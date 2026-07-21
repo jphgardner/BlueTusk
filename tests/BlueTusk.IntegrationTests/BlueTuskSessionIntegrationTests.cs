@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Text;
 using BlueTusk.Client;
 using BlueTusk.Data;
@@ -44,6 +45,41 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal("SELECT 1", resultSet.CommandTag);
         Assert.Contains("server_version", session.Parameters);
         Assert.NotNull(session.BackendKeyData);
+    }
+
+    [Fact]
+    public async Task Session_executes_an_extended_query_with_binary_parameters()
+    {
+        var connectionString = GetConnectionString();
+        var settings = new BlueTuskConnectionStringBuilder(connectionString);
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            },
+            CancellationToken.None);
+        var left = new byte[sizeof(int)];
+        var right = new byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32BigEndian(left, 20);
+        BinaryPrimitives.WriteInt32BigEndian(right, 22);
+
+        var result = await session.ExecuteExtendedQueryAsync(
+            "SELECT $1::int4 + $2::int4 AS answer",
+            [
+                new BlueTuskExtendedQueryParameter(23, 1, left),
+                new BlueTuskExtendedQueryParameter(23, 1, right),
+            ],
+            CancellationToken.None);
+
+        var resultSet = Assert.Single(result.ResultSets);
+        var row = Assert.Single(resultSet.Rows);
+        Assert.Equal("42", Encoding.UTF8.GetString(row.Values[0]!.Value.Span));
     }
 
     [Fact]

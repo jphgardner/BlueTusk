@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Diagnostics;
 using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
@@ -56,25 +57,103 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    public async ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
+    public ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
         string sql,
         CancellationToken cancellationToken = default)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
-        if (!_open)
+        ValidateQuery(sql);
+        return ExecuteQueryAsync(
+            output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
+            cancellationToken);
+    }
+
+    public ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+
+        var typeOids = new uint[parameters.Count];
+        var bindParameters = new BlueTuskBindParameter[parameters.Count];
+        for (var index = 0; index < parameters.Count; index++)
         {
-            throw new InvalidOperationException("The PostgreSQL session is not open.");
+            var parameter = parameters[index];
+            typeOids[index] = parameter.TypeOid;
+            bindParameters[index] = new BlueTuskBindParameter(parameter.FormatCode, parameter.Value);
         }
+
+        return ExecuteQueryAsync(
+            output =>
+            {
+                BlueTuskFrontendMessageWriter.WriteParse(output, string.Empty, sql, typeOids);
+                BlueTuskFrontendMessageWriter.WriteBind(
+                    output,
+                    string.Empty,
+                    string.Empty,
+                    bindParameters);
+                BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+                BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+                BlueTuskFrontendMessageWriter.WriteSync(output);
+            },
+            cancellationToken);
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        if (_open)
+        {
+            try
+            {
+                _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Closing);
+                await _connection.WriteAsync(BlueTuskFrontendMessageWriter.WriteTerminate, CancellationToken.None)
+                    .ConfigureAwait(false);
+                _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Disconnected);
+            }
+            catch (IOException)
+            {
+                // The physical connection is being discarded regardless.
+            }
+        }
+
+        _open = false;
+        _operationLock.Dispose();
+        await _connection.DisposeAsync().ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _open = false;
+        _operationLock.Dispose();
+        _connection.Dispose();
+    }
+
+    private async ValueTask<BlueTuskQueryResult> ExecuteQueryAsync(
+        Action<IBufferWriter<byte>> writeMessages,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(writeMessages);
+        ObjectDisposedException.ThrowIf(_disposed, this);
 
         await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         var started = Stopwatch.GetTimestamp();
         try
         {
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-            await _connection.WriteAsync(
-                output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
-                cancellationToken).ConfigureAwait(false);
+            await _connection.WriteAsync(writeMessages, cancellationToken).ConfigureAwait(false);
 
             var resultSets = new List<BlueTuskResultSet>();
             IReadOnlyList<BlueTuskFieldDescription> fields = [];
@@ -139,45 +218,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    public async ValueTask DisposeAsync()
+    private void ValidateQuery(string sql)
     {
-        if (_disposed)
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentException.ThrowIfNullOrWhiteSpace(sql);
+        if (!_open)
         {
-            return;
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
         }
-
-        _disposed = true;
-        if (_open)
-        {
-            try
-            {
-                _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Closing);
-                await _connection.WriteAsync(BlueTuskFrontendMessageWriter.WriteTerminate, CancellationToken.None)
-                    .ConfigureAwait(false);
-                _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Disconnected);
-            }
-            catch (IOException)
-            {
-                // The physical connection is being discarded regardless.
-            }
-        }
-
-        _open = false;
-        _operationLock.Dispose();
-        await _connection.DisposeAsync().ConfigureAwait(false);
-    }
-
-    public void Dispose()
-    {
-        if (_disposed)
-        {
-            return;
-        }
-
-        _disposed = true;
-        _open = false;
-        _operationLock.Dispose();
-        _connection.Dispose();
     }
 
     private async ValueTask OpenCoreAsync(CancellationToken cancellationToken)
