@@ -6,12 +6,14 @@ using BlueTusk.Protocol;
 
 namespace BlueTusk.Data;
 
-/// <summary>Represents one physical connection to PostgreSQL.</summary>
+/// <summary>Represents a logical connection to PostgreSQL.</summary>
 public sealed class BlueTuskConnection : DbConnection
 {
+    private readonly BlueTuskConnectionPool? _pool;
     private string _connectionString = string.Empty;
     private BlueTuskConnectionStringBuilder _settings = new();
-    private BlueTuskSession? _session;
+    private IBlueTuskPhysicalSession? _session;
+    private BlueTuskPoolLease? _poolLease;
     private BlueTuskTransaction? _currentTransaction;
     private bool _startingTransaction;
     private readonly object _transactionSync = new();
@@ -22,7 +24,13 @@ public sealed class BlueTuskConnection : DbConnection
     }
 
     public BlueTuskConnection(string connectionString)
+        : this(connectionString, pool: null)
     {
+    }
+
+    internal BlueTuskConnection(string connectionString, BlueTuskConnectionPool? pool)
+    {
+        _pool = pool;
         ConnectionString = connectionString;
     }
 
@@ -37,7 +45,16 @@ public sealed class BlueTuskConnection : DbConnection
                 throw new InvalidOperationException("The connection string cannot change while the connection is open.");
             }
 
+            if (_pool is not null &&
+                _connectionString.Length > 0 &&
+                !string.Equals(_connectionString, value, StringComparison.Ordinal))
+            {
+                throw new InvalidOperationException(
+                    "A connection created by a data source cannot use a different connection string.");
+            }
+
             _settings = new BlueTuskConnectionStringBuilder(value ?? string.Empty);
+            _settings.Validate();
             _connectionString = value ?? string.Empty;
         }
     }
@@ -53,7 +70,7 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);
 
-    internal BlueTuskSession Session =>
+    internal IBlueTuskPhysicalSession Session =>
         _session ?? throw new InvalidOperationException("The connection is not open.");
 
     internal bool HasOpenSession => _session is { IsOpen: true };
@@ -87,24 +104,21 @@ public sealed class BlueTuskConnection : DbConnection
         SetState(ConnectionState.Connecting);
         try
         {
-            _session = await BlueTuskSession.OpenAsync(
-                new BlueTuskClientOptions
-                {
-                    Host = _settings.Host,
-                    Port = _settings.Port,
-                    Database = _settings.Database,
-                    Username = _settings.Username,
-                    Password = _settings.Password,
-                    ApplicationName = _settings.ApplicationName,
-                    ConnectTimeout = _settings.Timeout,
-                    SslMode = _settings.SslMode,
-                    ChannelBinding = _settings.ChannelBinding,
-                },
-                cancellationToken).ConfigureAwait(false);
+            if (_pool is null)
+            {
+                _session = await BlueTuskPhysicalSession.OpenAsync(_settings, cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                _poolLease = await _pool.RentAsync(cancellationToken).ConfigureAwait(false);
+                _session = _poolLease.Session;
+            }
+
             SetState(ConnectionState.Open);
         }
         catch
         {
+            Interlocked.Exchange(ref _poolLease, null)?.Dispose();
             _session = null;
             SetState(ConnectionState.Closed);
             throw;
@@ -115,7 +129,16 @@ public sealed class BlueTuskConnection : DbConnection
     {
         DetachTransaction()?.ConnectionClosed();
         var session = Interlocked.Exchange(ref _session, null);
-        session?.Dispose();
+        var lease = Interlocked.Exchange(ref _poolLease, null);
+        if (lease is not null)
+        {
+            lease.Dispose();
+        }
+        else
+        {
+            session?.Dispose();
+        }
+
         SetState(ConnectionState.Closed);
     }
 
@@ -123,7 +146,12 @@ public sealed class BlueTuskConnection : DbConnection
     {
         DetachTransaction()?.ConnectionClosed();
         var session = Interlocked.Exchange(ref _session, null);
-        if (session is not null)
+        var lease = Interlocked.Exchange(ref _poolLease, null);
+        if (lease is not null)
+        {
+            lease.Dispose();
+        }
+        else if (session is not null)
         {
             await session.DisposeAsync().ConfigureAwait(false);
         }
