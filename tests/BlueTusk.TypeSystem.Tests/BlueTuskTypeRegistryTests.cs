@@ -54,6 +54,8 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(1700, "numeric", typeof(BlueTuskNumeric), typeof(BlueTuskNumericCodec))]
     [InlineData(2950, "uuid", typeof(Guid), typeof(BlueTuskGuidCodec))]
     [InlineData(3220, "pg_lsn", typeof(BlueTuskLogSequenceNumber), typeof(BlueTuskLogSequenceNumberCodec))]
+    [InlineData(3614, "tsvector", typeof(BlueTuskTextSearchVector), typeof(BlueTuskTextSearchVectorCodec))]
+    [InlineData(3615, "tsquery", typeof(BlueTuskTextSearchQuery), typeof(BlueTuskTextSearchQueryCodec))]
     [InlineData(3802, "jsonb", typeof(string), typeof(BlueTuskJsonbCodec))]
     public void Registry_resolves_core_scalar_codecs(
         uint oid,

@@ -41,6 +41,8 @@ internal static class BlueTuskParameterEncoder
     private const uint NumericOid = 1700;
     private const uint UuidOid = 2950;
     private const uint PgLsnOid = 3220;
+    private const uint TextSearchVectorOid = 3614;
+    private const uint TextSearchQueryOid = 3615;
 
     public static IReadOnlyList<BlueTuskExtendedQueryParameter> Encode(BlueTuskParameterCollection parameters)
     {
@@ -122,6 +124,8 @@ internal static class BlueTuskParameterEncoder
             BlueTuskPolygon => PolygonOid,
             BlueTuskLine => LineOid,
             BlueTuskCircle => CircleOid,
+            BlueTuskTextSearchVector => TextSearchVectorOid,
+            BlueTuskTextSearchQuery => TextSearchQueryOid,
             BlueTuskNetworkAddress network => network.IsCidr ? CidrOid : InetOid,
             BlueTuskMacAddress8 => Macaddr8Oid,
             BlueTuskMacAddress => MacaddrOid,
@@ -251,6 +255,8 @@ internal static class BlueTuskParameterEncoder
             BlueTuskBuiltInTypes.PgLsn,
             GetValue<BlueTuskLogSequenceNumber>(value),
             sizeof(ulong)),
+        TextSearchVectorOid => EncodeTextSearchVector(typeOid, GetValue<BlueTuskTextSearchVector>(value)),
+        TextSearchQueryOid => EncodeTextSearchQuery(typeOid, GetValue<BlueTuskTextSearchQuery>(value)),
         TextOid => Text(typeOid, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty),
         _ when value is string text => Text(typeOid, text),
         _ when value is byte[] bytes => Binary(typeOid, bytes),
@@ -393,6 +399,26 @@ internal static class BlueTuskParameterEncoder
             BlueTuskBuiltInTypes.Polygon,
             value,
             checked(4 + (value.Count * 16)));
+
+    private static BlueTuskExtendedQueryParameter EncodeTextSearchVector(
+        uint typeOid,
+        BlueTuskTextSearchVector value) =>
+        EncodeBinary(
+            typeOid,
+            new BlueTuskTextSearchVectorCodec(),
+            BlueTuskBuiltInTypes.TextSearchVector,
+            value,
+            BlueTuskTextSearchVectorCodec.GetBinarySize(value));
+
+    private static BlueTuskExtendedQueryParameter EncodeTextSearchQuery(
+        uint typeOid,
+        BlueTuskTextSearchQuery value) =>
+        EncodeBinary(
+            typeOid,
+            new BlueTuskTextSearchQueryCodec(),
+            BlueTuskBuiltInTypes.TextSearchQuery,
+            value,
+            BlueTuskTextSearchQueryCodec.GetBinarySize(value));
 
     private static ReadOnlyMemory<byte> GetBytes(object value) => value switch
     {

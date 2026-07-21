@@ -82,9 +82,13 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Uuid { get; } = Create(2950, "uuid", 2951);
 
-    public static BlueTuskTypeDescriptor Jsonb { get; } = Create(3802, "jsonb", 3807);
-
     public static BlueTuskTypeDescriptor PgLsn { get; } = Create(3220, "pg_lsn", 3221);
+
+    public static BlueTuskTypeDescriptor TextSearchVector { get; } = Create(3614, "tsvector", 3643);
+
+    public static BlueTuskTypeDescriptor TextSearchQuery { get; } = Create(3615, "tsquery", 3645);
+
+    public static BlueTuskTypeDescriptor Jsonb { get; } = Create(3802, "jsonb", 3807);
 
     public static BlueTuskTypeRegistry CreateInitialRegistry() => CreateRegistry();
 
@@ -130,6 +134,8 @@ public static class BlueTuskBuiltInTypes
             .Register(Varbit, new BlueTuskBitStringCodec())
             .Register(Uuid, new BlueTuskGuidCodec())
             .Register(PgLsn, new BlueTuskLogSequenceNumberCodec())
+            .Register(TextSearchVector, new BlueTuskTextSearchVectorCodec())
+            .Register(TextSearchQuery, new BlueTuskTextSearchQueryCodec())
             .Register(Jsonb, new BlueTuskJsonbCodec())
             .Build();
     }

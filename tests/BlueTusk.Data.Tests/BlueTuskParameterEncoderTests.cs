@@ -154,4 +154,23 @@ public sealed class BlueTuskParameterEncoderTests
         Assert.Equal(GeometricPayloadLengths, encoded.Select(item => item.Value!.Value.Length));
         Assert.All(encoded, item => Assert.Equal(1, item.FormatCode));
     }
+
+    [Fact]
+    public void Encodes_text_search_values_in_binary()
+    {
+        var vector = BlueTuskTextSearchVector.Parse("'fat':2A 'rat':3");
+        var query = BlueTuskTextSearchQuery.Parse("fat:AB & rat:*");
+
+        var encodedVector = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskTextSearchVector>(vector));
+        var encodedQuery = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskTextSearchQuery>(query));
+
+        Assert.Equal(3614U, encodedVector.TypeOid);
+        Assert.Equal(3615U, encodedQuery.TypeOid);
+        Assert.Equal(1, encodedVector.FormatCode);
+        Assert.Equal(1, encodedQuery.FormatCode);
+        Assert.Equal(BlueTuskTextSearchVectorCodec.GetBinarySize(vector), encodedVector.Value!.Value.Length);
+        Assert.Equal(BlueTuskTextSearchQueryCodec.GetBinarySize(query), encodedQuery.Value!.Value.Length);
+    }
 }

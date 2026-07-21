@@ -95,6 +95,20 @@ public ref struct BlueTuskReader
         return value;
     }
 
+    public string ReadNullTerminatedUtf8()
+    {
+        var remaining = _buffer[_offset..];
+        var terminator = remaining.IndexOf((byte)0);
+        if (terminator < 0)
+        {
+            throw new InvalidOperationException("The field does not contain a null-terminated UTF-8 value.");
+        }
+
+        var value = StrictUtf8.GetString(remaining[..terminator]);
+        _offset += terminator + 1;
+        return value;
+    }
+
     private readonly void EnsureRemaining(int count)
     {
         if (Remaining < count)

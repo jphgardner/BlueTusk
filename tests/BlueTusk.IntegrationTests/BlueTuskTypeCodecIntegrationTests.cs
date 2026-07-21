@@ -233,6 +233,23 @@ public sealed class BlueTuskTypeCodecIntegrationTests
         Assert.Equal(circle, reader.GetFieldValue<BlueTuskCircle>(6));
     }
 
+    [Fact]
+    public async Task Text_search_parameters_round_trip_in_binary()
+    {
+        var vector = BlueTuskTextSearchVector.Parse("'cat':3 'fat':2A,4B 'rat':5");
+        var query = BlueTuskTextSearchQuery.Parse("fat:AB & (rat | !cat:*)");
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand("SELECT $1::tsvector, $2::tsquery");
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskTextSearchVector>(vector));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskTextSearchQuery>(query));
+
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(vector, reader.GetFieldValue<BlueTuskTextSearchVector>(0));
+        Assert.Equal(query, reader.GetFieldValue<BlueTuskTextSearchQuery>(1));
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

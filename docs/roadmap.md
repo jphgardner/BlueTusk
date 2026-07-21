@@ -67,7 +67,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Wire-specific scalar families: time with time zone, interval, bit strings, `pg_lsn`, and `tid`
 - [x] Network and geometric scalar families
 - [ ] Money, including `lc_monetary`-aware scale discovery
-- [ ] Full-text and catalogue-specific scalar families
+- [x] Full-text scalar family
+- [ ] Catalogue-specific scalar families
 - [ ] Catalogue discovery and cache
 - [ ] Arrays, enums, domains, and composites
 - [ ] Ranges and multiranges
