@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.4 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, and cancellable queries through ADO.NET, but it does not yet support pooling, prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental pre-release provider. Version 0.0.5 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET, but it does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -42,7 +42,7 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 
 ## Status
 
-The current `0.0.4` implementation provides:
+The current `0.0.5` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -63,6 +63,9 @@ The current `0.0.4` implementation provides:
 - typed binary and text parameter encoding without SQL interpolation;
 - ADO.NET transactions with PostgreSQL isolation levels, commit, rollback, and rollback-on-disposal;
 - cancellation tokens, command timeouts, and explicit sync/async cancellation over PostgreSQL's dedicated channel;
+- bounded per-data-source connection pooling with cancellable waiters;
+- transaction rollback, `DISCARD ALL` session reset, health validation, and connection lifetime enforcement;
+- pool warm-up, clear/drain controls, statistics, metrics, live concurrency tests, and a checkout benchmark;
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.
 
 Minimal usage:

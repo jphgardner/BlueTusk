@@ -46,13 +46,13 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Commit, rollback, rollback-on-disposal, and failed-transaction recovery
 - [x] Typed and base-class ADO.NET transaction acceptance tests
 
-## 0.0.5 — Connection pooling and data sources
+## 0.0.5 — Connection pooling and data sources (complete)
 
-- [ ] Bounded per-data-source physical connection pool
-- [ ] Minimum/maximum size, idle lifetime, and maximum lifetime
-- [ ] Safe session reset and health validation
-- [ ] Waiter cancellation and pool draining
-- [ ] Pool diagnostics and live concurrency tests
+- [x] Bounded per-data-source physical connection pool
+- [x] Minimum/maximum size, idle lifetime, and maximum lifetime
+- [x] Safe session reset and health validation
+- [x] Waiter cancellation and pool draining
+- [x] Pool diagnostics and live concurrency tests
 
 ## 0.0.6 — Core binary type codecs
 

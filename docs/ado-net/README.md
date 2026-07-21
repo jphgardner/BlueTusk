@@ -1,6 +1,6 @@
 # ADO.NET
 
-Version 0.0.4 provides an initial asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, buffered `BlueTuskDataReader`, provider factory, and unpooled `BlueTuskDataSource`.
+Version 0.0.5 provides an asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, buffered `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource`.
 
 Commands without parameters use PostgreSQL's simple-query protocol. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL.
 
@@ -33,4 +33,6 @@ await transaction.CommitAsync();
 
 Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a separate connection. BlueTusk drains the original connection through `ReadyForQuery` before returning, so a cancelled connection remains reusable. `Cancel()` and `CancelAsync()` provide explicit cancellation. Cancellation inside a transaction leaves PostgreSQL's transaction in the failed state and requires rollback.
 
-Preparation, pooling, batches, streaming readers, and synchronous query execution remain future milestones.
+`BlueTuskDataSource` owns a bounded physical connection pool by default. Logical connections return their physical session when closed or disposed; reuse rolls back an unfinished transaction when necessary and issues `DISCARD ALL` before handing the session to another caller. See [Connection pooling](pooling.md) for sizing, lifetime, warm-up, statistics, and drain controls.
+
+Preparation, batches, streaming readers, and synchronous query execution remain future milestones.
