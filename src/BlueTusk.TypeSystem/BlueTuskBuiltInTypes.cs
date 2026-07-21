@@ -32,9 +32,17 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Xml { get; } = Create(142, "xml", 143);
 
+    public static BlueTuskTypeDescriptor Cidr { get; } = Create(650, "cidr", 651);
+
     public static BlueTuskTypeDescriptor Float4 { get; } = Create(700, "float4", 1021);
 
     public static BlueTuskTypeDescriptor Float8 { get; } = Create(701, "float8", 1022);
+
+    public static BlueTuskTypeDescriptor Macaddr8 { get; } = Create(774, "macaddr8", 775);
+
+    public static BlueTuskTypeDescriptor Macaddr { get; } = Create(829, "macaddr", 1040);
+
+    public static BlueTuskTypeDescriptor Inet { get; } = Create(869, "inet", 1041);
 
     public static BlueTuskTypeDescriptor Bpchar { get; } = Create(1042, "bpchar", 1014);
 
@@ -82,8 +90,12 @@ public static class BlueTuskBuiltInTypes
             .Register(Tid, new BlueTuskTupleIdCodec())
             .Register(Json, textCodec)
             .Register(Xml, textCodec)
+            .Register(Cidr, new BlueTuskCidrCodec())
             .Register(Float4, new BlueTuskSingleCodec())
             .Register(Float8, new BlueTuskDoubleCodec())
+            .Register(Macaddr8, new BlueTuskMacAddress8Codec())
+            .Register(Macaddr, new BlueTuskMacAddressCodec())
+            .Register(Inet, new BlueTuskInetCodec())
             .Register(Bpchar, textCodec)
             .Register(Varchar, textCodec)
             .Register(Date, new BlueTuskDateCodec())

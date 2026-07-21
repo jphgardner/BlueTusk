@@ -106,4 +106,28 @@ public sealed class BlueTuskParameterEncoderTests
         Assert.Equal(AdvancedPayloadLengths, encoded.Select(item => item.Value!.Value.Length));
         Assert.All(encoded, item => Assert.Equal(1, item.FormatCode));
     }
+
+    [Fact]
+    public void Encodes_network_values_in_binary()
+    {
+        var inet = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskNetworkAddress>(
+                BlueTuskNetworkAddress.Parse("192.168.1.5/24")));
+        var cidr = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskNetworkAddress>(
+                BlueTuskNetworkAddress.Parse("2001:db8::/32", isCidr: true)));
+        var macaddr = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskMacAddress>(BlueTuskMacAddress.Parse("08:00:2b:01:02:03")));
+        var macaddr8 = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskMacAddress8>(BlueTuskMacAddress8.Parse("08:00:2b:01:02:03:04:05")));
+
+        Assert.Equal(869U, inet.TypeOid);
+        Assert.Equal(650U, cidr.TypeOid);
+        Assert.Equal(829U, macaddr.TypeOid);
+        Assert.Equal(774U, macaddr8.TypeOid);
+        Assert.Equal(1, inet.FormatCode);
+        Assert.Equal(1, cidr.FormatCode);
+        Assert.Equal(1, macaddr.FormatCode);
+        Assert.Equal(1, macaddr8.FormatCode);
+    }
 }

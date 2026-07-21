@@ -19,6 +19,10 @@ internal static class BlueTuskParameterEncoder
     private const uint TidOid = 27;
     private const uint Float4Oid = 700;
     private const uint Float8Oid = 701;
+    private const uint CidrOid = 650;
+    private const uint Macaddr8Oid = 774;
+    private const uint MacaddrOid = 829;
+    private const uint InetOid = 869;
     private const uint DateOid = 1082;
     private const uint TimeOid = 1083;
     private const uint TimestampOid = 1114;
@@ -104,6 +108,9 @@ internal static class BlueTuskParameterEncoder
             BlueTuskTimeWithTimeZone => TimeWithTimeZoneOid,
             BlueTuskBitString => VarbitOid,
             BlueTuskLogSequenceNumber => PgLsnOid,
+            BlueTuskNetworkAddress network => network.IsCidr ? CidrOid : InetOid,
+            BlueTuskMacAddress8 => Macaddr8Oid,
+            BlueTuskMacAddress => MacaddrOid,
             Guid => UuidOid,
             byte[] or ReadOnlyMemory<byte> or Memory<byte> => ByteaOid,
             DateOnly => DateOid,
@@ -128,6 +135,19 @@ internal static class BlueTuskParameterEncoder
         Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture)),
         Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
         Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
+        CidrOid or InetOid => EncodeNetworkAddress(typeOid, GetValue<BlueTuskNetworkAddress>(value)),
+        Macaddr8Oid => EncodeBinary(
+            typeOid,
+            new BlueTuskMacAddress8Codec(),
+            BlueTuskBuiltInTypes.Macaddr8,
+            GetValue<BlueTuskMacAddress8>(value),
+            sizeof(ulong)),
+        MacaddrOid => EncodeBinary(
+            typeOid,
+            new BlueTuskMacAddressCodec(),
+            BlueTuskBuiltInTypes.Macaddr,
+            GetValue<BlueTuskMacAddress>(value),
+            6),
         ByteaOid => Binary(typeOid, GetBytes(value)),
         NumericOid => EncodeNumeric(typeOid, value),
         UuidOid => EncodeBinary(
@@ -283,6 +303,32 @@ internal static class BlueTuskParameterEncoder
             value,
             BlueTuskDataFormat.Binary,
             typeOid == BitOid ? BlueTuskBuiltInTypes.Bit : BlueTuskBuiltInTypes.Varbit);
+        return Binary(typeOid, bytes);
+    }
+
+    private static BlueTuskExtendedQueryParameter EncodeNetworkAddress(
+        uint typeOid,
+        BlueTuskNetworkAddress value)
+    {
+        var bytes = new byte[4 + value.Address.GetAddressBytes().Length];
+        var writer = new BlueTuskWriter(bytes);
+        if (typeOid == CidrOid)
+        {
+            new BlueTuskCidrCodec().WriteTyped(
+                ref writer,
+                value,
+                BlueTuskDataFormat.Binary,
+                BlueTuskBuiltInTypes.Cidr);
+        }
+        else
+        {
+            new BlueTuskInetCodec().WriteTyped(
+                ref writer,
+                value,
+                BlueTuskDataFormat.Binary,
+                BlueTuskBuiltInTypes.Inet);
+        }
+
         return Binary(typeOid, bytes);
     }
 

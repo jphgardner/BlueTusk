@@ -173,6 +173,30 @@ public sealed class BlueTuskTypeCodecIntegrationTests
         Assert.Equal(lsn, reader.GetFieldValue<BlueTuskLogSequenceNumber>(4));
     }
 
+    [Fact]
+    public async Task Network_scalar_parameters_round_trip_in_binary()
+    {
+        var inet = BlueTuskNetworkAddress.Parse("192.168.1.5/24");
+        var cidr = BlueTuskNetworkAddress.Parse("2001:db8::/32", isCidr: true);
+        var macaddr = BlueTuskMacAddress.Parse("08:00:2b:01:02:03");
+        var macaddr8 = BlueTuskMacAddress8.Parse("08:00:2b:01:02:03:04:05");
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand(
+            "SELECT $1::inet, $2::cidr, $3::macaddr, $4::macaddr8");
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskNetworkAddress>(inet));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskNetworkAddress>(cidr));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskMacAddress>(macaddr));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskMacAddress8>(macaddr8));
+
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(inet, reader.GetFieldValue<BlueTuskNetworkAddress>(0));
+        Assert.Equal(cidr, reader.GetFieldValue<BlueTuskNetworkAddress>(1));
+        Assert.Equal(macaddr, reader.GetFieldValue<BlueTuskMacAddress>(2));
+        Assert.Equal(macaddr8, reader.GetFieldValue<BlueTuskMacAddress8>(3));
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
