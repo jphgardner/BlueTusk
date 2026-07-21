@@ -1,0 +1,90 @@
+{
+   "Title":"BlueTusk.Benchmarks.PoolCheckoutBenchmarks-20260721-132804",
+   "HostEnvironmentInfo":{
+      "BenchmarkDotNetCaption":"BenchmarkDotNet",
+      "BenchmarkDotNetVersion":"0.15.8",
+      "OsVersion":"Windows 11 (10.0.26200.8894/25H2/2025Update/HudsonValley2)",
+      "ProcessorName":"AMD Ryzen 7 5800X",
+      "PhysicalProcessorCount":1,
+      "PhysicalCoreCount":8,
+      "LogicalCoreCount":16,
+      "RuntimeVersion":".NET 10.0.10 (10.0.10, 10.0.1026.32716)",
+      "Architecture":"X64",
+      "HasAttachedDebugger":false,
+      "HasRyuJit":true,
+      "Configuration":"RELEASE",
+      "DotNetCliVersion":"10.0.110",
+      "ChronometerFrequency":{
+         "Hertz":10000000
+      },
+      "HardwareTimerKind":"Unknown"
+   },
+   "Benchmarks":[
+      {
+         "DisplayInfo":"PoolCheckoutBenchmarks.CheckoutWarmSession: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"PoolCheckoutBenchmarks",
+         "Method":"CheckoutWarmSession",
+         "MethodTitle":"CheckoutWarmSession",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.PoolCheckoutBenchmarks.CheckoutWarmSession",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               244.76418495178223,245.31097412109375,230.00938892364502
+            ],
+            "N":3,
+            "Min":230.00938892364502,
+            "LowerFence":225.91059803962708,
+            "Q1":237.38678693771362,
+            "Median":244.76418495178223,
+            "Mean":240.028182665507,
+            "Q3":245.037579536438,
+            "UpperFence":256.51376843452454,
+            "Max":245.31097412109375,
+            "InterquartileRange":7.650792598724365,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":5.011883066951937,
+            "Variance":75.35691563039866,
+            "StandardDeviation":8.680836113554884,
+            "Skewness":-0.38318291269675947,
+            "Kurtosis":0.6666666666666651,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":240.028182665507,
+               "StandardError":5.011883066951937,
+               "Level":12,
+               "Margin":158.37076592248886,
+               "Lower":81.65741674301813,
+               "Upper":398.39894858799585
+            },
+            "Percentiles":{
+               "P0":230.00938892364502,
+               "P25":237.38678693771362,
+               "P50":244.76418495178223,
+               "P67":244.95009326934814,
+               "P80":245.09225845336914,
+               "P85":245.1469373703003,
+               "P90":245.20161628723145,
+               "P95":245.2562952041626,
+               "P100":245.31097412109375
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":4194304,
+            "BytesAllocatedPerOperation":0
+         }
+      }
+   ]
+}

@@ -18,3 +18,5 @@ dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --
 The checked-in GitHub Markdown reports are human-readable; the brief JSON reports support automated comparison. A short job has only three measured iterations and is a development reference, not a universal performance guarantee or a substitute for release-grade runs.
 
 The frontend-writer report was regenerated after removing interface-enumerator allocations from extended Bind messages. Both simple and extended writer workloads report zero managed allocation per operation.
+
+The warm-session pool checkout workload uses an in-memory physical session to isolate pool arbitration and reset dispatch. Its initial 0.0.5 reference result is approximately 240 ns per checkout with zero managed allocation per operation.
