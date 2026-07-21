@@ -54,6 +54,8 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Macaddr8 { get; } = Create(774, "macaddr8", 775);
 
+    public static BlueTuskTypeDescriptor Money { get; } = Create(790, "money", 791);
+
     public static BlueTuskTypeDescriptor Macaddr { get; } = Create(829, "macaddr", 1040);
 
     public static BlueTuskTypeDescriptor Inet { get; } = Create(869, "inet", 1041);
@@ -119,6 +121,7 @@ public static class BlueTuskBuiltInTypes
             .Register(Float8, new BlueTuskDoubleCodec())
             .Register(Circle, new BlueTuskCircleCodec())
             .Register(Macaddr8, new BlueTuskMacAddress8Codec())
+            .Register(Money)
             .Register(Macaddr, new BlueTuskMacAddressCodec())
             .Register(Inet, new BlueTuskInetCodec())
             .Register(Bpchar, textCodec)

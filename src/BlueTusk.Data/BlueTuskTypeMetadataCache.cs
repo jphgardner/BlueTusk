@@ -18,7 +18,11 @@ internal sealed class BlueTuskTypeMetadataCache
         "FROM pg_catalog.pg_type AS t " +
         "JOIN pg_catalog.pg_namespace AS n ON n.oid = t.typnamespace " +
         "LEFT JOIN pg_catalog.pg_range AS r ON r.rngtypid = t.oid OR r.rngmultitypid = t.oid " +
-        "ORDER BY t.oid";
+        "ORDER BY t.oid; " +
+        "SELECT current_setting('lc_monetary'), " +
+        "COALESCE(max(fractional_digits) FILTER (WHERE " +
+        "((power(10::numeric, -fractional_digits))::money)::numeric <> 0), 0)::text " +
+        "FROM generate_series(0, 10) AS digits(fractional_digits)";
 
     private readonly SemaphoreSlim _loadLock = new(1, 1);
     private readonly BlueTuskTypeRegistry? _configuredTypes;
@@ -65,9 +69,22 @@ internal sealed class BlueTuskTypeMetadataCache
             }
 
             var result = await session.ExecuteSimpleQueryAsync(CatalogueQuery, cancellationToken).ConfigureAwait(false);
-            var resultSet = result.ResultSets.Count == 1
-                ? result.ResultSets[0]
-                : throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected result shape.");
+            if (result.ResultSets.Count != 2)
+            {
+                throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected result shape.");
+            }
+
+            var resultSet = result.ResultSets[0];
+            var moneyResultSet = result.ResultSets[1];
+            if (moneyResultSet.Fields.Count != 2 || moneyResultSet.Rows.Count != 1)
+            {
+                throw new InvalidOperationException("PostgreSQL money metadata probe returned an unexpected result shape.");
+            }
+
+            var moneyRow = moneyResultSet.Rows[0].Values;
+            var moneyFormat = new BlueTuskMoneyFormat(
+                GetRequiredText(moneyRow[0], "lc_monetary"),
+                checked((int)ParseUInt32(moneyRow[1], "money fractional digits")));
             if (resultSet.Fields.Count != 9)
             {
                 throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected column count.");
@@ -91,7 +108,9 @@ internal sealed class BlueTuskTypeMetadataCache
                 };
             }
 
-            Volatile.Write(ref _registry, BlueTuskTypeCatalogue.BuildRegistry(types, _configuredTypes));
+            Volatile.Write(
+                ref _registry,
+                BlueTuskTypeCatalogue.BuildRegistry(types, _configuredTypes, moneyFormat));
             Volatile.Write(ref _loaded, 1);
         }
         finally

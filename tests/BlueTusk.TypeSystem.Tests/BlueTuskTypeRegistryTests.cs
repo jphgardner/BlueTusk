@@ -73,6 +73,16 @@ public sealed class BlueTuskTypeRegistryTests
     }
 
     [Fact]
+    public void Money_descriptor_is_bootstrapped_without_assuming_locale_scale()
+    {
+        var registry = BlueTuskBuiltInTypes.CreateRegistry();
+
+        Assert.True(registry.TryGetType(BlueTuskBuiltInTypes.Money.Id, out var type));
+        Assert.Equal("money", type!.Name);
+        Assert.False(registry.TryGetCodec(type.Id, out _));
+    }
+
+    [Fact]
     public void Unknown_text_values_remain_accessible()
     {
         var type = new BlueTuskTypeDescriptor

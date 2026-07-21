@@ -233,7 +233,7 @@ public sealed class BlueTuskCommand : DbCommand
                 ? await connection.Session.ExecuteSimpleQueryAsync(CommandText, effectiveToken).ConfigureAwait(false)
                 : await connection.Session.ExecuteExtendedQueryAsync(
                     CommandText,
-                    BlueTuskParameterEncoder.Encode(_parameters),
+                    BlueTuskParameterEncoder.Encode(_parameters, connection.TypeRegistry),
                     effectiveToken).ConfigureAwait(false);
         }
         catch (BlueTuskServerException exception)

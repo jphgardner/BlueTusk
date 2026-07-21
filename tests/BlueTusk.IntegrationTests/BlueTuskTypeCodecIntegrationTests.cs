@@ -284,6 +284,34 @@ public sealed class BlueTuskTypeCodecIntegrationTests
         Assert.Equal(cached.Types.Count, dataSource.TypeRegistry.Types.Count);
     }
 
+    [Fact]
+    public async Task Money_uses_discovered_locale_scale_for_text_and_binary_round_trips()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using (var connection = await dataSource.OpenConnectionAsync(CancellationToken.None))
+        {
+            Assert.True(dataSource.TypeRegistry.TryGetCodec(BlueTuskBuiltInTypes.Money.Id, out var registered));
+            var codec = Assert.IsType<BlueTuskMoneyCodec>(registered);
+            Assert.Equal(2, codec.FractionalDigits);
+        }
+
+        var value = new BlueTuskMoney(123_456, 2);
+        await using (var binaryCommand = dataSource.CreateCommand("SELECT $1::money"))
+        {
+            binaryCommand.Parameters.Add(new BlueTuskParameter<BlueTuskMoney>(value));
+            await using var reader = await binaryCommand.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(value, reader.GetFieldValue<BlueTuskMoney>(0));
+        }
+
+        await using (var textCommand = dataSource.CreateCommand("SELECT 1234.56::money"))
+        await using (var reader = await textCommand.ExecuteReaderAsync(CancellationToken.None))
+        {
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(value, reader.GetFieldValue<BlueTuskMoney>(0));
+        }
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

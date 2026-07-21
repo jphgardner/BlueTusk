@@ -102,7 +102,7 @@ public sealed class BlueTuskParameterEncoderTests
                 BlueTuskLogSequenceNumber.Parse("16/B374D848")),
         };
 
-        var encoded = values.Select(BlueTuskParameterEncoder.Encode).ToArray();
+        var encoded = values.Select(value => BlueTuskParameterEncoder.Encode(value)).ToArray();
 
         Assert.Equal(AdvancedTypeOids, encoded.Select(item => item.TypeOid));
         Assert.Equal(AdvancedPayloadLengths, encoded.Select(item => item.Value!.Value.Length));
@@ -148,7 +148,7 @@ public sealed class BlueTuskParameterEncoderTests
             new BlueTuskParameter<BlueTuskCircle>(new BlueTuskCircle(points[0], 5)),
         };
 
-        var encoded = values.Select(BlueTuskParameterEncoder.Encode).ToArray();
+        var encoded = values.Select(value => BlueTuskParameterEncoder.Encode(value)).ToArray();
 
         Assert.Equal(GeometricTypeOids, encoded.Select(item => item.TypeOid));
         Assert.Equal(GeometricPayloadLengths, encoded.Select(item => item.Value!.Value.Length));
@@ -172,5 +172,24 @@ public sealed class BlueTuskParameterEncoderTests
         Assert.Equal(1, encodedQuery.FormatCode);
         Assert.Equal(BlueTuskTextSearchVectorCodec.GetBinarySize(vector), encodedVector.Value!.Value.Length);
         Assert.Equal(BlueTuskTextSearchQueryCodec.GetBinarySize(query), encodedQuery.Value!.Value.Length);
+    }
+
+    [Fact]
+    public void Encodes_money_raw_minor_units_and_validates_discovered_scale()
+    {
+        var value = new BlueTuskMoney(123_456, 2);
+        var types = BlueTuskTypeCatalogue.BuildRegistry(
+            [],
+            moneyFormat: new BlueTuskMoneyFormat("en_US.UTF-8", 2));
+
+        var encoded = BlueTuskParameterEncoder.Encode(new BlueTuskParameter<BlueTuskMoney>(value), types);
+
+        Assert.Equal(790U, encoded.TypeOid);
+        Assert.Equal(1, encoded.FormatCode);
+        Assert.Equal(123_456, BinaryPrimitives.ReadInt64BigEndian(encoded.Value!.Value.Span));
+        Assert.Throws<InvalidOperationException>(() =>
+            BlueTuskParameterEncoder.Encode(
+                new BlueTuskParameter<BlueTuskMoney>(new BlueTuskMoney(123_456, 3)),
+                types));
     }
 }

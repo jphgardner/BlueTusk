@@ -28,6 +28,7 @@ internal static class BlueTuskParameterEncoder
     private const uint CircleOid = 718;
     private const uint CidrOid = 650;
     private const uint Macaddr8Oid = 774;
+    private const uint MoneyOid = 790;
     private const uint MacaddrOid = 829;
     private const uint InetOid = 869;
     private const uint DateOid = 1082;
@@ -44,19 +45,23 @@ internal static class BlueTuskParameterEncoder
     private const uint TextSearchVectorOid = 3614;
     private const uint TextSearchQueryOid = 3615;
 
-    public static IReadOnlyList<BlueTuskExtendedQueryParameter> Encode(BlueTuskParameterCollection parameters)
+    public static IReadOnlyList<BlueTuskExtendedQueryParameter> Encode(
+        BlueTuskParameterCollection parameters,
+        BlueTuskTypeRegistry? types = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
         var encoded = new BlueTuskExtendedQueryParameter[parameters.Count];
         for (var index = 0; index < parameters.Count; index++)
         {
-            encoded[index] = Encode(parameters.Items[index]);
+            encoded[index] = Encode(parameters.Items[index], types);
         }
 
         return encoded;
     }
 
-    public static BlueTuskExtendedQueryParameter Encode(BlueTuskParameter parameter)
+    public static BlueTuskExtendedQueryParameter Encode(
+        BlueTuskParameter parameter,
+        BlueTuskTypeRegistry? types = null)
     {
         ArgumentNullException.ThrowIfNull(parameter);
         var value = parameter.Value is DBNull ? null : parameter.Value;
@@ -70,7 +75,7 @@ internal static class BlueTuskParameterEncoder
 
         return value is null
             ? new BlueTuskExtendedQueryParameter(typeOid, 0, null)
-            : EncodeValue(typeOid, value);
+            : EncodeValue(typeOid, value, types);
     }
 
     private static uint ResolveTypeOid(DbType dbType, object? value)
@@ -124,6 +129,7 @@ internal static class BlueTuskParameterEncoder
             BlueTuskPolygon => PolygonOid,
             BlueTuskLine => LineOid,
             BlueTuskCircle => CircleOid,
+            BlueTuskMoney => MoneyOid,
             BlueTuskTextSearchVector => TextSearchVectorOid,
             BlueTuskTextSearchQuery => TextSearchQueryOid,
             BlueTuskNetworkAddress network => network.IsCidr ? CidrOid : InetOid,
@@ -142,129 +148,133 @@ internal static class BlueTuskParameterEncoder
         };
     }
 
-    private static BlueTuskExtendedQueryParameter EncodeValue(uint typeOid, object value) => typeOid switch
-    {
-        BooleanOid => Binary(
-            typeOid,
-            new byte[] { (byte)(Convert.ToBoolean(value, CultureInfo.InvariantCulture) ? 1 : 0) }),
-        Int2Oid => BinaryInt16(typeOid, Convert.ToInt16(value, CultureInfo.InvariantCulture)),
-        Int4Oid => BinaryInt32(typeOid, Convert.ToInt32(value, CultureInfo.InvariantCulture)),
-        OidOid => BinaryUInt32(typeOid, Convert.ToUInt32(value, CultureInfo.InvariantCulture)),
-        Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture)),
-        Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
-        Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
-        PointOid => EncodeBinary(
-            typeOid,
-            new BlueTuskPointCodec(),
-            BlueTuskBuiltInTypes.Point,
-            GetValue<BlueTuskPoint>(value),
-            16),
-        LineSegmentOid => EncodeBinary(
-            typeOid,
-            new BlueTuskLineSegmentCodec(),
-            BlueTuskBuiltInTypes.LineSegment,
-            GetValue<BlueTuskLineSegment>(value),
-            32),
-        PathOid => EncodePath(typeOid, GetValue<BlueTuskPath>(value)),
-        BoxOid => EncodeBinary(
-            typeOid,
-            new BlueTuskBoxCodec(),
-            BlueTuskBuiltInTypes.Box,
-            GetValue<BlueTuskBox>(value),
-            32),
-        PolygonOid => EncodePolygon(typeOid, GetValue<BlueTuskPolygon>(value)),
-        LineOid => EncodeBinary(
-            typeOid,
-            new BlueTuskLineCodec(),
-            BlueTuskBuiltInTypes.Line,
-            GetValue<BlueTuskLine>(value),
-            24),
-        CircleOid => EncodeBinary(
-            typeOid,
-            new BlueTuskCircleCodec(),
-            BlueTuskBuiltInTypes.Circle,
-            GetValue<BlueTuskCircle>(value),
-            24),
-        CidrOid or InetOid => EncodeNetworkAddress(typeOid, GetValue<BlueTuskNetworkAddress>(value)),
-        Macaddr8Oid => EncodeBinary(
-            typeOid,
-            new BlueTuskMacAddress8Codec(),
-            BlueTuskBuiltInTypes.Macaddr8,
-            GetValue<BlueTuskMacAddress8>(value),
-            sizeof(ulong)),
-        MacaddrOid => EncodeBinary(
-            typeOid,
-            new BlueTuskMacAddressCodec(),
-            BlueTuskBuiltInTypes.Macaddr,
-            GetValue<BlueTuskMacAddress>(value),
-            6),
-        ByteaOid => Binary(typeOid, GetBytes(value)),
-        NumericOid => EncodeNumeric(typeOid, value),
-        UuidOid => EncodeBinary(
-            typeOid,
-            new BlueTuskGuidCodec(),
-            BlueTuskBuiltInTypes.Uuid,
-            GetGuid(value),
-            16),
-        DateOid => EncodeBinary(
-            typeOid,
-            new BlueTuskDateCodec(),
-            BlueTuskBuiltInTypes.Date,
-            GetDate(value),
-            sizeof(int)),
-        TimeOid => EncodeBinary(
-            typeOid,
-            new BlueTuskTimeCodec(),
-            BlueTuskBuiltInTypes.Time,
-            GetTime(value),
-            sizeof(long)),
-        TimestampOid => EncodeBinary(
-            typeOid,
-            new BlueTuskTimestampCodec(),
-            BlueTuskBuiltInTypes.Timestamp,
-            GetDateTime(value),
-            sizeof(long)),
-        TimestampWithTimeZoneOid => EncodeBinary(
-            typeOid,
-            new BlueTuskTimestampWithTimeZoneCodec(),
-            BlueTuskBuiltInTypes.TimestampWithTimeZone,
-            GetDateTimeOffset(value),
-            sizeof(long)),
-        TidOid => EncodeBinary(
-            typeOid,
-            new BlueTuskTupleIdCodec(),
-            BlueTuskBuiltInTypes.Tid,
-            GetValue<BlueTuskTupleId>(value),
-            6),
-        IntervalOid => EncodeBinary(
-            typeOid,
-            new BlueTuskIntervalCodec(),
-            BlueTuskBuiltInTypes.Interval,
-            GetValue<BlueTuskInterval>(value),
-            16),
-        TimeWithTimeZoneOid => EncodeBinary(
-            typeOid,
-            new BlueTuskTimeWithTimeZoneCodec(),
-            BlueTuskBuiltInTypes.TimeWithTimeZone,
-            GetValue<BlueTuskTimeWithTimeZone>(value),
-            12),
-        BitOid or VarbitOid => EncodeBitString(typeOid, GetValue<BlueTuskBitString>(value)),
-        PgLsnOid => EncodeBinary(
-            typeOid,
-            new BlueTuskLogSequenceNumberCodec(),
-            BlueTuskBuiltInTypes.PgLsn,
-            GetValue<BlueTuskLogSequenceNumber>(value),
-            sizeof(ulong)),
-        TextSearchVectorOid => EncodeTextSearchVector(typeOid, GetValue<BlueTuskTextSearchVector>(value)),
-        TextSearchQueryOid => EncodeTextSearchQuery(typeOid, GetValue<BlueTuskTextSearchQuery>(value)),
-        TextOid => Text(typeOid, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty),
-        _ when value is string text => Text(typeOid, text),
-        _ when value is byte[] bytes => Binary(typeOid, bytes),
-        _ when value is ReadOnlyMemory<byte> bytes => Binary(typeOid, bytes),
-        _ when value is Memory<byte> bytes => Binary(typeOid, bytes),
-        _ => throw new NotSupportedException(
-            $"PostgreSQL type OID {typeOid} requires a string or byte payload when no built-in encoder is available."),
-    };
+    private static BlueTuskExtendedQueryParameter EncodeValue(
+        uint typeOid,
+        object value,
+        BlueTuskTypeRegistry? types) => typeOid switch
+        {
+            BooleanOid => Binary(
+                typeOid,
+                new byte[] { (byte)(Convert.ToBoolean(value, CultureInfo.InvariantCulture) ? 1 : 0) }),
+            Int2Oid => BinaryInt16(typeOid, Convert.ToInt16(value, CultureInfo.InvariantCulture)),
+            Int4Oid => BinaryInt32(typeOid, Convert.ToInt32(value, CultureInfo.InvariantCulture)),
+            OidOid => BinaryUInt32(typeOid, Convert.ToUInt32(value, CultureInfo.InvariantCulture)),
+            Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture)),
+            Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
+            Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
+            PointOid => EncodeBinary(
+                typeOid,
+                new BlueTuskPointCodec(),
+                BlueTuskBuiltInTypes.Point,
+                GetValue<BlueTuskPoint>(value),
+                16),
+            LineSegmentOid => EncodeBinary(
+                typeOid,
+                new BlueTuskLineSegmentCodec(),
+                BlueTuskBuiltInTypes.LineSegment,
+                GetValue<BlueTuskLineSegment>(value),
+                32),
+            PathOid => EncodePath(typeOid, GetValue<BlueTuskPath>(value)),
+            BoxOid => EncodeBinary(
+                typeOid,
+                new BlueTuskBoxCodec(),
+                BlueTuskBuiltInTypes.Box,
+                GetValue<BlueTuskBox>(value),
+                32),
+            PolygonOid => EncodePolygon(typeOid, GetValue<BlueTuskPolygon>(value)),
+            LineOid => EncodeBinary(
+                typeOid,
+                new BlueTuskLineCodec(),
+                BlueTuskBuiltInTypes.Line,
+                GetValue<BlueTuskLine>(value),
+                24),
+            CircleOid => EncodeBinary(
+                typeOid,
+                new BlueTuskCircleCodec(),
+                BlueTuskBuiltInTypes.Circle,
+                GetValue<BlueTuskCircle>(value),
+                24),
+            MoneyOid => EncodeMoney(typeOid, GetValue<BlueTuskMoney>(value), types),
+            CidrOid or InetOid => EncodeNetworkAddress(typeOid, GetValue<BlueTuskNetworkAddress>(value)),
+            Macaddr8Oid => EncodeBinary(
+                typeOid,
+                new BlueTuskMacAddress8Codec(),
+                BlueTuskBuiltInTypes.Macaddr8,
+                GetValue<BlueTuskMacAddress8>(value),
+                sizeof(ulong)),
+            MacaddrOid => EncodeBinary(
+                typeOid,
+                new BlueTuskMacAddressCodec(),
+                BlueTuskBuiltInTypes.Macaddr,
+                GetValue<BlueTuskMacAddress>(value),
+                6),
+            ByteaOid => Binary(typeOid, GetBytes(value)),
+            NumericOid => EncodeNumeric(typeOid, value),
+            UuidOid => EncodeBinary(
+                typeOid,
+                new BlueTuskGuidCodec(),
+                BlueTuskBuiltInTypes.Uuid,
+                GetGuid(value),
+                16),
+            DateOid => EncodeBinary(
+                typeOid,
+                new BlueTuskDateCodec(),
+                BlueTuskBuiltInTypes.Date,
+                GetDate(value),
+                sizeof(int)),
+            TimeOid => EncodeBinary(
+                typeOid,
+                new BlueTuskTimeCodec(),
+                BlueTuskBuiltInTypes.Time,
+                GetTime(value),
+                sizeof(long)),
+            TimestampOid => EncodeBinary(
+                typeOid,
+                new BlueTuskTimestampCodec(),
+                BlueTuskBuiltInTypes.Timestamp,
+                GetDateTime(value),
+                sizeof(long)),
+            TimestampWithTimeZoneOid => EncodeBinary(
+                typeOid,
+                new BlueTuskTimestampWithTimeZoneCodec(),
+                BlueTuskBuiltInTypes.TimestampWithTimeZone,
+                GetDateTimeOffset(value),
+                sizeof(long)),
+            TidOid => EncodeBinary(
+                typeOid,
+                new BlueTuskTupleIdCodec(),
+                BlueTuskBuiltInTypes.Tid,
+                GetValue<BlueTuskTupleId>(value),
+                6),
+            IntervalOid => EncodeBinary(
+                typeOid,
+                new BlueTuskIntervalCodec(),
+                BlueTuskBuiltInTypes.Interval,
+                GetValue<BlueTuskInterval>(value),
+                16),
+            TimeWithTimeZoneOid => EncodeBinary(
+                typeOid,
+                new BlueTuskTimeWithTimeZoneCodec(),
+                BlueTuskBuiltInTypes.TimeWithTimeZone,
+                GetValue<BlueTuskTimeWithTimeZone>(value),
+                12),
+            BitOid or VarbitOid => EncodeBitString(typeOid, GetValue<BlueTuskBitString>(value)),
+            PgLsnOid => EncodeBinary(
+                typeOid,
+                new BlueTuskLogSequenceNumberCodec(),
+                BlueTuskBuiltInTypes.PgLsn,
+                GetValue<BlueTuskLogSequenceNumber>(value),
+                sizeof(ulong)),
+            TextSearchVectorOid => EncodeTextSearchVector(typeOid, GetValue<BlueTuskTextSearchVector>(value)),
+            TextSearchQueryOid => EncodeTextSearchQuery(typeOid, GetValue<BlueTuskTextSearchQuery>(value)),
+            TextOid => Text(typeOid, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty),
+            _ when value is string text => Text(typeOid, text),
+            _ when value is byte[] bytes => Binary(typeOid, bytes),
+            _ when value is ReadOnlyMemory<byte> bytes => Binary(typeOid, bytes),
+            _ when value is Memory<byte> bytes => Binary(typeOid, bytes),
+            _ => throw new NotSupportedException(
+                $"PostgreSQL type OID {typeOid} requires a string or byte payload when no built-in encoder is available."),
+        };
 
     private static BlueTuskExtendedQueryParameter BinaryInt16(uint typeOid, short value)
     {
@@ -419,6 +429,24 @@ internal static class BlueTuskParameterEncoder
             BlueTuskBuiltInTypes.TextSearchQuery,
             value,
             BlueTuskTextSearchQueryCodec.GetBinarySize(value));
+
+    private static BlueTuskExtendedQueryParameter EncodeMoney(
+        uint typeOid,
+        BlueTuskMoney value,
+        BlueTuskTypeRegistry? types)
+    {
+        if (types is not null &&
+            types.TryGetCodec(BlueTuskBuiltInTypes.Money.Id, out var registered) &&
+            registered is BlueTuskMoneyCodec codec &&
+            value.FractionalDigits != codec.FractionalDigits)
+        {
+            throw new InvalidOperationException(
+                $"The money parameter has {value.FractionalDigits} fractional digits, but PostgreSQL locale " +
+                $"'{codec.Locale}' uses {codec.FractionalDigits}.");
+        }
+
+        return BinaryInt64(typeOid, value.UnscaledValue);
+    }
 
     private static ReadOnlyMemory<byte> GetBytes(object value) => value switch
     {

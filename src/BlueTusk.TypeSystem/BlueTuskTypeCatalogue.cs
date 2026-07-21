@@ -25,7 +25,8 @@ public static class BlueTuskTypeCatalogue
 {
     public static BlueTuskTypeRegistry BuildRegistry(
         IEnumerable<BlueTuskCatalogueType> catalogueTypes,
-        BlueTuskTypeRegistry? configuredTypes = null)
+        BlueTuskTypeRegistry? configuredTypes = null,
+        BlueTuskMoneyFormat? moneyFormat = null)
     {
         ArgumentNullException.ThrowIfNull(catalogueTypes);
         var builder = new BlueTuskTypeRegistryBuilder();
@@ -45,6 +46,11 @@ public static class BlueTuskTypeCatalogue
         var builtInTypes = BlueTuskBuiltInTypes.CreateRegistry();
         RegisterMissingDescriptors(builder, descriptors, builtInTypes);
         RegisterCodecs(builder, descriptors, builtInTypes);
+        if (moneyFormat is not null && descriptors.ContainsKey(BlueTuskBuiltInTypes.Money.Id))
+        {
+            builder.RegisterCodec(BlueTuskBuiltInTypes.Money.Id, new BlueTuskMoneyCodec(moneyFormat));
+        }
+
         if (configuredTypes is not null)
         {
             RegisterMissingDescriptors(builder, descriptors, configuredTypes);

@@ -119,4 +119,17 @@ public sealed class BlueTuskTypeCatalogueTests
         Assert.True(registry.TryGetCodec(type.Id, out var codec));
         Assert.IsType<BlueTuskStringCodec>(codec);
     }
+
+    [Fact]
+    public void Catalogue_binds_money_codec_only_after_locale_scale_discovery()
+    {
+        var registry = BlueTuskTypeCatalogue.BuildRegistry(
+            [],
+            moneyFormat: new BlueTuskMoneyFormat("en_GB.UTF-8", 2));
+
+        Assert.True(registry.TryGetCodec(BlueTuskBuiltInTypes.Money.Id, out var codec));
+        var moneyCodec = Assert.IsType<BlueTuskMoneyCodec>(codec);
+        Assert.Equal(2, moneyCodec.FractionalDigits);
+        Assert.Equal("en_GB.UTF-8", moneyCodec.Locale);
+    }
 }
