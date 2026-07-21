@@ -3,11 +3,9 @@ using System.Globalization;
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Encodes and decodes PostgreSQL <c>int4</c> in text and binary formats.</summary>
-public sealed class BlueTuskInt32Codec : IBlueTuskCodec<int>
+public sealed class BlueTuskInt32Codec : BlueTuskCodec<int>
 {
-    public Type ClrType => typeof(int);
-
-    public int ReadTyped(
+    public override int ReadTyped(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type)
@@ -26,7 +24,7 @@ public sealed class BlueTuskInt32Codec : IBlueTuskCodec<int>
         };
     }
 
-    public void WriteTyped(
+    public override void WriteTyped(
         ref BlueTuskWriter writer,
         int value,
         BlueTuskDataFormat format,
@@ -46,23 +44,4 @@ public sealed class BlueTuskInt32Codec : IBlueTuskCodec<int>
         }
     }
 
-    object IBlueTuskCodec.Read(
-        ref BlueTuskReader reader,
-        BlueTuskDataFormat format,
-        BlueTuskTypeDescriptor type) => ReadTyped(ref reader, format, type);
-
-    void IBlueTuskCodec.Write(
-        ref BlueTuskWriter writer,
-        object? value,
-        BlueTuskDataFormat format,
-        BlueTuskTypeDescriptor type)
-    {
-        if (value is not int typedValue)
-        {
-            throw new InvalidCastException($"The {type.QualifiedName} codec requires a System.Int32 value.");
-        }
-
-        WriteTyped(ref writer, typedValue, format, type);
-    }
 }
-
