@@ -20,20 +20,37 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     public X509Certificate2? RemoteCertificate => _remoteCertificate;
 
+    public void Connect(BlueTuskEndpoint endpoint, BlueTuskTransportOptions options)
+    {
+        ValidateConnect(endpoint, options);
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            _socket = endpoint switch
+            {
+                BlueTuskEndpoint.Tcp tcp => ConnectTcp(tcp, options, started),
+                BlueTuskEndpoint.UnixSocket unix => ConnectSocket(
+                    new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified),
+                    new UnixDomainSocketEndPoint(unix.Path),
+                    options,
+                    started),
+                _ => throw new NotSupportedException($"Endpoint type '{endpoint.GetType().Name}' is not supported."),
+            };
+            _stream = new NetworkStream(_socket, ownsSocket: true);
+        }
+        catch
+        {
+            DisposeSocket();
+            throw;
+        }
+    }
+
     public async ValueTask ConnectAsync(
         BlueTuskEndpoint endpoint,
         BlueTuskTransportOptions options,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        ArgumentNullException.ThrowIfNull(endpoint);
-        ArgumentNullException.ThrowIfNull(options);
-        options.Validate();
-
-        if (_socket is not null)
-        {
-            throw new InvalidOperationException("The transport is already connected.");
-        }
+        ValidateConnect(endpoint, options);
 
         using var timeoutSource = options.ConnectTimeout == Timeout.InfiniteTimeSpan
             ? null
@@ -84,11 +101,17 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
     public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken) =>
         GetConnectedStream().ReadAsync(buffer, cancellationToken);
 
+    public int Read(Span<byte> buffer) => GetConnectedStream().Read(buffer);
+
     public ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken) =>
         GetConnectedStream().WriteAsync(buffer, cancellationToken);
 
+    public void Write(ReadOnlySpan<byte> buffer) => GetConnectedStream().Write(buffer);
+
     public ValueTask FlushAsync(CancellationToken cancellationToken) =>
         new(GetConnectedStream().FlushAsync(cancellationToken));
+
+    public void Flush() => GetConnectedStream().Flush();
 
     public async ValueTask UpgradeToTlsAsync(BlueTuskTlsOptions options, CancellationToken cancellationToken)
     {
@@ -155,6 +178,116 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         return _stream ?? throw new InvalidOperationException("The transport is not connected.");
+    }
+
+    private static Socket ConnectTcp(
+        BlueTuskEndpoint.Tcp endpoint,
+        BlueTuskTransportOptions options,
+        long started)
+    {
+        var addresses = Dns.GetHostAddresses(endpoint.Host)
+            .OrderBy(static address => address.AddressFamily == AddressFamily.InterNetwork ? 0 : 1)
+            .ToArray();
+        SocketException? lastError = null;
+        foreach (var address in addresses)
+        {
+            var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            try
+            {
+                return ConnectSocket(socket, new IPEndPoint(address, endpoint.Port), options, started);
+            }
+            catch (SocketException exception)
+            {
+                lastError = exception;
+                socket.Dispose();
+            }
+        }
+
+        throw lastError ?? new SocketException((int)SocketError.HostNotFound);
+    }
+
+    private static Socket ConnectSocket(
+        Socket socket,
+        EndPoint endpoint,
+        BlueTuskTransportOptions options,
+        long started)
+    {
+        ConfigureSocket(socket, options);
+        socket.Blocking = false;
+        try
+        {
+            try
+            {
+                socket.Connect(endpoint);
+            }
+            catch (SocketException exception) when (
+                exception.SocketErrorCode is SocketError.WouldBlock or SocketError.InProgress or SocketError.AlreadyInProgress)
+            {
+                WaitForConnect(socket, options.ConnectTimeout, started);
+            }
+
+            return socket;
+        }
+        finally
+        {
+            socket.Blocking = true;
+        }
+    }
+
+    private static void WaitForConnect(Socket socket, TimeSpan timeout, long started)
+    {
+        while (true)
+        {
+            var pollInterval = TimeSpan.FromSeconds(1);
+            if (timeout != Timeout.InfiniteTimeSpan)
+            {
+                var remaining = timeout - Stopwatch.GetElapsedTime(started);
+                if (remaining <= TimeSpan.Zero)
+                {
+                    throw new TimeoutException($"Connecting to PostgreSQL exceeded the {timeout} timeout.");
+                }
+
+                pollInterval = remaining < pollInterval ? remaining : pollInterval;
+            }
+
+            var microseconds = Math.Max(1, checked((int)Math.Ceiling(pollInterval.TotalMicroseconds)));
+            if (!socket.Poll(microseconds, SelectMode.SelectWrite) &&
+                !socket.Poll(0, SelectMode.SelectError))
+            {
+                continue;
+            }
+
+            var error = (SocketError)Convert.ToInt32(
+                socket.GetSocketOption(SocketOptionLevel.Socket, SocketOptionName.Error),
+                System.Globalization.CultureInfo.InvariantCulture);
+            if (error != SocketError.Success)
+            {
+                throw new SocketException((int)error);
+            }
+
+            return;
+        }
+    }
+
+    private static void ConfigureSocket(Socket socket, BlueTuskTransportOptions options)
+    {
+        socket.NoDelay = options.NoDelay;
+        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, options.KeepAlive);
+        socket.ReceiveBufferSize = options.ReceiveBufferSize;
+        socket.SendBufferSize = options.SendBufferSize;
+    }
+
+    private void ValidateConnect(BlueTuskEndpoint endpoint, BlueTuskTransportOptions options)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(endpoint);
+        ArgumentNullException.ThrowIfNull(options);
+        options.Validate();
+
+        if (_socket is not null)
+        {
+            throw new InvalidOperationException("The transport is already connected.");
+        }
     }
 
     private void DisposeSocket()
