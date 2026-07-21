@@ -359,6 +359,82 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Catalogue_driven_enums_domains_and_enum_arrays_round_trip()
+    {
+        var suffix = Guid.NewGuid().ToString("N");
+        var enumName = $"bluetusk_order_status_{suffix}";
+        var domainName = $"bluetusk_positive_integer_{suffix}";
+        await using var administration = BlueTuskDataSource.Create(GetConnectionString());
+        try
+        {
+            await using (var create = administration.CreateCommand(
+                $"CREATE TYPE public.{enumName} AS ENUM ('pending', 'in-progress', 'Complete'); " +
+                $"CREATE DOMAIN public.{domainName} AS int4 CHECK (VALUE > 0)"))
+            {
+                await create.ExecuteNonQueryAsync(CancellationToken.None);
+            }
+
+            var builder = new BlueTuskDataSourceBuilder(GetConnectionString());
+            builder.MapEnum<IntegrationOrderStatus>($"public.{enumName}");
+            await using (var dataSource = builder.Build())
+            {
+                await using (var connection = await dataSource.OpenConnectionAsync(CancellationToken.None))
+                {
+                    Assert.NotNull(connection);
+                }
+
+                var enumType = Assert.Single(
+                    dataSource.TypeRegistry.Types,
+                    type => type.Schema == "public" && type.Name == enumName);
+                Assert.Collection(
+                    enumType.EnumLabels,
+                    label => Assert.Equal("pending", label),
+                    label => Assert.Equal("in-progress", label),
+                    label => Assert.Equal("Complete", label));
+                var domainType = Assert.Single(
+                    dataSource.TypeRegistry.Types,
+                    type => type.Schema == "public" && type.Name == domainName);
+                Assert.Equal(BlueTuskTypeKind.Domain, domainType.Kind);
+                Assert.Equal(BlueTuskBuiltInTypes.Int4.Id, domainType.BaseType);
+                Assert.True(dataSource.TypeRegistry.TryGetCodec(domainType.Id, out var registeredDomain));
+                Assert.IsType<BlueTuskDomainCodec>(registeredDomain);
+
+                var statuses = new[] { IntegrationOrderStatus.Pending, IntegrationOrderStatus.Complete };
+                await using (var binaryCommand = dataSource.CreateCommand(
+                    $"SELECT $1::public.{enumName}, $2::public.{enumName}[], $3::public.{domainName}"))
+                {
+                    binaryCommand.Parameters.Add(
+                        new BlueTuskParameter<IntegrationOrderStatus>(IntegrationOrderStatus.InProgress));
+                    binaryCommand.Parameters.Add(new BlueTuskParameter<IntegrationOrderStatus[]>(statuses));
+                    binaryCommand.Parameters.Add(
+                        new BlueTuskParameter<int>(42) { PostgreSqlTypeOid = domainType.Id.Oid });
+                    await using var reader = await binaryCommand.ExecuteReaderAsync(CancellationToken.None);
+                    Assert.True(await reader.ReadAsync(CancellationToken.None));
+                    Assert.Equal(IntegrationOrderStatus.InProgress, reader.GetFieldValue<IntegrationOrderStatus>(0));
+                    Assert.Equal(statuses, reader.GetFieldValue<IntegrationOrderStatus[]>(1));
+                    Assert.Equal(42, reader.GetInt32(2));
+                }
+
+                await using var textCommand = dataSource.CreateCommand(
+                    $"SELECT 'pending'::public.{enumName}, " +
+                    $"ARRAY['in-progress', 'Complete']::public.{enumName}[]");
+                await using var textReader = await textCommand.ExecuteReaderAsync(CancellationToken.None);
+                Assert.True(await textReader.ReadAsync(CancellationToken.None));
+                Assert.Equal(IntegrationOrderStatus.Pending, textReader.GetFieldValue<IntegrationOrderStatus>(0));
+                var textStatuses = textReader.GetFieldValue<IntegrationOrderStatus[]>(1);
+                Assert.Equal(IntegrationOrderStatus.InProgress, textStatuses[0]);
+                Assert.Equal(IntegrationOrderStatus.Complete, textStatuses[1]);
+            }
+        }
+        finally
+        {
+            await using var drop = administration.CreateCommand(
+                $"DROP DOMAIN IF EXISTS public.{domainName}; DROP TYPE IF EXISTS public.{enumName}");
+            await drop.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+    }
+
+    [Fact]
     public async Task Data_source_builder_binds_runtime_codec_by_catalogue_name()
     {
         var builder = new BlueTuskDataSourceBuilder(GetConnectionString());
@@ -389,6 +465,17 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     private readonly record struct TestJsonPath(string Value);
+
+    private enum IntegrationOrderStatus
+    {
+        [BlueTuskName("pending")]
+        Pending,
+
+        [BlueTuskName("in-progress")]
+        InProgress,
+
+        Complete,
+    }
 
     private sealed class TestJsonPathCodec : BlueTuskCodec<TestJsonPath>
     {

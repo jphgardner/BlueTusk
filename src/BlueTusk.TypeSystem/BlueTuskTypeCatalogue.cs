@@ -21,6 +21,8 @@ public sealed record BlueTuskCatalogueType
     public BlueTuskTypeId? RangeSubtype { get; init; }
 
     public char Delimiter { get; init; } = ',';
+
+    public IReadOnlyList<string> EnumLabels { get; init; } = Array.Empty<string>();
 }
 
 public static class BlueTuskTypeCatalogue
@@ -66,7 +68,8 @@ public static class BlueTuskTypeCatalogue
                 requireResolution: hasDiscoveredTypes);
         }
 
-        RegisterArrayCodecs(builder, descriptors);
+        RegisterEnumCodecs(builder, descriptors);
+        RegisterDependentCodecs(builder, descriptors);
 
         return builder.Build();
     }
@@ -96,6 +99,7 @@ public static class BlueTuskTypeCatalogue
             ArrayType = type.ArrayType,
             RangeSubtype = type.RangeSubtype,
             Delimiter = type.Delimiter,
+            EnumLabels = type.EnumLabels.ToArray(),
         };
     }
 
@@ -178,10 +182,60 @@ public static class BlueTuskTypeCatalogue
         }
     }
 
-    private static void RegisterArrayCodecs(
+    private static void RegisterEnumCodecs(
         BlueTuskTypeRegistryBuilder builder,
         IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
     {
+        foreach (var enumType in descriptors.Values.Where(type => type.Kind == BlueTuskTypeKind.Enum))
+        {
+            if (!builder.ContainsCodec(enumType.Id))
+            {
+                builder.RegisterCodec(enumType.Id, new BlueTuskEnumValueCodec());
+            }
+        }
+    }
+
+    private static void RegisterDependentCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        bool changed;
+        do
+        {
+            changed = RegisterDomainCodecs(builder, descriptors);
+            changed |= RegisterArrayCodecs(builder, descriptors);
+        }
+        while (changed);
+    }
+
+    private static bool RegisterDomainCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        var changed = false;
+        foreach (var domainType in descriptors.Values.Where(type => type.Kind == BlueTuskTypeKind.Domain))
+        {
+            if (builder.ContainsCodec(domainType.Id) ||
+                domainType.BaseType is not { } baseTypeId ||
+                !descriptors.TryGetValue(baseTypeId, out var baseType) ||
+                !builder.TryGetCodec(baseTypeId, out var baseCodec) ||
+                baseCodec is null)
+            {
+                continue;
+            }
+
+            builder.RegisterCodec(domainType.Id, new BlueTuskDomainCodec(baseType, baseCodec));
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static bool RegisterArrayCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        var changed = false;
         foreach (var arrayType in descriptors.Values.Where(type => type.Kind == BlueTuskTypeKind.Array))
         {
             if (builder.ContainsCodec(arrayType.Id) ||
@@ -194,6 +248,9 @@ public static class BlueTuskTypeCatalogue
             }
 
             builder.RegisterCodec(arrayType.Id, new BlueTuskArrayCodec(elementType, elementCodec));
+            changed = true;
         }
+
+        return changed;
     }
 }

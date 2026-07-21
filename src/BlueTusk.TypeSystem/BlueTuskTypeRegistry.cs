@@ -19,9 +19,26 @@ public sealed class BlueTuskTypeRegistry
         _namedCodecs = namedCodecs;
         _typeList = types.Values.ToArray();
         _uniqueClrTypes = codecs
+            .Where(registration => IsInferenceCandidate(types, registration.Key))
             .GroupBy(registration => registration.Value.ClrType)
             .Where(group => group.Count() == 1)
             .ToDictionary(group => group.Key, group => group.Single().Key);
+    }
+
+    private static bool IsInferenceCandidate(
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> types,
+        BlueTuskTypeId id)
+    {
+        var type = types[id];
+        if (type.Kind == BlueTuskTypeKind.Domain)
+        {
+            return false;
+        }
+
+        return type.Kind != BlueTuskTypeKind.Array ||
+            type.ElementType is not { } elementTypeId ||
+            !types.TryGetValue(elementTypeId, out var elementType) ||
+            elementType.Kind != BlueTuskTypeKind.Domain;
     }
 
     public bool TryGetType(BlueTuskTypeId id, out BlueTuskTypeDescriptor? type) =>
@@ -75,6 +92,21 @@ public readonly record struct BlueTuskTypeName
     public string Schema { get; }
 
     public string Name { get; }
+
+    public static BlueTuskTypeName Parse(string qualifiedName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(qualifiedName);
+        var separator = qualifiedName.LastIndexOf('.');
+        if (separator <= 0 || separator == qualifiedName.Length - 1)
+        {
+            throw new FormatException(
+                $"PostgreSQL type name '{qualifiedName}' must be qualified as schema.name.");
+        }
+
+        return new BlueTuskTypeName(
+            qualifiedName[..separator],
+            qualifiedName[(separator + 1)..]);
+    }
 
     public override string ToString() => $"{Schema}.{Name}";
 }

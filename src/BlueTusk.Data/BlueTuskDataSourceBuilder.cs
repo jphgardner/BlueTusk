@@ -31,5 +31,15 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
 
     internal IReadOnlyList<IBlueTuskPlugin> Plugins => _plugins;
 
+    public BlueTuskDataSourceBuilder MapEnum<TEnum>(
+        string postgresTypeName,
+        IReadOnlyDictionary<TEnum, string>? labels = null)
+        where TEnum : struct, Enum
+    {
+        var typeName = BlueTuskTypeName.Parse(postgresTypeName);
+        Types.Register(typeName.Schema, typeName.Name, new BlueTuskEnumCodec<TEnum>(labels));
+        return this;
+    }
+
     public BlueTuskDataSource Build() => new(ConnectionString, Types.Build());
 }

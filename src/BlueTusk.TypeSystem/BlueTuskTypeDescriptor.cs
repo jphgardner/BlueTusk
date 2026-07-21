@@ -21,5 +21,7 @@ public sealed record BlueTuskTypeDescriptor
 
     public char Delimiter { get; init; } = ',';
 
+    public IReadOnlyList<string> EnumLabels { get; init; } = Array.Empty<string>();
+
     public string QualifiedName => $"{Schema}.{Name}";
 }

@@ -19,6 +19,8 @@ internal sealed class BlueTuskTypeMetadataCache
         "JOIN pg_catalog.pg_namespace AS n ON n.oid = t.typnamespace " +
         "LEFT JOIN pg_catalog.pg_range AS r ON r.rngtypid = t.oid OR r.rngmultitypid = t.oid " +
         "ORDER BY t.oid; " +
+        "SELECT enumtypid::text, enumlabel " +
+        "FROM pg_catalog.pg_enum ORDER BY enumtypid, enumsortorder; " +
         "SELECT current_setting('lc_monetary'), " +
         "COALESCE(max(fractional_digits) FILTER (WHERE " +
         "((power(10::numeric, -fractional_digits))::money)::numeric <> 0), 0)::text " +
@@ -69,13 +71,32 @@ internal sealed class BlueTuskTypeMetadataCache
             }
 
             var result = await session.ExecuteSimpleQueryAsync(CatalogueQuery, cancellationToken).ConfigureAwait(false);
-            if (result.ResultSets.Count != 2)
+            if (result.ResultSets.Count != 3)
             {
                 throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected result shape.");
             }
 
             var resultSet = result.ResultSets[0];
-            var moneyResultSet = result.ResultSets[1];
+            var enumResultSet = result.ResultSets[1];
+            var moneyResultSet = result.ResultSets[2];
+            if (enumResultSet.Fields.Count != 2)
+            {
+                throw new InvalidOperationException("PostgreSQL enum catalogue query returned an unexpected result shape.");
+            }
+
+            var enumLabels = new Dictionary<BlueTuskTypeId, List<string>>();
+            foreach (var row in enumResultSet.Rows)
+            {
+                var typeId = new BlueTuskTypeId(ParseUInt32(row.Values[0], "enum type OID"));
+                if (!enumLabels.TryGetValue(typeId, out var labels))
+                {
+                    labels = [];
+                    enumLabels.Add(typeId, labels);
+                }
+
+                labels.Add(GetRequiredText(row.Values[1], "enum label"));
+            }
+
             if (moneyResultSet.Fields.Count != 2 || moneyResultSet.Rows.Count != 1)
             {
                 throw new InvalidOperationException("PostgreSQL money metadata probe returned an unexpected result shape.");
@@ -106,6 +127,11 @@ internal sealed class BlueTuskTypeMetadataCache
                     ArrayType = ParseOptionalTypeId(values[7]),
                     RangeSubtype = ParseOptionalTypeId(values[8]),
                     Delimiter = GetRequiredCharacter(values[9], "delimiter"),
+                    EnumLabels = enumLabels.TryGetValue(
+                        new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
+                        out var labels)
+                        ? labels.ToArray()
+                        : Array.Empty<string>(),
                 };
             }
 
