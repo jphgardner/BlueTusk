@@ -18,6 +18,16 @@ public sealed class BlueTuskFrontendMessageWriterTests
     }
 
     [Fact]
+    public void Writes_a_cancel_request()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteCancelRequest(output, new BlueTuskBackendKeyData(123, 456));
+
+        Assert.Equal("0000001004D2162E0000007B000001C8", Convert.ToHexString(output.WrittenSpan));
+    }
+
+    [Fact]
     public void Writes_a_protocol_30_startup_message()
     {
         var output = new ArrayBufferWriter<byte>();

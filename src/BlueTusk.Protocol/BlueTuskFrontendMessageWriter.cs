@@ -9,12 +9,22 @@ public static class BlueTuskFrontendMessageWriter
 {
     public const int ProtocolVersion30 = 3 << 16;
     public const int SslRequestCode = 80877103;
+    public const int CancelRequestCode = 80877102;
 
     public static void WriteSslRequest(IBufferWriter<byte> output)
     {
         ArgumentNullException.ThrowIfNull(output);
         WriteInt32(output, 8);
         WriteInt32(output, SslRequestCode);
+    }
+
+    public static void WriteCancelRequest(IBufferWriter<byte> output, BlueTuskBackendKeyData backendKeyData)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        WriteInt32(output, sizeof(int) * 4);
+        WriteInt32(output, CancelRequestCode);
+        WriteInt32(output, backendKeyData.ProcessId);
+        WriteInt32(output, backendKeyData.SecretKey);
     }
 
     public static void WriteStartupMessage(
