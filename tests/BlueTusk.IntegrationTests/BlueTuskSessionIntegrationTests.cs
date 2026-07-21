@@ -110,6 +110,93 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task Command_cancellation_tokens_preserve_the_connection()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand("SELECT pg_sleep(10)", connection);
+        using var cancellationSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => command.ExecuteNonQueryAsync(cancellationSource.Token));
+
+        Assert.Equal(ConnectionState.Open, connection.State);
+        await using var valid = new BlueTuskCommand("SELECT 42::int4", connection);
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Command_timeouts_cancel_on_the_server_and_preserve_the_connection()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand("SELECT pg_sleep(10)", connection)
+        {
+            CommandTimeout = 1,
+        };
+
+        _ = await Assert.ThrowsAsync<TimeoutException>(
+            () => command.ExecuteNonQueryAsync(CancellationToken.None));
+
+        Assert.Equal(ConnectionState.Open, connection.State);
+        await using var valid = new BlueTuskCommand("SELECT 42::int4", connection);
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Explicit_command_cancellation_uses_the_dedicated_channel(bool asynchronous)
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand("SELECT pg_sleep(10)", connection);
+        var execution = command.ExecuteNonQueryAsync(CancellationToken.None);
+        await Task.Delay(TimeSpan.FromMilliseconds(100));
+
+        if (asynchronous)
+        {
+            await command.CancelAsync(CancellationToken.None);
+        }
+        else
+        {
+            command.Cancel();
+        }
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => execution);
+        await using var valid = new BlueTuskCommand("SELECT 42::int4", connection);
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Cancellation_inside_a_transaction_preserves_failed_state_for_rollback()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var transaction = await connection.BeginTransactionAsync(CancellationToken.None);
+        await using var sleeping = new BlueTuskCommand("SELECT pg_sleep(10)", connection)
+        {
+            CommandTimeout = 1,
+            Transaction = transaction,
+        };
+
+        _ = await Assert.ThrowsAsync<TimeoutException>(
+            () => sleeping.ExecuteNonQueryAsync(CancellationToken.None));
+
+        await using var failed = new BlueTuskCommand("SELECT 1::int4", connection)
+        {
+            Transaction = transaction,
+        };
+        var exception = await Assert.ThrowsAsync<BlueTuskException>(
+            () => failed.ExecuteScalarAsync(CancellationToken.None));
+        Assert.Equal("25P02", exception.SqlState);
+
+        await transaction.RollbackAsync(CancellationToken.None);
+        await using var valid = new BlueTuskCommand("SELECT 42::int4", connection);
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task AdoNet_connection_command_and_reader_execute_end_to_end()
     {
         var connectionString = GetConnectionString();

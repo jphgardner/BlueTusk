@@ -14,5 +14,14 @@ public sealed class BlueTuskParameterCollectionTests
         Assert.Same(parameter, parameters["ANSWER"]);
         Assert.Equal(42, parameter.TypedValue);
     }
-}
 
+    [Fact]
+    public void Rejects_negative_command_timeouts()
+    {
+        using var command = new BlueTuskCommand();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => command.CommandTimeout = -1);
+        command.CommandTimeout = 0;
+        Assert.Equal(0, command.CommandTimeout);
+    }
+}

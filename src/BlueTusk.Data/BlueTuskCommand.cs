@@ -11,6 +11,10 @@ public sealed class BlueTuskCommand : DbCommand
     private BlueTuskConnection? _connection;
     private readonly BlueTuskDataSource? _dataSource;
     private BlueTuskTransaction? _transaction;
+    private BlueTuskConnection? _executingConnection;
+    private int _commandTimeout = 30;
+    private int _executing;
+    private int _cancellationRequested;
 
     public BlueTuskCommand()
     {
@@ -31,7 +35,15 @@ public sealed class BlueTuskCommand : DbCommand
     [AllowNull]
     public override string CommandText { get; set; } = string.Empty;
 
-    public override int CommandTimeout { get; set; } = 30;
+    public override int CommandTimeout
+    {
+        get => _commandTimeout;
+        set
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            _commandTimeout = value;
+        }
+    }
 
     public override CommandType CommandType
     {
@@ -87,8 +99,29 @@ public sealed class BlueTuskCommand : DbCommand
         set => _transaction = value;
     }
 
-    public override void Cancel() =>
-        throw new NotSupportedException("PostgreSQL cancellation-channel support is planned for milestone 0.0.4.");
+    public override void Cancel()
+    {
+        var connection = Volatile.Read(ref _executingConnection);
+        if (connection is not { HasOpenSession: true })
+        {
+            return;
+        }
+
+        Interlocked.Exchange(ref _cancellationRequested, 1);
+        connection.Session.Cancel();
+    }
+
+    public async Task CancelAsync(CancellationToken cancellationToken = default)
+    {
+        var connection = Volatile.Read(ref _executingConnection);
+        if (connection is not { HasOpenSession: true })
+        {
+            return;
+        }
+
+        Interlocked.Exchange(ref _cancellationRequested, 1);
+        await connection.Session.CancelAsync(cancellationToken).ConfigureAwait(false);
+    }
 
     public override int ExecuteNonQuery() =>
         throw new NotSupportedException("Synchronous command execution is not implemented yet. Use ExecuteNonQueryAsync.");
@@ -97,7 +130,7 @@ public sealed class BlueTuskCommand : DbCommand
         throw new NotSupportedException("Synchronous command execution is not implemented yet. Use ExecuteScalarAsync.");
 
     public override void Prepare() =>
-        throw new NotSupportedException("Prepared statements are planned for milestone 0.0.3.");
+        throw new NotSupportedException("Explicit prepared statements are not implemented yet.");
 
     protected override DbParameter CreateDbParameter() => new BlueTuskParameter();
 
@@ -142,6 +175,25 @@ public sealed class BlueTuskCommand : DbCommand
 
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreAsync(CancellationToken cancellationToken)
     {
+        if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
+        {
+            throw new InvalidOperationException("The command is already executing.");
+        }
+
+        Interlocked.Exchange(ref _cancellationRequested, 0);
+        try
+        {
+            return await ExecuteCoreOnceAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            Volatile.Write(ref _executingConnection, null);
+            Volatile.Write(ref _executing, 0);
+        }
+    }
+
+    private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(CancellationToken cancellationToken)
+    {
         if (_connection is null && _dataSource is null)
         {
             throw new InvalidOperationException("The command has no connection or data source.");
@@ -170,6 +222,7 @@ public sealed class BlueTuskCommand : DbCommand
         using var linkedSource = timeoutSource is null
             ? null
             : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutSource.Token);
+        Volatile.Write(ref _executingConnection, connection);
         try
         {
             var effectiveToken = linkedSource?.Token ?? cancellationToken;
@@ -182,15 +235,23 @@ public sealed class BlueTuskCommand : DbCommand
         }
         catch (BlueTuskServerException exception)
         {
+            if (exception.SqlState == "57014" && Volatile.Read(ref _cancellationRequested) != 0)
+            {
+                throw new OperationCanceledException("The PostgreSQL command was cancelled.", exception);
+            }
+
             throw new BlueTuskException(exception);
         }
         catch (OperationCanceledException exception) when (
             timeoutSource?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
         {
-            connection.Close();
             throw new TimeoutException($"The command exceeded its {CommandTimeout}-second timeout.", exception);
         }
         catch (OperationCanceledException)
+        {
+            throw;
+        }
+        catch (Exception) when (!connection.HasOpenSession)
         {
             connection.Close();
             throw;

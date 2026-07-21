@@ -56,6 +56,8 @@ public sealed class BlueTuskConnection : DbConnection
     internal BlueTuskSession Session =>
         _session ?? throw new InvalidOperationException("The connection is not open.");
 
+    internal bool HasOpenSession => _session is { IsOpen: true };
+
     internal BlueTuskTransaction? CurrentTransaction
     {
         get
