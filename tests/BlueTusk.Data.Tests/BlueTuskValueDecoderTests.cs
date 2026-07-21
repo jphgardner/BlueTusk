@@ -88,7 +88,8 @@ public sealed class BlueTuskValueDecoderTests
                     [new BlueTuskDataRow([value])],
                     "SELECT 1"),
             ]),
-            connectionToClose: null);
+            connectionToClose: null,
+            BlueTuskBuiltInTypes.CreateRegistry());
 
     private static BlueTuskFieldDescription Field(uint oid, short formatCode) =>
         new("value", 0, 0, oid, -1, -1, formatCode);

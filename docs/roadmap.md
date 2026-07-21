@@ -69,7 +69,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Money, including `lc_monetary`-aware scale discovery
 - [x] Full-text scalar family
 - [ ] Catalogue-specific scalar families
-- [ ] Catalogue discovery and cache
+- [x] Catalogue discovery and per-data-source cache with explicit reload
 - [ ] Arrays, enums, domains, and composites
 - [ ] Ranges and multiranges
 - [ ] Public runtime codec registration

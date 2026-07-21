@@ -1,0 +1,126 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Globalization;
+using System.Text;
+using BlueTusk.TypeSystem;
+
+namespace BlueTusk.Data;
+
+[SuppressMessage(
+    "Reliability",
+    "CA1001:Types that own disposable fields should be disposable",
+    Justification = "The cache can be shared by a data source and active connections; disposing its semaphore would race those readers.")]
+internal sealed class BlueTuskTypeMetadataCache
+{
+    private const string CatalogueQuery =
+        "SELECT t.oid::text, n.nspname, t.typname, t.typtype::text, t.typcategory::text, " +
+        "NULLIF(t.typelem, 0)::text, NULLIF(t.typbasetype, 0)::text, NULLIF(t.typarray, 0)::text, " +
+        "NULLIF(r.rngsubtype, 0)::text " +
+        "FROM pg_catalog.pg_type AS t " +
+        "JOIN pg_catalog.pg_namespace AS n ON n.oid = t.typnamespace " +
+        "LEFT JOIN pg_catalog.pg_range AS r ON r.rngtypid = t.oid OR r.rngmultitypid = t.oid " +
+        "ORDER BY t.oid";
+
+    private readonly SemaphoreSlim _loadLock = new(1, 1);
+    private readonly BlueTuskTypeRegistry? _configuredTypes;
+    private BlueTuskTypeRegistry _registry;
+    private int _loaded;
+
+    public BlueTuskTypeMetadataCache(BlueTuskTypeRegistry? configuredTypes = null)
+    {
+        _configuredTypes = configuredTypes;
+        _registry = BlueTuskTypeCatalogue.BuildRegistry([], configuredTypes);
+    }
+
+    public BlueTuskTypeRegistry Registry => Volatile.Read(ref _registry);
+
+    public async ValueTask EnsureLoadedAsync(
+        IBlueTuskPhysicalSession session,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        if (Volatile.Read(ref _loaded) != 0)
+        {
+            return;
+        }
+
+        await LoadAsync(session, force: false, cancellationToken).ConfigureAwait(false);
+    }
+
+    public ValueTask ReloadAsync(
+        IBlueTuskPhysicalSession session,
+        CancellationToken cancellationToken) =>
+        LoadAsync(session, force: true, cancellationToken);
+
+    private async ValueTask LoadAsync(
+        IBlueTuskPhysicalSession session,
+        bool force,
+        CancellationToken cancellationToken)
+    {
+        await _loadLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (!force && Volatile.Read(ref _loaded) != 0)
+            {
+                return;
+            }
+
+            var result = await session.ExecuteSimpleQueryAsync(CatalogueQuery, cancellationToken).ConfigureAwait(false);
+            var resultSet = result.ResultSets.Count == 1
+                ? result.ResultSets[0]
+                : throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected result shape.");
+            if (resultSet.Fields.Count != 9)
+            {
+                throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected column count.");
+            }
+
+            var types = new BlueTuskCatalogueType[resultSet.Rows.Count];
+            for (var index = 0; index < resultSet.Rows.Count; index++)
+            {
+                var values = resultSet.Rows[index].Values;
+                types[index] = new BlueTuskCatalogueType
+                {
+                    Id = new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
+                    Schema = GetRequiredText(values[1], "schema"),
+                    Name = GetRequiredText(values[2], "name"),
+                    PostgreSqlKind = GetRequiredCharacter(values[3], "kind"),
+                    PostgreSqlCategory = GetRequiredCharacter(values[4], "category"),
+                    ElementType = ParseOptionalTypeId(values[5]),
+                    BaseType = ParseOptionalTypeId(values[6]),
+                    ArrayType = ParseOptionalTypeId(values[7]),
+                    RangeSubtype = ParseOptionalTypeId(values[8]),
+                };
+            }
+
+            Volatile.Write(ref _registry, BlueTuskTypeCatalogue.BuildRegistry(types, _configuredTypes));
+            Volatile.Write(ref _loaded, 1);
+        }
+        finally
+        {
+            _loadLock.Release();
+        }
+    }
+
+    private static BlueTuskTypeId? ParseOptionalTypeId(ReadOnlyMemory<byte>? value) =>
+        value is null ? null : new BlueTuskTypeId(ParseUInt32(value, "type OID"));
+
+    private static uint ParseUInt32(ReadOnlyMemory<byte>? value, string field)
+    {
+        var text = GetRequiredText(value, field);
+        return uint.TryParse(text, NumberStyles.None, CultureInfo.InvariantCulture, out var result)
+            ? result
+            : throw new InvalidOperationException($"PostgreSQL type catalogue returned invalid {field} '{text}'.");
+    }
+
+    private static char GetRequiredCharacter(ReadOnlyMemory<byte>? value, string field)
+    {
+        var text = GetRequiredText(value, field);
+        return text.Length == 1
+            ? text[0]
+            : throw new InvalidOperationException($"PostgreSQL type catalogue returned invalid {field} '{text}'.");
+    }
+
+    private static string GetRequiredText(ReadOnlyMemory<byte>? value, string field) =>
+        value is { } bytes
+            ? Encoding.UTF8.GetString(bytes.Span)
+            : throw new InvalidOperationException($"PostgreSQL type catalogue returned null {field}.");
+}

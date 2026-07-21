@@ -3,6 +3,7 @@ using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
 using BlueTusk.Protocol;
+using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data;
 
@@ -10,6 +11,7 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskConnection : DbConnection
 {
     private readonly BlueTuskConnectionPool? _pool;
+    private readonly BlueTuskTypeMetadataCache _typeMetadata;
     private string _connectionString = string.Empty;
     private BlueTuskConnectionStringBuilder _settings = new();
     private IBlueTuskPhysicalSession? _session;
@@ -21,16 +23,26 @@ public sealed class BlueTuskConnection : DbConnection
 
     public BlueTuskConnection()
     {
+        _typeMetadata = new BlueTuskTypeMetadataCache();
     }
 
     public BlueTuskConnection(string connectionString)
-        : this(connectionString, pool: null)
+        : this(connectionString, pool: null, new BlueTuskTypeMetadataCache())
     {
     }
 
     internal BlueTuskConnection(string connectionString, BlueTuskConnectionPool? pool)
+        : this(connectionString, pool, new BlueTuskTypeMetadataCache())
+    {
+    }
+
+    internal BlueTuskConnection(
+        string connectionString,
+        BlueTuskConnectionPool? pool,
+        BlueTuskTypeMetadataCache typeMetadata)
     {
         _pool = pool;
+        _typeMetadata = typeMetadata ?? throw new ArgumentNullException(nameof(typeMetadata));
         ConnectionString = connectionString;
     }
 
@@ -75,6 +87,8 @@ public sealed class BlueTuskConnection : DbConnection
 
     internal bool HasOpenSession => _session is { IsOpen: true };
 
+    internal BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;
+
     internal BlueTuskTransaction? CurrentTransaction
     {
         get
@@ -113,6 +127,8 @@ public sealed class BlueTuskConnection : DbConnection
                 _pooledSession = await _pool.RentAsync(cancellationToken).ConfigureAwait(false);
                 _session = _pooledSession.Session;
             }
+
+            await _typeMetadata.EnsureLoadedAsync(_session, cancellationToken).ConfigureAwait(false);
 
             SetState(ConnectionState.Open);
         }

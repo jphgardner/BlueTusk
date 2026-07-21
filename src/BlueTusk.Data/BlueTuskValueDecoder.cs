@@ -8,7 +8,14 @@ internal static class BlueTuskValueDecoder
     private static readonly BlueTuskTypeRegistry BuiltInTypes = BlueTuskBuiltInTypes.CreateRegistry();
 
     public static object Decode(BlueTuskFieldDescription field, ReadOnlyMemory<byte>? value)
+        => Decode(BuiltInTypes, field, value);
+
+    public static object Decode(
+        BlueTuskTypeRegistry types,
+        BlueTuskFieldDescription field,
+        ReadOnlyMemory<byte>? value)
     {
+        ArgumentNullException.ThrowIfNull(types);
         if (value is null)
         {
             return DBNull.Value;
@@ -22,12 +29,12 @@ internal static class BlueTuskValueDecoder
                 $"PostgreSQL field '{field.Name}' has unknown format code {field.FormatCode}."),
         };
         var id = new BlueTuskTypeId(field.TypeOid);
-        if (!BuiltInTypes.TryGetType(id, out var type) || type is null)
+        if (!types.TryGetType(id, out var type) || type is null)
         {
             return Unknown(field, format, value.Value, type: null);
         }
 
-        if (!BuiltInTypes.TryGetCodec(id, out var codec) || codec is null)
+        if (!types.TryGetCodec(id, out var codec) || codec is null)
         {
             return Unknown(field, format, value.Value, type);
         }
@@ -44,17 +51,27 @@ internal static class BlueTuskValueDecoder
     }
 
     public static Type GetFieldType(BlueTuskFieldDescription field)
+        => GetFieldType(BuiltInTypes, field);
+
+    public static Type GetFieldType(BlueTuskTypeRegistry types, BlueTuskFieldDescription field)
     {
+        ArgumentNullException.ThrowIfNull(types);
         var id = new BlueTuskTypeId(field.TypeOid);
-        return BuiltInTypes.TryGetCodec(id, out var codec) && codec is not null
+        return types.TryGetCodec(id, out var codec) && codec is not null
             ? codec.ClrType
             : typeof(BlueTuskUnknownValue);
     }
 
     public static string GetDataTypeName(uint oid) =>
-        BuiltInTypes.TryGetType(new BlueTuskTypeId(oid), out var type) && type is not null
+        GetDataTypeName(BuiltInTypes, oid);
+
+    public static string GetDataTypeName(BlueTuskTypeRegistry types, uint oid)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+        return types.TryGetType(new BlueTuskTypeId(oid), out var type) && type is not null
             ? type.Name
             : $"oid_{oid}";
+    }
 
     private static BlueTuskUnknownValue Unknown(
         BlueTuskFieldDescription field,

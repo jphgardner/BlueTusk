@@ -20,15 +20,20 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskDataReader : DbDataReader
 {
     private readonly BlueTuskQueryResult _result;
+    private readonly BlueTuskTypeRegistry _types;
     private BlueTuskConnection? _connectionToClose;
     private int _resultIndex;
     private int _rowIndex = -1;
     private bool _closed;
 
-    internal BlueTuskDataReader(BlueTuskQueryResult result, BlueTuskConnection? connectionToClose)
+    internal BlueTuskDataReader(
+        BlueTuskQueryResult result,
+        BlueTuskConnection? connectionToClose,
+        BlueTuskTypeRegistry types)
     {
         _result = result ?? throw new ArgumentNullException(nameof(result));
         _connectionToClose = connectionToClose;
+        _types = types ?? throw new ArgumentNullException(nameof(types));
     }
 
     public override int FieldCount => CurrentResultSet?.Fields.Count ?? 0;
@@ -108,12 +113,13 @@ public sealed class BlueTuskDataReader : DbDataReader
         throw new IndexOutOfRangeException($"Column '{name}' was not found.");
     }
 
-    public override string GetDataTypeName(int ordinal) => BlueTuskValueDecoder.GetDataTypeName(GetField(ordinal).TypeOid);
+    public override string GetDataTypeName(int ordinal) =>
+        BlueTuskValueDecoder.GetDataTypeName(_types, GetField(ordinal).TypeOid);
 
-    public override Type GetFieldType(int ordinal) => BlueTuskValueDecoder.GetFieldType(GetField(ordinal));
+    public override Type GetFieldType(int ordinal) => BlueTuskValueDecoder.GetFieldType(_types, GetField(ordinal));
 
     public override object GetValue(int ordinal) =>
-        BlueTuskValueDecoder.Decode(GetField(ordinal), CurrentRow.Values[ordinal]);
+        BlueTuskValueDecoder.Decode(_types, GetField(ordinal), CurrentRow.Values[ordinal]);
 
     public override int GetValues(object[] values)
     {

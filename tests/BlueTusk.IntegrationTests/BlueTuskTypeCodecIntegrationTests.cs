@@ -250,6 +250,40 @@ public sealed class BlueTuskTypeCodecIntegrationTests
         Assert.Equal(query, reader.GetFieldValue<BlueTuskTextSearchQuery>(1));
     }
 
+    [Fact]
+    public async Task Data_source_discovers_caches_and_reloads_catalogue_type_metadata()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using (var connection = await dataSource.OpenConnectionAsync(CancellationToken.None))
+        {
+            var registry = dataSource.TypeRegistry;
+            Assert.True(registry.Types.Count > 100);
+            Assert.True(registry.TryGetType(new BlueTuskTypeId(1007), out var array));
+            Assert.Equal(BlueTuskTypeKind.Array, array!.Kind);
+            Assert.Equal(new BlueTuskTypeId(23), array.ElementType);
+            Assert.True(registry.TryGetType(new BlueTuskTypeId(3904), out var range));
+            Assert.Equal(BlueTuskTypeKind.Range, range!.Kind);
+            Assert.Equal(new BlueTuskTypeId(23), range.RangeSubtype);
+            Assert.True(registry.TryGetType(new BlueTuskTypeId(4451), out var multirange));
+            Assert.Equal(BlueTuskTypeKind.Multirange, multirange!.Kind);
+            Assert.Equal(new BlueTuskTypeId(23), multirange.RangeSubtype);
+            Assert.True(registry.TryGetType(new BlueTuskTypeId(71), out var composite));
+            Assert.Equal(BlueTuskTypeKind.Composite, composite!.Kind);
+            Assert.True(registry.TryGetCodec(new BlueTuskTypeId(23), out var codec));
+            Assert.IsType<BlueTuskInt32Codec>(codec);
+        }
+
+        var cached = dataSource.TypeRegistry;
+        await using (var secondConnection = await dataSource.OpenConnectionAsync(CancellationToken.None))
+        {
+            Assert.Same(cached, dataSource.TypeRegistry);
+        }
+
+        await dataSource.ReloadTypesAsync(CancellationToken.None);
+        Assert.NotSame(cached, dataSource.TypeRegistry);
+        Assert.Equal(cached.Types.Count, dataSource.TypeRegistry.Types.Count);
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

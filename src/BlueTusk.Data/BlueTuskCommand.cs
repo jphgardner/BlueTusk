@@ -142,7 +142,10 @@ public sealed class BlueTuskCommand : DbCommand
         CancellationToken cancellationToken)
     {
         var result = await ExecuteCoreAsync(cancellationToken).ConfigureAwait(false);
-        return new BlueTuskDataReader(result, behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null);
+        return new BlueTuskDataReader(
+            result,
+            behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
+            GetTypeRegistry());
     }
 
     public override async Task<int> ExecuteNonQueryAsync(CancellationToken cancellationToken)
@@ -156,7 +159,7 @@ public sealed class BlueTuskCommand : DbCommand
         var result = await ExecuteCoreAsync(cancellationToken).ConfigureAwait(false);
         var resultSet = result.FirstOrDefault;
         return resultSet is { Fields.Count: > 0, Rows.Count: > 0 }
-            ? BlueTuskValueDecoder.Decode(resultSet.Fields[0], resultSet.Rows[0].Values[0])
+            ? BlueTuskValueDecoder.Decode(GetTypeRegistry(), resultSet.Fields[0], resultSet.Rows[0].Values[0])
             : null;
     }
 
@@ -280,4 +283,9 @@ public sealed class BlueTuskCommand : DbCommand
 
         return found ? affected : -1;
     }
+
+    private BlueTusk.TypeSystem.BlueTuskTypeRegistry GetTypeRegistry() =>
+        _connection?.TypeRegistry ??
+        _dataSource?.TypeRegistry ??
+        throw new InvalidOperationException("The command has no connection or data source.");
 }

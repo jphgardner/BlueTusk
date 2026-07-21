@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data;
 
@@ -8,12 +9,14 @@ public sealed class BlueTuskDataSource : DbDataSource
 {
     private readonly BlueTuskConnectionStringBuilder _settings;
     private readonly BlueTuskConnectionPool? _pool;
+    private readonly BlueTuskTypeMetadataCache _typeMetadata;
 
-    internal BlueTuskDataSource(string connectionString)
+    internal BlueTuskDataSource(string connectionString, BlueTuskTypeRegistry? configuredTypes = null)
     {
         _settings = new BlueTuskConnectionStringBuilder(connectionString);
         _settings.Validate();
         ConnectionString = connectionString;
+        _typeMetadata = new BlueTuskTypeMetadataCache(configuredTypes);
         if (_settings.Pooling)
         {
             _pool = new BlueTuskConnectionPool(_settings);
@@ -23,6 +26,8 @@ public sealed class BlueTuskDataSource : DbDataSource
     public override string ConnectionString { get; }
 
     public static BlueTuskDataSource Create(string connectionString) => new(connectionString);
+
+    public BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;
 
     public new BlueTuskConnection CreateConnection() => (BlueTuskConnection)base.CreateConnection();
 
@@ -47,11 +52,18 @@ public sealed class BlueTuskDataSource : DbDataSource
     public ValueTask WarmUpAsync(CancellationToken cancellationToken = default) =>
         _pool?.WarmUpAsync(cancellationToken) ?? ValueTask.CompletedTask;
 
+    public async ValueTask ReloadTypesAsync(CancellationToken cancellationToken = default)
+    {
+        await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await _typeMetadata.ReloadAsync(connection.Session, cancellationToken).ConfigureAwait(false);
+    }
+
     public void ClearPool() => _pool?.Clear();
 
     public ValueTask ClearPoolAsync() => _pool?.ClearAsync() ?? ValueTask.CompletedTask;
 
-    protected override DbConnection CreateDbConnection() => new BlueTuskConnection(ConnectionString, _pool);
+    protected override DbConnection CreateDbConnection() =>
+        new BlueTuskConnection(ConnectionString, _pool, _typeMetadata);
 
     protected override DbConnection OpenDbConnection() =>
         throw new NotSupportedException("Synchronous connection opening is not implemented yet. Use OpenConnectionAsync.");

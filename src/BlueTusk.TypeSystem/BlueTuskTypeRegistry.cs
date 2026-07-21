@@ -5,6 +5,7 @@ public sealed class BlueTuskTypeRegistry
 {
     private readonly IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> _types;
     private readonly IReadOnlyDictionary<BlueTuskTypeId, IBlueTuskCodec> _codecs;
+    private readonly IReadOnlyList<BlueTuskTypeDescriptor> _typeList;
 
     internal BlueTuskTypeRegistry(
         IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> types,
@@ -12,6 +13,7 @@ public sealed class BlueTuskTypeRegistry
     {
         _types = types;
         _codecs = codecs;
+        _typeList = types.Values.ToArray();
     }
 
     public bool TryGetType(BlueTuskTypeId id, out BlueTuskTypeDescriptor? type) =>
@@ -19,6 +21,10 @@ public sealed class BlueTuskTypeRegistry
 
     public bool TryGetCodec(BlueTuskTypeId id, out IBlueTuskCodec? codec) =>
         _codecs.TryGetValue(id, out codec);
+
+    public IReadOnlyList<BlueTuskTypeDescriptor> Types => _typeList;
+
+    internal IEnumerable<KeyValuePair<BlueTuskTypeId, IBlueTuskCodec>> Codecs => _codecs;
 }
 
 public sealed class BlueTuskTypeRegistryBuilder
@@ -42,9 +48,24 @@ public sealed class BlueTuskTypeRegistryBuilder
         return this;
     }
 
+    public BlueTuskTypeRegistryBuilder RegisterCodec(BlueTuskTypeId type, IBlueTuskCodec codec)
+    {
+        ArgumentNullException.ThrowIfNull(codec);
+        if (!_types.ContainsKey(type))
+        {
+            throw new InvalidOperationException($"PostgreSQL type OID {type} is not registered.");
+        }
+
+        if (!_codecs.TryAdd(type, codec))
+        {
+            throw new InvalidOperationException($"PostgreSQL type OID {type} already has a codec.");
+        }
+
+        return this;
+    }
+
     public BlueTuskTypeRegistry Build() =>
         new(
             new Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor>(_types),
             new Dictionary<BlueTuskTypeId, IBlueTuskCodec>(_codecs));
 }
-
