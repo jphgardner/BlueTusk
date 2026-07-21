@@ -97,6 +97,76 @@ public sealed class BlueTuskConnectionPoolTests
     }
 
     [Fact]
+    public async Task Maximum_lifetime_discards_a_session_when_its_lease_returns()
+    {
+        var timeProvider = new ManualTimeProvider();
+        await using var pool = CreatePool(
+            maximumSize: 1,
+            idleLifetime: TimeSpan.Zero,
+            connectionLifetime: TimeSpan.FromSeconds(1),
+            timeProvider: timeProvider);
+        var lease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(lease.Session);
+        timeProvider.Advance(TimeSpan.FromSeconds(2));
+
+        lease.Dispose();
+
+        Assert.True(session.Disposed);
+        Assert.Equal(0, pool.Statistics.Total);
+        Assert.Equal(1, pool.Statistics.Discarded);
+    }
+
+    [Fact]
+    public async Task Failed_health_validation_is_replaced()
+    {
+        var sessions = new List<FakePhysicalSession>();
+        await using var pool = CreatePool(
+            maximumSize: 1,
+            factory: _ =>
+            {
+                var session = new FakePhysicalSession();
+                sessions.Add(session);
+                return ValueTask.FromResult<IBlueTuskPhysicalSession>(session);
+            });
+        var firstLease = await pool.RentAsync(CancellationToken.None);
+        var firstSession = Assert.IsType<FakePhysicalSession>(firstLease.Session);
+        firstSession.FailReset = true;
+        firstLease.Dispose();
+
+        var secondLease = await pool.RentAsync(CancellationToken.None);
+
+        Assert.NotSame(firstSession, secondLease.Session);
+        Assert.True(firstSession.Disposed);
+        Assert.Equal(2, sessions.Count);
+        Assert.Equal(1, pool.Statistics.Discarded);
+        secondLease.Dispose();
+    }
+
+    [Fact]
+    public async Task Failed_creation_releases_capacity_for_the_next_checkout()
+    {
+        var attempts = 0;
+        await using var pool = CreatePool(
+            maximumSize: 1,
+            factory: _ =>
+            {
+                if (Interlocked.Increment(ref attempts) == 1)
+                {
+                    throw new IOException("Simulated connection failure.");
+                }
+
+                return ValueTask.FromResult<IBlueTuskPhysicalSession>(new FakePhysicalSession());
+            });
+
+        await Assert.ThrowsAsync<IOException>(() => pool.RentAsync(CancellationToken.None).AsTask());
+        var lease = await pool.RentAsync(CancellationToken.None);
+
+        Assert.Equal(2, attempts);
+        Assert.Equal(1, pool.Statistics.Total);
+        lease.Dispose();
+    }
+
+    [Fact]
     public async Task Clearing_marks_active_sessions_for_discard_on_return()
     {
         await using var pool = CreatePool(maximumSize: 1);
@@ -173,11 +243,18 @@ public sealed class BlueTuskConnectionPoolTests
 
         public bool Disposed { get; private set; }
 
+        public bool FailReset { get; set; }
+
         public ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
             string sql,
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (FailReset && sql == "DISCARD ALL")
+            {
+                throw new IOException("Simulated health-validation failure.");
+            }
+
             Commands.Add(sql);
             if (sql == "ROLLBACK")
             {
