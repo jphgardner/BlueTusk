@@ -24,6 +24,11 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(26, "oid", typeof(uint), typeof(BlueTuskUInt32Codec))]
     [InlineData(700, "float4", typeof(float), typeof(BlueTuskSingleCodec))]
     [InlineData(701, "float8", typeof(double), typeof(BlueTuskDoubleCodec))]
+    [InlineData(1082, "date", typeof(DateOnly), typeof(BlueTuskDateCodec))]
+    [InlineData(1083, "time", typeof(TimeSpan), typeof(BlueTuskTimeCodec))]
+    [InlineData(1114, "timestamp", typeof(DateTime), typeof(BlueTuskTimestampCodec))]
+    [InlineData(1184, "timestamptz", typeof(DateTimeOffset), typeof(BlueTuskTimestampWithTimeZoneCodec))]
+    [InlineData(1700, "numeric", typeof(BlueTuskNumeric), typeof(BlueTuskNumericCodec))]
     [InlineData(2950, "uuid", typeof(Guid), typeof(BlueTuskGuidCodec))]
     [InlineData(3802, "jsonb", typeof(string), typeof(BlueTuskJsonbCodec))]
     public void Registry_resolves_core_scalar_codecs(
