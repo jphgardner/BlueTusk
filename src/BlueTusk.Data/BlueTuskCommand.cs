@@ -10,7 +10,7 @@ public sealed class BlueTuskCommand : DbCommand
     private readonly BlueTuskParameterCollection _parameters = new();
     private BlueTuskConnection? _connection;
     private readonly BlueTuskDataSource? _dataSource;
-    private DbTransaction? _transaction;
+    private BlueTuskTransaction? _transaction;
 
     public BlueTuskCommand()
     {
@@ -71,6 +71,17 @@ public sealed class BlueTuskCommand : DbCommand
     public new BlueTuskParameterCollection Parameters => _parameters;
 
     protected override DbTransaction? DbTransaction
+    {
+        get => _transaction;
+        set => _transaction = value switch
+        {
+            null => null,
+            BlueTuskTransaction transaction => transaction,
+            _ => throw new ArgumentException("A BlueTuskCommand requires a BlueTuskTransaction.", nameof(value)),
+        };
+    }
+
+    public new BlueTuskTransaction? Transaction
     {
         get => _transaction;
         set => _transaction = value;
@@ -148,10 +159,7 @@ public sealed class BlueTuskCommand : DbCommand
             throw new InvalidOperationException("The command connection is not open.");
         }
 
-        if (_transaction is not null)
-        {
-            throw new NotSupportedException("Transactions are planned for milestone 0.0.4.");
-        }
+        connection.ValidateCommandTransaction(_transaction);
 
         if (string.IsNullOrWhiteSpace(CommandText))
         {

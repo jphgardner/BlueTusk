@@ -217,6 +217,118 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
     }
 
+    [Fact]
+    public async Task Transactions_commit_and_roll_back_on_one_connection()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using (var create = new BlueTuskCommand(
+                         "CREATE TEMP TABLE bluetusk_transaction_test (value int4 NOT NULL)",
+                         connection))
+        {
+            _ = await create.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        await using (var rollback = await connection.BeginTransactionAsync(
+                         IsolationLevel.Serializable,
+                         CancellationToken.None))
+        {
+            await using var isolation = new BlueTuskCommand("SHOW transaction_isolation", connection)
+            {
+                Transaction = rollback,
+            };
+            Assert.Equal("serializable", await isolation.ExecuteScalarAsync<string>(CancellationToken.None));
+
+            await using var insert = new BlueTuskCommand(
+                "INSERT INTO bluetusk_transaction_test (value) VALUES ($1)",
+                connection)
+            {
+                Transaction = rollback,
+            };
+            insert.Parameters.Add(new BlueTuskParameter<int>(1));
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync(CancellationToken.None));
+            await rollback.RollbackAsync(CancellationToken.None);
+        }
+
+        await using (var count = new BlueTuskCommand("SELECT count(*)::int8 FROM bluetusk_transaction_test", connection))
+        {
+            Assert.Equal(0, await count.ExecuteScalarAsync<long>(CancellationToken.None));
+        }
+
+        await using (var commit = await connection.BeginTransactionAsync(CancellationToken.None))
+        {
+            await using var insert = new BlueTuskCommand(
+                "INSERT INTO bluetusk_transaction_test (value) VALUES ($1)",
+                connection)
+            {
+                Transaction = commit,
+            };
+            insert.Parameters.Add(new BlueTuskParameter<int>(2));
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync(CancellationToken.None));
+            await commit.CommitAsync(CancellationToken.None);
+        }
+
+        await using (var count = new BlueTuskCommand("SELECT count(*)::int8 FROM bluetusk_transaction_test", connection))
+        {
+            Assert.Equal(1, await count.ExecuteScalarAsync<long>(CancellationToken.None));
+        }
+    }
+
+    [Fact]
+    public async Task Commands_require_the_active_transaction_and_rollback_recovers_failures()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var transaction = await connection.BeginTransactionAsync(CancellationToken.None);
+        await using var unenlisted = new BlueTuskCommand("SELECT 1::int4", connection);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => unenlisted.ExecuteScalarAsync(CancellationToken.None));
+
+        await using var invalid = new BlueTuskCommand("SELECT 1::int4 / 0::int4", connection)
+        {
+            Transaction = transaction,
+        };
+        var exception = await Assert.ThrowsAsync<BlueTuskException>(
+            () => invalid.ExecuteScalarAsync(CancellationToken.None));
+        Assert.Equal("22012", exception.SqlState);
+
+        await transaction.RollbackAsync(CancellationToken.None);
+        await using var valid = new BlueTuskCommand("SELECT 42::int4", connection);
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Disposing_a_transaction_asynchronously_rolls_it_back()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using (var create = new BlueTuskCommand(
+                         "CREATE TEMP TABLE bluetusk_dispose_transaction_test (value int4 NOT NULL)",
+                         connection))
+        {
+            _ = await create.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        var transaction = await connection.BeginTransactionAsync(CancellationToken.None);
+        await using (var insert = new BlueTuskCommand(
+                         "INSERT INTO bluetusk_dispose_transaction_test (value) VALUES (1)",
+                         connection)
+        {
+            Transaction = transaction,
+        })
+        {
+            Assert.Equal(1, await insert.ExecuteNonQueryAsync(CancellationToken.None));
+        }
+
+        await transaction.DisposeAsync();
+
+        await using var count = new BlueTuskCommand(
+            "SELECT count(*)::int8 FROM bluetusk_dispose_transaction_test",
+            connection);
+        Assert.Equal(0, await count.ExecuteScalarAsync<long>(CancellationToken.None));
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
