@@ -192,4 +192,43 @@ public sealed class BlueTuskParameterEncoderTests
                 new BlueTuskParameter<BlueTuskMoney>(new BlueTuskMoney(123_456, 3)),
                 types));
     }
+
+    [Fact]
+    public void Encodes_registered_runtime_type_and_grows_its_buffer()
+    {
+        var descriptor = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(91_100),
+            Schema = "app",
+            Name = "large_value",
+            Kind = BlueTuskTypeKind.Base,
+        };
+        var types = new BlueTuskTypeRegistryBuilder()
+            .Register(descriptor, new LargeValueCodec())
+            .Build();
+        var value = new LargeValue(new string('x', 1024));
+
+        var encoded = BlueTuskParameterEncoder.Encode(new BlueTuskParameter<LargeValue>(value), types);
+
+        Assert.Equal(91_100U, encoded.TypeOid);
+        Assert.Equal(1, encoded.FormatCode);
+        Assert.Equal(1024, encoded.Value!.Value.Length);
+        Assert.All(encoded.Value.Value.ToArray(), item => Assert.Equal((byte)'x', item));
+    }
+
+    private readonly record struct LargeValue(string Value);
+
+    private sealed class LargeValueCodec : BlueTuskCodec<LargeValue>
+    {
+        public override LargeValue ReadTyped(
+            ref BlueTuskReader reader,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type) => new(reader.ReadRemainingUtf8());
+
+        public override void WriteTyped(
+            ref BlueTuskWriter writer,
+            LargeValue value,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type) => writer.WriteUtf8(value.Value);
+    }
 }

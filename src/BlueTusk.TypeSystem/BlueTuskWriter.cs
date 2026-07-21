@@ -89,8 +89,16 @@ public ref struct BlueTuskWriter
     {
         if (_buffer.Length - _offset < count)
         {
-            throw new InvalidOperationException(
+            throw new BlueTuskWriteBufferTooSmallException(
                 $"The destination contains {_buffer.Length - _offset} unwritten bytes; {count} are required.");
         }
+    }
+}
+
+public sealed class BlueTuskWriteBufferTooSmallException : InvalidOperationException
+{
+    public BlueTuskWriteBufferTooSmallException(string message)
+        : base(message)
+    {
     }
 }

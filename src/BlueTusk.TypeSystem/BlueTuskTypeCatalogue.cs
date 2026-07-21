@@ -31,9 +31,11 @@ public static class BlueTuskTypeCatalogue
         ArgumentNullException.ThrowIfNull(catalogueTypes);
         var builder = new BlueTuskTypeRegistryBuilder();
         var descriptors = new Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor>();
+        var hasDiscoveredTypes = false;
         foreach (var catalogueType in catalogueTypes)
         {
             ArgumentNullException.ThrowIfNull(catalogueType);
+            hasDiscoveredTypes = true;
             var descriptor = CreateDescriptor(catalogueType);
             if (!descriptors.TryAdd(descriptor.Id, descriptor))
             {
@@ -45,7 +47,7 @@ public static class BlueTuskTypeCatalogue
 
         var builtInTypes = BlueTuskBuiltInTypes.CreateRegistry();
         RegisterMissingDescriptors(builder, descriptors, builtInTypes);
-        RegisterCodecs(builder, descriptors, builtInTypes);
+        RegisterCodecs(builder, descriptors, builtInTypes, replace: false);
         if (moneyFormat is not null && descriptors.ContainsKey(BlueTuskBuiltInTypes.Money.Id))
         {
             builder.RegisterCodec(BlueTuskBuiltInTypes.Money.Id, new BlueTuskMoneyCodec(moneyFormat));
@@ -54,7 +56,12 @@ public static class BlueTuskTypeCatalogue
         if (configuredTypes is not null)
         {
             RegisterMissingDescriptors(builder, descriptors, configuredTypes);
-            RegisterCodecs(builder, descriptors, configuredTypes);
+            RegisterCodecs(builder, descriptors, configuredTypes, replace: true);
+            RegisterNamedCodecs(
+                builder,
+                descriptors,
+                configuredTypes,
+                requireResolution: hasDiscoveredTypes);
         }
 
         return builder.Build();
@@ -115,7 +122,8 @@ public static class BlueTuskTypeCatalogue
     private static void RegisterCodecs(
         BlueTuskTypeRegistryBuilder builder,
         Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors,
-        BlueTuskTypeRegistry source)
+        BlueTuskTypeRegistry source,
+        bool replace)
     {
         foreach (var registration in source.Codecs)
         {
@@ -125,7 +133,43 @@ public static class BlueTuskTypeCatalogue
                     $"Codec for PostgreSQL type OID {registration.Key} does not have a descriptor.");
             }
 
-            builder.RegisterCodec(registration.Key, registration.Value);
+            if (replace)
+            {
+                builder.RegisterOrReplaceCodec(registration.Key, registration.Value);
+            }
+            else
+            {
+                builder.RegisterCodec(registration.Key, registration.Value);
+            }
+        }
+    }
+
+    private static void RegisterNamedCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors,
+        BlueTuskTypeRegistry source,
+        bool requireResolution)
+    {
+        foreach (var registration in source.NamedCodecs)
+        {
+            var matches = descriptors.Values
+                .Where(type =>
+                    string.Equals(type.Schema, registration.Key.Schema, StringComparison.Ordinal) &&
+                    string.Equals(type.Name, registration.Key.Name, StringComparison.Ordinal))
+                .ToArray();
+            if (matches.Length != 1)
+            {
+                if (!requireResolution && matches.Length == 0)
+                {
+                    builder.RegisterNamedCodec(registration.Key, registration.Value);
+                    continue;
+                }
+
+                throw new InvalidOperationException(
+                    $"Named codec registration for PostgreSQL type {registration.Key} resolved to {matches.Length} catalogue types.");
+            }
+
+            builder.RegisterOrReplaceCodec(matches[0].Id, registration.Value);
         }
     }
 }

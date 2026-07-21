@@ -65,7 +65,7 @@ internal static class BlueTuskParameterEncoder
     {
         ArgumentNullException.ThrowIfNull(parameter);
         var value = parameter.Value is DBNull ? null : parameter.Value;
-        var typeOid = parameter.PostgreSqlTypeOid ?? ResolveTypeOid(parameter.DbType, value);
+        var typeOid = parameter.PostgreSqlTypeOid ?? ResolveTypeOid(parameter.DbType, value, types);
         if (typeOid == 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -78,7 +78,10 @@ internal static class BlueTuskParameterEncoder
             : EncodeValue(typeOid, value, types);
     }
 
-    private static uint ResolveTypeOid(DbType dbType, object? value)
+    private static uint ResolveTypeOid(
+        DbType dbType,
+        object? value,
+        BlueTuskTypeRegistry? types)
     {
         if (dbType != DbType.Object)
         {
@@ -142,9 +145,10 @@ internal static class BlueTuskParameterEncoder
             DateTime => TimestampOid,
             DateTimeOffset => TimestampWithTimeZoneOid,
             string or char => TextOid,
+            _ when types?.TryGetType(value.GetType(), out var type, out _) == true => type!.Id.Oid,
             _ => throw new NotSupportedException(
                 $"CLR type {value.GetType().FullName} does not have a BlueTusk parameter encoder yet. " +
-                "Set PostgreSqlTypeOid and supply a string or byte payload for a custom type."),
+                "Register a unique runtime codec or set PostgreSqlTypeOid and supply a string or byte payload."),
         };
     }
 
@@ -268,12 +272,7 @@ internal static class BlueTuskParameterEncoder
             TextSearchVectorOid => EncodeTextSearchVector(typeOid, GetValue<BlueTuskTextSearchVector>(value)),
             TextSearchQueryOid => EncodeTextSearchQuery(typeOid, GetValue<BlueTuskTextSearchQuery>(value)),
             TextOid => Text(typeOid, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty),
-            _ when value is string text => Text(typeOid, text),
-            _ when value is byte[] bytes => Binary(typeOid, bytes),
-            _ when value is ReadOnlyMemory<byte> bytes => Binary(typeOid, bytes),
-            _ when value is Memory<byte> bytes => Binary(typeOid, bytes),
-            _ => throw new NotSupportedException(
-                $"PostgreSQL type OID {typeOid} requires a string or byte payload when no built-in encoder is available."),
+            _ => EncodeFallback(typeOid, value, types),
         };
 
     private static BlueTuskExtendedQueryParameter BinaryInt16(uint typeOid, short value)
@@ -315,6 +314,60 @@ internal static class BlueTuskParameterEncoder
 
     private static BlueTuskExtendedQueryParameter Text(uint typeOid, string value) =>
         new(typeOid, 0, Encoding.UTF8.GetBytes(value));
+
+    private static BlueTuskExtendedQueryParameter EncodeFallback(
+        uint typeOid,
+        object value,
+        BlueTuskTypeRegistry? types)
+    {
+        var typeId = new BlueTuskTypeId(typeOid);
+        if (types?.TryGetType(typeId, out var type) == true &&
+            type is not null &&
+            types.TryGetCodec(typeId, out var codec) &&
+            codec is not null &&
+            codec.ClrType.IsInstanceOfType(value))
+        {
+            return EncodeRegistered(typeOid, type, codec, value);
+        }
+
+        return value switch
+        {
+            string text => Text(typeOid, text),
+            byte[] bytes => Binary(typeOid, bytes),
+            ReadOnlyMemory<byte> bytes => Binary(typeOid, bytes),
+            Memory<byte> bytes => Binary(typeOid, bytes),
+            _ => throw new NotSupportedException(
+                $"PostgreSQL type OID {typeOid} requires a registered codec or string/byte payload."),
+        };
+    }
+
+    private static BlueTuskExtendedQueryParameter EncodeRegistered(
+        uint typeOid,
+        BlueTuskTypeDescriptor type,
+        IBlueTuskCodec codec,
+        object value)
+    {
+        var length = 256;
+        while (true)
+        {
+            var bytes = new byte[length];
+            var writer = new BlueTuskWriter(bytes);
+            try
+            {
+                codec.Write(ref writer, value, BlueTuskDataFormat.Binary, type);
+                if (writer.WrittenCount != bytes.Length)
+                {
+                    Array.Resize(ref bytes, writer.WrittenCount);
+                }
+
+                return Binary(typeOid, bytes);
+            }
+            catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
+            {
+                length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+            }
+        }
+    }
 
     private static BlueTuskExtendedQueryParameter EncodeBinary<T>(
         uint typeOid,

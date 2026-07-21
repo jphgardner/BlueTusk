@@ -132,4 +132,67 @@ public sealed class BlueTuskTypeCatalogueTests
         Assert.Equal(2, moneyCodec.FractionalDigits);
         Assert.Equal("en_GB.UTF-8", moneyCodec.Locale);
     }
+
+    [Fact]
+    public void Named_registration_resolves_discovered_oid_and_unique_clr_type()
+    {
+        var configured = new BlueTuskTypeRegistryBuilder()
+            .Register("app", "special_value", new SpecialValueCodec())
+            .Build();
+        var registry = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(91_000),
+                Schema = "app",
+                Name = "special_value",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'U',
+            },
+        ], configured);
+
+        Assert.True(registry.TryGetType(typeof(SpecialValue), out var type, out var codec));
+        Assert.Equal(91_000U, type!.Id.Oid);
+        Assert.IsType<SpecialValueCodec>(codec);
+    }
+
+    [Fact]
+    public void Separate_binary_and_text_codecs_are_composed_during_registration()
+    {
+        var binaryCodec = new SpecialValueCodec();
+        var textCodec = new SpecialValueCodec();
+        var configured = new BlueTuskTypeRegistryBuilder()
+            .Register("app", "special_value", binaryCodec, textCodec)
+            .Build();
+        var registry = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(91_001),
+                Schema = "app",
+                Name = "special_value",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'U',
+            },
+        ], configured);
+
+        Assert.True(registry.TryGetCodec(new BlueTuskTypeId(91_001), out var codec));
+        Assert.IsType<BlueTuskSplitCodec<SpecialValue>>(codec);
+    }
+
+    private readonly record struct SpecialValue(string Value);
+
+    private sealed class SpecialValueCodec : BlueTuskCodec<SpecialValue>
+    {
+        public override SpecialValue ReadTyped(
+            ref BlueTuskReader reader,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type) => new(reader.ReadRemainingUtf8());
+
+        public override void WriteTyped(
+            ref BlueTuskWriter writer,
+            SpecialValue value,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type) => writer.WriteUtf8(value.Value);
+    }
 }

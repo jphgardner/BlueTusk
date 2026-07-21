@@ -312,6 +312,68 @@ public sealed class BlueTuskTypeCodecIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Data_source_builder_binds_runtime_codec_by_catalogue_name()
+    {
+        var builder = new BlueTuskDataSourceBuilder(GetConnectionString());
+        builder.Types.Register("pg_catalog", "jsonpath", new TestJsonPathCodec());
+        await using var dataSource = builder.Build();
+        var value = new TestJsonPath("$.answer");
+        var normalizedValue = new TestJsonPath("$.\"answer\"");
+
+        await using (var binaryCommand = dataSource.CreateCommand("SELECT $1::jsonpath"))
+        {
+            binaryCommand.Parameters.Add(new BlueTuskParameter<TestJsonPath>(value));
+            await using var reader = await binaryCommand.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(normalizedValue, reader.GetFieldValue<TestJsonPath>(0));
+        }
+
+        await using (var textCommand = dataSource.CreateCommand("SELECT '$.answer'::jsonpath"))
+        await using (var reader = await textCommand.ExecuteReaderAsync(CancellationToken.None))
+        {
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(normalizedValue, reader.GetFieldValue<TestJsonPath>(0));
+            Assert.Equal("jsonpath", reader.GetDataTypeName(0));
+        }
+
+        Assert.True(dataSource.TypeRegistry.TryGetType(typeof(TestJsonPath), out var type, out var codec));
+        Assert.Equal(4072U, type!.Id.Oid);
+        Assert.IsType<TestJsonPathCodec>(codec);
+    }
+
+    private readonly record struct TestJsonPath(string Value);
+
+    private sealed class TestJsonPathCodec : BlueTuskCodec<TestJsonPath>
+    {
+        public override TestJsonPath ReadTyped(
+            ref BlueTuskReader reader,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type)
+        {
+            if (format == BlueTuskDataFormat.Binary && reader.ReadByte() != 1)
+            {
+                throw new InvalidOperationException("PostgreSQL jsonpath binary version is not supported.");
+            }
+
+            return new TestJsonPath(reader.ReadRemainingUtf8());
+        }
+
+        public override void WriteTyped(
+            ref BlueTuskWriter writer,
+            TestJsonPath value,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type)
+        {
+            if (format == BlueTuskDataFormat.Binary)
+            {
+                writer.WriteByte(1);
+            }
+
+            writer.WriteUtf8(value.Value);
+        }
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

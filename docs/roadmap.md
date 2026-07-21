@@ -72,7 +72,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Catalogue discovery and per-data-source cache with explicit reload
 - [ ] Arrays, enums, domains, and composites
 - [ ] Ranges and multiranges
-- [ ] Public runtime codec registration
+- [x] Public runtime codec registration by discovered catalogue name or explicit OID
 
 ## 0.0.8 — COPY and notifications
 
