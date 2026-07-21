@@ -2,7 +2,7 @@
 
 This file tracks executable repository status. The product vision is broader; unchecked work is not implied by package names already present in the solution.
 
-## 0.0.1 — Foundation (in progress)
+## 0.0.1 — Foundation (complete)
 
 - [x] Repository and package structure
 - [x] Shared SDK, formatting, analyzer, and CI rules
@@ -14,8 +14,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Initial catalogue type model and `int4` codec
 - [x] Fake backend stream utilities
 - [x] Scriptable fake PostgreSQL TCP server
-- [ ] Protocol packet-inspection file format
-- [ ] BenchmarkDotNet harness and checked-in baselines
+- [x] Protocol packet-inspection file format
+- [x] BenchmarkDotNet harness and checked-in baselines
 
 ## 0.0.2 — Authentication and simple queries (complete)
 

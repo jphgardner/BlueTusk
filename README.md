@@ -38,7 +38,7 @@ EntityFrameworkCore → Data → Client → Protocol → Transport
                           TypeSystem   Security
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
 ## Status
 
@@ -52,7 +52,9 @@ The current `0.0.4` implementation provides:
 - catalogue-friendly type descriptors, unknown-value preservation, and an `int4` codec;
 - security redaction and observability primitives;
 - a fake backend message stream for conformance testing;
-- a Docker-based PostgreSQL version matrix.
+- a Docker-based PostgreSQL version matrix;
+- a versioned, bounded protocol-capture format and redaction-aware inspector;
+- executable BenchmarkDotNet protocol/type workloads with checked-in reference baselines;
 - TLS negotiation with safe platform certificate validation by default;
 - SCRAM-SHA-256 and SCRAM-SHA-256-PLUS authentication;
 - startup metadata, structured errors/notices, and backend key data;
