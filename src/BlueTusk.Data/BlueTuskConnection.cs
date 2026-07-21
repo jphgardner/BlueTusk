@@ -13,7 +13,7 @@ public sealed class BlueTuskConnection : DbConnection
     private string _connectionString = string.Empty;
     private BlueTuskConnectionStringBuilder _settings = new();
     private IBlueTuskPhysicalSession? _session;
-    private BlueTuskPoolLease? _poolLease;
+    private BlueTuskPooledSession? _pooledSession;
     private BlueTuskTransaction? _currentTransaction;
     private bool _startingTransaction;
     private readonly object _transactionSync = new();
@@ -110,15 +110,20 @@ public sealed class BlueTuskConnection : DbConnection
             }
             else
             {
-                _poolLease = await _pool.RentAsync(cancellationToken).ConfigureAwait(false);
-                _session = _poolLease.Session;
+                _pooledSession = await _pool.RentAsync(cancellationToken).ConfigureAwait(false);
+                _session = _pooledSession.Session;
             }
 
             SetState(ConnectionState.Open);
         }
         catch
         {
-            Interlocked.Exchange(ref _poolLease, null)?.Dispose();
+            var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
+            if (pooledSession is not null)
+            {
+                _pool!.Return(pooledSession);
+            }
+
             _session = null;
             SetState(ConnectionState.Closed);
             throw;
@@ -129,10 +134,10 @@ public sealed class BlueTuskConnection : DbConnection
     {
         DetachTransaction()?.ConnectionClosed();
         var session = Interlocked.Exchange(ref _session, null);
-        var lease = Interlocked.Exchange(ref _poolLease, null);
-        if (lease is not null)
+        var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
+        if (pooledSession is not null)
         {
-            lease.Dispose();
+            _pool!.Return(pooledSession);
         }
         else
         {
@@ -146,10 +151,10 @@ public sealed class BlueTuskConnection : DbConnection
     {
         DetachTransaction()?.ConnectionClosed();
         var session = Interlocked.Exchange(ref _session, null);
-        var lease = Interlocked.Exchange(ref _poolLease, null);
-        if (lease is not null)
+        var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
+        if (pooledSession is not null)
         {
-            lease.Dispose();
+            _pool!.Return(pooledSession);
         }
         else if (session is not null)
         {

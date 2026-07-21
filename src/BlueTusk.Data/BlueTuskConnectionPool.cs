@@ -63,7 +63,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         Reused: Interlocked.Read(ref _reused),
         Discarded: Interlocked.Read(ref _discarded));
 
-    internal async ValueTask<BlueTuskPoolLease> RentAsync(CancellationToken cancellationToken)
+    internal async ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         if (_minimumSize > 0 && Volatile.Read(ref _total) < _minimumSize)
@@ -89,7 +89,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
                     var created = await CreateReservedSessionAsync(
                         lease: true,
                         cancellationToken).ConfigureAwait(false);
-                    return new BlueTuskPoolLease(this, created);
+                    return created;
                 }
 
                 if (!hasSlot || slot.Session is null)
@@ -112,7 +112,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
                     {
                         BlueTuskDiagnostics.PoolLeases.Add(1);
                         BlueTuskDiagnostics.PoolReuses.Add(1);
-                        return new BlueTuskPoolLease(this, pooledSession);
+                        return pooledSession;
                     }
                 }
                 catch (OperationCanceledException)
@@ -587,20 +587,4 @@ internal sealed class BlueTuskPooledSession(
     internal DateTimeOffset LastReturned { get; set; } = createdAt;
 
     internal int Generation { get; } = generation;
-}
-
-internal sealed class BlueTuskPoolLease : IDisposable
-{
-    private BlueTuskConnectionPool? _pool;
-    private readonly BlueTuskPooledSession _session;
-
-    internal BlueTuskPoolLease(BlueTuskConnectionPool pool, BlueTuskPooledSession session)
-    {
-        _pool = pool;
-        _session = session;
-    }
-
-    internal IBlueTuskPhysicalSession Session => _session.Session;
-
-    public void Dispose() => Interlocked.Exchange(ref _pool, null)?.Return(_session);
 }

@@ -21,7 +21,7 @@ public sealed class BlueTuskConnectionPoolTests
         var firstLease = await pool.RentAsync(CancellationToken.None);
         var firstSession = Assert.IsType<FakePhysicalSession>(firstLease.Session);
         firstSession.TransactionStatus = BlueTuskTransactionStatus.InTransaction;
-        firstLease.Dispose();
+        pool.Return(firstLease);
 
         var secondLease = await pool.RentAsync(CancellationToken.None);
 
@@ -30,7 +30,7 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.Equal(
             new BlueTuskPoolStatistics(true, 0, 2, 1, 0, 1, 0, 1, 1, 0),
             pool.Statistics);
-        secondLease.Dispose();
+        pool.Return(secondLease);
         Assert.Equal(1, pool.Statistics.Idle);
         Assert.Equal(0, pool.Statistics.Busy);
     }
@@ -49,7 +49,7 @@ public sealed class BlueTuskConnectionPoolTests
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => waiting);
         Assert.Equal(1, pool.Statistics.Total);
         Assert.Equal(1, pool.Statistics.Busy);
-        lease.Dispose();
+        pool.Return(lease);
         Assert.Equal(1, pool.Statistics.Idle);
     }
 
@@ -83,7 +83,7 @@ public sealed class BlueTuskConnectionPoolTests
             timeProvider: timeProvider);
         var firstLease = await pool.RentAsync(CancellationToken.None);
         var firstSession = Assert.IsType<FakePhysicalSession>(firstLease.Session);
-        firstLease.Dispose();
+        pool.Return(firstLease);
         timeProvider.Advance(TimeSpan.FromSeconds(2));
 
         var secondLease = await pool.RentAsync(CancellationToken.None);
@@ -93,7 +93,7 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.Equal(2, sessions.Count);
         Assert.Equal(2, pool.Statistics.Opened);
         Assert.Equal(1, pool.Statistics.Discarded);
-        secondLease.Dispose();
+        pool.Return(secondLease);
     }
 
     [Fact]
@@ -109,7 +109,7 @@ public sealed class BlueTuskConnectionPoolTests
         var session = Assert.IsType<FakePhysicalSession>(lease.Session);
         timeProvider.Advance(TimeSpan.FromSeconds(2));
 
-        lease.Dispose();
+        pool.Return(lease);
 
         Assert.True(session.Disposed);
         Assert.Equal(0, pool.Statistics.Total);
@@ -131,7 +131,7 @@ public sealed class BlueTuskConnectionPoolTests
         var firstLease = await pool.RentAsync(CancellationToken.None);
         var firstSession = Assert.IsType<FakePhysicalSession>(firstLease.Session);
         firstSession.FailReset = true;
-        firstLease.Dispose();
+        pool.Return(firstLease);
 
         var secondLease = await pool.RentAsync(CancellationToken.None);
 
@@ -139,7 +139,7 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.True(firstSession.Disposed);
         Assert.Equal(2, sessions.Count);
         Assert.Equal(1, pool.Statistics.Discarded);
-        secondLease.Dispose();
+        pool.Return(secondLease);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public sealed class BlueTuskConnectionPoolTests
 
         Assert.Equal(2, attempts);
         Assert.Equal(1, pool.Statistics.Total);
-        lease.Dispose();
+        pool.Return(lease);
     }
 
     [Fact]
@@ -174,13 +174,13 @@ public sealed class BlueTuskConnectionPoolTests
         var firstSession = Assert.IsType<FakePhysicalSession>(firstLease.Session);
 
         await pool.ClearAsync();
-        firstLease.Dispose();
+        pool.Return(firstLease);
         var secondLease = await pool.RentAsync(CancellationToken.None);
 
         Assert.True(firstSession.Disposed);
         Assert.NotSame(firstSession, secondLease.Session);
         Assert.Equal(1, pool.Statistics.Discarded);
-        secondLease.Dispose();
+        pool.Return(secondLease);
     }
 
     [Fact]
@@ -195,7 +195,7 @@ public sealed class BlueTuskConnectionPoolTests
         await pool.DisposeAsync();
 
         await Assert.ThrowsAsync<ObjectDisposedException>(() => waiting);
-        lease.Dispose();
+        pool.Return(lease);
         Assert.True(session.Disposed);
         Assert.Equal(0, pool.Statistics.Total);
     }
