@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.2 can connect with TLS and SCRAM-SHA-256 and execute buffered simple queries through ADO.NET, but it does not yet support parameters, transactions, pooling, cancellation, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental pre-release provider. Version 0.0.3 can connect with TLS and SCRAM-SHA-256 and execute buffered simple and parameterized queries through ADO.NET, but it does not yet support transactions, pooling, cancellation, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -42,7 +42,7 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 
 ## Status
 
-The current `0.0.2` implementation provides:
+The current `0.0.3` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -57,20 +57,19 @@ The current `0.0.2` implementation provides:
 - SCRAM-SHA-256 and SCRAM-SHA-256-PLUS authentication;
 - startup metadata, structured errors/notices, and backend key data;
 - buffered simple-query execution with multiple results;
+- extended-query execution through Parse, Bind, Describe, Execute, and Sync;
+- typed binary and text parameter encoding without SQL interpolation;
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.
 
 Minimal usage:
 
 ```csharp
-await using var connection = new BlueTuskConnection(connectionString);
-await connection.OpenAsync();
+await using var dataSource = BlueTuskDataSource.Create(connectionString);
+await using var command = dataSource.CreateCommand("SELECT $1::int4 + $2::int4");
+command.Parameters.Add(new BlueTuskParameter<int>(20));
+command.Parameters.Add(new BlueTuskParameter<int>(22));
 
-await using var command = new BlueTuskCommand("SELECT 42::int4, 'hello'::text", connection);
-await using var reader = await command.ExecuteReaderAsync();
-while (await reader.ReadAsync())
-{
-    Console.WriteLine($"{reader.GetInt32(0)} — {reader.GetString(1)}");
-}
+var answer = await command.ExecuteScalarAsync<int>();
 ```
 
 ## License

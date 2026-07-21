@@ -28,12 +28,12 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Simple query operation
 - [x] Initial ADO.NET connection, command, reader, and unpooled data source
 
-## 0.0.3 — Extended queries and parameters
+## 0.0.3 — Extended queries and parameters (complete)
 
-- [ ] Parse/Bind/Describe/Execute/Sync writers
-- [ ] RowDescription and DataRow parsing
-- [ ] Typed parameter encoding
-- [ ] Multiple results
-- [ ] End-to-end `SELECT $1::int4 + $2::int4`
+- [x] Parse/Bind/Describe/Execute/Sync writers
+- [x] RowDescription and DataRow parsing
+- [x] Typed parameter encoding
+- [x] Multiple results
+- [x] End-to-end `SELECT $1::int4 + $2::int4`
 
 Later milestones follow the product plan: transactions/cancellation, pooling, the complete type system, COPY/notifications, replication, EF Core, SQL/PGQ, and extensions. Each milestone must have conformance and real-server acceptance tests before its version is published.
