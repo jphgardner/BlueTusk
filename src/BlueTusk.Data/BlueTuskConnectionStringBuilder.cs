@@ -32,7 +32,14 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
 
     public int Port
     {
-        get => GetInt32(nameof(Port), 5432);
+        get
+        {
+            var value = GetInt32(nameof(Port), 5432);
+            return value is > 0 and <= 65_535
+                ? value
+                : throw new ArgumentOutOfRangeException(nameof(Port));
+        }
+
         set => this[nameof(Port)] = value is > 0 and <= 65_535
             ? value
             : throw new ArgumentOutOfRangeException(nameof(value));
@@ -59,7 +66,7 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
 
     public TimeSpan Timeout
     {
-        get => TimeSpan.FromSeconds(GetInt32(nameof(Timeout), 15));
+        get => GetPositiveTimeSpan(nameof(Timeout), 15);
         set
         {
             if (value <= TimeSpan.Zero || value.TotalSeconds > int.MaxValue)
@@ -97,7 +104,14 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
 
     public int MinimumPoolSize
     {
-        get => GetInt32("Minimum Pool Size", 0);
+        get
+        {
+            var value = GetInt32("Minimum Pool Size", 0);
+            return value >= 0
+                ? value
+                : throw new ArgumentOutOfRangeException(nameof(MinimumPoolSize));
+        }
+
         set => this["Minimum Pool Size"] = value >= 0
             ? value
             : throw new ArgumentOutOfRangeException(nameof(value));
@@ -105,10 +119,45 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
 
     public int MaximumPoolSize
     {
-        get => GetInt32("Maximum Pool Size", 100);
+        get
+        {
+            var value = GetInt32("Maximum Pool Size", 100);
+            return value > 0
+                ? value
+                : throw new ArgumentOutOfRangeException(nameof(MaximumPoolSize));
+        }
+
         set => this["Maximum Pool Size"] = value > 0
             ? value
             : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    public TimeSpan ConnectionIdleLifetime
+    {
+        get => GetNonNegativeTimeSpan("Connection Idle Lifetime", 300);
+        set => SetNonNegativeTimeSpan("Connection Idle Lifetime", value);
+    }
+
+    public TimeSpan ConnectionLifetime
+    {
+        get => GetNonNegativeTimeSpan("Connection Lifetime", 3_600);
+        set => SetNonNegativeTimeSpan("Connection Lifetime", value);
+    }
+
+    internal void Validate()
+    {
+        _ = Host;
+        _ = Port;
+        _ = Timeout;
+        _ = SslMode;
+        _ = ChannelBinding;
+        _ = ConnectionIdleLifetime;
+        _ = ConnectionLifetime;
+
+        if (MinimumPoolSize > MaximumPoolSize)
+        {
+            throw new ArgumentException("Minimum Pool Size cannot exceed Maximum Pool Size.");
+        }
     }
 
     private string GetString(string keyword, string defaultValue) =>
@@ -125,6 +174,32 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         TryGetValue(keyword, out var value)
             ? Convert.ToBoolean(value, CultureInfo.InvariantCulture)
             : defaultValue;
+
+    private TimeSpan GetPositiveTimeSpan(string keyword, int defaultSeconds)
+    {
+        var seconds = GetInt32(keyword, defaultSeconds);
+        return seconds > 0
+            ? TimeSpan.FromSeconds(seconds)
+            : throw new ArgumentOutOfRangeException(keyword);
+    }
+
+    private TimeSpan GetNonNegativeTimeSpan(string keyword, int defaultSeconds)
+    {
+        var seconds = GetInt32(keyword, defaultSeconds);
+        return seconds >= 0
+            ? TimeSpan.FromSeconds(seconds)
+            : throw new ArgumentOutOfRangeException(keyword);
+    }
+
+    private void SetNonNegativeTimeSpan(string keyword, TimeSpan value)
+    {
+        if (value < TimeSpan.Zero || value.TotalSeconds > int.MaxValue)
+        {
+            throw new ArgumentOutOfRangeException(nameof(value));
+        }
+
+        this[keyword] = checked((int)Math.Ceiling(value.TotalSeconds));
+    }
 
     private TEnum GetEnum<TEnum>(string keyword, TEnum defaultValue)
         where TEnum : struct, Enum =>

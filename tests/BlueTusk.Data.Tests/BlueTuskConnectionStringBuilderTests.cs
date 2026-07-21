@@ -13,7 +13,10 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal("localhost", builder.Host);
         Assert.Equal(5432, builder.Port);
         Assert.True(builder.Pooling);
+        Assert.Equal(0, builder.MinimumPoolSize);
         Assert.Equal(100, builder.MaximumPoolSize);
+        Assert.Equal(TimeSpan.FromMinutes(5), builder.ConnectionIdleLifetime);
+        Assert.Equal(TimeSpan.FromHours(1), builder.ConnectionLifetime);
     }
 
     [Fact]
@@ -36,6 +39,25 @@ public sealed class BlueTuskConnectionStringBuilderTests
         var builder = new BlueTuskConnectionStringBuilder();
 
         Assert.Throws<ArgumentOutOfRangeException>(() => builder.Port = 65_536);
+        Assert.Throws<ArgumentOutOfRangeException>(() => _ = new BlueTuskConnectionStringBuilder("Port=65536").Port);
+    }
+
+    [Fact]
+    public void Validates_pool_bounds_and_lifetimes()
+    {
+        var invalidBounds = new BlueTuskConnectionStringBuilder(
+            "Minimum Pool Size=3;Maximum Pool Size=2");
+        var invalidIdleLifetime = new BlueTuskConnectionStringBuilder("Connection Idle Lifetime=-1");
+        var disabledLifetimes = new BlueTuskConnectionStringBuilder
+        {
+            ConnectionIdleLifetime = TimeSpan.Zero,
+            ConnectionLifetime = TimeSpan.Zero,
+        };
+
+        Assert.Throws<ArgumentException>(invalidBounds.Validate);
+        Assert.Throws<ArgumentOutOfRangeException>(() => _ = invalidIdleLifetime.ConnectionIdleLifetime);
+        Assert.Equal(TimeSpan.Zero, disabledLifetimes.ConnectionIdleLifetime);
+        Assert.Equal(TimeSpan.Zero, disabledLifetimes.ConnectionLifetime);
     }
 
     [Fact]
