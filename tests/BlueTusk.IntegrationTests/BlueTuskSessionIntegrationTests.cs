@@ -81,7 +81,8 @@ public sealed class BlueTuskSessionIntegrationTests
 
         var resultSet = Assert.Single(result.ResultSets);
         var row = Assert.Single(resultSet.Rows);
-        Assert.Equal("42", Encoding.UTF8.GetString(row.Values[0]!.Value.Span));
+        Assert.Equal(1, Assert.Single(resultSet.Fields).FormatCode);
+        Assert.Equal(42, BinaryPrimitives.ReadInt32BigEndian(row.Values[0]!.Value.Span));
     }
 
     [Fact]

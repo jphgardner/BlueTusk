@@ -10,6 +10,7 @@ namespace BlueTusk.Client;
 /// <summary>A single authenticated PostgreSQL protocol session.</summary>
 public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 {
+    private static readonly short[] BinaryResultFormat = [1];
     private readonly BlueTuskProtocolConnection _connection;
     private readonly BlueTuskClientOptions _options;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
@@ -94,7 +95,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     output,
                     string.Empty,
                     string.Empty,
-                    bindParameters);
+                    bindParameters,
+                    BinaryResultFormat);
                 BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
                 BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
                 BlueTuskFrontendMessageWriter.WriteSync(output);

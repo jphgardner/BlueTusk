@@ -3,6 +3,7 @@ using System.Data;
 using System.Globalization;
 using System.Text;
 using BlueTusk.Client;
+using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data;
 
@@ -91,6 +92,7 @@ internal static class BlueTuskParameterEncoder
             float => Float4Oid,
             double => Float8Oid,
             decimal => NumericOid,
+            BlueTuskNumeric => NumericOid,
             Guid => UuidOid,
             byte[] or ReadOnlyMemory<byte> or Memory<byte> => ByteaOid,
             DateOnly => DateOid,
@@ -116,14 +118,39 @@ internal static class BlueTuskParameterEncoder
         Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
         Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
         ByteaOid => Binary(typeOid, GetBytes(value)),
-        NumericOid => Text(typeOid, Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture)),
-        UuidOid => Text(typeOid, GetGuid(value).ToString("D", CultureInfo.InvariantCulture)),
-        DateOid => Text(typeOid, GetDate(value).ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)),
-        TimeOid => Text(typeOid, FormatTime(value)),
-        TimestampOid => Text(typeOid, GetDateTime(value).ToString("yyyy-MM-dd HH:mm:ss.fffffff", CultureInfo.InvariantCulture)),
-        TimestampWithTimeZoneOid => Text(
+        NumericOid => Text(typeOid, value is BlueTuskNumeric numeric
+            ? numeric.ToString()
+            : Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture)),
+        UuidOid => EncodeBinary(
             typeOid,
-            GetDateTimeOffset(value).ToString("yyyy-MM-dd HH:mm:ss.fffffffzzz", CultureInfo.InvariantCulture)),
+            new BlueTuskGuidCodec(),
+            BlueTuskBuiltInTypes.Uuid,
+            GetGuid(value),
+            16),
+        DateOid => EncodeBinary(
+            typeOid,
+            new BlueTuskDateCodec(),
+            BlueTuskBuiltInTypes.Date,
+            GetDate(value),
+            sizeof(int)),
+        TimeOid => EncodeBinary(
+            typeOid,
+            new BlueTuskTimeCodec(),
+            BlueTuskBuiltInTypes.Time,
+            GetTime(value),
+            sizeof(long)),
+        TimestampOid => EncodeBinary(
+            typeOid,
+            new BlueTuskTimestampCodec(),
+            BlueTuskBuiltInTypes.Timestamp,
+            GetDateTime(value),
+            sizeof(long)),
+        TimestampWithTimeZoneOid => EncodeBinary(
+            typeOid,
+            new BlueTuskTimestampWithTimeZoneCodec(),
+            BlueTuskBuiltInTypes.TimestampWithTimeZone,
+            GetDateTimeOffset(value),
+            sizeof(long)),
         TextOid => Text(typeOid, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty),
         _ when value is string text => Text(typeOid, text),
         _ when value is byte[] bytes => Binary(typeOid, bytes),
@@ -173,6 +200,25 @@ internal static class BlueTuskParameterEncoder
     private static BlueTuskExtendedQueryParameter Text(uint typeOid, string value) =>
         new(typeOid, 0, Encoding.UTF8.GetBytes(value));
 
+    private static BlueTuskExtendedQueryParameter EncodeBinary<T>(
+        uint typeOid,
+        BlueTuskCodec<T> codec,
+        BlueTuskTypeDescriptor type,
+        T value,
+        int length)
+    {
+        var bytes = new byte[length];
+        var writer = new BlueTuskWriter(bytes);
+        codec.WriteTyped(ref writer, value, BlueTuskDataFormat.Binary, type);
+        if (writer.WrittenCount != length)
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} parameter codec wrote {writer.WrittenCount} bytes; {length} were expected.");
+        }
+
+        return Binary(typeOid, bytes);
+    }
+
     private static ReadOnlyMemory<byte> GetBytes(object value) => value switch
     {
         byte[] bytes => bytes,
@@ -190,12 +236,11 @@ internal static class BlueTuskParameterEncoder
         _ => DateOnly.Parse(Convert.ToString(value, CultureInfo.InvariantCulture)!, CultureInfo.InvariantCulture),
     };
 
-    private static string FormatTime(object value) => value switch
+    private static TimeSpan GetTime(object value) => value switch
     {
-        TimeOnly time => time.ToString("HH:mm:ss.fffffff", CultureInfo.InvariantCulture),
-        TimeSpan timeSpan => timeSpan.ToString("c", CultureInfo.InvariantCulture),
-        _ => TimeOnly.Parse(Convert.ToString(value, CultureInfo.InvariantCulture)!, CultureInfo.InvariantCulture)
-            .ToString("HH:mm:ss.fffffff", CultureInfo.InvariantCulture),
+        TimeOnly time => time.ToTimeSpan(),
+        TimeSpan timeSpan => timeSpan,
+        _ => TimeOnly.Parse(Convert.ToString(value, CultureInfo.InvariantCulture)!, CultureInfo.InvariantCulture).ToTimeSpan(),
     };
 
     private static DateTime GetDateTime(object value) => value is DateTime dateTime

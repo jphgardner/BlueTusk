@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
 using BlueTusk.Client;
 using BlueTusk.Protocol;
+using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data;
 
@@ -140,6 +141,16 @@ public sealed class BlueTuskDataReader : DbDataReader
         if (value is DBNull)
         {
             throw new InvalidCastException("A database NULL cannot be read as a non-null value.");
+        }
+
+        if (value is BlueTuskNumeric numeric && typeof(T) == typeof(decimal))
+        {
+            return (T)(object)numeric.ToDecimal();
+        }
+
+        if (value is TimeSpan time && typeof(T) == typeof(TimeOnly) && time < TimeSpan.FromDays(1))
+        {
+            return (T)(object)TimeOnly.FromTimeSpan(time);
         }
 
         return value is T typed
