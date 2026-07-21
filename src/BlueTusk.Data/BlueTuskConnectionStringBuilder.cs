@@ -2,6 +2,7 @@ using System.ComponentModel;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using BlueTusk.Client;
 
 namespace BlueTusk.Data;
 
@@ -76,6 +77,24 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         set => this[nameof(Pooling)] = value;
     }
 
+    public string ApplicationName
+    {
+        get => GetString("Application Name", "BlueTusk");
+        set => this["Application Name"] = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    public BlueTuskSslMode SslMode
+    {
+        get => GetEnum("SSL Mode", BlueTuskSslMode.VerifyFull);
+        set => this["SSL Mode"] = value.ToString();
+    }
+
+    public BlueTuskChannelBindingMode ChannelBinding
+    {
+        get => GetEnum("Channel Binding", BlueTuskChannelBindingMode.Prefer);
+        set => this["Channel Binding"] = value.ToString();
+    }
+
     public int MinimumPoolSize
     {
         get => GetInt32("Minimum Pool Size", 0);
@@ -105,5 +124,11 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     private bool GetBoolean(string keyword, bool defaultValue) =>
         TryGetValue(keyword, out var value)
             ? Convert.ToBoolean(value, CultureInfo.InvariantCulture)
+            : defaultValue;
+
+    private TEnum GetEnum<TEnum>(string keyword, TEnum defaultValue)
+        where TEnum : struct, Enum =>
+        TryGetValue(keyword, out var value)
+            ? Enum.Parse<TEnum>(Convert.ToString(value, CultureInfo.InvariantCulture)!, ignoreCase: true)
             : defaultValue;
 }

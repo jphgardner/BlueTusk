@@ -1,3 +1,4 @@
+using BlueTusk.Client;
 using BlueTusk.Security;
 
 namespace BlueTusk.Data.Tests;
@@ -36,5 +37,18 @@ public sealed class BlueTuskConnectionStringBuilderTests
 
         Assert.Throws<ArgumentOutOfRangeException>(() => builder.Port = 65_536);
     }
-}
 
+    [Fact]
+    public void Uses_secure_tls_defaults_and_parses_explicit_modes()
+    {
+        var defaults = new BlueTuskConnectionStringBuilder();
+        var explicitSettings = new BlueTuskConnectionStringBuilder(
+            "SSL Mode=Disable;Channel Binding=Disable;Application Name=test-suite");
+
+        Assert.Equal(BlueTuskSslMode.VerifyFull, defaults.SslMode);
+        Assert.Equal(BlueTuskChannelBindingMode.Prefer, defaults.ChannelBinding);
+        Assert.Equal(BlueTuskSslMode.Disable, explicitSettings.SslMode);
+        Assert.Equal(BlueTuskChannelBindingMode.Disable, explicitSettings.ChannelBinding);
+        Assert.Equal("test-suite", explicitSettings.ApplicationName);
+    }
+}

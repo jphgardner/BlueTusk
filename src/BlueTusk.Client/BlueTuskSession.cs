@@ -7,7 +7,7 @@ using BlueTusk.Transport;
 namespace BlueTusk.Client;
 
 /// <summary>A single authenticated PostgreSQL protocol session.</summary>
-public sealed class BlueTuskSession : IAsyncDisposable
+public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 {
     private readonly BlueTuskProtocolConnection _connection;
     private readonly BlueTuskClientOptions _options;
@@ -165,6 +165,19 @@ public sealed class BlueTuskSession : IAsyncDisposable
         _open = false;
         _operationLock.Dispose();
         await _connection.DisposeAsync().ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        _disposed = true;
+        _open = false;
+        _operationLock.Dispose();
+        _connection.Dispose();
     }
 
     private async ValueTask OpenCoreAsync(CancellationToken cancellationToken)

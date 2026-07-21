@@ -18,5 +18,15 @@ public class BlueTuskException : DbException
         : base(message, innerException)
     {
     }
-}
 
+    internal BlueTuskException(BlueTusk.Client.BlueTuskServerException exception)
+        : base(exception.Message, exception)
+    {
+        SqlState = exception.SqlState;
+        Severity = exception.Severity;
+    }
+
+    public override string? SqlState { get; }
+
+    public string? Severity { get; }
+}

@@ -17,15 +17,16 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Protocol packet-inspection file format
 - [ ] BenchmarkDotNet harness and checked-in baselines
 
-## 0.0.2 — Authentication and simple queries
+## 0.0.2 — Authentication and simple queries (complete)
 
-- [ ] SSLRequest and TLS upgrade
-- [ ] Startup parameter/status processing
-- [ ] SCRAM-SHA-256 and SCRAM-SHA-256-PLUS
-- [ ] Backend key data and cancellation channel
-- [ ] Error and notice field parsing
-- [ ] Simple query operation
-- [ ] Initial ADO.NET connection, command, and reader
+- [x] SSLRequest and TLS upgrade
+- [x] Startup parameter/status processing
+- [x] SCRAM-SHA-256 and SCRAM-SHA-256-PLUS
+- [x] Backend key data capture
+- [ ] Cancellation channel (scheduled for 0.0.4)
+- [x] Error and notice field parsing
+- [x] Simple query operation
+- [x] Initial ADO.NET connection, command, reader, and unpooled data source
 
 ## 0.0.3 — Extended queries and parameters
 

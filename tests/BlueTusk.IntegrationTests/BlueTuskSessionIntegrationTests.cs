@@ -1,6 +1,7 @@
 using System.Text;
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.TypeSystem;
 using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
@@ -44,5 +45,79 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Contains("server_version", session.Parameters);
         Assert.NotNull(session.BackendKeyData);
     }
-}
 
+    [Fact]
+    public async Task AdoNet_connection_command_and_reader_execute_end_to_end()
+    {
+        var connectionString = GetConnectionString();
+        await using var connection = new BlueTuskConnection(connectionString);
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand(
+            "SELECT 42::int4 AS answer, 'hello'::text AS greeting, NULL::text AS missing, current_timestamp AS now, point(1, 2) AS unknown_value; SELECT 7::int4 AS second",
+            connection);
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(42, reader.GetInt32(reader.GetOrdinal("answer")));
+        Assert.Equal("hello", reader.GetString(1));
+        Assert.True(await reader.IsDBNullAsync(2, CancellationToken.None));
+        Assert.IsType<DateTimeOffset>(reader.GetValue(3));
+        Assert.Equal("(1,2)", reader.GetFieldValue<BlueTuskUnknownValue>(4).GetText());
+        Assert.False(await reader.ReadAsync(CancellationToken.None));
+        Assert.True(await reader.NextResultAsync(CancellationToken.None));
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(7, reader.GetInt32(0));
+        Assert.False(await reader.NextResultAsync(CancellationToken.None));
+        Assert.NotEmpty(connection.ServerVersion);
+    }
+
+    [Fact]
+    public async Task AdoNet_typed_scalar_decodes_int4()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand("SELECT 6::int4 * 7::int4", connection);
+
+        Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Data_source_commands_own_their_physical_connection()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand("SELECT 40::int4 + 2::int4");
+
+        Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Errors_are_drained_through_ready_for_query()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var invalid = new BlueTuskCommand("SELEC broken", connection);
+
+        var exception = await Assert.ThrowsAsync<BlueTuskException>(
+            () => invalid.ExecuteNonQueryAsync(CancellationToken.None));
+
+        Assert.Equal("42601", exception.SqlState);
+        await using var valid = new BlueTuskCommand("SELECT 1::int4", connection);
+        Assert.Equal(1, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    private static string GetConnectionString()
+    {
+        var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw SkipException.ForSkip("$XunitDynamicSkip$BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+        }
+
+        var settings = new BlueTuskConnectionStringBuilder(connectionString)
+        {
+            SslMode = BlueTuskSslMode.Disable,
+            ChannelBinding = BlueTuskChannelBindingMode.Disable,
+        };
+        return settings.ConnectionString;
+    }
+}

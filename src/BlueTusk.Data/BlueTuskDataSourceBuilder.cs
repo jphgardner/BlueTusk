@@ -30,5 +30,6 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     }
 
     internal IReadOnlyList<IBlueTuskPlugin> Plugins => _plugins;
-}
 
+    public BlueTuskDataSource Build() => new(ConnectionString);
+}

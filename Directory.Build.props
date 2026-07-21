@@ -11,7 +11,7 @@
     <Authors>BlueTusk contributors</Authors>
     <Company>BlueTusk</Company>
     <Product>BlueTusk</Product>
-    <VersionPrefix>0.0.1</VersionPrefix>
+    <VersionPrefix>0.0.2</VersionPrefix>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
