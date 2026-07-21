@@ -54,4 +54,20 @@ public sealed class BlueTuskFrontendMessageWriterTests
         Assert.Throws<ArgumentException>(
             () => BlueTuskFrontendMessageWriter.WriteSimpleQuery(new ArrayBufferWriter<byte>(), "SELECT\0 1"));
     }
+
+    [Fact]
+    public void Writes_sasl_initial_and_continuation_responses()
+    {
+        var initial = new ArrayBufferWriter<byte>();
+        var continuation = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(initial, "SCRAM-SHA-256", "n,,n=user,r=nonce");
+        BlueTuskFrontendMessageWriter.WriteSaslResponse(continuation, "c=biws,r=nonce,p=proof");
+
+        Assert.Equal((byte)'p', initial.WrittenSpan[0]);
+        Assert.Equal(initial.WrittenCount - 1, BinaryPrimitives.ReadInt32BigEndian(initial.WrittenSpan[1..]));
+        Assert.Contains("SCRAM-SHA-256\0", Encoding.UTF8.GetString(initial.WrittenSpan), StringComparison.Ordinal);
+        Assert.Equal((byte)'p', continuation.WrittenSpan[0]);
+        Assert.Equal(continuation.WrittenCount - 1, BinaryPrimitives.ReadInt32BigEndian(continuation.WrittenSpan[1..]));
+    }
 }

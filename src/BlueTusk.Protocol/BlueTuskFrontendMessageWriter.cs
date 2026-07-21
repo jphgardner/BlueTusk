@@ -58,6 +58,40 @@ public static class BlueTuskFrontendMessageWriter
         WriteByte(output, 0);
     }
 
+    public static void WriteSaslInitialResponse(IBufferWriter<byte> output, string mechanism, string response)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(mechanism, nameof(mechanism));
+        ArgumentNullException.ThrowIfNull(response);
+
+        var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
+        var responseLength = Encoding.UTF8.GetByteCount(response);
+        WriteByte(output, (byte)'p');
+        WriteInt32(output, checked(sizeof(int) + mechanismLength + 1 + sizeof(int) + responseLength));
+        WriteUtf8(output, mechanism, mechanismLength);
+        WriteByte(output, 0);
+        WriteInt32(output, responseLength);
+        WriteUtf8(output, response, responseLength);
+    }
+
+    public static void WriteSaslResponse(IBufferWriter<byte> output, string response)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ArgumentNullException.ThrowIfNull(response);
+
+        var responseLength = Encoding.UTF8.GetByteCount(response);
+        WriteByte(output, (byte)'p');
+        WriteInt32(output, checked(sizeof(int) + responseLength));
+        WriteUtf8(output, response, responseLength);
+    }
+
+    public static void WriteTerminate(IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        WriteByte(output, (byte)'X');
+        WriteInt32(output, sizeof(int));
+    }
+
     private static void WriteCString(IBufferWriter<byte> output, string value)
     {
         WriteUtf8(output, value, Encoding.UTF8.GetByteCount(value));
