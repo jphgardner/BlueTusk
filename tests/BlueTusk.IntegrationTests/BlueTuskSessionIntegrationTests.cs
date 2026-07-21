@@ -84,6 +84,32 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task Session_cancels_and_drains_before_reuse()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            },
+            CancellationToken.None);
+        using var cancellationSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => session.ExecuteSimpleQueryAsync("SELECT pg_sleep(10)", cancellationSource.Token).AsTask());
+
+        var result = await session.ExecuteSimpleQueryAsync("SELECT 42::int4", CancellationToken.None);
+        var row = Assert.Single(Assert.Single(result.ResultSets).Rows);
+        Assert.Equal("42", Encoding.UTF8.GetString(row.Values[0]!.Value.Span));
+    }
+
+    [Fact]
     public async Task AdoNet_connection_command_and_reader_execute_end_to_end()
     {
         var connectionString = GetConnectionString();

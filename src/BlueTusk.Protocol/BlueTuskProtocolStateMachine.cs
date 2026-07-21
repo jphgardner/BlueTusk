@@ -80,4 +80,25 @@ public sealed class BlueTuskProtocolStateMachine
             _state = next;
         }
     }
+
+    public bool TryTransition(
+        BlueTuskConnectionState expected,
+        BlueTuskConnectionState next)
+    {
+        lock (_sync)
+        {
+            if (_state != expected)
+            {
+                return false;
+            }
+
+            if (!AllowedTransitions.TryGetValue(_state, out var allowed) || !allowed.Contains(next))
+            {
+                throw new InvalidOperationException($"Protocol state cannot transition from {_state} to {next}.");
+            }
+
+            _state = next;
+            return true;
+        }
+    }
 }

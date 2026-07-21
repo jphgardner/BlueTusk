@@ -30,5 +30,15 @@ public sealed class BlueTuskProtocolStateMachineTests
         Assert.Contains("Disconnected", exception.Message, StringComparison.Ordinal);
         Assert.Equal(BlueTuskConnectionState.Disconnected, state.State);
     }
-}
 
+    [Fact]
+    public void Conditionally_transitions_only_from_the_expected_state()
+    {
+        var state = new BlueTuskProtocolStateMachine();
+        state.TransitionTo(BlueTuskConnectionState.TransportConnected);
+
+        Assert.False(state.TryTransition(BlueTuskConnectionState.Ready, BlueTuskConnectionState.Executing));
+        Assert.True(state.TryTransition(BlueTuskConnectionState.TransportConnected, BlueTuskConnectionState.Startup));
+        Assert.Equal(BlueTuskConnectionState.Startup, state.State);
+    }
+}
