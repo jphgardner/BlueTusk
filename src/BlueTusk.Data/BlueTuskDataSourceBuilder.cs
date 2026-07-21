@@ -41,5 +41,12 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
         return this;
     }
 
+    public BlueTuskDataSourceBuilder MapComposite<T>(string postgresTypeName)
+    {
+        var typeName = BlueTuskTypeName.Parse(postgresTypeName);
+        Types.Register(typeName.Schema, typeName.Name, new BlueTuskCompositeCodec<T>());
+        return this;
+    }
+
     public BlueTuskDataSource Build() => new(ConnectionString, Types.Build());
 }

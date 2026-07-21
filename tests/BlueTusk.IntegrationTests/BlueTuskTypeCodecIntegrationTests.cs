@@ -503,6 +503,47 @@ public sealed class BlueTuskTypeCodecIntegrationTests
                 Assert.True(await textReader.ReadAsync(CancellationToken.None));
                 AssertAddress(value, textReader.GetFieldValue<BlueTuskRecord>(0));
             }
+
+            var mappedBuilder = new BlueTuskDataSourceBuilder(GetConnectionString());
+            mappedBuilder.MapComposite<IntegrationAddress>($"public.{typeName}");
+            await using (var mappedDataSource = mappedBuilder.Build())
+            {
+                await using (var connection = await mappedDataSource.OpenConnectionAsync(CancellationToken.None))
+                {
+                    Assert.NotNull(connection);
+                }
+
+                var mappedType = Assert.Single(
+                    mappedDataSource.TypeRegistry.Types,
+                    type => type.Schema == "public" && type.Name == typeName);
+                Assert.True(mappedDataSource.TypeRegistry.TryGetCodec(mappedType.Id, out var mappedCodec));
+                Assert.IsType<BlueTuskCompositeCodec<IntegrationAddress>>(mappedCodec);
+
+                var value = new IntegrationAddress(88, "Baker, Street", null);
+                IntegrationAddress[] values =
+                [
+                    value,
+                    new IntegrationAddress(7, "Side Road", "rear entrance"),
+                ];
+                await using (var binaryCommand = mappedDataSource.CreateCommand(
+                    $"SELECT $1::public.{typeName}, $2::public.{typeName}[]"))
+                {
+                    binaryCommand.Parameters.Add(new BlueTuskParameter<IntegrationAddress>(value));
+                    binaryCommand.Parameters.Add(new BlueTuskParameter<IntegrationAddress[]>(values));
+                    await using var reader = await binaryCommand.ExecuteReaderAsync(CancellationToken.None);
+                    Assert.True(await reader.ReadAsync(CancellationToken.None));
+                    Assert.Equal(value, reader.GetFieldValue<IntegrationAddress>(0));
+                    Assert.Equal(values, reader.GetFieldValue<IntegrationAddress[]>(1));
+                }
+
+                await using var literalCommand = mappedDataSource.CreateCommand(
+                    $"SELECT '(5,\"River, Lane\",)'::public.{typeName}");
+                await using var literalReader = await literalCommand.ExecuteReaderAsync(CancellationToken.None);
+                Assert.True(await literalReader.ReadAsync(CancellationToken.None));
+                Assert.Equal(
+                    new IntegrationAddress(5, "River, Lane", null),
+                    literalReader.GetFieldValue<IntegrationAddress>(0));
+            }
         }
         finally
         {
@@ -553,6 +594,8 @@ public sealed class BlueTuskTypeCodecIntegrationTests
 
         Complete,
     }
+
+    private sealed record IntegrationAddress(int HouseNumber, string Street, string? Note);
 
     private sealed class TestJsonPathCodec : BlueTuskCodec<TestJsonPath>
     {

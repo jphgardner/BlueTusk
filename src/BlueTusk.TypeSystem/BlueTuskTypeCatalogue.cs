@@ -38,6 +38,8 @@ public static class BlueTuskTypeCatalogue
         ArgumentNullException.ThrowIfNull(catalogueTypes);
         var builder = new BlueTuskTypeRegistryBuilder();
         var descriptors = new Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor>();
+        Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec> deferredCodecs =
+            new Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec>();
         var hasDiscoveredTypes = false;
         foreach (var catalogueType in catalogueTypes)
         {
@@ -69,10 +71,14 @@ public static class BlueTuskTypeCatalogue
                 descriptors,
                 configuredTypes,
                 requireResolution: hasDiscoveredTypes);
+            if (hasDiscoveredTypes)
+            {
+                deferredCodecs = ResolveDeferredCodecs(descriptors, configuredTypes);
+            }
         }
 
         RegisterEnumCodecs(builder, descriptors);
-        RegisterDependentCodecs(builder, descriptors);
+        RegisterDependentCodecs(builder, descriptors, deferredCodecs);
         RegisterAnonymousRecordCodec(builder, descriptors);
 
         return builder.Build();
@@ -183,8 +189,32 @@ public static class BlueTuskTypeCatalogue
                     $"Named codec registration for PostgreSQL type {registration.Key} resolved to {matches.Length} catalogue types.");
             }
 
-            builder.RegisterOrReplaceCodec(matches[0].Id, registration.Value);
+            if (registration.Value is not IBlueTuskDeferredCodec)
+            {
+                builder.RegisterOrReplaceCodec(matches[0].Id, registration.Value);
+            }
         }
+    }
+
+    private static Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec> ResolveDeferredCodecs(
+        Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors,
+        BlueTuskTypeRegistry source)
+    {
+        var result = new Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec>();
+        foreach (var registration in source.NamedCodecs)
+        {
+            if (registration.Value is not IBlueTuskDeferredCodec deferred)
+            {
+                continue;
+            }
+
+            var match = descriptors.Values.Single(type =>
+                string.Equals(type.Schema, registration.Key.Schema, StringComparison.Ordinal) &&
+                string.Equals(type.Name, registration.Key.Name, StringComparison.Ordinal));
+            result.Add(match.Id, deferred);
+        }
+
+        return result;
     }
 
     private static void RegisterEnumCodecs(
@@ -202,16 +232,53 @@ public static class BlueTuskTypeCatalogue
 
     private static void RegisterDependentCodecs(
         BlueTuskTypeRegistryBuilder builder,
-        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+        Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors,
+        Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec> deferredCodecs)
     {
+        var unresolved = new Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec>(deferredCodecs);
         bool changed;
         do
         {
             changed = RegisterDomainCodecs(builder, descriptors);
             changed |= RegisterArrayCodecs(builder, descriptors);
-            changed |= RegisterCompositeCodecs(builder, descriptors);
+            changed |= RegisterDeferredCodecs(builder, descriptors, unresolved);
+            changed |= RegisterCompositeCodecs(builder, descriptors, deferredCodecs);
         }
         while (changed);
+
+        if (unresolved.Count != 0)
+        {
+            var names = string.Join(
+                ", ",
+                unresolved.Keys.Select(id => descriptors[id].QualifiedName));
+            throw new InvalidOperationException(
+                $"CLR composite mappings could not resolve codecs for every field of: {names}.");
+        }
+    }
+
+    private static bool RegisterDeferredCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        Dictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors,
+        Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec> unresolved)
+    {
+        var changed = false;
+        foreach (var registration in unresolved.ToArray())
+        {
+            if (!registration.Value.TryBind(
+                    descriptors[registration.Key],
+                    descriptors,
+                    builder,
+                    out var codec))
+            {
+                continue;
+            }
+
+            builder.RegisterOrReplaceCodec(registration.Key, codec);
+            unresolved.Remove(registration.Key);
+            changed = true;
+        }
+
+        return changed;
     }
 
     private static bool RegisterDomainCodecs(
@@ -239,12 +306,14 @@ public static class BlueTuskTypeCatalogue
 
     private static bool RegisterCompositeCodecs(
         BlueTuskTypeRegistryBuilder builder,
-        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors,
+        Dictionary<BlueTuskTypeId, IBlueTuskDeferredCodec> mappedTypes)
     {
         var changed = false;
         foreach (var compositeType in descriptors.Values.Where(type => type.Kind == BlueTuskTypeKind.Composite))
         {
-            if (builder.ContainsCodec(compositeType.Id) ||
+            if (mappedTypes.ContainsKey(compositeType.Id) ||
+                builder.ContainsCodec(compositeType.Id) ||
                 !BlueTuskRecordCodec.TryCreate(compositeType, descriptors, builder, out var codec))
             {
                 continue;
