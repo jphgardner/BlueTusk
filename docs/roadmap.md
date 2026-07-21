@@ -54,15 +54,17 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Waiter cancellation and pool draining
 - [x] Pool diagnostics and live concurrency tests
 
-## 0.0.6 — Core binary type codecs
+## 0.0.6 — Core binary type codecs (complete)
 
-- [ ] Complete scalar built-in codec registry
-- [ ] Binary result negotiation and decoding
-- [ ] Streaming text, `bytea`, and JSON values
-- [ ] Date/time infinity and numeric edge cases
+- [x] Core scalar codec registry for boolean, integer, floating-point, numeric, character, binary, UUID, temporal, JSON, and XML values
+- [x] Binary result negotiation and registry-driven decoding
+- [x] Binary parameter encoding for numeric, UUID, and temporal values
+- [x] Buffer-backed stream and text-reader accessors for `bytea`, text, and JSON values
+- [x] Date/time infinity, 24:00 time, and arbitrary-precision numeric edge cases
 
-## 0.0.7 — Dynamic and structured types
+## 0.0.7 — Advanced, dynamic, and structured types
 
+- [ ] Remaining scalar families: money, time with time zone, interval, bit strings, network, geometric, full-text, `pg_lsn`, `tid`, and catalogue-specific types
 - [ ] Catalogue discovery and cache
 - [ ] Arrays, enums, domains, and composites
 - [ ] Ranges and multiranges
@@ -84,7 +86,7 @@ This file tracks executable repository status. The product vision is broader; un
 
 - [ ] Prepared statements, batches, and multi-host connection attempts
 - [ ] Genuine synchronous connection and query paths
-- [ ] Buffered, sequential, and streaming reader modes
+- [ ] Network-backed sequential and streaming reader modes
 - [ ] ADO.NET conformance, stress, differential, and performance baselines
 
 Later milestones follow the full product specification: EF Core CRUD and migrations, PostgreSQL-native LINQ, advanced schema modelling and scaffolding, SQL/PGQ property graphs, and the extension ecosystem. Each milestone must have conformance and real-server acceptance tests before its version is published.

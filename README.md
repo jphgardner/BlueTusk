@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.5 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET, but it does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental pre-release provider. Version 0.0.6 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET, including binary results for its core scalar types. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -38,18 +38,20 @@ EntityFrameworkCore → Data → Client → Protocol → Transport
                           TypeSystem   Security
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
 ## Status
 
-The current `0.0.5` implementation provides:
+The current `0.0.6` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
 - TCP endpoint and transport abstractions;
 - PostgreSQL backend-frame parsing and startup/query message writing;
 - an explicit protocol connection state machine;
-- catalogue-friendly type descriptors, unknown-value preservation, and an `int4` codec;
+- catalogue-friendly type descriptors and unknown-value preservation;
+- text and binary codecs for core scalar boolean, integer, floating-point, numeric, character, binary, UUID, temporal, JSON, and XML values;
+- arbitrary-precision PostgreSQL `numeric`, including NaN and infinities, plus temporal infinity and 24:00 handling;
 - security redaction and observability primitives;
 - a fake backend message stream for conformance testing;
 - a Docker-based PostgreSQL version matrix;
@@ -61,6 +63,8 @@ The current `0.0.5` implementation provides:
 - buffered simple-query execution with multiple results;
 - extended-query execution through Parse, Bind, Describe, Execute, and Sync;
 - typed binary and text parameter encoding without SQL interpolation;
+- binary result negotiation for extended queries and registry-driven field decoding;
+- buffer-backed stream and text-reader accessors for `bytea`, text, and JSON values;
 - ADO.NET transactions with PostgreSQL isolation levels, commit, rollback, and rollback-on-disposal;
 - cancellation tokens, command timeouts, and explicit sync/async cancellation over PostgreSQL's dedicated channel;
 - bounded per-data-source connection pooling with cancellable waiters;
