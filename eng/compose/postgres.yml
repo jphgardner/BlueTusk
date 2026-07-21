@@ -1,0 +1,41 @@
+name: bluetusk-tests
+
+x-postgres-common: &postgres-common
+  environment:
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: postgres
+    POSTGRES_DB: bluetusk_tests
+  healthcheck:
+    test: ["CMD-SHELL", "pg_isready -U postgres -d bluetusk_tests"]
+    interval: 2s
+    timeout: 5s
+    retries: 20
+  restart: "no"
+
+services:
+  postgres15:
+    <<: *postgres-common
+    image: postgres:15-alpine
+    ports: ["5415:5432"]
+
+  postgres16:
+    <<: *postgres-common
+    image: postgres:16-alpine
+    ports: ["5416:5432"]
+
+  postgres17:
+    <<: *postgres-common
+    image: postgres:17-alpine
+    ports: ["5417:5432"]
+
+  postgres18:
+    <<: *postgres-common
+    image: postgres:18-alpine
+    ports: ["5418:5432"]
+
+  postgres19:
+    <<: *postgres-common
+    image: postgres:19beta2-alpine
+    profiles: ["preview"]
+    ports: ["5419:5432"]
+

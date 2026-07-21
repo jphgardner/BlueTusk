@@ -1,0 +1,14 @@
+**/bin/
+**/obj/
+.vs/
+.vscode/
+.idea/
+TestResults/
+artifacts/
+coverage/
+*.user
+*.suo
+*.nupkg
+*.snupkg
+.env
+

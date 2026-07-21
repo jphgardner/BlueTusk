@@ -1,0 +1,38 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Verify formatting
+        run: dotnet format BlueTusk.slnx --no-restore --verify-no-changes
+
+      - name: Build
+        run: dotnet build BlueTusk.slnx --configuration Release --no-restore
+
+      - name: Test
+        run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
+
+      - name: Pack
+        run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages

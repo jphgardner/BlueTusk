@@ -1,0 +1,15 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Transport\BlueTusk.Transport.csproj" />
+    <ProjectReference Include="..\BlueTusk.Security\BlueTusk.Security.csproj" />
+    <ProjectReference Include="..\BlueTusk.Diagnostics\BlueTusk.Diagnostics.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+</Project>
