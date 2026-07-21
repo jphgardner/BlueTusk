@@ -23,7 +23,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Startup parameter/status processing
 - [x] SCRAM-SHA-256 and SCRAM-SHA-256-PLUS
 - [x] Backend key data capture
-- [ ] Cancellation channel (scheduled for 0.0.4)
+- [x] Cancellation channel (delivered in 0.0.4)
 - [x] Error and notice field parsing
 - [x] Simple query operation
 - [x] Initial ADO.NET connection, command, reader, and unpooled data source
@@ -36,4 +36,55 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Multiple results
 - [x] End-to-end `SELECT $1::int4 + $2::int4`
 
-Later milestones follow the product plan: transactions/cancellation, pooling, the complete type system, COPY/notifications, replication, EF Core, SQL/PGQ, and extensions. Each milestone must have conformance and real-server acceptance tests before its version is published.
+## 0.0.4 — Transactions and cancellation (complete)
+
+- [x] Dedicated CancelRequest framing and sync/async transport
+- [x] Cancellation-token and command-timeout integration
+- [x] Drain through `ReadyForQuery` before connection reuse
+- [x] Explicit `Cancel()` and `CancelAsync()`
+- [x] PostgreSQL transaction isolation modes
+- [x] Commit, rollback, rollback-on-disposal, and failed-transaction recovery
+- [x] Typed and base-class ADO.NET transaction acceptance tests
+
+## 0.0.5 — Connection pooling and data sources
+
+- [ ] Bounded per-data-source physical connection pool
+- [ ] Minimum/maximum size, idle lifetime, and maximum lifetime
+- [ ] Safe session reset and health validation
+- [ ] Waiter cancellation and pool draining
+- [ ] Pool diagnostics and live concurrency tests
+
+## 0.0.6 — Core binary type codecs
+
+- [ ] Complete scalar built-in codec registry
+- [ ] Binary result negotiation and decoding
+- [ ] Streaming text, `bytea`, and JSON values
+- [ ] Date/time infinity and numeric edge cases
+
+## 0.0.7 — Dynamic and structured types
+
+- [ ] Catalogue discovery and cache
+- [ ] Arrays, enums, domains, and composites
+- [ ] Ranges and multiranges
+- [ ] Public runtime codec registration
+
+## 0.0.8 — COPY and notifications
+
+- [ ] Binary, text, CSV, and raw COPY APIs
+- [ ] `LISTEN`/`NOTIFY` asynchronous delivery
+- [ ] Large-object streams
+
+## 0.0.9 — Replication preview
+
+- [ ] Physical and logical replication sessions
+- [ ] Slot/publication discovery and feedback
+- [ ] `pgoutput` decoding
+
+## 0.1.0 — First public ADO.NET preview
+
+- [ ] Prepared statements, batches, and multi-host connection attempts
+- [ ] Genuine synchronous connection and query paths
+- [ ] Buffered, sequential, and streaming reader modes
+- [ ] ADO.NET conformance, stress, differential, and performance baselines
+
+Later milestones follow the full product specification: EF Core CRUD and migrations, PostgreSQL-native LINQ, advanced schema modelling and scaffolding, SQL/PGQ property graphs, and the extension ecosystem. Each milestone must have conformance and real-server acceptance tests before its version is published.

@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.3 can connect with TLS and SCRAM-SHA-256 and execute buffered simple and parameterized queries through ADO.NET, but it does not yet support transactions, pooling, cancellation, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental pre-release provider. Version 0.0.4 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, and cancellable queries through ADO.NET, but it does not yet support pooling, prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -42,7 +42,7 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 
 ## Status
 
-The current `0.0.3` implementation provides:
+The current `0.0.4` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -59,6 +59,8 @@ The current `0.0.3` implementation provides:
 - buffered simple-query execution with multiple results;
 - extended-query execution through Parse, Bind, Describe, Execute, and Sync;
 - typed binary and text parameter encoding without SQL interpolation;
+- ADO.NET transactions with PostgreSQL isolation levels, commit, rollback, and rollback-on-disposal;
+- cancellation tokens, command timeouts, and explicit sync/async cancellation over PostgreSQL's dedicated channel;
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.
 
 Minimal usage:
