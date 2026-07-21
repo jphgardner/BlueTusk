@@ -125,9 +125,9 @@ public static class BlueTuskFrontendMessageWriter
         WriteUtf8(output, sql, sqlLength);
         WriteByte(output, 0);
         WriteInt16(output, checked((short)parameterTypeOids.Count));
-        foreach (var oid in parameterTypeOids)
+        for (var index = 0; index < parameterTypeOids.Count; index++)
         {
-            WriteInt32(output, unchecked((int)oid));
+            WriteInt32(output, unchecked((int)parameterTypeOids[index]));
         }
     }
 
@@ -142,7 +142,7 @@ public static class BlueTuskFrontendMessageWriter
         ValidateCString(portalName, nameof(portalName));
         ValidateCString(statementName, nameof(statementName));
         ArgumentNullException.ThrowIfNull(parameters);
-        resultFormatCodes ??= [];
+        resultFormatCodes ??= Array.Empty<short>();
         ArgumentOutOfRangeException.ThrowIfGreaterThan(parameters.Count, short.MaxValue);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(resultFormatCodes.Count, short.MaxValue);
 
@@ -152,8 +152,9 @@ public static class BlueTuskFrontendMessageWriter
             sizeof(int) + portalLength + 1 + statementLength + 1 + sizeof(short) +
             (sizeof(short) * parameters.Count) + sizeof(short) + sizeof(short) +
             (sizeof(short) * resultFormatCodes.Count));
-        foreach (var parameter in parameters)
+        for (var index = 0; index < parameters.Count; index++)
         {
+            var parameter = parameters[index];
             length = checked(length + sizeof(int) + (parameter.Value?.Length ?? 0));
         }
 
@@ -164,8 +165,9 @@ public static class BlueTuskFrontendMessageWriter
         WriteUtf8(output, statementName, statementLength);
         WriteByte(output, 0);
         WriteInt16(output, checked((short)parameters.Count));
-        foreach (var parameter in parameters)
+        for (var index = 0; index < parameters.Count; index++)
         {
+            var parameter = parameters[index];
             if (parameter.FormatCode is not (0 or 1))
             {
                 throw new ArgumentOutOfRangeException(nameof(parameters), "Parameter format codes must be text (0) or binary (1).");
@@ -175,8 +177,9 @@ public static class BlueTuskFrontendMessageWriter
         }
 
         WriteInt16(output, checked((short)parameters.Count));
-        foreach (var parameter in parameters)
+        for (var index = 0; index < parameters.Count; index++)
         {
+            var parameter = parameters[index];
             if (parameter.Value is not { } value)
             {
                 WriteInt32(output, -1);
@@ -188,8 +191,9 @@ public static class BlueTuskFrontendMessageWriter
         }
 
         WriteInt16(output, checked((short)resultFormatCodes.Count));
-        foreach (var formatCode in resultFormatCodes)
+        for (var index = 0; index < resultFormatCodes.Count; index++)
         {
+            var formatCode = resultFormatCodes[index];
             if (formatCode is not (0 or 1))
             {
                 throw new ArgumentOutOfRangeException(nameof(resultFormatCodes), "Result format codes must be text (0) or binary (1).");
