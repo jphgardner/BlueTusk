@@ -19,6 +19,7 @@ public sealed record BlueTuskTypeDescriptor
 
     public BlueTuskTypeId? RangeSubtype { get; init; }
 
+    public char Delimiter { get; init; } = ',';
+
     public string QualifiedName => $"{Schema}.{Name}";
 }
-

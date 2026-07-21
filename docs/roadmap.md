@@ -70,7 +70,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Full-text scalar family
 - [ ] Catalogue-specific scalar families
 - [x] Catalogue discovery and per-data-source cache with explicit reload
-- [ ] Arrays, enums, domains, and composites
+- [x] Catalogue-driven arrays in binary and text formats
+- [ ] Enums, domains, composites, and records
 - [ ] Ranges and multiranges
 - [x] Public runtime codec registration by discovered catalogue name or explicit OID
 

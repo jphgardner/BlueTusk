@@ -19,6 +19,8 @@ public sealed record BlueTuskCatalogueType
     public BlueTuskTypeId? ArrayType { get; init; }
 
     public BlueTuskTypeId? RangeSubtype { get; init; }
+
+    public char Delimiter { get; init; } = ',';
 }
 
 public static class BlueTuskTypeCatalogue
@@ -64,6 +66,8 @@ public static class BlueTuskTypeCatalogue
                 requireResolution: hasDiscoveredTypes);
         }
 
+        RegisterArrayCodecs(builder, descriptors);
+
         return builder.Build();
     }
 
@@ -91,6 +95,7 @@ public static class BlueTuskTypeCatalogue
             BaseType = type.BaseType,
             ArrayType = type.ArrayType,
             RangeSubtype = type.RangeSubtype,
+            Delimiter = type.Delimiter,
         };
     }
 
@@ -170,6 +175,25 @@ public static class BlueTuskTypeCatalogue
             }
 
             builder.RegisterOrReplaceCodec(matches[0].Id, registration.Value);
+        }
+    }
+
+    private static void RegisterArrayCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        foreach (var arrayType in descriptors.Values.Where(type => type.Kind == BlueTuskTypeKind.Array))
+        {
+            if (builder.ContainsCodec(arrayType.Id) ||
+                arrayType.ElementType is not { } elementTypeId ||
+                !descriptors.TryGetValue(elementTypeId, out var elementType) ||
+                !builder.TryGetCodec(elementTypeId, out var elementCodec) ||
+                elementCodec is null)
+            {
+                continue;
+            }
+
+            builder.RegisterCodec(arrayType.Id, new BlueTuskArrayCodec(elementType, elementCodec));
         }
     }
 }

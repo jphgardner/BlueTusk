@@ -313,6 +313,52 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Catalogue_driven_arrays_round_trip_shape_nulls_and_lower_bounds()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        var integers = new[] { int.MinValue, 0, int.MaxValue };
+        string?[] text = ["a,b", null, "NULL", "snow 🐘"];
+        var matrix = new int[,]
+        {
+            { 1, 2 },
+            { 3, 4 },
+        };
+
+        await using (var binaryCommand = dataSource.CreateCommand(
+            "SELECT $1::int4[], $2::text[], $3::int4[]"))
+        {
+            binaryCommand.Parameters.Add(new BlueTuskParameter<int[]>(integers));
+            binaryCommand.Parameters.Add(
+                new BlueTuskParameter<string?[]>(text) { PostgreSqlTypeOid = 1009 });
+            binaryCommand.Parameters.Add(new BlueTuskParameter<int[,]>(matrix));
+            await using var reader = await binaryCommand.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(integers, reader.GetFieldValue<int[]>(0));
+            Assert.Equal(text, reader.GetFieldValue<string?[]>(1));
+            Assert.Equal(matrix.Cast<int>(), reader.GetFieldValue<int[,]>(2).Cast<int>());
+        }
+
+        await using (var textCommand = dataSource.CreateCommand(
+            "SELECT '{{1,2},{3,4}}'::int4[], '[0:1]={5,6}'::int4[], " +
+            "'{\"a,b\",NULL,\"NULL\",\"snow 🐘\"}'::text[]"))
+        await using (var reader = await textCommand.ExecuteReaderAsync(CancellationToken.None))
+        {
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            var textMatrix = reader.GetFieldValue<int[,]>(0);
+            Assert.Equal(1, textMatrix[0, 0]);
+            Assert.Equal(2, textMatrix[0, 1]);
+            Assert.Equal(3, textMatrix[1, 0]);
+            Assert.Equal(4, textMatrix[1, 1]);
+
+            var bounded = reader.GetFieldValue<Array>(1);
+            Assert.Equal(-1, bounded.GetLowerBound(0));
+            Assert.Equal(5, bounded.GetValue(-1));
+            Assert.Equal(6, bounded.GetValue(0));
+            Assert.Equal(text, reader.GetFieldValue<string?[]>(2));
+        }
+    }
+
+    [Fact]
     public async Task Data_source_builder_binds_runtime_codec_by_catalogue_name()
     {
         var builder = new BlueTuskDataSourceBuilder(GetConnectionString());

@@ -45,6 +45,19 @@ public ref struct BlueTuskWriter
         _offset += sizeof(int);
     }
 
+    public void WriteInt32BigEndianAt(int offset, int value)
+    {
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        if (offset > _offset - sizeof(int))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(offset),
+                "The target must be a complete Int32 within the data already written.");
+        }
+
+        BinaryPrimitives.WriteInt32BigEndian(_buffer[offset..], value);
+    }
+
     public void WriteUInt32BigEndian(uint value)
     {
         EnsureRemaining(sizeof(uint));

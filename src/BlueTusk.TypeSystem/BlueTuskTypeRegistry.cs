@@ -38,7 +38,14 @@ public sealed class BlueTuskTypeRegistry
         out IBlueTuskCodec? codec)
     {
         ArgumentNullException.ThrowIfNull(clrType);
-        if (_uniqueClrTypes.TryGetValue(clrType, out var id))
+        if (!_uniqueClrTypes.TryGetValue(clrType, out var id) && clrType.IsArray)
+        {
+            var elementType = clrType.GetElementType()!;
+            elementType = Nullable.GetUnderlyingType(elementType) ?? elementType;
+            _uniqueClrTypes.TryGetValue(elementType.MakeArrayType(), out id);
+        }
+
+        if (id != default)
         {
             type = _types[id];
             codec = _codecs[id];
@@ -150,6 +157,11 @@ public sealed class BlueTuskTypeRegistryBuilder
         _namedCodecs[type] = codec;
         return this;
     }
+
+    internal bool ContainsCodec(BlueTuskTypeId type) => _codecs.ContainsKey(type);
+
+    internal bool TryGetCodec(BlueTuskTypeId type, out IBlueTuskCodec? codec) =>
+        _codecs.TryGetValue(type, out codec);
 
     public BlueTuskTypeRegistry Build() =>
         new(

@@ -38,7 +38,7 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Path { get; } = Create(602, "path", 1019);
 
-    public static BlueTuskTypeDescriptor Box { get; } = Create(603, "box", 1020);
+    public static BlueTuskTypeDescriptor Box { get; } = Create(603, "box", 1020, ';');
 
     public static BlueTuskTypeDescriptor Polygon { get; } = Create(604, "polygon", 1027);
 
@@ -143,12 +143,13 @@ public static class BlueTuskBuiltInTypes
             .Build();
     }
 
-    private static BlueTuskTypeDescriptor Create(uint oid, string name, uint arrayOid) => new()
+    private static BlueTuskTypeDescriptor Create(uint oid, string name, uint arrayOid, char delimiter = ',') => new()
     {
         Id = new BlueTuskTypeId(oid),
         Schema = "pg_catalog",
         Name = name,
         Kind = BlueTuskTypeKind.Base,
         ArrayType = new BlueTuskTypeId(arrayOid),
+        Delimiter = delimiter,
     };
 }

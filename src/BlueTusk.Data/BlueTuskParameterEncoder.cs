@@ -325,7 +325,7 @@ internal static class BlueTuskParameterEncoder
             type is not null &&
             types.TryGetCodec(typeId, out var codec) &&
             codec is not null &&
-            codec.ClrType.IsInstanceOfType(value))
+            (codec.ClrType.IsInstanceOfType(value) || codec is BlueTuskArrayCodec && value is Array))
         {
             return EncodeRegistered(typeOid, type, codec, value);
         }

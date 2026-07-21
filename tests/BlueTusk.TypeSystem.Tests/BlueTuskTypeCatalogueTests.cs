@@ -180,6 +180,40 @@ public sealed class BlueTuskTypeCatalogueTests
         Assert.IsType<BlueTuskSplitCodec<SpecialValue>>(codec);
     }
 
+    [Fact]
+    public void Discovered_array_composes_element_codec_and_infers_all_clr_ranks()
+    {
+        var registry = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.Int4.Id,
+                Schema = "pg_catalog",
+                Name = "int4",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = new BlueTuskTypeId(1007),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(1007),
+                Schema = "pg_catalog",
+                Name = "_int4",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.Int4.Id,
+            },
+        ]);
+
+        Assert.True(registry.TryGetCodec(new BlueTuskTypeId(1007), out var registered));
+        var codec = Assert.IsType<BlueTuskArrayCodec>(registered);
+        Assert.Equal(typeof(int[]), codec.ClrType);
+        Assert.True(registry.TryGetType(typeof(int[,]), out var type, out _));
+        Assert.Equal(1007U, type!.Id.Oid);
+        Assert.True(registry.TryGetType(typeof(int?[]), out type, out _));
+        Assert.Equal(1007U, type!.Id.Oid);
+    }
+
     private readonly record struct SpecialValue(string Value);
 
     private sealed class SpecialValueCodec : BlueTuskCodec<SpecialValue>

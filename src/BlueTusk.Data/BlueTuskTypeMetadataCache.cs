@@ -14,7 +14,7 @@ internal sealed class BlueTuskTypeMetadataCache
     private const string CatalogueQuery =
         "SELECT t.oid::text, n.nspname, t.typname, t.typtype::text, t.typcategory::text, " +
         "NULLIF(t.typelem, 0)::text, NULLIF(t.typbasetype, 0)::text, NULLIF(t.typarray, 0)::text, " +
-        "NULLIF(r.rngsubtype, 0)::text " +
+        "NULLIF(r.rngsubtype, 0)::text, t.typdelim::text " +
         "FROM pg_catalog.pg_type AS t " +
         "JOIN pg_catalog.pg_namespace AS n ON n.oid = t.typnamespace " +
         "LEFT JOIN pg_catalog.pg_range AS r ON r.rngtypid = t.oid OR r.rngmultitypid = t.oid " +
@@ -85,7 +85,7 @@ internal sealed class BlueTuskTypeMetadataCache
             var moneyFormat = new BlueTuskMoneyFormat(
                 GetRequiredText(moneyRow[0], "lc_monetary"),
                 checked((int)ParseUInt32(moneyRow[1], "money fractional digits")));
-            if (resultSet.Fields.Count != 9)
+            if (resultSet.Fields.Count != 10)
             {
                 throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected column count.");
             }
@@ -105,6 +105,7 @@ internal sealed class BlueTuskTypeMetadataCache
                     BaseType = ParseOptionalTypeId(values[6]),
                     ArrayType = ParseOptionalTypeId(values[7]),
                     RangeSubtype = ParseOptionalTypeId(values[8]),
+                    Delimiter = GetRequiredCharacter(values[9], "delimiter"),
                 };
             }
 
