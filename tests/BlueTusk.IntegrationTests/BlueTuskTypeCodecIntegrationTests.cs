@@ -197,6 +197,42 @@ public sealed class BlueTuskTypeCodecIntegrationTests
         Assert.Equal(macaddr8, reader.GetFieldValue<BlueTuskMacAddress8>(3));
     }
 
+    [Fact]
+    public async Task Geometric_scalar_parameters_round_trip_in_binary()
+    {
+        var first = new BlueTuskPoint(1.5, -2.25);
+        var second = new BlueTuskPoint(3, 4);
+        var third = new BlueTuskPoint(-5.5, 6.75);
+        var point = first;
+        var line = new BlueTuskLine(1, 2, 3);
+        var lineSegment = new BlueTuskLineSegment(first, second);
+        var box = new BlueTuskBox(first, second);
+        var path = new BlueTuskPath(new[] { first, second, third }, isClosed: false);
+        var polygon = new BlueTuskPolygon(new[] { first, second, third });
+        var circle = new BlueTuskCircle(first, 3.5);
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand(
+            "SELECT $1::point, $2::line, $3::lseg, $4::box, $5::path, $6::polygon, $7::circle");
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskPoint>(point));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskLine>(line));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskLineSegment>(lineSegment));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskBox>(box));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskPath>(path));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskPolygon>(polygon));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskCircle>(circle));
+
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(point, reader.GetFieldValue<BlueTuskPoint>(0));
+        Assert.Equal(line, reader.GetFieldValue<BlueTuskLine>(1));
+        Assert.Equal(lineSegment, reader.GetFieldValue<BlueTuskLineSegment>(2));
+        Assert.Equal(box, reader.GetFieldValue<BlueTuskBox>(3));
+        Assert.Equal(path, reader.GetFieldValue<BlueTuskPath>(4));
+        Assert.Equal(polygon, reader.GetFieldValue<BlueTuskPolygon>(5));
+        Assert.Equal(circle, reader.GetFieldValue<BlueTuskCircle>(6));
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

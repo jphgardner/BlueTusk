@@ -64,7 +64,10 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.0.7 — Advanced, dynamic, and structured types
 
-- [ ] Remaining scalar families: money, time with time zone, interval, bit strings, network, geometric, full-text, `pg_lsn`, `tid`, and catalogue-specific types
+- [x] Wire-specific scalar families: time with time zone, interval, bit strings, `pg_lsn`, and `tid`
+- [x] Network and geometric scalar families
+- [ ] Money, including `lc_monetary`-aware scale discovery
+- [ ] Full-text and catalogue-specific scalar families
 - [ ] Catalogue discovery and cache
 - [ ] Arrays, enums, domains, and composites
 - [ ] Ranges and multiranges

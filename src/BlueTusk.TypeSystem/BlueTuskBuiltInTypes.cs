@@ -32,11 +32,25 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Xml { get; } = Create(142, "xml", 143);
 
+    public static BlueTuskTypeDescriptor Point { get; } = Create(600, "point", 1017);
+
+    public static BlueTuskTypeDescriptor LineSegment { get; } = Create(601, "lseg", 1018);
+
+    public static BlueTuskTypeDescriptor Path { get; } = Create(602, "path", 1019);
+
+    public static BlueTuskTypeDescriptor Box { get; } = Create(603, "box", 1020);
+
+    public static BlueTuskTypeDescriptor Polygon { get; } = Create(604, "polygon", 1027);
+
+    public static BlueTuskTypeDescriptor Line { get; } = Create(628, "line", 629);
+
     public static BlueTuskTypeDescriptor Cidr { get; } = Create(650, "cidr", 651);
 
     public static BlueTuskTypeDescriptor Float4 { get; } = Create(700, "float4", 1021);
 
     public static BlueTuskTypeDescriptor Float8 { get; } = Create(701, "float8", 1022);
+
+    public static BlueTuskTypeDescriptor Circle { get; } = Create(718, "circle", 719);
 
     public static BlueTuskTypeDescriptor Macaddr8 { get; } = Create(774, "macaddr8", 775);
 
@@ -90,9 +104,16 @@ public static class BlueTuskBuiltInTypes
             .Register(Tid, new BlueTuskTupleIdCodec())
             .Register(Json, textCodec)
             .Register(Xml, textCodec)
+            .Register(Point, new BlueTuskPointCodec())
+            .Register(LineSegment, new BlueTuskLineSegmentCodec())
+            .Register(Path, new BlueTuskPathCodec())
+            .Register(Box, new BlueTuskBoxCodec())
+            .Register(Polygon, new BlueTuskPolygonCodec())
+            .Register(Line, new BlueTuskLineCodec())
             .Register(Cidr, new BlueTuskCidrCodec())
             .Register(Float4, new BlueTuskSingleCodec())
             .Register(Float8, new BlueTuskDoubleCodec())
+            .Register(Circle, new BlueTuskCircleCodec())
             .Register(Macaddr8, new BlueTuskMacAddress8Codec())
             .Register(Macaddr, new BlueTuskMacAddressCodec())
             .Register(Inet, new BlueTuskInetCodec())

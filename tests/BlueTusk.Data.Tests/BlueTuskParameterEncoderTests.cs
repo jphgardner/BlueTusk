@@ -9,6 +9,8 @@ public sealed class BlueTuskParameterEncoderTests
 {
     private static readonly uint[] AdvancedTypeOids = [27, 1186, 1266, 1562, 3220];
     private static readonly int[] AdvancedPayloadLengths = [6, 16, 12, 5, 8];
+    private static readonly uint[] GeometricTypeOids = [600, 601, 602, 603, 604, 628, 718];
+    private static readonly int[] GeometricPayloadLengths = [16, 32, 37, 32, 36, 24, 24];
 
     [Fact]
     public void Encodes_int32_as_binary_int4()
@@ -129,5 +131,27 @@ public sealed class BlueTuskParameterEncoderTests
         Assert.Equal(1, cidr.FormatCode);
         Assert.Equal(1, macaddr.FormatCode);
         Assert.Equal(1, macaddr8.FormatCode);
+    }
+
+    [Fact]
+    public void Encodes_geometric_values_in_binary()
+    {
+        var points = new[] { new BlueTuskPoint(1, 2), new BlueTuskPoint(3, 4) };
+        var values = new BlueTuskParameter[]
+        {
+            new BlueTuskParameter<BlueTuskPoint>(points[0]),
+            new BlueTuskParameter<BlueTuskLineSegment>(new BlueTuskLineSegment(points[0], points[1])),
+            new BlueTuskParameter<BlueTuskPath>(new BlueTuskPath(points, isClosed: false)),
+            new BlueTuskParameter<BlueTuskBox>(new BlueTuskBox(points[0], points[1])),
+            new BlueTuskParameter<BlueTuskPolygon>(new BlueTuskPolygon(points)),
+            new BlueTuskParameter<BlueTuskLine>(new BlueTuskLine(1, 2, 3)),
+            new BlueTuskParameter<BlueTuskCircle>(new BlueTuskCircle(points[0], 5)),
+        };
+
+        var encoded = values.Select(BlueTuskParameterEncoder.Encode).ToArray();
+
+        Assert.Equal(GeometricTypeOids, encoded.Select(item => item.TypeOid));
+        Assert.Equal(GeometricPayloadLengths, encoded.Select(item => item.Value!.Value.Length));
+        Assert.All(encoded, item => Assert.Equal(1, item.FormatCode));
     }
 }

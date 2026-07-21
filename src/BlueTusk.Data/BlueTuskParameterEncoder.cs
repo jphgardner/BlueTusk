@@ -17,8 +17,15 @@ internal static class BlueTuskParameterEncoder
     private const uint TextOid = 25;
     private const uint OidOid = 26;
     private const uint TidOid = 27;
+    private const uint PointOid = 600;
+    private const uint LineSegmentOid = 601;
+    private const uint PathOid = 602;
+    private const uint BoxOid = 603;
+    private const uint PolygonOid = 604;
+    private const uint LineOid = 628;
     private const uint Float4Oid = 700;
     private const uint Float8Oid = 701;
+    private const uint CircleOid = 718;
     private const uint CidrOid = 650;
     private const uint Macaddr8Oid = 774;
     private const uint MacaddrOid = 829;
@@ -108,6 +115,13 @@ internal static class BlueTuskParameterEncoder
             BlueTuskTimeWithTimeZone => TimeWithTimeZoneOid,
             BlueTuskBitString => VarbitOid,
             BlueTuskLogSequenceNumber => PgLsnOid,
+            BlueTuskPoint => PointOid,
+            BlueTuskLineSegment => LineSegmentOid,
+            BlueTuskPath => PathOid,
+            BlueTuskBox => BoxOid,
+            BlueTuskPolygon => PolygonOid,
+            BlueTuskLine => LineOid,
+            BlueTuskCircle => CircleOid,
             BlueTuskNetworkAddress network => network.IsCidr ? CidrOid : InetOid,
             BlueTuskMacAddress8 => Macaddr8Oid,
             BlueTuskMacAddress => MacaddrOid,
@@ -135,6 +149,38 @@ internal static class BlueTuskParameterEncoder
         Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture)),
         Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
         Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
+        PointOid => EncodeBinary(
+            typeOid,
+            new BlueTuskPointCodec(),
+            BlueTuskBuiltInTypes.Point,
+            GetValue<BlueTuskPoint>(value),
+            16),
+        LineSegmentOid => EncodeBinary(
+            typeOid,
+            new BlueTuskLineSegmentCodec(),
+            BlueTuskBuiltInTypes.LineSegment,
+            GetValue<BlueTuskLineSegment>(value),
+            32),
+        PathOid => EncodePath(typeOid, GetValue<BlueTuskPath>(value)),
+        BoxOid => EncodeBinary(
+            typeOid,
+            new BlueTuskBoxCodec(),
+            BlueTuskBuiltInTypes.Box,
+            GetValue<BlueTuskBox>(value),
+            32),
+        PolygonOid => EncodePolygon(typeOid, GetValue<BlueTuskPolygon>(value)),
+        LineOid => EncodeBinary(
+            typeOid,
+            new BlueTuskLineCodec(),
+            BlueTuskBuiltInTypes.Line,
+            GetValue<BlueTuskLine>(value),
+            24),
+        CircleOid => EncodeBinary(
+            typeOid,
+            new BlueTuskCircleCodec(),
+            BlueTuskBuiltInTypes.Circle,
+            GetValue<BlueTuskCircle>(value),
+            24),
         CidrOid or InetOid => EncodeNetworkAddress(typeOid, GetValue<BlueTuskNetworkAddress>(value)),
         Macaddr8Oid => EncodeBinary(
             typeOid,
@@ -332,6 +378,22 @@ internal static class BlueTuskParameterEncoder
         return Binary(typeOid, bytes);
     }
 
+    private static BlueTuskExtendedQueryParameter EncodePath(uint typeOid, BlueTuskPath value) =>
+        EncodeBinary(
+            typeOid,
+            new BlueTuskPathCodec(),
+            BlueTuskBuiltInTypes.Path,
+            value,
+            checked(5 + (value.Count * 16)));
+
+    private static BlueTuskExtendedQueryParameter EncodePolygon(uint typeOid, BlueTuskPolygon value) =>
+        EncodeBinary(
+            typeOid,
+            new BlueTuskPolygonCodec(),
+            BlueTuskBuiltInTypes.Polygon,
+            value,
+            checked(4 + (value.Count * 16)));
+
     private static ReadOnlyMemory<byte> GetBytes(object value) => value switch
     {
         byte[] bytes => bytes,
@@ -364,7 +426,7 @@ internal static class BlueTuskParameterEncoder
         ? dateTimeOffset
         : DateTimeOffset.Parse(Convert.ToString(value, CultureInfo.InvariantCulture)!, CultureInfo.InvariantCulture);
 
-    private static T GetValue<T>(object value) where T : struct => value is T typed
+    private static T GetValue<T>(object value) => value is T typed
         ? typed
         : throw new InvalidCastException($"Value of type {value.GetType().FullName} cannot be encoded as {typeof(T).FullName}.");
 }

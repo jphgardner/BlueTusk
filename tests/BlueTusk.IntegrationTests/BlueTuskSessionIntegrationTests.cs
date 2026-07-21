@@ -205,7 +205,7 @@ public sealed class BlueTuskSessionIntegrationTests
         await using var connection = new BlueTuskConnection(connectionString);
         await connection.OpenAsync(CancellationToken.None);
         await using var command = new BlueTuskCommand(
-            "SELECT 42::int4 AS answer, 'hello'::text AS greeting, NULL::text AS missing, current_timestamp AS now, point(1, 2) AS unknown_value; SELECT 7::int4 AS second",
+            "SELECT 42::int4 AS answer, 'hello'::text AS greeting, NULL::text AS missing, current_timestamp AS now, point(1, 2) AS point_value; SELECT 7::int4 AS second",
             connection);
         await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
 
@@ -214,7 +214,7 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal("hello", reader.GetString(1));
         Assert.True(await reader.IsDBNullAsync(2, CancellationToken.None));
         Assert.IsType<DateTimeOffset>(reader.GetValue(3));
-        Assert.Equal("(1,2)", reader.GetFieldValue<BlueTuskUnknownValue>(4).GetText());
+        Assert.Equal(new BlueTuskPoint(1, 2), reader.GetFieldValue<BlueTuskPoint>(4));
         Assert.False(await reader.ReadAsync(CancellationToken.None));
         Assert.True(await reader.NextResultAsync(CancellationToken.None));
         Assert.True(await reader.ReadAsync(CancellationToken.None));
