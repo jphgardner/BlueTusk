@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Data;
+using System.Data.Common;
 using System.Text;
 using BlueTusk.Client;
 using BlueTusk.Data;
@@ -414,6 +415,22 @@ public sealed class BlueTuskSessionIntegrationTests
             "SELECT count(*)::int8 FROM bluetusk_dispose_transaction_test",
             connection);
         Assert.Equal(0, await count.ExecuteScalarAsync<long>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Transactions_work_through_ADO_NET_base_classes()
+    {
+        await using DbConnection connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            CancellationToken.None);
+        await using var command = connection.CreateCommand();
+        command.CommandText = "SELECT 42::int4";
+        command.Transaction = transaction;
+
+        Assert.Equal(42, await command.ExecuteScalarAsync(CancellationToken.None));
+        await transaction.CommitAsync(CancellationToken.None);
     }
 
     private static string GetConnectionString()
