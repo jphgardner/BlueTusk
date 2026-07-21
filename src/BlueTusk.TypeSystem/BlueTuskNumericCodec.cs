@@ -12,6 +12,20 @@ public sealed class BlueTuskNumericCodec : BlueTuskCodec<BlueTuskNumeric>
     private const ushort PositiveInfinitySign = 0xD000;
     private const ushort NegativeInfinitySign = 0xF000;
 
+    public static int GetMaximumBinarySize(BlueTuskNumeric value)
+    {
+        if (!value.IsFinite)
+        {
+            return 8;
+        }
+
+        var digits = BigInteger.Abs(value.UnscaledValue).ToString(CultureInfo.InvariantCulture).Length;
+        var integerDigits = Math.Max(0, digits - value.Scale);
+        var integerGroups = (integerDigits + 3) / 4;
+        var fractionalGroups = (value.Scale + 3) / 4;
+        return checked(8 + (sizeof(short) * (integerGroups + fractionalGroups)));
+    }
+
     public override BlueTuskNumeric ReadTyped(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,

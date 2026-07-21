@@ -66,14 +66,20 @@ public sealed class BlueTuskParameterEncoderTests
     }
 
     [Fact]
-    public void Encodes_arbitrary_precision_numeric_as_lossless_text()
+    public void Encodes_arbitrary_precision_numeric_as_lossless_binary()
     {
         var value = BlueTuskNumeric.Parse("123456789012345678901234567890.123456789");
 
         var encoded = BlueTuskParameterEncoder.Encode(new BlueTuskParameter<BlueTuskNumeric>(value));
 
         Assert.Equal(1700U, encoded.TypeOid);
-        Assert.Equal(0, encoded.FormatCode);
-        Assert.Equal(value.ToString(), Encoding.UTF8.GetString(encoded.Value!.Value.Span));
+        Assert.Equal(1, encoded.FormatCode);
+        var reader = new BlueTuskReader(encoded.Value!.Value.Span);
+        Assert.Equal(
+            value,
+            new BlueTuskNumericCodec().ReadTyped(
+                ref reader,
+                BlueTuskDataFormat.Binary,
+                BlueTuskBuiltInTypes.Numeric));
     }
 }

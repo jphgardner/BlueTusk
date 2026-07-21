@@ -118,9 +118,7 @@ internal static class BlueTuskParameterEncoder
         Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
         Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
         ByteaOid => Binary(typeOid, GetBytes(value)),
-        NumericOid => Text(typeOid, value is BlueTuskNumeric numeric
-            ? numeric.ToString()
-            : Convert.ToDecimal(value, CultureInfo.InvariantCulture).ToString(CultureInfo.InvariantCulture)),
+        NumericOid => EncodeNumeric(typeOid, value),
         UuidOid => EncodeBinary(
             typeOid,
             new BlueTuskGuidCodec(),
@@ -214,6 +212,27 @@ internal static class BlueTuskParameterEncoder
         {
             throw new InvalidOperationException(
                 $"The {type.QualifiedName} parameter codec wrote {writer.WrittenCount} bytes; {length} were expected.");
+        }
+
+        return Binary(typeOid, bytes);
+    }
+
+    private static BlueTuskExtendedQueryParameter EncodeNumeric(uint typeOid, object value)
+    {
+        var numeric = value is BlueTuskNumeric typed
+            ? typed
+            : (BlueTuskNumeric)Convert.ToDecimal(value, CultureInfo.InvariantCulture);
+        var codec = new BlueTuskNumericCodec();
+        var bytes = new byte[BlueTuskNumericCodec.GetMaximumBinarySize(numeric)];
+        var writer = new BlueTuskWriter(bytes);
+        codec.WriteTyped(
+            ref writer,
+            numeric,
+            BlueTuskDataFormat.Binary,
+            BlueTuskBuiltInTypes.Numeric);
+        if (writer.WrittenCount != bytes.Length)
+        {
+            Array.Resize(ref bytes, writer.WrittenCount);
         }
 
         return Binary(typeOid, bytes);
