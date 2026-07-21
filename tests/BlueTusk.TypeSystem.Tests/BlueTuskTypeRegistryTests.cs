@@ -25,6 +25,7 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(23, "int4", typeof(int), typeof(BlueTuskInt32Codec))]
     [InlineData(25, "text", typeof(string), typeof(BlueTuskStringCodec))]
     [InlineData(26, "oid", typeof(uint), typeof(BlueTuskUInt32Codec))]
+    [InlineData(27, "tid", typeof(BlueTuskTupleId), typeof(BlueTuskTupleIdCodec))]
     [InlineData(114, "json", typeof(string), typeof(BlueTuskStringCodec))]
     [InlineData(142, "xml", typeof(string), typeof(BlueTuskStringCodec))]
     [InlineData(700, "float4", typeof(float), typeof(BlueTuskSingleCodec))]
@@ -35,8 +36,13 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(1083, "time", typeof(TimeSpan), typeof(BlueTuskTimeCodec))]
     [InlineData(1114, "timestamp", typeof(DateTime), typeof(BlueTuskTimestampCodec))]
     [InlineData(1184, "timestamptz", typeof(DateTimeOffset), typeof(BlueTuskTimestampWithTimeZoneCodec))]
+    [InlineData(1186, "interval", typeof(BlueTuskInterval), typeof(BlueTuskIntervalCodec))]
+    [InlineData(1266, "timetz", typeof(BlueTuskTimeWithTimeZone), typeof(BlueTuskTimeWithTimeZoneCodec))]
+    [InlineData(1560, "bit", typeof(BlueTuskBitString), typeof(BlueTuskBitStringCodec))]
+    [InlineData(1562, "varbit", typeof(BlueTuskBitString), typeof(BlueTuskBitStringCodec))]
     [InlineData(1700, "numeric", typeof(BlueTuskNumeric), typeof(BlueTuskNumericCodec))]
     [InlineData(2950, "uuid", typeof(Guid), typeof(BlueTuskGuidCodec))]
+    [InlineData(3220, "pg_lsn", typeof(BlueTuskLogSequenceNumber), typeof(BlueTuskLogSequenceNumberCodec))]
     [InlineData(3802, "jsonb", typeof(string), typeof(BlueTuskJsonbCodec))]
     public void Registry_resolves_core_scalar_codecs(
         uint oid,

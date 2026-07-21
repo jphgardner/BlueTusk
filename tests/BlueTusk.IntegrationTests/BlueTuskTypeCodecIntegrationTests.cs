@@ -113,6 +113,66 @@ public sealed class BlueTuskTypeCodecIntegrationTests
         Assert.Equal(numeric, reader.GetFieldValue<BlueTuskNumeric>(5));
     }
 
+    [Fact]
+    public async Task Advanced_postgresql_scalars_decode_from_binary_results()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand(
+            "SELECT $1::int4, " +
+            "'(42,7)'::tid, " +
+            "'24:00:00+05:30:45'::timetz, " +
+            "'1 year 2 mons 3 days 04:05:06.789'::interval, " +
+            "'infinity'::interval, " +
+            "B'10110'::bit(5), " +
+            "B'001011'::varbit, " +
+            "'16/B374D848'::pg_lsn");
+        command.Parameters.Add(new BlueTuskParameter<int>(1));
+
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(new BlueTuskTupleId(42, 7), reader.GetFieldValue<BlueTuskTupleId>(1));
+        Assert.Equal(
+            new BlueTuskTimeWithTimeZone(TimeSpan.FromDays(1), new TimeSpan(5, 30, 45)),
+            reader.GetFieldValue<BlueTuskTimeWithTimeZone>(2));
+        Assert.Equal(new BlueTuskInterval(14, 3, 14_706_789_000), reader.GetFieldValue<BlueTuskInterval>(3));
+        Assert.Equal(BlueTuskInterval.PositiveInfinity, reader.GetFieldValue<BlueTuskInterval>(4));
+        Assert.Equal(new BlueTuskBitString("10110"), reader.GetFieldValue<BlueTuskBitString>(5));
+        Assert.Equal(new BlueTuskBitString("001011"), reader.GetFieldValue<BlueTuskBitString>(6));
+        Assert.Equal(
+            BlueTuskLogSequenceNumber.Parse("16/B374D848"),
+            reader.GetFieldValue<BlueTuskLogSequenceNumber>(7));
+    }
+
+    [Fact]
+    public async Task Advanced_postgresql_scalar_parameters_round_trip_in_binary()
+    {
+        var tupleId = new BlueTuskTupleId(42, 7);
+        var timeWithTimeZone = new BlueTuskTimeWithTimeZone(
+            new TimeSpan(23, 59, 59) + TimeSpan.FromTicks(123_456 * TimeSpan.TicksPerMicrosecond),
+            new TimeSpan(-8, -30, -45));
+        var interval = new BlueTuskInterval(-10, -3, 14_106_789_000);
+        var bits = new BlueTuskBitString("1011001");
+        var lsn = BlueTuskLogSequenceNumber.Parse("16/B374D848");
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand(
+            "SELECT $1::tid, $2::timetz, $3::interval, $4::varbit, $5::pg_lsn");
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskTupleId>(tupleId));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskTimeWithTimeZone>(timeWithTimeZone));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskInterval>(interval));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskBitString>(bits));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskLogSequenceNumber>(lsn));
+
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(tupleId, reader.GetFieldValue<BlueTuskTupleId>(0));
+        Assert.Equal(timeWithTimeZone, reader.GetFieldValue<BlueTuskTimeWithTimeZone>(1));
+        Assert.Equal(interval, reader.GetFieldValue<BlueTuskInterval>(2));
+        Assert.Equal(bits, reader.GetFieldValue<BlueTuskBitString>(3));
+        Assert.Equal(lsn, reader.GetFieldValue<BlueTuskLogSequenceNumber>(4));
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

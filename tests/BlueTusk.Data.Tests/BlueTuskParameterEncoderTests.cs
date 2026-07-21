@@ -7,6 +7,9 @@ namespace BlueTusk.Data.Tests;
 
 public sealed class BlueTuskParameterEncoderTests
 {
+    private static readonly uint[] AdvancedTypeOids = [27, 1186, 1266, 1562, 3220];
+    private static readonly int[] AdvancedPayloadLengths = [6, 16, 12, 5, 8];
+
     [Fact]
     public void Encodes_int32_as_binary_int4()
     {
@@ -81,5 +84,26 @@ public sealed class BlueTuskParameterEncoderTests
                 ref reader,
                 BlueTuskDataFormat.Binary,
                 BlueTuskBuiltInTypes.Numeric));
+    }
+
+    [Fact]
+    public void Encodes_postgresql_specific_scalar_values_in_binary()
+    {
+        var values = new BlueTuskParameter[]
+        {
+            new BlueTuskParameter<BlueTuskTupleId>(new BlueTuskTupleId(42, 7)),
+            new BlueTuskParameter<BlueTuskInterval>(new BlueTuskInterval(14, 3, 4_000_005)),
+            new BlueTuskParameter<BlueTuskTimeWithTimeZone>(
+                new BlueTuskTimeWithTimeZone(TimeSpan.FromHours(12), TimeSpan.FromHours(-8))),
+            new BlueTuskParameter<BlueTuskBitString>(new BlueTuskBitString("10110")),
+            new BlueTuskParameter<BlueTuskLogSequenceNumber>(
+                BlueTuskLogSequenceNumber.Parse("16/B374D848")),
+        };
+
+        var encoded = values.Select(BlueTuskParameterEncoder.Encode).ToArray();
+
+        Assert.Equal(AdvancedTypeOids, encoded.Select(item => item.TypeOid));
+        Assert.Equal(AdvancedPayloadLengths, encoded.Select(item => item.Value!.Value.Length));
+        Assert.All(encoded, item => Assert.Equal(1, item.FormatCode));
     }
 }

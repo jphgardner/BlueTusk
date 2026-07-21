@@ -16,14 +16,20 @@ internal static class BlueTuskParameterEncoder
     private const uint Int4Oid = 23;
     private const uint TextOid = 25;
     private const uint OidOid = 26;
+    private const uint TidOid = 27;
     private const uint Float4Oid = 700;
     private const uint Float8Oid = 701;
     private const uint DateOid = 1082;
     private const uint TimeOid = 1083;
     private const uint TimestampOid = 1114;
     private const uint TimestampWithTimeZoneOid = 1184;
+    private const uint IntervalOid = 1186;
+    private const uint TimeWithTimeZoneOid = 1266;
+    private const uint BitOid = 1560;
+    private const uint VarbitOid = 1562;
     private const uint NumericOid = 1700;
     private const uint UuidOid = 2950;
+    private const uint PgLsnOid = 3220;
 
     public static IReadOnlyList<BlueTuskExtendedQueryParameter> Encode(BlueTuskParameterCollection parameters)
     {
@@ -93,6 +99,11 @@ internal static class BlueTuskParameterEncoder
             double => Float8Oid,
             decimal => NumericOid,
             BlueTuskNumeric => NumericOid,
+            BlueTuskTupleId => TidOid,
+            BlueTuskInterval => IntervalOid,
+            BlueTuskTimeWithTimeZone => TimeWithTimeZoneOid,
+            BlueTuskBitString => VarbitOid,
+            BlueTuskLogSequenceNumber => PgLsnOid,
             Guid => UuidOid,
             byte[] or ReadOnlyMemory<byte> or Memory<byte> => ByteaOid,
             DateOnly => DateOid,
@@ -149,6 +160,31 @@ internal static class BlueTuskParameterEncoder
             BlueTuskBuiltInTypes.TimestampWithTimeZone,
             GetDateTimeOffset(value),
             sizeof(long)),
+        TidOid => EncodeBinary(
+            typeOid,
+            new BlueTuskTupleIdCodec(),
+            BlueTuskBuiltInTypes.Tid,
+            GetValue<BlueTuskTupleId>(value),
+            6),
+        IntervalOid => EncodeBinary(
+            typeOid,
+            new BlueTuskIntervalCodec(),
+            BlueTuskBuiltInTypes.Interval,
+            GetValue<BlueTuskInterval>(value),
+            16),
+        TimeWithTimeZoneOid => EncodeBinary(
+            typeOid,
+            new BlueTuskTimeWithTimeZoneCodec(),
+            BlueTuskBuiltInTypes.TimeWithTimeZone,
+            GetValue<BlueTuskTimeWithTimeZone>(value),
+            12),
+        BitOid or VarbitOid => EncodeBitString(typeOid, GetValue<BlueTuskBitString>(value)),
+        PgLsnOid => EncodeBinary(
+            typeOid,
+            new BlueTuskLogSequenceNumberCodec(),
+            BlueTuskBuiltInTypes.PgLsn,
+            GetValue<BlueTuskLogSequenceNumber>(value),
+            sizeof(ulong)),
         TextOid => Text(typeOid, Convert.ToString(value, CultureInfo.InvariantCulture) ?? string.Empty),
         _ when value is string text => Text(typeOid, text),
         _ when value is byte[] bytes => Binary(typeOid, bytes),
@@ -238,6 +274,18 @@ internal static class BlueTuskParameterEncoder
         return Binary(typeOid, bytes);
     }
 
+    private static BlueTuskExtendedQueryParameter EncodeBitString(uint typeOid, BlueTuskBitString value)
+    {
+        var bytes = new byte[sizeof(int) + ((value.Length + 7) / 8)];
+        var writer = new BlueTuskWriter(bytes);
+        new BlueTuskBitStringCodec().WriteTyped(
+            ref writer,
+            value,
+            BlueTuskDataFormat.Binary,
+            typeOid == BitOid ? BlueTuskBuiltInTypes.Bit : BlueTuskBuiltInTypes.Varbit);
+        return Binary(typeOid, bytes);
+    }
+
     private static ReadOnlyMemory<byte> GetBytes(object value) => value switch
     {
         byte[] bytes => bytes,
@@ -269,4 +317,8 @@ internal static class BlueTuskParameterEncoder
     private static DateTimeOffset GetDateTimeOffset(object value) => value is DateTimeOffset dateTimeOffset
         ? dateTimeOffset
         : DateTimeOffset.Parse(Convert.ToString(value, CultureInfo.InvariantCulture)!, CultureInfo.InvariantCulture);
+
+    private static T GetValue<T>(object value) where T : struct => value is T typed
+        ? typed
+        : throw new InvalidCastException($"Value of type {value.GetType().FullName} cannot be encoded as {typeof(T).FullName}.");
 }

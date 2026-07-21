@@ -26,6 +26,8 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Oid { get; } = Create(26, "oid", 1028);
 
+    public static BlueTuskTypeDescriptor Tid { get; } = Create(27, "tid", 1010);
+
     public static BlueTuskTypeDescriptor Json { get; } = Create(114, "json", 199);
 
     public static BlueTuskTypeDescriptor Xml { get; } = Create(142, "xml", 143);
@@ -46,11 +48,21 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor TimestampWithTimeZone { get; } = Create(1184, "timestamptz", 1185);
 
+    public static BlueTuskTypeDescriptor Interval { get; } = Create(1186, "interval", 1187);
+
+    public static BlueTuskTypeDescriptor TimeWithTimeZone { get; } = Create(1266, "timetz", 1270);
+
     public static BlueTuskTypeDescriptor Numeric { get; } = Create(1700, "numeric", 1231);
+
+    public static BlueTuskTypeDescriptor Bit { get; } = Create(1560, "bit", 1561);
+
+    public static BlueTuskTypeDescriptor Varbit { get; } = Create(1562, "varbit", 1563);
 
     public static BlueTuskTypeDescriptor Uuid { get; } = Create(2950, "uuid", 2951);
 
     public static BlueTuskTypeDescriptor Jsonb { get; } = Create(3802, "jsonb", 3807);
+
+    public static BlueTuskTypeDescriptor PgLsn { get; } = Create(3220, "pg_lsn", 3221);
 
     public static BlueTuskTypeRegistry CreateInitialRegistry() => CreateRegistry();
 
@@ -67,6 +79,7 @@ public static class BlueTuskBuiltInTypes
             .Register(Int4, new BlueTuskInt32Codec())
             .Register(Text, textCodec)
             .Register(Oid, new BlueTuskUInt32Codec())
+            .Register(Tid, new BlueTuskTupleIdCodec())
             .Register(Json, textCodec)
             .Register(Xml, textCodec)
             .Register(Float4, new BlueTuskSingleCodec())
@@ -77,8 +90,13 @@ public static class BlueTuskBuiltInTypes
             .Register(Time, new BlueTuskTimeCodec())
             .Register(Timestamp, new BlueTuskTimestampCodec())
             .Register(TimestampWithTimeZone, new BlueTuskTimestampWithTimeZoneCodec())
+            .Register(Interval, new BlueTuskIntervalCodec())
+            .Register(TimeWithTimeZone, new BlueTuskTimeWithTimeZoneCodec())
             .Register(Numeric, new BlueTuskNumericCodec())
+            .Register(Bit, new BlueTuskBitStringCodec())
+            .Register(Varbit, new BlueTuskBitStringCodec())
             .Register(Uuid, new BlueTuskGuidCodec())
+            .Register(PgLsn, new BlueTuskLogSequenceNumberCodec())
             .Register(Jsonb, new BlueTuskJsonbCodec())
             .Build();
     }
