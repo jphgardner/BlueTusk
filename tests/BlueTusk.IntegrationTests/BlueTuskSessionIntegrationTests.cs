@@ -174,6 +174,23 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal(1, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
     }
 
+    [Fact]
+    public async Task Extended_query_errors_are_drained_through_ready_for_query()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var invalid = new BlueTuskCommand("SELECT $1::int4", connection);
+        invalid.Parameters.Add(new BlueTuskParameter<string>("not-an-integer"));
+
+        var exception = await Assert.ThrowsAsync<BlueTuskException>(
+            () => invalid.ExecuteNonQueryAsync(CancellationToken.None));
+
+        Assert.Equal("22P02", exception.SqlState);
+        await using var valid = new BlueTuskCommand("SELECT $1::int4", connection);
+        valid.Parameters.Add(new BlueTuskParameter<int>(42));
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
