@@ -435,6 +435,83 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Catalogue_driven_composites_records_and_composite_arrays_round_trip()
+    {
+        var typeName = $"bluetusk_address_{Guid.NewGuid():N}";
+        await using var administration = BlueTuskDataSource.Create(GetConnectionString());
+        try
+        {
+            await using (var create = administration.CreateCommand(
+                $"CREATE TYPE public.{typeName} AS " +
+                "(house_number int4, street text, note text)"))
+            {
+                await create.ExecuteNonQueryAsync(CancellationToken.None);
+            }
+
+            await using (var dataSource = BlueTuskDataSource.Create(GetConnectionString()))
+            {
+                await using (var connection = await dataSource.OpenConnectionAsync(CancellationToken.None))
+                {
+                    Assert.NotNull(connection);
+                }
+
+                var compositeType = Assert.Single(
+                    dataSource.TypeRegistry.Types,
+                    type => type.Schema == "public" && type.Name == typeName);
+                Assert.Collection(
+                    compositeType.CompositeFields,
+                    field => Assert.Equal("house_number", field.Name),
+                    field => Assert.Equal("street", field.Name),
+                    field => Assert.Equal("note", field.Name));
+                Assert.True(dataSource.TypeRegistry.TryGetCodec(compositeType.Id, out var registered));
+                Assert.IsType<BlueTuskRecordCodec>(registered);
+
+                var value = new BlueTuskRecord(
+                [
+                    new BlueTuskRecordField("house_number", BlueTuskBuiltInTypes.Int4, 42),
+                    new BlueTuskRecordField("street", BlueTuskBuiltInTypes.Text, "Main, Road"),
+                    new BlueTuskRecordField("note", BlueTuskBuiltInTypes.Text, null),
+                ]);
+                await using (var binaryCommand = dataSource.CreateCommand(
+                    $"SELECT $1::public.{typeName}, ARRAY[$1::public.{typeName}], " +
+                    "ROW(7::int4, 'anonymous'::text, NULL::uuid)"))
+                {
+                    binaryCommand.Parameters.Add(
+                        new BlueTuskParameter<BlueTuskRecord>(value)
+                        {
+                            PostgreSqlTypeOid = compositeType.Id.Oid,
+                        });
+                    await using var reader = await binaryCommand.ExecuteReaderAsync(CancellationToken.None);
+                    Assert.True(await reader.ReadAsync(CancellationToken.None));
+                    AssertAddress(value, reader.GetFieldValue<BlueTuskRecord>(0));
+                    var array = reader.GetFieldValue<BlueTuskRecord[]>(1);
+                    Assert.Single(array);
+                    AssertAddress(value, array[0]);
+
+                    var anonymous = reader.GetFieldValue<BlueTuskRecord>(2);
+                    Assert.Equal(7, anonymous[0].Value);
+                    Assert.Equal("int4", anonymous[0].Type!.Name);
+                    Assert.Equal("anonymous", anonymous[1].Value);
+                    Assert.Equal("text", anonymous[1].Type!.Name);
+                    Assert.Null(anonymous[2].Value);
+                    Assert.Equal("uuid", anonymous[2].Type!.Name);
+                }
+
+                await using var textCommand = dataSource.CreateCommand(
+                    $"SELECT '(42,\"Main, Road\",)'::public.{typeName}");
+                await using var textReader = await textCommand.ExecuteReaderAsync(CancellationToken.None);
+                Assert.True(await textReader.ReadAsync(CancellationToken.None));
+                AssertAddress(value, textReader.GetFieldValue<BlueTuskRecord>(0));
+            }
+        }
+        finally
+        {
+            await using var drop = administration.CreateCommand($"DROP TYPE IF EXISTS public.{typeName}");
+            await drop.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+    }
+
+    [Fact]
     public async Task Data_source_builder_binds_runtime_codec_by_catalogue_name()
     {
         var builder = new BlueTuskDataSourceBuilder(GetConnectionString());
@@ -504,6 +581,16 @@ public sealed class BlueTuskTypeCodecIntegrationTests
             }
 
             writer.WriteUtf8(value.Value);
+        }
+    }
+
+    private static void AssertAddress(BlueTuskRecord expected, BlueTuskRecord actual)
+    {
+        Assert.Equal(expected.Count, actual.Count);
+        for (var index = 0; index < expected.Count; index++)
+        {
+            Assert.Equal(expected[index].Name, actual[index].Name);
+            Assert.Equal(expected[index].Value, actual[index].Value);
         }
     }
 

@@ -72,7 +72,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Catalogue discovery and per-data-source cache with explicit reload
 - [x] Catalogue-driven arrays in binary and text formats
 - [x] Catalogue-driven enums and domains with CLR enum mapping
-- [ ] Composites and records
+- [x] Composite metadata plus named and anonymous record wire values
+- [ ] CLR composite mapping
 - [ ] Ranges and multiranges
 - [x] Public runtime codec registration by discovered catalogue name or explicit OID
 

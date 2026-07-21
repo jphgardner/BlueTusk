@@ -23,6 +23,9 @@ public sealed record BlueTuskCatalogueType
     public char Delimiter { get; init; } = ',';
 
     public IReadOnlyList<string> EnumLabels { get; init; } = Array.Empty<string>();
+
+    public IReadOnlyList<BlueTuskCompositeField> CompositeFields { get; init; } =
+        Array.Empty<BlueTuskCompositeField>();
 }
 
 public static class BlueTuskTypeCatalogue
@@ -70,6 +73,7 @@ public static class BlueTuskTypeCatalogue
 
         RegisterEnumCodecs(builder, descriptors);
         RegisterDependentCodecs(builder, descriptors);
+        RegisterAnonymousRecordCodec(builder, descriptors);
 
         return builder.Build();
     }
@@ -100,6 +104,7 @@ public static class BlueTuskTypeCatalogue
             RangeSubtype = type.RangeSubtype,
             Delimiter = type.Delimiter,
             EnumLabels = type.EnumLabels.ToArray(),
+            CompositeFields = type.CompositeFields.ToArray(),
         };
     }
 
@@ -204,6 +209,7 @@ public static class BlueTuskTypeCatalogue
         {
             changed = RegisterDomainCodecs(builder, descriptors);
             changed |= RegisterArrayCodecs(builder, descriptors);
+            changed |= RegisterCompositeCodecs(builder, descriptors);
         }
         while (changed);
     }
@@ -231,6 +237,26 @@ public static class BlueTuskTypeCatalogue
         return changed;
     }
 
+    private static bool RegisterCompositeCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        var changed = false;
+        foreach (var compositeType in descriptors.Values.Where(type => type.Kind == BlueTuskTypeKind.Composite))
+        {
+            if (builder.ContainsCodec(compositeType.Id) ||
+                !BlueTuskRecordCodec.TryCreate(compositeType, descriptors, builder, out var codec))
+            {
+                continue;
+            }
+
+            builder.RegisterCodec(compositeType.Id, codec);
+            changed = true;
+        }
+
+        return changed;
+    }
+
     private static bool RegisterArrayCodecs(
         BlueTuskTypeRegistryBuilder builder,
         IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
@@ -252,5 +278,23 @@ public static class BlueTuskTypeCatalogue
         }
 
         return changed;
+    }
+
+    private static void RegisterAnonymousRecordCodec(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        var recordTypes = descriptors.Values
+            .Where(type =>
+                type.Kind == BlueTuskTypeKind.Pseudo &&
+                string.Equals(type.Schema, "pg_catalog", StringComparison.Ordinal) &&
+                string.Equals(type.Name, "record", StringComparison.Ordinal))
+            .ToArray();
+        if (recordTypes.Length == 1 && !builder.ContainsCodec(recordTypes[0].Id))
+        {
+            builder.RegisterCodec(
+                recordTypes[0].Id,
+                BlueTuskRecordCodec.CreateAnonymous(descriptors, builder));
+        }
     }
 }

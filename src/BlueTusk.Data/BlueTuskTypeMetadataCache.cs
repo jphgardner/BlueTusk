@@ -21,6 +21,11 @@ internal sealed class BlueTuskTypeMetadataCache
         "ORDER BY t.oid; " +
         "SELECT enumtypid::text, enumlabel " +
         "FROM pg_catalog.pg_enum ORDER BY enumtypid, enumsortorder; " +
+        "SELECT t.oid::text, a.attnum::text, a.attname, a.atttypid::text " +
+        "FROM pg_catalog.pg_type AS t " +
+        "JOIN pg_catalog.pg_attribute AS a ON a.attrelid = t.typrelid " +
+        "WHERE t.typtype = 'c' AND a.attnum > 0 AND NOT a.attisdropped " +
+        "ORDER BY t.oid, a.attnum; " +
         "SELECT current_setting('lc_monetary'), " +
         "COALESCE(max(fractional_digits) FILTER (WHERE " +
         "((power(10::numeric, -fractional_digits))::money)::numeric <> 0), 0)::text " +
@@ -71,14 +76,15 @@ internal sealed class BlueTuskTypeMetadataCache
             }
 
             var result = await session.ExecuteSimpleQueryAsync(CatalogueQuery, cancellationToken).ConfigureAwait(false);
-            if (result.ResultSets.Count != 3)
+            if (result.ResultSets.Count != 4)
             {
                 throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected result shape.");
             }
 
             var resultSet = result.ResultSets[0];
             var enumResultSet = result.ResultSets[1];
-            var moneyResultSet = result.ResultSets[2];
+            var compositeResultSet = result.ResultSets[2];
+            var moneyResultSet = result.ResultSets[3];
             if (enumResultSet.Fields.Count != 2)
             {
                 throw new InvalidOperationException("PostgreSQL enum catalogue query returned an unexpected result shape.");
@@ -95,6 +101,30 @@ internal sealed class BlueTuskTypeMetadataCache
                 }
 
                 labels.Add(GetRequiredText(row.Values[1], "enum label"));
+            }
+
+            if (compositeResultSet.Fields.Count != 4)
+            {
+                throw new InvalidOperationException(
+                    "PostgreSQL composite catalogue query returned an unexpected result shape.");
+            }
+
+            var compositeFields = new Dictionary<BlueTuskTypeId, List<BlueTuskCompositeField>>();
+            foreach (var row in compositeResultSet.Rows)
+            {
+                var typeId = new BlueTuskTypeId(ParseUInt32(row.Values[0], "composite type OID"));
+                if (!compositeFields.TryGetValue(typeId, out var fields))
+                {
+                    fields = [];
+                    compositeFields.Add(typeId, fields);
+                }
+
+                fields.Add(new BlueTuskCompositeField
+                {
+                    Position = checked((int)ParseUInt32(row.Values[1], "composite field position")),
+                    Name = GetRequiredText(row.Values[2], "composite field name"),
+                    Type = new BlueTuskTypeId(ParseUInt32(row.Values[3], "composite field type OID")),
+                });
             }
 
             if (moneyResultSet.Fields.Count != 2 || moneyResultSet.Rows.Count != 1)
@@ -132,6 +162,11 @@ internal sealed class BlueTuskTypeMetadataCache
                         out var labels)
                         ? labels.ToArray()
                         : Array.Empty<string>(),
+                    CompositeFields = compositeFields.TryGetValue(
+                        new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
+                        out var fields)
+                        ? fields.ToArray()
+                        : Array.Empty<BlueTuskCompositeField>(),
                 };
             }
 
