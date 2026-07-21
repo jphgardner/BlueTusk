@@ -1,17 +1,24 @@
 using System.Diagnostics;
 using System.Net;
+using System.Net.Security;
 using System.Net.Sockets;
+using System.Security.Cryptography.X509Certificates;
 
 namespace BlueTusk.Transport;
 
 /// <summary>A socket-backed transport with genuine asynchronous I/O.</summary>
-public sealed class BlueTuskSocketTransport : IBlueTuskTransport
+public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 {
     private Socket? _socket;
-    private NetworkStream? _stream;
+    private Stream? _stream;
+    private X509Certificate2? _remoteCertificate;
     private bool _disposed;
 
     public EndPoint? RemoteEndPoint => _socket?.RemoteEndPoint;
+
+    public bool IsEncrypted => _stream is SslStream;
+
+    public X509Certificate2? RemoteCertificate => _remoteCertificate;
 
     public async ValueTask ConnectAsync(
         BlueTuskEndpoint endpoint,
@@ -83,6 +90,50 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTransport
     public ValueTask FlushAsync(CancellationToken cancellationToken) =>
         new(GetConnectedStream().FlushAsync(cancellationToken));
 
+    public async ValueTask UpgradeToTlsAsync(BlueTuskTlsOptions options, CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(options);
+        options.Validate();
+
+        var innerStream = GetConnectedStream();
+        if (innerStream is SslStream)
+        {
+            throw new InvalidOperationException("The transport is already encrypted.");
+        }
+
+        var certificates = new X509CertificateCollection();
+        certificates.AddRange(options.ClientCertificates.ToArray());
+        var tlsStream = new SslStream(
+            innerStream,
+            leaveInnerStreamOpen: false,
+            options.RemoteCertificateValidationCallback);
+
+        try
+        {
+            await tlsStream.AuthenticateAsClientAsync(
+                new SslClientAuthenticationOptions
+                {
+                    TargetHost = options.TargetHost,
+                    EnabledSslProtocols = options.EnabledProtocols,
+                    CertificateRevocationCheckMode = options.CertificateRevocationCheckMode,
+                    ClientCertificates = certificates,
+                },
+                cancellationToken).ConfigureAwait(false);
+
+            _stream = tlsStream;
+            _remoteCertificate = tlsStream.RemoteCertificate is { } certificate
+                ? new X509Certificate2(certificate)
+                : null;
+        }
+        catch
+        {
+            await tlsStream.DisposeAsync().ConfigureAwait(false);
+            DisposeSocket();
+            throw;
+        }
+    }
+
     public void Dispose()
     {
         if (_disposed)
@@ -100,7 +151,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTransport
         return ValueTask.CompletedTask;
     }
 
-    private NetworkStream GetConnectedStream()
+    private Stream GetConnectedStream()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         return _stream ?? throw new InvalidOperationException("The transport is not connected.");
@@ -110,6 +161,8 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTransport
     {
         _stream?.Dispose();
         _stream = null;
+        _remoteCertificate?.Dispose();
+        _remoteCertificate = null;
         _socket?.Dispose();
         _socket = null;
     }

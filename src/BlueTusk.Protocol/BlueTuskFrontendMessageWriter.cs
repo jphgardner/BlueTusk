@@ -8,6 +8,14 @@ namespace BlueTusk.Protocol;
 public static class BlueTuskFrontendMessageWriter
 {
     public const int ProtocolVersion30 = 3 << 16;
+    public const int SslRequestCode = 80877103;
+
+    public static void WriteSslRequest(IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        WriteInt32(output, 8);
+        WriteInt32(output, SslRequestCode);
+    }
 
     public static void WriteStartupMessage(
         IBufferWriter<byte> output,
@@ -86,4 +94,3 @@ public static class BlueTuskFrontendMessageWriter
         }
     }
 }
-

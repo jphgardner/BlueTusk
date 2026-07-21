@@ -7,6 +7,17 @@ namespace BlueTusk.Protocol.Tests;
 public sealed class BlueTuskFrontendMessageWriterTests
 {
     [Fact]
+    public void Writes_an_ssl_request()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteSslRequest(output);
+
+        Assert.Equal(8, BinaryPrimitives.ReadInt32BigEndian(output.WrittenSpan));
+        Assert.Equal(80877103, BinaryPrimitives.ReadInt32BigEndian(output.WrittenSpan[4..]));
+    }
+
+    [Fact]
     public void Writes_a_protocol_30_startup_message()
     {
         var output = new ArrayBufferWriter<byte>();
@@ -44,4 +55,3 @@ public sealed class BlueTuskFrontendMessageWriterTests
             () => BlueTuskFrontendMessageWriter.WriteSimpleQuery(new ArrayBufferWriter<byte>(), "SELECT\0 1"));
     }
 }
-
