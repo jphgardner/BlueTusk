@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Data;
 using System.Text;
 using BlueTusk.Client;
 using BlueTusk.Data;
@@ -115,6 +116,38 @@ public sealed class BlueTuskSessionIntegrationTests
         await using var command = new BlueTuskCommand("SELECT 6::int4 * 7::int4", connection);
 
         Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task AdoNet_parameters_execute_through_the_extended_protocol()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand("SELECT $1::int4 + $2::int4");
+        command.Parameters.Add(new BlueTuskParameter<int>(20));
+        command.Parameters.Add(new BlueTuskParameter<int>(22));
+
+        Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task AdoNet_parameter_values_are_not_interpolated_into_sql()
+    {
+        const string injectionShapedValue = "'; DROP TABLE important_data; --";
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand("SELECT $1::text");
+        command.Parameters.Add(new BlueTuskParameter<string>(injectionShapedValue));
+
+        Assert.Equal(injectionShapedValue, await command.ExecuteScalarAsync<string>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task AdoNet_null_parameters_use_the_declared_type()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand("SELECT $1::text IS NULL");
+        command.Parameters.Add(new BlueTuskParameter(DBNull.Value) { DbType = DbType.String });
+
+        Assert.True(await command.ExecuteScalarAsync<bool>(CancellationToken.None));
     }
 
     [Fact]

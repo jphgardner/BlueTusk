@@ -153,12 +153,6 @@ public sealed class BlueTuskCommand : DbCommand
             throw new NotSupportedException("Transactions are planned for milestone 0.0.4.");
         }
 
-        if (_parameters.Count != 0)
-        {
-            throw new NotSupportedException(
-                "Parameters require the extended query protocol, planned for milestone 0.0.3. Values are never interpolated into SQL.");
-        }
-
         if (string.IsNullOrWhiteSpace(CommandText))
         {
             throw new InvalidOperationException("CommandText is required.");
@@ -170,9 +164,13 @@ public sealed class BlueTuskCommand : DbCommand
             : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutSource.Token);
         try
         {
-            return await connection.Session.ExecuteSimpleQueryAsync(
-                CommandText,
-                linkedSource?.Token ?? cancellationToken).ConfigureAwait(false);
+            var effectiveToken = linkedSource?.Token ?? cancellationToken;
+            return _parameters.Count == 0
+                ? await connection.Session.ExecuteSimpleQueryAsync(CommandText, effectiveToken).ConfigureAwait(false)
+                : await connection.Session.ExecuteExtendedQueryAsync(
+                    CommandText,
+                    BlueTuskParameterEncoder.Encode(_parameters),
+                    effectiveToken).ConfigureAwait(false);
         }
         catch (BlueTuskServerException exception)
         {

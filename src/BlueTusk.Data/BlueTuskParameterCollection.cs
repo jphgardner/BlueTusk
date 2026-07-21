@@ -20,6 +20,8 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
 
     public override object SyncRoot => ((ICollection)_items).SyncRoot;
 
+    internal IReadOnlyList<BlueTuskParameter> Items => _items;
+
     public BlueTuskParameter Add(BlueTuskParameter parameter)
     {
         ArgumentNullException.ThrowIfNull(parameter);
