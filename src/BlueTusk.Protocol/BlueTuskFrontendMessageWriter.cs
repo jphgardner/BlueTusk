@@ -92,6 +92,135 @@ public static class BlueTuskFrontendMessageWriter
         WriteInt32(output, sizeof(int));
     }
 
+    public static void WriteParse(
+        IBufferWriter<byte> output,
+        string statementName,
+        string sql,
+        IReadOnlyList<uint> parameterTypeOids)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(statementName, nameof(statementName));
+        ValidateCString(sql, nameof(sql));
+        ArgumentNullException.ThrowIfNull(parameterTypeOids);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameterTypeOids.Count, short.MaxValue);
+
+        var statementLength = Encoding.UTF8.GetByteCount(statementName);
+        var sqlLength = Encoding.UTF8.GetByteCount(sql);
+        var length = checked(
+            sizeof(int) + statementLength + 1 + sqlLength + 1 + sizeof(short) + (sizeof(int) * parameterTypeOids.Count));
+        WriteByte(output, (byte)'P');
+        WriteInt32(output, length);
+        WriteUtf8(output, statementName, statementLength);
+        WriteByte(output, 0);
+        WriteUtf8(output, sql, sqlLength);
+        WriteByte(output, 0);
+        WriteInt16(output, checked((short)parameterTypeOids.Count));
+        foreach (var oid in parameterTypeOids)
+        {
+            WriteInt32(output, unchecked((int)oid));
+        }
+    }
+
+    public static void WriteBind(
+        IBufferWriter<byte> output,
+        string portalName,
+        string statementName,
+        IReadOnlyList<BlueTuskBindParameter> parameters,
+        IReadOnlyList<short>? resultFormatCodes = null)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(portalName, nameof(portalName));
+        ValidateCString(statementName, nameof(statementName));
+        ArgumentNullException.ThrowIfNull(parameters);
+        resultFormatCodes ??= [];
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameters.Count, short.MaxValue);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(resultFormatCodes.Count, short.MaxValue);
+
+        var portalLength = Encoding.UTF8.GetByteCount(portalName);
+        var statementLength = Encoding.UTF8.GetByteCount(statementName);
+        var length = checked(
+            sizeof(int) + portalLength + 1 + statementLength + 1 + sizeof(short) +
+            (sizeof(short) * parameters.Count) + sizeof(short) + sizeof(short) +
+            (sizeof(short) * resultFormatCodes.Count));
+        foreach (var parameter in parameters)
+        {
+            length = checked(length + sizeof(int) + (parameter.Value?.Length ?? 0));
+        }
+
+        WriteByte(output, (byte)'B');
+        WriteInt32(output, length);
+        WriteUtf8(output, portalName, portalLength);
+        WriteByte(output, 0);
+        WriteUtf8(output, statementName, statementLength);
+        WriteByte(output, 0);
+        WriteInt16(output, checked((short)parameters.Count));
+        foreach (var parameter in parameters)
+        {
+            if (parameter.FormatCode is not (0 or 1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(parameters), "Parameter format codes must be text (0) or binary (1).");
+            }
+
+            WriteInt16(output, parameter.FormatCode);
+        }
+
+        WriteInt16(output, checked((short)parameters.Count));
+        foreach (var parameter in parameters)
+        {
+            if (parameter.Value is not { } value)
+            {
+                WriteInt32(output, -1);
+                continue;
+            }
+
+            WriteInt32(output, value.Length);
+            WriteBytes(output, value.Span);
+        }
+
+        WriteInt16(output, checked((short)resultFormatCodes.Count));
+        foreach (var formatCode in resultFormatCodes)
+        {
+            if (formatCode is not (0 or 1))
+            {
+                throw new ArgumentOutOfRangeException(nameof(resultFormatCodes), "Result format codes must be text (0) or binary (1).");
+            }
+
+            WriteInt16(output, formatCode);
+        }
+    }
+
+    public static void WriteDescribePortal(IBufferWriter<byte> output, string portalName)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(portalName, nameof(portalName));
+        var portalLength = Encoding.UTF8.GetByteCount(portalName);
+        WriteByte(output, (byte)'D');
+        WriteInt32(output, checked(sizeof(int) + 1 + portalLength + 1));
+        WriteByte(output, (byte)'P');
+        WriteUtf8(output, portalName, portalLength);
+        WriteByte(output, 0);
+    }
+
+    public static void WriteExecute(IBufferWriter<byte> output, string portalName, int maximumRows = 0)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(portalName, nameof(portalName));
+        ArgumentOutOfRangeException.ThrowIfNegative(maximumRows);
+        var portalLength = Encoding.UTF8.GetByteCount(portalName);
+        WriteByte(output, (byte)'E');
+        WriteInt32(output, checked(sizeof(int) + portalLength + 1 + sizeof(int)));
+        WriteUtf8(output, portalName, portalLength);
+        WriteByte(output, 0);
+        WriteInt32(output, maximumRows);
+    }
+
+    public static void WriteSync(IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        WriteByte(output, (byte)'S');
+        WriteInt32(output, sizeof(int));
+    }
+
     private static void WriteCString(IBufferWriter<byte> output, string value)
     {
         WriteUtf8(output, value, Encoding.UTF8.GetByteCount(value));
@@ -110,6 +239,19 @@ public static class BlueTuskFrontendMessageWriter
         var destination = output.GetSpan(sizeof(int));
         BinaryPrimitives.WriteInt32BigEndian(destination, value);
         output.Advance(sizeof(int));
+    }
+
+    private static void WriteInt16(IBufferWriter<byte> output, short value)
+    {
+        var destination = output.GetSpan(sizeof(short));
+        BinaryPrimitives.WriteInt16BigEndian(destination, value);
+        output.Advance(sizeof(short));
+    }
+
+    private static void WriteBytes(IBufferWriter<byte> output, ReadOnlySpan<byte> value)
+    {
+        value.CopyTo(output.GetSpan(value.Length));
+        output.Advance(value.Length);
     }
 
     private static void WriteByte(IBufferWriter<byte> output, byte value)

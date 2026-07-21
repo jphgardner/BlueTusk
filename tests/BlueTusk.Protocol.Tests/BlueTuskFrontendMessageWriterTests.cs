@@ -70,4 +70,33 @@ public sealed class BlueTuskFrontendMessageWriterTests
         Assert.Equal((byte)'p', continuation.WrittenSpan[0]);
         Assert.Equal(continuation.WrittenCount - 1, BinaryPrimitives.ReadInt32BigEndian(continuation.WrittenSpan[1..]));
     }
+
+    [Fact]
+    public void Writes_an_extended_query_message_sequence()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteParse(output, string.Empty, "SELECT $1::int4", [23]);
+        var parseLength = BinaryPrimitives.ReadInt32BigEndian(output.WrittenSpan[1..]);
+        var bindOffset = output.WrittenCount;
+        BlueTuskFrontendMessageWriter.WriteBind(
+            output,
+            string.Empty,
+            string.Empty,
+            [new BlueTuskBindParameter(1, new byte[] { 0, 0, 0, 42 }), new BlueTuskBindParameter(0, null)]);
+        var describeOffset = output.WrittenCount;
+        BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+        var executeOffset = output.WrittenCount;
+        BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+        var syncOffset = output.WrittenCount;
+        BlueTuskFrontendMessageWriter.WriteSync(output);
+
+        Assert.Equal((byte)'P', output.WrittenSpan[0]);
+        Assert.Equal(bindOffset - 1, parseLength);
+        Assert.Equal((byte)'B', output.WrittenSpan[bindOffset]);
+        Assert.Equal(describeOffset - bindOffset - 1, BinaryPrimitives.ReadInt32BigEndian(output.WrittenSpan[(bindOffset + 1)..]));
+        Assert.Equal((byte)'D', output.WrittenSpan[describeOffset]);
+        Assert.Equal((byte)'E', output.WrittenSpan[executeOffset]);
+        Assert.Equal((byte)'S', output.WrittenSpan[syncOffset]);
+    }
 }
