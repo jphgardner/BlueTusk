@@ -174,6 +174,49 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Transaction_catalogue_types_and_arrays_round_trip_in_binary()
+    {
+        var transactionId = new BlueTuskTransactionId(uint.MaxValue);
+        var commandId = new BlueTuskCommandId(uint.MaxValue);
+        var fullTransactionId = new BlueTuskFullTransactionId(ulong.MaxValue);
+        var snapshot = new BlueTuskTransactionSnapshot(10, 20, [12, 15]);
+        BlueTuskFullTransactionId[] fullTransactionIds =
+        [
+            new BlueTuskFullTransactionId(0),
+            fullTransactionId,
+        ];
+        BlueTuskTransactionSnapshot[] snapshots = [snapshot];
+
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var command = dataSource.CreateCommand(
+            "SELECT $1::xid, $2::cid, $3::xid8, $4::pg_snapshot, " +
+            "$5::txid_snapshot, $6::xid8[], $7::pg_snapshot[]");
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskTransactionId>(transactionId));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskCommandId>(commandId));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskFullTransactionId>(fullTransactionId));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskTransactionSnapshot>(snapshot));
+        command.Parameters.Add(
+            new BlueTuskParameter<BlueTuskTransactionSnapshot>(snapshot)
+            {
+                PostgreSqlTypeOid = BlueTuskBuiltInTypes.TxidSnapshot.Id.Oid,
+            });
+        command.Parameters.Add(
+            new BlueTuskParameter<BlueTuskFullTransactionId[]>(fullTransactionIds));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskTransactionSnapshot[]>(snapshots));
+
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.Equal(transactionId, reader.GetFieldValue<BlueTuskTransactionId>(0));
+        Assert.Equal(commandId, reader.GetFieldValue<BlueTuskCommandId>(1));
+        Assert.Equal(fullTransactionId, reader.GetFieldValue<BlueTuskFullTransactionId>(2));
+        Assert.Equal(snapshot, reader.GetFieldValue<BlueTuskTransactionSnapshot>(3));
+        Assert.Equal(snapshot, reader.GetFieldValue<BlueTuskTransactionSnapshot>(4));
+        Assert.Equal(fullTransactionIds, reader.GetFieldValue<BlueTuskFullTransactionId[]>(5));
+        Assert.Equal(snapshots, reader.GetFieldValue<BlueTuskTransactionSnapshot[]>(6));
+    }
+
+    [Fact]
     public async Task Network_scalar_parameters_round_trip_in_binary()
     {
         var inet = BlueTuskNetworkAddress.Parse("192.168.1.5/24");

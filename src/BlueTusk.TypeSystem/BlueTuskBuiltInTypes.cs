@@ -28,6 +28,10 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Tid { get; } = Create(27, "tid", 1010);
 
+    public static BlueTuskTypeDescriptor Xid { get; } = Create(28, "xid", 1011);
+
+    public static BlueTuskTypeDescriptor Cid { get; } = Create(29, "cid", 1012);
+
     public static BlueTuskTypeDescriptor Json { get; } = Create(114, "json", 199);
 
     public static BlueTuskTypeDescriptor Xml { get; } = Create(142, "xml", 143);
@@ -84,6 +88,8 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Uuid { get; } = Create(2950, "uuid", 2951);
 
+    public static BlueTuskTypeDescriptor TxidSnapshot { get; } = Create(2970, "txid_snapshot", 2949);
+
     public static BlueTuskTypeDescriptor PgLsn { get; } = Create(3220, "pg_lsn", 3221);
 
     public static BlueTuskTypeDescriptor TextSearchVector { get; } = Create(3614, "tsvector", 3643);
@@ -91,6 +97,10 @@ public static class BlueTuskBuiltInTypes
     public static BlueTuskTypeDescriptor TextSearchQuery { get; } = Create(3615, "tsquery", 3645);
 
     public static BlueTuskTypeDescriptor Jsonb { get; } = Create(3802, "jsonb", 3807);
+
+    public static BlueTuskTypeDescriptor PgSnapshot { get; } = Create(5038, "pg_snapshot", 5039);
+
+    public static BlueTuskTypeDescriptor Xid8 { get; } = Create(5069, "xid8", 271);
 
     public static BlueTuskTypeRegistry CreateInitialRegistry() => CreateRegistry();
 
@@ -108,6 +118,8 @@ public static class BlueTuskBuiltInTypes
             .Register(Text, textCodec)
             .Register(Oid, new BlueTuskUInt32Codec())
             .Register(Tid, new BlueTuskTupleIdCodec())
+            .Register(Xid, new BlueTuskTransactionIdCodec())
+            .Register(Cid, new BlueTuskCommandIdCodec())
             .Register(Json, textCodec)
             .Register(Xml, textCodec)
             .Register(Point, new BlueTuskPointCodec())
@@ -136,10 +148,13 @@ public static class BlueTuskBuiltInTypes
             .Register(Bit, new BlueTuskBitStringCodec())
             .Register(Varbit, new BlueTuskBitStringCodec())
             .Register(Uuid, new BlueTuskGuidCodec())
+            .Register(TxidSnapshot, new BlueTuskTransactionSnapshotCodec())
             .Register(PgLsn, new BlueTuskLogSequenceNumberCodec())
             .Register(TextSearchVector, new BlueTuskTextSearchVectorCodec())
             .Register(TextSearchQuery, new BlueTuskTextSearchQueryCodec())
             .Register(Jsonb, new BlueTuskJsonbCodec())
+            .Register(PgSnapshot, new BlueTuskTransactionSnapshotCodec())
+            .Register(Xid8, new BlueTuskFullTransactionIdCodec())
             .Build();
     }
 

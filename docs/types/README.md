@@ -1,6 +1,6 @@
 # Core type mappings
 
-Version 0.0.6 registers the following PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format; extended queries request and decode binary fields.
+BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format; extended queries request and decode binary fields.
 
 | PostgreSQL type | OID | Default CLR value | Text | Binary |
 | --- | ---: | --- | :---: | :---: |
@@ -67,3 +67,17 @@ var empty = BlueTuskRange.Empty<int>();
 ```
 
 `BlueTuskMultirange<T>` is an immutable ordered collection of `BlueTuskRange<T>` values. Range and multirange arrays are discovered and composed automatically, and all four forms participate in parameter type inference when the CLR mapping is unique.
+
+## Transaction catalogue values
+
+PostgreSQL's unsigned transaction identifiers have dedicated CLR values so their complete wire ranges are preserved:
+
+| PostgreSQL type | CLR value |
+| --- | --- |
+| `xid` | `BlueTuskTransactionId` |
+| `cid` | `BlueTuskCommandId` |
+| `xid8` | `BlueTuskFullTransactionId` |
+| `pg_snapshot` | `BlueTuskTransactionSnapshot` |
+| `txid_snapshot` | `BlueTuskTransactionSnapshot` |
+
+`BlueTuskTransactionSnapshot` validates PostgreSQL's ordered half-open snapshot invariants and defensively copies the in-progress transaction IDs. Modern `pg_snapshot` is the default parameter inference target. The deprecated `txid_snapshot` remains readable and writable by specifying its PostgreSQL OID explicitly. Catalogue-discovered arrays of all five types are composed automatically.

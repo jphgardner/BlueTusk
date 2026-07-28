@@ -35,11 +35,25 @@ public sealed class BlueTuskTypeRegistry
             return false;
         }
 
-        return type.Kind != BlueTuskTypeKind.Array ||
+        if (IsLegacyTransactionSnapshot(type))
+        {
+            return false;
+        }
+
+        if (type.Kind != BlueTuskTypeKind.Array ||
             type.ElementType is not { } elementTypeId ||
-            !types.TryGetValue(elementTypeId, out var elementType) ||
-            elementType.Kind != BlueTuskTypeKind.Domain;
+            !types.TryGetValue(elementTypeId, out var elementType))
+        {
+            return true;
+        }
+
+        return elementType.Kind != BlueTuskTypeKind.Domain &&
+            !IsLegacyTransactionSnapshot(elementType);
     }
+
+    private static bool IsLegacyTransactionSnapshot(BlueTuskTypeDescriptor type) =>
+        string.Equals(type.Schema, "pg_catalog", StringComparison.Ordinal) &&
+        string.Equals(type.Name, "txid_snapshot", StringComparison.Ordinal);
 
     public bool TryGetType(BlueTuskTypeId id, out BlueTuskTypeDescriptor? type) =>
         _types.TryGetValue(id, out type);
