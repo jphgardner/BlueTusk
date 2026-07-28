@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.6 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET, including binary results for its core scalar types. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental pre-release provider. Version 0.0.7 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET. Its catalogue-driven type system supports advanced scalars, arrays, enums, domains, composites, records, ranges, and multiranges in text and binary formats. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -42,7 +42,7 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 
 ## Status
 
-The current `0.0.6` implementation provides:
+The current `0.0.7` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -51,6 +51,10 @@ The current `0.0.6` implementation provides:
 - an explicit protocol connection state machine;
 - catalogue-friendly type descriptors and unknown-value preservation;
 - text and binary codecs for core scalar boolean, integer, floating-point, numeric, character, binary, UUID, temporal, JSON, and XML values;
+- advanced temporal, bit-string, transaction, object-identifier, network, geometric, money, full-text, JSONPath, and system-catalogue values;
+- per-data-source catalogue discovery with explicit reload and unknown-value preservation;
+- catalogue-composed arrays, enums, domains, named and anonymous records, ranges, and multiranges;
+- convention- and attribute-based CLR enum and composite mappings plus public runtime codec registration;
 - arbitrary-precision PostgreSQL `numeric`, including NaN and infinities, plus temporal infinity and 24:00 handling;
 - security redaction and observability primitives;
 - a fake backend message stream for conformance testing;

@@ -69,6 +69,7 @@ public class PoolCheckoutBenchmarks : IAsyncDisposable
         public ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
             string sql,
             IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+            bool useBinaryResults,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

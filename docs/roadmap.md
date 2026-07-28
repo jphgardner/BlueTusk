@@ -62,7 +62,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Buffer-backed stream and text-reader accessors for `bytea`, text, and JSON values
 - [x] Date/time infinity, 24:00 time, and arbitrary-precision numeric edge cases
 
-## 0.0.7 — Advanced, dynamic, and structured types
+## 0.0.7 — Advanced, dynamic, and structured types (complete)
 
 - [x] Wire-specific scalar families: time with time zone, interval, bit strings, `pg_lsn`, and `tid`
 - [x] Network and geometric scalar families

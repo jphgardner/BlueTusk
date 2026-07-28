@@ -44,6 +44,8 @@ PostgreSQL `date` infinity maps to `DateOnly.MinValue` and `DateOnly.MaxValue`. 
 
 PostgreSQL `time` can represent `24:00:00`, so its default CLR type is `TimeSpan`. `GetFieldValue<TimeOnly>` is available for values before 24:00. Binary temporal values preserve PostgreSQL's microsecond precision.
 
+`BlueTuskInterval` represents PostgreSQL finite intervals and the positive/negative infinity values supported by PostgreSQL 17 and later. PostgreSQL 15–16 reject interval infinity at the server boundary.
+
 ## Binary and streaming behavior
 
 UUID binary values use PostgreSQL network byte order, JSONB validates its version byte, and `bytea` accepts binary, hexadecimal text, and legacy escape text. UTF-8 decoding is strict so malformed server text is rejected rather than silently replaced.

@@ -198,12 +198,19 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     public async Task Advanced_postgresql_scalars_decode_from_binary_results()
     {
         await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var versionCommand = dataSource.CreateCommand("SHOW server_version_num");
+        var serverVersion = int.Parse(
+            (await versionCommand.ExecuteScalarAsync<string>(CancellationToken.None))!,
+            System.Globalization.CultureInfo.InvariantCulture);
+        var infinityExpression = serverVersion >= 170_000
+            ? "'infinity'::interval"
+            : "'0 seconds'::interval";
         await using var command = dataSource.CreateCommand(
             "SELECT $1::int4, " +
             "'(42,7)'::tid, " +
             "'24:00:00+05:30:45'::timetz, " +
             "'1 year 2 mons 3 days 04:05:06.789'::interval, " +
-            "'infinity'::interval, " +
+            infinityExpression + ", " +
             "B'10110'::bit(5), " +
             "B'001011'::varbit, " +
             "'16/B374D848'::pg_lsn");
@@ -217,7 +224,11 @@ public sealed class BlueTuskTypeCodecIntegrationTests
             new BlueTuskTimeWithTimeZone(TimeSpan.FromDays(1), new TimeSpan(5, 30, 45)),
             reader.GetFieldValue<BlueTuskTimeWithTimeZone>(2));
         Assert.Equal(new BlueTuskInterval(14, 3, 14_706_789_000), reader.GetFieldValue<BlueTuskInterval>(3));
-        Assert.Equal(BlueTuskInterval.PositiveInfinity, reader.GetFieldValue<BlueTuskInterval>(4));
+        Assert.Equal(
+            serverVersion >= 170_000
+                ? BlueTuskInterval.PositiveInfinity
+                : new BlueTuskInterval(0, 0, 0),
+            reader.GetFieldValue<BlueTuskInterval>(4));
         Assert.Equal(new BlueTuskBitString("10110"), reader.GetFieldValue<BlueTuskBitString>(5));
         Assert.Equal(new BlueTuskBitString("001011"), reader.GetFieldValue<BlueTuskBitString>(6));
         Assert.Equal(
