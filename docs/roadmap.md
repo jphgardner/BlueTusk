@@ -81,7 +81,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Catalogue-driven ranges and multiranges in binary and text formats
 - [x] Public runtime codec registration by discovered catalogue name or explicit OID
 
-## 0.0.8 — COPY and notifications
+## 0.0.8 — COPY and notifications (complete)
 
 - [x] Binary, text, CSV, and raw COPY APIs
   - [x] Streaming raw COPY FROM/TO for text, CSV, and binary payloads

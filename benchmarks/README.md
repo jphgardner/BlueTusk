@@ -1,6 +1,6 @@
 # BlueTusk benchmarks
 
-The BenchmarkDotNet suite covers protocol parsing/writing, integer/numeric/temporal/JSONB codecs, catalogue-composed array/enum/range/composite decoding, and warm-session pool checkout today. Reader, COPY, replication, EF materialisation, and graph workloads are added alongside those implementations. The pool workload isolates provider bookkeeping and reset dispatch with an in-memory physical session; live PostgreSQL behavior is covered by integration tests.
+The BenchmarkDotNet suite covers protocol parsing/writing, integer/numeric/temporal/JSONB codecs, catalogue-composed array/enum/range/composite decoding, binary COPY field encoding, notification decoding, large-object stream transfer overhead, and warm-session pool checkout today. Reader, replication, EF materialisation, and graph workloads are added alongside those implementations. Pool and large-object workloads isolate provider bookkeeping with in-memory sessions; live PostgreSQL behavior is covered by integration tests.
 
 Run the complete suite in Release mode:
 

@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.7 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET. Its catalogue-driven type system supports advanced scalars, arrays, enums, domains, composites, records, ranges, and multiranges in text and binary formats. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental pre-release provider. Version 0.0.8 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET. Its catalogue-driven type system supports advanced scalars, arrays, enums, domains, composites, records, ranges, and multiranges in text and binary formats. It also provides streaming COPY, asynchronous notifications, and transactional large-object streams. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -42,7 +42,7 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 
 ## Status
 
-The current `0.0.7` implementation provides:
+The current `0.0.8` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -74,6 +74,9 @@ The current `0.0.7` implementation provides:
 - bounded per-data-source connection pooling with cancellable waiters;
 - transaction rollback, `DISCARD ALL` session reset, health validation, and connection lifetime enforcement;
 - pool warm-up, clear/drain controls, statistics, metrics, live concurrency tests, and a checkout benchmark;
+- streaming raw text, CSV, and binary COPY plus typed binary import and export;
+- asynchronous `LISTEN`/`NOTIFY` delivery with quoted subscriptions and bounded backpressure;
+- transactional large-object creation, deletion, streaming, 64-bit seek, and truncation;
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.
 
 Minimal usage:
