@@ -24,11 +24,13 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
     ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default);
 
     ValueTask<BlueTuskCopyResult> CopyOutAsync(
         string sql,
         Stream destination,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default);
 
     void Cancel();
@@ -87,14 +89,16 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     public ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default) =>
-        _session.CopyInAsync(sql, source, cancellationToken);
+        _session.CopyInAsync(sql, source, copyStarted, cancellationToken);
 
     public ValueTask<BlueTuskCopyResult> CopyOutAsync(
         string sql,
         Stream destination,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default) =>
-        _session.CopyOutAsync(sql, destination, cancellationToken);
+        _session.CopyOutAsync(sql, destination, copyStarted, cancellationToken);
 
     public void Cancel() => _session.Cancel();
 

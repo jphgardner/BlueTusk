@@ -199,11 +199,131 @@ public sealed class BlueTuskConnection : DbConnection
         CancellationToken cancellationToken = default)
     {
         EnsureCopyAvailable();
+        return await CopyFromCoreAsync(
+            copyCommand,
+            source,
+            copyStarted: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<BlueTuskRawCopyResult> CopyToAsync(
+        string copyCommand,
+        Stream destination,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCopyAvailable();
+        return await CopyToCoreAsync(
+            copyCommand,
+            destination,
+            copyStarted: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<BlueTuskBinaryImporter> BeginBinaryImportAsync(
+        string copyCommand,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCopyAvailable();
+        var pipe = new BlueTuskCopyPipe();
+        var started = new TaskCompletionSource<BlueTuskCopyResponse>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var copyTask = CopyFromCoreAsync(
+            copyCommand,
+            pipe,
+            response => started.TrySetResult(response),
+            CancellationToken.None).AsTask();
+        var response = await AwaitCopyStartAsync(
+            started.Task,
+            copyTask,
+            pipe,
+            cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ValidateBinaryCopyResponse(response);
+            var importer = new BlueTuskBinaryImporter(
+                pipe,
+                copyTask,
+                TypeRegistry,
+                response.ColumnFormats.Count);
+            await importer.InitializeAsync(cancellationToken).ConfigureAwait(false);
+            return importer;
+        }
+        catch
+        {
+            pipe.CompleteWriting(
+                new IOException("Binary COPY import could not be initialized."));
+            try
+            {
+                _ = await copyTask.ConfigureAwait(false);
+            }
+            catch
+            {
+                // The initialization exception remains authoritative.
+            }
+
+            await pipe.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    public async ValueTask<BlueTuskBinaryExporter> BeginBinaryExportAsync(
+        string copyCommand,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCopyAvailable();
+        var pipe = new BlueTuskCopyPipe();
+        var started = new TaskCompletionSource<BlueTuskCopyResponse>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        var copyTask = CopyToPipeAsync(
+            copyCommand,
+            pipe,
+            response => started.TrySetResult(response)).AsTask();
+        var response = await AwaitCopyStartAsync(
+            started.Task,
+            copyTask,
+            pipe,
+            cancellationToken).ConfigureAwait(false);
+        try
+        {
+            ValidateBinaryCopyResponse(response);
+            var exporter = new BlueTuskBinaryExporter(
+                pipe,
+                copyTask,
+                TypeRegistry,
+                response.ColumnFormats.Count);
+            await exporter.InitializeAsync(cancellationToken).ConfigureAwait(false);
+            return exporter;
+        }
+        catch
+        {
+            pipe.CompleteWriting(
+                new IOException("Binary COPY export could not be initialized."));
+            try
+            {
+                _ = await copyTask.ConfigureAwait(false);
+            }
+            catch
+            {
+                // The initialization exception remains authoritative.
+            }
+
+            await pipe.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async ValueTask<BlueTuskRawCopyResult> CopyFromCoreAsync(
+        string copyCommand,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
+        CancellationToken cancellationToken)
+    {
         try
         {
             var result = await Session.CopyInAsync(
                 copyCommand,
                 source,
+                copyStarted,
                 cancellationToken).ConfigureAwait(false);
             return CreateRawCopyResult(result);
         }
@@ -218,17 +338,18 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
-    public async ValueTask<BlueTuskRawCopyResult> CopyToAsync(
+    private async ValueTask<BlueTuskRawCopyResult> CopyToCoreAsync(
         string copyCommand,
         Stream destination,
-        CancellationToken cancellationToken = default)
+        Action<BlueTuskCopyResponse>? copyStarted,
+        CancellationToken cancellationToken)
     {
-        EnsureCopyAvailable();
         try
         {
             var result = await Session.CopyOutAsync(
                 copyCommand,
                 destination,
+                copyStarted,
                 cancellationToken).ConfigureAwait(false);
             return CreateRawCopyResult(result);
         }
@@ -239,6 +360,28 @@ public sealed class BlueTuskConnection : DbConnection
         catch (Exception) when (!HasOpenSession)
         {
             Close();
+            throw;
+        }
+    }
+
+    private async ValueTask<BlueTuskRawCopyResult> CopyToPipeAsync(
+        string copyCommand,
+        BlueTuskCopyPipe pipe,
+        Action<BlueTuskCopyResponse> copyStarted)
+    {
+        try
+        {
+            var result = await CopyToCoreAsync(
+                copyCommand,
+                pipe,
+                copyStarted,
+                CancellationToken.None).ConfigureAwait(false);
+            pipe.CompleteWriting();
+            return result;
+        }
+        catch (Exception exception)
+        {
+            pipe.CompleteWriting(exception);
             throw;
         }
     }
@@ -433,6 +576,56 @@ public sealed class BlueTuskConnection : DbConnection
                 .ToArray(),
             rowsAffected,
             result.BytesTransferred);
+    }
+
+    private async ValueTask<BlueTuskCopyResponse> AwaitCopyStartAsync(
+        Task<BlueTuskCopyResponse> started,
+        Task<BlueTuskRawCopyResult> copyTask,
+        BlueTuskCopyPipe pipe,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            var completed = await Task.WhenAny(started, copyTask)
+                .WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (ReferenceEquals(completed, copyTask))
+            {
+                _ = await copyTask.ConfigureAwait(false);
+                throw new BlueTuskException(
+                    "PostgreSQL completed COPY without entering COPY mode.");
+            }
+
+            return await started.ConfigureAwait(false);
+        }
+        catch (OperationCanceledException)
+        {
+            pipe.CompleteWriting(
+                new OperationCanceledException(
+                    "Binary COPY initialization was cancelled.",
+                    cancellationToken));
+            await Session.CancelAsync(CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                _ = await copyTask.ConfigureAwait(false);
+            }
+            catch
+            {
+                // The caller's cancellation remains authoritative.
+            }
+
+            throw;
+        }
+    }
+
+    private static void ValidateBinaryCopyResponse(BlueTuskCopyResponse response)
+    {
+        if (response.Format != BlueTuskCopyFormat.Binary ||
+            response.ColumnFormats.Any(
+                static format => format != BlueTuskCopyFormat.Binary))
+        {
+            throw new InvalidOperationException(
+                "The COPY command must specify PostgreSQL binary format.");
+        }
     }
 
     [SuppressMessage(

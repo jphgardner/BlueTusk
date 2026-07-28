@@ -76,12 +76,14 @@ public class PoolCheckoutBenchmarks : IAsyncDisposable
         public ValueTask<BlueTuskCopyResult> CopyInAsync(
             string sql,
             Stream source,
+            Action<BlueTuskCopyResponse>? copyStarted,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
         public ValueTask<BlueTuskCopyResult> CopyOutAsync(
             string sql,
             Stream destination,
+            Action<BlueTuskCopyResponse>? copyStarted,
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 

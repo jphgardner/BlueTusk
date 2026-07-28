@@ -8,6 +8,8 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskCopyIntegrationTests
 {
+    private static readonly int[] SampleScores = [1, 2, 3];
+
     [Fact]
     public async Task Raw_copy_streams_support_csv_text_and_binary_round_trips()
     {
@@ -118,6 +120,127 @@ public sealed class BlueTuskCopyIntegrationTests
         Assert.Equal("1,Chloé 🐘,line one\n", destination.ToString());
         Assert.Equal(-1, source.Read());
         destination.Write("still open");
+    }
+
+    [Fact]
+    public async Task Typed_binary_copy_imports_and_exports_rows()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            connection,
+            """
+            CREATE TEMP TABLE bluetusk_binary_copy (
+                id int4,
+                name text,
+                active bool,
+                happened_at timestamptz,
+                token uuid,
+                note text,
+                scores int4[]
+            )
+            """);
+        var firstTime = new DateTimeOffset(2026, 7, 28, 12, 34, 56, TimeSpan.FromHours(2));
+        var secondTime = new DateTimeOffset(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
+        var firstToken = Guid.Parse("00112233-4455-6677-8899-aabbccddeeff");
+        var secondToken = Guid.Parse("ffeeddcc-bbaa-9988-7766-554433221100");
+
+        await using (var importer = await connection.BeginBinaryImportAsync(
+                         "COPY bluetusk_binary_copy FROM STDIN WITH (FORMAT BINARY)",
+                         CancellationToken.None))
+        {
+            await importer.StartRowAsync(CancellationToken.None);
+            await importer.WriteAsync(1, CancellationToken.None);
+            await importer.WriteAsync("Chloé 🐘", CancellationToken.None);
+            await importer.WriteAsync(true, CancellationToken.None);
+            await importer.WriteAsync(firstTime, CancellationToken.None);
+            await importer.WriteAsync(firstToken, CancellationToken.None);
+            await importer.WriteAsync<string>(null, CancellationToken.None);
+            await importer.WriteAsync(SampleScores, CancellationToken.None);
+
+            await importer.StartRowAsync(CancellationToken.None);
+            await importer.WriteAsync(2, CancellationToken.None);
+            await importer.WriteAsync("BlueTusk", CancellationToken.None);
+            await importer.WriteAsync(false, CancellationToken.None);
+            await importer.WriteAsync(secondTime, CancellationToken.None);
+            await importer.WriteAsync(secondToken, CancellationToken.None);
+            await importer.WriteAsync("complete", CancellationToken.None);
+            await importer.WriteAsync(Array.Empty<int>(), CancellationToken.None);
+
+            Assert.Equal(2, await importer.CompleteAsync(CancellationToken.None));
+        }
+
+        await using var exporter = await connection.BeginBinaryExportAsync(
+            """
+            COPY (
+                SELECT id, name, active, happened_at, token, note, scores
+                FROM bluetusk_binary_copy
+                ORDER BY id
+            ) TO STDOUT WITH (FORMAT BINARY)
+            """,
+            CancellationToken.None);
+
+        Assert.Equal(7, await exporter.StartRowAsync(CancellationToken.None));
+        Assert.Equal(1, await exporter.ReadAsync<int>(CancellationToken.None));
+        Assert.Equal("Chloé 🐘", await exporter.ReadAsync<string>(CancellationToken.None));
+        Assert.True(await exporter.ReadAsync<bool>(CancellationToken.None));
+        Assert.Equal(
+            firstTime.UtcDateTime,
+            (await exporter.ReadAsync<DateTimeOffset>(CancellationToken.None)).UtcDateTime);
+        Assert.Equal(firstToken, await exporter.ReadAsync<Guid>(CancellationToken.None));
+        Assert.Null(await exporter.ReadAsync<string>(CancellationToken.None));
+        Assert.Equal(
+            SampleScores,
+            await exporter.ReadAsync<int[]>(CancellationToken.None));
+
+        Assert.Equal(7, await exporter.StartRowAsync(CancellationToken.None));
+        Assert.Equal(2, await exporter.ReadAsync<int>(CancellationToken.None));
+        Assert.Equal("BlueTusk", await exporter.ReadAsync<string>(CancellationToken.None));
+        Assert.False(await exporter.ReadAsync<bool>(CancellationToken.None));
+        Assert.Equal(
+            secondTime,
+            await exporter.ReadAsync<DateTimeOffset>(CancellationToken.None));
+        Assert.Equal(secondToken, await exporter.ReadAsync<Guid>(CancellationToken.None));
+        Assert.Equal("complete", await exporter.ReadAsync<string>(CancellationToken.None));
+        Assert.Empty((await exporter.ReadAsync<int[]>(CancellationToken.None))!);
+        Assert.Equal(-1, await exporter.StartRowAsync(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Binary_copy_disposal_and_format_mismatch_abort_cleanly()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            connection,
+            "CREATE TEMP TABLE bluetusk_aborted_binary_copy (id int4, name text)");
+
+        var importer = await connection.BeginBinaryImportAsync(
+            "COPY bluetusk_aborted_binary_copy FROM STDIN WITH (FORMAT BINARY)",
+            CancellationToken.None);
+        await importer.StartRowAsync(CancellationToken.None);
+        await importer.WriteAsync(1, CancellationToken.None);
+        await importer.DisposeAsync();
+
+        var exporter = await connection.BeginBinaryExportAsync(
+            """
+            COPY (
+                SELECT value, value::text
+                FROM generate_series(1, 10000) AS value
+            ) TO STDOUT WITH (FORMAT BINARY)
+            """,
+            CancellationToken.None);
+        Assert.Equal(2, await exporter.StartRowAsync(CancellationToken.None));
+        await exporter.DisposeAsync();
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => connection.BeginBinaryImportAsync(
+                "COPY bluetusk_aborted_binary_copy FROM STDIN WITH (FORMAT CSV)",
+                CancellationToken.None).AsTask());
+
+        await using var verify = new BlueTuskCommand("SELECT $1::int4", connection);
+        verify.Parameters.Add(new BlueTuskParameter<int>(42));
+        Assert.Equal(42, await verify.ExecuteScalarAsync<int>(CancellationToken.None));
     }
 
     [Fact]

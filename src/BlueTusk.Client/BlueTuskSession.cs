@@ -116,6 +116,17 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     public async ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
+        CancellationToken cancellationToken = default) =>
+        await CopyInAsync(
+            sql,
+            source,
+            copyStarted: null,
+            cancellationToken).ConfigureAwait(false);
+
+    public async ValueTask<BlueTuskCopyResult> CopyInAsync(
+        string sql,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
@@ -130,7 +141,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         var started = Stopwatch.GetTimestamp();
         try
         {
-            return await CopyInCoreAsync(sql, source, cancellationToken).ConfigureAwait(false);
+            return await CopyInCoreAsync(
+                sql,
+                source,
+                copyStarted,
+                cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -142,6 +157,17 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     public async ValueTask<BlueTuskCopyResult> CopyOutAsync(
         string sql,
         Stream destination,
+        CancellationToken cancellationToken = default) =>
+        await CopyOutAsync(
+            sql,
+            destination,
+            copyStarted: null,
+            cancellationToken).ConfigureAwait(false);
+
+    public async ValueTask<BlueTuskCopyResult> CopyOutAsync(
+        string sql,
+        Stream destination,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
@@ -158,7 +184,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         var started = Stopwatch.GetTimestamp();
         try
         {
-            return await CopyOutCoreAsync(sql, destination, cancellationToken).ConfigureAwait(false);
+            return await CopyOutCoreAsync(
+                sql,
+                destination,
+                copyStarted,
+                cancellationToken).ConfigureAwait(false);
         }
         finally
         {
@@ -276,6 +306,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private async ValueTask<BlueTuskCopyResult> CopyInCoreAsync(
         string sql,
         Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -285,6 +316,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             CancellationToken.None).ConfigureAwait(false);
         var response = await ReadCopyStartAsync('G').ConfigureAwait(false);
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyIn);
+        copyStarted?.Invoke(response);
 
         var buffer = ArrayPool<byte>.Shared.Rent(CopyBufferSize);
         long bytesTransferred = 0;
@@ -330,6 +362,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private async ValueTask<BlueTuskCopyResult> CopyOutCoreAsync(
         string sql,
         Stream destination,
+        Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
@@ -339,6 +372,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             CancellationToken.None).ConfigureAwait(false);
         var response = await ReadCopyStartAsync('H').ConfigureAwait(false);
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyOut);
+        copyStarted?.Invoke(response);
 
         long bytesTransferred = 0;
         string? commandTag = null;
