@@ -285,6 +285,10 @@ public sealed class BlueTuskConnectionPoolTests
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public void Cancel()
         {
         }

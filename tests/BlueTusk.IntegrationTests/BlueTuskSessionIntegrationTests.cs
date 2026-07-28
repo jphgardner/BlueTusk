@@ -86,6 +86,44 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task Session_waits_for_notifications_and_remains_usable_after_wait_cancellation()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        var options = new BlueTuskClientOptions
+        {
+            Host = settings.Host,
+            Port = settings.Port,
+            Database = settings.Database,
+            Username = settings.Username,
+            Password = settings.Password,
+            SslMode = BlueTuskSslMode.Disable,
+            ChannelBinding = BlueTuskChannelBindingMode.Disable,
+        };
+        await using var listener = await BlueTuskSession.OpenAsync(options, CancellationToken.None);
+        await using var publisher = await BlueTuskSession.OpenAsync(options, CancellationToken.None);
+
+        _ = await listener.ExecuteSimpleQueryAsync(
+            "LISTEN bluetusk_client_notifications",
+            CancellationToken.None);
+        var pending = listener.WaitForNotificationAsync(CancellationToken.None).AsTask();
+        _ = await publisher.ExecuteSimpleQueryAsync(
+            "SELECT pg_notify('bluetusk_client_notifications', 'created \U0001F9A3')",
+            CancellationToken.None);
+
+        var notification = await pending.WaitAsync(TimeSpan.FromSeconds(5));
+        Assert.Equal("bluetusk_client_notifications", notification.Channel);
+        Assert.Equal("created \U0001F9A3", notification.Payload);
+        Assert.Equal(publisher.BackendKeyData!.Value.ProcessId, notification.ProcessId);
+
+        using var cancellationSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(50));
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => listener.WaitForNotificationAsync(cancellationSource.Token).AsTask());
+
+        var result = await listener.ExecuteSimpleQueryAsync("SELECT 42", CancellationToken.None);
+        Assert.Equal("SELECT 1", Assert.Single(result.ResultSets).CommandTag);
+    }
+
+    [Fact]
     public async Task Session_cancels_and_drains_before_reuse()
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());

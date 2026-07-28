@@ -18,6 +18,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private readonly SemaphoreSlim _operationLock = new(1, 1);
     private readonly Dictionary<string, string> _parameters = new(StringComparer.Ordinal);
     private readonly List<BlueTuskError> _notices = [];
+    private readonly Queue<BlueTuskNotificationResponse> _pendingNotifications = [];
     private readonly object _cancellationSync = new();
     private TaskCompletionSource<bool>? _cancellationRequest;
     private bool _open;
@@ -193,6 +194,61 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         finally
         {
             BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
+    }
+
+    /// <summary>Waits for the next asynchronous notification delivered by PostgreSQL.</summary>
+    public async ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
+        CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (_pendingNotifications.TryDequeue(out var pending))
+            {
+                return pending;
+            }
+
+            if (_connection.StateMachine.State != BlueTuskConnectionState.Ready)
+            {
+                throw new InvalidOperationException(
+                    "Notifications can only be awaited while the PostgreSQL session is ready.");
+            }
+
+            while (true)
+            {
+                var message = await ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+                switch (message.Identifier)
+                {
+                    case 'A':
+                        return BlueTuskBackendMessageDecoder.DecodeNotificationResponse(message);
+                    case 'N':
+                        _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                        break;
+                    case 'S':
+                        StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                        break;
+                    case 'E':
+                        throw new BlueTuskServerException(
+                            BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    case 'Z':
+                        await CompleteReadyForQuery(
+                            BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message)).ConfigureAwait(false);
+                        break;
+                    default:
+                        break;
+                }
+            }
+        }
+        finally
+        {
             _operationLock.Release();
         }
     }
@@ -382,9 +438,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var message = await ReadMessageAsync().ConfigureAwait(false);
+                var message = await ReadMessageAsync(CancellationToken.None).ConfigureAwait(false);
                 switch (message.Identifier)
                 {
+                    case 'A':
+                        EnqueueNotification(message);
+                        break;
                     case 'd':
                         var data = BlueTuskBackendMessageDecoder.DecodeCopyData(message);
                         await destination.WriteAsync(data, cancellationToken).ConfigureAwait(false);
@@ -440,9 +499,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskServerException? deferredError = null;
         while (true)
         {
-            var message = await ReadMessageAsync().ConfigureAwait(false);
+            var message = await ReadMessageAsync(CancellationToken.None).ConfigureAwait(false);
             switch (message.Identifier)
             {
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
                 case var identifier when identifier == expectedIdentifier:
                     return BlueTuskBackendMessageDecoder.DecodeCopyResponse(message);
                 case 'E':
@@ -477,9 +539,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskServerException? deferredError = null;
         while (true)
         {
-            var message = await ReadMessageAsync().ConfigureAwait(false);
+            var message = await ReadMessageAsync(CancellationToken.None).ConfigureAwait(false);
             switch (message.Identifier)
             {
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
                 case 'c':
                     break;
                 case 'C':
@@ -552,9 +617,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    private async ValueTask<BlueTuskBackendMessage> ReadMessageAsync()
+    private async ValueTask<BlueTuskBackendMessage> ReadMessageAsync(
+        CancellationToken cancellationToken)
     {
-        var message = await _connection.ReadMessageAsync(CancellationToken.None).ConfigureAwait(false);
+        var message = await _connection.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
         BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
         return message;
     }
@@ -617,6 +683,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
             switch (message.Identifier)
             {
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
                 case 'T':
                     fields = BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
                     rows = [];
@@ -673,6 +742,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             return _cancellationRequest?.Task ?? Task.CompletedTask;
         }
     }
+
+    private void EnqueueNotification(BlueTuskBackendMessage message) =>
+        _pendingNotifications.Enqueue(
+            BlueTuskBackendMessageDecoder.DecodeNotificationResponse(message));
 
     private TaskCompletionSource<bool>? BeginCancellation()
     {

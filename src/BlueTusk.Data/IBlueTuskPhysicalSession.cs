@@ -33,6 +33,9 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default);
 
+    ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
+        CancellationToken cancellationToken = default);
+
     void Cancel();
 
     ValueTask CancelAsync(CancellationToken cancellationToken = default);
@@ -99,6 +102,10 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default) =>
         _session.CopyOutAsync(sql, destination, copyStarted, cancellationToken);
+
+    public ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
+        CancellationToken cancellationToken = default) =>
+        _session.WaitForNotificationAsync(cancellationToken);
 
     public void Cancel() => _session.Cancel();
 
