@@ -256,7 +256,7 @@ public sealed class BlueTuskConnection : DbConnection
         string channel,
         CancellationToken cancellationToken = default)
     {
-        var quotedChannel = BlueTuskSqlIdentifier.Quote(channel, nameof(channel));
+        var quotedChannel = BlueTuskSql.QuoteIdentifier(channel);
         EnsureNotificationsAvailable();
 
         await _notificationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -305,7 +305,7 @@ public sealed class BlueTuskConnection : DbConnection
         string channel,
         CancellationToken cancellationToken = default)
     {
-        _ = BlueTuskSqlIdentifier.Quote(channel, nameof(channel));
+        _ = BlueTuskSql.QuoteIdentifier(channel);
 
         NotificationSubscription? subscription;
         await _notificationGate.WaitAsync(cancellationToken).ConfigureAwait(false);

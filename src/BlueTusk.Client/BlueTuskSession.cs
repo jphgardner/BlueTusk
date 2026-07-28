@@ -819,16 +819,27 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             channelBindingData = await NegotiateTlsAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        var startupParameters = new Dictionary<string, string>
+        {
+            ["user"] = _options.Username,
+            ["database"] = _options.Database,
+            ["client_encoding"] = "UTF8",
+            ["application_name"] = _options.ApplicationName,
+        };
+        switch (_options.ReplicationMode)
+        {
+            case BlueTuskReplicationMode.Physical:
+                startupParameters["replication"] = "true";
+                break;
+            case BlueTuskReplicationMode.Database:
+                startupParameters["replication"] = "database";
+                break;
+        }
+
         await _connection.WriteAsync(
             output => BlueTuskFrontendMessageWriter.WriteStartupMessage(
                 output,
-                new Dictionary<string, string>
-                {
-                    ["user"] = _options.Username,
-                    ["database"] = _options.Database,
-                    ["client_encoding"] = "UTF8",
-                    ["application_name"] = _options.ApplicationName,
-                }),
+                startupParameters),
             cancellationToken).ConfigureAwait(false);
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Authentication);
 

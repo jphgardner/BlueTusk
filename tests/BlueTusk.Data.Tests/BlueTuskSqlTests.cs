@@ -1,6 +1,8 @@
+using BlueTusk.Client;
+
 namespace BlueTusk.Data.Tests;
 
-public sealed class BlueTuskSqlIdentifierTests
+public sealed class BlueTuskSqlTests
 {
     [Theory]
     [InlineData("orders", "\"orders\"")]
@@ -9,7 +11,7 @@ public sealed class BlueTuskSqlIdentifierTests
     [InlineData("select", "\"select\"")]
     public void Quotes_postgresql_identifiers(string identifier, string expected)
     {
-        Assert.Equal(expected, BlueTuskSqlIdentifier.Quote(identifier, nameof(identifier)));
+        Assert.Equal(expected, BlueTuskSql.QuoteIdentifier(identifier));
     }
 
     [Theory]
@@ -18,6 +20,15 @@ public sealed class BlueTuskSqlIdentifierTests
     public void Rejects_identifiers_that_cannot_be_sent(string identifier)
     {
         Assert.Throws<ArgumentException>(
-            () => BlueTuskSqlIdentifier.Quote(identifier, nameof(identifier)));
+            () => BlueTuskSql.QuoteIdentifier(identifier));
+    }
+
+    [Theory]
+    [InlineData("orders", "E'orders'")]
+    [InlineData("order's", "E'order''s'")]
+    [InlineData("a\\b", "E'a\\\\b'")]
+    public void Quotes_postgresql_string_literals(string value, string expected)
+    {
+        Assert.Equal(expected, BlueTuskSql.QuoteLiteral(value));
     }
 }

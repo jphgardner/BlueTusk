@@ -18,6 +18,13 @@ public enum BlueTuskChannelBindingMode
     Require,
 }
 
+public enum BlueTuskReplicationMode
+{
+    None,
+    Physical,
+    Database,
+}
+
 /// <summary>Connection settings for one physical PostgreSQL session.</summary>
 public sealed record BlueTuskClientOptions
 {
@@ -38,6 +45,8 @@ public sealed record BlueTuskClientOptions
     public BlueTuskSslMode SslMode { get; init; } = BlueTuskSslMode.VerifyFull;
 
     public BlueTuskChannelBindingMode ChannelBinding { get; init; } = BlueTuskChannelBindingMode.Prefer;
+
+    public BlueTuskReplicationMode ReplicationMode { get; init; }
 
     public X509RevocationMode CertificateRevocationCheckMode { get; init; } = X509RevocationMode.Online;
 
@@ -62,6 +71,10 @@ public sealed record BlueTuskClientOptions
         {
             throw new ArgumentException("Required channel binding cannot be used when TLS is disabled.");
         }
+
+        if (!Enum.IsDefined(ReplicationMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(ReplicationMode));
+        }
     }
 }
-

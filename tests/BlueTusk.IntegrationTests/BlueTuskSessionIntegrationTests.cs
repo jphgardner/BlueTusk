@@ -123,6 +123,38 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal("SELECT 1", Assert.Single(result.ResultSets).CommandTag);
     }
 
+    [Theory]
+    [InlineData(BlueTuskReplicationMode.Physical)]
+    [InlineData(BlueTuskReplicationMode.Database)]
+    public async Task Session_negotiates_replication_startup_modes(
+        BlueTuskReplicationMode replicationMode)
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+                ReplicationMode = replicationMode,
+            },
+            CancellationToken.None);
+
+        var result = await session.ExecuteSimpleQueryAsync(
+            "IDENTIFY_SYSTEM",
+            CancellationToken.None);
+
+        var resultSet = Assert.Single(result.ResultSets);
+        Assert.Equal(
+            ["systemid", "timeline", "xlogpos", "dbname"],
+            resultSet.Fields.Select(static field => field.Name));
+        Assert.Single(resultSet.Rows);
+    }
+
     [Fact]
     public async Task Session_cancels_and_drains_before_reuse()
     {

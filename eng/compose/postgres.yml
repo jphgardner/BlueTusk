@@ -1,10 +1,22 @@
 name: bluetusk-tests
 
 x-postgres-common: &postgres-common
+  command:
+    - postgres
+    - -c
+    - wal_level=logical
+    - -c
+    - max_wal_senders=10
+    - -c
+    - max_replication_slots=10
+    - -c
+    - hba_file=/etc/postgresql/bluetusk-pg_hba.conf
   environment:
     POSTGRES_USER: postgres
     POSTGRES_PASSWORD: postgres
     POSTGRES_DB: bluetusk_tests
+  volumes:
+    - ./pg_hba.conf:/etc/postgresql/bluetusk-pg_hba.conf:ro
   healthcheck:
     test: ["CMD-SHELL", "pg_isready -U postgres -d bluetusk_tests"]
     interval: 2s
@@ -38,4 +50,3 @@ services:
     image: postgres:19beta2-alpine
     profiles: ["preview"]
     ports: ["5419:5432"]
-
