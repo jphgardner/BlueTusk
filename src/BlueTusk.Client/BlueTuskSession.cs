@@ -11,6 +11,7 @@ namespace BlueTusk.Client;
 public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 {
     private static readonly short[] BinaryResultFormat = [1];
+    private static readonly short[] TextResultFormat = [0];
     private readonly BlueTuskProtocolConnection _connection;
     private readonly BlueTuskClientOptions _options;
     private readonly SemaphoreSlim _operationLock = new(1, 1);
@@ -73,6 +74,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     public ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        CancellationToken cancellationToken = default) =>
+        ExecuteExtendedQueryAsync(sql, parameters, useBinaryResults: true, cancellationToken);
+
+    public ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
@@ -96,7 +104,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     string.Empty,
                     string.Empty,
                     bindParameters,
-                    BinaryResultFormat);
+                    useBinaryResults ? BinaryResultFormat : TextResultFormat);
                 BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
                 BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
                 BlueTuskFrontendMessageWriter.WriteSync(output);

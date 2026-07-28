@@ -80,6 +80,7 @@ public sealed class BlueTuskArrayCodec :
             return BlueTuskDataFormat.Binary;
         }
 
+        var preferredFormat = selector.DefaultWriteFormat;
         foreach (var item in array)
         {
             if (item is not null &&
@@ -89,7 +90,7 @@ public sealed class BlueTuskArrayCodec :
             }
         }
 
-        return BlueTuskDataFormat.Binary;
+        return preferredFormat;
     }
 
     private Array ReadBinary(ref BlueTuskReader reader, BlueTuskTypeDescriptor type)

@@ -42,6 +42,7 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(774, "macaddr8", typeof(BlueTuskMacAddress8), typeof(BlueTuskMacAddress8Codec))]
     [InlineData(829, "macaddr", typeof(BlueTuskMacAddress), typeof(BlueTuskMacAddressCodec))]
     [InlineData(869, "inet", typeof(BlueTuskNetworkAddress), typeof(BlueTuskInetCodec))]
+    [InlineData(1033, "aclitem", typeof(BlueTuskAccessControlItem), typeof(BlueTuskAccessControlItemCodec))]
     [InlineData(1042, "bpchar", typeof(string), typeof(BlueTuskStringCodec))]
     [InlineData(1043, "varchar", typeof(string), typeof(BlueTuskStringCodec))]
     [InlineData(1082, "date", typeof(DateOnly), typeof(BlueTuskDateCodec))]
@@ -56,10 +57,16 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(1790, "refcursor", typeof(BlueTuskRefCursor), typeof(BlueTuskRefCursorCodec))]
     [InlineData(2950, "uuid", typeof(Guid), typeof(BlueTuskGuidCodec))]
     [InlineData(3220, "pg_lsn", typeof(BlueTuskLogSequenceNumber), typeof(BlueTuskLogSequenceNumberCodec))]
+    [InlineData(3361, "pg_ndistinct", typeof(BlueTuskNDistinctStatistics), typeof(BlueTuskNDistinctStatisticsCodec))]
+    [InlineData(3402, "pg_dependencies", typeof(BlueTuskDependencyStatistics), typeof(BlueTuskDependencyStatisticsCodec))]
     [InlineData(3614, "tsvector", typeof(BlueTuskTextSearchVector), typeof(BlueTuskTextSearchVectorCodec))]
     [InlineData(3615, "tsquery", typeof(BlueTuskTextSearchQuery), typeof(BlueTuskTextSearchQueryCodec))]
+    [InlineData(3642, "gtsvector", typeof(BlueTuskGistTextSearchVector), typeof(BlueTuskGistTextSearchVectorCodec))]
     [InlineData(3802, "jsonb", typeof(string), typeof(BlueTuskJsonbCodec))]
     [InlineData(4072, "jsonpath", typeof(BlueTuskJsonPath), typeof(BlueTuskJsonPathCodec))]
+    [InlineData(4600, "pg_brin_bloom_summary", typeof(BlueTuskBrinBloomSummary), typeof(BlueTuskBrinBloomSummaryCodec))]
+    [InlineData(4601, "pg_brin_minmax_multi_summary", typeof(BlueTuskBrinMinMaxMultiSummary), typeof(BlueTuskBrinMinMaxMultiSummaryCodec))]
+    [InlineData(5017, "pg_mcv_list", typeof(BlueTuskMostCommonValueStatistics), typeof(BlueTuskMostCommonValueStatisticsCodec))]
     public void Registry_resolves_core_scalar_codecs(
         uint oid,
         string name,

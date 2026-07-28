@@ -35,6 +35,8 @@ public interface IBlueTuskCodec<T> : IBlueTuskCodec
 /// </summary>
 public interface IBlueTuskWriteFormatSelector
 {
+    BlueTuskDataFormat DefaultWriteFormat => BlueTuskDataFormat.Binary;
+
     BlueTuskDataFormat GetPreferredWriteFormat(
         object value,
         BlueTuskTypeDescriptor type);

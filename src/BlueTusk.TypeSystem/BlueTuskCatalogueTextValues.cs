@@ -44,3 +44,33 @@ public readonly record struct BlueTuskJsonPath
 
 /// <summary>The one-byte PostgreSQL internal <c>"char"</c> value.</summary>
 public readonly record struct BlueTuskInternalChar(byte Value);
+
+/// <summary>A PostgreSQL access-control-list entry stored as <c>aclitem</c>.</summary>
+public readonly record struct BlueTuskAccessControlItem
+{
+    public BlueTuskAccessControlItem(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        Value = value;
+    }
+
+    public string Value { get; }
+
+    public override string ToString() => Value;
+}
+
+/// <summary>
+/// An output-only PostgreSQL GiST text-search signature stored as <c>gtsvector</c>.
+/// </summary>
+public readonly record struct BlueTuskGistTextSearchVector
+{
+    public BlueTuskGistTextSearchVector(string value)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        Value = value;
+    }
+
+    public string Value { get; }
+
+    public override string ToString() => Value;
+}

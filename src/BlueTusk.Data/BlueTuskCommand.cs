@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
+using BlueTusk.Protocol;
 
 namespace BlueTusk.Data;
 
@@ -229,12 +230,31 @@ public sealed class BlueTuskCommand : DbCommand
         try
         {
             var effectiveToken = linkedSource?.Token ?? cancellationToken;
-            return _parameters.Count == 0
-                ? await connection.Session.ExecuteSimpleQueryAsync(CommandText, effectiveToken).ConfigureAwait(false)
-                : await connection.Session.ExecuteExtendedQueryAsync(
+            if (_parameters.Count == 0)
+            {
+                return await connection.Session.ExecuteSimpleQueryAsync(CommandText, effectiveToken)
+                    .ConfigureAwait(false);
+            }
+
+            var parameters = BlueTuskParameterEncoder.Encode(_parameters, connection.TypeRegistry);
+            var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
+            try
+            {
+                return await connection.Session.ExecuteExtendedQueryAsync(
                     CommandText,
-                    BlueTuskParameterEncoder.Encode(_parameters, connection.TypeRegistry),
+                    parameters,
+                    useBinaryResults,
                     effectiveToken).ConfigureAwait(false);
+            }
+            catch (BlueTuskServerException exception) when (
+                useBinaryResults && IsMissingBinaryOutputFunction(exception))
+            {
+                return await connection.Session.ExecuteExtendedQueryAsync(
+                    CommandText,
+                    parameters,
+                    useBinaryResults: false,
+                    effectiveToken).ConfigureAwait(false);
+            }
         }
         catch (BlueTuskServerException exception)
         {
@@ -283,6 +303,14 @@ public sealed class BlueTuskCommand : DbCommand
 
         return found ? affected : -1;
     }
+
+    private static bool IsMissingBinaryOutputFunction(BlueTuskServerException exception) =>
+        exception.SqlState == "42883" &&
+        (exception.Message.StartsWith(
+             "no binary output function available for type ",
+             StringComparison.Ordinal) ||
+         exception.Error.Fields.TryGetValue('R', out var routine) &&
+         string.Equals(routine, "getTypeBinaryOutputInfo", StringComparison.Ordinal));
 
     private BlueTusk.TypeSystem.BlueTuskTypeRegistry GetTypeRegistry() =>
         _connection?.TypeRegistry ??

@@ -74,6 +74,8 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Inet { get; } = Create(869, "inet", 1041);
 
+    public static BlueTuskTypeDescriptor AclItem { get; } = Create(1033, "aclitem", 1034);
+
     public static BlueTuskTypeDescriptor Bpchar { get; } = Create(1042, "bpchar", 1014);
 
     public static BlueTuskTypeDescriptor Varchar { get; } = Create(1043, "varchar", 1015);
@@ -114,9 +116,18 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor PgLsn { get; } = Create(3220, "pg_lsn", 3221);
 
+    public static BlueTuskTypeDescriptor PgNDistinct { get; } =
+        CreateWithoutArray(3361, "pg_ndistinct");
+
+    public static BlueTuskTypeDescriptor PgDependencies { get; } =
+        CreateWithoutArray(3402, "pg_dependencies");
+
     public static BlueTuskTypeDescriptor TextSearchVector { get; } = Create(3614, "tsvector", 3643);
 
     public static BlueTuskTypeDescriptor TextSearchQuery { get; } = Create(3615, "tsquery", 3645);
+
+    public static BlueTuskTypeDescriptor GistTextSearchVector { get; } =
+        Create(3642, "gtsvector", 3644);
 
     public static BlueTuskTypeDescriptor RegConfig { get; } = Create(3734, "regconfig", 3735);
 
@@ -134,6 +145,15 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor RegCollation { get; } =
         Create(4191, "regcollation", 4192);
+
+    public static BlueTuskTypeDescriptor PgBrinBloomSummary { get; } =
+        CreateWithoutArray(4600, "pg_brin_bloom_summary");
+
+    public static BlueTuskTypeDescriptor PgBrinMinMaxMultiSummary { get; } =
+        CreateWithoutArray(4601, "pg_brin_minmax_multi_summary");
+
+    public static BlueTuskTypeDescriptor PgMcvList { get; } =
+        CreateWithoutArray(5017, "pg_mcv_list");
 
     public static BlueTuskTypeDescriptor PgSnapshot { get; } = Create(5038, "pg_snapshot", 5039);
 
@@ -177,6 +197,7 @@ public static class BlueTuskBuiltInTypes
             .Register(Money)
             .Register(Macaddr, new BlueTuskMacAddressCodec())
             .Register(Inet, new BlueTuskInetCodec())
+            .Register(AclItem, new BlueTuskAccessControlItemCodec())
             .Register(Bpchar, textCodec)
             .Register(Varchar, textCodec)
             .Register(Date, new BlueTuskDateCodec())
@@ -197,8 +218,11 @@ public static class BlueTuskBuiltInTypes
             .Register(RegType, new BlueTuskObjectIdentifierCodec<BlueTuskRegType>())
             .Register(TxidSnapshot, new BlueTuskTransactionSnapshotCodec())
             .Register(PgLsn, new BlueTuskLogSequenceNumberCodec())
+            .Register(PgNDistinct, new BlueTuskNDistinctStatisticsCodec())
+            .Register(PgDependencies, new BlueTuskDependencyStatisticsCodec())
             .Register(TextSearchVector, new BlueTuskTextSearchVectorCodec())
             .Register(TextSearchQuery, new BlueTuskTextSearchQueryCodec())
+            .Register(GistTextSearchVector, new BlueTuskGistTextSearchVectorCodec())
             .Register(RegConfig, new BlueTuskObjectIdentifierCodec<BlueTuskRegConfig>())
             .Register(RegDictionary, new BlueTuskObjectIdentifierCodec<BlueTuskRegDictionary>())
             .Register(Jsonb, new BlueTuskJsonbCodec())
@@ -206,6 +230,9 @@ public static class BlueTuskBuiltInTypes
             .Register(RegNamespace, new BlueTuskObjectIdentifierCodec<BlueTuskRegNamespace>())
             .Register(RegRole, new BlueTuskObjectIdentifierCodec<BlueTuskRegRole>())
             .Register(RegCollation, new BlueTuskObjectIdentifierCodec<BlueTuskRegCollation>())
+            .Register(PgBrinBloomSummary, new BlueTuskBrinBloomSummaryCodec())
+            .Register(PgBrinMinMaxMultiSummary, new BlueTuskBrinMinMaxMultiSummaryCodec())
+            .Register(PgMcvList, new BlueTuskMostCommonValueStatisticsCodec())
             .Register(PgSnapshot, new BlueTuskTransactionSnapshotCodec())
             .Register(Xid8, new BlueTuskFullTransactionIdCodec())
             .Build();

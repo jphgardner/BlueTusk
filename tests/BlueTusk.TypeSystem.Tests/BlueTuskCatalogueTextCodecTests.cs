@@ -142,6 +142,44 @@ public sealed class BlueTuskCatalogueTextCodecTests
     }
 
     [Fact]
+    public void Aclitem_round_trips_text_and_always_selects_text_for_writes()
+    {
+        var codec = new BlueTuskAccessControlItemCodec();
+        var value = new BlueTuskAccessControlItem("postgres=arwdDxt/postgres");
+
+        Assert.Equal(
+            value,
+            RoundTrip(codec, BlueTuskBuiltInTypes.AclItem, value, BlueTuskDataFormat.Text));
+        Assert.Equal(
+            BlueTuskDataFormat.Text,
+            codec.GetPreferredWriteFormat(value, BlueTuskBuiltInTypes.AclItem));
+        Assert.Equal(BlueTuskDataFormat.Text, codec.DefaultWriteFormat);
+        Assert.Throws<NotSupportedException>(
+            () => Write(codec, BlueTuskBuiltInTypes.AclItem, value, BlueTuskDataFormat.Binary));
+    }
+
+    [Fact]
+    public void Gtsvector_decodes_text_but_rejects_input()
+    {
+        var codec = new BlueTuskGistTextSearchVectorCodec();
+        var value = new BlueTuskGistTextSearchVector("deadbeef");
+
+        Assert.Equal(
+            value,
+            Read(
+                codec,
+                BlueTuskBuiltInTypes.GistTextSearchVector,
+                Encoding.UTF8.GetBytes(value.Value),
+                BlueTuskDataFormat.Text));
+        Assert.Throws<NotSupportedException>(
+            () => Write(
+                codec,
+                BlueTuskBuiltInTypes.GistTextSearchVector,
+                value,
+                BlueTuskDataFormat.Text));
+    }
+
+    [Fact]
     public void Catalogue_composes_internal_char_cursor_and_jsonpath_arrays()
     {
         var registry = BlueTuskTypeCatalogue.BuildRegistry(
@@ -160,6 +198,34 @@ public sealed class BlueTuskCatalogueTextCodecTests
         AssertCodecType(registry, new BlueTuskTypeId(2201), typeof(BlueTuskRefCursor[]));
         AssertCodecType(registry, BlueTuskBuiltInTypes.JsonPath.Id, typeof(BlueTuskJsonPath));
         AssertCodecType(registry, new BlueTuskTypeId(4073), typeof(BlueTuskJsonPath[]));
+    }
+
+    [Fact]
+    public void Catalogue_composes_text_only_catalogue_arrays()
+    {
+        var registry = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            Base(BlueTuskBuiltInTypes.AclItem, 'U'),
+            Array(1034, "_aclitem", BlueTuskBuiltInTypes.AclItem.Id),
+            Base(BlueTuskBuiltInTypes.GistTextSearchVector, 'U'),
+            Array(3644, "_gtsvector", BlueTuskBuiltInTypes.GistTextSearchVector.Id),
+        ]);
+
+        AssertCodecType(registry, BlueTuskBuiltInTypes.AclItem.Id, typeof(BlueTuskAccessControlItem));
+        AssertCodecType(registry, new BlueTuskTypeId(1034), typeof(BlueTuskAccessControlItem[]));
+        AssertCodecType(
+            registry,
+            BlueTuskBuiltInTypes.GistTextSearchVector.Id,
+            typeof(BlueTuskGistTextSearchVector));
+        AssertCodecType(registry, new BlueTuskTypeId(3644), typeof(BlueTuskGistTextSearchVector[]));
+
+        Assert.True(registry.TryGetCodec(new BlueTuskTypeId(1034), out var aclArrayCodec));
+        Assert.Equal(
+            BlueTuskDataFormat.Text,
+            Assert.IsAssignableFrom<IBlueTuskWriteFormatSelector>(aclArrayCodec)
+                .GetPreferredWriteFormat(
+                    System.Array.Empty<BlueTuskAccessControlItem>(),
+                    BlueTuskBuiltInTypes.AclItem));
     }
 
     private static BlueTuskCatalogueType Base(

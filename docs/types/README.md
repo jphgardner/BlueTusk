@@ -1,6 +1,6 @@
 # Core type mappings
 
-BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format; extended queries request and decode binary fields.
+BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries decode the server's text format. Extended queries prefer binary fields and transparently retry with text outside a transaction when a selected PostgreSQL type has no binary output function. Inside an explicit transaction they request text fields up front, avoiding a failed Bind that would abort the transaction.
 
 | PostgreSQL type | OID | Default CLR value | Text | Binary |
 | --- | ---: | --- | :---: | :---: |
@@ -111,7 +111,7 @@ Symbolic values are sent as text so PostgreSQL resolves them using its normal na
 
 `int2vector` maps to the immutable `BlueTuskInt16Vector`; `oidvector` maps to `BlueTuskObjectIdentifierVector`. Their codecs enforce PostgreSQL's one-dimensional, zero-based, null-free binary shape, including full unsigned OID values. PostgreSQL does not accept an empty vector through its binary receive function, so BlueTusk automatically uses text for an empty vector or an array containing one.
 
-Runtime codecs that have the same value-dependent requirement can implement `IBlueTuskWriteFormatSelector`. Otherwise registered codec parameters continue to prefer binary.
+Runtime codecs that have the same value-dependent requirement can implement `IBlueTuskWriteFormatSelector`. Its `DefaultWriteFormat` also controls empty composed arrays, whose elements cannot provide a value-specific choice. Otherwise registered codec parameters continue to prefer binary.
 
 ## JSONPath and text-like catalogue values
 
@@ -127,3 +127,19 @@ Runtime codecs that have the same value-dependent requirement can implement `IBl
 `BlueTuskJsonPath` deliberately preserves the expression as text and lets PostgreSQL parse, validate, and normalize it. Its binary codec validates the PostgreSQL JSONPath wire-version byte. `refcursor` values and arrays use their own CLR type so they do not collide with ordinary `text` inference.
 
 PostgreSQL exposes `pg_node_tree` through system catalogues but rejects input values of that type. BlueTusk therefore decodes its text and binary forms into `BlueTuskNodeTree`, while attempts to encode one fail locally with `NotSupportedException`.
+
+## Text-only and opaque catalogue values
+
+| PostgreSQL type | CLR value | Behavior |
+| --- | --- | --- |
+| `aclitem` | `BlueTuskAccessControlItem` | Text-only read/write; PostgreSQL validates ACL syntax |
+| `gtsvector` | `BlueTuskGistTextSearchVector` | Text-only, decode-only GiST signature |
+| `pg_ndistinct` | `BlueTuskNDistinctStatistics` | Decode-only opaque statistics payload |
+| `pg_dependencies` | `BlueTuskDependencyStatistics` | Decode-only opaque statistics payload |
+| `pg_mcv_list` | `BlueTuskMostCommonValueStatistics` | Decode-only opaque statistics payload |
+| `pg_brin_bloom_summary` | `BlueTuskBrinBloomSummary` | Decode-only opaque BRIN summary |
+| `pg_brin_minmax_multi_summary` | `BlueTuskBrinMinMaxMultiSummary` | Decode-only opaque BRIN summary |
+
+`aclitem` has no binary input or output functions. Its codec and catalogue-composed arrays therefore always use text, including empty arrays. `gtsvector` likewise has no binary output and PostgreSQL rejects input values.
+
+The statistics and BRIN values preserve their exact field format and bytes through distinct immutable CLR types. Their internal representation is deliberately not interpreted: PostgreSQL owns that version-specific encoding and rejects client input even where a receive function appears in the catalogue. BlueTusk consequently exposes these values for lossless inspection and rejects attempts to encode them.

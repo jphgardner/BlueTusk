@@ -8,6 +8,87 @@ namespace BlueTusk.IntegrationTests;
 public sealed class BlueTuskTypeCodecIntegrationTests
 {
     [Fact]
+    public async Task AdoNet_retries_text_only_catalogue_results_and_preserves_transactions()
+    {
+        var value = new BlueTuskAccessControlItem("postgres=arwdDxt/postgres");
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+
+        await using (var command = CreateAclCommand(connection, transaction: null, value))
+        await using (var reader = await command.ExecuteReaderAsync(CancellationToken.None))
+        {
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(value, reader.GetFieldValue<BlueTuskAccessControlItem>(0));
+            Assert.Equal([value], reader.GetFieldValue<BlueTuskAccessControlItem[]>(1));
+            Assert.Empty(reader.GetFieldValue<BlueTuskAccessControlItem[]>(2));
+        }
+
+        await using var transaction = await connection.BeginTransactionAsync(CancellationToken.None);
+        await using (var command = CreateAclCommand(connection, transaction, value))
+        await using (var reader = await command.ExecuteReaderAsync(CancellationToken.None))
+        {
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(value, reader.GetFieldValue<BlueTuskAccessControlItem>(0));
+        }
+
+        await using var verify = new BlueTuskCommand("SELECT $1::int4", connection)
+        {
+            Transaction = transaction,
+        };
+        verify.Parameters.Add(new BlueTuskParameter<int>(42));
+        Assert.Equal(42, await verify.ExecuteScalarAsync<int>(CancellationToken.None));
+        await transaction.RollbackAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task AdoNet_decodes_opaque_extended_statistics_values()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using (var setup = new BlueTuskCommand(
+                         """
+                         CREATE TEMP TABLE bluetusk_opaque_statistics (a int4, b int4);
+                         INSERT INTO bluetusk_opaque_statistics
+                         SELECT value % 10, value % 10
+                         FROM generate_series(1, 1000) AS value;
+                         CREATE STATISTICS bluetusk_opaque_statistics_sample
+                         (ndistinct, dependencies, mcv)
+                         ON a, b FROM bluetusk_opaque_statistics;
+                         ANALYZE bluetusk_opaque_statistics;
+                         """,
+                         connection))
+        {
+            _ = await setup.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        BlueTuskNDistinctStatistics ndistinct;
+        BlueTuskDependencyStatistics dependencies;
+        BlueTuskMostCommonValueStatistics mostCommonValues;
+        await using (var query = new BlueTuskCommand(
+                         """
+                         SELECT data.stxdndistinct, data.stxddependencies, data.stxdmcv
+                         FROM pg_catalog.pg_statistic_ext_data AS data
+                         JOIN pg_catalog.pg_statistic_ext AS definition
+                           ON definition.oid = data.stxoid
+                         WHERE definition.stxname = $1
+                         """,
+                         connection))
+        {
+            query.Parameters.Add(
+                new BlueTuskParameter<string>("bluetusk_opaque_statistics_sample"));
+            await using var reader = await query.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            ndistinct = reader.GetFieldValue<BlueTuskNDistinctStatistics>(0);
+            dependencies = reader.GetFieldValue<BlueTuskDependencyStatistics>(1);
+            mostCommonValues = reader.GetFieldValue<BlueTuskMostCommonValueStatistics>(2);
+        }
+
+        AssertOpaqueBinaryValue(ndistinct);
+        AssertOpaqueBinaryValue(dependencies);
+        AssertOpaqueBinaryValue(mostCommonValues);
+    }
+
+    [Fact]
     public async Task Extended_queries_negotiate_binary_result_columns()
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
@@ -911,6 +992,30 @@ public sealed class BlueTuskTypeCodecIntegrationTests
 
             writer.WriteUtf8(value.Value);
         }
+    }
+
+    private static BlueTuskCommand CreateAclCommand(
+        BlueTuskConnection connection,
+        BlueTuskTransaction? transaction,
+        BlueTuskAccessControlItem value)
+    {
+        var command = new BlueTuskCommand(
+            "SELECT $1::aclitem, ARRAY[$1::aclitem]::aclitem[], $2::aclitem[]",
+            connection)
+        {
+            Transaction = transaction,
+        };
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskAccessControlItem>(value));
+        command.Parameters.Add(
+            new BlueTuskParameter<BlueTuskAccessControlItem[]>(
+                Array.Empty<BlueTuskAccessControlItem>()));
+        return command;
+    }
+
+    private static void AssertOpaqueBinaryValue(BlueTuskOpaqueCatalogueValue value)
+    {
+        Assert.Equal(BlueTuskDataFormat.Binary, value.Format);
+        Assert.False(value.Data.IsEmpty);
     }
 
     private static void AssertAddress(BlueTuskRecord expected, BlueTuskRecord actual)

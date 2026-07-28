@@ -191,3 +191,79 @@ public sealed class BlueTuskInternalCharCodec : BlueTuskCodec<BlueTuskInternalCh
     private static InvalidOperationException InvalidValue(BlueTuskTypeDescriptor type) =>
         new($"The {type.QualifiedName} value is not a canonical PostgreSQL internal character.");
 }
+
+public sealed class BlueTuskAccessControlItemCodec :
+    BlueTuskCodec<BlueTuskAccessControlItem>,
+    IBlueTuskWriteFormatSelector
+{
+    public BlueTuskDataFormat DefaultWriteFormat => BlueTuskDataFormat.Text;
+
+    public override BlueTuskAccessControlItem ReadTyped(
+        ref BlueTuskReader reader,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        EnsureTextFormat(format, type);
+        return new BlueTuskAccessControlItem(reader.ReadRemainingUtf8());
+    }
+
+    public override void WriteTyped(
+        ref BlueTuskWriter writer,
+        BlueTuskAccessControlItem value,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        EnsureTextFormat(format, type);
+        writer.WriteUtf8(value.Value);
+    }
+
+    public BlueTuskDataFormat GetPreferredWriteFormat(
+        object value,
+        BlueTuskTypeDescriptor type)
+    {
+        if (value is not BlueTuskAccessControlItem)
+        {
+            throw new InvalidCastException(
+                $"The {type.QualifiedName} codec requires a {typeof(BlueTuskAccessControlItem).FullName} value.");
+        }
+
+        return BlueTuskDataFormat.Text;
+    }
+
+    private static void EnsureTextFormat(
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        if (format != BlueTuskDataFormat.Text)
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL exposes {type.QualifiedName} in text format only.");
+        }
+    }
+}
+
+public sealed class BlueTuskGistTextSearchVectorCodec :
+    BlueTuskCodec<BlueTuskGistTextSearchVector>
+{
+    public override BlueTuskGistTextSearchVector ReadTyped(
+        ref BlueTuskReader reader,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        if (format != BlueTuskDataFormat.Text)
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL exposes {type.QualifiedName} in text format only.");
+        }
+
+        return new BlueTuskGistTextSearchVector(reader.ReadRemainingUtf8());
+    }
+
+    public override void WriteTyped(
+        ref BlueTuskWriter writer,
+        BlueTuskGistTextSearchVector value,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type) =>
+        throw new NotSupportedException(
+            $"PostgreSQL does not accept input values for {type.QualifiedName}.");
+}

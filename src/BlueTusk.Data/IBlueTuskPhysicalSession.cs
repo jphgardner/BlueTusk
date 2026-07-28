@@ -18,6 +18,7 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
     ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
         CancellationToken cancellationToken = default);
 
     void Cancel();
@@ -69,8 +70,9 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     public ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
         CancellationToken cancellationToken = default) =>
-        _session.ExecuteExtendedQueryAsync(sql, parameters, cancellationToken);
+        _session.ExecuteExtendedQueryAsync(sql, parameters, useBinaryResults, cancellationToken);
 
     public void Cancel() => _session.Cancel();
 
