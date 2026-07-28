@@ -92,6 +92,35 @@ public sealed class BlueTuskCopyIntegrationTests
     }
 
     [Fact]
+    public async Task Text_copy_helpers_stream_unicode_csv_without_owning_text_objects()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            connection,
+            "CREATE TEMP TABLE bluetusk_text_copy (id int4, name text, note text)");
+        using var source = new StringReader("1,\"Chloé 🐘\",\"line one\"\n");
+
+        var imported = await connection.CopyTextFromAsync(
+            "COPY bluetusk_text_copy FROM STDIN WITH (FORMAT CSV)",
+            source,
+            CancellationToken.None);
+
+        Assert.Equal(1, imported.RowsAffected);
+        using var destination = new StringWriter(
+            System.Globalization.CultureInfo.InvariantCulture);
+        var exported = await connection.CopyTextToAsync(
+            "COPY bluetusk_text_copy TO STDOUT WITH (FORMAT CSV)",
+            destination,
+            CancellationToken.None);
+
+        Assert.Equal(1, exported.RowsAffected);
+        Assert.Equal("1,Chloé 🐘,line one\n", destination.ToString());
+        Assert.Equal(-1, source.Read());
+        destination.Write("still open");
+    }
+
+    [Fact]
     public async Task Failed_copy_streams_abort_and_leave_the_connection_reusable()
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());

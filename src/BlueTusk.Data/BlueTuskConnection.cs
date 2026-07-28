@@ -243,6 +243,34 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
+    public async ValueTask<BlueTuskRawCopyResult> CopyTextFromAsync(
+        string copyCommand,
+        TextReader source,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        await using var stream = new BlueTuskCopyTextReaderStream(source);
+        return await CopyFromAsync(
+            copyCommand,
+            stream,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<BlueTuskRawCopyResult> CopyTextToAsync(
+        string copyCommand,
+        TextWriter destination,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(destination);
+        await using var stream = new BlueTuskCopyTextWriterStream(destination);
+        var result = await CopyToAsync(
+            copyCommand,
+            stream,
+            cancellationToken).ConfigureAwait(false);
+        await stream.CompleteAsync(cancellationToken).ConfigureAwait(false);
+        return result;
+    }
+
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
         throw new NotSupportedException("Synchronous transaction start is not implemented yet. Use BeginTransactionAsync.");
 

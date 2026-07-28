@@ -29,8 +29,17 @@ var exported = await connection.CopyToAsync(
 
 The result reports PostgreSQL's overall and per-column COPY formats, rows affected, and payload bytes transferred. BlueTusk does not dispose the caller-owned stream.
 
+For text and CSV data, `CopyTextFromAsync` and `CopyTextToAsync` accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks:
+
+```csharp
+using var source = new StringReader("1,\"Chloé 🐘\"\n");
+await connection.CopyTextFromAsync(
+    "COPY app.people (id, name) FROM STDIN WITH (FORMAT CSV)",
+    source);
+```
+
 Only the supplied SQL determines COPY options such as delimiter, quote, escape, null representation, encoding, and header handling. Values are not interpolated by these raw APIs; construct commands from trusted SQL and use PostgreSQL identifier quoting for dynamic object names.
 
 The physical session remains exclusively leased for the full transfer. If the source, destination, or cancellation token fails, BlueTusk sends `CopyFail` or a cancellation request as appropriate and drains through `ReadyForQuery` before allowing the connection to be reused.
 
-Typed text/CSV row helpers and typed binary import/export are tracked separately in the [roadmap](../roadmap.md).
+Typed binary import/export is tracked separately in the [roadmap](../roadmap.md).
