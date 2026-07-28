@@ -40,6 +40,7 @@
     <Project Path="tests/BlueTusk.EntityFrameworkCore.Tests/BlueTusk.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj" />
     <Project Path="tests/BlueTusk.Protocol.Tests/BlueTusk.Protocol.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Replication.PgOutput.Tests/BlueTusk.Replication.PgOutput.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.Tests/BlueTusk.Replication.Tests.csproj" />
     <Project Path="tests/BlueTusk.Security.Tests/BlueTusk.Security.Tests.csproj" />
     <Project Path="tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj" />

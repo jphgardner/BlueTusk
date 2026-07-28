@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Replication.Tests;
 

@@ -20,5 +20,5 @@ public enum BlueTuskPgOutputMessageCode : byte
     Prepare = (byte)'P',
     CommitPrepared = (byte)'K',
     RollbackPrepared = (byte)'r',
+    StreamPrepare = (byte)'p',
 }
-

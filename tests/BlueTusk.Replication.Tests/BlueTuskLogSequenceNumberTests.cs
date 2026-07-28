@@ -1,3 +1,5 @@
+using BlueTusk.TypeSystem;
+
 namespace BlueTusk.Replication.Tests;
 
 public sealed class BlueTuskLogSequenceNumberTests

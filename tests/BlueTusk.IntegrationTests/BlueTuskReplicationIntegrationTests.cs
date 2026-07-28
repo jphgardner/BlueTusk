@@ -1,6 +1,7 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Replication;
+using BlueTusk.Replication.PgOutput;
 using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
@@ -44,6 +45,11 @@ public sealed class BlueTuskReplicationIntegrationTests
 
         Assert.Equal(message.WalEnd, replication.LastReceivedWalPosition);
         Assert.Equal(status, replication.StandbyStatus);
+        var activeSlot = Assert.Single(
+            await replication.GetReplicationSlotsAsync(),
+            candidate => candidate.SlotName == slotName);
+        Assert.Equal("physical", activeSlot.SlotType);
+        Assert.True(activeSlot.IsActive);
 
         await enumerator.DisposeAsync();
         var discovered = await replication.ReadReplicationSlotAsync(slotName);
@@ -81,6 +87,20 @@ public sealed class BlueTuskReplicationIntegrationTests
                     slotName,
                     temporary: true);
                 Assert.Equal("pgoutput", slot.OutputPlugin);
+                var publication = Assert.Single(
+                    await replication.GetPublicationsAsync(),
+                    candidate => candidate.Name == publicationName);
+                Assert.True(publication.PublishesInserts);
+                var publicationTable = Assert.Single(
+                    await replication.GetPublicationTablesAsync(publicationName));
+                Assert.Equal(tableName, publicationTable.TableName);
+                Assert.Equal(["id", "value"], publicationTable.Columns);
+                Assert.Null(publicationTable.RowFilter);
+                var discoveredSlot = Assert.Single(
+                    await replication.GetReplicationSlotsAsync(),
+                    candidate => candidate.SlotName == slotName);
+                Assert.Equal("logical", discoveredSlot.SlotType);
+                Assert.Equal("pgoutput", discoveredSlot.OutputPlugin);
 
                 await using var enumerator = replication.StartReplicationAsync(
                     slotName,
@@ -96,19 +116,35 @@ public sealed class BlueTuskReplicationIntegrationTests
                     Task.Delay(Timeout.InfiniteTimeSpan, timeout.Token));
                 Assert.Same(firstMessage, completed);
                 Assert.True(await firstMessage);
+                var decoder = new BlueTuskPgOutputDecoder();
                 var xLogData = enumerator.Current as BlueTuskXLogData ??
                     await ReadXLogDataAsync(enumerator);
-                Assert.NotEmpty(xLogData.Data.ToArray());
-                Assert.Contains(
-                    xLogData.Data.Span[0],
-                    new[]
+                BlueTuskPgOutputRelation? relation = null;
+                BlueTuskPgOutputInsert? insert = null;
+                do
+                {
+                    var decoded = decoder.Decode(xLogData).Message;
+                    relation = decoded as BlueTuskPgOutputRelation ?? relation;
+                    insert = decoded as BlueTuskPgOutputInsert;
+                    if (insert is null)
                     {
-                        (byte)'B',
-                        (byte)'R',
-                        (byte)'I',
-                        (byte)'C',
-                    });
+                        xLogData = await ReadXLogDataAsync(enumerator);
+                    }
+                }
+                while (insert is null);
 
+                Assert.NotNull(relation);
+                Assert.Equal(tableName, relation.Name);
+                Assert.Equal(relation.RelationId, insert.RelationId);
+                Assert.Equal(2, insert.NewRow.Values.Count);
+                Assert.Equal(
+                    "1",
+                    System.Text.Encoding.UTF8.GetString(
+                        insert.NewRow.Values[0].Data.Span));
+                Assert.Equal(
+                    "hello",
+                    System.Text.Encoding.UTF8.GetString(
+                        insert.NewRow.Values[1].Data.Span));
                 await replication.SendStandbyStatusUpdateAsync(
                     new BlueTuskStandbyStatus(
                         xLogData.WalEnd,
@@ -121,6 +157,284 @@ public sealed class BlueTuskReplicationIntegrationTests
                     administration,
                     $"DROP PUBLICATION IF EXISTS {quotedPublication}");
             }
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task Pgoutput_streams_large_in_progress_transactions()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_streaming_{suffix}";
+        var publicationName = $"bluetusk_streaming_pub_{suffix}";
+        var slotName = $"bluetusk_streaming_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        var transactionOpen = false;
+
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text NOT NULL)");
+        try
+        {
+            await ExecuteAsync(
+                administration,
+                $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+            try
+            {
+                await using var replication =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                _ = await replication.CreateReplicationSlotAsync(
+                    slotName,
+                    temporary: true);
+
+                await ExecuteAsync(administration, "BEGIN");
+                transactionOpen = true;
+                await ExecuteAsync(
+                    administration,
+                    $"""
+                     INSERT INTO {quotedTable}
+                     SELECT value, repeat('x', 1024)
+                     FROM generate_series(1, 512) AS value
+                     """);
+
+                await using var enumerator = replication.StartReplicationAsync(
+                    new BlueTuskPgOutputReplicationOptions
+                    {
+                        SlotName = slotName,
+                        PublicationNames = [publicationName],
+                        ProtocolVersion = 2,
+                        StreamingMode = BlueTuskLogicalStreamingMode.On,
+                    }).GetAsyncEnumerator();
+                var decoder = new BlueTuskPgOutputDecoder(
+                    new BlueTuskPgOutputDecoderOptions
+                    {
+                        ProtocolVersion = 2,
+                        StreamingMode = BlueTuskPgOutputStreamingMode.On,
+                    });
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+
+                var streamStart = Assert.IsType<BlueTuskPgOutputStreamStart>(
+                    (await ReadDecodedUntilAsync(
+                        enumerator,
+                        decoder,
+                        static message => message is BlueTuskPgOutputStreamStart,
+                        timeout.Token)).Message);
+                var streamedInsert = Assert.IsType<BlueTuskPgOutputInsert>(
+                    (await ReadDecodedUntilAsync(
+                        enumerator,
+                        decoder,
+                        static message => message is BlueTuskPgOutputInsert,
+                        timeout.Token)).Message);
+                _ = Assert.IsType<BlueTuskPgOutputStreamStop>(
+                    (await ReadDecodedUntilAsync(
+                        enumerator,
+                        decoder,
+                        static message => message is BlueTuskPgOutputStreamStop,
+                        timeout.Token)).Message);
+
+                Assert.Equal(streamStart.TransactionId, streamedInsert.StreamingTransactionId);
+                await ExecuteAsync(administration, "COMMIT");
+                transactionOpen = false;
+
+                var streamCommit = Assert.IsType<BlueTuskPgOutputStreamCommit>(
+                    (await ReadDecodedUntilAsync(
+                        enumerator,
+                        decoder,
+                        static message => message is BlueTuskPgOutputStreamCommit,
+                        timeout.Token)).Message);
+                Assert.Equal(streamStart.TransactionId, streamCommit.TransactionId);
+            }
+            finally
+            {
+                if (transactionOpen)
+                {
+                    await ExecuteAsync(administration, "ROLLBACK");
+                    transactionOpen = false;
+                }
+
+                await ExecuteAsync(
+                    administration,
+                    $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            }
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task Pgoutput_decodes_prepared_transaction_metadata()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_twophase_{suffix}";
+        var publicationName = $"bluetusk_twophase_pub_{suffix}";
+        var slotName = $"bluetusk_twophase_slot_{suffix}";
+        var globalTransactionId = $"bluetusk_gid_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        var quotedGlobalTransactionId = BlueTuskSql.QuoteLiteral(globalTransactionId);
+        var prepared = false;
+
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text NOT NULL)");
+        try
+        {
+            await ExecuteAsync(
+                administration,
+                $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+            try
+            {
+                await using var replication =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                _ = await replication.CreateReplicationSlotAsync(
+                    slotName,
+                    temporary: true,
+                    twoPhase: true);
+                await using var enumerator = replication.StartReplicationAsync(
+                    new BlueTuskPgOutputReplicationOptions
+                    {
+                        SlotName = slotName,
+                        PublicationNames = [publicationName],
+                        ProtocolVersion = 3,
+                        StreamingMode = BlueTuskLogicalStreamingMode.On,
+                        TwoPhase = true,
+                    }).GetAsyncEnumerator();
+
+                var firstMove = enumerator.MoveNextAsync().AsTask();
+                await ExecuteAsync(administration, "BEGIN");
+                await ExecuteAsync(
+                    administration,
+                    $"INSERT INTO {quotedTable} VALUES (1, 'prepared')");
+                await ExecuteAsync(
+                    administration,
+                    $"PREPARE TRANSACTION {quotedGlobalTransactionId}");
+                prepared = true;
+
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                Assert.True(await firstMove.WaitAsync(timeout.Token));
+                var decoder = new BlueTuskPgOutputDecoder(
+                    new BlueTuskPgOutputDecoderOptions
+                    {
+                        ProtocolVersion = 3,
+                        StreamingMode = BlueTuskPgOutputStreamingMode.On,
+                        TwoPhase = true,
+                    });
+                BlueTuskPgOutputBeginPrepare? beginPrepare = null;
+                BlueTuskPgOutputInsert? insert = null;
+                BlueTuskPgOutputPrepare? prepare = null;
+                if (enumerator.Current is BlueTuskXLogData initialData)
+                {
+                    CapturePreparedMessage(
+                        decoder.Decode(initialData).Message,
+                        ref beginPrepare,
+                        ref insert,
+                        ref prepare);
+                }
+
+                while (prepare is null)
+                {
+                    var decoded = await ReadDecodedUntilAsync(
+                        enumerator,
+                        decoder,
+                        static message =>
+                            message is BlueTuskPgOutputBeginPrepare or
+                                BlueTuskPgOutputInsert or
+                                BlueTuskPgOutputPrepare,
+                        timeout.Token);
+                    CapturePreparedMessage(
+                        decoded.Message,
+                        ref beginPrepare,
+                        ref insert,
+                        ref prepare);
+                }
+
+                Assert.NotNull(beginPrepare);
+                Assert.NotNull(insert);
+                Assert.Equal(globalTransactionId, beginPrepare.GlobalTransactionId);
+                Assert.Equal(globalTransactionId, prepare.GlobalTransactionId);
+                Assert.Equal(beginPrepare.TransactionId, prepare.TransactionId);
+            }
+            finally
+            {
+                if (prepared)
+                {
+                    await ExecuteAsync(
+                        administration,
+                        $"ROLLBACK PREPARED {quotedGlobalTransactionId}");
+                    prepared = false;
+                }
+
+                await ExecuteAsync(
+                    administration,
+                    $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            }
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task Logical_connection_streams_custom_output_plugin_payloads()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_custom_plugin_{suffix}";
+        var slotName = $"bluetusk_custom_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text NOT NULL)");
+        try
+        {
+            await using var replication =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+            var slot = await replication.CreateReplicationSlotAsync(
+                slotName,
+                outputPlugin: "test_decoding",
+                temporary: true);
+            Assert.Equal("test_decoding", slot.OutputPlugin);
+
+            await using var enumerator = replication.StartReplicationAsync(
+                new BlueTuskLogicalReplicationRequest
+                {
+                    SlotName = slotName,
+                }).GetAsyncEnumerator();
+            var firstMove = enumerator.MoveNextAsync().AsTask();
+            await ExecuteAsync(
+                administration,
+                $"INSERT INTO {quotedTable} VALUES (1, 'custom')");
+
+            using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+            Assert.True(await firstMove.WaitAsync(timeout.Token));
+            string? decodedText = enumerator.Current is BlueTuskXLogData initial
+                ? System.Text.Encoding.UTF8.GetString(initial.Data.Span)
+                : null;
+            while (decodedText is null ||
+                !decodedText.Contains("INSERT:", StringComparison.Ordinal))
+            {
+                var xLogData = await ReadXLogDataAsync(enumerator);
+                decodedText = System.Text.Encoding.UTF8.GetString(xLogData.Data.Span);
+            }
+
+            Assert.Contains(tableName, decodedText, StringComparison.Ordinal);
+            Assert.Contains("'custom'", decodedText, StringComparison.Ordinal);
         }
         finally
         {
@@ -141,6 +455,41 @@ public sealed class BlueTuskReplicationIntegrationTests
         }
 
         throw new XunitException("The physical replication stream completed before sending WAL.");
+    }
+
+    private static async Task<BlueTuskPgOutputEnvelope> ReadDecodedUntilAsync(
+        IAsyncEnumerator<BlueTuskReplicationMessage> enumerator,
+        BlueTuskPgOutputDecoder decoder,
+        Func<BlueTuskPgOutputMessage, bool> predicate,
+        CancellationToken cancellationToken)
+    {
+        while (await enumerator.MoveNextAsync().AsTask().WaitAsync(cancellationToken))
+        {
+            if (enumerator.Current is not BlueTuskXLogData xLogData)
+            {
+                continue;
+            }
+
+            var decoded = decoder.Decode(xLogData);
+            if (predicate(decoded.Message))
+            {
+                return decoded;
+            }
+        }
+
+        throw new XunitException(
+            "The logical replication stream completed before the expected pgoutput message.");
+    }
+
+    private static void CapturePreparedMessage(
+        BlueTuskPgOutputMessage message,
+        ref BlueTuskPgOutputBeginPrepare? beginPrepare,
+        ref BlueTuskPgOutputInsert? insert,
+        ref BlueTuskPgOutputPrepare? prepare)
+    {
+        beginPrepare = message as BlueTuskPgOutputBeginPrepare ?? beginPrepare;
+        insert = message as BlueTuskPgOutputInsert ?? insert;
+        prepare = message as BlueTuskPgOutputPrepare ?? prepare;
     }
 
     private static async Task ForceWalSwitchAsync(string connectionString)

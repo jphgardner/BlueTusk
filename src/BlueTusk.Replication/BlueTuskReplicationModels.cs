@@ -20,6 +20,39 @@ public sealed record BlueTuskPhysicalReplicationSlot(
     BlueTuskLogSequenceNumber? RestartPosition,
     ulong? RestartTimeline);
 
+/// <summary>A replication slot discovered through the PostgreSQL catalog.</summary>
+public sealed record BlueTuskReplicationSlotInfo(
+    string SlotName,
+    string? OutputPlugin,
+    string SlotType,
+    string? DatabaseName,
+    bool IsTemporary,
+    bool IsActive,
+    int? ActiveProcessId,
+    BlueTuskLogSequenceNumber? RestartPosition,
+    BlueTuskLogSequenceNumber? ConfirmedFlushPosition,
+    string? WalStatus);
+
+/// <summary>A PostgreSQL logical replication publication.</summary>
+public sealed record BlueTuskPublicationInfo(
+    uint Oid,
+    string Name,
+    string Owner,
+    bool PublishesAllTables,
+    bool PublishesInserts,
+    bool PublishesUpdates,
+    bool PublishesDeletes,
+    bool PublishesTruncates,
+    bool PublishesViaPartitionRoot);
+
+/// <summary>A table exposed by a PostgreSQL logical replication publication.</summary>
+public sealed record BlueTuskPublicationTableInfo(
+    string PublicationName,
+    string SchemaName,
+    string TableName,
+    IReadOnlyList<string>? Columns,
+    string? RowFilter);
+
 /// <summary>Options passed to a PostgreSQL logical decoding output plugin.</summary>
 public sealed record BlueTuskLogicalReplicationRequest
 {
@@ -29,4 +62,87 @@ public sealed record BlueTuskLogicalReplicationRequest
 
     public IReadOnlyDictionary<string, string?> PluginOptions { get; init; } =
         new Dictionary<string, string?>(StringComparer.Ordinal);
+}
+
+public enum BlueTuskLogicalStreamingMode
+{
+    Off,
+    On,
+    Parallel,
+}
+
+public enum BlueTuskLogicalOriginMode
+{
+    Any,
+    None,
+}
+
+/// <summary>Typed startup options for PostgreSQL's pgoutput plugin.</summary>
+public sealed record BlueTuskPgOutputReplicationOptions
+{
+    public required string SlotName { get; init; }
+
+    public required IReadOnlyList<string> PublicationNames { get; init; }
+
+    public BlueTuskLogSequenceNumber StartPosition { get; init; }
+
+    public int ProtocolVersion { get; init; } = 1;
+
+    public bool Binary { get; init; }
+
+    public bool Messages { get; init; }
+
+    public BlueTuskLogicalStreamingMode StreamingMode { get; init; }
+
+    public bool TwoPhase { get; init; }
+
+    public BlueTuskLogicalOriginMode OriginMode { get; init; } =
+        BlueTuskLogicalOriginMode.Any;
+
+    internal void Validate()
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(SlotName);
+        ArgumentNullException.ThrowIfNull(PublicationNames);
+        if (PublicationNames.Count == 0)
+        {
+            throw new ArgumentException(
+                "At least one publication name is required.",
+                nameof(PublicationNames));
+        }
+
+        foreach (var publicationName in PublicationNames)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(publicationName);
+        }
+
+        ArgumentOutOfRangeException.ThrowIfLessThan(ProtocolVersion, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(ProtocolVersion, 4);
+        if (!Enum.IsDefined(StreamingMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(StreamingMode));
+        }
+
+        if (!Enum.IsDefined(OriginMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(OriginMode));
+        }
+
+        if (StreamingMode != BlueTuskLogicalStreamingMode.Off && ProtocolVersion < 2)
+        {
+            throw new ArgumentException(
+                "Transaction streaming requires pgoutput protocol version 2 or later.");
+        }
+
+        if (StreamingMode == BlueTuskLogicalStreamingMode.Parallel && ProtocolVersion < 4)
+        {
+            throw new ArgumentException(
+                "Parallel transaction streaming requires pgoutput protocol version 4.");
+        }
+
+        if (TwoPhase && ProtocolVersion < 3)
+        {
+            throw new ArgumentException(
+                "Two-phase decoding requires pgoutput protocol version 3 or later.");
+        }
+    }
 }

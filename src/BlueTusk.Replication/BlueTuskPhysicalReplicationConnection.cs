@@ -5,8 +5,10 @@ namespace BlueTusk.Replication;
 /// <summary>A PostgreSQL physical streaming replication connection.</summary>
 public sealed class BlueTuskPhysicalReplicationConnection : BlueTuskReplicationConnection
 {
-    private BlueTuskPhysicalReplicationConnection(BlueTuskSession session)
-        : base(session)
+    private BlueTuskPhysicalReplicationConnection(
+        BlueTuskSession session,
+        BlueTuskClientOptions catalogOptions)
+        : base(session, catalogOptions)
     {
     }
 
@@ -25,7 +27,7 @@ public sealed class BlueTuskPhysicalReplicationConnection : BlueTuskReplicationC
         var session = await BlueTuskSession.OpenAsync(
             options with { ReplicationMode = BlueTuskReplicationMode.Physical },
             cancellationToken).ConfigureAwait(false);
-        return new BlueTuskPhysicalReplicationConnection(session);
+        return new BlueTuskPhysicalReplicationConnection(session, options);
     }
 
     /// <summary>Streams physical WAL from the requested position.</summary>

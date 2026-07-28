@@ -10,6 +10,10 @@ x-postgres-common: &postgres-common
     - -c
     - max_replication_slots=10
     - -c
+    - max_prepared_transactions=10
+    - -c
+    - logical_decoding_work_mem=64kB
+    - -c
     - hba_file=/etc/postgresql/bluetusk-pg_hba.conf
   environment:
     POSTGRES_USER: postgres

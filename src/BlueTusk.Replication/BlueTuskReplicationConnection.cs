@@ -10,15 +10,22 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
 {
     private readonly CancellationTokenSource _disposeCancellation = new();
     private readonly object _statusSync = new();
+    private readonly BlueTuskClientOptions _catalogOptions;
     private BlueTuskCopyBothChannel? _activeChannel;
     private BlueTuskStandbyStatus _standbyStatus;
     private BlueTuskLogSequenceNumber _lastReceivedWalPosition;
     private int _streaming;
     private int _disposed;
 
-    private protected BlueTuskReplicationConnection(BlueTuskSession session)
+    private protected BlueTuskReplicationConnection(
+        BlueTuskSession session,
+        BlueTuskClientOptions catalogOptions)
     {
         Session = session;
+        _catalogOptions = catalogOptions with
+        {
+            ReplicationMode = BlueTuskReplicationMode.None,
+        };
     }
 
     private protected BlueTuskSession Session { get; }
@@ -49,6 +56,48 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
                 return _standbyStatus;
             }
         }
+    }
+
+    /// <summary>Lists physical and logical replication slots visible to the user.</summary>
+    public async ValueTask<IReadOnlyList<BlueTuskReplicationSlotInfo>>
+        GetReplicationSlotsAsync(CancellationToken cancellationToken = default)
+    {
+        var result = await ExecuteCatalogQueryAsync(
+            """
+            SELECT
+                slot_name,
+                plugin,
+                slot_type,
+                database,
+                temporary::text,
+                active::text,
+                active_pid::text,
+                restart_lsn::text,
+                confirmed_flush_lsn::text,
+                wal_status
+            FROM pg_catalog.pg_replication_slots
+            ORDER BY slot_name
+            """,
+            cancellationToken).ConfigureAwait(false);
+        var resultSet = GetSingleResultSet(result, "replication slot discovery");
+        var slots = new BlueTuskReplicationSlotInfo[resultSet.Rows.Count];
+        for (var index = 0; index < slots.Length; index++)
+        {
+            var row = resultSet.Rows[index];
+            slots[index] = new BlueTuskReplicationSlotInfo(
+                GetRequiredText(row, 0, "slot_name"),
+                GetOptionalText(row, 1),
+                GetRequiredText(row, 2, "slot_type"),
+                GetOptionalText(row, 3),
+                ParseBoolean(GetRequiredText(row, 4, "temporary"), "temporary"),
+                ParseBoolean(GetRequiredText(row, 5, "active"), "active"),
+                ParseNullableInt32(GetOptionalText(row, 6), "active_pid"),
+                ParseNullablePosition(GetOptionalText(row, 7)),
+                ParseNullablePosition(GetOptionalText(row, 8)),
+                GetOptionalText(row, 9));
+        }
+
+        return slots;
     }
 
     /// <summary>Reads the server identity, timeline, and current WAL position.</summary>
@@ -132,6 +181,18 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
         return Session.ExecuteSimpleQueryAsync(command, cancellationToken);
+    }
+
+    private protected async ValueTask<BlueTuskQueryResult> ExecuteCatalogQueryAsync(
+        string sql,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        await using var session = await BlueTuskSession.OpenAsync(
+            _catalogOptions,
+            cancellationToken).ConfigureAwait(false);
+        return await session.ExecuteSimpleQueryAsync(sql, cancellationToken)
+            .ConfigureAwait(false);
     }
 
     private protected async IAsyncEnumerable<BlueTuskReplicationMessage> StreamAsync(
@@ -222,15 +283,20 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
         BlueTuskQueryResult result,
         string command)
     {
-        var resultSet = result.ResultSets.Count == 1
-            ? result.ResultSets[0]
-            : throw new BlueTuskReplicationProtocolException(
-                $"{command} returned {result.ResultSets.Count} result sets instead of one.");
+        var resultSet = GetSingleResultSet(result, command);
         return resultSet.Rows.Count == 1
             ? resultSet.Rows[0]
             : throw new BlueTuskReplicationProtocolException(
                 $"{command} returned {resultSet.Rows.Count} rows instead of one.");
     }
+
+    private protected static BlueTuskResultSet GetSingleResultSet(
+        BlueTuskQueryResult result,
+        string command) =>
+        result.ResultSets.Count == 1
+            ? result.ResultSets[0]
+            : throw new BlueTuskReplicationProtocolException(
+                $"{command} returned {result.ResultSets.Count} result sets instead of one.");
 
     private protected static string GetRequiredText(
         BlueTuskDataRow row,
@@ -253,9 +319,31 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
             : null;
     }
 
-    private static uint ParseUInt32(string value, string fieldName) =>
+    private protected static uint ParseUInt32(string value, string fieldName) =>
         uint.TryParse(value, out var parsed)
             ? parsed
             : throw new BlueTuskReplicationProtocolException(
                 $"The {fieldName} replication field was not an unsigned integer.");
+
+    private protected static bool ParseBoolean(string value, string fieldName) =>
+        value switch
+        {
+            "t" or "true" => true,
+            "f" or "false" => false,
+            _ => throw new BlueTuskReplicationProtocolException(
+                $"The {fieldName} catalog field was not a PostgreSQL boolean."),
+        };
+
+    private static int? ParseNullableInt32(string? value, string fieldName) =>
+        value is null
+            ? null
+            : int.TryParse(value, out var parsed)
+                ? parsed
+                : throw new BlueTuskReplicationProtocolException(
+                    $"The {fieldName} catalog field was not a 32-bit integer.");
+
+    private static BlueTuskLogSequenceNumber? ParseNullablePosition(string? value) =>
+        value is null
+            ? null
+            : BlueTuskLogSequenceNumber.Parse(value);
 }

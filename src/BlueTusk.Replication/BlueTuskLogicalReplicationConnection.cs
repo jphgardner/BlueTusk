@@ -1,4 +1,7 @@
+using System.Diagnostics;
+using System.Globalization;
 using System.Text;
+using System.Text.Json;
 using BlueTusk.Client;
 
 namespace BlueTusk.Replication;
@@ -6,8 +9,10 @@ namespace BlueTusk.Replication;
 /// <summary>A PostgreSQL logical streaming replication connection.</summary>
 public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationConnection
 {
-    private BlueTuskLogicalReplicationConnection(BlueTuskSession session)
-        : base(session)
+    private BlueTuskLogicalReplicationConnection(
+        BlueTuskSession session,
+        BlueTuskClientOptions catalogOptions)
+        : base(session, catalogOptions)
     {
     }
 
@@ -26,7 +31,90 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         var session = await BlueTuskSession.OpenAsync(
             options with { ReplicationMode = BlueTuskReplicationMode.Database },
             cancellationToken).ConfigureAwait(false);
-        return new BlueTuskLogicalReplicationConnection(session);
+        return new BlueTuskLogicalReplicationConnection(session, options);
+    }
+
+    /// <summary>Lists logical replication publications in the connected database.</summary>
+    public async ValueTask<IReadOnlyList<BlueTuskPublicationInfo>> GetPublicationsAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var result = await ExecuteCatalogQueryAsync(
+            """
+            SELECT
+                oid::text,
+                pubname,
+                pubowner::regrole::text,
+                puballtables::text,
+                pubinsert::text,
+                pubupdate::text,
+                pubdelete::text,
+                pubtruncate::text,
+                pubviaroot::text
+            FROM pg_catalog.pg_publication
+            ORDER BY pubname
+            """,
+            cancellationToken).ConfigureAwait(false);
+        var resultSet = GetSingleResultSet(result, "publication discovery");
+        var publications = new BlueTuskPublicationInfo[resultSet.Rows.Count];
+        for (var index = 0; index < publications.Length; index++)
+        {
+            var row = resultSet.Rows[index];
+            publications[index] = new BlueTuskPublicationInfo(
+                ParseUInt32(GetRequiredText(row, 0, "oid"), "oid"),
+                GetRequiredText(row, 1, "pubname"),
+                GetRequiredText(row, 2, "pubowner"),
+                ParseBoolean(GetRequiredText(row, 3, "puballtables"), "puballtables"),
+                ParseBoolean(GetRequiredText(row, 4, "pubinsert"), "pubinsert"),
+                ParseBoolean(GetRequiredText(row, 5, "pubupdate"), "pubupdate"),
+                ParseBoolean(GetRequiredText(row, 6, "pubdelete"), "pubdelete"),
+                ParseBoolean(GetRequiredText(row, 7, "pubtruncate"), "pubtruncate"),
+                ParseBoolean(GetRequiredText(row, 8, "pubviaroot"), "pubviaroot"));
+        }
+
+        return publications;
+    }
+
+    /// <summary>Lists tables and filters exposed by one logical publication.</summary>
+    public async ValueTask<IReadOnlyList<BlueTuskPublicationTableInfo>>
+        GetPublicationTablesAsync(
+            string publicationName,
+            CancellationToken cancellationToken = default)
+    {
+        var result = await ExecuteCatalogQueryAsync(
+            $"""
+             SELECT
+                 pubname,
+                 schemaname,
+                 tablename,
+                 CASE
+                     WHEN attnames IS NULL THEN NULL
+                     ELSE array_to_json(attnames)::text
+                 END,
+                 rowfilter
+             FROM pg_catalog.pg_publication_tables
+             WHERE pubname = {BlueTuskSql.QuoteLiteral(publicationName)}
+             ORDER BY schemaname, tablename
+             """,
+            cancellationToken).ConfigureAwait(false);
+        var resultSet = GetSingleResultSet(result, "publication table discovery");
+        var tables = new BlueTuskPublicationTableInfo[resultSet.Rows.Count];
+        for (var index = 0; index < tables.Length; index++)
+        {
+            var row = resultSet.Rows[index];
+            var columnsJson = GetOptionalText(row, 3);
+            tables[index] = new BlueTuskPublicationTableInfo(
+                GetRequiredText(row, 0, "pubname"),
+                GetRequiredText(row, 1, "schemaname"),
+                GetRequiredText(row, 2, "tablename"),
+                columnsJson is null
+                    ? null
+                    : JsonSerializer.Deserialize<string[]>(columnsJson) ??
+                        throw new BlueTuskReplicationProtocolException(
+                            "Publication columns were not a JSON array."),
+                GetOptionalText(row, 4));
+        }
+
+        return tables;
     }
 
     /// <summary>Streams pgoutput changes for one publication.</summary>
@@ -35,16 +123,67 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         string publicationName,
         CancellationToken cancellationToken = default) =>
         StartReplicationAsync(
-            new BlueTuskLogicalReplicationRequest
+            new BlueTuskPgOutputReplicationOptions
             {
                 SlotName = slotName,
-                PluginOptions = new Dictionary<string, string?>(StringComparer.Ordinal)
-                {
-                    ["proto_version"] = "1",
-                    ["publication_names"] = publicationName,
-                },
+                PublicationNames = [publicationName],
             },
             cancellationToken);
+
+    /// <summary>Streams changes using typed pgoutput plugin options.</summary>
+    public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
+        BlueTuskPgOutputReplicationOptions options,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        options.Validate();
+        var pluginOptions = new Dictionary<string, string?>(StringComparer.Ordinal)
+        {
+            ["proto_version"] = options.ProtocolVersion.ToString(
+                CultureInfo.InvariantCulture),
+            ["publication_names"] = string.Join(
+                ",",
+                options.PublicationNames.Select(BlueTuskSql.QuoteIdentifier)),
+        };
+        if (options.Binary)
+        {
+            pluginOptions["binary"] = "true";
+        }
+
+        if (options.Messages)
+        {
+            pluginOptions["messages"] = "true";
+        }
+
+        if (options.StreamingMode != BlueTuskLogicalStreamingMode.Off)
+        {
+            pluginOptions["streaming"] = options.StreamingMode switch
+            {
+                BlueTuskLogicalStreamingMode.On => "on",
+                BlueTuskLogicalStreamingMode.Parallel => "parallel",
+                _ => throw new UnreachableException(),
+            };
+        }
+
+        if (options.TwoPhase)
+        {
+            pluginOptions["two_phase"] = "true";
+        }
+
+        if (options.OriginMode == BlueTuskLogicalOriginMode.None)
+        {
+            pluginOptions["origin"] = "none";
+        }
+
+        return StartReplicationAsync(
+            new BlueTuskLogicalReplicationRequest
+            {
+                SlotName = options.SlotName,
+                StartPosition = options.StartPosition,
+                PluginOptions = pluginOptions,
+            },
+            cancellationToken);
+    }
 
     /// <summary>Streams output from a logical decoding plugin.</summary>
     public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
@@ -142,4 +281,5 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
 
         return $"'{value.Replace("'", "''", StringComparison.Ordinal)}'";
     }
+
 }
