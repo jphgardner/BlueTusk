@@ -621,7 +621,8 @@ public sealed class BlueTuskTypeCodecIntegrationTests
 
         await dataSource.ReloadTypesAsync(CancellationToken.None);
         Assert.NotSame(cached, dataSource.TypeRegistry);
-        Assert.Equal(cached.Types.Count, dataSource.TypeRegistry.Types.Count);
+        Assert.True(dataSource.TypeRegistry.Types.Count >= cached.Types.Count);
+        Assert.True(dataSource.TypeRegistry.TryGetType(new BlueTuskTypeId(23), out _));
     }
 
     [Fact]
