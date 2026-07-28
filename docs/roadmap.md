@@ -100,9 +100,19 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.0.9 — Replication preview
 
-- [ ] Physical and logical replication sessions
-- [ ] Slot/publication discovery and feedback
-- [ ] `pgoutput` decoding
+- [x] Physical and logical replication sessions
+  - [x] Replication startup negotiation and duplex `COPY BOTH`
+  - [x] WAL data, primary keepalives, and physical streaming
+  - [x] Logical plugin options and raw custom-plugin output
+- [x] Slot/publication discovery and feedback
+  - [x] Physical and logical slot create/drop/read/list operations
+  - [x] Publication, table, column, and row-filter discovery
+  - [x] Standby status updates, keepalive replies, and hot-standby feedback
+- [x] `pgoutput` decoding
+  - [x] Relation/type metadata, DML tuples, truncate, origin, and logical messages
+  - [x] Protocol-version-aware streamed transaction messages
+  - [x] Two-phase and parallel-stream metadata
+  - [x] PostgreSQL 15–18 and custom-plugin acceptance coverage
 
 ## 0.1.0 — First public ADO.NET preview
 

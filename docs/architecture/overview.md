@@ -4,12 +4,13 @@ BlueTusk is split by responsibility so protocol correctness can be tested withou
 
 ```text
 Application
-    ↓
-BlueTusk.EntityFrameworkCore
-    ↓
-BlueTusk.Data
-    ↓
-BlueTusk.Client
+    ├──→ BlueTusk.EntityFrameworkCore ─→ BlueTusk.Data ─┐
+    ├──→ BlueTusk.Data ─────────────────────────────────┤
+    └──→ BlueTusk.Replication.PgOutput                  │
+                 ↓                                     │
+          BlueTusk.Replication ────────────────────────┤
+                                                      ↓
+                                              BlueTusk.Client
     ├──────────────→ BlueTusk.TypeSystem
     ↓
 BlueTusk.Protocol ─→ BlueTusk.Security
@@ -28,6 +29,7 @@ PostgreSQL
 - **Client** coordinates sessions and PostgreSQL-native operations using protocol and type-system abstractions.
 - **Data** exposes `System.Data.Common` APIs, pooling, connection strings, and data sources.
 - **Replication** consumes `COPY BOTH` without introducing ADO.NET concepts into the protocol engine.
+- **Replication.PgOutput** statefully decodes standard logical-replication messages while preserving their WAL envelopes.
 - **EntityFrameworkCore** is the only layer allowed to depend on EF Core.
 - **Extensions.Abstractions** is the public, stable plug-in seam. Extension packages must not access protocol internals.
 
@@ -42,4 +44,3 @@ Wire lengths are validated before allocation. A configured upper bound is mandat
 ## Sync and async
 
 Asynchronous APIs use actual asynchronous socket operations. Synchronous APIs will use dedicated synchronous paths; they will not call asynchronous methods and block on the result.
-

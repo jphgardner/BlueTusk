@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.8 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET. Its catalogue-driven type system supports advanced scalars, arrays, enums, domains, composites, records, ranges, and multiranges in text and binary formats. It also provides streaming COPY, asynchronous notifications, and transactional large-object streams. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental pre-release provider. Version 0.0.9 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET. Its catalogue-driven type system supports advanced scalars, arrays, enums, domains, composites, records, ranges, and multiranges in text and binary formats. It also provides streaming COPY, asynchronous notifications, transactional large-object streams, and physical and logical replication with `pgoutput` decoding. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -36,13 +36,15 @@ The dependency direction is deliberately one-way:
 EntityFrameworkCore → Data → Client → Protocol → Transport
                               ↓          ↓
                           TypeSystem   Security
+
+Replication.PgOutput → Replication → Client
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [replication](docs/replication/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
 ## Status
 
-The current `0.0.8` implementation provides:
+The current `0.0.9` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -77,6 +79,10 @@ The current `0.0.8` implementation provides:
 - streaming raw text, CSV, and binary COPY plus typed binary import and export;
 - asynchronous `LISTEN`/`NOTIFY` delivery with quoted subscriptions and bounded backpressure;
 - transactional large-object creation, deletion, streaming, 64-bit seek, and truncation;
+- physical and logical `COPY BOTH` replication sessions with WAL and keepalive framing;
+- replication-slot and publication discovery plus standby and hot-standby feedback;
+- protocol-version-aware `pgoutput` decoding for DML, streamed transactions, and two-phase metadata;
+- raw logical decoding output for custom plugins;
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.
 
 Minimal usage:

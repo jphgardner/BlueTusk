@@ -9,6 +9,8 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Description>PostgreSQL pgoutput protocol decoding for BlueTusk replication streams.</Description>
+    <PackageTags>postgresql;replication;pgoutput;logical-decoding;dotnet</PackageTags>
   </PropertyGroup>
 
 </Project>
