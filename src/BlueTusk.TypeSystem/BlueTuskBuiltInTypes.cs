@@ -44,6 +44,8 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Xml { get; } = Create(142, "xml", 143);
 
+    public static BlueTuskTypeDescriptor NodeTree { get; } = CreateWithoutArray(194, "pg_node_tree");
+
     public static BlueTuskTypeDescriptor Point { get; } = Create(600, "point", 1017);
 
     public static BlueTuskTypeDescriptor LineSegment { get; } = Create(601, "lseg", 1018);
@@ -90,6 +92,8 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Numeric { get; } = Create(1700, "numeric", 1231);
 
+    public static BlueTuskTypeDescriptor RefCursor { get; } = Create(1790, "refcursor", 2201);
+
     public static BlueTuskTypeDescriptor Bit { get; } = Create(1560, "bit", 1561);
 
     public static BlueTuskTypeDescriptor Varbit { get; } = Create(1562, "varbit", 1563);
@@ -121,6 +125,8 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Jsonb { get; } = Create(3802, "jsonb", 3807);
 
+    public static BlueTuskTypeDescriptor JsonPath { get; } = Create(4072, "jsonpath", 4073);
+
     public static BlueTuskTypeDescriptor RegNamespace { get; } =
         Create(4089, "regnamespace", 4090);
 
@@ -141,7 +147,7 @@ public static class BlueTuskBuiltInTypes
         return new BlueTuskTypeRegistryBuilder()
             .Register(Boolean, new BlueTuskBooleanCodec())
             .Register(Bytea, new BlueTuskByteArrayCodec())
-            .Register(Char, textCodec)
+            .Register(Char, new BlueTuskInternalCharCodec())
             .Register(Name, textCodec)
             .Register(Int8, new BlueTuskInt64Codec())
             .Register(Int2, new BlueTuskInt16Codec())
@@ -156,6 +162,7 @@ public static class BlueTuskBuiltInTypes
             .Register(OidVector, new BlueTuskObjectIdentifierVectorCodec())
             .Register(Json, textCodec)
             .Register(Xml, textCodec)
+            .Register(NodeTree, new BlueTuskNodeTreeCodec())
             .Register(Point, new BlueTuskPointCodec())
             .Register(LineSegment, new BlueTuskLineSegmentCodec())
             .Register(Path, new BlueTuskPathCodec())
@@ -179,6 +186,7 @@ public static class BlueTuskBuiltInTypes
             .Register(Interval, new BlueTuskIntervalCodec())
             .Register(TimeWithTimeZone, new BlueTuskTimeWithTimeZoneCodec())
             .Register(Numeric, new BlueTuskNumericCodec())
+            .Register(RefCursor, new BlueTuskRefCursorCodec())
             .Register(Bit, new BlueTuskBitStringCodec())
             .Register(Varbit, new BlueTuskBitStringCodec())
             .Register(Uuid, new BlueTuskGuidCodec())
@@ -194,6 +202,7 @@ public static class BlueTuskBuiltInTypes
             .Register(RegConfig, new BlueTuskObjectIdentifierCodec<BlueTuskRegConfig>())
             .Register(RegDictionary, new BlueTuskObjectIdentifierCodec<BlueTuskRegDictionary>())
             .Register(Jsonb, new BlueTuskJsonbCodec())
+            .Register(JsonPath, new BlueTuskJsonPathCodec())
             .Register(RegNamespace, new BlueTuskObjectIdentifierCodec<BlueTuskRegNamespace>())
             .Register(RegRole, new BlueTuskObjectIdentifierCodec<BlueTuskRegRole>())
             .Register(RegCollation, new BlueTuskObjectIdentifierCodec<BlueTuskRegCollation>())
@@ -217,4 +226,12 @@ public static class BlueTuskBuiltInTypes
             ArrayType = new BlueTuskTypeId(arrayOid),
             Delimiter = delimiter,
         };
+
+    private static BlueTuskTypeDescriptor CreateWithoutArray(uint oid, string name) => new()
+    {
+        Id = new BlueTuskTypeId(oid),
+        Schema = "pg_catalog",
+        Name = name,
+        Kind = BlueTuskTypeKind.Base,
+    };
 }

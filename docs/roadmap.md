@@ -71,7 +71,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Catalogue-specific scalar families
   - [x] Transaction identifiers and snapshot values
   - [x] Object-identifier aliases and catalogue vector values
-  - [ ] JSONPath, cursor, node-tree, and internal character values
+  - [x] JSONPath, cursor, node-tree, and internal character values
   - [ ] Text-only and opaque system-catalogue values
 - [x] Catalogue discovery and per-data-source cache with explicit reload
 - [x] Catalogue-driven arrays in binary and text formats

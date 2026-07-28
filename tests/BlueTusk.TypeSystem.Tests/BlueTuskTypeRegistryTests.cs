@@ -18,7 +18,7 @@ public sealed class BlueTuskTypeRegistryTests
     [Theory]
     [InlineData(16, "bool", typeof(bool), typeof(BlueTuskBooleanCodec))]
     [InlineData(17, "bytea", typeof(byte[]), typeof(BlueTuskByteArrayCodec))]
-    [InlineData(18, "char", typeof(string), typeof(BlueTuskStringCodec))]
+    [InlineData(18, "char", typeof(BlueTuskInternalChar), typeof(BlueTuskInternalCharCodec))]
     [InlineData(19, "name", typeof(string), typeof(BlueTuskStringCodec))]
     [InlineData(20, "int8", typeof(long), typeof(BlueTuskInt64Codec))]
     [InlineData(21, "int2", typeof(short), typeof(BlueTuskInt16Codec))]
@@ -28,6 +28,7 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(27, "tid", typeof(BlueTuskTupleId), typeof(BlueTuskTupleIdCodec))]
     [InlineData(114, "json", typeof(string), typeof(BlueTuskStringCodec))]
     [InlineData(142, "xml", typeof(string), typeof(BlueTuskStringCodec))]
+    [InlineData(194, "pg_node_tree", typeof(BlueTuskNodeTree), typeof(BlueTuskNodeTreeCodec))]
     [InlineData(600, "point", typeof(BlueTuskPoint), typeof(BlueTuskPointCodec))]
     [InlineData(601, "lseg", typeof(BlueTuskLineSegment), typeof(BlueTuskLineSegmentCodec))]
     [InlineData(602, "path", typeof(BlueTuskPath), typeof(BlueTuskPathCodec))]
@@ -52,11 +53,13 @@ public sealed class BlueTuskTypeRegistryTests
     [InlineData(1560, "bit", typeof(BlueTuskBitString), typeof(BlueTuskBitStringCodec))]
     [InlineData(1562, "varbit", typeof(BlueTuskBitString), typeof(BlueTuskBitStringCodec))]
     [InlineData(1700, "numeric", typeof(BlueTuskNumeric), typeof(BlueTuskNumericCodec))]
+    [InlineData(1790, "refcursor", typeof(BlueTuskRefCursor), typeof(BlueTuskRefCursorCodec))]
     [InlineData(2950, "uuid", typeof(Guid), typeof(BlueTuskGuidCodec))]
     [InlineData(3220, "pg_lsn", typeof(BlueTuskLogSequenceNumber), typeof(BlueTuskLogSequenceNumberCodec))]
     [InlineData(3614, "tsvector", typeof(BlueTuskTextSearchVector), typeof(BlueTuskTextSearchVectorCodec))]
     [InlineData(3615, "tsquery", typeof(BlueTuskTextSearchQuery), typeof(BlueTuskTextSearchQueryCodec))]
     [InlineData(3802, "jsonb", typeof(string), typeof(BlueTuskJsonbCodec))]
+    [InlineData(4072, "jsonpath", typeof(BlueTuskJsonPath), typeof(BlueTuskJsonPathCodec))]
     public void Registry_resolves_core_scalar_codecs(
         uint oid,
         string name,

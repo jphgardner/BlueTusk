@@ -322,6 +322,98 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Catalogue_text_types_round_trip_and_node_tree_decodes()
+    {
+        var tableName = $"bluetusk_node_tree_{Guid.NewGuid():N}";
+        var zero = new BlueTuskInternalChar(0);
+        var ascii = new BlueTuskInternalChar((byte)'A');
+        var high = new BlueTuskInternalChar(byte.MaxValue);
+        BlueTuskInternalChar[] characters = [zero, ascii, high];
+        var cursor = new BlueTuskRefCursor("portal 🐘");
+        BlueTuskRefCursor[] cursors = [cursor, new BlueTuskRefCursor(string.Empty)];
+        var path = new BlueTuskJsonPath("$.answer");
+        var normalizedPath = new BlueTuskJsonPath("$.\"answer\"");
+        BlueTuskJsonPath[] paths = [path];
+        BlueTuskJsonPath[] normalizedPaths = [normalizedPath];
+        await using var administration = BlueTuskDataSource.Create(GetConnectionString());
+        try
+        {
+            await using (var create = administration.CreateCommand(
+                $"CREATE TABLE public.{tableName} (value int DEFAULT 42)"))
+            {
+                await create.ExecuteNonQueryAsync(CancellationToken.None);
+            }
+
+            await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+            await using (var command = dataSource.CreateCommand(
+                "SELECT $1::\"char\", $2::\"char\", $3::\"char\", $4::\"char\"[], " +
+                "$5::refcursor, $6::refcursor[], $7::jsonpath, $8::jsonpath[]"))
+            {
+                command.Parameters.Add(new BlueTuskParameter<BlueTuskInternalChar>(zero));
+                command.Parameters.Add(new BlueTuskParameter<BlueTuskInternalChar>(ascii));
+                command.Parameters.Add(new BlueTuskParameter<BlueTuskInternalChar>(high));
+                command.Parameters.Add(
+                    new BlueTuskParameter<BlueTuskInternalChar[]>(characters));
+                command.Parameters.Add(new BlueTuskParameter<BlueTuskRefCursor>(cursor));
+                command.Parameters.Add(new BlueTuskParameter<BlueTuskRefCursor[]>(cursors));
+                command.Parameters.Add(new BlueTuskParameter<BlueTuskJsonPath>(path));
+                command.Parameters.Add(new BlueTuskParameter<BlueTuskJsonPath[]>(paths));
+
+                await using var reader =
+                    await command.ExecuteReaderAsync(CancellationToken.None);
+                Assert.True(await reader.ReadAsync(CancellationToken.None));
+                Assert.Equal(zero, reader.GetFieldValue<BlueTuskInternalChar>(0));
+                Assert.Equal(ascii, reader.GetFieldValue<BlueTuskInternalChar>(1));
+                Assert.Equal(high, reader.GetFieldValue<BlueTuskInternalChar>(2));
+                Assert.Equal(
+                    characters,
+                    reader.GetFieldValue<BlueTuskInternalChar[]>(3));
+                Assert.Equal(cursor, reader.GetFieldValue<BlueTuskRefCursor>(4));
+                Assert.Equal(cursors, reader.GetFieldValue<BlueTuskRefCursor[]>(5));
+                Assert.Equal(normalizedPath, reader.GetFieldValue<BlueTuskJsonPath>(6));
+                Assert.Equal(
+                    normalizedPaths,
+                    reader.GetFieldValue<BlueTuskJsonPath[]>(7));
+            }
+
+            await using (var nodeCommand = dataSource.CreateCommand(
+                "SELECT adbin FROM pg_attrdef WHERE adrelid = $1::regclass"))
+            {
+                nodeCommand.Parameters.Add(
+                    new BlueTuskParameter<BlueTuskRegClass>(
+                        new BlueTuskRegClass($"public.{tableName}")));
+                await using var nodeReader =
+                    await nodeCommand.ExecuteReaderAsync(CancellationToken.None);
+                Assert.True(await nodeReader.ReadAsync(CancellationToken.None));
+                var node = nodeReader.GetFieldValue<BlueTuskNodeTree>(0);
+                Assert.Contains("CONST", node.Value, StringComparison.Ordinal);
+                Assert.Contains(":consttype 23", node.Value, StringComparison.Ordinal);
+            }
+
+            await using var textCommand = dataSource.CreateCommand(
+                "SELECT ''::\"char\", '\\377'::\"char\", " +
+                "'portal'::refcursor, '$.answer'::jsonpath");
+            await using var textReader =
+                await textCommand.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await textReader.ReadAsync(CancellationToken.None));
+            Assert.Equal(zero, textReader.GetFieldValue<BlueTuskInternalChar>(0));
+            Assert.Equal(high, textReader.GetFieldValue<BlueTuskInternalChar>(1));
+            Assert.Equal(
+                new BlueTuskRefCursor("portal"),
+                textReader.GetFieldValue<BlueTuskRefCursor>(2));
+            Assert.Equal(
+                normalizedPath,
+                textReader.GetFieldValue<BlueTuskJsonPath>(3));
+        }
+        finally
+        {
+            await using var drop = administration.CreateCommand(
+                $"DROP TABLE IF EXISTS public.{tableName}");
+            await drop.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+    }
+
+    [Fact]
     public async Task Network_scalar_parameters_round_trip_in_binary()
     {
         var inet = BlueTuskNetworkAddress.Parse("192.168.1.5/24");

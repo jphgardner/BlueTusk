@@ -6,7 +6,7 @@ BlueTusk registers PostgreSQL scalar types by catalogue OID. Simple queries deco
 | --- | ---: | --- | :---: | :---: |
 | `bool` | 16 | `bool` | yes | yes |
 | `bytea` | 17 | `byte[]` | yes | yes |
-| `char` | 18 | `string` | yes | yes |
+| `"char"` | 18 | `BlueTuskInternalChar` | yes | yes |
 | `name` | 19 | `string` | yes | yes |
 | `int8` | 20 | `long` | yes | yes |
 | `int2` | 21 | `short` | yes | yes |
@@ -112,3 +112,18 @@ Symbolic values are sent as text so PostgreSQL resolves them using its normal na
 `int2vector` maps to the immutable `BlueTuskInt16Vector`; `oidvector` maps to `BlueTuskObjectIdentifierVector`. Their codecs enforce PostgreSQL's one-dimensional, zero-based, null-free binary shape, including full unsigned OID values. PostgreSQL does not accept an empty vector through its binary receive function, so BlueTusk automatically uses text for an empty vector or an array containing one.
 
 Runtime codecs that have the same value-dependent requirement can implement `IBlueTuskWriteFormatSelector`. Otherwise registered codec parameters continue to prefer binary.
+
+## JSONPath and text-like catalogue values
+
+| PostgreSQL type | CLR value | Notes |
+| --- | --- | --- |
+| `"char"` | `BlueTuskInternalChar` | One raw byte; distinct from SQL `char(n)` |
+| `refcursor` | `BlueTuskRefCursor` | PostgreSQL portal name |
+| `pg_node_tree` | `BlueTuskNodeTree` | Opaque, decode-only expression tree |
+| `jsonpath` | `BlueTuskJsonPath` | SQL/JSON path expression |
+
+`BlueTuskInternalChar` preserves all 256 values. Its text codec implements PostgreSQL's empty representation for zero, single-byte ASCII representation, and backslash-plus-octal representation for values with the high bit set.
+
+`BlueTuskJsonPath` deliberately preserves the expression as text and lets PostgreSQL parse, validate, and normalize it. Its binary codec validates the PostgreSQL JSONPath wire-version byte. `refcursor` values and arrays use their own CLR type so they do not collide with ordinary `text` inference.
+
+PostgreSQL exposes `pg_node_tree` through system catalogues but rejects input values of that type. BlueTusk therefore decodes its text and binary forms into `BlueTuskNodeTree`, while attempts to encode one fail locally with `NotSupportedException`.
