@@ -1,3 +1,5 @@
+using System.Data.Common;
+using System.Globalization;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 
@@ -52,6 +54,32 @@ public sealed record BlueTuskClientOptions
 
     public RemoteCertificateValidationCallback? RemoteCertificateValidationCallback { get; init; }
 
+    /// <summary>Creates client options from a BlueTusk connection string.</summary>
+    public static BlueTuskClientOptions FromConnectionString(string connectionString)
+    {
+        ArgumentNullException.ThrowIfNull(connectionString);
+        var builder = new DbConnectionStringBuilder
+        {
+            ConnectionString = connectionString,
+        };
+
+        return new BlueTuskClientOptions
+        {
+            Host = GetString(builder, "Host", "localhost"),
+            Port = GetInt32(builder, "Port", 5432),
+            Database = GetString(builder, "Database", string.Empty),
+            Username = GetString(builder, "Username", string.Empty),
+            Password = GetString(builder, "Password", string.Empty),
+            ApplicationName = GetString(builder, "Application Name", "BlueTusk"),
+            ConnectTimeout = TimeSpan.FromSeconds(GetInt32(builder, "Timeout", 15)),
+            SslMode = GetEnum(builder, "SSL Mode", BlueTuskSslMode.VerifyFull),
+            ChannelBinding = GetEnum(
+                builder,
+                "Channel Binding",
+                BlueTuskChannelBindingMode.Prefer),
+        };
+    }
+
     internal void Validate()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(Host);
@@ -77,4 +105,31 @@ public sealed record BlueTuskClientOptions
             throw new ArgumentOutOfRangeException(nameof(ReplicationMode));
         }
     }
+
+    private static string GetString(
+        DbConnectionStringBuilder builder,
+        string keyword,
+        string defaultValue) =>
+        builder.TryGetValue(keyword, out var value)
+            ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? defaultValue
+            : defaultValue;
+
+    private static int GetInt32(
+        DbConnectionStringBuilder builder,
+        string keyword,
+        int defaultValue) =>
+        builder.TryGetValue(keyword, out var value)
+            ? Convert.ToInt32(value, CultureInfo.InvariantCulture)
+            : defaultValue;
+
+    private static TEnum GetEnum<TEnum>(
+        DbConnectionStringBuilder builder,
+        string keyword,
+        TEnum defaultValue)
+        where TEnum : struct, Enum =>
+        builder.TryGetValue(keyword, out var value)
+            ? Enum.Parse<TEnum>(
+                Convert.ToString(value, CultureInfo.InvariantCulture)!,
+                ignoreCase: true)
+            : defaultValue;
 }
