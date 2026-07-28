@@ -28,6 +28,10 @@ public sealed record BlueTuskTypeDescriptor
 
     public BlueTuskTypeId? RangeSubtype { get; init; }
 
+    public BlueTuskTypeId? RangeType { get; init; }
+
+    public BlueTuskTypeId? MultirangeType { get; init; }
+
     public char Delimiter { get; init; } = ',';
 
     public IReadOnlyList<string> EnumLabels { get; init; } = Array.Empty<string>();

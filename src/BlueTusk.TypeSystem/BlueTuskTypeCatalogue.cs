@@ -20,6 +20,10 @@ public sealed record BlueTuskCatalogueType
 
     public BlueTuskTypeId? RangeSubtype { get; init; }
 
+    public BlueTuskTypeId? RangeType { get; init; }
+
+    public BlueTuskTypeId? MultirangeType { get; init; }
+
     public char Delimiter { get; init; } = ',';
 
     public IReadOnlyList<string> EnumLabels { get; init; } = Array.Empty<string>();
@@ -108,6 +112,8 @@ public static class BlueTuskTypeCatalogue
             BaseType = type.BaseType,
             ArrayType = type.ArrayType,
             RangeSubtype = type.RangeSubtype,
+            RangeType = type.RangeType,
+            MultirangeType = type.MultirangeType,
             Delimiter = type.Delimiter,
             EnumLabels = type.EnumLabels.ToArray(),
             CompositeFields = type.CompositeFields.ToArray(),
@@ -240,9 +246,11 @@ public static class BlueTuskTypeCatalogue
         do
         {
             changed = RegisterDomainCodecs(builder, descriptors);
-            changed |= RegisterArrayCodecs(builder, descriptors);
             changed |= RegisterDeferredCodecs(builder, descriptors, unresolved);
             changed |= RegisterCompositeCodecs(builder, descriptors, deferredCodecs);
+            changed |= RegisterRangeCodecs(builder, descriptors);
+            changed |= RegisterMultirangeCodecs(builder, descriptors);
+            changed |= RegisterArrayCodecs(builder, descriptors);
         }
         while (changed);
 
@@ -343,6 +351,61 @@ public static class BlueTuskTypeCatalogue
             }
 
             builder.RegisterCodec(arrayType.Id, new BlueTuskArrayCodec(elementType, elementCodec));
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static bool RegisterRangeCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        var changed = false;
+        foreach (var rangeType in descriptors.Values.Where(type => type.Kind == BlueTuskTypeKind.Range))
+        {
+            if (builder.ContainsCodec(rangeType.Id) ||
+                rangeType.RangeSubtype is not { } subtypeId ||
+                !descriptors.TryGetValue(subtypeId, out var subtype) ||
+                !builder.TryGetCodec(subtypeId, out var subtypeCodec) ||
+                subtypeCodec is not IBlueTuskRangeCodecFactory factory)
+            {
+                continue;
+            }
+
+            var codec = factory.CreateRangeCodec(subtype, subtypeCodec);
+            if (codec is null)
+            {
+                continue;
+            }
+
+            builder.RegisterCodec(rangeType.Id, codec);
+            changed = true;
+        }
+
+        return changed;
+    }
+
+    private static bool RegisterMultirangeCodecs(
+        BlueTuskTypeRegistryBuilder builder,
+        IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> descriptors)
+    {
+        var changed = false;
+        foreach (var multirangeType in descriptors.Values.Where(
+                     type => type.Kind == BlueTuskTypeKind.Multirange))
+        {
+            if (builder.ContainsCodec(multirangeType.Id) ||
+                multirangeType.RangeType is not { } rangeTypeId ||
+                !descriptors.TryGetValue(rangeTypeId, out var rangeType) ||
+                !builder.TryGetCodec(rangeTypeId, out var rangeCodec) ||
+                rangeCodec is not IBlueTuskMultirangeCodecFactory factory)
+            {
+                continue;
+            }
+
+            builder.RegisterCodec(
+                multirangeType.Id,
+                factory.CreateMultirangeCodec(rangeType));
             changed = true;
         }
 

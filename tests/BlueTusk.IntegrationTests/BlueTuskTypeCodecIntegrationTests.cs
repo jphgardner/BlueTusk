@@ -264,9 +264,17 @@ public sealed class BlueTuskTypeCodecIntegrationTests
             Assert.True(registry.TryGetType(new BlueTuskTypeId(3904), out var range));
             Assert.Equal(BlueTuskTypeKind.Range, range!.Kind);
             Assert.Equal(new BlueTuskTypeId(23), range.RangeSubtype);
+            Assert.Equal(new BlueTuskTypeId(3904), range.RangeType);
+            Assert.Equal(new BlueTuskTypeId(4451), range.MultirangeType);
             Assert.True(registry.TryGetType(new BlueTuskTypeId(4451), out var multirange));
             Assert.Equal(BlueTuskTypeKind.Multirange, multirange!.Kind);
             Assert.Equal(new BlueTuskTypeId(23), multirange.RangeSubtype);
+            Assert.Equal(new BlueTuskTypeId(3904), multirange.RangeType);
+            Assert.Equal(new BlueTuskTypeId(4451), multirange.MultirangeType);
+            Assert.True(registry.TryGetCodec(range.Id, out var rangeCodec));
+            Assert.IsType<BlueTuskRangeCodec<int>>(rangeCodec);
+            Assert.True(registry.TryGetCodec(multirange.Id, out var multirangeCodec));
+            Assert.IsType<BlueTuskMultirangeCodec<int>>(multirangeCodec);
             Assert.True(registry.TryGetType(new BlueTuskTypeId(71), out var composite));
             Assert.Equal(BlueTuskTypeKind.Composite, composite!.Kind);
             Assert.True(registry.TryGetCodec(new BlueTuskTypeId(23), out var codec));
@@ -356,6 +364,44 @@ public sealed class BlueTuskTypeCodecIntegrationTests
             Assert.Equal(6, bounded.GetValue(0));
             Assert.Equal(text, reader.GetFieldValue<string?[]>(2));
         }
+    }
+
+    [Fact]
+    public async Task Catalogue_driven_ranges_multiranges_and_arrays_round_trip()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        var range = new BlueTuskRange<int>(1, 5);
+        var secondRange = new BlueTuskRange<int>(10, 20);
+        var multirange = new BlueTuskMultirange<int>([range, secondRange]);
+        BlueTuskRange<int>[] ranges = [range, BlueTuskRange.Empty<int>()];
+        BlueTuskMultirange<int>[] multiranges = [multirange, BlueTuskMultirange.Empty<int>()];
+        await using var command = dataSource.CreateCommand(
+            "SELECT $1::int4range, $2::int4multirange, " +
+            "$3::int4range[], $4::int4multirange[]");
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskRange<int>>(range));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskMultirange<int>>(multirange));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskRange<int>[]>(ranges));
+        command.Parameters.Add(new BlueTuskParameter<BlueTuskMultirange<int>[]>(multiranges));
+
+        await using (var reader = await command.ExecuteReaderAsync(CancellationToken.None))
+        {
+            Assert.True(await reader.ReadAsync(CancellationToken.None));
+            Assert.Equal(range, reader.GetFieldValue<BlueTuskRange<int>>(0));
+            Assert.Equal(multirange, reader.GetFieldValue<BlueTuskMultirange<int>>(1));
+            Assert.Equal(ranges, reader.GetFieldValue<BlueTuskRange<int>[]>(2));
+            Assert.Equal(multiranges, reader.GetFieldValue<BlueTuskMultirange<int>[]>(3));
+        }
+
+        await using var literalCommand = dataSource.CreateCommand(
+            "SELECT '(,5]'::int4range, '{[1,5),[10,20)}'::int4multirange");
+        await using var literalReader = await literalCommand.ExecuteReaderAsync(CancellationToken.None);
+        Assert.True(await literalReader.ReadAsync(CancellationToken.None));
+        Assert.Equal(
+            new BlueTuskRange<int>(
+                BlueTuskRangeBound.Unbounded<int>(),
+                BlueTuskRangeBound.Exclusive(6)),
+            literalReader.GetFieldValue<BlueTuskRange<int>>(0));
+        Assert.Equal(multirange, literalReader.GetFieldValue<BlueTuskMultirange<int>>(1));
     }
 
     [Fact]

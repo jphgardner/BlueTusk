@@ -76,6 +76,19 @@ public sealed class BlueTuskTypeCatalogueTests
                 PostgreSqlKind = 'r',
                 PostgreSqlCategory = 'R',
                 RangeSubtype = new BlueTuskTypeId(23),
+                RangeType = new BlueTuskTypeId(90_003),
+                MultirangeType = new BlueTuskTypeId(90_004),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(90_004),
+                Schema = "app",
+                Name = "int_span_multi",
+                PostgreSqlKind = 'm',
+                PostgreSqlCategory = 'R',
+                RangeSubtype = new BlueTuskTypeId(23),
+                RangeType = new BlueTuskTypeId(90_003),
+                MultirangeType = new BlueTuskTypeId(90_004),
             },
         ]);
 
@@ -86,6 +99,9 @@ public sealed class BlueTuskTypeCatalogueTests
         Assert.Equal(new BlueTuskTypeId(23), domain!.BaseType);
         Assert.True(registry.TryGetType(new BlueTuskTypeId(90_003), out var range));
         Assert.Equal(new BlueTuskTypeId(23), range!.RangeSubtype);
+        Assert.Equal(new BlueTuskTypeId(90_004), range.MultirangeType);
+        Assert.True(registry.TryGetType(new BlueTuskTypeId(90_004), out var multirange));
+        Assert.Equal(new BlueTuskTypeId(90_003), multirange!.RangeType);
         Assert.True(registry.TryGetCodec(new BlueTuskTypeId(23), out var codec));
         Assert.IsType<BlueTuskInt32Codec>(codec);
     }

@@ -1,7 +1,29 @@
 namespace BlueTusk.TypeSystem;
 
+internal interface IBlueTuskRangeCodecFactory
+{
+    IBlueTuskCodec? CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec);
+}
+
+internal interface IBlueTuskArrayRangeCodecFactory
+{
+    IBlueTuskCodec CreateArrayRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec);
+}
+
+internal interface IBlueTuskMultirangeCodecFactory
+{
+    IBlueTuskCodec CreateMultirangeCodec(BlueTuskTypeDescriptor rangeType);
+}
+
 /// <summary>Provides the non-generic dispatch required by a strongly typed BlueTusk codec.</summary>
-public abstract class BlueTuskCodec<T> : IBlueTuskCodec<T>
+public abstract class BlueTuskCodec<T> :
+    IBlueTuskCodec<T>,
+    IBlueTuskRangeCodecFactory,
+    IBlueTuskArrayRangeCodecFactory
 {
     public Type ClrType => typeof(T);
 
@@ -35,4 +57,14 @@ public abstract class BlueTuskCodec<T> : IBlueTuskCodec<T>
 
         WriteTyped(ref writer, typedValue, format, type);
     }
+
+    IBlueTuskCodec IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        new BlueTuskRangeCodec<T>(subtype, subtypeCodec);
+
+    IBlueTuskCodec IBlueTuskArrayRangeCodecFactory.CreateArrayRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        new BlueTuskRangeCodec<T[]>(subtype, subtypeCodec);
 }

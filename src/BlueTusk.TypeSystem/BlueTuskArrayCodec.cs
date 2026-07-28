@@ -3,7 +3,7 @@ using System.Text;
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Encodes PostgreSQL arrays by composing the catalogue-discovered element codec.</summary>
-public sealed class BlueTuskArrayCodec : IBlueTuskCodec
+public sealed class BlueTuskArrayCodec : IBlueTuskCodec, IBlueTuskRangeCodecFactory
 {
     private const int MaximumDimensions = 6;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
@@ -54,6 +54,13 @@ public sealed class BlueTuskArrayCodec : IBlueTuskCodec
                 throw new ArgumentOutOfRangeException(nameof(format));
         }
     }
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        _elementCodec is IBlueTuskArrayRangeCodecFactory factory
+            ? factory.CreateArrayRangeCodec(subtype, subtypeCodec)
+            : null;
 
     private Array ReadBinary(ref BlueTuskReader reader, BlueTuskTypeDescriptor type)
     {

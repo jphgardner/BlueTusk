@@ -50,4 +50,20 @@ UUID binary values use PostgreSQL network byte order, JSONB validates its versio
 
 The current data reader buffers complete result sets. `GetStream` returns a read-only stream over a buffered `bytea`; `GetTextReader` exposes buffered text, JSON, and JSONB strings. Network-backed sequential access remains scheduled for 0.1.0.
 
-An unregistered OID is returned as `BlueTuskUnknownValue`, preserving its format and raw bytes. Runtime codec registration and catalogue-discovered structured types are scheduled for 0.0.7.
+An unregistered OID is returned as `BlueTuskUnknownValue`, preserving its format and raw bytes.
+
+## Catalogue-discovered structured types
+
+Each data source loads PostgreSQL type relationships from the system catalogues. Arrays, domains, enums, composites, records, ranges, and multiranges are composed from the codecs of their contained types in both text and binary formats. Runtime codecs can be registered by schema-qualified catalogue name, while `MapEnum<TEnum>` and `MapComposite<T>` provide typed mappings for user-defined enums and composites.
+
+`BlueTuskRange<T>` keeps empty ranges distinct from ranges with one or two unbounded sides. Construct finite bounds with `BlueTuskRangeBound.Inclusive(value)` or `BlueTuskRangeBound.Exclusive(value)`, and use `BlueTuskRangeBound.Unbounded<T>()` for an infinite side:
+
+```csharp
+var finite = new BlueTuskRange<int>(1, 10); // [1,10)
+var upperBounded = new BlueTuskRange<int>(
+    BlueTuskRangeBound.Unbounded<int>(),
+    BlueTuskRangeBound.Inclusive(10));
+var empty = BlueTuskRange.Empty<int>();
+```
+
+`BlueTuskMultirange<T>` is an immutable ordered collection of `BlueTuskRange<T>` values. Range and multirange arrays are discovered and composed automatically, and all four forms participate in parameter type inference when the CLR mapping is unique.

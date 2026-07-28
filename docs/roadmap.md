@@ -74,7 +74,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Catalogue-driven enums and domains with CLR enum mapping
 - [x] Composite metadata plus named and anonymous record wire values
 - [x] CLR composite mapping through `MapComposite<T>` with convention- and attribute-based member names
-- [ ] Ranges and multiranges
+- [x] Catalogue-driven ranges and multiranges in binary and text formats
 - [x] Public runtime codec registration by discovered catalogue name or explicit OID
 
 ## 0.0.8 — COPY and notifications

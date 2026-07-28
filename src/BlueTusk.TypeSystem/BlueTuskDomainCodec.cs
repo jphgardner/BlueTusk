@@ -1,7 +1,10 @@
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Delegates a PostgreSQL domain's wire representation to its catalogue-discovered base type.</summary>
-public sealed class BlueTuskDomainCodec : IBlueTuskCodec
+public sealed class BlueTuskDomainCodec :
+    IBlueTuskCodec,
+    IBlueTuskRangeCodecFactory,
+    IBlueTuskArrayRangeCodecFactory
 {
     private readonly BlueTuskTypeDescriptor _baseType;
     private readonly IBlueTuskCodec _baseCodec;
@@ -26,4 +29,16 @@ public sealed class BlueTuskDomainCodec : IBlueTuskCodec
         BlueTuskDataFormat format,
         BlueTuskTypeDescriptor type) =>
         _baseCodec.Write(ref writer, value, format, _baseType);
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        (_baseCodec as IBlueTuskRangeCodecFactory)?.CreateRangeCodec(subtype, subtypeCodec);
+
+    IBlueTuskCodec IBlueTuskArrayRangeCodecFactory.CreateArrayRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        (_baseCodec as IBlueTuskArrayRangeCodecFactory)?.CreateArrayRangeCodec(subtype, subtypeCodec) ??
+        throw new InvalidOperationException(
+            $"The {_baseType.QualifiedName} codec cannot construct a range over a domain array.");
 }
