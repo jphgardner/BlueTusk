@@ -156,6 +156,61 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task Session_streams_duplex_copy_data_and_returns_to_ready()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+                ReplicationMode = BlueTuskReplicationMode.Physical,
+            },
+            CancellationToken.None);
+
+        var identity = await session.ExecuteSimpleQueryAsync(
+            "IDENTIFY_SYSTEM",
+            CancellationToken.None);
+        var identityRow = Assert.Single(Assert.Single(identity.ResultSets).Rows);
+        var walPosition = Encoding.UTF8.GetString(identityRow.Values[2]!.Value.Span);
+
+        await using var channel = await session.BeginCopyBothAsync(
+            $"START_REPLICATION PHYSICAL {walPosition}",
+            CancellationToken.None);
+
+        await using (var writer = new BlueTuskConnection(GetConnectionString()))
+        {
+            await writer.OpenAsync(CancellationToken.None);
+            await using var command = new BlueTuskCommand("SELECT pg_switch_wal()", writer);
+            _ = await command.ExecuteScalarAsync(CancellationToken.None);
+        }
+
+        using var readTimeout = new CancellationTokenSource(TimeSpan.FromSeconds(10));
+        ReadOnlyMemory<byte>? payload;
+        do
+        {
+            payload = await channel.ReadAsync(readTimeout.Token);
+        }
+        while (payload is { Length: > 0 } value && value.Span[0] != (byte)'w');
+
+        Assert.NotNull(payload);
+        Assert.Equal((byte)'w', payload.Value.Span[0]);
+
+        _ = await channel.CompleteAsync();
+        Assert.True(channel.IsCompleted);
+
+        var reused = await session.ExecuteSimpleQueryAsync(
+            "IDENTIFY_SYSTEM",
+            CancellationToken.None);
+        Assert.Single(Assert.Single(reused.ResultSets).Rows);
+    }
+
+    [Fact]
     public async Task Session_cancels_and_drains_before_reuse()
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());

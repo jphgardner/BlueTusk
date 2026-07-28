@@ -21,6 +21,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private readonly Queue<BlueTuskNotificationResponse> _pendingNotifications = [];
     private readonly object _cancellationSync = new();
     private TaskCompletionSource<bool>? _cancellationRequest;
+    private int _copyBothOperationActive;
     private bool _open;
     private bool _disposed;
 
@@ -198,6 +199,31 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    /// <summary>Starts a duplex PostgreSQL COPY operation.</summary>
+    public async ValueTask<BlueTuskCopyBothChannel> BeginCopyBothAsync(
+        string sql,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
+                cancellationToken).ConfigureAwait(false);
+            var response = await ReadCopyStartAsync('W').ConfigureAwait(false);
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyBoth);
+            Volatile.Write(ref _copyBothOperationActive, 1);
+            return new BlueTuskCopyBothChannel(this, response);
+        }
+        catch
+        {
+            _operationLock.Release();
+            throw;
+        }
+    }
+
     /// <summary>Waits for the next asynchronous notification delivered by PostgreSQL.</summary>
     public async ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
         CancellationToken cancellationToken = default)
@@ -320,6 +346,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         _open = false;
+        ReleaseCopyBothOperation();
         _operationLock.Dispose();
         await _connection.DisposeAsync().ConfigureAwait(false);
     }
@@ -333,6 +360,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
         _disposed = true;
         _open = false;
+        ReleaseCopyBothOperation();
         _operationLock.Dispose();
         _connection.Dispose();
     }
@@ -575,6 +603,123 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    internal async ValueTask<BlueTuskCopyBothReadResult> ReadCopyBothAsync(
+        CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref _copyBothOperationActive) == 0 ||
+            _connection.StateMachine.State != BlueTuskConnectionState.CopyBoth)
+        {
+            return BlueTuskCopyBothReadResult.Completed(commandTag: null);
+        }
+
+        string? commandTag = null;
+        BlueTuskServerException? deferredError = null;
+        try
+        {
+            while (true)
+            {
+                var message = await ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+                switch (message.Identifier)
+                {
+                    case 'd':
+                        var data = BlueTuskBackendMessageDecoder.DecodeCopyData(message);
+                        BlueTuskDiagnostics.CopyBytes.Add(
+                            data.Length,
+                            new KeyValuePair<string, object?>("direction", "both.in"));
+                        return BlueTuskCopyBothReadResult.Payload(data);
+                    case 'c':
+                        break;
+                    case 'C':
+                        commandTag = BlueTuskBackendMessageDecoder.DecodeCommandComplete(message);
+                        break;
+                    case 'E':
+                        deferredError = new BlueTuskServerException(
+                            BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                        break;
+                    case 'A':
+                        EnqueueNotification(message);
+                        break;
+                    case 'N':
+                        _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                        break;
+                    case 'S':
+                        StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                        break;
+                    case 'Z':
+                        await CompleteReadyForQuery(
+                            BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message)).ConfigureAwait(false);
+                        ReleaseCopyBothOperation();
+                        if (deferredError is not null)
+                        {
+                            throw deferredError;
+                        }
+
+                        return BlueTuskCopyBothReadResult.Completed(commandTag);
+                    default:
+                        break;
+                }
+            }
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch
+        {
+            _open = false;
+            ReleaseCopyBothOperation();
+            throw;
+        }
+    }
+
+    internal async ValueTask WriteCopyBothAsync(
+        ReadOnlyMemory<byte> data,
+        CancellationToken cancellationToken)
+    {
+        if (Volatile.Read(ref _copyBothOperationActive) == 0 ||
+            _connection.StateMachine.State != BlueTuskConnectionState.CopyBoth)
+        {
+            throw new InvalidOperationException("The session is not in COPY BOTH mode.");
+        }
+
+        await _connection.WriteAsync(
+            output => BlueTuskFrontendMessageWriter.WriteCopyData(output, data.Span),
+            cancellationToken).ConfigureAwait(false);
+        BlueTuskDiagnostics.CopyBytes.Add(
+            data.Length,
+            new KeyValuePair<string, object?>("direction", "both.out"));
+    }
+
+    internal async ValueTask<string?> CompleteCopyBothAsync()
+    {
+        if (Volatile.Read(ref _copyBothOperationActive) == 0)
+        {
+            return null;
+        }
+
+        try
+        {
+            if (_connection.StateMachine.State == BlueTuskConnectionState.CopyBoth)
+            {
+                await _connection.WriteAsync(
+                    BlueTuskFrontendMessageWriter.WriteCopyDone,
+                    CancellationToken.None).ConfigureAwait(false);
+                return await ReadCopyCompletionAsync(suppressServerError: false).ConfigureAwait(false);
+            }
+
+            return null;
+        }
+        catch
+        {
+            _open = false;
+            throw;
+        }
+        finally
+        {
+            ReleaseCopyBothOperation();
+        }
+    }
+
     private async ValueTask AbortCopyInAsync()
     {
         if (_connection.StateMachine.State != BlueTuskConnectionState.CopyIn)
@@ -746,6 +891,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private void EnqueueNotification(BlueTuskBackendMessage message) =>
         _pendingNotifications.Enqueue(
             BlueTuskBackendMessageDecoder.DecodeNotificationResponse(message));
+
+    private void ReleaseCopyBothOperation()
+    {
+        if (Interlocked.Exchange(ref _copyBothOperationActive, 0) != 0)
+        {
+            _operationLock.Release();
+        }
+    }
 
     private TaskCompletionSource<bool>? BeginCancellation()
     {
