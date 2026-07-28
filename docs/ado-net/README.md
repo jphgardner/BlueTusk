@@ -39,4 +39,6 @@ Connection-owned [COPY APIs](copy.md) stream raw text, CSV, or binary payloads t
 
 Connection-owned [`LISTEN`/`NOTIFY` APIs](notifications.md) deliver PostgreSQL notifications through a bounded asynchronous stream while leaving the primary connection session available for commands.
 
+Transactional [large-object streams](large-objects.md) support asynchronous creation, deletion, reads, writes, 64-bit seeks, and truncation.
+
 `GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Network-backed sequential readers, preparation, batches, and synchronous query execution remain future milestones.

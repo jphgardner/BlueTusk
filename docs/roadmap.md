@@ -92,7 +92,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Quoted, idempotent channel subscriptions and explicit unlisten APIs
   - [x] Bounded asynchronous delivery without occupying the primary command session
   - [x] Close, reopen, cancellation, and PostgreSQL 15–18 lifecycle coverage
-- [ ] Large-object streams
+- [x] Large-object streams
+  - [x] Transaction-aware create, open, and delete APIs
+  - [x] Asynchronous read/write streams with 64-bit seek and truncate
+  - [x] Implicit commit/rollback ownership and explicit-transaction composition
+  - [x] PostgreSQL 15–18 lifecycle and failure-recovery coverage
 
 ## 0.0.9 — Replication preview
 

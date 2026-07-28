@@ -1,9 +1,11 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using BlueTusk.Client;
 using BlueTusk.Data.Copy;
+using BlueTusk.Data.LargeObjects;
 using BlueTusk.Data.Notifications;
 using BlueTusk.Protocol;
 using BlueTusk.TypeSystem;
@@ -16,6 +18,7 @@ public sealed class BlueTuskConnection : DbConnection
     private const int NotificationBufferCapacity = 1_024;
     private readonly BlueTuskConnectionPool? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
+    private readonly SemaphoreSlim _largeObjectGate = new(1, 1);
     private readonly SemaphoreSlim _notificationGate = new(1, 1);
     private readonly object _notificationStateSync = new();
     private readonly Dictionary<string, NotificationSubscription> _notificationSubscriptions =
@@ -25,6 +28,7 @@ public sealed class BlueTuskConnection : DbConnection
     private IBlueTuskPhysicalSession? _session;
     private BlueTuskPooledSession? _pooledSession;
     private BlueTuskTransaction? _currentTransaction;
+    private BlueTuskTransaction? _implicitLargeObjectTransaction;
     private bool _startingTransaction;
     private readonly object _transactionSync = new();
     private Channel<BlueTuskNotification> _notificationChannel = CreateNotificationChannel();
@@ -174,7 +178,9 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override void Close()
     {
-        DetachTransaction()?.ConnectionClosed();
+        var transaction = DetachTransaction();
+        Interlocked.Exchange(ref _implicitLargeObjectTransaction, null);
+        transaction?.ConnectionClosed();
         var subscriptions = DetachNotificationSubscriptions();
         try
         {
@@ -208,7 +214,9 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override async Task CloseAsync()
     {
-        DetachTransaction()?.ConnectionClosed();
+        var transaction = DetachTransaction();
+        Interlocked.Exchange(ref _implicitLargeObjectTransaction, null);
+        transaction?.ConnectionClosed();
         var subscriptions = await DetachNotificationSubscriptionsAsync().ConfigureAwait(false);
         try
         {
@@ -334,6 +342,135 @@ public sealed class BlueTuskConnection : DbConnection
         foreach (var subscription in subscriptions)
         {
             await subscription.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Creates a PostgreSQL large object with a server-assigned object identifier.</summary>
+    public ValueTask<uint> CreateLargeObjectAsync(CancellationToken cancellationToken = default) =>
+        CreateLargeObjectAsync(preferredObjectId: 0, cancellationToken);
+
+    /// <summary>Creates a PostgreSQL large object, optionally requesting a specific object identifier.</summary>
+    public ValueTask<uint> CreateLargeObjectAsync(
+        uint preferredObjectId,
+        CancellationToken cancellationToken = default) =>
+        ExecuteLargeObjectTransactionAsync(
+            (transaction, token) => BlueTuskLargeObjectOperations.ExecuteScalarAsync<uint>(
+                this,
+                transaction,
+                "SELECT pg_catalog.lo_create($1)",
+                [new BlueTuskParameter<uint>(preferredObjectId)],
+                token),
+            cancellationToken);
+
+    /// <summary>Deletes a PostgreSQL large object.</summary>
+    public async ValueTask DeleteLargeObjectAsync(
+        uint objectId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        var deleted = await ExecuteLargeObjectTransactionAsync(
+            (transaction, token) => BlueTuskLargeObjectOperations.ExecuteScalarAsync<int>(
+                this,
+                transaction,
+                "SELECT pg_catalog.lo_unlink($1)",
+                [new BlueTuskParameter<uint>(objectId)],
+                token),
+            cancellationToken).ConfigureAwait(false);
+        if (deleted != 1)
+        {
+            throw new BlueTuskException(
+                $"PostgreSQL returned the unexpected lo_unlink result {deleted}.");
+        }
+    }
+
+    /// <summary>Opens a transactional asynchronous stream over a PostgreSQL large object.</summary>
+    public async ValueTask<BlueTuskLargeObjectStream> OpenLargeObjectAsync(
+        uint objectId,
+        FileAccess access,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        if (access is < FileAccess.Read or > FileAccess.ReadWrite)
+        {
+            throw new ArgumentOutOfRangeException(nameof(access));
+        }
+
+        await _largeObjectGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        BlueTuskTransaction? transaction = null;
+        var ownsTransaction = false;
+        try
+        {
+            EnsureLargeObjectsAvailable();
+            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            {
+                throw new InvalidOperationException(
+                    "Only one implicitly transactional large-object stream can be open at a time. " +
+                    "Begin an explicit transaction to open multiple streams.");
+            }
+
+            transaction = CurrentTransaction;
+            if (transaction is null)
+            {
+                transaction = await BeginTransactionAsync(
+                    IsolationLevel.ReadCommitted,
+                    cancellationToken).ConfigureAwait(false);
+                ownsTransaction = true;
+                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+            }
+
+            try
+            {
+                var mode = access switch
+                {
+                    FileAccess.Read => 0x0004_0000,
+                    FileAccess.Write => 0x0002_0000,
+                    FileAccess.ReadWrite => 0x0006_0000,
+                    _ => throw new UnreachableException(),
+                };
+                var descriptor = await BlueTuskLargeObjectOperations.ExecuteScalarAsync<int>(
+                    this,
+                    transaction,
+                    "SELECT pg_catalog.lo_open($1, $2)",
+                    [
+                        new BlueTuskParameter<uint>(objectId),
+                        new BlueTuskParameter<int>(mode),
+                    ],
+                    cancellationToken).ConfigureAwait(false);
+                var operations = new BlueTuskLargeObjectOperations(
+                    this,
+                    transaction,
+                    descriptor,
+                    ownsTransaction);
+                var length = await operations.SeekAsync(
+                    0,
+                    SeekOrigin.End,
+                    cancellationToken).ConfigureAwait(false);
+                var position = await operations.SeekAsync(
+                    0,
+                    SeekOrigin.Begin,
+                    cancellationToken).ConfigureAwait(false);
+                return new BlueTuskLargeObjectStream(
+                    objectId,
+                    access,
+                    length,
+                    position,
+                    operations);
+            }
+            catch
+            {
+                if (ownsTransaction)
+                {
+                    await CompleteImplicitLargeObjectTransactionCoreAsync(
+                        transaction,
+                        commit: false).ConfigureAwait(false);
+                }
+
+                throw;
+            }
+        }
+        finally
+        {
+            _largeObjectGate.Release();
         }
     }
 
@@ -712,6 +849,115 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
+    internal async ValueTask CompleteImplicitLargeObjectTransactionAsync(
+        BlueTuskTransaction transaction,
+        bool commit,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(transaction);
+        await _largeObjectGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            if (ReferenceEquals(
+                    Volatile.Read(ref _implicitLargeObjectTransaction),
+                    transaction))
+            {
+                await CompleteImplicitLargeObjectTransactionCoreAsync(
+                    transaction,
+                    commit).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            _largeObjectGate.Release();
+        }
+    }
+
+    private async ValueTask<T> ExecuteLargeObjectTransactionAsync<T>(
+        Func<BlueTuskTransaction, CancellationToken, ValueTask<T>> operation,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        await _largeObjectGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        BlueTuskTransaction? transaction = null;
+        var ownsTransaction = false;
+        try
+        {
+            EnsureLargeObjectsAvailable();
+            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            {
+                throw new InvalidOperationException(
+                    "A large-object management operation cannot run while an implicitly " +
+                    "transactional large-object stream is open.");
+            }
+
+            transaction = CurrentTransaction;
+            if (transaction is null)
+            {
+                transaction = await BeginTransactionAsync(
+                    IsolationLevel.ReadCommitted,
+                    cancellationToken).ConfigureAwait(false);
+                ownsTransaction = true;
+                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+            }
+
+            try
+            {
+                var result = await operation(transaction, cancellationToken).ConfigureAwait(false);
+                if (ownsTransaction)
+                {
+                    await CompleteImplicitLargeObjectTransactionCoreAsync(
+                        transaction,
+                        commit: true).ConfigureAwait(false);
+                }
+
+                return result;
+            }
+            catch
+            {
+                if (ownsTransaction)
+                {
+                    await CompleteImplicitLargeObjectTransactionCoreAsync(
+                        transaction,
+                        commit: false).ConfigureAwait(false);
+                }
+
+                throw;
+            }
+        }
+        finally
+        {
+            _largeObjectGate.Release();
+        }
+    }
+
+    private async ValueTask CompleteImplicitLargeObjectTransactionCoreAsync(
+        BlueTuskTransaction transaction,
+        bool commit)
+    {
+        try
+        {
+            if (!transaction.IsCompleted && _state == ConnectionState.Open)
+            {
+                if (commit)
+                {
+                    await transaction.CommitAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+                else
+                {
+                    await transaction.RollbackAsync(CancellationToken.None).ConfigureAwait(false);
+                }
+            }
+        }
+        finally
+        {
+            _ = Interlocked.CompareExchange(
+                ref _implicitLargeObjectTransaction,
+                null,
+                transaction);
+        }
+    }
+
     private static Channel<BlueTuskNotification> CreateNotificationChannel() =>
         Channel.CreateBounded<BlueTuskNotification>(
             new BoundedChannelOptions(NotificationBufferCapacity)
@@ -854,6 +1100,16 @@ public sealed class BlueTuskConnection : DbConnection
                 throw new InvalidOperationException(
                     "COPY cannot start while a transaction is being opened.");
             }
+        }
+    }
+
+    private void EnsureLargeObjectsAvailable()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_state != ConnectionState.Open)
+        {
+            throw new InvalidOperationException(
+                "The connection must be open to access PostgreSQL large objects.");
         }
     }
 
