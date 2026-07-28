@@ -216,6 +216,113 @@ public sealed class BlueTuskParameterEncoderTests
         Assert.All(encoded.Value.Value.ToArray(), item => Assert.Equal((byte)'x', item));
     }
 
+    [Fact]
+    public void Registered_codecs_can_select_text_for_symbolic_values_and_arrays()
+    {
+        var types = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.RegClass.Id,
+                Schema = "pg_catalog",
+                Name = "regclass",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = new BlueTuskTypeId(2210),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(2210),
+                Schema = "pg_catalog",
+                Name = "_regclass",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.RegClass.Id,
+            },
+        ]);
+
+        var symbolic = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegClass>(new BlueTuskRegClass("pg_type")),
+            types);
+        var numeric = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegClass>(new BlueTuskRegClass(1247)),
+            types);
+        var symbolicArray = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegClass[]>(
+                [new BlueTuskRegClass("pg_type"), new BlueTuskRegClass("pg_proc")]),
+            types);
+        var numericArray = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegClass[]>(
+                [new BlueTuskRegClass(1247), new BlueTuskRegClass(1255)]),
+            types);
+
+        Assert.Equal(0, symbolic.FormatCode);
+        Assert.Equal("pg_type", Encoding.UTF8.GetString(symbolic.Value!.Value.Span));
+        Assert.Equal(1, numeric.FormatCode);
+        Assert.Equal(1247U, BinaryPrimitives.ReadUInt32BigEndian(numeric.Value!.Value.Span));
+        Assert.Equal(0, symbolicArray.FormatCode);
+        Assert.Equal(
+            "{pg_type,pg_proc}",
+            Encoding.UTF8.GetString(symbolicArray.Value!.Value.Span));
+        Assert.Equal(1, numericArray.FormatCode);
+    }
+
+    [Fact]
+    public void Encodes_non_empty_catalogue_vector_arrays_in_binary_and_empty_values_in_text()
+    {
+        var types = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.Int2Vector.Id,
+                Schema = "pg_catalog",
+                Name = "int2vector",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.Int2.Id,
+                ArrayType = new BlueTuskTypeId(1006),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(1006),
+                Schema = "pg_catalog",
+                Name = "_int2vector",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.Int2Vector.Id,
+            },
+        ]);
+        BlueTuskInt16Vector[] values =
+        [
+            new BlueTuskInt16Vector([1, 2, -3]),
+        ];
+        BlueTuskInt16Vector[] valuesWithEmpty =
+        [
+            values[0],
+            new BlueTuskInt16Vector([]),
+        ];
+
+        var encoded = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskInt16Vector[]>(values),
+            types);
+        var encodedWithEmpty = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskInt16Vector[]>(valuesWithEmpty),
+            types);
+
+        Assert.Equal(1006U, encoded.TypeOid);
+        Assert.Equal(1, encoded.FormatCode);
+        Assert.Equal(
+            "0000000100000000000000160000000100000001" +
+            "00000026" +
+            "0000000100000000000000150000000300000000" +
+            "00000002000100000002000200000002FFFD",
+            Convert.ToHexString(encoded.Value!.Value.Span));
+        Assert.Equal(0, encodedWithEmpty.FormatCode);
+        Assert.Equal(
+            "{\"1 2 -3\",\"\"}",
+            Encoding.UTF8.GetString(encodedWithEmpty.Value!.Value.Span));
+    }
+
     private readonly record struct LargeValue(string Value);
 
     private sealed class LargeValueCodec : BlueTuskCodec<LargeValue>

@@ -347,6 +347,15 @@ internal static class BlueTuskParameterEncoder
         IBlueTuskCodec codec,
         object value)
     {
+        var format = codec is IBlueTuskWriteFormatSelector selector
+            ? selector.GetPreferredWriteFormat(value, type)
+            : BlueTuskDataFormat.Binary;
+        if (format is not (BlueTuskDataFormat.Text or BlueTuskDataFormat.Binary))
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} codec selected unsupported wire format {format}.");
+        }
+
         var length = 256;
         while (true)
         {
@@ -354,13 +363,13 @@ internal static class BlueTuskParameterEncoder
             var writer = new BlueTuskWriter(bytes);
             try
             {
-                codec.Write(ref writer, value, BlueTuskDataFormat.Binary, type);
+                codec.Write(ref writer, value, format, type);
                 if (writer.WrittenCount != bytes.Length)
                 {
                     Array.Resize(ref bytes, writer.WrittenCount);
                 }
 
-                return Binary(typeOid, bytes);
+                return new BlueTuskExtendedQueryParameter(typeOid, (short)format, bytes);
             }
             catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
             {

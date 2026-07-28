@@ -3,7 +3,10 @@ using System.Text;
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Encodes PostgreSQL arrays by composing the catalogue-discovered element codec.</summary>
-public sealed class BlueTuskArrayCodec : IBlueTuskCodec, IBlueTuskRangeCodecFactory
+public sealed class BlueTuskArrayCodec :
+    IBlueTuskCodec,
+    IBlueTuskRangeCodecFactory,
+    IBlueTuskWriteFormatSelector
 {
     private const int MaximumDimensions = 6;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
@@ -61,6 +64,33 @@ public sealed class BlueTuskArrayCodec : IBlueTuskCodec, IBlueTuskRangeCodecFact
         _elementCodec is IBlueTuskArrayRangeCodecFactory factory
             ? factory.CreateArrayRangeCodec(subtype, subtypeCodec)
             : null;
+
+    public BlueTuskDataFormat GetPreferredWriteFormat(
+        object value,
+        BlueTuskTypeDescriptor type)
+    {
+        if (value is not Array array)
+        {
+            throw new InvalidCastException(
+                $"The {type.QualifiedName} codec requires a CLR array value.");
+        }
+
+        if (_elementCodec is not IBlueTuskWriteFormatSelector selector)
+        {
+            return BlueTuskDataFormat.Binary;
+        }
+
+        foreach (var item in array)
+        {
+            if (item is not null &&
+                selector.GetPreferredWriteFormat(item, _elementType) == BlueTuskDataFormat.Text)
+            {
+                return BlueTuskDataFormat.Text;
+            }
+        }
+
+        return BlueTuskDataFormat.Binary;
+    }
 
     private Array ReadBinary(ref BlueTuskReader reader, BlueTuskTypeDescriptor type)
     {

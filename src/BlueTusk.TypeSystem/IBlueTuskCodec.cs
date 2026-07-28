@@ -30,3 +30,12 @@ public interface IBlueTuskCodec<T> : IBlueTuskCodec
         BlueTuskTypeDescriptor type);
 }
 
+/// <summary>
+/// Selects the parameter wire format when a codec cannot represent every CLR value in binary.
+/// </summary>
+public interface IBlueTuskWriteFormatSelector
+{
+    BlueTuskDataFormat GetPreferredWriteFormat(
+        object value,
+        BlueTuskTypeDescriptor type);
+}

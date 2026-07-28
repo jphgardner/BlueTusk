@@ -98,7 +98,9 @@ public static class BlueTuskTypeCatalogue
             Name = type.Name,
             Kind = type.PostgreSqlKind switch
             {
-                'b' when type.PostgreSqlCategory == 'A' && type.ElementType is not null => BlueTuskTypeKind.Array,
+                'b' when type.PostgreSqlCategory == 'A' &&
+                    type.ElementType is not null &&
+                    type.ArrayType is null => BlueTuskTypeKind.Array,
                 'b' => BlueTuskTypeKind.Base,
                 'c' => BlueTuskTypeKind.Composite,
                 'd' => BlueTuskTypeKind.Domain,

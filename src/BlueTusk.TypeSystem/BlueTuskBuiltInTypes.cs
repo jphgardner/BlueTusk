@@ -20,7 +20,12 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Int2 { get; } = Create(21, "int2", 1005);
 
+    public static BlueTuskTypeDescriptor Int2Vector { get; } =
+        Create(22, "int2vector", 1006, elementTypeOid: 21);
+
     public static BlueTuskTypeDescriptor Int4 { get; } = Create(23, "int4", 1007);
+
+    public static BlueTuskTypeDescriptor RegProc { get; } = Create(24, "regproc", 1008);
 
     public static BlueTuskTypeDescriptor Text { get; } = Create(25, "text", 1009);
 
@@ -31,6 +36,9 @@ public static class BlueTuskBuiltInTypes
     public static BlueTuskTypeDescriptor Xid { get; } = Create(28, "xid", 1011);
 
     public static BlueTuskTypeDescriptor Cid { get; } = Create(29, "cid", 1012);
+
+    public static BlueTuskTypeDescriptor OidVector { get; } =
+        Create(30, "oidvector", 1013, elementTypeOid: 26);
 
     public static BlueTuskTypeDescriptor Json { get; } = Create(114, "json", 199);
 
@@ -88,6 +96,16 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Uuid { get; } = Create(2950, "uuid", 2951);
 
+    public static BlueTuskTypeDescriptor RegProcedure { get; } = Create(2202, "regprocedure", 2207);
+
+    public static BlueTuskTypeDescriptor RegOper { get; } = Create(2203, "regoper", 2208);
+
+    public static BlueTuskTypeDescriptor RegOperator { get; } = Create(2204, "regoperator", 2209);
+
+    public static BlueTuskTypeDescriptor RegClass { get; } = Create(2205, "regclass", 2210);
+
+    public static BlueTuskTypeDescriptor RegType { get; } = Create(2206, "regtype", 2211);
+
     public static BlueTuskTypeDescriptor TxidSnapshot { get; } = Create(2970, "txid_snapshot", 2949);
 
     public static BlueTuskTypeDescriptor PgLsn { get; } = Create(3220, "pg_lsn", 3221);
@@ -96,7 +114,20 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor TextSearchQuery { get; } = Create(3615, "tsquery", 3645);
 
+    public static BlueTuskTypeDescriptor RegConfig { get; } = Create(3734, "regconfig", 3735);
+
+    public static BlueTuskTypeDescriptor RegDictionary { get; } =
+        Create(3769, "regdictionary", 3770);
+
     public static BlueTuskTypeDescriptor Jsonb { get; } = Create(3802, "jsonb", 3807);
+
+    public static BlueTuskTypeDescriptor RegNamespace { get; } =
+        Create(4089, "regnamespace", 4090);
+
+    public static BlueTuskTypeDescriptor RegRole { get; } = Create(4096, "regrole", 4097);
+
+    public static BlueTuskTypeDescriptor RegCollation { get; } =
+        Create(4191, "regcollation", 4192);
 
     public static BlueTuskTypeDescriptor PgSnapshot { get; } = Create(5038, "pg_snapshot", 5039);
 
@@ -114,12 +145,15 @@ public static class BlueTuskBuiltInTypes
             .Register(Name, textCodec)
             .Register(Int8, new BlueTuskInt64Codec())
             .Register(Int2, new BlueTuskInt16Codec())
+            .Register(Int2Vector, new BlueTuskInt16VectorCodec())
             .Register(Int4, new BlueTuskInt32Codec())
+            .Register(RegProc, new BlueTuskObjectIdentifierCodec<BlueTuskRegProc>())
             .Register(Text, textCodec)
             .Register(Oid, new BlueTuskUInt32Codec())
             .Register(Tid, new BlueTuskTupleIdCodec())
             .Register(Xid, new BlueTuskTransactionIdCodec())
             .Register(Cid, new BlueTuskCommandIdCodec())
+            .Register(OidVector, new BlueTuskObjectIdentifierVectorCodec())
             .Register(Json, textCodec)
             .Register(Xml, textCodec)
             .Register(Point, new BlueTuskPointCodec())
@@ -148,23 +182,39 @@ public static class BlueTuskBuiltInTypes
             .Register(Bit, new BlueTuskBitStringCodec())
             .Register(Varbit, new BlueTuskBitStringCodec())
             .Register(Uuid, new BlueTuskGuidCodec())
+            .Register(RegProcedure, new BlueTuskObjectIdentifierCodec<BlueTuskRegProcedure>())
+            .Register(RegOper, new BlueTuskObjectIdentifierCodec<BlueTuskRegOper>())
+            .Register(RegOperator, new BlueTuskObjectIdentifierCodec<BlueTuskRegOperator>())
+            .Register(RegClass, new BlueTuskObjectIdentifierCodec<BlueTuskRegClass>())
+            .Register(RegType, new BlueTuskObjectIdentifierCodec<BlueTuskRegType>())
             .Register(TxidSnapshot, new BlueTuskTransactionSnapshotCodec())
             .Register(PgLsn, new BlueTuskLogSequenceNumberCodec())
             .Register(TextSearchVector, new BlueTuskTextSearchVectorCodec())
             .Register(TextSearchQuery, new BlueTuskTextSearchQueryCodec())
+            .Register(RegConfig, new BlueTuskObjectIdentifierCodec<BlueTuskRegConfig>())
+            .Register(RegDictionary, new BlueTuskObjectIdentifierCodec<BlueTuskRegDictionary>())
             .Register(Jsonb, new BlueTuskJsonbCodec())
+            .Register(RegNamespace, new BlueTuskObjectIdentifierCodec<BlueTuskRegNamespace>())
+            .Register(RegRole, new BlueTuskObjectIdentifierCodec<BlueTuskRegRole>())
+            .Register(RegCollation, new BlueTuskObjectIdentifierCodec<BlueTuskRegCollation>())
             .Register(PgSnapshot, new BlueTuskTransactionSnapshotCodec())
             .Register(Xid8, new BlueTuskFullTransactionIdCodec())
             .Build();
     }
 
-    private static BlueTuskTypeDescriptor Create(uint oid, string name, uint arrayOid, char delimiter = ',') => new()
-    {
-        Id = new BlueTuskTypeId(oid),
-        Schema = "pg_catalog",
-        Name = name,
-        Kind = BlueTuskTypeKind.Base,
-        ArrayType = new BlueTuskTypeId(arrayOid),
-        Delimiter = delimiter,
-    };
+    private static BlueTuskTypeDescriptor Create(
+        uint oid,
+        string name,
+        uint arrayOid,
+        char delimiter = ',',
+        uint? elementTypeOid = null) => new()
+        {
+            Id = new BlueTuskTypeId(oid),
+            Schema = "pg_catalog",
+            Name = name,
+            Kind = BlueTuskTypeKind.Base,
+            ElementType = elementTypeOid is null ? null : new BlueTuskTypeId(elementTypeOid.Value),
+            ArrayType = new BlueTuskTypeId(arrayOid),
+            Delimiter = delimiter,
+        };
 }

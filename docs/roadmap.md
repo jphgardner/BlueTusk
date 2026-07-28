@@ -69,6 +69,10 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Money with `lc_monetary`-aware scale discovery
 - [x] Full-text scalar family
 - [ ] Catalogue-specific scalar families
+  - [x] Transaction identifiers and snapshot values
+  - [x] Object-identifier aliases and catalogue vector values
+  - [ ] JSONPath, cursor, node-tree, and internal character values
+  - [ ] Text-only and opaque system-catalogue values
 - [x] Catalogue discovery and per-data-source cache with explicit reload
 - [x] Catalogue-driven arrays in binary and text formats
 - [x] Catalogue-driven enums and domains with CLR enum mapping

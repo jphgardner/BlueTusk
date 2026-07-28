@@ -217,6 +217,111 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Object_identifier_aliases_and_catalogue_vectors_round_trip()
+    {
+        var relation = new BlueTuskRegClass("pg_type");
+        var dataType = new BlueTuskRegType("integer");
+        var binaryAddition = new BlueTuskRegOperator("+(integer,integer)");
+        BlueTuskRegClass[] relations =
+        [
+            new BlueTuskRegClass("pg_type"),
+            new BlueTuskRegClass("pg_proc"),
+        ];
+        var int2Vector = new BlueTuskInt16Vector([1, 2, -3]);
+        var oidVector = new BlueTuskObjectIdentifierVector([0, uint.MaxValue, 23]);
+        var emptyInt2Vector = new BlueTuskInt16Vector([]);
+        var emptyOidVector = new BlueTuskObjectIdentifierVector([]);
+        BlueTuskInt16Vector[] int2Vectors = [int2Vector, emptyInt2Vector];
+        BlueTuskObjectIdentifierVector[] oidVectors = [oidVector];
+
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using (var aliasCommand = dataSource.CreateCommand(
+            "SELECT $1::regclass, $2::regtype, $3::regoperator, $4::regclass[]"))
+        {
+            aliasCommand.Parameters.Add(new BlueTuskParameter<BlueTuskRegClass>(relation));
+            aliasCommand.Parameters.Add(new BlueTuskParameter<BlueTuskRegType>(dataType));
+            aliasCommand.Parameters.Add(
+                new BlueTuskParameter<BlueTuskRegOperator>(binaryAddition));
+            aliasCommand.Parameters.Add(new BlueTuskParameter<BlueTuskRegClass[]>(relations));
+            await using var aliasReader =
+                await aliasCommand.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await aliasReader.ReadAsync(CancellationToken.None));
+            Assert.Equal(
+                1247U,
+                aliasReader.GetFieldValue<BlueTuskRegClass>(0).Identifier.Oid);
+            Assert.Equal(
+                23U,
+                aliasReader.GetFieldValue<BlueTuskRegType>(1).Identifier.Oid);
+            Assert.True(
+                aliasReader.GetFieldValue<BlueTuskRegOperator>(2).Identifier.Oid > 0);
+            var decodedRelations = aliasReader.GetFieldValue<BlueTuskRegClass[]>(3);
+            Assert.Equal(1247U, decodedRelations[0].Identifier.Oid);
+            Assert.Equal(1255U, decodedRelations[1].Identifier.Oid);
+        }
+
+        await using (var vectorCommand = dataSource.CreateCommand(
+            "SELECT $1::int2vector, $2::oidvector, $3::int2vector, $4::oidvector"))
+        {
+            vectorCommand.Parameters.Add(new BlueTuskParameter<BlueTuskInt16Vector>(int2Vector));
+            vectorCommand.Parameters.Add(
+                new BlueTuskParameter<BlueTuskObjectIdentifierVector>(oidVector));
+            vectorCommand.Parameters.Add(
+                new BlueTuskParameter<BlueTuskInt16Vector>(emptyInt2Vector));
+            vectorCommand.Parameters.Add(
+                new BlueTuskParameter<BlueTuskObjectIdentifierVector>(emptyOidVector));
+            await using var vectorReader =
+                await vectorCommand.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await vectorReader.ReadAsync(CancellationToken.None));
+            Assert.Equal(
+                int2Vector,
+                vectorReader.GetFieldValue<BlueTuskInt16Vector>(0));
+            Assert.Equal(
+                oidVector,
+                vectorReader.GetFieldValue<BlueTuskObjectIdentifierVector>(1));
+            Assert.Equal(
+                emptyInt2Vector,
+                vectorReader.GetFieldValue<BlueTuskInt16Vector>(2));
+            Assert.Equal(
+                emptyOidVector,
+                vectorReader.GetFieldValue<BlueTuskObjectIdentifierVector>(3));
+        }
+
+        await using (var vectorArrayCommand = dataSource.CreateCommand(
+            "SELECT $1::int2vector[], $2::oidvector[]"))
+        {
+            vectorArrayCommand.Parameters.Add(
+                new BlueTuskParameter<BlueTuskInt16Vector[]>(int2Vectors));
+            vectorArrayCommand.Parameters.Add(
+                new BlueTuskParameter<BlueTuskObjectIdentifierVector[]>(oidVectors));
+            await using var vectorArrayReader =
+                await vectorArrayCommand.ExecuteReaderAsync(CancellationToken.None);
+            Assert.True(await vectorArrayReader.ReadAsync(CancellationToken.None));
+            Assert.Equal(
+                int2Vectors,
+                vectorArrayReader.GetFieldValue<BlueTuskInt16Vector[]>(0));
+            Assert.Equal(
+                oidVectors,
+                vectorArrayReader.GetFieldValue<BlueTuskObjectIdentifierVector[]>(1));
+        }
+
+        await using var textCommand = dataSource.CreateCommand(
+            "SELECT 'pg_type'::regclass, 'integer'::regtype, " +
+            "'1 2 -3'::int2vector, '0 4294967295 23'::oidvector");
+        await using var textReader = await textCommand.ExecuteReaderAsync(CancellationToken.None);
+        Assert.True(await textReader.ReadAsync(CancellationToken.None));
+        Assert.Equal(
+            "pg_type",
+            textReader.GetFieldValue<BlueTuskRegClass>(0).Identifier.Name);
+        Assert.Equal(
+            "integer",
+            textReader.GetFieldValue<BlueTuskRegType>(1).Identifier.Name);
+        Assert.Equal(int2Vector, textReader.GetFieldValue<BlueTuskInt16Vector>(2));
+        Assert.Equal(
+            oidVector,
+            textReader.GetFieldValue<BlueTuskObjectIdentifierVector>(3));
+    }
+
+    [Fact]
     public async Task Network_scalar_parameters_round_trip_in_binary()
     {
         var inet = BlueTuskNetworkAddress.Parse("192.168.1.5/24");

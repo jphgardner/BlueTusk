@@ -81,3 +81,34 @@ PostgreSQL's unsigned transaction identifiers have dedicated CLR values so their
 | `txid_snapshot` | `BlueTuskTransactionSnapshot` |
 
 `BlueTuskTransactionSnapshot` validates PostgreSQL's ordered half-open snapshot invariants and defensively copies the in-progress transaction IDs. Modern `pg_snapshot` is the default parameter inference target. The deprecated `txid_snapshot` remains readable and writable by specifying its PostgreSQL OID explicitly. Catalogue-discovered arrays of all five types are composed automatically.
+
+## Object identifiers and catalogue vectors
+
+The PostgreSQL `reg*` aliases use symbolic names in text and unsigned four-byte OIDs in binary. BlueTusk provides a distinct CLR wrapper for each alias so parameter inference remains unambiguous:
+
+| PostgreSQL type | CLR value |
+| --- | --- |
+| `regproc` | `BlueTuskRegProc` |
+| `regprocedure` | `BlueTuskRegProcedure` |
+| `regoper` | `BlueTuskRegOper` |
+| `regoperator` | `BlueTuskRegOperator` |
+| `regclass` | `BlueTuskRegClass` |
+| `regtype` | `BlueTuskRegType` |
+| `regconfig` | `BlueTuskRegConfig` |
+| `regdictionary` | `BlueTuskRegDictionary` |
+| `regnamespace` | `BlueTuskRegNamespace` |
+| `regrole` | `BlueTuskRegRole` |
+| `regcollation` | `BlueTuskRegCollation` |
+
+Construct an alias from either form. The returned `Identifier` preserves whether a text result was symbolic or numeric:
+
+```csharp
+var relationByName = new BlueTuskRegClass("public.orders");
+var relationByOid = new BlueTuskRegClass(16_384);
+```
+
+Symbolic values are sent as text so PostgreSQL resolves them using its normal namespace and search-path rules. Numeric values use binary. The same value-sensitive choice applies to catalogue-composed arrays.
+
+`int2vector` maps to the immutable `BlueTuskInt16Vector`; `oidvector` maps to `BlueTuskObjectIdentifierVector`. Their codecs enforce PostgreSQL's one-dimensional, zero-based, null-free binary shape, including full unsigned OID values. PostgreSQL does not accept an empty vector through its binary receive function, so BlueTusk automatically uses text for an empty vector or an array containing one.
+
+Runtime codecs that have the same value-dependent requirement can implement `IBlueTuskWriteFormatSelector`. Otherwise registered codec parameters continue to prefer binary.
