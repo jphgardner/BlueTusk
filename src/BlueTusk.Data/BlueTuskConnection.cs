@@ -1,8 +1,10 @@
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using System.Threading.Channels;
 using BlueTusk.Client;
 using BlueTusk.Data.Copy;
+using BlueTusk.Data.Notifications;
 using BlueTusk.Protocol;
 using BlueTusk.TypeSystem;
 
@@ -11,8 +13,13 @@ namespace BlueTusk.Data;
 /// <summary>Represents a logical connection to PostgreSQL.</summary>
 public sealed class BlueTuskConnection : DbConnection
 {
+    private const int NotificationBufferCapacity = 1_024;
     private readonly BlueTuskConnectionPool? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
+    private readonly SemaphoreSlim _notificationGate = new(1, 1);
+    private readonly object _notificationStateSync = new();
+    private readonly Dictionary<string, NotificationSubscription> _notificationSubscriptions =
+        new(StringComparer.Ordinal);
     private string _connectionString = string.Empty;
     private BlueTuskConnectionStringBuilder _settings = new();
     private IBlueTuskPhysicalSession? _session;
@@ -20,6 +27,10 @@ public sealed class BlueTuskConnection : DbConnection
     private BlueTuskTransaction? _currentTransaction;
     private bool _startingTransaction;
     private readonly object _transactionSync = new();
+    private Channel<BlueTuskNotification> _notificationChannel = CreateNotificationChannel();
+    private bool _notificationChannelCompleted;
+    private bool _acceptingNotificationSubscriptions;
+    private bool _disposed;
     private ConnectionState _state = ConnectionState.Closed;
 
     public BlueTuskConnection()
@@ -83,6 +94,18 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);
 
+    /// <summary>Gets the asynchronous stream of notifications received by this connection.</summary>
+    public IAsyncEnumerable<BlueTuskNotification> Notifications
+    {
+        get
+        {
+            lock (_notificationStateSync)
+            {
+                return _notificationChannel.Reader.ReadAllAsync();
+            }
+        }
+    }
+
     internal IBlueTuskPhysicalSession Session =>
         _session ?? throw new InvalidOperationException("The connection is not open.");
 
@@ -106,6 +129,7 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override async Task OpenAsync(CancellationToken cancellationToken)
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
         if (_state != ConnectionState.Closed)
         {
             throw new InvalidOperationException("The connection is already open or opening.");
@@ -131,6 +155,7 @@ public sealed class BlueTuskConnection : DbConnection
 
             await _typeMetadata.EnsureLoadedAsync(_session, cancellationToken).ConfigureAwait(false);
 
+            BeginNotificationLifetime();
             SetState(ConnectionState.Open);
         }
         catch
@@ -150,39 +175,167 @@ public sealed class BlueTuskConnection : DbConnection
     public override void Close()
     {
         DetachTransaction()?.ConnectionClosed();
-        var session = Interlocked.Exchange(ref _session, null);
-        var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
-        if (pooledSession is not null)
+        var subscriptions = DetachNotificationSubscriptions();
+        try
         {
-            _pool!.Return(pooledSession);
+            foreach (var subscription in subscriptions)
+            {
+                subscription.Dispose();
+            }
         }
-        else
+        finally
         {
-            session?.Dispose();
+            try
+            {
+                var session = Interlocked.Exchange(ref _session, null);
+                var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
+                if (pooledSession is not null)
+                {
+                    _pool!.Return(pooledSession);
+                }
+                else
+                {
+                    session?.Dispose();
+                }
+            }
+            finally
+            {
+                CompleteNotificationLifetime();
+                SetState(ConnectionState.Closed);
+            }
         }
-
-        SetState(ConnectionState.Closed);
     }
 
     public override async Task CloseAsync()
     {
         DetachTransaction()?.ConnectionClosed();
-        var session = Interlocked.Exchange(ref _session, null);
-        var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
-        if (pooledSession is not null)
+        var subscriptions = await DetachNotificationSubscriptionsAsync().ConfigureAwait(false);
+        try
         {
-            _pool!.Return(pooledSession);
+            foreach (var subscription in subscriptions)
+            {
+                await subscription.DisposeAsync().ConfigureAwait(false);
+            }
         }
-        else if (session is not null)
+        finally
         {
-            await session.DisposeAsync().ConfigureAwait(false);
+            try
+            {
+                var session = Interlocked.Exchange(ref _session, null);
+                var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
+                if (pooledSession is not null)
+                {
+                    _pool!.Return(pooledSession);
+                }
+                else if (session is not null)
+                {
+                    await session.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+            finally
+            {
+                CompleteNotificationLifetime();
+                SetState(ConnectionState.Closed);
+            }
         }
-
-        SetState(ConnectionState.Closed);
     }
 
     public override void ChangeDatabase(string databaseName) =>
         throw new NotSupportedException("Changing databases requires opening a new PostgreSQL connection.");
+
+    /// <summary>Starts receiving asynchronous notifications for a PostgreSQL channel.</summary>
+    public async ValueTask ListenAsync(
+        string channel,
+        CancellationToken cancellationToken = default)
+    {
+        var quotedChannel = BlueTuskSqlIdentifier.Quote(channel, nameof(channel));
+        EnsureNotificationsAvailable();
+
+        await _notificationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        IBlueTuskPhysicalSession? listenerSession = null;
+        try
+        {
+            EnsureNotificationsAvailable();
+            if (!_acceptingNotificationSubscriptions)
+            {
+                throw new InvalidOperationException(
+                    "The connection is closing and cannot accept notification subscriptions.");
+            }
+
+            if (_notificationSubscriptions.ContainsKey(channel))
+            {
+                return;
+            }
+
+            listenerSession = await BlueTuskPhysicalSession.OpenAsync(
+                _settings,
+                cancellationToken).ConfigureAwait(false);
+            _ = await listenerSession.ExecuteSimpleQueryAsync(
+                $"LISTEN {quotedChannel}",
+                cancellationToken).ConfigureAwait(false);
+
+            var subscription = new NotificationSubscription(
+                channel,
+                listenerSession,
+                GetNotificationWriter());
+            _notificationSubscriptions.Add(channel, subscription);
+            subscription.Start(PumpNotificationsAsync(subscription));
+            listenerSession = null;
+        }
+        finally
+        {
+            _notificationGate.Release();
+            if (listenerSession is not null)
+            {
+                await listenerSession.DisposeAsync().ConfigureAwait(false);
+            }
+        }
+    }
+
+    /// <summary>Stops receiving asynchronous notifications for a PostgreSQL channel.</summary>
+    public async ValueTask UnlistenAsync(
+        string channel,
+        CancellationToken cancellationToken = default)
+    {
+        _ = BlueTuskSqlIdentifier.Quote(channel, nameof(channel));
+
+        NotificationSubscription? subscription;
+        await _notificationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _notificationSubscriptions.Remove(channel, out subscription);
+        }
+        finally
+        {
+            _notificationGate.Release();
+        }
+
+        if (subscription is not null)
+        {
+            await subscription.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Stops receiving notifications for every channel on this connection.</summary>
+    public async ValueTask UnlistenAllAsync(CancellationToken cancellationToken = default)
+    {
+        NotificationSubscription[] subscriptions;
+        await _notificationGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            subscriptions = _notificationSubscriptions.Values.ToArray();
+            _notificationSubscriptions.Clear();
+        }
+        finally
+        {
+            _notificationGate.Release();
+        }
+
+        foreach (var subscription in subscriptions)
+        {
+            await subscription.DisposeAsync().ConfigureAwait(false);
+        }
+    }
 
     public new async ValueTask<BlueTuskTransaction> BeginTransactionAsync(
         CancellationToken cancellationToken = default) =>
@@ -480,9 +633,17 @@ public sealed class BlueTuskConnection : DbConnection
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing)
+        if (disposing && !_disposed)
         {
-            Close();
+            try
+            {
+                Close();
+            }
+            finally
+            {
+                _disposed = true;
+                CompleteNotificationLifetime();
+            }
         }
 
         base.Dispose(disposing);
@@ -490,7 +651,19 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override async ValueTask DisposeAsync()
     {
-        await CloseAsync().ConfigureAwait(false);
+        if (!_disposed)
+        {
+            try
+            {
+                await CloseAsync().ConfigureAwait(false);
+            }
+            finally
+            {
+                _disposed = true;
+                CompleteNotificationLifetime();
+            }
+        }
+
         await base.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
@@ -536,6 +709,134 @@ public sealed class BlueTuskConnection : DbConnection
             _currentTransaction = null;
             _startingTransaction = false;
             return transaction;
+        }
+    }
+
+    private static Channel<BlueTuskNotification> CreateNotificationChannel() =>
+        Channel.CreateBounded<BlueTuskNotification>(
+            new BoundedChannelOptions(NotificationBufferCapacity)
+            {
+                AllowSynchronousContinuations = false,
+                FullMode = BoundedChannelFullMode.Wait,
+                SingleReader = true,
+                SingleWriter = false,
+            });
+
+    private void BeginNotificationLifetime()
+    {
+        _notificationGate.Wait();
+        try
+        {
+            lock (_notificationStateSync)
+            {
+                if (_notificationChannelCompleted)
+                {
+                    _notificationChannel = CreateNotificationChannel();
+                    _notificationChannelCompleted = false;
+                }
+            }
+
+            _acceptingNotificationSubscriptions = true;
+        }
+        finally
+        {
+            _notificationGate.Release();
+        }
+    }
+
+    private void CompleteNotificationLifetime(Exception? exception = null)
+    {
+        lock (_notificationStateSync)
+        {
+            if (_notificationChannelCompleted)
+            {
+                return;
+            }
+
+            _notificationChannelCompleted = true;
+            _notificationChannel.Writer.TryComplete(exception);
+        }
+    }
+
+    private ChannelWriter<BlueTuskNotification> GetNotificationWriter()
+    {
+        lock (_notificationStateSync)
+        {
+            if (_notificationChannelCompleted)
+            {
+                throw new InvalidOperationException(
+                    "The notification stream has completed. Reopen the connection before listening again.");
+            }
+
+            return _notificationChannel.Writer;
+        }
+    }
+
+    private void EnsureNotificationsAvailable()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_state != ConnectionState.Open)
+        {
+            throw new InvalidOperationException(
+                "The connection must be open to listen for PostgreSQL notifications.");
+        }
+    }
+
+    private NotificationSubscription[] DetachNotificationSubscriptions()
+    {
+        _notificationGate.Wait();
+        try
+        {
+            _acceptingNotificationSubscriptions = false;
+            var subscriptions = _notificationSubscriptions.Values.ToArray();
+            _notificationSubscriptions.Clear();
+            return subscriptions;
+        }
+        finally
+        {
+            _notificationGate.Release();
+        }
+    }
+
+    private async ValueTask<NotificationSubscription[]> DetachNotificationSubscriptionsAsync()
+    {
+        await _notificationGate.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+        try
+        {
+            _acceptingNotificationSubscriptions = false;
+            var subscriptions = _notificationSubscriptions.Values.ToArray();
+            _notificationSubscriptions.Clear();
+            return subscriptions;
+        }
+        finally
+        {
+            _notificationGate.Release();
+        }
+    }
+
+    private async Task PumpNotificationsAsync(NotificationSubscription subscription)
+    {
+        try
+        {
+            while (true)
+            {
+                var response = await subscription.Session.WaitForNotificationAsync(
+                    subscription.CancellationToken).ConfigureAwait(false);
+                await subscription.Writer.WriteAsync(
+                    new BlueTuskNotification(
+                        response.ProcessId,
+                        response.Channel,
+                        response.Payload),
+                    subscription.CancellationToken).ConfigureAwait(false);
+            }
+        }
+        catch (OperationCanceledException) when (subscription.IsCancellationRequested)
+        {
+            // Unlisten and connection shutdown interrupt the otherwise indefinite receive.
+        }
+        catch (Exception exception)
+        {
+            CompleteNotificationLifetime(exception);
         }
     }
 
@@ -657,6 +958,70 @@ public sealed class BlueTuskConnection : DbConnection
         if (previous != state)
         {
             OnStateChange(new StateChangeEventArgs(previous, state));
+        }
+    }
+
+    private sealed class NotificationSubscription : IDisposable, IAsyncDisposable
+    {
+        private readonly CancellationTokenSource _cancellationSource = new();
+        private Task _pump = Task.CompletedTask;
+        private int _disposed;
+
+        public NotificationSubscription(
+            string channel,
+            IBlueTuskPhysicalSession session,
+            ChannelWriter<BlueTuskNotification> writer)
+        {
+            Channel = channel;
+            Session = session;
+            Writer = writer;
+        }
+
+        public string Channel { get; }
+
+        public IBlueTuskPhysicalSession Session { get; }
+
+        public ChannelWriter<BlueTuskNotification> Writer { get; }
+
+        public CancellationToken CancellationToken => _cancellationSource.Token;
+
+        public bool IsCancellationRequested => _cancellationSource.IsCancellationRequested;
+
+        public void Start(Task pump)
+        {
+            ArgumentNullException.ThrowIfNull(pump);
+            if (!ReferenceEquals(_pump, Task.CompletedTask))
+            {
+                throw new InvalidOperationException("The notification subscription has already started.");
+            }
+
+            _pump = pump;
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            _cancellationSource.Cancel();
+            _pump.GetAwaiter().GetResult();
+            Session.Dispose();
+            _cancellationSource.Dispose();
+        }
+
+        public async ValueTask DisposeAsync()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            _cancellationSource.Cancel();
+            await _pump.ConfigureAwait(false);
+            await Session.DisposeAsync().ConfigureAwait(false);
+            _cancellationSource.Dispose();
         }
     }
 }

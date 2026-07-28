@@ -37,4 +37,6 @@ Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a se
 
 Connection-owned [COPY APIs](copy.md) stream raw text, CSV, or binary payloads to and from PostgreSQL while preserving exclusive use of the physical session.
 
+Connection-owned [`LISTEN`/`NOTIFY` APIs](notifications.md) deliver PostgreSQL notifications through a bounded asynchronous stream while leaving the primary connection session available for commands.
+
 `GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Network-backed sequential readers, preparation, batches, and synchronous query execution remain future milestones.

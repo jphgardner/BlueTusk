@@ -87,7 +87,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Streaming raw COPY FROM/TO for text, CSV, and binary payloads
   - [x] Streaming `TextReader`/`TextWriter` helpers for text and CSV
   - [x] Typed binary importer and exporter
-- [ ] `LISTEN`/`NOTIFY` asynchronous delivery
+- [x] `LISTEN`/`NOTIFY` asynchronous delivery
+  - [x] Strict backend `NotificationResponse` decoding
+  - [x] Quoted, idempotent channel subscriptions and explicit unlisten APIs
+  - [x] Bounded asynchronous delivery without occupying the primary command session
+  - [x] Close, reopen, cancellation, and PostgreSQL 15–18 lifecycle coverage
 - [ ] Large-object streams
 
 ## 0.0.9 — Replication preview
