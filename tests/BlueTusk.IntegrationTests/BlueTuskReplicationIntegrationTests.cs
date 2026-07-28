@@ -512,7 +512,7 @@ public sealed class BlueTuskReplicationIntegrationTests
         if (string.IsNullOrWhiteSpace(connectionString))
         {
             throw SkipException.ForSkip(
-                "$XunitDynamicSkip$BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+                "BLUETUSK_TEST_CONNECTION_STRING is not configured.");
         }
 
         var settings = new BlueTuskConnectionStringBuilder(connectionString)

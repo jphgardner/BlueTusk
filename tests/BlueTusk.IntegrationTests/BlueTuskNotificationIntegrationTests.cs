@@ -153,7 +153,7 @@ public sealed class BlueTuskNotificationIntegrationTests
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
-            throw SkipException.ForSkip("$XunitDynamicSkip$BLUETUSK_TEST_CONNECTION_STRING is not configured.");
+            throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.");
         }
 
         var settings = new BlueTuskConnectionStringBuilder(connectionString)

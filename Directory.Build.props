@@ -21,6 +21,7 @@
 
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('$([System.IO.Path]::DirectorySeparatorChar)tests$([System.IO.Path]::DirectorySeparatorChar)'))">
     <IsPackable>false</IsPackable>
+    <NoWarn>$(NoWarn);xUnit1051</NoWarn>
   </PropertyGroup>
 
   <ItemGroup Condition="'$(IsPackable)' != 'false'">
