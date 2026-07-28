@@ -117,8 +117,20 @@ This file tracks executable repository status. The product vision is broader; un
 ## 0.1.0 — First public ADO.NET preview
 
 - [ ] Prepared statements, batches, and multi-host connection attempts
+  - [ ] Explicit, automatic, named, and unnamed prepared statements
+  - [ ] `DbBatch`/`DbBatchCommand`, parameters, transactions, cancellation, and multiple results
+  - [ ] Safe named-parameter rewriting and command execution-mode selection
+  - [ ] Ordered multi-host failover, target-session selection, and per-host pools
 - [ ] Genuine synchronous connection and query paths
+  - [ ] Synchronous transport, TLS, startup, authentication, and cancellation
+  - [ ] Synchronous pooling, transactions, commands, COPY, notifications, and large objects
 - [ ] Network-backed sequential and streaming reader modes
+  - [ ] Bounded named portals, suspension, and incremental row reads
+  - [ ] Sequential field access plus streaming `bytea`, text, and JSON
+  - [ ] Reader cancellation, disposal, and connection-reuse recovery
 - [ ] ADO.NET conformance, stress, differential, and performance baselines
+  - [ ] Provider-factory and base-class conformance suite
+  - [ ] Concurrent connection, cancellation, preparation, batch, and streaming stress suites
+  - [ ] Differential PostgreSQL behavior matrix and checked-in benchmark baselines
 
 Later milestones follow the full product specification: EF Core CRUD and migrations, PostgreSQL-native LINQ, advanced schema modelling and scaffolding, SQL/PGQ property graphs, and the extension ecosystem. Each milestone must have conformance and real-server acceptance tests before its version is published.
