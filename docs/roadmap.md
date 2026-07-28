@@ -98,7 +98,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Implicit commit/rollback ownership and explicit-transaction composition
   - [x] PostgreSQL 15–18 lifecycle and failure-recovery coverage
 
-## 0.0.9 — Replication preview
+## 0.0.9 — Replication preview (complete)
 
 - [x] Physical and logical replication sessions
   - [x] Replication startup negotiation and duplex `COPY BOTH`
