@@ -235,6 +235,36 @@ public static class BlueTuskFrontendMessageWriter
         WriteInt32(output, sizeof(int));
     }
 
+    public static void WriteCopyData(
+        IBufferWriter<byte> output,
+        ReadOnlySpan<byte> data)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        WriteByte(output, (byte)'d');
+        WriteInt32(output, checked(sizeof(int) + data.Length));
+        WriteBytes(output, data);
+    }
+
+    public static void WriteCopyDone(IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        WriteByte(output, (byte)'c');
+        WriteInt32(output, sizeof(int));
+    }
+
+    public static void WriteCopyFail(
+        IBufferWriter<byte> output,
+        string message)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(message, nameof(message));
+        var messageLength = Encoding.UTF8.GetByteCount(message);
+        WriteByte(output, (byte)'f');
+        WriteInt32(output, checked(sizeof(int) + messageLength + 1));
+        WriteUtf8(output, message, messageLength);
+        WriteByte(output, 0);
+    }
+
     private static void WriteCString(IBufferWriter<byte> output, string value)
     {
         WriteUtf8(output, value, Encoding.UTF8.GetByteCount(value));

@@ -128,6 +128,39 @@ public static class BlueTuskBackendMessageDecoder
         return tag;
     }
 
+    public static BlueTuskCopyResponse DecodeCopyResponse(BlueTuskBackendMessage message)
+    {
+        if (message.Identifier is not ('G' or 'H' or 'W'))
+        {
+            throw new ArgumentException(
+                "The message is not a CopyInResponse, CopyOutResponse, or CopyBothResponse.",
+                nameof(message));
+        }
+
+        var reader = CreateReader(message, out _);
+        var format = DecodeCopyFormat(reader.ReadByte());
+        var columnCount = reader.ReadInt16();
+        if (columnCount < 0)
+        {
+            throw new BlueTuskProtocolException("COPY response declared a negative column count.");
+        }
+
+        var columnFormats = new BlueTuskCopyFormat[columnCount];
+        for (var index = 0; index < columnFormats.Length; index++)
+        {
+            columnFormats[index] = DecodeCopyFormat(reader.ReadInt16());
+        }
+
+        reader.EnsureConsumed();
+        return new BlueTuskCopyResponse(format, columnFormats);
+    }
+
+    public static byte[] DecodeCopyData(BlueTuskBackendMessage message)
+    {
+        RequireCode(message, 'd');
+        return message.ToPayloadArray();
+    }
+
     public static BlueTuskError DecodeErrorOrNotice(BlueTuskBackendMessage message)
     {
         if (message.Identifier is not ('E' or 'N'))
@@ -176,6 +209,13 @@ public static class BlueTuskBackendMessageDecoder
 
         throw new BlueTuskProtocolException("AuthenticationSASL was missing its final null terminator.");
     }
+
+    private static BlueTuskCopyFormat DecodeCopyFormat(int value) => value switch
+    {
+        0 => BlueTuskCopyFormat.Text,
+        1 => BlueTuskCopyFormat.Binary,
+        _ => throw new BlueTuskProtocolException($"COPY response contained unknown format code {value}."),
+    };
 
     private static BlueTuskBackendPayloadReader CreateReader(BlueTuskBackendMessage message, out byte[] bytes)
     {

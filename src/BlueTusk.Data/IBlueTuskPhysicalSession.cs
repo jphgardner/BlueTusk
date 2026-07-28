@@ -21,6 +21,16 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
 
+    ValueTask<BlueTuskCopyResult> CopyInAsync(
+        string sql,
+        Stream source,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<BlueTuskCopyResult> CopyOutAsync(
+        string sql,
+        Stream destination,
+        CancellationToken cancellationToken = default);
+
     void Cancel();
 
     ValueTask CancelAsync(CancellationToken cancellationToken = default);
@@ -73,6 +83,18 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         bool useBinaryResults,
         CancellationToken cancellationToken = default) =>
         _session.ExecuteExtendedQueryAsync(sql, parameters, useBinaryResults, cancellationToken);
+
+    public ValueTask<BlueTuskCopyResult> CopyInAsync(
+        string sql,
+        Stream source,
+        CancellationToken cancellationToken = default) =>
+        _session.CopyInAsync(sql, source, cancellationToken);
+
+    public ValueTask<BlueTuskCopyResult> CopyOutAsync(
+        string sql,
+        Stream destination,
+        CancellationToken cancellationToken = default) =>
+        _session.CopyOutAsync(sql, destination, cancellationToken);
 
     public void Cancel() => _session.Cancel();
 

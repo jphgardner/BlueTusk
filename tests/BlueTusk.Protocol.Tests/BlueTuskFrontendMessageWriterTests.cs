@@ -109,4 +109,24 @@ public sealed class BlueTuskFrontendMessageWriterTests
         Assert.Equal((byte)'E', output.WrittenSpan[executeOffset]);
         Assert.Equal((byte)'S', output.WrittenSpan[syncOffset]);
     }
+
+    [Fact]
+    public void Writes_copy_data_done_and_fail_messages()
+    {
+        var data = new ArrayBufferWriter<byte>();
+        var done = new ArrayBufferWriter<byte>();
+        var fail = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteCopyData(data, new byte[] { 0, 1, 255 });
+        BlueTuskFrontendMessageWriter.WriteCopyDone(done);
+        BlueTuskFrontendMessageWriter.WriteCopyFail(fail, "source failed");
+
+        Assert.Equal("64000000070001FF", Convert.ToHexString(data.WrittenSpan));
+        Assert.Equal("6300000004", Convert.ToHexString(done.WrittenSpan));
+        Assert.Equal((byte)'f', fail.WrittenSpan[0]);
+        Assert.Equal(
+            fail.WrittenCount - 1,
+            BinaryPrimitives.ReadInt32BigEndian(fail.WrittenSpan[1..]));
+        Assert.Equal("source failed\0", Encoding.UTF8.GetString(fail.WrittenSpan[5..]));
+    }
 }

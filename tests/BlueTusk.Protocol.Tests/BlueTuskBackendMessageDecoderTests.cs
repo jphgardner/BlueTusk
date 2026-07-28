@@ -86,6 +86,39 @@ public sealed class BlueTuskBackendMessageDecoderTests
     }
 
     [Fact]
+    public void Decodes_copy_responses_and_data()
+    {
+        var response = new ArrayBufferWriter<byte>();
+        WriteByte(response, (byte)BlueTuskCopyFormat.Binary);
+        WriteInt16(response, 3);
+        WriteInt16(response, (short)BlueTuskCopyFormat.Binary);
+        WriteInt16(response, (short)BlueTuskCopyFormat.Text);
+        WriteInt16(response, (short)BlueTuskCopyFormat.Binary);
+
+        var decoded = BlueTuskBackendMessageDecoder.DecodeCopyResponse(Message('H', response));
+        Assert.Equal(BlueTuskCopyFormat.Binary, decoded.Format);
+        Assert.Equal(
+            [
+                BlueTuskCopyFormat.Binary,
+                BlueTuskCopyFormat.Text,
+                BlueTuskCopyFormat.Binary,
+            ],
+            decoded.ColumnFormats);
+        Assert.Equal(
+            new byte[] { 0, 1, 2, 255 },
+            BlueTuskBackendMessageDecoder.DecodeCopyData(
+                Message('d', new byte[] { 0, 1, 2, 255 })));
+    }
+
+    [Fact]
+    public void Rejects_invalid_copy_response_formats()
+    {
+        Assert.Throws<BlueTuskProtocolException>(
+            () => BlueTuskBackendMessageDecoder.DecodeCopyResponse(
+                Message('G', new byte[] { 2, 0, 0 })));
+    }
+
+    [Fact]
     public void Rejects_a_data_row_with_an_invalid_length()
     {
         var payload = new ArrayBufferWriter<byte>();

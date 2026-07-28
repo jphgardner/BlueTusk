@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
+using BlueTusk.Data.Copy;
 using BlueTusk.Protocol;
 using BlueTusk.TypeSystem;
 
@@ -192,6 +193,56 @@ public sealed class BlueTuskConnection : DbConnection
         CancellationToken cancellationToken = default) =>
         (BlueTuskTransaction)await BeginDbTransactionAsync(isolationLevel, cancellationToken).ConfigureAwait(false);
 
+    public async ValueTask<BlueTuskRawCopyResult> CopyFromAsync(
+        string copyCommand,
+        Stream source,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCopyAvailable();
+        try
+        {
+            var result = await Session.CopyInAsync(
+                copyCommand,
+                source,
+                cancellationToken).ConfigureAwait(false);
+            return CreateRawCopyResult(result);
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        catch (Exception) when (!HasOpenSession)
+        {
+            Close();
+            throw;
+        }
+    }
+
+    public async ValueTask<BlueTuskRawCopyResult> CopyToAsync(
+        string copyCommand,
+        Stream destination,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureCopyAvailable();
+        try
+        {
+            var result = await Session.CopyOutAsync(
+                copyCommand,
+                destination,
+                cancellationToken).ConfigureAwait(false);
+            return CreateRawCopyResult(result);
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        catch (Exception) when (!HasOpenSession)
+        {
+            Close();
+            throw;
+        }
+    }
+
     protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
         throw new NotSupportedException("Synchronous transaction start is not implemented yet. Use BeginTransactionAsync.");
 
@@ -315,6 +366,45 @@ public sealed class BlueTuskConnection : DbConnection
             _startingTransaction = false;
             return transaction;
         }
+    }
+
+    private void EnsureCopyAvailable()
+    {
+        if (_state != ConnectionState.Open)
+        {
+            throw new InvalidOperationException("The connection must be open to start COPY.");
+        }
+
+        lock (_transactionSync)
+        {
+            if (_startingTransaction)
+            {
+                throw new InvalidOperationException(
+                    "COPY cannot start while a transaction is being opened.");
+            }
+        }
+    }
+
+    private static BlueTuskRawCopyResult CreateRawCopyResult(BlueTuskCopyResult result)
+    {
+        if (!BlueTuskCommandTagParser.TryGetRowsAffected(result.CommandTag, out var rowsAffected))
+        {
+            throw new BlueTuskException(
+                $"PostgreSQL completed COPY with an invalid command tag '{result.CommandTag}'.");
+        }
+
+        return new BlueTuskRawCopyResult(
+            result.Response.Format == BlueTuskCopyFormat.Binary
+                ? BlueTuskCopyDataFormat.Binary
+                : BlueTuskCopyDataFormat.Text,
+            result.Response.ColumnFormats
+                .Select(
+                    static format => format == BlueTuskCopyFormat.Binary
+                        ? BlueTuskCopyDataFormat.Binary
+                        : BlueTuskCopyDataFormat.Text)
+                .ToArray(),
+            rowsAffected,
+            result.BytesTransferred);
     }
 
     [SuppressMessage(

@@ -22,6 +22,16 @@ public sealed record BlueTuskFieldDescription(
 
 public sealed record BlueTuskDataRow(IReadOnlyList<ReadOnlyMemory<byte>?> Values);
 
+public enum BlueTuskCopyFormat : byte
+{
+    Text = 0,
+    Binary = 1,
+}
+
+public sealed record BlueTuskCopyResponse(
+    BlueTuskCopyFormat Format,
+    IReadOnlyList<BlueTuskCopyFormat> ColumnFormats);
+
 public sealed record BlueTuskError(IReadOnlyDictionary<char, string> Fields)
 {
     public string Severity => Get('V') ?? Get('S') ?? "ERROR";
@@ -36,4 +46,3 @@ public sealed record BlueTuskError(IReadOnlyDictionary<char, string> Fields)
 
     private string? Get(char code) => Fields.TryGetValue(code, out var value) ? value : null;
 }
-

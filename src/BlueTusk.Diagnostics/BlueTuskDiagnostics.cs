@@ -24,6 +24,9 @@ public static class BlueTuskDiagnostics
     public static Histogram<long> ProtocolMessageSize { get; } =
         Meter.CreateHistogram<long>("bluetusk.protocol.message.size", unit: "By");
 
+    public static Counter<long> CopyBytes { get; } =
+        Meter.CreateCounter<long>("bluetusk.copy.bytes", unit: "By");
+
     public static UpDownCounter<long> PoolConnections { get; } =
         Meter.CreateUpDownCounter<long>("bluetusk.pool.connections", unit: "{connection}");
 

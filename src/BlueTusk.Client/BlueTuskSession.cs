@@ -10,6 +10,7 @@ namespace BlueTusk.Client;
 /// <summary>A single authenticated PostgreSQL protocol session.</summary>
 public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 {
+    private const int CopyBufferSize = 81_920;
     private static readonly short[] BinaryResultFormat = [1];
     private static readonly short[] TextResultFormat = [0];
     private readonly BlueTuskProtocolConnection _connection;
@@ -110,6 +111,60 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 BlueTuskFrontendMessageWriter.WriteSync(output);
             },
             cancellationToken);
+    }
+
+    public async ValueTask<BlueTuskCopyResult> CopyInAsync(
+        string sql,
+        Stream source,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(source);
+        if (!source.CanRead)
+        {
+            throw new ArgumentException("The COPY source stream must be readable.", nameof(source));
+        }
+
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            return await CopyInCoreAsync(sql, source, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
+    }
+
+    public async ValueTask<BlueTuskCopyResult> CopyOutAsync(
+        string sql,
+        Stream destination,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(destination);
+        if (!destination.CanWrite)
+        {
+            throw new ArgumentException(
+                "The COPY destination stream must be writable.",
+                nameof(destination));
+        }
+
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            return await CopyOutCoreAsync(sql, destination, cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
     }
 
     public void Cancel()
@@ -216,6 +271,258 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
             _operationLock.Release();
         }
+    }
+
+    private async ValueTask<BlueTuskCopyResult> CopyInCoreAsync(
+        string sql,
+        Stream source,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+        await _connection.WriteAsync(
+            output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
+            CancellationToken.None).ConfigureAwait(false);
+        var response = await ReadCopyStartAsync('G').ConfigureAwait(false);
+        _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyIn);
+
+        var buffer = ArrayPool<byte>.Shared.Rent(CopyBufferSize);
+        long bytesTransferred = 0;
+        try
+        {
+            while (true)
+            {
+                var read = await source.ReadAsync(
+                    buffer.AsMemory(0, CopyBufferSize),
+                    cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    break;
+                }
+
+                await _connection.WriteAsync(
+                    output => BlueTuskFrontendMessageWriter.WriteCopyData(
+                        output,
+                        buffer.AsSpan(0, read)),
+                    CancellationToken.None).ConfigureAwait(false);
+                bytesTransferred = checked(bytesTransferred + read);
+                BlueTuskDiagnostics.CopyBytes.Add(read, new KeyValuePair<string, object?>("direction", "in"));
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            await _connection.WriteAsync(
+                BlueTuskFrontendMessageWriter.WriteCopyDone,
+                CancellationToken.None).ConfigureAwait(false);
+            var commandTag = await ReadCopyCompletionAsync(suppressServerError: false).ConfigureAwait(false);
+            return new BlueTuskCopyResult(response, commandTag, bytesTransferred);
+        }
+        catch (Exception) when (_connection.StateMachine.State == BlueTuskConnectionState.CopyIn)
+        {
+            await AbortCopyInAsync().ConfigureAwait(false);
+            throw;
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    private async ValueTask<BlueTuskCopyResult> CopyOutCoreAsync(
+        string sql,
+        Stream destination,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+        await _connection.WriteAsync(
+            output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
+            CancellationToken.None).ConfigureAwait(false);
+        var response = await ReadCopyStartAsync('H').ConfigureAwait(false);
+        _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyOut);
+
+        long bytesTransferred = 0;
+        string? commandTag = null;
+        BlueTuskServerException? deferredError = null;
+        try
+        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var message = await ReadMessageAsync().ConfigureAwait(false);
+                switch (message.Identifier)
+                {
+                    case 'd':
+                        var data = BlueTuskBackendMessageDecoder.DecodeCopyData(message);
+                        await destination.WriteAsync(data, cancellationToken).ConfigureAwait(false);
+                        bytesTransferred = checked(bytesTransferred + data.Length);
+                        BlueTuskDiagnostics.CopyBytes.Add(
+                            data.Length,
+                            new KeyValuePair<string, object?>("direction", "out"));
+                        break;
+                    case 'c':
+                        break;
+                    case 'C':
+                        commandTag = BlueTuskBackendMessageDecoder.DecodeCommandComplete(message);
+                        break;
+                    case 'E':
+                        deferredError = new BlueTuskServerException(
+                            BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                        break;
+                    case 'N':
+                        _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                        break;
+                    case 'S':
+                        StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                        break;
+                    case 'Z':
+                        await CompleteReadyForQuery(
+                            BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message)).ConfigureAwait(false);
+                        if (deferredError is not null)
+                        {
+                            throw deferredError;
+                        }
+
+                        return new BlueTuskCopyResult(
+                            response,
+                            commandTag ?? throw new BlueTuskProtocolException(
+                                "COPY OUT completed without a command tag."),
+                            bytesTransferred);
+                    default:
+                        break;
+                }
+            }
+        }
+        catch (Exception) when (
+            _connection.StateMachine.State is BlueTuskConnectionState.CopyOut or
+                BlueTuskConnectionState.Cancelling)
+        {
+            await AbortCopyOutAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async ValueTask<BlueTuskCopyResponse> ReadCopyStartAsync(char expectedIdentifier)
+    {
+        BlueTuskServerException? deferredError = null;
+        while (true)
+        {
+            var message = await ReadMessageAsync().ConfigureAwait(false);
+            switch (message.Identifier)
+            {
+                case var identifier when identifier == expectedIdentifier:
+                    return BlueTuskBackendMessageDecoder.DecodeCopyResponse(message);
+                case 'E':
+                    deferredError = new BlueTuskServerException(
+                        BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'Z':
+                    await CompleteReadyForQuery(
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message)).ConfigureAwait(false);
+                    if (deferredError is not null)
+                    {
+                        throw deferredError;
+                    }
+
+                    throw new BlueTuskProtocolException(
+                        $"PostgreSQL did not enter the expected COPY {(expectedIdentifier == 'G' ? "IN" : "OUT")} mode.");
+                default:
+                    break;
+            }
+        }
+    }
+
+    private async ValueTask<string> ReadCopyCompletionAsync(bool suppressServerError)
+    {
+        string? commandTag = null;
+        BlueTuskServerException? deferredError = null;
+        while (true)
+        {
+            var message = await ReadMessageAsync().ConfigureAwait(false);
+            switch (message.Identifier)
+            {
+                case 'c':
+                    break;
+                case 'C':
+                    commandTag = BlueTuskBackendMessageDecoder.DecodeCommandComplete(message);
+                    break;
+                case 'E':
+                    deferredError = new BlueTuskServerException(
+                        BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'Z':
+                    await CompleteReadyForQuery(
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message)).ConfigureAwait(false);
+                    if (!suppressServerError && deferredError is not null)
+                    {
+                        throw deferredError;
+                    }
+
+                    return commandTag ?? string.Empty;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private async ValueTask AbortCopyInAsync()
+    {
+        if (_connection.StateMachine.State != BlueTuskConnectionState.CopyIn)
+        {
+            return;
+        }
+
+        try
+        {
+            await _connection.WriteAsync(
+                output => BlueTuskFrontendMessageWriter.WriteCopyFail(
+                    output,
+                    "The client COPY source failed."),
+                CancellationToken.None).ConfigureAwait(false);
+            _ = await ReadCopyCompletionAsync(suppressServerError: true).ConfigureAwait(false);
+        }
+        catch
+        {
+            _open = false;
+        }
+    }
+
+    private async ValueTask AbortCopyOutAsync()
+    {
+        if (_connection.StateMachine.State == BlueTuskConnectionState.CopyOut)
+        {
+            await CancelAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+
+        if (_connection.StateMachine.State == BlueTuskConnectionState.Cancelling)
+        {
+            try
+            {
+                _ = await ReadCopyCompletionAsync(suppressServerError: true).ConfigureAwait(false);
+            }
+            catch
+            {
+                _open = false;
+            }
+        }
+    }
+
+    private async ValueTask<BlueTuskBackendMessage> ReadMessageAsync()
+    {
+        var message = await _connection.ReadMessageAsync(CancellationToken.None).ConfigureAwait(false);
+        BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
+        return message;
     }
 
     private async ValueTask<BlueTuskQueryResult> ReadQueryResponseWithCancellationAsync(
@@ -337,8 +644,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         lock (_cancellationSync)
         {
-            if (!_connection.StateMachine.TryTransition(
-                    BlueTuskConnectionState.Executing,
+            var state = _connection.StateMachine.State;
+            if (state is not (
+                    BlueTuskConnectionState.Executing or
+                    BlueTuskConnectionState.CopyIn or
+                    BlueTuskConnectionState.CopyOut or
+                    BlueTuskConnectionState.CopyBoth) ||
+                !_connection.StateMachine.TryTransition(
+                    state,
                     BlueTuskConnectionState.Cancelling))
             {
                 return null;
