@@ -45,6 +45,18 @@ public static class BlueTuskBackendMessageDecoder
         return result;
     }
 
+    public static BlueTuskNotificationResponse DecodeNotificationResponse(BlueTuskBackendMessage message)
+    {
+        RequireCode(message, 'A');
+        var reader = CreateReader(message, out _);
+        var result = new BlueTuskNotificationResponse(
+            reader.ReadInt32(),
+            reader.ReadCString(),
+            reader.ReadCString());
+        reader.EnsureConsumed();
+        return result;
+    }
+
     public static BlueTuskTransactionStatus DecodeReadyForQuery(BlueTuskBackendMessage message)
     {
         RequireCode(message, 'Z');

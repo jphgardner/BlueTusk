@@ -43,6 +43,40 @@ public sealed class BlueTuskBackendMessageDecoderTests
     }
 
     [Fact]
+    public void Decodes_notification_responses()
+    {
+        var notification = new ArrayBufferWriter<byte>();
+        WriteInt32(notification, 1234);
+        WriteCString(notification, "order-events");
+        WriteCString(notification, "created \U0001F9A3");
+
+        Assert.Equal(
+            new BlueTuskNotificationResponse(1234, "order-events", "created \U0001F9A3"),
+            BlueTuskBackendMessageDecoder.DecodeNotificationResponse(Message('A', notification)));
+    }
+
+    [Fact]
+    public void Rejects_malformed_notification_responses()
+    {
+        var missingPayload = new ArrayBufferWriter<byte>();
+        WriteInt32(missingPayload, 1234);
+        WriteCString(missingPayload, "orders");
+
+        var trailingData = new ArrayBufferWriter<byte>();
+        WriteInt32(trailingData, 1234);
+        WriteCString(trailingData, "orders");
+        WriteCString(trailingData, "ready");
+        WriteByte(trailingData, 1);
+
+        Assert.Throws<BlueTuskProtocolException>(
+            () => BlueTuskBackendMessageDecoder.DecodeNotificationResponse(
+                Message('A', missingPayload)));
+        Assert.Throws<BlueTuskProtocolException>(
+            () => BlueTuskBackendMessageDecoder.DecodeNotificationResponse(
+                Message('A', trailingData)));
+    }
+
+    [Fact]
     public void Decodes_row_description_and_data_row()
     {
         var description = new ArrayBufferWriter<byte>();

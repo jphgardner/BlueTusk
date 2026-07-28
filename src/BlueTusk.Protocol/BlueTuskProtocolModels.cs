@@ -4,6 +4,11 @@ public sealed record BlueTuskParameterStatus(string Name, string Value);
 
 public readonly record struct BlueTuskBackendKeyData(int ProcessId, int SecretKey);
 
+public sealed record BlueTuskNotificationResponse(
+    int ProcessId,
+    string Channel,
+    string Payload);
+
 public enum BlueTuskTransactionStatus : byte
 {
     Idle = (byte)'I',
