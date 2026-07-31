@@ -115,6 +115,90 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             cancellationToken);
     }
 
+    /// <summary>Creates a named PostgreSQL prepared statement.</summary>
+    public async ValueTask PrepareStatementAsync(
+        string statementName,
+        string sql,
+        IReadOnlyList<uint> parameterTypeOids,
+        CancellationToken cancellationToken = default)
+    {
+        ValidatePreparedStatementName(statementName);
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameterTypeOids);
+
+        _ = await ExecuteQueryAsync(
+            output =>
+            {
+                BlueTuskFrontendMessageWriter.WriteParse(
+                    output,
+                    statementName,
+                    sql,
+                    parameterTypeOids);
+                BlueTuskFrontendMessageWriter.WriteDescribeStatement(output, statementName);
+                BlueTuskFrontendMessageWriter.WriteSync(output);
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Executes a named PostgreSQL prepared statement.</summary>
+    public ValueTask<BlueTuskQueryResult> ExecutePreparedStatementAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults = true,
+        CancellationToken cancellationToken = default)
+    {
+        ValidatePreparedStatementName(statementName);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        ArgumentNullException.ThrowIfNull(parameters);
+        var bindParameters = new BlueTuskBindParameter[parameters.Count];
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            var parameter = parameters[index];
+            bindParameters[index] = new BlueTuskBindParameter(parameter.FormatCode, parameter.Value);
+        }
+
+        return ExecuteQueryAsync(
+            output =>
+            {
+                BlueTuskFrontendMessageWriter.WriteBind(
+                    output,
+                    string.Empty,
+                    statementName,
+                    bindParameters,
+                    useBinaryResults ? BinaryResultFormat : TextResultFormat);
+                BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+                BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+                BlueTuskFrontendMessageWriter.WriteSync(output);
+            },
+            cancellationToken);
+    }
+
+    /// <summary>Closes a named PostgreSQL prepared statement.</summary>
+    public async ValueTask ClosePreparedStatementAsync(
+        string statementName,
+        CancellationToken cancellationToken = default)
+    {
+        ValidatePreparedStatementName(statementName);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        _ = await ExecuteQueryAsync(
+            output =>
+            {
+                BlueTuskFrontendMessageWriter.WriteCloseStatement(output, statementName);
+                BlueTuskFrontendMessageWriter.WriteSync(output);
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
     public async ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
@@ -951,6 +1035,17 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         if (!_open)
         {
             throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+    }
+
+    private static void ValidatePreparedStatementName(string statementName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(statementName);
+        if (statementName.Contains('\0'))
+        {
+            throw new ArgumentException(
+                "Prepared statement names cannot contain a null character.",
+                nameof(statementName));
         }
     }
 

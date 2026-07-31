@@ -15,6 +15,18 @@ var answer = await command.ExecuteScalarAsync<int>();
 
 BlueTusk infers built-in PostgreSQL type OIDs from `DbType` or the CLR value. A null parameter must set `DbType` or `PostgreSqlTypeOid`; this avoids relying on ambiguous server inference.
 
+The 0.1.0 development line supports explicit asynchronous preparation on an open, connection-owned command. BlueTusk creates a named server statement and reuses it across executions; changing the command text or parameter type identity closes and prepares the statement again.
+
+```csharp
+await using var connection = await dataSource.OpenConnectionAsync();
+await using var command = new BlueTuskCommand("SELECT $1::int4 + $2::int4", connection);
+command.Parameters.Add(new BlueTuskParameter<int>(20));
+command.Parameters.Add(new BlueTuskParameter<int>(22));
+
+await command.PrepareAsync();
+var answer = await command.ExecuteScalarAsync<int>();
+```
+
 Transactions use PostgreSQL transaction blocks and require explicit command enlistment:
 
 ```csharp
@@ -41,4 +53,4 @@ Connection-owned [`LISTEN`/`NOTIFY` APIs](notifications.md) deliver PostgreSQL n
 
 Transactional [large-object streams](large-objects.md) support asynchronous creation, deletion, reads, writes, 64-bit seeks, and truncation.
 
-`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Network-backed sequential readers, preparation, batches, and synchronous query execution remain future milestones.
+`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Network-backed sequential readers, automatic preparation, batches, and synchronous query execution remain in progress for 0.1.0.

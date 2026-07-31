@@ -8,6 +8,7 @@ namespace BlueTusk.Data;
 
 public sealed class BlueTuskCommand : DbCommand
 {
+    private static long s_preparedStatementSequence;
     private readonly BlueTuskParameterCollection _parameters = new();
     private BlueTuskConnection? _connection;
     private readonly BlueTuskDataSource? _dataSource;
@@ -16,6 +17,8 @@ public sealed class BlueTuskCommand : DbCommand
     private int _commandTimeout = 30;
     private int _executing;
     private int _cancellationRequested;
+    private bool _prepareRequested;
+    private PreparedStatementState? _preparedStatement;
 
     public BlueTuskCommand()
     {
@@ -65,7 +68,7 @@ public sealed class BlueTuskCommand : DbCommand
     protected override DbConnection? DbConnection
     {
         get => _connection;
-        set => _connection = value switch
+        set => Connection = value switch
         {
             null => null,
             BlueTuskConnection connection => connection,
@@ -76,7 +79,15 @@ public sealed class BlueTuskCommand : DbCommand
     public new BlueTuskConnection? Connection
     {
         get => _connection;
-        set => _connection = value;
+        set
+        {
+            if (!ReferenceEquals(_connection, value))
+            {
+                _preparedStatement = null;
+            }
+
+            _connection = value;
+        }
     }
 
     protected override DbParameterCollection DbParameterCollection => _parameters;
@@ -131,7 +142,30 @@ public sealed class BlueTuskCommand : DbCommand
         throw new NotSupportedException("Synchronous command execution is not implemented yet. Use ExecuteScalarAsync.");
 
     public override void Prepare() =>
-        throw new NotSupportedException("Explicit prepared statements are not implemented yet.");
+        throw new NotSupportedException(
+            "Synchronous preparation is not implemented yet. Use PrepareAsync.");
+
+    public override async Task PrepareAsync(CancellationToken cancellationToken = default)
+    {
+        if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
+        {
+            throw new InvalidOperationException("The command is already executing.");
+        }
+
+        try
+        {
+            _prepareRequested = true;
+            _ = await EnsurePreparedAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        finally
+        {
+            Volatile.Write(ref _executing, 0);
+        }
+    }
 
     protected override DbParameter CreateDbParameter() => new BlueTuskParameter();
 
@@ -230,7 +264,7 @@ public sealed class BlueTuskCommand : DbCommand
         try
         {
             var effectiveToken = linkedSource?.Token ?? cancellationToken;
-            if (_parameters.Count == 0)
+            if (_parameters.Count == 0 && !_prepareRequested)
             {
                 return await connection.Session.ExecuteSimpleQueryAsync(CommandText, effectiveToken)
                     .ConfigureAwait(false);
@@ -240,6 +274,16 @@ public sealed class BlueTuskCommand : DbCommand
             var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
             try
             {
+                if (_prepareRequested)
+                {
+                    var prepared = await EnsurePreparedAsync(effectiveToken).ConfigureAwait(false);
+                    return await connection.Session.ExecutePreparedStatementAsync(
+                        prepared.Name,
+                        parameters,
+                        useBinaryResults,
+                        effectiveToken).ConfigureAwait(false);
+                }
+
                 return await connection.Session.ExecuteExtendedQueryAsync(
                     CommandText,
                     parameters,
@@ -249,6 +293,16 @@ public sealed class BlueTuskCommand : DbCommand
             catch (BlueTuskServerException exception) when (
                 useBinaryResults && IsMissingBinaryOutputFunction(exception))
             {
+                if (_prepareRequested)
+                {
+                    var prepared = await EnsurePreparedAsync(effectiveToken).ConfigureAwait(false);
+                    return await connection.Session.ExecutePreparedStatementAsync(
+                        prepared.Name,
+                        parameters,
+                        useBinaryResults: false,
+                        effectiveToken).ConfigureAwait(false);
+                }
+
                 return await connection.Session.ExecuteExtendedQueryAsync(
                     CommandText,
                     parameters,
@@ -312,8 +366,66 @@ public sealed class BlueTuskCommand : DbCommand
          exception.Error.Fields.TryGetValue('R', out var routine) &&
          string.Equals(routine, "getTypeBinaryOutputInfo", StringComparison.Ordinal));
 
+    private async ValueTask<PreparedStatementState> EnsurePreparedAsync(
+        CancellationToken cancellationToken)
+    {
+        var connection = _connection ??
+            throw new InvalidOperationException(
+                "Explicit preparation requires a command associated with an open connection.");
+        if (connection.State != ConnectionState.Open)
+        {
+            throw new InvalidOperationException(
+                "Explicit preparation requires an open command connection.");
+        }
+
+        connection.ValidateCommandTransaction(_transaction);
+        if (string.IsNullOrWhiteSpace(CommandText))
+        {
+            throw new InvalidOperationException("CommandText is required.");
+        }
+
+        var parameters = BlueTuskParameterEncoder.Encode(_parameters, connection.TypeRegistry);
+        var typeOids = parameters.Select(static parameter => parameter.TypeOid).ToArray();
+        var session = connection.Session;
+        if (_preparedStatement is { } current &&
+            ReferenceEquals(current.Session, session) &&
+            string.Equals(current.Sql, CommandText, StringComparison.Ordinal) &&
+            current.ParameterTypeOids.AsSpan().SequenceEqual(typeOids))
+        {
+            return current;
+        }
+
+        var statementName = _preparedStatement?.Name ??
+            $"bluetusk_{Interlocked.Increment(ref s_preparedStatementSequence):x}";
+        if (_preparedStatement is { } existing && ReferenceEquals(existing.Session, session))
+        {
+            await session.ClosePreparedStatementAsync(
+                existing.Name,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        await session.PrepareStatementAsync(
+            statementName,
+            CommandText,
+            typeOids,
+            cancellationToken).ConfigureAwait(false);
+        var prepared = new PreparedStatementState(
+            statementName,
+            CommandText,
+            typeOids,
+            session);
+        _preparedStatement = prepared;
+        return prepared;
+    }
+
     private BlueTusk.TypeSystem.BlueTuskTypeRegistry GetTypeRegistry() =>
         _connection?.TypeRegistry ??
         _dataSource?.TypeRegistry ??
         throw new InvalidOperationException("The command has no connection or data source.");
+
+    private sealed record PreparedStatementState(
+        string Name,
+        string Sql,
+        uint[] ParameterTypeOids,
+        IBlueTuskPhysicalSession Session);
 }

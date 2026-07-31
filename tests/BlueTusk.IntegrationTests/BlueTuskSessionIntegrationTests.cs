@@ -86,6 +86,82 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task Session_prepares_executes_and_closes_a_named_statement()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            },
+            CancellationToken.None);
+        const string statementName = "bluetusk_integration_prepared";
+
+        await session.PrepareStatementAsync(
+            statementName,
+            "SELECT $1::int4 + $2::int4 AS answer",
+            [23, 23],
+            CancellationToken.None);
+
+        var left = new byte[sizeof(int)];
+        var right = new byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32BigEndian(left, 19);
+        BinaryPrimitives.WriteInt32BigEndian(right, 23);
+        var result = await session.ExecutePreparedStatementAsync(
+            statementName,
+            [
+                new BlueTuskExtendedQueryParameter(23, 1, left),
+                new BlueTuskExtendedQueryParameter(23, 1, right),
+            ],
+            cancellationToken: CancellationToken.None);
+
+        var row = Assert.Single(Assert.Single(result.ResultSets).Rows);
+        Assert.Equal(42, BinaryPrimitives.ReadInt32BigEndian(row.Values[0]!.Value.Span));
+
+        await session.ClosePreparedStatementAsync(statementName, CancellationToken.None);
+        var prepared = await session.ExecuteSimpleQueryAsync(
+            $"SELECT count(*) FROM pg_prepared_statements WHERE name = '{statementName}'",
+            CancellationToken.None);
+        Assert.Equal(
+            "0",
+            Encoding.UTF8.GetString(
+                Assert.Single(Assert.Single(prepared.ResultSets).Rows).Values[0]!.Value.Span));
+    }
+
+    [Fact]
+    public async Task AdoNet_prepare_reuses_and_reprepares_named_statements()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        var left = new BlueTuskParameter<int>(20);
+        var right = new BlueTuskParameter<int>(22);
+        await using var command = new BlueTuskCommand(
+            "SELECT $1::int4 + $2::int4",
+            connection);
+        command.Parameters.Add(left);
+        command.Parameters.Add(right);
+
+        await command.PrepareAsync(CancellationToken.None);
+        Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+
+        left.TypedValue = 6;
+        right.TypedValue = 7;
+        command.CommandText = "SELECT $1::int4 * $2::int4";
+        Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+
+        await using var count = new BlueTuskCommand(
+            "SELECT count(*) FROM pg_prepared_statements WHERE name LIKE 'bluetusk_%'",
+            connection);
+        Assert.Equal(1L, await count.ExecuteScalarAsync<long>(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task Session_waits_for_notifications_and_remains_usable_after_wait_cancellation()
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());

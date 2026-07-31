@@ -111,6 +111,23 @@ public sealed class BlueTuskFrontendMessageWriterTests
     }
 
     [Fact]
+    public void Writes_named_statement_describe_and_close_messages()
+    {
+        var describe = new ArrayBufferWriter<byte>();
+        var close = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteDescribeStatement(describe, "statement_1");
+        BlueTuskFrontendMessageWriter.WriteCloseStatement(close, "statement_1");
+
+        Assert.Equal((byte)'D', describe.WrittenSpan[0]);
+        Assert.Equal((byte)'S', describe.WrittenSpan[5]);
+        Assert.Equal("statement_1\0", Encoding.UTF8.GetString(describe.WrittenSpan[6..]));
+        Assert.Equal((byte)'C', close.WrittenSpan[0]);
+        Assert.Equal((byte)'S', close.WrittenSpan[5]);
+        Assert.Equal("statement_1\0", Encoding.UTF8.GetString(close.WrittenSpan[6..]));
+    }
+
+    [Fact]
     public void Writes_copy_data_done_and_fail_messages()
     {
         var data = new ArrayBufferWriter<byte>();

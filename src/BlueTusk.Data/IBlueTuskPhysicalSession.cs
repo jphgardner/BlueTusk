@@ -21,6 +21,22 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
 
+    ValueTask PrepareStatementAsync(
+        string statementName,
+        string sql,
+        IReadOnlyList<uint> parameterTypeOids,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<BlueTuskQueryResult> ExecutePreparedStatementAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default);
+
+    ValueTask ClosePreparedStatementAsync(
+        string statementName,
+        CancellationToken cancellationToken = default);
+
     ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
@@ -88,6 +104,29 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         bool useBinaryResults,
         CancellationToken cancellationToken = default) =>
         _session.ExecuteExtendedQueryAsync(sql, parameters, useBinaryResults, cancellationToken);
+
+    public ValueTask PrepareStatementAsync(
+        string statementName,
+        string sql,
+        IReadOnlyList<uint> parameterTypeOids,
+        CancellationToken cancellationToken = default) =>
+        _session.PrepareStatementAsync(statementName, sql, parameterTypeOids, cancellationToken);
+
+    public ValueTask<BlueTuskQueryResult> ExecutePreparedStatementAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecutePreparedStatementAsync(
+            statementName,
+            parameters,
+            useBinaryResults,
+            cancellationToken);
+
+    public ValueTask ClosePreparedStatementAsync(
+        string statementName,
+        CancellationToken cancellationToken = default) =>
+        _session.ClosePreparedStatementAsync(statementName, cancellationToken);
 
     public ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,

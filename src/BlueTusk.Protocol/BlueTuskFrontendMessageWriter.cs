@@ -204,14 +204,46 @@ public static class BlueTuskFrontendMessageWriter
     }
 
     public static void WriteDescribePortal(IBufferWriter<byte> output, string portalName)
+        => WriteDescribe(output, (byte)'P', portalName, nameof(portalName));
+
+    public static void WriteDescribeStatement(IBufferWriter<byte> output, string statementName)
+        => WriteDescribe(output, (byte)'S', statementName, nameof(statementName));
+
+    public static void WriteCloseStatement(IBufferWriter<byte> output, string statementName)
+        => WriteClose(output, (byte)'S', statementName, nameof(statementName));
+
+    public static void WriteClosePortal(IBufferWriter<byte> output, string portalName)
+        => WriteClose(output, (byte)'P', portalName, nameof(portalName));
+
+    private static void WriteDescribe(
+        IBufferWriter<byte> output,
+        byte targetType,
+        string name,
+        string parameterName)
     {
         ArgumentNullException.ThrowIfNull(output);
-        ValidateCString(portalName, nameof(portalName));
-        var portalLength = Encoding.UTF8.GetByteCount(portalName);
+        ValidateCString(name, parameterName);
+        var nameLength = Encoding.UTF8.GetByteCount(name);
         WriteByte(output, (byte)'D');
-        WriteInt32(output, checked(sizeof(int) + 1 + portalLength + 1));
-        WriteByte(output, (byte)'P');
-        WriteUtf8(output, portalName, portalLength);
+        WriteInt32(output, checked(sizeof(int) + 1 + nameLength + 1));
+        WriteByte(output, targetType);
+        WriteUtf8(output, name, nameLength);
+        WriteByte(output, 0);
+    }
+
+    private static void WriteClose(
+        IBufferWriter<byte> output,
+        byte targetType,
+        string name,
+        string parameterName)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(name, parameterName);
+        var nameLength = Encoding.UTF8.GetByteCount(name);
+        WriteByte(output, (byte)'C');
+        WriteInt32(output, checked(sizeof(int) + 1 + nameLength + 1));
+        WriteByte(output, targetType);
+        WriteUtf8(output, name, nameLength);
         WriteByte(output, 0);
     }
 

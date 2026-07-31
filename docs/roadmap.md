@@ -118,6 +118,9 @@ This file tracks executable repository status. The product vision is broader; un
 
 - [ ] Prepared statements, batches, and multi-host connection attempts
   - [ ] Explicit, automatic, named, and unnamed prepared statements
+    - [x] Named statement Parse/Describe, Bind/Execute, Close, and asynchronous ADO.NET preparation
+    - [x] Re-prepare when command text or parameter type identity changes
+    - [ ] Automatic preparation cache, unnamed preparation, and synchronous preparation
   - [ ] `DbBatch`/`DbBatchCommand`, parameters, transactions, cancellation, and multiple results
   - [ ] Safe named-parameter rewriting and command execution-mode selection
   - [ ] Ordered multi-host failover, target-session selection, and per-host pools
