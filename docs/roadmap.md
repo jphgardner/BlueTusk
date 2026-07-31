@@ -157,6 +157,10 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Core relational type mappings and SQL generation
 - [x] Core LINQ translation, query execution, and result materialisation
 - [ ] Initial migrations SQL generation and history repository
+  - [x] Common relational create-table, primary-key, foreign-key, index, default, and facet DDL
+  - [x] PostgreSQL identity-column DDL and live schema-creation coverage
+  - [ ] Migration history repository and idempotent migration scripts
+  - [ ] Alter, rename, sequence, and drop-operation coverage
 - [ ] Initial database reverse engineering
 - [ ] Initial EF Core relational specification-suite coverage
 

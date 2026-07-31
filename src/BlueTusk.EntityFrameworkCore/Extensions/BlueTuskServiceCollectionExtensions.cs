@@ -1,11 +1,13 @@
 using System.ComponentModel;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+using BlueTusk.EntityFrameworkCore.Migrations.Internal;
 using BlueTusk.EntityFrameworkCore.Query.Internal;
 using BlueTusk.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Metadata.Conventions.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update;
@@ -28,6 +30,8 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IRelationalAnnotationProvider, BlueTuskAnnotationProvider>()
             .TryAdd<IModelValidator, BlueTuskModelValidator>()
             .TryAdd<IProviderConventionSetBuilder, BlueTuskConventionSetBuilder>()
+            .TryAdd<IMigrationsAnnotationProvider, BlueTuskMigrationsAnnotationProvider>()
+            .TryAdd<IMigrationsSqlGenerator, BlueTuskMigrationsSqlGenerator>()
             .TryAdd<IMethodCallTranslatorProvider, BlueTuskMethodCallTranslatorProvider>()
             .TryAdd<IMemberTranslatorProvider, BlueTuskMemberTranslatorProvider>()
             .TryAdd<IQuerySqlGeneratorFactory, BlueTuskQuerySqlGeneratorFactory>()
