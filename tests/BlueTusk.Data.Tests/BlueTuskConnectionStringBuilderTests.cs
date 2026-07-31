@@ -17,6 +17,8 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal(100, builder.MaximumPoolSize);
         Assert.Equal(TimeSpan.FromMinutes(5), builder.ConnectionIdleLifetime);
         Assert.Equal(TimeSpan.FromHours(1), builder.ConnectionLifetime);
+        Assert.Equal(0, builder.MaxAutoPrepare);
+        Assert.Equal(5, builder.AutoPrepareMinUsages);
     }
 
     [Fact]
@@ -72,5 +74,19 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal(BlueTuskSslMode.Disable, explicitSettings.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Disable, explicitSettings.ChannelBinding);
         Assert.Equal("test-suite", explicitSettings.ApplicationName);
+    }
+
+    [Fact]
+    public void Validates_automatic_preparation_settings()
+    {
+        var enabled = new BlueTuskConnectionStringBuilder(
+            "Max Auto Prepare=20;Auto Prepare Min Usages=3");
+
+        Assert.Equal(20, enabled.MaxAutoPrepare);
+        Assert.Equal(3, enabled.AutoPrepareMinUsages);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => _ = new BlueTuskConnectionStringBuilder("Max Auto Prepare=-1").MaxAutoPrepare);
+        Assert.Throws<ArgumentOutOfRangeException>(
+            () => _ = new BlueTuskConnectionStringBuilder("Auto Prepare Min Usages=0").AutoPrepareMinUsages);
     }
 }

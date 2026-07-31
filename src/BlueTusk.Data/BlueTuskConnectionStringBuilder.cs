@@ -144,6 +144,38 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         set => SetNonNegativeTimeSpan("Connection Lifetime", value);
     }
 
+    /// <summary>Gets or sets the maximum number of automatically prepared statements per physical connection.</summary>
+    public int MaxAutoPrepare
+    {
+        get
+        {
+            var value = GetInt32("Max Auto Prepare", 0);
+            return value >= 0
+                ? value
+                : throw new ArgumentOutOfRangeException(nameof(MaxAutoPrepare));
+        }
+
+        set => this["Max Auto Prepare"] = value >= 0
+            ? value
+            : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
+    /// <summary>Gets or sets the executions required before a statement is automatically prepared.</summary>
+    public int AutoPrepareMinUsages
+    {
+        get
+        {
+            var value = GetInt32("Auto Prepare Min Usages", 5);
+            return value > 0
+                ? value
+                : throw new ArgumentOutOfRangeException(nameof(AutoPrepareMinUsages));
+        }
+
+        set => this["Auto Prepare Min Usages"] = value > 0
+            ? value
+            : throw new ArgumentOutOfRangeException(nameof(value));
+    }
+
     internal void Validate()
     {
         _ = Host;
@@ -153,6 +185,8 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = ChannelBinding;
         _ = ConnectionIdleLifetime;
         _ = ConnectionLifetime;
+        _ = MaxAutoPrepare;
+        _ = AutoPrepareMinUsages;
 
         if (MinimumPoolSize > MaximumPoolSize)
         {

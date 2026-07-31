@@ -162,6 +162,69 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task AdoNet_automatically_prepares_evicts_and_invalidates_statements()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        {
+            Pooling = false,
+            MaxAutoPrepare = 2,
+            AutoPrepareMinUsages = 2,
+        };
+        await using var connection = new BlueTuskConnection(settings.ConnectionString);
+        await connection.OpenAsync(CancellationToken.None);
+
+        await ExecuteAsync("SELECT $1::int4 + 1", 41);
+        Assert.Equal(0L, await CountPreparedAsync());
+        await ExecuteAsync("SELECT $1::int4 + 1", 41);
+        Assert.Equal(1L, await CountPreparedAsync());
+
+        await ExecuteAsync("SELECT $1::int4 + 2", 40);
+        await ExecuteAsync("SELECT $1::int4 + 2", 40);
+        await ExecuteAsync("SELECT $1::int4 + 1", 41);
+        await ExecuteAsync("SELECT $1::int4 + 3", 39);
+        await ExecuteAsync("SELECT $1::int4 + 3", 39);
+
+        await using (var statements = new BlueTuskCommand(
+            "SELECT statement FROM pg_prepared_statements ORDER BY statement",
+            connection))
+        await using (var reader = await statements.ExecuteReaderAsync(CancellationToken.None))
+        {
+            var preparedSql = new List<string>();
+            while (await reader.ReadAsync(CancellationToken.None))
+            {
+                preparedSql.Add(reader.GetString(0));
+            }
+
+            Assert.Equal(["SELECT $1::int4 + 1", "SELECT $1::int4 + 3"], preparedSql);
+        }
+
+        await using (var deallocate = new BlueTuskCommand("DEALLOCATE ALL", connection))
+        {
+            _ = await deallocate.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        await ExecuteAsync("SELECT $1::int4 + 1", 41);
+        Assert.Equal(0L, await CountPreparedAsync());
+        await ExecuteAsync("SELECT $1::int4 + 1", 41);
+        Assert.Equal(1L, await CountPreparedAsync());
+
+        async Task ExecuteAsync(string sql, int value)
+        {
+            await using var command = new BlueTuskCommand(sql, connection);
+            command.Parameters.Add(new BlueTuskParameter<int>(value));
+            Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+        }
+
+        async Task<long> CountPreparedAsync()
+        {
+            await using var command = new BlueTuskCommand(
+                "SELECT count(*) FROM pg_prepared_statements WHERE name LIKE 'bluetusk_auto_%'",
+                connection);
+            return await command.ExecuteScalarAsync<long>(CancellationToken.None);
+        }
+    }
+
+    [Fact]
     public async Task Session_waits_for_notifications_and_remains_usable_after_wait_cancellation()
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
