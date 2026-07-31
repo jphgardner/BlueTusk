@@ -148,12 +148,12 @@ This file tracks executable repository status. The product vision is broader; un
 
 - [x] `UseBlueTusk` options and provider-service registration
 - [x] EF Core create, read, update, and delete operations
-- [ ] EF Core transaction and savepoint integration
+- [x] EF Core transaction and savepoint integration
   - [x] Explicit transaction begin and rollback
-  - [ ] Commit and savepoint coverage
-- [ ] Store-generated keys, defaults, computed values, and concurrency tokens
+  - [x] Commit and savepoint coverage
+- [x] Store-generated keys, defaults, computed values, and concurrency tokens
   - [x] Identity key propagation
-  - [ ] Defaults, computed values, and optimistic concurrency
+  - [x] Defaults, computed values, and optimistic concurrency
 - [ ] Core relational type mappings and SQL generation
 - [ ] Core LINQ translation, query execution, and result materialisation
 - [ ] Initial migrations SQL generation and history repository
