@@ -144,4 +144,76 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Concurrent connection, cancellation, preparation, batch, and streaming stress suites
   - [x] Differential PostgreSQL behavior matrix and checked-in benchmark baselines
 
-Later milestones follow the full product specification: EF Core CRUD and migrations, PostgreSQL-native LINQ, advanced schema modelling and scaffolding, SQL/PGQ property graphs, and the extension ecosystem. Each milestone must have conformance and real-server acceptance tests before its version is published.
+## 0.2.0 — EF Core CRUD preview (Milestone 5)
+
+- [ ] `UseBlueTusk` options and provider-service registration
+- [ ] EF Core create, read, update, and delete operations
+- [ ] EF Core transaction and savepoint integration
+- [ ] Store-generated keys, defaults, computed values, and concurrency tokens
+- [ ] Core relational type mappings and SQL generation
+- [ ] Core LINQ translation, query execution, and result materialisation
+- [ ] Initial migrations SQL generation and history repository
+- [ ] Initial database reverse engineering
+- [ ] Initial EF Core relational specification-suite coverage
+
+## 0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)
+
+- [ ] Complete PostgreSQL type mappings
+- [ ] PostgreSQL operators and operator-aware LINQ translations
+- [ ] PostgreSQL scalar, aggregate, and set-returning function translations
+- [ ] PostgreSQL-specific query roots and SQL constructs
+- [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
+- [ ] PostgreSQL-specific query diagnostics and translation tests
+
+## 0.4.0 — Advanced migrations and scaffolding (Milestone 6, schema surface)
+
+- [ ] Advanced indexes, operator classes, collations, storage parameters, and included columns
+- [ ] Table partitioning metadata and migrations
+- [ ] Row-level security policies
+- [ ] Enum, domain, and composite type creation and alteration
+- [ ] Functions and procedures
+- [ ] Views and materialised views
+- [ ] PostgreSQL-complete migrations SQL generation
+- [ ] PostgreSQL-complete database reverse engineering and scaffolding
+- [ ] Idempotent scripts, history-table behaviour, and version-aware DDL
+
+## 0.5.0 — SQL/PGQ graph preview (Milestone 7)
+
+- [ ] Property-graph model metadata
+- [ ] Property-graph migrations
+- [ ] Native graph query root
+- [ ] Typed graph-pattern API
+- [ ] `GRAPH_TABLE` translation
+- [ ] Relational and graph query composition
+- [ ] Property-graph reverse engineering and scaffolding
+- [ ] Graph-specific diagnostics
+
+## Extension ecosystem (Milestone 8, pre-1.0)
+
+- [ ] PostGIS package
+- [ ] pgvector package
+- [ ] hstore package
+- [ ] ltree package
+- [ ] citext package
+- [ ] pg_trgm package
+- [ ] TimescaleDB package
+- [ ] Extension-authoring template
+- [ ] Extension compatibility-testing kit
+
+## 1.0.0 — Production-ready BlueTusk platform (Milestone 9)
+
+- [ ] Stable ADO.NET APIs
+- [ ] Stable extension APIs
+- [ ] Full built-in PostgreSQL type support
+- [ ] Production-grade connection pooling
+- [ ] Reliable cancellation
+- [ ] Production-ready `COPY`, notifications, large objects, and replication
+- [ ] EF Core relational specification coverage
+- [ ] PostgreSQL-specific EF support
+- [ ] Security review
+- [ ] Stress testing
+- [ ] Competitive benchmarks
+- [ ] Complete documentation
+- [ ] Supported-version CI
+
+Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.
