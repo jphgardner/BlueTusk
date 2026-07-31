@@ -34,7 +34,14 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     {
         get
         {
-            var value = GetInt32(nameof(Port), 5432);
+            var ports = GetString(nameof(Port), "5432");
+            if (ports.Contains(','))
+            {
+                throw new InvalidOperationException(
+                    "Port contains a multi-host port list. Use HostEndpoints to inspect individual ports.");
+            }
+
+            var value = Convert.ToInt32(ports, CultureInfo.InvariantCulture);
             return value is > 0 and <= 65_535
                 ? value
                 : throw new ArgumentOutOfRangeException(nameof(Port));
@@ -44,6 +51,16 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
             ? value
             : throw new ArgumentOutOfRangeException(nameof(value));
     }
+
+    /// <summary>Gets or sets the raw shared or comma-separated PostgreSQL port list.</summary>
+    public string Ports
+    {
+        get => GetString(nameof(Port), "5432");
+        set => this[nameof(Port)] = value ?? throw new ArgumentNullException(nameof(value));
+    }
+
+    /// <summary>Gets the parsed, positionally paired host endpoints.</summary>
+    public IReadOnlyList<BlueTuskHostEndpoint> HostEndpoints => ParseHostEndpoints();
 
     public string Database
     {
@@ -100,6 +117,18 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     {
         get => GetEnum("Channel Binding", BlueTuskChannelBindingMode.Prefer);
         set => this["Channel Binding"] = value.ToString();
+    }
+
+    public BlueTuskTargetSessionAttributes TargetSessionAttributes
+    {
+        get => GetEnum("Target Session Attributes", BlueTuskTargetSessionAttributes.Any);
+        set => this["Target Session Attributes"] = value.ToString();
+    }
+
+    public BlueTuskLoadBalanceHosts LoadBalanceHosts
+    {
+        get => GetEnum("Load Balance Hosts", BlueTuskLoadBalanceHosts.Disable);
+        set => this["Load Balance Hosts"] = value.ToString();
     }
 
     public int MinimumPoolSize
@@ -179,10 +208,12 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     internal void Validate()
     {
         _ = Host;
-        _ = Port;
+        _ = HostEndpoints;
         _ = Timeout;
         _ = SslMode;
         _ = ChannelBinding;
+        _ = TargetSessionAttributes;
+        _ = LoadBalanceHosts;
         _ = ConnectionIdleLifetime;
         _ = ConnectionLifetime;
         _ = MaxAutoPrepare;
@@ -235,9 +266,55 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         this[keyword] = checked((int)Math.Ceiling(value.TotalSeconds));
     }
 
+    private BlueTuskHostEndpoint[] ParseHostEndpoints()
+    {
+        var hosts = Host.Split(',', StringSplitOptions.TrimEntries);
+        if (hosts.Length == 0 || hosts.Any(static host => host.Length == 0))
+        {
+            throw new ArgumentException("Host must contain one or more non-empty host names.");
+        }
+
+        var portItems = Ports.Split(',', StringSplitOptions.TrimEntries);
+        if (portItems.Length != 1 && portItems.Length != hosts.Length)
+        {
+            throw new ArgumentException(
+                "Port must contain one shared value or one value for every host.");
+        }
+
+        var endpoints = new BlueTuskHostEndpoint[hosts.Length];
+        for (var index = 0; index < hosts.Length; index++)
+        {
+            var portText = portItems.Length == 1 ? portItems[0] : portItems[index];
+            var port = portText.Length == 0
+                ? 5432
+                : Convert.ToInt32(portText, CultureInfo.InvariantCulture);
+            if (port is < 1 or > 65_535)
+            {
+                throw new ArgumentOutOfRangeException(nameof(Port));
+            }
+
+            endpoints[index] = new BlueTuskHostEndpoint(hosts[index], port);
+        }
+
+        return endpoints;
+    }
+
     private TEnum GetEnum<TEnum>(string keyword, TEnum defaultValue)
-        where TEnum : struct, Enum =>
-        TryGetValue(keyword, out var value)
-            ? Enum.Parse<TEnum>(Convert.ToString(value, CultureInfo.InvariantCulture)!, ignoreCase: true)
-            : defaultValue;
+        where TEnum : struct, Enum
+    {
+        if (!TryGetValue(keyword, out var value))
+        {
+            return defaultValue;
+        }
+
+        var text = Convert.ToString(value, CultureInfo.InvariantCulture)!;
+        var normalized = text
+            .Replace("-", string.Empty, StringComparison.Ordinal)
+            .Replace("_", string.Empty, StringComparison.Ordinal)
+            .Replace(" ", string.Empty, StringComparison.Ordinal);
+        return Enum.TryParse<TEnum>(normalized, ignoreCase: true, out var parsed) &&
+            Enum.IsDefined(parsed)
+                ? parsed
+                : throw new ArgumentException($"'{text}' is not a valid value for {keyword}.");
+    }
 }

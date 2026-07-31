@@ -19,6 +19,9 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal(TimeSpan.FromHours(1), builder.ConnectionLifetime);
         Assert.Equal(0, builder.MaxAutoPrepare);
         Assert.Equal(5, builder.AutoPrepareMinUsages);
+        Assert.Equal(BlueTuskTargetSessionAttributes.Any, builder.TargetSessionAttributes);
+        Assert.Equal(BlueTuskLoadBalanceHosts.Disable, builder.LoadBalanceHosts);
+        Assert.Equal([new BlueTuskHostEndpoint("localhost", 5432)], builder.HostEndpoints);
     }
 
     [Fact]
@@ -88,5 +91,37 @@ public sealed class BlueTuskConnectionStringBuilderTests
             () => _ = new BlueTuskConnectionStringBuilder("Max Auto Prepare=-1").MaxAutoPrepare);
         Assert.Throws<ArgumentOutOfRangeException>(
             () => _ = new BlueTuskConnectionStringBuilder("Auto Prepare Min Usages=0").AutoPrepareMinUsages);
+    }
+
+    [Fact]
+    public void Parses_multi_host_ports_targets_and_load_balancing()
+    {
+        var paired = new BlueTuskConnectionStringBuilder(
+            "Host=db-a,db-b;Port=5432,5433;Target Session Attributes=prefer-standby;Load Balance Hosts=random");
+        var shared = new BlueTuskConnectionStringBuilder("Host=db-a,db-b;Port=5544");
+
+        Assert.Equal(
+            [new BlueTuskHostEndpoint("db-a", 5432), new BlueTuskHostEndpoint("db-b", 5433)],
+            paired.HostEndpoints);
+        Assert.Equal(BlueTuskTargetSessionAttributes.PreferStandby, paired.TargetSessionAttributes);
+        Assert.Equal(BlueTuskLoadBalanceHosts.Random, paired.LoadBalanceHosts);
+        Assert.Equal(
+            [new BlueTuskHostEndpoint("db-a", 5544), new BlueTuskHostEndpoint("db-b", 5544)],
+            shared.HostEndpoints);
+        Assert.Throws<InvalidOperationException>(() => _ = paired.Port);
+    }
+
+    [Fact]
+    public void Rejects_misaligned_multi_host_settings()
+    {
+        var mismatched = new BlueTuskConnectionStringBuilder(
+            "Host=db-a,db-b;Port=5432,5433,5434");
+        var emptyHost = new BlueTuskConnectionStringBuilder("Host=db-a,,db-b");
+        var invalidTarget = new BlueTuskConnectionStringBuilder(
+            "Target Session Attributes=somewhere");
+
+        Assert.Throws<ArgumentException>(mismatched.Validate);
+        Assert.Throws<ArgumentException>(emptyHost.Validate);
+        Assert.Throws<ArgumentException>(invalidTarget.Validate);
     }
 }

@@ -53,10 +53,19 @@ public class PoolCheckoutBenchmarks : IAsyncDisposable
 
         public bool IsOpen { get; private set; } = true;
 
+        public BlueTuskHostEndpoint Endpoint { get; } = new("localhost", 5432);
+
+        public bool? IsPrimary => true;
+
+        public bool? IsReadOnly => false;
+
         public IReadOnlyDictionary<string, string> Parameters { get; } =
             new Dictionary<string, string>();
 
         public BlueTuskTransactionStatus TransactionStatus => BlueTuskTransactionStatus.Idle;
+
+        public ValueTask RefreshHostStateAsync(CancellationToken cancellationToken = default) =>
+            ValueTask.CompletedTask;
 
         public ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
             string sql,

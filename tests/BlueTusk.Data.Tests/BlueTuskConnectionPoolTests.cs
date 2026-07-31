@@ -234,6 +234,12 @@ public sealed class BlueTuskConnectionPoolTests
     {
         public bool IsOpen => !Disposed;
 
+        public BlueTuskHostEndpoint Endpoint { get; } = new("localhost", 5432);
+
+        public bool? IsPrimary => true;
+
+        public bool? IsReadOnly => false;
+
         public IReadOnlyDictionary<string, string> Parameters { get; } =
             new Dictionary<string, string> { ["server_version"] = "test" };
 
@@ -244,6 +250,9 @@ public sealed class BlueTuskConnectionPoolTests
         public bool Disposed { get; private set; }
 
         public bool FailReset { get; set; }
+
+        public ValueTask RefreshHostStateAsync(CancellationToken cancellationToken = default) =>
+            ValueTask.CompletedTask;
 
         public ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
             string sql,

@@ -126,6 +126,10 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] `DbBatch`/`DbBatchCommand`, parameters, transactions, cancellation, and multiple results
   - [x] Safe named-parameter rewriting and command execution-mode selection
   - [ ] Ordered multi-host failover, target-session selection, and per-host pools
+    - [x] Ordered and randomized host/port-list attempts with connected-endpoint reporting
+    - [x] Primary, standby, read-write, read-only, and preferred-role target probes
+    - [x] Authentication-stop and credential-redacted aggregate failure behavior
+    - [ ] Per-host pool partitioning and aggregate lifecycle/statistics
 - [ ] Genuine synchronous connection and query paths
   - [ ] Synchronous transport, TLS, startup, authentication, and cancellation
   - [ ] Synchronous pooling, transactions, commands, COPY, notifications, and large objects

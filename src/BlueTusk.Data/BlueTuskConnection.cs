@@ -89,7 +89,10 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override string Database => _settings.Database;
 
-    public override string DataSource => _settings.Host;
+    public override string DataSource => ConnectedEndpoint?.Host ?? _settings.Host;
+
+    /// <summary>Gets the host and port selected for the current physical connection.</summary>
+    public BlueTuskHostEndpoint? ConnectedEndpoint => _session?.Endpoint;
 
     public override string ServerVersion =>
         _session?.Parameters.TryGetValue("server_version", out var version) == true ? version : string.Empty;

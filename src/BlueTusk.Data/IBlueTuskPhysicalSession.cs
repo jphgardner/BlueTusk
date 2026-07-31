@@ -1,5 +1,6 @@
 using BlueTusk.Client;
 using BlueTusk.Protocol;
+using BlueTusk.Security;
 
 namespace BlueTusk.Data;
 
@@ -7,9 +8,17 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
 {
     bool IsOpen { get; }
 
+    BlueTuskHostEndpoint Endpoint { get; }
+
+    bool? IsPrimary { get; }
+
+    bool? IsReadOnly { get; }
+
     IReadOnlyDictionary<string, string> Parameters { get; }
 
     BlueTuskTransactionStatus TransactionStatus { get; }
+
+    ValueTask RefreshHostStateAsync(CancellationToken cancellationToken = default);
 
     ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
         string sql,
@@ -68,6 +77,7 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
 internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 {
     private readonly BlueTuskSession _session;
+    private readonly BlueTuskHostEndpoint _endpoint;
     private readonly int _maximumAutoPreparedStatements;
     private readonly int _autoPrepareMinimumUsages;
     private readonly Dictionary<string, AutoPrepareEntry> _autoPrepareEntries =
@@ -75,18 +85,28 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     private readonly SemaphoreSlim _autoPrepareGate = new(1, 1);
     private long _autoPrepareClock;
     private long _autoPrepareNameSequence;
+    private bool? _isPrimary;
+    private bool? _isReadOnly;
 
     private BlueTuskPhysicalSession(
         BlueTuskSession session,
+        BlueTuskHostEndpoint endpoint,
         int maximumAutoPreparedStatements,
         int autoPrepareMinimumUsages)
     {
         _session = session;
+        _endpoint = endpoint;
         _maximumAutoPreparedStatements = maximumAutoPreparedStatements;
         _autoPrepareMinimumUsages = autoPrepareMinimumUsages;
     }
 
     public bool IsOpen => _session.IsOpen;
+
+    public BlueTuskHostEndpoint Endpoint => _endpoint;
+
+    public bool? IsPrimary => _isPrimary;
+
+    public bool? IsReadOnly => _isReadOnly;
 
     public IReadOnlyDictionary<string, string> Parameters => _session.Parameters;
 
@@ -96,24 +116,128 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         BlueTuskConnectionStringBuilder settings,
         CancellationToken cancellationToken)
     {
-        var session = await BlueTuskSession.OpenAsync(
-            new BlueTuskClientOptions
+        ArgumentNullException.ThrowIfNull(settings);
+        settings.Validate();
+        var endpoints = settings.HostEndpoints.ToArray();
+        if (settings.LoadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
+        {
+            Random.Shared.Shuffle(endpoints);
+        }
+
+        var target = settings.TargetSessionAttributes;
+        var requiredTarget = target switch
+        {
+            BlueTuskTargetSessionAttributes.PreferPrimary =>
+                BlueTuskTargetSessionAttributes.Primary,
+            BlueTuskTargetSessionAttributes.PreferStandby =>
+                BlueTuskTargetSessionAttributes.Standby,
+            _ => target,
+        };
+        var allowsFallback = target is
+            BlueTuskTargetSessionAttributes.PreferPrimary or
+            BlueTuskTargetSessionAttributes.PreferStandby;
+        var failures = new List<Exception>();
+        BlueTuskPhysicalSession? fallback = null;
+        foreach (var endpoint in endpoints)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            BlueTuskPhysicalSession? candidate = null;
+            try
             {
-                Host = settings.Host,
-                Port = settings.Port,
-                Database = settings.Database,
-                Username = settings.Username,
-                Password = settings.Password,
-                ApplicationName = settings.ApplicationName,
-                ConnectTimeout = settings.Timeout,
-                SslMode = settings.SslMode,
-                ChannelBinding = settings.ChannelBinding,
-            },
+                candidate = await OpenEndpointAsync(
+                    settings,
+                    endpoint,
+                    cancellationToken).ConfigureAwait(false);
+                if (requiredTarget == BlueTuskTargetSessionAttributes.Any)
+                {
+                    if (fallback is not null)
+                    {
+                        await fallback.DisposeAsync().ConfigureAwait(false);
+                    }
+
+                    var accepted = candidate;
+                    candidate = null;
+                    return accepted;
+                }
+
+                await candidate.RefreshHostStateAsync(cancellationToken).ConfigureAwait(false);
+                if (MatchesTarget(candidate, requiredTarget))
+                {
+                    if (fallback is not null)
+                    {
+                        await fallback.DisposeAsync().ConfigureAwait(false);
+                    }
+
+                    var accepted = candidate;
+                    candidate = null;
+                    return accepted;
+                }
+
+                failures.Add(new BlueTuskHostSelectionException(
+                    endpoint,
+                    requiredTarget,
+                    candidate.IsPrimary,
+                    candidate.IsReadOnly));
+                if (allowsFallback && fallback is null)
+                {
+                    fallback = candidate;
+                    candidate = null;
+                }
+            }
+            catch (BlueTuskAuthenticationException)
+            {
+                if (fallback is not null)
+                {
+                    await fallback.DisposeAsync().ConfigureAwait(false);
+                }
+
+                throw;
+            }
+            catch (OperationCanceledException)
+            {
+                if (fallback is not null)
+                {
+                    await fallback.DisposeAsync().ConfigureAwait(false);
+                }
+
+                throw;
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                failures.Add(new BlueTuskHostConnectionException(endpoint, exception));
+            }
+            finally
+            {
+                if (candidate is not null)
+                {
+                    await candidate.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+        }
+
+        if (fallback is not null)
+        {
+            return fallback;
+        }
+
+        throw new BlueTuskException(
+            $"Could not open a PostgreSQL connection matching {target} across " +
+            $"{endpoints.Length} configured host(s).",
+            new AggregateException(failures));
+    }
+
+    public async ValueTask RefreshHostStateAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var result = await _session.ExecuteSimpleQueryAsync(
+            "SELECT pg_is_in_recovery(), current_setting('transaction_read_only')",
             cancellationToken).ConfigureAwait(false);
-        return new BlueTuskPhysicalSession(
-            session,
-            settings.MaxAutoPrepare,
-            settings.AutoPrepareMinUsages);
+        var row = result.FirstOrDefault is { Rows.Count: 1, Fields.Count: 2 } resultSet
+            ? resultSet.Rows[0]
+            : throw new BlueTuskException(
+                "PostgreSQL returned an invalid target-session probe result.");
+        _isPrimary = !ReadPostgreSqlBoolean(row.Values[0], "pg_is_in_recovery");
+        _isReadOnly = ReadPostgreSqlBoolean(row.Values[1], "transaction_read_only");
     }
 
     public async ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
@@ -371,4 +495,76 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
         public string? PreparedStatementName { get; set; }
     }
+
+    private static async ValueTask<BlueTuskPhysicalSession> OpenEndpointAsync(
+        BlueTuskConnectionStringBuilder settings,
+        BlueTuskHostEndpoint endpoint,
+        CancellationToken cancellationToken)
+    {
+        var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = endpoint.Host,
+                Port = endpoint.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                ApplicationName = settings.ApplicationName,
+                ConnectTimeout = settings.Timeout,
+                SslMode = settings.SslMode,
+                ChannelBinding = settings.ChannelBinding,
+            },
+            cancellationToken).ConfigureAwait(false);
+        return new BlueTuskPhysicalSession(
+            session,
+            endpoint,
+            settings.MaxAutoPrepare,
+            settings.AutoPrepareMinUsages);
+    }
+
+    private static bool MatchesTarget(
+        BlueTuskPhysicalSession session,
+        BlueTuskTargetSessionAttributes target) => target switch
+        {
+            BlueTuskTargetSessionAttributes.Any => true,
+            BlueTuskTargetSessionAttributes.Primary => session.IsPrimary == true,
+            BlueTuskTargetSessionAttributes.Standby => session.IsPrimary == false,
+            BlueTuskTargetSessionAttributes.ReadWrite => session.IsReadOnly == false,
+            BlueTuskTargetSessionAttributes.ReadOnly => session.IsReadOnly == true,
+            _ => throw new ArgumentOutOfRangeException(nameof(target)),
+        };
+
+    private static bool ReadPostgreSqlBoolean(
+        ReadOnlyMemory<byte>? value,
+        string fieldName)
+    {
+        if (value is not { } bytes)
+        {
+            throw new BlueTuskException(
+                $"PostgreSQL returned NULL for target-session field {fieldName}.");
+        }
+
+        var text = System.Text.Encoding.UTF8.GetString(bytes.Span);
+        return text switch
+        {
+            "t" or "true" or "on" => true,
+            "f" or "false" or "off" => false,
+            _ => throw new BlueTuskException(
+                $"PostgreSQL returned invalid target-session field {fieldName}.")
+        };
+    }
+
+    private sealed class BlueTuskHostSelectionException(
+        BlueTuskHostEndpoint endpoint,
+        BlueTuskTargetSessionAttributes target,
+        bool? isPrimary,
+        bool? isReadOnly)
+        : Exception(
+            $"Host {endpoint} does not match {target} " +
+            $"(primary={isPrimary}, read-only={isReadOnly}).");
+
+    private sealed class BlueTuskHostConnectionException(
+        BlueTuskHostEndpoint endpoint,
+        Exception innerException)
+        : Exception($"Host {endpoint} could not be opened.", innerException);
 }

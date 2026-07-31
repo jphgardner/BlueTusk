@@ -55,6 +55,8 @@ Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a se
 
 `BlueTuskDataSource` owns a bounded physical connection pool by default. Logical connections return their physical session when closed or disposed; reuse rolls back an unfinished transaction when necessary and issues `DISCARD ALL` before handing the session to another caller. See [Connection pooling](pooling.md) for sizing, lifetime, warm-up, statistics, and drain controls.
 
+[Multi-host connections](multi-host.md) support ordered or randomized attempts, shared or per-host ports, and primary/standby/read-write/read-only target selection.
+
 Connection-owned [COPY APIs](copy.md) stream raw text, CSV, or binary payloads to and from PostgreSQL while preserving exclusive use of the physical session.
 
 Connection-owned [`LISTEN`/`NOTIFY` APIs](notifications.md) deliver PostgreSQL notifications through a bounded asynchronous stream while leaving the primary connection session available for commands.
