@@ -10,6 +10,175 @@ namespace BlueTusk.EntityFrameworkCore.Tests;
 public sealed class TypeMappingIntegrationTests
 {
     [Fact]
+    public async Task PostgreSQL_ranges_multiranges_and_their_arrays_round_trip_through_EF_Core()
+    {
+        var connectionString = GetConnectionString();
+        await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_range_values\"");
+        await ExecuteNonQueryAsync(connectionString, CreateRangeTableSql);
+
+        var intRange = new BlueTuskRange<int>(1, 5);
+        var secondIntRange = new BlueTuskRange<int>(10, 20);
+        var expected = new RangeValue
+        {
+            Id = 1,
+            IntRange = intRange,
+            LongRange = new BlueTuskRange<long>(1_000_000_000_000, 2_000_000_000_000),
+            NumericRange = new BlueTuskRange<BlueTuskNumeric>(
+                BlueTuskNumeric.Parse("1.25"),
+                BlueTuskNumeric.Parse("99.75")),
+            TimestampRange = new BlueTuskRange<DateTime>(
+                new DateTime(2026, 1, 1, 8, 30, 0, DateTimeKind.Unspecified),
+                new DateTime(2026, 1, 2, 17, 45, 0, DateTimeKind.Unspecified)),
+            TimestampWithTimeZoneRange = new BlueTuskRange<DateTimeOffset>(
+                new DateTimeOffset(2026, 1, 1, 8, 30, 0, TimeSpan.Zero),
+                new DateTimeOffset(2026, 1, 2, 17, 45, 0, TimeSpan.Zero)),
+            DateRange = new BlueTuskRange<DateOnly>(new DateOnly(2026, 7, 1), new DateOnly(2026, 8, 1)),
+            IntMultirange = new BlueTuskMultirange<int>([intRange, secondIntRange]),
+            LongMultirange = new BlueTuskMultirange<long>(
+                [new BlueTuskRange<long>(1, 5), new BlueTuskRange<long>(10, 15)]),
+            NumericMultirange = new BlueTuskMultirange<BlueTuskNumeric>(
+                [
+                    new BlueTuskRange<BlueTuskNumeric>(
+                        BlueTuskNumeric.Parse("1.25"),
+                        BlueTuskNumeric.Parse("2.5")),
+                    new BlueTuskRange<BlueTuskNumeric>(
+                        BlueTuskNumeric.Parse("10"),
+                        BlueTuskNumeric.Parse("20")),
+                ]),
+            TimestampMultirange = new BlueTuskMultirange<DateTime>(
+                [
+                    new BlueTuskRange<DateTime>(
+                        new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Unspecified),
+                        new DateTime(2026, 1, 2, 0, 0, 0, DateTimeKind.Unspecified)),
+                ]),
+            TimestampWithTimeZoneMultirange = new BlueTuskMultirange<DateTimeOffset>(
+                [
+                    new BlueTuskRange<DateTimeOffset>(
+                        new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+                        new DateTimeOffset(2026, 1, 2, 0, 0, 0, TimeSpan.Zero)),
+                ]),
+            DateMultirange = new BlueTuskMultirange<DateOnly>(
+                [
+                    new BlueTuskRange<DateOnly>(new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 5)),
+                    new BlueTuskRange<DateOnly>(new DateOnly(2026, 2, 1), new DateOnly(2026, 2, 5)),
+                ]),
+            IntRangeArray = [intRange, BlueTuskRange.Empty<int>()],
+            IntMultirangeArray =
+            [
+                new BlueTuskMultirange<int>([intRange, secondIntRange]),
+                BlueTuskMultirange.Empty<int>(),
+            ],
+        };
+
+        try
+        {
+            await using (var context = CreateRangeContext(connectionString))
+            {
+                context.Values.Add(expected);
+                Assert.Equal(1, await context.SaveChangesAsync());
+            }
+
+            await using (var context = CreateRangeContext(connectionString))
+            {
+                var actual = await context.Values.AsNoTracking().SingleAsync();
+                Assert.Equal(expected.IntRange, actual.IntRange);
+                Assert.Equal(expected.LongRange, actual.LongRange);
+                Assert.Equal(expected.NumericRange, actual.NumericRange);
+                Assert.Equal(expected.TimestampRange, actual.TimestampRange);
+                Assert.Equal(expected.TimestampWithTimeZoneRange, actual.TimestampWithTimeZoneRange);
+                Assert.Equal(expected.DateRange, actual.DateRange);
+                Assert.Equal(expected.IntMultirange, actual.IntMultirange);
+                Assert.Equal(expected.LongMultirange, actual.LongMultirange);
+                Assert.Equal(expected.NumericMultirange, actual.NumericMultirange);
+                Assert.Equal(expected.TimestampMultirange, actual.TimestampMultirange);
+                Assert.Equal(expected.TimestampWithTimeZoneMultirange, actual.TimestampWithTimeZoneMultirange);
+                Assert.Equal(expected.DateMultirange, actual.DateMultirange);
+                Assert.Equal(expected.IntRangeArray, actual.IntRangeArray);
+                Assert.Equal(expected.IntMultirangeArray, actual.IntMultirangeArray);
+                Assert.Null(actual.OptionalIntRange);
+                Assert.Null(actual.OptionalIntMultirange);
+            }
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_range_values\"");
+        }
+    }
+
+    [Fact]
+    public async Task PostgreSQL_arrays_round_trip_and_detect_in_place_changes_through_EF_Core()
+    {
+        var connectionString = GetConnectionString();
+        await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_array_values\"");
+        await ExecuteNonQueryAsync(connectionString, CreateArrayTableSql);
+
+        var expected = new ArrayValue
+        {
+            Id = 1,
+            IntValues = [1, 2, 3],
+            MatrixValues = new[,] { { 1, 2 }, { 3, 4 } },
+            TextValues = ["blue", null, "tusk"],
+            BytesValues = [[0, 1, 2], [253, 254, 255]],
+            GuidValues =
+            [
+                Guid.Parse("84057795-1ace-4ed0-8b1a-e399687814b7"),
+                Guid.Parse("a41c84e3-6bfd-4873-a79a-bfb39fa6cf18"),
+            ],
+            DateValues = [new DateOnly(2026, 7, 31), new DateOnly(2027, 1, 1)],
+            PointValues = [new BlueTuskPoint(1.5, -2.5), new BlueTuskPoint(3.25, 4.75)],
+            CidrValues =
+            [
+                BlueTuskNetworkAddress.Parse("192.0.2.0/24", isCidr: true),
+                BlueTuskNetworkAddress.Parse("2001:db8::/48", isCidr: true),
+            ],
+            BitValues = [new BlueTuskBitString("1010"), new BlueTuskBitString("0101")],
+            JsonbValues = ["{\"index\":1}", "{\"index\":2}"],
+        };
+
+        try
+        {
+            await using (var context = CreateArrayContext(connectionString))
+            {
+                context.Values.Add(expected);
+                Assert.Equal(1, await context.SaveChangesAsync());
+            }
+
+            await using (var context = CreateArrayContext(connectionString))
+            {
+                var tracked = await context.Values.SingleAsync();
+                tracked.IntValues[0] = 42;
+                Assert.Equal(1, await context.SaveChangesAsync());
+            }
+
+            await using (var context = CreateArrayContext(connectionString))
+            {
+                var actual = await context.Values.AsNoTracking().SingleAsync();
+                Assert.Equal([42, 2, 3], actual.IntValues);
+                Assert.Equal(expected.MatrixValues.Cast<int>(), actual.MatrixValues.Cast<int>());
+                Assert.Equal(expected.TextValues, actual.TextValues);
+                Assert.Equal(expected.BytesValues, actual.BytesValues);
+                Assert.Equal(expected.GuidValues, actual.GuidValues);
+                Assert.Equal(expected.DateValues, actual.DateValues);
+                Assert.Equal(expected.PointValues, actual.PointValues);
+                Assert.Equal(expected.CidrValues, actual.CidrValues);
+                Assert.Equal(expected.BitValues, actual.BitValues);
+                for (var index = 0; index < expected.JsonbValues.Length; index++)
+                {
+                    using var expectedJson = JsonDocument.Parse(expected.JsonbValues[index]);
+                    using var actualJson = JsonDocument.Parse(actual.JsonbValues[index]);
+                    Assert.True(JsonElement.DeepEquals(expectedJson.RootElement, actualJson.RootElement));
+                }
+
+                Assert.Null(actual.OptionalIntValues);
+            }
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_array_values\"");
+        }
+    }
+
+    [Fact]
     public async Task PostgreSQL_native_scalar_types_round_trip_through_EF_Core()
     {
         var connectionString = GetConnectionString();
@@ -195,6 +364,43 @@ public sealed class TypeMappingIntegrationTests
             "OptionalJsonPathValue" jsonpath NULL)
         """;
 
+    private const string CreateArrayTableSql = """
+        CREATE TABLE "ef_array_values" (
+            "Id" integer PRIMARY KEY,
+            "IntValues" integer[] NOT NULL,
+            "MatrixValues" integer[] NOT NULL,
+            "TextValues" text[] NOT NULL,
+            "BytesValues" bytea[] NOT NULL,
+            "GuidValues" uuid[] NOT NULL,
+            "DateValues" date[] NOT NULL,
+            "PointValues" point[] NOT NULL,
+            "CidrValues" cidr[] NOT NULL,
+            "BitValues" bit(4)[] NOT NULL,
+            "JsonbValues" jsonb[] NOT NULL,
+            "OptionalIntValues" integer[] NULL)
+        """;
+
+    private const string CreateRangeTableSql = """
+        CREATE TABLE "ef_range_values" (
+            "Id" integer PRIMARY KEY,
+            "IntRange" int4range NOT NULL,
+            "LongRange" int8range NOT NULL,
+            "NumericRange" numrange NOT NULL,
+            "TimestampRange" tsrange NOT NULL,
+            "TimestampWithTimeZoneRange" tstzrange NOT NULL,
+            "DateRange" daterange NOT NULL,
+            "IntMultirange" int4multirange NOT NULL,
+            "LongMultirange" int8multirange NOT NULL,
+            "NumericMultirange" nummultirange NOT NULL,
+            "TimestampMultirange" tsmultirange NOT NULL,
+            "TimestampWithTimeZoneMultirange" tstzmultirange NOT NULL,
+            "DateMultirange" datemultirange NOT NULL,
+            "IntRangeArray" int4range[] NOT NULL,
+            "IntMultirangeArray" int4multirange[] NOT NULL,
+            "OptionalIntRange" int4range NULL,
+            "OptionalIntMultirange" int4multirange NULL)
+        """;
+
     private static TypeValueContext CreateContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<TypeValueContext>()
@@ -209,6 +415,22 @@ public sealed class TypeMappingIntegrationTests
             .UseBlueTusk(connectionString)
             .Options;
         return new NativeTypeValueContext(options);
+    }
+
+    private static ArrayValueContext CreateArrayContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<ArrayValueContext>()
+            .UseBlueTusk(connectionString)
+            .Options;
+        return new ArrayValueContext(options);
+    }
+
+    private static RangeValueContext CreateRangeContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<RangeValueContext>()
+            .UseBlueTusk(connectionString)
+            .Options;
+        return new RangeValueContext(options);
     }
 
     private static async Task ExecuteNonQueryAsync(string connectionString, string sql)
@@ -268,6 +490,35 @@ public sealed class TypeMappingIntegrationTests
         }
     }
 
+    private sealed class ArrayValueContext(DbContextOptions<ArrayValueContext> options) : DbContext(options)
+    {
+        public DbSet<ArrayValue> Values => Set<ArrayValue>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var value = modelBuilder.Entity<ArrayValue>();
+            value.ToTable("ef_array_values");
+            value.HasKey(entity => entity.Id);
+            value.Property(entity => entity.Id).ValueGeneratedNever();
+            value.Property(entity => entity.CidrValues).HasColumnType("cidr[]");
+            value.Property(entity => entity.BitValues).HasColumnType("bit(4)[]");
+            value.Property(entity => entity.JsonbValues).HasColumnType("jsonb[]");
+        }
+    }
+
+    private sealed class RangeValueContext(DbContextOptions<RangeValueContext> options) : DbContext(options)
+    {
+        public DbSet<RangeValue> Values => Set<RangeValue>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var value = modelBuilder.Entity<RangeValue>();
+            value.ToTable("ef_range_values");
+            value.HasKey(entity => entity.Id);
+            value.Property(entity => entity.Id).ValueGeneratedNever();
+        }
+    }
+
     private sealed class TypeValue
     {
         public int Id { get; set; }
@@ -313,5 +564,45 @@ public sealed class TypeMappingIntegrationTests
         public string JsonbValue { get; set; } = string.Empty;
         public string XmlValue { get; set; } = string.Empty;
         public BlueTuskJsonPath? OptionalJsonPathValue { get; set; }
+    }
+
+    private sealed class ArrayValue
+    {
+        public int Id { get; set; }
+        public int[] IntValues { get; set; } = [];
+        public int[,] MatrixValues { get; set; } = new int[0, 0];
+        public string?[] TextValues { get; set; } = [];
+        public byte[][] BytesValues { get; set; } = [];
+        public Guid[] GuidValues { get; set; } = [];
+        public DateOnly[] DateValues { get; set; } = [];
+        public BlueTuskPoint[] PointValues { get; set; } = [];
+        public BlueTuskNetworkAddress[] CidrValues { get; set; } = [];
+        public BlueTuskBitString[] BitValues { get; set; } = [];
+        public string[] JsonbValues { get; set; } = [];
+        public int[]? OptionalIntValues { get; set; }
+    }
+
+    private sealed class RangeValue
+    {
+        public int Id { get; set; }
+        public BlueTuskRange<int> IntRange { get; set; }
+        public BlueTuskRange<long> LongRange { get; set; }
+        public BlueTuskRange<BlueTuskNumeric> NumericRange { get; set; }
+        public BlueTuskRange<DateTime> TimestampRange { get; set; }
+        public BlueTuskRange<DateTimeOffset> TimestampWithTimeZoneRange { get; set; }
+        public BlueTuskRange<DateOnly> DateRange { get; set; }
+        public BlueTuskMultirange<int> IntMultirange { get; set; } = BlueTuskMultirange.Empty<int>();
+        public BlueTuskMultirange<long> LongMultirange { get; set; } = BlueTuskMultirange.Empty<long>();
+        public BlueTuskMultirange<BlueTuskNumeric> NumericMultirange { get; set; } =
+            BlueTuskMultirange.Empty<BlueTuskNumeric>();
+        public BlueTuskMultirange<DateTime> TimestampMultirange { get; set; } =
+            BlueTuskMultirange.Empty<DateTime>();
+        public BlueTuskMultirange<DateTimeOffset> TimestampWithTimeZoneMultirange { get; set; } =
+            BlueTuskMultirange.Empty<DateTimeOffset>();
+        public BlueTuskMultirange<DateOnly> DateMultirange { get; set; } = BlueTuskMultirange.Empty<DateOnly>();
+        public BlueTuskRange<int>[] IntRangeArray { get; set; } = [];
+        public BlueTuskMultirange<int>[] IntMultirangeArray { get; set; } = [];
+        public BlueTuskRange<int>? OptionalIntRange { get; set; }
+        public BlueTuskMultirange<int>? OptionalIntMultirange { get; set; }
     }
 }

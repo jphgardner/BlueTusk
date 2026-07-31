@@ -427,7 +427,8 @@ public sealed class BlueTuskReplicationIntegrationTests
                 ? System.Text.Encoding.UTF8.GetString(initial.Data.Span)
                 : null;
             while (decodedText is null ||
-                !decodedText.Contains("INSERT:", StringComparison.Ordinal))
+                !decodedText.Contains("INSERT:", StringComparison.Ordinal) ||
+                !decodedText.Contains(tableName, StringComparison.Ordinal))
             {
                 var xLogData = await ReadXLogDataAsync(enumerator);
                 decodedText = System.Text.Encoding.UTF8.GetString(xLogData.Data.Span);

@@ -60,6 +60,18 @@ public sealed class QueryTranslationTests
         { typeof(BlueTuskMostCommonValueStatistics), "pg_mcv_list" },
         { typeof(BlueTuskBrinBloomSummary), "pg_brin_bloom_summary" },
         { typeof(BlueTuskBrinMinMaxMultiSummary), "pg_brin_minmax_multi_summary" },
+        { typeof(BlueTuskRange<int>), "int4range" },
+        { typeof(BlueTuskRange<BlueTuskNumeric>), "numrange" },
+        { typeof(BlueTuskRange<DateTime>), "tsrange" },
+        { typeof(BlueTuskRange<DateTimeOffset>), "tstzrange" },
+        { typeof(BlueTuskRange<DateOnly>), "daterange" },
+        { typeof(BlueTuskRange<long>), "int8range" },
+        { typeof(BlueTuskMultirange<int>), "int4multirange" },
+        { typeof(BlueTuskMultirange<BlueTuskNumeric>), "nummultirange" },
+        { typeof(BlueTuskMultirange<DateTime>), "tsmultirange" },
+        { typeof(BlueTuskMultirange<DateTimeOffset>), "tstzmultirange" },
+        { typeof(BlueTuskMultirange<DateOnly>), "datemultirange" },
+        { typeof(BlueTuskMultirange<long>), "int8multirange" },
     };
 
     public static TheoryData<string, Type> ExplicitNativeStoreMappings => new()
@@ -70,6 +82,24 @@ public sealed class QueryTranslationTests
         { "cidr", typeof(BlueTuskNetworkAddress) },
         { "bit", typeof(BlueTuskBitString) },
         { "txid_snapshot", typeof(BlueTuskTransactionSnapshot) },
+    };
+
+    public static TheoryData<Type, string, Type> ArrayMappings => new()
+    {
+        { typeof(bool[]), "boolean[]", typeof(bool) },
+        { typeof(short[]), "smallint[]", typeof(short) },
+        { typeof(int[]), "integer[]", typeof(int) },
+        { typeof(int[,]), "integer[]", typeof(int) },
+        { typeof(string[]), "text[]", typeof(string) },
+        { typeof(byte[][]), "bytea[]", typeof(byte[]) },
+        { typeof(Guid[]), "uuid[]", typeof(Guid) },
+        { typeof(DateOnly[]), "date[]", typeof(DateOnly) },
+        { typeof(BlueTuskNetworkAddress[]), "inet[]", typeof(BlueTuskNetworkAddress) },
+        { typeof(BlueTuskPoint[]), "point[]", typeof(BlueTuskPoint) },
+        { typeof(BlueTuskNumeric[]), "numeric[]", typeof(BlueTuskNumeric) },
+        { typeof(BlueTuskTextSearchVector[]), "tsvector[]", typeof(BlueTuskTextSearchVector) },
+        { typeof(BlueTuskRange<int>[]), "int4range[]", typeof(BlueTuskRange<int>) },
+        { typeof(BlueTuskMultirange<int>[]), "int4multirange[]", typeof(BlueTuskMultirange<int>) },
     };
 
     [Theory]
@@ -92,6 +122,22 @@ public sealed class QueryTranslationTests
 
         Assert.NotNull(mapping);
         Assert.Equal(expectedClrType, mapping.ClrType);
+    }
+
+    [Theory]
+    [MemberData(nameof(ArrayMappings))]
+    public void CLR_arrays_have_structural_PostgreSQL_array_mappings(
+        Type arrayType,
+        string expectedStoreType,
+        Type expectedElementType)
+    {
+        using var context = CreateContext();
+        var mapping = context.GetService<IRelationalTypeMappingSource>().FindMapping(arrayType);
+
+        Assert.NotNull(mapping);
+        Assert.Equal(expectedStoreType, mapping.StoreType);
+        Assert.Equal(expectedElementType, mapping.ElementTypeMapping!.ClrType);
+        Assert.NotNull(mapping.Comparer);
     }
 
     [Fact]

@@ -26,7 +26,22 @@ modelBuilder.Entity<NetworkRule>(entity =>
 });
 ```
 
-Provider mappings carry the exact PostgreSQL OID into every parameter, including null parameters, so store-type intent is preserved on the wire. Arrays, ranges, multiranges, and user-defined enum/domain/composite types are the next part of this milestone.
+Provider mappings carry the exact PostgreSQL OID into every parameter, including null parameters, so store-type intent is preserved on the wire.
+
+CLR arrays of supported wire-native elements map to PostgreSQL arrays. Both one- and multidimensional CLR arrays preserve shape, null reference-type elements, and exact store intent such as `cidr[]`, `bit(128)[]`, and `jsonb[]`. The mapping uses structural snapshots, so mutating an array element in place is detected by EF change tracking. `byte[]` remains the scalar `bytea` mapping; use `byte[][]` for `bytea[]`.
+
+The six built-in range families map to `BlueTuskRange<T>`, and the corresponding multiranges map to `BlueTuskMultirange<T>`:
+
+| Subtype | Range | Multirange |
+|---|---|---|
+| `int` | `int4range` | `int4multirange` |
+| `long` | `int8range` | `int8multirange` |
+| `BlueTuskNumeric` | `numrange` | `nummultirange` |
+| `DateTime` | `tsrange` | `tsmultirange` |
+| `DateTimeOffset` | `tstzrange` | `tstzmultirange` |
+| `DateOnly` | `daterange` | `datemultirange` |
+
+Range and multirange arrays are supported as well. Runtime-registered enum, domain, composite, and record mappings remain the final type-mapping slice of this milestone.
 
 ## Migrations
 
@@ -53,4 +68,4 @@ Generated contexts configure `UseBlueTusk`. PostgreSQL-complete discovery—incl
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native scalar gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, and JSON-path values through EF. Later 0.3 work extends this suite with PostgreSQL-specific query semantics.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, and multirange values through EF. Later 0.3 work extends this suite with user-defined types and PostgreSQL-specific query semantics.

@@ -26,6 +26,53 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
     private static readonly RelationalTypeMapping TimeOnly = new TimeOnlyTypeMapping("time without time zone", DbType.Time);
     private static readonly RelationalTypeMapping TimeSpan = new BlueTuskIntervalTypeMapping();
 
+    private static readonly BlueTuskTypeDescriptor Int4RangeDescriptor =
+        BuiltInCollectionDescriptor(3904, "int4range", 3905, BlueTuskTypeKind.Range);
+    private static readonly BlueTuskTypeDescriptor NumericRangeDescriptor =
+        BuiltInCollectionDescriptor(3906, "numrange", 3907, BlueTuskTypeKind.Range);
+    private static readonly BlueTuskTypeDescriptor TimestampRangeDescriptor =
+        BuiltInCollectionDescriptor(3908, "tsrange", 3909, BlueTuskTypeKind.Range);
+    private static readonly BlueTuskTypeDescriptor TimestampWithTimeZoneRangeDescriptor =
+        BuiltInCollectionDescriptor(3910, "tstzrange", 3911, BlueTuskTypeKind.Range);
+    private static readonly BlueTuskTypeDescriptor DateRangeDescriptor =
+        BuiltInCollectionDescriptor(3912, "daterange", 3913, BlueTuskTypeKind.Range);
+    private static readonly BlueTuskTypeDescriptor Int8RangeDescriptor =
+        BuiltInCollectionDescriptor(3926, "int8range", 3927, BlueTuskTypeKind.Range);
+    private static readonly BlueTuskTypeDescriptor Int4MultirangeDescriptor =
+        BuiltInCollectionDescriptor(4451, "int4multirange", 6150, BlueTuskTypeKind.Multirange);
+    private static readonly BlueTuskTypeDescriptor NumericMultirangeDescriptor =
+        BuiltInCollectionDescriptor(4532, "nummultirange", 6151, BlueTuskTypeKind.Multirange);
+    private static readonly BlueTuskTypeDescriptor TimestampMultirangeDescriptor =
+        BuiltInCollectionDescriptor(4533, "tsmultirange", 6152, BlueTuskTypeKind.Multirange);
+    private static readonly BlueTuskTypeDescriptor TimestampWithTimeZoneMultirangeDescriptor =
+        BuiltInCollectionDescriptor(4534, "tstzmultirange", 6153, BlueTuskTypeKind.Multirange);
+    private static readonly BlueTuskTypeDescriptor DateMultirangeDescriptor =
+        BuiltInCollectionDescriptor(4535, "datemultirange", 6155, BlueTuskTypeKind.Multirange);
+    private static readonly BlueTuskTypeDescriptor Int8MultirangeDescriptor =
+        BuiltInCollectionDescriptor(4536, "int8multirange", 6157, BlueTuskTypeKind.Multirange);
+
+    private static readonly RelationalTypeMapping Int4Range = new BlueTuskRangeTypeMapping<int>("int4range", 3904);
+    private static readonly RelationalTypeMapping NumericRange =
+        new BlueTuskRangeTypeMapping<BlueTuskNumeric>("numrange", 3906);
+    private static readonly RelationalTypeMapping TimestampRange =
+        new BlueTuskRangeTypeMapping<DateTime>("tsrange", 3908);
+    private static readonly RelationalTypeMapping TimestampWithTimeZoneRange =
+        new BlueTuskRangeTypeMapping<DateTimeOffset>("tstzrange", 3910);
+    private static readonly RelationalTypeMapping DateRange = new BlueTuskRangeTypeMapping<DateOnly>("daterange", 3912);
+    private static readonly RelationalTypeMapping Int8Range = new BlueTuskRangeTypeMapping<long>("int8range", 3926);
+    private static readonly RelationalTypeMapping Int4Multirange =
+        new BlueTuskMultirangeTypeMapping<int>("int4multirange", 4451);
+    private static readonly RelationalTypeMapping NumericMultirange =
+        new BlueTuskMultirangeTypeMapping<BlueTuskNumeric>("nummultirange", 4532);
+    private static readonly RelationalTypeMapping TimestampMultirange =
+        new BlueTuskMultirangeTypeMapping<DateTime>("tsmultirange", 4533);
+    private static readonly RelationalTypeMapping TimestampWithTimeZoneMultirange =
+        new BlueTuskMultirangeTypeMapping<DateTimeOffset>("tstzmultirange", 4534);
+    private static readonly RelationalTypeMapping DateMultirange =
+        new BlueTuskMultirangeTypeMapping<DateOnly>("datemultirange", 4535);
+    private static readonly RelationalTypeMapping Int8Multirange =
+        new BlueTuskMultirangeTypeMapping<long>("int8multirange", 4536);
+
     private static readonly RelationalTypeMapping Json = Native("json", typeof(string), BlueTuskBuiltInTypes.Json);
     private static readonly RelationalTypeMapping Jsonb = Native("jsonb", typeof(string), BlueTuskBuiltInTypes.Jsonb);
     private static readonly RelationalTypeMapping Xml = Native("xml", typeof(string), BlueTuskBuiltInTypes.Xml);
@@ -210,6 +257,179 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(BlueTuskMostCommonValueStatistics)] = MostCommonValueStatistics,
             [typeof(BlueTuskBrinBloomSummary)] = BrinBloomSummary,
             [typeof(BlueTuskBrinMinMaxMultiSummary)] = BrinMinMaxMultiSummary,
+            [typeof(BlueTuskRange<int>)] = Int4Range,
+            [typeof(BlueTuskRange<BlueTuskNumeric>)] = NumericRange,
+            [typeof(BlueTuskRange<DateTime>)] = TimestampRange,
+            [typeof(BlueTuskRange<DateTimeOffset>)] = TimestampWithTimeZoneRange,
+            [typeof(BlueTuskRange<DateOnly>)] = DateRange,
+            [typeof(BlueTuskRange<long>)] = Int8Range,
+            [typeof(BlueTuskMultirange<int>)] = Int4Multirange,
+            [typeof(BlueTuskMultirange<BlueTuskNumeric>)] = NumericMultirange,
+            [typeof(BlueTuskMultirange<DateTime>)] = TimestampMultirange,
+            [typeof(BlueTuskMultirange<DateTimeOffset>)] = TimestampWithTimeZoneMultirange,
+            [typeof(BlueTuskMultirange<DateOnly>)] = DateMultirange,
+            [typeof(BlueTuskMultirange<long>)] = Int8Multirange,
+        };
+
+    private static readonly Dictionary<Type, BlueTuskTypeDescriptor> ArrayElementDescriptors =
+        new Dictionary<Type, BlueTuskTypeDescriptor>
+        {
+            [typeof(bool)] = BlueTuskBuiltInTypes.Boolean,
+            [typeof(short)] = BlueTuskBuiltInTypes.Int2,
+            [typeof(int)] = BlueTuskBuiltInTypes.Int4,
+            [typeof(long)] = BlueTuskBuiltInTypes.Int8,
+            [typeof(float)] = BlueTuskBuiltInTypes.Float4,
+            [typeof(double)] = BlueTuskBuiltInTypes.Float8,
+            [typeof(string)] = BlueTuskBuiltInTypes.Text,
+            [typeof(byte[])] = BlueTuskBuiltInTypes.Bytea,
+            [typeof(Guid)] = BlueTuskBuiltInTypes.Uuid,
+            [typeof(DateTime)] = BlueTuskBuiltInTypes.Timestamp,
+            [typeof(DateTimeOffset)] = BlueTuskBuiltInTypes.TimestampWithTimeZone,
+            [typeof(DateOnly)] = BlueTuskBuiltInTypes.Date,
+            [typeof(uint)] = BlueTuskBuiltInTypes.Oid,
+            [typeof(BlueTuskInterval)] = BlueTuskBuiltInTypes.Interval,
+            [typeof(BlueTuskTimeWithTimeZone)] = BlueTuskBuiltInTypes.TimeWithTimeZone,
+            [typeof(BlueTuskBitString)] = BlueTuskBuiltInTypes.Varbit,
+            [typeof(BlueTuskNumeric)] = BlueTuskBuiltInTypes.Numeric,
+            [typeof(BlueTuskTupleId)] = BlueTuskBuiltInTypes.Tid,
+            [typeof(BlueTuskLogSequenceNumber)] = BlueTuskBuiltInTypes.PgLsn,
+            [typeof(BlueTuskNetworkAddress)] = BlueTuskBuiltInTypes.Inet,
+            [typeof(BlueTuskMacAddress)] = BlueTuskBuiltInTypes.Macaddr,
+            [typeof(BlueTuskMacAddress8)] = BlueTuskBuiltInTypes.Macaddr8,
+            [typeof(BlueTuskPoint)] = BlueTuskBuiltInTypes.Point,
+            [typeof(BlueTuskLine)] = BlueTuskBuiltInTypes.Line,
+            [typeof(BlueTuskLineSegment)] = BlueTuskBuiltInTypes.LineSegment,
+            [typeof(BlueTuskBox)] = BlueTuskBuiltInTypes.Box,
+            [typeof(BlueTuskPath)] = BlueTuskBuiltInTypes.Path,
+            [typeof(BlueTuskPolygon)] = BlueTuskBuiltInTypes.Polygon,
+            [typeof(BlueTuskCircle)] = BlueTuskBuiltInTypes.Circle,
+            [typeof(BlueTuskMoney)] = BlueTuskBuiltInTypes.Money,
+            [typeof(BlueTuskTextSearchVector)] = BlueTuskBuiltInTypes.TextSearchVector,
+            [typeof(BlueTuskTextSearchQuery)] = BlueTuskBuiltInTypes.TextSearchQuery,
+            [typeof(BlueTuskJsonPath)] = BlueTuskBuiltInTypes.JsonPath,
+            [typeof(BlueTuskRegProc)] = BlueTuskBuiltInTypes.RegProc,
+            [typeof(BlueTuskRegProcedure)] = BlueTuskBuiltInTypes.RegProcedure,
+            [typeof(BlueTuskRegOper)] = BlueTuskBuiltInTypes.RegOper,
+            [typeof(BlueTuskRegOperator)] = BlueTuskBuiltInTypes.RegOperator,
+            [typeof(BlueTuskRegClass)] = BlueTuskBuiltInTypes.RegClass,
+            [typeof(BlueTuskRegType)] = BlueTuskBuiltInTypes.RegType,
+            [typeof(BlueTuskRegConfig)] = BlueTuskBuiltInTypes.RegConfig,
+            [typeof(BlueTuskRegDictionary)] = BlueTuskBuiltInTypes.RegDictionary,
+            [typeof(BlueTuskRegNamespace)] = BlueTuskBuiltInTypes.RegNamespace,
+            [typeof(BlueTuskRegRole)] = BlueTuskBuiltInTypes.RegRole,
+            [typeof(BlueTuskRegCollation)] = BlueTuskBuiltInTypes.RegCollation,
+            [typeof(BlueTuskTransactionId)] = BlueTuskBuiltInTypes.Xid,
+            [typeof(BlueTuskCommandId)] = BlueTuskBuiltInTypes.Cid,
+            [typeof(BlueTuskFullTransactionId)] = BlueTuskBuiltInTypes.Xid8,
+            [typeof(BlueTuskTransactionSnapshot)] = BlueTuskBuiltInTypes.PgSnapshot,
+            [typeof(BlueTuskRefCursor)] = BlueTuskBuiltInTypes.RefCursor,
+            [typeof(BlueTuskInternalChar)] = BlueTuskBuiltInTypes.Char,
+            [typeof(BlueTuskAccessControlItem)] = BlueTuskBuiltInTypes.AclItem,
+            [typeof(BlueTuskGistTextSearchVector)] = BlueTuskBuiltInTypes.GistTextSearchVector,
+            [typeof(BlueTuskInt16Vector)] = BlueTuskBuiltInTypes.Int2Vector,
+            [typeof(BlueTuskObjectIdentifierVector)] = BlueTuskBuiltInTypes.OidVector,
+            [typeof(BlueTuskRange<int>)] = Int4RangeDescriptor,
+            [typeof(BlueTuskRange<BlueTuskNumeric>)] = NumericRangeDescriptor,
+            [typeof(BlueTuskRange<DateTime>)] = TimestampRangeDescriptor,
+            [typeof(BlueTuskRange<DateTimeOffset>)] = TimestampWithTimeZoneRangeDescriptor,
+            [typeof(BlueTuskRange<DateOnly>)] = DateRangeDescriptor,
+            [typeof(BlueTuskRange<long>)] = Int8RangeDescriptor,
+            [typeof(BlueTuskMultirange<int>)] = Int4MultirangeDescriptor,
+            [typeof(BlueTuskMultirange<BlueTuskNumeric>)] = NumericMultirangeDescriptor,
+            [typeof(BlueTuskMultirange<DateTime>)] = TimestampMultirangeDescriptor,
+            [typeof(BlueTuskMultirange<DateTimeOffset>)] = TimestampWithTimeZoneMultirangeDescriptor,
+            [typeof(BlueTuskMultirange<DateOnly>)] = DateMultirangeDescriptor,
+            [typeof(BlueTuskMultirange<long>)] = Int8MultirangeDescriptor,
+        };
+
+    private static readonly Dictionary<string, BlueTuskTypeDescriptor> ArrayStoreDescriptors =
+        new Dictionary<string, BlueTuskTypeDescriptor>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["bool"] = BlueTuskBuiltInTypes.Boolean,
+            ["boolean"] = BlueTuskBuiltInTypes.Boolean,
+            ["int2"] = BlueTuskBuiltInTypes.Int2,
+            ["smallint"] = BlueTuskBuiltInTypes.Int2,
+            ["int4"] = BlueTuskBuiltInTypes.Int4,
+            ["integer"] = BlueTuskBuiltInTypes.Int4,
+            ["int8"] = BlueTuskBuiltInTypes.Int8,
+            ["bigint"] = BlueTuskBuiltInTypes.Int8,
+            ["float4"] = BlueTuskBuiltInTypes.Float4,
+            ["real"] = BlueTuskBuiltInTypes.Float4,
+            ["float8"] = BlueTuskBuiltInTypes.Float8,
+            ["double precision"] = BlueTuskBuiltInTypes.Float8,
+            ["text"] = BlueTuskBuiltInTypes.Text,
+            ["name"] = BlueTuskBuiltInTypes.Name,
+            ["varchar"] = BlueTuskBuiltInTypes.Varchar,
+            ["character varying"] = BlueTuskBuiltInTypes.Varchar,
+            ["bytea"] = BlueTuskBuiltInTypes.Bytea,
+            ["uuid"] = BlueTuskBuiltInTypes.Uuid,
+            ["timestamp"] = BlueTuskBuiltInTypes.Timestamp,
+            ["timestamp without time zone"] = BlueTuskBuiltInTypes.Timestamp,
+            ["timestamptz"] = BlueTuskBuiltInTypes.TimestampWithTimeZone,
+            ["timestamp with time zone"] = BlueTuskBuiltInTypes.TimestampWithTimeZone,
+            ["date"] = BlueTuskBuiltInTypes.Date,
+            ["interval"] = BlueTuskBuiltInTypes.Interval,
+            ["timetz"] = BlueTuskBuiltInTypes.TimeWithTimeZone,
+            ["time with time zone"] = BlueTuskBuiltInTypes.TimeWithTimeZone,
+            ["numeric"] = BlueTuskBuiltInTypes.Numeric,
+            ["decimal"] = BlueTuskBuiltInTypes.Numeric,
+            ["bit"] = BlueTuskBuiltInTypes.Bit,
+            ["varbit"] = BlueTuskBuiltInTypes.Varbit,
+            ["bit varying"] = BlueTuskBuiltInTypes.Varbit,
+            ["json"] = BlueTuskBuiltInTypes.Json,
+            ["jsonb"] = BlueTuskBuiltInTypes.Jsonb,
+            ["xml"] = BlueTuskBuiltInTypes.Xml,
+            ["tid"] = BlueTuskBuiltInTypes.Tid,
+            ["pg_lsn"] = BlueTuskBuiltInTypes.PgLsn,
+            ["inet"] = BlueTuskBuiltInTypes.Inet,
+            ["cidr"] = BlueTuskBuiltInTypes.Cidr,
+            ["macaddr"] = BlueTuskBuiltInTypes.Macaddr,
+            ["macaddr8"] = BlueTuskBuiltInTypes.Macaddr8,
+            ["point"] = BlueTuskBuiltInTypes.Point,
+            ["line"] = BlueTuskBuiltInTypes.Line,
+            ["lseg"] = BlueTuskBuiltInTypes.LineSegment,
+            ["box"] = BlueTuskBuiltInTypes.Box,
+            ["path"] = BlueTuskBuiltInTypes.Path,
+            ["polygon"] = BlueTuskBuiltInTypes.Polygon,
+            ["circle"] = BlueTuskBuiltInTypes.Circle,
+            ["money"] = BlueTuskBuiltInTypes.Money,
+            ["tsvector"] = BlueTuskBuiltInTypes.TextSearchVector,
+            ["tsquery"] = BlueTuskBuiltInTypes.TextSearchQuery,
+            ["jsonpath"] = BlueTuskBuiltInTypes.JsonPath,
+            ["oid"] = BlueTuskBuiltInTypes.Oid,
+            ["regproc"] = BlueTuskBuiltInTypes.RegProc,
+            ["regprocedure"] = BlueTuskBuiltInTypes.RegProcedure,
+            ["regoper"] = BlueTuskBuiltInTypes.RegOper,
+            ["regoperator"] = BlueTuskBuiltInTypes.RegOperator,
+            ["regclass"] = BlueTuskBuiltInTypes.RegClass,
+            ["regtype"] = BlueTuskBuiltInTypes.RegType,
+            ["regconfig"] = BlueTuskBuiltInTypes.RegConfig,
+            ["regdictionary"] = BlueTuskBuiltInTypes.RegDictionary,
+            ["regnamespace"] = BlueTuskBuiltInTypes.RegNamespace,
+            ["regrole"] = BlueTuskBuiltInTypes.RegRole,
+            ["regcollation"] = BlueTuskBuiltInTypes.RegCollation,
+            ["xid"] = BlueTuskBuiltInTypes.Xid,
+            ["cid"] = BlueTuskBuiltInTypes.Cid,
+            ["xid8"] = BlueTuskBuiltInTypes.Xid8,
+            ["pg_snapshot"] = BlueTuskBuiltInTypes.PgSnapshot,
+            ["txid_snapshot"] = BlueTuskBuiltInTypes.TxidSnapshot,
+            ["refcursor"] = BlueTuskBuiltInTypes.RefCursor,
+            ["aclitem"] = BlueTuskBuiltInTypes.AclItem,
+            ["gtsvector"] = BlueTuskBuiltInTypes.GistTextSearchVector,
+            ["int2vector"] = BlueTuskBuiltInTypes.Int2Vector,
+            ["oidvector"] = BlueTuskBuiltInTypes.OidVector,
+            ["int4range"] = Int4RangeDescriptor,
+            ["numrange"] = NumericRangeDescriptor,
+            ["tsrange"] = TimestampRangeDescriptor,
+            ["tstzrange"] = TimestampWithTimeZoneRangeDescriptor,
+            ["daterange"] = DateRangeDescriptor,
+            ["int8range"] = Int8RangeDescriptor,
+            ["int4multirange"] = Int4MultirangeDescriptor,
+            ["nummultirange"] = NumericMultirangeDescriptor,
+            ["tsmultirange"] = TimestampMultirangeDescriptor,
+            ["tstzmultirange"] = TimestampWithTimeZoneMultirangeDescriptor,
+            ["datemultirange"] = DateMultirangeDescriptor,
+            ["int8multirange"] = Int8MultirangeDescriptor,
         };
 
     private static readonly Dictionary<string, RelationalTypeMapping> StoreMappings =
@@ -298,6 +518,18 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             ["pg_mcv_list"] = MostCommonValueStatistics,
             ["pg_brin_bloom_summary"] = BrinBloomSummary,
             ["pg_brin_minmax_multi_summary"] = BrinMinMaxMultiSummary,
+            ["int4range"] = Int4Range,
+            ["numrange"] = NumericRange,
+            ["tsrange"] = TimestampRange,
+            ["tstzrange"] = TimestampWithTimeZoneRange,
+            ["daterange"] = DateRange,
+            ["int8range"] = Int8Range,
+            ["int4multirange"] = Int4Multirange,
+            ["nummultirange"] = NumericMultirange,
+            ["tsmultirange"] = TimestampMultirange,
+            ["tstzmultirange"] = TimestampWithTimeZoneMultirange,
+            ["datemultirange"] = DateMultirange,
+            ["int8multirange"] = Int8Multirange,
         };
 
     public BlueTuskTypeMappingSource(
@@ -312,6 +544,11 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         var clrType = mappingInfo.ClrType is { } requestedClrType
             ? Nullable.GetUnderlyingType(requestedClrType) ?? requestedClrType
             : null;
+
+        if (clrType is { IsArray: true } && clrType != typeof(byte[]))
+        {
+            return FindArrayMapping(mappingInfo, clrType, elementTypeMapping: null);
+        }
 
         if (mappingInfo.StoreTypeNameBase is { } storeTypeName
             && StoreMappings.TryGetValue(storeTypeName, out var storeMapping))
@@ -334,6 +571,23 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         }
 
         return base.FindMapping(mappingInfo);
+    }
+
+    protected override RelationalTypeMapping? FindCollectionMapping(
+        RelationalTypeMappingInfo mappingInfo,
+        Type modelClrType,
+        Type? providerClrType,
+        CoreTypeMapping? elementMapping)
+    {
+        if (modelClrType.IsArray
+            && providerClrType?.IsArray == true
+            && modelClrType != typeof(byte[])
+            && elementMapping is RelationalTypeMapping relationalElementMapping)
+        {
+            return FindArrayMapping(mappingInfo, modelClrType, relationalElementMapping);
+        }
+
+        return null;
     }
 
     private static RelationalTypeMapping ApplyFacets(
@@ -395,4 +649,75 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         Type clrType,
         BlueTuskTypeDescriptor descriptor) =>
         new BlueTuskNativeTypeMapping(storeType, clrType, descriptor.Id.Oid);
+
+    private static BlueTuskTypeDescriptor BuiltInCollectionDescriptor(
+        uint oid,
+        string name,
+        uint arrayOid,
+        BlueTuskTypeKind kind) => new()
+        {
+            Id = new BlueTuskTypeId(oid),
+            Schema = "pg_catalog",
+            Name = name,
+            Kind = kind,
+            ArrayType = new BlueTuskTypeId(arrayOid),
+        };
+
+    private static BlueTuskArrayTypeMapping? FindArrayMapping(
+        in RelationalTypeMappingInfo mappingInfo,
+        Type arrayType,
+        RelationalTypeMapping? elementTypeMapping)
+    {
+        var elementClrType = arrayType.GetElementType()!;
+        BlueTuskTypeDescriptor? elementDescriptor = null;
+        string? requestedElementStoreType = null;
+        if (mappingInfo.StoreTypeName is { } requestedStoreType)
+        {
+            var storeType = requestedStoreType.Trim();
+            if (!storeType.EndsWith("[]", StringComparison.Ordinal))
+            {
+                return null;
+            }
+
+            requestedElementStoreType = storeType[..^2].Trim();
+            var facetIndex = requestedElementStoreType.IndexOf('(');
+            var storeTypeBase = facetIndex < 0
+                ? requestedElementStoreType
+                : requestedElementStoreType[..facetIndex].TrimEnd();
+            if (!ArrayStoreDescriptors.TryGetValue(storeTypeBase.Trim('"'), out elementDescriptor))
+            {
+                return null;
+            }
+
+            if (!StoreMappings.TryGetValue(storeTypeBase.Trim('"'), out elementTypeMapping))
+            {
+                return null;
+            }
+        }
+
+        if (elementDescriptor is null
+            && !ArrayElementDescriptors.TryGetValue(elementClrType, out elementDescriptor))
+        {
+            return null;
+        }
+
+        if (elementTypeMapping is null
+            && !ClrMappings.TryGetValue(elementClrType, out elementTypeMapping))
+        {
+            return null;
+        }
+
+        if (elementDescriptor.ArrayType is not { } arrayTypeId)
+        {
+            return null;
+        }
+
+        var storeTypeName = mappingInfo.StoreTypeName
+            ?? $"{requestedElementStoreType ?? elementTypeMapping.StoreType}[]";
+        return new BlueTuskArrayTypeMapping(
+            storeTypeName,
+            arrayType,
+            arrayTypeId.Oid,
+            elementTypeMapping);
+    }
 }
