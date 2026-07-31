@@ -9,6 +9,7 @@ public interface IBlueTuskTlsTransport : IBlueTuskTransport
 
     X509Certificate2? RemoteCertificate { get; }
 
+    void UpgradeToTls(BlueTuskTlsOptions options);
+
     ValueTask UpgradeToTlsAsync(BlueTuskTlsOptions options, CancellationToken cancellationToken);
 }
-

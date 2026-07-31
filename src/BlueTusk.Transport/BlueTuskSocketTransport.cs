@@ -125,8 +125,12 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
             throw new InvalidOperationException("The transport is already encrypted.");
         }
 
-        var certificates = new X509CertificateCollection();
-        certificates.AddRange(options.ClientCertificates.ToArray());
+        X509CertificateCollection? certificates = null;
+        if (options.ClientCertificates.Count != 0)
+        {
+            certificates = new X509CertificateCollection();
+            certificates.AddRange(options.ClientCertificates.ToArray());
+        }
         var tlsStream = new SslStream(
             innerStream,
             leaveInnerStreamOpen: false,
@@ -152,6 +156,51 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
         catch
         {
             await tlsStream.DisposeAsync().ConfigureAwait(false);
+            DisposeSocket();
+            throw;
+        }
+    }
+
+    public void UpgradeToTls(BlueTuskTlsOptions options)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(options);
+        options.Validate();
+
+        var innerStream = GetConnectedStream();
+        if (innerStream is SslStream)
+        {
+            throw new InvalidOperationException("The transport is already encrypted.");
+        }
+
+        X509CertificateCollection? certificates = null;
+        if (options.ClientCertificates.Count != 0)
+        {
+            certificates = new X509CertificateCollection();
+            certificates.AddRange(options.ClientCertificates.ToArray());
+        }
+        var tlsStream = new SslStream(
+            innerStream,
+            leaveInnerStreamOpen: false,
+            options.RemoteCertificateValidationCallback);
+        try
+        {
+            tlsStream.AuthenticateAsClient(
+                new SslClientAuthenticationOptions
+                {
+                    TargetHost = options.TargetHost,
+                    EnabledSslProtocols = options.EnabledProtocols,
+                    CertificateRevocationCheckMode = options.CertificateRevocationCheckMode,
+                    ClientCertificates = certificates,
+                });
+            _stream = tlsStream;
+            _remoteCertificate = tlsStream.RemoteCertificate is { } certificate
+                ? new X509Certificate2(certificate)
+                : null;
+        }
+        catch
+        {
+            tlsStream.Dispose();
             DisposeSocket();
             throw;
         }

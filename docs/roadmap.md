@@ -131,7 +131,7 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Authentication-stop and credential-redacted aggregate failure behavior
     - [x] Per-host pool partitioning and aggregate lifecycle/statistics
 - [ ] Genuine synchronous connection and query paths
-  - [ ] Synchronous transport, TLS, startup, authentication, and cancellation
+  - [x] Synchronous transport, TLS, startup, authentication, and cancellation
   - [ ] Synchronous pooling, transactions, commands, COPY, notifications, and large objects
 - [ ] Network-backed sequential and streaming reader modes
   - [ ] Bounded named portals, suspension, and incremental row reads

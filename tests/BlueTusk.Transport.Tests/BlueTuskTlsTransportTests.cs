@@ -78,6 +78,56 @@ public sealed class BlueTuskTlsTransportTests
         }
     }
 
+    [Fact]
+    public async Task Synchronously_upgrades_an_established_socket_to_tls()
+    {
+        using var key = RSA.Create(2048);
+        var request = new CertificateRequest("CN=localhost", key, HashAlgorithmName.SHA256, RSASignaturePadding.Pkcs1);
+        var names = new SubjectAlternativeNameBuilder();
+        names.AddDnsName("localhost");
+        request.CertificateExtensions.Add(names.Build());
+        using var ephemeralCertificate = request.CreateSelfSigned(
+            DateTimeOffset.UtcNow.AddMinutes(-1),
+            DateTimeOffset.UtcNow.AddDays(1));
+        using var certificate = X509CertificateLoader.LoadPkcs12(
+            ephemeralCertificate.Export(X509ContentType.Pkcs12),
+            password: null,
+            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+
+        var listener = new TcpListener(IPAddress.Loopback, 0);
+        listener.Start();
+        try
+        {
+            var port = ((IPEndPoint)listener.LocalEndpoint).Port;
+            var serverTask = RunServerAsync(listener, certificate);
+            using var transport = new BlueTuskSocketTransport();
+            transport.Connect(
+                new BlueTuskEndpoint.Tcp("localhost", port),
+                BlueTuskTransportOptions.Default);
+            transport.UpgradeToTls(
+                new BlueTuskTlsOptions
+                {
+                    TargetHost = "localhost",
+                    CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+                    RemoteCertificateValidationCallback = (_, presented, _, _) =>
+                        string.Equals(
+                            presented?.GetCertHashString(),
+                            certificate.GetCertHashString(),
+                            StringComparison.Ordinal),
+                });
+            transport.Write(new byte[] { 42 });
+            transport.Flush();
+
+            Assert.True(transport.IsEncrypted);
+            Assert.NotNull(transport.RemoteCertificate);
+            Assert.Equal(42, await serverTask);
+        }
+        finally
+        {
+            listener.Stop();
+        }
+    }
+
     private static async Task<int> RunServerAsync(TcpListener listener, X509Certificate2 certificate)
     {
         using var socket = await listener.AcceptSocketAsync(CancellationToken.None);

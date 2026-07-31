@@ -27,6 +27,15 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     public IBlueTuskTransport Transport => _transport;
 
+    public void Connect(
+        BlueTuskEndpoint endpoint,
+        BlueTuskTransportOptions options)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _transport.Connect(endpoint, options);
+        StateMachine.TransitionTo(BlueTuskConnectionState.TransportConnected);
+    }
+
     public async ValueTask ConnectAsync(
         BlueTuskEndpoint endpoint,
         BlueTuskTransportOptions options,
@@ -46,6 +55,23 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         var read = await _transport.ReadAsync(_buffer.AsMemory(0, 1), cancellationToken).ConfigureAwait(false);
+        if (read == 0)
+        {
+            throw new EndOfStreamException("PostgreSQL disconnected while an unframed response byte was expected.");
+        }
+
+        return _buffer[0];
+    }
+
+    public byte ReadUnframedByte()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_count != 0)
+        {
+            throw new InvalidOperationException("Unframed bytes cannot be read after protocol buffering has started.");
+        }
+
+        var read = _transport.Read(_buffer.AsSpan(0, 1));
         if (read == 0)
         {
             throw new EndOfStreamException("PostgreSQL disconnected while an unframed response byte was expected.");
@@ -86,6 +112,36 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+    /// <remarks>The returned payload remains valid only until the next read from this connection.</remarks>
+    public BlueTuskBackendMessage ReadMessage()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        while (true)
+        {
+            var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
+            var originalLength = sequence.Length;
+            if (_parser.TryParse(ref sequence, out var message))
+            {
+                var consumed = checked((int)(originalLength - sequence.Length));
+                _start += consumed;
+                _count -= consumed;
+                return message;
+            }
+
+            PrepareForRead();
+            var read = _transport.Read(_buffer.AsSpan(_start + _count));
+            if (read == 0)
+            {
+                throw new EndOfStreamException(
+                    _count == 0
+                        ? "PostgreSQL closed the connection."
+                        : "PostgreSQL disconnected in the middle of a protocol message.");
+            }
+
+            _count += read;
+        }
+    }
+
     public async ValueTask WriteAsync(
         Action<IBufferWriter<byte>> writeMessage,
         CancellationToken cancellationToken)
@@ -97,6 +153,17 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         writeMessage(output);
         await _transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
         await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public void Write(Action<IBufferWriter<byte>> writeMessage)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(writeMessage);
+
+        var output = new ArrayBufferWriter<byte>();
+        writeMessage(output);
+        _transport.Write(output.WrittenSpan);
+        _transport.Flush();
     }
 
     public void Dispose()
@@ -159,4 +226,3 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         ArrayPool<byte>.Shared.Return(buffer);
     }
 }
-

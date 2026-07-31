@@ -7,6 +7,8 @@ public interface IBlueTuskTransport : IAsyncDisposable, IDisposable
 {
     EndPoint? RemoteEndPoint { get; }
 
+    void Connect(BlueTuskEndpoint endpoint, BlueTuskTransportOptions options);
+
     ValueTask ConnectAsync(
         BlueTuskEndpoint endpoint,
         BlueTuskTransportOptions options,
@@ -14,8 +16,13 @@ public interface IBlueTuskTransport : IAsyncDisposable, IDisposable
 
     ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken);
 
+    int Read(Span<byte> buffer);
+
     ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken);
 
-    ValueTask FlushAsync(CancellationToken cancellationToken);
-}
+    void Write(ReadOnlySpan<byte> buffer);
 
+    ValueTask FlushAsync(CancellationToken cancellationToken);
+
+    void Flush();
+}

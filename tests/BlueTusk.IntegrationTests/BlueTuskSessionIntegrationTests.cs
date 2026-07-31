@@ -12,6 +12,57 @@ namespace BlueTusk.IntegrationTests;
 public sealed class BlueTuskSessionIntegrationTests
 {
     [Fact]
+    public void Synchronous_session_uses_native_startup_and_extended_protocol_paths()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        using var session = BlueTuskSession.Open(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            });
+
+        var simple = session.ExecuteSimpleQuery("SELECT 40::int4");
+        Assert.Equal(
+            "40",
+            Encoding.UTF8.GetString(
+                Assert.Single(Assert.Single(simple.ResultSets).Rows).Values[0]!.Value.Span));
+
+        var value = new byte[sizeof(int)];
+        BinaryPrimitives.WriteInt32BigEndian(value, 41);
+        var extended = session.ExecuteExtendedQuery(
+            "SELECT $1::int4 + 1",
+            [new BlueTuskExtendedQueryParameter(23, 1, value)]);
+        Assert.Equal(
+            42,
+            BinaryPrimitives.ReadInt32BigEndian(
+                Assert.Single(Assert.Single(extended.ResultSets).Rows).Values[0]!.Value.Span));
+
+        const string statementName = "bluetusk_sync_prepared";
+        session.PrepareStatement(statementName, "SELECT $1::int4 + 1", [23]);
+        var prepared = session.ExecutePreparedStatement(
+            statementName,
+            [new BlueTuskExtendedQueryParameter(23, 1, value)]);
+        Assert.Equal(
+            42,
+            BinaryPrimitives.ReadInt32BigEndian(
+                Assert.Single(Assert.Single(prepared.ResultSets).Rows).Values[0]!.Value.Span));
+        session.ClosePreparedStatement(statementName);
+
+        var batch = session.ExecuteBatch(
+            [
+                new BlueTuskBatchQuery("SELECT 1", [], UseBinaryResults: false),
+                new BlueTuskBatchQuery("SELECT 2", [], UseBinaryResults: false),
+            ]);
+        Assert.Equal(2, batch.ResultSets.Count);
+    }
+
+    [Fact]
     public async Task Opens_with_scram_and_executes_a_simple_query()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
