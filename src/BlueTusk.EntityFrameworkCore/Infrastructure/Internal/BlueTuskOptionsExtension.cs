@@ -1,3 +1,4 @@
+using BlueTusk.Data;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -14,11 +15,23 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
     private BlueTuskOptionsExtension(BlueTuskOptionsExtension copyFrom)
         : base(copyFrom)
     {
+        DataSource = copyFrom.DataSource;
     }
+
+    internal BlueTuskDataSource? DataSource { get; private set; }
 
     public override DbContextOptionsExtensionInfo Info => _info ??= new ExtensionInfo(this);
 
     protected override RelationalOptionsExtension Clone() => new BlueTuskOptionsExtension(this);
+
+    internal BlueTuskOptionsExtension WithDataSource(BlueTuskDataSource? dataSource)
+    {
+        var clone = new BlueTuskOptionsExtension(this)
+        {
+            DataSource = dataSource,
+        };
+        return clone;
+    }
 
     public override void ApplyServices(IServiceCollection services)
         => services.AddEntityFrameworkBlueTusk();

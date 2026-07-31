@@ -25,6 +25,10 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
     private static readonly RelationalTypeMapping DateOnly = new DateOnlyTypeMapping("date", DbType.Date);
     private static readonly RelationalTypeMapping TimeOnly = new TimeOnlyTypeMapping("time without time zone", DbType.Time);
     private static readonly RelationalTypeMapping TimeSpan = new BlueTuskIntervalTypeMapping();
+    private static readonly RelationalTypeMapping Record =
+        new BlueTuskNativeTypeMapping("record", typeof(BlueTuskRecord), 2249);
+    private static readonly BlueTuskTypeDescriptor RecordDescriptor =
+        BuiltInCollectionDescriptor(2249, "record", 2287, BlueTuskTypeKind.Pseudo);
 
     private static readonly BlueTuskTypeDescriptor Int4RangeDescriptor =
         BuiltInCollectionDescriptor(3904, "int4range", 3905, BlueTuskTypeKind.Range);
@@ -209,6 +213,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(DateOnly)] = DateOnly,
             [typeof(TimeOnly)] = TimeOnly,
             [typeof(TimeSpan)] = TimeSpan,
+            [typeof(BlueTuskRecord)] = Record,
             [typeof(uint)] = Oid,
             [typeof(BlueTuskInterval)] = NativeInterval,
             [typeof(BlueTuskTimeWithTimeZone)] = TimeWithTimeZone,
@@ -340,6 +345,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(BlueTuskMultirange<DateTimeOffset>)] = TimestampWithTimeZoneMultirangeDescriptor,
             [typeof(BlueTuskMultirange<DateOnly>)] = DateMultirangeDescriptor,
             [typeof(BlueTuskMultirange<long>)] = Int8MultirangeDescriptor,
+            [typeof(BlueTuskRecord)] = RecordDescriptor,
         };
 
     private static readonly Dictionary<string, BlueTuskTypeDescriptor> ArrayStoreDescriptors =
@@ -518,6 +524,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             ["pg_mcv_list"] = MostCommonValueStatistics,
             ["pg_brin_bloom_summary"] = BrinBloomSummary,
             ["pg_brin_minmax_multi_summary"] = BrinMinMaxMultiSummary,
+            ["record"] = Record,
             ["int4range"] = Int4Range,
             ["numrange"] = NumericRange,
             ["tsrange"] = TimestampRange,
@@ -547,7 +554,15 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
 
         if (clrType is { IsArray: true } && clrType != typeof(byte[]))
         {
-            return FindArrayMapping(mappingInfo, clrType, elementTypeMapping: null);
+            var arrayMapping = FindArrayMapping(mappingInfo, clrType, elementTypeMapping: null);
+            if (arrayMapping is not null)
+            {
+                return arrayMapping;
+            }
+
+            return mappingInfo.StoreTypeName is { } arrayStoreType && IsSchemaQualified(arrayStoreType)
+                ? CreateUserDefinedMapping(arrayStoreType, clrType)
+                : null;
         }
 
         if (mappingInfo.StoreTypeNameBase is { } storeTypeName
@@ -562,6 +577,13 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             }
 
             return ApplyFacets(storeMapping, mappingInfo);
+        }
+
+        if (clrType is not null
+            && mappingInfo.StoreTypeName is { } userDefinedStoreType
+            && IsSchemaQualified(userDefinedStoreType))
+        {
+            return CreateUserDefinedMapping(userDefinedStoreType, clrType);
         }
 
         if (clrType is not null
@@ -584,7 +606,16 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             && modelClrType != typeof(byte[])
             && elementMapping is RelationalTypeMapping relationalElementMapping)
         {
-            return FindArrayMapping(mappingInfo, modelClrType, relationalElementMapping);
+            var arrayMapping = FindArrayMapping(mappingInfo, modelClrType, relationalElementMapping);
+            if (arrayMapping is not null)
+            {
+                return arrayMapping;
+            }
+
+            if (mappingInfo.StoreTypeName is { } storeType && IsSchemaQualified(storeType))
+            {
+                return CreateUserDefinedMapping(storeType, modelClrType);
+            }
         }
 
         return null;
@@ -719,5 +750,45 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             arrayType,
             arrayTypeId.Oid,
             elementTypeMapping);
+    }
+
+    private static RelationalTypeMapping CreateUserDefinedMapping(string storeType, Type clrType)
+    {
+        if (!clrType.IsArray)
+        {
+            return new BlueTuskUserDefinedTypeMapping(storeType, clrType, storeType);
+        }
+
+        var elementStoreType = storeType.Trim();
+        while (elementStoreType.EndsWith("[]", StringComparison.Ordinal))
+        {
+            elementStoreType = elementStoreType[..^2].TrimEnd();
+        }
+
+        var elementClrType = clrType.GetElementType()!;
+        var elementMapping = new BlueTuskUserDefinedTypeMapping(
+            elementStoreType,
+            elementClrType,
+            elementStoreType);
+        return new BlueTuskArrayTypeMapping(storeType, clrType, storeType, elementMapping);
+    }
+
+    private static bool IsSchemaQualified(string storeType)
+    {
+        var typeName = storeType.AsSpan().Trim().ToString();
+        while (typeName.EndsWith("[]", StringComparison.Ordinal))
+        {
+            typeName = typeName[..^2].TrimEnd();
+        }
+
+        try
+        {
+            _ = BlueTuskTypeName.Parse(typeName);
+            return true;
+        }
+        catch (FormatException)
+        {
+            return false;
+        }
     }
 }

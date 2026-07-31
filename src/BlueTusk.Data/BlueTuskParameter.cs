@@ -39,6 +39,13 @@ public class BlueTuskParameter : DbParameter
     /// </summary>
     public uint? PostgreSqlTypeOid { get; set; }
 
+    /// <summary>
+    /// Gets or sets a schema-qualified PostgreSQL type name to resolve from the live type catalogue.
+    /// This is useful for database-specific types whose OIDs are not stable across databases.
+    /// <see cref="PostgreSqlTypeOid"/> takes precedence when both values are set.
+    /// </summary>
+    public string? PostgreSqlTypeName { get; set; }
+
     [AllowNull]
     public override string ParameterName { get; set; } = string.Empty;
 
@@ -59,6 +66,7 @@ public class BlueTuskParameter : DbParameter
     {
         DbType = DbType.Object;
         PostgreSqlTypeOid = null;
+        PostgreSqlTypeName = null;
     }
 }
 

@@ -8,7 +8,8 @@ namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
 internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
 {
-    private readonly uint _postgreSqlTypeOid;
+    private readonly uint? _postgreSqlTypeOid;
+    private readonly string? _postgreSqlTypeName;
 
     public BlueTuskArrayTypeMapping(
         string storeType,
@@ -26,23 +27,48 @@ internal sealed class BlueTuskArrayTypeMapping : RelationalTypeMapping
         _postgreSqlTypeOid = postgreSqlTypeOid;
     }
 
+    public BlueTuskArrayTypeMapping(
+        string storeType,
+        Type arrayType,
+        string postgreSqlTypeName,
+        RelationalTypeMapping elementTypeMapping)
+        : base(CreateParameters(storeType, arrayType, elementTypeMapping))
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(postgreSqlTypeName);
+        if (!arrayType.IsArray)
+        {
+            throw new ArgumentException("A PostgreSQL array mapping requires a CLR array type.", nameof(arrayType));
+        }
+
+        _postgreSqlTypeName = postgreSqlTypeName;
+    }
+
     private BlueTuskArrayTypeMapping(
         RelationalTypeMappingParameters parameters,
-        uint postgreSqlTypeOid)
+        uint? postgreSqlTypeOid,
+        string? postgreSqlTypeName)
         : base(parameters)
     {
         _postgreSqlTypeOid = postgreSqlTypeOid;
+        _postgreSqlTypeName = postgreSqlTypeName;
     }
 
     protected override RelationalTypeMapping Clone(RelationalTypeMappingParameters parameters) =>
-        new BlueTuskArrayTypeMapping(parameters, _postgreSqlTypeOid);
+        new BlueTuskArrayTypeMapping(parameters, _postgreSqlTypeOid, _postgreSqlTypeName);
 
     protected override void ConfigureParameter(DbParameter parameter)
     {
         base.ConfigureParameter(parameter);
         if (parameter is BlueTuskParameter blueTuskParameter)
         {
-            blueTuskParameter.PostgreSqlTypeOid = _postgreSqlTypeOid;
+            if (_postgreSqlTypeOid is { } postgreSqlTypeOid)
+            {
+                blueTuskParameter.PostgreSqlTypeOid = postgreSqlTypeOid;
+            }
+            else
+            {
+                blueTuskParameter.PostgreSqlTypeName = _postgreSqlTypeName;
+            }
         }
     }
 

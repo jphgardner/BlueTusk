@@ -40,6 +40,20 @@ public sealed class ProviderConfigurationTests
     }
 
     [Fact]
+    public void UseBlueTusk_accepts_an_existing_data_source()
+    {
+        using var dataSource = BlueTuskDataSource.Create(ConnectionString);
+        var options = new DbContextOptionsBuilder<TestContext>()
+            .UseBlueTusk(dataSource)
+            .Options;
+
+        using var context = new TestContext(options);
+
+        Assert.Equal(ConnectionString, context.Database.GetConnectionString());
+        Assert.IsType<BlueTuskConnection>(context.Database.GetDbConnection());
+    }
+
+    [Fact]
     public void AddEntityFrameworkBlueTusk_registers_provider_services()
     {
         var services = new ServiceCollection();

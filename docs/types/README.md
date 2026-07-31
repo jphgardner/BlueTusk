@@ -58,6 +58,8 @@ An unregistered OID is returned as `BlueTuskUnknownValue`, preserving its format
 
 Each data source loads PostgreSQL type relationships from the system catalogues. Arrays, domains, enums, composites, records, ranges, and multiranges are composed from the codecs of their contained types in both text and binary formats. Runtime codecs can be registered by schema-qualified catalogue name, while `MapEnum<TEnum>` and `MapComposite<T>` provide typed mappings for user-defined enums and composites.
 
+Set `BlueTuskParameter.PostgreSqlTypeName` when a parameter—especially a null value—must select one of those catalogue-discovered types. Names are parsed using PostgreSQL identifier rules: unquoted identifiers fold to lowercase, quoted identifiers preserve case and may contain dots, and a trailing `[]` selects the discovered array type.
+
 `BlueTuskRange<T>` keeps empty ranges distinct from ranges with one or two unbounded sides. Construct finite bounds with `BlueTuskRangeBound.Inclusive(value)` or `BlueTuskRangeBound.Exclusive(value)`, and use `BlueTuskRangeBound.Unbounded<T>()` for an infinite side:
 
 ```csharp

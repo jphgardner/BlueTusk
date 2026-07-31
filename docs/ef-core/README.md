@@ -1,6 +1,6 @@
 # Entity Framework Core
 
-`BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current 0.2 implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and the core PostgreSQL scalar type mappings.
+`BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings.
 
 ## Configure a context
 
@@ -9,7 +9,17 @@ services.AddDbContext<AppDbContext>(options =>
     options.UseBlueTusk(connectionString));
 ```
 
-`UseBlueTusk` also accepts an existing `BlueTuskConnection` when the application owns connection construction or lifetime.
+`UseBlueTusk` also accepts an existing `BlueTuskConnection` when the application owns connection construction or lifetime. Pass a `BlueTuskDataSource` when the context should share its physical pool and runtime-registered type mappings; the application owns the data source lifetime:
+
+```csharp
+var builder = new BlueTuskDataSourceBuilder(connectionString);
+builder.MapEnum<OrderStatus>("app.order_status");
+builder.MapComposite<Address>("app.address");
+var dataSource = builder.Build();
+
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource));
+```
 
 ## PostgreSQL type mappings
 
@@ -41,7 +51,22 @@ The six built-in range families map to `BlueTuskRange<T>`, and the corresponding
 | `DateTimeOffset` | `tstzrange` | `tstzmultirange` |
 | `DateOnly` | `daterange` | `datemultirange` |
 
-Range and multirange arrays are supported as well. Runtime-registered enum, domain, composite, and record mappings remain the final type-mapping slice of this milestone.
+Range and multirange arrays are supported as well.
+
+Schema-qualified store types map runtime-registered enums and composites, catalogue-discovered domains, and lossless `BlueTuskRecord` values. Their arrays are supported with the same exact runtime type identity. Configure primitive-collection element store types explicitly so EF can build the element mapping used by query parameters and change tracking:
+
+```csharp
+modelBuilder.Entity<Order>(entity =>
+{
+    entity.Property(order => order.Status)
+        .HasColumnType("app.order_status");
+    entity.PrimitiveCollection(order => order.StatusHistory)
+        .HasColumnType("app.order_status[]")
+        .ElementType(element => element.HasStoreType("app.order_status"));
+    entity.Property(order => order.ShippingAddress)
+        .HasColumnType("app.address");
+});
+```
 
 ## Migrations
 
@@ -68,4 +93,4 @@ Generated contexts configure `UseBlueTusk`. PostgreSQL-complete discovery—incl
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, and multirange values through EF. Later 0.3 work extends this suite with user-defined types and PostgreSQL-specific query semantics.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. Later 0.3 work extends this suite with PostgreSQL-specific query semantics.

@@ -21,7 +21,18 @@ Automatic preparation is opt-in per physical connection. `Max Auto Prepare` boun
 Max Auto Prepare=100;Auto Prepare Min Usages=5
 ```
 
-BlueTusk infers built-in PostgreSQL type OIDs from `DbType` or the CLR value. A null parameter must set `DbType` or `PostgreSqlTypeOid`; this avoids relying on ambiguous server inference.
+BlueTusk infers built-in PostgreSQL type OIDs from `DbType` or the CLR value. A null parameter must set `DbType`, `PostgreSqlTypeOid`, or `PostgreSqlTypeName`; this avoids relying on ambiguous server inference. `PostgreSqlTypeName` resolves schema-qualified catalogue types through the connection's runtime registry and supports scalar and array names, including quoted identifiers:
+
+```csharp
+command.Parameters.Add(new BlueTuskParameter(null)
+{
+    PostgreSqlTypeName = "app.order_status",
+});
+command.Parameters.Add(new BlueTuskParameter(null)
+{
+    PostgreSqlTypeName = "app.order_status[]",
+});
+```
 
 Explicit preparation is available synchronously and asynchronously on an open, connection-owned command. BlueTusk creates a named server statement and reuses it across executions; changing the command text or parameter type identity closes and prepares the statement again.
 

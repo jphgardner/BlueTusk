@@ -50,7 +50,57 @@ public sealed class BlueTuskParameterEncoderTests
         var exception = Assert.Throws<InvalidOperationException>(
             () => BlueTuskParameterEncoder.Encode(new BlueTuskParameter(null)));
 
-        Assert.Contains("requires DbType or PostgreSqlTypeOid", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("requires DbType, PostgreSqlTypeOid, or PostgreSqlTypeName", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Resolves_schema_qualified_scalar_and_array_type_names_for_null_parameters()
+    {
+        var scalar = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(91_200),
+            Schema = "app",
+            Name = "order_status",
+            Kind = BlueTuskTypeKind.Enum,
+            ArrayType = new BlueTuskTypeId(91_201),
+        };
+        var array = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(91_201),
+            Schema = "app",
+            Name = "_order_status",
+            Kind = BlueTuskTypeKind.Array,
+            ElementType = scalar.Id,
+        };
+        var types = new BlueTuskTypeRegistryBuilder()
+            .Register(scalar, new BlueTuskStringCodec())
+            .Register(array, new BlueTuskArrayCodec(scalar, new BlueTuskStringCodec()))
+            .Build();
+
+        var scalarValue = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter(null) { PostgreSqlTypeName = "app.order_status" },
+            types);
+        var arrayValue = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter(null) { PostgreSqlTypeName = "app.order_status[]" },
+            types);
+
+        Assert.Equal(91_200U, scalarValue.TypeOid);
+        Assert.Equal(91_201U, arrayValue.TypeOid);
+        Assert.Null(scalarValue.Value);
+        Assert.Null(arrayValue.Value);
+    }
+
+    [Fact]
+    public void Rejects_a_named_parameter_type_missing_from_the_loaded_catalogue()
+    {
+        var types = new BlueTuskTypeRegistryBuilder().Build();
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            BlueTuskParameterEncoder.Encode(
+                new BlueTuskParameter("pending") { PostgreSqlTypeName = "app.order_status" },
+                types));
+
+        Assert.Contains("app.order_status", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("not present", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]

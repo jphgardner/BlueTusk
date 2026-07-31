@@ -175,13 +175,13 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)
 
-- [ ] Complete PostgreSQL type mappings
+- [x] Complete PostgreSQL type mappings
   - [x] Built-in wire-native scalar mappings with exact parameter OIDs
   - [x] Network, geometric, bit-string, money, arbitrary numeric, full-text, JSON path, system identifier, transaction, and catalogue CLR values
   - [x] Explicit `json`, `jsonb`, `xml`, `cidr`, `bit`, and legacy snapshot store-type selection
   - [x] Built-in one- and multidimensional arrays with structural change tracking and exact element-family OIDs
   - [x] All six built-in range and multirange families, including their array types
-  - [ ] Runtime-registered enums, domains, composites, records, and their arrays
+  - [x] Runtime-registered enums, domains, composites, records, and their arrays
 - [ ] PostgreSQL operators and operator-aware LINQ translations
 - [ ] PostgreSQL scalar, aggregate, and set-returning function translations
 - [ ] PostgreSQL-specific query roots and SQL constructs

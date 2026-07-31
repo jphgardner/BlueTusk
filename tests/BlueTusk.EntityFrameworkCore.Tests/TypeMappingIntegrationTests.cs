@@ -10,6 +10,119 @@ namespace BlueTusk.EntityFrameworkCore.Tests;
 public sealed class TypeMappingIntegrationTests
 {
     [Fact]
+    public async Task Runtime_registered_enums_domains_composites_and_arrays_round_trip_through_EF_Core()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var enumName = $"ef_order_status_{suffix}";
+        var domainName = $"ef_positive_integer_{suffix}";
+        var compositeName = $"ef_address_{suffix}";
+        var recordName = $"ef_record_address_{suffix}";
+        await ExecuteNonQueryAsync(
+            connectionString,
+            $"""
+            DROP TABLE IF EXISTS "ef_user_type_values";
+            CREATE TYPE public.{enumName} AS ENUM ('pending', 'in-progress', 'Complete');
+            CREATE DOMAIN public.{domainName} AS int4 CHECK (VALUE > 0);
+            CREATE TYPE public.{compositeName} AS
+                (house_number int4, street text, note text);
+            CREATE TYPE public.{recordName} AS
+                (house_number int4, street text, note text);
+            CREATE TABLE "ef_user_type_values" (
+                "Id" integer PRIMARY KEY,
+                "Status" public.{enumName} NOT NULL,
+                "OptionalStatus" public.{enumName} NULL,
+                "Statuses" public.{enumName}[] NOT NULL,
+                "OptionalStatuses" public.{enumName}[] NULL,
+                "DomainValue" public.{domainName} NOT NULL,
+                "OptionalDomainValue" public.{domainName} NULL,
+                "DomainValues" public.{domainName}[] NOT NULL,
+                "Address" public.{compositeName} NOT NULL,
+                "OptionalAddress" public.{compositeName} NULL,
+                "Addresses" public.{compositeName}[] NOT NULL,
+                "RecordAddress" public.{recordName} NOT NULL,
+                "RecordAddresses" public.{recordName}[] NOT NULL)
+            """);
+
+        var builder = new BlueTuskDataSourceBuilder(connectionString);
+        builder.MapEnum<EfOrderStatus>($"public.{enumName}");
+        builder.MapComposite<EfAddress>($"public.{compositeName}");
+        await using var dataSource = builder.Build();
+        var expected = new UserTypeValue
+        {
+            Id = 1,
+            Status = EfOrderStatus.InProgress,
+            Statuses = [EfOrderStatus.Pending, EfOrderStatus.Complete],
+            DomainValue = 42,
+            DomainValues = [1, 2, 3],
+            Address = new EfAddress(221, "Baker Street", null),
+            Addresses =
+            [
+                new EfAddress(221, "Baker Street", null),
+                new EfAddress(7, "Side Road", "rear entrance"),
+            ],
+            RecordAddress = CreateAddressRecord(19, "Record Road", null),
+            RecordAddresses =
+            [
+                CreateAddressRecord(19, "Record Road", null),
+                CreateAddressRecord(23, "Binary Boulevard", "north entrance"),
+            ],
+        };
+
+        try
+        {
+            await using (var context = CreateUserTypeContext(
+                dataSource,
+                enumName,
+                domainName,
+                compositeName,
+                recordName))
+            {
+                context.Values.Add(expected);
+                Assert.Equal(1, await context.SaveChangesAsync());
+            }
+
+            await using (var context = CreateUserTypeContext(
+                dataSource,
+                enumName,
+                domainName,
+                compositeName,
+                recordName))
+            {
+                var actual = await context.Values.AsNoTracking().SingleAsync();
+                Assert.Equal(expected.Status, actual.Status);
+                Assert.Null(actual.OptionalStatus);
+                Assert.Equal(expected.Statuses, actual.Statuses);
+                Assert.Null(actual.OptionalStatuses);
+                Assert.Equal(expected.DomainValue, actual.DomainValue);
+                Assert.Null(actual.OptionalDomainValue);
+                Assert.Equal(expected.DomainValues, actual.DomainValues);
+                Assert.Equal(expected.Address, actual.Address);
+                Assert.Null(actual.OptionalAddress);
+                Assert.Equal(expected.Addresses, actual.Addresses);
+                AssertAddressRecord(expected.RecordAddress, actual.RecordAddress);
+                Assert.Equal(expected.RecordAddresses.Length, actual.RecordAddresses.Length);
+                for (var index = 0; index < expected.RecordAddresses.Length; index++)
+                {
+                    AssertAddressRecord(expected.RecordAddresses[index], actual.RecordAddresses[index]);
+                }
+            }
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(
+                connectionString,
+                $"""
+                DROP TABLE IF EXISTS "ef_user_type_values";
+                DROP TYPE IF EXISTS public.{recordName};
+                DROP TYPE IF EXISTS public.{compositeName};
+                DROP DOMAIN IF EXISTS public.{domainName};
+                DROP TYPE IF EXISTS public.{enumName}
+                """);
+        }
+    }
+
+    [Fact]
     public async Task PostgreSQL_ranges_multiranges_and_their_arrays_round_trip_through_EF_Core()
     {
         var connectionString = GetConnectionString();
@@ -433,6 +546,19 @@ public sealed class TypeMappingIntegrationTests
         return new RangeValueContext(options);
     }
 
+    private static UserTypeValueContext CreateUserTypeContext(
+        BlueTuskDataSource dataSource,
+        string enumName,
+        string domainName,
+        string compositeName,
+        string recordName)
+    {
+        var options = new DbContextOptionsBuilder<UserTypeValueContext>()
+            .UseBlueTusk(dataSource)
+            .Options;
+        return new UserTypeValueContext(options, enumName, domainName, compositeName, recordName);
+    }
+
     private static async Task ExecuteNonQueryAsync(string connectionString, string sql)
     {
         await using var connection = new BlueTuskConnection(connectionString);
@@ -516,6 +642,46 @@ public sealed class TypeMappingIntegrationTests
             value.ToTable("ef_range_values");
             value.HasKey(entity => entity.Id);
             value.Property(entity => entity.Id).ValueGeneratedNever();
+        }
+    }
+
+    private sealed class UserTypeValueContext(
+        DbContextOptions<UserTypeValueContext> options,
+        string enumName,
+        string domainName,
+        string compositeName,
+        string recordName) : DbContext(options)
+    {
+        public DbSet<UserTypeValue> Values => Set<UserTypeValue>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var value = modelBuilder.Entity<UserTypeValue>();
+            value.ToTable("ef_user_type_values");
+            value.HasKey(entity => entity.Id);
+            value.Property(entity => entity.Id).ValueGeneratedNever();
+            value.Property(entity => entity.Status).HasColumnType($"public.{enumName}");
+            value.Property(entity => entity.OptionalStatus).HasColumnType($"public.{enumName}");
+            value.PrimitiveCollection(entity => entity.Statuses)
+                .HasColumnType($"public.{enumName}[]")
+                .ElementType(element => element.HasStoreType($"public.{enumName}"));
+            value.PrimitiveCollection(entity => entity.OptionalStatuses)
+                .HasColumnType($"public.{enumName}[]")
+                .ElementType(element => element.HasStoreType($"public.{enumName}"));
+            value.Property(entity => entity.DomainValue).HasColumnType($"public.{domainName}");
+            value.Property(entity => entity.OptionalDomainValue).HasColumnType($"public.{domainName}");
+            value.PrimitiveCollection(entity => entity.DomainValues)
+                .HasColumnType($"public.{domainName}[]")
+                .ElementType(element => element.HasStoreType($"public.{domainName}"));
+            value.Property(entity => entity.Address).HasColumnType($"public.{compositeName}");
+            value.Property(entity => entity.OptionalAddress).HasColumnType($"public.{compositeName}");
+            value.PrimitiveCollection(entity => entity.Addresses)
+                .HasColumnType($"public.{compositeName}[]")
+                .ElementType(element => element.HasStoreType($"public.{compositeName}"));
+            value.Property(entity => entity.RecordAddress).HasColumnType($"public.{recordName}");
+            value.PrimitiveCollection(entity => entity.RecordAddresses)
+                .HasColumnType($"public.{recordName}[]")
+                .ElementType(element => element.HasStoreType($"public.{recordName}"));
         }
     }
 
@@ -604,5 +770,53 @@ public sealed class TypeMappingIntegrationTests
         public BlueTuskMultirange<int>[] IntMultirangeArray { get; set; } = [];
         public BlueTuskRange<int>? OptionalIntRange { get; set; }
         public BlueTuskMultirange<int>? OptionalIntMultirange { get; set; }
+    }
+
+    private sealed class UserTypeValue
+    {
+        public int Id { get; set; }
+        public EfOrderStatus Status { get; set; }
+        public EfOrderStatus? OptionalStatus { get; set; }
+        public EfOrderStatus[] Statuses { get; set; } = [];
+        public EfOrderStatus[]? OptionalStatuses { get; set; }
+        public int DomainValue { get; set; }
+        public int? OptionalDomainValue { get; set; }
+        public int[] DomainValues { get; set; } = [];
+        public EfAddress Address { get; set; } = new(0, string.Empty, null);
+        public EfAddress? OptionalAddress { get; set; }
+        public EfAddress[] Addresses { get; set; } = [];
+        public BlueTuskRecord RecordAddress { get; set; } = CreateAddressRecord(0, string.Empty, null);
+        public BlueTuskRecord[] RecordAddresses { get; set; } = [];
+    }
+
+    private enum EfOrderStatus
+    {
+        [BlueTuskName("pending")]
+        Pending,
+
+        [BlueTuskName("in-progress")]
+        InProgress,
+
+        Complete,
+    }
+
+    private sealed record EfAddress(int HouseNumber, string Street, string? Note);
+
+    private static BlueTuskRecord CreateAddressRecord(int houseNumber, string street, string? note) => new(
+    [
+        new BlueTuskRecordField("house_number", BlueTuskBuiltInTypes.Int4, houseNumber),
+        new BlueTuskRecordField("street", BlueTuskBuiltInTypes.Text, street),
+        new BlueTuskRecordField("note", BlueTuskBuiltInTypes.Text, note),
+    ]);
+
+    private static void AssertAddressRecord(BlueTuskRecord expected, BlueTuskRecord actual)
+    {
+        Assert.Equal(expected.Count, actual.Count);
+        for (var index = 0; index < expected.Count; index++)
+        {
+            Assert.Equal(expected[index].Name, actual[index].Name);
+            Assert.Equal(expected[index].Type!.Name, actual[index].Type!.Name);
+            Assert.Equal(expected[index].Value, actual[index].Value);
+        }
     }
 }

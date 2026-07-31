@@ -73,7 +73,8 @@ internal static class BlueTuskParameterEncoder
     {
         ArgumentNullException.ThrowIfNull(parameter);
         var value = parameter.Value is DBNull ? null : parameter.Value;
-        var typeOid = parameter.PostgreSqlTypeOid ?? ResolveTypeOid(parameter.DbType, value, types);
+        var typeOid = parameter.PostgreSqlTypeOid
+            ?? ResolveTypeOid(parameter.PostgreSqlTypeName, parameter.DbType, value, types);
         if (typeOid == 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -87,10 +88,16 @@ internal static class BlueTuskParameterEncoder
     }
 
     private static uint ResolveTypeOid(
+        string? postgreSqlTypeName,
         DbType dbType,
         object? value,
         BlueTuskTypeRegistry? types)
     {
+        if (!string.IsNullOrWhiteSpace(postgreSqlTypeName))
+        {
+            return ResolveTypeName(postgreSqlTypeName, types);
+        }
+
         if (dbType != DbType.Object)
         {
             return dbType switch
@@ -118,7 +125,7 @@ internal static class BlueTuskParameterEncoder
         return value switch
         {
             null => throw new InvalidOperationException(
-                "A null parameter requires DbType or PostgreSqlTypeOid so PostgreSQL can determine its type."),
+                "A null parameter requires DbType, PostgreSqlTypeOid, or PostgreSqlTypeName so PostgreSQL can determine its type."),
             bool => BooleanOid,
             sbyte or byte or short or ushort => Int2Oid,
             int => Int4Oid,
@@ -158,6 +165,42 @@ internal static class BlueTuskParameterEncoder
                 $"CLR type {value.GetType().FullName} does not have a BlueTusk parameter encoder yet. " +
                 "Register a unique runtime codec or set PostgreSqlTypeOid and supply a string or byte payload."),
         };
+    }
+
+    private static uint ResolveTypeName(string postgreSqlTypeName, BlueTuskTypeRegistry? types)
+    {
+        if (types is null)
+        {
+            throw new InvalidOperationException(
+                "PostgreSqlTypeName requires an open BlueTusk connection with a loaded PostgreSQL type catalogue.");
+        }
+
+        var typeName = postgreSqlTypeName.AsSpan().Trim().ToString();
+        var isArray = false;
+        while (typeName.EndsWith("[]", StringComparison.Ordinal))
+        {
+            isArray = true;
+            typeName = typeName[..^2].TrimEnd();
+        }
+
+        var parsedName = BlueTuskTypeName.Parse(typeName);
+        if (!types.TryGetType(parsedName, out var type, out _))
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL type {parsedName} is not present in the loaded type catalogue.");
+        }
+
+        if (!isArray)
+        {
+            return type!.Id.Oid;
+        }
+
+        if (type!.ArrayType is not { } arrayType)
+        {
+            throw new InvalidOperationException($"PostgreSQL type {parsedName} does not have an array type.");
+        }
+
+        return arrayType.Oid;
     }
 
     private static BlueTuskExtendedQueryParameter EncodeValue(

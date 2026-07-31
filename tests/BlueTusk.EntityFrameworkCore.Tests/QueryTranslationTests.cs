@@ -60,6 +60,7 @@ public sealed class QueryTranslationTests
         { typeof(BlueTuskMostCommonValueStatistics), "pg_mcv_list" },
         { typeof(BlueTuskBrinBloomSummary), "pg_brin_bloom_summary" },
         { typeof(BlueTuskBrinMinMaxMultiSummary), "pg_brin_minmax_multi_summary" },
+        { typeof(BlueTuskRecord), "record" },
         { typeof(BlueTuskRange<int>), "int4range" },
         { typeof(BlueTuskRange<BlueTuskNumeric>), "numrange" },
         { typeof(BlueTuskRange<DateTime>), "tsrange" },
@@ -100,6 +101,7 @@ public sealed class QueryTranslationTests
         { typeof(BlueTuskTextSearchVector[]), "tsvector[]", typeof(BlueTuskTextSearchVector) },
         { typeof(BlueTuskRange<int>[]), "int4range[]", typeof(BlueTuskRange<int>) },
         { typeof(BlueTuskMultirange<int>[]), "int4multirange[]", typeof(BlueTuskMultirange<int>) },
+        { typeof(BlueTuskRecord[]), "record[]", typeof(BlueTuskRecord) },
     };
 
     [Theory]
