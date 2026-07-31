@@ -1,4 +1,7 @@
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Tests;
 
@@ -6,6 +9,90 @@ public sealed class QueryTranslationTests
 {
     private const string ConnectionString =
         "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk_tests";
+
+    public static TheoryData<Type, string> NativeClrMappings => new()
+    {
+        { typeof(uint), "oid" },
+        { typeof(BlueTuskInterval), "interval" },
+        { typeof(BlueTuskTimeWithTimeZone), "time with time zone" },
+        { typeof(BlueTuskBitString), "bit varying" },
+        { typeof(BlueTuskNumeric), "numeric" },
+        { typeof(BlueTuskTupleId), "tid" },
+        { typeof(BlueTuskLogSequenceNumber), "pg_lsn" },
+        { typeof(BlueTuskNetworkAddress), "inet" },
+        { typeof(BlueTuskMacAddress), "macaddr" },
+        { typeof(BlueTuskMacAddress8), "macaddr8" },
+        { typeof(BlueTuskPoint), "point" },
+        { typeof(BlueTuskLine), "line" },
+        { typeof(BlueTuskLineSegment), "lseg" },
+        { typeof(BlueTuskBox), "box" },
+        { typeof(BlueTuskPath), "path" },
+        { typeof(BlueTuskPolygon), "polygon" },
+        { typeof(BlueTuskCircle), "circle" },
+        { typeof(BlueTuskMoney), "money" },
+        { typeof(BlueTuskTextSearchVector), "tsvector" },
+        { typeof(BlueTuskTextSearchQuery), "tsquery" },
+        { typeof(BlueTuskJsonPath), "jsonpath" },
+        { typeof(BlueTuskRegProc), "regproc" },
+        { typeof(BlueTuskRegProcedure), "regprocedure" },
+        { typeof(BlueTuskRegOper), "regoper" },
+        { typeof(BlueTuskRegOperator), "regoperator" },
+        { typeof(BlueTuskRegClass), "regclass" },
+        { typeof(BlueTuskRegType), "regtype" },
+        { typeof(BlueTuskRegConfig), "regconfig" },
+        { typeof(BlueTuskRegDictionary), "regdictionary" },
+        { typeof(BlueTuskRegNamespace), "regnamespace" },
+        { typeof(BlueTuskRegRole), "regrole" },
+        { typeof(BlueTuskRegCollation), "regcollation" },
+        { typeof(BlueTuskTransactionId), "xid" },
+        { typeof(BlueTuskCommandId), "cid" },
+        { typeof(BlueTuskFullTransactionId), "xid8" },
+        { typeof(BlueTuskTransactionSnapshot), "pg_snapshot" },
+        { typeof(BlueTuskRefCursor), "refcursor" },
+        { typeof(BlueTuskNodeTree), "pg_node_tree" },
+        { typeof(BlueTuskInternalChar), "\"char\"" },
+        { typeof(BlueTuskAccessControlItem), "aclitem" },
+        { typeof(BlueTuskGistTextSearchVector), "gtsvector" },
+        { typeof(BlueTuskInt16Vector), "int2vector" },
+        { typeof(BlueTuskObjectIdentifierVector), "oidvector" },
+        { typeof(BlueTuskNDistinctStatistics), "pg_ndistinct" },
+        { typeof(BlueTuskDependencyStatistics), "pg_dependencies" },
+        { typeof(BlueTuskMostCommonValueStatistics), "pg_mcv_list" },
+        { typeof(BlueTuskBrinBloomSummary), "pg_brin_bloom_summary" },
+        { typeof(BlueTuskBrinMinMaxMultiSummary), "pg_brin_minmax_multi_summary" },
+    };
+
+    public static TheoryData<string, Type> ExplicitNativeStoreMappings => new()
+    {
+        { "json", typeof(string) },
+        { "jsonb", typeof(string) },
+        { "xml", typeof(string) },
+        { "cidr", typeof(BlueTuskNetworkAddress) },
+        { "bit", typeof(BlueTuskBitString) },
+        { "txid_snapshot", typeof(BlueTuskTransactionSnapshot) },
+    };
+
+    [Theory]
+    [MemberData(nameof(NativeClrMappings))]
+    public void PostgreSQL_native_CLR_types_have_provider_mappings(Type clrType, string expectedStoreType)
+    {
+        using var context = CreateContext();
+        var mapping = context.GetService<IRelationalTypeMappingSource>().FindMapping(clrType);
+
+        Assert.NotNull(mapping);
+        Assert.Equal(expectedStoreType, mapping.StoreType);
+    }
+
+    [Theory]
+    [MemberData(nameof(ExplicitNativeStoreMappings))]
+    public void Explicit_PostgreSQL_store_types_select_their_wire_CLR_type(string storeType, Type expectedClrType)
+    {
+        using var context = CreateContext();
+        var mapping = context.GetService<IRelationalTypeMappingSource>().FindMapping(storeType);
+
+        Assert.NotNull(mapping);
+        Assert.Equal(expectedClrType, mapping.ClrType);
+    }
 
     [Fact]
     public void Core_model_uses_PostgreSQL_store_types()

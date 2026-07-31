@@ -1,12 +1,87 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
+using System.Text.Json;
 using Xunit.Sdk;
 
 namespace BlueTusk.EntityFrameworkCore.Tests;
 
 public sealed class TypeMappingIntegrationTests
 {
+    [Fact]
+    public async Task PostgreSQL_native_scalar_types_round_trip_through_EF_Core()
+    {
+        var connectionString = GetConnectionString();
+        await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_native_type_values\"");
+        await ExecuteNonQueryAsync(connectionString, CreateNativeTableSql);
+
+        var expected = new NativeTypeValue
+        {
+            Id = 1,
+            InetValue = BlueTuskNetworkAddress.Parse("192.0.2.42/24"),
+            CidrValue = BlueTuskNetworkAddress.Parse("198.51.100.0/24", isCidr: true),
+            MacAddressValue = BlueTuskMacAddress.Parse("08:00:2b:01:02:03"),
+            MacAddress8Value = BlueTuskMacAddress8.Parse("08:00:2b:ff:fe:01:02:03"),
+            PointValue = new BlueTuskPoint(12.5, -4.25),
+            LineSegmentValue = new BlueTuskLineSegment(new BlueTuskPoint(0, 1), new BlueTuskPoint(2, 3)),
+            BoxValue = new BlueTuskBox(new BlueTuskPoint(-1, -2), new BlueTuskPoint(3, 4)),
+            CircleValue = new BlueTuskCircle(new BlueTuskPoint(5, 6), 7.5),
+            BitValue = new BlueTuskBitString("101101"),
+            LogSequenceNumberValue = BlueTuskLogSequenceNumber.Parse("16/B374D848"),
+            NumericValue = BlueTuskNumeric.Parse("12345678901234567890.125"),
+            TimeWithTimeZoneValue = BlueTuskTimeWithTimeZone.Parse("14:30:15.25+01:30"),
+            IntervalValue = new BlueTuskInterval(months: 14, days: 3, microseconds: 4_500_000),
+            JsonPathValue = new BlueTuskJsonPath("$.\"store\".\"book\"[*]?(@.\"price\" < 10)"),
+            TextSearchVectorValue = BlueTuskTextSearchVector.Parse("'blue':1A 'tusk':2B"),
+            TextSearchQueryValue = BlueTuskTextSearchQuery.Parse("'blue' & 'tusk':*"),
+            JsonValue = "{\"provider\":\"BlueTusk\"}",
+            JsonbValue = "{\"complete\":true,\"version\":3}",
+            XmlValue = "<provider name=\"BlueTusk\" />",
+        };
+
+        try
+        {
+            await using (var context = CreateNativeContext(connectionString))
+            {
+                context.Values.Add(expected);
+                Assert.Equal(1, await context.SaveChangesAsync());
+            }
+
+            await using (var context = CreateNativeContext(connectionString))
+            {
+                var actual = await context.Values.AsNoTracking().SingleAsync();
+                Assert.Equal(expected.Id, actual.Id);
+                Assert.Equal(expected.InetValue, actual.InetValue);
+                Assert.Equal(expected.CidrValue, actual.CidrValue);
+                Assert.Equal(expected.MacAddressValue, actual.MacAddressValue);
+                Assert.Equal(expected.MacAddress8Value, actual.MacAddress8Value);
+                Assert.Equal(expected.PointValue, actual.PointValue);
+                Assert.Equal(expected.LineSegmentValue, actual.LineSegmentValue);
+                Assert.Equal(expected.BoxValue, actual.BoxValue);
+                Assert.Equal(expected.CircleValue, actual.CircleValue);
+                Assert.Equal(expected.BitValue, actual.BitValue);
+                Assert.Equal(expected.LogSequenceNumberValue, actual.LogSequenceNumberValue);
+                Assert.Equal(expected.NumericValue, actual.NumericValue);
+                Assert.Equal(expected.TimeWithTimeZoneValue, actual.TimeWithTimeZoneValue);
+                Assert.Equal(expected.IntervalValue, actual.IntervalValue);
+                Assert.Equal(expected.JsonPathValue, actual.JsonPathValue);
+                Assert.Equal(expected.TextSearchVectorValue, actual.TextSearchVectorValue);
+                Assert.Equal(expected.TextSearchQueryValue, actual.TextSearchQueryValue);
+                Assert.Equal(expected.JsonValue, actual.JsonValue);
+                using var expectedJsonb = JsonDocument.Parse(expected.JsonbValue);
+                using var actualJsonb = JsonDocument.Parse(actual.JsonbValue);
+                Assert.True(JsonElement.DeepEquals(expectedJsonb.RootElement, actualJsonb.RootElement));
+                Assert.Equal(expected.XmlValue, actual.XmlValue);
+                Assert.Null(actual.OptionalJsonPathValue);
+            }
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_native_type_values\"");
+        }
+    }
+
     [Fact]
     public async Task Core_scalar_types_round_trip_through_EF_Core()
     {
@@ -95,12 +170,45 @@ public sealed class TypeMappingIntegrationTests
             "TimeSpanValue" interval NOT NULL)
         """;
 
+    private const string CreateNativeTableSql = """
+        CREATE TABLE "ef_native_type_values" (
+            "Id" integer PRIMARY KEY,
+            "InetValue" inet NOT NULL,
+            "CidrValue" cidr NOT NULL,
+            "MacAddressValue" macaddr NOT NULL,
+            "MacAddress8Value" macaddr8 NOT NULL,
+            "PointValue" point NOT NULL,
+            "LineSegmentValue" lseg NOT NULL,
+            "BoxValue" box NOT NULL,
+            "CircleValue" circle NOT NULL,
+            "BitValue" bit(6) NOT NULL,
+            "LogSequenceNumberValue" pg_lsn NOT NULL,
+            "NumericValue" numeric NOT NULL,
+            "TimeWithTimeZoneValue" time with time zone NOT NULL,
+            "IntervalValue" interval NOT NULL,
+            "JsonPathValue" jsonpath NOT NULL,
+            "TextSearchVectorValue" tsvector NOT NULL,
+            "TextSearchQueryValue" tsquery NOT NULL,
+            "JsonValue" json NOT NULL,
+            "JsonbValue" jsonb NOT NULL,
+            "XmlValue" xml NOT NULL,
+            "OptionalJsonPathValue" jsonpath NULL)
+        """;
+
     private static TypeValueContext CreateContext(string connectionString)
     {
         var options = new DbContextOptionsBuilder<TypeValueContext>()
             .UseBlueTusk(connectionString)
             .Options;
         return new TypeValueContext(options);
+    }
+
+    private static NativeTypeValueContext CreateNativeContext(string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<NativeTypeValueContext>()
+            .UseBlueTusk(connectionString)
+            .Options;
+        return new NativeTypeValueContext(options);
     }
 
     private static async Task ExecuteNonQueryAsync(string connectionString, string sql)
@@ -142,6 +250,24 @@ public sealed class TypeMappingIntegrationTests
         }
     }
 
+    private sealed class NativeTypeValueContext(DbContextOptions<NativeTypeValueContext> options) : DbContext(options)
+    {
+        public DbSet<NativeTypeValue> Values => Set<NativeTypeValue>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var value = modelBuilder.Entity<NativeTypeValue>();
+            value.ToTable("ef_native_type_values");
+            value.HasKey(entity => entity.Id);
+            value.Property(entity => entity.Id).ValueGeneratedNever();
+            value.Property(entity => entity.CidrValue).HasColumnType("cidr");
+            value.Property(entity => entity.BitValue).HasColumnType("bit(6)");
+            value.Property(entity => entity.JsonValue).HasColumnType("json");
+            value.Property(entity => entity.JsonbValue).HasColumnType("jsonb");
+            value.Property(entity => entity.XmlValue).HasColumnType("xml");
+        }
+    }
+
     private sealed class TypeValue
     {
         public int Id { get; set; }
@@ -162,5 +288,30 @@ public sealed class TypeMappingIntegrationTests
         public DateOnly DateOnlyValue { get; set; }
         public TimeOnly TimeOnlyValue { get; set; }
         public TimeSpan TimeSpanValue { get; set; }
+    }
+
+    private sealed class NativeTypeValue
+    {
+        public int Id { get; set; }
+        public BlueTuskNetworkAddress InetValue { get; set; }
+        public BlueTuskNetworkAddress CidrValue { get; set; }
+        public BlueTuskMacAddress MacAddressValue { get; set; }
+        public BlueTuskMacAddress8 MacAddress8Value { get; set; }
+        public BlueTuskPoint PointValue { get; set; }
+        public BlueTuskLineSegment LineSegmentValue { get; set; }
+        public BlueTuskBox BoxValue { get; set; }
+        public BlueTuskCircle CircleValue { get; set; }
+        public BlueTuskBitString BitValue { get; set; }
+        public BlueTuskLogSequenceNumber LogSequenceNumberValue { get; set; }
+        public BlueTuskNumeric NumericValue { get; set; }
+        public BlueTuskTimeWithTimeZone TimeWithTimeZoneValue { get; set; }
+        public BlueTuskInterval IntervalValue { get; set; }
+        public BlueTuskJsonPath JsonPathValue { get; set; }
+        public BlueTuskTextSearchVector TextSearchVectorValue { get; set; } = BlueTuskTextSearchVector.Parse(string.Empty);
+        public BlueTuskTextSearchQuery TextSearchQueryValue { get; set; } = BlueTuskTextSearchQuery.Empty;
+        public string JsonValue { get; set; } = string.Empty;
+        public string JsonbValue { get; set; } = string.Empty;
+        public string XmlValue { get; set; } = string.Empty;
+        public BlueTuskJsonPath? OptionalJsonPathValue { get; set; }
     }
 }

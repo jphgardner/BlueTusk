@@ -166,6 +166,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] EF design-time provider discovery and `UseBlueTusk` context generation
   - [x] Tables, views, columns, defaults, generated values, keys, foreign keys, indexes, and sequences
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
+  - [x] Catalogue-only sequence discovery safe during concurrent schema changes
 - [x] Initial EF Core relational specification-suite coverage
   - [x] Provider-service lifetime and isolation contracts
   - [x] Raw SQL composition, parameterization, compiled queries, and nullable projections
@@ -175,6 +176,10 @@ This file tracks executable repository status. The product vision is broader; un
 ## 0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)
 
 - [ ] Complete PostgreSQL type mappings
+  - [x] Built-in wire-native scalar mappings with exact parameter OIDs
+  - [x] Network, geometric, bit-string, money, arbitrary numeric, full-text, JSON path, system identifier, transaction, and catalogue CLR values
+  - [x] Explicit `json`, `jsonb`, `xml`, `cidr`, `bit`, and legacy snapshot store-type selection
+  - [ ] Arrays, ranges, multiranges, enums, domains, composites, and records
 - [ ] PostgreSQL operators and operator-aware LINQ translations
 - [ ] PostgreSQL scalar, aggregate, and set-returning function translations
 - [ ] PostgreSQL-specific query roots and SQL constructs

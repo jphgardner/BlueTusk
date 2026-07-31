@@ -396,29 +396,28 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         Selection selection)
     {
         const string sql = """
-            SELECT schemaname,
-                   sequencename,
-                   data_type::text,
-                   start_value,
-                   increment_by,
-                   min_value,
-                   max_value,
-                   cycle
-            FROM pg_catalog.pg_sequences
-            WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+            SELECT sequence_namespace.nspname,
+                   sequence_class.relname,
+                   pg_catalog.format_type(sequence.seqtypid, NULL),
+                   sequence.seqstart,
+                   sequence.seqincrement,
+                   sequence.seqmin,
+                   sequence.seqmax,
+                   sequence.seqcycle
+            FROM pg_catalog.pg_class AS sequence_class
+            JOIN pg_catalog.pg_namespace AS sequence_namespace
+              ON sequence_namespace.oid = sequence_class.relnamespace
+            JOIN pg_catalog.pg_sequence AS sequence
+              ON sequence.seqrelid = sequence_class.oid
+            WHERE sequence_class.relkind = 'S'
+              AND sequence_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
               AND NOT EXISTS (
                   SELECT 1
-                  FROM pg_catalog.pg_class AS sequence_class
-                  JOIN pg_catalog.pg_namespace AS sequence_namespace
-                    ON sequence_namespace.oid = sequence_class.relnamespace
-                  JOIN pg_catalog.pg_depend AS dependency
-                    ON dependency.classid = 'pg_catalog.pg_class'::pg_catalog.regclass
-                   AND dependency.objid = sequence_class.oid
-                  WHERE sequence_class.relkind = 'S'
-                    AND sequence_namespace.nspname = schemaname
-                    AND sequence_class.relname = sequencename
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_class'::pg_catalog.regclass
+                    AND dependency.objid = sequence_class.oid
                     AND dependency.deptype IN ('a', 'i'))
-            ORDER BY schemaname, sequencename
+            ORDER BY sequence_namespace.nspname, sequence_class.relname
             """;
 
         using var command = connection.CreateCommand();
