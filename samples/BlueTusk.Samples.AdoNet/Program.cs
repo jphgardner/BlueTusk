@@ -16,4 +16,21 @@ while (await reader.ReadAsync())
     Console.WriteLine($"{reader.GetInt32(0)} — {reader.GetString(1)}");
 }
 
+await using var batch = connection.CreateBatch();
+var first = batch.BatchCommands.Add("SELECT @value::int4 AS value");
+first.Parameters.Add(new BlueTuskParameter<int>(42) { ParameterName = "value" });
+batch.BatchCommands.Add("SELECT 'one protocol cycle'::text AS description");
+
+await using var batchReader = await batch.ExecuteReaderAsync();
+if (await batchReader.ReadAsync())
+{
+    Console.WriteLine($"Batch value: {batchReader.GetInt32(0)}");
+}
+
+await batchReader.NextResultAsync();
+if (await batchReader.ReadAsync())
+{
+    Console.WriteLine($"Batch description: {batchReader.GetString(0)}");
+}
+
 return 0;

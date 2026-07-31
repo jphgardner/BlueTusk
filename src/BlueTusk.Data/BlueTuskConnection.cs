@@ -98,6 +98,8 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);
 
+    public override bool CanCreateBatch => true;
+
     /// <summary>Gets the asynchronous stream of notifications received by this connection.</summary>
     public IAsyncEnumerable<BlueTuskNotification> Notifications
     {
@@ -767,6 +769,10 @@ public sealed class BlueTuskConnection : DbConnection
     }
 
     protected override DbCommand CreateDbCommand() => new BlueTuskCommand { Connection = this };
+
+    protected override DbBatch CreateDbBatch() => new BlueTuskBatch(this);
+
+    public new BlueTuskBatch CreateBatch() => (BlueTuskBatch)base.CreateBatch();
 
     protected override void Dispose(bool disposing)
     {

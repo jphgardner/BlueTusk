@@ -37,6 +37,14 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         string statementName,
         CancellationToken cancellationToken = default);
 
+    ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
+        IReadOnlyList<BlueTuskBatchQuery> queries,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
+        IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
+        CancellationToken cancellationToken = default);
+
     ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
@@ -182,6 +190,16 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         string statementName,
         CancellationToken cancellationToken = default) =>
         _session.ClosePreparedStatementAsync(statementName, cancellationToken);
+
+    public ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
+        IReadOnlyList<BlueTuskBatchQuery> queries,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecuteBatchAsync(queries, cancellationToken);
+
+    public ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
+        IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecutePreparedBatchAsync(queries, cancellationToken);
 
     public ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,

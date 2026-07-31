@@ -123,7 +123,7 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Bounded automatic preparation cache with usage promotion, LRU eviction, and reset invalidation
     - [x] Deliberately selectable unnamed extended-query execution
     - [ ] Synchronous preparation
-  - [ ] `DbBatch`/`DbBatchCommand`, parameters, transactions, cancellation, and multiple results
+  - [x] `DbBatch`/`DbBatchCommand`, parameters, transactions, cancellation, and multiple results
   - [x] Safe named-parameter rewriting and command execution-mode selection
   - [ ] Ordered multi-host failover, target-session selection, and per-host pools
 - [ ] Genuine synchronous connection and query paths

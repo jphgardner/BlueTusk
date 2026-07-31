@@ -92,6 +92,16 @@ public class PoolCheckoutBenchmarks : IAsyncDisposable
             CancellationToken cancellationToken = default) =>
             throw new NotSupportedException();
 
+        public ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
+            IReadOnlyList<BlueTuskBatchQuery> queries,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
+        public ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
+            IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
+            CancellationToken cancellationToken = default) =>
+            throw new NotSupportedException();
+
         public ValueTask<BlueTuskCopyResult> CopyInAsync(
             string sql,
             Stream source,

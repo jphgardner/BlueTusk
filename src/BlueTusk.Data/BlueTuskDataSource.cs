@@ -36,6 +36,8 @@ public sealed class BlueTuskDataSource : DbDataSource
 
     public new BlueTuskCommand CreateCommand(string commandText) => (BlueTuskCommand)base.CreateCommand(commandText);
 
+    public new BlueTuskBatch CreateBatch() => (BlueTuskBatch)base.CreateBatch();
+
     public BlueTuskPoolStatistics GetPoolStatistics() =>
         _pool?.Statistics ?? new BlueTuskPoolStatistics(
             PoolingEnabled: false,
@@ -85,6 +87,8 @@ public sealed class BlueTuskDataSource : DbDataSource
 
     protected override DbCommand CreateDbCommand([AllowNull] string commandText) =>
         new BlueTuskCommand(commandText ?? string.Empty, this);
+
+    protected override DbBatch CreateDbBatch() => new BlueTuskBatch(this);
 
     protected override void Dispose(bool disposing)
     {

@@ -61,4 +61,6 @@ Connection-owned [`LISTEN`/`NOTIFY` APIs](notifications.md) deliver PostgreSQL n
 
 Transactional [large-object streams](large-objects.md) support asynchronous creation, deletion, reads, writes, 64-bit seeks, and truncation.
 
-`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Network-backed sequential readers, batches, and synchronous query execution remain in progress for 0.1.0.
+[`BlueTuskBatch`](batches.md) implements `DbBatch`/`DbBatchCommand` with parameters, ordered multiple results, preparation, transactions, timeouts, cancellation, and data-source-owned execution.
+
+`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Network-backed sequential readers and synchronous query execution remain in progress for 0.1.0.

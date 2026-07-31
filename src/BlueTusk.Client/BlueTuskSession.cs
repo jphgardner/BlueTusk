@@ -199,6 +199,104 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             cancellationToken).ConfigureAwait(false);
     }
 
+    /// <summary>Executes multiple unnamed extended-query statements in one protocol cycle.</summary>
+    public ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
+        IReadOnlyList<BlueTuskBatchQuery> queries,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(queries);
+        if (queries.Count == 0)
+        {
+            throw new ArgumentException("A batch requires at least one query.", nameof(queries));
+        }
+
+        foreach (var query in queries)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            ValidateQuery(query.Sql);
+            ArgumentNullException.ThrowIfNull(query.Parameters);
+        }
+
+        return ExecuteQueryAsync(
+            output =>
+            {
+                foreach (var query in queries)
+                {
+                    var typeOids = query.Parameters
+                        .Select(static parameter => parameter.TypeOid)
+                        .ToArray();
+                    var bindParameters = query.Parameters
+                        .Select(static parameter =>
+                            new BlueTuskBindParameter(parameter.FormatCode, parameter.Value))
+                        .ToArray();
+                    BlueTuskFrontendMessageWriter.WriteParse(
+                        output,
+                        string.Empty,
+                        query.Sql,
+                        typeOids);
+                    BlueTuskFrontendMessageWriter.WriteBind(
+                        output,
+                        string.Empty,
+                        string.Empty,
+                        bindParameters,
+                        query.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
+                    BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+                    BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+                }
+
+                BlueTuskFrontendMessageWriter.WriteSync(output);
+            },
+            cancellationToken);
+    }
+
+    /// <summary>Executes multiple named prepared statements in one protocol cycle.</summary>
+    public ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
+        IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(queries);
+        if (queries.Count == 0)
+        {
+            throw new ArgumentException("A batch requires at least one query.", nameof(queries));
+        }
+
+        foreach (var query in queries)
+        {
+            ArgumentNullException.ThrowIfNull(query);
+            ValidatePreparedStatementName(query.StatementName);
+            ArgumentNullException.ThrowIfNull(query.Parameters);
+        }
+
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        return ExecuteQueryAsync(
+            output =>
+            {
+                foreach (var query in queries)
+                {
+                    var bindParameters = query.Parameters
+                        .Select(static parameter =>
+                            new BlueTuskBindParameter(parameter.FormatCode, parameter.Value))
+                        .ToArray();
+                    BlueTuskFrontendMessageWriter.WriteBind(
+                        output,
+                        string.Empty,
+                        query.StatementName,
+                        bindParameters,
+                        query.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
+                    BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+                    BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+                }
+
+                BlueTuskFrontendMessageWriter.WriteSync(output);
+            },
+            cancellationToken);
+    }
+
     public async ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
