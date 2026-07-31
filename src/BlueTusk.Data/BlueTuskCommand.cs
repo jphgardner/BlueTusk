@@ -15,6 +15,7 @@ public sealed class BlueTuskCommand : DbCommand
     private BlueTuskTransaction? _transaction;
     private BlueTuskConnection? _executingConnection;
     private int _commandTimeout = 30;
+    private BlueTuskCommandExecutionMode _executionMode;
     private int _executing;
     private int _cancellationRequested;
     private bool _prepareRequested;
@@ -47,6 +48,15 @@ public sealed class BlueTuskCommand : DbCommand
             ArgumentOutOfRangeException.ThrowIfNegative(value);
             _commandTimeout = value;
         }
+    }
+
+    /// <summary>Gets or sets whether BlueTusk selects, requires, or bypasses the extended query protocol.</summary>
+    public BlueTuskCommandExecutionMode ExecutionMode
+    {
+        get => _executionMode;
+        set => _executionMode = Enum.IsDefined(value)
+            ? value
+            : throw new ArgumentOutOfRangeException(nameof(value));
     }
 
     public override CommandType CommandType
@@ -264,19 +274,37 @@ public sealed class BlueTuskCommand : DbCommand
         try
         {
             var effectiveToken = linkedSource?.Token ?? cancellationToken;
-            if (_parameters.Count == 0 && !_prepareRequested)
+            var plan = BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
+            if (ExecutionMode == BlueTuskCommandExecutionMode.Simple)
             {
-                return await connection.Session.ExecuteSimpleQueryAsync(CommandText, effectiveToken)
+                if (plan.Parameters.Count != 0 || _prepareRequested)
+                {
+                    throw new InvalidOperationException(
+                        "Simple execution mode cannot be used with parameters or a prepared command.");
+                }
+
+                return await connection.Session.ExecuteSimpleQueryAsync(plan.Sql, effectiveToken)
                     .ConfigureAwait(false);
             }
 
-            var parameters = BlueTuskParameterEncoder.Encode(_parameters, connection.TypeRegistry);
+            if (ExecutionMode == BlueTuskCommandExecutionMode.Auto &&
+                plan.Parameters.Count == 0 &&
+                !_prepareRequested)
+            {
+                return await connection.Session.ExecuteSimpleQueryAsync(plan.Sql, effectiveToken)
+                    .ConfigureAwait(false);
+            }
+
+            var parameters = BlueTuskParameterEncoder.Encode(plan.Parameters, connection.TypeRegistry);
             var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
             try
             {
                 if (_prepareRequested)
                 {
-                    var prepared = await EnsurePreparedAsync(effectiveToken).ConfigureAwait(false);
+                    var prepared = await EnsurePreparedAsync(
+                        effectiveToken,
+                        plan,
+                        parameters).ConfigureAwait(false);
                     return await connection.Session.ExecutePreparedStatementAsync(
                         prepared.Name,
                         parameters,
@@ -285,7 +313,7 @@ public sealed class BlueTuskCommand : DbCommand
                 }
 
                 return await connection.Session.ExecuteExtendedQueryAsync(
-                    CommandText,
+                    plan.Sql,
                     parameters,
                     useBinaryResults,
                     effectiveToken).ConfigureAwait(false);
@@ -295,7 +323,10 @@ public sealed class BlueTuskCommand : DbCommand
             {
                 if (_prepareRequested)
                 {
-                    var prepared = await EnsurePreparedAsync(effectiveToken).ConfigureAwait(false);
+                    var prepared = await EnsurePreparedAsync(
+                        effectiveToken,
+                        plan,
+                        parameters).ConfigureAwait(false);
                     return await connection.Session.ExecutePreparedStatementAsync(
                         prepared.Name,
                         parameters,
@@ -304,7 +335,7 @@ public sealed class BlueTuskCommand : DbCommand
                 }
 
                 return await connection.Session.ExecuteExtendedQueryAsync(
-                    CommandText,
+                    plan.Sql,
                     parameters,
                     useBinaryResults: false,
                     effectiveToken).ConfigureAwait(false);
@@ -367,7 +398,9 @@ public sealed class BlueTuskCommand : DbCommand
          string.Equals(routine, "getTypeBinaryOutputInfo", StringComparison.Ordinal));
 
     private async ValueTask<PreparedStatementState> EnsurePreparedAsync(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        BlueTuskCommandPlan? plan = null,
+        IReadOnlyList<BlueTuskExtendedQueryParameter>? encodedParameters = null)
     {
         var connection = _connection ??
             throw new InvalidOperationException(
@@ -384,12 +417,21 @@ public sealed class BlueTuskCommand : DbCommand
             throw new InvalidOperationException("CommandText is required.");
         }
 
-        var parameters = BlueTuskParameterEncoder.Encode(_parameters, connection.TypeRegistry);
-        var typeOids = parameters.Select(static parameter => parameter.TypeOid).ToArray();
+        if (ExecutionMode == BlueTuskCommandExecutionMode.Simple)
+        {
+            throw new InvalidOperationException(
+                "A command in simple execution mode cannot be prepared.");
+        }
+
+        plan ??= BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
+        encodedParameters ??= BlueTuskParameterEncoder.Encode(
+            plan.Parameters,
+            connection.TypeRegistry);
+        var typeOids = encodedParameters.Select(static parameter => parameter.TypeOid).ToArray();
         var session = connection.Session;
         if (_preparedStatement is { } current &&
             ReferenceEquals(current.Session, session) &&
-            string.Equals(current.Sql, CommandText, StringComparison.Ordinal) &&
+            string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) &&
             current.ParameterTypeOids.AsSpan().SequenceEqual(typeOids))
         {
             return current;
@@ -406,12 +448,12 @@ public sealed class BlueTuskCommand : DbCommand
 
         await session.PrepareStatementAsync(
             statementName,
-            CommandText,
+            plan.Sql,
             typeOids,
             cancellationToken).ConfigureAwait(false);
         var prepared = new PreparedStatementState(
             statementName,
-            CommandText,
+            plan.Sql,
             typeOids,
             session);
         _preparedStatement = prepared;

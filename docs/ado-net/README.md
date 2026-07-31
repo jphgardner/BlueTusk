@@ -2,7 +2,7 @@
 
 Version 0.0.9 provides an asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, buffered `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource`.
 
-Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
+Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
 
 ```csharp
 await using var dataSource = BlueTuskDataSource.Create(connectionString);
@@ -12,6 +12,8 @@ command.Parameters.Add(new BlueTuskParameter<int>(22));
 
 var answer = await command.ExecuteScalarAsync<int>();
 ```
+
+Set `ExecutionMode` to `Auto` (the default), `Simple`, or `Extended` to control protocol selection. Extended mode can be selected for parameterless commands; simple mode rejects parameters and prepared commands rather than interpolating values.
 
 BlueTusk infers built-in PostgreSQL type OIDs from `DbType` or the CLR value. A null parameter must set `DbType` or `PostgreSqlTypeOid`; this avoids relying on ambiguous server inference.
 

@@ -122,7 +122,7 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Re-prepare when command text or parameter type identity changes
     - [ ] Automatic preparation cache, unnamed preparation, and synchronous preparation
   - [ ] `DbBatch`/`DbBatchCommand`, parameters, transactions, cancellation, and multiple results
-  - [ ] Safe named-parameter rewriting and command execution-mode selection
+  - [x] Safe named-parameter rewriting and command execution-mode selection
   - [ ] Ordered multi-host failover, target-session selection, and per-host pools
 - [ ] Genuine synchronous connection and query paths
   - [ ] Synchronous transport, TLS, startup, authentication, and cancellation

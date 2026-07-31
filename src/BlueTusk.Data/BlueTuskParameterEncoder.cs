@@ -50,10 +50,18 @@ internal static class BlueTuskParameterEncoder
         BlueTuskTypeRegistry? types = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
+        return Encode(parameters.Items, types);
+    }
+
+    public static IReadOnlyList<BlueTuskExtendedQueryParameter> Encode(
+        IReadOnlyList<BlueTuskParameter> parameters,
+        BlueTuskTypeRegistry? types = null)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
         var encoded = new BlueTuskExtendedQueryParameter[parameters.Count];
         for (var index = 0; index < parameters.Count; index++)
         {
-            encoded[index] = Encode(parameters.Items[index], types);
+            encoded[index] = Encode(parameters[index], types);
         }
 
         return encoded;

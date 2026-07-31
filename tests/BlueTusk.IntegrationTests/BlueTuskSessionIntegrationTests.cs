@@ -446,6 +446,44 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task AdoNet_named_parameters_are_rewritten_and_can_be_prepared()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand(
+            "SELECT @left::int4 + :right::int4 + @LEFT::int4",
+            connection);
+        command.Parameters.Add(new BlueTuskParameter<int>(22) { ParameterName = "right" });
+        command.Parameters.Add(new BlueTuskParameter<int>(10) { ParameterName = "left" });
+
+        await command.PrepareAsync(CancellationToken.None);
+
+        Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task AdoNet_execution_mode_selects_extended_and_guards_simple_commands()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var extended = new BlueTuskCommand("SELECT 42::int4", connection)
+        {
+            ExecutionMode = BlueTuskCommandExecutionMode.Extended,
+        };
+
+        Assert.Equal(42, await extended.ExecuteScalarAsync<int>(CancellationToken.None));
+
+        await using var simple = new BlueTuskCommand("SELECT $1::int4", connection)
+        {
+            ExecutionMode = BlueTuskCommandExecutionMode.Simple,
+        };
+        simple.Parameters.Add(new BlueTuskParameter<int>(42));
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => simple.ExecuteScalarAsync(CancellationToken.None));
+        Assert.Contains("Simple execution mode", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task AdoNet_parameter_values_are_not_interpolated_into_sql()
     {
         const string injectionShapedValue = "'; DROP TABLE important_data; --";
