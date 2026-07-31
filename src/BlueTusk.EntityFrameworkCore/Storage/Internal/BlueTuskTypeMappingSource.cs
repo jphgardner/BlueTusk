@@ -18,12 +18,12 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
     private static readonly RelationalTypeMapping Bytes = new ByteArrayTypeMapping("bytea", DbType.Binary);
     private static readonly RelationalTypeMapping Guid = new GuidTypeMapping("uuid", DbType.Guid);
     private static readonly RelationalTypeMapping DateTime =
-        new DateTimeTypeMapping("timestamp with time zone", DbType.DateTime);
+        new DateTimeTypeMapping("timestamp without time zone", DbType.DateTime);
     private static readonly RelationalTypeMapping DateTimeOffset =
         new DateTimeOffsetTypeMapping("timestamp with time zone", DbType.DateTimeOffset);
     private static readonly RelationalTypeMapping DateOnly = new DateOnlyTypeMapping("date", DbType.Date);
     private static readonly RelationalTypeMapping TimeOnly = new TimeOnlyTypeMapping("time without time zone", DbType.Time);
-    private static readonly RelationalTypeMapping TimeSpan = new TimeSpanTypeMapping("interval", DbType.Time);
+    private static readonly RelationalTypeMapping TimeSpan = new BlueTuskIntervalTypeMapping();
 
     private static readonly Dictionary<Type, RelationalTypeMapping> ClrMappings =
         new Dictionary<Type, RelationalTypeMapping>
@@ -93,15 +93,51 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         if (mappingInfo.StoreTypeNameBase is { } storeTypeName
             && StoreMappings.TryGetValue(storeTypeName, out var storeMapping))
         {
-            return storeMapping;
+            return ApplyFacets(storeMapping, mappingInfo);
         }
 
         if (mappingInfo.ClrType is { } clrType
             && ClrMappings.TryGetValue(Nullable.GetUnderlyingType(clrType) ?? clrType, out var clrMapping))
         {
-            return clrMapping;
+            return ApplyFacets(clrMapping, mappingInfo);
         }
 
         return base.FindMapping(mappingInfo);
+    }
+
+    private static RelationalTypeMapping ApplyFacets(
+        RelationalTypeMapping mapping,
+        in RelationalTypeMappingInfo mappingInfo)
+    {
+        if (mapping.ClrType == typeof(string))
+        {
+            return mappingInfo.IsFixedLength == true
+                ? new StringTypeMapping(
+                    "character",
+                    DbType.StringFixedLength,
+                    unicode: false,
+                    mappingInfo.Size).Clone(
+                        mappingInfo,
+                        storeTypePostfix: StoreTypePostfix.Size)
+                : mappingInfo.Size is { } size
+                    ? new StringTypeMapping("character varying", DbType.String, unicode: false, size).Clone(
+                        mappingInfo,
+                        storeTypePostfix: StoreTypePostfix.Size)
+                    : String;
+        }
+
+        if (mapping.ClrType == typeof(decimal)
+            && (mappingInfo.Precision is not null || mappingInfo.Scale is not null))
+        {
+            return new DecimalTypeMapping(
+                "numeric",
+                DbType.Decimal,
+                mappingInfo.Precision,
+                mappingInfo.Scale).Clone(
+                    mappingInfo,
+                    storeTypePostfix: StoreTypePostfix.PrecisionAndScale);
+        }
+
+        return mapping;
     }
 }

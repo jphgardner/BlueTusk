@@ -14,8 +14,20 @@ public sealed class QueryTranslationTests
         var entityType = context.Model.FindEntityType(typeof(Blog))!;
 
         Assert.Equal("integer", entityType.FindProperty(nameof(Blog.Id))!.GetColumnType());
-        Assert.Equal("text", entityType.FindProperty(nameof(Blog.Name))!.GetColumnType());
+        Assert.Equal("character varying(64)", entityType.FindProperty(nameof(Blog.Name))!.GetColumnType());
         Assert.Equal("boolean", entityType.FindProperty(nameof(Blog.IsActive))!.GetColumnType());
+        Assert.Equal("smallint", entityType.FindProperty(nameof(Blog.SmallNumber))!.GetColumnType());
+        Assert.Equal("bigint", entityType.FindProperty(nameof(Blog.LargeNumber))!.GetColumnType());
+        Assert.Equal("real", entityType.FindProperty(nameof(Blog.Ratio))!.GetColumnType());
+        Assert.Equal("double precision", entityType.FindProperty(nameof(Blog.Measurement))!.GetColumnType());
+        Assert.Equal("numeric(18,4)", entityType.FindProperty(nameof(Blog.Amount))!.GetColumnType());
+        Assert.Equal("bytea", entityType.FindProperty(nameof(Blog.Payload))!.GetColumnType());
+        Assert.Equal("uuid", entityType.FindProperty(nameof(Blog.Token))!.GetColumnType());
+        Assert.Equal("timestamp without time zone", entityType.FindProperty(nameof(Blog.CreatedAt))!.GetColumnType());
+        Assert.Equal("timestamp with time zone", entityType.FindProperty(nameof(Blog.PublishedAt))!.GetColumnType());
+        Assert.Equal("date", entityType.FindProperty(nameof(Blog.PublishDate))!.GetColumnType());
+        Assert.Equal("time without time zone", entityType.FindProperty(nameof(Blog.PublishTime))!.GetColumnType());
+        Assert.Equal("interval", entityType.FindProperty(nameof(Blog.Duration))!.GetColumnType());
     }
 
     [Fact]
@@ -103,6 +115,12 @@ public sealed class QueryTranslationTests
     private sealed class BlogContext(DbContextOptions<BlogContext> options) : DbContext(options)
     {
         public DbSet<Blog> Blogs => Set<Blog>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Blog>().Property(blog => blog.Name).HasMaxLength(64);
+            modelBuilder.Entity<Blog>().Property(blog => blog.Amount).HasPrecision(18, 4);
+        }
     }
 
     private sealed class Blog
@@ -112,5 +130,29 @@ public sealed class QueryTranslationTests
         public string Name { get; set; } = string.Empty;
 
         public bool IsActive { get; set; }
+
+        public short SmallNumber { get; set; }
+
+        public long LargeNumber { get; set; }
+
+        public float Ratio { get; set; }
+
+        public double Measurement { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public byte[] Payload { get; set; } = [];
+
+        public Guid Token { get; set; }
+
+        public DateTime CreatedAt { get; set; }
+
+        public DateTimeOffset PublishedAt { get; set; }
+
+        public DateOnly PublishDate { get; set; }
+
+        public TimeOnly PublishTime { get; set; }
+
+        public TimeSpan Duration { get; set; }
     }
 }

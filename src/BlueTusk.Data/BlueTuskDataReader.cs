@@ -270,6 +270,15 @@ public sealed class BlueTuskDataReader : DbDataReader
             return (T)(object)TimeOnly.FromTimeSpan(time);
         }
 
+        if (value is BlueTuskInterval { IsFinite: true, Months: 0 } interval
+            && typeof(T) == typeof(TimeSpan))
+        {
+            var ticks = checked(
+                (interval.Days * TimeSpan.TicksPerDay)
+                + (interval.Microseconds * 10));
+            return (T)(object)TimeSpan.FromTicks(ticks);
+        }
+
         return value is T typed
             ? typed
             : (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
