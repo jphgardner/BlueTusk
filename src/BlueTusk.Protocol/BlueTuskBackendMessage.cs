@@ -13,3 +13,8 @@ public readonly record struct BlueTuskBackendMessage(byte Code, ReadOnlySequence
     public byte[] ToPayloadArray() => Payload.ToArray();
 }
 
+/// <summary>Describes a backend message whose payload can be consumed incrementally.</summary>
+public readonly record struct BlueTuskBackendMessageHeader(byte Code, int PayloadLength)
+{
+    public char Identifier => (char)Code;
+}

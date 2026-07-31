@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Buffers.Binary;
 using BlueTusk.Transport;
 
 namespace BlueTusk.Protocol;
@@ -12,6 +13,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     private byte[] _buffer;
     private int _start;
     private int _count;
+    private int _activePayloadRemaining = -1;
     private bool _disposed;
 
     public BlueTuskProtocolConnection(
@@ -84,6 +86,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     public async ValueTask<BlueTuskBackendMessage> ReadMessageAsync(CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        EnsureNoActivePayload();
         while (true)
         {
             var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
@@ -116,6 +119,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     public BlueTuskBackendMessage ReadMessage()
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
+        EnsureNoActivePayload();
         while (true)
         {
             var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
@@ -140,6 +144,65 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
             _count += read;
         }
+    }
+
+    /// <summary>Reads a backend frame header while leaving its payload on the transport.</summary>
+    /// <remarks>
+    /// The caller must consume the complete payload through <see cref="ReadMessagePayload(Span{byte})"/>
+    /// or <see cref="ReadMessagePayloadAsync(Memory{byte}, CancellationToken)"/> before reading another message.
+    /// </remarks>
+    public BlueTuskBackendMessageHeader ReadMessageHeader()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        BeginNextMessage();
+        EnsureBuffered(HeaderSize);
+        return ConsumeHeader();
+    }
+
+    /// <summary>Asynchronously reads a backend frame header while leaving its payload on the transport.</summary>
+    public async ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderAsync(
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        BeginNextMessage();
+        await EnsureBufferedAsync(HeaderSize, cancellationToken).ConfigureAwait(false);
+        return ConsumeHeader();
+    }
+
+    /// <summary>Reads the next portion of the active backend message payload.</summary>
+    public int ReadMessagePayload(Span<byte> destination)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        EnsureActivePayload();
+        if (destination.IsEmpty || _activePayloadRemaining == 0)
+        {
+            return 0;
+        }
+
+        var requested = Math.Min(destination.Length, _activePayloadRemaining);
+        var read = ReadPayloadBytes(destination[..requested]);
+        _activePayloadRemaining -= read;
+        return read;
+    }
+
+    /// <summary>Asynchronously reads the next portion of the active backend message payload.</summary>
+    public async ValueTask<int> ReadMessagePayloadAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        EnsureActivePayload();
+        if (destination.IsEmpty || _activePayloadRemaining == 0)
+        {
+            return 0;
+        }
+
+        var requested = Math.Min(destination.Length, _activePayloadRemaining);
+        var read = await ReadPayloadBytesAsync(
+            destination[..requested],
+            cancellationToken).ConfigureAwait(false);
+        _activePayloadRemaining -= read;
+        return read;
     }
 
     public async ValueTask WriteAsync(
@@ -217,12 +280,143 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         _buffer = replacement;
     }
 
+    private const int HeaderSize = 5;
+
+    private void BeginNextMessage()
+    {
+        if (_activePayloadRemaining > 0)
+        {
+            throw new InvalidOperationException(
+                $"The active backend message still has {_activePayloadRemaining} unread payload bytes.");
+        }
+
+        _activePayloadRemaining = -1;
+    }
+
+    private BlueTuskBackendMessageHeader ConsumeHeader()
+    {
+        var code = _buffer[_start];
+        var length = BinaryPrimitives.ReadInt32BigEndian(_buffer.AsSpan(_start + 1, sizeof(int)));
+        if (length < sizeof(int))
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend message '{(char)code}' declared invalid length {length}.");
+        }
+
+        if (length > _parser.MaximumMessageSize)
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend message '{(char)code}' declared length {length}, exceeding the configured maximum {_parser.MaximumMessageSize}.");
+        }
+
+        _start += HeaderSize;
+        _count -= HeaderSize;
+        _activePayloadRemaining = length - sizeof(int);
+        return new BlueTuskBackendMessageHeader(code, _activePayloadRemaining);
+    }
+
+    private void EnsureBuffered(int minimumCount)
+    {
+        while (_count < minimumCount)
+        {
+            PrepareForRead();
+            var read = _transport.Read(_buffer.AsSpan(_start + _count));
+            if (read == 0)
+            {
+                throw new EndOfStreamException(
+                    _count == 0
+                        ? "PostgreSQL closed the connection."
+                        : "PostgreSQL disconnected in the middle of a protocol message header.");
+            }
+
+            _count += read;
+        }
+    }
+
+    private async ValueTask EnsureBufferedAsync(int minimumCount, CancellationToken cancellationToken)
+    {
+        while (_count < minimumCount)
+        {
+            PrepareForRead();
+            var read = await _transport.ReadAsync(
+                _buffer.AsMemory(_start + _count),
+                cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+            {
+                throw new EndOfStreamException(
+                    _count == 0
+                        ? "PostgreSQL closed the connection."
+                        : "PostgreSQL disconnected in the middle of a protocol message header.");
+            }
+
+            _count += read;
+        }
+    }
+
+    private int ReadPayloadBytes(Span<byte> destination)
+    {
+        if (_count != 0)
+        {
+            var copied = Math.Min(destination.Length, _count);
+            _buffer.AsSpan(_start, copied).CopyTo(destination);
+            _start += copied;
+            _count -= copied;
+            return copied;
+        }
+
+        var read = _transport.Read(destination);
+        return read != 0
+            ? read
+            : throw new EndOfStreamException(
+                "PostgreSQL disconnected in the middle of a protocol message payload.");
+    }
+
+    private async ValueTask<int> ReadPayloadBytesAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken)
+    {
+        if (_count != 0)
+        {
+            var copied = Math.Min(destination.Length, _count);
+            _buffer.AsMemory(_start, copied).CopyTo(destination);
+            _start += copied;
+            _count -= copied;
+            return copied;
+        }
+
+        var read = await _transport.ReadAsync(destination, cancellationToken).ConfigureAwait(false);
+        return read != 0
+            ? read
+            : throw new EndOfStreamException(
+                "PostgreSQL disconnected in the middle of a protocol message payload.");
+    }
+
+    private void EnsureNoActivePayload()
+    {
+        if (_activePayloadRemaining > 0)
+        {
+            throw new InvalidOperationException(
+                "A streamed backend message is active; consume its payload before reading another message.");
+        }
+
+        _activePayloadRemaining = -1;
+    }
+
+    private void EnsureActivePayload()
+    {
+        if (_activePayloadRemaining < 0)
+        {
+            throw new InvalidOperationException("No streamed backend message payload is active.");
+        }
+    }
+
     private void ReturnBuffer()
     {
         var buffer = _buffer;
         _buffer = [];
         _start = 0;
         _count = 0;
+        _activePayloadRemaining = -1;
         ArrayPool<byte>.Shared.Return(buffer);
     }
 }
