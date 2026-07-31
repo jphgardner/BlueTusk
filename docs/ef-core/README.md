@@ -17,4 +17,19 @@ services.AddDbContext<AppDbContext>(options =>
 
 Runtime migrations support the PostgreSQL `__EFMigrationsHistory` repository, transaction-scoped migration locking, up/down application, and idempotent scripts. The initial DDL surface covers tables, columns, keys and constraints, indexes, sequences, defaults, comments, schema moves, and alter/rename/drop operations. Acceptance tests apply an idempotent script twice, re-enter `Database.MigrateAsync()`, move back to an earlier migration, and finally revert to the empty database.
 
-Design-time migration tooling, reverse engineering, and PostgreSQL-specific schema features such as extensions, enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+Design-time migration authoring commands and PostgreSQL-specific schema features such as extensions, enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+
+## Database-first scaffolding
+
+The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, and standalone sequences. Schema and table filters are supported, and caller-owned open connections remain open.
+
+```bash
+dotnet ef dbcontext scaffold \
+  "Host=localhost;Database=app;Username=app;Password=..." \
+  BlueTusk.EntityFrameworkCore \
+  --context AppDbContext \
+  --output-dir Models \
+  --schema public
+```
+
+Generated contexts configure `UseBlueTusk`. PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, partition metadata, policies, routines, and property graphs—belongs to the advanced scaffolding milestone.

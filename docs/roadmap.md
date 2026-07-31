@@ -162,7 +162,10 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] PostgreSQL identity-column DDL and live schema-creation coverage
   - [x] Migration history repository, transactional locking, and idempotent migration scripts
   - [x] Live apply/revert coverage for alter, rename, sequence, index, and drop operations
-- [ ] Initial database reverse engineering
+- [x] Initial database reverse engineering
+  - [x] EF design-time provider discovery and `UseBlueTusk` context generation
+  - [x] Tables, views, columns, defaults, generated values, keys, foreign keys, indexes, and sequences
+  - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
 - [ ] Initial EF Core relational specification-suite coverage
 
 ## 0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)
