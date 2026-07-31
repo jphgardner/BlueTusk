@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Net;
 using System.Net.Sockets;
 
@@ -45,11 +46,48 @@ internal sealed class FakePostgreSqlServer : IAsyncDisposable
                 case FakeServerStep.Delay delay:
                     await Task.Delay(delay.Duration, cancellationToken).ConfigureAwait(false);
                     break;
+                case FakeServerStep.ExpectFrontendMessage expect:
+                    await ExpectFrontendMessageAsync(stream, expect.Identifier, cancellationToken)
+                        .ConfigureAwait(false);
+                    break;
                 case FakeServerStep.Disconnect:
                     return;
                 default:
                     throw new ArgumentOutOfRangeException(nameof(script), step, "Unknown fake server step.");
             }
+        }
+    }
+
+    private static async Task ExpectFrontendMessageAsync(
+        NetworkStream stream,
+        byte? expectedIdentifier,
+        CancellationToken cancellationToken)
+    {
+        var header = new byte[expectedIdentifier is null ? 4 : 5];
+        await stream.ReadExactlyAsync(header, cancellationToken).ConfigureAwait(false);
+        var lengthOffset = 0;
+        if (expectedIdentifier is { } identifier)
+        {
+            if (header[0] != identifier)
+            {
+                throw new InvalidOperationException(
+                    $"Expected frontend message '{(char)identifier}', received '{(char)header[0]}'.");
+            }
+
+            lengthOffset = 1;
+        }
+
+        var length = BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(lengthOffset, sizeof(int)));
+        if (length < sizeof(int))
+        {
+            throw new InvalidOperationException($"Frontend message declared invalid length {length}.");
+        }
+
+        var payloadLength = length - sizeof(int);
+        if (payloadLength > 0)
+        {
+            var payload = new byte[payloadLength];
+            await stream.ReadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -74,6 +112,8 @@ internal abstract record FakeServerStep
     internal sealed record Send(byte[] Bytes, int? FragmentSize = null) : FakeServerStep;
 
     internal sealed record Delay(TimeSpan Duration) : FakeServerStep;
+
+    internal sealed record ExpectFrontendMessage(byte? Identifier) : FakeServerStep;
 
     internal sealed record Disconnect : FakeServerStep;
 }

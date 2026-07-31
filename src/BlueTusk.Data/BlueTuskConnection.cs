@@ -98,6 +98,9 @@ public sealed class BlueTuskConnection : DbConnection
     public override string ServerVersion =>
         _session?.Parameters.TryGetValue("server_version", out var version) == true ? version : string.Empty;
 
+    /// <summary>Gets the capabilities detected for the currently open physical session.</summary>
+    public BlueTuskServerCapabilities? ServerCapabilities => _session?.Capabilities;
+
     public override ConnectionState State => _state;
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);

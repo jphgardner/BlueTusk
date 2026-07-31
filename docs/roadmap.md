@@ -185,9 +185,9 @@ This file tracks executable repository status. The product vision is broader; un
 
 ### PostgreSQL pipeline mode and transport evaluation
 
-- [ ] Client-layer PostgreSQL pipeline API with explicit `Sync` boundaries and ordered result groups
-- [ ] Pipeline error propagation, cancellation, disposal, and safe session-recovery semantics
-- [ ] Fake-server, conformance, stress, and live PostgreSQL pipeline-mode coverage
+- [x] Client-layer PostgreSQL pipeline API with explicit `Sync` boundaries and ordered result groups
+- [x] Pipeline error propagation, cancellation, disposal, and safe session-recovery semantics
+- [x] Fake-server, conformance, stress, and live PostgreSQL pipeline-mode coverage
 - [x] ADR separates PostgreSQL pipeline mode from `System.IO.Pipelines` and defines the evaluation gate
 - [ ] ArrayPool/Span/Memory versus `System.IO.Pipelines` prototype benchmarks
   - [ ] Fragmented frames, large fields, COPY, cancellation, and TLS

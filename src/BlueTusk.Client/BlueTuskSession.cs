@@ -46,6 +46,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     public BlueTuskTransactionStatus TransactionStatus { get; private set; } = BlueTuskTransactionStatus.Idle;
 
+    /// <summary>Gets the capabilities detected from the authenticated PostgreSQL server.</summary>
+    public BlueTuskServerCapabilities Capabilities { get; private set; } = BlueTuskServerCapabilities.Unknown;
+
     public static BlueTuskSession Open(BlueTuskClientOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -521,6 +524,109 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
                 BlueTuskFrontendMessageWriter.WriteSync(output);
             });
+    }
+
+    /// <summary>
+    /// Executes ordered extended-query groups in PostgreSQL pipeline mode. Each group ends with an explicit
+    /// Sync boundary, and server errors are returned with that group after the session has reached ReadyForQuery.
+    /// </summary>
+    public BlueTuskPipelineResult ExecutePipeline(IReadOnlyList<BlueTuskPipelineGroup> groups)
+    {
+        ValidatePipeline(groups);
+        _operationLock.Wait();
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            _connection.Write(output => WritePipeline(output, groups));
+
+            var results = new List<BlueTuskPipelineGroupResult>(groups.Count);
+            for (var index = 0; index < groups.Count; index++)
+            {
+                results.Add(ReadPipelineGroupResponse());
+                if (index + 1 < groups.Count)
+                {
+                    BeginNextPipelineGroup();
+                }
+            }
+
+            return new BlueTuskPipelineResult(results);
+        }
+        catch
+        {
+            if (_connection.StateMachine.State is not (
+                    BlueTuskConnectionState.Ready or BlueTuskConnectionState.FailedTransaction))
+            {
+                _open = false;
+            }
+
+            throw;
+        }
+        finally
+        {
+            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
+    }
+
+    /// <summary>
+    /// Executes ordered extended-query groups in PostgreSQL pipeline mode. Cancellation drains the active and
+    /// already-sent groups before the session is released for reuse.
+    /// </summary>
+    public async ValueTask<BlueTuskPipelineResult> ExecutePipelineAsync(
+        IReadOnlyList<BlueTuskPipelineGroup> groups,
+        CancellationToken cancellationToken = default)
+    {
+        ValidatePipeline(groups);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var started = Stopwatch.GetTimestamp();
+        var messagesWritten = false;
+        try
+        {
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                output => WritePipeline(output, groups),
+                cancellationToken).ConfigureAwait(false);
+            messagesWritten = true;
+
+            var results = new List<BlueTuskPipelineGroupResult>(groups.Count);
+            for (var index = 0; index < groups.Count; index++)
+            {
+                try
+                {
+                    results.Add(await ReadPipelineGroupResponseWithCancellationAsync(cancellationToken)
+                        .ConfigureAwait(false));
+                }
+                catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+                {
+                    await DrainRemainingPipelineGroupsAsync(groups.Count - index - 1).ConfigureAwait(false);
+                    throw;
+                }
+
+                if (index + 1 < groups.Count)
+                {
+                    BeginNextPipelineGroup();
+                }
+            }
+
+            return new BlueTuskPipelineResult(results);
+        }
+        catch
+        {
+            if (!messagesWritten || _connection.StateMachine.State is not (
+                    BlueTuskConnectionState.Ready or BlueTuskConnectionState.FailedTransaction))
+            {
+                _open = false;
+                await _connection.DisposeAsync().ConfigureAwait(false);
+            }
+
+            throw;
+        }
+        finally
+        {
+            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
     }
 
     /// <summary>Executes multiple named prepared statements in one protocol cycle.</summary>
@@ -1684,6 +1790,88 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    private void ValidatePipeline(IReadOnlyList<BlueTuskPipelineGroup> groups)
+    {
+        ArgumentNullException.ThrowIfNull(groups);
+        if (groups.Count == 0)
+        {
+            throw new ArgumentException("A PostgreSQL pipeline requires at least one synchronization group.", nameof(groups));
+        }
+
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        if (!Capabilities.SupportsPipelineMode)
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL pipeline mode requires PostgreSQL 14 or later; the connected server is {Capabilities.ServerVersion}.");
+        }
+
+        foreach (var group in groups)
+        {
+            ArgumentNullException.ThrowIfNull(group);
+            ArgumentNullException.ThrowIfNull(group.Queries);
+            if (group.Queries.Count == 0)
+            {
+                throw new ArgumentException(
+                    "Every PostgreSQL pipeline synchronization group requires at least one query.",
+                    nameof(groups));
+            }
+
+            foreach (var query in group.Queries)
+            {
+                ArgumentNullException.ThrowIfNull(query);
+                ValidateQuery(query.Sql);
+                ArgumentNullException.ThrowIfNull(query.Parameters);
+            }
+        }
+    }
+
+    private static void WritePipeline(
+        IBufferWriter<byte> output,
+        IReadOnlyList<BlueTuskPipelineGroup> groups)
+    {
+        foreach (var group in groups)
+        {
+            foreach (var query in group.Queries)
+            {
+                var typeOids = query.Parameters
+                    .Select(static parameter => parameter.TypeOid)
+                    .ToArray();
+                var bindParameters = query.Parameters
+                    .Select(static parameter =>
+                        new BlueTuskBindParameter(parameter.FormatCode, parameter.Value))
+                    .ToArray();
+                BlueTuskFrontendMessageWriter.WriteParse(output, string.Empty, query.Sql, typeOids);
+                BlueTuskFrontendMessageWriter.WriteBind(
+                    output,
+                    string.Empty,
+                    string.Empty,
+                    bindParameters,
+                    query.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
+                BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+                BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+            }
+
+            BlueTuskFrontendMessageWriter.WriteSync(output);
+        }
+    }
+
+    private void BeginNextPipelineGroup() =>
+        _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+
+    private async ValueTask DrainRemainingPipelineGroupsAsync(int count)
+    {
+        for (var index = 0; index < count; index++)
+        {
+            BeginNextPipelineGroup();
+            _ = await ReadPipelineGroupResponseAsync().ConfigureAwait(false);
+        }
+    }
+
     private BlueTuskQueryResult ExecuteQuery(Action<IBufferWriter<byte>> writeMessages)
     {
         ArgumentNullException.ThrowIfNull(writeMessages);
@@ -2489,6 +2677,17 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private BlueTuskQueryResult ReadQueryResponse()
     {
+        var response = ReadPipelineGroupResponse();
+        if (response.Error is not null)
+        {
+            throw response.Error;
+        }
+
+        return response.Result;
+    }
+
+    private BlueTuskPipelineGroupResult ReadPipelineGroupResponse()
+    {
         var resultSets = new List<BlueTuskResultSet>();
         IReadOnlyList<BlueTuskFieldDescription> fields = [];
         List<BlueTuskDataRow> rows = [];
@@ -2533,12 +2732,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 case 'Z':
                     CompleteReadyForQuerySynchronously(
                         BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
-                    if (deferredError is not null)
-                    {
-                        throw deferredError;
-                    }
-
-                    return new BlueTuskQueryResult(resultSets);
+                    return new BlueTuskPipelineGroupResult(
+                        new BlueTuskQueryResult(resultSets),
+                        deferredError);
                 default:
                     break;
             }
@@ -2592,6 +2788,17 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private async ValueTask<BlueTuskQueryResult> ReadQueryResponseAsync()
     {
+        var response = await ReadPipelineGroupResponseAsync().ConfigureAwait(false);
+        if (response.Error is not null)
+        {
+            throw response.Error;
+        }
+
+        return response.Result;
+    }
+
+    private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseAsync()
+    {
         var resultSets = new List<BlueTuskResultSet>();
         IReadOnlyList<BlueTuskFieldDescription> fields = [];
         List<BlueTuskDataRow> rows = [];
@@ -2638,15 +2845,49 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     var cancellationCompletion = CompleteReadyForQuery(
                         BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
                     await cancellationCompletion.ConfigureAwait(false);
-                    if (deferredError is not null)
-                    {
-                        throw deferredError;
-                    }
-
-                    return new BlueTuskQueryResult(resultSets);
+                    return new BlueTuskPipelineGroupResult(
+                        new BlueTuskQueryResult(resultSets),
+                        deferredError);
                 default:
                     break;
             }
+        }
+    }
+
+    private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseWithCancellationAsync(
+        CancellationToken cancellationToken)
+    {
+        var responseTask = ReadPipelineGroupResponseAsync().AsTask();
+        if (!cancellationToken.CanBeCanceled)
+        {
+            return await responseTask.ConfigureAwait(false);
+        }
+
+        try
+        {
+            return await responseTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            if (responseTask.IsCompleted)
+            {
+                return await responseTask.ConfigureAwait(false);
+            }
+
+            try
+            {
+                await CancelAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                ObserveFault(responseTask);
+                _open = false;
+                await _connection.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+
+            _ = await responseTask.ConfigureAwait(false);
+            throw new OperationCanceledException("The PostgreSQL pipeline was cancelled.", cancellationToken);
         }
     }
 
@@ -3022,6 +3263,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         }
 
                         TransactionStatus = BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message);
+                        Capabilities = BlueTuskServerCapabilities.Detect(_parameters);
                         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Ready);
                         return;
                     default:
@@ -3095,6 +3337,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         }
 
                         TransactionStatus = BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message);
+                        Capabilities = BlueTuskServerCapabilities.Detect(_parameters);
                         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Ready);
                         return;
                     default:

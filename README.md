@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, and the first PostgreSQL-specific EF mappings. PostgreSQL pipeline mode, stable extensions, PostgreSQL 19/SQL-PGQ, and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, and the first PostgreSQL-specific EF mappings. Stable extensions, PostgreSQL 19/SQL-PGQ, transport-pipeline evaluation, and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -72,6 +72,7 @@ The current `0.0.9` implementation provides:
 - binary result negotiation for extended queries and registry-driven field decoding;
 - buffer-backed stream and text-reader accessors for `bytea`, text, and JSON values;
 - ADO.NET transactions with PostgreSQL isolation levels, commit, rollback, and rollback-on-disposal;
+- [PostgreSQL pipeline mode](docs/pipeline-mode.md) with explicit synchronization groups, ordered results, cancellation draining, and safe session reuse;
 - cancellation tokens, command timeouts, and explicit sync/async cancellation over PostgreSQL's dedicated channel;
 - bounded per-data-source connection pooling with cancellable waiters;
 - transaction rollback, `DISCARD ALL` session reset, health validation, and connection lifetime enforcement;

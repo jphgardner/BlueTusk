@@ -16,6 +16,8 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
 
     IReadOnlyDictionary<string, string> Parameters { get; }
 
+    BlueTuskServerCapabilities Capabilities => BlueTuskServerCapabilities.Unknown;
+
     BlueTuskTransactionStatus TransactionStatus { get; }
 
     void RefreshHostState() =>
@@ -193,6 +195,8 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     public bool? IsReadOnly => _isReadOnly;
 
     public IReadOnlyDictionary<string, string> Parameters => _session.Parameters;
+
+    public BlueTuskServerCapabilities Capabilities => _session.Capabilities;
 
     public BlueTuskTransactionStatus TransactionStatus => _session.TransactionStatus;
 

@@ -79,6 +79,8 @@ await transaction.CommitAsync();
 
 Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a separate connection. BlueTusk drains the original connection through `ReadyForQuery` before returning, so a cancelled connection remains reusable. `Cancel()` and `CancelAsync()` provide explicit cancellation. Cancellation inside a transaction leaves PostgreSQL's transaction in the failed state and requires rollback.
 
+Low-level clients can use [PostgreSQL pipeline mode](../pipeline-mode.md) to send multiple extended-query synchronization groups in one flush. This is a Client-layer API rather than an ADO.NET batching alias; `BlueTuskBatch` remains the provider-neutral `DbBatch` surface.
+
 `BlueTuskDataSource` owns a bounded physical connection pool by default. Logical connections return their physical session when closed or disposed; reuse rolls back an unfinished transaction when necessary and issues `DISCARD ALL` before handing the session to another caller. See [Connection pooling](pooling.md) for sizing, lifetime, warm-up, statistics, and drain controls.
 
 [Multi-host connections](multi-host.md) support ordered or randomized attempts, shared or per-host ports, and primary/standby/read-write/read-only target selection.

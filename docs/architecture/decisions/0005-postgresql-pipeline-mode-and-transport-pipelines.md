@@ -28,4 +28,4 @@ Adoption requires a meaningful measured benefit without regressing synchronous b
 
 ## Consequences
 
-PostgreSQL pipeline mode can ship independently of the transport evaluation. Documentation and capability detection must describe each concern separately. The roadmap remains unchecked for pipeline mode and transport benchmarks until executable tests and checked-in results exist.
+PostgreSQL pipeline mode ships independently of the transport evaluation. Its Client-layer implementation has fake-server, conformance, stress, and live PostgreSQL coverage for explicit synchronization boundaries, ordered group errors, cancellation draining, and safe session reuse. Documentation and capability detection describe pipeline semantics separately from transport buffering. The transport benchmark and adoption gates remain unchecked until reproducible results exist.

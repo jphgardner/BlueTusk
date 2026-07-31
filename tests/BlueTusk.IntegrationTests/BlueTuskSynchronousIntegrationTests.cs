@@ -18,6 +18,15 @@ public sealed class BlueTuskSynchronousIntegrationTests
         Assert.Equal(1, dataSource.GetPoolStatistics().Idle);
         using (var connection = dataSource.OpenConnection())
         {
+            var capabilities = Assert.IsType<BlueTuskServerCapabilities>(connection.ServerCapabilities);
+            Assert.True(capabilities.ServerVersion.Major >= 14);
+            Assert.Equal(capabilities.ServerVersion.Major >= 14, capabilities.SupportsPipelineMode);
+            Assert.Equal(capabilities.ServerVersion.Major >= 15, capabilities.SupportsMerge);
+            Assert.Equal(capabilities.ServerVersion.Major >= 14, capabilities.SupportsMultiranges);
+            Assert.Equal(capabilities.ServerVersion.Major >= 18, capabilities.SupportsVirtualGeneratedColumns);
+            Assert.False(capabilities.SupportsSqlPgq);
+            Assert.False(capabilities.SupportsOAuthBearer);
+
             using var prepared = new BlueTuskCommand(
                 "SELECT @value::int4 + 1",
                 connection);
