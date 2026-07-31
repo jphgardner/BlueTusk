@@ -156,11 +156,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Defaults, computed values, and optimistic concurrency
 - [x] Core relational type mappings and SQL generation
 - [x] Core LINQ translation, query execution, and result materialisation
-- [ ] Initial migrations SQL generation and history repository
+- [x] Initial migrations SQL generation and history repository
   - [x] Common relational create-table, primary-key, foreign-key, index, default, and facet DDL
   - [x] PostgreSQL identity-column DDL and live schema-creation coverage
-  - [ ] Migration history repository and idempotent migration scripts
-  - [ ] Alter, rename, sequence, and drop-operation coverage
+  - [x] Migration history repository, transactional locking, and idempotent migration scripts
+  - [x] Live apply/revert coverage for alter, rename, sequence, index, and drop operations
 - [ ] Initial database reverse engineering
 - [ ] Initial EF Core relational specification-suite coverage
 
