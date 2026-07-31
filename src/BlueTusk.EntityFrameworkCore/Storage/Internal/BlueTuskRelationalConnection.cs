@@ -1,7 +1,6 @@
 using System.Data.Common;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;

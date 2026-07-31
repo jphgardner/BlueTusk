@@ -1,8 +1,8 @@
+using System.Text.Json;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
-using System.Text.Json;
 using Xunit.Sdk;
 
 namespace BlueTusk.EntityFrameworkCore.Tests;

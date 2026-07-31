@@ -4,7 +4,6 @@ using BlueTusk.TypeSystem;
 namespace BlueTusk.Data;
 
 /// <summary>Collects immutable provider configuration before a data source is created.</summary>
-/// <remarks>The executable data source will be introduced with the first end-to-end connection milestone.</remarks>
 public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
 {
     private readonly List<IBlueTuskPlugin> _plugins = [];

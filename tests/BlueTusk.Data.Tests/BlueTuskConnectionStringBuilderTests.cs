@@ -39,6 +39,19 @@ public sealed class BlueTuskConnectionStringBuilderTests
     }
 
     [Fact]
+    public void Redactor_handles_quoted_values_without_exposing_secrets()
+    {
+        const string connectionString =
+            "Host=db.example;Password='top;secret';Application Name=\"worker;one\"";
+
+        var redacted = BlueTuskConnectionStringRedactor.Redact(connectionString);
+
+        Assert.DoesNotContain("top;secret", redacted, StringComparison.Ordinal);
+        Assert.Contains("Password=<redacted>", redacted, StringComparison.Ordinal);
+        Assert.Contains("worker;one", redacted, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Rejects_invalid_ports()
     {
         var builder = new BlueTuskConnectionStringBuilder();

@@ -39,4 +39,14 @@ public sealed class BlueTuskClientOptionsTests
         Assert.Equal(BlueTuskSslMode.VerifyFull, options.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Prefer, options.ChannelBinding);
     }
+
+    [Fact]
+    public void Parses_quoted_connection_string_values_without_ADO_NET_dependencies()
+    {
+        var options = BlueTuskClientOptions.FromConnectionString(
+            "Database=app;Username=replicator;Password='s;ecret';Application Name=\"wal;reader\"");
+
+        Assert.Equal("s;ecret", options.Password);
+        Assert.Equal("wal;reader", options.ApplicationName);
+    }
 }

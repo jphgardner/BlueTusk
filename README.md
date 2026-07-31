@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental pre-release provider. Version 0.0.9 can connect with TLS and SCRAM-SHA-256 and execute buffered, parameterized, transactional, cancellable, and pooled queries through ADO.NET. Its catalogue-driven type system supports advanced scalars, arrays, enums, domains, composites, records, ranges, and multiranges in text and binary formats. It also provides streaming COPY, asynchronous notifications, transactional large-object streams, and physical and logical replication with `pgoutput` decoding. It does not yet support prepared statements, batches, or production workloads. Track implemented scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, and the first PostgreSQL-specific EF mappings. PostgreSQL pipeline mode, stable extensions, PostgreSQL 19/SQL-PGQ, and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -84,17 +84,22 @@ The current `0.0.9` implementation provides:
 - protocol-version-aware `pgoutput` decoding for DML, streamed transactions, and two-phase metadata;
 - raw logical decoding output for custom plugins;
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.
+- explicit and automatic prepared statements, `DbBatch`, named parameters, and multi-host pools;
+- EF Core CRUD, transactions, generated values, core LINQ, initial migrations and reverse engineering;
+- PostgreSQL-native EF scalar, array, range, multirange, enum, domain, composite, and record mappings.
 
-Minimal usage:
+Applications should build one long-lived data source per distinct configuration. It owns pooling, runtime codecs, and the PostgreSQL type catalogue:
 
 ```csharp
-await using var dataSource = BlueTuskDataSource.Create(connectionString);
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
 await using var command = dataSource.CreateCommand("SELECT $1::int4 + $2::int4");
 command.Parameters.Add(new BlueTuskParameter<int>(20));
 command.Parameters.Add(new BlueTuskParameter<int>(22));
 
 var answer = await command.ExecuteScalarAsync<int>();
 ```
+
+Directly constructing `BlueTuskConnection` is supported for compatibility and dedicated ownership scenarios, but those connections are unpooled. Replication uses separate, dedicated unpooled sessions.
 
 ## License
 

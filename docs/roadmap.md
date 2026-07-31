@@ -7,7 +7,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Repository and package structure
 - [x] Shared SDK, formatting, analyzer, and CI rules
 - [x] Architecture and compatibility decisions
-- [x] PostgreSQL 15–18 and 19 beta Docker environments
+- [x] PostgreSQL 15–18 Docker environments and a PostgreSQL 19 beta compose profile
 - [x] Fragmentation-aware backend frame parser
 - [x] Startup and simple-query message writer
 - [x] Connection state machine
@@ -173,6 +173,70 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Tracking modes, identity resolution, split-query includes, and relationship fix-up
   - [x] Relational command execution and bulk update/delete
 
+## Cross-cutting architecture gates (required before 1.0)
+
+### Data-source-first application model
+
+- [x] `UseBlueTusk(BlueTuskDataSource)` preserves the source pool, configured codecs, and runtime catalogue
+- [x] EF ownership, pool reuse, overload switching, and provider-service cache/debug-metadata coverage
+- [x] ADO.NET, EF Core, and root samples lead with one long-lived data source per configuration
+- [x] Directly constructed `BlueTuskConnection` documented as an unpooled compatibility/convenience path
+- [ ] Data-source-derived factory for dedicated, unpooled replication sessions
+
+### PostgreSQL pipeline mode and transport evaluation
+
+- [ ] Client-layer PostgreSQL pipeline API with explicit `Sync` boundaries and ordered result groups
+- [ ] Pipeline error propagation, cancellation, disposal, and safe session-recovery semantics
+- [ ] Fake-server, conformance, stress, and live PostgreSQL pipeline-mode coverage
+- [x] ADR separates PostgreSQL pipeline mode from `System.IO.Pipelines` and defines the evaluation gate
+- [ ] ArrayPool/Span/Memory versus `System.IO.Pipelines` prototype benchmarks
+  - [ ] Fragmented frames, large fields, COPY, cancellation, and TLS
+  - [ ] Genuine synchronous and asynchronous workloads
+- [ ] Adopt `System.IO.Pipelines` only if measured throughput, allocations, and complexity justify it
+
+### Allocation discipline
+
+- [x] Retain the span-based `BlueTuskReader`/`BlueTuskWriter` codec model
+- [ ] Profile complete parameter and result paths
+  - [ ] Per-command writers, per-parameter arrays, boxing, and text transcoding
+  - [ ] Structured codecs, COPY field buffers, and large-field materialisation
+- [ ] Introduce safe per-session reuse, pooling, sizing passes, or direct `IBufferWriter` encoding where measurements justify them
+- [ ] Check in end-to-end allocation baselines and explicit regression budgets
+- [ ] Describe inherently allocating returned CLR values accurately; no blanket “allocation-free” claim
+
+### Enforced package boundaries and provider contract
+
+- [x] Automated conformance test rejects reverse BlueTusk references and ADO.NET/EF leakage into lower layers
+- [x] Remove the unused Client → Extensions.Abstractions reference
+- [x] Document the narrow Data surface consumed by EF: data-source connection creation, parameter store-type identity, runtime type resolution, capabilities, and diagnostics
+- [x] Keep protocol parsing independently testable without ADO.NET or EF
+- [ ] Run the architecture gate in every supported CI environment
+
+### Extension seam
+
+- [ ] Carry an immutable feature registry through `BlueTuskDataSource.Build()` and expose real consumption semantics
+- [ ] Complete a `citext` vertical slice without extension-specific core dependencies
+  - [ ] Codec/type registration and data-source-builder ergonomics
+  - [ ] ADO.NET live tests, documentation, and package metadata
+  - [ ] Separate EF translation/migration plug-in where required
+- [ ] Extension-authoring template
+- [ ] Extension compatibility-test harness
+- [ ] Stabilise extension APIs only after the vertical slice and compatibility gate
+
+### Replication preview gate
+
+- [ ] Data-source-derived dedicated-session ergonomics without pooling replication connections
+- [ ] Allocation/backpressure benchmarks and cancellation/disposal stress coverage
+- [ ] Reconnect/resume examples and explicit ownership/lifetime documentation
+- [ ] PostgreSQL 19 live coverage
+- [ ] Long-running durability, feedback, and failure-recovery matrix required before production-ready status
+
+### Release truthfulness
+
+- [x] Reconcile package version, README, roadmap, and implemented prepared/batch/EF scope
+- [x] Label implemented, tested preview, production-ready, and planned capabilities distinctly
+- [ ] Re-audit all public claims at each preview and 1.0 release gate
+
 ## 0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)
 
 - [x] Complete PostgreSQL type mappings
@@ -200,16 +264,29 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
 - [ ] Idempotent scripts, history-table behaviour, and version-aware DDL
 
-## 0.5.0 — SQL/PGQ graph preview (Milestone 7)
+## 0.5.0 — PostgreSQL 19 SQL/PGQ graph preview (Milestone 7)
 
-- [ ] Property-graph model metadata
-- [ ] Property-graph migrations
-- [ ] Native graph query root
-- [ ] Typed graph-pattern API
-- [ ] `GRAPH_TABLE` translation
-- [ ] Relational and graph query composition
-- [ ] Property-graph reverse engineering and scaffolding
-- [ ] Graph-specific diagnostics
+- [ ] Phase A: provider compatibility against PostgreSQL 19 Beta 2
+  - [ ] Populate and expose real server capabilities; remove unused capability-only claims
+  - [ ] Executable PostgreSQL 19 CI/integration job, beyond the compose profile
+  - [ ] Live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` and `GRAPH_TABLE` raw-SQL tests
+  - [ ] Parameters, metadata, preparation, batches, cancellation, pooling, and mixed relational/graph coverage
+  - [ ] PostgreSQL 15–18 regression gate remains green
+- [ ] Phase B: property-graph metadata and schema
+  - [ ] Graph, vertex, edge, key, label, and property model metadata
+  - [ ] PostgreSQL 19 `information_schema`/documented-catalogue discovery
+  - [ ] Capability-guarded migrations and reverse engineering
+  - [ ] Correct graph, label, property, and table identifier quoting
+- [ ] Phase C: EF query support
+  - [ ] Native typed graph query root and graph-pattern representation
+  - [ ] Parameterised `GRAPH_TABLE` translation
+  - [ ] Relational/graph composition, projections, filters, aliases, and materialisation
+  - [ ] Explicit unsupported-construct diagnostics with no unsafe string fallback
+  - [ ] SQL-generation unit tests and live PostgreSQL 19 acceptance tests
+- [ ] Phase D: sample and tooling
+  - [ ] Executable PostgreSQL 19 graph sample replaces the placeholder
+  - [ ] Schema tooling displays property graphs
+  - [ ] Supported SQL/PGQ subset and raw-SQL-only remainder documented
 
 ## Extension ecosystem (Milestone 8, pre-1.0)
 

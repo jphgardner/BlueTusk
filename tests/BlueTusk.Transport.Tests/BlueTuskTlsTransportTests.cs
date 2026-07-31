@@ -23,7 +23,7 @@ public sealed class BlueTuskTlsTransportTests
         using var certificate = X509CertificateLoader.LoadPkcs12(
             ephemeralCertificate.Export(X509ContentType.Pkcs12),
             password: null,
-            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable);
 
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
@@ -92,7 +92,7 @@ public sealed class BlueTuskTlsTransportTests
         using var certificate = X509CertificateLoader.LoadPkcs12(
             ephemeralCertificate.Export(X509ContentType.Pkcs12),
             password: null,
-            X509KeyStorageFlags.UserKeySet | X509KeyStorageFlags.PersistKeySet | X509KeyStorageFlags.Exportable);
+            X509KeyStorageFlags.MachineKeySet | X509KeyStorageFlags.Exportable);
 
         var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();

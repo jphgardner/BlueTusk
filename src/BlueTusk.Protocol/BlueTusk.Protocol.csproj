@@ -2,8 +2,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Transport\BlueTusk.Transport.csproj" />
-    <ProjectReference Include="..\BlueTusk.Security\BlueTusk.Security.csproj" />
-    <ProjectReference Include="..\BlueTusk.Diagnostics\BlueTusk.Diagnostics.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

@@ -36,14 +36,19 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
     public override void ApplyServices(IServiceCollection services)
         => services.AddEntityFrameworkBlueTusk();
 
-    private sealed class ExtensionInfo(IDbContextOptionsExtension extension)
+    private sealed class ExtensionInfo(BlueTuskOptionsExtension extension)
         : RelationalExtensionInfo(extension)
     {
-        public override string LogFragment => "using BlueTusk ";
+        public override string LogFragment => extension.DataSource is null
+            ? "using BlueTusk "
+            : "using BlueTusk data source ";
 
         public override int GetServiceProviderHashCode() => 0;
 
         public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
-            => debugInfo["BlueTusk"] = "1";
+        {
+            debugInfo["BlueTusk"] = "1";
+            debugInfo["BlueTusk:DataSource"] = extension.DataSource is null ? "0" : "1";
+        }
     }
 }

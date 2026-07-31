@@ -5,11 +5,15 @@
 ## Configure a context
 
 ```csharp
-services.AddDbContext<AppDbContext>(options =>
-    options.UseBlueTusk(connectionString));
+services.AddSingleton(_ =>
+    new BlueTuskDataSourceBuilder(connectionString).Build());
+services.AddDbContext<AppDbContext>((serviceProvider, options) =>
+    options.UseBlueTusk(serviceProvider.GetRequiredService<BlueTuskDataSource>()));
 ```
 
-`UseBlueTusk` also accepts an existing `BlueTuskConnection` when the application owns connection construction or lifetime. Pass a `BlueTuskDataSource` when the context should share its physical pool and runtime-registered type mappings; the application owns the data source lifetime:
+The long-lived data source is the recommended application entry point: EF-created logical connections share its physical pool, configured codecs, and runtime type catalogue, while the dependency-injection container owns the data source lifetime. `UseBlueTusk` also accepts a connection string or an existing `BlueTuskConnection` for compatibility and dedicated-lifetime scenarios; directly constructed connections are unpooled.
+
+Configure runtime user-defined types before registering the data source:
 
 ```csharp
 var builder = new BlueTuskDataSourceBuilder(connectionString);

@@ -1,5 +1,5 @@
-using BlueTusk.Data;
 using BlueTusk.Client;
+using BlueTusk.Data;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using Xunit.Sdk;

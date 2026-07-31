@@ -1,4 +1,3 @@
-using System.Data.Common;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Infrastructure;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;

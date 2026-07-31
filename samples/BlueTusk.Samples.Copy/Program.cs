@@ -7,8 +7,8 @@ if (string.IsNullOrWhiteSpace(connectionString))
     return 2;
 }
 
-await using var connection = new BlueTuskConnection(connectionString);
-await connection.OpenAsync();
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+await using var connection = await dataSource.OpenConnectionAsync();
 await using (var create = new BlueTuskCommand(
                  "CREATE TEMP TABLE bluetusk_copy_sample (id int4, name text)",
                  connection))
