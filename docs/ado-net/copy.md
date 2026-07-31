@@ -81,7 +81,7 @@ while (await exporter.StartRowAsync() != -1)
 
 Arrays and other catalogue-composed values use their existing binary codecs. `ReadAsync<T>` also has an explicit-OID overload. Reading a PostgreSQL null into a non-nullable value type fails instead of silently substituting its CLR default.
 
-Both typed operations use a bounded producer/consumer pipe, so application code and the network apply backpressure to one another. Disposing before the trailer aborts and drains COPY, leaving the connection reusable.
+Both typed operations use a bounded producer/consumer pipe, so application code and the network apply backpressure to one another. COPY-mode initialization is ordered independently from transfer completion, including immediate empty exports under concurrent load. Disposing before the trailer aborts and drains COPY, leaving the connection reusable.
 
 Synchronous typed binary COPY is also incremental and uses a stateful protocol operation rather than buffering the transfer:
 

@@ -87,6 +87,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Streaming raw COPY FROM/TO for text, CSV, and binary payloads
   - [x] Streaming `TextReader`/`TextWriter` helpers for text and CSV
   - [x] Typed binary importer and exporter
+  - [x] Race-free initialization for immediate and empty COPY completion
 - [x] `LISTEN`/`NOTIFY` asynchronous delivery
   - [x] Strict backend `NotificationResponse` decoding
   - [x] Quoted, idempotent channel subscriptions and explicit unlisten APIs

@@ -1723,6 +1723,11 @@ public sealed class BlueTuskConnection : DbConnection
             if (ReferenceEquals(completed, copyTask))
             {
                 _ = await copyTask.ConfigureAwait(false);
+                if (started.IsCompletedSuccessfully)
+                {
+                    return await started.ConfigureAwait(false);
+                }
+
                 throw new BlueTuskException(
                     "PostgreSQL completed COPY without entering COPY mode.");
             }

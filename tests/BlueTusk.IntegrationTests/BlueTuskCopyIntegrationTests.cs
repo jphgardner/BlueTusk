@@ -207,6 +207,21 @@ public sealed class BlueTuskCopyIntegrationTests
     }
 
     [Fact]
+    public async Task Empty_binary_exports_initialize_when_transfer_completes_immediately()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+
+        for (var iteration = 0; iteration < 32; iteration++)
+        {
+            await using var exporter = await connection.BeginBinaryExportAsync(
+                "COPY (SELECT 1::int4 WHERE false) TO STDOUT WITH (FORMAT BINARY)",
+                CancellationToken.None);
+            Assert.Equal(-1, await exporter.StartRowAsync(CancellationToken.None));
+        }
+    }
+
+    [Fact]
     public async Task Binary_copy_disposal_and_format_mismatch_abort_cleanly()
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());
