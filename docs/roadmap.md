@@ -130,11 +130,11 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Primary, standby, read-write, read-only, and preferred-role target probes
     - [x] Authentication-stop and credential-redacted aggregate failure behavior
     - [x] Per-host pool partitioning and aggregate lifecycle/statistics
-- [ ] Genuine synchronous connection and query paths
+- [x] Genuine synchronous connection and query paths
   - [x] Synchronous transport, TLS, startup, authentication, and cancellation
-  - [ ] Synchronous pooling, transactions, commands, COPY, notifications, and large objects
+  - [x] Synchronous pooling, transactions, commands, COPY, notifications, and large objects
     - [x] Per-host pooling, type discovery, commands, preparation, batches, transactions, and timeouts
-    - [ ] COPY, notifications, and large objects
+    - [x] Streaming raw, text, and typed-binary COPY, notification subscriptions/waits, and large objects
 - [ ] Network-backed sequential and streaming reader modes
   - [ ] Bounded named portals, suspension, and incremental row reads
   - [ ] Sequential field access plus streaming `bytea`, text, and JSON

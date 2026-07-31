@@ -1,9 +1,11 @@
 using System.Buffers.Binary;
+using BlueTusk.Client;
+using BlueTusk.Protocol;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data.Copy;
 
-public sealed class BlueTuskBinaryExporter : IAsyncDisposable
+public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
 {
     private const int MaximumHeaderExtensionLength = 64 * 1024 * 1024;
     private static ReadOnlySpan<byte> Signature =>
@@ -14,6 +16,7 @@ public sealed class BlueTuskBinaryExporter : IAsyncDisposable
 
     private readonly BlueTuskCopyPipe _pipe;
     private readonly Task<BlueTuskRawCopyResult> _copyTask;
+    private readonly BlueTuskCopyOutOperation? _synchronousOperation;
     private readonly BlueTuskTypeRegistry _registry;
     private readonly short _expectedColumnCount;
     private short _fieldCount;
@@ -34,6 +37,26 @@ public sealed class BlueTuskBinaryExporter : IAsyncDisposable
         _copyTask = copyTask;
         _registry = registry;
         _expectedColumnCount = checked((short)columnCount);
+    }
+
+    internal BlueTuskBinaryExporter(
+        BlueTuskCopyOutOperation operation,
+        BlueTuskTypeRegistry registry,
+        int columnCount)
+    {
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
+        _pipe = null!;
+        _copyTask = null!;
+        _synchronousOperation = operation ?? throw new ArgumentNullException(nameof(operation));
+        _registry = registry;
+        _expectedColumnCount = checked((short)columnCount);
+    }
+
+    internal void Initialize()
+    {
+        var header = new byte[19];
+        ReadExactly(header);
+        ValidateHeader(header);
     }
 
     internal async ValueTask InitializeAsync(CancellationToken cancellationToken)
@@ -70,6 +93,45 @@ public sealed class BlueTuskBinaryExporter : IAsyncDisposable
             await ReadExactlyAsync(new byte[extensionLength], cancellationToken)
                 .ConfigureAwait(false);
         }
+    }
+
+    public int StartRow()
+    {
+        EnsureSynchronousMode();
+        EnsurePreviousRowComplete();
+        var bytes = new byte[sizeof(short)];
+        ReadExactly(bytes);
+        _fieldCount = BinaryPrimitives.ReadInt16BigEndian(bytes);
+        if (_fieldCount == -1)
+        {
+            _completed = true;
+            var scratch = new byte[1];
+            while (_synchronousOperation!.Read(scratch) != 0)
+            {
+            }
+
+            var result = _synchronousOperation.Result ?? throw new InvalidOperationException(
+                "PostgreSQL did not complete binary COPY after its trailer.");
+            if (result.Response.Format != BlueTuskCopyFormat.Binary)
+            {
+                throw new InvalidOperationException("PostgreSQL did not execute binary COPY.");
+            }
+
+            if (!BlueTuskCommandTagParser.TryGetRowsAffected(result.CommandTag, out var rowsAffected) ||
+                rowsAffected != _rowsRead)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL reported an invalid binary COPY row count for {_rowsRead} rows read.");
+            }
+
+            return -1;
+        }
+
+        ValidateFieldCount();
+        _rowStarted = true;
+        _fieldIndex = 0;
+        _rowsRead = checked(_rowsRead + 1);
+        return _fieldCount;
     }
 
     public async ValueTask<int> StartRowAsync(
@@ -119,6 +181,36 @@ public sealed class BlueTuskBinaryExporter : IAsyncDisposable
         CancellationToken cancellationToken = default) =>
         ReadAsync<T>(postgreSqlTypeOid: null, cancellationToken);
 
+    public T? Read<T>(uint? postgreSqlTypeOid = null)
+    {
+        EnsureSynchronousMode();
+        EnsureFieldAvailable();
+        var lengthBytes = new byte[sizeof(int)];
+        ReadExactly(lengthBytes);
+        var length = BinaryPrimitives.ReadInt32BigEndian(lengthBytes);
+        _fieldIndex++;
+        if (length == -1)
+        {
+            if (default(T) is not null)
+            {
+                throw new InvalidOperationException(
+                    $"A null binary COPY field cannot be read as non-nullable {typeof(T).FullName}.");
+            }
+
+            return default;
+        }
+
+        if (length < -1)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL binary COPY field declared invalid length {length}.");
+        }
+
+        var payload = new byte[length];
+        ReadExactly(payload);
+        return BlueTuskBinaryCopyCodec.Decode<T>(payload, postgreSqlTypeOid, _registry);
+    }
+
     public async ValueTask<T?> ReadAsync<T>(
         uint? postgreSqlTypeOid,
         CancellationToken cancellationToken = default)
@@ -167,6 +259,12 @@ public sealed class BlueTuskBinaryExporter : IAsyncDisposable
         }
 
         _disposed = true;
+        if (_synchronousOperation is not null)
+        {
+            _synchronousOperation.Dispose();
+            return;
+        }
+
         if (!_completed)
         {
             _pipe.CompleteWriting(
@@ -182,6 +280,39 @@ public sealed class BlueTuskBinaryExporter : IAsyncDisposable
         }
 
         await _pipe.DisposeAsync().ConfigureAwait(false);
+    }
+
+    public void Dispose()
+    {
+        if (_disposed)
+        {
+            return;
+        }
+
+        if (_synchronousOperation is null)
+        {
+            throw new InvalidOperationException(
+                "An asynchronously created binary exporter must be disposed asynchronously.");
+        }
+
+        _disposed = true;
+        _synchronousOperation.Dispose();
+    }
+
+    private void ReadExactly(Span<byte> destination)
+    {
+        var offset = 0;
+        while (offset < destination.Length)
+        {
+            var read = _synchronousOperation!.Read(destination[offset..]);
+            if (read == 0)
+            {
+                throw new EndOfStreamException(
+                    "PostgreSQL binary COPY ended in the middle of a value.");
+            }
+
+            offset += read;
+        }
     }
 
     private async ValueTask ReadExactlyAsync(
@@ -210,6 +341,77 @@ public sealed class BlueTuskBinaryExporter : IAsyncDisposable
         if (_completed)
         {
             throw new InvalidOperationException("The binary COPY exporter is already complete.");
+        }
+    }
+
+    private void EnsurePreviousRowComplete()
+    {
+        EnsureReadable();
+        if (_rowStarted && _fieldIndex != _fieldCount)
+        {
+            throw new InvalidOperationException(
+                $"The current binary COPY row has {_fieldCount - _fieldIndex} unread fields.");
+        }
+    }
+
+    private void EnsureFieldAvailable()
+    {
+        EnsureReadable();
+        if (!_rowStarted || _fieldIndex >= _fieldCount)
+        {
+            throw new InvalidOperationException(
+                "StartRow or StartRowAsync must identify a row with an unread field before Read is called.");
+        }
+    }
+
+    private void EnsureSynchronousMode()
+    {
+        if (_synchronousOperation is null)
+        {
+            throw new InvalidOperationException(
+                "This binary exporter was created for asynchronous operation.");
+        }
+    }
+
+    private void ValidateHeader(ReadOnlySpan<byte> header)
+    {
+        if (!header[..Signature.Length].SequenceEqual(Signature))
+        {
+            throw new InvalidOperationException("PostgreSQL binary COPY signature is invalid.");
+        }
+
+        var flags = BinaryPrimitives.ReadInt32BigEndian(header[11..]);
+        if (flags != 0)
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL binary COPY flags 0x{flags:X8} are not supported.");
+        }
+
+        var extensionLength = BinaryPrimitives.ReadInt32BigEndian(header[15..]);
+        if (extensionLength < 0)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL binary COPY declared a negative header extension length.");
+        }
+
+        if (extensionLength > MaximumHeaderExtensionLength)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL binary COPY header extension exceeds {MaximumHeaderExtensionLength} bytes.");
+        }
+
+        if (extensionLength > 0)
+        {
+            ReadExactly(new byte[extensionLength]);
+        }
+    }
+
+    private void ValidateFieldCount()
+    {
+        if (_fieldCount < 0 || _fieldCount != _expectedColumnCount)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL binary COPY row contains {_fieldCount} fields; {_expectedColumnCount} were expected.");
         }
     }
 }

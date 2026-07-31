@@ -87,6 +87,15 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
     BlueTuskQueryResult ExecutePreparedBatch(IReadOnlyList<BlueTuskPreparedBatchQuery> queries) =>
         throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
 
+    BlueTuskCopyResult CopyIn(
+        string sql,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
+    BlueTuskCopyInOperation BeginCopyIn(string sql) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
     ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
@@ -98,6 +107,18 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         Stream destination,
         Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default);
+
+    BlueTuskCopyResult CopyOut(
+        string sql,
+        Stream destination,
+        Action<BlueTuskCopyResponse>? copyStarted) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
+    BlueTuskCopyOutOperation BeginCopyOut(string sql) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
+    BlueTuskNotificationResponse WaitForNotification() =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
 
     ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
         CancellationToken cancellationToken = default);
@@ -523,12 +544,31 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         CancellationToken cancellationToken = default) =>
         _session.CopyInAsync(sql, source, copyStarted, cancellationToken);
 
+    public BlueTuskCopyResult CopyIn(
+        string sql,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted) =>
+        _session.CopyIn(sql, source, copyStarted);
+
+    public BlueTuskCopyInOperation BeginCopyIn(string sql) => _session.BeginCopyIn(sql);
+
     public ValueTask<BlueTuskCopyResult> CopyOutAsync(
         string sql,
         Stream destination,
         Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default) =>
         _session.CopyOutAsync(sql, destination, copyStarted, cancellationToken);
+
+    public BlueTuskCopyResult CopyOut(
+        string sql,
+        Stream destination,
+        Action<BlueTuskCopyResponse>? copyStarted) =>
+        _session.CopyOut(sql, destination, copyStarted);
+
+    public BlueTuskCopyOutOperation BeginCopyOut(string sql) => _session.BeginCopyOut(sql);
+
+    public BlueTuskNotificationResponse WaitForNotification() =>
+        _session.WaitForNotification();
 
     public ValueTask<BlueTuskNotificationResponse> WaitForNotificationAsync(
         CancellationToken cancellationToken = default) =>

@@ -21,6 +21,7 @@ public sealed class BlueTuskConnection : DbConnection
     private readonly SemaphoreSlim _largeObjectGate = new(1, 1);
     private readonly SemaphoreSlim _notificationGate = new(1, 1);
     private readonly object _notificationStateSync = new();
+    private readonly AutoResetEvent _notificationAvailable = new(initialState: false);
     private readonly Dictionary<string, NotificationSubscription> _notificationSubscriptions =
         new(StringComparer.Ordinal);
     private string _connectionString = string.Empty;
@@ -112,6 +113,29 @@ public sealed class BlueTuskConnection : DbConnection
             {
                 return _notificationChannel.Reader.ReadAllAsync();
             }
+        }
+    }
+
+    /// <summary>Blocks until the next subscribed PostgreSQL notification is available.</summary>
+    public BlueTuskNotification WaitForNotification()
+    {
+        EnsureNotificationsAvailable();
+        while (true)
+        {
+            lock (_notificationStateSync)
+            {
+                if (_notificationChannel.Reader.TryRead(out var notification))
+                {
+                    return notification;
+                }
+
+                if (_notificationChannelCompleted)
+                {
+                    throw new EndOfStreamException("The PostgreSQL notification stream has completed.");
+                }
+            }
+
+            _notificationAvailable.WaitOne();
         }
     }
 
@@ -298,6 +322,51 @@ public sealed class BlueTuskConnection : DbConnection
         throw new NotSupportedException("Changing databases requires opening a new PostgreSQL connection.");
 
     /// <summary>Starts receiving asynchronous notifications for a PostgreSQL channel.</summary>
+    public void Listen(string channel)
+    {
+        var quotedChannel = BlueTuskSql.QuoteIdentifier(channel);
+        EnsureNotificationsAvailable();
+
+        _notificationGate.Wait();
+        IBlueTuskPhysicalSession? listenerSession = null;
+        try
+        {
+            EnsureNotificationsAvailable();
+            if (!_acceptingNotificationSubscriptions)
+            {
+                throw new InvalidOperationException(
+                    "The connection is closing and cannot accept notification subscriptions.");
+            }
+
+            if (_notificationSubscriptions.ContainsKey(channel))
+            {
+                return;
+            }
+
+            listenerSession = BlueTuskPhysicalSession.Open(_settings);
+            _ = listenerSession.ExecuteSimpleQuery($"LISTEN {quotedChannel}");
+
+            var subscription = new NotificationSubscription(
+                channel,
+                listenerSession,
+                GetNotificationWriter());
+            _notificationSubscriptions.Add(channel, subscription);
+            subscription.StartSynchronous(
+                Task.Factory.StartNew(
+                    () => PumpNotifications(subscription),
+                    CancellationToken.None,
+                    TaskCreationOptions.LongRunning,
+                    TaskScheduler.Default));
+            listenerSession = null;
+        }
+        finally
+        {
+            _notificationGate.Release();
+            listenerSession?.Dispose();
+        }
+    }
+
+    /// <summary>Starts receiving asynchronous notifications for a PostgreSQL channel.</summary>
     public async ValueTask ListenAsync(
         string channel,
         CancellationToken cancellationToken = default)
@@ -347,6 +416,25 @@ public sealed class BlueTuskConnection : DbConnection
     }
 
     /// <summary>Stops receiving asynchronous notifications for a PostgreSQL channel.</summary>
+    public void Unlisten(string channel)
+    {
+        _ = BlueTuskSql.QuoteIdentifier(channel);
+
+        NotificationSubscription? subscription;
+        _notificationGate.Wait();
+        try
+        {
+            _notificationSubscriptions.Remove(channel, out subscription);
+        }
+        finally
+        {
+            _notificationGate.Release();
+        }
+
+        subscription?.Dispose();
+    }
+
+    /// <summary>Stops receiving asynchronous notifications for a PostgreSQL channel.</summary>
     public async ValueTask UnlistenAsync(
         string channel,
         CancellationToken cancellationToken = default)
@@ -371,6 +459,27 @@ public sealed class BlueTuskConnection : DbConnection
     }
 
     /// <summary>Stops receiving notifications for every channel on this connection.</summary>
+    public void UnlistenAll()
+    {
+        NotificationSubscription[] subscriptions;
+        _notificationGate.Wait();
+        try
+        {
+            subscriptions = _notificationSubscriptions.Values.ToArray();
+            _notificationSubscriptions.Clear();
+        }
+        finally
+        {
+            _notificationGate.Release();
+        }
+
+        foreach (var subscription in subscriptions)
+        {
+            subscription.Dispose();
+        }
+    }
+
+    /// <summary>Stops receiving notifications for every channel on this connection.</summary>
     public async ValueTask UnlistenAllAsync(CancellationToken cancellationToken = default)
     {
         NotificationSubscription[] subscriptions;
@@ -388,6 +497,112 @@ public sealed class BlueTuskConnection : DbConnection
         foreach (var subscription in subscriptions)
         {
             await subscription.DisposeAsync().ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>Creates a PostgreSQL large object with a server-assigned object identifier.</summary>
+    public uint CreateLargeObject() => CreateLargeObject(preferredObjectId: 0);
+
+    /// <summary>Creates a PostgreSQL large object, optionally requesting a specific object identifier.</summary>
+    public uint CreateLargeObject(uint preferredObjectId) =>
+        ExecuteLargeObjectTransaction(
+            transaction => BlueTuskLargeObjectOperations.ExecuteScalar<uint>(
+                this,
+                transaction,
+                "SELECT pg_catalog.lo_create($1)",
+                [new BlueTuskParameter<uint>(preferredObjectId)]));
+
+    /// <summary>Deletes a PostgreSQL large object.</summary>
+    public void DeleteLargeObject(uint objectId)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        var deleted = ExecuteLargeObjectTransaction(
+            transaction => BlueTuskLargeObjectOperations.ExecuteScalar<int>(
+                this,
+                transaction,
+                "SELECT pg_catalog.lo_unlink($1)",
+                [new BlueTuskParameter<uint>(objectId)]));
+        if (deleted != 1)
+        {
+            throw new BlueTuskException(
+                $"PostgreSQL returned the unexpected lo_unlink result {deleted}.");
+        }
+    }
+
+    /// <summary>Opens a transactional stream over a PostgreSQL large object.</summary>
+    public BlueTuskLargeObjectStream OpenLargeObject(uint objectId, FileAccess access)
+    {
+        ArgumentOutOfRangeException.ThrowIfZero(objectId);
+        if (access is < FileAccess.Read or > FileAccess.ReadWrite)
+        {
+            throw new ArgumentOutOfRangeException(nameof(access));
+        }
+
+        _largeObjectGate.Wait();
+        BlueTuskTransaction? transaction = null;
+        var ownsTransaction = false;
+        try
+        {
+            EnsureLargeObjectsAvailable();
+            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            {
+                throw new InvalidOperationException(
+                    "Only one implicitly transactional large-object stream can be open at a time. " +
+                    "Begin an explicit transaction to open multiple streams.");
+            }
+
+            transaction = CurrentTransaction;
+            if (transaction is null)
+            {
+                transaction = BeginTransaction(IsolationLevel.ReadCommitted);
+                ownsTransaction = true;
+                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+            }
+
+            try
+            {
+                var mode = access switch
+                {
+                    FileAccess.Read => 0x0004_0000,
+                    FileAccess.Write => 0x0002_0000,
+                    FileAccess.ReadWrite => 0x0006_0000,
+                    _ => throw new UnreachableException(),
+                };
+                var descriptor = BlueTuskLargeObjectOperations.ExecuteScalar<int>(
+                    this,
+                    transaction,
+                    "SELECT pg_catalog.lo_open($1, $2)",
+                    [
+                        new BlueTuskParameter<uint>(objectId),
+                        new BlueTuskParameter<int>(mode),
+                    ]);
+                var operations = new BlueTuskLargeObjectOperations(
+                    this,
+                    transaction,
+                    descriptor,
+                    ownsTransaction);
+                var length = operations.Seek(0, SeekOrigin.End);
+                var position = operations.Seek(0, SeekOrigin.Begin);
+                return new BlueTuskLargeObjectStream(
+                    objectId,
+                    access,
+                    length,
+                    position,
+                    operations);
+            }
+            catch
+            {
+                if (ownsTransaction)
+                {
+                    CompleteImplicitLargeObjectTransactionCore(transaction, commit: false);
+                }
+
+                throw;
+            }
+        }
+        finally
+        {
+            _largeObjectGate.Release();
         }
     }
 
@@ -520,6 +735,12 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
+    public new BlueTuskTransaction BeginTransaction() =>
+        (BlueTuskTransaction)base.BeginTransaction();
+
+    public new BlueTuskTransaction BeginTransaction(IsolationLevel isolationLevel) =>
+        (BlueTuskTransaction)base.BeginTransaction(isolationLevel);
+
     public new async ValueTask<BlueTuskTransaction> BeginTransactionAsync(
         CancellationToken cancellationToken = default) =>
         await BeginTransactionAsync(IsolationLevel.Unspecified, cancellationToken).ConfigureAwait(false);
@@ -528,6 +749,18 @@ public sealed class BlueTuskConnection : DbConnection
         IsolationLevel isolationLevel,
         CancellationToken cancellationToken = default) =>
         (BlueTuskTransaction)await BeginDbTransactionAsync(isolationLevel, cancellationToken).ConfigureAwait(false);
+
+    public BlueTuskRawCopyResult CopyFrom(string copyCommand, Stream source)
+    {
+        EnsureCopyAvailable();
+        return CopyFromCore(copyCommand, source, copyStarted: null);
+    }
+
+    public BlueTuskRawCopyResult CopyTo(string copyCommand, Stream destination)
+    {
+        EnsureCopyAvailable();
+        return CopyToCore(copyCommand, destination, copyStarted: null);
+    }
 
     public async ValueTask<BlueTuskRawCopyResult> CopyFromAsync(
         string copyCommand,
@@ -553,6 +786,58 @@ public sealed class BlueTuskConnection : DbConnection
             destination,
             copyStarted: null,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    public BlueTuskBinaryImporter BeginBinaryImport(string copyCommand)
+    {
+        EnsureCopyAvailable();
+        BlueTuskCopyInOperation? operation = null;
+        try
+        {
+            operation = Session.BeginCopyIn(copyCommand);
+            ValidateBinaryCopyResponse(operation.Response);
+            var importer = new BlueTuskBinaryImporter(
+                operation,
+                TypeRegistry,
+                operation.Response.ColumnFormats.Count);
+            importer.Initialize();
+            operation = null;
+            return importer;
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        finally
+        {
+            operation?.Dispose();
+        }
+    }
+
+    public BlueTuskBinaryExporter BeginBinaryExport(string copyCommand)
+    {
+        EnsureCopyAvailable();
+        BlueTuskCopyOutOperation? operation = null;
+        try
+        {
+            operation = Session.BeginCopyOut(copyCommand);
+            ValidateBinaryCopyResponse(operation.Response);
+            var exporter = new BlueTuskBinaryExporter(
+                operation,
+                TypeRegistry,
+                operation.Response.ColumnFormats.Count);
+            exporter.Initialize();
+            operation = null;
+            return exporter;
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        finally
+        {
+            operation?.Dispose();
+        }
     }
 
     public async ValueTask<BlueTuskBinaryImporter> BeginBinaryImportAsync(
@@ -648,6 +933,46 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
+    private BlueTuskRawCopyResult CopyFromCore(
+        string copyCommand,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted)
+    {
+        try
+        {
+            return CreateRawCopyResult(Session.CopyIn(copyCommand, source, copyStarted));
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        catch (Exception) when (!HasOpenSession)
+        {
+            Close();
+            throw;
+        }
+    }
+
+    private BlueTuskRawCopyResult CopyToCore(
+        string copyCommand,
+        Stream destination,
+        Action<BlueTuskCopyResponse>? copyStarted)
+    {
+        try
+        {
+            return CreateRawCopyResult(Session.CopyOut(copyCommand, destination, copyStarted));
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        catch (Exception) when (!HasOpenSession)
+        {
+            Close();
+            throw;
+        }
+    }
+
     private async ValueTask<BlueTuskRawCopyResult> CopyFromCoreAsync(
         string copyCommand,
         Stream source,
@@ -720,6 +1045,22 @@ public sealed class BlueTuskConnection : DbConnection
             pipe.CompleteWriting(exception);
             throw;
         }
+    }
+
+    public BlueTuskRawCopyResult CopyTextFrom(string copyCommand, TextReader source)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        using var stream = new BlueTuskCopyTextReaderStream(source);
+        return CopyFrom(copyCommand, stream);
+    }
+
+    public BlueTuskRawCopyResult CopyTextTo(string copyCommand, TextWriter destination)
+    {
+        ArgumentNullException.ThrowIfNull(destination);
+        using var stream = new BlueTuskCopyTextWriterStream(destination);
+        var result = CopyTo(copyCommand, stream);
+        stream.Complete();
+        return result;
     }
 
     public async ValueTask<BlueTuskRawCopyResult> CopyTextFromAsync(
@@ -946,6 +1287,27 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
+    internal void CompleteImplicitLargeObjectTransaction(
+        BlueTuskTransaction transaction,
+        bool commit)
+    {
+        ArgumentNullException.ThrowIfNull(transaction);
+        _largeObjectGate.Wait();
+        try
+        {
+            if (ReferenceEquals(
+                    Volatile.Read(ref _implicitLargeObjectTransaction),
+                    transaction))
+            {
+                CompleteImplicitLargeObjectTransactionCore(transaction, commit);
+            }
+        }
+        finally
+        {
+            _largeObjectGate.Release();
+        }
+    }
+
     internal async ValueTask CompleteImplicitLargeObjectTransactionAsync(
         BlueTuskTransaction transaction,
         bool commit,
@@ -1028,6 +1390,83 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
+    private T ExecuteLargeObjectTransaction<T>(Func<BlueTuskTransaction, T> operation)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        _largeObjectGate.Wait();
+        BlueTuskTransaction? transaction = null;
+        var ownsTransaction = false;
+        try
+        {
+            EnsureLargeObjectsAvailable();
+            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            {
+                throw new InvalidOperationException(
+                    "A large-object management operation cannot run while an implicitly " +
+                    "transactional large-object stream is open.");
+            }
+
+            transaction = CurrentTransaction;
+            if (transaction is null)
+            {
+                transaction = BeginTransaction(IsolationLevel.ReadCommitted);
+                ownsTransaction = true;
+                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+            }
+
+            try
+            {
+                var result = operation(transaction);
+                if (ownsTransaction)
+                {
+                    CompleteImplicitLargeObjectTransactionCore(transaction, commit: true);
+                }
+
+                return result;
+            }
+            catch
+            {
+                if (ownsTransaction)
+                {
+                    CompleteImplicitLargeObjectTransactionCore(transaction, commit: false);
+                }
+
+                throw;
+            }
+        }
+        finally
+        {
+            _largeObjectGate.Release();
+        }
+    }
+
+    private void CompleteImplicitLargeObjectTransactionCore(
+        BlueTuskTransaction transaction,
+        bool commit)
+    {
+        try
+        {
+            if (!transaction.IsCompleted && _state == ConnectionState.Open)
+            {
+                if (commit)
+                {
+                    transaction.Commit();
+                }
+                else
+                {
+                    transaction.Rollback();
+                }
+            }
+        }
+        finally
+        {
+            _ = Interlocked.CompareExchange(
+                ref _implicitLargeObjectTransaction,
+                null,
+                transaction);
+        }
+    }
+
     private async ValueTask CompleteImplicitLargeObjectTransactionCoreAsync(
         BlueTuskTransaction transaction,
         bool commit)
@@ -1098,6 +1537,7 @@ public sealed class BlueTuskConnection : DbConnection
 
             _notificationChannelCompleted = true;
             _notificationChannel.Writer.TryComplete(exception);
+            _notificationAvailable.Set();
         }
     }
 
@@ -1171,11 +1611,47 @@ public sealed class BlueTuskConnection : DbConnection
                         response.Channel,
                         response.Payload),
                     subscription.CancellationToken).ConfigureAwait(false);
+                _notificationAvailable.Set();
             }
         }
         catch (OperationCanceledException) when (subscription.IsCancellationRequested)
         {
             // Unlisten and connection shutdown interrupt the otherwise indefinite receive.
+        }
+        catch (Exception exception)
+        {
+            CompleteNotificationLifetime(exception);
+        }
+    }
+
+    private void PumpNotifications(NotificationSubscription subscription)
+    {
+        try
+        {
+            while (true)
+            {
+                var response = subscription.Session.WaitForNotification();
+                var notification = new BlueTuskNotification(
+                    response.ProcessId,
+                    response.Channel,
+                    response.Payload);
+                var spinWait = new SpinWait();
+                while (!subscription.Writer.TryWrite(notification))
+                {
+                    if (subscription.IsCancellationRequested)
+                    {
+                        return;
+                    }
+
+                    spinWait.SpinOnce();
+                }
+
+                _notificationAvailable.Set();
+            }
+        }
+        catch (Exception) when (subscription.IsCancellationRequested)
+        {
+            // Unlisten and connection shutdown dispose the blocking listener session.
         }
         catch (Exception exception)
         {
@@ -1318,6 +1794,7 @@ public sealed class BlueTuskConnection : DbConnection
     {
         private readonly CancellationTokenSource _cancellationSource = new();
         private Task _pump = Task.CompletedTask;
+        private bool _synchronous;
         private int _disposed;
 
         public NotificationSubscription(
@@ -1351,6 +1828,12 @@ public sealed class BlueTuskConnection : DbConnection
             _pump = pump;
         }
 
+        public void StartSynchronous(Task pump)
+        {
+            _synchronous = true;
+            Start(pump);
+        }
+
         public void Dispose()
         {
             if (Interlocked.Exchange(ref _disposed, 1) != 0)
@@ -1359,8 +1842,17 @@ public sealed class BlueTuskConnection : DbConnection
             }
 
             _cancellationSource.Cancel();
+            if (_synchronous)
+            {
+                Session.Dispose();
+            }
+
             _pump.GetAwaiter().GetResult();
-            Session.Dispose();
+            if (!_synchronous)
+            {
+                Session.Dispose();
+            }
+
             _cancellationSource.Dispose();
         }
 
@@ -1372,8 +1864,17 @@ public sealed class BlueTuskConnection : DbConnection
             }
 
             _cancellationSource.Cancel();
+            if (_synchronous)
+            {
+                Session.Dispose();
+            }
+
             await _pump.ConfigureAwait(false);
-            await Session.DisposeAsync().ConfigureAwait(false);
+            if (!_synchronous)
+            {
+                await Session.DisposeAsync().ConfigureAwait(false);
+            }
+
             _cancellationSource.Dispose();
         }
     }

@@ -1,6 +1,6 @@
 # Large objects
 
-PostgreSQL large objects are addressed by an unsigned object identifier and accessed through a transactional descriptor. BlueTusk exposes that descriptor as an asynchronous stream:
+PostgreSQL large objects are addressed by an unsigned object identifier and accessed through a transactional descriptor. BlueTusk exposes that descriptor as a synchronous and asynchronous stream:
 
 ```csharp
 var objectId = await connection.CreateLargeObjectAsync();
@@ -29,18 +29,18 @@ PostgreSQL requires every large-object descriptor to remain inside a transaction
 - If the caller already owns a `BlueTuskTransaction`, large-object creation, deletion, and streams join it. The caller remains responsible for commit or rollback, and multiple streams may be open.
 - Creating or deleting outside an explicit transaction uses a short implicit transaction.
 
-Always use `await using` for an implicitly transactional stream. BlueTusk does not implement synchronous database I/O by blocking the asynchronous path. Synchronous stream disposal therefore closes the connection and rolls back the implicit transaction; synchronous `Read`, `Write`, `Seek`, and `SetLength` throw `NotSupportedException`.
+Use `using` with `CreateLargeObject`, `OpenLargeObject`, and `DeleteLargeObject` for the native synchronous path, or `await using` with their asynchronous counterparts. Successful disposal closes the descriptor and commits an implicit transaction in both modes; a failed operation rolls it back.
 
 ## Stream behavior
 
 `BlueTuskLargeObjectStream` exposes:
 
-- asynchronous `ReadAsync` and `WriteAsync`;
-- 64-bit `SeekAsync` and `SetLengthAsync`;
+- synchronous and asynchronous reads and writes;
+- 64-bit `Seek`/`SeekAsync` and `SetLength`/`SetLengthAsync`;
 - cached `Length` and `Position`;
 - the backing `ObjectId`;
 - `FileAccess.Read`, `Write`, and `ReadWrite` enforcement.
 
-Transfers are split into chunks of at most 1 MiB. Each write reaches PostgreSQL before its task completes, so `FlushAsync` has no additional server work. Opening with `FileAccess.Write` does not truncate an existing object; call `SetLengthAsync(0)` when replacement semantics are required.
+Transfers are split into chunks of at most 1 MiB. Each write reaches PostgreSQL before the method returns, so `Flush` and `FlushAsync` have no additional server work. Opening with `FileAccess.Write` does not truncate an existing object; call `SetLength(0)` or `SetLengthAsync(0)` when replacement semantics are required.
 
 Large objects live in the database independently of table rows. PostgreSQL does not automatically delete an object when an OID column is deleted, so applications should call `DeleteLargeObjectAsync` or arrange database-side ownership cleanup.

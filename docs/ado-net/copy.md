@@ -1,6 +1,6 @@
 # COPY
 
-`BlueTuskConnection.CopyFromAsync` and `CopyToAsync` stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation.
+`BlueTuskConnection.CopyFrom`/`CopyTo` and `CopyFromAsync`/`CopyToAsync` stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation.
 
 ```csharp
 await using var source = File.OpenRead("people.csv");
@@ -29,7 +29,7 @@ var exported = await connection.CopyToAsync(
 
 The result reports PostgreSQL's overall and per-column COPY formats, rows affected, and payload bytes transferred. BlueTusk does not dispose the caller-owned stream.
 
-For text and CSV data, `CopyTextFromAsync` and `CopyTextToAsync` accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks:
+For text and CSV data, the synchronous `CopyTextFrom`/`CopyTextTo` and asynchronous `CopyTextFromAsync`/`CopyTextToAsync` APIs accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks:
 
 ```csharp
 using var source = new StringReader("1,\"Chloé 🐘\"\n");
@@ -82,3 +82,24 @@ while (await exporter.StartRowAsync() != -1)
 Arrays and other catalogue-composed values use their existing binary codecs. `ReadAsync<T>` also has an explicit-OID overload. Reading a PostgreSQL null into a non-nullable value type fails instead of silently substituting its CLR default.
 
 Both typed operations use a bounded producer/consumer pipe, so application code and the network apply backpressure to one another. Disposing before the trailer aborts and drains COPY, leaving the connection reusable.
+
+Synchronous typed binary COPY is also incremental and uses a stateful protocol operation rather than buffering the transfer:
+
+```csharp
+using var importer = connection.BeginBinaryImport(
+    "COPY app.people (id, name) FROM STDIN BINARY");
+importer.StartRow();
+importer.Write(42);
+importer.Write("Chloé 🐘");
+var rows = importer.Complete();
+
+using var exporter = connection.BeginBinaryExport(
+    "COPY app.people (id, name) TO STDOUT BINARY");
+while (exporter.StartRow() != -1)
+{
+    var id = exporter.Read<int>();
+    var name = exporter.Read<string>();
+}
+```
+
+Disposing a synchronous importer before `Complete` sends `CopyFail`; disposing an exporter before its trailer sends a cancellation request. Both paths drain through `ReadyForQuery` before releasing the connection.

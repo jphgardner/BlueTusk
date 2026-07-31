@@ -55,8 +55,25 @@ internal sealed class BlueTuskCopyTextReaderStream : Stream
         return count;
     }
 
-    public override int Read(byte[] buffer, int offset, int count) =>
-        throw new NotSupportedException("Synchronous COPY text reads are not supported.");
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        ValidateBufferArguments(buffer, offset, count);
+        if (count == 0)
+        {
+            return 0;
+        }
+
+        while (_byteCount == 0 && !_encoderFlushed)
+        {
+            FillBuffer();
+        }
+
+        var copied = Math.Min(count, _byteCount);
+        _bytes.AsSpan(_byteOffset, copied).CopyTo(buffer.AsSpan(offset, copied));
+        _byteOffset += copied;
+        _byteCount -= copied;
+        return copied;
+    }
 
     public override void Flush()
     {
@@ -80,6 +97,32 @@ internal sealed class BlueTuskCopyTextReaderStream : Stream
             characterCount = await _reader.ReadAsync(
                 _characters.AsMemory(),
                 cancellationToken).ConfigureAwait(false);
+            _endOfText = characterCount == 0;
+        }
+
+        _encoder.Convert(
+            _characters.AsSpan(0, characterCount),
+            _bytes,
+            _endOfText,
+            out var charactersUsed,
+            out _byteCount,
+            out var completed);
+        if (charactersUsed != characterCount)
+        {
+            throw new InvalidOperationException(
+                "The UTF-8 COPY buffer could not consume the available characters.");
+        }
+
+        _encoderFlushed = _endOfText && completed;
+    }
+
+    private void FillBuffer()
+    {
+        _byteOffset = 0;
+        var characterCount = 0;
+        if (!_endOfText)
+        {
+            characterCount = _reader.Read(_characters, 0, _characters.Length);
             _endOfText = characterCount == 0;
         }
 
@@ -178,11 +221,56 @@ internal sealed class BlueTuskCopyTextWriterStream : Stream
         await _writer.FlushAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    public override void Write(byte[] buffer, int offset, int count) =>
-        throw new NotSupportedException("Synchronous COPY text writes are not supported.");
+    public void Complete()
+    {
+        if (_completed)
+        {
+            return;
+        }
 
-    public override void Flush() =>
-        throw new NotSupportedException("Synchronous COPY text writes are not supported.");
+        _completed = true;
+        _decoder.Convert(
+            ReadOnlySpan<byte>.Empty,
+            _characters,
+            flush: true,
+            out _,
+            out var charactersUsed,
+            out _);
+        if (charactersUsed > 0)
+        {
+            _writer.Write(_characters, 0, charactersUsed);
+        }
+
+        _writer.Flush();
+    }
+
+    public override void Write(byte[] buffer, int offset, int count)
+    {
+        ValidateBufferArguments(buffer, offset, count);
+        ObjectDisposedException.ThrowIf(_completed, this);
+        var remaining = buffer.AsSpan(offset, count);
+        while (!remaining.IsEmpty)
+        {
+            _decoder.Convert(
+                remaining,
+                _characters,
+                flush: false,
+                out var bytesUsed,
+                out var charactersUsed,
+                out _);
+            remaining = remaining[bytesUsed..];
+            if (charactersUsed > 0)
+            {
+                _writer.Write(_characters, 0, charactersUsed);
+            }
+        }
+    }
+
+    public override void Flush()
+    {
+        ObjectDisposedException.ThrowIf(_completed, this);
+        _writer.Flush();
+    }
 
     public override int Read(byte[] buffer, int offset, int count) =>
         throw new NotSupportedException();

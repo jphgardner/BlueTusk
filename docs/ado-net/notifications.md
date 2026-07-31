@@ -14,6 +14,17 @@ await foreach (var notification in connection.Notifications)
 }
 ```
 
+The synchronous path uses a dedicated blocking listener session and a long-running worker, while normal commands continue on the connection's primary session:
+
+```csharp
+connection.Listen("orders");
+var notification = connection.WaitForNotification();
+Console.WriteLine(notification.Payload);
+connection.Unlisten("orders");
+```
+
+`UnlistenAll()` synchronously stops every listener. Synchronous listener disposal closes the blocking socket to interrupt its receive loop; it does not block on asynchronous network I/O.
+
 `BlueTuskNotification` contains the publishing backend process ID, the channel reported by PostgreSQL, and the payload. PostgreSQL delivers a notification only after the publishing transaction commits; notifications produced by an aborted transaction are discarded.
 
 Channel names are PostgreSQL identifiers. `ListenAsync` quotes them through BlueTusk's central identifier-quoting path, so mixed case, whitespace, Unicode, reserved words, and embedded double quotes are safe. Empty names and names containing a null character are rejected. Payload values should be sent as parameters:

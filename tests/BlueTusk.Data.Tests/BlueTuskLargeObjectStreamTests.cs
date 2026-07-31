@@ -81,7 +81,7 @@ public sealed class BlueTuskLargeObjectStreamTests
     }
 
     [Fact]
-    public async Task Enforces_access_and_async_only_stream_contract()
+    public async Task Enforces_access_contract_for_sync_and_async_operations()
     {
         using var readOperations = new FakeLargeObjectOperations("abc"u8.ToArray());
         await using var read = new BlueTuskLargeObjectStream(
@@ -102,27 +102,35 @@ public sealed class BlueTuskLargeObjectStreamTests
             () => read.WriteAsync(new byte[1]).AsTask());
         await Assert.ThrowsAsync<NotSupportedException>(
             () => write.ReadAsync(new byte[1]).AsTask());
-        Assert.Throws<NotSupportedException>(() => read.Read(new byte[1], 0, 1));
-        Assert.Throws<NotSupportedException>(() => write.Write(new byte[1], 0, 1));
-        Assert.Throws<NotSupportedException>(() => read.Seek(0, SeekOrigin.Begin));
-        Assert.Throws<NotSupportedException>(() => write.SetLength(0));
+        Assert.Throws<NotSupportedException>(() => read.Write(new byte[1], 0, 1));
+        Assert.Throws<NotSupportedException>(() => write.Read(new byte[1], 0, 1));
+        Assert.Equal(0, read.Seek(0, SeekOrigin.Begin));
+        write.SetLength(0);
     }
 
     [Fact]
-    public void Synchronous_disposal_abandons_instead_of_blocking_on_async_io()
+    public void Synchronous_operations_and_disposal_complete_normally()
     {
-        using var operations = new FakeLargeObjectOperations([]);
+        using var operations = new FakeLargeObjectOperations("abcdef"u8.ToArray());
         var stream = new BlueTuskLargeObjectStream(
             42,
-            FileAccess.Read,
-            length: 0,
+            FileAccess.ReadWrite,
+            length: operations.Length,
             position: 0,
             operations);
 
+        var prefix = new byte[3];
+        Assert.Equal(3, stream.Read(prefix, 0, prefix.Length));
+        Assert.Equal("abc", Encoding.UTF8.GetString(prefix));
+        Assert.Equal(2, stream.Seek(-1, SeekOrigin.Current));
+        stream.Write("XY"u8.ToArray(), 0, 2);
+        stream.SetLength(4);
         stream.Dispose();
 
-        Assert.True(operations.Abandoned);
-        Assert.False(operations.Closed);
+        Assert.True(operations.Closed);
+        Assert.True(operations.Commit);
+        Assert.False(operations.Abandoned);
+        Assert.Equal("abXY", Encoding.UTF8.GetString(operations.ToArray()));
     }
 
     private sealed class FakeLargeObjectOperations :
@@ -150,6 +158,18 @@ public sealed class BlueTuskLargeObjectStreamTests
 
         public List<int> WriteSizes { get; } = [];
 
+        public byte[] Read(int count)
+        {
+            if (FailRead)
+            {
+                throw new IOException("Simulated large-object read failure.");
+            }
+
+            var value = new byte[Math.Min(count, checked((int)(_stream.Length - _stream.Position)))];
+            _ = _stream.Read(value);
+            return value;
+        }
+
         public ValueTask<byte[]> ReadAsync(int count, CancellationToken cancellationToken)
         {
             cancellationToken.ThrowIfCancellationRequested();
@@ -173,6 +193,15 @@ public sealed class BlueTuskLargeObjectStreamTests
             return ValueTask.FromResult(buffer.Length);
         }
 
+        public int Write(ReadOnlySpan<byte> buffer)
+        {
+            WriteSizes.Add(buffer.Length);
+            _stream.Write(buffer);
+            return buffer.Length;
+        }
+
+        public long Seek(long offset, SeekOrigin origin) => _stream.Seek(offset, origin);
+
         public ValueTask<long> SeekAsync(
             long offset,
             SeekOrigin origin,
@@ -187,6 +216,14 @@ public sealed class BlueTuskLargeObjectStreamTests
             cancellationToken.ThrowIfCancellationRequested();
             _stream.SetLength(value);
             return ValueTask.CompletedTask;
+        }
+
+        public void SetLength(long value) => _stream.SetLength(value);
+
+        public void Close(bool commit)
+        {
+            Closed = true;
+            Commit = commit;
         }
 
         public ValueTask CloseAsync(bool commit, CancellationToken cancellationToken)

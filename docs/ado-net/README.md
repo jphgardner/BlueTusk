@@ -78,4 +78,4 @@ Transactional [large-object streams](large-objects.md) support asynchronous crea
 
 [`BlueTuskBatch`](batches.md) implements `DbBatch`/`DbBatchCommand` with parameters, ordered multiple results, preparation, transactions, timeouts, cancellation, and data-source-owned execution.
 
-`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Synchronous COPY, notification, and large-object convenience APIs plus network-backed sequential readers remain in progress for 0.1.0.
+`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Raw/text/typed-binary COPY, notification subscription and waiting, and large-object streams now have separate native synchronous and asynchronous paths. Network-backed sequential readers remain in progress for 0.1.0.
