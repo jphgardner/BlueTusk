@@ -18,11 +18,23 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
 
     BlueTuskTransactionStatus TransactionStatus { get; }
 
+    void RefreshHostState() =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
     ValueTask RefreshHostStateAsync(CancellationToken cancellationToken = default);
+
+    BlueTuskQueryResult ExecuteSimpleQuery(string sql) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
 
     ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
         string sql,
         CancellationToken cancellationToken = default);
+
+    BlueTuskQueryResult ExecuteExtendedQuery(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
 
     ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
         string sql,
@@ -36,6 +48,18 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<uint> parameterTypeOids,
         CancellationToken cancellationToken = default);
 
+    void PrepareStatement(
+        string statementName,
+        string sql,
+        IReadOnlyList<uint> parameterTypeOids) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
+    BlueTuskQueryResult ExecutePreparedStatement(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
     ValueTask<BlueTuskQueryResult> ExecutePreparedStatementAsync(
         string statementName,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -46,6 +70,12 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         string statementName,
         CancellationToken cancellationToken = default);
 
+    void ClosePreparedStatement(string statementName) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
+    BlueTuskQueryResult ExecuteBatch(IReadOnlyList<BlueTuskBatchQuery> queries) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
     ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
         IReadOnlyList<BlueTuskBatchQuery> queries,
         CancellationToken cancellationToken = default);
@@ -53,6 +83,9 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
     ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
         IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
         CancellationToken cancellationToken = default);
+
+    BlueTuskQueryResult ExecutePreparedBatch(IReadOnlyList<BlueTuskPreparedBatchQuery> queries) =>
+        throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
 
     ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
@@ -111,6 +144,90 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     public IReadOnlyDictionary<string, string> Parameters => _session.Parameters;
 
     public BlueTuskTransactionStatus TransactionStatus => _session.TransactionStatus;
+
+    public static IBlueTuskPhysicalSession Open(BlueTuskConnectionStringBuilder settings)
+    {
+        ArgumentNullException.ThrowIfNull(settings);
+        settings.Validate();
+        var endpoints = settings.HostEndpoints.ToArray();
+        if (settings.LoadBalanceHosts == BlueTuskLoadBalanceHosts.Random)
+        {
+            Random.Shared.Shuffle(endpoints);
+        }
+
+        var target = settings.TargetSessionAttributes;
+        var requiredTarget = target switch
+        {
+            BlueTuskTargetSessionAttributes.PreferPrimary =>
+                BlueTuskTargetSessionAttributes.Primary,
+            BlueTuskTargetSessionAttributes.PreferStandby =>
+                BlueTuskTargetSessionAttributes.Standby,
+            _ => target,
+        };
+        var allowsFallback = target is
+            BlueTuskTargetSessionAttributes.PreferPrimary or
+            BlueTuskTargetSessionAttributes.PreferStandby;
+        var failures = new List<Exception>();
+        BlueTuskPhysicalSession? fallback = null;
+        foreach (var endpoint in endpoints)
+        {
+            BlueTuskPhysicalSession? candidate = null;
+            try
+            {
+                candidate = OpenEndpoint(settings, endpoint);
+                if (requiredTarget == BlueTuskTargetSessionAttributes.Any)
+                {
+                    fallback?.Dispose();
+                    var accepted = candidate;
+                    candidate = null;
+                    return accepted;
+                }
+
+                candidate.RefreshHostState();
+                if (MatchesTarget(candidate, requiredTarget))
+                {
+                    fallback?.Dispose();
+                    var accepted = candidate;
+                    candidate = null;
+                    return accepted;
+                }
+
+                failures.Add(new BlueTuskHostSelectionException(
+                    endpoint,
+                    requiredTarget,
+                    candidate.IsPrimary,
+                    candidate.IsReadOnly));
+                if (allowsFallback && fallback is null)
+                {
+                    fallback = candidate;
+                    candidate = null;
+                }
+            }
+            catch (BlueTuskAuthenticationException)
+            {
+                fallback?.Dispose();
+                throw;
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                failures.Add(new BlueTuskHostConnectionException(endpoint, exception));
+            }
+            finally
+            {
+                candidate?.Dispose();
+            }
+        }
+
+        if (fallback is not null)
+        {
+            return fallback;
+        }
+
+        throw new BlueTuskException(
+            $"Could not open a PostgreSQL connection matching {target} across " +
+            $"{endpoints.Length} configured host(s).",
+            new AggregateException(failures));
+    }
 
     public static async ValueTask<IBlueTuskPhysicalSession> OpenAsync(
         BlueTuskConnectionStringBuilder settings,
@@ -240,6 +357,38 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         _isReadOnly = ReadPostgreSqlBoolean(row.Values[1], "transaction_read_only");
     }
 
+    public void RefreshHostState()
+    {
+        var result = _session.ExecuteSimpleQuery(
+            "SELECT pg_is_in_recovery(), current_setting('transaction_read_only')");
+        var row = result.FirstOrDefault is { Rows.Count: 1, Fields.Count: 2 } resultSet
+            ? resultSet.Rows[0]
+            : throw new BlueTuskException(
+                "PostgreSQL returned an invalid target-session probe result.");
+        _isPrimary = !ReadPostgreSqlBoolean(row.Values[0], "pg_is_in_recovery");
+        _isReadOnly = ReadPostgreSqlBoolean(row.Values[1], "transaction_read_only");
+    }
+
+    public BlueTuskQueryResult ExecuteSimpleQuery(string sql)
+    {
+        if (!ResetsPreparedStatements(sql))
+        {
+            return _session.ExecuteSimpleQuery(sql);
+        }
+
+        _autoPrepareGate.Wait();
+        try
+        {
+            var result = _session.ExecuteSimpleQuery(sql);
+            _autoPrepareEntries.Clear();
+            return result;
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
     public async ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
         string sql,
         CancellationToken cancellationToken = default)
@@ -292,12 +441,45 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
     }
 
+    public BlueTuskQueryResult ExecuteExtendedQuery(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return _session.ExecuteExtendedQuery(sql, parameters, useBinaryResults);
+        }
+
+        _autoPrepareGate.Wait();
+        try
+        {
+            return ExecuteAutoPrepared(sql, parameters, useBinaryResults);
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
+    public void PrepareStatement(
+        string statementName,
+        string sql,
+        IReadOnlyList<uint> parameterTypeOids) =>
+        _session.PrepareStatement(statementName, sql, parameterTypeOids);
+
     public ValueTask PrepareStatementAsync(
         string statementName,
         string sql,
         IReadOnlyList<uint> parameterTypeOids,
         CancellationToken cancellationToken = default) =>
         _session.PrepareStatementAsync(statementName, sql, parameterTypeOids, cancellationToken);
+
+    public BlueTuskQueryResult ExecutePreparedStatement(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults) =>
+        _session.ExecutePreparedStatement(statementName, parameters, useBinaryResults);
 
     public ValueTask<BlueTuskQueryResult> ExecutePreparedStatementAsync(
         string statementName,
@@ -315,6 +497,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         CancellationToken cancellationToken = default) =>
         _session.ClosePreparedStatementAsync(statementName, cancellationToken);
 
+    public void ClosePreparedStatement(string statementName) =>
+        _session.ClosePreparedStatement(statementName);
+
+    public BlueTuskQueryResult ExecuteBatch(IReadOnlyList<BlueTuskBatchQuery> queries) =>
+        _session.ExecuteBatch(queries);
+
     public ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
         IReadOnlyList<BlueTuskBatchQuery> queries,
         CancellationToken cancellationToken = default) =>
@@ -324,6 +512,9 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
         CancellationToken cancellationToken = default) =>
         _session.ExecutePreparedBatchAsync(queries, cancellationToken);
+
+    public BlueTuskQueryResult ExecutePreparedBatch(IReadOnlyList<BlueTuskPreparedBatchQuery> queries) =>
+        _session.ExecutePreparedBatch(queries);
 
     public ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
@@ -426,6 +617,57 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             cancellationToken).ConfigureAwait(false);
     }
 
+    private BlueTuskQueryResult ExecuteAutoPrepared(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults)
+    {
+        var key = CreateAutoPrepareKey(sql, parameters);
+        if (!_autoPrepareEntries.TryGetValue(key, out var entry))
+        {
+            entry = new AutoPrepareEntry();
+            _autoPrepareEntries.Add(key, entry);
+        }
+
+        entry.LastUsed = ++_autoPrepareClock;
+        PruneAutoPrepareCandidates(key);
+        if (entry.PreparedStatementName is { } preparedStatementName)
+        {
+            try
+            {
+                return _session.ExecutePreparedStatement(
+                    preparedStatementName,
+                    parameters,
+                    useBinaryResults);
+            }
+            catch (BlueTuskServerException exception) when (exception.SqlState == "26000")
+            {
+                _autoPrepareEntries.Remove(key);
+                return _session.ExecuteExtendedQuery(sql, parameters, useBinaryResults);
+            }
+        }
+
+        entry.UsageCount = entry.UsageCount == int.MaxValue
+            ? int.MaxValue
+            : entry.UsageCount + 1;
+        if (entry.UsageCount < _autoPrepareMinimumUsages)
+        {
+            return _session.ExecuteExtendedQuery(sql, parameters, useBinaryResults);
+        }
+
+        EvictAutoPreparedStatementIfRequired();
+        preparedStatementName = $"bluetusk_auto_{++_autoPrepareNameSequence:x}";
+        _session.PrepareStatement(
+            preparedStatementName,
+            sql,
+            parameters.Select(static parameter => parameter.TypeOid).ToArray());
+        entry.PreparedStatementName = preparedStatementName;
+        return _session.ExecutePreparedStatement(
+            preparedStatementName,
+            parameters,
+            useBinaryResults);
+    }
+
     private async ValueTask EvictAutoPreparedStatementIfRequiredAsync(
         CancellationToken cancellationToken)
     {
@@ -443,6 +685,29 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             await _session.ClosePreparedStatementAsync(
                 oldest.Value.PreparedStatementName!,
                 cancellationToken).ConfigureAwait(false);
+        }
+        catch (BlueTuskServerException exception) when (exception.SqlState == "26000")
+        {
+            // Server-side DEALLOCATE invalidated the local entry; eviction can still continue.
+        }
+
+        _autoPrepareEntries.Remove(oldest.Key);
+    }
+
+    private void EvictAutoPreparedStatementIfRequired()
+    {
+        var prepared = _autoPrepareEntries
+            .Where(static pair => pair.Value.PreparedStatementName is not null)
+            .ToArray();
+        if (prepared.Length < _maximumAutoPreparedStatements)
+        {
+            return;
+        }
+
+        var oldest = prepared.MinBy(static pair => pair.Value.LastUsed);
+        try
+        {
+            _session.ClosePreparedStatement(oldest.Value.PreparedStatementName!);
         }
         catch (BlueTuskServerException exception) when (exception.SqlState == "26000")
         {
@@ -515,6 +780,30 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 ChannelBinding = settings.ChannelBinding,
             },
             cancellationToken).ConfigureAwait(false);
+        return new BlueTuskPhysicalSession(
+            session,
+            endpoint,
+            settings.MaxAutoPrepare,
+            settings.AutoPrepareMinUsages);
+    }
+
+    private static BlueTuskPhysicalSession OpenEndpoint(
+        BlueTuskConnectionStringBuilder settings,
+        BlueTuskHostEndpoint endpoint)
+    {
+        var session = BlueTuskSession.Open(
+            new BlueTuskClientOptions
+            {
+                Host = endpoint.Host,
+                Port = endpoint.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                ApplicationName = settings.ApplicationName,
+                ConnectTimeout = settings.Timeout,
+                SslMode = settings.SslMode,
+                ChannelBinding = settings.ChannelBinding,
+            });
         return new BlueTuskPhysicalSession(
             session,
             endpoint,

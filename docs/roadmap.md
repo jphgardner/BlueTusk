@@ -116,13 +116,13 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.1.0 — First public ADO.NET preview
 
-- [ ] Prepared statements, batches, and multi-host connection attempts
-  - [ ] Explicit, automatic, named, and unnamed prepared statements
+- [x] Prepared statements, batches, and multi-host connection attempts
+  - [x] Explicit, automatic, named, and unnamed prepared statements
     - [x] Named statement Parse/Describe, Bind/Execute, Close, and asynchronous ADO.NET preparation
     - [x] Re-prepare when command text or parameter type identity changes
     - [x] Bounded automatic preparation cache with usage promotion, LRU eviction, and reset invalidation
     - [x] Deliberately selectable unnamed extended-query execution
-    - [ ] Synchronous preparation
+    - [x] Synchronous preparation
   - [x] `DbBatch`/`DbBatchCommand`, parameters, transactions, cancellation, and multiple results
   - [x] Safe named-parameter rewriting and command execution-mode selection
   - [x] Ordered multi-host failover, target-session selection, and per-host pools
@@ -133,6 +133,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Genuine synchronous connection and query paths
   - [x] Synchronous transport, TLS, startup, authentication, and cancellation
   - [ ] Synchronous pooling, transactions, commands, COPY, notifications, and large objects
+    - [x] Per-host pooling, type discovery, commands, preparation, batches, transactions, and timeouts
+    - [ ] COPY, notifications, and large objects
 - [ ] Network-backed sequential and streaming reader modes
   - [ ] Bounded named portals, suspension, and incremental row reads
   - [ ] Sequential field access plus streaming `bytea`, text, and JSON

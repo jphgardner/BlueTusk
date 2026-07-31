@@ -63,6 +63,35 @@ internal sealed class BlueTuskTypeMetadataCache
         CancellationToken cancellationToken) =>
         LoadAsync(session, force: true, cancellationToken);
 
+    public void EnsureLoaded(IBlueTuskPhysicalSession session)
+    {
+        ArgumentNullException.ThrowIfNull(session);
+        if (Volatile.Read(ref _loaded) == 0)
+        {
+            Load(session, force: false);
+        }
+    }
+
+    public void Reload(IBlueTuskPhysicalSession session) => Load(session, force: true);
+
+    private void Load(IBlueTuskPhysicalSession session, bool force)
+    {
+        _loadLock.Wait();
+        try
+        {
+            if (!force && Volatile.Read(ref _loaded) != 0)
+            {
+                return;
+            }
+
+            ApplyCatalogueResult(session.ExecuteSimpleQuery(CatalogueQuery));
+        }
+        finally
+        {
+            _loadLock.Release();
+        }
+    }
+
     private async ValueTask LoadAsync(
         IBlueTuskPhysicalSession session,
         bool force,
@@ -77,111 +106,116 @@ internal sealed class BlueTuskTypeMetadataCache
             }
 
             var result = await session.ExecuteSimpleQueryAsync(CatalogueQuery, cancellationToken).ConfigureAwait(false);
-            if (result.ResultSets.Count != 4)
-            {
-                throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected result shape.");
-            }
-
-            var resultSet = result.ResultSets[0];
-            var enumResultSet = result.ResultSets[1];
-            var compositeResultSet = result.ResultSets[2];
-            var moneyResultSet = result.ResultSets[3];
-            if (enumResultSet.Fields.Count != 2)
-            {
-                throw new InvalidOperationException("PostgreSQL enum catalogue query returned an unexpected result shape.");
-            }
-
-            var enumLabels = new Dictionary<BlueTuskTypeId, List<string>>();
-            foreach (var row in enumResultSet.Rows)
-            {
-                var typeId = new BlueTuskTypeId(ParseUInt32(row.Values[0], "enum type OID"));
-                if (!enumLabels.TryGetValue(typeId, out var labels))
-                {
-                    labels = [];
-                    enumLabels.Add(typeId, labels);
-                }
-
-                labels.Add(GetRequiredText(row.Values[1], "enum label"));
-            }
-
-            if (compositeResultSet.Fields.Count != 4)
-            {
-                throw new InvalidOperationException(
-                    "PostgreSQL composite catalogue query returned an unexpected result shape.");
-            }
-
-            var compositeFields = new Dictionary<BlueTuskTypeId, List<BlueTuskCompositeField>>();
-            foreach (var row in compositeResultSet.Rows)
-            {
-                var typeId = new BlueTuskTypeId(ParseUInt32(row.Values[0], "composite type OID"));
-                if (!compositeFields.TryGetValue(typeId, out var fields))
-                {
-                    fields = [];
-                    compositeFields.Add(typeId, fields);
-                }
-
-                fields.Add(new BlueTuskCompositeField
-                {
-                    Position = checked((int)ParseUInt32(row.Values[1], "composite field position")),
-                    Name = GetRequiredText(row.Values[2], "composite field name"),
-                    Type = new BlueTuskTypeId(ParseUInt32(row.Values[3], "composite field type OID")),
-                });
-            }
-
-            if (moneyResultSet.Fields.Count != 2 || moneyResultSet.Rows.Count != 1)
-            {
-                throw new InvalidOperationException("PostgreSQL money metadata probe returned an unexpected result shape.");
-            }
-
-            var moneyRow = moneyResultSet.Rows[0].Values;
-            var moneyFormat = new BlueTuskMoneyFormat(
-                GetRequiredText(moneyRow[0], "lc_monetary"),
-                checked((int)ParseUInt32(moneyRow[1], "money fractional digits")));
-            if (resultSet.Fields.Count != 12)
-            {
-                throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected column count.");
-            }
-
-            var types = new BlueTuskCatalogueType[resultSet.Rows.Count];
-            for (var index = 0; index < resultSet.Rows.Count; index++)
-            {
-                var values = resultSet.Rows[index].Values;
-                types[index] = new BlueTuskCatalogueType
-                {
-                    Id = new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
-                    Schema = GetRequiredText(values[1], "schema"),
-                    Name = GetRequiredText(values[2], "name"),
-                    PostgreSqlKind = GetRequiredCharacter(values[3], "kind"),
-                    PostgreSqlCategory = GetRequiredCharacter(values[4], "category"),
-                    ElementType = ParseOptionalTypeId(values[5]),
-                    BaseType = ParseOptionalTypeId(values[6]),
-                    ArrayType = ParseOptionalTypeId(values[7]),
-                    RangeSubtype = ParseOptionalTypeId(values[8]),
-                    RangeType = ParseOptionalTypeId(values[9]),
-                    MultirangeType = ParseOptionalTypeId(values[10]),
-                    Delimiter = GetRequiredCharacter(values[11], "delimiter"),
-                    EnumLabels = enumLabels.TryGetValue(
-                        new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
-                        out var labels)
-                        ? labels.ToArray()
-                        : Array.Empty<string>(),
-                    CompositeFields = compositeFields.TryGetValue(
-                        new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
-                        out var fields)
-                        ? fields.ToArray()
-                        : Array.Empty<BlueTuskCompositeField>(),
-                };
-            }
-
-            Volatile.Write(
-                ref _registry,
-                BlueTuskTypeCatalogue.BuildRegistry(types, _configuredTypes, moneyFormat));
-            Volatile.Write(ref _loaded, 1);
+            ApplyCatalogueResult(result);
         }
         finally
         {
             _loadLock.Release();
         }
+    }
+
+    private void ApplyCatalogueResult(BlueTusk.Client.BlueTuskQueryResult result)
+    {
+        if (result.ResultSets.Count != 4)
+        {
+            throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected result shape.");
+        }
+
+        var resultSet = result.ResultSets[0];
+        var enumResultSet = result.ResultSets[1];
+        var compositeResultSet = result.ResultSets[2];
+        var moneyResultSet = result.ResultSets[3];
+        if (enumResultSet.Fields.Count != 2)
+        {
+            throw new InvalidOperationException("PostgreSQL enum catalogue query returned an unexpected result shape.");
+        }
+
+        var enumLabels = new Dictionary<BlueTuskTypeId, List<string>>();
+        foreach (var row in enumResultSet.Rows)
+        {
+            var typeId = new BlueTuskTypeId(ParseUInt32(row.Values[0], "enum type OID"));
+            if (!enumLabels.TryGetValue(typeId, out var labels))
+            {
+                labels = [];
+                enumLabels.Add(typeId, labels);
+            }
+
+            labels.Add(GetRequiredText(row.Values[1], "enum label"));
+        }
+
+        if (compositeResultSet.Fields.Count != 4)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL composite catalogue query returned an unexpected result shape.");
+        }
+
+        var compositeFields = new Dictionary<BlueTuskTypeId, List<BlueTuskCompositeField>>();
+        foreach (var row in compositeResultSet.Rows)
+        {
+            var typeId = new BlueTuskTypeId(ParseUInt32(row.Values[0], "composite type OID"));
+            if (!compositeFields.TryGetValue(typeId, out var fields))
+            {
+                fields = [];
+                compositeFields.Add(typeId, fields);
+            }
+
+            fields.Add(new BlueTuskCompositeField
+            {
+                Position = checked((int)ParseUInt32(row.Values[1], "composite field position")),
+                Name = GetRequiredText(row.Values[2], "composite field name"),
+                Type = new BlueTuskTypeId(ParseUInt32(row.Values[3], "composite field type OID")),
+            });
+        }
+
+        if (moneyResultSet.Fields.Count != 2 || moneyResultSet.Rows.Count != 1)
+        {
+            throw new InvalidOperationException("PostgreSQL money metadata probe returned an unexpected result shape.");
+        }
+
+        var moneyRow = moneyResultSet.Rows[0].Values;
+        var moneyFormat = new BlueTuskMoneyFormat(
+            GetRequiredText(moneyRow[0], "lc_monetary"),
+            checked((int)ParseUInt32(moneyRow[1], "money fractional digits")));
+        if (resultSet.Fields.Count != 12)
+        {
+            throw new InvalidOperationException("PostgreSQL type catalogue query returned an unexpected column count.");
+        }
+
+        var types = new BlueTuskCatalogueType[resultSet.Rows.Count];
+        for (var index = 0; index < resultSet.Rows.Count; index++)
+        {
+            var values = resultSet.Rows[index].Values;
+            types[index] = new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
+                Schema = GetRequiredText(values[1], "schema"),
+                Name = GetRequiredText(values[2], "name"),
+                PostgreSqlKind = GetRequiredCharacter(values[3], "kind"),
+                PostgreSqlCategory = GetRequiredCharacter(values[4], "category"),
+                ElementType = ParseOptionalTypeId(values[5]),
+                BaseType = ParseOptionalTypeId(values[6]),
+                ArrayType = ParseOptionalTypeId(values[7]),
+                RangeSubtype = ParseOptionalTypeId(values[8]),
+                RangeType = ParseOptionalTypeId(values[9]),
+                MultirangeType = ParseOptionalTypeId(values[10]),
+                Delimiter = GetRequiredCharacter(values[11], "delimiter"),
+                EnumLabels = enumLabels.TryGetValue(
+                    new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
+                    out var labels)
+                    ? labels.ToArray()
+                    : Array.Empty<string>(),
+                CompositeFields = compositeFields.TryGetValue(
+                    new BlueTuskTypeId(ParseUInt32(values[0], "oid")),
+                    out var fields)
+                    ? fields.ToArray()
+                    : Array.Empty<BlueTuskCompositeField>(),
+            };
+        }
+
+        Volatile.Write(
+            ref _registry,
+            BlueTuskTypeCatalogue.BuildRegistry(types, _configuredTypes, moneyFormat));
+        Volatile.Write(ref _loaded, 1);
     }
 
     private static BlueTuskTypeId? ParseOptionalTypeId(ReadOnlyMemory<byte>? value) =>

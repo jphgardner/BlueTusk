@@ -1,6 +1,6 @@
 # ADO.NET
 
-Version 0.0.9 provides an asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, buffered `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource`.
+The 0.1.0 development line provides native synchronous and asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, `BlueTuskBatch`, buffered `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use blocking socket, TLS, protocol, authentication, pool, and query implementations rather than blocking asynchronous I/O.
 
 Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
 
@@ -23,7 +23,7 @@ Max Auto Prepare=100;Auto Prepare Min Usages=5
 
 BlueTusk infers built-in PostgreSQL type OIDs from `DbType` or the CLR value. A null parameter must set `DbType` or `PostgreSqlTypeOid`; this avoids relying on ambiguous server inference.
 
-The 0.1.0 development line supports explicit asynchronous preparation on an open, connection-owned command. BlueTusk creates a named server statement and reuses it across executions; changing the command text or parameter type identity closes and prepares the statement again.
+Explicit preparation is available synchronously and asynchronously on an open, connection-owned command. BlueTusk creates a named server statement and reuses it across executions; changing the command text or parameter type identity closes and prepares the statement again.
 
 ```csharp
 await using var connection = await dataSource.OpenConnectionAsync();
@@ -33,6 +33,19 @@ command.Parameters.Add(new BlueTuskParameter<int>(22));
 
 await command.PrepareAsync();
 var answer = await command.ExecuteScalarAsync<int>();
+```
+
+The equivalent synchronous path includes data-source ownership, pool warm-up and checkout, type discovery, preparation, transactions, readers, batches, timeouts, and PostgreSQL cancellation:
+
+```csharp
+using var dataSource = BlueTuskDataSource.Create(connectionString);
+dataSource.WarmUp();
+using var connection = dataSource.OpenConnection();
+using var command = new BlueTuskCommand("SELECT @value::int4 + 1", connection);
+command.Parameters.Add(new BlueTuskParameter<int>(41) { ParameterName = "value" });
+
+command.Prepare();
+var answer = (int)command.ExecuteScalar()!;
 ```
 
 Transactions use PostgreSQL transaction blocks and require explicit command enlistment:
@@ -65,4 +78,4 @@ Transactional [large-object streams](large-objects.md) support asynchronous crea
 
 [`BlueTuskBatch`](batches.md) implements `DbBatch`/`DbBatchCommand` with parameters, ordered multiple results, preparation, transactions, timeouts, cancellation, and data-source-owned execution.
 
-`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Network-backed sequential readers and synchronous query execution remain in progress for 0.1.0.
+`GetStream` and `GetTextReader` expose already-buffered `bytea`, text, and JSON values. Synchronous COPY, notification, and large-object convenience APIs plus network-backed sequential readers remain in progress for 0.1.0.

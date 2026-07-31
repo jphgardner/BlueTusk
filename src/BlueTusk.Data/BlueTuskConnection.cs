@@ -133,8 +133,49 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
-    public override void Open() =>
-        throw new NotSupportedException("Synchronous connection opening is not implemented yet. Use OpenAsync.");
+    public override void Open()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_state != ConnectionState.Closed)
+        {
+            throw new InvalidOperationException("The connection is already open or opening.");
+        }
+
+        if (string.IsNullOrWhiteSpace(_connectionString))
+        {
+            throw new InvalidOperationException("A connection string is required.");
+        }
+
+        SetState(ConnectionState.Connecting);
+        try
+        {
+            if (_pool is null)
+            {
+                _session = BlueTuskPhysicalSession.Open(_settings);
+            }
+            else
+            {
+                _pooledSession = _pool.Rent();
+                _session = _pooledSession.Session;
+            }
+
+            _typeMetadata.EnsureLoaded(_session);
+            BeginNotificationLifetime();
+            SetState(ConnectionState.Open);
+        }
+        catch
+        {
+            var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
+            if (pooledSession is not null)
+            {
+                _pool!.Return(pooledSession);
+            }
+
+            _session = null;
+            SetState(ConnectionState.Closed);
+            throw;
+        }
+    }
 
     public override async Task OpenAsync(CancellationToken cancellationToken)
     {
@@ -709,8 +750,55 @@ public sealed class BlueTuskConnection : DbConnection
         return result;
     }
 
-    protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel) =>
-        throw new NotSupportedException("Synchronous transaction start is not implemented yet. Use BeginTransactionAsync.");
+    protected override DbTransaction BeginDbTransaction(IsolationLevel isolationLevel)
+    {
+        if (_state != ConnectionState.Open)
+        {
+            throw new InvalidOperationException("The connection must be open to begin a transaction.");
+        }
+
+        lock (_transactionSync)
+        {
+            if (_currentTransaction is not null || _startingTransaction)
+            {
+                throw new InvalidOperationException("The connection already has an active transaction.");
+            }
+
+            _startingTransaction = true;
+        }
+
+        try
+        {
+            try
+            {
+                _ = Session.ExecuteSimpleQuery(BlueTuskTransaction.GetBeginStatement(isolationLevel));
+            }
+            catch (BlueTuskServerException exception)
+            {
+                throw new BlueTuskException(exception);
+            }
+
+            if (Session.TransactionStatus != BlueTuskTransactionStatus.InTransaction)
+            {
+                throw new BlueTuskException("PostgreSQL did not enter a transaction after BEGIN.");
+            }
+
+            var transaction = new BlueTuskTransaction(this, isolationLevel);
+            lock (_transactionSync)
+            {
+                _currentTransaction = transaction;
+            }
+
+            return transaction;
+        }
+        finally
+        {
+            lock (_transactionSync)
+            {
+                _startingTransaction = false;
+            }
+        }
+    }
 
     protected override async ValueTask<DbTransaction> BeginDbTransactionAsync(
         IsolationLevel isolationLevel,

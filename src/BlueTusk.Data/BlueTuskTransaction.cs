@@ -25,14 +25,12 @@ public sealed class BlueTuskTransaction : DbTransaction
 
     internal bool IsCompleted => Volatile.Read(ref _completed) != 0;
 
-    public override void Commit() =>
-        throw new NotSupportedException("Synchronous transaction completion is not implemented yet. Use CommitAsync.");
+    public override void Commit() => Complete("COMMIT");
 
     public override Task CommitAsync(CancellationToken cancellationToken = default) =>
         CompleteAsync("COMMIT", cancellationToken);
 
-    public override void Rollback() =>
-        throw new NotSupportedException("Synchronous transaction completion is not implemented yet. Use RollbackAsync.");
+    public override void Rollback() => Complete("ROLLBACK");
 
     public override Task RollbackAsync(CancellationToken cancellationToken = default) =>
         CompleteAsync("ROLLBACK", cancellationToken);
@@ -90,6 +88,26 @@ public sealed class BlueTuskTransaction : DbTransaction
         try
         {
             _ = await connection.Session.ExecuteSimpleQueryAsync(sql, cancellationToken).ConfigureAwait(false);
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
+        }
+        finally
+        {
+            if (connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
+            {
+                MarkCompleted();
+            }
+        }
+    }
+
+    private void Complete(string sql)
+    {
+        var connection = GetActiveConnection();
+        try
+        {
+            _ = connection.Session.ExecuteSimpleQuery(sql);
         }
         catch (BlueTuskServerException exception)
         {

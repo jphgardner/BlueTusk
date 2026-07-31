@@ -52,6 +52,69 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
     internal override IReadOnlyDictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics> HostStatistics =>
         _entries.ToDictionary(static entry => entry.Endpoint, static entry => entry.Pool.Statistics);
 
+    internal override BlueTuskPooledSession Rent()
+    {
+        ThrowIfDisposed();
+        var entries = GetOrderedEntries();
+        var failures = new List<Exception>();
+        BlueTuskPooledSession? fallback = null;
+        var sawSaturatedPool = false;
+        foreach (var entry in entries)
+        {
+            try
+            {
+                var lease = entry.Pool.TryRent();
+                if (lease is null)
+                {
+                    sawSaturatedPool = true;
+                    continue;
+                }
+
+                var selection = SelectLease(lease);
+                if (selection == LeaseSelection.Accept)
+                {
+                    ReturnFallback(fallback);
+                    return lease;
+                }
+
+                if (selection == LeaseSelection.Fallback && fallback is null)
+                {
+                    fallback = lease;
+                }
+                else
+                {
+                    failures.Add(new BlueTuskHostPoolSelectionException(
+                        entry.Endpoint,
+                        _target,
+                        lease.Session.IsPrimary,
+                        lease.Session.IsReadOnly));
+                    lease.Owner.Return(lease);
+                }
+            }
+            catch (BlueTuskAuthenticationException)
+            {
+                ReturnFallback(fallback);
+                throw;
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                failures.Add(new BlueTuskHostPoolException(entry.Endpoint, exception));
+            }
+        }
+
+        if (fallback is not null)
+        {
+            return fallback;
+        }
+
+        if (sawSaturatedPool)
+        {
+            return RentFromSaturatedPools(entries, failures);
+        }
+
+        throw CreatePoolException(failures);
+    }
+
     internal override async ValueTask<BlueTuskPooledSession> RentAsync(
         CancellationToken cancellationToken)
     {
@@ -131,6 +194,15 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
     {
         ArgumentNullException.ThrowIfNull(session);
         session.Owner.Return(session);
+    }
+
+    internal override void WarmUp()
+    {
+        ThrowIfDisposed();
+        foreach (var entry in _entries)
+        {
+            entry.Pool.WarmUp();
+        }
     }
 
     internal override async ValueTask WarmUpAsync(CancellationToken cancellationToken)
@@ -232,6 +304,91 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         }
 
         return fallback ?? throw CreatePoolException(failures);
+    }
+
+    private BlueTuskPooledSession RentFromSaturatedPools(
+        IReadOnlyList<PoolEntry> entries,
+        List<Exception> failures)
+    {
+        BlueTuskPooledSession? fallback = null;
+        foreach (var entry in entries)
+        {
+            try
+            {
+                var lease = entry.Pool.Rent();
+                var selection = SelectLease(lease);
+                if (selection == LeaseSelection.Accept)
+                {
+                    ReturnFallback(fallback);
+                    return lease;
+                }
+
+                if (selection == LeaseSelection.Fallback && fallback is null)
+                {
+                    fallback = lease;
+                }
+                else
+                {
+                    failures.Add(new BlueTuskHostPoolSelectionException(
+                        entry.Endpoint,
+                        _target,
+                        lease.Session.IsPrimary,
+                        lease.Session.IsReadOnly));
+                    lease.Owner.Return(lease);
+                }
+            }
+            catch (Exception exception) when (exception is not OutOfMemoryException)
+            {
+                failures.Add(new BlueTuskHostPoolException(entry.Endpoint, exception));
+            }
+        }
+
+        return fallback ?? throw CreatePoolException(failures);
+    }
+
+    private LeaseSelection SelectLease(BlueTuskPooledSession lease)
+    {
+        var requiredTarget = _target switch
+        {
+            BlueTuskTargetSessionAttributes.PreferPrimary =>
+                BlueTuskTargetSessionAttributes.Primary,
+            BlueTuskTargetSessionAttributes.PreferStandby =>
+                BlueTuskTargetSessionAttributes.Standby,
+            _ => _target,
+        };
+        if (requiredTarget == BlueTuskTargetSessionAttributes.Any)
+        {
+            return LeaseSelection.Accept;
+        }
+
+        try
+        {
+            lease.Session.RefreshHostState();
+        }
+        catch
+        {
+            try
+            {
+                lease.Session.Dispose();
+            }
+            finally
+            {
+                lease.Owner.Return(lease);
+            }
+
+            throw;
+        }
+
+        if (MatchesTarget(lease.Session, requiredTarget))
+        {
+            return LeaseSelection.Accept;
+        }
+
+        return _target is
+            BlueTuskTargetSessionAttributes.PreferPrimary or
+            BlueTuskTargetSessionAttributes.PreferStandby
+                ? LeaseSelection.Fallback
+                : LeaseSelection.Reject;
     }
 
     private async ValueTask<LeaseSelection> SelectLeaseAsync(

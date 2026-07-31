@@ -33,6 +33,8 @@ public sealed class BlueTuskDataSource : DbDataSource
 
     public new BlueTuskConnection CreateConnection() => (BlueTuskConnection)base.CreateConnection();
 
+    public new BlueTuskConnection OpenConnection() => (BlueTuskConnection)base.OpenConnection();
+
     public new async ValueTask<BlueTuskConnection> OpenConnectionAsync(CancellationToken cancellationToken = default) =>
         (BlueTuskConnection)await base.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
 
@@ -60,6 +62,14 @@ public sealed class BlueTuskDataSource : DbDataSource
     public ValueTask WarmUpAsync(CancellationToken cancellationToken = default) =>
         _pool?.WarmUpAsync(cancellationToken) ?? ValueTask.CompletedTask;
 
+    public void WarmUp() => _pool?.WarmUp();
+
+    public void ReloadTypes()
+    {
+        using var connection = OpenConnection();
+        _typeMetadata.Reload(connection.Session);
+    }
+
     public async ValueTask ReloadTypesAsync(CancellationToken cancellationToken = default)
     {
         await using var connection = await OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -73,8 +83,20 @@ public sealed class BlueTuskDataSource : DbDataSource
     protected override DbConnection CreateDbConnection() =>
         new BlueTuskConnection(ConnectionString, _pool, _typeMetadata);
 
-    protected override DbConnection OpenDbConnection() =>
-        throw new NotSupportedException("Synchronous connection opening is not implemented yet. Use OpenConnectionAsync.");
+    protected override DbConnection OpenDbConnection()
+    {
+        var connection = CreateConnection();
+        try
+        {
+            connection.Open();
+            return connection;
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+    }
 
     protected override async ValueTask<DbConnection> OpenDbConnectionAsync(CancellationToken cancellationToken = default)
     {

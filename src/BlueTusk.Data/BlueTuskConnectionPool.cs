@@ -12,9 +12,13 @@ internal abstract class BlueTuskConnectionPoolBase : IDisposable, IAsyncDisposab
 
     internal abstract IReadOnlyDictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics> HostStatistics { get; }
 
+    internal abstract BlueTuskPooledSession Rent();
+
     internal abstract ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken);
 
     internal abstract void Return(BlueTuskPooledSession session);
+
+    internal abstract void WarmUp();
 
     internal abstract ValueTask WarmUpAsync(CancellationToken cancellationToken);
 
@@ -37,6 +41,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             SingleWriter = false,
         });
     private readonly Func<CancellationToken, ValueTask<IBlueTuskPhysicalSession>> _sessionFactory;
+    private readonly Func<IBlueTuskPhysicalSession> _synchronousSessionFactory;
     private readonly TimeProvider _timeProvider;
     private readonly TimeSpan _idleLifetime;
     private readonly TimeSpan _connectionLifetime;
@@ -60,7 +65,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
     internal BlueTuskConnectionPool(
         BlueTuskConnectionStringBuilder settings,
         Func<CancellationToken, ValueTask<IBlueTuskPhysicalSession>>? sessionFactory = null,
-        TimeProvider? timeProvider = null)
+        TimeProvider? timeProvider = null,
+        Func<IBlueTuskPhysicalSession>? synchronousSessionFactory = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Validate();
@@ -72,6 +78,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         _connectionLifetime = settings.ConnectionLifetime;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _sessionFactory = sessionFactory ?? (token => BlueTuskPhysicalSession.OpenAsync(settings, token));
+        _synchronousSessionFactory = synchronousSessionFactory ?? (() => BlueTuskPhysicalSession.Open(settings));
     }
 
     internal override BlueTuskPoolStatistics Statistics => new(
@@ -91,6 +98,60 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         {
             [_endpoint] = Statistics,
         };
+
+    internal override BlueTuskPooledSession Rent()
+    {
+        ThrowIfDisposed();
+        if (_minimumSize > 0 && Volatile.Read(ref _total) < _minimumSize)
+        {
+            WarmUp();
+        }
+
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            while (true)
+            {
+                var (hasSlot, slot, creationReserved) = TryAcquireAvailableOrReserveCreation();
+                if (!hasSlot && !creationReserved)
+                {
+                    slot = ReadAvailable();
+                    hasSlot = true;
+                }
+
+                if (creationReserved)
+                {
+                    return CreateReservedSession(lease: true);
+                }
+
+                if (!hasSlot || slot.Session is not { } pooledSession)
+                {
+                    continue;
+                }
+
+                lock (_stateSync)
+                {
+                    _idle--;
+                }
+
+                if (IsCurrent(pooledSession) &&
+                    !IsExpired(pooledSession, includeIdleLifetime: true) &&
+                    ResetAndValidate(pooledSession) &&
+                    TryLeaseCurrent(pooledSession))
+                {
+                    BlueTuskDiagnostics.PoolLeases.Add(1);
+                    BlueTuskDiagnostics.PoolReuses.Add(1);
+                    return pooledSession;
+                }
+
+                Discard(pooledSession);
+            }
+        }
+        finally
+        {
+            BlueTuskDiagnostics.PoolCheckoutDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+        }
+    }
 
     internal override async ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken)
     {
@@ -221,6 +282,76 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
     }
 
+    internal BlueTuskPooledSession? TryRent()
+    {
+        ThrowIfDisposed();
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            while (true)
+            {
+                var (hasSlot, slot, creationReserved) = TryAcquireAvailableOrReserveCreation();
+                if (!hasSlot && !creationReserved)
+                {
+                    return null;
+                }
+
+                if (creationReserved)
+                {
+                    return CreateReservedSession(lease: true);
+                }
+
+                if (slot.Session is not { } pooledSession)
+                {
+                    continue;
+                }
+
+                lock (_stateSync)
+                {
+                    _idle--;
+                }
+
+                if (IsCurrent(pooledSession) &&
+                    !IsExpired(pooledSession, includeIdleLifetime: true) &&
+                    ResetAndValidate(pooledSession) &&
+                    TryLeaseCurrent(pooledSession))
+                {
+                    BlueTuskDiagnostics.PoolLeases.Add(1);
+                    BlueTuskDiagnostics.PoolReuses.Add(1);
+                    return pooledSession;
+                }
+
+                Discard(pooledSession);
+            }
+        }
+        finally
+        {
+            BlueTuskDiagnostics.PoolCheckoutDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+        }
+    }
+
+    internal override void WarmUp()
+    {
+        ThrowIfDisposed();
+        if (_minimumSize == 0 || Volatile.Read(ref _total) >= _minimumSize)
+        {
+            return;
+        }
+
+        _warmUpLock.Wait();
+        try
+        {
+            while (TryReserveWarmUpCreation())
+            {
+                _ = CreateReservedSession(lease: false);
+            }
+        }
+        finally
+        {
+            _warmUpLock.Release();
+        }
+    }
+
     internal override async ValueTask WarmUpAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
@@ -283,6 +414,10 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
         var sessions = DrainIdleSessions(complete: true);
         _shutdown.Cancel();
+        lock (_stateSync)
+        {
+            Monitor.PulseAll(_stateSync);
+        }
         foreach (var session in sessions)
         {
             Discard(session);
@@ -327,6 +462,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                     _idle--;
                     discard = true;
                 }
+
+                Monitor.Pulse(_stateSync);
             }
         }
 
@@ -398,6 +535,94 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             Interlocked.Decrement(ref _waiting);
             BlueTuskDiagnostics.PoolWaiters.Add(-1);
         }
+    }
+
+    private BlueTuskPoolSlot ReadAvailable()
+    {
+        Interlocked.Increment(ref _waiting);
+        BlueTuskDiagnostics.PoolWaiters.Add(1);
+        try
+        {
+            lock (_stateSync)
+            {
+                while (true)
+                {
+                    ThrowIfDisposed();
+                    if (_available.Reader.TryRead(out var slot))
+                    {
+                        return slot;
+                    }
+
+                    Monitor.Wait(_stateSync);
+                }
+            }
+        }
+        finally
+        {
+            Interlocked.Decrement(ref _waiting);
+            BlueTuskDiagnostics.PoolWaiters.Add(-1);
+        }
+    }
+
+    private BlueTuskPooledSession CreateReservedSession(bool lease)
+    {
+        IBlueTuskPhysicalSession session;
+        try
+        {
+            session = _synchronousSessionFactory();
+        }
+        catch
+        {
+            ReleaseCreationReservation();
+            throw;
+        }
+
+        BlueTuskPooledSession pooledSession;
+        var reject = false;
+        lock (_stateSync)
+        {
+            _creating--;
+            if (Volatile.Read(ref _disposed) != 0)
+            {
+                reject = true;
+                pooledSession = null!;
+            }
+            else
+            {
+                var now = _timeProvider.GetUtcNow();
+                pooledSession = new BlueTuskPooledSession(session, now, _generation, this);
+                _total++;
+                _opened++;
+                if (lease)
+                {
+                    _busy++;
+                }
+                else
+                {
+                    _idle++;
+                    if (!_available.Writer.TryWrite(new BlueTuskPoolSlot(pooledSession)))
+                    {
+                        throw new InvalidOperationException("Could not publish a warmed physical session.");
+                    }
+
+                    Monitor.Pulse(_stateSync);
+                }
+            }
+        }
+
+        if (reject)
+        {
+            DisposeUnacceptedSession(session);
+            throw new ObjectDisposedException(nameof(BlueTuskDataSource));
+        }
+
+        BlueTuskDiagnostics.PoolConnections.Add(1);
+        if (lease)
+        {
+            BlueTuskDiagnostics.PoolLeases.Add(1);
+        }
+
+        return pooledSession;
     }
 
     private async ValueTask<BlueTuskPooledSession> CreateReservedSessionAsync(
@@ -504,6 +729,41 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         catch (OperationCanceledException)
         {
             throw;
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            return false;
+        }
+    }
+
+    private static bool ResetAndValidate(BlueTuskPooledSession pooledSession)
+    {
+        var session = pooledSession.Session;
+        if (!session.IsOpen)
+        {
+            return false;
+        }
+
+        try
+        {
+            if (session.TransactionStatus != BlueTuskTransactionStatus.Idle)
+            {
+                _ = session.ExecuteSimpleQuery("ROLLBACK");
+            }
+
+            if (!session.IsOpen || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
+            {
+                return false;
+            }
+
+            _ = session.ExecuteSimpleQuery("DISCARD ALL");
+            if (!session.IsOpen || session.TransactionStatus != BlueTuskTransactionStatus.Idle)
+            {
+                return false;
+            }
+
+            BlueTuskDiagnostics.PoolResets.Add(1);
+            return true;
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
         {
@@ -633,6 +893,22 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
     }
 
+    [SuppressMessage(
+        "Design",
+        "CA1031:Do not catch general exception types",
+        Justification = "A session rejected during concurrent disposal is already outside the pool.")]
+    private static void DisposeUnacceptedSession(IBlueTuskPhysicalSession session)
+    {
+        try
+        {
+            session.Dispose();
+        }
+        catch
+        {
+            // The data source has already been disposed.
+        }
+    }
+
     private void RecordDiscard()
     {
         lock (_stateSync)
@@ -648,9 +924,13 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
     private void SignalCapacityAvailable()
     {
-        if (Volatile.Read(ref _disposed) == 0)
+        lock (_stateSync)
         {
-            _available.Writer.TryWrite(default);
+            if (Volatile.Read(ref _disposed) == 0)
+            {
+                _available.Writer.TryWrite(default);
+                Monitor.PulseAll(_stateSync);
+            }
         }
     }
 
