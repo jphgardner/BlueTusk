@@ -33,3 +33,7 @@ dotnet ef dbcontext scaffold \
 ```
 
 Generated contexts configure `UseBlueTusk`. PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, partition metadata, policies, routines, and property graphs—belongs to the advanced scaffolding milestone.
+
+## Validation
+
+The 0.2 provider gate runs against PostgreSQL and covers service lifetimes, core scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. Later milestones extend this suite with PostgreSQL-specific query and schema semantics.

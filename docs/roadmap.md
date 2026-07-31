@@ -145,7 +145,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Concurrent connection, cancellation, preparation, batch, and streaming stress suites
   - [x] Differential PostgreSQL behavior matrix and checked-in benchmark baselines
 
-## 0.2.0 — EF Core CRUD preview (Milestone 5)
+## 0.2.0 — EF Core CRUD preview (Milestone 5, complete)
 
 - [x] `UseBlueTusk` options and provider-service registration
 - [x] EF Core create, read, update, and delete operations
@@ -166,7 +166,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] EF design-time provider discovery and `UseBlueTusk` context generation
   - [x] Tables, views, columns, defaults, generated values, keys, foreign keys, indexes, and sequences
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
-- [ ] Initial EF Core relational specification-suite coverage
+- [x] Initial EF Core relational specification-suite coverage
+  - [x] Provider-service lifetime and isolation contracts
+  - [x] Raw SQL composition, parameterization, compiled queries, and nullable projections
+  - [x] Tracking modes, identity resolution, split-query includes, and relationship fix-up
+  - [x] Relational command execution and bulk update/delete
 
 ## 0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)
 
