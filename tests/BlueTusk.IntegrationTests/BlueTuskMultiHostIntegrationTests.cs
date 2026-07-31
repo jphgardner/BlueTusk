@@ -65,6 +65,51 @@ public sealed class BlueTuskMultiHostIntegrationTests
         Assert.DoesNotContain(settings.Password, exception.ToString(), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Multi_host_data_source_partitions_capacity_and_statistics_per_endpoint()
+    {
+        var settings = CreateSettings();
+        settings.Host = "localhost,localhost";
+        settings.Ports = "5415,5418";
+        settings.Pooling = true;
+        settings.MinimumPoolSize = 1;
+        settings.MaximumPoolSize = 1;
+        settings.TargetSessionAttributes = BlueTuskTargetSessionAttributes.Primary;
+        await using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);
+
+        await dataSource.WarmUpAsync(CancellationToken.None);
+        var warmed = dataSource.GetHostPoolStatistics();
+        Assert.Equal(2, warmed.Count);
+        Assert.All(warmed.Values, statistics =>
+        {
+            Assert.Equal(1, statistics.Total);
+            Assert.Equal(1, statistics.Idle);
+            Assert.Equal(1, statistics.MaximumSize);
+        });
+        Assert.Equal(2, dataSource.GetPoolStatistics().MaximumSize);
+
+        await using (var first = await dataSource.OpenConnectionAsync(CancellationToken.None))
+        await using (var second = await dataSource.OpenConnectionAsync(CancellationToken.None))
+        {
+            Assert.Equal(
+                [5415, 5418],
+                new[]
+                {
+                    first.ConnectedEndpoint!.Value.Port,
+                    second.ConnectedEndpoint!.Value.Port,
+                }.Order());
+            Assert.All(
+                dataSource.GetHostPoolStatistics().Values,
+                statistics => Assert.Equal(1, statistics.Busy));
+        }
+
+        Assert.All(
+            dataSource.GetHostPoolStatistics().Values,
+            statistics => Assert.Equal(1, statistics.Idle));
+        await dataSource.ClearPoolAsync();
+        Assert.Equal(0, dataSource.GetPoolStatistics().Total);
+    }
+
     private static BlueTuskConnectionStringBuilder CreateSettings()
     {
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");

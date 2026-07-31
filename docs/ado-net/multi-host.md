@@ -23,4 +23,6 @@ BlueTusk probes `pg_is_in_recovery()` and `transaction_read_only` after authenti
 
 `BlueTuskConnection.ConnectedEndpoint` reports the selected host and port. Failure messages identify attempted endpoints but never include passwords or authentication payloads.
 
-Per-host pool partitioning is still in progress for 0.1.0. Until that lands, pooled multi-host sessions share the data source's aggregate pool.
+`BlueTuskDataSource` partitions physical pools by host endpoint. Each endpoint independently enforces minimum/maximum size, idle and maximum lifetime, reset, warm-up, and draining. A checkout tries immediate capacity across the selected host order before waiting, so saturation of one endpoint can route work to another acceptable endpoint. Targeted checkouts refresh the server role before acceptance, and each returned lease routes back to its owning endpoint pool.
+
+`GetPoolStatistics()` aggregates all endpoint pools. `GetHostPoolStatistics()` returns the same counters keyed by `BlueTuskHostEndpoint`. Pool-size settings apply per endpoint, so a three-host data source with `Maximum Pool Size=20` has an aggregate maximum of 60 physical sessions.

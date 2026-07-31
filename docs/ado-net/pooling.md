@@ -23,11 +23,13 @@ await using var connection = await dataSource.OpenConnectionAsync();
 |---|---:|---|
 | `Pooling` | `true` | Enables the data source's physical connection pool. |
 | `Minimum Pool Size` | `0` | Physical sessions opened by warm-up and before the first checkout. |
-| `Maximum Pool Size` | `100` | Hard limit for physical sessions owned by the data source. |
+| `Maximum Pool Size` | `100` | Hard limit for physical sessions in each host endpoint pool. |
 | `Connection Idle Lifetime` | 5 minutes | Maximum idle age checked before reuse; zero disables idle expiry. |
 | `Connection Lifetime` | 1 hour | Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. |
 
 When the pool is at its maximum, asynchronous opens wait in order for returned capacity. The caller's cancellation token cancels that wait without consuming a slot.
+
+Multi-host data sources own one pool per configured endpoint. Checkout tries available capacity across the selected host order, and role-targeted checkouts revalidate primary/standby and read-only state. `Minimum Pool Size` and `Maximum Pool Size` apply to each endpoint pool. `GetHostPoolStatistics()` exposes each partition; `GetPoolStatistics()` reports their aggregate.
 
 ## Reset and validation
 
@@ -43,6 +45,7 @@ The reset round trip is also the health check. A closed session, failed reset, e
 
 - `WarmUpAsync()` opens the configured minimum number of physical sessions.
 - `GetPoolStatistics()` returns total, idle, busy, waiting, opened, reused, and discarded counts.
+- `GetHostPoolStatistics()` returns the same counters for each configured endpoint.
 - `ClearPool()` and `ClearPoolAsync()` close idle sessions and mark active sessions for disposal when they return.
 - Disposing the data source cancels queued opens, closes idle sessions, and drains active sessions as their logical connections close.
 

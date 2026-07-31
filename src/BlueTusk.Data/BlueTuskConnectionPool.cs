@@ -6,7 +6,28 @@ using BlueTusk.Protocol;
 
 namespace BlueTusk.Data;
 
-internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
+internal abstract class BlueTuskConnectionPoolBase : IDisposable, IAsyncDisposable
+{
+    internal abstract BlueTuskPoolStatistics Statistics { get; }
+
+    internal abstract IReadOnlyDictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics> HostStatistics { get; }
+
+    internal abstract ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken);
+
+    internal abstract void Return(BlueTuskPooledSession session);
+
+    internal abstract ValueTask WarmUpAsync(CancellationToken cancellationToken);
+
+    internal abstract void Clear();
+
+    internal abstract ValueTask ClearAsync();
+
+    public abstract void Dispose();
+
+    public abstract ValueTask DisposeAsync();
+}
+
+internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 {
     private readonly Channel<BlueTuskPoolSlot> _available = Channel.CreateUnbounded<BlueTuskPoolSlot>(
         new UnboundedChannelOptions
@@ -24,6 +45,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
     private readonly object _stateSync = new();
     private readonly int _minimumSize;
     private readonly int _maximumSize;
+    private readonly BlueTuskHostEndpoint _endpoint;
     private int _generation;
     private int _disposed;
     private int _creating;
@@ -45,13 +67,14 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
 
         _minimumSize = settings.MinimumPoolSize;
         _maximumSize = settings.MaximumPoolSize;
+        _endpoint = settings.HostEndpoints.Single();
         _idleLifetime = settings.ConnectionIdleLifetime;
         _connectionLifetime = settings.ConnectionLifetime;
         _timeProvider = timeProvider ?? TimeProvider.System;
         _sessionFactory = sessionFactory ?? (token => BlueTuskPhysicalSession.OpenAsync(settings, token));
     }
 
-    internal BlueTuskPoolStatistics Statistics => new(
+    internal override BlueTuskPoolStatistics Statistics => new(
         PoolingEnabled: true,
         MinimumSize: _minimumSize,
         MaximumSize: _maximumSize,
@@ -63,7 +86,13 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         Reused: Interlocked.Read(ref _reused),
         Discarded: Interlocked.Read(ref _discarded));
 
-    internal async ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken)
+    internal override IReadOnlyDictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics> HostStatistics =>
+        new Dictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics>
+        {
+            [_endpoint] = Statistics,
+        };
+
+    internal override async ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         if (_minimumSize > 0 && Volatile.Read(ref _total) < _minimumSize)
@@ -131,7 +160,68 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         }
     }
 
-    internal async ValueTask WarmUpAsync(CancellationToken cancellationToken)
+    internal async ValueTask<BlueTuskPooledSession?> TryRentAsync(
+        CancellationToken cancellationToken)
+    {
+        ThrowIfDisposed();
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            while (true)
+            {
+                cancellationToken.ThrowIfCancellationRequested();
+                var (hasSlot, slot, creationReserved) = TryAcquireAvailableOrReserveCreation();
+                if (!hasSlot && !creationReserved)
+                {
+                    return null;
+                }
+
+                if (creationReserved)
+                {
+                    return await CreateReservedSessionAsync(
+                        lease: true,
+                        cancellationToken).ConfigureAwait(false);
+                }
+
+                if (slot.Session is not { } pooledSession)
+                {
+                    continue;
+                }
+
+                lock (_stateSync)
+                {
+                    _idle--;
+                }
+
+                try
+                {
+                    if (IsCurrent(pooledSession) &&
+                        !IsExpired(pooledSession, includeIdleLifetime: true) &&
+                        await ResetAndValidateAsync(pooledSession, cancellationToken).ConfigureAwait(false) &&
+                        TryLeaseCurrent(pooledSession))
+                    {
+                        BlueTuskDiagnostics.PoolLeases.Add(1);
+                        BlueTuskDiagnostics.PoolReuses.Add(1);
+                        return pooledSession;
+                    }
+                }
+                catch (OperationCanceledException)
+                {
+                    await DiscardAsync(pooledSession).ConfigureAwait(false);
+                    ThrowDisposedInsteadOfCancellation(cancellationToken);
+                    throw;
+                }
+
+                await DiscardAsync(pooledSession).ConfigureAwait(false);
+            }
+        }
+        finally
+        {
+            BlueTuskDiagnostics.PoolCheckoutDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+        }
+    }
+
+    internal override async ValueTask WarmUpAsync(CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         if (_minimumSize == 0 || Volatile.Read(ref _total) >= _minimumSize)
@@ -166,7 +256,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         }
     }
 
-    internal void Clear()
+    internal override void Clear()
     {
         ThrowIfDisposed();
         foreach (var session in DrainIdleSessions(complete: false))
@@ -175,7 +265,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         }
     }
 
-    internal async ValueTask ClearAsync()
+    internal override async ValueTask ClearAsync()
     {
         ThrowIfDisposed();
         foreach (var session in DrainIdleSessions(complete: false))
@@ -184,7 +274,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         }
     }
 
-    public void Dispose()
+    public override void Dispose()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
         {
@@ -199,7 +289,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         }
     }
 
-    public async ValueTask DisposeAsync()
+    public override async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _disposed, 1) != 0)
         {
@@ -214,7 +304,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
         }
     }
 
-    internal void Return(BlueTuskPooledSession session)
+    internal override void Return(BlueTuskPooledSession session)
     {
         ArgumentNullException.ThrowIfNull(session);
         var discard = false;
@@ -347,7 +437,7 @@ internal sealed class BlueTuskConnectionPool : IDisposable, IAsyncDisposable
             else
             {
                 var now = _timeProvider.GetUtcNow();
-                pooledSession = new BlueTuskPooledSession(session, now, _generation);
+                pooledSession = new BlueTuskPooledSession(session, now, _generation, this);
                 _total++;
                 _opened++;
                 if (lease)
@@ -578,7 +668,8 @@ internal readonly record struct BlueTuskPoolSlot(BlueTuskPooledSession? Session)
 internal sealed class BlueTuskPooledSession(
     IBlueTuskPhysicalSession session,
     DateTimeOffset createdAt,
-    int generation)
+    int generation,
+    BlueTuskConnectionPool owner)
 {
     internal IBlueTuskPhysicalSession Session { get; } = session;
 
@@ -587,4 +678,6 @@ internal sealed class BlueTuskPooledSession(
     internal DateTimeOffset LastReturned { get; set; } = createdAt;
 
     internal int Generation { get; } = generation;
+
+    internal BlueTuskConnectionPool Owner { get; } = owner;
 }

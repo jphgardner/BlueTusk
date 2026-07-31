@@ -8,7 +8,7 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskDataSource : DbDataSource
 {
     private readonly BlueTuskConnectionStringBuilder _settings;
-    private readonly BlueTuskConnectionPool? _pool;
+    private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
 
     internal BlueTuskDataSource(string connectionString, BlueTuskTypeRegistry? configuredTypes = null)
@@ -19,7 +19,9 @@ public sealed class BlueTuskDataSource : DbDataSource
         _typeMetadata = new BlueTuskTypeMetadataCache(configuredTypes);
         if (_settings.Pooling)
         {
-            _pool = new BlueTuskConnectionPool(_settings);
+            _pool = _settings.HostEndpoints.Count > 1
+                ? new BlueTuskMultiHostConnectionPool(_settings)
+                : new BlueTuskConnectionPool(_settings);
         }
     }
 
@@ -50,6 +52,10 @@ public sealed class BlueTuskDataSource : DbDataSource
             Opened: 0,
             Reused: 0,
             Discarded: 0);
+
+    /// <summary>Gets pool statistics partitioned by configured host endpoint.</summary>
+    public IReadOnlyDictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics> GetHostPoolStatistics() =>
+        _pool?.HostStatistics ?? new Dictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics>();
 
     public ValueTask WarmUpAsync(CancellationToken cancellationToken = default) =>
         _pool?.WarmUpAsync(cancellationToken) ?? ValueTask.CompletedTask;

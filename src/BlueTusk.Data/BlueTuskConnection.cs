@@ -16,7 +16,7 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskConnection : DbConnection
 {
     private const int NotificationBufferCapacity = 1_024;
-    private readonly BlueTuskConnectionPool? _pool;
+    private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
     private readonly SemaphoreSlim _largeObjectGate = new(1, 1);
     private readonly SemaphoreSlim _notificationGate = new(1, 1);
@@ -47,14 +47,14 @@ public sealed class BlueTuskConnection : DbConnection
     {
     }
 
-    internal BlueTuskConnection(string connectionString, BlueTuskConnectionPool? pool)
+    internal BlueTuskConnection(string connectionString, BlueTuskConnectionPoolBase? pool)
         : this(connectionString, pool, new BlueTuskTypeMetadataCache())
     {
     }
 
     internal BlueTuskConnection(
         string connectionString,
-        BlueTuskConnectionPool? pool,
+        BlueTuskConnectionPoolBase? pool,
         BlueTuskTypeMetadataCache typeMetadata)
     {
         _pool = pool;
