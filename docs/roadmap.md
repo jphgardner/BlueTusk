@@ -139,9 +139,9 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Bounded named portals, suspension, and incremental row reads
   - [x] Sequential field access plus streaming `bytea`, text, and JSON
   - [x] Reader cancellation, disposal, and connection-reuse recovery
-- [ ] ADO.NET conformance, stress, differential, and performance baselines
-  - [ ] Provider-factory and base-class conformance suite
-  - [ ] Concurrent connection, cancellation, preparation, batch, and streaming stress suites
-  - [ ] Differential PostgreSQL behavior matrix and checked-in benchmark baselines
+- [x] ADO.NET conformance, stress, differential, and performance baselines
+  - [x] Provider-factory and base-class conformance suite
+  - [x] Concurrent connection, cancellation, preparation, batch, and streaming stress suites
+  - [x] Differential PostgreSQL behavior matrix and checked-in benchmark baselines
 
 Later milestones follow the full product specification: EF Core CRUD and migrations, PostgreSQL-native LINQ, advanced schema modelling and scaffolding, SQL/PGQ property graphs, and the extension ecosystem. Each milestone must have conformance and real-server acceptance tests before its version is published.

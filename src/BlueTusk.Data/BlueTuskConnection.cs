@@ -104,6 +104,8 @@ public sealed class BlueTuskConnection : DbConnection
 
     public override bool CanCreateBatch => true;
 
+    protected override DbProviderFactory DbProviderFactory => BlueTuskProviderFactory.Instance;
+
     /// <summary>Gets the asynchronous stream of notifications received by this connection.</summary>
     public IAsyncEnumerable<BlueTuskNotification> Notifications
     {

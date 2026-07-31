@@ -23,4 +23,7 @@ public sealed class BlueTuskProviderFactory : DbProviderFactory
     public override DbBatchCommand CreateBatchCommand() => new BlueTuskBatchCommand();
 
     public override DbConnectionStringBuilder CreateConnectionStringBuilder() => new BlueTuskConnectionStringBuilder();
+
+    public override DbDataSource CreateDataSource(string connectionString) =>
+        BlueTuskDataSource.Create(connectionString);
 }
