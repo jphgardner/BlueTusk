@@ -1,0 +1,36 @@
+using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.Extensions.DependencyInjection;
+
+namespace BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+
+public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
+{
+    private DbContextOptionsExtensionInfo? _info;
+
+    public BlueTuskOptionsExtension()
+    {
+    }
+
+    private BlueTuskOptionsExtension(BlueTuskOptionsExtension copyFrom)
+        : base(copyFrom)
+    {
+    }
+
+    public override DbContextOptionsExtensionInfo Info => _info ??= new ExtensionInfo(this);
+
+    protected override RelationalOptionsExtension Clone() => new BlueTuskOptionsExtension(this);
+
+    public override void ApplyServices(IServiceCollection services)
+        => services.AddEntityFrameworkBlueTusk();
+
+    private sealed class ExtensionInfo(IDbContextOptionsExtension extension)
+        : RelationalExtensionInfo(extension)
+    {
+        public override string LogFragment => "using BlueTusk ";
+
+        public override int GetServiceProviderHashCode() => 0;
+
+        public override void PopulateDebugInfo(IDictionary<string, string> debugInfo)
+            => debugInfo["BlueTusk"] = "1";
+    }
+}

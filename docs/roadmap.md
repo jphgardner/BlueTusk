@@ -146,7 +146,7 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.2.0 — EF Core CRUD preview (Milestone 5)
 
-- [ ] `UseBlueTusk` options and provider-service registration
+- [x] `UseBlueTusk` options and provider-service registration
 - [ ] EF Core create, read, update, and delete operations
 - [ ] EF Core transaction and savepoint integration
 - [ ] Store-generated keys, defaults, computed values, and concurrency tokens
