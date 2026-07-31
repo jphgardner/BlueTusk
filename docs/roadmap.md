@@ -210,14 +210,14 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Remove the unused Client → Extensions.Abstractions reference
 - [x] Document the narrow Data surface consumed by EF: data-source connection creation, parameter store-type identity, runtime type resolution, capabilities, and diagnostics
 - [x] Keep protocol parsing independently testable without ADO.NET or EF
-- [ ] Run the architecture gate in every supported CI environment
+- [x] Run the architecture gate in every supported CI environment
 
 ### Extension seam
 
-- [ ] Carry an immutable feature registry through `BlueTuskDataSource.Build()` and expose real consumption semantics
-- [ ] Complete a `citext` vertical slice without extension-specific core dependencies
-  - [ ] Codec/type registration and data-source-builder ergonomics
-  - [ ] ADO.NET live tests, documentation, and package metadata
+- [x] Carry an immutable feature registry through `BlueTuskDataSource.Build()` and expose real consumption semantics
+- [x] Complete a `citext` vertical slice without extension-specific core dependencies
+  - [x] Codec/type registration and data-source-builder ergonomics
+  - [x] ADO.NET live tests, documentation, and package metadata
   - [ ] Separate EF translation/migration plug-in where required
 - [ ] Extension-authoring template
 - [ ] Extension compatibility-test harness
@@ -294,7 +294,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] pgvector package
 - [ ] hstore package
 - [ ] ltree package
-- [ ] citext package
+- [x] citext package (tested ADO.NET preview; extension SDK remains unstable)
 - [ ] pg_trgm package
 - [ ] TimescaleDB package
 - [ ] Extension-authoring template

@@ -21,6 +21,8 @@ public sealed class ArchitectureDependencyTests
                     "BlueTusk.TypeSystem",
                 ],
             ["BlueTusk.Extensions.Abstractions"] = ["BlueTusk.TypeSystem"],
+            ["BlueTusk.Extensions.Citext"] =
+                ["BlueTusk.Data", "BlueTusk.Extensions.Abstractions", "BlueTusk.TypeSystem"],
             ["BlueTusk.Data"] =
                 [
                     "BlueTusk.Client",
@@ -65,7 +67,8 @@ public sealed class ArchitectureDependencyTests
             name => name is not (
                 "BlueTusk.Data" or
                 "BlueTusk.EntityFrameworkCore" or
-                "BlueTusk.EntityFrameworkCore.Design"));
+                "BlueTusk.EntityFrameworkCore.Design" or
+                "BlueTusk.Extensions.Citext"));
 
         foreach (var assemblyName in lowerLayers)
         {

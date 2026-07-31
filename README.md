@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, and the first PostgreSQL-specific EF mappings. Stable extensions, PostgreSQL 19/SQL-PGQ, transport-pipeline evaluation, and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, a `citext` extension preview, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, and the first PostgreSQL-specific EF mappings. A stable extension SDK, PostgreSQL 19/SQL-PGQ, transport-pipeline evaluation, and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -40,11 +40,11 @@ EntityFrameworkCore → Data → Client → Protocol → Transport
 Replication.PgOutput → Replication → Client
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [replication](docs/replication/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
 ## Status
 
-The current `0.0.9` implementation provides:
+The current `0.3.0-preview.1` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -88,6 +88,7 @@ The current `0.0.9` implementation provides:
 - explicit and automatic prepared statements, `DbBatch`, named parameters, and multi-host pools;
 - EF Core CRUD, transactions, generated values, core LINQ, initial migrations and reverse engineering;
 - PostgreSQL-native EF scalar, array, range, multirange, enum, domain, composite, and record mappings.
+- an immutable data-source feature registry and independently packaged, live-tested `citext` codec preview.
 
 Applications should build one long-lived data source per distinct configuration. It owns pooling, runtime codecs, and the PostgreSQL type catalogue:
 

@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using BlueTusk.Extensions;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data;
@@ -11,11 +12,15 @@ public sealed class BlueTuskDataSource : DbDataSource
     private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
 
-    internal BlueTuskDataSource(string connectionString, BlueTuskTypeRegistry? configuredTypes = null)
+    internal BlueTuskDataSource(
+        string connectionString,
+        BlueTuskTypeRegistry? configuredTypes = null,
+        BlueTuskFeatureRegistry? features = null)
     {
         _settings = new BlueTuskConnectionStringBuilder(connectionString);
         _settings.Validate();
         ConnectionString = connectionString;
+        Features = features ?? BlueTuskFeatureRegistry.Empty;
         _typeMetadata = new BlueTuskTypeMetadataCache(configuredTypes);
         if (_settings.Pooling)
         {
@@ -30,6 +35,9 @@ public sealed class BlueTuskDataSource : DbDataSource
     public static BlueTuskDataSource Create(string connectionString) => new(connectionString);
 
     public BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;
+
+    /// <summary>Gets the immutable optional-feature snapshot configured for this data source.</summary>
+    public BlueTuskFeatureRegistry Features { get; }
 
     public new BlueTuskConnection CreateConnection() => (BlueTuskConnection)base.CreateConnection();
 

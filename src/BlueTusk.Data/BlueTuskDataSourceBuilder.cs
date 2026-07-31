@@ -6,8 +6,6 @@ namespace BlueTusk.Data;
 /// <summary>Collects immutable provider configuration before a data source is created.</summary>
 public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
 {
-    private readonly List<IBlueTuskPlugin> _plugins = [];
-
     public BlueTuskDataSourceBuilder(string connectionString)
     {
         ConnectionString = connectionString ?? throw new ArgumentNullException(nameof(connectionString));
@@ -24,11 +22,8 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     {
         ArgumentNullException.ThrowIfNull(plugin);
         plugin.Configure(this);
-        _plugins.Add(plugin);
         return this;
     }
-
-    internal IReadOnlyList<IBlueTuskPlugin> Plugins => _plugins;
 
     public BlueTuskDataSourceBuilder MapEnum<TEnum>(
         string postgresTypeName,
@@ -47,5 +42,5 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
         return this;
     }
 
-    public BlueTuskDataSource Build() => new(ConnectionString, Types.Build());
+    public BlueTuskDataSource Build() => new(ConnectionString, Types.Build(), Features.Build());
 }

@@ -19,6 +19,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\extensions\BlueTusk.Extensions.Citext\BlueTusk.Extensions.Citext.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Client\BlueTusk.Client.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Diagnostics\BlueTusk.Diagnostics.csproj" />
