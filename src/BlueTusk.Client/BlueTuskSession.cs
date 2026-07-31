@@ -1058,10 +1058,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     sql,
                     typeOids,
                     bindParameters,
-                    useBinaryResults,
-                    fetchSize));
+                    useBinaryResults));
             requestWritten = true;
             var fields = ReadPortalStart();
+            _connection.Write(
+                output => WritePortalExecute(output, portalName, fetchSize));
             return new BlueTuskPortal(this, portalName, fields, fetchSize, started);
         }
         catch
@@ -1114,11 +1115,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     sql,
                     typeOids,
                     bindParameters,
-                    useBinaryResults,
-                    fetchSize),
+                    useBinaryResults),
                 cancellationToken).ConfigureAwait(false);
             requestWritten = true;
             var fields = await ReadPortalStartAsync(cancellationToken).ConfigureAwait(false);
+            await _connection.WriteAsync(
+                output => WritePortalExecute(output, portalName, fetchSize),
+                cancellationToken).ConfigureAwait(false);
             return new BlueTuskPortal(this, portalName, fields, fetchSize, started);
         }
         catch
@@ -1144,8 +1147,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string? sql,
         IReadOnlyList<uint> typeOids,
         IReadOnlyList<BlueTuskBindParameter> parameters,
-        bool useBinaryResults,
-        int fetchSize)
+        bool useBinaryResults)
     {
         if (sql is not null)
         {
@@ -1159,6 +1161,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             parameters,
             useBinaryResults ? BinaryResultFormat : TextResultFormat);
         BlueTuskFrontendMessageWriter.WriteDescribePortal(output, portalName);
+        BlueTuskFrontendMessageWriter.WriteFlush(output);
+    }
+
+    private static void WritePortalExecute(
+        IBufferWriter<byte> output,
+        string portalName,
+        int fetchSize)
+    {
         BlueTuskFrontendMessageWriter.WriteExecute(output, portalName, fetchSize);
         BlueTuskFrontendMessageWriter.WriteFlush(output);
     }

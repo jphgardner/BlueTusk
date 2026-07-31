@@ -50,7 +50,7 @@ PostgreSQL `time` can represent `24:00:00`, so its default CLR type is `TimeSpan
 
 UUID binary values use PostgreSQL network byte order, JSONB validates its version byte, and `bytea` accepts binary, hexadecimal text, and legacy escape text. UTF-8 decoding is strict so malformed server text is rejected rather than silently replaced.
 
-The current data reader buffers complete result sets. `GetStream` returns a read-only stream over a buffered `bytea`; `GetTextReader` exposes buffered text, JSON, and JSONB strings. Network-backed sequential access remains scheduled for 0.1.0.
+The default data reader buffers complete result sets for random field access. A reader created with `CommandBehavior.SequentialAccess` instead uses a bounded named portal: rows remain on the PostgreSQL connection until requested, fields must be visited in ordinal order, binary `bytea` is exposed directly through `GetStream`, and text, JSON, and JSONB are decoded incrementally through `GetTextReader`. Materializing a scalar value buffers only that field.
 
 An unregistered OID is returned as `BlueTuskUnknownValue`, preserving its format and raw bytes.
 

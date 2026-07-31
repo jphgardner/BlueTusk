@@ -135,10 +135,10 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Synchronous pooling, transactions, commands, COPY, notifications, and large objects
     - [x] Per-host pooling, type discovery, commands, preparation, batches, transactions, and timeouts
     - [x] Streaming raw, text, and typed-binary COPY, notification subscriptions/waits, and large objects
-- [ ] Network-backed sequential and streaming reader modes
-  - [ ] Bounded named portals, suspension, and incremental row reads
-  - [ ] Sequential field access plus streaming `bytea`, text, and JSON
-  - [ ] Reader cancellation, disposal, and connection-reuse recovery
+- [x] Network-backed sequential and streaming reader modes
+  - [x] Bounded named portals, suspension, and incremental row reads
+  - [x] Sequential field access plus streaming `bytea`, text, and JSON
+  - [x] Reader cancellation, disposal, and connection-reuse recovery
 - [ ] ADO.NET conformance, stress, differential, and performance baselines
   - [ ] Provider-factory and base-class conformance suite
   - [ ] Concurrent connection, cancellation, preparation, batch, and streaming stress suites

@@ -24,4 +24,15 @@ public sealed class BlueTuskParameterCollectionTests
         command.CommandTimeout = 0;
         Assert.Equal(0, command.CommandTimeout);
     }
+
+    [Fact]
+    public void Validates_the_sequential_portal_fetch_size()
+    {
+        using var command = new BlueTuskCommand();
+
+        Assert.Equal(32, command.SequentialFetchSize);
+        Assert.Throws<ArgumentOutOfRangeException>(() => command.SequentialFetchSize = 0);
+        command.SequentialFetchSize = 128;
+        Assert.Equal(128, command.SequentialFetchSize);
+    }
 }

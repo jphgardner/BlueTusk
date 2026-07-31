@@ -42,6 +42,21 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
 
+    BlueTuskPortal BeginPortal(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize) =>
+        throw new NotSupportedException("This physical-session implementation does not provide streaming portals.");
+
+    ValueTask<BlueTuskPortal> BeginPortalAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This physical-session implementation does not provide streaming portals.");
+
     ValueTask PrepareStatementAsync(
         string statementName,
         string sql,
@@ -65,6 +80,21 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
+
+    BlueTuskPortal BeginPreparedPortal(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize) =>
+        throw new NotSupportedException("This physical-session implementation does not provide streaming portals.");
+
+    ValueTask<BlueTuskPortal> BeginPreparedPortalAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This physical-session implementation does not provide streaming portals.");
 
     ValueTask ClosePreparedStatementAsync(
         string statementName,
@@ -462,6 +492,26 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
     }
 
+    public BlueTuskPortal BeginPortal(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize) =>
+        _session.BeginPortal(sql, parameters, useBinaryResults, fetchSize);
+
+    public ValueTask<BlueTuskPortal> BeginPortalAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken = default) =>
+        _session.BeginPortalAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            cancellationToken);
+
     public BlueTuskQueryResult ExecuteExtendedQuery(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -511,6 +561,26 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             statementName,
             parameters,
             useBinaryResults,
+            cancellationToken);
+
+    public BlueTuskPortal BeginPreparedPortal(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize) =>
+        _session.BeginPreparedPortal(statementName, parameters, useBinaryResults, fetchSize);
+
+    public ValueTask<BlueTuskPortal> BeginPreparedPortalAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken = default) =>
+        _session.BeginPreparedPortalAsync(
+            statementName,
+            parameters,
+            useBinaryResults,
+            fetchSize,
             cancellationToken);
 
     public ValueTask ClosePreparedStatementAsync(

@@ -89,6 +89,19 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
             return _currentRow;
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            try
+            {
+                await _session.CancelAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            finally
+            {
+                await _session.AbortPortalAsync(this).ConfigureAwait(false);
+            }
+
+            throw;
+        }
         catch
         {
             await _session.AbortPortalAsync(this).ConfigureAwait(false);
@@ -216,12 +229,30 @@ public sealed class BlueTuskPortalRow
         return _activeLength == -1;
     }
 
+    public int GetFieldLength(int ordinal)
+    {
+        MoveToField(ordinal);
+        return _activeLength == -1
+            ? throw new InvalidCastException("A database NULL does not have a field length.")
+            : _activeLength;
+    }
+
     public async ValueTask<bool> IsDBNullAsync(
         int ordinal,
         CancellationToken cancellationToken = default)
     {
         await MoveToFieldAsync(ordinal, cancellationToken).ConfigureAwait(false);
         return _activeLength == -1;
+    }
+
+    public async ValueTask<int> GetFieldLengthAsync(
+        int ordinal,
+        CancellationToken cancellationToken = default)
+    {
+        await MoveToFieldAsync(ordinal, cancellationToken).ConfigureAwait(false);
+        return _activeLength == -1
+            ? throw new InvalidCastException("A database NULL does not have a field length.")
+            : _activeLength;
     }
 
     public ReadOnlyMemory<byte>? ReadField(int ordinal)
