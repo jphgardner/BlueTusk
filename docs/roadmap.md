@@ -197,12 +197,12 @@ This file tracks executable repository status. The product vision is broader; un
 ### Allocation discipline
 
 - [x] Retain the span-based `BlueTuskReader`/`BlueTuskWriter` codec model
-- [ ] Profile complete parameter and result paths
-  - [ ] Per-command writers, per-parameter arrays, boxing, and text transcoding
-  - [ ] Structured codecs, COPY field buffers, and large-field materialisation
-- [ ] Introduce safe per-session reuse, pooling, sizing passes, or direct `IBufferWriter` encoding where measurements justify them
-- [ ] Check in end-to-end allocation baselines and explicit regression budgets
-- [ ] Describe inherently allocating returned CLR values accurately; no blanket “allocation-free” claim
+- [x] Profile complete parameter and result paths
+  - [x] Per-command writers, per-parameter arrays, boxing, and text transcoding
+  - [x] Structured codecs, COPY field buffers, and large-field materialisation
+- [x] Introduce safe per-session reuse, pooling, sizing passes, or direct `IBufferWriter` encoding where measurements justify them
+- [x] Check in end-to-end allocation baselines and explicit regression budgets
+- [x] Describe inherently allocating returned CLR values accurately; no blanket “allocation-free” claim
 
 ### Enforced package boundaries and provider contract
 

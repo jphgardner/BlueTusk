@@ -34,5 +34,9 @@ jobs:
       - name: Test
         run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
+      - name: Verify checked-in allocation budgets
+        shell: pwsh
+        run: ./eng/verify-allocation-budgets.ps1
+
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages

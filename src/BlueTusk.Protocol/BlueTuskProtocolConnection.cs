@@ -8,12 +8,16 @@ namespace BlueTusk.Protocol;
 public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 {
     private const int InitialBufferSize = 16 * 1024;
+    private const int InitialWriteBufferSize = 4 * 1024;
+    private const int MaximumRetainedWriteBufferSize = 64 * 1024;
     private readonly IBlueTuskTransport _transport;
     private readonly BlueTuskBackendMessageParser _parser;
+    private ArrayBufferWriter<byte> _writeBuffer = new(InitialWriteBufferSize);
     private byte[] _buffer;
     private int _start;
     private int _count;
     private int _activePayloadRemaining = -1;
+    private int _writeInProgress;
     private bool _disposed;
 
     public BlueTuskProtocolConnection(
@@ -215,10 +219,17 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(writeMessage);
 
-        var output = new ArrayBufferWriter<byte>();
-        writeMessage(output);
-        await _transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
-        await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output);
+            await _transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            EndWrite();
+        }
     }
 
     public void Write(Action<IBufferWriter<byte>> writeMessage)
@@ -226,10 +237,17 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(writeMessage);
 
-        var output = new ArrayBufferWriter<byte>();
-        writeMessage(output);
-        _transport.Write(output.WrittenSpan);
-        _transport.Flush();
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output);
+            _transport.Write(output.WrittenSpan);
+            _transport.Flush();
+        }
+        finally
+        {
+            EndWrite();
+        }
     }
 
     public void Dispose()
@@ -421,5 +439,30 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         _count = 0;
         _activePayloadRemaining = -1;
         ArrayPool<byte>.Shared.Return(buffer);
+    }
+
+    private ArrayBufferWriter<byte> BeginWrite()
+    {
+        if (Interlocked.CompareExchange(ref _writeInProgress, 1, 0) != 0)
+        {
+            throw new InvalidOperationException(
+                "A protocol write is already active on this physical connection.");
+        }
+
+        return _writeBuffer;
+    }
+
+    private void EndWrite()
+    {
+        if (_writeBuffer.Capacity > MaximumRetainedWriteBufferSize)
+        {
+            _writeBuffer = new ArrayBufferWriter<byte>(InitialWriteBufferSize);
+        }
+        else
+        {
+            _writeBuffer.Clear();
+        }
+
+        Volatile.Write(ref _writeInProgress, 0);
     }
 }

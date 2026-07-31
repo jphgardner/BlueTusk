@@ -1,4 +1,6 @@
 using BenchmarkDotNet.Attributes;
+using BlueTusk.Client;
+using BlueTusk.Data;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Benchmarks;
@@ -11,6 +13,7 @@ public class StructuredCodecBenchmarks
     private static readonly BlueTuskTypeId EnumTypeId = new(90_002);
     private static readonly BlueTuskTypeId RangeTypeId = new(90_003);
     private static readonly BlueTuskTypeId CompositeTypeId = new(90_004);
+    private static readonly int[] Int32ArrayValue = [1, 2, 3, 4];
 
     private readonly byte[] _array =
         Convert.FromHexString(
@@ -21,6 +24,9 @@ public class StructuredCodecBenchmarks
         Convert.FromHexString("02000000040000000A0000000400000014");
     private readonly byte[] _composite =
         Convert.FromHexString("0000000200000017000000040000002A000000190000000568656C6C6F");
+    private readonly BlueTuskTypeRegistry _registry;
+    private readonly BlueTuskParameter _arrayParameter;
+    private readonly BlueTuskParameter _compositeParameter;
     private readonly IBlueTuskCodec _arrayCodec;
     private readonly IBlueTuskCodec _enumCodec;
     private readonly IBlueTuskCodec _rangeCodec;
@@ -32,11 +38,24 @@ public class StructuredCodecBenchmarks
 
     public StructuredCodecBenchmarks()
     {
-        var registry = CreateRegistry();
-        (_arrayType, _arrayCodec) = Resolve(registry, ArrayTypeId);
-        (_enumType, _enumCodec) = Resolve(registry, EnumTypeId);
-        (_rangeType, _rangeCodec) = Resolve(registry, RangeTypeId);
-        (_compositeType, _compositeCodec) = Resolve(registry, CompositeTypeId);
+        _registry = CreateRegistry();
+        (_arrayType, _arrayCodec) = Resolve(_registry, ArrayTypeId);
+        (_enumType, _enumCodec) = Resolve(_registry, EnumTypeId);
+        (_rangeType, _rangeCodec) = Resolve(_registry, RangeTypeId);
+        (_compositeType, _compositeCodec) = Resolve(_registry, CompositeTypeId);
+        _arrayParameter = new BlueTuskParameter(Int32ArrayValue)
+        {
+            PostgreSqlTypeOid = ArrayTypeId.Oid,
+        };
+        _compositeParameter = new BlueTuskParameter(
+            new BlueTuskRecord(
+            [
+                new BlueTuskRecordField("answer", BlueTuskBuiltInTypes.Int4, 42),
+                new BlueTuskRecordField("message", BlueTuskBuiltInTypes.Text, "hello"),
+            ]))
+        {
+            PostgreSqlTypeOid = CompositeTypeId.Oid,
+        };
     }
 
     [Benchmark(Baseline = true)]
@@ -78,6 +97,14 @@ public class StructuredCodecBenchmarks
             BlueTuskDataFormat.Binary,
             _compositeType)!;
     }
+
+    [Benchmark]
+    public BlueTuskExtendedQueryParameter EncodeInt32ArrayParameter() =>
+        BlueTuskParameterEncoder.Encode(_arrayParameter, _registry);
+
+    [Benchmark]
+    public BlueTuskExtendedQueryParameter EncodeCompositeParameter() =>
+        BlueTuskParameterEncoder.Encode(_compositeParameter, _registry);
 
     private static BlueTuskTypeRegistry CreateRegistry() =>
         BlueTuskTypeCatalogue.BuildRegistry(

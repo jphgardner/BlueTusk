@@ -26,3 +26,9 @@ BenchmarkDotNet reports are written below `artifacts/benchmarks` by default. The
 $env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*DataReaderBenchmarks*' '*ProtocolStreamingBenchmarks*'
 ```
+
+The checked-in command, reader, streaming, and protocol-write reports have explicit managed-allocation budgets. After regenerating a named baseline, verify it before committing:
+
+```powershell
+pwsh -File eng/verify-allocation-budgets.ps1
+```

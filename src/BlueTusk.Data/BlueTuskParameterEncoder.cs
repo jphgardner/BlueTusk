@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Data;
 using System.Globalization;
@@ -410,21 +411,21 @@ internal static class BlueTuskParameterEncoder
         var length = 256;
         while (true)
         {
-            var bytes = new byte[length];
-            var writer = new BlueTuskWriter(bytes);
+            var buffer = ArrayPool<byte>.Shared.Rent(length);
             try
             {
+                var writer = new BlueTuskWriter(buffer.AsSpan(0, length));
                 codec.Write(ref writer, value, format, type);
-                if (writer.WrittenCount != bytes.Length)
-                {
-                    Array.Resize(ref bytes, writer.WrittenCount);
-                }
-
+                var bytes = buffer.AsSpan(0, writer.WrittenCount).ToArray();
                 return new BlueTuskExtendedQueryParameter(typeOid, (short)format, bytes);
             }
             catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
             {
                 length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
             }
         }
     }
@@ -454,19 +455,22 @@ internal static class BlueTuskParameterEncoder
             ? typed
             : (BlueTuskNumeric)Convert.ToDecimal(value, CultureInfo.InvariantCulture);
         var codec = new BlueTuskNumericCodec();
-        var bytes = new byte[BlueTuskNumericCodec.GetMaximumBinarySize(numeric)];
-        var writer = new BlueTuskWriter(bytes);
-        codec.WriteTyped(
-            ref writer,
-            numeric,
-            BlueTuskDataFormat.Binary,
-            BlueTuskBuiltInTypes.Numeric);
-        if (writer.WrittenCount != bytes.Length)
+        var maximumLength = BlueTuskNumericCodec.GetMaximumBinarySize(numeric);
+        var buffer = ArrayPool<byte>.Shared.Rent(maximumLength);
+        try
         {
-            Array.Resize(ref bytes, writer.WrittenCount);
+            var writer = new BlueTuskWriter(buffer.AsSpan(0, maximumLength));
+            codec.WriteTyped(
+                ref writer,
+                numeric,
+                BlueTuskDataFormat.Binary,
+                BlueTuskBuiltInTypes.Numeric);
+            return Binary(typeOid, buffer.AsSpan(0, writer.WrittenCount).ToArray());
         }
-
-        return Binary(typeOid, bytes);
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
+        }
     }
 
     private static BlueTuskExtendedQueryParameter EncodeBitString(uint typeOid, BlueTuskBitString value)

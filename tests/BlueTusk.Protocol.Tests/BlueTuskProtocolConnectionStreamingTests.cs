@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Net;
+using System.Text;
 using BlueTusk.Transport;
 
 namespace BlueTusk.Protocol.Tests;
@@ -62,6 +63,20 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         Assert.Throws<InvalidOperationException>(() => connection.ReadMessage());
     }
 
+    [Fact]
+    public async Task Reused_write_storage_is_reset_between_sync_and_async_flushes()
+    {
+        await using var transport = new FragmentedTransport([], 16);
+        await using var connection = new BlueTuskProtocolConnection(transport);
+
+        connection.Write(output => WriteUtf8(output, "first"));
+        await connection.WriteAsync(
+            output => WriteUtf8(output, "second"),
+            CancellationToken.None);
+
+        Assert.Equal(["first", "second"], transport.Writes.Select(Encoding.UTF8.GetString));
+    }
+
     private static byte[] Frame(byte code, byte[] payload)
     {
         var frame = new byte[payload.Length + 5];
@@ -71,9 +86,18 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         return frame;
     }
 
+    private static void WriteUtf8(System.Buffers.IBufferWriter<byte> output, string value)
+    {
+        var length = Encoding.UTF8.GetByteCount(value);
+        Encoding.UTF8.GetBytes(value, output.GetSpan(length));
+        output.Advance(length);
+    }
+
     private sealed class FragmentedTransport(byte[] input, int maximumRead) : IBlueTuskTransport
     {
         private int _offset;
+
+        public List<byte[]> Writes { get; } = [];
 
         public EndPoint? RemoteEndPoint => null;
 
@@ -102,10 +126,15 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
 
         public void Write(ReadOnlySpan<byte> buffer)
         {
+            Writes.Add(buffer.ToArray());
         }
 
-        public ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken) =>
-            ValueTask.CompletedTask;
+        public ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Writes.Add(buffer.ToArray());
+            return ValueTask.CompletedTask;
+        }
 
         public void Flush()
         {

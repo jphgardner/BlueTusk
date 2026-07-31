@@ -2610,6 +2610,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             try
             {
                 _ = ReadCopyCompletion(suppressServerError: true);
+                SynchronizeAfterCancellation();
             }
             catch
             {
@@ -2652,12 +2653,60 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             try
             {
                 _ = await ReadCopyCompletionAsync(suppressServerError: true).ConfigureAwait(false);
+                await SynchronizeAfterCancellationAsync().ConfigureAwait(false);
             }
             catch
             {
                 _open = false;
             }
         }
+    }
+
+    private void SynchronizeAfterCancellation()
+    {
+        const int maximumAttempts = 3;
+        for (var attempt = 0; attempt < maximumAttempts; attempt++)
+        {
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            _connection.Write(static output =>
+                BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, "SELECT 1"));
+            try
+            {
+                _ = ReadQueryResponse();
+                return;
+            }
+            catch (BlueTuskServerException exception) when (exception.SqlState == "57014")
+            {
+                // A CancelRequest can arrive after COPY itself reached ReadyForQuery. Consume it here.
+            }
+        }
+
+        throw new BlueTuskProtocolException(
+            "PostgreSQL continued to cancel synchronization queries after COPY cleanup.");
+    }
+
+    private async ValueTask SynchronizeAfterCancellationAsync()
+    {
+        const int maximumAttempts = 3;
+        for (var attempt = 0; attempt < maximumAttempts; attempt++)
+        {
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                static output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, "SELECT 1"),
+                CancellationToken.None).ConfigureAwait(false);
+            try
+            {
+                _ = await ReadQueryResponseAsync().ConfigureAwait(false);
+                return;
+            }
+            catch (BlueTuskServerException exception) when (exception.SqlState == "57014")
+            {
+                // A CancelRequest can arrive after COPY itself reached ReadyForQuery. Consume it here.
+            }
+        }
+
+        throw new BlueTuskProtocolException(
+            "PostgreSQL continued to cancel synchronization queries after COPY cleanup.");
     }
 
     private async ValueTask<BlueTuskBackendMessage> ReadMessageAsync(

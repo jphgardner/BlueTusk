@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "environment": "windows-ryzen7-5800x-dotnet10",
+  "budgets": [
+    {
+      "benchmark": "BlueTusk.Benchmarks.CommandPathBenchmarks.ExecuteInt32ParameterAndScalar",
+      "maximumBytesPerOperation": 1200,
+      "reason": "Complete synchronous named-parameter rewrite, binary int4 encoding, dispatch, and boxed DbCommand scalar result."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.CommandPathBenchmarks.ExecuteTextParameterAndScalar",
+      "maximumBytesPerOperation": 1600,
+      "reason": "Complete text parameter path including UTF-8 payload and the inherently allocated returned CLR string."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.CommandPathBenchmarks.ExecuteReaderAndReadOneHundredInt32Values",
+      "maximumBytesPerOperation": 3000,
+      "reason": "Buffered command/reader setup and 100 typed GetInt32 calls without per-value boxing."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.CommandPathBenchmarks.ExecuteInt32ParameterAndScalarAsync",
+      "maximumBytesPerOperation": 1550,
+      "reason": "Complete asynchronous named-parameter and scalar path including cancellation/timeout infrastructure."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ProtocolWritePathBenchmarks.WriteSimpleQuery",
+      "maximumBytesPerOperation": 0,
+      "reason": "Warm-session simple protocol write using reusable bounded session storage."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ProtocolWritePathBenchmarks.WriteExtendedQuery",
+      "maximumBytesPerOperation": 0,
+      "reason": "Warm-session Parse/Bind/Describe/Execute/Sync write using reusable bounded session storage."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32ArrayBinary",
+      "maximumBytesPerOperation": 448,
+      "reason": "Returned CLR array and boxed element values are caller-owned allocations."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadEnumBinary",
+      "maximumBytesPerOperation": 64,
+      "reason": "Returned lossless enum value owns its label string."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32RangeBinary",
+      "maximumBytesPerOperation": 64,
+      "reason": "Returned range boxes decoded bounds in its general representation."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadCompositeBinary",
+      "maximumBytesPerOperation": 416,
+      "reason": "Returned record, fields, and text value are caller-owned allocations."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeInt32ArrayParameter",
+      "maximumBytesPerOperation": 448,
+      "reason": "Exact caller-owned wire payload plus structured array traversal state."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeCompositeParameter",
+      "maximumBytesPerOperation": 80,
+      "reason": "Exact caller-owned composite wire payload; temporary sizing storage is pooled."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.DataReaderBenchmarks.ReadThousandTypedInt32Rows",
+      "maximumBytesPerOperation": 28000,
+      "reason": "Buffered reader object and result traversal; typed int4 values do not allocate individually."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.DataReaderBenchmarks.ReadOneMegabyteByteaStream",
+      "maximumBytesPerOperation": 1060000,
+      "reason": "Buffered bytea necessarily owns the returned one-megabyte CLR byte array."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.DataReaderBenchmarks.ReadOneMegabyteTextReader",
+      "maximumBytesPerOperation": 2120000,
+      "reason": "Buffered UTF-16 string materialization necessarily allocates approximately two bytes per character."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ProtocolStreamingBenchmarks.StreamOneMegabyteBackendPayload",
+      "maximumBytesPerOperation": 256,
+      "reason": "Bounded incremental payload drain without materializing the one-megabyte field."
+    }
+  ]
+}
