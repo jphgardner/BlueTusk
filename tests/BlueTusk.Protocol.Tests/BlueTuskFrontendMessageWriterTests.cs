@@ -97,7 +97,9 @@ public sealed class BlueTuskFrontendMessageWriterTests
         var describeOffset = output.WrittenCount;
         BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
         var executeOffset = output.WrittenCount;
-        BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+        BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty, maximumRows: 32);
+        var flushOffset = output.WrittenCount;
+        BlueTuskFrontendMessageWriter.WriteFlush(output);
         var syncOffset = output.WrittenCount;
         BlueTuskFrontendMessageWriter.WriteSync(output);
 
@@ -107,6 +109,8 @@ public sealed class BlueTuskFrontendMessageWriterTests
         Assert.Equal(describeOffset - bindOffset - 1, BinaryPrimitives.ReadInt32BigEndian(output.WrittenSpan[(bindOffset + 1)..]));
         Assert.Equal((byte)'D', output.WrittenSpan[describeOffset]);
         Assert.Equal((byte)'E', output.WrittenSpan[executeOffset]);
+        Assert.Equal(32, BinaryPrimitives.ReadInt32BigEndian(output.WrittenSpan[(executeOffset + 6)..]));
+        Assert.Equal((byte)'H', output.WrittenSpan[flushOffset]);
         Assert.Equal((byte)'S', output.WrittenSpan[syncOffset]);
     }
 

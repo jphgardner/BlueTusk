@@ -29,6 +29,9 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     public IBlueTuskTransport Transport => _transport;
 
+    /// <summary>Gets the unread byte count for the active incrementally consumed message payload.</summary>
+    public int ActiveMessagePayloadRemaining => Math.Max(_activePayloadRemaining, 0);
+
     public void Connect(
         BlueTuskEndpoint endpoint,
         BlueTuskTransportOptions options)

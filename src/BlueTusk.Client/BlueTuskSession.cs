@@ -23,6 +23,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private TaskCompletionSource<bool>? _cancellationRequest;
     private int _copyBothOperationActive;
     private int _synchronousCopyOperationActive;
+    private int _portalOperationActive;
+    private long _portalSequence;
     private bool _open;
     private bool _disposed;
 
@@ -177,6 +179,90 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 BlueTuskFrontendMessageWriter.WriteSync(output);
             },
             cancellationToken);
+    }
+
+    /// <summary>Begins an incremental extended-query operation over a bounded named portal.</summary>
+    public BlueTuskPortal BeginPortal(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults = true,
+        int fetchSize = 32)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentOutOfRangeException.ThrowIfLessThan(fetchSize, 1);
+        var portalName = $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
+        return BeginPortalCore(portalName, string.Empty, sql, parameters, useBinaryResults, fetchSize);
+    }
+
+    /// <summary>Begins an incremental extended-query operation over a bounded named portal.</summary>
+    public async ValueTask<BlueTuskPortal> BeginPortalAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults = true,
+        int fetchSize = 32,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentOutOfRangeException.ThrowIfLessThan(fetchSize, 1);
+        var portalName = $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
+        return await BeginPortalCoreAsync(
+            portalName,
+            string.Empty,
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Begins an incremental execution of a named prepared statement.</summary>
+    public BlueTuskPortal BeginPreparedPortal(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults = true,
+        int fetchSize = 32)
+    {
+        ValidatePreparedStatementName(statementName);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentOutOfRangeException.ThrowIfLessThan(fetchSize, 1);
+        var portalName = $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
+        return BeginPortalCore(portalName, statementName, null, parameters, useBinaryResults, fetchSize);
+    }
+
+    /// <summary>Begins an incremental execution of a named prepared statement.</summary>
+    public async ValueTask<BlueTuskPortal> BeginPreparedPortalAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults = true,
+        int fetchSize = 32,
+        CancellationToken cancellationToken = default)
+    {
+        ValidatePreparedStatementName(statementName);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentOutOfRangeException.ThrowIfLessThan(fetchSize, 1);
+        var portalName = $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
+        return await BeginPortalCoreAsync(
+            portalName,
+            statementName,
+            null,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            cancellationToken).ConfigureAwait(false);
     }
 
     /// <summary>Creates a named PostgreSQL prepared statement.</summary>
@@ -918,6 +1004,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         _open = false;
         ReleaseCopyBothOperation();
         ReleaseSynchronousCopyOperation();
+        Interlocked.Exchange(ref _portalOperationActive, 0);
         _operationLock.Dispose();
         await _connection.DisposeAsync().ConfigureAwait(false);
     }
@@ -933,8 +1020,658 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         _open = false;
         ReleaseCopyBothOperation();
         ReleaseSynchronousCopyOperation();
+        Interlocked.Exchange(ref _portalOperationActive, 0);
         _operationLock.Dispose();
         _connection.Dispose();
+    }
+
+    private BlueTuskPortal BeginPortalCore(
+        string portalName,
+        string statementName,
+        string? sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize)
+    {
+        var typeOids = new uint[parameters.Count];
+        var bindParameters = new BlueTuskBindParameter[parameters.Count];
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            typeOids[index] = parameters[index].TypeOid;
+            bindParameters[index] = new BlueTuskBindParameter(
+                parameters[index].FormatCode,
+                parameters[index].Value);
+        }
+
+        _operationLock.Wait();
+        Volatile.Write(ref _portalOperationActive, 1);
+        var started = Stopwatch.GetTimestamp();
+        var requestWritten = false;
+        try
+        {
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            _connection.Write(
+                output => WritePortalStart(
+                    output,
+                    portalName,
+                    statementName,
+                    sql,
+                    typeOids,
+                    bindParameters,
+                    useBinaryResults,
+                    fetchSize));
+            requestWritten = true;
+            var fields = ReadPortalStart();
+            return new BlueTuskPortal(this, portalName, fields, fetchSize, started);
+        }
+        catch
+        {
+            if (requestWritten)
+            {
+                RecoverAbandonedPortal(portalName);
+            }
+            else
+            {
+                _open = false;
+            }
+
+            ReleasePortalOperation(started);
+            throw;
+        }
+    }
+
+    private async ValueTask<BlueTuskPortal> BeginPortalCoreAsync(
+        string portalName,
+        string statementName,
+        string? sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken)
+    {
+        var typeOids = new uint[parameters.Count];
+        var bindParameters = new BlueTuskBindParameter[parameters.Count];
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            typeOids[index] = parameters[index].TypeOid;
+            bindParameters[index] = new BlueTuskBindParameter(
+                parameters[index].FormatCode,
+                parameters[index].Value);
+        }
+
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        Volatile.Write(ref _portalOperationActive, 1);
+        var started = Stopwatch.GetTimestamp();
+        var requestWritten = false;
+        try
+        {
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                output => WritePortalStart(
+                    output,
+                    portalName,
+                    statementName,
+                    sql,
+                    typeOids,
+                    bindParameters,
+                    useBinaryResults,
+                    fetchSize),
+                cancellationToken).ConfigureAwait(false);
+            requestWritten = true;
+            var fields = await ReadPortalStartAsync(cancellationToken).ConfigureAwait(false);
+            return new BlueTuskPortal(this, portalName, fields, fetchSize, started);
+        }
+        catch
+        {
+            if (requestWritten)
+            {
+                await RecoverAbandonedPortalAsync(portalName).ConfigureAwait(false);
+            }
+            else
+            {
+                _open = false;
+            }
+
+            ReleasePortalOperation(started);
+            throw;
+        }
+    }
+
+    private static void WritePortalStart(
+        IBufferWriter<byte> output,
+        string portalName,
+        string statementName,
+        string? sql,
+        IReadOnlyList<uint> typeOids,
+        IReadOnlyList<BlueTuskBindParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize)
+    {
+        if (sql is not null)
+        {
+            BlueTuskFrontendMessageWriter.WriteParse(output, statementName, sql, typeOids);
+        }
+
+        BlueTuskFrontendMessageWriter.WriteBind(
+            output,
+            portalName,
+            statementName,
+            parameters,
+            useBinaryResults ? BinaryResultFormat : TextResultFormat);
+        BlueTuskFrontendMessageWriter.WriteDescribePortal(output, portalName);
+        BlueTuskFrontendMessageWriter.WriteExecute(output, portalName, fetchSize);
+        BlueTuskFrontendMessageWriter.WriteFlush(output);
+    }
+
+    private IReadOnlyList<BlueTuskFieldDescription> ReadPortalStart()
+    {
+        while (true)
+        {
+            var message = ReadStreamedMessage();
+            switch (message.Identifier)
+            {
+                case '1':
+                case '2':
+                    break;
+                case 'T':
+                    return BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                case 'n':
+                    return [];
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'E':
+                    throw new BlueTuskServerException(
+                        BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                default:
+                    break;
+            }
+        }
+    }
+
+    private async ValueTask<IReadOnlyList<BlueTuskFieldDescription>> ReadPortalStartAsync(
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            var message = await ReadStreamedMessageAsync(cancellationToken).ConfigureAwait(false);
+            switch (message.Identifier)
+            {
+                case '1':
+                case '2':
+                    break;
+                case 'T':
+                    return BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                case 'n':
+                    return [];
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'E':
+                    throw new BlueTuskServerException(
+                        BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                default:
+                    break;
+            }
+        }
+    }
+
+    internal BlueTuskPortalRow? ReadPortalRow(BlueTuskPortal portal)
+    {
+        EnsurePortalOperation();
+        while (true)
+        {
+            var header = ReadStreamedMessageHeader();
+            if (header.Identifier == 'D')
+            {
+                return new BlueTuskPortalRow(this, portal, header.PayloadLength, portal.Fields.Count);
+            }
+
+            var message = ReadStreamedMessage(header);
+            switch (message.Identifier)
+            {
+                case 's':
+                    RequestMorePortalRows(portal);
+                    break;
+                case 'C':
+                    portal.SetCommandTag(BlueTuskBackendMessageDecoder.DecodeCommandComplete(message));
+                    CompletePortal(portal);
+                    return null;
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'E':
+                    var error = new BlueTuskServerException(
+                        BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    RecoverPortalError();
+                    portal.SetCompleted();
+                    ReleasePortalOperation(portal.StartedTimestamp);
+                    throw error;
+                default:
+                    break;
+            }
+        }
+    }
+
+    internal async ValueTask<BlueTuskPortalRow?> ReadPortalRowAsync(
+        BlueTuskPortal portal,
+        CancellationToken cancellationToken)
+    {
+        EnsurePortalOperation();
+        while (true)
+        {
+            var header = await ReadStreamedMessageHeaderAsync(cancellationToken).ConfigureAwait(false);
+            if (header.Identifier == 'D')
+            {
+                return await BlueTuskPortalRow.CreateAsync(
+                    this,
+                    portal,
+                    header.PayloadLength,
+                    portal.Fields.Count,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            var message = await ReadStreamedMessageAsync(header, cancellationToken).ConfigureAwait(false);
+            switch (message.Identifier)
+            {
+                case 's':
+                    await RequestMorePortalRowsAsync(portal, cancellationToken).ConfigureAwait(false);
+                    break;
+                case 'C':
+                    portal.SetCommandTag(BlueTuskBackendMessageDecoder.DecodeCommandComplete(message));
+                    await CompletePortalAsync(portal).ConfigureAwait(false);
+                    return null;
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'E':
+                    var error = new BlueTuskServerException(
+                        BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    await RecoverPortalErrorAsync().ConfigureAwait(false);
+                    portal.SetCompleted();
+                    ReleasePortalOperation(portal.StartedTimestamp);
+                    throw error;
+                default:
+                    break;
+            }
+        }
+    }
+
+    internal void ReadPortalPayloadExactly(Span<byte> destination)
+    {
+        while (!destination.IsEmpty)
+        {
+            var read = _connection.ReadMessagePayload(destination);
+            if (read == 0)
+            {
+                throw new BlueTuskProtocolException("A backend message payload ended unexpectedly.");
+            }
+
+            destination = destination[read..];
+        }
+    }
+
+    internal async ValueTask ReadPortalPayloadExactlyAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken)
+    {
+        while (!destination.IsEmpty)
+        {
+            var read = await _connection.ReadMessagePayloadAsync(
+                destination,
+                cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+            {
+                throw new BlueTuskProtocolException("A backend message payload ended unexpectedly.");
+            }
+
+            destination = destination[read..];
+        }
+    }
+
+    internal void AbortPortal(BlueTuskPortal portal)
+    {
+        if (Volatile.Read(ref _portalOperationActive) == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            SkipActiveStreamedPayload();
+            _connection.Write(
+                output =>
+                {
+                    BlueTuskFrontendMessageWriter.WriteClosePortal(output, portal.Name);
+                    BlueTuskFrontendMessageWriter.WriteSync(output);
+                });
+            DrainPortalToReady();
+        }
+        catch
+        {
+            _open = false;
+        }
+        finally
+        {
+            portal.SetCompleted();
+            ReleasePortalOperation(portal.StartedTimestamp);
+        }
+    }
+
+    internal async ValueTask AbortPortalAsync(BlueTuskPortal portal)
+    {
+        if (Volatile.Read(ref _portalOperationActive) == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await SkipActiveStreamedPayloadAsync().ConfigureAwait(false);
+            await _connection.WriteAsync(
+                output =>
+                {
+                    BlueTuskFrontendMessageWriter.WriteClosePortal(output, portal.Name);
+                    BlueTuskFrontendMessageWriter.WriteSync(output);
+                },
+                CancellationToken.None).ConfigureAwait(false);
+            await DrainPortalToReadyAsync().ConfigureAwait(false);
+        }
+        catch
+        {
+            _open = false;
+        }
+        finally
+        {
+            portal.SetCompleted();
+            ReleasePortalOperation(portal.StartedTimestamp);
+        }
+    }
+
+    private void RequestMorePortalRows(BlueTuskPortal portal) =>
+        _connection.Write(
+            output =>
+            {
+                BlueTuskFrontendMessageWriter.WriteExecute(output, portal.Name, portal.FetchSize);
+                BlueTuskFrontendMessageWriter.WriteFlush(output);
+            });
+
+    private ValueTask RequestMorePortalRowsAsync(
+        BlueTuskPortal portal,
+        CancellationToken cancellationToken) =>
+        _connection.WriteAsync(
+            output =>
+            {
+                BlueTuskFrontendMessageWriter.WriteExecute(output, portal.Name, portal.FetchSize);
+                BlueTuskFrontendMessageWriter.WriteFlush(output);
+            },
+            cancellationToken);
+
+    private void CompletePortal(BlueTuskPortal portal)
+    {
+        _connection.Write(BlueTuskFrontendMessageWriter.WriteSync);
+        DrainPortalToReady();
+        portal.SetCompleted();
+        ReleasePortalOperation(portal.StartedTimestamp);
+    }
+
+    private async ValueTask CompletePortalAsync(BlueTuskPortal portal)
+    {
+        await _connection.WriteAsync(
+            BlueTuskFrontendMessageWriter.WriteSync,
+            CancellationToken.None).ConfigureAwait(false);
+        await DrainPortalToReadyAsync().ConfigureAwait(false);
+        portal.SetCompleted();
+        ReleasePortalOperation(portal.StartedTimestamp);
+    }
+
+    private void RecoverPortalError()
+    {
+        _connection.Write(BlueTuskFrontendMessageWriter.WriteSync);
+        DrainPortalToReady();
+    }
+
+    private async ValueTask RecoverPortalErrorAsync()
+    {
+        await _connection.WriteAsync(
+            BlueTuskFrontendMessageWriter.WriteSync,
+            CancellationToken.None).ConfigureAwait(false);
+        await DrainPortalToReadyAsync().ConfigureAwait(false);
+    }
+
+    private void RecoverAbandonedPortal(string portalName)
+    {
+        try
+        {
+            SkipActiveStreamedPayload();
+            _connection.Write(
+                output =>
+                {
+                    BlueTuskFrontendMessageWriter.WriteClosePortal(output, portalName);
+                    BlueTuskFrontendMessageWriter.WriteSync(output);
+                });
+            DrainPortalToReady();
+        }
+        catch
+        {
+            _open = false;
+        }
+    }
+
+    private async ValueTask RecoverAbandonedPortalAsync(string portalName)
+    {
+        try
+        {
+            await SkipActiveStreamedPayloadAsync().ConfigureAwait(false);
+            await _connection.WriteAsync(
+                output =>
+                {
+                    BlueTuskFrontendMessageWriter.WriteClosePortal(output, portalName);
+                    BlueTuskFrontendMessageWriter.WriteSync(output);
+                },
+                CancellationToken.None).ConfigureAwait(false);
+            await DrainPortalToReadyAsync().ConfigureAwait(false);
+        }
+        catch
+        {
+            _open = false;
+        }
+    }
+
+    private void DrainPortalToReady()
+    {
+        while (true)
+        {
+            var header = ReadStreamedMessageHeader();
+            if (header.Identifier == 'D')
+            {
+                SkipStreamedPayload(header.PayloadLength);
+                continue;
+            }
+
+            var message = ReadStreamedMessage(header);
+            switch (message.Identifier)
+            {
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'Z':
+                    CompleteReadyForQuerySynchronously(
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
+                    return;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private async ValueTask DrainPortalToReadyAsync()
+    {
+        while (true)
+        {
+            var header = await ReadStreamedMessageHeaderAsync(CancellationToken.None).ConfigureAwait(false);
+            if (header.Identifier == 'D')
+            {
+                await SkipStreamedPayloadAsync(header.PayloadLength).ConfigureAwait(false);
+                continue;
+            }
+
+            var message = await ReadStreamedMessageAsync(
+                header,
+                CancellationToken.None).ConfigureAwait(false);
+            switch (message.Identifier)
+            {
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'Z':
+                    await CompleteReadyForQuery(
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message)).ConfigureAwait(false);
+                    return;
+                default:
+                    break;
+            }
+        }
+    }
+
+    private void SkipStreamedPayload(int count)
+    {
+        Span<byte> scratch = stackalloc byte[4096];
+        while (count > 0)
+        {
+            var chunk = Math.Min(count, scratch.Length);
+            ReadPortalPayloadExactly(scratch[..chunk]);
+            count -= chunk;
+        }
+    }
+
+    private async ValueTask SkipStreamedPayloadAsync(int count)
+    {
+        var scratch = new byte[Math.Min(count, 4096)];
+        while (count > 0)
+        {
+            var chunk = Math.Min(count, scratch.Length);
+            await ReadPortalPayloadExactlyAsync(
+                scratch.AsMemory(0, chunk),
+                CancellationToken.None).ConfigureAwait(false);
+            count -= chunk;
+        }
+    }
+
+    private void SkipActiveStreamedPayload()
+    {
+        var remaining = _connection.ActiveMessagePayloadRemaining;
+        if (remaining != 0)
+        {
+            SkipStreamedPayload(remaining);
+        }
+    }
+
+    private ValueTask SkipActiveStreamedPayloadAsync()
+    {
+        var remaining = _connection.ActiveMessagePayloadRemaining;
+        return remaining == 0
+            ? ValueTask.CompletedTask
+            : SkipStreamedPayloadAsync(remaining);
+    }
+
+    private BlueTuskBackendMessage ReadStreamedMessage()
+    {
+        var header = ReadStreamedMessageHeader();
+        return ReadStreamedMessage(header);
+    }
+
+    private BlueTuskBackendMessage ReadStreamedMessage(BlueTuskBackendMessageHeader header)
+    {
+        var payload = GC.AllocateUninitializedArray<byte>(header.PayloadLength);
+        ReadPortalPayloadExactly(payload);
+        return new BlueTuskBackendMessage(header.Code, new ReadOnlySequence<byte>(payload));
+    }
+
+    private async ValueTask<BlueTuskBackendMessage> ReadStreamedMessageAsync(
+        CancellationToken cancellationToken)
+    {
+        var header = await ReadStreamedMessageHeaderAsync(cancellationToken).ConfigureAwait(false);
+        return await ReadStreamedMessageAsync(header, cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<BlueTuskBackendMessage> ReadStreamedMessageAsync(
+        BlueTuskBackendMessageHeader header,
+        CancellationToken cancellationToken)
+    {
+        var payload = GC.AllocateUninitializedArray<byte>(header.PayloadLength);
+        await ReadPortalPayloadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
+        return new BlueTuskBackendMessage(header.Code, new ReadOnlySequence<byte>(payload));
+    }
+
+    private BlueTuskBackendMessageHeader ReadStreamedMessageHeader()
+    {
+        var header = _connection.ReadMessageHeader();
+        BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        return header;
+    }
+
+    private async ValueTask<BlueTuskBackendMessageHeader> ReadStreamedMessageHeaderAsync(
+        CancellationToken cancellationToken)
+    {
+        var header = await _connection.ReadMessageHeaderAsync(cancellationToken).ConfigureAwait(false);
+        BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        return header;
+    }
+
+    private void EnsurePortalOperation()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (Volatile.Read(ref _portalOperationActive) == 0)
+        {
+            throw new InvalidOperationException("No PostgreSQL portal operation is active.");
+        }
+    }
+
+    private void ReleasePortalOperation(long startedTimestamp)
+    {
+        if (Interlocked.Exchange(ref _portalOperationActive, 0) != 0)
+        {
+            BlueTuskDiagnostics.CommandDuration.Record(
+                Stopwatch.GetElapsedTime(startedTimestamp).TotalSeconds);
+            _operationLock.Release();
+        }
     }
 
     private BlueTuskQueryResult ExecuteQuery(Action<IBufferWriter<byte>> writeMessages)

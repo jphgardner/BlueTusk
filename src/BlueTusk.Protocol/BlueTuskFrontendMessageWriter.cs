@@ -267,6 +267,13 @@ public static class BlueTuskFrontendMessageWriter
         WriteInt32(output, sizeof(int));
     }
 
+    public static void WriteFlush(IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        WriteByte(output, (byte)'H');
+        WriteInt32(output, sizeof(int));
+    }
+
     public static void WriteCopyData(
         IBufferWriter<byte> output,
         ReadOnlySpan<byte> data)
