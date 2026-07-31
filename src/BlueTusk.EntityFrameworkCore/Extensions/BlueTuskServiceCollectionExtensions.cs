@@ -29,6 +29,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IModelValidator, BlueTuskModelValidator>()
             .TryAdd<IProviderConventionSetBuilder, BlueTuskConventionSetBuilder>()
             .TryAdd<IMethodCallTranslatorProvider, BlueTuskMethodCallTranslatorProvider>()
+            .TryAdd<IMemberTranslatorProvider, BlueTuskMemberTranslatorProvider>()
             .TryAdd<IQuerySqlGeneratorFactory, BlueTuskQuerySqlGeneratorFactory>()
             .TryAdd<IUpdateSqlGenerator, BlueTuskUpdateSqlGenerator>()
             .TryAdd<IModificationCommandBatchFactory, BlueTuskModificationCommandBatchFactory>()

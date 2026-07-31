@@ -28,7 +28,12 @@ public sealed class CrudIntegrationTests
 
             await using (var context = CreateContext(connectionString))
             {
-                var blog = await context.Blogs.SingleAsync(candidate => candidate.Id == generatedId);
+                var prefix = "Blue";
+                var blog = await context.Blogs.SingleAsync(candidate =>
+                    candidate.Id == generatedId
+                    && candidate.Name.StartsWith(prefix)
+                    && candidate.Name.Contains("Tusk")
+                    && candidate.Name.Length > 3);
                 Assert.Equal("BlueTusk", blog.Name);
                 Assert.True(blog.IsActive);
                 Assert.Equal("server-default", blog.ServerDefault);

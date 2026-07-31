@@ -36,6 +36,62 @@ public sealed class QueryTranslationTests
         Assert.Contains("LIMIT", sql, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public void Parameterised_string_operations_translate_to_PostgreSQL_functions()
+    {
+        using var context = CreateContext();
+        var prefix = "Blue%";
+        var fragment = "Tusk_";
+
+        var sql = context.Blogs
+            .Where(blog =>
+                blog.Name.StartsWith(prefix)
+                && blog.Name.Contains(fragment)
+                && blog.Name.Length > 3
+                && blog.Name.ToLowerInvariant().Replace("tusk", "db").Substring(0, 2) == "bl")
+            .ToQueryString();
+
+        Assert.Contains("left(", sql, StringComparison.Ordinal);
+        Assert.Contains("strpos(", sql, StringComparison.Ordinal);
+        Assert.Contains("char_length(", sql, StringComparison.Ordinal);
+        Assert.Contains("lower(", sql, StringComparison.Ordinal);
+        Assert.Contains("replace(", sql, StringComparison.Ordinal);
+        Assert.Contains("substring(", sql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Joins_grouping_aggregates_and_paging_translate()
+    {
+        using var context = CreateContext();
+
+        var groupedSql = context.Blogs
+            .GroupBy(blog => blog.IsActive)
+            .Select(group => new
+            {
+                group.Key,
+                Count = group.Count(),
+                MaximumId = group.Max(blog => blog.Id),
+            })
+            .ToQueryString();
+
+        var joinSql = context.Blogs
+            .Join(
+                context.Blogs,
+                left => left.Id,
+                right => right.Id,
+                (left, right) => new { left.Id, RightName = right.Name })
+            .Skip(2)
+            .Take(3)
+            .ToQueryString();
+
+        Assert.Contains("GROUP BY", groupedSql, StringComparison.Ordinal);
+        Assert.Contains("count(*)", groupedSql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("max(", groupedSql, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("INNER JOIN", joinSql, StringComparison.Ordinal);
+        Assert.Contains("LIMIT", joinSql, StringComparison.Ordinal);
+        Assert.Contains("OFFSET", joinSql, StringComparison.Ordinal);
+    }
+
     private static BlogContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<BlogContext>()

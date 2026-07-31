@@ -155,7 +155,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Identity key propagation
   - [x] Defaults, computed values, and optimistic concurrency
 - [ ] Core relational type mappings and SQL generation
-- [ ] Core LINQ translation, query execution, and result materialisation
+- [x] Core LINQ translation, query execution, and result materialisation
 - [ ] Initial migrations SQL generation and history repository
 - [ ] Initial database reverse engineering
 - [ ] Initial EF Core relational specification-suite coverage
