@@ -60,3 +60,9 @@ services:
     image: pgvector/pgvector:pg18-trixie
     profiles: ["extension-tests"]
     ports: ["5518:5432"]
+
+  postgis18:
+    <<: *postgres-common
+    image: postgis/postgis:18-3.6
+    profiles: ["extension-tests"]
+    ports: ["5519:5432"]

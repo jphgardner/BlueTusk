@@ -242,3 +242,35 @@ round trip. Both input strings are typed parameters. Functions and operators
 are schema-qualified, including quoted custom schemas. The live gate moves the
 extension into a spaced identifier, executes the same behavior, and restores
 it to `public`.
+
+## PostGIS preview
+
+`BlueTusk.Extensions.PostGIS` provides distinct geometry and geography
+identities without introducing a geometry-model dependency into BlueTusk core:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS postgis;
+```
+
+```csharp
+using BlueTusk.Data;
+using BlueTusk.Extensions.PostGIS;
+
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UsePostGis()
+    .Build();
+var point = BlueTuskGeometry.FromText(
+    "SRID=4326;POINT(-0.1276 51.5072)");
+```
+
+`BlueTuskGeometry` and `BlueTuskGeography` accept server-parseable WKT/EWKT or
+immutable EWKB. The codecs select text for textual values and native binary for
+EWKB; when an array contains text, existing binary elements fall back to
+hexadecimal EWKB accepted by PostGIS. Binary results can be sent back without
+conversion. The live PostgreSQL 18/PostGIS 3.6 gate verifies catalogue
+resolution, geometry and geography parameters, arrays, SRIDs, geography
+distance, spatial predicates, and text-to-binary conversion.
+
+This transport slice deliberately leaves geometry parsing, coordinate-system
+rules, topology, and algorithms to PostGIS. A rich geometry object model and EF
+spatial translations are separately tracked rather than claimed here.

@@ -461,7 +461,8 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## Extension ecosystem (Milestone 8, pre-1.0)
 
-- [ ] PostGIS package
+- [x] PostGIS ADO.NET transport package (live-tested EWKB/WKT geometry, geography, arrays, and spatial execution)
+- [ ] PostGIS rich geometry model and EF spatial integration
 - [x] pgvector ADO.NET package (live-tested dense `vector`, arrays, and distance execution)
 - [ ] pgvector `halfvec`/`sparsevec`, vector-specific `bit`, and EF integration
 - [x] hstore ADO.NET package (live-tested binary/text values, arrays, and operators)
