@@ -30,7 +30,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         base.HasDifferences(source, target) ||
         !DefinitionsEqual(GetGraphs(source), GetGraphs(target)) ||
         !PartitionDefinitionsEqual(GetPartitions(source), GetPartitions(target)) ||
-        BlueTuskRowLevelSecurityModelDiffer.HasDifferences(source, target);
+        BlueTuskRowLevelSecurityModelDiffer.HasDifferences(source, target) ||
+        BlueTuskTableInheritanceModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -46,6 +47,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
 
         AddPartitionDifferences(source, target, baseOperations, before, after);
         BlueTuskRowLevelSecurityModelDiffer.AddDifferences(source, target, baseOperations, after);
+        BlueTuskTableInheritanceModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            before,
+            after);
 
         foreach (var (key, sourceGraph) in sourceByName)
         {

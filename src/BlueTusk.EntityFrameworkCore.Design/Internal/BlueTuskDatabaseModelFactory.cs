@@ -9,6 +9,8 @@ using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
+using BlueTusk.EntityFrameworkCore.TableInheritance;
+using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -69,6 +71,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadConstraints(connection, tables);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
+        ReadTableInheritance(connection, tables);
         ReadRowLevelSecurity(connection, tables);
         ReadPartitioning(connection, tables);
         ReadSequences(connection, model, selection);
@@ -153,6 +156,60 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         }
 
         return tables;
+    }
+
+    private static void ReadTableInheritance(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT child_namespace.nspname,
+                   child.relname,
+                   parent_namespace.nspname,
+                   parent.relname
+            FROM pg_catalog.pg_inherits AS inheritance
+            JOIN pg_catalog.pg_class AS child ON child.oid = inheritance.inhrelid
+            JOIN pg_catalog.pg_namespace AS child_namespace ON child_namespace.oid = child.relnamespace
+            JOIN pg_catalog.pg_class AS parent ON parent.oid = inheritance.inhparent
+            JOIN pg_catalog.pg_namespace AS parent_namespace ON parent_namespace.oid = parent.relnamespace
+            WHERE NOT child.relispartition
+              AND child.relkind IN ('r', 'p')
+              AND parent.relkind IN ('r', 'p')
+              AND child_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND child_namespace.nspname !~ '^pg_toast'
+            ORDER BY child_namespace.nspname, child.relname, inheritance.inhseqno
+            """;
+
+        var definitions = new Dictionary<
+            (string Schema, string Name),
+            List<BlueTuskInheritedTableDefinition>>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var child = (reader.GetString(0), reader.GetString(1));
+            if (!tables.ContainsKey(child))
+            {
+                continue;
+            }
+
+            if (!definitions.TryGetValue(child, out var parents))
+            {
+                parents = [];
+                definitions.Add(child, parents);
+            }
+
+            parents.Add(new BlueTuskInheritedTableDefinition(reader.GetString(3), reader.GetString(2)));
+        }
+
+        foreach (var (child, parents) in definitions)
+        {
+            var definition = new BlueTuskTableInheritanceDefinition(parents);
+            BlueTuskTableInheritanceMetadata.Validate(definition, child.Name, child.Schema);
+            tables[child][BlueTuskTableInheritanceMetadata.AnnotationName] =
+                BlueTuskTableInheritanceMetadata.Serialize(definition);
+        }
     }
 
     private static void ReadPartitioning(

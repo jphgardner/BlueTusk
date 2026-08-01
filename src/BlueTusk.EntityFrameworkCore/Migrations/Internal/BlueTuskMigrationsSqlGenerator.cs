@@ -26,6 +26,12 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case AddBlueTuskTableInheritanceOperation addInheritance:
+                Generate(addInheritance, builder);
+                break;
+            case RemoveBlueTuskTableInheritanceOperation removeInheritance:
+                Generate(removeInheritance, builder);
+                break;
             case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
                 Generate(createPolicy, builder);
                 break;
@@ -69,6 +75,32 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 base.Generate(operation, model, builder);
                 break;
         }
+    }
+
+    private void Generate(
+        AddBlueTuskTableInheritanceOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        builder
+            .Append("ALTER TABLE ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" INHERIT ")
+            .Append(helper.DelimitIdentifier(operation.ParentTable, operation.ParentSchema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RemoveBlueTuskTableInheritanceOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        builder
+            .Append("ALTER TABLE ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" NO INHERIT ")
+            .Append(helper.DelimitIdentifier(operation.ParentTable, operation.ParentSchema));
+        EndStatement(builder);
     }
 
     protected override void Generate(

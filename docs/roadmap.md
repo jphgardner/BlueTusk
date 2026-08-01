@@ -305,6 +305,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Create/alter/drop/rename/replacement diffs, trusted `USING`/`WITH CHECK` predicates, snapshots, and operation C# scaffolding
   - [x] `pg_class`/`pg_policies` reverse engineering with fluent model regeneration
   - [x] PostgreSQL 15–19 non-owner filtering, check enforcement, lifecycle, discovery, and scaffolding acceptance
+- [x] Direct table inheritance
+  - [x] Ordered multiple-parent metadata, typed entity-parent and explicit table-parent configuration, snapshots, and generated fluent C#
+  - [x] Rename-aware add/remove/reorder diffs plus manual `INHERIT`/`NO INHERIT` migration operations
+  - [x] `pg_inherits` direct-parent discovery without conflating declarative partitions
+  - [x] PostgreSQL 15–19 inherited scans, `ONLY` behavior, lifecycle, discovery, and scaffolding acceptance
 - [ ] Enum, domain, and composite type creation and alteration
 - [ ] Functions and procedures
 - [ ] Views and materialised views

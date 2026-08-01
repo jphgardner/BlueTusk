@@ -23,6 +23,30 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case AddBlueTuskTableInheritanceOperation addInheritance:
+                builder
+                    .Append("migrationBuilder.AddBlueTuskTableInheritance(")
+                    .Append(Dependencies.CSharpHelper.Literal(addInheritance.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(addInheritance.ParentTable))
+                    .Append(", ")
+                    .Append(Literal(addInheritance.Schema))
+                    .Append(", ")
+                    .Append(Literal(addInheritance.ParentSchema))
+                    .AppendLine(");");
+                break;
+            case RemoveBlueTuskTableInheritanceOperation removeInheritance:
+                builder
+                    .Append("migrationBuilder.RemoveBlueTuskTableInheritance(")
+                    .Append(Dependencies.CSharpHelper.Literal(removeInheritance.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(removeInheritance.ParentTable))
+                    .Append(", ")
+                    .Append(Literal(removeInheritance.Schema))
+                    .Append(", ")
+                    .Append(Literal(removeInheritance.ParentSchema))
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskRowSecurityPolicy(")

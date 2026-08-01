@@ -1,6 +1,7 @@
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
+using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -20,7 +21,8 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
             .Concat(table.GetAnnotations()
                 .Where(annotation => annotation.Name is
                     BlueTuskPartitionMetadata.AnnotationName or
-                    BlueTuskRowLevelSecurityMetadata.AnnotationName));
+                    BlueTuskRowLevelSecurityMetadata.AnnotationName or
+                    BlueTuskTableInheritanceMetadata.AnnotationName));
     }
 
     public override IEnumerable<IAnnotation> ForRemove(ITableIndex index)
