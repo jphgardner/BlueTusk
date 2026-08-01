@@ -306,7 +306,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] `TABLESAMPLE SYSTEM`/`BERNOULLI` with typed percentages, optional repeatable seeds, scope validation, and PostgreSQL 15–19 acceptance
   - [x] `FOR UPDATE`, `FOR NO KEY UPDATE`, `FOR SHARE`, and `FOR KEY SHARE` with wait, `NOWAIT`, and `SKIP LOCKED` behavior
   - [x] Typed ranking, distribution, bucket, offset, and value window functions with partitioning, ascending/descending ordering, nullable results, and compiled queries
-  - [ ] Recursive/materialized CTEs, system columns, and PostgreSQL data-modification query constructs
+  - [x] Explicit typed `tableoid`/transaction/command/tuple system-column mappings with migration exclusion and `xmin` concurrency
+  - [ ] Recursive/materialized CTEs and PostgreSQL data-modification query constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element/subscript expansion, typed series/JSONB roots, and generic multi-array expansion
   - [x] Regex match/split and delimiter-table native query roots

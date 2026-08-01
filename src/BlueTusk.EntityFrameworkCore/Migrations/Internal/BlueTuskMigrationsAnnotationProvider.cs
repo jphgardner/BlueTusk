@@ -41,7 +41,9 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
         ArgumentNullException.ThrowIfNull(column);
         return base.ForRemove(column)
             .Concat(column.GetAnnotations()
-                .Where(annotation => annotation.Name == BlueTuskValueGenerationAnnotations.IdentityGeneration));
+                .Where(annotation => annotation.Name is
+                    BlueTuskValueGenerationAnnotations.IdentityGeneration or
+                    BlueTuskSystemColumnAnnotations.SystemColumn));
     }
 
     public override IEnumerable<IAnnotation> ForRemove(ICheckConstraint constraint)

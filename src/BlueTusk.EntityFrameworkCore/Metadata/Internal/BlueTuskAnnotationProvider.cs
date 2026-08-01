@@ -96,6 +96,24 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
         }
 
         var mappedProperties = column.PropertyMappings.Select(mapping => mapping.Property).ToArray();
+        var systemColumns = mappedProperties
+            .Select(property => property.FindAnnotation(BlueTuskSystemColumnAnnotations.SystemColumn)?.Value)
+            .Where(value => value is not null)
+            .Distinct()
+            .ToArray();
+        if (systemColumns.Length > 1)
+        {
+            throw new InvalidOperationException(
+                $"Column '{column.Table.Schema}.{column.Table.Name}.{column.Name}' has conflicting PostgreSQL system-column mappings.");
+        }
+
+        if (systemColumns.Length == 1)
+        {
+            yield return new Annotation(
+                BlueTuskSystemColumnAnnotations.SystemColumn,
+                systemColumns[0]);
+        }
+
         var explicitModes = mappedProperties
             .Select(property => property.FindAnnotation(BlueTuskValueGenerationAnnotations.IdentityGeneration)?.Value)
             .Where(value => value is not null)

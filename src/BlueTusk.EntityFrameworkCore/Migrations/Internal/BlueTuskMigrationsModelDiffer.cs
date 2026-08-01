@@ -1,5 +1,6 @@
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
+using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
@@ -53,7 +54,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         IRelationalModel? source,
         IRelationalModel? target)
     {
-        var baseOperations = base.GetDifferences(source, target);
+        var baseOperations = RemoveSystemColumnOperations(base.GetDifferences(source, target));
         var sourceGraphs = GetGraphs(source);
         var targetGraphs = GetGraphs(target);
         var sourceByName = sourceGraphs.ToDictionary(GraphKey.Create);
@@ -265,6 +266,35 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         model is null
             ? Array.Empty<BlueTuskPropertyGraphDefinition>()
             : BlueTuskPropertyGraphMetadata.Get(model.Model);
+
+    private static MigrationOperation[] RemoveSystemColumnOperations(
+        IReadOnlyList<MigrationOperation> operations)
+    {
+        foreach (var createTable in operations.OfType<CreateTableOperation>())
+        {
+            for (var index = createTable.Columns.Count - 1; index >= 0; index--)
+            {
+                if (IsSystemColumnOperation(createTable.Columns[index]))
+                {
+                    createTable.Columns.RemoveAt(index);
+                }
+            }
+        }
+
+        return operations
+            .Where(operation => operation switch
+            {
+                AddColumnOperation column => !IsSystemColumnOperation(column),
+                AlterColumnOperation column => !IsSystemColumnOperation(column),
+                DropColumnOperation column => !IsSystemColumnOperation(column),
+                RenameColumnOperation column => !IsSystemColumnOperation(column),
+                _ => true,
+            })
+            .ToArray();
+    }
+
+    private static bool IsSystemColumnOperation(MigrationOperation operation)
+        => operation[BlueTuskSystemColumnAnnotations.SystemColumn] is not null;
 
     private static IReadOnlyList<BlueTuskPartitionedTableDefinition> GetPartitions(IRelationalModel? model) =>
         BlueTuskPartitionMetadata.GetTables(model);

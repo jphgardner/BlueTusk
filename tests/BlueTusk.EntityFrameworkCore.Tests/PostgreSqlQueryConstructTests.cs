@@ -1,6 +1,8 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Xunit.Sdk;
 
 namespace BlueTusk.EntityFrameworkCore.Tests;
@@ -164,6 +166,43 @@ public sealed class PostgreSqlQueryConstructTests
     }
 
     [Fact]
+    public void System_columns_are_typed_queryable_and_excluded_from_generated_ddl()
+    {
+        using var context = CreateContext();
+
+        var sql = context.Documents
+            .Select(document => new
+            {
+                TableOid = EF.Property<uint>(document, BlueTuskSystemColumns.TableOid),
+                Xmin = EF.Property<BlueTuskTransactionId>(document, BlueTuskSystemColumns.Xmin),
+                Cmin = EF.Property<BlueTuskCommandId>(document, BlueTuskSystemColumns.Cmin),
+                Xmax = EF.Property<BlueTuskTransactionId>(document, BlueTuskSystemColumns.Xmax),
+                Cmax = EF.Property<BlueTuskCommandId>(document, BlueTuskSystemColumns.Cmax),
+                Ctid = EF.Property<BlueTuskTupleId>(document, BlueTuskSystemColumns.Ctid),
+            })
+            .ToQueryString();
+        var entityType = context.Model.FindEntityType(typeof(QueryConstructDocument))!;
+        var xmin = entityType.FindProperty(BlueTuskSystemColumns.Xmin)!;
+        var createScript = context.Database.GenerateCreateScript();
+
+        Assert.Contains("\"tableoid\"", sql, StringComparison.Ordinal);
+        Assert.Contains("\"xmin\"", sql, StringComparison.Ordinal);
+        Assert.Contains("\"cmin\"", sql, StringComparison.Ordinal);
+        Assert.Contains("\"xmax\"", sql, StringComparison.Ordinal);
+        Assert.Contains("\"cmax\"", sql, StringComparison.Ordinal);
+        Assert.Contains("\"ctid\"", sql, StringComparison.Ordinal);
+        Assert.Equal("xid", xmin.GetColumnType());
+        Assert.Equal(ValueGenerated.OnAddOrUpdate, xmin.ValueGenerated);
+        Assert.True(xmin.IsConcurrencyToken);
+        Assert.DoesNotContain("\"tableoid\" oid", createScript, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"xmin\" xid", createScript, StringComparison.Ordinal);
+        Assert.DoesNotContain("\"ctid\" tid", createScript, StringComparison.Ordinal);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new ModelBuilder().Entity<QueryConstructDocument>()
+                .UseBlueTuskSystemColumn((BlueTuskSystemColumn)99));
+    }
+
+    [Fact]
     public async Task Query_constructs_execute_with_distinct_sampling_locking_and_compilation()
     {
         var connectionString = GetConnectionString();
@@ -257,6 +296,19 @@ public sealed class PostgreSqlQueryConstructTests
                         document.Score),
                 })
                 .ToListAsync();
+            var systemColumns = await context.Documents
+                .OrderBy(document => document.Id)
+                .Select(document => new
+                {
+                    document.Id,
+                    TableOid = EF.Property<uint>(document, BlueTuskSystemColumns.TableOid),
+                    Xmin = EF.Property<BlueTuskTransactionId>(document, BlueTuskSystemColumns.Xmin),
+                    Cmin = EF.Property<BlueTuskCommandId>(document, BlueTuskSystemColumns.Cmin),
+                    Xmax = EF.Property<BlueTuskTransactionId>(document, BlueTuskSystemColumns.Xmax),
+                    Cmax = EF.Property<BlueTuskCommandId>(document, BlueTuskSystemColumns.Cmax),
+                    Ctid = EF.Property<BlueTuskTupleId>(document, BlueTuskSystemColumns.Ctid),
+                })
+                .ToListAsync();
 
             Assert.Equal([2, 3], distinct.Select(document => document.Id).ToArray());
             Assert.Equal(3, fullSystemSample);
@@ -282,6 +334,15 @@ public sealed class PostgreSqlQueryConstructTests
                     (row.Id, row.RowNumber, row.DescendingRowNumber, row.Rank, row.DenseRank,
                         row.PercentRank, row.CumulativeDistribution, row.Tile, row.Previous,
                         row.Next, row.First, row.Last, row.Second)));
+            Assert.Equal(3, systemColumns.Count);
+            Assert.All(systemColumns, row =>
+            {
+                Assert.True(row.TableOid > 0);
+                Assert.True(row.Xmin.Value > 0);
+                Assert.Equal(0u, row.Xmax.Value);
+                Assert.True(row.Ctid.OffsetNumber > 0);
+            });
+            Assert.Equal(3, systemColumns.Select(row => row.Ctid).Distinct().Count());
 
             await using var lockingContext = CreateContext(dataSource);
             await using var lockingTransaction = await lockingContext.Database.BeginTransactionAsync();
@@ -327,6 +388,15 @@ public sealed class PostgreSqlQueryConstructTests
                     .ForKeyShare()
                     .ToListAsync());
             await strengthTransaction.RollbackAsync();
+
+            await using var firstWriter = CreateContext(dataSource);
+            await using var staleWriter = CreateContext(dataSource);
+            var current = await firstWriter.Documents.SingleAsync(document => document.Id == 1);
+            var stale = await staleWriter.Documents.SingleAsync(document => document.Id == 1);
+            current.Score = 5;
+            await firstWriter.SaveChangesAsync();
+            stale.Score = 6;
+            await Assert.ThrowsAsync<DbUpdateConcurrencyException>(() => staleWriter.SaveChangesAsync());
         }
         finally
         {
@@ -379,8 +449,12 @@ public sealed class PostgreSqlQueryConstructTests
         public DbSet<QueryConstructDocument> Documents => Set<QueryConstructDocument>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-            => modelBuilder.Entity<QueryConstructDocument>()
-                .ToTable("ef_query_construct_documents");
+        {
+            var document = modelBuilder.Entity<QueryConstructDocument>();
+            document.ToTable("ef_query_construct_documents");
+            document.UseBlueTuskSystemColumns();
+            document.UseBlueTuskXminConcurrencyToken();
+        }
     }
 
     private sealed class QueryConstructDocument
