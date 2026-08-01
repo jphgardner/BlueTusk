@@ -18,4 +18,21 @@ public sealed class BlueTuskDbContextOptionsBuilder
     /// register immutable EF options extensions.
     /// </summary>
     public DbContextOptionsBuilder ContextOptionsBuilder => OptionsBuilder;
+
+    /// <summary>
+    /// Configures the existing database used to create or drop the target database.
+    /// </summary>
+    /// <remarks>
+    /// The default is <c>postgres</c>, except when <c>postgres</c> is itself the target,
+    /// in which case <c>template1</c> is used.
+    /// </remarks>
+    public BlueTuskDbContextOptionsBuilder UseAdminDatabase(string databaseName)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(databaseName);
+        var extension = OptionsBuilder.Options.FindExtension<BlueTuskOptionsExtension>()
+            ?? throw new InvalidOperationException("BlueTusk provider options have not been configured.");
+        extension = extension.WithAdminDatabase(databaseName);
+        ((IDbContextOptionsBuilderInfrastructure)OptionsBuilder).AddOrUpdateExtension(extension);
+        return this;
+    }
 }

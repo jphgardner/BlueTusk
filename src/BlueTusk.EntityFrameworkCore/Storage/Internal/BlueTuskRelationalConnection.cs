@@ -15,6 +15,8 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
         _dataSource = dependencies.ContextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource;
     }
 
+    internal BlueTuskDataSource? DataSource => _dataSource;
+
     protected override DbConnection CreateDbConnection()
         => _dataSource?.CreateConnection()
             ?? new BlueTuskConnection(ConnectionString ?? string.Empty);

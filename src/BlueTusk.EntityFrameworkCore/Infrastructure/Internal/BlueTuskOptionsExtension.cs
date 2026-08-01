@@ -15,8 +15,11 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
     private BlueTuskOptionsExtension(BlueTuskOptionsExtension copyFrom)
         : base(copyFrom)
     {
+        AdminDatabase = copyFrom.AdminDatabase;
         DataSource = copyFrom.DataSource;
     }
+
+    internal string? AdminDatabase { get; private set; }
 
     internal BlueTuskDataSource? DataSource { get; private set; }
 
@@ -29,6 +32,15 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
         var clone = new BlueTuskOptionsExtension(this)
         {
             DataSource = dataSource,
+        };
+        return clone;
+    }
+
+    internal BlueTuskOptionsExtension WithAdminDatabase(string? adminDatabase)
+    {
+        var clone = new BlueTuskOptionsExtension(this)
+        {
+            AdminDatabase = adminDatabase,
         };
         return clone;
     }
@@ -49,6 +61,7 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
         {
             debugInfo["BlueTusk"] = "1";
             debugInfo["BlueTusk:DataSource"] = extension.DataSource is null ? "0" : "1";
+            debugInfo["BlueTusk:AdminDatabase"] = extension.AdminDatabase ?? string.Empty;
         }
     }
 }

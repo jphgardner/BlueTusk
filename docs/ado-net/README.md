@@ -36,6 +36,13 @@ command.Parameters.Add(new BlueTuskParameter(null)
 });
 ```
 
+The current immutable catalogue snapshot is available from either
+`dataSource.TypeRegistry` or an open `connection.TypeRegistry`. After creating,
+altering, or dropping a user-defined type at runtime, call
+`ReloadTypes()`/`ReloadTypesAsync()` on the long-lived data source. The same
+methods are available on an open directly constructed connection for its local,
+unpooled catalogue.
+
 Explicit preparation is available synchronously and asynchronously on an open, connection-owned command. BlueTusk creates a named server statement and reuses it across executions; changing the command text or parameter type identity closes and prepares the statement again.
 
 ```csharp

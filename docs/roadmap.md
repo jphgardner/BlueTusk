@@ -158,6 +158,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Core relational type mappings and SQL generation
 - [x] Core LINQ translation, query execution, and result materialisation
 - [x] Initial migrations SQL generation and history repository
+  - [x] Physical database existence/create/drop lifecycle with configurable admin database, sync/async paths, pool draining, catalogue refresh, quoted identifiers, and PostgreSQL 15–19 acceptance
   - [x] Common relational create-table, primary-key, foreign-key, index, default, and facet DDL
   - [x] PostgreSQL identity-column DDL and live schema-creation coverage
   - [x] Exact `ALWAYS`/`BY DEFAULT` identity metadata plus add, switch, drop, reverse-engineering, and generated fluent C# lifecycle

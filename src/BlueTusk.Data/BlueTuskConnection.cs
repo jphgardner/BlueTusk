@@ -155,7 +155,22 @@ public sealed class BlueTuskConnection : DbConnection
 
     internal bool HasOpenSession => _session is { IsOpen: true };
 
-    internal BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;
+    /// <summary>Gets the current immutable PostgreSQL type-registry snapshot.</summary>
+    public BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;
+
+    /// <summary>Reloads PostgreSQL type metadata for this open connection.</summary>
+    public void ReloadTypes()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _typeMetadata.Reload(Session);
+    }
+
+    /// <summary>Reloads PostgreSQL type metadata for this open connection.</summary>
+    public ValueTask ReloadTypesAsync(CancellationToken cancellationToken = default)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _typeMetadata.ReloadAsync(Session, cancellationToken);
+    }
 
     internal BlueTuskTransaction? CurrentTransaction
     {
