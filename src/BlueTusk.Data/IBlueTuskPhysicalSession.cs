@@ -892,6 +892,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 ConnectTimeout = settings.Timeout,
                 SslMode = settings.SslMode,
                 ChannelBinding = settings.ChannelBinding,
+                AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
             },
             cancellationToken).ConfigureAwait(false);
         await session.ProbeOptionalCapabilitiesAsync(cancellationToken).ConfigureAwait(false);
@@ -918,6 +919,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 ConnectTimeout = settings.Timeout,
                 SslMode = settings.SslMode,
                 ChannelBinding = settings.ChannelBinding,
+                AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
             });
         session.ProbeOptionalCapabilities();
         return new BlueTuskPhysicalSession(

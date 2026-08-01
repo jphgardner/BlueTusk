@@ -86,6 +86,7 @@ public sealed class BlueTuskDataSource : DbDataSource
             ConnectTimeout = _settings.Timeout,
             SslMode = _settings.SslMode,
             ChannelBinding = _settings.ChannelBinding,
+            AllowUnencryptedPassword = _settings.AllowUnencryptedPassword,
         };
     }
 

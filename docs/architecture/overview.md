@@ -56,6 +56,11 @@ Protocol parsers return views over caller-owned buffers. The view is valid only 
 
 Wire lengths are validated before allocation. A configured upper bound is mandatory for any server-controlled length that can cause memory growth.
 
+Authentication messages use a sensitive protocol-write path that overwrites reusable framing
+storage after the transport flushes it. Security-layer password derivations clear temporary
+writable byte buffers; immutable caller-supplied .NET strings remain owned by the caller and
+cannot be zeroed by the provider.
+
 ## Sync and async
 
 Asynchronous APIs use actual asynchronous socket operations. Synchronous APIs will use dedicated synchronous paths; they will not call asynchronous methods and block on the result.

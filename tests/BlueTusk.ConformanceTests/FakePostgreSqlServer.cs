@@ -47,7 +47,11 @@ internal sealed class FakePostgreSqlServer : IAsyncDisposable
                     await Task.Delay(delay.Duration, cancellationToken).ConfigureAwait(false);
                     break;
                 case FakeServerStep.ExpectFrontendMessage expect:
-                    await ExpectFrontendMessageAsync(stream, expect.Identifier, cancellationToken)
+                    await ExpectFrontendMessageAsync(
+                            stream,
+                            expect.Identifier,
+                            expect.Payload,
+                            cancellationToken)
                         .ConfigureAwait(false);
                     break;
                 case FakeServerStep.Disconnect:
@@ -61,6 +65,7 @@ internal sealed class FakePostgreSqlServer : IAsyncDisposable
     private static async Task ExpectFrontendMessageAsync(
         NetworkStream stream,
         byte? expectedIdentifier,
+        byte[]? expectedPayload,
         CancellationToken cancellationToken)
     {
         var header = new byte[expectedIdentifier is null ? 4 : 5];
@@ -84,10 +89,15 @@ internal sealed class FakePostgreSqlServer : IAsyncDisposable
         }
 
         var payloadLength = length - sizeof(int);
+        var payload = new byte[payloadLength];
         if (payloadLength > 0)
         {
-            var payload = new byte[payloadLength];
             await stream.ReadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
+        }
+
+        if (expectedPayload is not null && !payload.AsSpan().SequenceEqual(expectedPayload))
+        {
+            throw new InvalidOperationException("The frontend message payload did not match the expected bytes.");
         }
     }
 
@@ -113,7 +123,7 @@ internal abstract record FakeServerStep
 
     internal sealed record Delay(TimeSpan Duration) : FakeServerStep;
 
-    internal sealed record ExpectFrontendMessage(byte? Identifier) : FakeServerStep;
+    internal sealed record ExpectFrontendMessage(byte? Identifier, byte[]? Payload = null) : FakeServerStep;
 
     internal sealed record Disconnect : FakeServerStep;
 }

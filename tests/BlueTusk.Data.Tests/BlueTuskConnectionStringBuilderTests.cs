@@ -21,6 +21,7 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal(5, builder.AutoPrepareMinUsages);
         Assert.Equal(BlueTuskTargetSessionAttributes.Any, builder.TargetSessionAttributes);
         Assert.Equal(BlueTuskLoadBalanceHosts.Disable, builder.LoadBalanceHosts);
+        Assert.False(builder.AllowUnencryptedPassword);
         Assert.Equal([new BlueTuskHostEndpoint("localhost", 5432)], builder.HostEndpoints);
     }
 
@@ -83,12 +84,13 @@ public sealed class BlueTuskConnectionStringBuilderTests
     {
         var defaults = new BlueTuskConnectionStringBuilder();
         var explicitSettings = new BlueTuskConnectionStringBuilder(
-            "SSL Mode=Disable;Channel Binding=Disable;Application Name=test-suite");
+            "SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Application Name=test-suite");
 
         Assert.Equal(BlueTuskSslMode.VerifyFull, defaults.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Prefer, defaults.ChannelBinding);
         Assert.Equal(BlueTuskSslMode.Disable, explicitSettings.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Disable, explicitSettings.ChannelBinding);
+        Assert.True(explicitSettings.AllowUnencryptedPassword);
         Assert.Equal("test-suite", explicitSettings.ApplicationName);
     }
 

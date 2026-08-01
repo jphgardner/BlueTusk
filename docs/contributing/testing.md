@@ -12,6 +12,11 @@
 
 Tests requiring a server read `BLUETUSK_TEST_CONNECTION_STRING` and must skip with a clear reason when it is absent. Credentials must never be printed, including in failed test output.
 
+The checked-in compose `pg_hba.conf` reserves `bluetusk_md5_test` and
+`bluetusk_cleartext_test` for authentication compatibility tests before the
+default SCRAM rule. The tests create those roles only for their own lifetime;
+normal matrix users continue to authenticate with SCRAM-SHA-256.
+
 The compatibility project carries a test-only Npgsql dependency and runs equivalent value, parameter, transaction-error, cancellation, reuse, and schema-metadata operations through both providers. PostgreSQL internal type names (`int4`, `bool`) and SQL aliases (`integer`, `boolean`) are normalized before comparison; any other difference fails the suite and must be resolved against PostgreSQL behavior.
 
 The default stress scale runs bounded concurrent pool churn, cancellation storms, preparation, batches, and partially consumed sequential streams. Set `BLUETUSK_STRESS_SCALE` to a positive integer to multiply the worker count for longer soak runs.

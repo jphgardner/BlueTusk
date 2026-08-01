@@ -11,7 +11,7 @@ public sealed class BlueTuskClientOptionsTests
             """
             Host=db.example.test;Port=5544;Database=app;Username=replicator;
             Password=secret;Application Name=wal-reader;Timeout=7;
-            SSL Mode=Require;Channel Binding=Require
+            SSL Mode=Require;Channel Binding=Require;Allow Unencrypted Password=true
             """);
 
         Assert.Equal("db.example.test", options.Host);
@@ -23,6 +23,7 @@ public sealed class BlueTuskClientOptionsTests
         Assert.Equal(TimeSpan.FromSeconds(7), options.ConnectTimeout);
         Assert.Equal(BlueTuskSslMode.Require, options.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Require, options.ChannelBinding);
+        Assert.True(options.AllowUnencryptedPassword);
         Assert.Equal(BlueTuskReplicationMode.None, options.ReplicationMode);
     }
 
@@ -38,6 +39,7 @@ public sealed class BlueTuskClientOptionsTests
         Assert.Equal(TimeSpan.FromSeconds(15), options.ConnectTimeout);
         Assert.Equal(BlueTuskSslMode.VerifyFull, options.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Prefer, options.ChannelBinding);
+        Assert.False(options.AllowUnencryptedPassword);
     }
 
     [Fact]

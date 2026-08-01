@@ -48,6 +48,12 @@ public sealed record BlueTuskClientOptions
 
     public BlueTuskChannelBindingMode ChannelBinding { get; init; } = BlueTuskChannelBindingMode.Prefer;
 
+    /// <summary>
+    /// Gets whether a server may request the cleartext PostgreSQL password method without TLS.
+    /// </summary>
+    /// <remarks>Defaults to <see langword="false"/>. This does not disable TLS validation.</remarks>
+    public bool AllowUnencryptedPassword { get; init; }
+
     public BlueTuskReplicationMode ReplicationMode { get; init; }
 
     public X509RevocationMode CertificateRevocationCheckMode { get; init; } = X509RevocationMode.Online;
@@ -74,6 +80,7 @@ public sealed record BlueTuskClientOptions
                 settings,
                 "Channel Binding",
                 BlueTuskChannelBindingMode.Prefer),
+            AllowUnencryptedPassword = GetBoolean(settings, "Allow Unencrypted Password", defaultValue: false),
         };
     }
 
@@ -126,6 +133,14 @@ public sealed record BlueTuskClientOptions
         where TEnum : struct, Enum =>
         settings.TryGetValue(keyword, out var value)
             ? Enum.Parse<TEnum>(value, ignoreCase: true)
+            : defaultValue;
+
+    private static bool GetBoolean(
+        Dictionary<string, string> settings,
+        string keyword,
+        bool defaultValue) =>
+        settings.TryGetValue(keyword, out var value)
+            ? bool.Parse(value)
             : defaultValue;
 
     private static Dictionary<string, string> ParseConnectionString(string connectionString)

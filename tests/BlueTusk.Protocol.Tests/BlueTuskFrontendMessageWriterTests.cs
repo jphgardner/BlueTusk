@@ -82,6 +82,25 @@ public sealed class BlueTuskFrontendMessageWriterTests
     }
 
     [Fact]
+    public void Writes_a_password_message_from_caller_owned_bytes()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WritePasswordMessage(output, "secret"u8);
+
+        Assert.Equal("700000000B73656372657400", Convert.ToHexString(output.WrittenSpan));
+    }
+
+    [Fact]
+    public void Rejects_an_embedded_null_in_a_password_response()
+    {
+        Assert.Throws<ArgumentException>(
+            () => BlueTuskFrontendMessageWriter.WritePasswordMessage(
+                new ArrayBufferWriter<byte>(),
+                new byte[] { 1, 0, 2 }));
+    }
+
+    [Fact]
     public void Writes_an_extended_query_message_sequence()
     {
         var output = new ArrayBufferWriter<byte>();

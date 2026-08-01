@@ -4,6 +4,32 @@ The current preview provides native synchronous and asynchronous `BlueTuskConnec
 
 Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
 
+Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers
+SCRAM channel binding when PostgreSQL offers it. Legacy PostgreSQL MD5 challenges are
+supported for compatibility, but MD5 is deprecated by PostgreSQL and should not be selected
+for new deployments. A server request for cleartext password authentication is accepted over
+an established TLS connection. It is rejected on an unencrypted connection unless the caller
+deliberately sets `Allow Unencrypted Password=true`, which is intended only for trusted
+compatibility environments:
+
+```text
+SSL Mode=VerifyFull;Channel Binding=Prefer
+```
+
+```text
+SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true
+```
+
+Password and SCRAM frames use protocol storage that is overwritten immediately after the
+transport flushes it, and temporary MD5/password byte arrays are cleared. A .NET connection
+string and its immutable password `string` cannot be zeroed by the provider, so applications
+should keep their lifetime narrow and avoid logging them. See PostgreSQL's current
+[password authentication](https://www.postgresql.org/docs/current/auth-password.html) and
+[encryption options](https://www.postgresql.org/docs/current/encryption-options.html) for the
+server-side configuration and MD5 migration guidance. The compatibility gate creates isolated
+test roles and executes both authentication paths against PostgreSQL 15–19; the normal matrix
+user remains configured for SCRAM-SHA-256.
+
 Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
 
 ```csharp

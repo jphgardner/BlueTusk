@@ -95,6 +95,27 @@ public static class BlueTuskFrontendMessageWriter
         WriteUtf8(output, response, responseLength);
     }
 
+    /// <summary>Writes a PostgreSQL password response as a null-terminated byte string.</summary>
+    /// <remarks>
+    /// The caller owns and must clear <paramref name="response"/> when it contains sensitive
+    /// material. Use <see cref="BlueTuskProtocolConnection.WriteSensitive"/> or
+    /// <see cref="BlueTuskProtocolConnection.WriteSensitiveAsync"/> to clear the protocol write
+    /// buffer after the message has been flushed.
+    /// </remarks>
+    public static void WritePasswordMessage(IBufferWriter<byte> output, ReadOnlySpan<byte> response)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        if (response.Contains((byte)0))
+        {
+            throw new ArgumentException("A PostgreSQL password response cannot contain an embedded null byte.", nameof(response));
+        }
+
+        WriteByte(output, (byte)'p');
+        WriteInt32(output, checked(sizeof(int) + response.Length + 1));
+        WriteBytes(output, response);
+        WriteByte(output, 0);
+    }
+
     public static void WriteTerminate(IBufferWriter<byte> output)
     {
         ArgumentNullException.ThrowIfNull(output);

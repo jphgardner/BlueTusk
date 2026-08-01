@@ -119,6 +119,15 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         set => this["Channel Binding"] = value.ToString();
     }
 
+    /// <summary>
+    /// Gets or sets whether cleartext password authentication may be used without TLS.
+    /// </summary>
+    public bool AllowUnencryptedPassword
+    {
+        get => GetBoolean("Allow Unencrypted Password", false);
+        set => this["Allow Unencrypted Password"] = value;
+    }
+
     public BlueTuskTargetSessionAttributes TargetSessionAttributes
     {
         get => GetEnum("Target Session Attributes", BlueTuskTargetSessionAttributes.Any);
@@ -212,6 +221,7 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = Timeout;
         _ = SslMode;
         _ = ChannelBinding;
+        _ = AllowUnencryptedPassword;
         _ = TargetSessionAttributes;
         _ = LoadBalanceHosts;
         _ = ConnectionIdleLifetime;

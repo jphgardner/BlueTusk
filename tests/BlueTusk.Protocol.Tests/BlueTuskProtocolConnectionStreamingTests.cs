@@ -77,6 +77,34 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         Assert.Equal(["first", "second"], transport.Writes.Select(Encoding.UTF8.GetString));
     }
 
+    [Fact]
+    public async Task Sensitive_writes_overwrite_reusable_storage_after_sync_and_async_flushes()
+    {
+        await using var transport = new FragmentedTransport([], 16);
+        await using var connection = new BlueTuskProtocolConnection(transport);
+        Memory<byte> synchronousStorage = default;
+        Memory<byte> asynchronousStorage = default;
+
+        connection.WriteSensitive(output =>
+        {
+            synchronousStorage = output.GetMemory(6)[..6];
+            "secret"u8.CopyTo(synchronousStorage.Span);
+            output.Advance(6);
+        });
+        await connection.WriteSensitiveAsync(
+            output =>
+            {
+                asynchronousStorage = output.GetMemory(5)[..5];
+                "token"u8.CopyTo(asynchronousStorage.Span);
+                output.Advance(5);
+            },
+            CancellationToken.None);
+
+        Assert.All(synchronousStorage.ToArray(), static value => Assert.Equal(0, value));
+        Assert.All(asynchronousStorage.ToArray(), static value => Assert.Equal(0, value));
+        Assert.Equal(["secret", "token"], transport.Writes.Select(Encoding.UTF8.GetString));
+    }
+
     private static byte[] Frame(byte code, byte[] payload)
     {
         var frame = new byte[payload.Length + 5];

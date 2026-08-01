@@ -94,6 +94,7 @@ public sealed class BlueTuskDataSourceBuilderTests
             Pooling = true,
             SslMode = BlueTuskSslMode.Require,
             ChannelBinding = BlueTuskChannelBindingMode.Require,
+            AllowUnencryptedPassword = true,
         };
         using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);
 
@@ -108,6 +109,7 @@ public sealed class BlueTuskDataSourceBuilderTests
         Assert.Equal(TimeSpan.FromSeconds(7), options.ConnectTimeout);
         Assert.Equal(BlueTuskSslMode.Require, options.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Require, options.ChannelBinding);
+        Assert.True(options.AllowUnencryptedPassword);
         Assert.Equal(BlueTuskReplicationMode.None, options.ReplicationMode);
         Assert.Equal(0, dataSource.GetPoolStatistics().Total);
     }

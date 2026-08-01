@@ -1,5 +1,7 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using BlueTusk.Transport;
 
 namespace BlueTusk.Protocol;
@@ -215,6 +217,18 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     public async ValueTask WriteAsync(
         Action<IBufferWriter<byte>> writeMessage,
         CancellationToken cancellationToken)
+        => await WriteCoreAsync(writeMessage, clearBuffer: false, cancellationToken).ConfigureAwait(false);
+
+    /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
+    public async ValueTask WriteSensitiveAsync(
+        Action<IBufferWriter<byte>> writeMessage,
+        CancellationToken cancellationToken)
+        => await WriteCoreAsync(writeMessage, clearBuffer: true, cancellationToken).ConfigureAwait(false);
+
+    private async ValueTask WriteCoreAsync(
+        Action<IBufferWriter<byte>> writeMessage,
+        bool clearBuffer,
+        CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(writeMessage);
@@ -228,11 +242,18 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
         finally
         {
-            EndWrite();
+            EndWrite(clearBuffer);
         }
     }
 
     public void Write(Action<IBufferWriter<byte>> writeMessage)
+        => WriteCore(writeMessage, clearBuffer: false);
+
+    /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
+    public void WriteSensitive(Action<IBufferWriter<byte>> writeMessage)
+        => WriteCore(writeMessage, clearBuffer: true);
+
+    private void WriteCore(Action<IBufferWriter<byte>> writeMessage, bool clearBuffer)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(writeMessage);
@@ -246,7 +267,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
         finally
         {
-            EndWrite();
+            EndWrite(clearBuffer);
         }
     }
 
@@ -452,8 +473,14 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         return _writeBuffer;
     }
 
-    private void EndWrite()
+    private void EndWrite(bool clearBuffer)
     {
+        if (clearBuffer
+            && MemoryMarshal.TryGetArray(_writeBuffer.WrittenMemory, out var segment))
+        {
+            CryptographicOperations.ZeroMemory(segment.AsSpan());
+        }
+
         if (_writeBuffer.Capacity > MaximumRetainedWriteBufferSize)
         {
             _writeBuffer = new ArrayBufferWriter<byte>(InitialWriteBufferSize);

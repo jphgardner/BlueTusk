@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Diagnostics;
+using System.Text;
 using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 using BlueTusk.Security;
@@ -3328,9 +3329,15 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         var request = BlueTuskBackendMessageDecoder.DecodeAuthentication(message);
                         switch (request)
                         {
+                            case BlueTuskAuthenticationRequest.CleartextPassword:
+                                await SendCleartextPasswordAsync(cancellationToken).ConfigureAwait(false);
+                                break;
+                            case BlueTuskAuthenticationRequest.Md5Password md5:
+                                await SendMd5PasswordAsync(md5.Salt, cancellationToken).ConfigureAwait(false);
+                                break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
                                 scram = CreateScramClient(sasl.Mechanisms, channelBindingData);
-                                await _connection.WriteAsync(
+                                await _connection.WriteSensitiveAsync(
                                     output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
                                         output,
                                         scram.Mechanism,
@@ -3339,7 +3346,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 break;
                             case BlueTuskAuthenticationRequest.SaslContinue continuation when scram is not null:
                                 var clientFinal = scram.CreateClientFinalMessage(continuation.Data);
-                                await _connection.WriteAsync(
+                                await _connection.WriteSensitiveAsync(
                                     output => BlueTuskFrontendMessageWriter.WriteSaslResponse(output, clientFinal),
                                     cancellationToken).ConfigureAwait(false);
                                 break;
@@ -3404,9 +3411,15 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         var request = BlueTuskBackendMessageDecoder.DecodeAuthentication(message);
                         switch (request)
                         {
+                            case BlueTuskAuthenticationRequest.CleartextPassword:
+                                SendCleartextPassword();
+                                break;
+                            case BlueTuskAuthenticationRequest.Md5Password md5:
+                                SendMd5Password(md5.Salt.Span);
+                                break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
                                 scram = CreateScramClient(sasl.Mechanisms, channelBindingData);
-                                _connection.Write(
+                                _connection.WriteSensitive(
                                     output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
                                         output,
                                         scram.Mechanism,
@@ -3414,7 +3427,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 break;
                             case BlueTuskAuthenticationRequest.SaslContinue continuation when scram is not null:
                                 var clientFinal = scram.CreateClientFinalMessage(continuation.Data);
-                                _connection.Write(
+                                _connection.WriteSensitive(
                                     output => BlueTuskFrontendMessageWriter.WriteSaslResponse(output, clientFinal));
                                 break;
                             case BlueTuskAuthenticationRequest.SaslFinal finalResponse when scram is not null:
@@ -3460,6 +3473,84 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         finally
         {
             scram?.Dispose();
+        }
+    }
+
+    private async ValueTask SendCleartextPasswordAsync(CancellationToken cancellationToken)
+    {
+        EnsureCleartextPasswordIsPermitted();
+        var password = Encoding.UTF8.GetBytes(_options.Password);
+        try
+        {
+            await _connection.WriteSensitiveAsync(
+                output => BlueTuskFrontendMessageWriter.WritePasswordMessage(output, password),
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(password);
+        }
+    }
+
+    private void SendCleartextPassword()
+    {
+        EnsureCleartextPasswordIsPermitted();
+        var password = Encoding.UTF8.GetBytes(_options.Password);
+        try
+        {
+            _connection.WriteSensitive(
+                output => BlueTuskFrontendMessageWriter.WritePasswordMessage(output, password));
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(password);
+        }
+    }
+
+    private async ValueTask SendMd5PasswordAsync(
+        ReadOnlyMemory<byte> salt,
+        CancellationToken cancellationToken)
+    {
+        var response = BlueTuskPostgreSqlMd5Password.CreateResponse(
+            _options.Username,
+            _options.Password,
+            salt.Span);
+        try
+        {
+            await _connection.WriteSensitiveAsync(
+                output => BlueTuskFrontendMessageWriter.WritePasswordMessage(output, response),
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(response);
+        }
+    }
+
+    private void SendMd5Password(ReadOnlySpan<byte> salt)
+    {
+        var response = BlueTuskPostgreSqlMd5Password.CreateResponse(
+            _options.Username,
+            _options.Password,
+            salt);
+        try
+        {
+            _connection.WriteSensitive(
+                output => BlueTuskFrontendMessageWriter.WritePasswordMessage(output, response));
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(response);
+        }
+    }
+
+    private void EnsureCleartextPasswordIsPermitted()
+    {
+        if (!IsEncrypted && !_options.AllowUnencryptedPassword)
+        {
+            throw new BlueTuskAuthenticationException(
+                "PostgreSQL requested cleartext password authentication over an unencrypted connection. " +
+                "Use TLS or explicitly set Allow Unencrypted Password=true for a trusted compatibility environment.");
         }
     }
 

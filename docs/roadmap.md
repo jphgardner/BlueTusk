@@ -22,6 +22,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] SSLRequest and TLS upgrade
 - [x] Startup parameter/status processing
 - [x] SCRAM-SHA-256 and SCRAM-SHA-256-PLUS
+- [x] Legacy PostgreSQL MD5 challenge compatibility with overwrite-on-flush credential buffers and PostgreSQL 15–19 acceptance
+- [x] Cleartext password compatibility over TLS, or by explicit plaintext-transport opt-in, with PostgreSQL 15–19 acceptance
 - [x] Backend key data capture
 - [x] Cancellation channel (delivered in 0.0.4)
 - [x] Error and notice field parsing
@@ -499,6 +501,10 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] EF Core relational specification coverage
 - [ ] PostgreSQL-specific EF support
 - [ ] Security review
+  - [x] SCRAM channel binding, legacy MD5 compatibility, gated cleartext passwords, secret redaction, and overwrite-on-flush authentication buffers
+  - [ ] PostgreSQL password-file (`pgpass`) resolution and password callbacks
+  - [ ] Access-token callbacks and refresh lifecycle
+  - [ ] TLS client-certificate authentication and certificate-selection callbacks
 - [ ] Stress testing
 - [ ] Competitive benchmarks
 - [ ] Complete documentation
