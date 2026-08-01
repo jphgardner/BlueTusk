@@ -256,6 +256,55 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             return compositeField;
         }
 
+        if (extensionExpression is BlueTuskArrayConstructorExpression arrayConstructor)
+        {
+            Sql.Append("ARRAY[");
+            for (var index = 0; index < arrayConstructor.Rows.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(arrayConstructor.Rows[index]);
+            }
+
+            Sql.Append("]");
+            return arrayConstructor;
+        }
+
+        if (extensionExpression is BlueTuskArraySubscriptExpression arraySubscript)
+        {
+            Sql.Append("(");
+            Visit(arraySubscript.Array);
+            Sql.Append(")");
+            foreach (var subscript in arraySubscript.Subscripts)
+            {
+                Sql.Append("[");
+                Visit(subscript);
+                Sql.Append("]");
+            }
+
+            return arraySubscript;
+        }
+
+        if (extensionExpression is BlueTuskArraySliceExpression arraySlice)
+        {
+            Sql.Append("(");
+            Visit(arraySlice.Array);
+            Sql.Append(")");
+            for (var index = 0; index < arraySlice.LowerBounds.Count; index++)
+            {
+                Sql.Append("[");
+                Visit(arraySlice.LowerBounds[index]);
+                Sql.Append(":");
+                Visit(arraySlice.UpperBounds[index]);
+                Sql.Append("]");
+            }
+
+            return arraySlice;
+        }
+
         return base.VisitExtension(extensionExpression);
     }
 

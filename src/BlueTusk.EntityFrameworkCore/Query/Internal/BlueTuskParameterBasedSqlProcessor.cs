@@ -108,6 +108,38 @@ internal sealed class BlueTuskSqlNullabilityProcessor(
             return compositeField.Update(instance);
         }
 
+        if (sqlExpression is BlueTuskArrayConstructorExpression arrayConstructor)
+        {
+            var rows = arrayConstructor.Rows
+                .Select(row => Visit(row, allowOptimizedExpansion, out _))
+                .ToArray();
+            nullable = true;
+            return arrayConstructor.Update(rows);
+        }
+
+        if (sqlExpression is BlueTuskArraySubscriptExpression arraySubscript)
+        {
+            var array = Visit(arraySubscript.Array, allowOptimizedExpansion, out _);
+            var subscripts = arraySubscript.Subscripts
+                .Select(subscript => Visit(subscript, allowOptimizedExpansion, out _))
+                .ToArray();
+            nullable = true;
+            return arraySubscript.Update(array, subscripts);
+        }
+
+        if (sqlExpression is BlueTuskArraySliceExpression arraySlice)
+        {
+            var array = Visit(arraySlice.Array, allowOptimizedExpansion, out _);
+            var lowerBounds = arraySlice.LowerBounds
+                .Select(bound => Visit(bound, allowOptimizedExpansion, out _))
+                .ToArray();
+            var upperBounds = arraySlice.UpperBounds
+                .Select(bound => Visit(bound, allowOptimizedExpansion, out _))
+                .ToArray();
+            nullable = true;
+            return arraySlice.Update(array, lowerBounds, upperBounds);
+        }
+
         if (sqlExpression is not BlueTuskBinaryExpression binary)
         {
             return base.VisitCustomSqlExpression(sqlExpression, allowOptimizedExpansion, out nullable);

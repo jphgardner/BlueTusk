@@ -10,6 +10,96 @@ namespace BlueTusk.EntityFrameworkCore.Tests;
 public sealed class TypeMappingIntegrationTests
 {
     [Fact]
+    public void Multidimensional_array_queries_translate_to_native_parameterized_SQL()
+    {
+        using var context = CreateArrayContext(
+            "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk_tests");
+        var firstSubscript = 2;
+        var secondSubscript = 1;
+        var firstLowerBound = 1;
+        var firstUpperBound = 2;
+        var secondLowerBound = 1;
+        var secondUpperBound = 1;
+        int[] firstRow = [5, 6];
+        int[] secondRow = [7, 8];
+
+        var sql = context.Values
+            .Select(value => new ArrayQueryProjection(
+                EF.Functions.ArrayElement(value.MatrixValues, firstSubscript, secondSubscript),
+                EF.Functions.ArraySlice(
+                    value.MatrixValues,
+                    firstLowerBound,
+                    firstUpperBound,
+                    secondLowerBound,
+                    secondUpperBound),
+                EF.Functions.Array2D(firstRow, secondRow)))
+            .ToQueryString();
+
+        Assert.Contains(
+            "(\"e\".\"MatrixValues\")[@firstSubscript][@secondSubscript]",
+            sql,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "(\"e\".\"MatrixValues\")[@firstLowerBound:@firstUpperBound]" +
+            "[@secondLowerBound:@secondUpperBound]",
+            sql,
+            StringComparison.Ordinal);
+        Assert.Contains("ARRAY[@firstRow, @secondRow]", sql, StringComparison.Ordinal);
+
+        int[,,] cube = new int[2, 2, 2];
+        int[,,,] hypercube = new int[2, 2, 2, 2];
+        var thirdSubscript = 1;
+        var fourthSubscript = 2;
+        var higherRankSql = context.Values
+            .Select(value => new
+            {
+                VectorElement = EF.Functions.ArrayElement(value.IntValues, firstSubscript),
+                CubeElement = EF.Functions.ArrayElement(
+                    cube,
+                    firstSubscript,
+                    secondSubscript,
+                    thirdSubscript),
+                HypercubeElement = EF.Functions.ArrayElement(
+                    hypercube,
+                    firstSubscript,
+                    secondSubscript,
+                    thirdSubscript,
+                    fourthSubscript),
+                VectorSlice = EF.Functions.ArraySlice(
+                    value.IntValues,
+                    firstLowerBound,
+                    firstUpperBound),
+                CubeSlice = EF.Functions.ArraySlice(cube, 1, 1, 1, 1, 1, 1),
+                HypercubeSlice = EF.Functions.ArraySlice(hypercube, 1, 1, 1, 1, 1, 1, 1, 1),
+            })
+            .ToQueryString();
+        Assert.Contains("(@cube)[@firstSubscript][@secondSubscript][@thirdSubscript]", higherRankSql);
+        Assert.Contains(
+            "(@hypercube)[@firstSubscript][@secondSubscript][@thirdSubscript][@fourthSubscript]",
+            higherRankSql);
+        Assert.Contains("(\"e\".\"IntValues\")[@firstLowerBound:@firstUpperBound]", higherRankSql);
+        Assert.Contains("(@cube)[1:1][1:1][1:1]", higherRankSql);
+        Assert.Contains("(@hypercube)[1:1][1:1][1:1][1:1]", higherRankSql);
+
+        int[] thirdRow = [9, 10];
+        int[] fourthRow = [11, 12];
+        var constructorSql = context.Values
+            .Select(value => new
+            {
+                OneRow = EF.Functions.Array2D(firstRow),
+                ThreeRows = EF.Functions.Array2D(firstRow, secondRow, thirdRow),
+                FourRows = EF.Functions.Array2D(firstRow, secondRow, thirdRow, fourthRow),
+            })
+            .ToQueryString();
+        Assert.Contains("ARRAY[@firstRow]", constructorSql, StringComparison.Ordinal);
+        Assert.Contains("ARRAY[@firstRow, @secondRow, @thirdRow]", constructorSql, StringComparison.Ordinal);
+        Assert.Contains(
+            "ARRAY[@firstRow, @secondRow, @thirdRow, @fourthRow]",
+            constructorSql,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Composite_and_lossless_record_fields_translate_to_quoted_native_access()
     {
         var builder = new BlueTuskDataSourceBuilder(
@@ -376,6 +466,59 @@ public sealed class TypeMappingIntegrationTests
                 }
 
                 Assert.Null(actual.OptionalIntValues);
+
+                var firstSubscript = 2;
+                var secondSubscript = 1;
+                var firstLowerBound = 1;
+                var firstUpperBound = 2;
+                var secondLowerBound = 1;
+                var secondUpperBound = 1;
+                int[] firstRow = [5, 6];
+                int[] secondRow = [7, 8];
+                var queryResult = await context.Values
+                    .AsNoTracking()
+                    .Select(value => new ArrayQueryProjection(
+                        EF.Functions.ArrayElement(
+                            value.MatrixValues,
+                            firstSubscript,
+                            secondSubscript),
+                        EF.Functions.ArraySlice(
+                            value.MatrixValues,
+                            firstLowerBound,
+                            firstUpperBound,
+                            secondLowerBound,
+                            secondUpperBound),
+                        EF.Functions.Array2D(firstRow, secondRow)))
+                    .SingleAsync();
+                Assert.Equal(3, queryResult.Element);
+                Assert.Equal(new[,] { { 1 }, { 3 } }.Cast<int>(), queryResult.Slice.Cast<int>());
+                Assert.Equal(2, queryResult.Slice.GetLength(0));
+                Assert.Equal(1, queryResult.Slice.GetLength(1));
+                Assert.Equal(new[,] { { 5, 6 }, { 7, 8 } }.Cast<int>(), queryResult.Constructed.Cast<int>());
+                Assert.Equal(2, queryResult.Constructed.GetLength(0));
+                Assert.Equal(2, queryResult.Constructed.GetLength(1));
+
+                var compiledQuery = EF.CompileQuery(
+                    (ArrayValueContext database,
+                        int row,
+                        int column,
+                        int[] compiledFirstRow,
+                        int[] compiledSecondRow) => database.Values
+                        .AsNoTracking()
+                        .Where(value => EF.Functions.ArrayElement(value.MatrixValues, row, column) == 3)
+                        .Select(value => new ArrayQueryProjection(
+                            EF.Functions.ArrayElement(value.MatrixValues, row, column),
+                            EF.Functions.ArraySlice(value.MatrixValues, 1, 2, 1, 1),
+                            EF.Functions.Array2D(compiledFirstRow, compiledSecondRow))));
+                var compiledResult = compiledQuery(
+                    context,
+                    firstSubscript,
+                    secondSubscript,
+                    firstRow,
+                    secondRow).Single();
+                Assert.Equal(3, compiledResult.Element);
+                Assert.Equal(queryResult.Slice.Cast<int>(), compiledResult.Slice.Cast<int>());
+                Assert.Equal(queryResult.Constructed.Cast<int>(), compiledResult.Constructed.Cast<int>());
             }
         }
         finally
@@ -902,6 +1045,11 @@ public sealed class TypeMappingIntegrationTests
         int RecordHouseNumber,
         string RecordStreet,
         string? RecordNote);
+
+    private sealed record ArrayQueryProjection(
+        int Element,
+        int[,] Slice,
+        int[,] Constructed);
 
     private static BlueTuskRecord CreateAddressRecord(int houseNumber, string street, string? note) => new(
     [

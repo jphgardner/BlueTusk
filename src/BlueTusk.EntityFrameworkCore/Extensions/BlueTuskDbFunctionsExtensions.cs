@@ -384,6 +384,93 @@ public static class BlueTuskDbFunctionsExtensions
     public static T[] ArrayPrepend<T>(this DbFunctions _, T value, T[] array)
         => ThrowTranslationOnly<T[]>();
 
+    /// <summary>Constructs a two-dimensional PostgreSQL array from one row.</summary>
+    public static T[,] Array2D<T>(this DbFunctions _, T[] row1)
+        => ThrowTranslationOnly<T[,]>();
+
+    /// <summary>Constructs a two-dimensional PostgreSQL array from two equal-length rows.</summary>
+    public static T[,] Array2D<T>(this DbFunctions _, T[] row1, T[] row2)
+        => ThrowTranslationOnly<T[,]>();
+
+    /// <summary>Constructs a two-dimensional PostgreSQL array from three equal-length rows.</summary>
+    public static T[,] Array2D<T>(this DbFunctions _, T[] row1, T[] row2, T[] row3)
+        => ThrowTranslationOnly<T[,]>();
+
+    /// <summary>Constructs a two-dimensional PostgreSQL array from four equal-length rows.</summary>
+    public static T[,] Array2D<T>(this DbFunctions _, T[] row1, T[] row2, T[] row3, T[] row4)
+        => ThrowTranslationOnly<T[,]>();
+
+    /// <summary>Reads a PostgreSQL array element using a one-based subscript.</summary>
+    public static T ArrayElement<T>(this DbFunctions _, T[] array, int subscript)
+        => ThrowTranslationOnly<T>();
+
+    /// <summary>Reads a two-dimensional PostgreSQL array element using one-based subscripts.</summary>
+    public static T ArrayElement<T>(
+        this DbFunctions _,
+        T[,] array,
+        int firstSubscript,
+        int secondSubscript)
+        => ThrowTranslationOnly<T>();
+
+    /// <summary>Reads a three-dimensional PostgreSQL array element using one-based subscripts.</summary>
+    public static T ArrayElement<T>(
+        this DbFunctions _,
+        T[,,] array,
+        int firstSubscript,
+        int secondSubscript,
+        int thirdSubscript)
+        => ThrowTranslationOnly<T>();
+
+    /// <summary>Reads a four-dimensional PostgreSQL array element using one-based subscripts.</summary>
+    public static T ArrayElement<T>(
+        this DbFunctions _,
+        T[,,,] array,
+        int firstSubscript,
+        int secondSubscript,
+        int thirdSubscript,
+        int fourthSubscript)
+        => ThrowTranslationOnly<T>();
+
+    /// <summary>Reads an inclusive one-dimensional PostgreSQL array slice.</summary>
+    public static T[] ArraySlice<T>(this DbFunctions _, T[] array, int lowerBound, int upperBound)
+        => ThrowTranslationOnly<T[]>();
+
+    /// <summary>Reads an inclusive two-dimensional PostgreSQL array slice.</summary>
+    public static T[,] ArraySlice<T>(
+        this DbFunctions _,
+        T[,] array,
+        int firstLowerBound,
+        int firstUpperBound,
+        int secondLowerBound,
+        int secondUpperBound)
+        => ThrowTranslationOnly<T[,]>();
+
+    /// <summary>Reads an inclusive three-dimensional PostgreSQL array slice.</summary>
+    public static T[,,] ArraySlice<T>(
+        this DbFunctions _,
+        T[,,] array,
+        int firstLowerBound,
+        int firstUpperBound,
+        int secondLowerBound,
+        int secondUpperBound,
+        int thirdLowerBound,
+        int thirdUpperBound)
+        => ThrowTranslationOnly<T[,,]>();
+
+    /// <summary>Reads an inclusive four-dimensional PostgreSQL array slice.</summary>
+    public static T[,,,] ArraySlice<T>(
+        this DbFunctions _,
+        T[,,,] array,
+        int firstLowerBound,
+        int firstUpperBound,
+        int secondLowerBound,
+        int secondUpperBound,
+        int thirdLowerBound,
+        int thirdUpperBound,
+        int fourthLowerBound,
+        int fourthUpperBound)
+        => ThrowTranslationOnly<T[,,,]>();
+
     public static BlueTuskRange<T> RangeUnion<T>(
         this DbFunctions _,
         BlueTuskRange<T> left,
