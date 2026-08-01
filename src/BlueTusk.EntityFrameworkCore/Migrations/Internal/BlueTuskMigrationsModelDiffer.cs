@@ -33,7 +33,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskRowLevelSecurityModelDiffer.HasDifferences(source, target) ||
         BlueTuskTableInheritanceModelDiffer.HasDifferences(source, target) ||
         BlueTuskUserDefinedTypeModelDiffer.HasDifferences(source, target) ||
-        BlueTuskRoutineModelDiffer.HasDifferences(source, target);
+        BlueTuskRoutineModelDiffer.HasDifferences(source, target) ||
+        BlueTuskViewModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -48,6 +49,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var typeAfter = new List<MigrationOperation>();
         var routineBefore = new List<MigrationOperation>();
         var routineAfter = new List<MigrationOperation>();
+        var viewBefore = new List<MigrationOperation>();
+        var viewAfter = new List<MigrationOperation>();
         var before = new List<MigrationOperation>();
         var after = new List<MigrationOperation>();
 
@@ -63,6 +66,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             baseOperations,
             routineBefore,
             routineAfter);
+        BlueTuskViewModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            viewBefore,
+            viewAfter);
         AddPartitionDifferences(source, target, baseOperations, before, after);
         BlueTuskRowLevelSecurityModelDiffer.AddDifferences(source, target, baseOperations, after);
         BlueTuskTableInheritanceModelDiffer.AddDifferences(
@@ -121,14 +130,20 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var dropSchemas = baseOperations.OfType<DropSchemaOperation>();
         var relationalOperations = baseOperations.Where(
             operation => operation is not EnsureSchemaOperation and not DropSchemaOperation);
-        return ensureSchemas.Concat(typeBefore)
+        var operations = ensureSchemas.Concat(typeBefore)
+            .Concat(viewBefore)
             .Concat(routineBefore)
             .Concat(before)
             .Concat(relationalOperations)
             .Concat(after)
             .Concat(routineAfter)
+            .Concat(viewAfter)
             .Concat(typeAfter)
             .Concat(dropSchemas)
+            .ToArray();
+        var ensuredSchemaNames = new HashSet<string>(StringComparer.Ordinal);
+        return operations.Where(operation =>
+                operation is not EnsureSchemaOperation ensureSchema || ensuredSchemaNames.Add(ensureSchema.Name))
             .ToArray();
     }
 

@@ -9,6 +9,8 @@ using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
+using BlueTusk.EntityFrameworkCore.Views;
+using BlueTusk.EntityFrameworkCore.Views.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -30,6 +32,27 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskViewOperation createView:
+                Generate(createView, builder);
+                break;
+            case ReplaceBlueTuskViewOperation replaceView:
+                Generate(replaceView, builder);
+                break;
+            case CreateBlueTuskMaterializedViewOperation createMaterializedView:
+                Generate(createMaterializedView, builder);
+                break;
+            case AlterBlueTuskMaterializedViewOperation alterMaterializedView:
+                Generate(alterMaterializedView, builder);
+                break;
+            case DropBlueTuskViewOperation dropView:
+                Generate(dropView, builder);
+                break;
+            case RenameBlueTuskViewOperation renameView:
+                Generate(renameView, builder);
+                break;
+            case RefreshBlueTuskMaterializedViewOperation refreshMaterializedView:
+                Generate(refreshMaterializedView, builder);
+                break;
             case CreateBlueTuskRoutineOperation createRoutine:
                 Generate(createRoutine, builder);
                 break;
@@ -121,6 +144,325 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 base.Generate(operation, model, builder);
                 break;
         }
+    }
+
+    private void Generate(
+        CreateBlueTuskViewOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskViewMetadata.Validate(operation.Definition);
+        AppendViewDefinition(builder, operation.Definition, replace: false);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        ReplaceBlueTuskViewOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskViewAlterationPlanner.ValidateReplacement(operation.OldDefinition, operation.Definition);
+        AppendViewDefinition(builder, operation.Definition, replace: true);
+        EndStatement(builder);
+
+        var name = Dependencies.SqlGenerationHelper.DelimitIdentifier(
+            operation.Definition.Name,
+            operation.Definition.Schema);
+        if (operation.OldDefinition.SecurityBarrier && !operation.Definition.SecurityBarrier)
+        {
+            builder.Append("ALTER VIEW ").Append(name).Append(" SET (security_barrier=false)");
+            EndStatement(builder);
+        }
+
+        if (operation.OldDefinition.SecurityInvoker && !operation.Definition.SecurityInvoker)
+        {
+            builder.Append("ALTER VIEW ").Append(name).Append(" SET (security_invoker=false)");
+            EndStatement(builder);
+        }
+
+        if (operation.OldDefinition.CheckOption is not null && operation.Definition.CheckOption is null)
+        {
+            builder.Append("ALTER VIEW ").Append(name).Append(" RESET (check_option)");
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        CreateBlueTuskMaterializedViewOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskViewMetadata.Normalize(operation.Definition);
+        BlueTuskViewMetadata.Validate(definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("CREATE MATERIALIZED VIEW ")
+            .Append(helper.DelimitIdentifier(definition.Name, definition.Schema));
+        AppendIdentifierList(builder, definition.Columns);
+        builder.Append(" USING ").Append(helper.DelimitIdentifier(definition.AccessMethod));
+        AppendStorageParameters(builder, definition.StorageParameters);
+        if (definition.Tablespace is not null)
+        {
+            builder.Append(" TABLESPACE ").Append(helper.DelimitIdentifier(definition.Tablespace));
+        }
+
+        builder.Append(" AS ").Append(definition.QuerySql)
+            .Append(definition.IsPopulated ? " WITH DATA" : " WITH NO DATA");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskMaterializedViewOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskViewAlterationPlanner.ValidateMaterializedAlteration(
+            operation.OldDefinition,
+            operation.Definition);
+        var oldDefinition = BlueTuskViewMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskViewMetadata.Normalize(operation.Definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        var name = helper.DelimitIdentifier(definition.Name, definition.Schema);
+        if (!string.Equals(oldDefinition.AccessMethod, definition.AccessMethod, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER MATERIALIZED VIEW ").Append(name)
+                .Append(" SET ACCESS METHOD ").Append(helper.DelimitIdentifier(definition.AccessMethod));
+            EndStatement(builder);
+        }
+
+        if (!string.Equals(oldDefinition.Tablespace, definition.Tablespace, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER MATERIALIZED VIEW ").Append(name)
+                .Append(" SET TABLESPACE ")
+                .Append(helper.DelimitIdentifier(definition.Tablespace ?? "pg_default"));
+            EndStatement(builder);
+        }
+
+        var oldParameters = oldDefinition.StorageParameters.ToDictionary(
+            parameter => parameter.Name,
+            StringComparer.Ordinal);
+        var parametersToSet = definition.StorageParameters
+            .Where(parameter => !oldParameters.TryGetValue(parameter.Name, out var oldParameter) ||
+                                !string.Equals(oldParameter.ValueSql, parameter.ValueSql, StringComparison.Ordinal))
+            .ToArray();
+        if (parametersToSet.Length > 0)
+        {
+            builder.Append("ALTER MATERIALIZED VIEW ").Append(name).Append(" SET ");
+            AppendStorageParameterBody(builder, parametersToSet);
+            EndStatement(builder);
+        }
+
+        var parameterNames = definition.StorageParameters.Select(parameter => parameter.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var parametersToReset = oldDefinition.StorageParameters
+            .Where(parameter => !parameterNames.Contains(parameter.Name))
+            .Select(parameter => parameter.Name)
+            .ToArray();
+        if (parametersToReset.Length > 0)
+        {
+            builder.Append("ALTER MATERIALIZED VIEW ").Append(name).Append(" RESET (");
+            for (var index = 0; index < parametersToReset.Length; index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(helper.DelimitIdentifier(parametersToReset[index]));
+            }
+
+            builder.Append(")");
+            EndStatement(builder);
+        }
+
+        if (oldDefinition.IsPopulated != definition.IsPopulated)
+        {
+            AppendRefreshMaterializedView(builder, definition.Name, definition.Schema, false, definition.IsPopulated);
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        DropBlueTuskViewOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append(operation.Kind == BlueTuskViewKind.View ? "DROP VIEW " : "DROP MATERIALIZED VIEW ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskViewOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        var keyword = operation.Kind == BlueTuskViewKind.View ? "VIEW" : "MATERIALIZED VIEW";
+        var currentSchema = operation.Schema;
+        if (!string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
+        {
+            if (operation.NewSchema is null)
+            {
+                throw new InvalidOperationException("A PostgreSQL view cannot be moved to an unspecified schema.");
+            }
+
+            builder.Append("ALTER ").Append(keyword).Append(" ")
+                .Append(helper.DelimitIdentifier(operation.Name, currentSchema))
+                .Append(" SET SCHEMA ").Append(helper.DelimitIdentifier(operation.NewSchema));
+            EndStatement(builder);
+            currentSchema = operation.NewSchema;
+        }
+
+        if (!string.Equals(operation.Name, operation.NewName, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER ").Append(keyword).Append(" ")
+                .Append(helper.DelimitIdentifier(operation.Name, currentSchema))
+                .Append(" RENAME TO ").Append(helper.DelimitIdentifier(operation.NewName));
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        RefreshBlueTuskMaterializedViewOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        if (operation.Concurrently && !operation.WithData)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL cannot refresh a materialized view CONCURRENTLY WITH NO DATA.");
+        }
+
+        AppendRefreshMaterializedView(
+            builder,
+            operation.Name,
+            operation.Schema,
+            operation.Concurrently,
+            operation.WithData);
+        EndStatement(builder);
+    }
+
+    private void AppendViewDefinition(
+        MigrationCommandListBuilder builder,
+        BlueTuskViewDefinition definition,
+        bool replace)
+    {
+        definition = BlueTuskViewMetadata.Normalize(definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append(replace ? "CREATE OR REPLACE " : "CREATE ");
+        if (definition.IsRecursive)
+        {
+            builder.Append("RECURSIVE ");
+        }
+
+        builder.Append("VIEW ").Append(helper.DelimitIdentifier(definition.Name, definition.Schema));
+        AppendIdentifierList(builder, definition.Columns);
+        var optionCount = (definition.SecurityBarrier ? 1 : 0) +
+                          (definition.SecurityInvoker ? 1 : 0) +
+                          (definition.CheckOption is null ? 0 : 1);
+        if (optionCount > 0)
+        {
+            builder.Append(" WITH (");
+            var needsSeparator = false;
+            if (definition.SecurityBarrier)
+            {
+                builder.Append("security_barrier=true");
+                needsSeparator = true;
+            }
+
+            if (definition.SecurityInvoker)
+            {
+                if (needsSeparator)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append("security_invoker=true");
+                needsSeparator = true;
+            }
+
+            if (definition.CheckOption is not null)
+            {
+                if (needsSeparator)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append("check_option=")
+                    .Append(definition.CheckOption == BlueTuskViewCheckOption.Local ? "local" : "cascaded");
+            }
+
+            builder.Append(")");
+        }
+
+        builder.Append(" AS ").Append(definition.QuerySql);
+    }
+
+    private void AppendIdentifierList(MigrationCommandListBuilder builder, IReadOnlyList<string> identifiers)
+    {
+        if (identifiers.Count == 0)
+        {
+            return;
+        }
+
+        builder.Append(" (");
+        for (var index = 0; index < identifiers.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(identifiers[index]));
+        }
+
+        builder.Append(")");
+    }
+
+    private void AppendStorageParameters(
+        MigrationCommandListBuilder builder,
+        IReadOnlyList<BlueTuskMaterializedViewStorageParameterDefinition> parameters)
+    {
+        if (parameters.Count == 0)
+        {
+            return;
+        }
+
+        builder.Append(" WITH ");
+        AppendStorageParameterBody(builder, parameters);
+    }
+
+    private void AppendStorageParameterBody(
+        MigrationCommandListBuilder builder,
+        IReadOnlyList<BlueTuskMaterializedViewStorageParameterDefinition> parameters)
+    {
+        builder.Append("(");
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(parameters[index].Name))
+                .Append("=").Append(parameters[index].ValueSql);
+        }
+
+        builder.Append(")");
+    }
+
+    private void AppendRefreshMaterializedView(
+        MigrationCommandListBuilder builder,
+        string name,
+        string? schema,
+        bool concurrently,
+        bool withData)
+    {
+        builder.Append("REFRESH MATERIALIZED VIEW ");
+        if (concurrently)
+        {
+            builder.Append("CONCURRENTLY ");
+        }
+
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name, schema))
+            .Append(withData ? " WITH DATA" : " WITH NO DATA");
     }
 
     private void Generate(

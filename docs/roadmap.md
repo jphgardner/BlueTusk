@@ -322,7 +322,12 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] UDT-first ordering plus relational dependency phases for string and SQL-standard tracked bodies
   - [x] `pg_proc` canonical discovery for normal/window functions and procedures with aggregate, system, and extension-owned exclusion
   - [x] PostgreSQL 15–19 overloaded execution, procedure lifecycle, replacement, reverse-engineering, and scaffolding acceptance
-- [ ] Views and materialised views
+- [x] Views and materialised views
+  - [x] Typed ordinary/recursive and materialised definitions with output columns, security/check options, dependencies, access method, storage parameters, tablespace, and population state
+  - [x] Dependency-ordered create/drop, constrained ordinary replacement, rename/schema moves, materialised auxiliary alterations, and manual normal/concurrent refresh operations
+  - [x] Destructive materialised-query replacement with transitive provider-owned dependent reconstruction and default-`RESTRICT` drops
+  - [x] `pg_class`/`pg_rewrite`/`pg_depend`/`pg_get_viewdef` discovery with system/extension exclusion plus fluent model regeneration
+  - [x] PostgreSQL 15–19 execution, check enforcement, concurrent refresh, lifecycle, reverse-engineering, and scaffolding acceptance
 - [ ] PostgreSQL-complete migrations SQL generation
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
 - [ ] Idempotent scripts, history-table behaviour, and version-aware DDL

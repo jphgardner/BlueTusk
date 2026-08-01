@@ -15,6 +15,8 @@ using BlueTusk.EntityFrameworkCore.TableInheritance;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
+using BlueTusk.EntityFrameworkCore.Views;
+using BlueTusk.EntityFrameworkCore.Views.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -81,6 +83,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadSequences(connection, model, selection);
         ReadUserDefinedTypes(connection, model, selection);
         ReadRoutines(connection, model, selection);
+        ReadViews(connection, model, tables, selection);
         ReadPropertyGraphs(connection, model, selection);
         return model;
     }
@@ -1145,6 +1148,172 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             model[BlueTuskRoutineMetadata.AnnotationName] =
                 BlueTuskRoutineMetadata.Serialize(new BlueTuskRoutineDefinitionSet(definitions));
         }
+    }
+
+    private static void ReadViews(
+        DbConnection connection,
+        DatabaseModel model,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables,
+        Selection selection)
+    {
+        const string dependencySql = """
+            SELECT child_namespace.nspname,
+                   child.relname,
+                   parent_namespace.nspname,
+                   parent.relname
+            FROM pg_catalog.pg_rewrite AS rewrite_entry
+            JOIN pg_catalog.pg_class AS child ON child.oid = rewrite_entry.ev_class
+            JOIN pg_catalog.pg_namespace AS child_namespace ON child_namespace.oid = child.relnamespace
+            JOIN pg_catalog.pg_depend AS dependency
+              ON dependency.classid = 'pg_catalog.pg_rewrite'::pg_catalog.regclass
+             AND dependency.objid = rewrite_entry.oid
+             AND dependency.refclassid = 'pg_catalog.pg_class'::pg_catalog.regclass
+             AND dependency.deptype = 'n'
+            JOIN pg_catalog.pg_class AS parent ON parent.oid = dependency.refobjid
+            JOIN pg_catalog.pg_namespace AS parent_namespace ON parent_namespace.oid = parent.relnamespace
+            WHERE child.relkind IN ('v', 'm')
+              AND parent.relkind IN ('v', 'm')
+              AND child.oid <> parent.oid
+              AND child_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND child_namespace.nspname !~ '^pg_toast'
+            ORDER BY child_namespace.nspname, child.relname, parent_namespace.nspname, parent.relname
+            """;
+        var dependencies = new Dictionary<
+            (string Schema, string Name),
+            List<BlueTuskViewDependencyDefinition>>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = dependencySql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var key = (reader.GetString(0), reader.GetString(1));
+                if (!tables.ContainsKey(key) || !selection.IncludesTable(key.Item1, key.Item2))
+                {
+                    continue;
+                }
+
+                if (!dependencies.TryGetValue(key, out var viewDependencies))
+                {
+                    viewDependencies = [];
+                    dependencies.Add(key, viewDependencies);
+                }
+
+                var dependency = new BlueTuskViewDependencyDefinition(reader.GetString(3), reader.GetString(2));
+                if (!viewDependencies.Contains(dependency))
+                {
+                    viewDependencies.Add(dependency);
+                }
+            }
+        }
+
+        const string sql = """
+            SELECT namespace.nspname,
+                   relation.relname,
+                   relation.relkind::text,
+                   pg_catalog.pg_get_viewdef(relation.oid, false),
+                   relation.reloptions,
+                   relation.relispopulated,
+                   access_method.amname,
+                   tablespace.spcname
+            FROM pg_catalog.pg_class AS relation
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+            LEFT JOIN pg_catalog.pg_am AS access_method ON access_method.oid = relation.relam
+            LEFT JOIN pg_catalog.pg_tablespace AS tablespace ON tablespace.oid = relation.reltablespace
+            WHERE relation.relkind IN ('v', 'm')
+              AND namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_class'::pg_catalog.regclass
+                    AND dependency.objid = relation.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, relation.relname
+            """;
+        var views = new List<BlueTuskViewDefinition>();
+        var materializedViews = new List<BlueTuskMaterializedViewDefinition>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = sql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var key = (Schema: reader.GetString(0), Name: reader.GetString(1));
+                if (!tables.TryGetValue(key, out var table) || !selection.IncludesTable(key.Schema, key.Name))
+                {
+                    continue;
+                }
+
+                var columns = table.Columns.Select(column => column.Name).ToArray();
+                var viewDependencies = dependencies.TryGetValue(key, out var discoveredDependencies)
+                    ? discoveredDependencies.ToArray()
+                    : Array.Empty<BlueTuskViewDependencyDefinition>();
+                var options = reader.IsDBNull(4)
+                    ? Array.Empty<string>()
+                    : ParsePostgreSqlArray(reader.GetValue(4));
+                if (reader.GetString(2) == "v")
+                {
+                    views.Add(new BlueTuskViewDefinition(
+                        key.Name,
+                        key.Schema,
+                        reader.GetString(3),
+                        columns,
+                        viewDependencies,
+                        SecurityBarrier: HasOption(options, "security_barrier", "true"),
+                        SecurityInvoker: HasOption(options, "security_invoker", "true"),
+                        CheckOption: GetOption(options, "check_option")?.ToLowerInvariant() switch
+                        {
+                            "local" => BlueTuskViewCheckOption.Local,
+                            "cascaded" => BlueTuskViewCheckOption.Cascaded,
+                            _ => null,
+                        }));
+                }
+                else
+                {
+                    materializedViews.Add(new BlueTuskMaterializedViewDefinition(
+                        key.Name,
+                        key.Schema,
+                        reader.GetString(3),
+                        columns,
+                        viewDependencies,
+                        reader.IsDBNull(6) ? "heap" : reader.GetString(6),
+                        options.Select(ParseStorageParameter).ToArray(),
+                        GetNullableString(reader, 7),
+                        reader.GetBoolean(5)));
+                }
+            }
+        }
+
+        if (views.Count > 0 || materializedViews.Count > 0)
+        {
+            model[BlueTuskViewMetadata.AnnotationName] = BlueTuskViewMetadata.Serialize(
+                new BlueTuskViewDefinitionSet(views, materializedViews));
+        }
+    }
+
+    private static bool HasOption(IReadOnlyList<string> options, string name, string value) =>
+        string.Equals(GetOption(options, name), value, StringComparison.OrdinalIgnoreCase);
+
+    private static string? GetOption(IReadOnlyList<string> options, string name)
+    {
+        var prefix = $"{name}=";
+        return options.FirstOrDefault(option => option.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+            ?[prefix.Length..];
+    }
+
+    private static BlueTuskMaterializedViewStorageParameterDefinition ParseStorageParameter(string option)
+    {
+        var separator = option.IndexOf('=');
+        if (separator <= 0 || separator == option.Length - 1)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL returned an invalid materialized-view storage parameter '{option}'.");
+        }
+
+        return new BlueTuskMaterializedViewStorageParameterDefinition(
+            option[..separator],
+            option[(separator + 1)..]);
     }
 
     private static BlueTuskPropertyGraphDefinition ToDefinition(

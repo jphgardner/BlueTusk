@@ -4,6 +4,7 @@ using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
+using BlueTusk.EntityFrameworkCore.Views.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations.Design;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -25,6 +26,78 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskViewOperation createView:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskView(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskViewMetadata.Serialize(createView.Definition)))
+                    .AppendLine(");");
+                break;
+            case ReplaceBlueTuskViewOperation replaceView:
+                builder
+                    .Append("migrationBuilder.ReplaceBlueTuskView(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskViewMetadata.Serialize(replaceView.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskViewMetadata.Serialize(replaceView.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskMaterializedViewOperation createMaterializedView:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskMaterializedView(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskViewMetadata.Serialize(createMaterializedView.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskMaterializedViewOperation alterMaterializedView:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskMaterializedView(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskViewMetadata.Serialize(alterMaterializedView.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskViewMetadata.Serialize(alterMaterializedView.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskViewOperation dropView:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskView(")
+                    .Append("global::BlueTusk.EntityFrameworkCore.Views.BlueTuskViewKind.")
+                    .Append(dropView.Kind.ToString())
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropView.Name))
+                    .Append(", ")
+                    .Append(Literal(dropView.Schema))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskViewOperation renameView:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskView(")
+                    .Append("global::BlueTusk.EntityFrameworkCore.Views.BlueTuskViewKind.")
+                    .Append(renameView.Kind.ToString())
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameView.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameView.NewName))
+                    .Append(", ")
+                    .Append(Literal(renameView.Schema))
+                    .Append(", ")
+                    .Append(Literal(renameView.NewSchema))
+                    .AppendLine(");");
+                break;
+            case RefreshBlueTuskMaterializedViewOperation refreshMaterializedView:
+                builder
+                    .Append("migrationBuilder.RefreshBlueTuskMaterializedView(")
+                    .Append(Dependencies.CSharpHelper.Literal(refreshMaterializedView.Name))
+                    .Append(", ")
+                    .Append(Literal(refreshMaterializedView.Schema))
+                    .Append(", ")
+                    .Append(refreshMaterializedView.Concurrently ? "true" : "false")
+                    .Append(", ")
+                    .Append(refreshMaterializedView.WithData ? "true" : "false")
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskRoutineOperation createRoutine:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskRoutine(")
