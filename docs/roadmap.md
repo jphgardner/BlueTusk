@@ -462,7 +462,8 @@ This file tracks executable repository status. The product vision is broader; un
 ## Extension ecosystem (Milestone 8, pre-1.0)
 
 - [ ] PostGIS package
-- [ ] pgvector package
+- [x] pgvector ADO.NET package (live-tested dense `vector`, arrays, and distance execution)
+- [ ] pgvector `halfvec`/`sparsevec`, vector-specific `bit`, and EF integration
 - [ ] hstore package
 - [ ] ltree package
 - [x] citext packages (tested ADO.NET and EF preview; extension SDK remains unstable)

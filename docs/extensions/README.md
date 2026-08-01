@@ -119,3 +119,39 @@ mapping and migration SQL live only in the companion package. The authoring
 template and compatibility harness establish an executable preview contract,
 but stability still requires ecosystem feedback and an explicit versioning
 commitment.
+
+## pgvector preview
+
+`BlueTusk.Extensions.PgVector` provides the first executable pgvector slice.
+Install the extension before building the data source, then register the
+schema-local `vector` type:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS vector;
+```
+
+```csharp
+using BlueTusk.Data;
+using BlueTusk.Extensions.PgVector;
+
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UsePgVector()
+    .Build();
+
+var embedding = new BlueTuskVector(1f, 2f, 3f);
+await using var command = dataSource.CreateCommand(
+    "SELECT $1::vector, $1 <-> '[1,2,4]'::vector");
+command.Parameters.Add(new BlueTuskParameter<BlueTuskVector>(embedding));
+```
+
+`BlueTuskVector` is immutable, structurally comparable, restricted to finite
+single-precision elements, and enforces pgvector's 1–16,000 dimension range.
+The codec implements pgvector's native binary header and float payload as well
+as its invariant text form. Runtime catalogue composition also supports
+`BlueTuskVector[]`. The package's live contract verifies scalar and array binary
+round trips plus Euclidean distance against the official PostgreSQL 18 pgvector
+image.
+
+The current package deliberately covers the dense `vector` data path only.
+`halfvec`, `sparsevec`, vector-specific `bit` behavior, EF mappings, and LINQ
+distance translations are not claimed by this preview.

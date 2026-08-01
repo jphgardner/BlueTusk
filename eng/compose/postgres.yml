@@ -54,3 +54,9 @@ services:
     image: postgres:19beta2-alpine
     profiles: ["preview"]
     ports: ["5419:5432"]
+
+  pgvector18:
+    <<: *postgres-common
+    image: pgvector/pgvector:pg18-trixie
+    profiles: ["extension-tests"]
+    ports: ["5518:5432"]
