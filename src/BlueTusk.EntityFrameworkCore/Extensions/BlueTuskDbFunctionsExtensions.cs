@@ -613,6 +613,65 @@ public static class BlueTuskDbFunctionsExtensions
         IEnumerable<BlueTuskRange<T>> ranges)
         => ThrowTranslationOnly<BlueTuskRange<T>?>();
 
+    public static string? JsonAggregate<T>(this DbFunctions _, IEnumerable<T> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonbAggregate<T>(this DbFunctions _, IEnumerable<T> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? XmlAggregate(this DbFunctions _, IEnumerable<string> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static int? IntegerBitAnd(this DbFunctions _, IEnumerable<int> values)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? IntegerBitOr(this DbFunctions _, IEnumerable<int> values)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? IntegerBitXor(this DbFunctions _, IEnumerable<int> values)
+        => ThrowTranslationOnly<int?>();
+
+    public static long? BigIntBitAnd(this DbFunctions _, IEnumerable<long> values)
+        => ThrowTranslationOnly<long?>();
+
+    public static long? BigIntBitOr(this DbFunctions _, IEnumerable<long> values)
+        => ThrowTranslationOnly<long?>();
+
+    public static long? BigIntBitXor(this DbFunctions _, IEnumerable<long> values)
+        => ThrowTranslationOnly<long?>();
+
+    public static double? StandardDeviationPopulation(
+        this DbFunctions _,
+        IEnumerable<double> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static decimal? StandardDeviationPopulation(
+        this DbFunctions _,
+        IEnumerable<decimal> values)
+        => ThrowTranslationOnly<decimal?>();
+
+    public static double? StandardDeviationSample(
+        this DbFunctions _,
+        IEnumerable<double> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static decimal? StandardDeviationSample(
+        this DbFunctions _,
+        IEnumerable<decimal> values)
+        => ThrowTranslationOnly<decimal?>();
+
+    public static double? VariancePopulation(this DbFunctions _, IEnumerable<double> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static decimal? VariancePopulation(this DbFunctions _, IEnumerable<decimal> values)
+        => ThrowTranslationOnly<decimal?>();
+
+    public static double? VarianceSample(this DbFunctions _, IEnumerable<double> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static decimal? VarianceSample(this DbFunctions _, IEnumerable<decimal> values)
+        => ThrowTranslationOnly<decimal?>();
+
     private static T ThrowTranslationOnly<T>()
         => throw new InvalidOperationException(
             "BlueTusk PostgreSQL database functions can only be used in translated EF Core queries.");

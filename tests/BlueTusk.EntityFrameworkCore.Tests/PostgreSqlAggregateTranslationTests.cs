@@ -41,6 +41,26 @@ public sealed class PostgreSqlAggregateTranslationTests
                     group
                         .Where(value => value.Include && value.Number >= minimum)
                         .Select(value => value.Range)),
+                Json = EF.Functions.JsonAggregate(
+                    group.OrderBy(value => value.SortOrder).Select(value => value.Json)),
+                Jsonb = EF.Functions.JsonbAggregate(
+                    group.OrderBy(value => value.SortOrder).Select(value => value.Json)),
+                Xml = EF.Functions.XmlAggregate(
+                    group.OrderBy(value => value.SortOrder).Select(value => value.Xml)),
+                IntegerAnd = EF.Functions.IntegerBitAnd(group.Select(value => value.Number)),
+                IntegerOr = EF.Functions.IntegerBitOr(group.Select(value => value.Number)),
+                IntegerXor = EF.Functions.IntegerBitXor(group.Select(value => value.Number)),
+                BigIntAnd = EF.Functions.BigIntBitAnd(group.Select(value => value.LongBits)),
+                BigIntOr = EF.Functions.BigIntBitOr(group.Select(value => value.LongBits)),
+                BigIntXor = EF.Functions.BigIntBitXor(group.Select(value => value.LongBits)),
+                PopulationDeviation = EF.Functions.StandardDeviationPopulation(
+                    group.Select(value => value.Measurement)),
+                SampleDeviation = EF.Functions.StandardDeviationSample(
+                    group.Select(value => value.Amount)),
+                PopulationVariance = EF.Functions.VariancePopulation(
+                    group.Select(value => value.Amount)),
+                SampleVariance = EF.Functions.VarianceSample(
+                    group.Select(value => value.Measurement)),
             })
             .ToQueryString();
 
@@ -51,6 +71,16 @@ public sealed class PostgreSqlAggregateTranslationTests
         Assert.Contains("bool_or(", sql, StringComparison.Ordinal);
         Assert.Contains("range_agg(", sql, StringComparison.Ordinal);
         Assert.Contains("range_intersect_agg(", sql, StringComparison.Ordinal);
+        Assert.Contains("json_agg(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_agg(", sql, StringComparison.Ordinal);
+        Assert.Contains("xmlagg(", sql, StringComparison.Ordinal);
+        Assert.Contains("bit_and(", sql, StringComparison.Ordinal);
+        Assert.Contains("bit_or(", sql, StringComparison.Ordinal);
+        Assert.Contains("bit_xor(", sql, StringComparison.Ordinal);
+        Assert.Contains("stddev_pop(", sql, StringComparison.Ordinal);
+        Assert.Contains("stddev_samp(", sql, StringComparison.Ordinal);
+        Assert.Contains("var_pop(", sql, StringComparison.Ordinal);
+        Assert.Contains("var_samp(", sql, StringComparison.Ordinal);
         Assert.Contains(" ORDER BY ", sql, StringComparison.Ordinal);
         Assert.Contains(" FILTER (WHERE ", sql, StringComparison.Ordinal);
         Assert.Contains("@delimiter", sql, StringComparison.Ordinal);
@@ -74,13 +104,37 @@ public sealed class PostgreSqlAggregateTranslationTests
                 "Text" text NOT NULL,
                 "Flag" boolean NOT NULL,
                 "Include" boolean NOT NULL,
-                "Range" int4range NOT NULL);
+                "Range" int4range NOT NULL,
+                "LongBits" bigint NOT NULL,
+                "Measurement" double precision NOT NULL,
+                "Amount" numeric NOT NULL,
+                "Json" jsonb NOT NULL,
+                "Xml" xml NOT NULL);
             INSERT INTO "ef_aggregate_values"
-                ("Id", "GroupId", "SortOrder", "Number", "Text", "Flag", "Include", "Range")
+                (
+                    "Id",
+                    "GroupId",
+                    "SortOrder",
+                    "Number",
+                    "Text",
+                    "Flag",
+                    "Include",
+                    "Range",
+                    "LongBits",
+                    "Measurement",
+                    "Amount",
+                    "Json",
+                    "Xml")
             VALUES
-                (1, 7, 2, 20, 'beta',  true,  true,  '[1,5)'::int4range),
-                (2, 7, 1, 10, 'alpha', true,  true,  '[4,8)'::int4range),
-                (3, 7, 3, 20, 'gamma', false, false, '[10,12)'::int4range)
+                (
+                    1, 7, 2, 20, 'beta', true, true, '[1,5)'::int4range,
+                    12, 2, 2, '{"id":2}'::jsonb, '<item>beta</item>'::xml),
+                (
+                    2, 7, 1, 10, 'alpha', true, true, '[4,8)'::int4range,
+                    10, 1, 1, '{"id":1}'::jsonb, '<item>alpha</item>'::xml),
+                (
+                    3, 7, 3, 20, 'gamma', false, false, '[10,12)'::int4range,
+                    5, 3, 3, '{"id":3}'::jsonb, '<item>gamma</item>'::xml)
             """);
 
         try
@@ -111,6 +165,34 @@ public sealed class PostgreSqlAggregateTranslationTests
                         group
                             .Where(value => value.Include && value.Number >= minimum)
                             .Select(value => value.Range)),
+                    Json = EF.Functions.JsonAggregate(
+                        group.OrderBy(value => value.SortOrder).Select(value => value.Json)),
+                    Jsonb = EF.Functions.JsonbAggregate(
+                        group.OrderBy(value => value.SortOrder).Select(value => value.Json)),
+                    Xml = EF.Functions.XmlAggregate(
+                        group.OrderBy(value => value.SortOrder).Select(value => value.Xml)),
+                    IntegerAnd = EF.Functions.IntegerBitAnd(group.Select(value => value.Number)),
+                    IntegerOr = EF.Functions.IntegerBitOr(group.Select(value => value.Number)),
+                    IntegerXor = EF.Functions.IntegerBitXor(group.Select(value => value.Number)),
+                    BigIntAnd = EF.Functions.BigIntBitAnd(group.Select(value => value.LongBits)),
+                    BigIntOr = EF.Functions.BigIntBitOr(group.Select(value => value.LongBits)),
+                    BigIntXor = EF.Functions.BigIntBitXor(group.Select(value => value.LongBits)),
+                    DoublePopulationDeviation = EF.Functions.StandardDeviationPopulation(
+                        group.Select(value => value.Measurement)),
+                    DecimalPopulationDeviation = EF.Functions.StandardDeviationPopulation(
+                        group.Select(value => value.Amount)),
+                    DoubleSampleDeviation = EF.Functions.StandardDeviationSample(
+                        group.Select(value => value.Measurement)),
+                    DecimalSampleDeviation = EF.Functions.StandardDeviationSample(
+                        group.Select(value => value.Amount)),
+                    DoublePopulationVariance = EF.Functions.VariancePopulation(
+                        group.Select(value => value.Measurement)),
+                    DecimalPopulationVariance = EF.Functions.VariancePopulation(
+                        group.Select(value => value.Amount)),
+                    DoubleSampleVariance = EF.Functions.VarianceSample(
+                        group.Select(value => value.Measurement)),
+                    DecimalSampleVariance = EF.Functions.VarianceSample(
+                        group.Select(value => value.Amount)),
                 })
                 .SingleAsync();
 
@@ -129,6 +211,32 @@ public sealed class PostgreSqlAggregateTranslationTests
                 ]),
                 aggregate.Union);
             Assert.Equal(new BlueTuskRange<int>(4, 5), aggregate.Intersection);
+            Assert.Contains("{\"id\": 1}", aggregate.Json, StringComparison.Ordinal);
+            Assert.Contains("{\"id\": 2}", aggregate.Json, StringComparison.Ordinal);
+            Assert.Contains("{\"id\": 3}", aggregate.Json, StringComparison.Ordinal);
+            Assert.Contains("{\"id\": 1}", aggregate.Jsonb, StringComparison.Ordinal);
+            Assert.Contains("{\"id\": 2}", aggregate.Jsonb, StringComparison.Ordinal);
+            Assert.Contains("{\"id\": 3}", aggregate.Jsonb, StringComparison.Ordinal);
+            Assert.Equal(
+                "<item>alpha</item><item>beta</item><item>gamma</item>",
+                aggregate.Xml);
+            Assert.Equal(0, aggregate.IntegerAnd);
+            Assert.Equal(30, aggregate.IntegerOr);
+            Assert.Equal(10, aggregate.IntegerXor);
+            Assert.Equal(0, aggregate.BigIntAnd);
+            Assert.Equal(15, aggregate.BigIntOr);
+            Assert.Equal(3, aggregate.BigIntXor);
+            Assert.Equal(Math.Sqrt(2d / 3d), aggregate.DoublePopulationDeviation!.Value, 12);
+            Assert.Equal(
+                (decimal)Math.Sqrt(2d / 3d),
+                aggregate.DecimalPopulationDeviation!.Value,
+                precision: 12);
+            Assert.Equal(1, aggregate.DoubleSampleDeviation);
+            Assert.Equal(1, aggregate.DecimalSampleDeviation);
+            Assert.Equal(2d / 3d, aggregate.DoublePopulationVariance!.Value, 12);
+            Assert.Equal(2m / 3m, aggregate.DecimalPopulationVariance!.Value, 12);
+            Assert.Equal(1, aggregate.DoubleSampleVariance);
+            Assert.Equal(1, aggregate.DecimalSampleVariance);
         }
         finally
         {
@@ -178,7 +286,12 @@ public sealed class PostgreSqlAggregateTranslationTests
         public DbSet<AggregateValue> Values => Set<AggregateValue>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-            => modelBuilder.Entity<AggregateValue>().ToTable("ef_aggregate_values");
+        {
+            var value = modelBuilder.Entity<AggregateValue>();
+            value.ToTable("ef_aggregate_values");
+            value.Property(item => item.Json).HasColumnType("jsonb");
+            value.Property(item => item.Xml).HasColumnType("xml");
+        }
     }
 
     private sealed class AggregateValue
@@ -198,5 +311,15 @@ public sealed class PostgreSqlAggregateTranslationTests
         public bool Include { get; set; }
 
         public BlueTuskRange<int> Range { get; set; }
+
+        public long LongBits { get; set; }
+
+        public double Measurement { get; set; }
+
+        public decimal Amount { get; set; }
+
+        public string Json { get; set; } = "{}";
+
+        public string Xml { get; set; } = "<item />";
     }
 }

@@ -250,8 +250,34 @@ var summaries = await context.Events
 becomes aggregate `DISTINCT`, and a grouping `Where(...)` becomes native
 `FILTER (WHERE ...)`. Delimiters and filter values remain normal parameters.
 The APIs return nullable results because PostgreSQL returns `NULL` when an
-aggregate has no selected input rows. JSON/statistical/ordered-set aggregates,
-and remaining aggregates remain planned.
+aggregate has no selected input rows.
+
+`JsonAggregate`, `JsonbAggregate`, and `XmlAggregate` retain `json`, `jsonb`,
+and `xml` result mappings. `IntegerBitAnd`/`Or`/`Xor` and their `BigInt`
+counterparts expose PostgreSQL's width-preserving bitwise aggregates.
+`StandardDeviationPopulation`, `StandardDeviationSample`,
+`VariancePopulation`, and `VarianceSample` have `double` and `decimal`
+overloads so floating-point and PostgreSQL `numeric` calculations materialize
+without changing result families. These aggregates keep the same in-call
+ordering, `DISTINCT`, and `FILTER` support as the initial surface:
+
+```csharp
+var summaries = context.Events
+    .GroupBy(item => item.Category)
+    .Select(group => new
+    {
+        Payloads = EF.Functions.JsonbAggregate(
+            group.OrderBy(item => item.Position).Select(item => item.Payload)),
+        PopulationVariance = EF.Functions.VariancePopulation(
+            group.Where(item => item.IsIncluded).Select(item => item.Measurement)),
+    });
+```
+
+Generated SQL and typed live tests cover both result mappings and numeric
+families across PostgreSQL 15–19. JSON object aggregates, paired regression and
+covariance aggregates, ordered-set/hypothetical-set aggregates, and remaining
+aggregate families are still planned; BlueTusk does not currently emulate their
+multi-input or `WITHIN GROUP` syntax with client code.
 
 ## Array expansion and lateral queries
 

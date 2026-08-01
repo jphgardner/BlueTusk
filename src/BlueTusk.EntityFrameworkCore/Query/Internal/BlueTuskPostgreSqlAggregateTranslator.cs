@@ -21,6 +21,19 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.BooleanOr)] = "bool_or",
             [nameof(BlueTuskDbFunctionsExtensions.RangeAggregate)] = "range_agg",
             [nameof(BlueTuskDbFunctionsExtensions.RangeIntersectAggregate)] = "range_intersect_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonAggregate)] = "json_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonbAggregate)] = "jsonb_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.XmlAggregate)] = "xmlagg",
+            [nameof(BlueTuskDbFunctionsExtensions.IntegerBitAnd)] = "bit_and",
+            [nameof(BlueTuskDbFunctionsExtensions.IntegerBitOr)] = "bit_or",
+            [nameof(BlueTuskDbFunctionsExtensions.IntegerBitXor)] = "bit_xor",
+            [nameof(BlueTuskDbFunctionsExtensions.BigIntBitAnd)] = "bit_and",
+            [nameof(BlueTuskDbFunctionsExtensions.BigIntBitOr)] = "bit_or",
+            [nameof(BlueTuskDbFunctionsExtensions.BigIntBitXor)] = "bit_xor",
+            [nameof(BlueTuskDbFunctionsExtensions.StandardDeviationPopulation)] = "stddev_pop",
+            [nameof(BlueTuskDbFunctionsExtensions.StandardDeviationSample)] = "stddev_samp",
+            [nameof(BlueTuskDbFunctionsExtensions.VariancePopulation)] = "var_pop",
+            [nameof(BlueTuskDbFunctionsExtensions.VarianceSample)] = "var_samp",
         };
 
     public SqlExpression? Translate(
@@ -53,9 +66,18 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
         }
 
         var resultType = Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType;
-        var resultMapping = method.Name == nameof(BlueTuskDbFunctionsExtensions.StringAggregate)
-            ? typeMappingSource.FindMapping("text")
-            : typeMappingSource.FindMapping(resultType);
+        var resultMapping = method.Name switch
+        {
+            nameof(BlueTuskDbFunctionsExtensions.StringAggregate) =>
+                typeMappingSource.FindMapping("text"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonAggregate) =>
+                typeMappingSource.FindMapping("json"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonbAggregate) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.XmlAggregate) =>
+                typeMappingSource.FindMapping("xml"),
+            _ => typeMappingSource.FindMapping(resultType),
+        };
         if (resultMapping is null)
         {
             return null;
