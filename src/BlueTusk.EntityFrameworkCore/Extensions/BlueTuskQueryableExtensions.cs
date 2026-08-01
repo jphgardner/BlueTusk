@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Text;
 using Microsoft.EntityFrameworkCore.Query;
 
 namespace Microsoft.EntityFrameworkCore;
@@ -64,6 +65,21 @@ public static class BlueTuskQueryableExtensions
         [NotParameterized] BlueTuskRowLockingBehavior behavior = BlueTuskRowLockingBehavior.Wait)
         => CreateLockingQuery(source, nameof(ForKeyShare), behavior);
 
+    public static IQueryable<TSource> AsCte<TSource>(
+        this IQueryable<TSource> source,
+        [NotParameterized] string name)
+        => CreateCteQuery(source, nameof(AsCte), name);
+
+    public static IQueryable<TSource> AsMaterializedCte<TSource>(
+        this IQueryable<TSource> source,
+        [NotParameterized] string name)
+        => CreateCteQuery(source, nameof(AsMaterializedCte), name);
+
+    public static IQueryable<TSource> AsNotMaterializedCte<TSource>(
+        this IQueryable<TSource> source,
+        [NotParameterized] string name)
+        => CreateCteQuery(source, nameof(AsNotMaterializedCte), name);
+
     private static IQueryable<TSource> CreateSamplingQuery<TSource>(
         IQueryable<TSource> source,
         string methodName,
@@ -116,6 +132,35 @@ public static class BlueTuskQueryableExtensions
                 method,
                 source.Expression,
                 Expression.Constant(behavior)));
+    }
+
+    private static IQueryable<TSource> CreateCteQuery<TSource>(
+        IQueryable<TSource> source,
+        string methodName,
+        string name)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        if (name.Contains('\0', StringComparison.Ordinal))
+        {
+            throw new ArgumentException("A PostgreSQL CTE name cannot contain a null character.", nameof(name));
+        }
+
+        if (Encoding.UTF8.GetByteCount(name) > 63)
+        {
+            throw new ArgumentException(
+                "A PostgreSQL CTE name cannot exceed 63 UTF-8 bytes.",
+                nameof(name));
+        }
+
+        var method = GetMethod(methodName, genericArgumentCount: 1, parameterCount: 2)
+            .MakeGenericMethod(typeof(TSource));
+        return source.Provider.CreateQuery<TSource>(
+            Expression.Call(
+                null,
+                method,
+                source.Expression,
+                Expression.Constant(name)));
     }
 
     private static MethodInfo GetMethod(

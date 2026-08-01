@@ -8,6 +8,8 @@ namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies dependencies)
     : QuerySqlGenerator(dependencies)
 {
+    private bool _renderingCteBody;
+
     protected override Expression VisitExtension(Expression extensionExpression)
     {
         if (extensionExpression is BlueTuskUnnestExpression unnest)
@@ -246,6 +248,45 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         return base.VisitExtension(extensionExpression);
     }
 
+    protected override Expression VisitSelect(SelectExpression selectExpression)
+    {
+        if (_renderingCteBody
+            || GetQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.CommonTableExpression)?.Value
+                is not BlueTuskCteClause cte)
+        {
+            return base.VisitSelect(selectExpression);
+        }
+
+        Sql.Append("WITH ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(cte.Name))
+            .Append(" AS");
+        if (cte.Materialization != BlueTuskCteMaterialization.Default)
+        {
+            Sql.Append(cte.Materialization == BlueTuskCteMaterialization.Materialized
+                ? " MATERIALIZED"
+                : " NOT MATERIALIZED");
+        }
+
+        Sql.Append(" (").AppendLine();
+        _renderingCteBody = true;
+        try
+        {
+            base.VisitSelect(selectExpression);
+        }
+        finally
+        {
+            _renderingCteBody = false;
+        }
+
+        Sql.AppendLine()
+            .Append(")")
+            .AppendLine()
+            .Append("SELECT * FROM ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(cte.Name));
+        AppendCteResultOrdering(selectExpression);
+        return selectExpression;
+    }
+
     protected override Expression VisitCrossApply(CrossApplyExpression crossApplyExpression)
     {
         Sql.Append("JOIN LATERAL ");
@@ -362,4 +403,46 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         => selectExpression.Tables.Count == 0
             ? null
             : selectExpression.Tables[0].FindAnnotation(name);
+
+    private void AppendCteResultOrdering(SelectExpression selectExpression)
+    {
+        if (selectExpression.Orderings.Count == 0)
+        {
+            return;
+        }
+
+        var positions = new int[selectExpression.Orderings.Count];
+        for (var orderingIndex = 0; orderingIndex < selectExpression.Orderings.Count; orderingIndex++)
+        {
+            var ordering = selectExpression.Orderings[orderingIndex];
+            var projectionIndex = selectExpression.Projection
+                .Select((projection, index) => (projection, index))
+                .FirstOrDefault(item => item.projection.Expression.Equals(ordering.Expression))
+                .index;
+            if (projectionIndex < 0
+                || projectionIndex >= selectExpression.Projection.Count
+                || !selectExpression.Projection[projectionIndex].Expression.Equals(ordering.Expression))
+            {
+                throw new InvalidOperationException(
+                    "An ordered PostgreSQL CTE must project every ORDER BY expression so the result order can be preserved.");
+            }
+
+            positions[orderingIndex] = projectionIndex + 1;
+        }
+
+        Sql.AppendLine().Append("ORDER BY ");
+        for (var index = 0; index < positions.Length; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Sql.Append(positions[index].ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if (!selectExpression.Orderings[index].IsAscending)
+            {
+                Sql.Append(" DESC");
+            }
+        }
+    }
 }

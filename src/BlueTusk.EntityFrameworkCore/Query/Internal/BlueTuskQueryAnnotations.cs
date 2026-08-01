@@ -7,6 +7,8 @@ internal static class BlueTuskQueryAnnotationNames
 {
     public const string DistinctOn = "BlueTusk:DistinctOn";
 
+    public const string CommonTableExpression = "BlueTusk:CommonTableExpression";
+
     public const string RowLocking = "BlueTusk:RowLocking";
 
     public const string TableSample = "BlueTusk:TableSample";
@@ -25,6 +27,17 @@ internal enum BlueTuskTableSampleMethod
     System,
     Bernoulli,
 }
+
+internal enum BlueTuskCteMaterialization
+{
+    Default,
+    Materialized,
+    NotMaterialized,
+}
+
+internal sealed record BlueTuskCteClause(
+    string Name,
+    BlueTuskCteMaterialization Materialization);
 
 internal sealed record BlueTuskRowLockingClause(
     BlueTuskRowLockingStrength Strength,

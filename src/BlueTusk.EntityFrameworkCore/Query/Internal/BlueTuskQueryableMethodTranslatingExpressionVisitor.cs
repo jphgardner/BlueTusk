@@ -88,6 +88,24 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                     selectExpression,
                     methodCallExpression,
                     BlueTuskRowLockingStrength.KeyShare),
+            nameof(BlueTuskQueryableExtensions.AsCte) =>
+                TranslateCte(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskCteMaterialization.Default),
+            nameof(BlueTuskQueryableExtensions.AsMaterializedCte) =>
+                TranslateCte(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskCteMaterialization.Materialized),
+            nameof(BlueTuskQueryableExtensions.AsNotMaterializedCte) =>
+                TranslateCte(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskCteMaterialization.NotMaterialized),
             _ => base.VisitMethodCall(methodCallExpression),
         };
     }
@@ -186,6 +204,25 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             selectExpression,
             BlueTuskQueryAnnotationNames.RowLocking,
             new BlueTuskRowLockingClause(strength, behavior));
+        return source;
+    }
+
+    private static ShapedQueryExpression TranslateCte(
+        ShapedQueryExpression source,
+        SelectExpression selectExpression,
+        MethodCallExpression methodCallExpression,
+        BlueTuskCteMaterialization materialization)
+    {
+        if (methodCallExpression.Arguments[1] is not ConstantExpression { Value: string name })
+        {
+            throw new InvalidOperationException(
+                "The PostgreSQL CTE name must be a constant value.");
+        }
+
+        AddQueryAnnotation(
+            selectExpression,
+            BlueTuskQueryAnnotationNames.CommonTableExpression,
+            new BlueTuskCteClause(name, materialization));
         return source;
     }
 

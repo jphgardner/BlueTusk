@@ -102,6 +102,38 @@ public sealed class PostgreSqlQueryConstructTests
     }
 
     [Fact]
+    public void Ctes_translate_materialization_quoting_ordering_and_diagnostics()
+    {
+        using var context = CreateContext();
+
+        var materializedSql = context.Documents
+            .Where(document => document.Score > 0)
+            .OrderBy(document => document.Id)
+            .Select(document => new { document.Id, document.Score })
+            .AsMaterializedCte("Ranked \"Documents")
+            .ToQueryString();
+        var notMaterializedSql = context.Documents
+            .AsNotMaterializedCte("inlined_documents")
+            .ToQueryString();
+        var defaultSql = context.Documents
+            .AsCte("ordinary_documents")
+            .ToQueryString();
+
+        Assert.Contains("WITH \"Ranked \"\"Documents\" AS MATERIALIZED (", materializedSql, StringComparison.Ordinal);
+        Assert.Contains("SELECT * FROM \"Ranked \"\"Documents\"", materializedSql, StringComparison.Ordinal);
+        Assert.EndsWith("ORDER BY 1", materializedSql, StringComparison.Ordinal);
+        Assert.Contains("WITH \"inlined_documents\" AS NOT MATERIALIZED (", notMaterializedSql, StringComparison.Ordinal);
+        Assert.Contains("WITH \"ordinary_documents\" AS (", defaultSql, StringComparison.Ordinal);
+        Assert.Throws<ArgumentException>(() => context.Documents.AsCte(new string('a', 64)));
+        Assert.Throws<ArgumentException>(() => context.Documents.AsCte("invalid\0name"));
+        var duplicate = Assert.Throws<InvalidOperationException>(() => context.Documents
+            .AsCte("first")
+            .AsMaterializedCte("second")
+            .ToQueryString());
+        Assert.Contains("can be applied only once", duplicate.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Window_functions_translate_partition_order_direction_and_typed_values()
     {
         using var context = CreateContext();
@@ -249,6 +281,12 @@ public sealed class PostgreSqlQueryConstructTests
                     .Where(document => document.Score >= minimumScore)
                     .OrderBy(document => document.Id)
                     .Select(document => EF.Functions.WindowRowNumber(document.Score)));
+            var compiledCte = EF.CompileQuery(
+                (QueryConstructContext database, int minimumScore) => database.Documents
+                    .Where(document => document.Score >= minimumScore)
+                    .OrderBy(document => document.Id)
+                    .Select(document => document.Id)
+                    .AsMaterializedCte("compiled_documents"));
             var windows = await context.Documents
                 .OrderBy(document => document.Id)
                 .Select(document => new
@@ -317,6 +355,7 @@ public sealed class PostgreSqlQueryConstructTests
                 [2, 3],
                 compiledDistinct(context, 2).Select(document => document.Id).ToArray());
             Assert.Equal([2L, 1L], compiledWindow(context, 2).ToArray());
+            Assert.Equal([2, 3], compiledCte(context, 2).ToArray());
             Assert.Collection(
                 windows,
                 row => Assert.Equal(

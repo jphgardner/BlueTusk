@@ -667,6 +667,30 @@ var sample = await context.Events
     .ToListAsync(cancellationToken);
 ```
 
+Translated LINQ queries can be exposed through a named PostgreSQL CTE with
+`AsCte`, `AsMaterializedCte`, or `AsNotMaterializedCte`. The latter two emit
+PostgreSQL's explicit CTE planning controls; the default form leaves the choice
+to the server. The name is identifier-delimited, must fit PostgreSQL's 63-byte
+identifier limit, and is never interpreted as SQL. Values and predicates inside
+the CTE remain normal EF parameters:
+
+```csharp
+var ranked = await context.Events
+    .Where(item => item.Score >= minimumScore)
+    .OrderBy(item => item.Id)
+    .Select(item => new { item.Id, item.Score })
+    .AsMaterializedCte("ranked_events")
+    .ToListAsync(cancellationToken);
+```
+
+The operation wraps the complete translated query and remains compatible with
+compiled queries. For an ordered CTE, every ordering expression must be present
+in the projection; BlueTusk then reapplies the order by output position outside
+the CTE so enumeration order is retained. Applying more than one CTE wrapper to
+the same query fails with a focused diagnostic. Default, materialized, and
+non-materialized SQL generation plus compiled execution are covered across
+PostgreSQL 15–19.
+
 Row-locking extensions cover `ForUpdate`, `ForNoKeyUpdate`, `ForShare`, and
 `ForKeyShare`. Each accepts `Wait`, `NoWait`, or `SkipLocked` behavior. Apply
 the locking operation after the final server projection and enumerate it inside
