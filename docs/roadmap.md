@@ -309,6 +309,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Create/replace/drop/rename/mode diffs with relation dependency ordering, rename-aware tables, destructive diagnostics, and default-`RESTRICT` drops
   - [x] Canonical `pg_rewrite`/`pg_get_ruledef` discovery with generated fluent C#, extension-owned exclusion, and ordinary view `_RETURN` de-duplication
   - [x] PostgreSQL 15–19 execution, lifecycle, reverse-engineering, and scaffolding acceptance
+- [x] Logical-replication publications
+  - [x] Typed table/schema/all-table membership, column lists, trusted row filters, DML selection, partition-root publishing, and empty publications
+  - [x] PostgreSQL 18 generated-column publishing plus PostgreSQL 19 all-sequence and all-table exclusion metadata with explicit capability guards
+  - [x] In-place membership/options changes, rename, destructive all-object mode transitions, relation dependency ordering, and default-`RESTRICT` drops
+  - [x] Cross-version `pg_publication`/`pg_publication_rel`/`pg_publication_namespace` discovery, fluent C# scaffolding, and PostgreSQL 15–19 acceptance
 - [x] Table partitioning metadata and migrations
   - [x] Typed RANGE, single-key LIST, multi-key HASH, expression-key, default-partition, and recursive subpartition metadata
   - [x] Create/add/drop/rename/schema-move diffs with destructive bound-change and unsupported root-strategy diagnostics
@@ -362,7 +367,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
 - [ ] Remaining product-spec schema objects
   - [ ] Event triggers
-  - [ ] Publications and subscriptions
+  - [ ] Subscriptions
   - [ ] Foreign-data wrappers, servers, user mappings, and foreign tables
   - [ ] Operators, operator classes, operator families, casts, and aggregates
   - [ ] Tablespace lifecycle

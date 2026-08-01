@@ -9,6 +9,8 @@ using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.Publications;
+using BlueTusk.EntityFrameworkCore.Publications.Internal;
 using BlueTusk.EntityFrameworkCore.Routines;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
@@ -190,6 +192,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case AlterBlueTuskRuleEnabledModeOperation alterRuleMode:
                 Generate(alterRuleMode, builder);
+                break;
+            case CreateBlueTuskPublicationOperation createPublication:
+                Generate(createPublication, builder);
+                break;
+            case AlterBlueTuskPublicationOperation alterPublication:
+                Generate(alterPublication, builder);
+                break;
+            case DropBlueTuskPublicationOperation dropPublication:
+                Generate(dropPublication, builder);
+                break;
+            case RenameBlueTuskPublicationOperation renamePublication:
+                Generate(renamePublication, builder);
                 break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
@@ -2775,6 +2789,326 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name));
     }
 
+    private void Generate(
+        CreateBlueTuskPublicationOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskPublicationMetadata.Normalize(operation.Definition);
+        BlueTuskPublicationMetadata.Validate(definition);
+        var sql = BuildCreatePublicationSql(definition);
+        var minimumVersion = BlueTuskPublicationMetadata.MinimumServerVersion(definition);
+        if (minimumVersion > 150000)
+        {
+            GenerateMinimumVersionGuarded(
+                [sql],
+                minimumVersion,
+                $"BlueTusk publication '{definition.Name}' requires PostgreSQL {minimumVersion / 10000} or later.",
+                "$BlueTuskPublication$",
+                builder);
+            return;
+        }
+
+        builder.Append(sql);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskPublicationOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = BlueTuskPublicationMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskPublicationMetadata.Normalize(operation.Definition);
+        BlueTuskPublicationMetadata.Validate(oldDefinition);
+        BlueTuskPublicationMetadata.Validate(definition);
+        if (!string.Equals(oldDefinition.Name, definition.Name, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Publication alteration cannot also rename the publication.");
+        }
+
+        if (oldDefinition.AllTables != definition.AllTables ||
+            oldDefinition.AllSequences != definition.AllSequences)
+        {
+            throw new InvalidOperationException(
+                "Changing FOR ALL TABLES or FOR ALL SEQUENCES requires a destructive publication replacement.");
+        }
+
+        var statements = BuildAlterPublicationSql(oldDefinition, definition);
+        var minimumVersion = Math.Max(
+            BlueTuskPublicationMetadata.MinimumServerVersion(oldDefinition),
+            BlueTuskPublicationMetadata.MinimumServerVersion(definition));
+        if (minimumVersion > 150000)
+        {
+            GenerateMinimumVersionGuarded(
+                statements,
+                minimumVersion,
+                $"BlueTusk publication '{definition.Name}' requires PostgreSQL {minimumVersion / 10000} or later.",
+                "$BlueTuskPublication$",
+                builder);
+            return;
+        }
+
+        foreach (var statement in statements)
+        {
+            builder.Append(statement);
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        DropBlueTuskPublicationOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP PUBLICATION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskPublicationOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        builder.Append("ALTER PUBLICATION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RENAME TO ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private string BuildCreatePublicationSql(BlueTuskPublicationDefinition definition)
+    {
+        var sql = new StringBuilder("CREATE PUBLICATION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name));
+        if (HasPublicationMembership(definition))
+        {
+            sql.Append(" FOR ");
+            AppendPublicationMembership(sql, definition);
+        }
+
+        var options = BuildPublicationOptions(definition, includeDefaults: false);
+        if (options.Count > 0)
+        {
+            sql.Append(" WITH (").AppendJoin(", ", options).Append(')');
+        }
+
+        return sql.ToString();
+    }
+
+    private List<string> BuildAlterPublicationSql(
+        BlueTuskPublicationDefinition oldDefinition,
+        BlueTuskPublicationDefinition definition)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var name = helper.DelimitIdentifier(definition.Name);
+        var statements = new List<string>();
+        if (!PublicationMembershipEquals(oldDefinition, definition))
+        {
+            if (HasPublicationMembership(definition))
+            {
+                var sql = new StringBuilder("ALTER PUBLICATION ").Append(name).Append(" SET ");
+                AppendPublicationMembership(sql, definition);
+                statements.Add(sql.ToString());
+            }
+            else
+            {
+                var oldTables = oldDefinition.Tables.Where(table => !table.IsExcluded).ToArray();
+                if (oldTables.Length > 0)
+                {
+                    var sql = new StringBuilder("ALTER PUBLICATION ").Append(name).Append(" DROP TABLE ");
+                    AppendPublicationTableList(sql, oldTables, includeDetails: false);
+                    statements.Add(sql.ToString());
+                }
+
+                if (oldDefinition.Schemas.Count > 0)
+                {
+                    statements.Add(new StringBuilder("ALTER PUBLICATION ").Append(name)
+                        .Append(" DROP TABLES IN SCHEMA ")
+                        .AppendJoin(", ", oldDefinition.Schemas.Select(helper.DelimitIdentifier))
+                        .ToString());
+                }
+            }
+        }
+
+        var changedOptions = BuildChangedPublicationOptions(oldDefinition, definition);
+        if (changedOptions.Count > 0)
+        {
+            statements.Add(new StringBuilder("ALTER PUBLICATION ").Append(name)
+                .Append(" SET (").AppendJoin(", ", changedOptions).Append(')').ToString());
+        }
+
+        return statements;
+    }
+
+    private void AppendPublicationMembership(StringBuilder sql, BlueTuskPublicationDefinition definition)
+    {
+        if (definition.AllTables)
+        {
+            sql.Append("ALL TABLES");
+            var excluded = definition.Tables.Where(table => table.IsExcluded).ToArray();
+            if (excluded.Length > 0)
+            {
+                sql.Append(" EXCEPT (TABLE ");
+                AppendPublicationTableList(sql, excluded, includeDetails: false);
+                sql.Append(')');
+            }
+
+            if (definition.AllSequences)
+            {
+                sql.Append(", ALL SEQUENCES");
+            }
+
+            return;
+        }
+
+        if (definition.AllSequences)
+        {
+            sql.Append("ALL SEQUENCES");
+            return;
+        }
+
+        var tables = definition.Tables.Where(table => !table.IsExcluded).ToArray();
+        if (tables.Length > 0)
+        {
+            sql.Append("TABLE ");
+            AppendPublicationTableList(sql, tables, includeDetails: true);
+        }
+
+        if (definition.Schemas.Count > 0)
+        {
+            if (tables.Length > 0)
+            {
+                sql.Append(", ");
+            }
+
+            sql.Append("TABLES IN SCHEMA ")
+                .AppendJoin(", ", definition.Schemas.Select(Dependencies.SqlGenerationHelper.DelimitIdentifier));
+        }
+    }
+
+    private void AppendPublicationTableList(
+        StringBuilder sql,
+        BlueTuskPublicationTableDefinition[] tables,
+        bool includeDetails)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        for (var index = 0; index < tables.Length; index++)
+        {
+            if (index > 0)
+            {
+                sql.Append(", ");
+            }
+
+            var table = tables[index];
+            if (!table.IncludeDescendants)
+            {
+                sql.Append("ONLY ");
+            }
+
+            sql.Append(helper.DelimitIdentifier(table.Name, table.Schema));
+            if (!includeDetails)
+            {
+                continue;
+            }
+
+            if (table.Columns is not null)
+            {
+                sql.Append(" (").AppendJoin(", ", table.Columns.Select(helper.DelimitIdentifier)).Append(')');
+            }
+
+            if (table.RowFilterSql is not null)
+            {
+                sql.Append(" WHERE (").Append(table.RowFilterSql).Append(')');
+            }
+        }
+    }
+
+    private static bool HasPublicationMembership(BlueTuskPublicationDefinition definition) =>
+        definition.AllTables || definition.AllSequences || definition.Tables.Count > 0 || definition.Schemas.Count > 0;
+
+    private static bool PublicationMembershipEquals(
+        BlueTuskPublicationDefinition left,
+        BlueTuskPublicationDefinition right) =>
+        left.AllTables == right.AllTables &&
+        left.AllSequences == right.AllSequences &&
+        left.Tables.SequenceEqual(right.Tables) &&
+        left.Schemas.SequenceEqual(right.Schemas, StringComparer.Ordinal);
+
+    private static List<string> BuildPublicationOptions(
+        BlueTuskPublicationDefinition definition,
+        bool includeDefaults)
+    {
+        var options = new List<string>();
+        if (includeDefaults || definition.Operations != BlueTuskPublicationOperations.All)
+        {
+            options.Add($"publish = '{BuildPublishedOperations(definition.Operations)}'");
+        }
+
+        if (includeDefaults || definition.PublishViaPartitionRoot)
+        {
+            options.Add($"publish_via_partition_root = {definition.PublishViaPartitionRoot.ToString().ToLowerInvariant()}");
+        }
+
+        if (definition.GeneratedColumns != BlueTuskPublicationGeneratedColumns.None)
+        {
+            options.Add("publish_generated_columns = stored");
+        }
+
+        return options;
+    }
+
+    private static List<string> BuildChangedPublicationOptions(
+        BlueTuskPublicationDefinition oldDefinition,
+        BlueTuskPublicationDefinition definition)
+    {
+        var options = new List<string>();
+        if (oldDefinition.Operations != definition.Operations)
+        {
+            options.Add($"publish = '{BuildPublishedOperations(definition.Operations)}'");
+        }
+
+        if (oldDefinition.PublishViaPartitionRoot != definition.PublishViaPartitionRoot)
+        {
+            options.Add($"publish_via_partition_root = {definition.PublishViaPartitionRoot.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.GeneratedColumns != definition.GeneratedColumns)
+        {
+            options.Add("publish_generated_columns = " +
+                        (definition.GeneratedColumns == BlueTuskPublicationGeneratedColumns.Stored ? "stored" : "none"));
+        }
+
+        return options;
+    }
+
+    private static string BuildPublishedOperations(BlueTuskPublicationOperations operations)
+    {
+        var values = new List<string>();
+        if (operations.HasFlag(BlueTuskPublicationOperations.Insert))
+        {
+            values.Add("insert");
+        }
+
+        if (operations.HasFlag(BlueTuskPublicationOperations.Update))
+        {
+            values.Add("update");
+        }
+
+        if (operations.HasFlag(BlueTuskPublicationOperations.Delete))
+        {
+            values.Add("delete");
+        }
+
+        if (operations.HasFlag(BlueTuskPublicationOperations.Truncate))
+        {
+            values.Add("truncate");
+        }
+
+        return string.Join(", ", values);
+    }
+
     private void AppendPolicyRole(
         MigrationCommandListBuilder builder,
         BlueTuskRowSecurityRoleDefinition role)
@@ -3017,6 +3351,38 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             builder.Append("    EXECUTE '")
                 .Append(EscapeLiteral(statement))
                 .AppendLine("';");
+        }
+
+        builder.AppendLine("END;")
+            .Append(delimiter);
+        EndStatement(builder);
+    }
+
+    private void GenerateMinimumVersionGuarded(
+        IReadOnlyList<string> statements,
+        int minimumVersion,
+        string message,
+        string initialDelimiter,
+        MigrationCommandListBuilder builder)
+    {
+        var delimiter = initialDelimiter;
+        while (statements.Any(statement => statement.Contains(delimiter, StringComparison.Ordinal)))
+        {
+            delimiter = delimiter.Insert(delimiter.Length - 1, "_");
+        }
+
+        builder.Append("DO ").AppendLine(delimiter)
+            .AppendLine("BEGIN")
+            .Append("    IF current_setting('server_version_num')::integer < ")
+            .Append(minimumVersion.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .AppendLine(" THEN")
+            .AppendLine("        RAISE EXCEPTION USING")
+            .AppendLine("            ERRCODE = '0A000',")
+            .Append("            MESSAGE = '").Append(EscapeLiteral(message)).AppendLine("';")
+            .AppendLine("    END IF;");
+        foreach (var statement in statements)
+        {
+            builder.Append("    EXECUTE '").Append(EscapeLiteral(statement)).AppendLine("';");
         }
 
         builder.AppendLine("END;")

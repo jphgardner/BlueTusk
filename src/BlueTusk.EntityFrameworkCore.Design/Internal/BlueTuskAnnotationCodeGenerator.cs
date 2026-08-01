@@ -4,6 +4,7 @@ using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.Publications.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
@@ -74,6 +75,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskViewModelBuilderExtensions.HasBlueTuskViews),
                 serializedViews);
+        }
+
+        if (annotation.Name == BlueTuskPublicationMetadata.AnnotationName &&
+            annotation.Value is string serializedPublications)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskPublicationModelBuilderExtensions.HasBlueTuskPublications),
+                serializedPublications);
         }
 
         return base.GenerateFluentApi(model, annotation);

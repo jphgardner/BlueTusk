@@ -4,6 +4,7 @@ using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.Publications.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
@@ -470,6 +471,33 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(", BlueTusk.EntityFrameworkCore.Rules.BlueTuskRuleEnabledMode.")
                     .Append(alterRuleMode.EnabledMode.ToString()).Append(", ")
                     .Append(Literal(alterRuleMode.Schema)).AppendLine(");");
+                break;
+            case CreateBlueTuskPublicationOperation createPublication:
+                builder.Append("migrationBuilder.CreateBlueTuskPublication(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskPublicationMetadata.Serialize(createPublication.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskPublicationOperation alterPublication:
+                builder.Append("migrationBuilder.AlterBlueTuskPublication(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskPublicationMetadata.Serialize(alterPublication.OldDefinition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskPublicationMetadata.Serialize(alterPublication.Definition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskPublicationOperation dropPublication:
+                builder.Append("migrationBuilder.DropBlueTuskPublication(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropPublication.Name))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskPublicationOperation renamePublication:
+                builder.Append("migrationBuilder.RenameBlueTuskPublication(")
+                    .Append(Dependencies.CSharpHelper.Literal(renamePublication.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renamePublication.NewName))
+                    .AppendLine(");");
                 break;
             case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
                 builder

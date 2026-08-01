@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using System.Text.Json;
 using BlueTusk.Data;
 using BlueTusk.Data.Schema;
 using BlueTusk.EntityFrameworkCore.Collations;
@@ -13,6 +14,8 @@ using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.Publications;
+using BlueTusk.EntityFrameworkCore.Publications.Internal;
 using BlueTusk.EntityFrameworkCore.Routines;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
@@ -88,6 +91,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadExclusionConstraints(connection, tables);
         ReadTriggers(connection, tables);
         ReadRules(connection, tables);
+        ReadPublications(connection, model);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
         ReadTableInheritance(connection, tables);
@@ -827,6 +831,163 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         {
             tables[tableKey][BlueTuskRuleMetadata.AnnotationName] = BlueTuskRuleMetadata.Serialize(rules);
         }
+    }
+
+    private static void ReadPublications(DbConnection connection, DatabaseModel model)
+    {
+        const string publicationSql = """
+            SELECT publication_entry.pubname,
+                   publication_entry.puballtables,
+                   COALESCE((pg_catalog.to_jsonb(publication_entry)->>'puballsequences')::boolean, false),
+                   publication_entry.pubinsert,
+                   publication_entry.pubupdate,
+                   publication_entry.pubdelete,
+                   publication_entry.pubtruncate,
+                   publication_entry.pubviaroot,
+                   COALESCE(pg_catalog.to_jsonb(publication_entry)->>'pubgencols', 'n')
+            FROM pg_catalog.pg_publication AS publication_entry
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM pg_catalog.pg_depend AS dependency
+                WHERE dependency.classid = 'pg_catalog.pg_publication'::pg_catalog.regclass
+                  AND dependency.objid = publication_entry.oid
+                  AND dependency.deptype = 'e')
+            ORDER BY publication_entry.pubname
+            """;
+        var publications = new Dictionary<string, BlueTuskPublicationDefinition>(StringComparer.Ordinal);
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = publicationSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var operations = BlueTuskPublicationOperations.None;
+                if (reader.GetBoolean(3))
+                {
+                    operations |= BlueTuskPublicationOperations.Insert;
+                }
+
+                if (reader.GetBoolean(4))
+                {
+                    operations |= BlueTuskPublicationOperations.Update;
+                }
+
+                if (reader.GetBoolean(5))
+                {
+                    operations |= BlueTuskPublicationOperations.Delete;
+                }
+
+                if (reader.GetBoolean(6))
+                {
+                    operations |= BlueTuskPublicationOperations.Truncate;
+                }
+
+                var name = reader.GetString(0);
+                publications.Add(name, new BlueTuskPublicationDefinition(
+                    name,
+                    Tables: [],
+                    Schemas: [],
+                    reader.GetBoolean(1),
+                    reader.GetBoolean(2),
+                    operations,
+                    reader.GetBoolean(7),
+                    reader.GetString(8) switch
+                    {
+                        "n" => BlueTuskPublicationGeneratedColumns.None,
+                        "s" => BlueTuskPublicationGeneratedColumns.Stored,
+                        var value => throw new InvalidOperationException(
+                            $"Unknown PostgreSQL publication generated-column mode '{value}'."),
+                    }));
+            }
+        }
+
+        if (publications.Count == 0)
+        {
+            return;
+        }
+
+        const string tableSql = """
+            SELECT publication_entry.pubname,
+                   namespace.nspname,
+                   relation.relname,
+                   COALESCE((pg_catalog.to_jsonb(publication_relation)->>'prexcept')::boolean, false),
+                   CASE WHEN publication_relation.prattrs IS NULL THEN NULL ELSE (
+                       SELECT pg_catalog.array_to_json(pg_catalog.array_agg(attribute.attname ORDER BY attribute.attnum))::text
+                       FROM pg_catalog.pg_attribute AS attribute
+                       WHERE attribute.attrelid = publication_relation.prrelid
+                         AND attribute.attnum = ANY (publication_relation.prattrs::smallint[])
+                         AND NOT attribute.attisdropped)
+                   END,
+                   pg_catalog.pg_get_expr(publication_relation.prqual, publication_relation.prrelid, false)
+            FROM pg_catalog.pg_publication_rel AS publication_relation
+            JOIN pg_catalog.pg_publication AS publication_entry
+              ON publication_entry.oid = publication_relation.prpubid
+            JOIN pg_catalog.pg_class AS relation ON relation.oid = publication_relation.prrelid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+            ORDER BY publication_entry.pubname, namespace.nspname, relation.relname
+            """;
+        var tables = publications.Keys.ToDictionary(
+            name => name,
+            _ => new List<BlueTuskPublicationTableDefinition>(),
+            StringComparer.Ordinal);
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = tableSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var publicationName = reader.GetString(0);
+                if (!tables.TryGetValue(publicationName, out var publicationTables))
+                {
+                    continue;
+                }
+
+                var columnsJson = GetNullableString(reader, 4);
+                publicationTables.Add(new BlueTuskPublicationTableDefinition(
+                    reader.GetString(2),
+                    reader.GetString(1),
+                    IncludeDescendants: false,
+                    columnsJson is null
+                        ? null
+                        : JsonSerializer.Deserialize<string[]>(columnsJson)
+                          ?? throw new InvalidOperationException("Publication columns were not a JSON array."),
+                    GetNullableString(reader, 5),
+                    reader.GetBoolean(3)));
+            }
+        }
+
+        const string schemaSql = """
+            SELECT publication_entry.pubname, namespace.nspname
+            FROM pg_catalog.pg_publication_namespace AS publication_namespace
+            JOIN pg_catalog.pg_publication AS publication_entry
+              ON publication_entry.oid = publication_namespace.pnpubid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = publication_namespace.pnnspid
+            ORDER BY publication_entry.pubname, namespace.nspname
+            """;
+        var schemas = publications.Keys.ToDictionary(
+            name => name,
+            _ => new List<string>(),
+            StringComparer.Ordinal);
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = schemaSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                if (schemas.TryGetValue(reader.GetString(0), out var publicationSchemas))
+                {
+                    publicationSchemas.Add(reader.GetString(1));
+                }
+            }
+        }
+
+        var definitions = new BlueTuskPublicationDefinitionSet(publications.Values.Select(definition =>
+            definition with
+            {
+                Tables = tables[definition.Name],
+                Schemas = schemas[definition.Name],
+            }).ToArray());
+        model[BlueTuskPublicationMetadata.AnnotationName] = BlueTuskPublicationMetadata.Serialize(definitions);
     }
 
     private static void ReadIndexes(
