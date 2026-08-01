@@ -77,7 +77,9 @@ The current `0.3.0-preview.1` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
-- TCP endpoint and transport abstractions;
+- TCP and Unix-domain transports with deterministic DNS/address fallback, total connect
+  deadlines, cancellation, TCP keepalive, bounded socket buffers, and classified connection
+  failures;
 - PostgreSQL backend-frame parsing and startup/query message writing;
 - an explicit protocol connection state machine;
 - catalogue-friendly type descriptors and unknown-value preservation;
@@ -125,7 +127,8 @@ The current `0.3.0-preview.1` implementation provides:
   live-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF, `citext` ADO.NET/EF, `hstore`, `ltree`, `pg_trgm`, and pgvector ADO.NET/EF previews.
 - a packaged extension-authoring template and framework-neutral live compatibility harness.
 - catalogue-probed PostgreSQL 19 SQL/PGQ capability detection, live raw-SQL property-graph coverage, typed information-schema discovery, text/JSON schema tooling, capability-guarded EF migrations/reverse engineering, and typed composable EF linear-path queries.
-- a benchmark-backed decision to retain the genuine sync/async ArrayPool/Span/Memory transport.
+- a benchmark-backed decision to retain the genuine sync/async ArrayPool/Span/Memory
+  [transport](docs/architecture/transport.md).
 
 Applications should build one long-lived data source per distinct configuration. It owns pooling, runtime codecs, and the PostgreSQL type catalogue:
 

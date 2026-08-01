@@ -9,16 +9,36 @@ namespace BlueTusk.Transport;
 /// <summary>A socket-backed transport with genuine asynchronous I/O.</summary>
 public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 {
+    private readonly Func<string, IPAddress[]> _resolveAddresses;
+    private readonly Func<string, CancellationToken, ValueTask<IPAddress[]>> _resolveAddressesAsync;
     private Socket? _socket;
     private Stream? _stream;
     private X509Certificate2? _remoteCertificate;
     private bool _disposed;
+
+    public BlueTuskSocketTransport()
+        : this(
+            Dns.GetHostAddresses,
+            static (host, cancellationToken) =>
+                new ValueTask<IPAddress[]>(Dns.GetHostAddressesAsync(host, cancellationToken)))
+    {
+    }
+
+    internal BlueTuskSocketTransport(
+        Func<string, IPAddress[]> resolveAddresses,
+        Func<string, CancellationToken, ValueTask<IPAddress[]>> resolveAddressesAsync)
+    {
+        _resolveAddresses = resolveAddresses ?? throw new ArgumentNullException(nameof(resolveAddresses));
+        _resolveAddressesAsync = resolveAddressesAsync ?? throw new ArgumentNullException(nameof(resolveAddressesAsync));
+    }
 
     public EndPoint? RemoteEndPoint => _socket?.RemoteEndPoint;
 
     public bool IsEncrypted => _stream is SslStream;
 
     public X509Certificate2? RemoteCertificate => _remoteCertificate;
+
+    internal Socket? ConnectedSocket => _socket;
 
     public void Connect(BlueTuskEndpoint endpoint, BlueTuskTransportOptions options)
     {
@@ -37,6 +57,21 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
                 _ => throw new NotSupportedException($"Endpoint type '{endpoint.GetType().Name}' is not supported."),
             };
             _stream = new NetworkStream(_socket, ownsSocket: true);
+        }
+        catch (BlueTuskTransportException)
+        {
+            DisposeSocket();
+            throw;
+        }
+        catch (TimeoutException exception)
+        {
+            DisposeSocket();
+            throw BlueTuskTransportException.ForTimeout(endpoint, options.ConnectTimeout, exception);
+        }
+        catch (SocketException exception)
+        {
+            DisposeSocket();
+            throw BlueTuskTransportException.ForSocket(endpoint, [], exception);
         }
         catch
         {
@@ -62,34 +97,30 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
         try
         {
-            var socket = endpoint switch
+            _socket = endpoint switch
             {
-                BlueTuskEndpoint.Tcp => new Socket(SocketType.Stream, ProtocolType.Tcp),
-                BlueTuskEndpoint.UnixSocket => new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified),
+                BlueTuskEndpoint.Tcp tcp => await ConnectTcpAsync(tcp, options, effectiveToken).ConfigureAwait(false),
+                BlueTuskEndpoint.UnixSocket unix => await ConnectUnixSocketAsync(unix, options, effectiveToken)
+                    .ConfigureAwait(false),
                 _ => throw new NotSupportedException($"Endpoint type '{endpoint.GetType().Name}' is not supported."),
             };
-
-            _socket = socket;
-            socket.NoDelay = options.NoDelay;
-            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, options.KeepAlive);
-            socket.ReceiveBufferSize = options.ReceiveBufferSize;
-            socket.SendBufferSize = options.SendBufferSize;
-
-            EndPoint socketEndpoint = endpoint switch
-            {
-                BlueTuskEndpoint.Tcp tcp => new DnsEndPoint(tcp.Host, tcp.Port),
-                BlueTuskEndpoint.UnixSocket unix => new UnixDomainSocketEndPoint(unix.Path),
-                _ => throw new UnreachableException(),
-            };
-
-            await socket.ConnectAsync(socketEndpoint, effectiveToken).ConfigureAwait(false);
-            _stream = new NetworkStream(socket, ownsSocket: true);
+            _stream = new NetworkStream(_socket, ownsSocket: true);
         }
         catch (OperationCanceledException exception) when (
             timeoutSource?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
         {
             DisposeSocket();
-            throw new TimeoutException($"Connecting to PostgreSQL exceeded the {options.ConnectTimeout} timeout.", exception);
+            throw BlueTuskTransportException.ForTimeout(endpoint, options.ConnectTimeout, exception);
+        }
+        catch (BlueTuskTransportException)
+        {
+            DisposeSocket();
+            throw;
+        }
+        catch (SocketException exception)
+        {
+            DisposeSocket();
+            throw BlueTuskTransportException.ForSocket(endpoint, [], exception);
         }
         catch
         {
@@ -231,31 +262,138 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
         return _stream ?? throw new InvalidOperationException("The transport is not connected.");
     }
 
-    private static Socket ConnectTcp(
+    private Socket ConnectTcp(
         BlueTuskEndpoint.Tcp endpoint,
         BlueTuskTransportOptions options,
         long started)
     {
-        var addresses = Dns.GetHostAddresses(endpoint.Host)
-            .OrderBy(static address => address.AddressFamily == AddressFamily.InterNetwork ? 0 : 1)
-            .ToArray();
+        IPAddress[] addresses;
+        try
+        {
+            addresses = OrderAddresses(_resolveAddresses(endpoint.Host));
+        }
+        catch (Exception exception) when (
+            exception is not OperationCanceledException and not OutOfMemoryException)
+        {
+            throw BlueTuskTransportException.ForNameResolution(endpoint, exception);
+        }
+
+        if (addresses.Length == 0)
+        {
+            throw BlueTuskTransportException.ForNameResolution(
+                endpoint,
+                new SocketException((int)SocketError.HostNotFound));
+        }
+
+        var failures = new List<BlueTuskAddressFailure>(addresses.Length);
         SocketException? lastError = null;
         foreach (var address in addresses)
         {
-            var socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+            Socket? socket = null;
             try
             {
+                socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
                 return ConnectSocket(socket, new IPEndPoint(address, endpoint.Port), options, started);
             }
             catch (SocketException exception)
             {
                 lastError = exception;
-                socket.Dispose();
+                failures.Add(new BlueTuskAddressFailure(address, exception.SocketErrorCode));
+                socket?.Dispose();
+            }
+            catch
+            {
+                socket?.Dispose();
+                throw;
             }
         }
 
-        throw lastError ?? new SocketException((int)SocketError.HostNotFound);
+        throw BlueTuskTransportException.ForSocket(
+            endpoint,
+            failures,
+            lastError ?? new SocketException((int)SocketError.HostNotFound));
     }
+
+    private async ValueTask<Socket> ConnectTcpAsync(
+        BlueTuskEndpoint.Tcp endpoint,
+        BlueTuskTransportOptions options,
+        CancellationToken cancellationToken)
+    {
+        IPAddress[] addresses;
+        try
+        {
+            addresses = OrderAddresses(
+                await _resolveAddressesAsync(endpoint.Host, cancellationToken).ConfigureAwait(false));
+        }
+        catch (Exception exception) when (
+            exception is not OperationCanceledException and not OutOfMemoryException)
+        {
+            throw BlueTuskTransportException.ForNameResolution(endpoint, exception);
+        }
+
+        if (addresses.Length == 0)
+        {
+            throw BlueTuskTransportException.ForNameResolution(
+                endpoint,
+                new SocketException((int)SocketError.HostNotFound));
+        }
+
+        var failures = new List<BlueTuskAddressFailure>(addresses.Length);
+        SocketException? lastError = null;
+        foreach (var address in addresses)
+        {
+            Socket? socket = null;
+            try
+            {
+                socket = new Socket(address.AddressFamily, SocketType.Stream, ProtocolType.Tcp);
+                ConfigureSocket(socket, options);
+                await socket.ConnectAsync(new IPEndPoint(address, endpoint.Port), cancellationToken)
+                    .ConfigureAwait(false);
+                return socket;
+            }
+            catch (SocketException exception)
+            {
+                lastError = exception;
+                failures.Add(new BlueTuskAddressFailure(address, exception.SocketErrorCode));
+                socket?.Dispose();
+            }
+            catch
+            {
+                socket?.Dispose();
+                throw;
+            }
+        }
+
+        throw BlueTuskTransportException.ForSocket(
+            endpoint,
+            failures,
+            lastError ?? new SocketException((int)SocketError.HostNotFound));
+    }
+
+    private static async ValueTask<Socket> ConnectUnixSocketAsync(
+        BlueTuskEndpoint.UnixSocket endpoint,
+        BlueTuskTransportOptions options,
+        CancellationToken cancellationToken)
+    {
+        var socket = new Socket(AddressFamily.Unix, SocketType.Stream, ProtocolType.Unspecified);
+        ConfigureSocket(socket, options);
+        try
+        {
+            await socket.ConnectAsync(new UnixDomainSocketEndPoint(endpoint.Path), cancellationToken)
+                .ConfigureAwait(false);
+            return socket;
+        }
+        catch
+        {
+            socket.Dispose();
+            throw;
+        }
+    }
+
+    private static IPAddress[] OrderAddresses(IEnumerable<IPAddress> addresses) =>
+        addresses
+            .OrderBy(static address => address.AddressFamily == AddressFamily.InterNetwork ? 0 : 1)
+            .ToArray();
 
     private static Socket ConnectSocket(
         Socket socket,
@@ -322,8 +460,12 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
 
     private static void ConfigureSocket(Socket socket, BlueTuskTransportOptions options)
     {
-        socket.NoDelay = options.NoDelay;
-        socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, options.KeepAlive);
+        if (socket.ProtocolType == ProtocolType.Tcp)
+        {
+            socket.NoDelay = options.NoDelay;
+            socket.SetSocketOption(SocketOptionLevel.Socket, SocketOptionName.KeepAlive, options.KeepAlive);
+        }
+
         socket.ReceiveBufferSize = options.ReceiveBufferSize;
         socket.SendBufferSize = options.SendBufferSize;
     }

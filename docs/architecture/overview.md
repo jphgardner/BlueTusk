@@ -22,7 +22,10 @@ PostgreSQL
 
 ## Layer rules
 
-- **Transport** moves bytes. It does not know SQL, PostgreSQL types, authentication mechanisms, or ADO.NET.
+- **Transport** moves bytes. It owns endpoint resolution, ordered address attempts, socket/TLS
+  I/O, connect deadlines, cancellation, and stable connection-failure classification, but does
+  not know SQL, PostgreSQL types, authentication mechanisms, or ADO.NET. See the
+  [transport contract](transport.md).
 - **Protocol** owns frontend/backend framing, connection and operation state machines, authentication negotiation, and cancellation protocol messages. It does not expose ADO.NET types.
 - **Security** owns authentication primitives, secret handling, certificate policy, and diagnostic redaction.
 - **TypeSystem** owns catalogue type identities and codecs. Unknown types are values, not fatal errors.

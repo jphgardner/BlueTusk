@@ -206,6 +206,16 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Genuine synchronous and asynchronous workloads
 - [x] Retain ArrayPool/Span/Memory: measured benefits do not justify production `System.IO.Pipelines` complexity and regressions
 
+### Transport contract
+
+- [x] TCP and Unix-domain socket connections with genuine sync and async paths
+- [x] Deterministic DNS expansion and ordered multi-address fallback
+- [x] Shared address-attempt deadline plus async DNS/connect cancellation
+- [x] TLS server validation, client certificates, and certificate selection
+- [x] TCP keepalive/`NoDelay`, bounded socket buffers, and awaited-write backpressure
+- [x] Stable connection-failure categories with ordered per-address diagnostics
+- [x] Direct transport tests for fallback, failure, options, cancellation, deadlines, and Unix sockets
+
 ### Allocation discipline
 
 - [x] Retain the span-based `BlueTuskReader`/`BlueTuskWriter` codec model
