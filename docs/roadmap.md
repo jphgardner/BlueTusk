@@ -274,7 +274,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Ordered JSON/JSONB/XML, integer/`bigint` bitwise, and double/numeric population/sample statistical aggregates
   - [x] Aggregate ordering, `DISTINCT`, `FILTER`, typed results, and PostgreSQL 15–19 acceptance
   - [ ] Remaining scalar, JSON-object/multi-input statistical, ordered-set, and other PostgreSQL aggregate functions
-  - [ ] Set-returning functions and lateral query roots
+  - [x] Set-returning functions and lateral query roots
     - [x] Mapped-array `unnest` roots with ordinality, nullable elements, parameterized filters, and inner/outer lateral composition
     - [x] SQL-generation and PostgreSQL 15–19 live array-expansion acceptance
     - [x] Typed integer and bigint `generate_series` roots with parameterized standalone, correlated lateral, and compiled-query execution
@@ -284,7 +284,7 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Typed two-array integer/text `unnest` roots with unequal-length null padding, ordinality, lateral composition, and compiled parameters
     - [x] Schema-qualified, model-registered user-defined table functions with typed keyless rows, parameters, lateral composition, and compiled-query execution
     - [x] Model-derived JSONB-to-recordset roots with quoted column definitions, exact store types, nullable fields, lateral composition, and compiled-query execution
-    - [ ] Additional multi-array type/arity combinations
+    - [x] Generic two-, three-, and four-array `unnest` with nullable padding, ordinality, compiled-query execution, and PostgreSQL 15–19 acceptance
 - [ ] PostgreSQL-specific query roots and SQL constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element expansion, typed series/JSONB roots, and initial multi-array expansion

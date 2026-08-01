@@ -258,6 +258,54 @@ public sealed class PostgreSqlSetReturningFunctionTests
     }
 
     [Fact]
+    public void Multi_argument_unnest_supports_generic_types_and_two_to_four_inputs()
+    {
+        using var context = CreateContext();
+        long?[] numbers = [1, null];
+        Guid?[] identifiers = [Guid.Parse("11111111-1111-1111-1111-111111111111")];
+        bool?[] flags = [true, false, null];
+        double?[] amounts = [1.5, 2.5];
+
+        var pairSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.Unnest(numbers, identifiers),
+                (_, row) => new { row.First, row.Second })
+            .ToQueryString();
+        var tripleSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.Unnest(numbers, identifiers, flags),
+                (_, row) => new { row.First, row.Second, row.Third })
+            .ToQueryString();
+        var quadrupleSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.Unnest(numbers, identifiers, flags, amounts),
+                (_, row) => new { row.First, row.Second, row.Third, row.Fourth })
+            .ToQueryString();
+
+        Assert.Contains("unnest(", pairSql, StringComparison.Ordinal);
+        Assert.Contains("@numbers", pairSql, StringComparison.Ordinal);
+        Assert.Contains("@identifiers", pairSql, StringComparison.Ordinal);
+        Assert.Contains("(\"first\", \"second\", \"ordinality\")", pairSql, StringComparison.Ordinal);
+        Assert.Contains("@flags", tripleSql, StringComparison.Ordinal);
+        Assert.Contains(
+            "(\"first\", \"second\", \"third\", \"ordinality\")",
+            tripleSql,
+            StringComparison.Ordinal);
+        Assert.Contains("@amounts", quadrupleSql, StringComparison.Ordinal);
+        Assert.Contains(
+            "(\"first\", \"second\", \"third\", \"fourth\", \"ordinality\")",
+            quadrupleSql,
+            StringComparison.Ordinal);
+
+        var unsafePadding = Assert.Throws<InvalidOperationException>(() => context.Values
+            .SelectMany(
+                _ => EF.Functions.Unnest(new long[] { 1 }, identifiers),
+                (_, row) => row)
+            .ToQueryString());
+        Assert.Contains("must use nullable element arrays", unsafePadding.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Model_registered_table_functions_translate_schema_arguments_and_lateral_composition()
     {
         using var context = CreateContext();
@@ -427,6 +475,21 @@ public sealed class PostgreSqlSetReturningFunctionTests
                     value => EF.Functions.Unnest(value.Numbers, value.Labels),
                     (_, pair) => pair)
                 .ToListAsync();
+            long?[] multiNumbers = [10, null];
+            Guid firstIdentifier = Guid.Parse("11111111-1111-1111-1111-111111111111");
+            Guid?[] multiIdentifiers = [firstIdentifier];
+            bool?[] multiFlags = [true, false, null];
+            double?[] multiAmounts = [1.5, 2.5];
+            var multiTypedArrays = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    _ => EF.Functions.Unnest(
+                        multiNumbers,
+                        multiIdentifiers,
+                        multiFlags,
+                        multiAmounts),
+                    (_, row) => row)
+                .ToListAsync();
             var userDefinedRows = await context.UserDefinedRows(2)
                 .Where(row => row.Id > 2)
                 .OrderBy(row => row.Id)
@@ -559,6 +622,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         _ => EF.Functions.Unnest(numbers, labels),
                         (_, pair) => pair)
                     .Count());
+            var compiledMultiArrayCount = EF.CompileQuery(
+                (SetReturningContext database, long?[] first, Guid?[] second, bool?[] third) => database.Values
+                    .Where(value => value.Id == 1)
+                    .SelectMany(
+                        _ => EF.Functions.Unnest(first, second, third),
+                        (_, row) => row)
+                    .Count());
             var compiledUserDefinedRowCount = EF.CompileQuery(
                 (SetReturningContext database, int minimumId) => database
                     .UserDefinedRows(minimumId)
@@ -626,6 +696,14 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 ],
                 zippedArrays);
             Assert.Collection(
+                multiTypedArrays,
+                row => Assert.Equal((10L, firstIdentifier, true, 1.5),
+                    (row.First, row.Second, row.Third, row.Fourth)),
+                row => Assert.Equal((null, null, false, 2.5),
+                    (row.First, row.Second, row.Third, row.Fourth)),
+                row => Assert.Equal((null, null, null, null),
+                    (row.First, row.Second, row.Third, row.Fourth)));
+            Assert.Collection(
                 userDefinedRows,
                 row => Assert.Equal((3, "row-3"), (row.Id, row.Label)),
                 row => Assert.Equal((4, "row-4"), (row.Id, row.Label)));
@@ -681,6 +759,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Equal(
                 3,
                 compiledZippedArrayCount(context, [1, 2], ["one", null, "three"]));
+            Assert.Equal(
+                3,
+                compiledMultiArrayCount(
+                    context,
+                    [10, null],
+                    [firstIdentifier],
+                    [true, false, null]));
             Assert.Equal(3, compiledUserDefinedRowCount(context, 5));
         }
         finally

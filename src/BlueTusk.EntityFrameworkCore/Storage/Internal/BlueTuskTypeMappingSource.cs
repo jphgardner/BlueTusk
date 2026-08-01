@@ -700,7 +700,8 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         Type arrayType,
         RelationalTypeMapping? elementTypeMapping)
     {
-        var elementClrType = arrayType.GetElementType()!;
+        var elementClrType = Nullable.GetUnderlyingType(arrayType.GetElementType()!)
+            ?? arrayType.GetElementType()!;
         BlueTuskTypeDescriptor? elementDescriptor = null;
         string? requestedElementStoreType = null;
         if (mappingInfo.StoreTypeName is { } requestedStoreType)

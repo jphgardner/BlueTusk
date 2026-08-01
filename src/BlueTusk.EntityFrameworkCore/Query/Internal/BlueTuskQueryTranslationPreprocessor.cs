@@ -45,24 +45,13 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
                 && methodCallExpression.Method.Name == nameof(BlueTuskDbFunctionsExtensions.Unnest))
             {
                 var elementType = methodCallExpression.Method.ReturnType.GetGenericArguments()[0];
-                var pairTypes = elementType.GetGenericArguments();
+                var columns = GetUnnestColumns(elementType, methodCallExpression.Arguments.Count - 1);
                 return new BlueTuskRecordSetReturningFunctionQueryRootExpression(
                     "unnest",
                     elementType,
                     methodCallExpression.Arguments.Skip(1).Select(argument => Visit(argument)!).ToArray(),
-                    [null, null],
-                    [
-                        new BlueTuskSetReturningFunctionColumn(
-                            "first",
-                            pairTypes[0],
-                            StoreType: null,
-                            IsNullable: true),
-                        new BlueTuskSetReturningFunctionColumn(
-                            "second",
-                            pairTypes[1],
-                            StoreType: null,
-                            IsNullable: true),
-                    ]);
+                    Enumerable.Repeat<string?>(null, columns.Length).ToArray(),
+                    columns);
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
@@ -130,6 +119,50 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
             }
 
             return base.VisitMethodCall(methodCallExpression);
+        }
+
+        private static BlueTuskSetReturningFunctionColumn[] GetUnnestColumns(
+            Type elementType,
+            int argumentCount)
+        {
+            if (!elementType.IsGenericType)
+            {
+                throw new InvalidOperationException(
+                    $"The multi-array unnest row type '{elementType.Name}' is not supported.");
+            }
+
+            var definition = elementType.GetGenericTypeDefinition();
+            var expectedCount = definition == typeof(KeyValuePair<,>)
+                || definition == typeof(BlueTuskUnnestPair<,>)
+                    ? 2
+                    : definition == typeof(BlueTuskUnnestTriple<,,>)
+                        ? 3
+                        : definition == typeof(BlueTuskUnnestQuadruple<,,,>)
+                            ? 4
+                            : 0;
+            if (expectedCount == 0 || argumentCount != expectedCount)
+            {
+                throw new InvalidOperationException(
+                    $"The multi-array unnest row type '{elementType.Name}' does not match its {argumentCount} inputs.");
+            }
+
+            var elementTypes = elementType.GetGenericArguments();
+            if (definition != typeof(KeyValuePair<,>)
+                && elementTypes.Any(type => type.IsValueType && Nullable.GetUnderlyingType(type) is null))
+            {
+                throw new InvalidOperationException(
+                    "Generic multi-array unnest inputs with value-type elements must use nullable element "
+                    + "arrays because PostgreSQL pads shorter arrays with NULL.");
+            }
+
+            string[] names = ["first", "second", "third", "fourth"];
+            return elementTypes
+                .Select((type, index) => new BlueTuskSetReturningFunctionColumn(
+                    names[index],
+                    type,
+                    StoreType: null,
+                    IsNullable: true))
+                .ToArray();
         }
 
         private static bool TryGetJsonFunction(

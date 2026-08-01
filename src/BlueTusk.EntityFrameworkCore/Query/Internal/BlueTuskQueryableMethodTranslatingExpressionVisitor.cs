@@ -226,7 +226,9 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 : _typeMappingSource.FindMapping(column.StoreType);
             if (columnMapping is null)
             {
-                return null;
+                throw new InvalidOperationException(
+                    $"PostgreSQL set-returning column '{column.Name}' has no mapping for CLR type "
+                    + $"'{column.ClrType.Name}'.");
             }
 
             columns[index] = new ColumnExpression(
@@ -259,12 +261,21 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             identifier: [(ordinalityColumn, (ValueComparer)ordinalityTypeMapping.Comparer)],
             _queryCompilationContext.SqlAliasManager);
 #pragma warning restore EF1001
-        var pairProperties = new[]
-        {
-            function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Key))!,
-            function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Value))!,
-        };
-        var projectionMembers = pairProperties
+        var constructor = function.ElementType.GetConstructor(
+            function.Columns.Select(column => column.ClrType).ToArray())
+            ?? throw new InvalidOperationException(
+                $"The set-returning row type '{function.ElementType.Name}' does not expose the expected constructor.");
+        var rowProperties = constructor.GetParameters()
+            .Select(parameter => function.ElementType.GetProperty(
+                    parameter.Name!,
+                    System.Reflection.BindingFlags.Instance
+                    | System.Reflection.BindingFlags.Public
+                    | System.Reflection.BindingFlags.IgnoreCase)
+                ?? throw new InvalidOperationException(
+                    $"The set-returning row type '{function.ElementType.Name}' does not expose property "
+                    + $"'{parameter.Name}'."))
+            .ToArray();
+        var projectionMembers = rowProperties
             .Select(property => new ProjectionMember().Append(property))
             .ToArray();
         selectExpression.ReplaceProjection(
@@ -275,8 +286,6 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                     item => (Expression)columns[item.index]));
         selectExpression.AppendOrdering(new OrderingExpression(ordinalityColumn, ascending: true));
 
-        var constructor = function.ElementType.GetConstructor(
-            function.ElementType.GetGenericArguments())!;
         var shaper = Expression.New(
             constructor,
             projectionMembers
@@ -285,7 +294,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                         selectExpression,
                         projection,
                         function.Columns[index].ClrType)),
-            pairProperties);
+            rowProperties);
         return new ShapedQueryExpression(selectExpression, shaper);
     }
 
@@ -299,25 +308,25 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             var argumentStoreType = argumentStoreTypes[index];
             if (TranslateExpression(
                     expressions[index],
-                    applyDefaultTypeMapping: argumentStoreType is null) is not { } argument)
+                    applyDefaultTypeMapping: false) is not { } argument)
             {
-                return null;
+                throw new InvalidOperationException(
+                    $"PostgreSQL set-returning argument {index + 1} could not be translated.");
             }
 
-            if (argumentStoreType is not null)
+            var argumentTypeMapping = argumentStoreType is null
+                ? _typeMappingSource.FindMapping(expressions[index].Type, RelationalDependencies.Model)
+                : _typeMappingSource.FindMapping(argumentStoreType);
+            if (argumentTypeMapping is null)
             {
-                var argumentTypeMapping = _typeMappingSource.FindMapping(argumentStoreType);
-                if (argumentTypeMapping is null)
-                {
-                    return null;
-                }
-
-                argument = RelationalDependencies.SqlExpressionFactory.ApplyTypeMapping(
-                    argument,
-                    argumentTypeMapping);
+                throw new InvalidOperationException(
+                    $"PostgreSQL set-returning argument {index + 1} has no mapping for CLR type "
+                    + $"'{expressions[index].Type.Name}'.");
             }
 
-            arguments[index] = argument;
+            arguments[index] = RelationalDependencies.SqlExpressionFactory.ApplyTypeMapping(
+                argument,
+                argumentTypeMapping);
         }
 
         return arguments;

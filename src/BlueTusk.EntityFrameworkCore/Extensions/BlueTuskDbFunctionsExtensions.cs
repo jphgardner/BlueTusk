@@ -1,4 +1,5 @@
 using System.Runtime.CompilerServices;
+using BlueTusk.EntityFrameworkCore.Query;
 using BlueTusk.TypeSystem;
 
 namespace Microsoft.EntityFrameworkCore;
@@ -240,6 +241,32 @@ public static class BlueTuskDbFunctionsExtensions
         int[] first,
         string?[] second)
         => ThrowTranslationOnly<IQueryable<KeyValuePair<int?, string?>>>();
+
+    /// <summary>Zips two PostgreSQL arrays, padding shorter inputs with nulls.</summary>
+    public static IQueryable<BlueTuskUnnestPair<TFirst, TSecond>> Unnest<TFirst, TSecond>(
+        this DbFunctions _,
+        TFirst[] first,
+        TSecond[] second)
+        => ThrowTranslationOnly<IQueryable<BlueTuskUnnestPair<TFirst, TSecond>>>();
+
+    /// <summary>Zips three PostgreSQL arrays, padding shorter inputs with nulls.</summary>
+    public static IQueryable<BlueTuskUnnestTriple<TFirst, TSecond, TThird>> Unnest<TFirst, TSecond, TThird>(
+        this DbFunctions _,
+        TFirst[] first,
+        TSecond[] second,
+        TThird[] third)
+        => ThrowTranslationOnly<IQueryable<BlueTuskUnnestTriple<TFirst, TSecond, TThird>>>();
+
+    /// <summary>Zips four PostgreSQL arrays, padding shorter inputs with nulls.</summary>
+    public static IQueryable<BlueTuskUnnestQuadruple<TFirst, TSecond, TThird, TFourth>>
+        Unnest<TFirst, TSecond, TThird, TFourth>(
+            this DbFunctions _,
+            TFirst[] first,
+            TSecond[] second,
+            TThird[] third,
+            TFourth[] fourth)
+        => ThrowTranslationOnly<
+            IQueryable<BlueTuskUnnestQuadruple<TFirst, TSecond, TThird, TFourth>>>();
 
     public static IQueryable<T> JsonToRecordset<T>(this DbFunctions _, string jsonb)
         where T : class
