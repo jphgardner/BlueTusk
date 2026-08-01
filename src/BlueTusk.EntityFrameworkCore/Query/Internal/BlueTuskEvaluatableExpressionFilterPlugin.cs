@@ -7,8 +7,8 @@ namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 internal sealed class BlueTuskEvaluatableExpressionFilterPlugin : IEvaluatableExpressionFilterPlugin
 {
     public bool IsEvaluatableExpression(Expression expression)
-        => expression is not MethodCallExpression
-        {
-            Method.DeclaringType: { } declaringType,
-        } || declaringType != typeof(BlueTuskDbFunctionsExtensions);
+        => expression is not MethodCallExpression methodCall
+            || methodCall.Method.DeclaringType != typeof(BlueTuskDbFunctionsExtensions)
+                && !(methodCall.Method.DeclaringType == typeof(ValueTuple)
+                    && methodCall.Method is { IsStatic: true, Name: nameof(ValueTuple.Create) });
 }

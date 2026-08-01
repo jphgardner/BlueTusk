@@ -255,7 +255,9 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Parameterised `ILIKE` and POSIX regular-expression predicates
   - [x] Array, range/multirange, JSONB/JSONPath, network, and full-text predicates
   - [x] SQL-generation and PostgreSQL 15–19 live operator acceptance
-  - [ ] `ANY`, `ALL`, row values, tuple comparison, and remaining operator forms
+  - [x] Typed comparison and pattern `ANY`/`ALL` over PostgreSQL array parameters
+  - [x] Equal-arity row values and tuple comparisons across all six B-tree operators
+  - [ ] Remaining operator forms
 - [ ] PostgreSQL scalar, aggregate, and set-returning function translations
   - [x] Initial array, range/multirange, JSONB, regex, network, and full-text scalar functions
   - [x] Composable nested functions with typed result materialisation and PostgreSQL 15–19 acceptance

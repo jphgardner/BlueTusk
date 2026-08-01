@@ -42,6 +42,38 @@ internal sealed class BlueTuskSqlNullabilityProcessor(
             return aggregate.Update(arguments, orderings, predicate);
         }
 
+        if (sqlExpression is BlueTuskQuantifiedComparisonExpression quantifiedComparison)
+        {
+            var item = Visit(
+                quantifiedComparison.Item,
+                allowOptimizedExpansion,
+                out var itemNullable);
+            var array = Visit(
+                quantifiedComparison.Array,
+                allowOptimizedExpansion,
+                out var arrayNullable);
+            var elementType = array.Type.GetElementType();
+            var elementNullable = elementType is not null
+                && (!elementType.IsValueType || Nullable.GetUnderlyingType(elementType) is not null);
+            nullable = itemNullable || arrayNullable || elementNullable;
+            return quantifiedComparison.Update(item, array);
+        }
+
+        if (sqlExpression is BlueTuskRowValueExpression rowValue)
+        {
+            var nullableValue = false;
+            var values = rowValue.Values
+                .Select(value =>
+                {
+                    var visited = Visit(value, allowOptimizedExpansion, out var valueNullable);
+                    nullableValue |= valueNullable;
+                    return visited;
+                })
+                .ToArray();
+            nullable = nullableValue;
+            return rowValue.Update(values);
+        }
+
         if (sqlExpression is not BlueTuskBinaryExpression binary)
         {
             return base.VisitCustomSqlExpression(sqlExpression, allowOptimizedExpansion, out nullable);

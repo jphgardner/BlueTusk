@@ -75,6 +75,95 @@ public sealed class PostgreSqlOperatorTranslationTests
     }
 
     [Fact]
+    public void Quantified_and_row_value_comparisons_translate_to_PostgreSQL_syntax()
+    {
+        using var context = CreateContext();
+        var values = new[] { 1, 2 };
+        var patterns = new[] { "Blue%", "%Provider" };
+        var boundaryId = 2;
+        var boundaryName = "Boundary";
+
+        var quantifiedSql = context.Documents
+            .Where(document =>
+                EF.Functions.EqualAny(document.Id, values)
+                && EF.Functions.NotEqualAny(document.Id, values)
+                && EF.Functions.LessThanAny(document.Id, values)
+                && EF.Functions.LessThanOrEqualAny(document.Id, values)
+                && EF.Functions.GreaterThanAny(document.Id, values)
+                && EF.Functions.GreaterThanOrEqualAny(document.Id, values)
+                && EF.Functions.EqualAll(document.Id, values)
+                && EF.Functions.NotEqualAll(document.Id, values)
+                && EF.Functions.LessThanAll(document.Id, values)
+                && EF.Functions.LessThanOrEqualAll(document.Id, values)
+                && EF.Functions.GreaterThanAll(document.Id, values)
+                && EF.Functions.GreaterThanOrEqualAll(document.Id, values)
+                && EF.Functions.LikeAny(document.Name, patterns)
+                && EF.Functions.ILikeAny(document.Name, patterns)
+                && EF.Functions.LikeAll(document.Name, patterns)
+                && EF.Functions.ILikeAll(document.Name, patterns))
+            .ToQueryString();
+        var rowSql = context.Documents
+            .Where(document =>
+                EF.Functions.RowEqual(
+                    ValueTuple.Create(document.Id, document.Name),
+                    ValueTuple.Create(boundaryId, boundaryName))
+                || EF.Functions.RowNotEqual(
+                    ValueTuple.Create(document.Id, document.Name),
+                    ValueTuple.Create(boundaryId, boundaryName))
+                || EF.Functions.RowLessThan(
+                    ValueTuple.Create(document.Id, document.Name),
+                    ValueTuple.Create(boundaryId, boundaryName))
+                || EF.Functions.RowLessThanOrEqual(
+                    ValueTuple.Create(document.Id, document.Name),
+                    ValueTuple.Create(boundaryId, boundaryName))
+                || EF.Functions.RowGreaterThan(
+                    ValueTuple.Create(document.Id, document.Name),
+                    ValueTuple.Create(boundaryId, boundaryName))
+                || EF.Functions.RowGreaterThanOrEqual(
+                    ValueTuple.Create(document.Id, document.Name),
+                    ValueTuple.Create(boundaryId, boundaryName)))
+            .ToQueryString();
+
+        Assert.Contains(" = ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" <> ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" < ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" <= ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" > ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" >= ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" = ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" <> ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" < ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" <= ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" > ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" >= ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" LIKE ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" ILIKE ANY(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" LIKE ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains(" ILIKE ALL(", quantifiedSql, StringComparison.Ordinal);
+        Assert.Contains("(\"e\".\"Id\", \"e\".\"Name\")", rowSql, StringComparison.Ordinal);
+        Assert.Contains(" = (", rowSql, StringComparison.Ordinal);
+        Assert.Contains(" <> (", rowSql, StringComparison.Ordinal);
+        Assert.Contains(" < (", rowSql, StringComparison.Ordinal);
+        Assert.Contains(" <= (", rowSql, StringComparison.Ordinal);
+        Assert.Contains(" > (", rowSql, StringComparison.Ordinal);
+        Assert.Contains(" >= (", rowSql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Row_value_comparisons_reject_mismatched_tuple_lengths()
+    {
+        using var context = CreateContext();
+
+        var error = Assert.Throws<InvalidOperationException>(() => context.Documents
+            .Where(document => EF.Functions.RowGreaterThan(
+                ValueTuple.Create(document.Id, document.Name),
+                ValueTuple.Create(1, "Boundary", 3)))
+            .ToQueryString());
+
+        Assert.Contains("same number of elements", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Json_extensions_preserve_jsonb_and_path_operator_semantics()
     {
         using var context = CreateContext();
@@ -173,6 +262,59 @@ public sealed class PostgreSqlOperatorTranslationTests
                     EF.Functions.ArrayContains(document.Numbers, containedNumbers)
                     && EF.Functions.ArrayContainedBy(document.Numbers, containingNumbers)
                     && EF.Functions.ArrayOverlaps(document.Numbers, overlappingNumbers)));
+
+            var ids = new[] { 0, 1 };
+            var otherIds = new[] { 2, 3 };
+            var lowerIds = new[] { -1, 0 };
+            var upperIds = new[] { 2, 3 };
+            var exactIds = new[] { 1, 1 };
+            var namePatterns = new[] { "Blue%", "%Provider" };
+            Assert.Equal(
+                1,
+                await context.Documents.CountAsync(document =>
+                    EF.Functions.EqualAny(document.Id, ids)
+                    && EF.Functions.NotEqualAny(document.Id, ids)
+                    && EF.Functions.LessThanAny(document.Id, upperIds)
+                    && EF.Functions.LessThanOrEqualAny(document.Id, ids)
+                    && EF.Functions.GreaterThanAny(document.Id, lowerIds)
+                    && EF.Functions.GreaterThanOrEqualAny(document.Id, ids)
+                    && EF.Functions.EqualAll(document.Id, exactIds)
+                    && EF.Functions.NotEqualAll(document.Id, otherIds)
+                    && EF.Functions.LessThanAll(document.Id, upperIds)
+                    && EF.Functions.LessThanOrEqualAll(document.Id, upperIds)
+                    && EF.Functions.GreaterThanAll(document.Id, lowerIds)
+                    && EF.Functions.GreaterThanOrEqualAll(document.Id, exactIds)
+                    && EF.Functions.LikeAny(document.Name, namePatterns)
+                    && EF.Functions.ILikeAny(document.Name, namePatterns)
+                    && EF.Functions.LikeAll(document.Name, namePatterns)
+                    && EF.Functions.ILikeAll(document.Name, namePatterns)
+                    && EF.Functions.RowEqual(
+                        ValueTuple.Create(document.Id, document.Name),
+                        ValueTuple.Create(1, "BlueTusk Provider"))
+                    && EF.Functions.RowNotEqual(
+                        ValueTuple.Create(document.Id, document.Name),
+                        ValueTuple.Create(2, "BlueTusk Provider"))
+                    && EF.Functions.RowLessThan(
+                        ValueTuple.Create(document.Id, document.Name),
+                        ValueTuple.Create(2, string.Empty))
+                    && EF.Functions.RowLessThanOrEqual(
+                        ValueTuple.Create(document.Id, document.Name),
+                        ValueTuple.Create(1, "BlueTusk Provider"))
+                    && EF.Functions.RowGreaterThan(
+                        ValueTuple.Create(document.Id, document.Name),
+                        ValueTuple.Create(0, "zzz"))
+                    && EF.Functions.RowGreaterThanOrEqual(
+                        ValueTuple.Create(document.Id, document.Name),
+                        ValueTuple.Create(1, "BlueTusk Provider"))));
+
+            var compiled = EF.CompileQuery(
+                (DocumentContext database, int[] candidateIds, int cursorId, string cursorName) =>
+                    database.Documents.Count(document =>
+                        EF.Functions.EqualAny(document.Id, candidateIds)
+                        && EF.Functions.RowGreaterThanOrEqual(
+                            ValueTuple.Create(document.Id, document.Name),
+                            ValueTuple.Create(cursorId, cursorName))));
+            Assert.Equal(1, compiled(context, ids, 1, "BlueTusk Provider"));
 
             var containedRange = new BlueTuskRange<int>(2, 3);
             var containingRange = new BlueTuskRange<int>(0, 20);

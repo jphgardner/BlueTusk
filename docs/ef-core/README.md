@@ -97,13 +97,20 @@ an SQL fragment or concatenates application values into generated SQL.
 var requiredTags = new[] { 2, 3 };
 var activeWindow = new BlueTuskRange<int>(100, 200);
 var jsonFilter = """{"kind":"provider"}""";
+var candidateIds = new[] { 7, 11, 42 };
+var cursorId = 7;
+var cursorName = "BlueTusk";
 
 var documents = await context.Documents
     .Where(document =>
         EF.Functions.ILike(document.Name, "blue%")
         && EF.Functions.ArrayContains(document.Tags, requiredTags)
         && EF.Functions.RangeContains(document.ValidIds, activeWindow)
-        && EF.Functions.JsonContains(document.Metadata, jsonFilter))
+        && EF.Functions.JsonContains(document.Metadata, jsonFilter)
+        && EF.Functions.EqualAny(document.Id, candidateIds)
+        && EF.Functions.RowGreaterThan(
+            ValueTuple.Create(document.Id, document.Name),
+            ValueTuple.Create(cursorId, cursorName)))
     .ToListAsync(cancellationToken);
 ```
 
@@ -115,12 +122,25 @@ The preview covers:
   adjacency, plus multirange containment and overlap;
 - JSONB containment and key tests, and JSONPath `@?`/`@@`;
 - `inet`/`cidr` containment and overlap; and
-- `tsvector @@ tsquery` full-text matching.
+- `tsvector @@ tsquery` full-text matching;
+- typed `=`, `<>`, `<`, `<=`, `>`, and `>=` comparisons with PostgreSQL
+  `ANY(array)` and `ALL(array)`, plus `LIKE`/`ILIKE` quantifiers; and
+- two-or-more-element row comparisons using `ValueTuple.Create(...)` and all
+  six PostgreSQL B-tree comparison operators.
+
+The quantified methods are named after their SQL shape: `EqualAny`,
+`NotEqualAll`, `LessThanAny`, and the corresponding comparison/quantifier
+combinations. Array arguments retain one PostgreSQL array parameter instead of
+being interpolated or expanded into SQL literals. Row methods are `RowEqual`,
+`RowNotEqual`, `RowLessThan`, `RowLessThanOrEqual`, `RowGreaterThan`, and
+`RowGreaterThanOrEqual`. Both row constructors must have the same arity;
+BlueTusk rejects a mismatch during translation with a focused diagnostic.
 
 These methods deliberately throw if evaluated as ordinary CLR methods. A query
 must translate completely, and SQL null behavior follows the underlying
 PostgreSQL operator rather than pretending to be an in-memory implementation.
 Operator behavior is defined by PostgreSQL's
+[row and array comparison](https://www.postgresql.org/docs/current/functions-comparisons.html),
 [pattern](https://www.postgresql.org/docs/current/functions-matching.html),
 [array](https://www.postgresql.org/docs/current/functions-array.html),
 [range/multirange](https://www.postgresql.org/docs/current/functions-range.html),

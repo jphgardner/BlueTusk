@@ -68,6 +68,37 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             return aggregate;
         }
 
+        if (extensionExpression is BlueTuskQuantifiedComparisonExpression quantifiedComparison)
+        {
+            Sql.Append("(");
+            Visit(quantifiedComparison.Item);
+            Sql.Append(" ").Append(quantifiedComparison.OperatorToken).Append(" ");
+            Sql.Append(
+                quantifiedComparison.Quantifier == BlueTuskArrayQuantifier.Any
+                    ? "ANY("
+                    : "ALL(");
+            Visit(quantifiedComparison.Array);
+            Sql.Append("))");
+            return quantifiedComparison;
+        }
+
+        if (extensionExpression is BlueTuskRowValueExpression rowValue)
+        {
+            Sql.Append("(");
+            for (var index = 0; index < rowValue.Values.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(rowValue.Values[index]);
+            }
+
+            Sql.Append(")");
+            return rowValue;
+        }
+
         if (extensionExpression is BlueTuskBinaryExpression binary)
         {
             Sql.Append("(");

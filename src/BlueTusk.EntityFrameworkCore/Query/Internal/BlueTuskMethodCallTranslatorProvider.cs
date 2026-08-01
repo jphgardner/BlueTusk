@@ -11,6 +11,12 @@ internal sealed class BlueTuskMethodCallTranslatorProvider
     {
         AddTranslators(
         [
+            new BlueTuskRowValueTranslator(
+                dependencies.SqlExpressionFactory,
+                dependencies.RelationalTypeMappingSource),
+            new BlueTuskQuantifiedComparisonTranslator(
+                dependencies.SqlExpressionFactory,
+                dependencies.RelationalTypeMappingSource),
             new BlueTuskPostgreSqlFunctionTranslator(
                 dependencies.SqlExpressionFactory,
                 dependencies.RelationalTypeMappingSource),

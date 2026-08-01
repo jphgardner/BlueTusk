@@ -1,3 +1,4 @@
+using System.Runtime.CompilerServices;
 using BlueTusk.TypeSystem;
 
 namespace Microsoft.EntityFrameworkCore;
@@ -21,6 +22,72 @@ public static class BlueTuskDbFunctionsExtensions
         => ThrowTranslationOnly<bool>();
 
     public static bool ArrayOverlaps<T>(this DbFunctions _, T[] left, T[] right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool EqualAny<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool NotEqualAny<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool LessThanAny<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool LessThanOrEqualAny<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GreaterThanAny<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GreaterThanOrEqualAny<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool EqualAll<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool NotEqualAll<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool LessThanAll<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool LessThanOrEqualAll<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GreaterThanAll<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GreaterThanOrEqualAll<T>(this DbFunctions _, T item, T[] values)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool LikeAny(this DbFunctions _, string item, string[] patterns)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool ILikeAny(this DbFunctions _, string item, string[] patterns)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool LikeAll(this DbFunctions _, string item, string[] patterns)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool ILikeAll(this DbFunctions _, string item, string[] patterns)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RowEqual(this DbFunctions _, ITuple left, ITuple right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RowNotEqual(this DbFunctions _, ITuple left, ITuple right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RowLessThan(this DbFunctions _, ITuple left, ITuple right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RowLessThanOrEqual(this DbFunctions _, ITuple left, ITuple right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RowGreaterThan(this DbFunctions _, ITuple left, ITuple right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RowGreaterThanOrEqual(this DbFunctions _, ITuple left, ITuple right)
         => ThrowTranslationOnly<bool>();
 
     public static bool RangeContains<T>(
