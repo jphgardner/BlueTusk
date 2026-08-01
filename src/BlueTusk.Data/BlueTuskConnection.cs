@@ -7,6 +7,7 @@ using BlueTusk.Client;
 using BlueTusk.Data.Copy;
 using BlueTusk.Data.LargeObjects;
 using BlueTusk.Data.Notifications;
+using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 using BlueTusk.TypeSystem;
 
@@ -158,6 +159,11 @@ public sealed class BlueTuskConnection : DbConnection
         _session ?? throw new InvalidOperationException("The connection is not open.");
 
     internal bool HasOpenSession => _session is { IsOpen: true };
+
+    internal BlueTuskDiagnosticsOptions DiagnosticsOptions => _clientConfiguration.Diagnostics;
+
+    internal BlueTuskHostEndpoint DiagnosticEndpoint =>
+        ConnectedEndpoint ?? _settings.HostEndpoints[0];
 
     /// <summary>Gets the current immutable PostgreSQL type-registry snapshot.</summary>
     public BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;

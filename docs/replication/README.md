@@ -29,6 +29,12 @@ consumer requests the next element. Process or hand off each payload promptly,
 and put an application-owned bounded queue in front of slower durable work only
 when that queue's capacity and failure semantics are deliberate.
 
+The `BlueTusk.Diagnostics` meter records WAL-sender clock lag and byte-position
+lag for XLogData and keepalive messages. These are receive-side observations,
+not claims that a downstream consumer has applied a transaction. See
+[Diagnostics and observability](../observability.md) for metric names and
+dimensions.
+
 For a multi-host data source, select a configured endpoint explicitly:
 
 ```csharp

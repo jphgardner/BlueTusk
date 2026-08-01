@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 
 namespace BlueTusk.Data;
 
@@ -27,6 +28,8 @@ internal sealed record BlueTuskClientConfiguration
 
     internal RemoteCertificateValidationCallback? RemoteCertificateValidationCallback { get; init; }
 
+    internal BlueTuskDiagnosticsOptions Diagnostics { get; init; } = new();
+
     internal BlueTuskClientOptions Apply(BlueTuskClientOptions options) => options with
     {
         PasswordProvider = PasswordProvider,
@@ -42,6 +45,7 @@ internal sealed record BlueTuskClientConfiguration
 
     internal void Validate()
     {
+        Diagnostics.Validate();
         var hasPasswordProvider = PasswordProvider is not null || PasswordProviderAsync is not null;
         var hasAccessTokenProvider = AccessTokenProvider is not null || AccessTokenProviderAsync is not null;
         if (hasPasswordProvider && hasAccessTokenProvider)

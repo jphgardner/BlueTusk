@@ -2,6 +2,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Client\BlueTusk.Client.csproj" />
+    <ProjectReference Include="..\BlueTusk.Diagnostics\BlueTusk.Diagnostics.csproj" />
     <ProjectReference Include="..\BlueTusk.Protocol\BlueTusk.Protocol.csproj" />
     <ProjectReference Include="..\BlueTusk.TypeSystem\BlueTusk.TypeSystem.csproj" />
   </ItemGroup>

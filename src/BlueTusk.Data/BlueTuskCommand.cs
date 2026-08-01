@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Data;
@@ -250,11 +251,14 @@ public sealed class BlueTuskCommand : DbCommand
         Interlocked.Exchange(ref _timeoutRequested, 0);
         BlueTuskConnection? ownedConnection = null;
         Timer? timeoutTimer = null;
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
             var connection = GetStreamingConnection(ref ownedConnection);
             connection.ValidateCommandTransaction(_transaction);
             ValidateStreamingCommand();
+            telemetry = StartTelemetry(connection);
             Volatile.Write(ref _executingConnection, connection);
             timeoutTimer = CreateTimeoutTimer();
             var portal = BeginStreamingPortal(connection);
@@ -270,14 +274,21 @@ public sealed class BlueTuskCommand : DbCommand
             timeoutTimer?.Dispose();
             ownedConnection?.Dispose();
             CompleteStreamingExecution();
-            throw TranslateReaderServerException(exception);
+            var translated = TranslateReaderServerException(exception);
+            failure = translated;
+            throw translated;
         }
-        catch
+        catch (Exception exception)
         {
+            failure = exception;
             timeoutTimer?.Dispose();
             ownedConnection?.Dispose();
             CompleteStreamingExecution();
             throw;
+        }
+        finally
+        {
+            telemetry.Complete(failure);
         }
     }
 
@@ -294,6 +305,8 @@ public sealed class BlueTuskCommand : DbCommand
         Interlocked.Exchange(ref _timeoutRequested, 0);
         BlueTuskConnection? ownedConnection = null;
         Timer? timeoutTimer = null;
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
             var connection = await GetStreamingConnectionAsync(
@@ -301,6 +314,7 @@ public sealed class BlueTuskCommand : DbCommand
                 cancellationToken).ConfigureAwait(false);
             connection.ValidateCommandTransaction(_transaction);
             ValidateStreamingCommand();
+            telemetry = StartTelemetry(connection);
             Volatile.Write(ref _executingConnection, connection);
             timeoutTimer = CreateTimeoutTimer();
             var portal = await BeginStreamingPortalAsync(
@@ -322,10 +336,13 @@ public sealed class BlueTuskCommand : DbCommand
             }
 
             CompleteStreamingExecution();
-            throw TranslateReaderServerException(exception);
+            var translated = TranslateReaderServerException(exception);
+            failure = translated;
+            throw translated;
         }
-        catch
+        catch (Exception exception)
         {
+            failure = exception;
             timeoutTimer?.Dispose();
             if (ownedConnection is not null)
             {
@@ -334,6 +351,10 @@ public sealed class BlueTuskCommand : DbCommand
 
             CompleteStreamingExecution();
             throw;
+        }
+        finally
+        {
+            telemetry.Complete(failure);
         }
     }
 
@@ -586,12 +607,22 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
-            return await ExecuteCoreOnceAsync(cancellationToken).ConfigureAwait(false);
+            return await ExecuteCoreOnceAsync(
+                connection => telemetry = StartTelemetry(connection),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
         }
         finally
         {
+            telemetry.Complete(failure);
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
@@ -606,18 +637,26 @@ public sealed class BlueTuskCommand : DbCommand
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
-            return ExecuteCoreOnce();
+            return ExecuteCoreOnce(connection => telemetry = StartTelemetry(connection));
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
         }
         finally
         {
+            telemetry.Complete(failure);
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
     }
 
-    private BlueTuskQueryResult ExecuteCoreOnce()
+    private BlueTuskQueryResult ExecuteCoreOnce(Action<BlueTuskConnection> startTelemetry)
     {
         if (_connection is null && _dataSource is null)
         {
@@ -641,6 +680,8 @@ public sealed class BlueTuskCommand : DbCommand
         {
             throw new InvalidOperationException("CommandText is required.");
         }
+
+        startTelemetry(connection);
 
         Volatile.Write(ref _executingConnection, connection);
         using var timeoutTimer = CommandTimeout > 0
@@ -732,7 +773,9 @@ public sealed class BlueTuskCommand : DbCommand
         }
     }
 
-    private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(CancellationToken cancellationToken)
+    private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(
+        Action<BlueTuskConnection> startTelemetry,
+        CancellationToken cancellationToken)
     {
         if (_connection is null && _dataSource is null)
         {
@@ -757,6 +800,8 @@ public sealed class BlueTuskCommand : DbCommand
         {
             throw new InvalidOperationException("CommandText is required.");
         }
+
+        startTelemetry(connection);
 
         using var timeoutSource = CommandTimeout > 0 ? new CancellationTokenSource(TimeSpan.FromSeconds(CommandTimeout)) : null;
         using var linkedSource = timeoutSource is null
@@ -926,6 +971,7 @@ public sealed class BlueTuskCommand : DbCommand
             string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) &&
             current.ParameterTypeOids.AsSpan().SequenceEqual(typeOids))
         {
+            BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "reuse");
             return current;
         }
 
@@ -943,6 +989,7 @@ public sealed class BlueTuskCommand : DbCommand
             plan.Sql,
             typeOids,
             cancellationToken).ConfigureAwait(false);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "prepare");
         var prepared = new PreparedStatementState(
             statementName,
             plan.Sql,
@@ -988,6 +1035,7 @@ public sealed class BlueTuskCommand : DbCommand
             string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) &&
             current.ParameterTypeOids.AsSpan().SequenceEqual(typeOids))
         {
+            BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "reuse");
             return current;
         }
 
@@ -999,6 +1047,7 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         session.PrepareStatement(statementName, plan.Sql, typeOids);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "prepare");
         var prepared = new PreparedStatementState(statementName, plan.Sql, typeOids, session);
         _preparedStatement = prepared;
         return prepared;
@@ -1014,6 +1063,17 @@ public sealed class BlueTuskCommand : DbCommand
         _connection?.TypeRegistry ??
         _dataSource?.TypeRegistry ??
         throw new InvalidOperationException("The command has no connection or data source.");
+
+    private BlueTuskCommandInstrumentation StartTelemetry(BlueTuskConnection connection)
+    {
+        var endpoint = connection.DiagnosticEndpoint;
+        return BlueTuskDiagnostics.StartCommand(
+            CommandText,
+            connection.Database,
+            endpoint.Host,
+            endpoint.Port,
+            connection.DiagnosticsOptions);
+    }
 
     private sealed record PreparedStatementState(
         string Name,

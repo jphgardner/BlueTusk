@@ -47,6 +47,7 @@
     <Project Path="tests/BlueTusk.CompatibilityTests/BlueTusk.CompatibilityTests.csproj" />
     <Project Path="tests/BlueTusk.ConformanceTests/BlueTusk.ConformanceTests.csproj" />
     <Project Path="tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Diagnostics.Tests/BlueTusk.Diagnostics.Tests.csproj" />
     <Project Path="tests/BlueTusk.EntityFrameworkCore.Tests/BlueTusk.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.ExtensionTemplate.Tests/BlueTusk.ExtensionTemplate.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.Citext.EntityFrameworkCore.Tests/BlueTusk.Extensions.Citext.EntityFrameworkCore.Tests.csproj" />

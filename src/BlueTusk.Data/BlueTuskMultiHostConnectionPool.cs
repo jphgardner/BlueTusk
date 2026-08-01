@@ -1,3 +1,4 @@
+using BlueTusk.Diagnostics;
 using BlueTusk.Security;
 
 namespace BlueTusk.Data;
@@ -65,8 +66,10 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         var failures = new List<Exception>();
         BlueTuskPooledSession? fallback = null;
         var sawSaturatedPool = false;
-        foreach (var entry in entries)
+        for (var index = 0; index < entries.Length; index++)
         {
+            var entry = entries[index];
+            RecordRetry(index, entry.Endpoint);
             try
             {
                 var lease = entry.Pool.TryRent();
@@ -80,6 +83,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 if (selection == LeaseSelection.Accept)
                 {
                     ReturnFallback(fallback);
+                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
                     return lease;
                 }
 
@@ -110,6 +114,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
 
         if (fallback is not null)
         {
+            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
             return fallback;
         }
 
@@ -129,8 +134,10 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         var failures = new List<Exception>();
         BlueTuskPooledSession? fallback = null;
         var sawSaturatedPool = false;
-        foreach (var entry in entries)
+        for (var index = 0; index < entries.Length; index++)
         {
+            var entry = entries[index];
+            RecordRetry(index, entry.Endpoint);
             cancellationToken.ThrowIfCancellationRequested();
             try
             {
@@ -147,6 +154,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 if (selection == LeaseSelection.Accept)
                 {
                     ReturnFallback(fallback);
+                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
                     return lease;
                 }
 
@@ -182,6 +190,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
 
         if (fallback is not null)
         {
+            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
             return fallback;
         }
 
@@ -270,8 +279,10 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         CancellationToken cancellationToken)
     {
         BlueTuskPooledSession? fallback = null;
-        foreach (var entry in entries)
+        for (var index = 0; index < entries.Count; index++)
         {
+            var entry = entries[index];
+            RecordRetry(index, entry.Endpoint);
             try
             {
                 var lease = await entry.Pool.RentAsync(cancellationToken).ConfigureAwait(false);
@@ -281,6 +292,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 if (selection == LeaseSelection.Accept)
                 {
                     ReturnFallback(fallback);
+                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
                     return lease;
                 }
 
@@ -309,7 +321,13 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
             }
         }
 
-        return fallback ?? throw CreatePoolException(failures);
+        if (fallback is not null)
+        {
+            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
+            return fallback;
+        }
+
+        throw CreatePoolException(failures);
     }
 
     private BlueTuskPooledSession RentFromSaturatedPools(
@@ -317,8 +335,10 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
         List<Exception> failures)
     {
         BlueTuskPooledSession? fallback = null;
-        foreach (var entry in entries)
+        for (var index = 0; index < entries.Count; index++)
         {
+            var entry = entries[index];
+            RecordRetry(index, entry.Endpoint);
             try
             {
                 var lease = entry.Pool.Rent();
@@ -326,6 +346,7 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                 if (selection == LeaseSelection.Accept)
                 {
                     ReturnFallback(fallback);
+                    RecordFailover(entries[0].Endpoint, lease.Session.Endpoint);
                     return lease;
                 }
 
@@ -349,7 +370,13 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
             }
         }
 
-        return fallback ?? throw CreatePoolException(failures);
+        if (fallback is not null)
+        {
+            RecordFailover(entries[0].Endpoint, fallback.Session.Endpoint);
+            return fallback;
+        }
+
+        throw CreatePoolException(failures);
     }
 
     private LeaseSelection SelectLease(BlueTuskPooledSession lease)
@@ -475,6 +502,27 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
 
     private static void ReturnFallback(BlueTuskPooledSession? fallback) =>
         fallback?.Owner.Return(fallback);
+
+    private static void RecordRetry(int index, BlueTuskHostEndpoint endpoint)
+    {
+        if (index > 0)
+        {
+            BlueTuskDiagnostics.RecordConnectionRetry(
+                endpoint.Host,
+                endpoint.Port,
+                "multi_host");
+        }
+    }
+
+    private static void RecordFailover(
+        BlueTuskHostEndpoint first,
+        BlueTuskHostEndpoint selected)
+    {
+        if (first != selected)
+        {
+            BlueTuskDiagnostics.RecordConnectionFailover(selected.Host, selected.Port);
+        }
+    }
 
     private void ThrowIfDisposed() =>
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);

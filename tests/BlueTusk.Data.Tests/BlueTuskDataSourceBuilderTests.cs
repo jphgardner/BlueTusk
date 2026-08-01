@@ -3,6 +3,7 @@ using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data.Tests;
@@ -180,6 +181,28 @@ public sealed class BlueTuskDataSourceBuilderTests
             .Build();
 
         Assert.True(dataSource.CreateDedicatedSessionOptions().AccessTokenRequiresTls);
+    }
+
+    [Fact]
+    public void Data_source_builder_snapshots_diagnostics_configuration()
+    {
+        var options = new BlueTuskDiagnosticsOptions
+        {
+            SlowCommandThreshold = TimeSpan.FromMilliseconds(250),
+        };
+        using var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Database=app;Username=worker")
+            .ConfigureDiagnostics(options)
+            .Build();
+
+        Assert.NotSame(options, dataSource.DiagnosticsOptions);
+        Assert.Equal(TimeSpan.FromMilliseconds(250), dataSource.DiagnosticsOptions.SlowCommandThreshold);
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            new BlueTuskDataSourceBuilder("Host=db.example.test;Username=worker")
+                .ConfigureDiagnostics(new BlueTuskDiagnosticsOptions
+                {
+                    SlowCommandThreshold = TimeSpan.FromMilliseconds(-2),
+                }));
     }
 
     [Fact]

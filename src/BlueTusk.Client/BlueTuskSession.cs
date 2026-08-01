@@ -94,17 +94,27 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(options);
         options.Validate();
 
+        var telemetry = BlueTuskDiagnostics.StartConnection(
+            options.Database,
+            options.Host,
+            options.Port);
         var connection = new BlueTuskProtocolConnection(new BlueTuskSocketTransport());
         var session = new BlueTuskSession(connection, options);
+        Exception? failure = null;
         try
         {
             session.OpenCore();
             return session;
         }
-        catch
+        catch (Exception exception)
         {
+            failure = exception;
             session.Dispose();
             throw;
+        }
+        finally
+        {
+            telemetry.Complete(failure);
         }
     }
 
@@ -115,17 +125,27 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(options);
         options.Validate();
 
+        var telemetry = BlueTuskDiagnostics.StartConnection(
+            options.Database,
+            options.Host,
+            options.Port);
         var connection = new BlueTuskProtocolConnection(new BlueTuskSocketTransport());
         var session = new BlueTuskSession(connection, options);
+        Exception? failure = null;
         try
         {
             await session.OpenCoreAsync(cancellationToken).ConfigureAwait(false);
             return session;
         }
-        catch
+        catch (Exception exception)
         {
+            failure = exception;
             await session.DisposeAsync().ConfigureAwait(false);
             throw;
+        }
+        finally
+        {
+            telemetry.Complete(failure);
         }
     }
 

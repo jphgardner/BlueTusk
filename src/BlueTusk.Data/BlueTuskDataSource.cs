@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Extensions;
 using BlueTusk.TypeSystem;
 
@@ -40,6 +41,8 @@ public sealed class BlueTuskDataSource : DbDataSource
     public static BlueTuskDataSource Create(string connectionString) => new(connectionString);
 
     public BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;
+
+    internal BlueTuskDiagnosticsOptions DiagnosticsOptions => _clientConfiguration.Diagnostics;
 
     /// <summary>Gets the immutable optional-feature snapshot configured for this data source.</summary>
     public BlueTuskFeatureRegistry Features { get; }

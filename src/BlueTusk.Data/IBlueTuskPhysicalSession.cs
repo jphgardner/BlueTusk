@@ -1,4 +1,5 @@
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 using BlueTusk.Security;
 
@@ -444,6 +445,10 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         try
         {
             var result = _session.ExecuteSimpleQuery(sql);
+            BlueTuskDiagnostics.RecordPreparedStatements(
+                _autoPrepareEntries.Count(static pair => pair.Value.PreparedStatementName is not null),
+                "automatic",
+                "invalidate");
             _autoPrepareEntries.Clear();
             return result;
         }
@@ -466,6 +471,10 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         try
         {
             var result = await _session.ExecuteSimpleQueryAsync(sql, cancellationToken).ConfigureAwait(false);
+            BlueTuskDiagnostics.RecordPreparedStatements(
+                _autoPrepareEntries.Count(static pair => pair.Value.PreparedStatementName is not null),
+                "automatic",
+                "invalidate");
             _autoPrepareEntries.Clear();
             return result;
         }
@@ -695,6 +704,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         {
             try
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "reuse");
                 return await _session.ExecutePreparedStatementAsync(
                     preparedStatementName,
                     parameters,
@@ -703,6 +713,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             }
             catch (BlueTuskServerException exception) when (exception.SqlState == "26000")
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "invalidate");
                 _autoPrepareEntries.Remove(key);
                 return await _session.ExecuteExtendedQueryAsync(
                     sql,
@@ -732,6 +743,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             sql,
             parameters.Select(static parameter => parameter.TypeOid).ToArray(),
             cancellationToken).ConfigureAwait(false);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "prepare");
         entry.PreparedStatementName = preparedStatementName;
         return await _session.ExecutePreparedStatementAsync(
             preparedStatementName,
@@ -758,6 +770,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         {
             try
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "reuse");
                 return _session.ExecutePreparedStatement(
                     preparedStatementName,
                     parameters,
@@ -765,6 +778,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             }
             catch (BlueTuskServerException exception) when (exception.SqlState == "26000")
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "invalidate");
                 _autoPrepareEntries.Remove(key);
                 return _session.ExecuteExtendedQuery(sql, parameters, useBinaryResults);
             }
@@ -784,6 +798,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             preparedStatementName,
             sql,
             parameters.Select(static parameter => parameter.TypeOid).ToArray());
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "prepare");
         entry.PreparedStatementName = preparedStatementName;
         return _session.ExecutePreparedStatement(
             preparedStatementName,
@@ -815,6 +830,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
 
         _autoPrepareEntries.Remove(oldest.Key);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "evict");
     }
 
     private void EvictAutoPreparedStatementIfRequired()
@@ -838,6 +854,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
 
         _autoPrepareEntries.Remove(oldest.Key);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "evict");
     }
 
     private void PruneAutoPrepareCandidates(string protectedKey)

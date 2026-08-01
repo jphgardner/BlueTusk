@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Replication;
@@ -242,11 +243,22 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
                 if (message is BlueTuskXLogData xLogData)
                 {
                     RecordReceivedPosition(xLogData.WalEnd);
+                    RecordReplicationLag(
+                        xLogData.ServerClock,
+                        xLogData.ServerWalEnd,
+                        xLogData.WalEnd);
                 }
-                else if (message is BlueTuskPrimaryKeepalive { ReplyRequested: true })
+                else if (message is BlueTuskPrimaryKeepalive keepalive)
                 {
-                    await ReplyToKeepaliveAsync(channel, linkedCancellation.Token)
-                        .ConfigureAwait(false);
+                    RecordReplicationLag(
+                        keepalive.ServerClock,
+                        keepalive.ServerWalEnd,
+                        LastReceivedWalPosition);
+                    if (keepalive.ReplyRequested)
+                    {
+                        await ReplyToKeepaliveAsync(channel, linkedCancellation.Token)
+                            .ConfigureAwait(false);
+                    }
                 }
 
                 yield return message;
@@ -327,6 +339,18 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
             }
         }
     }
+
+    private void RecordReplicationLag(
+        DateTimeOffset serverClock,
+        BlueTuskLogSequenceNumber serverWalEnd,
+        BlueTuskLogSequenceNumber receivedWalEnd) =>
+        BlueTuskDiagnostics.RecordReplicationLag(
+            serverClock,
+            serverWalEnd.Value,
+            receivedWalEnd.Value,
+            _catalogOptions.Database,
+            _catalogOptions.Host,
+            _catalogOptions.Port);
 
     private protected static BlueTuskDataRow GetSingleRow(
         BlueTuskQueryResult result,

@@ -29,6 +29,9 @@ PostgreSQL
   [transport contract](transport.md).
 - **Protocol** owns frontend/backend framing, connection and operation state machines, authentication negotiation, and cancellation protocol messages. It does not expose ADO.NET types.
 - **Security** owns authentication primitives, secret handling, certificate policy, and diagnostic redaction.
+- **Diagnostics** owns dependency-free `ActivitySource`, `Meter`, and redacted
+  event contracts. Client, Data, and Replication may publish through it; it has
+  no references back into provider layers.
 - **TypeSystem** owns catalogue type identities and codecs. Unknown types are values, not fatal errors.
 - **Client** coordinates sessions and PostgreSQL-native operations using protocol and type-system abstractions.
 - **Data** exposes `System.Data.Common` APIs, pooling, connection strings, and data sources.

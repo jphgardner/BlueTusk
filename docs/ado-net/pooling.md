@@ -49,4 +49,4 @@ The reset round trip is also the health check. A closed session, failed reset, e
 - `ClearPool()` and `ClearPoolAsync()` close idle sessions and mark active sessions for disposal when they return.
 - Disposing the data source cancels queued opens, closes idle sessions, and drains active sessions as their logical connections close.
 
-The `BlueTusk.Diagnostics` meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Statistics are scoped to one data source; meter instruments are process-wide aggregates.
+The `BlueTusk.Diagnostics` meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Multi-host retries and non-first-host selections have separate counters. Statistics are scoped to one data source; meter instruments are process-wide aggregates. See [Diagnostics and observability](../observability.md) for names, dimensions, and redaction rules.

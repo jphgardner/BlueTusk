@@ -4,6 +4,20 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <Description>Redaction-safe tracing, metrics, and slow-command events for BlueTusk.</Description>
+    <PackageTags>postgresql;database;dotnet;bluetusk;opentelemetry;diagnostics;metrics;tracing</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlueTusk.Client" />
+    <InternalsVisibleTo Include="BlueTusk.Data" />
+    <InternalsVisibleTo Include="BlueTusk.Diagnostics.Tests" />
+    <InternalsVisibleTo Include="BlueTusk.Replication" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Remove="$(MSBuildThisFileDirectory)..\..\README.md" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

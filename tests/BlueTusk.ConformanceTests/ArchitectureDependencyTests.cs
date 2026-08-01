@@ -37,7 +37,7 @@ public sealed class ArchitectureDependencyTests
                     "BlueTusk.TypeSystem",
                 ],
             ["BlueTusk.Replication"] =
-                ["BlueTusk.Client", "BlueTusk.Protocol", "BlueTusk.TypeSystem"],
+                ["BlueTusk.Client", "BlueTusk.Diagnostics", "BlueTusk.Protocol", "BlueTusk.TypeSystem"],
             ["BlueTusk.Replication.PgOutput"] =
                 ["BlueTusk.Replication", "BlueTusk.TypeSystem"],
             ["BlueTusk.EntityFrameworkCore"] = ["BlueTusk.Data", "BlueTusk.TypeSystem"],

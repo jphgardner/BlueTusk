@@ -69,7 +69,7 @@ EntityFrameworkCore → Data → Client → Protocol → Transport
 Replication.PgOutput → Replication → Client
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
 ## Status
 
@@ -90,6 +90,7 @@ The current `0.3.0-preview.1` implementation provides:
 - convention- and attribute-based CLR enum and composite mappings plus public runtime codec registration;
 - arbitrary-precision PostgreSQL `numeric`, including NaN and infinities, plus temporal infinity and 24:00 handling;
 - security redaction and observability primitives;
+- OpenTelemetry-compatible connection/command activities and metrics, redacted slow-command events, prepared-statement/retry/failover metrics, query tags, COPY throughput, and replication lag;
 - a fake backend message stream for conformance testing;
 - a Docker-based PostgreSQL version matrix;
 - a versioned, bounded protocol-capture format and redaction-aware inspector;

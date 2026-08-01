@@ -1,6 +1,7 @@
 using System.Data;
 using System.Data.Common;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 
 namespace BlueTusk.Data;
 
@@ -224,12 +225,22 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
-            return await ExecuteCoreOnceAsync(cancellationToken).ConfigureAwait(false);
+            return await ExecuteCoreOnceAsync(
+                connection => telemetry = StartTelemetry(connection),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
         }
         finally
         {
+            telemetry.Complete(failure);
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
@@ -244,18 +255,26 @@ public sealed class BlueTuskBatch : DbBatch
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
-            return ExecuteCoreOnce();
+            return ExecuteCoreOnce(connection => telemetry = StartTelemetry(connection));
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
         }
         finally
         {
+            telemetry.Complete(failure);
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
     }
 
-    private BatchResult ExecuteCoreOnce()
+    private BatchResult ExecuteCoreOnce(Action<BlueTuskConnection> startTelemetry)
     {
         if (_connection is null && _dataSource is null)
         {
@@ -276,6 +295,7 @@ public sealed class BlueTuskBatch : DbBatch
 
         connection.ValidateCommandTransaction(_transaction);
         var commands = BuildExecutions(connection);
+        startTelemetry(connection);
         Volatile.Write(ref _executingConnection, connection);
         using var timeoutTimer = Timeout > 0
             ? new Timer(
@@ -327,7 +347,9 @@ public sealed class BlueTuskBatch : DbBatch
         }
     }
 
-    private async ValueTask<BatchResult> ExecuteCoreOnceAsync(CancellationToken cancellationToken)
+    private async ValueTask<BatchResult> ExecuteCoreOnceAsync(
+        Action<BlueTuskConnection> startTelemetry,
+        CancellationToken cancellationToken)
     {
         if (_connection is null && _dataSource is null)
         {
@@ -348,6 +370,7 @@ public sealed class BlueTuskBatch : DbBatch
 
         connection.ValidateCommandTransaction(_transaction);
         var commands = BuildExecutions(connection);
+        startTelemetry(connection);
         using var timeoutSource = Timeout > 0
             ? new CancellationTokenSource(TimeSpan.FromSeconds(Timeout))
             : null;
@@ -523,6 +546,10 @@ public sealed class BlueTuskBatch : DbBatch
             current.Sql.SequenceEqual(sql, StringComparer.Ordinal) &&
             ParameterTypesEqual(current.ParameterTypeOids, typeOids))
         {
+            BlueTuskDiagnostics.RecordPreparedStatements(
+                current.StatementNames.Length,
+                "batch",
+                "reuse");
             return current;
         }
 
@@ -577,6 +604,7 @@ public sealed class BlueTuskBatch : DbBatch
             statementNames,
             sql,
             typeOids);
+        BlueTuskDiagnostics.RecordPreparedStatements(preparedCount, "batch", "prepare");
         _preparedBatch = prepared;
         return prepared;
     }
@@ -602,6 +630,10 @@ public sealed class BlueTuskBatch : DbBatch
             current.Sql.SequenceEqual(sql, StringComparer.Ordinal) &&
             ParameterTypesEqual(current.ParameterTypeOids, typeOids))
         {
+            BlueTuskDiagnostics.RecordPreparedStatements(
+                current.StatementNames.Length,
+                "batch",
+                "reuse");
             return current;
         }
 
@@ -644,6 +676,7 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         var prepared = new PreparedBatchState(session, statementNames, sql, typeOids);
+        BlueTuskDiagnostics.RecordPreparedStatements(preparedCount, "batch", "prepare");
         _preparedBatch = prepared;
         return prepared;
     }
@@ -670,6 +703,16 @@ public sealed class BlueTuskBatch : DbBatch
 
         _connection.ValidateCommandTransaction(_transaction);
         return _connection;
+    }
+
+    private static BlueTuskCommandInstrumentation StartTelemetry(BlueTuskConnection connection)
+    {
+        var endpoint = connection.DiagnosticEndpoint;
+        return BlueTuskDiagnostics.StartBatch(
+            connection.Database,
+            endpoint.Host,
+            endpoint.Port,
+            connection.DiagnosticsOptions);
     }
 
     private void ApplyRecordsAffected(BlueTuskQueryResult result)

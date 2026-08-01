@@ -2,6 +2,7 @@ using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Extensions;
 using BlueTusk.TypeSystem;
 
@@ -86,6 +87,15 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     public BlueTuskDataSourceBuilder RequireTlsForAccessTokens()
     {
         _clientConfiguration = _clientConfiguration with { AccessTokenRequiresTls = true };
+        return this;
+    }
+
+    /// <summary>Configures tracing, metrics, and redacted slow-command diagnostics.</summary>
+    public BlueTuskDataSourceBuilder ConfigureDiagnostics(BlueTuskDiagnosticsOptions options)
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        options.Validate();
+        _clientConfiguration = _clientConfiguration with { Diagnostics = options with { } };
         return this;
     }
 

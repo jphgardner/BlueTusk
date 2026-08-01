@@ -236,6 +236,14 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Keep protocol parsing independently testable without ADO.NET or EF
 - [x] Run the architecture gate in every supported CI environment
 
+### Diagnostics and observability
+
+- [x] OpenTelemetry-compatible connection and command activities with stable database attributes and selected-endpoint identity
+- [x] Command, query-duration, pool, protocol, prepared-statement, COPY-throughput, retry, failover, and replication-lag metrics
+- [x] Bounded explicit query tags plus opt-in redacted slow-command events
+- [x] No SQL text, parameters, connection strings, exception messages, passwords, or tokens in provider telemetry
+- [x] Deterministic activity/meter/event listener tests plus live parameter-redaction acceptance
+
 ### Extension seam
 
 - [x] Carry an immutable feature registry through `BlueTuskDataSource.Build()` and expose real consumption semantics
