@@ -49,6 +49,14 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
                         targetItem,
                         CreateAlter(sourceItem, targetItem)));
                 }
+                else if (sourceItem.Definition is BlueTuskRangeTypeDefinition sourceRange &&
+                         targetItem.Definition is BlueTuskRangeTypeDefinition targetRange &&
+                         !Equals(sourceRange.MultirangeType, targetRange.MultirangeType))
+                {
+                    targetOperations.Add(new TargetOperation(
+                        targetItem,
+                        CreateRangeRename(sourceRange, targetRange)));
+                }
 
                 continue;
             }
@@ -61,14 +69,17 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
                 var renamed = renameCandidates[0];
                 targetOperations.Add(new TargetOperation(
                     renamed,
-                    new RenameBlueTuskUserDefinedTypeOperation
-                    {
-                        Kind = sourceItem.Kind,
-                        Name = sourceItem.Key.Name,
-                        Schema = sourceItem.Key.Schema,
-                        NewName = renamed.Key.Name,
-                        NewSchema = renamed.Key.Schema,
-                    }));
+                    sourceItem.Definition is BlueTuskRangeTypeDefinition sourceRange &&
+                    renamed.Definition is BlueTuskRangeTypeDefinition targetRange
+                        ? CreateRangeRename(sourceRange, targetRange)
+                        : new RenameBlueTuskUserDefinedTypeOperation
+                        {
+                            Kind = sourceItem.Kind,
+                            Name = sourceItem.Key.Name,
+                            Schema = sourceItem.Key.Schema,
+                            NewName = renamed.Key.Name,
+                            NewSchema = renamed.Key.Schema,
+                        }));
                 unmatchedTargets.Remove(renamed.Key);
             }
             else
@@ -79,13 +90,26 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
 
         creates.AddRange(unmatchedTargets.Values);
         targetOperations.AddRange(creates.Select(item => new TargetOperation(item, CreateCreate(item))));
-        var schemasToEnsure = creates.Select(item => item.Key.Schema)
+        var schemasToEnsure = creates.SelectMany(item => item.Definition is BlueTuskRangeTypeDefinition range
+                ? new[] { item.Key.Schema, range.MultirangeType.Schema }
+                : [item.Key.Schema])
             .Concat(targetOperations.Select(item => item.Operation)
                 .OfType<RenameBlueTuskUserDefinedTypeOperation>()
                 .Where(operation =>
                     operation.NewSchema is not null &&
                     !string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
                 .Select(operation => operation.NewSchema))
+            .Concat(targetOperations.Select(item => item.Operation)
+                .OfType<RenameBlueTuskRangeTypeOperation>()
+                .SelectMany(operation => new[]
+                {
+                    !string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal)
+                        ? operation.NewSchema
+                        : null,
+                    !string.Equals(operation.MultirangeSchema, operation.NewMultirangeSchema, StringComparison.Ordinal)
+                        ? operation.NewMultirangeSchema
+                        : null,
+                }))
             .Where(schema => schema is not null)
             .Cast<string>()
             .Distinct(StringComparer.Ordinal)
@@ -113,6 +137,10 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
             BlueTuskUserDefinedTypeKind.Enum => CreateEnumAlter(source, target),
             BlueTuskUserDefinedTypeKind.Domain => CreateDomainAlter(source, target),
             BlueTuskUserDefinedTypeKind.Composite => CreateCompositeAlter(source, target),
+            BlueTuskUserDefinedTypeKind.Range => throw new InvalidOperationException(
+                $"PostgreSQL range type '{target.Key.Schema}.{target.Key.Name}' cannot change its subtype, operator class, " +
+                "collation, canonical function, or subtype-difference function in place. Create an explicit " +
+                "data-preserving replacement migration."),
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type kind '{target.Kind}'."),
         };
 
@@ -162,6 +190,8 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
                 new CreateBlueTuskDomainTypeOperation { Definition = (BlueTuskDomainTypeDefinition)item.Definition },
             BlueTuskUserDefinedTypeKind.Composite =>
                 new CreateBlueTuskCompositeTypeOperation { Definition = (BlueTuskCompositeTypeDefinition)item.Definition },
+            BlueTuskUserDefinedTypeKind.Range =>
+                new CreateBlueTuskRangeTypeOperation { Definition = (BlueTuskRangeTypeDefinition)item.Definition },
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type kind '{item.Kind}'."),
         };
 
@@ -186,15 +216,34 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
                 Schema = item.Key.Schema,
                 IsDestructiveChange = true,
             },
+            BlueTuskUserDefinedTypeKind.Range => new DropBlueTuskRangeTypeOperation
+            {
+                Name = item.Key.Name,
+                Schema = item.Key.Schema,
+                IsDestructiveChange = true,
+            },
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type kind '{item.Kind}'."),
         };
 
     private static List<TypeItem> OrderForCreation(IReadOnlyCollection<TypeItem> items)
     {
         var byKey = items.ToDictionary(item => item.Key);
+        var ownerByTypeKey = new Dictionary<TypeKey, TypeKey>();
+        foreach (var item in items)
+        {
+            ownerByTypeKey[item.Key] = item.Key;
+            if (item.Definition is BlueTuskRangeTypeDefinition range)
+            {
+                ownerByTypeKey[new TypeKey(range.MultirangeType.Schema, range.MultirangeType.Name)] = item.Key;
+            }
+        }
+
         var remaining = items.ToDictionary(
             item => item.Key,
-            item => GetDependencies(item).Where(byKey.ContainsKey).ToHashSet());
+            item => GetDependencies(item)
+                .Select(dependency => ownerByTypeKey.TryGetValue(dependency, out var owner) ? owner : dependency)
+                .Where(dependency => dependency != item.Key && byKey.ContainsKey(dependency))
+                .ToHashSet());
         var ordered = new List<TypeItem>(items.Count);
         while (remaining.Count > 0)
         {
@@ -236,6 +285,12 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
 
     private static IEnumerable<TypeKey> GetDependencies(TypeItem item)
     {
+        if (item.Definition is BlueTuskRangeTypeDefinition range)
+        {
+            yield return new TypeKey(range.Subtype.Schema, range.Subtype.Name);
+            yield break;
+        }
+
         var storeTypes = item.Definition switch
         {
             BlueTuskDomainTypeDefinition domain => [domain.BaseStoreType],
@@ -281,6 +336,10 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
             .Concat(definitions.Composites.Select(definition => new TypeItem(
                 BlueTuskUserDefinedTypeKind.Composite,
                 new TypeKey(definition.Schema, definition.Name),
+                definition)))
+            .Concat(definitions.Ranges.Select(definition => new TypeItem(
+                BlueTuskUserDefinedTypeKind.Range,
+                new TypeKey(definition.Schema, definition.Name),
                 definition)));
 
     private static BlueTuskUserDefinedTypeDefinitionSet GetDefinitions(IRelationalModel? model) =>
@@ -301,7 +360,29 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
                 BlueTuskUserDefinedTypeMetadata.Serialize(definition with { Name = "_", Schema = null }),
             BlueTuskCompositeTypeDefinition definition =>
                 BlueTuskUserDefinedTypeMetadata.Serialize(definition with { Name = "_", Schema = null }),
+            BlueTuskRangeTypeDefinition definition =>
+                BlueTuskUserDefinedTypeMetadata.Serialize(definition with
+                {
+                    Name = "_",
+                    Schema = null,
+                    MultirangeType = new BlueTuskQualifiedName("__"),
+                }),
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type definition '{item.Definition.GetType().Name}'."),
+        };
+
+    private static RenameBlueTuskRangeTypeOperation CreateRangeRename(
+        BlueTuskRangeTypeDefinition source,
+        BlueTuskRangeTypeDefinition target) =>
+        new()
+        {
+            Name = source.Name,
+            Schema = source.Schema,
+            NewName = target.Name,
+            NewSchema = target.Schema,
+            MultirangeName = source.MultirangeType.Name,
+            MultirangeSchema = source.MultirangeType.Schema,
+            NewMultirangeName = target.MultirangeType.Name,
+            NewMultirangeSchema = target.MultirangeType.Schema,
         };
 
     private readonly record struct TypeKey(string? Schema, string Name);

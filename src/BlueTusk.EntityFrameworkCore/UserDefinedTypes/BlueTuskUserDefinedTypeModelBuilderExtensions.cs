@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata;
 
 namespace Microsoft.EntityFrameworkCore;
 
-/// <summary>PostgreSQL enum, domain, and standalone composite model extensions.</summary>
+/// <summary>PostgreSQL enum, domain, composite, range, and multirange model extensions.</summary>
 public static class BlueTuskUserDefinedTypeModelBuilderExtensions
 {
     /// <summary>Adds or replaces a PostgreSQL enum type with ordered labels.</summary>
@@ -59,6 +59,25 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         });
     }
 
+    /// <summary>Adds or replaces a PostgreSQL range and its paired multirange type.</summary>
+    public static ModelBuilder HasBlueTuskRange(
+        this ModelBuilder modelBuilder,
+        string name,
+        string subtypeName,
+        Action<BlueTuskRangeTypeBuilder>? buildAction = null,
+        string? schema = null,
+        string? subtypeSchema = null)
+    {
+        ArgumentNullException.ThrowIfNull(modelBuilder);
+        var builder = new BlueTuskRangeTypeBuilder(name, schema, subtypeName, subtypeSchema);
+        buildAction?.Invoke(builder);
+        var definitions = BlueTuskUserDefinedTypeMetadata.Get(modelBuilder.Model);
+        return Set(modelBuilder, definitions with
+        {
+            Ranges = Replace(definitions.Ranges, builder.Build()),
+        });
+    }
+
     /// <summary>Removes a provider-owned PostgreSQL type from the model.</summary>
     public static ModelBuilder HasNoBlueTuskUserDefinedType(
         this ModelBuilder modelBuilder,
@@ -73,6 +92,10 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
             Enums = definitions.Enums.Where(item => !HasName(item.Name, item.Schema, name, schema)).ToArray(),
             Domains = definitions.Domains.Where(item => !HasName(item.Name, item.Schema, name, schema)).ToArray(),
             Composites = definitions.Composites.Where(item => !HasName(item.Name, item.Schema, name, schema)).ToArray(),
+            Ranges = definitions.Ranges.Where(item =>
+                    !HasName(item.Name, item.Schema, name, schema) &&
+                    !HasName(item.MultirangeType.Name, item.MultirangeType.Schema, name, schema))
+                .ToArray(),
         });
     }
 
@@ -99,7 +122,8 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
         var serialized = BlueTuskUserDefinedTypeMetadata.Serialize(definitions);
         if (definitions.Enums.Count == 0 &&
             definitions.Domains.Count == 0 &&
-            definitions.Composites.Count == 0)
+            definitions.Composites.Count == 0 &&
+            definitions.Ranges.Count == 0)
         {
             modelBuilder.Model.RemoveAnnotation(BlueTuskUserDefinedTypeMetadata.AnnotationName);
         }
@@ -132,6 +156,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
             BlueTuskEnumTypeDefinition item => (item.Name, item.Schema),
             BlueTuskDomainTypeDefinition item => (item.Name, item.Schema),
             BlueTuskCompositeTypeDefinition item => (item.Name, item.Schema),
+            BlueTuskRangeTypeDefinition item => (item.Name, item.Schema),
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type definition '{typeof(T).Name}'."),
         };
 

@@ -97,3 +97,89 @@ public sealed class BlueTuskCompositeTypeBuilder
 
     internal BlueTuskCompositeTypeDefinition Build() => new(Name, Schema, _attributes.ToArray());
 }
+
+/// <summary>Builds PostgreSQL range-type metadata.</summary>
+public sealed class BlueTuskRangeTypeBuilder
+{
+    private BlueTuskQualifiedName _multirangeType;
+
+    internal BlueTuskRangeTypeBuilder(
+        string name,
+        string? schema,
+        string subtypeName,
+        string? subtypeSchema)
+    {
+        Name = name;
+        Schema = schema;
+        Subtype = new BlueTuskQualifiedName(subtypeName, subtypeSchema);
+        _multirangeType = new BlueTuskQualifiedName(GetDefaultMultirangeName(name), schema);
+    }
+
+    private string Name { get; }
+
+    private string? Schema { get; }
+
+    private BlueTuskQualifiedName Subtype { get; }
+
+    private BlueTuskQualifiedName? SubtypeOperatorClass { get; set; }
+
+    private BlueTuskQualifiedName? Collation { get; set; }
+
+    private BlueTuskQualifiedName? CanonicalFunction { get; set; }
+
+    private BlueTuskQualifiedName? SubtypeDifferenceFunction { get; set; }
+
+    /// <summary>Uses a non-default B-tree operator class for the subtype.</summary>
+    public BlueTuskRangeTypeBuilder UseSubtypeOperatorClass(string name, string? schema = null)
+    {
+        SubtypeOperatorClass = new BlueTuskQualifiedName(name, schema);
+        return this;
+    }
+
+    /// <summary>Uses a collation for a collatable range subtype.</summary>
+    public BlueTuskRangeTypeBuilder UseCollation(string name, string? schema = null)
+    {
+        Collation = new BlueTuskQualifiedName(name, schema);
+        return this;
+    }
+
+    /// <summary>References an existing range canonicalization function.</summary>
+    public BlueTuskRangeTypeBuilder HasCanonicalFunction(string name, string? schema = null)
+    {
+        CanonicalFunction = new BlueTuskQualifiedName(name, schema);
+        return this;
+    }
+
+    /// <summary>References an existing subtype-difference function.</summary>
+    public BlueTuskRangeTypeBuilder HasSubtypeDifferenceFunction(string name, string? schema = null)
+    {
+        SubtypeDifferenceFunction = new BlueTuskQualifiedName(name, schema);
+        return this;
+    }
+
+    /// <summary>Sets the name and schema of the paired multirange type.</summary>
+    public BlueTuskRangeTypeBuilder HasMultirangeType(string name, string? schema = null)
+    {
+        _multirangeType = new BlueTuskQualifiedName(name, schema ?? Schema);
+        return this;
+    }
+
+    internal BlueTuskRangeTypeDefinition Build() =>
+        new(
+            Name,
+            Schema,
+            Subtype,
+            SubtypeOperatorClass,
+            Collation,
+            CanonicalFunction,
+            SubtypeDifferenceFunction,
+            _multirangeType);
+
+    internal static string GetDefaultMultirangeName(string rangeName)
+    {
+        var index = rangeName.IndexOf("range", StringComparison.Ordinal);
+        return index < 0
+            ? $"{rangeName}_multirange"
+            : string.Concat(rangeName.AsSpan(0, index), "multirange", rangeName.AsSpan(index + "range".Length));
+    }
+}

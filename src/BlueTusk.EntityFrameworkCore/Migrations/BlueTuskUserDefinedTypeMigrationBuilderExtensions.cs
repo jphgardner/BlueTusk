@@ -8,7 +8,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 
 namespace Microsoft.EntityFrameworkCore.Migrations;
 
-/// <summary>Migration-builder extensions for PostgreSQL enum, domain, and composite types.</summary>
+/// <summary>Migration-builder extensions for PostgreSQL enum, domain, composite, and range types.</summary>
 public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
 {
     public static OperationBuilder<CreateBlueTuskEnumTypeOperation> CreateBlueTuskEnumType(
@@ -92,6 +92,44 @@ public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
             IsDestructiveChange = true,
         });
 
+    public static OperationBuilder<CreateBlueTuskRangeTypeOperation> CreateBlueTuskRangeType(
+        this MigrationBuilder migrationBuilder,
+        BlueTuskRangeTypeDefinition definition) =>
+        Add(migrationBuilder, new CreateBlueTuskRangeTypeOperation { Definition = definition });
+
+    public static OperationBuilder<DropBlueTuskRangeTypeOperation> DropBlueTuskRangeType(
+        this MigrationBuilder migrationBuilder,
+        string name,
+        string? schema = null) =>
+        Add(migrationBuilder, new DropBlueTuskRangeTypeOperation
+        {
+            Name = name,
+            Schema = schema,
+            IsDestructiveChange = true,
+        });
+
+    public static OperationBuilder<RenameBlueTuskRangeTypeOperation> RenameBlueTuskRangeType(
+        this MigrationBuilder migrationBuilder,
+        string name,
+        string newName,
+        string multirangeName,
+        string newMultirangeName,
+        string? schema = null,
+        string? newSchema = null,
+        string? multirangeSchema = null,
+        string? newMultirangeSchema = null) =>
+        Add(migrationBuilder, new RenameBlueTuskRangeTypeOperation
+        {
+            Name = name,
+            Schema = schema,
+            NewName = newName,
+            NewSchema = newSchema,
+            MultirangeName = multirangeName,
+            MultirangeSchema = multirangeSchema,
+            NewMultirangeName = newMultirangeName,
+            NewMultirangeSchema = newMultirangeSchema,
+        });
+
     public static OperationBuilder<RenameBlueTuskUserDefinedTypeOperation> RenameBlueTuskUserDefinedType(
         this MigrationBuilder migrationBuilder,
         BlueTuskUserDefinedTypeKind kind,
@@ -157,6 +195,14 @@ public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
             migrationBuilder,
             BlueTuskUserDefinedTypeMetadata.DeserializeComposite(serializedDefinition),
             BlueTuskUserDefinedTypeMetadata.DeserializeComposite(serializedOldDefinition));
+
+    [EditorBrowsable(EditorBrowsableState.Never)]
+    public static OperationBuilder<CreateBlueTuskRangeTypeOperation> CreateBlueTuskRangeType(
+        this MigrationBuilder migrationBuilder,
+        string serializedDefinition) =>
+        CreateBlueTuskRangeType(
+            migrationBuilder,
+            BlueTuskUserDefinedTypeMetadata.DeserializeRange(serializedDefinition));
 
     private static OperationBuilder<TOperation> Add<TOperation>(
         MigrationBuilder migrationBuilder,

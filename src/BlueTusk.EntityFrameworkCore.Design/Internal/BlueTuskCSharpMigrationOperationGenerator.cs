@@ -291,6 +291,36 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
             case DropBlueTuskCompositeTypeOperation dropComposite:
                 GenerateDropType("DropBlueTuskCompositeType", dropComposite.Name, dropComposite.Schema, builder);
                 break;
+            case CreateBlueTuskRangeTypeOperation createRange:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskRangeType(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(createRange.Definition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskRangeTypeOperation dropRange:
+                GenerateDropType("DropBlueTuskRangeType", dropRange.Name, dropRange.Schema, builder);
+                break;
+            case RenameBlueTuskRangeTypeOperation renameRange:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskRangeType(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRange.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRange.NewName))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRange.MultirangeName))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRange.NewMultirangeName))
+                    .Append(", ")
+                    .Append(Literal(renameRange.Schema))
+                    .Append(", ")
+                    .Append(Literal(renameRange.NewSchema))
+                    .Append(", ")
+                    .Append(Literal(renameRange.MultirangeSchema))
+                    .Append(", ")
+                    .Append(Literal(renameRange.NewMultirangeSchema))
+                    .AppendLine(");");
+                break;
             case RenameBlueTuskUserDefinedTypeOperation renameType:
                 builder
                     .Append("migrationBuilder.RenameBlueTuskUserDefinedType(")

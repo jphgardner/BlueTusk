@@ -937,6 +937,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         var composites = new Dictionary<
             (string Schema, string Name),
             List<BlueTuskCompositeAttributeDefinition>>();
+        var ranges = new List<BlueTuskRangeTypeDefinition>();
         using (var command = connection.CreateCommand())
         {
             command.CommandText = typeSql;
@@ -968,6 +969,82 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                         composites.Add(key, []);
                         break;
                 }
+            }
+        }
+
+        const string rangeSql = """
+            SELECT range_namespace.nspname,
+                   range_type.typname,
+                   subtype_namespace.nspname,
+                   subtype_type.typname,
+                   operator_namespace.nspname,
+                   operator_class.opcname,
+                   collation_namespace.nspname,
+                   collation_entry.collname,
+                   canonical_namespace.nspname,
+                   canonical_function.proname,
+                   difference_namespace.nspname,
+                   difference_function.proname,
+                   multirange_namespace.nspname,
+                   multirange_type.typname
+            FROM pg_catalog.pg_range AS range_entry
+            JOIN pg_catalog.pg_type AS range_type ON range_type.oid = range_entry.rngtypid
+            JOIN pg_catalog.pg_namespace AS range_namespace ON range_namespace.oid = range_type.typnamespace
+            JOIN pg_catalog.pg_type AS subtype_type ON subtype_type.oid = range_entry.rngsubtype
+            JOIN pg_catalog.pg_namespace AS subtype_namespace ON subtype_namespace.oid = subtype_type.typnamespace
+            JOIN pg_catalog.pg_opclass AS operator_class ON operator_class.oid = range_entry.rngsubopc
+            JOIN pg_catalog.pg_namespace AS operator_namespace ON operator_namespace.oid = operator_class.opcnamespace
+            LEFT JOIN pg_catalog.pg_collation AS collation_entry ON collation_entry.oid = range_entry.rngcollation
+            LEFT JOIN pg_catalog.pg_namespace AS collation_namespace
+              ON collation_namespace.oid = collation_entry.collnamespace
+            LEFT JOIN pg_catalog.pg_proc AS canonical_function
+              ON canonical_function.oid = range_entry.rngcanonical
+            LEFT JOIN pg_catalog.pg_namespace AS canonical_namespace
+              ON canonical_namespace.oid = canonical_function.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS difference_function
+              ON difference_function.oid = range_entry.rngsubdiff
+            LEFT JOIN pg_catalog.pg_namespace AS difference_namespace
+              ON difference_namespace.oid = difference_function.pronamespace
+            JOIN pg_catalog.pg_type AS multirange_type ON multirange_type.oid = range_entry.rngmultitypid
+            JOIN pg_catalog.pg_namespace AS multirange_namespace
+              ON multirange_namespace.oid = multirange_type.typnamespace
+            WHERE range_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND range_namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_type'::pg_catalog.regclass
+                    AND dependency.objid = range_type.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY range_namespace.nspname, range_type.typname
+            """;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = rangeSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var schema = reader.GetString(0);
+                if (!selection.IncludesSchemaObject(schema))
+                {
+                    continue;
+                }
+
+                ranges.Add(new BlueTuskRangeTypeDefinition(
+                    reader.GetString(1),
+                    schema,
+                    new BlueTuskQualifiedName(reader.GetString(3), reader.GetString(2)),
+                    new BlueTuskQualifiedName(reader.GetString(5), reader.GetString(4)),
+                    reader.IsDBNull(6)
+                        ? null
+                        : new BlueTuskQualifiedName(reader.GetString(7), reader.GetString(6)),
+                    reader.IsDBNull(8)
+                        ? null
+                        : new BlueTuskQualifiedName(reader.GetString(9), reader.GetString(8)),
+                    reader.IsDBNull(10)
+                        ? null
+                        : new BlueTuskQualifiedName(reader.GetString(11), reader.GetString(10)),
+                    new BlueTuskQualifiedName(reader.GetString(13), reader.GetString(12))));
             }
         }
 
@@ -1080,8 +1157,14 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             composites.Select(item => new BlueTuskCompositeTypeDefinition(
                 item.Key.Name,
                 item.Key.Schema,
-                item.Value)).ToArray());
-        if (definitions.Enums.Count > 0 || definitions.Domains.Count > 0 || definitions.Composites.Count > 0)
+                item.Value)).ToArray())
+        {
+            Ranges = ranges,
+        };
+        if (definitions.Enums.Count > 0 ||
+            definitions.Domains.Count > 0 ||
+            definitions.Composites.Count > 0 ||
+            definitions.Ranges.Count > 0)
         {
             model[BlueTuskUserDefinedTypeMetadata.AnnotationName] =
                 BlueTuskUserDefinedTypeMetadata.Serialize(definitions);

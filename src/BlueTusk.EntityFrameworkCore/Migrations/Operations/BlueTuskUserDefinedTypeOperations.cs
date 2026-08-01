@@ -60,6 +60,37 @@ public sealed class DropBlueTuskCompositeTypeOperation : MigrationOperation
     public string? Schema { get; init; }
 }
 
+public sealed class CreateBlueTuskRangeTypeOperation : MigrationOperation
+{
+    public required BlueTuskRangeTypeDefinition Definition { get; init; }
+}
+
+public sealed class DropBlueTuskRangeTypeOperation : MigrationOperation
+{
+    public required string Name { get; init; }
+
+    public string? Schema { get; init; }
+}
+
+public sealed class RenameBlueTuskRangeTypeOperation : MigrationOperation
+{
+    public required string Name { get; init; }
+
+    public string? Schema { get; init; }
+
+    public required string NewName { get; init; }
+
+    public string? NewSchema { get; init; }
+
+    public required string MultirangeName { get; init; }
+
+    public string? MultirangeSchema { get; init; }
+
+    public required string NewMultirangeName { get; init; }
+
+    public string? NewMultirangeSchema { get; init; }
+}
+
 public sealed class RenameBlueTuskUserDefinedTypeOperation : MigrationOperation
 {
     public required BlueTuskUserDefinedTypeKind Kind { get; init; }

@@ -119,6 +119,15 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             case DropBlueTuskCompositeTypeOperation dropComposite:
                 Generate(dropComposite, builder);
                 break;
+            case CreateBlueTuskRangeTypeOperation createRange:
+                Generate(createRange, builder);
+                break;
+            case DropBlueTuskRangeTypeOperation dropRange:
+                Generate(dropRange, builder);
+                break;
+            case RenameBlueTuskRangeTypeOperation renameRange:
+                Generate(renameRange, builder);
+                break;
             case RenameBlueTuskUserDefinedTypeOperation renameType:
                 Generate(renameType, builder);
                 break;
@@ -1122,6 +1131,53 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
+        CreateBlueTuskRangeTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = operation.Definition;
+        BlueTuskUserDefinedTypeMetadata.Validate(definition);
+        builder.Append("CREATE TYPE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name, definition.Schema))
+            .Append(" AS RANGE (SUBTYPE = ");
+        AppendQualifiedIdentifier(builder, definition.Subtype);
+        AppendRangeOption(builder, "SUBTYPE_OPCLASS", definition.SubtypeOperatorClass);
+        AppendRangeOption(builder, "COLLATION", definition.Collation);
+        AppendRangeOption(builder, "CANONICAL", definition.CanonicalFunction);
+        AppendRangeOption(builder, "SUBTYPE_DIFF", definition.SubtypeDifferenceFunction);
+        AppendRangeOption(builder, "MULTIRANGE_TYPE_NAME", definition.MultirangeType);
+        builder.Append(")");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskRangeTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("DROP TYPE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskRangeTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        GenerateTypeRename(
+            operation.MultirangeName,
+            operation.MultirangeSchema,
+            operation.NewMultirangeName,
+            operation.NewMultirangeSchema,
+            builder);
+        GenerateTypeRename(
+            operation.Name,
+            operation.Schema,
+            operation.NewName,
+            operation.NewSchema,
+            builder);
+    }
+
+    private void Generate(
         RenameBlueTuskUserDefinedTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
@@ -1151,6 +1207,57 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             EndStatement(builder);
         }
     }
+
+    private void GenerateTypeRename(
+        string name,
+        string? schema,
+        string newName,
+        string? newSchema,
+        MigrationCommandListBuilder builder)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var currentSchema = schema;
+        if (!string.Equals(schema, newSchema, StringComparison.Ordinal))
+        {
+            if (newSchema is null)
+            {
+                throw new InvalidOperationException("A PostgreSQL type cannot be moved to an unspecified schema.");
+            }
+
+            builder.Append("ALTER TYPE ")
+                .Append(helper.DelimitIdentifier(name, currentSchema))
+                .Append(" SET SCHEMA ").Append(helper.DelimitIdentifier(newSchema));
+            EndStatement(builder);
+            currentSchema = newSchema;
+        }
+
+        if (!string.Equals(name, newName, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER TYPE ")
+                .Append(helper.DelimitIdentifier(name, currentSchema))
+                .Append(" RENAME TO ").Append(helper.DelimitIdentifier(newName));
+            EndStatement(builder);
+        }
+    }
+
+    private void AppendRangeOption(
+        MigrationCommandListBuilder builder,
+        string keyword,
+        BlueTuskQualifiedName? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        builder.Append(", ").Append(keyword).Append(" = ");
+        AppendQualifiedIdentifier(builder, value);
+    }
+
+    private void AppendQualifiedIdentifier(
+        MigrationCommandListBuilder builder,
+        BlueTuskQualifiedName value) =>
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(value.Name, value.Schema));
 
     private void GenerateAddDomainConstraint(
         BlueTuskDomainTypeDefinition domain,

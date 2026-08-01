@@ -320,12 +320,17 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Extension-first create and extension-last default-`RESTRICT` drop ordering around provider-owned schema objects
   - [x] `pg_extension`/`pg_depend` discovery with exact installed version, schema, dependency edges, schema filters, and fluent model regeneration
   - [x] PostgreSQL 15–19 install, relocation, lifecycle, reverse-engineering, and scaffolding acceptance
-- [x] Enum, domain, and composite type creation and alteration
+- [x] Enum, domain, composite, range, and multirange type creation and alteration
   - [x] Typed model metadata, snapshots, migration operations, generated C#, identifier/literal quoting, and trusted SQL-fragment boundaries
   - [x] Dependency-ordered create/drop, schema/name moves, enum add/rename, domain default/nullability/check lifecycle, and composite attribute lifecycle
   - [x] Explicit diagnostics for enum removal/reordering, domain base/collation replacement, and composite reordering/insertion, with staged guidance for rename-plus-alter changes
   - [x] `pg_type`/`pg_enum`/`pg_constraint`/`pg_attribute` discovery with extension and table-row-type exclusion plus fluent model regeneration
   - [x] PostgreSQL 15–19 enforcement, alteration, lifecycle, reverse-engineering, and scaffolding acceptance
+  - [x] Typed custom range metadata for subtype, B-tree operator class, collation, canonical function, subtype-difference function, and paired multirange identity
+  - [x] Dependency ordering through both range and multirange names, pair-aware rename/schema moves, explicit replacement diagnostics, and default-`RESTRICT` drops
+  - [x] `pg_range` discovery with exact referenced-object identities, system/extension exclusion, schema filters, and fluent model regeneration
+  - [x] PostgreSQL 15–19 range/multirange execution, lifecycle, reverse-engineering, and scaffolding acceptance
+  - [x] Document the PostgreSQL shell-type boundary for canonical functions; provider-model routines do not synthesize the required shell/function/final-definition cycle
 - [x] Functions and procedures
   - [x] Typed SQL/PLpgSQL builders for overloads, parameter modes/defaults, scalar/`SETOF` results, language, planner/null/parallel/security attributes, and local configuration
   - [x] Signature-aware create/replace/drop/rename operations, generated migration C#, snapshots, destructive diagnostics, and collision-safe initial `CREATE`

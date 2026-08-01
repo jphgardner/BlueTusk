@@ -39,6 +39,9 @@ internal static class BlueTuskUserDefinedTypeMetadata
     public static string Serialize(BlueTuskCompositeTypeDefinition definition) =>
         JsonSerializer.Serialize(ValidateAndReturn(definition), SerializerOptions);
 
+    public static string Serialize(BlueTuskRangeTypeDefinition definition) =>
+        JsonSerializer.Serialize(ValidateAndReturn(definition), SerializerOptions);
+
     public static BlueTuskUserDefinedTypeDefinitionSet Deserialize(string json)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(json);
@@ -73,12 +76,21 @@ internal static class BlueTuskUserDefinedTypeMetadata
             ?? throw new ArgumentException("The composite definition is empty.", nameof(json)));
     }
 
+    public static BlueTuskRangeTypeDefinition DeserializeRange(string json)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(json);
+        return ValidateAndReturn(
+            JsonSerializer.Deserialize<BlueTuskRangeTypeDefinition>(json, SerializerOptions)
+            ?? throw new ArgumentException("The range definition is empty.", nameof(json)));
+    }
+
     public static void Validate(BlueTuskUserDefinedTypeDefinitionSet definitions)
     {
         ArgumentNullException.ThrowIfNull(definitions);
         ArgumentNullException.ThrowIfNull(definitions.Enums);
         ArgumentNullException.ThrowIfNull(definitions.Domains);
         ArgumentNullException.ThrowIfNull(definitions.Composites);
+        ArgumentNullException.ThrowIfNull(definitions.Ranges);
         var names = new HashSet<(string? Schema, string Name)>();
         foreach (var definition in definitions.Enums)
         {
@@ -96,6 +108,13 @@ internal static class BlueTuskUserDefinedTypeMetadata
         {
             Validate(definition);
             AddName(definition.Name, definition.Schema, names);
+        }
+
+        foreach (var definition in definitions.Ranges)
+        {
+            Validate(definition);
+            AddName(definition.Name, definition.Schema, names);
+            AddName(definition.MultirangeType.Name, definition.MultirangeType.Schema, names);
         }
     }
 
@@ -161,6 +180,25 @@ internal static class BlueTuskUserDefinedTypeMetadata
         }
     }
 
+    public static void Validate(BlueTuskRangeTypeDefinition definition)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        ValidateName(definition.Name, definition.Schema);
+        Validate(definition.Subtype, nameof(definition.Subtype));
+        Validate(definition.SubtypeOperatorClass, nameof(definition.SubtypeOperatorClass));
+        Validate(definition.Collation, nameof(definition.Collation));
+        Validate(definition.CanonicalFunction, nameof(definition.CanonicalFunction));
+        Validate(definition.SubtypeDifferenceFunction, nameof(definition.SubtypeDifferenceFunction));
+        Validate(definition.MultirangeType, nameof(definition.MultirangeType));
+        if (string.Equals(definition.Name, definition.MultirangeType.Name, StringComparison.Ordinal) &&
+            string.Equals(definition.Schema, definition.MultirangeType.Schema, StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"Range type '{definition.Schema}.{definition.Name}' cannot use the same name for its multirange type.",
+                nameof(definition));
+        }
+    }
+
     private static BlueTuskUserDefinedTypeDefinitionSet Normalize(
         BlueTuskUserDefinedTypeDefinitionSet definitions) =>
         new(
@@ -173,7 +211,12 @@ internal static class BlueTuskUserDefinedTypeMetadata
                 .ToArray(),
             definitions.Composites.OrderBy(definition => definition.Schema, StringComparer.Ordinal)
                 .ThenBy(definition => definition.Name, StringComparer.Ordinal)
-                .ToArray());
+                .ToArray())
+        {
+            Ranges = definitions.Ranges.OrderBy(definition => definition.Schema, StringComparer.Ordinal)
+                .ThenBy(definition => definition.Name, StringComparer.Ordinal)
+                .ToArray(),
+        };
 
     private static BlueTuskDomainTypeDefinition Normalize(BlueTuskDomainTypeDefinition definition) =>
         definition with
@@ -196,6 +239,9 @@ internal static class BlueTuskUserDefinedTypeMetadata
                 break;
             case BlueTuskCompositeTypeDefinition compositeDefinition:
                 Validate(compositeDefinition);
+                break;
+            case BlueTuskRangeTypeDefinition rangeDefinition:
+                Validate(rangeDefinition);
                 break;
         }
 
@@ -220,6 +266,20 @@ internal static class BlueTuskUserDefinedTypeMetadata
         if (schema is not null)
         {
             ArgumentException.ThrowIfNullOrWhiteSpace(schema);
+        }
+    }
+
+    private static void Validate(BlueTuskQualifiedName? name, string parameterName)
+    {
+        if (name is null)
+        {
+            return;
+        }
+
+        ArgumentException.ThrowIfNullOrWhiteSpace(name.Name, parameterName);
+        if (name.Schema is not null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(name.Schema, parameterName);
         }
     }
 
