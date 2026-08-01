@@ -1,4 +1,5 @@
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
@@ -358,6 +359,39 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(removeInheritance.Schema))
                     .Append(", ")
                     .Append(Literal(removeInheritance.ParentSchema))
+                    .AppendLine(");");
+                break;
+            case AddBlueTuskExclusionConstraintOperation addExclusionConstraint:
+                builder
+                    .Append("migrationBuilder.AddBlueTuskExclusionConstraint(")
+                    .Append(Dependencies.CSharpHelper.Literal(addExclusionConstraint.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskExclusionConstraintMetadata.Serialize(addExclusionConstraint.Definition)))
+                    .Append(", ")
+                    .Append(Literal(addExclusionConstraint.Schema))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskExclusionConstraintOperation dropExclusionConstraint:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskExclusionConstraint(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropExclusionConstraint.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropExclusionConstraint.Name))
+                    .Append(", ")
+                    .Append(Literal(dropExclusionConstraint.Schema))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskExclusionConstraintOperation renameExclusionConstraint:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskExclusionConstraint(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameExclusionConstraint.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameExclusionConstraint.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameExclusionConstraint.NewName))
+                    .Append(", ")
+                    .Append(Literal(renameExclusionConstraint.Schema))
                     .AppendLine(");");
                 break;
             case CreateBlueTuskRowSecurityPolicyOperation createPolicy:

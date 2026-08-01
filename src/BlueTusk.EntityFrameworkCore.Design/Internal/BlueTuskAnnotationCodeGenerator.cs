@@ -1,4 +1,5 @@
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
@@ -132,6 +133,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskRowLevelSecurityBuilderExtensions.HasBlueTuskRowLevelSecurity),
                 serializedRowLevelSecurity);
+        }
+
+        if (annotation.Name == BlueTuskExclusionConstraintMetadata.AnnotationName &&
+            annotation.Value is string serializedExclusionConstraints)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskExclusionConstraintBuilderExtensions.HasBlueTuskExclusionConstraints),
+                serializedExclusionConstraints);
         }
 
         if (annotation.Name == BlueTuskTableInheritanceMetadata.AnnotationName &&

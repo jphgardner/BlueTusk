@@ -36,7 +36,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskRoutineModelDiffer.HasDifferences(source, target) ||
         BlueTuskViewModelDiffer.HasDifferences(source, target) ||
         BlueTuskExtensionModelDiffer.HasDifferences(source, target) ||
-        BlueTuskCollationModelDiffer.HasDifferences(source, target);
+        BlueTuskCollationModelDiffer.HasDifferences(source, target) ||
+        BlueTuskExclusionConstraintModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -90,6 +91,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             baseOperations,
             viewBefore,
             viewAfter);
+        BlueTuskExclusionConstraintModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            before,
+            after);
         AddPartitionDifferences(source, target, baseOperations, before, after);
         BlueTuskRowLevelSecurityModelDiffer.AddDifferences(source, target, baseOperations, after);
         BlueTuskTableInheritanceModelDiffer.AddDifferences(

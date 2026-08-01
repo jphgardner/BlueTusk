@@ -1,6 +1,8 @@
 using System.Text;
 using BlueTusk.EntityFrameworkCore.Collations;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
+using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
@@ -151,6 +153,15 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case AlterBlueTuskRowLevelSecurityOperation alterRowLevelSecurity:
                 Generate(alterRowLevelSecurity, builder);
+                break;
+            case AddBlueTuskExclusionConstraintOperation addExclusionConstraint:
+                Generate(addExclusionConstraint, builder);
+                break;
+            case DropBlueTuskExclusionConstraintOperation dropExclusionConstraint:
+                Generate(dropExclusionConstraint, builder);
+                break;
+            case RenameBlueTuskExclusionConstraintOperation renameExclusionConstraint:
+                Generate(renameExclusionConstraint, builder);
                 break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
@@ -2205,6 +2216,187 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 .Append(forced ? " FORCE" : " NO FORCE")
                 .Append(" ROW LEVEL SECURITY");
             EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        AddBlueTuskExclusionConstraintOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        var definition = operation.Definition;
+        BlueTuskExclusionConstraintMetadata.Validate(definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("ALTER TABLE ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" ADD CONSTRAINT ")
+            .Append(helper.DelimitIdentifier(definition.Name))
+            .Append(" EXCLUDE USING ")
+            .Append(helper.DelimitIdentifier(definition.IndexMethod))
+            .Append(" (");
+        for (var index = 0; index < definition.Elements.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            AppendExclusionElement(builder, definition.Elements[index]);
+        }
+
+        builder.Append(")");
+        if (definition.IncludedColumns.Count > 0)
+        {
+            builder.Append(" INCLUDE (");
+            for (var index = 0; index < definition.IncludedColumns.Count; index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(helper.DelimitIdentifier(definition.IncludedColumns[index]));
+            }
+
+            builder.Append(")");
+        }
+
+        if (definition.StorageParameters.Count > 0)
+        {
+            builder.Append(" WITH (");
+            AppendExclusionParameters(builder, definition.StorageParameters);
+            builder.Append(")");
+        }
+
+        if (definition.Tablespace is not null)
+        {
+            builder.Append(" USING INDEX TABLESPACE ")
+                .Append(helper.DelimitIdentifier(definition.Tablespace));
+        }
+
+        if (definition.PredicateSql is not null)
+        {
+            builder.Append(" WHERE (").Append(definition.PredicateSql).Append(")");
+        }
+
+        if (definition.IsDeferrable)
+        {
+            builder.Append(definition.IsInitiallyDeferred
+                ? " DEFERRABLE INITIALLY DEFERRED"
+                : " DEFERRABLE INITIALLY IMMEDIATE");
+        }
+
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskExclusionConstraintOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("ALTER TABLE ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" DROP CONSTRAINT ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskExclusionConstraintOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("ALTER TABLE ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" RENAME CONSTRAINT ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" TO ")
+            .Append(helper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void AppendExclusionElement(
+        MigrationCommandListBuilder builder,
+        BlueTuskExclusionElementDefinition element)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        if (element.IsPreformatted)
+        {
+            builder.Append(element.Expression);
+        }
+        else
+        {
+            builder.Append(element.IsColumn
+                ? helper.DelimitIdentifier(element.Expression)
+                : $"({element.Expression})");
+            if (element.Collation is not null)
+            {
+                builder.Append(" COLLATE ")
+                    .Append(helper.DelimitIdentifier(element.Collation, element.CollationSchema));
+            }
+
+            if (element.OperatorClass is not null)
+            {
+                builder.Append(" ")
+                    .Append(helper.DelimitIdentifier(element.OperatorClass, element.OperatorClassSchema));
+                if (element.OperatorClassParameters.Count > 0)
+                {
+                    builder.Append(" (");
+                    AppendExclusionParameters(builder, element.OperatorClassParameters);
+                    builder.Append(")");
+                }
+            }
+
+            if (element.Descending)
+            {
+                builder.Append(" DESC");
+            }
+
+            builder.Append(element.NullSortOrder switch
+            {
+                BlueTuskExclusionNullSortOrder.Default => string.Empty,
+                BlueTuskExclusionNullSortOrder.NullsFirst => " NULLS FIRST",
+                BlueTuskExclusionNullSortOrder.NullsLast => " NULLS LAST",
+                _ => throw new InvalidOperationException(
+                    $"Unknown exclusion-constraint null sort order '{element.NullSortOrder}'."),
+            });
+        }
+
+        builder.Append(" WITH ");
+        if (element.OperatorSchema is null)
+        {
+            builder.Append(element.Operator);
+        }
+        else
+        {
+            builder.Append("OPERATOR(")
+                .Append(helper.DelimitIdentifier(element.OperatorSchema))
+                .Append(".")
+                .Append(element.Operator)
+                .Append(")");
+        }
+    }
+
+    private static void AppendExclusionParameters(
+        MigrationCommandListBuilder builder,
+        IReadOnlyList<BlueTuskExclusionParameterDefinition> parameters)
+    {
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(parameters[index].Name)
+                .Append(" = ")
+                .Append(parameters[index].Value);
         }
     }
 

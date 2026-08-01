@@ -4,6 +4,8 @@ using BlueTusk.Data;
 using BlueTusk.Data.Schema;
 using BlueTusk.EntityFrameworkCore.Collations;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
+using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
@@ -79,6 +81,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         var tables = ReadTables(connection, model, selection);
         ReadColumns(connection, tables);
         ReadConstraints(connection, tables);
+        ReadExclusionConstraints(connection, tables);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
         ReadTableInheritance(connection, tables);
@@ -556,6 +559,120 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             var column = FindColumn(table, reader.GetString(4));
             primaryKey?.Columns.Add(column);
             uniqueConstraint?.Columns.Add(column);
+        }
+    }
+
+    private static void ReadExclusionConstraints(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   table_class.relname,
+                   constraint_entry.conname,
+                   access_method.amname,
+                   constraint_entry.condeferrable,
+                   constraint_entry.condeferred,
+                   pg_catalog.pg_get_expr(index_entry.indpred, index_entry.indrelid, false),
+                   CASE WHEN index_class.reltablespace = 0 THEN NULL ELSE tablespace.spcname END,
+                   index_class.reloptions,
+                   operator_key.position,
+                   pg_catalog.pg_get_indexdef(constraint_entry.conindid, operator_key.position::integer, false),
+                   operator_namespace.nspname,
+                   operator_entry.oprname,
+                   ARRAY(
+                       SELECT included_attribute.attname
+                       FROM unnest(index_entry.indkey) WITH ORDINALITY AS included_key(attnum, position)
+                       JOIN pg_catalog.pg_attribute AS included_attribute
+                         ON included_attribute.attrelid = index_entry.indrelid
+                        AND included_attribute.attnum = included_key.attnum
+                       WHERE included_key.position > index_entry.indnkeyatts
+                       ORDER BY included_key.position)
+            FROM pg_catalog.pg_constraint AS constraint_entry
+            JOIN pg_catalog.pg_class AS table_class ON table_class.oid = constraint_entry.conrelid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = table_class.relnamespace
+            JOIN pg_catalog.pg_index AS index_entry ON index_entry.indexrelid = constraint_entry.conindid
+            JOIN pg_catalog.pg_class AS index_class ON index_class.oid = constraint_entry.conindid
+            JOIN pg_catalog.pg_am AS access_method ON access_method.oid = index_class.relam
+            LEFT JOIN pg_catalog.pg_tablespace AS tablespace ON tablespace.oid = index_class.reltablespace
+            CROSS JOIN LATERAL unnest(constraint_entry.conexclop) WITH ORDINALITY
+              AS operator_key(operator_oid, position)
+            JOIN pg_catalog.pg_operator AS operator_entry ON operator_entry.oid = operator_key.operator_oid
+            JOIN pg_catalog.pg_namespace AS operator_namespace
+              ON operator_namespace.oid = operator_entry.oprnamespace
+            WHERE constraint_entry.contype = 'x'
+              AND constraint_entry.conparentid = 0
+            ORDER BY namespace.nspname,
+                     table_class.relname,
+                     constraint_entry.conname,
+                     operator_key.position
+            """;
+        var seeds = new Dictionary<
+            (string Schema, string Table, string Name),
+            ExclusionConstraintSeed>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var tableKey = (reader.GetString(0), reader.GetString(1));
+            if (!tables.ContainsKey(tableKey))
+            {
+                continue;
+            }
+
+            var key = (tableKey.Item1, tableKey.Item2, reader.GetString(2));
+            if (!seeds.TryGetValue(key, out var seed))
+            {
+                var storageParameters = reader.IsDBNull(8)
+                    ? []
+                    : ParsePostgreSqlArray(reader.GetValue(8))
+                        .Select(value => value.Split('=', 2))
+                        .Where(parts => parts.Length == 2)
+                        .Select(parts => new BlueTuskExclusionParameterDefinition(parts[0], parts[1]))
+                        .ToArray();
+                seed = new ExclusionConstraintSeed(
+                    reader.GetString(3),
+                    reader.GetBoolean(4),
+                    reader.GetBoolean(5),
+                    GetNullableString(reader, 6),
+                    GetNullableString(reader, 7),
+                    ParsePostgreSqlArray(reader.GetValue(13)),
+                    storageParameters,
+                    []);
+                seeds.Add(key, seed);
+            }
+
+            seed.Elements.Add(new BlueTuskExclusionElementDefinition(
+                reader.GetString(10),
+                IsColumn: false,
+                IsPreformatted: true,
+                reader.GetString(12),
+                reader.GetString(11),
+                Collation: null,
+                CollationSchema: null,
+                OperatorClass: null,
+                OperatorClassSchema: null,
+                OperatorClassParameters: [],
+                Descending: false,
+                BlueTuskExclusionNullSortOrder.Default));
+        }
+
+        foreach (var tableGroup in seeds.GroupBy(item => (item.Key.Schema, item.Key.Table)))
+        {
+            var definitions = tableGroup.Select(item => new BlueTuskExclusionConstraintDefinition(
+                    item.Key.Name,
+                    item.Value.IndexMethod,
+                    item.Value.Elements,
+                    item.Value.IncludedColumns,
+                    item.Value.StorageParameters,
+                    item.Value.Tablespace,
+                    item.Value.PredicateSql,
+                    item.Value.IsDeferrable,
+                    item.Value.IsInitiallyDeferred))
+                .ToArray();
+            tables[tableGroup.Key][BlueTuskExclusionConstraintMetadata.AnnotationName] =
+                BlueTuskExclusionConstraintMetadata.Serialize(definitions);
         }
     }
 
@@ -1646,6 +1763,16 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         string Schema,
         string Version,
         List<string> Dependencies);
+
+    private sealed record ExclusionConstraintSeed(
+        string IndexMethod,
+        bool IsDeferrable,
+        bool IsInitiallyDeferred,
+        string? PredicateSql,
+        string? Tablespace,
+        IReadOnlyList<string> IncludedColumns,
+        IReadOnlyList<BlueTuskExclusionParameterDefinition> StorageParameters,
+        List<BlueTuskExclusionElementDefinition> Elements);
 
     private sealed class Selection
     {
