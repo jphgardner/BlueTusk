@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.CheckConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
@@ -207,6 +208,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
                 serializedExclusionConstraints);
         }
 
+        if (annotation.Name == BlueTuskCheckConstraintMetadata.ScaffoldAnnotationName &&
+            annotation.Value is string serializedCheckConstraints)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskCheckConstraintBuilderExtensions.HasBlueTuskCheckConstraints),
+                serializedCheckConstraints);
+        }
+
         if (annotation.Name == BlueTuskTriggerMetadata.AnnotationName &&
             annotation.Value is string serializedTriggers)
         {
@@ -232,6 +241,31 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         }
 
         return base.GenerateFluentApi(entityType, annotation);
+    }
+
+    protected override MethodCallCodeFragment? GenerateFluentApi(
+        ICheckConstraint checkConstraint,
+        IAnnotation annotation)
+    {
+        ArgumentNullException.ThrowIfNull(checkConstraint);
+        ArgumentNullException.ThrowIfNull(annotation);
+
+        return annotation.Name switch
+        {
+            BlueTuskCheckConstraintMetadata.NotValidAnnotationName when annotation.Value is bool value =>
+                new MethodCallCodeFragment(
+                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsBlueTuskNotValid),
+                    value),
+            BlueTuskCheckConstraintMetadata.NoInheritAnnotationName when annotation.Value is bool value =>
+                new MethodCallCodeFragment(
+                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsBlueTuskNoInherit),
+                    value),
+            BlueTuskCheckConstraintMetadata.NotEnforcedAnnotationName when annotation.Value is bool value =>
+                new MethodCallCodeFragment(
+                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsBlueTuskNotEnforced),
+                    value),
+            _ => base.GenerateFluentApi(checkConstraint, annotation),
+        };
     }
 
     protected override MethodCallCodeFragment? GenerateFluentApi(

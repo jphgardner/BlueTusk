@@ -163,6 +163,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Exact `ALWAYS`/`BY DEFAULT` identity metadata plus add, switch, drop, reverse-engineering, and generated fluent C# lifecycle
   - [x] Stored and PostgreSQL 18+ virtual generated columns, PostgreSQL 17+ expression alteration, destructive-change diagnostics, and server-version guards
   - [x] Table/column comment create, alter, clear, and reverse-engineering fidelity
+  - [x] Table CHECK constraints with `NOT VALID`, `NO INHERIT`, PostgreSQL 18+ `NOT ENFORCED`, validation-only diffs, and generated migration C#
   - [x] Migration history repository, transactional locking, and idempotent migration scripts
   - [x] Live apply/revert coverage for alter, rename, sequence, index, and drop operations
 - [x] Initial database reverse engineering
@@ -170,6 +171,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Packaged `bluetusk scaffold` CLI with schema/table selection, naming options, safe overwrite behavior, and secure-by-default generated contexts
   - [x] Tables, views, columns, defaults, generated values, keys, foreign keys, indexes, and sequences
   - [x] Exact identity-generation modes, stored/virtual generated-column modes, server-normalized expressions, and comments
+  - [x] Table CHECK expressions, validation/enforcement state, inheritance mode, and generated fluent C#
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
   - [x] Catalogue-only sequence discovery safe during concurrent schema changes
 - [x] Initial EF Core relational specification-suite coverage
@@ -293,6 +295,11 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.4.0 — Advanced migrations and scaffolding (Milestone 6, schema surface)
 
+- [x] PostgreSQL table CHECK constraints
+  - [x] Standard EF CHECK metadata plus typed `NOT VALID`, `NO INHERIT`, and PostgreSQL 18+ `NOT ENFORCED` options
+  - [x] Inline validated creation, deferred initial `NOT VALID` creation, manual add/validate operations, validation-only diffs, capability guards, and destructive diagnostics for non-in-place changes
+  - [x] Direct `pg_constraint` discovery with canonical expressions, extension/inheritance/partition-clone exclusion, validation/inheritance/enforcement retention, and fluent C# scaffolding
+  - [x] PostgreSQL 15–19 enforcement, validation lifecycle, reverse-engineering, and scaffolding acceptance
 - [x] Advanced indexes, operator classes, collations, storage parameters, and included columns
   - [x] Built-in and extension-provided access methods, partial and trusted-expression indexes
   - [x] Per-key operator classes, collations, sort direction, and null ordering

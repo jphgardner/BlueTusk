@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.CheckConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
@@ -123,6 +124,23 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
             yield return new Annotation(
                 BlueTuskValueGenerationAnnotations.IdentityGeneration,
                 (int)BlueTuskIdentityGeneration.ByDefault);
+        }
+    }
+
+    public override IEnumerable<IAnnotation> For(ICheckConstraint constraint, bool designTime)
+    {
+        ArgumentNullException.ThrowIfNull(constraint);
+        foreach (var annotation in base.For(constraint, designTime))
+        {
+            yield return annotation;
+        }
+
+        foreach (var annotation in constraint.GetAnnotations()
+                     .Where(annotation => annotation.Name.StartsWith(
+                         BlueTuskCheckConstraintMetadata.Prefix,
+                         StringComparison.Ordinal)))
+        {
+            yield return annotation;
         }
     }
 

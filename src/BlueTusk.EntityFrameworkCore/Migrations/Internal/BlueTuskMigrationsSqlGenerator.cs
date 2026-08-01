@@ -1,4 +1,5 @@
 using System.Text;
+using BlueTusk.EntityFrameworkCore.CheckConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Collations;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.EventTriggers;
@@ -53,6 +54,9 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case ValidateBlueTuskCheckConstraintOperation validateCheckConstraint:
+                Generate(validateCheckConstraint, builder);
+                break;
             case CreateBlueTuskTablespaceOperation createTablespace:
                 Generate(createTablespace, builder);
                 break;
@@ -1679,6 +1683,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(builder);
         GenerateVirtualGeneratedColumnGuard(operation.Columns, builder);
+        GenerateCheckConstraintVersionGuard(operation.CheckConstraints, builder);
         var foreignTable = operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] is string foreignJson
             ? BlueTuskForeignDataMetadata.DeserializeForeignTable(foreignJson)
             : null;
@@ -1723,8 +1728,69 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         if (terminate)
         {
             EndStatement(builder);
+            foreach (var checkConstraint in operation.CheckConstraints
+                         .Where(BlueTuskCheckConstraintMetadata.IsNotValid))
+            {
+                base.Generate(checkConstraint, model, builder);
+            }
+
             AppendCreateTableComments(operation, builder, foreignTable is not null);
         }
+    }
+
+    private void Generate(
+        ValidateBlueTuskCheckConstraintOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("ALTER TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" VALIDATE CONSTRAINT ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
+        EndStatement(builder);
+    }
+
+    protected override void CreateTableCheckConstraints(
+        CreateTableOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder)
+    {
+        foreach (var checkConstraint in operation.CheckConstraints
+                     .Where(checkConstraint => !BlueTuskCheckConstraintMetadata.IsNotValid(checkConstraint)))
+        {
+            builder.AppendLine(",");
+            CheckConstraint(checkConstraint, model, builder);
+        }
+    }
+
+    protected override void CheckConstraint(
+        AddCheckConstraintOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder)
+    {
+        base.CheckConstraint(operation, model, builder);
+        if (BlueTuskCheckConstraintMetadata.HasNoInherit(operation))
+        {
+            builder.Append(" NO INHERIT");
+        }
+
+        if (BlueTuskCheckConstraintMetadata.IsNotEnforced(operation))
+        {
+            builder.Append(" NOT ENFORCED");
+        }
+
+        if (BlueTuskCheckConstraintMetadata.IsNotValid(operation))
+        {
+            builder.Append(" NOT VALID");
+        }
+    }
+
+    protected override void Generate(
+        AddCheckConstraintOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder)
+    {
+        GenerateCheckConstraintVersionGuard([operation], builder);
+        base.Generate(operation, model, builder);
     }
 
     protected override void Generate(
@@ -2479,6 +2545,23 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             180000,
             "BlueTusk virtual generated columns require PostgreSQL 18 or later.",
             "$BlueTuskVirtualGeneratedColumn$",
+            builder);
+    }
+
+    private void GenerateCheckConstraintVersionGuard(
+        IReadOnlyList<AddCheckConstraintOperation> constraints,
+        MigrationCommandListBuilder builder)
+    {
+        if (!constraints.Any(BlueTuskCheckConstraintMetadata.IsNotEnforced))
+        {
+            return;
+        }
+
+        GenerateMinimumVersionGuarded(
+            [],
+            180000,
+            "BlueTusk NOT ENFORCED CHECK constraints require PostgreSQL 18 or later.",
+            "$BlueTuskNotEnforcedCheck$",
             builder);
     }
 

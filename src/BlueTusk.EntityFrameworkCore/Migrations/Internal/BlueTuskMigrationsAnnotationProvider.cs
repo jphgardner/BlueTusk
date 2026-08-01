@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.CheckConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
@@ -41,6 +42,16 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
         return base.ForRemove(column)
             .Concat(column.GetAnnotations()
                 .Where(annotation => annotation.Name == BlueTuskValueGenerationAnnotations.IdentityGeneration));
+    }
+
+    public override IEnumerable<IAnnotation> ForRemove(ICheckConstraint constraint)
+    {
+        ArgumentNullException.ThrowIfNull(constraint);
+        return base.ForRemove(constraint)
+            .Concat(constraint.GetAnnotations()
+                .Where(annotation => annotation.Name.StartsWith(
+                    BlueTuskCheckConstraintMetadata.Prefix,
+                    StringComparison.Ordinal)));
     }
 }
 

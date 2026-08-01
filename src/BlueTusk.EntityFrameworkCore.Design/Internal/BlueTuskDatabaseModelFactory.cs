@@ -3,6 +3,8 @@ using System.Data.Common;
 using System.Text.Json;
 using BlueTusk.Data;
 using BlueTusk.Data.Schema;
+using BlueTusk.EntityFrameworkCore.CheckConstraints;
+using BlueTusk.EntityFrameworkCore.CheckConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Collations;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.EventTriggers;
@@ -100,6 +102,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadColumns(connection, tables);
         ReadForeignData(connection, model, tables);
         ReadConstraints(connection, tables);
+        ReadCheckConstraints(connection, tables);
         ReadExclusionConstraints(connection, tables);
         ReadTriggers(connection, tables);
         ReadRules(connection, tables);
@@ -783,6 +786,74 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             var column = FindColumn(table, reader.GetString(4));
             primaryKey?.Columns.Add(column);
             uniqueConstraint?.Columns.Add(column);
+        }
+    }
+
+    private static void ReadCheckConstraints(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   relation.relname,
+                   constraint_entry.conname,
+                   pg_catalog.pg_get_expr(
+                       constraint_entry.conbin,
+                       constraint_entry.conrelid,
+                       false),
+                   NOT constraint_entry.convalidated,
+                   constraint_entry.connoinherit,
+                   NOT COALESCE(
+                       (pg_catalog.to_jsonb(constraint_entry) ->> 'conenforced')::boolean,
+                       true)
+            FROM pg_catalog.pg_constraint AS constraint_entry
+            JOIN pg_catalog.pg_class AS relation ON relation.oid = constraint_entry.conrelid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+            WHERE constraint_entry.contype = 'c'
+              AND constraint_entry.conparentid = 0
+              AND constraint_entry.conislocal
+              AND NOT relation.relispartition
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_constraint'::pg_catalog.regclass
+                    AND dependency.objid = constraint_entry.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, relation.relname, constraint_entry.conname
+            """;
+
+        var definitions = new Dictionary<
+            (string Schema, string Table),
+            List<BlueTuskCheckConstraintDefinition>>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var tableKey = (reader.GetString(0), reader.GetString(1));
+            if (!tables.ContainsKey(tableKey))
+            {
+                continue;
+            }
+
+            if (!definitions.TryGetValue(tableKey, out var constraints))
+            {
+                constraints = [];
+                definitions.Add(tableKey, constraints);
+            }
+
+            constraints.Add(new BlueTuskCheckConstraintDefinition(
+                reader.GetString(2),
+                reader.GetString(3),
+                reader.GetBoolean(4),
+                reader.GetBoolean(5),
+                reader.GetBoolean(6)));
+        }
+
+        foreach (var (table, constraints) in definitions)
+        {
+            tables[table][BlueTuskCheckConstraintMetadata.ScaffoldAnnotationName] =
+                BlueTuskCheckConstraintMetadata.Serialize(constraints);
         }
     }
 

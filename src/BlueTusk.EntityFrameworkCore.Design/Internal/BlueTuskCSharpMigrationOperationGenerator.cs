@@ -37,6 +37,16 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case ValidateBlueTuskCheckConstraintOperation validateCheckConstraint:
+                builder
+                    .Append("migrationBuilder.ValidateBlueTuskCheckConstraint(")
+                    .Append(Dependencies.CSharpHelper.Literal(validateCheckConstraint.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(validateCheckConstraint.Table))
+                    .Append(", ")
+                    .Append(Literal(validateCheckConstraint.Schema))
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskTablespaceOperation createTablespace:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskTablespace(")
