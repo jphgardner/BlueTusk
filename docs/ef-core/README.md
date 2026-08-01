@@ -473,7 +473,56 @@ name or SQL fragment at query time.
 
 Runtime migrations support the PostgreSQL `__EFMigrationsHistory` repository, transaction-scoped migration locking, up/down application, and idempotent scripts. The initial DDL surface covers tables, columns, keys and constraints, indexes, sequences, defaults, comments, schema moves, and alter/rename/drop operations. Acceptance tests apply an idempotent script twice, re-enter `Database.MigrateAsync()`, move back to an earlier migration, and finally revert to the empty database.
 
-PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext EF package also provides explicit `EnsureBlueTuskCitext` and `DropBlueTuskCitext` migration operations. General extension modelling and other PostgreSQL-specific schema features such as enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+### Advanced PostgreSQL indexes
+
+Advanced index metadata composes with EF's standard `IsUnique`, `IsDescending`,
+`HasFilter`, and `HasDatabaseName` configuration:
+
+```csharp
+modelBuilder.Entity<Document>()
+    .HasIndex(document => new { document.Title, document.CreatedAt })
+    .HasDatabaseName("ix_documents_title_created")
+    .IsUnique()
+    .IsDescending(false, true)
+    .HasFilter("\"title\" IS NOT NULL")
+    .UseBlueTuskIndexMethod("btree")
+    .UseBlueTuskOperatorClass("text_pattern_ops", null)
+    .UseBlueTuskCollation("C", null)
+    .HasBlueTuskNullSortOrder(
+        BlueTuskIndexNullSortOrder.NullsFirst,
+        BlueTuskIndexNullSortOrder.NullsLast)
+    .IncludeProperties(document => new
+    {
+        document.SearchVector,
+        document.Summary,
+    })
+    .HasBlueTuskFillFactor(80)
+    .HasBlueTuskNullsDistinct(false)
+    .IsBlueTuskConcurrent();
+```
+
+`UseBlueTuskIndexMethod` accepts built-in B-tree, hash, GiST, SP-GiST, GIN,
+and BRIN methods as well as extension-provided access methods. Operator classes
+and collations are configured per leading key and may be schema-qualified.
+Included properties are resolved through EF's table/column mapping, while
+storage-parameter names and values are restricted to safe PostgreSQL tokens.
+`NULLS NOT DISTINCT` requires PostgreSQL 15 or newer, which is BlueTusk's
+current minimum supported server.
+
+Trusted expression indexes can replace selected mapped keys with
+`HasBlueTuskIndexExpressions`; an empty entry retains the mapped column. These
+expressions become migration DDL verbatim and must be fixed application model
+metadata, never request data or user input. Partial indexes continue to use
+EF's `HasFilter` API.
+
+Concurrent create and drop commands are emitted with `CONCURRENTLY` and marked
+as transaction-suppressed EF migration commands. PostgreSQL does not allow
+those commands inside a transaction. The current idempotent-script wrapper is
+therefore not a supported deployment path for migrations containing concurrent
+indexes; run normal EF migrations or use non-concurrent index DDL until the
+version-aware/idempotent DDL milestone is complete.
+
+PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext EF package also provides explicit `EnsureBlueTuskCitext` and `DropBlueTuskCitext` migration operations. Other PostgreSQL-specific schema features such as enum types, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
 
 ## PostgreSQL 19 property-graph queries
 
@@ -503,7 +552,7 @@ in the [SQL/PGQ guide](../graph/README.md).
 
 ## Database-first scaffolding
 
-The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, and PostgreSQL 19 property graphs. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
+The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, and PostgreSQL 19 property graphs. Column-based indexes retain their access method, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and predicate; generated contexts use the BlueTusk fluent index APIs for those annotations. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
 
 ```bash
 dotnet ef dbcontext scaffold \
@@ -514,8 +563,8 @@ dotnet ef dbcontext scaffold \
   --schema public
 ```
 
-Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retained through a provider model annotation and participate in later migration diffs. PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, partition metadata, policies, and routines—belongs to the advanced scaffolding milestone.
+Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retained through a provider model annotation and participate in later migration diffs. Expression-index creation is supported from model metadata, but expression indexes are not scaffolded yet because EF requires a mapped-property key; PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, partition metadata, policies, and routines—remains a separate roadmap item.
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, integer/text multi-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair/recordset expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, advanced index creation/deletion and catalogue round-tripping, and database-first C# generation. Advanced index acceptance runs on PostgreSQL 15–19 and verifies expression/partial keys, access methods, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and transaction-suppressed concurrent operations. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, integer/text multi-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair/recordset expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

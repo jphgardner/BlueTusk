@@ -5,6 +5,7 @@ using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Design.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -59,6 +60,13 @@ public sealed class ReverseEngineeringTests
                 );
                 COMMENT ON TABLE ef_reverse.parents IS 'Reverse engineering parent';
                 COMMENT ON COLUMN ef_reverse.parents.name IS 'Display name';
+                CREATE UNIQUE INDEX ix_reverse_parents_name_advanced
+                    ON ef_reverse.parents USING btree
+                    (name COLLATE "C" text_pattern_ops DESC NULLS LAST)
+                    INCLUDE (amount)
+                    NULLS NOT DISTINCT
+                    WITH (fillfactor = 80)
+                    WHERE name <> '';
                 CREATE TABLE ef_reverse.children (
                     id integer NOT NULL,
                     parent_id integer NOT NULL,
@@ -121,9 +129,30 @@ public sealed class ReverseEngineeringTests
             Assert.Equal("fk_reverse_children_parent", foreignKey.Name);
             Assert.Same(parent, foreignKey.PrincipalTable);
             Assert.Equal(ReferentialAction.Cascade, foreignKey.OnDelete);
-            var index = Assert.Single(child.Indexes);
-            Assert.Equal("ix_reverse_children_parent", index.Name);
-            Assert.Equal("btree", index["BlueTusk:IndexMethod"]);
+            var childIndex = Assert.Single(child.Indexes);
+            Assert.Equal("ix_reverse_children_parent", childIndex.Name);
+            Assert.Equal("btree", childIndex["BlueTusk:IndexMethod"]);
+            var advancedIndex = Assert.Single(parent.Indexes);
+            Assert.Equal("ix_reverse_parents_name_advanced", advancedIndex.Name);
+            Assert.True(advancedIndex.IsUnique);
+            Assert.Equal([true], advancedIndex.IsDescending);
+            Assert.Contains("name", advancedIndex.Filter, StringComparison.Ordinal);
+            Assert.Contains("<>", advancedIndex.Filter, StringComparison.Ordinal);
+            Assert.Equal("btree", advancedIndex["BlueTusk:IndexMethod"]);
+            Assert.Equal(
+                ["text_pattern_ops"],
+                Assert.IsType<string[]>(advancedIndex["BlueTusk:IndexOperatorClasses"]));
+            Assert.Equal(
+                ["C"],
+                Assert.IsType<string[]>(advancedIndex["BlueTusk:IndexCollations"]));
+            Assert.Equal(
+                [(int)BlueTuskIndexNullSortOrder.NullsLast],
+                Assert.IsType<int[]>(advancedIndex["BlueTusk:IndexNullSortOrders"]));
+            Assert.Equal(
+                ["amount"],
+                Assert.IsType<string[]>(advancedIndex["BlueTusk:IndexIncludeProperties"]));
+            Assert.Equal(false, advancedIndex["BlueTusk:IndexNullsDistinct"]);
+            Assert.Contains("fillfactor", Assert.IsType<string>(advancedIndex["BlueTusk:IndexStorageParameters"]), StringComparison.Ordinal);
 
             var sequence = Assert.Single(model.Sequences);
             Assert.Equal("order_numbers", sequence.Name);
@@ -167,6 +196,12 @@ public sealed class ReverseEngineeringTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains("UseBlueTusk", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("UseBlueTuskIndexMethod", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("UseBlueTuskOperatorClass", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("UseBlueTuskCollation", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasBlueTuskNullSortOrder", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("IncludeProperties", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("BlueTusk:IndexStorageParameters", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 if (supportsSqlPgq)
                 {
                     Assert.Contains("HasBlueTuskPropertyGraphs", scaffolded.ContextFile.Code, StringComparison.Ordinal);

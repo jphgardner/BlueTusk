@@ -1,5 +1,6 @@
 using System.Text;
 using BlueTusk.EntityFrameworkCore.Graphs;
+using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -34,6 +35,159 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             default:
                 base.Generate(operation, model, builder);
                 break;
+        }
+    }
+
+    protected override void Generate(
+        CreateIndexOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder,
+        bool terminate = true)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(builder);
+
+        var helper = Dependencies.SqlGenerationHelper;
+        var concurrently = operation[BlueTuskIndexAnnotations.IsConcurrent] as bool? == true;
+        builder.Append("CREATE ");
+        if (operation.IsUnique)
+        {
+            builder.Append("UNIQUE ");
+        }
+
+        builder.Append("INDEX ");
+        if (concurrently)
+        {
+            builder.Append("CONCURRENTLY ");
+        }
+
+        builder
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema));
+
+        if (operation[BlueTuskIndexAnnotations.Method] is string method)
+        {
+            builder.Append(" USING ");
+            AppendQualifiedIdentifier(builder, method);
+        }
+
+        var operatorClasses = operation[BlueTuskIndexAnnotations.OperatorClasses] as string[];
+        var collations = operation[BlueTuskIndexAnnotations.Collations] as string[];
+        var nullSortOrders = operation[BlueTuskIndexAnnotations.NullSortOrders] as int[];
+        var expressions = operation[BlueTuskIndexAnnotations.Expressions] as string[];
+        builder.Append(" (");
+        for (var index = 0; index < operation.Columns.Length; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            if (expressions is { Length: > 0 } &&
+                index < expressions.Length &&
+                !string.IsNullOrEmpty(expressions[index]))
+            {
+                builder.Append("(").Append(expressions[index]).Append(")");
+            }
+            else
+            {
+                builder.Append(helper.DelimitIdentifier(operation.Columns[index]));
+            }
+
+            if (collations is { Length: > 0 } &&
+                index < collations.Length &&
+                !string.IsNullOrWhiteSpace(collations[index]))
+            {
+                builder.Append(" COLLATE ");
+                AppendQualifiedIdentifier(builder, collations[index]);
+            }
+
+            if (operatorClasses is { Length: > 0 } &&
+                index < operatorClasses.Length &&
+                !string.IsNullOrWhiteSpace(operatorClasses[index]))
+            {
+                builder.Append(" ");
+                AppendQualifiedIdentifier(builder, operatorClasses[index]);
+            }
+
+            if (IsDescending(operation, index))
+            {
+                builder.Append(" DESC");
+            }
+
+            if (nullSortOrders is { Length: > 0 } && index < nullSortOrders.Length)
+            {
+                builder.Append(nullSortOrders[index] switch
+                {
+                    (int)BlueTuskIndexNullSortOrder.Default => string.Empty,
+                    (int)BlueTuskIndexNullSortOrder.NullsFirst => " NULLS FIRST",
+                    (int)BlueTuskIndexNullSortOrder.NullsLast => " NULLS LAST",
+                    _ => throw new InvalidOperationException(
+                        $"Index '{operation.Name}' has an invalid null sort order at key {index}."),
+                });
+            }
+        }
+
+        builder.Append(")");
+
+        if (operation[BlueTuskIndexAnnotations.IncludeProperties] is string[] includeProperties &&
+            includeProperties.Length > 0)
+        {
+            builder.Append(" INCLUDE (");
+            for (var index = 0; index < includeProperties.Length; index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                builder.Append(helper.DelimitIdentifier(includeProperties[index]));
+            }
+
+            builder.Append(")");
+        }
+
+        if (operation[BlueTuskIndexAnnotations.NullsDistinct] is bool nullsDistinct)
+        {
+            if (!operation.IsUnique)
+            {
+                throw new InvalidOperationException(
+                    $"Index '{operation.Name}' configures null distinctness but is not unique.");
+            }
+
+            builder.Append(nullsDistinct ? " NULLS DISTINCT" : " NULLS NOT DISTINCT");
+        }
+
+        if (operation[BlueTuskIndexAnnotations.StorageParameters] is string serializedParameters)
+        {
+            var parameters = BlueTuskIndexAnnotations.DeserializeStorageParameters(serializedParameters);
+            if (parameters.Count > 0)
+            {
+                builder.Append(" WITH (");
+                var index = 0;
+                foreach (var (name, value) in parameters)
+                {
+                    if (index++ > 0)
+                    {
+                        builder.Append(", ");
+                    }
+
+                    builder.Append(name).Append(" = ").Append(value);
+                }
+
+                builder.Append(")");
+            }
+        }
+
+        if (!string.IsNullOrWhiteSpace(operation.Filter))
+        {
+            builder.Append(" WHERE ").Append(operation.Filter);
+        }
+
+        if (terminate)
+        {
+            EndIndexStatement(builder, concurrently);
         }
     }
 
@@ -162,10 +316,13 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         builder
             .Append("DROP INDEX ")
+            .Append(operation[BlueTuskIndexAnnotations.IsConcurrent] as bool? == true ? "CONCURRENTLY " : string.Empty)
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
         if (terminate)
         {
-            EndStatement(builder);
+            EndIndexStatement(
+                builder,
+                operation[BlueTuskIndexAnnotations.IsConcurrent] as bool? == true);
         }
     }
 
@@ -300,6 +457,29 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
     private void EndStatement(MigrationCommandListBuilder builder)
         => builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator).EndCommand();
+
+    private void EndIndexStatement(MigrationCommandListBuilder builder, bool suppressTransaction)
+        => builder
+            .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
+            .EndCommand(suppressTransaction: suppressTransaction);
+
+    private static bool IsDescending(CreateIndexOperation operation, int index) =>
+        operation.IsDescending is { Length: 0 } ||
+        operation.IsDescending is { Length: > 0 } values && index < values.Length && values[index];
+
+    private void AppendQualifiedIdentifier(MigrationCommandListBuilder builder, string identifier)
+    {
+        var parts = identifier.Split('.');
+        for (var index = 0; index < parts.Length; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(".");
+            }
+
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(parts[index]));
+        }
+    }
 
     private void Generate(
         CreateBlueTuskPropertyGraphOperation operation,

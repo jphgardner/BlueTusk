@@ -288,7 +288,12 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.4.0 — Advanced migrations and scaffolding (Milestone 6, schema surface)
 
-- [ ] Advanced indexes, operator classes, collations, storage parameters, and included columns
+- [x] Advanced indexes, operator classes, collations, storage parameters, and included columns
+  - [x] Built-in and extension-provided access methods, partial and trusted-expression indexes
+  - [x] Per-key operator classes, collations, sort direction, and null ordering
+  - [x] Included mapped columns, null-distinct unique indexes, and validated storage parameters
+  - [x] Transaction-suppressed concurrent create/drop operations
+  - [x] Column-based advanced-index catalogue discovery and fluent C# scaffolding
 - [ ] Table partitioning metadata and migrations
 - [ ] Row-level security policies
 - [ ] Enum, domain, and composite type creation and alteration

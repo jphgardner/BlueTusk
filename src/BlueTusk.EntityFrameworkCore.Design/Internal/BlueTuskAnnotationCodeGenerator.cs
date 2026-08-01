@@ -1,4 +1,5 @@
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
+using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -25,6 +26,61 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         }
 
         return base.GenerateFluentApi(model, annotation);
+    }
+
+    protected override MethodCallCodeFragment? GenerateFluentApi(
+        IIndex index,
+        IAnnotation annotation)
+    {
+        ArgumentNullException.ThrowIfNull(index);
+        ArgumentNullException.ThrowIfNull(annotation);
+
+        return annotation.Name switch
+        {
+            BlueTuskIndexAnnotations.Method when annotation.Value is string value =>
+                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.UseBlueTuskIndexMethod), value),
+            BlueTuskIndexAnnotations.OperatorClasses when annotation.Value is string[] values =>
+                Fragment(nameof(BlueTuskIndexBuilderExtensions.UseBlueTuskOperatorClass), values),
+            BlueTuskIndexAnnotations.Collations when annotation.Value is string[] values =>
+                Fragment(nameof(BlueTuskIndexBuilderExtensions.UseBlueTuskCollation), values),
+            BlueTuskIndexAnnotations.NullSortOrders when annotation.Value is int[] values =>
+                new MethodCallCodeFragment(
+                    nameof(BlueTuskIndexBuilderExtensions.HasBlueTuskNullSortOrder),
+                    values.Select(value => (object)(BlueTuskIndexNullSortOrder)value).ToArray()),
+            BlueTuskIndexAnnotations.IncludeProperties when annotation.Value is string[] values =>
+                Fragment(
+                    nameof(BlueTuskIndexBuilderExtensions.IncludeProperties),
+                    MapIncludedPropertyNames(index, values)),
+            BlueTuskIndexAnnotations.IsConcurrent when annotation.Value is bool value =>
+                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.IsBlueTuskConcurrent), value),
+            BlueTuskIndexAnnotations.NullsDistinct when annotation.Value is bool value =>
+                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.HasBlueTuskNullsDistinct), value),
+            BlueTuskIndexAnnotations.Expressions when annotation.Value is string[] values =>
+                Fragment(
+                    nameof(BlueTuskIndexBuilderExtensions.HasBlueTuskIndexExpressions),
+                    values.Select(value => string.IsNullOrEmpty(value) ? null : value).ToArray()),
+            _ => base.GenerateFluentApi(index, annotation),
+        };
+    }
+
+    private static MethodCallCodeFragment Fragment(string method, string?[] arguments) =>
+        new(method, arguments.Cast<object>().ToArray());
+
+    private static string[] MapIncludedPropertyNames(IIndex index, IReadOnlyList<string> values)
+    {
+        var tableName = index.DeclaringEntityType.GetTableName();
+        if (tableName is null)
+        {
+            return values.ToArray();
+        }
+
+        var storeObject = StoreObjectIdentifier.Table(tableName, index.DeclaringEntityType.GetSchema());
+        return values.Select(
+                value => index.DeclaringEntityType.FindProperty(value)?.Name
+                    ?? index.DeclaringEntityType.GetProperties()
+                        .FirstOrDefault(property => property.GetColumnName(storeObject) == value)?.Name
+                    ?? value)
+            .ToArray();
     }
 }
 

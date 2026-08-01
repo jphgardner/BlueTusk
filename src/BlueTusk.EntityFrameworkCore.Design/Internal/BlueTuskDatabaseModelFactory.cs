@@ -4,6 +4,8 @@ using BlueTusk.Data;
 using BlueTusk.Data.Schema;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
+using BlueTusk.EntityFrameworkCore.Metadata.Internal;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -286,15 +288,33 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                    idx.indisunique,
                    access_method.amname,
                    pg_catalog.pg_get_expr(idx.indpred, idx.indrelid),
-                   attribute.attname
+                   attribute.attname,
+                   key.position,
+                   idx.indnkeyatts,
+                   operator_namespace.nspname,
+                   operator_class.opcname,
+                   collation_namespace.nspname,
+                   index_collation.collname,
+                   ((idx.indoption)[key.position - 1] & 1) <> 0,
+                   ((idx.indoption)[key.position - 1] & 2) <> 0,
+                   idx.indnullsnotdistinct,
+                   index_class.reloptions
             FROM pg_catalog.pg_index AS idx
             JOIN pg_catalog.pg_class AS table_class ON table_class.oid = idx.indrelid
             JOIN pg_catalog.pg_namespace AS n ON n.oid = table_class.relnamespace
             JOIN pg_catalog.pg_class AS index_class ON index_class.oid = idx.indexrelid
             JOIN pg_catalog.pg_am AS access_method ON access_method.oid = index_class.relam
             CROSS JOIN LATERAL unnest(idx.indkey) WITH ORDINALITY AS key(attnum, position)
-            JOIN pg_catalog.pg_attribute AS attribute
+            LEFT JOIN pg_catalog.pg_attribute AS attribute
                 ON attribute.attrelid = idx.indrelid AND attribute.attnum = key.attnum
+            LEFT JOIN pg_catalog.pg_opclass AS operator_class
+                ON operator_class.oid = (idx.indclass)[key.position - 1]
+            LEFT JOIN pg_catalog.pg_namespace AS operator_namespace
+                ON operator_namespace.oid = operator_class.opcnamespace
+            LEFT JOIN pg_catalog.pg_collation AS index_collation
+                ON index_collation.oid = (idx.indcollation)[key.position - 1]
+            LEFT JOIN pg_catalog.pg_namespace AS collation_namespace
+                ON collation_namespace.oid = index_collation.collnamespace
             WHERE NOT idx.indisprimary
               AND NOT EXISTS (
                   SELECT 1 FROM pg_catalog.pg_constraint AS con
@@ -304,6 +324,12 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
 
         DatabaseIndex? index = null;
         string? currentIndex = null;
+        HashSet<string> skippedExpressionIndexes = new(StringComparer.Ordinal);
+        List<string?> operatorClasses = [];
+        List<string?> collations = [];
+        List<int> nullSortOrders = [];
+        List<string> includeColumns = [];
+        List<bool> descending = [];
         using var command = connection.CreateCommand();
         command.CommandText = sql;
         using var reader = command.ExecuteReader();
@@ -316,9 +342,26 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
 
             var indexName = reader.GetString(2);
             var indexIdentity = $"{table.Schema}.{table.Name}.{indexName}";
+            if (skippedExpressionIndexes.Contains(indexIdentity))
+            {
+                continue;
+            }
+
             if (!string.Equals(currentIndex, indexIdentity, StringComparison.Ordinal))
             {
+                ApplyAdvancedIndexAnnotations(
+                    index,
+                    operatorClasses,
+                    collations,
+                    nullSortOrders,
+                    includeColumns,
+                    descending);
                 currentIndex = indexIdentity;
+                operatorClasses = [];
+                collations = [];
+                nullSortOrders = [];
+                includeColumns = [];
+                descending = [];
                 index = new DatabaseIndex
                 {
                     Table = table,
@@ -326,12 +369,101 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                     IsUnique = reader.GetBoolean(3),
                     Filter = GetNullableString(reader, 5),
                 };
-                index["BlueTusk:IndexMethod"] = reader.GetString(4);
+                index[BlueTuskIndexAnnotations.Method] = reader.GetString(4);
+                if (reader.GetBoolean(3) && reader.GetBoolean(15))
+                {
+                    index[BlueTuskIndexAnnotations.NullsDistinct] = false;
+                }
+
+                if (!reader.IsDBNull(16))
+                {
+                    var storageParameters = ParsePostgreSqlArray(reader.GetValue(16));
+                    index[BlueTuskIndexAnnotations.StorageParameters] =
+                        BlueTuskIndexAnnotations.SerializeStorageParameters(
+                            storageParameters.Select(value => value.Split('=', 2))
+                                .Where(parts => parts.Length == 2)
+                                .ToDictionary(parts => parts[0], parts => parts[1], StringComparer.Ordinal));
+                }
+
                 table.Indexes.Add(index);
             }
 
-            index!.Columns.Add(FindColumn(table, reader.GetString(6)));
+            var position = reader.GetInt64(7);
+            var keyCount = reader.GetInt16(8);
+            if (position <= keyCount)
+            {
+                if (reader.IsDBNull(6))
+                {
+                    table.Indexes.Remove(index!);
+                    skippedExpressionIndexes.Add(indexIdentity);
+                    index = null;
+                    currentIndex = null;
+                    continue;
+                }
+
+                index!.Columns.Add(FindColumn(table, reader.GetString(6)));
+                var operatorClass = reader.IsDBNull(10)
+                    ? null
+                    : QualifyCatalogueIdentifier(reader.GetString(9), reader.GetString(10), "pg_catalog");
+                operatorClasses.Add(operatorClass);
+                var collation = reader.IsDBNull(12)
+                    ? null
+                    : QualifyCatalogueIdentifier(reader.GetString(11), reader.GetString(12), "pg_catalog");
+                collations.Add(collation);
+                descending.Add(reader.GetBoolean(13));
+                nullSortOrders.Add(reader.GetBoolean(14)
+                    ? (int)BlueTuskIndexNullSortOrder.NullsFirst
+                    : (int)BlueTuskIndexNullSortOrder.NullsLast);
+            }
+            else if (!reader.IsDBNull(6))
+            {
+                includeColumns.Add(reader.GetString(6));
+            }
         }
+
+        ApplyAdvancedIndexAnnotations(
+            index,
+            operatorClasses,
+            collations,
+            nullSortOrders,
+            includeColumns,
+            descending);
+    }
+
+    private static void ApplyAdvancedIndexAnnotations(
+        DatabaseIndex? index,
+        IReadOnlyList<string?> operatorClasses,
+        IReadOnlyList<string?> collations,
+        IReadOnlyList<int> nullSortOrders,
+        IReadOnlyList<string> includeColumns,
+        IReadOnlyList<bool> descending)
+    {
+        if (index is null)
+        {
+            return;
+        }
+
+        index[BlueTuskIndexAnnotations.OperatorClasses] = operatorClasses.ToArray();
+        index[BlueTuskIndexAnnotations.Collations] = collations.ToArray();
+        index[BlueTuskIndexAnnotations.NullSortOrders] = nullSortOrders.ToArray();
+        index[BlueTuskIndexAnnotations.IncludeProperties] = includeColumns.ToArray();
+        index.IsDescending = descending.ToArray();
+    }
+
+    private static string QualifyCatalogueIdentifier(string schema, string name, string defaultSchema) =>
+        string.Equals(schema, defaultSchema, StringComparison.Ordinal) ? name : $"{schema}.{name}";
+
+    private static string[] ParsePostgreSqlArray(object value)
+    {
+        if (value is string[] strings)
+        {
+            return strings;
+        }
+
+        var text = Convert.ToString(value, System.Globalization.CultureInfo.InvariantCulture);
+        return string.IsNullOrEmpty(text) || text == "{}"
+            ? Array.Empty<string>()
+            : text.Trim('{', '}').Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
     }
 
     private static void ReadForeignKeys(
