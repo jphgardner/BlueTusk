@@ -252,10 +252,16 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] All six built-in range and multirange families, including their array types
   - [x] Runtime-registered enums, domains, composites, records, and their arrays
 - [ ] PostgreSQL operators and operator-aware LINQ translations
+  - [x] Parameterised `ILIKE` and POSIX regular-expression predicates
+  - [x] Array, range/multirange, JSONB/JSONPath, network, and full-text predicates
+  - [x] SQL-generation and PostgreSQL 15–19 live operator acceptance
+  - [ ] `ANY`, `ALL`, row values, tuple comparison, and remaining operator forms
 - [ ] PostgreSQL scalar, aggregate, and set-returning function translations
 - [ ] PostgreSQL-specific query roots and SQL constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
 - [ ] PostgreSQL-specific query diagnostics and translation tests
+  - [x] Translation-only operator API with no client implementation or raw-string fallback
+  - [x] Provider SQL-expression quoting, nullability processing, and operator-family tests
 
 ## 0.4.0 — Advanced migrations and scaffolding (Milestone 6, schema surface)
 
