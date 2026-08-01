@@ -127,6 +127,125 @@ public sealed class PostgreSqlFunctionTranslationTests
     }
 
     [Fact]
+    public void Date_time_functions_translate_with_typed_timestamp_and_interval_results()
+    {
+        using var context = CreateContext();
+        var timestamp = new DateTime(2026, 8, 1, 12, 34, 56, DateTimeKind.Unspecified);
+        var timestampWithTimeZone = new DateTimeOffset(2026, 8, 1, 12, 34, 56, TimeSpan.Zero);
+        var interval = new BlueTuskInterval(14, 3, TimeSpan.FromMinutes(47).Ticks / 10);
+
+        var sql = context.Values
+            .Select(_ => new
+            {
+                Hour = EF.Functions.DatePart("hour", timestamp),
+                OffsetHour = EF.Functions.DatePart("hour", timestampWithTimeZone),
+                IntervalMonth = EF.Functions.DatePart("month", interval),
+                Truncated = EF.Functions.DateTrunc("day", timestamp),
+                OffsetTruncated = EF.Functions.DateTrunc(
+                    "day",
+                    timestampWithTimeZone,
+                    "Europe/London"),
+                IntervalTruncated = EF.Functions.DateTrunc("hour", interval),
+                Binned = EF.Functions.DateBin(
+                    TimeSpan.FromMinutes(15),
+                    timestamp,
+                    new DateTime(2026, 8, 1)),
+                Age = EF.Functions.DateAge(timestamp, new DateTime(2026, 1, 1)),
+                Date = EF.Functions.MakeDate(2026, 8, 1),
+                Time = EF.Functions.MakeTime(12, 34, 56.5),
+                Timestamp = EF.Functions.MakeTimestamp(2026, 8, 1, 12, 34, 56.5),
+                TimestampWithTimeZone = EF.Functions.MakeTimestampWithTimeZone(
+                    2026,
+                    8,
+                    1,
+                    12,
+                    34,
+                    56.5,
+                    "UTC"),
+                Interval = EF.Functions.MakeInterval(1, 2, 1, 3, 4, 5, 6.5),
+                JustifiedDays = EF.Functions.JustifyDays(interval),
+                JustifiedHours = EF.Functions.JustifyHours(interval),
+                Justified = EF.Functions.JustifyInterval(interval),
+            })
+            .ToQueryString();
+
+        Assert.Contains("date_part(", sql, StringComparison.Ordinal);
+        Assert.Contains("date_trunc(", sql, StringComparison.Ordinal);
+        Assert.Contains("date_bin(", sql, StringComparison.Ordinal);
+        Assert.Contains("age(", sql, StringComparison.Ordinal);
+        Assert.Contains("make_date(", sql, StringComparison.Ordinal);
+        Assert.Contains("make_time(", sql, StringComparison.Ordinal);
+        Assert.Contains("make_timestamp(", sql, StringComparison.Ordinal);
+        Assert.Contains("make_timestamptz(", sql, StringComparison.Ordinal);
+        Assert.Contains("make_interval(", sql, StringComparison.Ordinal);
+        Assert.Contains("justify_days(", sql, StringComparison.Ordinal);
+        Assert.Contains("justify_hours(", sql, StringComparison.Ordinal);
+        Assert.Contains("justify_interval(", sql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Geometric_functions_translate_for_every_supported_result_family()
+    {
+        using var context = CreateContext();
+        var box = new BlueTuskBox(new BlueTuskPoint(0, 0), new BlueTuskPoint(4, 3));
+        var circle = new BlueTuskCircle(new BlueTuskPoint(1, 2), 2);
+        var segment = new BlueTuskLineSegment(new BlueTuskPoint(0, 0), new BlueTuskPoint(3, 4));
+        var closedPath = new BlueTuskPath(
+            [new BlueTuskPoint(0, 0), new BlueTuskPoint(3, 0), new BlueTuskPoint(0, 4)],
+            isClosed: true);
+        var polygon = new BlueTuskPolygon(
+            [new BlueTuskPoint(0, 0), new BlueTuskPoint(3, 0), new BlueTuskPoint(0, 4)]);
+
+        var sql = context.Values
+            .Select(_ => new
+            {
+                BoxArea = EF.Functions.GeometryArea(box),
+                PathArea = EF.Functions.GeometryArea(closedPath),
+                CircleArea = EF.Functions.GeometryArea(circle),
+                BoxCenter = EF.Functions.GeometryCenter(box),
+                CircleCenter = EF.Functions.GeometryCenter(circle),
+                Diagonal = EF.Functions.BoxDiagonal(box),
+                Diameter = EF.Functions.CircleDiameter(circle),
+                Height = EF.Functions.BoxHeight(box),
+                Closed = EF.Functions.PathIsClosed(closedPath),
+                Open = EF.Functions.PathIsOpen(closedPath),
+                SegmentLength = EF.Functions.GeometryLength(segment),
+                PathLength = EF.Functions.GeometryLength(closedPath),
+                PathPoints = EF.Functions.GeometryPointCount(closedPath),
+                PolygonPoints = EF.Functions.GeometryPointCount(polygon),
+                ClosedPath = EF.Functions.PathClose(closedPath),
+                OpenPath = EF.Functions.PathOpen(closedPath),
+                Radius = EF.Functions.CircleRadius(circle),
+                Slope = EF.Functions.PointSlope(
+                    new BlueTuskPoint(0, 0),
+                    new BlueTuskPoint(2, 1)),
+                Width = EF.Functions.BoxWidth(box),
+            })
+            .ToQueryString();
+
+        foreach (var function in new[]
+        {
+            "area(",
+            "center(",
+            "diagonal(",
+            "diameter(",
+            "height(",
+            "isclosed(",
+            "isopen(",
+            "length(",
+            "npoints(",
+            "pclose(",
+            "popen(",
+            "radius(",
+            "slope(",
+            "width(",
+        })
+        {
+            Assert.Contains(function, sql, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public async Task PostgreSQL_scalar_functions_execute_with_typed_results_and_parameters()
     {
         var connectionString = GetConnectionString();
@@ -262,6 +381,184 @@ public sealed class PostgreSqlFunctionTranslationTests
             Assert.True(textSearch.PhraseNodes > 0);
             Assert.True(textSearch.WebNodes > 0);
             Assert.True(textSearch.Rank > 0);
+
+            var timestamp = new DateTime(
+                2026,
+                8,
+                1,
+                12,
+                34,
+                56,
+                DateTimeKind.Unspecified);
+            var timestampWithTimeZone = new DateTimeOffset(
+                2026,
+                8,
+                1,
+                12,
+                34,
+                56,
+                TimeSpan.Zero);
+            var nativeInterval = new BlueTuskInterval(
+                months: 27,
+                days: 3,
+                microseconds: (TimeSpan.FromHours(2) + TimeSpan.FromMinutes(47)).Ticks / 10);
+            var temporal = await context.Values
+                .Select(_ => new
+                {
+                    Hour = EF.Functions.DatePart("hour", timestamp),
+                    OffsetHour = EF.Functions.DatePart("hour", timestampWithTimeZone),
+                    IntervalMonth = EF.Functions.DatePart("month", nativeInterval),
+                    Truncated = EF.Functions.DateTrunc("day", timestamp),
+                    OffsetTruncated = EF.Functions.DateTrunc(
+                        "day",
+                        timestampWithTimeZone,
+                        "Europe/London"),
+                    IntervalTruncated = EF.Functions.DateTrunc("hour", nativeInterval),
+                    Binned = EF.Functions.DateBin(
+                        TimeSpan.FromMinutes(15),
+                        timestamp,
+                        new DateTime(2026, 8, 1)),
+                    OffsetBinned = EF.Functions.DateBin(
+                        TimeSpan.FromMinutes(15),
+                        timestampWithTimeZone,
+                        new DateTimeOffset(2026, 8, 1, 0, 0, 0, TimeSpan.Zero)),
+                    Age = EF.Functions.DateAge(
+                        new DateTime(2026, 3, 15),
+                        new DateTime(2026, 1, 10)),
+                    OffsetAge = EF.Functions.DateAge(
+                        new DateTimeOffset(2026, 3, 15, 0, 0, 0, TimeSpan.Zero),
+                        new DateTimeOffset(2026, 1, 10, 0, 0, 0, TimeSpan.Zero)),
+                    Date = EF.Functions.MakeDate(2026, 8, 1),
+                    Time = EF.Functions.MakeTime(12, 34, 56.5),
+                    Timestamp = EF.Functions.MakeTimestamp(2026, 8, 1, 12, 34, 56.5),
+                    TimestampWithTimeZone = EF.Functions.MakeTimestampWithTimeZone(
+                        2026,
+                        8,
+                        1,
+                        12,
+                        34,
+                        56.5,
+                        "UTC"),
+                    Interval = EF.Functions.MakeInterval(1, 2, 1, 3, 4, 5, 6.5),
+                    JustifiedDays = EF.Functions.JustifyDays(
+                        new BlueTuskInterval(0, 65, 0)),
+                    JustifiedHours = EF.Functions.JustifyHours(
+                        new BlueTuskInterval(
+                            0,
+                            0,
+                            (TimeSpan.FromHours(50) + TimeSpan.FromMinutes(10)).Ticks / 10)),
+                    Justified = EF.Functions.JustifyInterval(
+                        new BlueTuskInterval(1, 0, -TimeSpan.FromHours(1).Ticks / 10)),
+                })
+                .SingleAsync();
+
+            Assert.Equal(12, temporal.Hour);
+            Assert.Equal(12, temporal.OffsetHour);
+            Assert.Equal(3, temporal.IntervalMonth);
+            Assert.Equal(new DateTime(2026, 8, 1), temporal.Truncated);
+            Assert.Equal(
+                new DateTimeOffset(2026, 7, 31, 23, 0, 0, TimeSpan.Zero),
+                temporal.OffsetTruncated.ToUniversalTime());
+            Assert.Equal(
+                new BlueTuskInterval(27, 3, TimeSpan.FromHours(2).Ticks / 10),
+                temporal.IntervalTruncated);
+            Assert.Equal(new DateTime(2026, 8, 1, 12, 30, 0), temporal.Binned);
+            Assert.Equal(
+                new DateTimeOffset(2026, 8, 1, 12, 30, 0, TimeSpan.Zero),
+                temporal.OffsetBinned.ToUniversalTime());
+            Assert.Equal(new BlueTuskInterval(2, 5, 0), temporal.Age);
+            Assert.Equal(new BlueTuskInterval(2, 5, 0), temporal.OffsetAge);
+            Assert.Equal(new DateOnly(2026, 8, 1), temporal.Date);
+            Assert.Equal(new TimeOnly(12, 34, 56, 500), temporal.Time);
+            Assert.Equal(new DateTime(2026, 8, 1, 12, 34, 56, 500), temporal.Timestamp);
+            Assert.Equal(
+                new DateTimeOffset(2026, 8, 1, 12, 34, 56, 500, TimeSpan.Zero),
+                temporal.TimestampWithTimeZone.ToUniversalTime());
+            Assert.Equal(
+                new BlueTuskInterval(
+                    14,
+                    10,
+                    (TimeSpan.FromHours(4)
+                        + TimeSpan.FromMinutes(5)
+                        + TimeSpan.FromSeconds(6.5)).Ticks / 10),
+                temporal.Interval);
+            Assert.Equal(new BlueTuskInterval(2, 5, 0), temporal.JustifiedDays);
+            Assert.Equal(
+                new BlueTuskInterval(
+                    0,
+                    2,
+                    (TimeSpan.FromHours(2) + TimeSpan.FromMinutes(10)).Ticks / 10),
+                temporal.JustifiedHours);
+            Assert.Equal(
+                new BlueTuskInterval(0, 29, TimeSpan.FromHours(23).Ticks / 10),
+                temporal.Justified);
+
+            var box = new BlueTuskBox(
+                new BlueTuskPoint(0, 0),
+                new BlueTuskPoint(4, 3));
+            var circle = new BlueTuskCircle(new BlueTuskPoint(1, 2), 2);
+            var segment = new BlueTuskLineSegment(
+                new BlueTuskPoint(0, 0),
+                new BlueTuskPoint(3, 4));
+            var points = new[]
+            {
+                new BlueTuskPoint(0, 0),
+                new BlueTuskPoint(3, 0),
+                new BlueTuskPoint(0, 4),
+            };
+            var closedPath = new BlueTuskPath(points, isClosed: true);
+            var openPath = new BlueTuskPath(points, isClosed: false);
+            var polygon = new BlueTuskPolygon(points);
+            var geometry = await context.Values
+                .Select(_ => new
+                {
+                    BoxArea = EF.Functions.GeometryArea(box),
+                    PathArea = EF.Functions.GeometryArea(closedPath),
+                    OpenPathArea = EF.Functions.GeometryArea(openPath),
+                    CircleArea = EF.Functions.GeometryArea(circle),
+                    BoxCenter = EF.Functions.GeometryCenter(box),
+                    CircleCenter = EF.Functions.GeometryCenter(circle),
+                    Diagonal = EF.Functions.BoxDiagonal(box),
+                    Diameter = EF.Functions.CircleDiameter(circle),
+                    Height = EF.Functions.BoxHeight(box),
+                    Closed = EF.Functions.PathIsClosed(closedPath),
+                    Open = EF.Functions.PathIsOpen(openPath),
+                    SegmentLength = EF.Functions.GeometryLength(segment),
+                    ClosedPathLength = EF.Functions.GeometryLength(closedPath),
+                    OpenPathLength = EF.Functions.GeometryLength(openPath),
+                    PathPoints = EF.Functions.GeometryPointCount(closedPath),
+                    PolygonPoints = EF.Functions.GeometryPointCount(polygon),
+                    ClosedPath = EF.Functions.PathClose(openPath),
+                    OpenPath = EF.Functions.PathOpen(closedPath),
+                    Radius = EF.Functions.CircleRadius(circle),
+                    Slope = EF.Functions.PointSlope(
+                        new BlueTuskPoint(0, 0),
+                        new BlueTuskPoint(2, 1)),
+                    Width = EF.Functions.BoxWidth(box),
+                })
+                .SingleAsync();
+
+            Assert.Equal(12, geometry.BoxArea);
+            Assert.Equal(6, geometry.PathArea);
+            Assert.Null(geometry.OpenPathArea);
+            Assert.Equal(Math.PI * 4, geometry.CircleArea, precision: 10);
+            Assert.Equal(new BlueTuskPoint(2, 1.5), geometry.BoxCenter);
+            Assert.Equal(circle.Center, geometry.CircleCenter);
+            Assert.Equal(new BlueTuskLineSegment(box.High, box.Low), geometry.Diagonal);
+            Assert.Equal(4, geometry.Diameter);
+            Assert.Equal(3, geometry.Height);
+            Assert.True(geometry.Closed);
+            Assert.True(geometry.Open);
+            Assert.Equal(5, geometry.SegmentLength);
+            Assert.Equal(12, geometry.ClosedPathLength);
+            Assert.Equal(8, geometry.OpenPathLength);
+            Assert.Equal(3, geometry.PathPoints);
+            Assert.Equal(3, geometry.PolygonPoints);
+            Assert.True(geometry.ClosedPath.IsClosed);
+            Assert.False(geometry.OpenPath.IsClosed);
+            Assert.Equal(2, geometry.Radius);
+            Assert.Equal(0.5, geometry.Slope);
+            Assert.Equal(4, geometry.Width);
         }
         finally
         {

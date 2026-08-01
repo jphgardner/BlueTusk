@@ -423,6 +423,171 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskTextSearchQuery query)
         => ThrowTranslationOnly<float?>();
 
+    public static double DatePart(this DbFunctions _, string field, DateTime value)
+        => ThrowTranslationOnly<double>();
+
+    public static double DatePart(this DbFunctions _, string field, DateTimeOffset value)
+        => ThrowTranslationOnly<double>();
+
+    public static double DatePart(this DbFunctions _, string field, BlueTuskInterval value)
+        => ThrowTranslationOnly<double>();
+
+    public static DateTime DateTrunc(this DbFunctions _, string field, DateTime value)
+        => ThrowTranslationOnly<DateTime>();
+
+    public static DateTimeOffset DateTrunc(
+        this DbFunctions _,
+        string field,
+        DateTimeOffset value)
+        => ThrowTranslationOnly<DateTimeOffset>();
+
+    public static DateTimeOffset DateTrunc(
+        this DbFunctions _,
+        string field,
+        DateTimeOffset value,
+        string timeZone)
+        => ThrowTranslationOnly<DateTimeOffset>();
+
+    public static BlueTuskInterval DateTrunc(
+        this DbFunctions _,
+        string field,
+        BlueTuskInterval value)
+        => ThrowTranslationOnly<BlueTuskInterval>();
+
+    public static DateTime DateBin(
+        this DbFunctions _,
+        TimeSpan stride,
+        DateTime value,
+        DateTime origin)
+        => ThrowTranslationOnly<DateTime>();
+
+    public static DateTimeOffset DateBin(
+        this DbFunctions _,
+        TimeSpan stride,
+        DateTimeOffset value,
+        DateTimeOffset origin)
+        => ThrowTranslationOnly<DateTimeOffset>();
+
+    public static BlueTuskInterval DateAge(this DbFunctions _, DateTime value, DateTime earlier)
+        => ThrowTranslationOnly<BlueTuskInterval>();
+
+    public static BlueTuskInterval DateAge(
+        this DbFunctions _,
+        DateTimeOffset value,
+        DateTimeOffset earlier)
+        => ThrowTranslationOnly<BlueTuskInterval>();
+
+    public static DateOnly MakeDate(this DbFunctions _, int year, int month, int day)
+        => ThrowTranslationOnly<DateOnly>();
+
+    public static TimeOnly MakeTime(
+        this DbFunctions _,
+        int hour,
+        int minute,
+        double second)
+        => ThrowTranslationOnly<TimeOnly>();
+
+    public static DateTime MakeTimestamp(
+        this DbFunctions _,
+        int year,
+        int month,
+        int day,
+        int hour,
+        int minute,
+        double second)
+        => ThrowTranslationOnly<DateTime>();
+
+    public static DateTimeOffset MakeTimestampWithTimeZone(
+        this DbFunctions _,
+        int year,
+        int month,
+        int day,
+        int hour,
+        int minute,
+        double second,
+        string timeZone)
+        => ThrowTranslationOnly<DateTimeOffset>();
+
+    public static BlueTuskInterval MakeInterval(
+        this DbFunctions _,
+        int years,
+        int months,
+        int weeks,
+        int days,
+        int hours,
+        int minutes,
+        double seconds)
+        => ThrowTranslationOnly<BlueTuskInterval>();
+
+    public static BlueTuskInterval JustifyDays(this DbFunctions _, BlueTuskInterval value)
+        => ThrowTranslationOnly<BlueTuskInterval>();
+
+    public static BlueTuskInterval JustifyHours(this DbFunctions _, BlueTuskInterval value)
+        => ThrowTranslationOnly<BlueTuskInterval>();
+
+    public static BlueTuskInterval JustifyInterval(this DbFunctions _, BlueTuskInterval value)
+        => ThrowTranslationOnly<BlueTuskInterval>();
+
+    public static double GeometryArea(this DbFunctions _, BlueTuskBox value)
+        => ThrowTranslationOnly<double>();
+
+    public static double? GeometryArea(this DbFunctions _, BlueTuskPath value)
+        => ThrowTranslationOnly<double?>();
+
+    public static double GeometryArea(this DbFunctions _, BlueTuskCircle value)
+        => ThrowTranslationOnly<double>();
+
+    public static BlueTuskPoint GeometryCenter(this DbFunctions _, BlueTuskBox value)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint GeometryCenter(this DbFunctions _, BlueTuskCircle value)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskLineSegment BoxDiagonal(this DbFunctions _, BlueTuskBox value)
+        => ThrowTranslationOnly<BlueTuskLineSegment>();
+
+    public static double CircleDiameter(this DbFunctions _, BlueTuskCircle value)
+        => ThrowTranslationOnly<double>();
+
+    public static double BoxHeight(this DbFunctions _, BlueTuskBox value)
+        => ThrowTranslationOnly<double>();
+
+    public static bool PathIsClosed(this DbFunctions _, BlueTuskPath value)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool PathIsOpen(this DbFunctions _, BlueTuskPath value)
+        => ThrowTranslationOnly<bool>();
+
+    public static double GeometryLength(this DbFunctions _, BlueTuskLineSegment value)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryLength(this DbFunctions _, BlueTuskPath value)
+        => ThrowTranslationOnly<double>();
+
+    public static int GeometryPointCount(this DbFunctions _, BlueTuskPath value)
+        => ThrowTranslationOnly<int>();
+
+    public static int GeometryPointCount(this DbFunctions _, BlueTuskPolygon value)
+        => ThrowTranslationOnly<int>();
+
+    public static BlueTuskPath PathClose(this DbFunctions _, BlueTuskPath value)
+        => ThrowTranslationOnly<BlueTuskPath>();
+
+    public static BlueTuskPath PathOpen(this DbFunctions _, BlueTuskPath value)
+        => ThrowTranslationOnly<BlueTuskPath>();
+
+    public static double CircleRadius(this DbFunctions _, BlueTuskCircle value)
+        => ThrowTranslationOnly<double>();
+
+    public static double PointSlope(
+        this DbFunctions _,
+        BlueTuskPoint first,
+        BlueTuskPoint second)
+        => ThrowTranslationOnly<double>();
+
+    public static double BoxWidth(this DbFunctions _, BlueTuskBox value)
+        => ThrowTranslationOnly<double>();
+
     public static T[]? ArrayAggregate<T>(this DbFunctions _, IEnumerable<T> values)
         => ThrowTranslationOnly<T[]?>();
 

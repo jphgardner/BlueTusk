@@ -260,6 +260,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [ ] Remaining operator forms
 - [ ] PostgreSQL scalar, aggregate, and set-returning function translations
   - [x] Initial array, range/multirange, JSONB, regex, network, and full-text scalar functions
+  - [x] Typed date/time construction, extraction, truncation, binning, age, and interval-justification functions
+  - [x] PostgreSQL box, path, circle, line-segment, polygon, and point scalar functions
   - [x] Composable nested functions with typed result materialisation and PostgreSQL 15–19 acceptance
   - [x] Initial array, string, boolean, range-union, and range-intersection aggregates
   - [x] Aggregate ordering, `DISTINCT`, `FILTER`, typed results, and PostgreSQL 15–19 acceptance

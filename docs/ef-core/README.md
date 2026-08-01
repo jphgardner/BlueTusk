@@ -181,9 +181,44 @@ range and multirange bounds, inclusivity, infinity, and empty checks; JSONB
 type, array length, and first JSONPath result; regular-expression replace and
 count; network host/family/mask/network/broadcast; and full-text vector/query
 construction, lexeme/node counts, and rank. PostgreSQL's default text-search
-configuration applies to the current no-configuration overloads. Geometric,
-date/time, and remaining scalar functions are still planned and are not
-implied by this preview.
+configuration applies to the current no-configuration overloads.
+
+The date/time surface includes `date_part`, `date_trunc`, `date_bin`, and
+two-argument `age`; date, time, timestamp, timestamp-with-time-zone, and
+interval constructors; and all three interval-justification functions.
+Timestamp-with-time-zone construction and truncation expose an explicit time-
+zone argument so results do not silently depend on the session setting.
+`date_bin` accepts a `TimeSpan` stride, which cannot represent months and
+therefore matches PostgreSQL's stride restriction. Calendar-sensitive interval
+results use `BlueTuskInterval`, preserving independent months, days, and
+microseconds instead of flattening them into a `TimeSpan`:
+
+```csharp
+var buckets = context.Events.Select(item => new
+{
+    Bin = EF.Functions.DateBin(
+        TimeSpan.FromMinutes(15),
+        item.RecordedAt,
+        origin),
+    Day = EF.Functions.DateTrunc(
+        "day",
+        item.RecordedAtWithTimeZone,
+        "Europe/London"),
+});
+```
+
+The geometric surface covers PostgreSQL's complete documented function table:
+area, center, diagonal, diameter, height, open/closed path tests, length, point
+count, path open/close conversion, radius, slope, and width. Overloads retain
+the exact `BlueTuskBox`, `BlueTuskPath`, `BlueTuskCircle`,
+`BlueTuskLineSegment`, `BlueTuskPolygon`, and `BlueTuskPoint` mappings. Path
+area is nullable because PostgreSQL returns `NULL` for an open path. Generated
+SQL and live typed-parameter/result tests run across PostgreSQL 15–19. Other
+mathematical, formatting, string, binary, JSON, and full-text scalar overloads
+remain planned and are not implied by this preview. The function definitions
+follow PostgreSQL's [date/time](https://www.postgresql.org/docs/current/functions-datetime.html)
+and [geometric](https://www.postgresql.org/docs/current/functions-geometry.html)
+documentation.
 
 ## PostgreSQL aggregate functions
 
