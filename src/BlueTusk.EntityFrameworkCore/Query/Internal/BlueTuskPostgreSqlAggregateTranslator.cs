@@ -17,16 +17,25 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
         {
             [nameof(BlueTuskDbFunctionsExtensions.ArrayAggregate)] = "array_agg",
             [nameof(BlueTuskDbFunctionsExtensions.StringAggregate)] = "string_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.AnyValue)] = "any_value",
             [nameof(BlueTuskDbFunctionsExtensions.BooleanAnd)] = "bool_and",
             [nameof(BlueTuskDbFunctionsExtensions.BooleanOr)] = "bool_or",
             [nameof(BlueTuskDbFunctionsExtensions.RangeAggregate)] = "range_agg",
             [nameof(BlueTuskDbFunctionsExtensions.RangeIntersectAggregate)] = "range_intersect_agg",
             [nameof(BlueTuskDbFunctionsExtensions.JsonAggregate)] = "json_agg",
             [nameof(BlueTuskDbFunctionsExtensions.JsonbAggregate)] = "jsonb_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonAggregateStrict)] = "json_agg_strict",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonbAggregateStrict)] = "jsonb_agg_strict",
             [nameof(BlueTuskDbFunctionsExtensions.XmlAggregate)] = "xmlagg",
             [nameof(BlueTuskDbFunctionsExtensions.IntegerBitAnd)] = "bit_and",
+            [nameof(BlueTuskDbFunctionsExtensions.SmallIntBitAnd)] = "bit_and",
+            [nameof(BlueTuskDbFunctionsExtensions.BitStringAnd)] = "bit_and",
             [nameof(BlueTuskDbFunctionsExtensions.IntegerBitOr)] = "bit_or",
+            [nameof(BlueTuskDbFunctionsExtensions.SmallIntBitOr)] = "bit_or",
+            [nameof(BlueTuskDbFunctionsExtensions.BitStringOr)] = "bit_or",
             [nameof(BlueTuskDbFunctionsExtensions.IntegerBitXor)] = "bit_xor",
+            [nameof(BlueTuskDbFunctionsExtensions.SmallIntBitXor)] = "bit_xor",
+            [nameof(BlueTuskDbFunctionsExtensions.BitStringXor)] = "bit_xor",
             [nameof(BlueTuskDbFunctionsExtensions.BigIntBitAnd)] = "bit_and",
             [nameof(BlueTuskDbFunctionsExtensions.BigIntBitOr)] = "bit_or",
             [nameof(BlueTuskDbFunctionsExtensions.BigIntBitXor)] = "bit_xor",
@@ -36,6 +45,14 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.VarianceSample)] = "var_samp",
             [nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregate)] = "json_object_agg",
             [nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregate)] = "jsonb_object_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateStrict)] = "json_object_agg_strict",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateUnique)] = "json_object_agg_unique",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateUniqueStrict)] =
+                "json_object_agg_unique_strict",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateStrict)] = "jsonb_object_agg_strict",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateUnique)] = "jsonb_object_agg_unique",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateUniqueStrict)] =
+                "jsonb_object_agg_unique_strict",
             [nameof(BlueTuskDbFunctionsExtensions.Correlation)] = "corr",
             [nameof(BlueTuskDbFunctionsExtensions.CovariancePopulation)] = "covar_pop",
             [nameof(BlueTuskDbFunctionsExtensions.CovarianceSample)] = "covar_samp",
@@ -61,6 +78,12 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
     [
         nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregate),
         nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregate),
+        nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateStrict),
+        nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateUnique),
+        nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateUniqueStrict),
+        nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateStrict),
+        nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateUnique),
+        nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateUniqueStrict),
         nameof(BlueTuskDbFunctionsExtensions.Correlation),
         nameof(BlueTuskDbFunctionsExtensions.CovariancePopulation),
         nameof(BlueTuskDbFunctionsExtensions.CovarianceSample),
@@ -123,14 +146,30 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
         var resultMapping = method.Name switch
         {
             nameof(BlueTuskDbFunctionsExtensions.StringAggregate) =>
-                typeMappingSource.FindMapping("text"),
+                typeMappingSource.FindMapping(resultType),
             nameof(BlueTuskDbFunctionsExtensions.JsonAggregate) =>
                 typeMappingSource.FindMapping("json"),
             nameof(BlueTuskDbFunctionsExtensions.JsonbAggregate) =>
                 typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonAggregateStrict) =>
+                typeMappingSource.FindMapping("json"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonbAggregateStrict) =>
+                typeMappingSource.FindMapping("jsonb"),
             nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregate) =>
                 typeMappingSource.FindMapping("json"),
             nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregate) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateStrict) =>
+                typeMappingSource.FindMapping("json"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateUnique) =>
+                typeMappingSource.FindMapping("json"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregateUniqueStrict) =>
+                typeMappingSource.FindMapping("json"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateStrict) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateUnique) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregateUniqueStrict) =>
                 typeMappingSource.FindMapping("jsonb"),
             nameof(BlueTuskDbFunctionsExtensions.XmlAggregate) =>
                 typeMappingSource.FindMapping("xml"),

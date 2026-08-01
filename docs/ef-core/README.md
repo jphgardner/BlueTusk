@@ -262,18 +262,19 @@ var summaries = await context.Events
     .ToListAsync(cancellationToken);
 ```
 
-`ArrayAggregate`, `StringAggregate`, `BooleanAnd`, `BooleanOr`,
+`ArrayAggregate`, text/bytea `StringAggregate`, `BooleanAnd`, `BooleanOr`,
 `RangeAggregate`, and `RangeIntersectAggregate` map to PostgreSQL
 `array_agg`, `string_agg`, `bool_and`, `bool_or`, `range_agg`, and
-`range_intersect_agg`. Ordering stays inside the aggregate call, `Distinct()`
+`range_intersect_agg`; both range aggregates accept range and multirange
+inputs. Ordering stays inside the aggregate call, `Distinct()`
 becomes aggregate `DISTINCT`, and a grouping `Where(...)` becomes native
 `FILTER (WHERE ...)`. Delimiters and filter values remain normal parameters.
 The APIs return nullable results because PostgreSQL returns `NULL` when an
 aggregate has no selected input rows.
 
 `JsonAggregate`, `JsonbAggregate`, and `XmlAggregate` retain `json`, `jsonb`,
-and `xml` result mappings. `IntegerBitAnd`/`Or`/`Xor` and their `BigInt`
-counterparts expose PostgreSQL's width-preserving bitwise aggregates.
+and `xml` result mappings. `SmallInt`, `Integer`, `BigInt`, and `BitString`
+`And`/`Or`/`Xor` methods expose PostgreSQL's width-preserving bitwise aggregates.
 `StandardDeviationPopulation`, `StandardDeviationSample`,
 `VariancePopulation`, and `VarianceSample` have `double` and `decimal`
 overloads so floating-point and PostgreSQL `numeric` calculations materialize
@@ -313,7 +314,12 @@ var advanced = context.Events
 ```
 
 `JsonObjectAggregate` and `JsonbObjectAggregate` retain `json` and `jsonb`
-results and render both tuple values as native aggregate arguments. The same
+results and render both tuple values as native aggregate arguments. PostgreSQL
+16+ strict, unique, and unique-strict JSON/JSONB variants are exposed with the
+same pair shape; `JsonAggregateStrict`, `JsonbAggregateStrict`, and `AnyValue`
+cover the other aggregate additions introduced in that release. These methods
+remain translation-compatible with all targets, but executing them on
+PostgreSQL 15 produces PostgreSQL's normal undefined-function error. The same
 pair shape supports `Correlation`, population/sample covariance, and the full
 PostgreSQL linear-regression family: averages, count, intercept, R-squared,
 slope, sums of squares, and sum products. Pair order follows PostgreSQL's
@@ -329,12 +335,13 @@ same machinery, placing the hypothetical value in the direct-argument list and
 the grouped selector in the ordered set.
 
 Ordered-set `Distinct()` input is rejected with a focused diagnostic because
-PostgreSQL does not accept that combination. Integer, `bigint`, floating-point,
-numeric, and text mode overloads plus matching scalar discrete-percentile
-families preserve their result mappings. Generated SQL, scalar/array result
-materialisation, and typed live tests cover these families across PostgreSQL
-15–19. Other remaining aggregate families are still planned; no client-side
-aggregate emulation is used.
+PostgreSQL does not accept that combination. Mode and discrete percentiles are
+generic over mapped ordered types; continuous percentiles cover both double
+precision and interval scalar/array results. Generated SQL and typed live tests
+cover the version-independent families across PostgreSQL 15–19 and the
+PostgreSQL 16 additions across PostgreSQL 16–19. Standard LINQ supplies
+`avg`, `count`, `min`, `max`, and `sum`; BlueTusk's APIs cover the remaining
+documented built-in aggregate families without client-side emulation.
 
 ## Array expansion and lateral queries
 

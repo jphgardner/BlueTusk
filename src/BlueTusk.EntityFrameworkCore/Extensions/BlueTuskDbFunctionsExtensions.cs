@@ -1830,6 +1830,15 @@ public static class BlueTuskDbFunctionsExtensions
         string delimiter)
         => ThrowTranslationOnly<string?>();
 
+    public static byte[]? StringAggregate(
+        this DbFunctions _,
+        IEnumerable<byte[]> values,
+        byte[] delimiter)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static T? AnyValue<T>(this DbFunctions _, IEnumerable<T> values)
+        => ThrowTranslationOnly<T?>();
+
     public static bool? BooleanAnd(this DbFunctions _, IEnumerable<bool> values)
         => ThrowTranslationOnly<bool?>();
 
@@ -1841,15 +1850,31 @@ public static class BlueTuskDbFunctionsExtensions
         IEnumerable<BlueTuskRange<T>> ranges)
         => ThrowTranslationOnly<BlueTuskMultirange<T>?>();
 
+    public static BlueTuskMultirange<T>? RangeAggregate<T>(
+        this DbFunctions _,
+        IEnumerable<BlueTuskMultirange<T>> multiranges)
+        => ThrowTranslationOnly<BlueTuskMultirange<T>?>();
+
     public static BlueTuskRange<T>? RangeIntersectAggregate<T>(
         this DbFunctions _,
         IEnumerable<BlueTuskRange<T>> ranges)
         => ThrowTranslationOnly<BlueTuskRange<T>?>();
 
+    public static BlueTuskMultirange<T>? RangeIntersectAggregate<T>(
+        this DbFunctions _,
+        IEnumerable<BlueTuskMultirange<T>> multiranges)
+        => ThrowTranslationOnly<BlueTuskMultirange<T>?>();
+
     public static string? JsonAggregate<T>(this DbFunctions _, IEnumerable<T> values)
         => ThrowTranslationOnly<string?>();
 
     public static string? JsonbAggregate<T>(this DbFunctions _, IEnumerable<T> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonAggregateStrict<T>(this DbFunctions _, IEnumerable<T> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonbAggregateStrict<T>(this DbFunctions _, IEnumerable<T> values)
         => ThrowTranslationOnly<string?>();
 
     public static string? JsonObjectAggregate<TValue>(
@@ -1862,17 +1887,71 @@ public static class BlueTuskDbFunctionsExtensions
         IEnumerable<(string Key, TValue Value)> values)
         => ThrowTranslationOnly<string?>();
 
+    public static string? JsonObjectAggregateStrict<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonObjectAggregateUnique<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonObjectAggregateUniqueStrict<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonbObjectAggregateStrict<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonbObjectAggregateUnique<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonbObjectAggregateUniqueStrict<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
     public static string? XmlAggregate(this DbFunctions _, IEnumerable<string> values)
         => ThrowTranslationOnly<string?>();
 
     public static int? IntegerBitAnd(this DbFunctions _, IEnumerable<int> values)
         => ThrowTranslationOnly<int?>();
 
+    public static short? SmallIntBitAnd(this DbFunctions _, IEnumerable<short> values)
+        => ThrowTranslationOnly<short?>();
+
+    public static BlueTuskBitString? BitStringAnd(
+        this DbFunctions _,
+        IEnumerable<BlueTuskBitString> values)
+        => ThrowTranslationOnly<BlueTuskBitString?>();
+
     public static int? IntegerBitOr(this DbFunctions _, IEnumerable<int> values)
         => ThrowTranslationOnly<int?>();
 
+    public static short? SmallIntBitOr(this DbFunctions _, IEnumerable<short> values)
+        => ThrowTranslationOnly<short?>();
+
+    public static BlueTuskBitString? BitStringOr(
+        this DbFunctions _,
+        IEnumerable<BlueTuskBitString> values)
+        => ThrowTranslationOnly<BlueTuskBitString?>();
+
     public static int? IntegerBitXor(this DbFunctions _, IEnumerable<int> values)
         => ThrowTranslationOnly<int?>();
+
+    public static short? SmallIntBitXor(this DbFunctions _, IEnumerable<short> values)
+        => ThrowTranslationOnly<short?>();
+
+    public static BlueTuskBitString? BitStringXor(
+        this DbFunctions _,
+        IEnumerable<BlueTuskBitString> values)
+        => ThrowTranslationOnly<BlueTuskBitString?>();
 
     public static long? BigIntBitAnd(this DbFunctions _, IEnumerable<long> values)
         => ThrowTranslationOnly<long?>();
@@ -1990,6 +2069,9 @@ public static class BlueTuskDbFunctionsExtensions
     public static string? Mode(this DbFunctions _, IEnumerable<string> values)
         => ThrowTranslationOnly<string?>();
 
+    public static T? Mode<T>(this DbFunctions _, IEnumerable<T> values)
+        => ThrowTranslationOnly<T?>();
+
     public static double? PercentileContinuous(
         this DbFunctions _,
         IEnumerable<double> values,
@@ -2001,6 +2083,18 @@ public static class BlueTuskDbFunctionsExtensions
         IEnumerable<double> values,
         double[] fractions)
         => ThrowTranslationOnly<double[]?>();
+
+    public static BlueTuskInterval? PercentileContinuous(
+        this DbFunctions _,
+        IEnumerable<BlueTuskInterval> values,
+        double fraction)
+        => ThrowTranslationOnly<BlueTuskInterval?>();
+
+    public static BlueTuskInterval[]? PercentileContinuous(
+        this DbFunctions _,
+        IEnumerable<BlueTuskInterval> values,
+        double[] fractions)
+        => ThrowTranslationOnly<BlueTuskInterval[]?>();
 
     public static int? PercentileDiscrete(
         this DbFunctions _,
@@ -2043,6 +2137,18 @@ public static class BlueTuskDbFunctionsExtensions
         IEnumerable<decimal> values,
         double fraction)
         => ThrowTranslationOnly<decimal?>();
+
+    public static T? PercentileDiscrete<T>(
+        this DbFunctions _,
+        IEnumerable<T> values,
+        double fraction)
+        => ThrowTranslationOnly<T?>();
+
+    public static T[]? PercentileDiscrete<T>(
+        this DbFunctions _,
+        IEnumerable<T> values,
+        double[] fractions)
+        => ThrowTranslationOnly<T[]?>();
 
     public static long HypotheticalRank<T>(
         this DbFunctions _,
