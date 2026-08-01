@@ -247,6 +247,15 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             return unary;
         }
 
+        if (extensionExpression is BlueTuskCompositeFieldExpression compositeField)
+        {
+            Sql.Append("(");
+            Visit(compositeField.Instance);
+            Sql.Append(").")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(compositeField.FieldName));
+            return compositeField;
+        }
+
         return base.VisitExtension(extensionExpression);
     }
 

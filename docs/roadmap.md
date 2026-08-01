@@ -317,7 +317,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element/subscript expansion, typed series/JSONB roots, and generic multi-array expansion
   - [x] Regex match/split and delimiter-table native query roots
-  - [ ] Remaining array forms and other PostgreSQL-native query families
+  - [x] Parameterized runtime-enum equality and domain ordering plus flat typed-composite and lossless-record field predicates/projections with compiled queries and PostgreSQL 15–19 acceptance
+  - [ ] Multidimensional array construction/slicing/projected subscripting, nested composite fields, and other remaining PostgreSQL-native query families
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback
   - [x] Provider SQL-expression quoting, nullability processing, and operator-family tests

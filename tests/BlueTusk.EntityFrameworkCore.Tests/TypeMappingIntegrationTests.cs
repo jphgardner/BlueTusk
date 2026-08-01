@@ -10,6 +10,59 @@ namespace BlueTusk.EntityFrameworkCore.Tests;
 public sealed class TypeMappingIntegrationTests
 {
     [Fact]
+    public void Composite_and_lossless_record_fields_translate_to_quoted_native_access()
+    {
+        var builder = new BlueTuskDataSourceBuilder(
+            "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk_tests");
+        builder.MapEnum<EfOrderStatus>("public.ef_order_status");
+        builder.MapComposite<EfAddress>("public.ef_address");
+        using var dataSource = builder.Build();
+        using var context = CreateUserTypeContext(
+            dataSource,
+            "ef_order_status",
+            "ef_positive_integer",
+            "ef_address",
+            "ef_record_address");
+        var street = "Baker Street";
+        var status = EfOrderStatus.InProgress;
+        var minimumDomainValue = 40;
+
+        var sql = context.Values
+            .Where(value => value.Status == status
+                && value.DomainValue >= minimumDomainValue
+                && value.Address.Street == street)
+            .Select(value => new CompositeFieldProjection(
+                value.Address.HouseNumber,
+                value.Address.Street,
+                value.Address.Note,
+                EF.Functions.RecordField<int>(value.RecordAddress, "house_number"),
+                EF.Functions.RecordField<string>(value.RecordAddress, "street"),
+                EF.Functions.RecordField<string?>(value.RecordAddress, "note")))
+            .ToQueryString();
+
+        Assert.Contains("(\"e\".\"Address\").\"house_number\"", sql, StringComparison.Ordinal);
+        Assert.Contains("(\"e\".\"Address\").\"street\"", sql, StringComparison.Ordinal);
+        Assert.Contains("(\"e\".\"Address\").\"note\"", sql, StringComparison.Ordinal);
+        Assert.Contains("(\"e\".\"RecordAddress\").\"house_number\"", sql, StringComparison.Ordinal);
+        Assert.Contains("(\"e\".\"Address\").\"street\" = @street", sql, StringComparison.Ordinal);
+        Assert.Contains("\"e\".\"Status\" = @status", sql, StringComparison.Ordinal);
+        Assert.Contains("\"e\".\"DomainValue\" >= @minimumDomainValue", sql, StringComparison.Ordinal);
+
+        var quotedNameSql = context.Values
+            .Select(value => EF.Functions.RecordField<string>(value.RecordAddress, "street\"name"))
+            .ToQueryString();
+        Assert.Contains(
+            "(\"e\".\"RecordAddress\").\"street\"\"name\"",
+            quotedNameSql,
+            StringComparison.Ordinal);
+
+        var invalidName = Assert.Throws<ArgumentException>(() => context.Values
+            .Select(value => EF.Functions.RecordField<string>(value.RecordAddress, ""))
+            .ToQueryString());
+        Assert.Equal("fieldName", invalidName.ParamName);
+    }
+
+    [Fact]
     public async Task Runtime_registered_enums_domains_composites_and_arrays_round_trip_through_EF_Core()
     {
         var connectionString = GetConnectionString();
@@ -106,6 +159,46 @@ public sealed class TypeMappingIntegrationTests
                 {
                     AssertAddressRecord(expected.RecordAddresses[index], actual.RecordAddresses[index]);
                 }
+
+                var street = "Baker Street";
+                var status = EfOrderStatus.InProgress;
+                var minimumDomainValue = 40;
+                var fields = await context.Values
+                    .AsNoTracking()
+                    .Where(value => value.Status == status
+                        && value.DomainValue >= minimumDomainValue
+                        && value.Address.Street == street)
+                    .Select(value => new CompositeFieldProjection(
+                        value.Address.HouseNumber,
+                        value.Address.Street,
+                        value.Address.Note,
+                        EF.Functions.RecordField<int>(value.RecordAddress, "house_number"),
+                        EF.Functions.RecordField<string>(value.RecordAddress, "street"),
+                        EF.Functions.RecordField<string?>(value.RecordAddress, "note")))
+                    .SingleAsync();
+                Assert.Equal(
+                    new CompositeFieldProjection(221, "Baker Street", null, 19, "Record Road", null),
+                    fields);
+
+                var compiledFields = EF.CompileQuery(
+                    (UserTypeValueContext database,
+                        EfOrderStatus requestedStatus,
+                        int requestedMinimum,
+                        string requestedStreet) => database.Values
+                        .AsNoTracking()
+                        .Where(value => value.Status == requestedStatus
+                            && value.DomainValue >= requestedMinimum
+                            && value.Address.Street == requestedStreet)
+                        .Select(value => new CompositeFieldProjection(
+                            value.Address.HouseNumber,
+                            value.Address.Street,
+                            value.Address.Note,
+                            EF.Functions.RecordField<int>(value.RecordAddress, "house_number"),
+                            EF.Functions.RecordField<string>(value.RecordAddress, "street"),
+                            EF.Functions.RecordField<string?>(value.RecordAddress, "note"))));
+                Assert.Equal(
+                    [new CompositeFieldProjection(221, "Baker Street", null, 19, "Record Road", null)],
+                    compiledFields(context, status, minimumDomainValue, street).ToArray());
             }
         }
         finally
@@ -801,6 +894,14 @@ public sealed class TypeMappingIntegrationTests
     }
 
     private sealed record EfAddress(int HouseNumber, string Street, string? Note);
+
+    private sealed record CompositeFieldProjection(
+        int HouseNumber,
+        string Street,
+        string? Note,
+        int RecordHouseNumber,
+        string RecordStreet,
+        string? RecordNote);
 
     private static BlueTuskRecord CreateAddressRecord(int houseNumber, string street, string? note) => new(
     [

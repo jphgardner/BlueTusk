@@ -1,12 +1,20 @@
 using System.Runtime.CompilerServices;
 using BlueTusk.EntityFrameworkCore.Query;
 using BlueTusk.TypeSystem;
+using Microsoft.EntityFrameworkCore.Query;
 
 namespace Microsoft.EntityFrameworkCore;
 
 /// <summary>PostgreSQL-native predicates translated by the BlueTusk EF Core provider.</summary>
 public static class BlueTuskDbFunctionsExtensions
 {
+    /// <summary>Reads a typed field from a lossless record mapped to a named PostgreSQL composite type.</summary>
+    public static TField RecordField<TField>(
+        this DbFunctions _,
+        BlueTuskRecord record,
+        [NotParameterized] string fieldName)
+        => ThrowTranslationOnly<TField>();
+
     public static bool ILike(this DbFunctions _, string matchExpression, string pattern)
         => ThrowTranslationOnly<bool>();
 

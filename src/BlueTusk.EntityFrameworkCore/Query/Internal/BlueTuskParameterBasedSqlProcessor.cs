@@ -101,6 +101,13 @@ internal sealed class BlueTuskSqlNullabilityProcessor(
             return unary.Update(operand);
         }
 
+        if (sqlExpression is BlueTuskCompositeFieldExpression compositeField)
+        {
+            var instance = Visit(compositeField.Instance, allowOptimizedExpansion, out _);
+            nullable = true;
+            return compositeField.Update(instance);
+        }
+
         if (sqlExpression is not BlueTuskBinaryExpression binary)
         {
             return base.VisitCustomSqlExpression(sqlExpression, allowOptimizedExpansion, out nullable);
