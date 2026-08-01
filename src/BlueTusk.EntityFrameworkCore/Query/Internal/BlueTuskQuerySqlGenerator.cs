@@ -255,6 +255,15 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         if (!_renderingCteBody
             && GetQueryAnnotation(
                     selectExpression,
+                    BlueTuskQueryAnnotationNames.InsertOnConflictReturning)?.Value
+                is BlueTuskInsertOnConflictClause insertOnConflict)
+        {
+            return GenerateInsertOnConflict(selectExpression, insertOnConflict);
+        }
+
+        if (!_renderingCteBody
+            && GetQueryAnnotation(
+                    selectExpression,
                     BlueTuskQueryAnnotationNames.DataModificationReturning)?.Value
                 is BlueTuskReturningModificationClause modification)
         {
@@ -583,6 +592,85 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         {
             Sql.AppendLine().Append("WHERE ");
             Visit(selectExpression.Predicate);
+        }
+
+        Sql.AppendLine().Append("RETURNING ");
+        GenerateProjection(selectExpression);
+        return selectExpression;
+    }
+
+    private SelectExpression GenerateInsertOnConflict(
+        SelectExpression selectExpression,
+        BlueTuskInsertOnConflictClause insertOnConflict)
+    {
+        if (selectExpression.Tables is not [TableExpression table]
+            || insertOnConflict.Values.Count == 0
+            || insertOnConflict.ConflictColumns.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL INSERT ON CONFLICT RETURNING requires one mapped table, inserted values, and a conflict target.");
+        }
+
+        var helper = Dependencies.SqlGenerationHelper;
+        Sql.Append("INSERT INTO ")
+            .Append(helper.DelimitIdentifier(table.Name, table.Schema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(table.Alias))
+            .Append(" (");
+        for (var index = 0; index < insertOnConflict.Values.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Sql.Append(helper.DelimitIdentifier(insertOnConflict.Values[index].ColumnName));
+        }
+
+        Sql.Append(")")
+            .AppendLine()
+            .Append("VALUES (");
+        for (var index = 0; index < insertOnConflict.Values.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Visit(insertOnConflict.Values[index].Value);
+        }
+
+        Sql.Append(")")
+            .AppendLine()
+            .Append("ON CONFLICT (");
+        for (var index = 0; index < insertOnConflict.ConflictColumns.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Sql.Append(helper.DelimitIdentifier(insertOnConflict.ConflictColumns[index]));
+        }
+
+        Sql.Append(") ");
+        if (insertOnConflict.UpdateColumns.Count == 0)
+        {
+            Sql.Append("DO NOTHING");
+        }
+        else
+        {
+            Sql.Append("DO UPDATE SET ");
+            for (var index = 0; index < insertOnConflict.UpdateColumns.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                var column = helper.DelimitIdentifier(insertOnConflict.UpdateColumns[index]);
+                Sql.Append(column).Append(" = EXCLUDED.").Append(column);
+            }
         }
 
         Sql.AppendLine().Append("RETURNING ");

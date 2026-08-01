@@ -31,6 +31,86 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
         protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
         {
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
+                && methodCallExpression.Method.Name == nameof(BlueTuskQueryableExtensions.InsertOnConflictReturningCore))
+            {
+                var (root, noTracking) = GetInsertTarget(Visit(methodCallExpression.Arguments[0]));
+                if (methodCallExpression.Arguments[1] is not NewArrayExpression { Expressions.Count: > 0 } valueArray
+                    || methodCallExpression.Arguments[2] is not ConstantExpression { Value: string[] conflictProperties }
+                    || methodCallExpression.Arguments[3] is not ConstantExpression { Value: string[] updateProperties })
+                {
+                    throw new InvalidOperationException(
+                        $"PostgreSQL INSERT ON CONFLICT values could not be normalized from '{methodCallExpression.Arguments[1]}'.");
+                }
+
+                var values = new BlueTuskInsertPropertyValue[valueArray.Expressions.Count];
+                for (var index = 0; index < valueArray.Expressions.Count; index++)
+                {
+                    if (valueArray.Expressions[index] is not MethodCallExpression
+                        {
+                            Method.Name: nameof(BlueTuskQueryableExtensions.InsertValueCore),
+                            Arguments: [ConstantExpression { Value: string propertyName }, var value],
+                        }
+                        || root.EntityType.FindProperty(propertyName) is null)
+                    {
+                        throw new InvalidOperationException(
+                            "PostgreSQL INSERT ON CONFLICT values must assign direct mapped properties.");
+                    }
+
+                    if (value is UnaryExpression
+                        {
+                            NodeType: ExpressionType.Convert,
+                            Type: { } conversionType,
+                            Operand: var operand,
+                        }
+                        && conversionType == typeof(object))
+                    {
+                        value = operand;
+                    }
+
+                    values[index] = new BlueTuskInsertPropertyValue(propertyName, value);
+                }
+
+                var insertRoot = CreateInsertRoot(
+                    root,
+                    values,
+                    conflictProperties,
+                    updateProperties);
+                return noTracking is null
+                    ? insertRoot
+                    : noTracking.Update(null, [insertRoot]);
+            }
+
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
+                && methodCallExpression.Method.Name is
+                    nameof(BlueTuskQueryableExtensions.InsertOnConflictDoNothingReturning)
+                    or nameof(BlueTuskQueryableExtensions.InsertOnConflictUpdateReturning))
+            {
+                var (root, noTracking) = GetInsertTarget(Visit(methodCallExpression.Arguments[0]));
+
+                var valuesSelector = (LambdaExpression)((UnaryExpression)methodCallExpression.Arguments[1]).Operand;
+                var values = GetInsertValues(valuesSelector, root.EntityType);
+                var conflictSelector = (LambdaExpression)((UnaryExpression)methodCallExpression.Arguments[2]).Operand;
+                var conflictProperties = GetSelectedProperties(
+                    conflictSelector,
+                    root.EntityType,
+                    "conflict target");
+                var updateProperties = methodCallExpression.Arguments.Count == 4
+                    ? GetSelectedProperties(
+                        (LambdaExpression)((UnaryExpression)methodCallExpression.Arguments[3]).Operand,
+                        root.EntityType,
+                        "conflict update")
+                    : [];
+                var insertRoot = CreateInsertRoot(
+                    root,
+                    values,
+                    conflictProperties,
+                    updateProperties);
+                return noTracking is null
+                    ? insertRoot
+                    : noTracking.Update(null, [insertRoot]);
+            }
+
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
                 && methodCallExpression.Method.Name == nameof(BlueTuskQueryableExtensions.UpdateReturning)
                 && methodCallExpression.Arguments.Count == 3)
             {
@@ -222,6 +302,134 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
             }
 
             return base.VisitMethodCall(methodCallExpression);
+        }
+
+        private static (EntityQueryRootExpression Root, MethodCallExpression? NoTracking) GetInsertTarget(
+            Expression target)
+        {
+            if (target is MethodCallExpression
+                {
+                    Method.DeclaringType: not null,
+                    Method.Name: nameof(EntityFrameworkQueryableExtensions.AsNoTracking),
+                    Arguments: [EntityQueryRootExpression noTrackingRoot],
+                } noTracking
+                && noTracking.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions))
+            {
+                return (noTrackingRoot, noTracking);
+            }
+
+            if (target is EntityQueryRootExpression root)
+            {
+                return (root, null);
+            }
+
+            throw new InvalidOperationException(
+                "PostgreSQL INSERT ON CONFLICT RETURNING must target a DbSet directly.");
+        }
+
+        private static BlueTuskInsertOnConflictQueryRootExpression CreateInsertRoot(
+            EntityQueryRootExpression root,
+            IReadOnlyList<BlueTuskInsertPropertyValue> values,
+            IReadOnlyList<string> conflictProperties,
+            IReadOnlyList<string> updateProperties)
+        {
+            if (root.EntityType.BaseType is not null
+                || root.EntityType.GetDirectlyDerivedTypes().Any()
+                || root.EntityType.GetDeclaredQueryFilters().Count != 0)
+            {
+                throw new InvalidOperationException(
+                    "PostgreSQL INSERT ON CONFLICT RETURNING requires a non-inherited entity without a global query filter.");
+            }
+
+            foreach (var property in conflictProperties.Concat(updateProperties))
+            {
+                if (root.EntityType.FindProperty(property) is null)
+                {
+                    throw new InvalidOperationException(
+                        $"PostgreSQL INSERT ON CONFLICT property '{property}' is not mapped.");
+                }
+            }
+
+            return new BlueTuskInsertOnConflictQueryRootExpression(
+                root.EntityType,
+                values,
+                conflictProperties,
+                updateProperties);
+        }
+
+        private static BlueTuskInsertPropertyValue[] GetInsertValues(
+            LambdaExpression selector,
+            IEntityType entityType)
+        {
+            if (selector.Body is not MemberInitExpression initializer
+                || initializer.NewExpression.Type != entityType.ClrType
+                || initializer.Bindings.Count == 0)
+            {
+                throw new InvalidOperationException(
+                    "PostgreSQL INSERT ON CONFLICT values must be a non-empty mapped entity object initializer.");
+            }
+
+            var values = new BlueTuskInsertPropertyValue[initializer.Bindings.Count];
+            var propertyNames = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < initializer.Bindings.Count; index++)
+            {
+                if (initializer.Bindings[index] is not MemberAssignment assignment
+                    || entityType.FindProperty(assignment.Member.Name) is null
+                    || !propertyNames.Add(assignment.Member.Name))
+                {
+                    throw new InvalidOperationException(
+                        "PostgreSQL INSERT ON CONFLICT values must assign each direct mapped property at most once.");
+                }
+
+                values[index] = new BlueTuskInsertPropertyValue(
+                    assignment.Member.Name,
+                    assignment.Expression);
+            }
+
+            return values;
+        }
+
+        private static string[] GetSelectedProperties(
+            LambdaExpression selector,
+            IEntityType entityType,
+            string role)
+        {
+            var expressions = selector.Body switch
+            {
+                NewExpression tuple => tuple.Arguments,
+                MethodCallExpression
+                {
+                    Method.DeclaringType: not null,
+                    Method.Name: nameof(ValueTuple.Create),
+                } tuple when tuple.Method.DeclaringType == typeof(ValueTuple) => tuple.Arguments,
+                _ => [selector.Body],
+            };
+            var properties = new string[expressions.Count];
+            var propertyNames = new HashSet<string>(StringComparer.Ordinal);
+            for (var index = 0; index < expressions.Count; index++)
+            {
+                var expression = expressions[index];
+                while (expression is UnaryExpression
+                    {
+                        NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked,
+                    } conversion)
+                {
+                    expression = conversion.Operand;
+                }
+
+                if (expression is not MemberExpression member
+                    || member.Expression != selector.Parameters[0]
+                    || entityType.FindProperty(member.Member.Name) is null
+                    || !propertyNames.Add(member.Member.Name))
+                {
+                    throw new InvalidOperationException(
+                        $"PostgreSQL INSERT ON CONFLICT {role} must select distinct direct mapped properties.");
+                }
+
+                properties[index] = member.Member.Name;
+            }
+
+            return properties;
         }
 
         private static BlueTuskSetReturningFunctionColumn[] GetUnnestColumns(

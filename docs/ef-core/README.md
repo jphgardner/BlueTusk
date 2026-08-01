@@ -763,8 +763,44 @@ Compiled deletes likewise require an explicit `AsNoTracking`. Multi-setter
 updates use the builder overload outside compiled-query expressions. SQL
 generation, async materialization, multi-setter updates, compiled single-setter
 updates/deletes, and no-tracking behavior execute across PostgreSQL 15–19.
-`INSERT ... ON CONFLICT ... RETURNING` and typed `MERGE` remain planned and are
-tracked separately in the roadmap.
+
+Single-row inserts and upserts use the same returned-query model. Supply a
+mapped entity object initializer, select one or more conflict properties, and
+choose either `DO NOTHING` or the mapped properties that PostgreSQL should copy
+from its `EXCLUDED` row:
+
+```csharp
+var inserted = await context.Documents
+    .InsertOnConflictDoNothingReturning(
+        () => new Document { Id = id, Status = status, Score = score },
+        document => document.Id)
+    .SingleOrDefaultAsync(cancellationToken);
+
+var upserted = await context.Documents
+    .InsertOnConflictUpdateReturning(
+        () => new Document { Id = id, Status = status, Score = score },
+        document => document.Id,
+        document => new { document.Status, document.Score })
+    .Select(document => new { document.Id, document.Status, document.Score })
+    .SingleAsync(cancellationToken);
+```
+
+`DO NOTHING` returns no row when a conflict is ignored. The update overload
+emits `DO UPDATE SET ... = EXCLUDED...` in selector order and returns the
+inserted or updated row. Object-initializer values use their mapped PostgreSQL
+types and remain parameters; conflict and update selectors accept one direct
+property or an anonymous/tuple selection of distinct direct properties. The
+target must be a `DbSet` for one non-inherited table without a global query
+filter. This initial surface intentionally excludes multi-row inserts,
+constraint-name and partial-index inference, and arbitrary conflict-update
+expressions.
+
+As with the other modification-returning APIs, execution is deferred,
+enumeration must happen once, and returned entities are no-tracking. Compiled
+queries must put `AsNoTracking` before the insert operation. Parameterized
+`DO NOTHING`, `EXCLUDED` updates, returned projections, compiled upserts, and
+no-tracking materialization execute across PostgreSQL 15–19. Typed `MERGE`
+remains planned and is tracked separately in the roadmap.
 
 Row-locking extensions cover `ForUpdate`, `ForNoKeyUpdate`, `ForShare`, and
 `ForKeyShare`. Each accepts `Wait`, `NoWait`, or `SkipLocked` behavior. Apply

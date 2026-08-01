@@ -11,6 +11,8 @@ internal static class BlueTuskQueryAnnotationNames
 
     public const string DataModificationReturning = "BlueTusk:DataModificationReturning";
 
+    public const string InsertOnConflictReturning = "BlueTusk:InsertOnConflictReturning";
+
     public const string RowLocking = "BlueTusk:RowLocking";
 
     public const string RecursiveCommonTableExpression = "BlueTusk:RecursiveCommonTableExpression";
@@ -61,6 +63,15 @@ internal sealed record BlueTuskRecursiveCteClause(
 internal sealed record BlueTuskReturningModificationClause(
     BlueTuskReturningModificationKind Kind,
     IReadOnlyList<ColumnValueSetter> Setters);
+
+internal sealed record BlueTuskInsertColumnValue(
+    string ColumnName,
+    SqlExpression Value);
+
+internal sealed record BlueTuskInsertOnConflictClause(
+    IReadOnlyList<BlueTuskInsertColumnValue> Values,
+    IReadOnlyList<string> ConflictColumns,
+    IReadOnlyList<string> UpdateColumns);
 
 internal sealed record BlueTuskRowLockingClause(
     BlueTuskRowLockingStrength Strength,

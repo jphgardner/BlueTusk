@@ -81,6 +81,149 @@ public static class BlueTuskQueryableExtensions
         [NotParameterized] string name)
         => CreateCteQuery(source, nameof(AsNotMaterializedCte), name);
 
+    /// <summary>Inserts one row, ignores a typed conflict, and returns an inserted row.</summary>
+    public static IQueryable<TEntity> InsertOnConflictDoNothingReturning<TEntity, TConflict>(
+        this IQueryable<TEntity> target,
+        Expression<Func<TEntity>> values,
+        Expression<Func<TEntity, TConflict>> conflictTarget)
+        where TEntity : class
+        => CreateInsertOnConflictQuery(target, values, conflictTarget, updateProperties: null);
+
+    /// <summary>Inserts one row, updates selected columns from <c>EXCLUDED</c> on conflict, and returns the row.</summary>
+    public static IQueryable<TEntity> InsertOnConflictUpdateReturning<TEntity, TConflict, TUpdate>(
+        this IQueryable<TEntity> target,
+        Expression<Func<TEntity>> values,
+        Expression<Func<TEntity, TConflict>> conflictTarget,
+        Expression<Func<TEntity, TUpdate>> updateProperties)
+        where TEntity : class
+    {
+        ArgumentNullException.ThrowIfNull(updateProperties);
+        return CreateInsertOnConflictQuery(target, values, conflictTarget, updateProperties);
+    }
+
+    private static IQueryable<TEntity> CreateInsertOnConflictQuery<TEntity>(
+        IQueryable<TEntity> target,
+        LambdaExpression values,
+        LambdaExpression conflictTarget,
+        LambdaExpression? updateProperties)
+        where TEntity : class
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(values);
+        ArgumentNullException.ThrowIfNull(conflictTarget);
+        if (values.Body is not MemberInitExpression { Bindings.Count: > 0 } initializer
+            || initializer.NewExpression.Type != typeof(TEntity))
+        {
+            throw new ArgumentException(
+                "PostgreSQL INSERT ON CONFLICT values must be a non-empty entity object initializer.",
+                nameof(values));
+        }
+
+        var valueMethod = typeof(BlueTuskQueryableExtensions)
+            .GetMethod(
+                nameof(InsertValueCore),
+                BindingFlags.NonPublic | BindingFlags.Static)!;
+        var valueExpressions = new Expression[initializer.Bindings.Count];
+        for (var index = 0; index < initializer.Bindings.Count; index++)
+        {
+            if (initializer.Bindings[index] is not MemberAssignment assignment)
+            {
+                throw new ArgumentException(
+                    "PostgreSQL INSERT ON CONFLICT values must assign direct entity properties.",
+                    nameof(values));
+            }
+
+            var value = assignment.Expression.Type.IsValueType
+                ? Expression.Convert(assignment.Expression, typeof(object))
+                : assignment.Expression;
+            valueExpressions[index] = Expression.Call(
+                valueMethod,
+                Expression.Constant(assignment.Member.Name),
+                value);
+        }
+
+        var conflictProperties = GetSelectedMemberNames(conflictTarget, nameof(conflictTarget));
+        var updatedProperties = updateProperties is null
+            ? []
+            : GetSelectedMemberNames(updateProperties, nameof(updateProperties));
+        var noTrackingTarget = target.Expression is MethodCallExpression
+        {
+            Method.DeclaringType: not null,
+            Method.Name: nameof(EntityFrameworkQueryableExtensions.AsNoTracking),
+        } noTrackingCall
+            && noTrackingCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions)
+                ? target
+                : target.AsNoTracking();
+        return noTrackingTarget.Provider.CreateQuery<TEntity>(
+            Expression.Call(
+                null,
+                typeof(BlueTuskQueryableExtensions)
+                    .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+                    .Single(method =>
+                        method.Name == nameof(InsertOnConflictReturningCore)
+                        && method.IsGenericMethodDefinition)
+                    .MakeGenericMethod(typeof(TEntity)),
+                noTrackingTarget.Expression,
+                Expression.NewArrayInit(typeof(ITuple), valueExpressions),
+                Expression.Constant(conflictProperties),
+                Expression.Constant(updatedProperties)));
+    }
+
+    private static string[] GetSelectedMemberNames(LambdaExpression selector, string parameterName)
+    {
+        var expressions = selector.Body switch
+        {
+            NewExpression tuple => tuple.Arguments,
+            MethodCallExpression
+            {
+                Method.DeclaringType: not null,
+                Method.Name: nameof(ValueTuple.Create),
+            } tuple when tuple.Method.DeclaringType == typeof(ValueTuple) => tuple.Arguments,
+            _ => [selector.Body],
+        };
+        var names = new string[expressions.Count];
+        var distinctNames = new HashSet<string>(StringComparer.Ordinal);
+        for (var index = 0; index < expressions.Count; index++)
+        {
+            var expression = expressions[index];
+            while (expression is UnaryExpression
+                {
+                    NodeType: ExpressionType.Convert or ExpressionType.ConvertChecked,
+                } conversion)
+            {
+                expression = conversion.Operand;
+            }
+
+            if (expression is not MemberExpression member
+                || member.Expression != selector.Parameters[0]
+                || !distinctNames.Add(member.Member.Name))
+            {
+                throw new ArgumentException(
+                    "PostgreSQL INSERT ON CONFLICT selectors must name distinct direct properties.",
+                    parameterName);
+            }
+
+            names[index] = member.Member.Name;
+        }
+
+        return names;
+    }
+
+    internal static IQueryable<TEntity> InsertOnConflictReturningCore<TEntity>(
+        IQueryable<TEntity> target,
+        IReadOnlyList<ITuple> values,
+        [NotParameterized] string[] conflictProperties,
+        [NotParameterized] string[] updateProperties)
+        where TEntity : class
+        => throw new InvalidOperationException(
+            "InsertOnConflictReturningCore is a provider query marker and cannot be invoked directly.");
+
+    internal static ITuple InsertValueCore(
+        [NotParameterized] string propertyName,
+        object? value)
+        => throw new InvalidOperationException(
+            "InsertValueCore is a provider query marker and cannot be invoked directly.");
+
     /// <summary>Deletes matching rows and returns their mapped values through PostgreSQL <c>RETURNING</c>.</summary>
     public static IQueryable<TSource> DeleteReturning<TSource>(this IQueryable<TSource> source)
         where TSource : class

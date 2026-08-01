@@ -266,7 +266,97 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 ?? base.VisitExtension(extensionExpression);
         }
 
+        if (extensionExpression is BlueTuskInsertOnConflictQueryRootExpression insertOnConflict)
+        {
+            return TranslateInsertOnConflict(insertOnConflict)
+                ?? base.VisitExtension(extensionExpression);
+        }
+
         return base.VisitExtension(extensionExpression);
+    }
+
+    private ShapedQueryExpression? TranslateInsertOnConflict(
+        BlueTuskInsertOnConflictQueryRootExpression insertOnConflict)
+    {
+        if (_queryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL INSERT ON CONFLICT RETURNING queries must be no-tracking; call AsNoTracking in a compiled query.");
+        }
+
+        if (base.VisitExtension(new EntityQueryRootExpression(insertOnConflict.EntityType))
+                is not ShapedQueryExpression source
+            || source.QueryExpression is not SelectExpression { Tables: [TableExpression table] }
+                selectExpression)
+        {
+            return null;
+        }
+
+        var tableName = insertOnConflict.EntityType.GetTableName();
+        if (tableName is null
+            || insertOnConflict.EntityType.Model.GetRelationalModel().FindTable(
+                tableName,
+                insertOnConflict.EntityType.GetSchema()) is not { } relationalTable)
+        {
+            return null;
+        }
+
+        var values = new BlueTuskInsertColumnValue[insertOnConflict.Values.Count];
+        for (var index = 0; index < insertOnConflict.Values.Count; index++)
+        {
+            var propertyValue = insertOnConflict.Values[index];
+            if (insertOnConflict.EntityType.FindProperty(propertyValue.PropertyName) is not { } property
+                || relationalTable.FindColumn(property) is not { } column
+                || TranslateExpression(propertyValue.Value, applyDefaultTypeMapping: false) is not { } value)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL INSERT ON CONFLICT value for mapped property '{propertyValue.PropertyName}' could not be translated from expression '{propertyValue.Value}'.");
+            }
+
+            values[index] = new BlueTuskInsertColumnValue(
+                column.Name,
+                RelationalDependencies.SqlExpressionFactory.ApplyTypeMapping(
+                    value,
+                    column.StoreTypeMapping));
+        }
+
+        var conflictColumns = GetInsertColumns(
+            insertOnConflict.EntityType,
+            relationalTable,
+            insertOnConflict.ConflictProperties,
+            "conflict target");
+        var updateColumns = GetInsertColumns(
+            insertOnConflict.EntityType,
+            relationalTable,
+            insertOnConflict.UpdateProperties,
+            "conflict update");
+        AddQueryAnnotation(
+            selectExpression,
+            BlueTuskQueryAnnotationNames.InsertOnConflictReturning,
+            new BlueTuskInsertOnConflictClause(values, conflictColumns, updateColumns));
+        return source;
+    }
+
+    private static string[] GetInsertColumns(
+        IEntityType entityType,
+        ITable relationalTable,
+        IReadOnlyList<string> propertyNames,
+        string role)
+    {
+        var columns = new string[propertyNames.Count];
+        for (var index = 0; index < propertyNames.Count; index++)
+        {
+            if (entityType.FindProperty(propertyNames[index]) is not { } property
+                || relationalTable.FindColumn(property) is not { } column)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL INSERT ON CONFLICT {role} property '{propertyNames[index]}' is not mapped to the target table.");
+            }
+
+            columns[index] = column.Name;
+        }
+
+        return columns;
     }
 
     private ShapedQueryExpression TranslateDistinctOn(

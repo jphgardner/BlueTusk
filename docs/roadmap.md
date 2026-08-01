@@ -312,7 +312,7 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Typed recursive hierarchy CTEs with mapped key/parent selectors, parameterized multi-root traversal, cycle-safe `UNION`, opt-in `UNION ALL`, compiled queries, and PostgreSQL 15–19 acceptance
     - [ ] PostgreSQL data-modification query constructs
       - [x] Typed single-table `DELETE ... RETURNING` and single-/multi-setter `UPDATE ... RETURNING`, parameterized projections, no-tracking materialization, compiled single-setter/delete queries, and PostgreSQL 15–19 acceptance
-      - [ ] Typed `INSERT ... ON CONFLICT ... RETURNING`
+      - [x] Typed single-row `INSERT ... ON CONFLICT ... RETURNING` with mapped object initializers, single/composite conflict targets, `DO NOTHING`, selected-column `EXCLUDED` updates, compiled queries, and PostgreSQL 15–19 acceptance
       - [ ] Typed `MERGE`
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element/subscript expansion, typed series/JSONB roots, and generic multi-array expansion
