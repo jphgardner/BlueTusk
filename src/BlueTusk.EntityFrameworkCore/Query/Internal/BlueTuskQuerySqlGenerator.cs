@@ -82,7 +82,18 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 
         if (extensionExpression is BlueTuskAggregateExpression aggregate)
         {
-            Sql.Append(aggregate.Name).Append("(");
+            if (aggregate.Schema is null)
+            {
+                Sql.Append(aggregate.Name);
+            }
+            else
+            {
+                Sql.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                    aggregate.Name,
+                    aggregate.Schema));
+            }
+
+            Sql.Append("(");
             if (aggregate.IsDistinct)
             {
                 Sql.Append("DISTINCT ");

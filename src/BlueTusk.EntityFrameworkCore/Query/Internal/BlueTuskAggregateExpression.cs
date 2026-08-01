@@ -7,6 +7,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
 internal sealed class BlueTuskAggregateExpression(
+    string? schema,
     string name,
     IReadOnlyList<SqlExpression> arguments,
     bool isDistinct,
@@ -18,6 +19,8 @@ internal sealed class BlueTuskAggregateExpression(
     : SqlExpression(type, typeMapping)
 {
     private static ConstructorInfo? _quotingConstructor;
+
+    public string? Schema { get; } = schema;
 
     public string Name { get; } = name;
 
@@ -42,6 +45,7 @@ internal sealed class BlueTuskAggregateExpression(
             && predicate == Predicate
                 ? this
                 : new BlueTuskAggregateExpression(
+                    Schema,
                     Name,
                     arguments,
                     IsDistinct,
@@ -75,6 +79,7 @@ internal sealed class BlueTuskAggregateExpression(
             _quotingConstructor ??= typeof(BlueTuskAggregateExpression).GetConstructor(
             [
                 typeof(string),
+                typeof(string),
                 typeof(IReadOnlyList<SqlExpression>),
                 typeof(bool),
                 typeof(IReadOnlyList<OrderingExpression>),
@@ -83,6 +88,7 @@ internal sealed class BlueTuskAggregateExpression(
                 typeof(Type),
                 typeof(RelationalTypeMapping),
             ])!,
+            Constant(Schema, typeof(string)),
             Constant(Name),
             NewArrayInit(typeof(SqlExpression), Arguments.Select(argument => argument.Quote())),
             Constant(IsDistinct),
@@ -97,6 +103,11 @@ internal sealed class BlueTuskAggregateExpression(
 
     protected override void Print(ExpressionPrinter expressionPrinter)
     {
+        if (Schema is not null)
+        {
+            expressionPrinter.Append(Schema).Append(".");
+        }
+
         expressionPrinter.Append(Name).Append("(");
         if (IsDistinct)
         {
@@ -129,6 +140,7 @@ internal sealed class BlueTuskAggregateExpression(
     public override bool Equals(object? obj)
         => obj is BlueTuskAggregateExpression other
             && base.Equals(other)
+            && string.Equals(Schema, other.Schema, StringComparison.Ordinal)
             && string.Equals(Name, other.Name, StringComparison.Ordinal)
             && IsDistinct == other.IsDistinct
             && Arguments.SequenceEqual(other.Arguments)
@@ -140,6 +152,7 @@ internal sealed class BlueTuskAggregateExpression(
     {
         var hash = new HashCode();
         hash.Add(base.GetHashCode());
+        hash.Add(Schema, StringComparer.Ordinal);
         hash.Add(Name, StringComparer.Ordinal);
         hash.Add(IsDistinct);
         foreach (var argument in Arguments)

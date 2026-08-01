@@ -181,6 +181,7 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
         }
 
         return new BlueTuskAggregateExpression(
+            schema: null,
             functionName,
             aggregateArguments,
             source.IsDistinct,
@@ -225,6 +226,7 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
         return resultMapping is null
             ? null
             : new BlueTuskAggregateExpression(
+                schema: null,
                 functionName,
                 directArguments,
                 isDistinct: false,

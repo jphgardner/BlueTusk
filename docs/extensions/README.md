@@ -328,8 +328,8 @@ projections, spatial filters, and compiled queries.
 TimescaleDB adds SQL behavior instead of a wire type, so
 `BlueTusk.Extensions.TimescaleDB` is a feature-only package. It provides typed
 ADO.NET operations for discovering the installed extension version, converting
-an existing table to a range hypertable, and adding or removing an interval-based
-retention policy:
+an existing table to a range hypertable, obtaining approximate row counts, and
+managing retention, Hypercore columnstore, and continuous-aggregate policies:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS timescaledb;
@@ -358,7 +358,34 @@ await dataSource.RemoveRetentionPolicyAsync("public.metrics");
 Relations and time-column names are passed through PostgreSQL `regclass` and
 `name` parameters, while the configured extension schema is safely delimited.
 `migrateData` defaults to `false`: converting a populated table can take locks,
-so callers must opt into that behavior. The PostgreSQL 17/TimescaleDB live gate
-verifies version discovery, idempotent hypertable creation, quoted identifiers,
-and retention-policy creation and removal. Broader TimescaleDB query helpers and
-EF translations are not part of this preview.
+so callers must opt into that behavior. Continuous-aggregate refresh windows use
+typed `DateTimeOffset` values and all policy intervals must be finite. The
+columnstore helpers use TimescaleDB's current Hypercore APIs, not the legacy
+compression-policy names.
+
+`BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore` adds separately registered,
+schema-qualified query translations and migration helpers:
+
+```csharp
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource, provider => provider.UseTimescaleDb()));
+
+var hourly = context.Metrics
+    .GroupBy(metric => EF.Functions.TimeBucket(width, metric.RecordedAt))
+    .Select(group => new
+    {
+        group.Key,
+        First = EF.Functions.TimescaleFirst(
+            group.Select(metric => ValueTuple.Create(metric.Value, metric.RecordedAt))),
+        Histogram = EF.Functions.TimescaleHistogram(
+            group.Select(metric => metric.Value), 0, 100, 10),
+    });
+```
+
+Temporal buckets support timestamp-with-time-zone, timestamp, and date values,
+including offset/origin forms and timezone-aware timestamp-with-time-zone
+bucketing; smallint, integer, and bigint buckets are also typed. `first`, `last`,
+and `histogram` preserve LINQ ordering, distinctness, and filters in aggregate
+SQL. The PostgreSQL 17/TimescaleDB 2.29 gate verifies queries, compiled queries,
+hypertable creation, approximate counts, and all documented policy/refresh
+lifecycles.

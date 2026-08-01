@@ -38,6 +38,30 @@ public sealed class BlueTuskTimescaleDbTests
     }
 
     [Fact]
+    public async Task Policy_helpers_validate_intervals_and_refresh_windows_before_connecting()
+    {
+        await using var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=localhost;Port=1;Username=test;Password=test")
+            .UseTimescaleDb()
+            .Build();
+
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+            await dataSource.AddRetentionPolicyAsync("public.metrics", BlueTuskInterval.PositiveInfinity));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+            await dataSource.AddColumnstorePolicyAsync("public.metrics", BlueTuskInterval.NegativeInfinity));
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+            await dataSource.AddContinuousAggregatePolicyAsync(
+                "public.hourly",
+                BlueTuskInterval.PositiveInfinity,
+                new BlueTuskInterval(0, 1, 0),
+                new BlueTuskInterval(0, 0, 3_600_000_000)));
+
+        var instant = DateTimeOffset.UtcNow;
+        await Assert.ThrowsAsync<ArgumentOutOfRangeException>(async () =>
+            await dataSource.RefreshContinuousAggregateAsync("public.hourly", instant, instant));
+    }
+
+    [Fact]
     public async Task TimescaleDB_plugin_executes_hypertable_and_retention_lifecycle_live()
     {
         var connectionString = GetConnectionString();

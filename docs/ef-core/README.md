@@ -82,6 +82,33 @@ Configure exact spatial intent with store types such as
 `geometry(Polygon,3857)[]`. Geography accepts only operations implemented by
 PostGIS for geography; geometry-only calls fail with a focused diagnostic.
 
+TimescaleDB also keeps data-source and EF registration separate. The optional
+EF package adds schema-qualified interval and integer `time_bucket`
+translations plus typed `first`, `last`, and `histogram` group aggregates:
+
+```csharp
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UseTimescaleDb()
+    .Build();
+
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource, provider => provider.UseTimescaleDb()));
+
+var hourly = context.Metrics
+    .GroupBy(metric => EF.Functions.TimeBucket(width, metric.RecordedAt))
+    .Select(group => new
+    {
+        group.Key,
+        First = EF.Functions.TimescaleFirst(
+            group.Select(metric => ValueTuple.Create(metric.Value, metric.RecordedAt))),
+    });
+```
+
+Aggregate input ordering, distinctness, and filters remain composable through
+LINQ. The package also owns extension and hypertable migration helpers; the
+feature-only ADO.NET package owns retention, Hypercore columnstore, and
+continuous-aggregate policy operations.
+
 ## PostgreSQL type mappings
 
 In addition to the standard .NET relational types, the 0.3 query work maps BlueTusk's wire-native PostgreSQL scalar values. This includes `inet`/`cidr`, `macaddr`/`macaddr8`, all built-in geometric values, `bit`/`varbit`, arbitrary-precision `numeric`, `money`, `pg_lsn`, `tid`, `timetz`, native intervals, `jsonpath`, `tsvector`/`tsquery`, object identifiers, transaction values, and system-catalogue values. `string` can be explicitly mapped to `json`, `jsonb`, or `xml`.
@@ -2216,7 +2243,7 @@ queries are dependency-tracked by PostgreSQL, and `security_invoker` changes
 whose privileges and row-level-security policies apply to underlying relations;
 review both the query and grants as security-sensitive schema.
 
-PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext, pgvector, and PostGIS EF packages provide their own extension lifecycle migration helpers. Other PostgreSQL-specific schema features remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext, pgvector, PostGIS, and TimescaleDB EF packages provide their own extension lifecycle migration helpers. Other PostgreSQL-specific schema features remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
 
 ## PostgreSQL 19 property-graph queries
 
