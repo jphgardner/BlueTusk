@@ -270,10 +270,11 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Typed integer and bigint `generate_series` roots with parameterized standalone, correlated lateral, and compiled-query execution
     - [x] Typed numeric, timestamp, and timestamp-with-time-zone `generate_series` roots with exact argument mappings
     - [x] JSONB array-element, text-element, object-key, and JSONPath-query roots with exact mappings, ordinality, lateral composition, and compiled-query execution
-    - [ ] Record-shaped JSON functions, multi-argument `unnest`, and user-defined table functions
+    - [x] JSONB object key/value record roots with JSONB/text value mappings, nullable JSON-null text, and compiled-query execution
+    - [ ] Arbitrary JSON-to-recordset functions, multi-argument `unnest`, and user-defined table functions
 - [ ] PostgreSQL-specific query roots and SQL constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
-  - [x] Array predicates, scalar functions, aggregates, lateral element expansion, typed series roots, and single-column JSONB set-returning roots
+  - [x] Array predicates, scalar functions, aggregates, lateral element expansion, typed series roots, and scalar/key-value JSONB set-returning roots
   - [ ] Remaining array forms and other PostgreSQL-native query families
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback

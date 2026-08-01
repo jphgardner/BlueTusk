@@ -14,8 +14,9 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
         string alias,
         string name,
         IReadOnlyList<SqlExpression> arguments,
+        IReadOnlyList<string> columnNames,
         bool withOrdinality)
-        : this(alias, name, arguments, withOrdinality, annotations: null)
+        : this(alias, name, arguments, columnNames, withOrdinality, annotations: null)
     {
     }
 
@@ -23,10 +24,16 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
         string alias,
         string name,
         IReadOnlyList<SqlExpression> arguments,
+        IReadOnlyList<string> columnNames,
         bool withOrdinality,
         IReadOnlyDictionary<string, IAnnotation>? annotations)
         : base(alias, name, schema: null, builtIn: true, arguments, annotations)
-        => WithOrdinality = withOrdinality;
+    {
+        ColumnNames = columnNames;
+        WithOrdinality = withOrdinality;
+    }
+
+    public IReadOnlyList<string> ColumnNames { get; }
 
     public bool WithOrdinality { get; }
 
@@ -39,6 +46,7 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
                     Alias,
                     Name,
                     arguments,
+                    ColumnNames,
                     WithOrdinality,
                     Annotations);
 
@@ -51,6 +59,7 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
             Arguments
                 .Select(argument => (SqlExpression)cloningExpressionVisitor.Visit(argument))
                 .ToArray(),
+            ColumnNames,
             WithOrdinality,
             Annotations);
 
@@ -60,19 +69,27 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
             Alias,
             Name,
             Arguments,
+            ColumnNames,
             WithOrdinality,
             annotations);
 
     public override BlueTuskSetReturningFunctionTableExpression WithAlias(string newAlias)
-        => new(newAlias, Name, Arguments, WithOrdinality, Annotations);
+        => new(newAlias, Name, Arguments, ColumnNames, WithOrdinality, Annotations);
 
     public override Expression Quote()
         => New(
             _quotingConstructor ??= typeof(BlueTuskSetReturningFunctionTableExpression).GetConstructor(
-                [typeof(string), typeof(string), typeof(IReadOnlyList<SqlExpression>), typeof(bool)])!,
+                [
+                    typeof(string),
+                    typeof(string),
+                    typeof(IReadOnlyList<SqlExpression>),
+                    typeof(IReadOnlyList<string>),
+                    typeof(bool),
+                ])!,
             Constant(Alias),
             Constant(Name),
             NewArrayInit(typeof(SqlExpression), Arguments.Select(argument => argument.Quote())),
+            NewArrayInit(typeof(string), ColumnNames.Select(Constant)),
             Constant(WithOrdinality));
 
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -94,10 +111,25 @@ internal sealed class BlueTuskSetReturningFunctionTableExpression : TableValuedF
             expressionPrinter.Append(" WITH ORDINALITY");
         }
 
-        expressionPrinter.Append(" AS ").Append(Alias).Append("(value");
+        expressionPrinter.Append(" AS ").Append(Alias).Append("(");
+        for (var index = 0; index < ColumnNames.Count; index++)
+        {
+            if (index > 0)
+            {
+                expressionPrinter.Append(", ");
+            }
+
+            expressionPrinter.Append(ColumnNames[index]);
+        }
+
         if (WithOrdinality)
         {
-            expressionPrinter.Append(", ordinality");
+            if (ColumnNames.Count > 0)
+            {
+                expressionPrinter.Append(", ");
+            }
+
+            expressionPrinter.Append("ordinality");
         }
 
         expressionPrinter.Append(")");

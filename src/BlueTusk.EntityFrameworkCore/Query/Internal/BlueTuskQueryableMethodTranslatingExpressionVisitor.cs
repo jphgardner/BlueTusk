@@ -41,6 +41,12 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             return TranslateSetReturningFunction(function) ?? base.VisitExtension(extensionExpression);
         }
 
+        if (extensionExpression is BlueTuskRecordSetReturningFunctionQueryRootExpression recordFunction)
+        {
+            return TranslateRecordSetReturningFunction(recordFunction)
+                ?? base.VisitExtension(extensionExpression);
+        }
+
         return base.VisitExtension(extensionExpression);
     }
 
@@ -172,6 +178,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                     tableAlias,
                     function.Name,
                     arguments,
+                    ["value"],
                     function.WithOrdinality),
             ],
             valueColumn,
@@ -189,6 +196,110 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 selectExpression,
                 new ProjectionMember(),
                 function.ElementType));
+    }
+
+    private ShapedQueryExpression? TranslateRecordSetReturningFunction(
+        BlueTuskRecordSetReturningFunctionQueryRootExpression function)
+    {
+        if (TranslateSetReturningArguments(
+                function.Arguments,
+                function.ArgumentStoreTypes) is not { } arguments)
+        {
+            return null;
+        }
+
+        var tableAlias = _queryCompilationContext.SqlAliasManager.GenerateTableAlias(function.Name);
+        var keyMapping = _typeMappingSource.FindMapping("text")!;
+        var valueMapping = _typeMappingSource.FindMapping(function.ValueStoreType)!;
+        var keyColumn = new ColumnExpression(
+            "key",
+            tableAlias,
+            typeof(string),
+            keyMapping,
+            nullable: false);
+        var valueColumn = new ColumnExpression(
+            "value",
+            tableAlias,
+            typeof(string),
+            valueMapping,
+            function.IsValueNullable);
+        var ordinalityTypeMapping = _typeMappingSource.FindMapping(typeof(long))!;
+        var ordinalityColumn = new ColumnExpression(
+            "ordinality",
+            tableAlias,
+            typeof(long),
+            ordinalityTypeMapping,
+            nullable: false);
+
+#pragma warning disable EF1001 // SelectExpression constructors are provider-facing infrastructure.
+        var selectExpression = new SelectExpression(
+            [
+                new BlueTuskSetReturningFunctionTableExpression(
+                    tableAlias,
+                    function.Name,
+                    arguments,
+                    ["key", "value"],
+                    withOrdinality: true),
+            ],
+            keyColumn,
+            identifier: [(ordinalityColumn, (ValueComparer)ordinalityTypeMapping.Comparer)],
+            _queryCompilationContext.SqlAliasManager);
+#pragma warning restore EF1001
+        var keyProperty = function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Key))!;
+        var valueProperty = function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Value))!;
+        var keyProjection = new ProjectionMember().Append(keyProperty);
+        var valueProjection = new ProjectionMember().Append(valueProperty);
+        selectExpression.ReplaceProjection(
+            new Dictionary<ProjectionMember, Expression>
+            {
+                [keyProjection] = keyColumn,
+                [valueProjection] = valueColumn,
+            });
+        selectExpression.AppendOrdering(new OrderingExpression(ordinalityColumn, ascending: true));
+
+        var constructor = function.ElementType.GetConstructor([typeof(string), typeof(string)])!;
+        var shaper = Expression.New(
+            constructor,
+            [
+                new ProjectionBindingExpression(selectExpression, keyProjection, typeof(string)),
+                new ProjectionBindingExpression(selectExpression, valueProjection, typeof(string)),
+            ],
+            [keyProperty, valueProperty]);
+        return new ShapedQueryExpression(selectExpression, shaper);
+    }
+
+    private SqlExpression[]? TranslateSetReturningArguments(
+        IReadOnlyList<Expression> expressions,
+        IReadOnlyList<string?> argumentStoreTypes)
+    {
+        var arguments = new SqlExpression[expressions.Count];
+        for (var index = 0; index < expressions.Count; index++)
+        {
+            var argumentStoreType = argumentStoreTypes[index];
+            if (TranslateExpression(
+                    expressions[index],
+                    applyDefaultTypeMapping: argumentStoreType is null) is not { } argument)
+            {
+                return null;
+            }
+
+            if (argumentStoreType is not null)
+            {
+                var argumentTypeMapping = _typeMappingSource.FindMapping(argumentStoreType);
+                if (argumentTypeMapping is null)
+                {
+                    return null;
+                }
+
+                argument = RelationalDependencies.SqlExpressionFactory.ApplyTypeMapping(
+                    argument,
+                    argumentTypeMapping);
+            }
+
+            arguments[index] = argument;
+        }
+
+        return arguments;
     }
 
     private static Type? GetElementType(Type sequenceType)

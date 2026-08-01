@@ -225,6 +225,16 @@ public static class BlueTuskDbFunctionsExtensions
     public static IQueryable<string> JsonObjectKeys(this DbFunctions _, string jsonb)
         => ThrowTranslationOnly<IQueryable<string>>();
 
+    public static IQueryable<KeyValuePair<string, string>> JsonEach(
+        this DbFunctions _,
+        string jsonb)
+        => ThrowTranslationOnly<IQueryable<KeyValuePair<string, string>>>();
+
+    public static IQueryable<KeyValuePair<string, string?>> JsonEachText(
+        this DbFunctions _,
+        string jsonb)
+        => ThrowTranslationOnly<IQueryable<KeyValuePair<string, string?>>>();
+
     public static IQueryable<string> JsonPathQuery(
         this DbFunctions _,
         string jsonb,

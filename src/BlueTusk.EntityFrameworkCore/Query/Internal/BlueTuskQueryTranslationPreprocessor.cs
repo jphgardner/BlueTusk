@@ -35,6 +35,18 @@ internal sealed class BlueTuskQueryTranslationPreprocessor(
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
+                && TryGetJsonRecordFunction(methodCallExpression.Method.Name, out var recordSpecification))
+            {
+                return new BlueTuskRecordSetReturningFunctionQueryRootExpression(
+                    recordSpecification.Name!,
+                    methodCallExpression.Method.ReturnType.GetGenericArguments()[0],
+                    methodCallExpression.Arguments.Skip(1).Select(argument => Visit(argument)!).ToArray(),
+                    ["jsonb"],
+                    recordSpecification.ValueStoreType,
+                    recordSpecification.IsValueNullable);
+            }
+
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
                 && TryGetJsonFunction(methodCallExpression.Method.Name, out var specification))
             {
                 return new BlueTuskSetReturningFunctionQueryRootExpression(
@@ -70,10 +82,31 @@ internal sealed class BlueTuskQueryTranslationPreprocessor(
             return specification.Name is not null;
         }
 
+        private static bool TryGetJsonRecordFunction(
+            string methodName,
+            out JsonRecordSetReturningFunctionSpecification specification)
+        {
+            specification = methodName switch
+            {
+                nameof(BlueTuskDbFunctionsExtensions.JsonEach) =>
+                    new("jsonb_each", "jsonb", IsValueNullable: false),
+                nameof(BlueTuskDbFunctionsExtensions.JsonEachText) =>
+                    new("jsonb_each_text", "text", IsValueNullable: true),
+                _ => default,
+            };
+
+            return specification.Name is not null;
+        }
+
         private readonly record struct JsonSetReturningFunctionSpecification(
             string? Name,
             IReadOnlyList<string?> ArgumentStoreTypes,
             string ResultStoreType,
             bool IsNullable);
+
+        private readonly record struct JsonRecordSetReturningFunctionSpecification(
+            string? Name,
+            string ValueStoreType,
+            bool IsValueNullable);
     }
 }

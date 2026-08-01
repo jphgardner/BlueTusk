@@ -44,12 +44,27 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 
             Sql.Append(" AS ")
                 .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(function.Alias))
-                .Append("(")
-                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("value"));
+                .Append("(");
+            for (var index = 0; index < function.ColumnNames.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Sql.Append(
+                    Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                        function.ColumnNames[index]));
+            }
+
             if (function.WithOrdinality)
             {
-                Sql.Append(", ")
-                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("ordinality"));
+                if (function.ColumnNames.Count > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Sql.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("ordinality"));
             }
 
             Sql.Append(")");

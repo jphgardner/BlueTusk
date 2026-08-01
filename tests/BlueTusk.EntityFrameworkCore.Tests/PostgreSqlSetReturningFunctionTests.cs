@@ -153,6 +153,16 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 value => EF.Functions.JsonObjectKeys(value.JsonObject),
                 (value, key) => new { value.Id, Key = key })
             .ToQueryString();
+        var eachSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonEach(value.JsonObject),
+                (value, pair) => new { value.Id, pair.Key, pair.Value })
+            .ToQueryString();
+        var eachTextSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonEachText(value.JsonObject),
+                (value, pair) => new { value.Id, pair.Key, pair.Value })
+            .ToQueryString();
         var pathSql = context.Values
             .SelectMany(
                 value => EF.Functions.JsonPathQuery(value.JsonObject, path),
@@ -170,6 +180,9 @@ public sealed class PostgreSqlSetReturningFunctionTests
         Assert.Contains("(\"value\", \"ordinality\")", elementsSql, StringComparison.Ordinal);
         Assert.Contains("jsonb_array_elements_text(", textSql, StringComparison.Ordinal);
         Assert.Contains("jsonb_object_keys(", keysSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_each(", eachSql, StringComparison.Ordinal);
+        Assert.Contains("(\"key\", \"value\", \"ordinality\")", eachSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_each_text(", eachTextSql, StringComparison.Ordinal);
         Assert.Contains("jsonb_path_query(", pathSql, StringComparison.Ordinal);
         Assert.Contains("@path", pathSql, StringComparison.Ordinal);
         Assert.Contains("jsonb_array_elements_text(", parameterSql, StringComparison.Ordinal);
@@ -209,7 +222,7 @@ public sealed class PostgreSqlSetReturningFunctionTests
                     ARRAY[2, 4],
                     ARRAY['two', 'four'],
                     '[1,2]'::jsonb,
-                    '{"gamma":3}'::jsonb),
+                    '{"gamma":3,"nullable":null}'::jsonb),
                 (
                     3,
                     ARRAY[]::integer[],
@@ -266,6 +279,20 @@ public sealed class PostgreSqlSetReturningFunctionTests
                     value => EF.Functions.JsonObjectKeys(value.JsonObject),
                     (_, key) => key)
                 .OrderBy(key => key)
+                .ToListAsync();
+            var jsonPairs = await context.Values
+                .Where(value => value.Id == 2)
+                .SelectMany(
+                    value => EF.Functions.JsonEach(value.JsonObject),
+                    (_, pair) => pair)
+                .OrderBy(pair => pair.Key)
+                .ToListAsync();
+            var jsonTextPairs = await context.Values
+                .Where(value => value.Id == 2)
+                .SelectMany(
+                    value => EF.Functions.JsonEachText(value.JsonObject),
+                    (_, pair) => pair)
+                .OrderBy(pair => pair.Key)
                 .ToListAsync();
             var jsonPathMatches = await context.Values
                 .Where(value => value.Id == 1)
@@ -375,6 +402,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         _ => EF.Functions.JsonArrayElementsText(jsonValue),
                         (_, element) => element)
                     .Count());
+            var compiledJsonPairCount = EF.CompileQuery(
+                (SetReturningContext database, string jsonValue) => database.Values
+                    .Where(value => value.Id == 1)
+                    .SelectMany(
+                        _ => EF.Functions.JsonEachText(jsonValue),
+                        (_, pair) => pair)
+                    .Count());
 
             Assert.Collection(
                 expanded,
@@ -413,6 +447,18 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Equal(["\"one\"", "null", "\"one\""], jsonElements);
             Assert.Equal(["one", null, "one"], jsonTextElements);
             Assert.Equal(["alpha", "beta"], jsonKeys);
+            Assert.Equal(
+                [
+                    new KeyValuePair<string, string>("gamma", "3"),
+                    new KeyValuePair<string, string>("nullable", "null"),
+                ],
+                jsonPairs);
+            Assert.Equal(
+                [
+                    new KeyValuePair<string, string?>("gamma", "3"),
+                    new KeyValuePair<string, string?>("nullable", null),
+                ],
+                jsonTextPairs);
             Assert.Equal(["1", "2"], jsonPathMatches);
             Assert.Equal([2, 4, 6], integerSeries);
             Assert.Equal([5L, 3L, 1L], longSeries);
@@ -450,6 +496,9 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Equal(
                 3,
                 compiledJsonElementCount(context, "[\"captured\",null,\"value\"]"));
+            Assert.Equal(
+                2,
+                compiledJsonPairCount(context, "{\"key\":\"value\",\"nullable\":null}"));
         }
         finally
         {
