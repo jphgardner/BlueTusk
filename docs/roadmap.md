@@ -189,10 +189,10 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Pipeline error propagation, cancellation, disposal, and safe session-recovery semantics
 - [x] Fake-server, conformance, stress, and live PostgreSQL pipeline-mode coverage
 - [x] ADR separates PostgreSQL pipeline mode from `System.IO.Pipelines` and defines the evaluation gate
-- [ ] ArrayPool/Span/Memory versus `System.IO.Pipelines` prototype benchmarks
-  - [ ] Fragmented frames, large fields, COPY, cancellation, and TLS
-  - [ ] Genuine synchronous and asynchronous workloads
-- [ ] Adopt `System.IO.Pipelines` only if measured throughput, allocations, and complexity justify it
+- [x] ArrayPool/Span/Memory versus `System.IO.Pipelines` prototype benchmarks
+  - [x] Fragmented frames, large fields, COPY, cancellation, and TLS
+  - [x] Genuine synchronous and asynchronous workloads
+- [x] Retain ArrayPool/Span/Memory: measured benefits do not justify production `System.IO.Pipelines` complexity and regressions
 
 ### Allocation discipline
 

@@ -1,0 +1,545 @@
+{
+   "Title":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks-20260801-020556",
+   "HostEnvironmentInfo":{
+      "BenchmarkDotNetCaption":"BenchmarkDotNet",
+      "BenchmarkDotNetVersion":"0.15.8",
+      "OsVersion":"Windows 11 (10.0.26200.8973/25H2/2025Update/HudsonValley2)",
+      "ProcessorName":"AMD Ryzen 7 5800X",
+      "PhysicalProcessorCount":1,
+      "PhysicalCoreCount":8,
+      "LogicalCoreCount":16,
+      "RuntimeVersion":".NET 10.0.10 (10.0.10, 10.0.1026.32716)",
+      "Architecture":"X64",
+      "HasAttachedDebugger":false,
+      "HasRyuJit":true,
+      "Configuration":"RELEASE",
+      "DotNetCliVersion":"10.0.302",
+      "ChronometerFrequency":{
+         "Hertz":10000000
+      },
+      "HardwareTimerKind":"Unknown"
+   },
+   "Benchmarks":[
+      {
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketSync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=PlainTcp]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"CurrentArrayPoolSocketSync",
+         "MethodTitle":"CurrentArrayPoolSocketSync",
+         "Parameters":"Mode=PlainTcp",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketSync(Mode: PlainTcp)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               877.7023315429688,802.4940490722656,706.5498352050781
+            ],
+            "N":3,
+            "Min":706.5498352050781,
+            "LowerFence":626.1575698852539,
+            "Q1":754.5219421386719,
+            "Median":802.4940490722656,
+            "Mean":795.5820719401041,
+            "Q3":840.0981903076172,
+            "UpperFence":968.4625625610352,
+            "Max":877.7023315429688,
+            "InterquartileRange":85.57624816894531,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":49.5281933904975,
+            "Variance":7359.125821579559,
+            "StandardDeviation":85.78534735943872,
+            "Skewness":-0.08004985471206574,
+            "Kurtosis":0.6666666666666665,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":795.5820719401041,
+               "StandardError":49.5281933904975,
+               "Level":12,
+               "Margin":1565.04407968572,
+               "Lower":-769.4620077456158,
+               "Upper":2360.626151625824
+            },
+            "Percentiles":{
+               "P0":706.5498352050781,
+               "P25":754.5219421386719,
+               "P50":802.4940490722656,
+               "P67":828.0648651123047,
+               "P80":847.6190185546875,
+               "P85":855.1398468017578,
+               "P90":862.6606750488281,
+               "P95":870.1815032958984,
+               "P100":877.7023315429688
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":524288,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketBlockingSync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=PlainTcp]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"PipelinesPrototypeSocketBlockingSync",
+         "MethodTitle":"PipelinesPrototypeSocketBlockingSync",
+         "Parameters":"Mode=PlainTcp",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketBlockingSync(Mode: PlainTcp)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               784.5119953155518,774.6606349945068,761.7300510406494
+            ],
+            "N":3,
+            "Min":761.7300510406494,
+            "LowerFence":751.1088848114014,
+            "Q1":768.1953430175781,
+            "Median":774.6606349945068,
+            "Mean":773.6342271169027,
+            "Q3":779.5863151550293,
+            "UpperFence":796.672773361206,
+            "Max":784.5119953155518,
+            "InterquartileRange":11.390972137451172,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":6.596574390914192,
+            "Variance":130.54438108459482,
+            "StandardDeviation":11.4256020009711,
+            "Skewness":-0.0891090560379113,
+            "Kurtosis":0.666666666666668,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":773.6342271169027,
+               "StandardError":6.596574390914192,
+               "Level":12,
+               "Margin":208.44551335255133,
+               "Lower":565.1887137643514,
+               "Upper":982.079740469454
+            },
+            "Percentiles":{
+               "P0":761.7300510406494,
+               "P25":768.1953430175781,
+               "P50":774.6606349945068,
+               "P67":778.0100975036621,
+               "P80":780.5714511871338,
+               "P85":781.5565872192383,
+               "P90":782.5417232513428,
+               "P95":783.5268592834473,
+               "P100":784.5119953155518
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":1048576,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketAsync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=PlainTcp]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"CurrentArrayPoolSocketAsync",
+         "MethodTitle":"CurrentArrayPoolSocketAsync",
+         "Parameters":"Mode=PlainTcp",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketAsync(Mode: PlainTcp)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               787.8129482269287,719.8856830596924,735.330057144165
+            ],
+            "N":3,
+            "Min":719.8856830596924,
+            "LowerFence":676.6624212265015,
+            "Q1":727.6078701019287,
+            "Median":735.330057144165,
+            "Mean":747.6762294769287,
+            "Q3":761.5715026855469,
+            "UpperFence":812.5169515609741,
+            "Max":787.8129482269287,
+            "InterquartileRange":33.963632583618164,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":20.557636997214555,
+            "Variance":1267.8493167277338,
+            "StandardDeviation":35.6068717627333,
+            "Skewness":0.3050491537446864,
+            "Kurtosis":0.6666666666666667,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":747.6762294769287,
+               "StandardError":20.557636997214555,
+               "Level":12,
+               "Margin":649.601890808955,
+               "Lower":98.07433866797373,
+               "Upper":1397.2781202858837
+            },
+            "Percentiles":{
+               "P0":719.8856830596924,
+               "P25":727.6078701019287,
+               "P50":735.330057144165,
+               "P67":753.1742401123047,
+               "P80":766.8197917938232,
+               "P85":772.0680809020996,
+               "P90":777.316370010376,
+               "P95":782.5646591186523,
+               "P100":787.8129482269287
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":1048576,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketAsync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=PlainTcp]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"PipelinesPrototypeSocketAsync",
+         "MethodTitle":"PipelinesPrototypeSocketAsync",
+         "Parameters":"Mode=PlainTcp",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketAsync(Mode: PlainTcp)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               1324.7986793518066,1294.2017555236816,1340.4046058654785
+            ],
+            "N":3,
+            "Min":1294.2017555236816,
+            "LowerFence":1274.8480796813965,
+            "Q1":1309.5002174377441,
+            "Median":1324.7986793518066,
+            "Mean":1319.801680246989,
+            "Q3":1332.6016426086426,
+            "UpperFence":1367.2537803649902,
+            "Max":1340.4046058654785,
+            "InterquartileRange":23.101425170898438,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":13.569614892186904,
+            "Variance":552.4033449667817,
+            "StandardDeviation":23.50326243241099,
+            "Skewness":-0.20299830189049123,
+            "Kurtosis":0.6666666666666693,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":1319.801680246989,
+               "StandardError":13.569614892186904,
+               "Level":12,
+               "Margin":428.7869998243635,
+               "Lower":891.0146804226256,
+               "Upper":1748.5886800713524
+            },
+            "Percentiles":{
+               "P0":1294.2017555236816,
+               "P25":1309.5002174377441,
+               "P50":1324.7986793518066,
+               "P67":1330.104694366455,
+               "P80":1334.1622352600098,
+               "P85":1335.722827911377,
+               "P90":1337.2834205627441,
+               "P95":1338.8440132141113,
+               "P100":1340.4046058654785
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":524288,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketSync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=Tls]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"CurrentArrayPoolSocketSync",
+         "MethodTitle":"CurrentArrayPoolSocketSync",
+         "Parameters":"Mode=Tls",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketSync(Mode: Tls)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               1097.3405838012695,1086.9829177856445,1035.5880737304688
+            ],
+            "N":3,
+            "Min":1035.5880737304688,
+            "LowerFence":1014.971113204956,
+            "Q1":1061.2854957580566,
+            "Median":1086.9829177856445,
+            "Mean":1073.3038584391277,
+            "Q3":1092.161750793457,
+            "UpperFence":1138.4761333465576,
+            "Max":1097.3405838012695,
+            "InterquartileRange":30.87625503540039,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":19.093459818004323,
+            "Variance":1093.680623465237,
+            "StandardDeviation":33.070842497058294,
+            "Skewness":-0.34286164642492795,
+            "Kurtosis":0.66666666666667,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":1073.3038584391277,
+               "StandardError":19.093459818004323,
+               "Level":12,
+               "Margin":603.3352764007348,
+               "Lower":469.9685820383929,
+               "Upper":1676.6391348398624
+            },
+            "Percentiles":{
+               "P0":1035.5880737304688,
+               "P25":1061.2854957580566,
+               "P50":1086.9829177856445,
+               "P67":1090.504524230957,
+               "P80":1093.1975173950195,
+               "P85":1094.233283996582,
+               "P90":1095.2690505981445,
+               "P95":1096.304817199707,
+               "P100":1097.3405838012695
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":524288,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketBlockingSync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=Tls]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"PipelinesPrototypeSocketBlockingSync",
+         "MethodTitle":"PipelinesPrototypeSocketBlockingSync",
+         "Parameters":"Mode=Tls",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketBlockingSync(Mode: Tls)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               1373.7064361572266,1212.7981185913086,1119.8297500610352
+            ],
+            "N":3,
+            "Min":1119.8297500610352,
+            "LowerFence":975.9064197540283,
+            "Q1":1166.3139343261719,
+            "Median":1212.7981185913086,
+            "Mean":1235.4447682698567,
+            "Q3":1293.2522773742676,
+            "UpperFence":1483.6597919464111,
+            "Max":1373.7064361572266,
+            "InterquartileRange":126.9383430480957,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":74.15748106123704,
+            "Variance":16497.99599204319,
+            "StandardDeviation":128.44452495938933,
+            "Skewness":0.17083356930468005,
+            "Kurtosis":0.6666666666666673,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":1235.4447682698567,
+               "StandardError":74.15748106123704,
+               "Level":12,
+               "Margin":2343.3062818229546,
+               "Lower":-1107.861513553098,
+               "Upper":3578.751050092811
+            },
+            "Percentiles":{
+               "P0":1119.8297500610352,
+               "P25":1166.3139343261719,
+               "P50":1212.7981185913086,
+               "P67":1267.5069465637207,
+               "P80":1309.3431091308594,
+               "P85":1325.4339408874512,
+               "P90":1341.524772644043,
+               "P95":1357.6156044006348,
+               "P100":1373.7064361572266
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":524288,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketAsync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=Tls]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"CurrentArrayPoolSocketAsync",
+         "MethodTitle":"CurrentArrayPoolSocketAsync",
+         "Parameters":"Mode=Tls",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.CurrentArrayPoolSocketAsync(Mode: Tls)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               1230.9755325317383,1132.4287414550781,1083.4794998168945
+            ],
+            "N":3,
+            "Min":1083.4794998168945,
+            "LowerFence":997.3320960998535,
+            "Q1":1107.9541206359863,
+            "Median":1132.4287414550781,
+            "Mean":1148.9612579345703,
+            "Q3":1181.7021369934082,
+            "UpperFence":1292.324161529541,
+            "Max":1230.9755325317383,
+            "InterquartileRange":73.74801635742188,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":43.37342885728188,
+            "Variance":5643.762992513075,
+            "StandardDeviation":75.12498247928632,
+            "Skewness":0.2094091202808596,
+            "Kurtosis":0.6666666666666666,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":1148.9612579345703,
+               "StandardError":43.37342885728188,
+               "Level":12,
+               "Margin":1370.5593400825016,
+               "Lower":-221.59808214793134,
+               "Upper":2519.520598017072
+            },
+            "Percentiles":{
+               "P0":1083.4794998168945,
+               "P25":1107.9541206359863,
+               "P50":1132.4287414550781,
+               "P67":1165.9346504211426,
+               "P80":1191.5568161010742,
+               "P85":1201.4114952087402,
+               "P90":1211.2661743164062,
+               "P95":1221.1208534240723,
+               "P100":1230.9755325317383
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":524288,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketAsync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3) [Mode=Tls]",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"TransportPipelineSocketBenchmarks",
+         "Method":"PipelinesPrototypeSocketAsync",
+         "MethodTitle":"PipelinesPrototypeSocketAsync",
+         "Parameters":"Mode=Tls",
+         "FullName":"BlueTusk.Benchmarks.TransportPipelineSocketBenchmarks.PipelinesPrototypeSocketAsync(Mode: Tls)",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               1156.1674118041992,1083.431625366211,1112.7328872680664
+            ],
+            "N":3,
+            "Min":1083.431625366211,
+            "LowerFence":1043.5304164886475,
+            "Q1":1098.0822563171387,
+            "Median":1112.7328872680664,
+            "Mean":1117.4439748128254,
+            "Q3":1134.4501495361328,
+            "UpperFence":1189.001989364624,
+            "Max":1156.1674118041992,
+            "InterquartileRange":36.36789321899414,
+            "LowerOutliers":[
+               
+            ],
+            "UpperOutliers":[
+               
+            ],
+            "AllOutliers":[
+               
+            ],
+            "StandardError":21.128727809777132,
+            "Variance":1339.2694165789485,
+            "StandardDeviation":36.59603006582748,
+            "Skewness":0.12659885480253236,
+            "Kurtosis":0.6666666666666675,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":1117.4439748128254,
+               "StandardError":21.128727809777132,
+               "Level":12,
+               "Margin":667.6478204901989,
+               "Lower":449.79615432262653,
+               "Upper":1785.0917953030244
+            },
+            "Percentiles":{
+               "P0":1083.431625366211,
+               "P25":1098.0822563171387,
+               "P50":1112.7328872680664,
+               "P67":1127.5006256103516,
+               "P80":1138.793601989746,
+               "P85":1143.1370544433594,
+               "P90":1147.4805068969727,
+               "P95":1151.823959350586,
+               "P100":1156.1674118041992
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":524288,
+            "BytesAllocatedPerOperation":0
+         }
+      }
+   ]
+}

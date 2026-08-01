@@ -2,7 +2,7 @@
 
 `BlueTusk.Client` supports PostgreSQL pipeline mode on PostgreSQL 14 and later. A pipeline sends multiple extended-query synchronization groups in one network flush, preserves result order, and avoids waiting for each group before sending the next one.
 
-This feature is independent of the .NET `System.IO.Pipelines` buffering library. BlueTusk currently implements PostgreSQL pipeline semantics over its existing synchronous and asynchronous transport; any transport rewrite remains subject to separate benchmarks.
+This feature is independent of the .NET `System.IO.Pipelines` buffering library. BlueTusk implements PostgreSQL pipeline semantics over its existing synchronous and asynchronous transport. A separate benchmark-backed evaluation retained the ArrayPool/Span/Memory transport; see [ADR 0005](architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md).
 
 Each `BlueTuskPipelineGroup` ends with an explicit protocol `Sync`. A server error is attached to the affected group's result after BlueTusk drains through that group's `ReadyForQuery`. PostgreSQL can then execute the next already-sent group:
 
