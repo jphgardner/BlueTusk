@@ -101,6 +101,12 @@ public sealed class BlueTuskConnection : DbConnection
     /// <summary>Gets the capabilities detected for the currently open physical session.</summary>
     public BlueTuskServerCapabilities? ServerCapabilities => _session?.Capabilities;
 
+    /// <summary>
+    /// Gets whether the current physical session supports SQL/PGQ, or <see langword="null"/>
+    /// while no physical session is open.
+    /// </summary>
+    public bool? SupportsSqlPgq => _session?.Capabilities.SupportsSqlPgq;
+
     public override ConnectionState State => _state;
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);

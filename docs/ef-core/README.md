@@ -80,6 +80,32 @@ Runtime migrations support the PostgreSQL `__EFMigrationsHistory` repository, tr
 
 PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. Other PostgreSQL-specific schema features such as extensions, enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
 
+## PostgreSQL 19 property-graph queries
+
+`PropertyGraph` creates a typed SQL/PGQ query from graph metadata configured in
+the EF model. The preview translates linear directed paths to `GRAPH_TABLE`,
+keeps captured predicate values parameterized, and returns a composable
+`IQueryable`. It supports outer relational filters, joins, grouping, ordering,
+pagination, DTO projections, and tracked entity materialization:
+
+```csharp
+var friends = await context.PropertyGraph("social", "application")
+    .Match(pattern => pattern
+        .Vertex<Person>("source", person => person.Id == personId)
+        .Outgoing<Friendship>("edge")
+        .Vertex<Person>("target"))
+    .Select<FriendResult>(projection => projection
+        .Property<Person, int>(
+            "target", person => person.Id, result => result.PersonId)
+        .Property<Person, string>(
+            "target", person => person.Name, result => result.Name))
+    .OrderBy(result => result.Name)
+    .ToListAsync(cancellationToken);
+```
+
+The exact supported expression subset and raw-SQL-only remainder are documented
+in the [SQL/PGQ guide](../graph/README.md).
+
 ## Database-first scaffolding
 
 The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, and PostgreSQL 19 property graphs. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.

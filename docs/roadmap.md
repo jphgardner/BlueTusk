@@ -278,12 +278,12 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] PostgreSQL 19 `information_schema`/documented-catalogue discovery
   - [x] Capability-guarded migrations and reverse engineering
   - [x] Correct graph, label, property, and table identifier quoting
-- [ ] Phase C: EF query support
-  - [ ] Native typed graph query root and graph-pattern representation
-  - [ ] Parameterised `GRAPH_TABLE` translation
-  - [ ] Relational/graph composition, projections, filters, aliases, and materialisation
-  - [ ] Explicit unsupported-construct diagnostics with no unsafe string fallback
-  - [ ] SQL-generation unit tests and live PostgreSQL 19 acceptance tests
+- [x] Phase C: EF query support
+  - [x] Native typed graph query root and graph-pattern representation
+  - [x] Parameterised `GRAPH_TABLE` translation
+  - [x] Relational/graph composition, projections, filters, aliases, and materialisation
+  - [x] Explicit unsupported-construct diagnostics with no unsafe string fallback
+  - [x] SQL-generation unit tests and live PostgreSQL 19 acceptance tests
 - [x] Phase D: sample and tooling
   - [x] Executable PostgreSQL 19 graph sample replaces the placeholder
   - [x] Schema tooling displays property graphs
