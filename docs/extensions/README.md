@@ -212,3 +212,33 @@ UTF-8 text. PostgreSQL remains the grammar authority because valid ltree label
 characters depend on the database locale. The live gate resolves all three
 catalogue types and exercises arrays, hierarchical matching,
 position-independent matching, and path-level functions.
+
+## pg_trgm preview
+
+pg_trgm contributes functions, operators, and index operator classes but no
+wire type, so `BlueTusk.Extensions.PgTrgm` is intentionally a feature-only
+plugin. Its typed ADO.NET helper executes the three similarity families and
+threshold operators together:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS pg_trgm;
+```
+
+```csharp
+using BlueTusk.Data;
+using BlueTusk.Extensions.PgTrgm;
+
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UsePgTrgm()
+    .Build();
+var comparison = await dataSource.ComparePgTrgmAsync(
+    "BlueTusk",
+    "blue tusk");
+```
+
+`BlueTuskPgTrgmComparison` returns similarity, word similarity, strict-word
+similarity, all three threshold decisions, and the query's trigram set from one
+round trip. Both input strings are typed parameters. Functions and operators
+are schema-qualified, including quoted custom schemas. The live gate moves the
+extension into a spaced identifier, executes the same behavior, and restores
+it to `public`.

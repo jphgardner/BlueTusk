@@ -467,7 +467,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] hstore ADO.NET package (live-tested binary/text values, arrays, and operators)
 - [x] ltree ADO.NET package (live-tested `ltree`, `lquery`, `ltxtquery`, arrays, and operators)
 - [x] citext packages (tested ADO.NET and EF preview; extension SDK remains unstable)
-- [ ] pg_trgm package
+- [x] pg_trgm ADO.NET package (live-tested parameterized functions and operators, including quoted schemas)
 - [ ] TimescaleDB package
 - [x] Extension-authoring template
 - [x] Extension compatibility-testing kit
