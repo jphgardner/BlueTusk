@@ -13,3 +13,12 @@ public sealed class BlueTuskReplicationProtocolException : Exception
     {
     }
 }
+
+/// <summary>Indicates that a durable checkpoint cannot safely resume from the selected slot.</summary>
+public sealed class BlueTuskReplicationCheckpointException : InvalidOperationException
+{
+    public BlueTuskReplicationCheckpointException(string message)
+        : base(message)
+    {
+    }
+}

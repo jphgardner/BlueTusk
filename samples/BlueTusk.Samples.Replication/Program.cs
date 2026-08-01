@@ -44,11 +44,15 @@ try
         Console.WriteLine(
             $"{envelope.XLogData.WalStart}: {envelope.Message.Code}");
 
-        // Acknowledge only after the application has durably processed the change.
-        var applied = envelope.XLogData.WalEnd;
-        await replication.SendStandbyStatusUpdateAsync(
-            new BlueTuskStandbyStatus(applied, applied, applied),
-            shutdown.Token);
+        // pgoutput transaction-end LSNs, not CopyData payload lengths, are safe
+        // logical checkpoints. A real consumer must first persist all work for
+        // the transaction and the checkpoint atomically.
+        if (envelope.TryGetTransactionEndPosition(out var applied))
+        {
+            await replication.SendStandbyStatusUpdateAsync(
+                new BlueTuskStandbyStatus(applied, applied, applied),
+                shutdown.Token);
+        }
     }
 }
 catch (OperationCanceledException) when (shutdown.IsCancellationRequested)

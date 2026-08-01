@@ -230,7 +230,11 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Cancellation/disposal stress coverage
 - [x] Reconnect/resume examples and explicit ownership/lifetime documentation
 - [x] PostgreSQL 19 live coverage
-- [ ] Long-running durability, feedback, and failure-recovery matrix required before production-ready status
+- [x] Long-running durability, feedback, and failure-recovery matrix
+  - [x] PostgreSQL 15–19 persistent-slot reconnect/resume acceptance
+  - [x] Monotonic ordered feedback and exact pgoutput transaction checkpoints
+  - [x] Wrong-system, missing, active, stale, and lost-WAL safety diagnostics
+  - [x] Scheduled/manual PostgreSQL 19 1,000-epoch endurance job
 
 ### Release truthfulness
 

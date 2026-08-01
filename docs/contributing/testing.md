@@ -7,8 +7,8 @@
 - Integration tests run against every supported PostgreSQL major version.
 - Compatibility tests compare selected outcomes with libpq or other providers, then resolve differences against PostgreSQL behaviour.
 - Stress tests cover cancellation, pool churn, concurrent readers, pipeline recovery,
-  and dedicated replication cancellation/disposal. Long-running replication soaks
-  remain an explicit pre-1.0 gate.
+  and dedicated replication cancellation/disposal. The replication durability
+  matrix exercises persistent-slot feedback and resume across independent sessions.
 
 Tests requiring a server read `BLUETUSK_TEST_CONNECTION_STRING` and must skip with a clear reason when it is absent. Credentials must never be printed, including in failed test output.
 
@@ -16,10 +16,22 @@ The compatibility project carries a test-only Npgsql dependency and runs equival
 
 The default stress scale runs bounded concurrent pool churn, cancellation storms, preparation, batches, and partially consumed sequential streams. Set `BLUETUSK_STRESS_SCALE` to a positive integer to multiply the worker count for longer soak runs.
 
+Set `BLUETUSK_REPLICATION_DURABILITY_EPOCHS` to a positive integer to extend
+the logical replication reconnect/resume test. Each epoch opens a new dedicated
+session, validates the persisted checkpoint and slot state, commits a fresh
+transaction, persists its exact pgoutput transaction-end LSN, sends monotonic
+feedback, and disconnects cleanly.
+
+The scheduled and manually dispatched `replication-endurance` CI job runs this
+path for 1,000 PostgreSQL 19 reconnect epochs. Pull requests retain the fast
+default while still running the three-epoch test on every PostgreSQL major.
+
 ```powershell
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests"
+$env:BLUETUSK_REPLICATION_DURABILITY_EPOCHS = "250"
 dotnet test tests/BlueTusk.CompatibilityTests --no-restore
 dotnet test tests/BlueTusk.StressTests --no-restore
+dotnet test tests/BlueTusk.IntegrationTests --no-restore --filter FullyQualifiedName~Logical_replication_validates_and_resumes
 ```
 
 BenchmarkDotNet reports are written below `artifacts/benchmarks` by default. The named reference environment under `benchmarks/baselines` checks in human-readable GitHub Markdown and brief JSON reports. Refresh a short baseline with:

@@ -52,6 +52,10 @@ BlueTusk supports PostgreSQL 15 through 18 and provides:
 - raw payloads for any logical decoding output plugin; and
 - complete `pgoutput` decoding in `BlueTusk.Replication.PgOutput`.
 
+The same live suite also runs against PostgreSQL 19. Replication remains a
+preview because production readiness is a whole-product release claim, not a
+consequence of one passing protocol matrix.
+
 ## Server setup
 
 The server must admit a role with the `REPLICATION` attribute in `pg_hba.conf`.
@@ -158,10 +162,35 @@ segment state.
 ## Feedback and durability
 
 BlueTusk automatically answers primary keepalives that request an immediate
-reply. Applications control acknowledged positions:
+reply. Applications control acknowledged positions. For logical `pgoutput`,
+checkpoint the transaction-end LSN from a terminal message, not
+`BlueTuskXLogData.WalEnd`: logical payload byte length is not a WAL byte count.
 
 ```csharp
-var applied = envelope.XLogData.WalEnd;
+await ApplyAndCommitAsync(envelope.Message, cancellationToken);
+
+if (envelope.TryGetTransactionEndPosition(out var applied))
+{
+    await checkpoints.StoreAppliedPositionAsync(applied, cancellationToken);
+    await replication.SendStandbyStatusUpdateAsync(
+        new BlueTuskStandbyStatus(
+            Written: applied,
+            Flushed: applied,
+            Applied: applied),
+        cancellationToken);
+}
+```
+
+`TryGetTransactionEndPosition` recognizes commit, streamed commit, prepared,
+commit-prepared, rollback-prepared, and streamed-prepare terminal messages.
+Persist a prepare position only when the consumer also durably retains the
+prepared transaction's state.
+
+For physical replication, payload bytes correspond to WAL bytes, so
+`BlueTuskXLogData.WalEnd` is the receiver position:
+
+```csharp
+var applied = wal.WalEnd;
 await replication.SendStandbyStatusUpdateAsync(
     new BlueTuskStandbyStatus(
         Written: applied,
@@ -172,8 +201,11 @@ await replication.SendStandbyStatusUpdateAsync(
 
 Advance `Flushed` or `Applied` only after the corresponding data is durable.
 PostgreSQL can reclaim WAL based on slot progress; acknowledging data that can
-still be lost breaks recovery guarantees. Physical standbys can also call
-`SendHotStandbyFeedbackAsync` with their `xmin` horizons.
+still be lost breaks recovery guarantees. BlueTusk rejects feedback where
+`Applied > Flushed > Written` or where any position moves backwards, and it
+updates its local status only after the wire write succeeds. Concurrent manual
+updates and automatic keepalive replies are serialized. Physical standbys can
+also call `SendHotStandbyFeedbackAsync` with their `xmin` horizons.
 
 ## Physical replication
 
@@ -237,13 +269,15 @@ server back to `ReadyForQuery`, and releases the replication operation.
 
 ## Reconnect and resume
 
-Persist the last durably applied WAL position outside the replication process.
+Persist a `BlueTuskLogicalReplicationCheckpoint` outside the replication
+process. It binds the last durably applied transaction-end position to the
+PostgreSQL system identifier, database, persistent slot, and output plug-in.
 On a transient disconnect, create a new dedicated replication connection from
-the data source and request that persisted position. Do not resume from the
-largest position merely received in memory.
+the data source, validate that checkpoint, and request its applied position.
+Do not resume from the largest position merely received in memory.
 
 ```csharp
-var resumePosition = await checkpoints.LoadAppliedPositionAsync(cancellationToken);
+var checkpoint = await checkpoints.LoadAsync(cancellationToken);
 
 while (!cancellationToken.IsCancellationRequested)
 {
@@ -254,11 +288,15 @@ while (!cancellationToken.IsCancellationRequested)
                 dataSource.CreateDedicatedSessionOptions(),
                 cancellationToken);
 
+        await replication.ValidateResumeCheckpointAsync(
+            checkpoint,
+            cancellationToken);
+
         var request = new BlueTuskPgOutputReplicationOptions
         {
-            SlotName = "app_slot",
+            SlotName = checkpoint.SlotName,
             PublicationNames = ["app_publication"],
-            StartPosition = resumePosition,
+            StartPosition = checkpoint.AppliedPosition,
         };
 
         await foreach (var envelope in replication
@@ -266,16 +304,14 @@ while (!cancellationToken.IsCancellationRequested)
             .DecodePgOutputAsync(cancellationToken: cancellationToken))
         {
             await ApplyAndCommitAsync(envelope.Message, cancellationToken);
-            resumePosition = envelope.XLogData.WalEnd;
-            await checkpoints.StoreAppliedPositionAsync(
-                resumePosition,
-                cancellationToken);
-            await replication.SendStandbyStatusUpdateAsync(
-                new BlueTuskStandbyStatus(
-                    resumePosition,
-                    resumePosition,
-                    resumePosition),
-                cancellationToken);
+            if (envelope.TryGetTransactionEndPosition(out var applied))
+            {
+                checkpoint = checkpoint with { AppliedPosition = applied };
+                await checkpoints.StoreAsync(checkpoint, cancellationToken);
+                await replication.SendStandbyStatusUpdateAsync(
+                    new BlueTuskStandbyStatus(applied, applied, applied),
+                    cancellationToken);
+            }
         }
     }
     catch (Exception exception) when (
@@ -287,8 +323,26 @@ while (!cancellationToken.IsCancellationRequested)
 }
 ```
 
-The slot must still retain WAL at or before the checkpoint. If it was removed,
-invalidated, or advanced beyond recoverable application state, stop and repair
-from an application-specific snapshot rather than skipping data. Recreate the
-decoder after reconnect so relation and streamed-transaction state cannot leak
-across sessions.
+Validation rejects another cluster/database, a missing, temporary, active, or
+wrong-plug-in slot, lost/unreserved WAL, a checkpoint older than `restart_lsn`,
+a server `confirmed_flush_lsn` ahead of the application checkpoint, and a
+checkpoint ahead of the server. This implements PostgreSQL's documented advice
+to compare `confirmed_flush_lsn` before `START_REPLICATION`, which otherwise
+starts at the greater of the requested and confirmed positions. If validation
+fails, stop and repair from an application-specific snapshot rather than
+skipping data. Recreate the decoder after reconnect so relation and
+streamed-transaction state cannot leak across sessions.
+
+The live version-matrix test uses a persistent slot over multiple independent
+sessions, rejects wrong-system, missing, active, and stale checkpoints, and
+verifies every transaction exactly once in the durable consumer log. Set
+`BLUETUSK_REPLICATION_DURABILITY_EPOCHS` to increase reconnect epochs for a
+bounded soak.
+
+The scheduled/manual PostgreSQL 19 endurance job runs 1,000 epochs (4,000
+replicated rows) and the same test remains part of the ordinary PostgreSQL
+15–19 matrix at its fast default. The repository gate covers feedback ordering,
+wrong-system, missing, active, stale, and retained-WAL failures plus repeated
+connection teardown/recreation. This closes the replication-specific
+durability matrix; it does not by itself make the experimental provider a
+production-ready 1.0 release.

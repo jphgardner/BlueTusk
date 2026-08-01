@@ -2,6 +2,7 @@ using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
+using BlueTusk.TypeSystem;
 using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
@@ -177,6 +178,159 @@ public sealed class BlueTuskReplicationIntegrationTests
         }
         finally
         {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task Logical_replication_validates_and_resumes_durable_checkpoints_across_sessions()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_resume_{suffix}";
+        var publicationName = $"bluetusk_resume_publication_{suffix}";
+        var slotName = $"bluetusk_resume_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text NOT NULL)");
+
+        BlueTuskLogicalReplicationCheckpoint? initialCheckpoint = null;
+        var receivedIds = new List<int>();
+        try
+        {
+            await ExecuteAsync(
+                administration,
+                $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+            BlueTuskLogicalReplicationCheckpoint checkpoint;
+            await using (var setup =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+            {
+                var identity = await setup.IdentifySystemAsync();
+                var slot = await setup.CreateReplicationSlotAsync(slotName, temporary: false);
+                checkpoint = new BlueTuskLogicalReplicationCheckpoint(
+                    identity.SystemIdentifier,
+                    identity.DatabaseName!,
+                    slotName,
+                    "pgoutput",
+                    slot.ConsistentPoint);
+                initialCheckpoint = checkpoint;
+            }
+
+            var epochs = GetDurabilityEpochs();
+            const int rowsPerEpoch = 4;
+            for (var epoch = 0; epoch < epochs; epoch++)
+            {
+                await using var replication =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                var validatedSlot = await replication.ValidateResumeCheckpointAsync(checkpoint);
+                Assert.Equal(slotName, validatedSlot.SlotName);
+                Assert.False(validatedSlot.IsActive);
+
+                if (epoch == 0)
+                {
+                    var wrongSystem = checkpoint with
+                    {
+                        SystemIdentifier = checkpoint.SystemIdentifier + "-other",
+                    };
+                    await Assert.ThrowsAsync<BlueTuskReplicationCheckpointException>(
+                        () => replication.ValidateResumeCheckpointAsync(wrongSystem).AsTask());
+                }
+
+                await using var enumerator = replication.StartReplicationAsync(
+                    new BlueTuskPgOutputReplicationOptions
+                    {
+                        SlotName = slotName,
+                        PublicationNames = [publicationName],
+                        StartPosition = checkpoint.AppliedPosition,
+                    }).GetAsyncEnumerator();
+                var firstMove = enumerator.MoveNextAsync().AsTask();
+                if (epoch == 0)
+                {
+                    await using var contender =
+                        await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                    using var activeTimeout =
+                        new CancellationTokenSource(TimeSpan.FromSeconds(10));
+                    while (!(await contender.GetReplicationSlotsAsync(activeTimeout.Token))
+                        .Single(slot => slot.SlotName == slotName)
+                        .IsActive)
+                    {
+                        await Task.Delay(TimeSpan.FromMilliseconds(25), activeTimeout.Token);
+                    }
+
+                    var activeException =
+                        await Assert.ThrowsAsync<BlueTuskReplicationCheckpointException>(
+                            () => contender.ValidateResumeCheckpointAsync(
+                                checkpoint,
+                                activeTimeout.Token).AsTask());
+                    Assert.Contains("already active", activeException.Message, StringComparison.Ordinal);
+
+                    var missingSlot = checkpoint with { SlotName = slotName + "_missing" };
+                    var missingException =
+                        await Assert.ThrowsAsync<BlueTuskReplicationCheckpointException>(
+                            () => contender.ValidateResumeCheckpointAsync(
+                                missingSlot,
+                                activeTimeout.Token).AsTask());
+                    Assert.Contains("no longer exists", missingException.Message, StringComparison.Ordinal);
+                }
+
+                var firstId = epoch * rowsPerEpoch + 1;
+                await ExecuteAsync(
+                    administration,
+                    $"INSERT INTO {quotedTable} " +
+                    $"SELECT id, 'value-' || id::text FROM generate_series({firstId}, {firstId + rowsPerEpoch - 1}) AS id");
+
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+                Assert.True(await firstMove.WaitAsync(timeout.Token));
+                var transaction = await ReadCommittedTransactionAsync(
+                    enumerator,
+                    timeout.Token);
+                receivedIds.AddRange(transaction.InsertedIds);
+
+                checkpoint = checkpoint with { AppliedPosition = transaction.EndPosition };
+                await replication.SendStandbyStatusUpdateAsync(
+                    new BlueTuskStandbyStatus(
+                        checkpoint.AppliedPosition,
+                        checkpoint.AppliedPosition,
+                        checkpoint.AppliedPosition),
+                    timeout.Token);
+            }
+
+            Assert.Equal(
+                Enumerable.Range(1, epochs * rowsPerEpoch),
+                receivedIds.Order());
+
+            await using (var validation =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+            {
+                _ = await validation.ValidateResumeCheckpointAsync(checkpoint);
+                var unsafeOldCheckpoint = Assert.IsType<BlueTuskLogicalReplicationCheckpoint>(
+                    initialCheckpoint);
+                var exception = await Assert.ThrowsAsync<BlueTuskReplicationCheckpointException>(
+                    () => validation.ValidateResumeCheckpointAsync(unsafeOldCheckpoint).AsTask());
+                Assert.True(
+                    exception.Message.Contains("ahead of the durable", StringComparison.Ordinal) ||
+                    exception.Message.Contains("older than", StringComparison.Ordinal),
+                    exception.Message);
+            }
+        }
+        finally
+        {
+            await using (var cleanup =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+            {
+                if ((await cleanup.GetReplicationSlotsAsync()).Any(slot => slot.SlotName == slotName))
+                {
+                    await cleanup.DropReplicationSlotAsync(slotName);
+                }
+            }
+
+            await ExecuteAsync(
+                administration,
+                $"DROP PUBLICATION IF EXISTS {quotedPublication}");
             await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
         }
     }
@@ -499,6 +653,41 @@ public sealed class BlueTuskReplicationIntegrationTests
             "The logical replication stream completed before the expected pgoutput message.");
     }
 
+    private static async Task<(IReadOnlyList<int> InsertedIds, BlueTuskLogSequenceNumber EndPosition)>
+        ReadCommittedTransactionAsync(
+            IAsyncEnumerator<BlueTuskReplicationMessage> enumerator,
+            CancellationToken cancellationToken)
+    {
+        var decoder = new BlueTuskPgOutputDecoder();
+        var insertedIds = new List<int>();
+        while (true)
+        {
+            if (enumerator.Current is BlueTuskXLogData xLogData)
+            {
+                var envelope = decoder.Decode(xLogData);
+                if (envelope.Message is BlueTuskPgOutputInsert insert)
+                {
+                    insertedIds.Add(
+                        int.Parse(
+                            System.Text.Encoding.UTF8.GetString(
+                                insert.NewRow.Values[0].Data.Span),
+                            System.Globalization.CultureInfo.InvariantCulture));
+                }
+
+                if (envelope.TryGetTransactionEndPosition(out var endPosition))
+                {
+                    return (insertedIds, endPosition);
+                }
+            }
+
+            if (!await enumerator.MoveNextAsync().AsTask().WaitAsync(cancellationToken))
+            {
+                throw new XunitException(
+                    "Logical replication completed before the transaction checkpoint arrived.");
+            }
+        }
+    }
+
     private static void CapturePreparedMessage(
         BlueTuskPgOutputMessage message,
         ref BlueTuskPgOutputBeginPrepare? beginPrepare,
@@ -540,5 +729,18 @@ public sealed class BlueTuskReplicationIntegrationTests
             ChannelBinding = BlueTuskChannelBindingMode.Disable,
         };
         return settings.ConnectionString;
+    }
+
+    private static int GetDurabilityEpochs()
+    {
+        var configured = Environment.GetEnvironmentVariable(
+            "BLUETUSK_REPLICATION_DURABILITY_EPOCHS");
+        return int.TryParse(
+                configured,
+                System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out var epochs) && epochs > 0
+            ? epochs
+            : 3;
     }
 }

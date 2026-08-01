@@ -82,6 +82,7 @@ The current `0.3.0-preview.1` implementation provides:
 - transactional large-object creation, deletion, streaming, 64-bit seek, and truncation;
 - physical and logical `COPY BOTH` replication sessions with WAL and keepalive framing;
 - replication-slot and publication discovery plus standby and hot-standby feedback;
+- monotonic feedback, exact pgoutput transaction checkpoints, and guarded persistent-slot resume validation;
 - protocol-version-aware `pgoutput` decoding for DML, streamed transactions, and two-phase metadata;
 - raw logical decoding output for custom plugins;
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.

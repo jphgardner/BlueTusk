@@ -33,6 +33,17 @@ public sealed record BlueTuskReplicationSlotInfo(
     BlueTuskLogSequenceNumber? ConfirmedFlushPosition,
     string? WalStatus);
 
+/// <summary>
+/// Identifies a durable logical-replication position and the server resources
+/// to which it belongs.
+/// </summary>
+public sealed record BlueTuskLogicalReplicationCheckpoint(
+    string SystemIdentifier,
+    string DatabaseName,
+    string SlotName,
+    string OutputPlugin,
+    BlueTuskLogSequenceNumber AppliedPosition);
+
 /// <summary>A PostgreSQL logical replication publication.</summary>
 public sealed record BlueTuskPublicationInfo(
     uint Oid,
