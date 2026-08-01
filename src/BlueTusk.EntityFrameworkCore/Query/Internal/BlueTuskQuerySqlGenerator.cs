@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
 
@@ -138,6 +139,61 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             return aggregate;
         }
 
+        if (extensionExpression is BlueTuskWindowFunctionExpression window)
+        {
+            Sql.Append(window.Name).Append("(");
+            for (var index = 0; index < window.Arguments.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(window.Arguments[index]);
+            }
+
+            Sql.Append(") OVER (");
+            if (window.Partitions.Count > 0)
+            {
+                Sql.Append("PARTITION BY ");
+                for (var index = 0; index < window.Partitions.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(", ");
+                    }
+
+                    Visit(window.Partitions[index]);
+                }
+
+                Sql.Append(" ");
+            }
+
+            Sql.Append("ORDER BY ");
+            for (var index = 0; index < window.Orderings.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(window.Orderings[index].Expression);
+                if (!window.Orderings[index].IsAscending)
+                {
+                    Sql.Append(" DESC");
+                }
+            }
+
+            Sql.Append(")");
+            return window;
+        }
+
+        if (extensionExpression is BlueTuskWindowOrderingExpression windowOrdering)
+        {
+            Visit(windowOrdering.Operand);
+            return windowOrdering;
+        }
+
         if (extensionExpression is BlueTuskQuantifiedComparisonExpression quantifiedComparison)
         {
             Sql.Append("(");
@@ -206,6 +262,35 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         return outerApplyExpression;
     }
 
+    protected override Expression VisitTable(TableExpression tableExpression)
+    {
+        if (tableExpression.FindAnnotation(BlueTuskQueryAnnotationNames.TableSample)?.Value
+            is not BlueTuskTableSampleClause sample)
+        {
+            return base.VisitTable(tableExpression);
+        }
+
+        Sql.Append(
+                Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                    tableExpression.Name,
+                    tableExpression.Schema))
+            .Append(" AS ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(tableExpression.Alias))
+            .Append(" TABLESAMPLE ")
+            .Append(sample.Method == BlueTuskTableSampleMethod.System ? "SYSTEM" : "BERNOULLI")
+            .Append(" (");
+        Visit(sample.Percentage);
+        Sql.Append(")");
+        if (sample.Repeatable is not null)
+        {
+            Sql.Append(" REPEATABLE (");
+            Visit(sample.Repeatable);
+            Sql.Append(")");
+        }
+
+        return tableExpression;
+    }
+
     private void VisitLateralTable(TableExpressionBase tableExpression)
     {
         if (tableExpression is TableExpression table)
@@ -238,5 +323,43 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             Sql.Append(" OFFSET ");
             Visit(selectExpression.Offset);
         }
+
+        if (GetQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.RowLocking)?.Value
+            is BlueTuskRowLockingClause locking)
+        {
+            Sql.AppendLine().Append(locking.Strength switch
+            {
+                BlueTuskRowLockingStrength.Update => "FOR UPDATE",
+                BlueTuskRowLockingStrength.NoKeyUpdate => "FOR NO KEY UPDATE",
+                BlueTuskRowLockingStrength.Share => "FOR SHARE",
+                BlueTuskRowLockingStrength.KeyShare => "FOR KEY SHARE",
+                _ => throw new InvalidOperationException("Unknown PostgreSQL row-locking strength."),
+            });
+            if (locking.Behavior != BlueTuskRowLockingBehavior.Wait)
+            {
+                Sql.Append(locking.Behavior == BlueTuskRowLockingBehavior.NoWait
+                    ? " NOWAIT"
+                    : " SKIP LOCKED");
+            }
+        }
     }
+
+    protected override void GenerateTop(SelectExpression selectExpression)
+    {
+        base.GenerateTop(selectExpression);
+        if (GetQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.DistinctOn)?.Value
+            is SqlExpression key)
+        {
+            Sql.Append("DISTINCT ON (");
+            Visit(key);
+            Sql.Append(") ");
+        }
+    }
+
+    private static Microsoft.EntityFrameworkCore.Infrastructure.IAnnotation? GetQueryAnnotation(
+        SelectExpression selectExpression,
+        string name)
+        => selectExpression.Tables.Count == 0
+            ? null
+            : selectExpression.Tables[0].FindAnnotation(name);
 }

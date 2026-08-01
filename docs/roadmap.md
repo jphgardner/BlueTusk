@@ -302,6 +302,11 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Regex match/split and nullable `string_to_table` roots with capture arrays, flags, null markers, parameters, and compiled-query execution
     - [x] Four-argument JSONPath-query roots with typed variables and silent-mode arguments
 - [ ] PostgreSQL-specific query roots and SQL constructs
+  - [x] Ordered `DISTINCT ON` with leftmost-order validation, projection composition, compiled queries, and PostgreSQL 15–19 acceptance
+  - [x] `TABLESAMPLE SYSTEM`/`BERNOULLI` with typed percentages, optional repeatable seeds, scope validation, and PostgreSQL 15–19 acceptance
+  - [x] `FOR UPDATE`, `FOR NO KEY UPDATE`, `FOR SHARE`, and `FOR KEY SHARE` with wait, `NOWAIT`, and `SKIP LOCKED` behavior
+  - [x] Typed ranking, distribution, bucket, offset, and value window functions with partitioning, ascending/descending ordering, nullable results, and compiled queries
+  - [ ] Recursive/materialized CTEs, system columns, and PostgreSQL data-modification query constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element/subscript expansion, typed series/JSONB roots, and generic multi-array expansion
   - [x] Regex match/split and delimiter-table native query roots
@@ -309,6 +314,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback
   - [x] Provider SQL-expression quoting, nullability processing, and operator-family tests
+  - [x] Focused diagnostics for invalid `DISTINCT ON` ordering/composition, sampling scope, duplicate locking clauses, and translation-only window markers
 
 ## 0.4.0 — Advanced migrations and scaffolding (Milestone 6, schema surface)
 

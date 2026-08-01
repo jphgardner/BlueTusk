@@ -11,6 +11,9 @@ internal sealed class BlueTuskMethodCallTranslatorProvider
     {
         AddTranslators(
         [
+            new BlueTuskWindowFunctionTranslator(
+                dependencies.SqlExpressionFactory,
+                dependencies.RelationalTypeMappingSource),
             new BlueTuskRowValueTranslator(
                 dependencies.SqlExpressionFactory,
                 dependencies.RelationalTypeMappingSource),

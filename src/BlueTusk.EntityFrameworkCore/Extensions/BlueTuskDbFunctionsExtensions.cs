@@ -1847,6 +1847,141 @@ public static class BlueTuskDbFunctionsExtensions
         string nullString)
         => ThrowTranslationOnly<IQueryable<string?>>();
 
+    public static T WindowDescending<T>(this DbFunctions _, T value)
+        => ThrowTranslationOnly<T>();
+
+    public static long WindowRowNumber<TOrder>(this DbFunctions _, TOrder orderBy)
+        => ThrowTranslationOnly<long>();
+
+    public static long WindowRowNumber<TPartition, TOrder>(
+        this DbFunctions _,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<long>();
+
+    public static long WindowRank<TOrder>(this DbFunctions _, TOrder orderBy)
+        => ThrowTranslationOnly<long>();
+
+    public static long WindowRank<TPartition, TOrder>(
+        this DbFunctions _,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<long>();
+
+    public static long WindowDenseRank<TOrder>(this DbFunctions _, TOrder orderBy)
+        => ThrowTranslationOnly<long>();
+
+    public static long WindowDenseRank<TPartition, TOrder>(
+        this DbFunctions _,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<long>();
+
+    public static double WindowPercentRank<TOrder>(this DbFunctions _, TOrder orderBy)
+        => ThrowTranslationOnly<double>();
+
+    public static double WindowPercentRank<TPartition, TOrder>(
+        this DbFunctions _,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<double>();
+
+    public static double WindowCumulativeDistribution<TOrder>(
+        this DbFunctions _,
+        TOrder orderBy)
+        => ThrowTranslationOnly<double>();
+
+    public static double WindowCumulativeDistribution<TPartition, TOrder>(
+        this DbFunctions _,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<double>();
+
+    public static int WindowNtile<TOrder>(this DbFunctions _, int buckets, TOrder orderBy)
+        => ThrowTranslationOnly<int>();
+
+    public static int WindowNtile<TPartition, TOrder>(
+        this DbFunctions _,
+        int buckets,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<int>();
+
+    public static TValue WindowLag<TValue, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        int offset,
+        TValue defaultValue,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowLag<TValue, TPartition, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        int offset,
+        TValue defaultValue,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowLead<TValue, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        int offset,
+        TValue defaultValue,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowLead<TValue, TPartition, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        int offset,
+        TValue defaultValue,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowFirstValue<TValue, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowFirstValue<TValue, TPartition, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowLastValue<TValue, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowLastValue<TValue, TPartition, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowNthValue<TValue, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        int position,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
+    public static TValue WindowNthValue<TValue, TPartition, TOrder>(
+        this DbFunctions _,
+        TValue value,
+        int position,
+        TPartition partitionBy,
+        TOrder orderBy)
+        => ThrowTranslationOnly<TValue>();
+
     public static IQueryable<int> GenerateSeries(this DbFunctions _, int start, int stop)
         => ThrowTranslationOnly<IQueryable<int>>();
 

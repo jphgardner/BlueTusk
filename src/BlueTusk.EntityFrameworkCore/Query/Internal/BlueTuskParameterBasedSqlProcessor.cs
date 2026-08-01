@@ -46,6 +46,22 @@ internal sealed class BlueTuskSqlNullabilityProcessor(
             return aggregate.Update(arguments, orderings, withinGroupOrderings, predicate);
         }
 
+        if (sqlExpression is BlueTuskWindowFunctionExpression window)
+        {
+            var arguments = window.Arguments
+                .Select(argument => Visit(argument, allowOptimizedExpansion, out _))
+                .ToArray();
+            var partitions = window.Partitions
+                .Select(partition => Visit(partition, allowOptimizedExpansion, out _))
+                .ToArray();
+            var orderings = window.Orderings
+                .Select(ordering => ordering.Update(
+                    Visit(ordering.Expression, allowOptimizedExpansion, out _)))
+                .ToArray();
+            nullable = window.Name is "lag" or "lead" or "first_value" or "last_value" or "nth_value";
+            return window.Update(arguments, partitions, orderings);
+        }
+
         if (sqlExpression is BlueTuskQuantifiedComparisonExpression quantifiedComparison)
         {
             var item = Visit(

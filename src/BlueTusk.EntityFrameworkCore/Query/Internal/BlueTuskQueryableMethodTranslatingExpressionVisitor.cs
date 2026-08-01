@@ -35,6 +35,63 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
     protected override QueryableMethodTranslatingExpressionVisitor CreateSubqueryVisitor()
         => new BlueTuskQueryableMethodTranslatingExpressionVisitor(this);
 
+    protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
+    {
+        if (methodCallExpression.Method.DeclaringType != typeof(BlueTuskQueryableExtensions))
+        {
+            return base.VisitMethodCall(methodCallExpression);
+        }
+
+        if (Visit(methodCallExpression.Arguments[0]) is not ShapedQueryExpression source
+            || source.QueryExpression is not SelectExpression selectExpression)
+        {
+            return QueryCompilationContext.NotTranslatedExpression;
+        }
+
+        return methodCallExpression.Method.Name switch
+        {
+            nameof(BlueTuskQueryableExtensions.DistinctOn) =>
+                TranslateDistinctOn(source, selectExpression, methodCallExpression),
+            nameof(BlueTuskQueryableExtensions.TableSampleSystem) =>
+                TranslateTableSample(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskTableSampleMethod.System),
+            nameof(BlueTuskQueryableExtensions.TableSampleBernoulli) =>
+                TranslateTableSample(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskTableSampleMethod.Bernoulli),
+            nameof(BlueTuskQueryableExtensions.ForUpdate) =>
+                TranslateRowLocking(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskRowLockingStrength.Update),
+            nameof(BlueTuskQueryableExtensions.ForNoKeyUpdate) =>
+                TranslateRowLocking(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskRowLockingStrength.NoKeyUpdate),
+            nameof(BlueTuskQueryableExtensions.ForShare) =>
+                TranslateRowLocking(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskRowLockingStrength.Share),
+            nameof(BlueTuskQueryableExtensions.ForKeyShare) =>
+                TranslateRowLocking(
+                    source,
+                    selectExpression,
+                    methodCallExpression,
+                    BlueTuskRowLockingStrength.KeyShare),
+            _ => base.VisitMethodCall(methodCallExpression),
+        };
+    }
+
     protected override Expression VisitExtension(Expression extensionExpression)
     {
         if (extensionExpression is BlueTuskSetReturningFunctionQueryRootExpression function)
@@ -55,6 +112,105 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         }
 
         return base.VisitExtension(extensionExpression);
+    }
+
+    private ShapedQueryExpression TranslateDistinctOn(
+        ShapedQueryExpression source,
+        SelectExpression selectExpression,
+        MethodCallExpression methodCallExpression)
+    {
+        if (selectExpression.IsDistinct)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL DISTINCT ON cannot be combined with LINQ Distinct on the same query.");
+        }
+
+        var lambda = (LambdaExpression)((UnaryExpression)methodCallExpression.Arguments[1]).Operand;
+        var key = TranslateLambdaExpression(source, lambda)
+            ?? throw new InvalidOperationException(
+                "The PostgreSQL DISTINCT ON key could not be translated to a scalar SQL expression.");
+        if (selectExpression.Orderings.Count > 0
+            && !selectExpression.Orderings[0].Expression.Equals(key))
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL DISTINCT ON keys must match the leftmost ORDER BY expression.");
+        }
+
+        AddQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.DistinctOn, key);
+        return source;
+    }
+
+    private ShapedQueryExpression TranslateTableSample(
+        ShapedQueryExpression source,
+        SelectExpression selectExpression,
+        MethodCallExpression methodCallExpression,
+        BlueTuskTableSampleMethod method)
+    {
+        if (selectExpression.Tables is not [TableExpression])
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL TABLESAMPLE must be applied to a single mapped table query.");
+        }
+
+        var percentage = TranslateExpression(methodCallExpression.Arguments[1])
+            ?? throw new InvalidOperationException(
+                "The PostgreSQL TABLESAMPLE percentage could not be translated.");
+        var repeatable = methodCallExpression.Arguments.Count == 3
+            ? TranslateExpression(methodCallExpression.Arguments[2])
+                ?? throw new InvalidOperationException(
+                    "The PostgreSQL TABLESAMPLE repeatable seed could not be translated.")
+            : null;
+        AddQueryAnnotation(
+            selectExpression,
+            BlueTuskQueryAnnotationNames.TableSample,
+            new BlueTuskTableSampleClause(method, percentage, repeatable));
+        return source;
+    }
+
+    private static ShapedQueryExpression TranslateRowLocking(
+        ShapedQueryExpression source,
+        SelectExpression selectExpression,
+        MethodCallExpression methodCallExpression,
+        BlueTuskRowLockingStrength strength)
+    {
+        if (methodCallExpression.Arguments[1] is not ConstantExpression
+            {
+                Value: BlueTuskRowLockingBehavior behavior,
+            })
+        {
+            throw new InvalidOperationException(
+                "The PostgreSQL row-locking behavior must be a constant value.");
+        }
+
+        AddQueryAnnotation(
+            selectExpression,
+            BlueTuskQueryAnnotationNames.RowLocking,
+            new BlueTuskRowLockingClause(strength, behavior));
+        return source;
+    }
+
+    private static void AddQueryAnnotation(
+        SelectExpression selectExpression,
+        string name,
+        object value)
+    {
+        if (selectExpression.Tables.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "The PostgreSQL query operation requires a relational table source.");
+        }
+
+        if (selectExpression.Tables[0].FindAnnotation(name) is not null)
+        {
+            throw new InvalidOperationException(
+                $"The PostgreSQL query operation '{name}' can be applied only once.");
+        }
+
+        var tables = selectExpression.Tables.ToArray();
+        tables[0] = tables[0].AddAnnotation(name, value);
+#pragma warning disable EF1001 // Provider query annotations require replacing the relational table node.
+        selectExpression.SetTables(tables);
+#pragma warning restore EF1001
     }
 
     protected override ShapedQueryExpression? TranslatePrimitiveCollection(
