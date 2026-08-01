@@ -292,8 +292,36 @@ resolution, geometry and geography parameters, arrays, SRIDs, geography
 distance, spatial predicates, and text-to-binary conversion.
 
 This transport slice deliberately leaves geometry parsing, coordinate-system
-rules, topology, and algorithms to PostGIS. A rich geometry object model and EF
-spatial translations are separately tracked rather than claimed here.
+rules, topology, and algorithms to PostGIS. Rich geometry and EF support stays
+separately packaged in `BlueTusk.Extensions.PostGIS.EntityFrameworkCore`, which
+uses NetTopologySuite without adding spatial dependencies to BlueTusk core:
+
+```csharp
+using NetTopologySuite.Geometries;
+
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UsePostGis()
+    .Build();
+
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource, provider => provider.UsePostGis()));
+
+modelBuilder.Entity<Place>()
+    .Property(place => place.Location)
+    .HasColumnType("geometry(Point,4326)");
+```
+
+The EF package maps the complete NetTopologySuite geometry hierarchy, exact
+geometry/geography typmods, and arrays through BlueTusk's EWKB codecs. It
+translates typed predicates, distance and index-aware proximity, set operations,
+buffers, geometry members, transforms, validity repair, GeoJSON output, and the
+PostGIS bounding-box operator. Geography uses only its documented distance,
+intersection, covers/covered-by, area, length, and centroid surface; unsupported
+geometry-only calls produce focused translation errors. Conversion helpers
+preserve SRID and XY/Z/M ordinates, mutable geometries receive structural EF
+snapshots, and migration helpers own optional extension create/drop SQL. The
+PostgreSQL 18/PostGIS 3.6 live gate covers round trips, arrays, parameters,
+projections, spatial filters, and compiled queries.
 
 ## TimescaleDB preview
 

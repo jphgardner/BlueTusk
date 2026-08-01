@@ -475,7 +475,7 @@ This file tracks executable repository status. The product vision is broader; un
 ## Extension ecosystem (Milestone 8, pre-1.0)
 
 - [x] PostGIS ADO.NET transport package (live-tested EWKB/WKT geometry, geography, arrays, and spatial execution)
-- [ ] PostGIS rich geometry model and EF spatial integration
+- [x] PostGIS NetTopologySuite geometry model and EF spatial integration (geometry/geography typmods, arrays, structural snapshots, typed translations, focused diagnostics, migrations, compiled queries, and PostgreSQL 18/PostGIS 3.6 acceptance)
 - [x] pgvector ADO.NET package (live-tested `vector`, `halfvec`, `sparsevec`, arrays, and vector/bit distances)
 - [x] pgvector EF package (live-tested type mappings, arrays, dimensions, migrations, and vector/bit distance translations)
 - [x] hstore ADO.NET package (live-tested binary/text values, arrays, and operators)

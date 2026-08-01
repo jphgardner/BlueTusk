@@ -10,6 +10,7 @@
     <Project Path="extensions/BlueTusk.Extensions.PgTrgm/BlueTusk.Extensions.PgTrgm.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.PgVector/BlueTusk.Extensions.PgVector.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.PgVector.EntityFrameworkCore/BlueTusk.Extensions.PgVector.EntityFrameworkCore.csproj" />
+    <Project Path="extensions/BlueTusk.Extensions.PostGIS.EntityFrameworkCore/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.PostGIS/BlueTusk.Extensions.PostGIS.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.TimescaleDB/BlueTusk.Extensions.TimescaleDB.csproj" />
   </Folder>
@@ -47,6 +48,7 @@
     <Project Path="tests/BlueTusk.Extensions.HStore.Tests/BlueTusk.Extensions.HStore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.LTree.Tests/BlueTusk.Extensions.LTree.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.PgTrgm.Tests/BlueTusk.Extensions.PgTrgm.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj" />

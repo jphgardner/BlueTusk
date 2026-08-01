@@ -25,5 +25,10 @@ topology, and spatial algorithms. The BlueTusk values intentionally preserve
 opaque EWKB or server-parseable text rather than defining a competing geometry
 object model.
 
+Applications that need a rich geometry model and EF spatial queries can add
+`BlueTusk.Extensions.PostGIS.EntityFrameworkCore`. That optional package maps
+NetTopologySuite geometries through these lossless codecs without adding a
+geometry dependency to BlueTusk core.
+
 This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
 APIs, not stable or production-ready contracts.
