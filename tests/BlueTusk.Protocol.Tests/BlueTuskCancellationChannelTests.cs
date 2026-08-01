@@ -14,7 +14,7 @@ public sealed class BlueTuskCancellationChannelTests
         using var listener = new TcpListener(IPAddress.Loopback, 0);
         listener.Start();
         var port = ((IPEndPoint)listener.LocalEndpoint).Port;
-        var acceptTask = listener.AcceptTcpClientAsync(CancellationToken.None).AsTask();
+        var receiveTask = ReceiveRequestAndCloseAsync(listener);
         var endpoint = new BlueTuskEndpoint.Tcp("127.0.0.1", port);
         var options = new BlueTuskTransportOptions { ConnectTimeout = TimeSpan.FromSeconds(5) };
         var key = new BlueTuskBackendKeyData(123, 456);
@@ -28,9 +28,14 @@ public sealed class BlueTuskCancellationChannelTests
             BlueTuskCancellationChannel.Send(endpoint, options, key);
         }
 
-        using var client = await acceptTask;
+        Assert.Equal("0000001004D2162E0000007B000001C8", await receiveTask);
+    }
+
+    private static async Task<string> ReceiveRequestAndCloseAsync(TcpListener listener)
+    {
+        using var client = await listener.AcceptTcpClientAsync(CancellationToken.None);
         var request = new byte[sizeof(int) * 4];
         await client.GetStream().ReadExactlyAsync(request, CancellationToken.None);
-        Assert.Equal("0000001004D2162E0000007B000001C8", Convert.ToHexString(request));
+        return Convert.ToHexString(request);
     }
 }

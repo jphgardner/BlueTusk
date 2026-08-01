@@ -7,6 +7,36 @@ namespace BlueTusk.ConformanceTests;
 public sealed class PipelineConformanceTests
 {
     [Fact]
+    public async Task Optional_capability_probe_enables_SQL_PGQ_from_the_documented_catalogue()
+    {
+        await using var server = new FakePostgreSqlServer();
+        var serverTask = server.RunAsync(
+        [
+            new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+            new FakeServerStep.Send(StartupResponse()),
+            new FakeServerStep.ExpectFrontendMessage((byte)'Q'),
+            new FakeServerStep.Send(CapabilityProbeResponse()),
+        ], CancellationToken.None);
+
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = "127.0.0.1",
+                Port = server.Port,
+                Database = "app",
+                Username = "app",
+                Password = "password",
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            });
+
+        Assert.False(session.Capabilities.SupportsSqlPgq);
+        await session.ProbeOptionalCapabilitiesAsync();
+        Assert.True(session.Capabilities.SupportsSqlPgq);
+        await serverTask;
+    }
+
+    [Fact]
     public async Task Pipeline_writes_explicit_sync_boundaries_and_drains_an_error_before_the_next_group()
     {
         await using var server = new FakePostgreSqlServer();
@@ -76,6 +106,22 @@ public sealed class PipelineConformanceTests
         Frame('C', CStrings("UPDATE 1")),
         Frame('Z', [(byte)'I']));
 
+    private static byte[] CapabilityProbeResponse() => Combine(
+        Frame(
+            'T',
+            Combine(
+                Int16(1),
+                CStrings("supports_sql_pgq"),
+                Int32(0),
+                Int16(0),
+                Int32(25),
+                Int16(-1),
+                Int32(-1),
+                Int16(0))),
+        Frame('D', Combine(Int16(1), Int32(1), [(byte)'t'])),
+        Frame('C', CStrings("SELECT 1")),
+        Frame('Z', [(byte)'I']));
+
     private static byte[] Error(string sqlState, string message) => Frame(
         'E',
         Combine(
@@ -97,6 +143,13 @@ public sealed class PipelineConformanceTests
     {
         var bytes = new byte[sizeof(int)];
         BinaryPrimitives.WriteInt32BigEndian(bytes, value);
+        return bytes;
+    }
+
+    private static byte[] Int16(short value)
+    {
+        var bytes = new byte[sizeof(short)];
+        BinaryPrimitives.WriteInt16BigEndian(bytes, value);
         return bytes;
     }
 

@@ -18,6 +18,7 @@ public static class BlueTuskCancellationChannel
         transport.Connect(endpoint, transportOptions);
         transport.Write(output.WrittenSpan);
         transport.Flush();
+        WaitForServerClose(transport);
     }
 
     public static async ValueTask SendAsync(
@@ -33,6 +34,27 @@ public static class BlueTuskCancellationChannel
         await transport.ConnectAsync(endpoint, transportOptions, cancellationToken).ConfigureAwait(false);
         await transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
         await transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        await WaitForServerCloseAsync(transport, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void WaitForServerClose(BlueTuskSocketTransport transport)
+    {
+        Span<byte> response = stackalloc byte[1];
+        while (transport.Read(response) != 0)
+        {
+            // PostgreSQL sends no response and closes the one-shot cancellation connection.
+        }
+    }
+
+    private static async ValueTask WaitForServerCloseAsync(
+        BlueTuskSocketTransport transport,
+        CancellationToken cancellationToken)
+    {
+        var response = new byte[1];
+        while (await transport.ReadAsync(response, cancellationToken).ConfigureAwait(false) != 0)
+        {
+            // PostgreSQL sends no response and closes the one-shot cancellation connection.
+        }
     }
 
     private static ArrayBufferWriter<byte> CreateRequest(BlueTuskBackendKeyData backendKeyData)

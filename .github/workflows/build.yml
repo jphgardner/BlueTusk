@@ -40,3 +40,36 @@ jobs:
 
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
+
+  postgresql-integration:
+    name: PostgreSQL ${{ matrix.major }} live matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        major: [15, 16, 17, 18, 19]
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres${{ matrix.major }}
+
+      - name: Run live provider matrix
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests
+        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres${{ matrix.major }}
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes

@@ -229,7 +229,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Allocation/backpressure benchmarks
 - [x] Cancellation/disposal stress coverage
 - [x] Reconnect/resume examples and explicit ownership/lifetime documentation
-- [ ] PostgreSQL 19 live coverage
+- [x] PostgreSQL 19 live coverage
 - [ ] Long-running durability, feedback, and failure-recovery matrix required before production-ready status
 
 ### Release truthfulness
@@ -267,12 +267,12 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 0.5.0 — PostgreSQL 19 SQL/PGQ graph preview (Milestone 7)
 
-- [ ] Phase A: provider compatibility against PostgreSQL 19 Beta 2
-  - [ ] Populate and expose real server capabilities; remove unused capability-only claims
-  - [ ] Executable PostgreSQL 19 CI/integration job, beyond the compose profile
-  - [ ] Live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` and `GRAPH_TABLE` raw-SQL tests
-  - [ ] Parameters, metadata, preparation, batches, cancellation, pooling, and mixed relational/graph coverage
-  - [ ] PostgreSQL 15–18 regression gate remains green
+- [x] Phase A: provider compatibility against PostgreSQL 19 Beta 2
+  - [x] Populate and expose real server capabilities; remove unused capability-only claims
+  - [x] Executable PostgreSQL 19 CI/integration job, beyond the compose profile
+  - [x] Live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` and `GRAPH_TABLE` raw-SQL tests
+  - [x] Parameters, metadata, preparation, batches, cancellation, pooling, and mixed relational/graph coverage
+  - [x] PostgreSQL 15–18 regression gate remains green
 - [ ] Phase B: property-graph metadata and schema
   - [ ] Graph, vertex, edge, key, label, and property model metadata
   - [ ] PostgreSQL 19 `information_schema`/documented-catalogue discovery
@@ -285,7 +285,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [ ] Explicit unsupported-construct diagnostics with no unsafe string fallback
   - [ ] SQL-generation unit tests and live PostgreSQL 19 acceptance tests
 - [ ] Phase D: sample and tooling
-  - [ ] Executable PostgreSQL 19 graph sample replaces the placeholder
+  - [x] Executable PostgreSQL 19 graph sample replaces the placeholder
   - [ ] Schema tooling displays property graphs
   - [ ] Supported SQL/PGQ subset and raw-SQL-only remainder documented
 
@@ -315,6 +315,6 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Stress testing
 - [ ] Competitive benchmarks
 - [ ] Complete documentation
-- [ ] Supported-version CI
+- [x] Supported-version CI
 
 Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.

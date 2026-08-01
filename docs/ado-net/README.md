@@ -77,7 +77,7 @@ await command.ExecuteNonQueryAsync();
 await transaction.CommitAsync();
 ```
 
-Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a separate connection. BlueTusk drains the original connection through `ReadyForQuery` before returning, so a cancelled connection remains reusable. `Cancel()` and `CancelAsync()` provide explicit cancellation. Cancellation inside a transaction leaves PostgreSQL's transaction in the failed state and requires rollback.
+Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a separate connection. BlueTusk waits for PostgreSQL to close that one-shot cancellation channel, then drains the original connection through `ReadyForQuery` before returning, so a late cancellation cannot escape into the next command and a cancelled connection remains reusable. `Cancel()` and `CancelAsync()` provide explicit cancellation. Cancellation inside a transaction leaves PostgreSQL's transaction in the failed state and requires rollback.
 
 Low-level clients can use [PostgreSQL pipeline mode](../pipeline-mode.md) to send multiple extended-query synchronization groups in one flush. This is a Client-layer API rather than an ADO.NET batching alias; `BlueTuskBatch` remains the provider-neutral `DbBatch` surface.
 

@@ -894,6 +894,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 ChannelBinding = settings.ChannelBinding,
             },
             cancellationToken).ConfigureAwait(false);
+        await session.ProbeOptionalCapabilitiesAsync(cancellationToken).ConfigureAwait(false);
         return new BlueTuskPhysicalSession(
             session,
             endpoint,
@@ -918,6 +919,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 SslMode = settings.SslMode,
                 ChannelBinding = settings.ChannelBinding,
             });
+        session.ProbeOptionalCapabilities();
         return new BlueTuskPhysicalSession(
             session,
             endpoint,

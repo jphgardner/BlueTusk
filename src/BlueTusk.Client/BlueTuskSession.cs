@@ -11,6 +11,8 @@ namespace BlueTusk.Client;
 public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 {
     private const int CopyBufferSize = 81_920;
+    private const string OptionalCapabilityProbeSql =
+        "SELECT (to_regclass('information_schema.property_graphs') IS NOT NULL)::text";
     private static readonly short[] BinaryResultFormat = [1];
     private static readonly short[] TextResultFormat = [0];
     private readonly BlueTuskProtocolConnection _connection;
@@ -48,6 +50,43 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     /// <summary>Gets the capabilities detected from the authenticated PostgreSQL server.</summary>
     public BlueTuskServerCapabilities Capabilities { get; private set; } = BlueTuskServerCapabilities.Unknown;
+
+    /// <summary>Probes optional SQL features that cannot be established from startup metadata.</summary>
+    /// <remarks>
+    /// This is a normal SQL round trip and is intended for non-replication sessions. PostgreSQL
+    /// versions before 19 complete without a query because they cannot expose SQL/PGQ.
+    /// </remarks>
+    public void ProbeOptionalCapabilities()
+    {
+        if (Capabilities.ServerVersion.Major < 19)
+        {
+            return;
+        }
+
+        var result = ExecuteSimpleQuery(OptionalCapabilityProbeSql);
+        Capabilities = Capabilities with
+        {
+            SupportsSqlPgq = ReadCapabilityBoolean(result, "SQL/PGQ"),
+        };
+    }
+
+    /// <summary>Asynchronously probes optional SQL features absent from startup metadata.</summary>
+    public async ValueTask ProbeOptionalCapabilitiesAsync(
+        CancellationToken cancellationToken = default)
+    {
+        if (Capabilities.ServerVersion.Major < 19)
+        {
+            return;
+        }
+
+        var result = await ExecuteSimpleQueryAsync(
+            OptionalCapabilityProbeSql,
+            cancellationToken).ConfigureAwait(false);
+        Capabilities = Capabilities with
+        {
+            SupportsSqlPgq = ReadCapabilityBoolean(result, "SQL/PGQ"),
+        };
+    }
 
     public static BlueTuskSession Open(BlueTuskClientOptions options)
     {
@@ -87,6 +126,30 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             await session.DisposeAsync().ConfigureAwait(false);
             throw;
         }
+    }
+
+    private static bool ReadCapabilityBoolean(
+        BlueTuskQueryResult result,
+        string capabilityName)
+    {
+        var resultSet = result.ResultSets.Count == 1
+            ? result.ResultSets[0]
+            : throw new BlueTuskProtocolException(
+                $"The {capabilityName} capability probe returned an unexpected result count.");
+        var value = resultSet.Rows.Count == 1 && resultSet.Rows[0].Values.Count == 1
+            ? resultSet.Rows[0].Values[0]
+            : throw new BlueTuskProtocolException(
+                $"The {capabilityName} capability probe returned an unexpected row shape.");
+        return value is { } bytes
+            ? bytes.Span switch
+            {
+                [(byte)'t'] or [(byte)'t', (byte)'r', (byte)'u', (byte)'e'] => true,
+                [(byte)'f'] or [(byte)'f', (byte)'a', (byte)'l', (byte)'s', (byte)'e'] => false,
+                _ => throw new BlueTuskProtocolException(
+                    $"The {capabilityName} capability probe returned an invalid boolean."),
+            }
+            : throw new BlueTuskProtocolException(
+                $"The {capabilityName} capability probe returned NULL.");
     }
 
     public ValueTask<BlueTuskQueryResult> ExecuteSimpleQueryAsync(
