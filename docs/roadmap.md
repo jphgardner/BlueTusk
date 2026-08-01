@@ -310,7 +310,12 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Rename-aware add/remove/reorder diffs plus manual `INHERIT`/`NO INHERIT` migration operations
   - [x] `pg_inherits` direct-parent discovery without conflating declarative partitions
   - [x] PostgreSQL 15–19 inherited scans, `ONLY` behavior, lifecycle, discovery, and scaffolding acceptance
-- [ ] Enum, domain, and composite type creation and alteration
+- [x] Enum, domain, and composite type creation and alteration
+  - [x] Typed model metadata, snapshots, migration operations, generated C#, identifier/literal quoting, and trusted SQL-fragment boundaries
+  - [x] Dependency-ordered create/drop, schema/name moves, enum add/rename, domain default/nullability/check lifecycle, and composite attribute lifecycle
+  - [x] Explicit diagnostics for enum removal/reordering, domain base/collation replacement, and composite reordering/insertion, with staged guidance for rename-plus-alter changes
+  - [x] `pg_type`/`pg_enum`/`pg_constraint`/`pg_attribute` discovery with extension and table-row-type exclusion plus fluent model regeneration
+  - [x] PostgreSQL 15–19 enforcement, alteration, lifecycle, reverse-engineering, and scaffolding acceptance
 - [ ] Functions and procedures
 - [ ] Views and materialised views
 - [ ] PostgreSQL-complete migrations SQL generation

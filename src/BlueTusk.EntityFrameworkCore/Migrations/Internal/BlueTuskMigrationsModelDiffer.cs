@@ -31,7 +31,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         !DefinitionsEqual(GetGraphs(source), GetGraphs(target)) ||
         !PartitionDefinitionsEqual(GetPartitions(source), GetPartitions(target)) ||
         BlueTuskRowLevelSecurityModelDiffer.HasDifferences(source, target) ||
-        BlueTuskTableInheritanceModelDiffer.HasDifferences(source, target);
+        BlueTuskTableInheritanceModelDiffer.HasDifferences(source, target) ||
+        BlueTuskUserDefinedTypeModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -45,6 +46,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var before = new List<MigrationOperation>();
         var after = new List<MigrationOperation>();
 
+        BlueTuskUserDefinedTypeModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            before,
+            after);
         AddPartitionDifferences(source, target, baseOperations, before, after);
         BlueTuskRowLevelSecurityModelDiffer.AddDifferences(source, target, baseOperations, after);
         BlueTuskTableInheritanceModelDiffer.AddDifferences(
@@ -99,7 +106,15 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             }
         }
 
-        return before.Concat(baseOperations).Concat(after).ToArray();
+        var ensureSchemas = baseOperations.OfType<EnsureSchemaOperation>();
+        var dropSchemas = baseOperations.OfType<DropSchemaOperation>();
+        var relationalOperations = baseOperations.Where(
+            operation => operation is not EnsureSchemaOperation and not DropSchemaOperation);
+        return ensureSchemas.Concat(before)
+            .Concat(relationalOperations)
+            .Concat(after)
+            .Concat(dropSchemas)
+            .ToArray();
     }
 
     private static IReadOnlyList<BlueTuskPropertyGraphDefinition> GetGraphs(IRelationalModel? model) =>

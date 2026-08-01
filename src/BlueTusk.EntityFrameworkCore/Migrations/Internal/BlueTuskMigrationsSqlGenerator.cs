@@ -5,6 +5,8 @@ using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
+using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
+using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -26,6 +28,36 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskEnumTypeOperation createEnum:
+                Generate(createEnum, builder);
+                break;
+            case AlterBlueTuskEnumTypeOperation alterEnum:
+                Generate(alterEnum, builder);
+                break;
+            case DropBlueTuskEnumTypeOperation dropEnum:
+                Generate(dropEnum, builder);
+                break;
+            case CreateBlueTuskDomainTypeOperation createDomain:
+                Generate(createDomain, builder);
+                break;
+            case AlterBlueTuskDomainTypeOperation alterDomain:
+                Generate(alterDomain, builder);
+                break;
+            case DropBlueTuskDomainTypeOperation dropDomain:
+                Generate(dropDomain, builder);
+                break;
+            case CreateBlueTuskCompositeTypeOperation createComposite:
+                Generate(createComposite, builder);
+                break;
+            case AlterBlueTuskCompositeTypeOperation alterComposite:
+                Generate(alterComposite, builder);
+                break;
+            case DropBlueTuskCompositeTypeOperation dropComposite:
+                Generate(dropComposite, builder);
+                break;
+            case RenameBlueTuskUserDefinedTypeOperation renameType:
+                Generate(renameType, builder);
+                break;
             case AddBlueTuskTableInheritanceOperation addInheritance:
                 Generate(addInheritance, builder);
                 break;
@@ -76,6 +108,370 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
         }
     }
+
+    private void Generate(
+        CreateBlueTuskEnumTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = operation.Definition;
+        BlueTuskUserDefinedTypeMetadata.Validate(definition);
+        builder
+            .Append("CREATE TYPE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name, definition.Schema))
+            .Append(" AS ENUM (");
+        for (var index = 0; index < definition.Labels.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            AppendStringLiteral(builder, definition.Labels[index]);
+        }
+
+        builder.Append(")");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskEnumTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = operation.Definition;
+        var typeName = Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name, definition.Schema);
+        foreach (var change in BlueTuskUserDefinedTypeAlterationPlanner.PlanEnum(
+                     operation.OldDefinition,
+                     definition))
+        {
+            builder.Append("ALTER TYPE ").Append(typeName);
+            if (change.Kind == EnumValueChangeKind.Rename)
+            {
+                builder.Append(" RENAME VALUE ");
+                AppendStringLiteral(builder, change.Value);
+                builder.Append(" TO ");
+                AppendStringLiteral(builder, change.NewValue!);
+                EndStatement(builder);
+            }
+            else
+            {
+                builder.Append(" ADD VALUE ");
+                AppendStringLiteral(builder, change.Value);
+                if (change.Neighbor is not null)
+                {
+                    builder.Append(change.Before ? " BEFORE " : " AFTER ");
+                    AppendStringLiteral(builder, change.Neighbor);
+                }
+
+                EndIndexStatement(builder, suppressTransaction: true);
+            }
+        }
+    }
+
+    private void Generate(
+        DropBlueTuskEnumTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("DROP TYPE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskDomainTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = operation.Definition;
+        BlueTuskUserDefinedTypeMetadata.Validate(definition);
+        builder
+            .Append("CREATE DOMAIN ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name, definition.Schema))
+            .Append(" AS ")
+            .Append(definition.BaseStoreType);
+        if (definition.Collation is not null)
+        {
+            builder.Append(" COLLATE ");
+            AppendQualifiedIdentifier(builder, definition.Collation);
+        }
+
+        if (definition.DefaultSql is not null)
+        {
+            builder.Append(" DEFAULT ").Append(definition.DefaultSql);
+        }
+
+        if (definition.IsNotNull)
+        {
+            builder.Append(" NOT NULL");
+        }
+
+        foreach (var constraint in definition.Constraints.Where(constraint => constraint.IsValidated))
+        {
+            builder.Append(" CONSTRAINT ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(constraint.Name))
+                .Append(" CHECK (")
+                .Append(constraint.CheckSql)
+                .Append(")");
+        }
+
+        EndStatement(builder);
+        foreach (var constraint in definition.Constraints.Where(constraint => !constraint.IsValidated))
+        {
+            GenerateAddDomainConstraint(definition, constraint, builder);
+        }
+    }
+
+    private void Generate(
+        AlterBlueTuskDomainTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = operation.OldDefinition;
+        var definition = operation.Definition;
+        BlueTuskUserDefinedTypeAlterationPlanner.ValidateDomain(oldDefinition, definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        var typeName = helper.DelimitIdentifier(definition.Name, definition.Schema);
+        if (!string.Equals(oldDefinition.DefaultSql, definition.DefaultSql, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER DOMAIN ").Append(typeName)
+                .Append(definition.DefaultSql is null ? " DROP DEFAULT" : " SET DEFAULT ");
+            if (definition.DefaultSql is not null)
+            {
+                builder.Append(definition.DefaultSql);
+            }
+
+            EndStatement(builder);
+        }
+
+        if (oldDefinition.IsNotNull != definition.IsNotNull)
+        {
+            builder.Append("ALTER DOMAIN ").Append(typeName)
+                .Append(definition.IsNotNull ? " SET NOT NULL" : " DROP NOT NULL");
+            EndStatement(builder);
+        }
+
+        var oldByName = oldDefinition.Constraints.ToDictionary(constraint => constraint.Name, StringComparer.Ordinal);
+        var newByName = definition.Constraints.ToDictionary(constraint => constraint.Name, StringComparer.Ordinal);
+        var mappedNames = new Dictionary<string, string>(StringComparer.Ordinal);
+        var usedTargets = new HashSet<string>(StringComparer.Ordinal);
+        foreach (var constraint in oldDefinition.Constraints)
+        {
+            if (newByName.ContainsKey(constraint.Name))
+            {
+                mappedNames[constraint.Name] = constraint.Name;
+                usedTargets.Add(constraint.Name);
+                continue;
+            }
+
+            var candidates = definition.Constraints.Where(candidate =>
+                    !oldByName.ContainsKey(candidate.Name) &&
+                    !usedTargets.Contains(candidate.Name) &&
+                    DomainConstraintBodyEquals(constraint, candidate))
+                .ToArray();
+            if (candidates.Length == 1)
+            {
+                var renamed = candidates[0];
+                builder.Append("ALTER DOMAIN ").Append(typeName)
+                    .Append(" RENAME CONSTRAINT ").Append(helper.DelimitIdentifier(constraint.Name))
+                    .Append(" TO ").Append(helper.DelimitIdentifier(renamed.Name));
+                EndStatement(builder);
+                mappedNames[constraint.Name] = renamed.Name;
+                usedTargets.Add(renamed.Name);
+            }
+        }
+
+        foreach (var constraint in oldDefinition.Constraints)
+        {
+            if (!mappedNames.TryGetValue(constraint.Name, out var targetName))
+            {
+                GenerateDropDomainConstraint(typeName, constraint.Name, builder);
+                continue;
+            }
+
+            var target = newByName[targetName];
+            if (!string.Equals(constraint.CheckSql, target.CheckSql, StringComparison.Ordinal) ||
+                constraint.IsValidated && !target.IsValidated)
+            {
+                GenerateDropDomainConstraint(typeName, targetName, builder);
+                GenerateAddDomainConstraint(definition, target, builder);
+            }
+            else if (!constraint.IsValidated && target.IsValidated)
+            {
+                builder.Append("ALTER DOMAIN ").Append(typeName)
+                    .Append(" VALIDATE CONSTRAINT ").Append(helper.DelimitIdentifier(targetName));
+                EndStatement(builder);
+            }
+        }
+
+        var mappedTargetNames = mappedNames.Values.ToHashSet(StringComparer.Ordinal);
+        foreach (var constraint in definition.Constraints.Where(constraint => !mappedTargetNames.Contains(constraint.Name)))
+        {
+            GenerateAddDomainConstraint(definition, constraint, builder);
+        }
+    }
+
+    private void Generate(
+        DropBlueTuskDomainTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("DROP DOMAIN ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskCompositeTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = operation.Definition;
+        BlueTuskUserDefinedTypeMetadata.Validate(definition);
+        builder.Append("CREATE TYPE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name, definition.Schema))
+            .Append(" AS (");
+        for (var index = 0; index < definition.Attributes.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            AppendCompositeAttribute(builder, definition.Attributes[index]);
+        }
+
+        builder.Append(")");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskCompositeTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = operation.Definition;
+        var helper = Dependencies.SqlGenerationHelper;
+        var typeName = helper.DelimitIdentifier(definition.Name, definition.Schema);
+        foreach (var change in BlueTuskUserDefinedTypeAlterationPlanner.PlanComposite(
+                     operation.OldDefinition,
+                     definition))
+        {
+            builder.Append("ALTER TYPE ").Append(typeName);
+            switch (change.Kind)
+            {
+                case CompositeAttributeChangeKind.Rename:
+                    builder.Append(" RENAME ATTRIBUTE ").Append(helper.DelimitIdentifier(change.Name))
+                        .Append(" TO ").Append(helper.DelimitIdentifier(change.Attribute!.Name));
+                    break;
+                case CompositeAttributeChangeKind.Drop:
+                    builder.Append(" DROP ATTRIBUTE ").Append(helper.DelimitIdentifier(change.Name));
+                    break;
+                case CompositeAttributeChangeKind.Add:
+                    builder.Append(" ADD ATTRIBUTE ");
+                    AppendCompositeAttribute(builder, change.Attribute!);
+                    break;
+                case CompositeAttributeChangeKind.Alter:
+                    builder.Append(" ALTER ATTRIBUTE ").Append(helper.DelimitIdentifier(change.Name))
+                        .Append(" TYPE ").Append(change.Attribute!.StoreType);
+                    if (change.Attribute.Collation is not null)
+                    {
+                        builder.Append(" COLLATE ");
+                        AppendQualifiedIdentifier(builder, change.Attribute.Collation);
+                    }
+
+                    break;
+                default:
+                    throw new InvalidOperationException($"Unknown composite attribute change '{change.Kind}'.");
+            }
+
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        DropBlueTuskCompositeTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("DROP TYPE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskUserDefinedTypeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var keyword = operation.Kind == BlueTuskUserDefinedTypeKind.Domain ? "DOMAIN" : "TYPE";
+        var currentName = operation.Name;
+        var currentSchema = operation.Schema;
+        if (!string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
+        {
+            if (operation.NewSchema is null)
+            {
+                throw new InvalidOperationException("A PostgreSQL user-defined type cannot be moved to an unspecified schema.");
+            }
+
+            builder.Append("ALTER ").Append(keyword).Append(" ")
+                .Append(helper.DelimitIdentifier(currentName, currentSchema))
+                .Append(" SET SCHEMA ").Append(helper.DelimitIdentifier(operation.NewSchema));
+            EndStatement(builder);
+            currentSchema = operation.NewSchema;
+        }
+
+        if (!string.Equals(operation.Name, operation.NewName, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER ").Append(keyword).Append(" ")
+                .Append(helper.DelimitIdentifier(currentName, currentSchema))
+                .Append(" RENAME TO ").Append(helper.DelimitIdentifier(operation.NewName));
+            EndStatement(builder);
+        }
+    }
+
+    private void GenerateAddDomainConstraint(
+        BlueTuskDomainTypeDefinition domain,
+        BlueTuskDomainConstraintDefinition constraint,
+        MigrationCommandListBuilder builder)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("ALTER DOMAIN ")
+            .Append(helper.DelimitIdentifier(domain.Name, domain.Schema))
+            .Append(" ADD CONSTRAINT ").Append(helper.DelimitIdentifier(constraint.Name))
+            .Append(" CHECK (").Append(constraint.CheckSql).Append(")");
+        if (!constraint.IsValidated)
+        {
+            builder.Append(" NOT VALID");
+        }
+
+        EndStatement(builder);
+    }
+
+    private void GenerateDropDomainConstraint(
+        string typeName,
+        string constraintName,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("ALTER DOMAIN ").Append(typeName)
+            .Append(" DROP CONSTRAINT ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(constraintName));
+        EndStatement(builder);
+    }
+
+    private void AppendCompositeAttribute(
+        MigrationCommandListBuilder builder,
+        BlueTuskCompositeAttributeDefinition attribute)
+    {
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(attribute.Name))
+            .Append(" ").Append(attribute.StoreType);
+        if (attribute.Collation is not null)
+        {
+            builder.Append(" COLLATE ");
+            AppendQualifiedIdentifier(builder, attribute.Collation);
+        }
+    }
+
+    private static bool DomainConstraintBodyEquals(
+        BlueTuskDomainConstraintDefinition left,
+        BlueTuskDomainConstraintDefinition right) =>
+        string.Equals(left.CheckSql, right.CheckSql, StringComparison.Ordinal) &&
+        left.IsValidated == right.IsValidated;
+
+    private static void AppendStringLiteral(MigrationCommandListBuilder builder, string value) =>
+        builder.Append("'").Append(EscapeLiteral(value)).Append("'");
 
     private void Generate(
         AddBlueTuskTableInheritanceOperation operation,

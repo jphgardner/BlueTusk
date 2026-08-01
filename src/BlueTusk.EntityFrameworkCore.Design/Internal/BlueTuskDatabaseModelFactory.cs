@@ -11,6 +11,8 @@ using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
+using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
+using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -75,6 +77,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadRowLevelSecurity(connection, tables);
         ReadPartitioning(connection, tables);
         ReadSequences(connection, model, selection);
+        ReadUserDefinedTypes(connection, model, selection);
         ReadPropertyGraphs(connection, model, selection);
         return model;
     }
@@ -873,6 +876,206 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         }
     }
 
+    private static void ReadUserDefinedTypes(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        const string typeSql = """
+            SELECT namespace.nspname,
+                   type_entry.typname,
+                   type_entry.typtype::text,
+                   pg_catalog.format_type(type_entry.typbasetype, type_entry.typtypmod),
+                   CASE
+                     WHEN type_entry.typtype = 'd'
+                      AND type_entry.typcollation <> 0
+                      AND type_entry.typcollation <> base_type.typcollation
+                     THEN collation_namespace.nspname
+                   END,
+                   CASE
+                     WHEN type_entry.typtype = 'd'
+                      AND type_entry.typcollation <> 0
+                      AND type_entry.typcollation <> base_type.typcollation
+                     THEN collation_entry.collname
+                   END,
+                   pg_catalog.pg_get_expr(type_entry.typdefaultbin, 0, true),
+                   type_entry.typnotnull
+            FROM pg_catalog.pg_type AS type_entry
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = type_entry.typnamespace
+            LEFT JOIN pg_catalog.pg_type AS base_type ON base_type.oid = type_entry.typbasetype
+            LEFT JOIN pg_catalog.pg_collation AS collation_entry
+              ON collation_entry.oid = type_entry.typcollation
+            LEFT JOIN pg_catalog.pg_namespace AS collation_namespace
+              ON collation_namespace.oid = collation_entry.collnamespace
+            LEFT JOIN pg_catalog.pg_class AS composite_class ON composite_class.oid = type_entry.typrelid
+            WHERE (type_entry.typtype IN ('e', 'd')
+                   OR (type_entry.typtype = 'c' AND composite_class.relkind = 'c'))
+              AND namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_type'::pg_catalog.regclass
+                    AND dependency.objid = type_entry.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, type_entry.typname
+            """;
+        var enums = new Dictionary<(string Schema, string Name), List<string>>();
+        var domains = new Dictionary<(string Schema, string Name), DomainSeed>();
+        var composites = new Dictionary<
+            (string Schema, string Name),
+            List<BlueTuskCompositeAttributeDefinition>>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = typeSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var key = (reader.GetString(0), reader.GetString(1));
+                if (!selection.IncludesSchemaObject(key.Item1))
+                {
+                    continue;
+                }
+
+                switch (reader.GetString(2))
+                {
+                    case "e":
+                        enums.Add(key, []);
+                        break;
+                    case "d":
+                        domains.Add(key, new DomainSeed(
+                            reader.GetString(3),
+                            reader.IsDBNull(4)
+                                ? null
+                                : $"{reader.GetString(4)}.{reader.GetString(5)}",
+                            GetNullableString(reader, 6),
+                            reader.GetBoolean(7),
+                            []));
+                        break;
+                    case "c":
+                        composites.Add(key, []);
+                        break;
+                }
+            }
+        }
+
+        const string enumSql = """
+            SELECT namespace.nspname, type_entry.typname, enum_entry.enumlabel
+            FROM pg_catalog.pg_enum AS enum_entry
+            JOIN pg_catalog.pg_type AS type_entry ON type_entry.oid = enum_entry.enumtypid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = type_entry.typnamespace
+            ORDER BY namespace.nspname, type_entry.typname, enum_entry.enumsortorder
+            """;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = enumSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                if (enums.TryGetValue((reader.GetString(0), reader.GetString(1)), out var labels))
+                {
+                    labels.Add(reader.GetString(2));
+                }
+            }
+        }
+
+        const string domainConstraintSql = """
+            SELECT namespace.nspname,
+                   type_entry.typname,
+                   constraint_entry.conname,
+                   pg_catalog.pg_get_expr(constraint_entry.conbin, 0, true),
+                   constraint_entry.convalidated
+            FROM pg_catalog.pg_constraint AS constraint_entry
+            JOIN pg_catalog.pg_type AS type_entry ON type_entry.oid = constraint_entry.contypid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = type_entry.typnamespace
+            WHERE constraint_entry.contype = 'c'
+            ORDER BY namespace.nspname, type_entry.typname, constraint_entry.conname
+            """;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = domainConstraintSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                if (domains.TryGetValue((reader.GetString(0), reader.GetString(1)), out var domain))
+                {
+                    domain.Constraints.Add(new BlueTuskDomainConstraintDefinition(
+                        reader.GetString(2),
+                        reader.GetString(3),
+                        reader.GetBoolean(4)));
+                }
+            }
+        }
+
+        const string compositeAttributeSql = """
+            SELECT namespace.nspname,
+                   type_entry.typname,
+                   attribute_entry.attname,
+                   pg_catalog.format_type(attribute_entry.atttypid, attribute_entry.atttypmod),
+                   CASE
+                     WHEN attribute_entry.attcollation <> 0
+                      AND attribute_entry.attcollation <> attribute_type.typcollation
+                     THEN collation_namespace.nspname
+                   END,
+                   CASE
+                     WHEN attribute_entry.attcollation <> 0
+                      AND attribute_entry.attcollation <> attribute_type.typcollation
+                     THEN collation_entry.collname
+                   END
+            FROM pg_catalog.pg_type AS type_entry
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = type_entry.typnamespace
+            JOIN pg_catalog.pg_class AS composite_class
+              ON composite_class.oid = type_entry.typrelid AND composite_class.relkind = 'c'
+            JOIN pg_catalog.pg_attribute AS attribute_entry
+              ON attribute_entry.attrelid = composite_class.oid
+             AND attribute_entry.attnum > 0
+             AND NOT attribute_entry.attisdropped
+            JOIN pg_catalog.pg_type AS attribute_type ON attribute_type.oid = attribute_entry.atttypid
+            LEFT JOIN pg_catalog.pg_collation AS collation_entry
+              ON collation_entry.oid = attribute_entry.attcollation
+            LEFT JOIN pg_catalog.pg_namespace AS collation_namespace
+              ON collation_namespace.oid = collation_entry.collnamespace
+            ORDER BY namespace.nspname, type_entry.typname, attribute_entry.attnum
+            """;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = compositeAttributeSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                if (composites.TryGetValue((reader.GetString(0), reader.GetString(1)), out var attributes))
+                {
+                    attributes.Add(new BlueTuskCompositeAttributeDefinition(
+                        reader.GetString(2),
+                        reader.GetString(3),
+                        reader.IsDBNull(4)
+                            ? null
+                            : $"{reader.GetString(4)}.{reader.GetString(5)}"));
+                }
+            }
+        }
+
+        var definitions = new BlueTuskUserDefinedTypeDefinitionSet(
+            enums.Select(item => new BlueTuskEnumTypeDefinition(item.Key.Name, item.Key.Schema, item.Value)).ToArray(),
+            domains.Select(item => new BlueTuskDomainTypeDefinition(
+                item.Key.Name,
+                item.Key.Schema,
+                item.Value.BaseStoreType,
+                item.Value.Collation,
+                item.Value.DefaultSql,
+                item.Value.IsNotNull,
+                item.Value.Constraints)).ToArray(),
+            composites.Select(item => new BlueTuskCompositeTypeDefinition(
+                item.Key.Name,
+                item.Key.Schema,
+                item.Value)).ToArray());
+        if (definitions.Enums.Count > 0 || definitions.Domains.Count > 0 || definitions.Composites.Count > 0)
+        {
+            model[BlueTuskUserDefinedTypeMetadata.AnnotationName] =
+                BlueTuskUserDefinedTypeMetadata.Serialize(definitions);
+        }
+    }
+
     private static BlueTuskPropertyGraphDefinition ToDefinition(
         BlueTuskPropertyGraphSchema graph)
     {
@@ -955,6 +1158,13 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         string BoundSql);
 
     private readonly record struct PartitionKey(BlueTuskPartitionStrategy Strategy, string Sql);
+
+    private sealed record DomainSeed(
+        string BaseStoreType,
+        string? Collation,
+        string? DefaultSql,
+        bool IsNotNull,
+        List<BlueTuskDomainConstraintDefinition> Constraints);
 
     private sealed class Selection
     {

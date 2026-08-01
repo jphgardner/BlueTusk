@@ -2,6 +2,7 @@ using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
+using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations.Design;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -23,6 +24,81 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskEnumTypeOperation createEnum:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskEnumType(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(createEnum.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskEnumTypeOperation alterEnum:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskEnumType(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(alterEnum.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(alterEnum.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskEnumTypeOperation dropEnum:
+                GenerateDropType("DropBlueTuskEnumType", dropEnum.Name, dropEnum.Schema, builder);
+                break;
+            case CreateBlueTuskDomainTypeOperation createDomain:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskDomainType(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(createDomain.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskDomainTypeOperation alterDomain:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskDomainType(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(alterDomain.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(alterDomain.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskDomainTypeOperation dropDomain:
+                GenerateDropType("DropBlueTuskDomainType", dropDomain.Name, dropDomain.Schema, builder);
+                break;
+            case CreateBlueTuskCompositeTypeOperation createComposite:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskCompositeType(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(createComposite.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskCompositeTypeOperation alterComposite:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskCompositeType(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(alterComposite.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskUserDefinedTypeMetadata.Serialize(alterComposite.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskCompositeTypeOperation dropComposite:
+                GenerateDropType("DropBlueTuskCompositeType", dropComposite.Name, dropComposite.Schema, builder);
+                break;
+            case RenameBlueTuskUserDefinedTypeOperation renameType:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskUserDefinedType(")
+                    .Append("global::BlueTusk.EntityFrameworkCore.UserDefinedTypes.BlueTuskUserDefinedTypeKind.")
+                    .Append(renameType.Kind.ToString())
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameType.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameType.NewName))
+                    .Append(", ")
+                    .Append(Literal(renameType.Schema))
+                    .Append(", ")
+                    .Append(Literal(renameType.NewSchema))
+                    .AppendLine(");");
+                break;
             case AddBlueTuskTableInheritanceOperation addInheritance:
                 builder
                     .Append("migrationBuilder.AddBlueTuskTableInheritance(")
@@ -198,6 +274,19 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
     private string Literal(string? value) =>
         value is null ? "null" : Dependencies.CSharpHelper.Literal(value);
+
+    private void GenerateDropType(
+        string method,
+        string name,
+        string? schema,
+        IndentedStringBuilder builder)
+    {
+        builder.Append("migrationBuilder.").Append(method).Append("(")
+            .Append(Dependencies.CSharpHelper.Literal(name))
+            .Append(", ")
+            .Append(Literal(schema))
+            .AppendLine(");");
+    }
 
     private static string Literal(bool? value) =>
         value switch

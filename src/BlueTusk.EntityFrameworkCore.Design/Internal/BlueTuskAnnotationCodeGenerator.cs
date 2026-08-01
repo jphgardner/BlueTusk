@@ -3,6 +3,7 @@ using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
+using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -26,6 +27,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskPropertyGraphModelBuilderExtensions.HasBlueTuskPropertyGraphs),
                 serializedDefinitions);
+        }
+
+        if (annotation.Name == BlueTuskUserDefinedTypeMetadata.AnnotationName &&
+            annotation.Value is string serializedTypes)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskUserDefinedTypeModelBuilderExtensions.HasBlueTuskUserDefinedTypes),
+                serializedTypes);
         }
 
         return base.GenerateFluentApi(model, annotation);
