@@ -184,3 +184,31 @@ native codec validates pair counts, length prefixes, UTF-8, duplicate keys, and
 trailing bytes. Runtime catalogue composition supplies `BlueTuskHStore[]` with
 no array-specific registration. The live gate covers scalar and array binary
 round trips plus key lookup, existence, and null-definition semantics.
+
+## ltree preview
+
+`BlueTusk.Extensions.LTree` covers all three public ltree data types: label
+paths, hierarchical patterns, and position-independent text patterns.
+
+```sql
+CREATE EXTENSION IF NOT EXISTS ltree;
+```
+
+```csharp
+using BlueTusk.Data;
+using BlueTusk.Extensions.LTree;
+
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UseLTree()
+    .Build();
+var path = new BlueTuskLTree("Top.Countries.Europe.Russia");
+var query = new BlueTuskLQuery("Top.*{,2}.Europe.Russ@*");
+```
+
+`BlueTuskLTree`, `BlueTuskLQuery`, and `BlueTuskLTxtQuery` keep separate CLR
+identities so parameter inference cannot confuse their PostgreSQL operators.
+Their binary codecs implement PostgreSQL's version byte followed by canonical
+UTF-8 text. PostgreSQL remains the grammar authority because valid ltree label
+characters depend on the database locale. The live gate resolves all three
+catalogue types and exercises arrays, hierarchical matching,
+position-independent matching, and path-level functions.
