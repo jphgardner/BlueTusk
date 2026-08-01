@@ -114,6 +114,43 @@ jobs:
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
 
+  provider-stress:
+    name: PostgreSQL 19 provider stress
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL 19
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Run elevated-concurrency provider stress
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests
+          BLUETUSK_STRESS_SCALE: 8
+        run: >-
+          dotnet test tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj
+          --configuration Release
+          --no-restore
+          --filter 'FullyQualifiedName!~ReplicationStressTests'
+          --logger trx
+          --results-directory artifacts/test-results/provider-stress
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
   oauth-authentication:
     name: PostgreSQL 18 native OAUTHBEARER
     runs-on: ubuntu-latest

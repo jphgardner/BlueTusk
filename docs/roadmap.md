@@ -532,7 +532,9 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] PostgreSQL 18+ native OAUTHBEARER with TLS enforcement, ready-token callbacks, sensitive buffers, error acknowledgement, and real validator acceptance
   - [x] GSSAPI/Kerberos and SSPI with platform security contexts, sensitive binary-token handling, mutual authentication, and real KDC acceptance
   - [x] Optional AWS RDS/Aurora, Azure Database for PostgreSQL, and Google Cloud SQL identity adapters with SDK-native credential chains, TLS-before-token enforcement, per-physical-connection refresh, deterministic contract tests, and opt-in account acceptance
-- [ ] Stress testing
+- [x] Stress testing
+  - [x] PostgreSQL 15–19 pool churn, cancellation, preparation, batch, sequential-reader, pipeline, and replication lifecycle stress
+  - [x] Scheduled/manual PostgreSQL 19 elevated-concurrency provider stress plus separate 1,000-epoch replication endurance
 - [ ] Competitive benchmarks
 - [ ] Complete documentation
 - [x] Supported-version CI

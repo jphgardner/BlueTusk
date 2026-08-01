@@ -63,7 +63,15 @@ repository or test output. Provider setup and lifecycle details are in the
 
 The compatibility project carries a test-only Npgsql dependency and runs equivalent value, parameter, transaction-error, cancellation, reuse, and schema-metadata operations through both providers. PostgreSQL internal type names (`int4`, `bool`) and SQL aliases (`integer`, `boolean`) are normalized before comparison; any other difference fails the suite and must be resolved against PostgreSQL behavior.
 
-The default stress scale runs bounded concurrent pool churn, cancellation storms, preparation, batches, and partially consumed sequential streams. Set `BLUETUSK_STRESS_SCALE` to a positive integer to multiply the worker count for longer soak runs.
+The default stress scale runs bounded concurrent pool churn, cancellation
+storms, preparation, batches, partially consumed sequential streams, ordered
+pipeline groups, pipeline cancellation recovery, and replication
+cancellation/disposal. Set `BLUETUSK_STRESS_SCALE` to a positive integer to
+multiply the worker count. The scheduled/manual PostgreSQL 19 provider-stress
+job uses scale 8 for the pooled ADO.NET and Client pipeline tests. Replication
+is excluded from that high-connection-count job because its durability and
+recovery surface has the separate 1,000-epoch endurance job below; replication
+cancellation/disposal stress still runs in every PostgreSQL 15–19 matrix job.
 
 Set `BLUETUSK_REPLICATION_DURABILITY_EPOCHS` to a positive integer to extend
 the logical replication reconnect/resume test. Each epoch opens a new dedicated
