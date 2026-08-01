@@ -376,7 +376,11 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] PostgreSQL-complete migrations SQL generation
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
 - [ ] Remaining product-spec schema objects
-  - [ ] Event triggers
+  - [x] Event triggers
+    - [x] Typed DDL-start/end, SQL-drop, table-rewrite, and PostgreSQL 17+ login events with command-tag filters and firing modes
+    - [x] Routine-last create, migration-first drop, body replacement, rename, enable/disable/replica/always operations, generated migration C#, and default-`RESTRICT` removal
+    - [x] Direct `pg_event_trigger` discovery with function identity, tags, firing mode, extension exclusion, schema-filter behavior, and fluent C# scaffolding
+    - [x] PostgreSQL 15–19 execution, lifecycle, catalogue round-tripping, scaffolding, and PostgreSQL 17+ login capability acceptance
   - [x] Subscriptions
   - [x] Foreign-data wrappers, servers, user mappings, and foreign tables
   - [x] Operators, operator classes, operator families, casts, and aggregates

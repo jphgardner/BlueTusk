@@ -5,6 +5,8 @@ using BlueTusk.Data;
 using BlueTusk.Data.Schema;
 using BlueTusk.EntityFrameworkCore.Collations;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.EventTriggers;
+using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions;
@@ -110,6 +112,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadCollations(connection, model, selection);
         ReadUserDefinedTypes(connection, model, selection);
         ReadRoutines(connection, model, selection);
+        ReadEventTriggers(connection, model, selection);
         ReadSchemaPrograms(connection, model, selection);
         ReadViews(connection, model, tables, selection);
         ReadPropertyGraphs(connection, model, selection);
@@ -2107,6 +2110,72 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         {
             model[BlueTuskRoutineMetadata.AnnotationName] =
                 BlueTuskRoutineMetadata.Serialize(new BlueTuskRoutineDefinitionSet(definitions));
+        }
+    }
+
+    private static void ReadEventTriggers(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT event_trigger.evtname,
+                   event_trigger.evtevent,
+                   function_namespace.nspname,
+                   function_entry.proname,
+                   event_trigger.evtenabled::pg_catalog.text,
+                   event_trigger.evttags
+            FROM pg_catalog.pg_event_trigger AS event_trigger
+            JOIN pg_catalog.pg_proc AS function_entry ON function_entry.oid = event_trigger.evtfoid
+            JOIN pg_catalog.pg_namespace AS function_namespace
+              ON function_namespace.oid = function_entry.pronamespace
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM pg_catalog.pg_depend AS dependency
+                WHERE dependency.classid = 'pg_catalog.pg_event_trigger'::pg_catalog.regclass
+                  AND dependency.objid = event_trigger.oid
+                  AND dependency.deptype = 'e')
+            ORDER BY event_trigger.evtname
+            """;
+        var definitions = new List<BlueTuskEventTriggerDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var functionSchema = reader.GetString(2);
+            if (!selection.IncludesSchemaObject(functionSchema))
+            {
+                continue;
+            }
+
+            definitions.Add(new BlueTuskEventTriggerDefinition(
+                reader.GetString(0),
+                reader.GetString(1) switch
+                {
+                    "ddl_command_start" => BlueTuskEventTriggerEvent.DdlCommandStart,
+                    "ddl_command_end" => BlueTuskEventTriggerEvent.DdlCommandEnd,
+                    "sql_drop" => BlueTuskEventTriggerEvent.SqlDrop,
+                    "table_rewrite" => BlueTuskEventTriggerEvent.TableRewrite,
+                    "login" => BlueTuskEventTriggerEvent.Login,
+                    var value => throw new InvalidOperationException(
+                        $"PostgreSQL returned unknown event-trigger event '{value}'."),
+                },
+                new BlueTuskEventTriggerFunction(reader.GetString(3), functionSchema),
+                reader.IsDBNull(5) ? [] : ParsePostgreSqlArray(reader.GetValue(5)),
+                reader.GetString(4) switch
+                {
+                    "D" => BlueTuskEventTriggerEnabledMode.Disabled,
+                    "R" => BlueTuskEventTriggerEnabledMode.Replica,
+                    "A" => BlueTuskEventTriggerEnabledMode.Always,
+                    _ => BlueTuskEventTriggerEnabledMode.Origin,
+                }));
+        }
+
+        if (definitions.Count > 0)
+        {
+            model[BlueTuskEventTriggerMetadata.AnnotationName] =
+                BlueTuskEventTriggerMetadata.Serialize(new BlueTuskEventTriggerDefinitionSet(definitions));
         }
     }
 

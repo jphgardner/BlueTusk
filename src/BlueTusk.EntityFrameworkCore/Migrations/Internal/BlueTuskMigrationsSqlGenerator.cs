@@ -1,6 +1,8 @@
 using System.Text;
 using BlueTusk.EntityFrameworkCore.Collations;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.EventTriggers;
+using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
@@ -186,6 +188,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case AlterBlueTuskTriggerEnabledModeOperation alterTriggerMode:
                 Generate(alterTriggerMode, builder);
+                break;
+            case CreateBlueTuskEventTriggerOperation createEventTrigger:
+                Generate(createEventTrigger, builder);
+                break;
+            case DropBlueTuskEventTriggerOperation dropEventTrigger:
+                Generate(dropEventTrigger, builder);
+                break;
+            case RenameBlueTuskEventTriggerOperation renameEventTrigger:
+                Generate(renameEventTrigger, builder);
+                break;
+            case AlterBlueTuskEventTriggerEnabledModeOperation alterEventTriggerMode:
+                Generate(alterEventTriggerMode, builder);
                 break;
             case CreateBlueTuskRuleOperation createRule:
                 Generate(createRule, builder);
@@ -2701,6 +2715,101 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 .Append(parameters[index].Value);
         }
     }
+
+    private void Generate(CreateBlueTuskEventTriggerOperation operation, MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskEventTriggerMetadata.Normalize(operation.Definition);
+        BlueTuskEventTriggerMetadata.Validate(definition);
+        if (definition.Event == BlueTuskEventTriggerEvent.Login)
+        {
+            GenerateMinimumVersionGuarded(
+                Array.Empty<string>(),
+                170000,
+                $"BlueTusk event trigger '{definition.Name}' uses the login event and requires PostgreSQL 17 or later.",
+                "$BlueTuskEventTrigger$",
+                builder);
+        }
+
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("CREATE EVENT TRIGGER ").Append(helper.DelimitIdentifier(definition.Name))
+            .Append(" ON ").Append(EventTriggerEventSql(definition.Event));
+        if (definition.Tags.Count > 0)
+        {
+            builder.Append(" WHEN TAG IN (");
+            for (var index = 0; index < definition.Tags.Count; index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                AppendStringLiteral(builder, definition.Tags[index]);
+            }
+
+            builder.Append(")");
+        }
+
+        builder.Append(" EXECUTE FUNCTION ")
+            .Append(helper.DelimitIdentifier(definition.Function.Name, definition.Function.Schema))
+            .Append("()");
+        EndStatement(builder);
+        if (definition.EnabledMode != BlueTuskEventTriggerEnabledMode.Origin)
+        {
+            Generate(new AlterBlueTuskEventTriggerEnabledModeOperation
+            {
+                Name = definition.Name,
+                EnabledMode = definition.EnabledMode,
+            }, builder);
+        }
+    }
+
+    private void Generate(DropBlueTuskEventTriggerOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP EVENT TRIGGER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(RenameBlueTuskEventTriggerOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        builder.Append("ALTER EVENT TRIGGER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RENAME TO ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskEventTriggerEnabledModeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("ALTER EVENT TRIGGER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(operation.EnabledMode switch
+            {
+                BlueTuskEventTriggerEnabledMode.Origin => " ENABLE",
+                BlueTuskEventTriggerEnabledMode.Disabled => " DISABLE",
+                BlueTuskEventTriggerEnabledMode.Replica => " ENABLE REPLICA",
+                BlueTuskEventTriggerEnabledMode.Always => " ENABLE ALWAYS",
+                _ => throw new InvalidOperationException("Unknown PostgreSQL event-trigger enabled mode."),
+            });
+        EndStatement(builder);
+    }
+
+    private static string EventTriggerEventSql(BlueTuskEventTriggerEvent value) => value switch
+    {
+        BlueTuskEventTriggerEvent.DdlCommandStart => "ddl_command_start",
+        BlueTuskEventTriggerEvent.DdlCommandEnd => "ddl_command_end",
+        BlueTuskEventTriggerEvent.SqlDrop => "sql_drop",
+        BlueTuskEventTriggerEvent.TableRewrite => "table_rewrite",
+        BlueTuskEventTriggerEvent.Login => "login",
+        _ => throw new InvalidOperationException("Unknown PostgreSQL event-trigger event."),
+    };
 
     private void Generate(CreateBlueTuskTriggerOperation operation, MigrationCommandListBuilder builder)
     {

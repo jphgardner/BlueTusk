@@ -1,4 +1,5 @@
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
@@ -445,6 +446,31 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(alterTriggerMode.EnabledMode.ToString())
                     .Append(", ")
                     .Append(Literal(alterTriggerMode.Schema))
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskEventTriggerOperation createEventTrigger:
+                builder.Append("migrationBuilder.CreateBlueTuskEventTrigger(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskEventTriggerMetadata.Serialize(createEventTrigger.Definition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskEventTriggerOperation dropEventTrigger:
+                builder.Append("migrationBuilder.DropBlueTuskEventTrigger(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropEventTrigger.Name))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskEventTriggerOperation renameEventTrigger:
+                builder.Append("migrationBuilder.RenameBlueTuskEventTrigger(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameEventTrigger.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameEventTrigger.NewName))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskEventTriggerEnabledModeOperation alterEventTriggerMode:
+                builder.Append("migrationBuilder.AlterBlueTuskEventTriggerEnabledMode(")
+                    .Append(Dependencies.CSharpHelper.Literal(alterEventTriggerMode.Name))
+                    .Append(", global::BlueTusk.EntityFrameworkCore.EventTriggers.BlueTuskEventTriggerEnabledMode.")
+                    .Append(alterEventTriggerMode.EnabledMode.ToString())
                     .AppendLine(");");
                 break;
             case CreateBlueTuskRuleOperation createRule:

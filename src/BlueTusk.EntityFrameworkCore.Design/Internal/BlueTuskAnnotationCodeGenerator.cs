@@ -1,4 +1,5 @@
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
+using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
@@ -54,6 +55,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskForeignDataModelBuilderExtensions.HasBlueTuskForeignData),
                 serializedForeignData);
+        }
+
+        if (annotation.Name == BlueTuskEventTriggerMetadata.AnnotationName &&
+            annotation.Value is string serializedEventTriggers)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskEventTriggerModelBuilderExtensions.HasBlueTuskEventTriggers),
+                serializedEventTriggers);
         }
 
         if (annotation.Name == BlueTuskPropertyGraphMetadata.AnnotationName &&

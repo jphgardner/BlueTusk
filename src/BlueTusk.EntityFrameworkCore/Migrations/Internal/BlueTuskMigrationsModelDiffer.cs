@@ -43,7 +43,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskPublicationModelDiffer.HasDifferences(source, target) ||
         BlueTuskSubscriptionModelDiffer.HasDifferences(source, target) ||
         BlueTuskForeignDataModelDiffer.HasDifferences(source, target) ||
-        BlueTuskSchemaProgramModelDiffer.HasDifferences(source, target);
+        BlueTuskSchemaProgramModelDiffer.HasDifferences(source, target) ||
+        BlueTuskEventTriggerModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -76,6 +77,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var foreignDataAfter = new List<MigrationOperation>();
         var schemaProgramBefore = new List<MigrationOperation>();
         var schemaProgramAfter = new List<MigrationOperation>();
+        var eventTriggerBefore = new List<MigrationOperation>();
+        var eventTriggerAfter = new List<MigrationOperation>();
         var before = new List<MigrationOperation>();
         var after = new List<MigrationOperation>();
 
@@ -142,6 +145,11 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             target,
             schemaProgramBefore,
             schemaProgramAfter);
+        BlueTuskEventTriggerModelDiffer.AddDifferences(
+            source,
+            target,
+            eventTriggerBefore,
+            eventTriggerAfter);
         BlueTuskExclusionConstraintModelDiffer.AddDifferences(
             source,
             target,
@@ -206,7 +214,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var dropSchemas = baseOperations.OfType<DropSchemaOperation>();
         var relationalOperations = baseOperations.Where(
             operation => operation is not EnsureSchemaOperation and not DropSchemaOperation);
-        var operations = ensureSchemas.Concat(extensionBefore)
+        var operations = eventTriggerBefore.Concat(ensureSchemas).Concat(extensionBefore)
             .Concat(collationBefore)
             .Concat(typeBefore)
             .Concat(subscriptionBefore)
@@ -232,6 +240,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             .Concat(collationAfter)
             .Concat(extensionAfter)
             .Concat(dropSchemas)
+            .Concat(eventTriggerAfter)
             .ToArray();
         var ensuredSchemaNames = new HashSet<string>(StringComparer.Ordinal);
         return operations.Where(operation =>
