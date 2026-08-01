@@ -131,6 +131,8 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         Native("jsonpath", typeof(BlueTuskJsonPath), BlueTuskBuiltInTypes.JsonPath);
 
     private static readonly RelationalTypeMapping Oid = Native("oid", typeof(uint), BlueTuskBuiltInTypes.Oid);
+    private static readonly RelationalTypeMapping Oid8 =
+        Native("oid8", typeof(BlueTuskObjectIdentifier64), BlueTuskBuiltInTypes.Oid8);
     private static readonly RelationalTypeMapping RegProc =
         Native("regproc", typeof(BlueTuskRegProc), BlueTuskBuiltInTypes.RegProc);
     private static readonly RelationalTypeMapping RegProcedure =
@@ -153,6 +155,8 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         Native("regrole", typeof(BlueTuskRegRole), BlueTuskBuiltInTypes.RegRole);
     private static readonly RelationalTypeMapping RegCollation =
         Native("regcollation", typeof(BlueTuskRegCollation), BlueTuskBuiltInTypes.RegCollation);
+    private static readonly RelationalTypeMapping RegDatabase =
+        Native("regdatabase", typeof(BlueTuskRegDatabase), BlueTuskBuiltInTypes.RegDatabase);
 
     private static readonly RelationalTypeMapping Xid =
         Native("xid", typeof(BlueTuskTransactionId), BlueTuskBuiltInTypes.Xid);
@@ -215,6 +219,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(TimeSpan)] = TimeSpan,
             [typeof(BlueTuskRecord)] = Record,
             [typeof(uint)] = Oid,
+            [typeof(BlueTuskObjectIdentifier64)] = Oid8,
             [typeof(BlueTuskInterval)] = NativeInterval,
             [typeof(BlueTuskTimeWithTimeZone)] = TimeWithTimeZone,
             [typeof(BlueTuskBitString)] = Varbit,
@@ -246,6 +251,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(BlueTuskRegNamespace)] = RegNamespace,
             [typeof(BlueTuskRegRole)] = RegRole,
             [typeof(BlueTuskRegCollation)] = RegCollation,
+            [typeof(BlueTuskRegDatabase)] = RegDatabase,
             [typeof(BlueTuskTransactionId)] = Xid,
             [typeof(BlueTuskCommandId)] = Cid,
             [typeof(BlueTuskFullTransactionId)] = Xid8,
@@ -292,6 +298,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(DateTimeOffset)] = BlueTuskBuiltInTypes.TimestampWithTimeZone,
             [typeof(DateOnly)] = BlueTuskBuiltInTypes.Date,
             [typeof(uint)] = BlueTuskBuiltInTypes.Oid,
+            [typeof(BlueTuskObjectIdentifier64)] = BlueTuskBuiltInTypes.Oid8,
             [typeof(BlueTuskInterval)] = BlueTuskBuiltInTypes.Interval,
             [typeof(BlueTuskTimeWithTimeZone)] = BlueTuskBuiltInTypes.TimeWithTimeZone,
             [typeof(BlueTuskBitString)] = BlueTuskBuiltInTypes.Varbit,
@@ -323,6 +330,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(BlueTuskRegNamespace)] = BlueTuskBuiltInTypes.RegNamespace,
             [typeof(BlueTuskRegRole)] = BlueTuskBuiltInTypes.RegRole,
             [typeof(BlueTuskRegCollation)] = BlueTuskBuiltInTypes.RegCollation,
+            [typeof(BlueTuskRegDatabase)] = BlueTuskBuiltInTypes.RegDatabase,
             [typeof(BlueTuskTransactionId)] = BlueTuskBuiltInTypes.Xid,
             [typeof(BlueTuskCommandId)] = BlueTuskBuiltInTypes.Cid,
             [typeof(BlueTuskFullTransactionId)] = BlueTuskBuiltInTypes.Xid8,
@@ -403,6 +411,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             ["tsquery"] = BlueTuskBuiltInTypes.TextSearchQuery,
             ["jsonpath"] = BlueTuskBuiltInTypes.JsonPath,
             ["oid"] = BlueTuskBuiltInTypes.Oid,
+            ["oid8"] = BlueTuskBuiltInTypes.Oid8,
             ["regproc"] = BlueTuskBuiltInTypes.RegProc,
             ["regprocedure"] = BlueTuskBuiltInTypes.RegProcedure,
             ["regoper"] = BlueTuskBuiltInTypes.RegOper,
@@ -414,6 +423,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             ["regnamespace"] = BlueTuskBuiltInTypes.RegNamespace,
             ["regrole"] = BlueTuskBuiltInTypes.RegRole,
             ["regcollation"] = BlueTuskBuiltInTypes.RegCollation,
+            ["regdatabase"] = BlueTuskBuiltInTypes.RegDatabase,
             ["xid"] = BlueTuskBuiltInTypes.Xid,
             ["cid"] = BlueTuskBuiltInTypes.Cid,
             ["xid8"] = BlueTuskBuiltInTypes.Xid8,
@@ -497,6 +507,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             ["tsquery"] = TextSearchQuery,
             ["jsonpath"] = JsonPath,
             ["oid"] = Oid,
+            ["oid8"] = Oid8,
             ["regproc"] = RegProc,
             ["regprocedure"] = RegProcedure,
             ["regoper"] = RegOper,
@@ -508,6 +519,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             ["regnamespace"] = RegNamespace,
             ["regrole"] = RegRole,
             ["regcollation"] = RegCollation,
+            ["regdatabase"] = RegDatabase,
             ["xid"] = Xid,
             ["cid"] = Cid,
             ["xid8"] = Xid8,

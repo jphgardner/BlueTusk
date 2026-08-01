@@ -9,6 +9,9 @@ public readonly record struct BlueTuskCommandId(uint Value);
 /// <summary>A PostgreSQL non-wrapping 64-bit transaction identifier (<c>xid8</c>).</summary>
 public readonly record struct BlueTuskFullTransactionId(ulong Value);
 
+/// <summary>A PostgreSQL 64-bit object identifier (<c>oid8</c>).</summary>
+public readonly record struct BlueTuskObjectIdentifier64(ulong Value);
+
 /// <summary>A PostgreSQL transaction visibility snapshot.</summary>
 public sealed class BlueTuskTransactionSnapshot :
     IEquatable<BlueTuskTransactionSnapshot>

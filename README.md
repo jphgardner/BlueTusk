@@ -84,7 +84,7 @@ The current `0.3.0-preview.1` implementation provides:
 - an explicit protocol connection state machine;
 - catalogue-friendly type descriptors and unknown-value preservation;
 - text and binary codecs for core scalar boolean, integer, floating-point, numeric, character, binary, UUID, temporal, JSON, and XML values;
-- advanced temporal, bit-string, transaction, object-identifier, network, geometric, money, full-text, JSONPath, and system-catalogue values;
+- advanced temporal, bit-string, transaction, object-identifier (including PostgreSQL 19 `oid8` and `regdatabase`), network, geometric, money, full-text, JSONPath, and system-catalogue values;
 - per-data-source catalogue discovery with explicit reload and unknown-value preservation;
 - catalogue-composed arrays, enums, domains, named and anonymous records, ranges, and multiranges;
 - convention- and attribute-based CLR enum and composite mappings plus public runtime codec registration;

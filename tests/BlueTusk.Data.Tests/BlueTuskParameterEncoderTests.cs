@@ -318,6 +318,76 @@ public sealed class BlueTuskParameterEncoderTests
     }
 
     [Fact]
+    public void Encodes_PostgreSQL_19_oid8_and_regdatabase_values_and_arrays()
+    {
+        var types = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.Oid8.Id,
+                Schema = "pg_catalog",
+                Name = "oid8",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = new BlueTuskTypeId(6442),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(6442),
+                Schema = "pg_catalog",
+                Name = "_oid8",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.Oid8.Id,
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.RegDatabase.Id,
+                Schema = "pg_catalog",
+                Name = "regdatabase",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = new BlueTuskTypeId(6491),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(6491),
+                Schema = "pg_catalog",
+                Name = "_regdatabase",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.RegDatabase.Id,
+            },
+        ]);
+
+        var oid8 = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskObjectIdentifier64>(
+                new BlueTuskObjectIdentifier64(ulong.MaxValue)),
+            types);
+        var symbolicDatabase = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegDatabase>(new BlueTuskRegDatabase("template1")),
+            types);
+        var numericDatabase = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegDatabase>(new BlueTuskRegDatabase(1)),
+            types);
+        var oid8Array = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskObjectIdentifier64[]>(
+                [new BlueTuskObjectIdentifier64(0), new BlueTuskObjectIdentifier64(ulong.MaxValue)]),
+            types);
+
+        Assert.Equal(6437U, oid8.TypeOid);
+        Assert.Equal(1, oid8.FormatCode);
+        Assert.Equal(ulong.MaxValue, BinaryPrimitives.ReadUInt64BigEndian(oid8.Value!.Value.Span));
+        Assert.Equal(6490U, symbolicDatabase.TypeOid);
+        Assert.Equal(0, symbolicDatabase.FormatCode);
+        Assert.Equal("template1", Encoding.UTF8.GetString(symbolicDatabase.Value!.Value.Span));
+        Assert.Equal(1, numericDatabase.FormatCode);
+        Assert.Equal(1U, BinaryPrimitives.ReadUInt32BigEndian(numericDatabase.Value!.Value.Span));
+        Assert.Equal(6442U, oid8Array.TypeOid);
+        Assert.Equal(1, oid8Array.FormatCode);
+    }
+
+    [Fact]
     public void Encodes_non_empty_catalogue_vector_arrays_in_binary_and_empty_values_in_text()
     {
         var types = BlueTuskTypeCatalogue.BuildRegistry(

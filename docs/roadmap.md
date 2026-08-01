@@ -279,6 +279,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Complete PostgreSQL type mappings
   - [x] Built-in wire-native scalar mappings with exact parameter OIDs
   - [x] Network, geometric, bit-string, money, arbitrary numeric, full-text, JSON path, system identifier, transaction, and catalogue CLR values
+  - [x] PostgreSQL 19 unsigned `oid8` and `regdatabase` scalars/arrays with exact wire formats and older-version catalogue isolation
   - [x] Explicit `json`, `jsonb`, `xml`, `cidr`, `bit`, and legacy snapshot store-type selection
   - [x] Built-in one- and multidimensional arrays with structural change tracking and exact element-family OIDs
   - [x] All six built-in range and multirange families, including their array types
@@ -516,7 +517,8 @@ This file tracks executable repository status. The product vision is broader; un
 
 - [ ] Stable ADO.NET APIs
 - [ ] Stable extension APIs
-- [ ] Full built-in PostgreSQL type support
+- [x] Full built-in PostgreSQL type support
+  - [x] PostgreSQL 15–19 catalogue gate requires a codec for every queryable built-in base, range, and multirange type
 - [ ] Production-grade connection pooling
 - [ ] Reliable cancellation
 - [ ] Production-ready `COPY`, notifications, large objects, and replication

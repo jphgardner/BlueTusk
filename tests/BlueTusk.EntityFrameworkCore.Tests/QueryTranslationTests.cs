@@ -13,6 +13,7 @@ public sealed class QueryTranslationTests
     public static TheoryData<Type, string> NativeClrMappings => new()
     {
         { typeof(uint), "oid" },
+        { typeof(BlueTuskObjectIdentifier64), "oid8" },
         { typeof(BlueTuskInterval), "interval" },
         { typeof(BlueTuskTimeWithTimeZone), "time with time zone" },
         { typeof(BlueTuskBitString), "bit varying" },
@@ -44,6 +45,7 @@ public sealed class QueryTranslationTests
         { typeof(BlueTuskRegNamespace), "regnamespace" },
         { typeof(BlueTuskRegRole), "regrole" },
         { typeof(BlueTuskRegCollation), "regcollation" },
+        { typeof(BlueTuskRegDatabase), "regdatabase" },
         { typeof(BlueTuskTransactionId), "xid" },
         { typeof(BlueTuskCommandId), "cid" },
         { typeof(BlueTuskFullTransactionId), "xid8" },
@@ -83,6 +85,8 @@ public sealed class QueryTranslationTests
         { "cidr", typeof(BlueTuskNetworkAddress) },
         { "bit", typeof(BlueTuskBitString) },
         { "txid_snapshot", typeof(BlueTuskTransactionSnapshot) },
+        { "oid8", typeof(BlueTuskObjectIdentifier64) },
+        { "regdatabase", typeof(BlueTuskRegDatabase) },
     };
 
     public static TheoryData<Type, string, Type> ArrayMappings => new()
@@ -98,6 +102,8 @@ public sealed class QueryTranslationTests
         { typeof(BlueTuskNetworkAddress[]), "inet[]", typeof(BlueTuskNetworkAddress) },
         { typeof(BlueTuskPoint[]), "point[]", typeof(BlueTuskPoint) },
         { typeof(BlueTuskNumeric[]), "numeric[]", typeof(BlueTuskNumeric) },
+        { typeof(BlueTuskObjectIdentifier64[]), "oid8[]", typeof(BlueTuskObjectIdentifier64) },
+        { typeof(BlueTuskRegDatabase[]), "regdatabase[]", typeof(BlueTuskRegDatabase) },
         { typeof(BlueTuskTextSearchVector[]), "tsvector[]", typeof(BlueTuskTextSearchVector) },
         { typeof(BlueTuskRange<int>[]), "int4range[]", typeof(BlueTuskRange<int>) },
         { typeof(BlueTuskMultirange<int>[]), "int4multirange[]", typeof(BlueTuskMultirange<int>) },

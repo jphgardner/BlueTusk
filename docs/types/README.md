@@ -88,6 +88,12 @@ PostgreSQL's unsigned transaction identifiers have dedicated CLR values so their
 
 ## Object identifiers and catalogue vectors
 
+PostgreSQL 19's unsigned 64-bit `oid8` maps to
+`BlueTuskObjectIdentifier64`, preserving the complete `0` through
+`UInt64.MaxValue` range in text and big-endian binary formats. Its array type
+is catalogue-composed like other built-ins. Earlier PostgreSQL releases do not
+advertise this type, so the runtime catalogue does not register it there.
+
 The PostgreSQL `reg*` aliases use symbolic names in text and unsigned four-byte OIDs in binary. BlueTusk provides a distinct CLR wrapper for each alias so parameter inference remains unambiguous:
 
 | PostgreSQL type | CLR value |
@@ -103,6 +109,7 @@ The PostgreSQL `reg*` aliases use symbolic names in text and unsigned four-byte 
 | `regnamespace` | `BlueTuskRegNamespace` |
 | `regrole` | `BlueTuskRegRole` |
 | `regcollation` | `BlueTuskRegCollation` |
+| `regdatabase` (PostgreSQL 19+) | `BlueTuskRegDatabase` |
 
 Construct an alias from either form. The returned `Identifier` preserves whether a text result was symbolic or numeric:
 
@@ -112,6 +119,14 @@ var relationByOid = new BlueTuskRegClass(16_384);
 ```
 
 Symbolic values are sent as text so PostgreSQL resolves them using its normal namespace and search-path rules. Numeric values use binary. The same value-sensitive choice applies to catalogue-composed arrays.
+
+The built-in type coverage acceptance test queries `pg_catalog.pg_type` on
+every supported server and requires a codec for every queryable base, range,
+and multirange type. This keeps new PostgreSQL built-ins visible as an
+executable compatibility failure rather than silently treating them as an
+unknown type. See PostgreSQL 19's
+[object identifier type documentation](https://www.postgresql.org/docs/19/datatype-oid.html)
+for `oid8` and `regdatabase` semantics.
 
 `int2vector` maps to the immutable `BlueTuskInt16Vector`; `oidvector` maps to `BlueTuskObjectIdentifierVector`. Their codecs enforce PostgreSQL's one-dimensional, zero-based, null-free binary shape, including full unsigned OID values. PostgreSQL does not accept an empty vector through its binary receive function, so BlueTusk automatically uses text for an empty vector or an array containing one.
 

@@ -17,6 +17,11 @@ public sealed class BlueTuskCatalogueScalarCodecTests
             BlueTuskBuiltInTypes.RegProcedure,
             new BlueTuskRegProcedure(23),
             new BlueTuskRegProcedure("sum(integer)"));
+        AssertAlias(
+            new BlueTuskObjectIdentifierCodec<BlueTuskRegDatabase>(),
+            BlueTuskBuiltInTypes.RegDatabase,
+            new BlueTuskRegDatabase(1),
+            new BlueTuskRegDatabase("template1"));
 
         var numericText = Read(
             new BlueTuskObjectIdentifierCodec<BlueTuskRegType>(),
@@ -52,6 +57,7 @@ public sealed class BlueTuskCatalogueScalarCodecTests
             (BlueTuskBuiltInTypes.RegNamespace, typeof(BlueTuskRegNamespace)),
             (BlueTuskBuiltInTypes.RegRole, typeof(BlueTuskRegRole)),
             (BlueTuskBuiltInTypes.RegCollation, typeof(BlueTuskRegCollation)),
+            (BlueTuskBuiltInTypes.RegDatabase, typeof(BlueTuskRegDatabase)),
         ];
 
         foreach (var alias in aliases)

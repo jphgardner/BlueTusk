@@ -772,6 +772,73 @@ public sealed class TypeMappingIntegrationTests
     }
 
     [Fact]
+    public async Task PostgreSQL_19_oid8_and_regdatabase_round_trip_through_EF_Core()
+    {
+        var connectionString = GetConnectionString();
+        await using (var capabilityConnection = new BlueTuskConnection(connectionString))
+        {
+            await capabilityConnection.OpenAsync(CancellationToken.None);
+            if (capabilityConnection.ServerCapabilities is not { ServerVersion.Major: >= 19 })
+            {
+                return;
+            }
+        }
+
+        await ExecuteNonQueryAsync(connectionString, "DROP TABLE IF EXISTS \"ef_pg19_identifier_values\"");
+        await ExecuteNonQueryAsync(
+            connectionString,
+            """
+            CREATE TABLE "ef_pg19_identifier_values" (
+                "Id" integer PRIMARY KEY,
+                "Oid8Value" oid8 NOT NULL,
+                "DatabaseValue" regdatabase NOT NULL,
+                "Oid8Values" oid8[] NOT NULL,
+                "DatabaseValues" regdatabase[] NOT NULL)
+            """);
+        var oid8 = new BlueTuskObjectIdentifier64(ulong.MaxValue);
+        var expected = new PostgreSql19IdentifierValue
+        {
+            Id = 1,
+            Oid8Value = oid8,
+            DatabaseValue = new BlueTuskRegDatabase("template1"),
+            Oid8Values = [new BlueTuskObjectIdentifier64(0), oid8],
+            DatabaseValues =
+            [
+                new BlueTuskRegDatabase("template1"),
+                new BlueTuskRegDatabase("postgres"),
+            ],
+        };
+
+        try
+        {
+            await using (var context = CreatePostgreSql19IdentifierContext(connectionString))
+            {
+                context.Values.Add(expected);
+                Assert.Equal(1, await context.SaveChangesAsync());
+            }
+
+            await using (var context = CreatePostgreSql19IdentifierContext(connectionString))
+            {
+                var actual = await context.Values
+                    .AsNoTracking()
+                    .SingleAsync(value => value.Oid8Value == oid8);
+                Assert.Equal(expected.Oid8Value, actual.Oid8Value);
+                Assert.Equal(expected.Oid8Values, actual.Oid8Values);
+                Assert.True(actual.DatabaseValue.Identifier.Oid > 0);
+                Assert.All(
+                    actual.DatabaseValues,
+                    value => Assert.True(value.Identifier.Oid > 0));
+            }
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(
+                connectionString,
+                "DROP TABLE IF EXISTS \"ef_pg19_identifier_values\"");
+        }
+    }
+
+    [Fact]
     public async Task Core_scalar_types_round_trip_through_EF_Core()
     {
         var connectionString = GetConnectionString();
@@ -953,6 +1020,15 @@ public sealed class TypeMappingIntegrationTests
         return new RangeValueContext(options);
     }
 
+    private static PostgreSql19IdentifierContext CreatePostgreSql19IdentifierContext(
+        string connectionString)
+    {
+        var options = new DbContextOptionsBuilder<PostgreSql19IdentifierContext>()
+            .UseBlueTusk(connectionString)
+            .Options;
+        return new PostgreSql19IdentifierContext(options);
+    }
+
     private static UserTypeValueContext CreateUserTypeContext(
         BlueTuskDataSource dataSource,
         string enumName,
@@ -1047,6 +1123,20 @@ public sealed class TypeMappingIntegrationTests
         {
             var value = modelBuilder.Entity<RangeValue>();
             value.ToTable("ef_range_values");
+            value.HasKey(entity => entity.Id);
+            value.Property(entity => entity.Id).ValueGeneratedNever();
+        }
+    }
+
+    private sealed class PostgreSql19IdentifierContext(
+        DbContextOptions<PostgreSql19IdentifierContext> options) : DbContext(options)
+    {
+        public DbSet<PostgreSql19IdentifierValue> Values => Set<PostgreSql19IdentifierValue>();
+
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            var value = modelBuilder.Entity<PostgreSql19IdentifierValue>();
+            value.ToTable("ef_pg19_identifier_values");
             value.HasKey(entity => entity.Id);
             value.Property(entity => entity.Id).ValueGeneratedNever();
         }
@@ -1177,6 +1267,15 @@ public sealed class TypeMappingIntegrationTests
         public BlueTuskMultirange<int>[] IntMultirangeArray { get; set; } = [];
         public BlueTuskRange<int>? OptionalIntRange { get; set; }
         public BlueTuskMultirange<int>? OptionalIntMultirange { get; set; }
+    }
+
+    private sealed class PostgreSql19IdentifierValue
+    {
+        public int Id { get; set; }
+        public BlueTuskObjectIdentifier64 Oid8Value { get; set; }
+        public BlueTuskRegDatabase DatabaseValue { get; set; }
+        public BlueTuskObjectIdentifier64[] Oid8Values { get; set; } = [];
+        public BlueTuskRegDatabase[] DatabaseValues { get; set; } = [];
     }
 
     private sealed class UserTypeValue
