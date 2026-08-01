@@ -719,6 +719,53 @@ The key pair must name direct mapped properties with the same PostgreSQL store
 type. Multi-root parameterization, compiled queries, both union modes, and
 cycle termination execute across PostgreSQL 15–19.
 
+PostgreSQL data-modification queries can materialize the rows they changed with
+`DeleteReturning` and `UpdateReturning`. These are deferred query operations:
+enumerating the result executes the modification, so enumerate exactly once.
+They do not use `SaveChanges` or synchronize tracked instances, and BlueTusk
+forces their returned entity shape to be no-tracking.
+
+```csharp
+var updated = await context.Documents
+    .Where(document => document.Category == category)
+    .UpdateReturning(setters => setters
+        .SetProperty(document => document.Score, document => document.Score + increment)
+        .SetProperty(document => document.Status, document => "reviewed"))
+    .Select(document => new { document.Id, document.Score, document.Status })
+    .ToListAsync(cancellationToken);
+
+var deleted = await context.Documents
+    .Where(document => document.ExpiresAt < cutoff)
+    .DeleteReturning()
+    .Select(document => new { document.Id, document.ExpiresAt })
+    .ToListAsync(cancellationToken);
+```
+
+The source must resolve to one mapped table. Predicates and a returned
+projection are supported; ordering, paging, distinct, grouping, table
+sampling, row locking, joins, and CTE composition are rejected with a focused
+diagnostic. Setter values remain normal translated expressions and parameters.
+For compiled updates, use the single-property overload and put `AsNoTracking`
+in the compiled expression explicitly:
+
+```csharp
+var incrementScore = EF.CompileQuery(
+    (AppDbContext database, int id, int increment) => database.Documents
+        .AsNoTracking()
+        .Where(document => document.Id == id)
+        .UpdateReturning(
+            document => document.Score,
+            document => document.Score + increment)
+        .Select(document => new { document.Id, document.Score }));
+```
+
+Compiled deletes likewise require an explicit `AsNoTracking`. Multi-setter
+updates use the builder overload outside compiled-query expressions. SQL
+generation, async materialization, multi-setter updates, compiled single-setter
+updates/deletes, and no-tracking behavior execute across PostgreSQL 15–19.
+`INSERT ... ON CONFLICT ... RETURNING` and typed `MERGE` remain planned and are
+tracked separately in the roadmap.
+
 Row-locking extensions cover `ForUpdate`, `ForNoKeyUpdate`, `ForShare`, and
 `ForKeyShare`. Each accepts `Wait`, `NoWait`, or `SkipLocked` behavior. Apply
 the locking operation after the final server projection and enumerate it inside

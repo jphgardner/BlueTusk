@@ -9,6 +9,8 @@ internal static class BlueTuskQueryAnnotationNames
 
     public const string CommonTableExpression = "BlueTusk:CommonTableExpression";
 
+    public const string DataModificationReturning = "BlueTusk:DataModificationReturning";
+
     public const string RowLocking = "BlueTusk:RowLocking";
 
     public const string RecursiveCommonTableExpression = "BlueTusk:RecursiveCommonTableExpression";
@@ -37,6 +39,12 @@ internal enum BlueTuskCteMaterialization
     NotMaterialized,
 }
 
+internal enum BlueTuskReturningModificationKind
+{
+    Delete,
+    Update,
+}
+
 internal sealed record BlueTuskCteClause(
     string Name,
     BlueTuskCteMaterialization Materialization);
@@ -49,6 +57,10 @@ internal sealed record BlueTuskRecursiveCteClause(
     string ParentKeyColumn,
     SqlExpression Roots,
     BlueTuskRecursiveUnionBehavior UnionBehavior);
+
+internal sealed record BlueTuskReturningModificationClause(
+    BlueTuskReturningModificationKind Kind,
+    IReadOnlyList<ColumnValueSetter> Setters);
 
 internal sealed record BlueTuskRowLockingClause(
     BlueTuskRowLockingStrength Strength,

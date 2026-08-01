@@ -1,4 +1,6 @@
 using System.Linq.Expressions;
+using System.Reflection;
+using System.Runtime.CompilerServices;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
@@ -28,6 +30,37 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
     {
         protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
         {
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
+                && methodCallExpression.Method.Name == nameof(BlueTuskQueryableExtensions.UpdateReturning)
+                && methodCallExpression.Arguments.Count == 3)
+            {
+                var propertySelector = ((UnaryExpression)methodCallExpression.Arguments[1]).Operand;
+                var valueSelector = ((UnaryExpression)methodCallExpression.Arguments[2]).Operand;
+                var setterConstructor = typeof(Tuple<Delegate, object>)
+                    .GetConstructor([typeof(Delegate), typeof(object)])!;
+                var setters = Expression.NewArrayInit(
+                    typeof(ITuple),
+                    Expression.New(setterConstructor, propertySelector, valueSelector));
+                var marker = typeof(BlueTuskQueryableExtensions)
+                    .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+                    .Single(method =>
+                        method.Name == nameof(BlueTuskQueryableExtensions.UpdateReturningCore)
+                        && method.IsGenericMethodDefinition)
+                    .MakeGenericMethod(methodCallExpression.Method.GetGenericArguments()[0]);
+                return Expression.Call(
+                    marker,
+                    Visit(methodCallExpression.Arguments[0]),
+                    setters);
+            }
+
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
+                && methodCallExpression.Method.Name == nameof(BlueTuskQueryableExtensions.UpdateReturning)
+                && methodCallExpression.Arguments.Count == 2)
+            {
+                throw new InvalidOperationException(
+                    "Compiled PostgreSQL UPDATE RETURNING queries must use the property/value-selector overload.");
+            }
+
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
                 && methodCallExpression.Method.Name == nameof(BlueTuskQueryableExtensions.RecursiveDescendants))
             {

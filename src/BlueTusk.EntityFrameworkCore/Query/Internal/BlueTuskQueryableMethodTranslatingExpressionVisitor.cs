@@ -50,6 +50,29 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
 
         return methodCallExpression.Method.Name switch
         {
+            nameof(BlueTuskQueryableExtensions.DeleteReturning) =>
+                TranslateReturningModification(
+                    source,
+                    selectExpression,
+                    BlueTuskReturningModificationKind.Delete,
+                    []),
+            nameof(BlueTuskQueryableExtensions.UpdateReturning)
+                when methodCallExpression.Arguments.Count == 3 =>
+                TranslateUpdateReturning(
+                    source,
+                    selectExpression,
+                    [
+                        new ExecuteUpdateSetter(
+                            (LambdaExpression)((UnaryExpression)methodCallExpression.Arguments[1]).Operand,
+                            (LambdaExpression)((UnaryExpression)methodCallExpression.Arguments[2]).Operand),
+                    ]),
+            nameof(BlueTuskQueryableExtensions.UpdateReturning) =>
+                throw new InvalidOperationException(
+                    "Compiled PostgreSQL UPDATE RETURNING queries must use the property/value-selector overload."),
+            nameof(BlueTuskQueryableExtensions.UpdateReturningCore) => TranslateUpdateReturning(
+                source,
+                selectExpression,
+                methodCallExpression),
             nameof(BlueTuskQueryableExtensions.DistinctOn) =>
                 TranslateDistinctOn(source, selectExpression, methodCallExpression),
             nameof(BlueTuskQueryableExtensions.TableSampleSystem) =>
@@ -108,6 +131,114 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                     BlueTuskCteMaterialization.NotMaterialized),
             _ => base.VisitMethodCall(methodCallExpression),
         };
+    }
+
+    private ShapedQueryExpression TranslateUpdateReturning(
+        ShapedQueryExpression source,
+        SelectExpression selectExpression,
+        MethodCallExpression methodCallExpression)
+    {
+        if (methodCallExpression.Arguments[1] is not NewArrayExpression { Expressions.Count: > 0 } setterArray)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL UPDATE RETURNING requires at least one SetProperty invocation.");
+        }
+
+        var setters = new ExecuteUpdateSetter[setterArray.Expressions.Count];
+        for (var setterIndex = 0; setterIndex < setters.Length; setterIndex++)
+        {
+            if (setterArray.Expressions[setterIndex] is not NewExpression
+                {
+                    Arguments: [LambdaExpression propertySelector, var valueSelector],
+                })
+            {
+                throw new InvalidOperationException(
+                    "PostgreSQL UPDATE RETURNING accepts only SetProperty invocations.");
+            }
+
+            if (valueSelector is UnaryExpression
+                {
+                    NodeType: ExpressionType.Convert,
+                    Operand: var unwrappedValueSelector,
+                    Type: { } conversionType,
+                }
+                && conversionType == typeof(object))
+            {
+                valueSelector = unwrappedValueSelector;
+            }
+
+            setters[setterIndex] = new ExecuteUpdateSetter(propertySelector, valueSelector);
+        }
+
+        return TranslateUpdateReturning(source, selectExpression, setters);
+    }
+
+    private ShapedQueryExpression TranslateUpdateReturning(
+        ShapedQueryExpression source,
+        SelectExpression selectExpression,
+        IReadOnlyList<ExecuteUpdateSetter> setters)
+    {
+#pragma warning disable EF1001 // Provider translation reuses EF's canonical ExecuteUpdate setter translator.
+        var settersTranslated = TryTranslateSetters(
+            source,
+            setters,
+            out var translatedSetters,
+            out var targetTable);
+#pragma warning restore EF1001
+        if (!settersTranslated
+            || targetTable is not TableExpression table
+            || selectExpression.Tables is not [TableExpression sourceTable]
+            || table.Name != sourceTable.Name
+            || table.Schema != sourceTable.Schema
+            || table.Alias != sourceTable.Alias)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL UPDATE RETURNING requires setters that target the query's single mapped table.");
+        }
+
+        return TranslateReturningModification(
+            source,
+            selectExpression,
+            BlueTuskReturningModificationKind.Update,
+            translatedSetters!);
+    }
+
+    private ShapedQueryExpression TranslateReturningModification(
+        ShapedQueryExpression source,
+        SelectExpression selectExpression,
+        BlueTuskReturningModificationKind kind,
+        IReadOnlyList<ColumnValueSetter> setters)
+    {
+        if (_queryCompilationContext.QueryTrackingBehavior == QueryTrackingBehavior.TrackAll)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL data-modification RETURNING queries must be no-tracking; call AsNoTracking in a compiled query.");
+        }
+
+        if (selectExpression is not
+            {
+                Tables: [TableExpression table],
+                Offset: null,
+                Limit: null,
+                IsDistinct: false,
+                GroupBy: [],
+                Having: null,
+                Orderings: [],
+            }
+            || table.FindAnnotation(BlueTuskQueryAnnotationNames.CommonTableExpression) is not null
+            || table.FindAnnotation(BlueTuskQueryAnnotationNames.RecursiveCommonTableExpression) is not null
+            || table.FindAnnotation(BlueTuskQueryAnnotationNames.TableSample) is not null
+            || table.FindAnnotation(BlueTuskQueryAnnotationNames.RowLocking) is not null)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL {kind.ToString().ToUpperInvariant()} RETURNING requires a single mapped table with optional predicates and projection, without ordering, paging, distinct, grouping, sampling, locking, or a CTE.");
+        }
+
+        AddQueryAnnotation(
+            selectExpression,
+            BlueTuskQueryAnnotationNames.DataModificationReturning,
+            new BlueTuskReturningModificationClause(kind, setters));
+        return source;
     }
 
     protected override Expression VisitExtension(Expression extensionExpression)

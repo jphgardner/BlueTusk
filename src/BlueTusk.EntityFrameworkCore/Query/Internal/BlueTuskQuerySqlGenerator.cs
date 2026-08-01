@@ -253,6 +253,15 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
     protected override Expression VisitSelect(SelectExpression selectExpression)
     {
         if (!_renderingCteBody
+            && GetQueryAnnotation(
+                    selectExpression,
+                    BlueTuskQueryAnnotationNames.DataModificationReturning)?.Value
+                is BlueTuskReturningModificationClause modification)
+        {
+            return GenerateReturningModification(selectExpression, modification);
+        }
+
+        if (!_renderingCteBody
             && _recursiveCteSource is null
             && GetQueryAnnotation(
                     selectExpression,
@@ -534,5 +543,50 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             .AppendLine()
             .Append(")")
             .AppendLine();
+    }
+
+    private SelectExpression GenerateReturningModification(
+        SelectExpression selectExpression,
+        BlueTuskReturningModificationClause modification)
+    {
+        if (selectExpression.Tables is not [TableExpression table])
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL data-modification RETURNING requires one mapped table.");
+        }
+
+        var helper = Dependencies.SqlGenerationHelper;
+        Sql.Append(modification.Kind == BlueTuskReturningModificationKind.Delete
+                ? "DELETE FROM "
+                : "UPDATE ")
+            .Append(helper.DelimitIdentifier(table.Name, table.Schema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(table.Alias));
+
+        if (modification.Kind == BlueTuskReturningModificationKind.Update)
+        {
+            Sql.AppendLine().Append("SET ");
+            for (var setterIndex = 0; setterIndex < modification.Setters.Count; setterIndex++)
+            {
+                if (setterIndex > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                var setter = modification.Setters[setterIndex];
+                Sql.Append(helper.DelimitIdentifier(setter.Column.Name)).Append(" = ");
+                Visit(setter.Value);
+            }
+        }
+
+        if (selectExpression.Predicate is not null)
+        {
+            Sql.AppendLine().Append("WHERE ");
+            Visit(selectExpression.Predicate);
+        }
+
+        Sql.AppendLine().Append("RETURNING ");
+        GenerateProjection(selectExpression);
+        return selectExpression;
     }
 }

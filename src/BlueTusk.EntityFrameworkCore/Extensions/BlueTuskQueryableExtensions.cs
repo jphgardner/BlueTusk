@@ -1,5 +1,6 @@
 using System.Linq.Expressions;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text;
 using Microsoft.EntityFrameworkCore.Query;
 
@@ -79,6 +80,77 @@ public static class BlueTuskQueryableExtensions
         this IQueryable<TSource> source,
         [NotParameterized] string name)
         => CreateCteQuery(source, nameof(AsNotMaterializedCte), name);
+
+    /// <summary>Deletes matching rows and returns their mapped values through PostgreSQL <c>RETURNING</c>.</summary>
+    public static IQueryable<TSource> DeleteReturning<TSource>(this IQueryable<TSource> source)
+        where TSource : class
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        var noTrackingSource = source.AsNoTracking();
+        return noTrackingSource.Provider.CreateQuery<TSource>(
+            Expression.Call(
+                null,
+                GetMethod(nameof(DeleteReturning), genericArgumentCount: 1, parameterCount: 1)
+                    .MakeGenericMethod(typeof(TSource)),
+                noTrackingSource.Expression));
+    }
+
+#pragma warning disable EF1001 // A provider extension intentionally matches EF's ExecuteUpdate setter builder.
+    /// <summary>Updates matching rows and returns their mapped values through PostgreSQL <c>RETURNING</c>.</summary>
+    public static IQueryable<TSource> UpdateReturning<TSource>(
+        this IQueryable<TSource> source,
+        Action<UpdateSettersBuilder<TSource>> setPropertyCalls)
+        where TSource : class
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(setPropertyCalls);
+        var setterBuilder = new UpdateSettersBuilder<TSource>();
+        setPropertyCalls(setterBuilder);
+#pragma warning disable EF1001 // The provider uses EF's canonical ExecuteUpdate setter expression shape.
+        var setters = setterBuilder.BuildSettersExpression();
+#pragma warning restore EF1001
+        var noTrackingSource = source.AsNoTracking();
+        return noTrackingSource.Provider.CreateQuery<TSource>(
+            Expression.Call(
+                null,
+                typeof(BlueTuskQueryableExtensions)
+                    .GetMethods(BindingFlags.NonPublic | BindingFlags.Static)
+                    .Single(method =>
+                        method.Name == nameof(UpdateReturningCore)
+                        && method.IsGenericMethodDefinition)
+                    .MakeGenericMethod(typeof(TSource)),
+                noTrackingSource.Expression,
+                setters));
+    }
+#pragma warning restore EF1001
+
+    /// <summary>Updates one matching mapped property and returns rows through PostgreSQL <c>RETURNING</c>.</summary>
+    public static IQueryable<TSource> UpdateReturning<TSource, TProperty>(
+        this IQueryable<TSource> source,
+        Expression<Func<TSource, TProperty>> propertySelector,
+        Expression<Func<TSource, TProperty>> valueSelector)
+        where TSource : class
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(propertySelector);
+        ArgumentNullException.ThrowIfNull(valueSelector);
+        var noTrackingSource = source.AsNoTracking();
+        return noTrackingSource.Provider.CreateQuery<TSource>(
+            Expression.Call(
+                null,
+                GetMethod(nameof(UpdateReturning), genericArgumentCount: 2, parameterCount: 3)
+                    .MakeGenericMethod(typeof(TSource), typeof(TProperty)),
+                noTrackingSource.Expression,
+                Expression.Quote(propertySelector),
+                Expression.Quote(valueSelector)));
+    }
+
+    internal static IQueryable<TSource> UpdateReturningCore<TSource>(
+        IQueryable<TSource> source,
+        [NotParameterized] IReadOnlyList<ITuple> setters)
+        where TSource : class
+        => throw new InvalidOperationException(
+            "UpdateReturningCore is a provider query marker and cannot be invoked directly.");
 
     public static IQueryable<TSource> RecursiveDescendants<TSource, TKey>(
         this IQueryable<TSource> source,
