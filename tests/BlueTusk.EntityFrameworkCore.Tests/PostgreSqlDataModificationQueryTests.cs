@@ -1,5 +1,6 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.EntityFrameworkCore.Update.Internal;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Sdk;
 
@@ -9,6 +10,68 @@ public sealed class PostgreSqlDataModificationQueryTests
 {
     private const string ConnectionString =
         "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk_tests";
+
+#pragma warning disable EF1001 // Provider tests inspect the internal command plan without opening a database connection.
+    [Fact]
+    public void Merge_builds_model_driven_parameterized_commands_and_validates_selectors()
+    {
+        using var context = CreateContext();
+        var category = "merge-value";
+        var score = 42;
+
+        var update = BlueTuskMergeCommandFactory.Create(
+            context,
+            () => new ReturningDocument { Id = 7, Category = category, Score = score },
+            (ReturningDocument document) => document.Id,
+            (ReturningDocument document) => new { document.Category, document.Score },
+            BlueTuskMergeMatchedAction.Update);
+        var delete = BlueTuskMergeCommandFactory.Create(
+            context,
+            () => new ReturningDocument { Id = 7, Category = category, Score = score },
+            (ReturningDocument document) => document.Id,
+            updateProperties: null,
+            BlueTuskMergeMatchedAction.Delete);
+        var doNothing = BlueTuskMergeCommandFactory.Create(
+            context,
+            () => new ReturningDocument { Id = 7, Category = category, Score = score },
+            (ReturningDocument document) => new { document.Category, document.Score },
+            updateProperties: null,
+            BlueTuskMergeMatchedAction.DoNothing);
+
+        Assert.Contains("MERGE INTO \"ef_returning_documents\" AS \"target\"", update.CommandText, StringComparison.Ordinal);
+        Assert.Contains("USING (VALUES (@__merge_0, @__merge_1, @__merge_2))", update.CommandText, StringComparison.Ordinal);
+        Assert.Contains("AS \"source\" (\"Id\", \"Category\", \"Score\")", update.CommandText, StringComparison.Ordinal);
+        Assert.Contains("ON \"target\".\"Id\" = \"source\".\"Id\"", update.CommandText, StringComparison.Ordinal);
+        Assert.Contains("WHEN MATCHED THEN UPDATE SET", update.CommandText, StringComparison.Ordinal);
+        Assert.Contains("\"Category\" = \"source\".\"Category\"", update.CommandText, StringComparison.Ordinal);
+        Assert.Contains("WHEN NOT MATCHED THEN INSERT", update.CommandText, StringComparison.Ordinal);
+        Assert.DoesNotContain(category, update.CommandText, StringComparison.Ordinal);
+        Assert.Equal(7, update.ParameterValues["__merge_0"]);
+        Assert.Equal(category, update.ParameterValues["__merge_1"]);
+        Assert.Equal(score, update.ParameterValues["__merge_2"]);
+        Assert.Contains("WHEN MATCHED THEN DELETE", delete.CommandText, StringComparison.Ordinal);
+        Assert.Contains("WHEN MATCHED THEN DO NOTHING", doNothing.CommandText, StringComparison.Ordinal);
+        Assert.Contains(
+            "ON \"target\".\"Category\" = \"source\".\"Category\" AND \"target\".\"Score\" = \"source\".\"Score\"",
+            doNothing.CommandText,
+            StringComparison.Ordinal);
+
+        var missingMatchValue = Assert.Throws<ArgumentException>(() => BlueTuskMergeCommandFactory.Create(
+            context,
+            () => new ReturningDocument { Category = category, Score = score },
+            (ReturningDocument document) => document.Id,
+            (ReturningDocument document) => document.Score,
+            BlueTuskMergeMatchedAction.Update));
+        Assert.Equal("matchProperties", missingMatchValue.ParamName);
+        var computedUpdate = Assert.Throws<ArgumentException>(() => BlueTuskMergeCommandFactory.Create(
+            context,
+            () => new ReturningDocument { Id = 7, Category = category, Score = score },
+            (ReturningDocument document) => document.Id,
+            (ReturningDocument document) => document.Score + 1,
+            BlueTuskMergeMatchedAction.Update));
+        Assert.Equal("updateProperties", computedUpdate.ParamName);
+    }
+#pragma warning restore EF1001
 
     [Fact]
     public void Returning_modifications_translate_typed_predicates_setters_and_projections()
@@ -207,6 +270,47 @@ public sealed class PostgreSqlDataModificationQueryTests
                     document => new { document.Category, document.Score })
                 .ToArrayAsync());
 
+            Assert.Equal(
+                1,
+                await context.ExecuteMergeAsync(
+                    () => new ReturningDocument { Id = 2, Category = "merged", Score = 26 },
+                    document => document.Id,
+                    document => new { document.Category, document.Score }));
+            Assert.Equal(
+                1,
+                await context.ExecuteMergeAsync(
+                    () => new ReturningDocument { Id = 5, Category = "inserted-by-merge", Score = 50 },
+                    document => document.Id,
+                    document => new { document.Category, document.Score }));
+            Assert.Equal(
+                0,
+                await context.ExecuteMergeDoNothingAsync(
+                    () => new ReturningDocument { Id = 99, Category = "inserted-by-merge", Score = 50 },
+                    document => new { document.Category, document.Score }));
+            Assert.Equal(
+                1,
+                context.ExecuteMergeDoNothing(
+                    () => new ReturningDocument { Id = 6, Category = "temporary-merge", Score = 60 },
+                    document => document.Id));
+            Assert.Equal(
+                1,
+                await context.ExecuteMergeDeleteAsync(
+                    () => new ReturningDocument { Id = 6, Category = "unused", Score = 0 },
+                    document => document.Id));
+
+            await using (var transaction = await context.Database.BeginTransactionAsync())
+            {
+                Assert.Equal(
+                    1,
+                    await context.ExecuteMergeAsync(
+                        () => new ReturningDocument { Id = 7, Category = "rolled-back-merge", Score = 70 },
+                        document => document.Id,
+                        document => new { document.Category, document.Score }));
+                await transaction.RollbackAsync();
+            }
+
+            Assert.False(await context.Documents.AsNoTracking().AnyAsync(document => document.Id == 7));
+
             var increment = 4;
             var updated = await context.Documents
                 .Where(document => document.Id == 1)
@@ -234,7 +338,7 @@ public sealed class PostgreSqlDataModificationQueryTests
                         document.Category,
                         document.Score)));
             Assert.Equal(
-                [new ReturningDocumentResult(2, "alpha", 25)],
+                [new ReturningDocumentResult(2, "merged", 31)],
                 compiledUpdate(context, 2, 5).ToArray());
 
             var compiledDelete = EF.CompileQuery(
@@ -253,8 +357,9 @@ public sealed class PostgreSqlDataModificationQueryTests
             Assert.Equal(
                 [
                     new ReturningDocumentResult(1, "promoted", 14),
-                    new ReturningDocumentResult(2, "alpha", 25),
+                    new ReturningDocumentResult(2, "merged", 31),
                     new ReturningDocumentResult(4, "compiled-upsert", 42),
+                    new ReturningDocumentResult(5, "inserted-by-merge", 50),
                 ],
                 await context.Documents
                     .AsNoTracking()

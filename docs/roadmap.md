@@ -307,13 +307,13 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] `FOR UPDATE`, `FOR NO KEY UPDATE`, `FOR SHARE`, and `FOR KEY SHARE` with wait, `NOWAIT`, and `SKIP LOCKED` behavior
   - [x] Typed ranking, distribution, bucket, offset, and value window functions with partitioning, ascending/descending ordering, nullable results, and compiled queries
   - [x] Explicit typed `tableoid`/transaction/command/tuple system-column mappings with migration exclusion and `xmin` concurrency
-  - [ ] Recursive/materialized CTEs and PostgreSQL data-modification query constructs
+  - [x] Recursive/materialized CTEs and PostgreSQL data-modification query constructs
     - [x] Composable named CTEs with default, `MATERIALIZED`, and `NOT MATERIALIZED` planning, identifier validation, parameter preservation, ordered projections, compiled queries, and PostgreSQL 15–19 acceptance
     - [x] Typed recursive hierarchy CTEs with mapped key/parent selectors, parameterized multi-root traversal, cycle-safe `UNION`, opt-in `UNION ALL`, compiled queries, and PostgreSQL 15–19 acceptance
-    - [ ] PostgreSQL data-modification query constructs
+    - [x] PostgreSQL data-modification query constructs
       - [x] Typed single-table `DELETE ... RETURNING` and single-/multi-setter `UPDATE ... RETURNING`, parameterized projections, no-tracking materialization, compiled single-setter/delete queries, and PostgreSQL 15–19 acceptance
       - [x] Typed single-row `INSERT ... ON CONFLICT ... RETURNING` with mapped object initializers, single/composite conflict targets, `DO NOTHING`, selected-column `EXCLUDED` updates, compiled queries, and PostgreSQL 15–19 acceptance
-      - [ ] Typed `MERGE`
+      - [x] Typed single-row `MERGE` with model-derived identifiers, mapped parameters, composite match keys, matched update/delete/do-nothing actions, not-matched insertion, synchronous/asynchronous affected counts, EF transaction/diagnostics integration, and PostgreSQL 15–19 acceptance
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element/subscript expansion, typed series/JSONB roots, and generic multi-array expansion
   - [x] Regex match/split and delimiter-table native query roots

@@ -799,8 +799,43 @@ As with the other modification-returning APIs, execution is deferred,
 enumeration must happen once, and returned entities are no-tracking. Compiled
 queries must put `AsNoTracking` before the insert operation. Parameterized
 `DO NOTHING`, `EXCLUDED` updates, returned projections, compiled upserts, and
-no-tracking materialization execute across PostgreSQL 15–19. Typed `MERGE`
-remains planned and is tracked separately in the roadmap.
+no-tracking materialization execute across PostgreSQL 15–19.
+
+For PostgreSQL's native `MERGE`, BlueTusk exposes immediate synchronous and
+asynchronous operations on `DbContext`. The main overload updates selected
+source properties when the match succeeds and inserts every initialized
+property when it does not:
+
+```csharp
+var affected = await context.ExecuteMergeAsync(
+    () => new Document { Id = id, Status = status, Score = score },
+    document => document.Id,
+    document => new { document.Status, document.Score },
+    cancellationToken);
+```
+
+`ExecuteMergeDeleteAsync` selects `WHEN MATCHED THEN DELETE`, while
+`ExecuteMergeDoNothingAsync` selects `WHEN MATCHED THEN DO NOTHING`; both still
+insert the initialized source row when it does not match. Genuine synchronous
+counterparts are available for all three forms. Every operation returns
+PostgreSQL's affected-row count and executes through EF's relational command
+pipeline, so the current transaction, command interceptors, diagnostics,
+timeouts, and cancellation behavior are retained.
+
+The source is currently one mapped row. Values must be a non-empty entity
+object initializer, and match/update selectors must name distinct direct
+properties that were initialized in that row. Table and column identifiers are
+derived from EF metadata and centrally quoted; values use each column's exact
+relational type mapping and remain parameters. Entities using inheritance,
+conditional `WHEN` clauses, arbitrary update expressions, and multi-row source
+queries are intentionally outside this initial typed surface. As with EF bulk
+updates, the change tracker is not synchronized.
+
+PostgreSQL 15 and 16 do not permit `RETURNING` on `MERGE`, so BlueTusk's
+cross-version API deliberately reports the affected count rather than rows.
+Use a separate query when the resulting row is needed, or use the returned-row
+insert/update/delete APIs above. Update, insert, delete, and do-nothing paths
+execute across PostgreSQL 15–19.
 
 Row-locking extensions cover `ForUpdate`, `ForNoKeyUpdate`, `ForShare`, and
 `ForKeyShare`. Each accepts `Wait`, `NoWait`, or `SkipLocked` behavior. Apply
