@@ -37,7 +37,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskViewModelDiffer.HasDifferences(source, target) ||
         BlueTuskExtensionModelDiffer.HasDifferences(source, target) ||
         BlueTuskCollationModelDiffer.HasDifferences(source, target) ||
-        BlueTuskExclusionConstraintModelDiffer.HasDifferences(source, target);
+        BlueTuskExclusionConstraintModelDiffer.HasDifferences(source, target) ||
+        BlueTuskTriggerModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -58,6 +59,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var routineAfter = new List<MigrationOperation>();
         var viewBefore = new List<MigrationOperation>();
         var viewAfter = new List<MigrationOperation>();
+        var triggerBefore = new List<MigrationOperation>();
+        var triggerAfter = new List<MigrationOperation>();
         var before = new List<MigrationOperation>();
         var after = new List<MigrationOperation>();
 
@@ -91,6 +94,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             baseOperations,
             viewBefore,
             viewAfter);
+        BlueTuskTriggerModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            triggerBefore,
+            triggerAfter);
         BlueTuskExclusionConstraintModelDiffer.AddDifferences(
             source,
             target,
@@ -158,6 +167,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var operations = ensureSchemas.Concat(extensionBefore)
             .Concat(collationBefore)
             .Concat(typeBefore)
+            .Concat(triggerBefore)
             .Concat(viewBefore)
             .Concat(routineBefore)
             .Concat(before)
@@ -165,6 +175,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             .Concat(after)
             .Concat(routineAfter)
             .Concat(viewAfter)
+            .Concat(triggerAfter)
             .Concat(typeAfter)
             .Concat(collationAfter)
             .Concat(extensionAfter)

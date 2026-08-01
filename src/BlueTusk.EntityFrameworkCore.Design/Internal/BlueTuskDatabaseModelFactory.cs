@@ -19,6 +19,8 @@ using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
+using BlueTusk.EntityFrameworkCore.Triggers;
+using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views;
@@ -82,6 +84,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadColumns(connection, tables);
         ReadConstraints(connection, tables);
         ReadExclusionConstraints(connection, tables);
+        ReadTriggers(connection, tables);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
         ReadTableInheritance(connection, tables);
@@ -673,6 +676,91 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                 .ToArray();
             tables[tableGroup.Key][BlueTuskExclusionConstraintMetadata.AnnotationName] =
                 BlueTuskExclusionConstraintMetadata.Serialize(definitions);
+        }
+    }
+
+    private static void ReadTriggers(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   relation.relname,
+                   trigger_entry.tgname,
+                   pg_catalog.pg_get_triggerdef(trigger_entry.oid, false),
+                   trigger_entry.tgenabled::text,
+                   (
+                       SELECT extension_entry.extname
+                       FROM pg_catalog.pg_depend AS extension_dependency
+                       JOIN pg_catalog.pg_extension AS extension_entry
+                         ON extension_entry.oid = extension_dependency.refobjid
+                       WHERE extension_dependency.classid = 'pg_catalog.pg_trigger'::pg_catalog.regclass
+                         AND extension_dependency.objid = trigger_entry.oid
+                         AND extension_dependency.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass
+                         AND extension_dependency.deptype = 'x'
+                       LIMIT 1)
+            FROM pg_catalog.pg_trigger AS trigger_entry
+            JOIN pg_catalog.pg_class AS relation ON relation.oid = trigger_entry.tgrelid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+            WHERE NOT trigger_entry.tgisinternal
+              AND trigger_entry.tgparentid = 0
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_trigger'::pg_catalog.regclass
+                    AND dependency.objid = trigger_entry.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, relation.relname, trigger_entry.tgname
+            """;
+        var definitions = new Dictionary<(string Schema, string Table), List<BlueTuskTriggerDefinition>>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var tableKey = (reader.GetString(0), reader.GetString(1));
+            if (!tables.ContainsKey(tableKey))
+            {
+                continue;
+            }
+
+            if (!definitions.TryGetValue(tableKey, out var triggers))
+            {
+                triggers = [];
+                definitions.Add(tableKey, triggers);
+            }
+
+            triggers.Add(new BlueTuskTriggerDefinition(
+                reader.GetString(2),
+                BlueTuskTriggerTiming.Before,
+                [],
+                BlueTuskTriggerOrientation.Statement,
+                FunctionName: null,
+                FunctionSchema: null,
+                Arguments: [],
+                WhenSql: null,
+                OldTransitionTable: null,
+                NewTransitionTable: null,
+                IsConstraint: false,
+                ReferencedTable: null,
+                ReferencedTableSchema: null,
+                IsDeferrable: false,
+                IsInitiallyDeferred: false,
+                reader.GetString(4) switch
+                {
+                    "O" => BlueTuskTriggerEnabledMode.Origin,
+                    "D" => BlueTuskTriggerEnabledMode.Disabled,
+                    "R" => BlueTuskTriggerEnabledMode.Replica,
+                    "A" => BlueTuskTriggerEnabledMode.Always,
+                    var value => throw new InvalidOperationException($"Unknown PostgreSQL trigger mode '{value}'."),
+                },
+                reader.GetString(3),
+                GetNullableString(reader, 5)));
+        }
+
+        foreach (var (tableKey, triggers) in definitions)
+        {
+            tables[tableKey][BlueTuskTriggerMetadata.AnnotationName] = BlueTuskTriggerMetadata.Serialize(triggers);
         }
     }
 

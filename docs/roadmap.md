@@ -299,6 +299,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Create/drop/rename/replacement diffs with relational dependency ordering, rename-aware tables, destructive diagnostics, default-`RESTRICT` drops, and partitioned-root rejection
   - [x] Exact `pg_constraint`/backing-index discovery with canonical expression retention, schema filters, snapshots, and generated fluent C#
   - [x] PostgreSQL 15–19 enforcement, partial-predicate behavior, lifecycle, reverse-engineering, and scaffolding acceptance
+- [x] PostgreSQL table, view, and foreign-table triggers
+  - [x] Typed timing, INSERT/column-specific UPDATE/DELETE/TRUNCATE events, row/statement orientation, trusted `WHEN`, transition tables, schema-qualified functions, and literal arguments
+  - [x] Constraint-trigger referenced tables and deferrability, origin/disabled/replica/always firing modes, extension dependency, safe replace guard, rename, and default-`RESTRICT` drop
+  - [x] Function/view/table dependency ordering plus canonical `pg_trigger` discovery with clone, internal, and extension-owned exclusion and generated fluent C#
+  - [x] PostgreSQL 15–19 execution, firing-mode lifecycle, reverse-engineering, and scaffolding acceptance
 - [x] Table partitioning metadata and migrations
   - [x] Typed RANGE, single-key LIST, multi-key HASH, expression-key, default-partition, and recursive subpartition metadata
   - [x] Create/add/drop/rename/schema-move diffs with destructive bound-change and unsupported root-strategy diagnostics
@@ -350,6 +355,12 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] PostgreSQL 15–19 execution, check enforcement, concurrent refresh, lifecycle, reverse-engineering, and scaffolding acceptance
 - [ ] PostgreSQL-complete migrations SQL generation
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
+- [ ] Remaining product-spec schema objects
+  - [ ] Event triggers and rewrite rules
+  - [ ] Publications and subscriptions
+  - [ ] Foreign-data wrappers, servers, user mappings, and foreign tables
+  - [ ] Operators, operator classes, operator families, casts, and aggregates
+  - [ ] Tablespace lifecycle
 - [ ] Idempotent scripts, history-table behaviour, and version-aware DDL
 
 ## 0.5.0 — PostgreSQL 19 SQL/PGQ graph preview (Milestone 7)

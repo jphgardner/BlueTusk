@@ -7,6 +7,7 @@ using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
+using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views.Internal;
 using Microsoft.EntityFrameworkCore;
@@ -141,6 +142,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskExclusionConstraintBuilderExtensions.HasBlueTuskExclusionConstraints),
                 serializedExclusionConstraints);
+        }
+
+        if (annotation.Name == BlueTuskTriggerMetadata.AnnotationName &&
+            annotation.Value is string serializedTriggers)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskTriggerBuilderExtensions.HasBlueTuskTriggers),
+                serializedTriggers);
         }
 
         if (annotation.Name == BlueTuskTableInheritanceMetadata.AnnotationName &&

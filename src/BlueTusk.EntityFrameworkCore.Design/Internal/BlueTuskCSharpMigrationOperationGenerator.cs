@@ -6,6 +6,7 @@ using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
+using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -392,6 +393,53 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Dependencies.CSharpHelper.Literal(renameExclusionConstraint.NewName))
                     .Append(", ")
                     .Append(Literal(renameExclusionConstraint.Schema))
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskTriggerOperation createTrigger:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskTrigger(")
+                    .Append(Dependencies.CSharpHelper.Literal(createTrigger.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskTriggerMetadata.Serialize(createTrigger.Definition)))
+                    .Append(", ")
+                    .Append(Literal(createTrigger.Schema))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(createTrigger.OrReplace))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskTriggerOperation dropTrigger:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskTrigger(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropTrigger.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropTrigger.Name))
+                    .Append(", ")
+                    .Append(Literal(dropTrigger.Schema))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskTriggerOperation renameTrigger:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskTrigger(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameTrigger.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameTrigger.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameTrigger.NewName))
+                    .Append(", ")
+                    .Append(Literal(renameTrigger.Schema))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskTriggerEnabledModeOperation alterTriggerMode:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskTriggerEnabledMode(")
+                    .Append(Dependencies.CSharpHelper.Literal(alterTriggerMode.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(alterTriggerMode.Name))
+                    .Append(", BlueTusk.EntityFrameworkCore.Triggers.BlueTuskTriggerEnabledMode.")
+                    .Append(alterTriggerMode.EnabledMode.ToString())
+                    .Append(", ")
+                    .Append(Literal(alterTriggerMode.Schema))
                     .AppendLine(");");
                 break;
             case CreateBlueTuskRowSecurityPolicyOperation createPolicy:

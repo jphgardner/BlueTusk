@@ -12,6 +12,8 @@ using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.Routines;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
+using BlueTusk.EntityFrameworkCore.Triggers;
+using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views;
@@ -162,6 +164,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case RenameBlueTuskExclusionConstraintOperation renameExclusionConstraint:
                 Generate(renameExclusionConstraint, builder);
+                break;
+            case CreateBlueTuskTriggerOperation createTrigger:
+                Generate(createTrigger, builder);
+                break;
+            case DropBlueTuskTriggerOperation dropTrigger:
+                Generate(dropTrigger, builder);
+                break;
+            case RenameBlueTuskTriggerOperation renameTrigger:
+                Generate(renameTrigger, builder);
+                break;
+            case AlterBlueTuskTriggerEnabledModeOperation alterTriggerMode:
+                Generate(alterTriggerMode, builder);
                 break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
@@ -2398,6 +2412,245 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 .Append(" = ")
                 .Append(parameters[index].Value);
         }
+    }
+
+    private void Generate(CreateBlueTuskTriggerOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        var definition = operation.Definition;
+        BlueTuskTriggerMetadata.Validate(definition);
+        if (operation.OrReplace && definition.IsConstraint)
+        {
+            throw new InvalidOperationException("PostgreSQL cannot replace a constraint trigger in place.");
+        }
+
+        if (definition.CanonicalCreateSql is not null)
+        {
+            var sql = definition.CanonicalCreateSql.Trim().TrimEnd(';');
+            if (operation.OrReplace)
+            {
+                const string prefix = "CREATE TRIGGER ";
+                if (!sql.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        "A canonical trigger definition must begin with CREATE TRIGGER to use OR REPLACE.");
+                }
+
+                sql = "CREATE OR REPLACE TRIGGER " + sql[prefix.Length..];
+            }
+
+            builder.Append(sql);
+            EndStatement(builder);
+        }
+        else
+        {
+            AppendStructuredTrigger(operation, builder);
+        }
+
+        if (definition.EnabledMode != BlueTuskTriggerEnabledMode.Origin)
+        {
+            AppendTriggerEnabledMode(
+                builder,
+                operation.Table,
+                operation.Schema,
+                definition.Name,
+                definition.EnabledMode);
+            EndStatement(builder);
+        }
+
+        if (definition.ExtensionDependency is not null)
+        {
+            var helper = Dependencies.SqlGenerationHelper;
+            builder.Append("ALTER TRIGGER ")
+                .Append(helper.DelimitIdentifier(definition.Name))
+                .Append(" ON ")
+                .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+                .Append(" DEPENDS ON EXTENSION ")
+                .Append(helper.DelimitIdentifier(definition.ExtensionDependency));
+            EndStatement(builder);
+        }
+    }
+
+    private void AppendStructuredTrigger(
+        CreateBlueTuskTriggerOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = operation.Definition;
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("CREATE ");
+        if (operation.OrReplace)
+        {
+            builder.Append("OR REPLACE ");
+        }
+
+        if (definition.IsConstraint)
+        {
+            builder.Append("CONSTRAINT ");
+        }
+
+        builder.Append("TRIGGER ")
+            .Append(helper.DelimitIdentifier(definition.Name))
+            .Append(" ")
+            .Append(definition.Timing switch
+            {
+                BlueTuskTriggerTiming.Before => "BEFORE",
+                BlueTuskTriggerTiming.After => "AFTER",
+                BlueTuskTriggerTiming.InsteadOf => "INSTEAD OF",
+                _ => throw new InvalidOperationException($"Unknown trigger timing '{definition.Timing}'."),
+            })
+            .Append(" ");
+        for (var index = 0; index < definition.Events.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(" OR ");
+            }
+
+            var triggerEvent = definition.Events[index];
+            builder.Append(triggerEvent.Kind switch
+            {
+                BlueTuskTriggerEventKind.Insert => "INSERT",
+                BlueTuskTriggerEventKind.Update => "UPDATE",
+                BlueTuskTriggerEventKind.Delete => "DELETE",
+                BlueTuskTriggerEventKind.Truncate => "TRUNCATE",
+                _ => throw new InvalidOperationException($"Unknown trigger event '{triggerEvent.Kind}'."),
+            });
+            if (triggerEvent.UpdateColumns.Count > 0)
+            {
+                builder.Append(" OF ");
+                for (var columnIndex = 0; columnIndex < triggerEvent.UpdateColumns.Count; columnIndex++)
+                {
+                    if (columnIndex > 0)
+                    {
+                        builder.Append(", ");
+                    }
+
+                    builder.Append(helper.DelimitIdentifier(triggerEvent.UpdateColumns[columnIndex]));
+                }
+            }
+        }
+
+        builder.Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema));
+        if (definition.ReferencedTable is not null)
+        {
+            builder.Append(" FROM ")
+                .Append(helper.DelimitIdentifier(definition.ReferencedTable, definition.ReferencedTableSchema));
+        }
+
+        if (definition.IsConstraint)
+        {
+            builder.Append(definition.IsDeferrable
+                ? definition.IsInitiallyDeferred
+                    ? " DEFERRABLE INITIALLY DEFERRED"
+                    : " DEFERRABLE INITIALLY IMMEDIATE"
+                : " NOT DEFERRABLE");
+        }
+
+        if (definition.OldTransitionTable is not null || definition.NewTransitionTable is not null)
+        {
+            builder.Append(" REFERENCING");
+            if (definition.OldTransitionTable is not null)
+            {
+                builder.Append(" OLD TABLE AS ")
+                    .Append(helper.DelimitIdentifier(definition.OldTransitionTable));
+            }
+
+            if (definition.NewTransitionTable is not null)
+            {
+                builder.Append(" NEW TABLE AS ")
+                    .Append(helper.DelimitIdentifier(definition.NewTransitionTable));
+            }
+        }
+
+        builder.Append(definition.Orientation == BlueTuskTriggerOrientation.Row
+            ? " FOR EACH ROW"
+            : " FOR EACH STATEMENT");
+        if (definition.WhenSql is not null)
+        {
+            builder.Append(" WHEN (").Append(definition.WhenSql).Append(")");
+        }
+
+        builder.Append(" EXECUTE FUNCTION ")
+            .Append(helper.DelimitIdentifier(definition.FunctionName!, definition.FunctionSchema))
+            .Append("(");
+        for (var index = 0; index < definition.Arguments.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            AppendStringLiteral(builder, definition.Arguments[index]);
+        }
+
+        builder.Append(")");
+        EndStatement(builder);
+    }
+
+    private void Generate(DropBlueTuskTriggerOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("DROP TRIGGER ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(RenameBlueTuskTriggerOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("ALTER TRIGGER ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" RENAME TO ")
+            .Append(helper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskTriggerEnabledModeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        AppendTriggerEnabledMode(
+            builder,
+            operation.Table,
+            operation.Schema,
+            operation.Name,
+            operation.EnabledMode);
+        EndStatement(builder);
+    }
+
+    private void AppendTriggerEnabledMode(
+        MigrationCommandListBuilder builder,
+        string table,
+        string? schema,
+        string name,
+        BlueTuskTriggerEnabledMode mode)
+    {
+        var action = mode switch
+        {
+            BlueTuskTriggerEnabledMode.Origin => "ENABLE TRIGGER ",
+            BlueTuskTriggerEnabledMode.Disabled => "DISABLE TRIGGER ",
+            BlueTuskTriggerEnabledMode.Replica => "ENABLE REPLICA TRIGGER ",
+            BlueTuskTriggerEnabledMode.Always => "ENABLE ALWAYS TRIGGER ",
+            _ => throw new InvalidOperationException($"Unknown trigger enabled mode '{mode}'."),
+        };
+        builder.Append("ALTER TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table, schema))
+            .Append(" ")
+            .Append(action)
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name));
     }
 
     private void AppendPolicyRole(
