@@ -160,11 +160,15 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Initial migrations SQL generation and history repository
   - [x] Common relational create-table, primary-key, foreign-key, index, default, and facet DDL
   - [x] PostgreSQL identity-column DDL and live schema-creation coverage
+  - [x] Exact `ALWAYS`/`BY DEFAULT` identity metadata plus add, switch, drop, reverse-engineering, and generated fluent C# lifecycle
+  - [x] Stored and PostgreSQL 18+ virtual generated columns, PostgreSQL 17+ expression alteration, destructive-change diagnostics, and server-version guards
+  - [x] Table/column comment create, alter, clear, and reverse-engineering fidelity
   - [x] Migration history repository, transactional locking, and idempotent migration scripts
   - [x] Live apply/revert coverage for alter, rename, sequence, index, and drop operations
 - [x] Initial database reverse engineering
   - [x] EF design-time provider discovery and `UseBlueTusk` context generation
   - [x] Tables, views, columns, defaults, generated values, keys, foreign keys, indexes, and sequences
+  - [x] Exact identity-generation modes, stored/virtual generated-column modes, server-normalized expressions, and comments
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
   - [x] Catalogue-only sequence discovery safe during concurrent schema changes
 - [x] Initial EF Core relational specification-suite coverage

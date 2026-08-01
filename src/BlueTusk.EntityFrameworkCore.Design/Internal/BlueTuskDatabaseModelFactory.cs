@@ -511,15 +511,34 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
 
             if (!string.IsNullOrEmpty(generated))
             {
+                if (generated is not "s" and not "v")
+                {
+                    throw new NotSupportedException(
+                        $"PostgreSQL returned unknown generated-column mode '{generated}' for " +
+                        $"'{table.Schema}.{table.Name}.{column.Name}'.");
+                }
+
                 column.ComputedColumnSql = defaultExpression;
-                column.IsStored = true;
+                column.IsStored = generated == "s";
                 column.ValueGenerated = ValueGenerated.OnAddOrUpdate;
             }
             else
             {
                 column.DefaultValueSql = defaultExpression;
-                if (!string.IsNullOrEmpty(identity)
-                    || defaultExpression?.StartsWith("nextval(", StringComparison.OrdinalIgnoreCase) == true)
+                if (!string.IsNullOrEmpty(identity))
+                {
+                    var generation = identity switch
+                    {
+                        "a" => BlueTuskIdentityGeneration.Always,
+                        "d" => BlueTuskIdentityGeneration.ByDefault,
+                        _ => throw new NotSupportedException(
+                            $"PostgreSQL returned unknown identity mode '{identity}' for " +
+                            $"'{table.Schema}.{table.Name}.{column.Name}'."),
+                    };
+                    column[BlueTuskValueGenerationAnnotations.IdentityGeneration] = (int)generation;
+                    column.ValueGenerated = ValueGenerated.OnAdd;
+                }
+                else if (defaultExpression?.StartsWith("nextval(", StringComparison.OrdinalIgnoreCase) == true)
                 {
                     column.ValueGenerated = ValueGenerated.OnAdd;
                 }

@@ -1678,6 +1678,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     {
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(builder);
+        GenerateVirtualGeneratedColumnGuard(operation.Columns, builder);
         var foreignTable = operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] is string foreignJson
             ? BlueTuskForeignDataMetadata.DeserializeForeignTable(foreignJson)
             : null;
@@ -1722,6 +1723,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         if (terminate)
         {
             EndStatement(builder);
+            AppendCreateTableComments(operation, builder, foreignTable is not null);
         }
     }
 
@@ -1760,7 +1762,29 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 "Create an explicit data-preserving replacement migration.");
         }
 
+        if (!string.Equals(operation.Comment, operation.OldTable.Comment, StringComparison.Ordinal))
+        {
+            AppendTableComment(builder, operation.Name, operation.Schema, operation.Comment);
+            return;
+        }
+
         base.Generate(operation, model, builder);
+    }
+
+    protected override void Generate(
+        AddColumnOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder,
+        bool terminate = true)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(builder);
+        GenerateVirtualGeneratedColumnGuard([operation], builder);
+        base.Generate(operation, model, builder, terminate);
+        if (terminate && operation.Comment is not null)
+        {
+            AppendColumnComment(builder, operation.Table, operation.Schema, operation.Name, operation.Comment);
+        }
     }
 
     protected override void Generate(
@@ -2010,11 +2034,6 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(builder);
 
-        if (operation.ComputedColumnSql is not null)
-        {
-            throw new NotSupportedException("PostgreSQL generated-column alteration requires dropping and recreating the column.");
-        }
-
         var helper = Dependencies.SqlGenerationHelper;
         var table = helper.DelimitIdentifier(operation.Table, operation.Schema);
         var column = helper.DelimitIdentifier(operation.Name);
@@ -2024,6 +2043,87 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             operation.Name,
             operation,
             model);
+        var generatedSql = operation.ComputedColumnSql;
+        var oldGeneratedSql = operation.OldColumn.ComputedColumnSql;
+        if (generatedSql is not null || oldGeneratedSql is not null)
+        {
+            if (generatedSql is not null && oldGeneratedSql is null)
+            {
+                throw new NotSupportedException(
+                    $"PostgreSQL cannot convert '{operation.Schema}.{operation.Table}.{operation.Name}' " +
+                    "from an ordinary column to a generated column in place. Drop and recreate the column explicitly.");
+            }
+
+            if (generatedSql is not null && oldGeneratedSql is not null)
+            {
+                if (operation.IsStored != operation.OldColumn.IsStored)
+                {
+                    throw new NotSupportedException(
+                        $"PostgreSQL cannot change '{operation.Schema}.{operation.Table}.{operation.Name}' " +
+                        "between stored and virtual generation in place. Drop and recreate the column explicitly.");
+                }
+
+                if (!string.Equals(columnType, operation.OldColumn.ColumnType, StringComparison.OrdinalIgnoreCase) ||
+                    !string.Equals(operation.Collation, operation.OldColumn.Collation, StringComparison.Ordinal))
+                {
+                    throw new NotSupportedException(
+                        $"Change the type or collation of generated column " +
+                        $"'{operation.Schema}.{operation.Table}.{operation.Name}' in an explicit staged migration.");
+                }
+
+                if (!string.Equals(generatedSql, oldGeneratedSql, StringComparison.Ordinal))
+                {
+                    var minimumVersion = operation.IsStored == false ? 180000 : 170000;
+                    GenerateMinimumVersionGuarded(
+                        [],
+                        minimumVersion,
+                        minimumVersion == 180000
+                            ? "BlueTusk virtual generated columns require PostgreSQL 18 or later."
+                            : "BlueTusk generated-column expression changes require PostgreSQL 17 or later.",
+                        "$BlueTuskGeneratedColumn$",
+                        builder);
+                    builder.Append("ALTER TABLE ").Append(table)
+                        .Append(" ALTER COLUMN ").Append(column)
+                        .Append(" SET EXPRESSION AS (").Append(generatedSql).Append(")");
+                    EndStatement(builder);
+                }
+
+                if (!string.Equals(operation.Comment, operation.OldColumn.Comment, StringComparison.Ordinal))
+                {
+                    AppendColumnComment(
+                        builder,
+                        operation.Table,
+                        operation.Schema,
+                        operation.Name,
+                        operation.Comment);
+                }
+
+                return;
+            }
+
+            if (operation.OldColumn.IsStored == false)
+            {
+                throw new NotSupportedException(
+                    $"PostgreSQL cannot drop the expression of virtual generated column " +
+                    $"'{operation.Schema}.{operation.Table}.{operation.Name}'. Drop and recreate it explicitly.");
+            }
+
+            builder.Append("ALTER TABLE ").Append(table)
+                .Append(" ALTER COLUMN ").Append(column)
+                .Append(" DROP EXPRESSION");
+            EndStatement(builder);
+        }
+
+        var identity = GetExplicitIdentityGeneration(operation);
+        var oldIdentity = GetExplicitIdentityGeneration(operation.OldColumn);
+        if (oldIdentity is not null && identity is null)
+        {
+            AppendAlterIdentity(builder, table, column, "DROP IDENTITY");
+        }
+        else if (oldIdentity is not null && identity is not null && oldIdentity != identity)
+        {
+            AppendAlterIdentity(builder, table, column, $"SET GENERATED {IdentitySql(identity.Value)}");
+        }
 
         if (!string.Equals(columnType, operation.OldColumn.ColumnType, StringComparison.OrdinalIgnoreCase)
             || !string.Equals(operation.Collation, operation.OldColumn.Collation, StringComparison.Ordinal))
@@ -2072,13 +2172,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             EndStatement(builder);
         }
 
+        if (oldIdentity is null && identity is not null)
+        {
+            AppendAlterIdentity(
+                builder,
+                table,
+                column,
+                $"ADD GENERATED {IdentitySql(identity.Value)} AS IDENTITY");
+        }
+
         if (!string.Equals(operation.Comment, operation.OldColumn.Comment, StringComparison.Ordinal))
         {
-            builder
-                .Append("COMMENT ON COLUMN ").Append(table).Append(".").Append(column)
-                .Append(" IS ")
-                .Append(operation.Comment is null ? "NULL" : $"'{EscapeLiteral(operation.Comment)}'");
-            EndStatement(builder);
+            AppendColumnComment(builder, operation.Table, operation.Schema, operation.Name, operation.Comment);
         }
     }
 
@@ -2229,6 +2334,24 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
+        if (operation.ComputedColumnSql is not null)
+        {
+            var columnType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model);
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
+                .Append(" ")
+                .Append(columnType);
+            if (operation.Collation is not null)
+            {
+                builder.Append(" COLLATE ");
+                AppendQualifiedIdentifier(builder, operation.Collation);
+            }
+
+            builder.Append(" GENERATED ALWAYS AS (")
+                .Append(operation.ComputedColumnSql)
+                .Append(operation.IsStored == false ? ") VIRTUAL" : ") STORED");
+            return;
+        }
+
         if (operation[BlueTuskForeignDataMetadata.ForeignColumnOptionsAnnotationName] is string serializedOptions)
         {
             var columnType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model);
@@ -2242,14 +2365,6 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 AppendQualifiedIdentifier(builder, operation.Collation);
             }
 
-            if (operation.ComputedColumnSql is not null)
-            {
-                builder.Append(" GENERATED ALWAYS AS (")
-                    .Append(operation.ComputedColumnSql)
-                    .Append(operation.IsStored == false ? ") VIRTUAL" : ") STORED");
-                return;
-            }
-
             builder.Append(operation.IsNullable ? " NULL" : " NOT NULL");
             DefaultValue(operation.DefaultValue, operation.DefaultValueSql, columnType, builder);
             return;
@@ -2257,30 +2372,51 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         base.ColumnDefinition(schema, table, name, operation, model, builder);
 
-        if (IsIdentityColumn(schema, table, name, operation, model))
+        var identity = GetIdentityGeneration(schema, table, name, operation, model);
+        if (identity is not null)
         {
-            builder.Append(" GENERATED BY DEFAULT AS IDENTITY");
+            builder.Append(" GENERATED ")
+                .Append(IdentitySql(identity.Value))
+                .Append(" AS IDENTITY");
         }
     }
 
-    private static bool IsIdentityColumn(
+    private static BlueTuskIdentityGeneration? GetIdentityGeneration(
         string? schema,
         string table,
         string name,
         ColumnOperation operation,
         IModel? model)
     {
-        if (operation.DefaultValue is not null
-            || operation.DefaultValueSql is not null
-            || operation.ComputedColumnSql is not null)
+        var explicitGeneration = GetExplicitIdentityGeneration(operation);
+        if (operation.DefaultValue is not null ||
+            operation.DefaultValueSql is not null ||
+            operation.ComputedColumnSql is not null)
         {
-            return false;
+            if (explicitGeneration is not null)
+            {
+                throw new InvalidOperationException(
+                    $"Identity column '{schema}.{table}.{name}' cannot also have a default or generated expression.");
+            }
+
+            return null;
         }
 
         var clrType = Nullable.GetUnderlyingType(operation.ClrType) ?? operation.ClrType;
         if (clrType != typeof(short) && clrType != typeof(int) && clrType != typeof(long))
         {
-            return false;
+            if (explicitGeneration is not null)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL identity column '{schema}.{table}.{name}' must use smallint, integer, or bigint.");
+            }
+
+            return null;
+        }
+
+        if (explicitGeneration is not null)
+        {
+            return explicitGeneration;
         }
 
         return model?.GetRelationalModel()
@@ -2289,7 +2425,107 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             ?.PropertyMappings
             .Any(mapping =>
                 mapping.Property.ValueGenerated == ValueGenerated.OnAdd
-                && mapping.Property.IsPrimaryKey()) == true;
+                && mapping.Property.IsPrimaryKey()) == true
+            ? BlueTuskIdentityGeneration.ByDefault
+            : null;
+    }
+
+    private static BlueTuskIdentityGeneration? GetExplicitIdentityGeneration(ColumnOperation operation)
+    {
+        var value = operation[BlueTuskValueGenerationAnnotations.IdentityGeneration];
+        if (value is null)
+        {
+            return null;
+        }
+
+        var generation = (BlueTuskIdentityGeneration)Convert.ToInt32(
+            value,
+            System.Globalization.CultureInfo.InvariantCulture);
+        return Enum.IsDefined(generation)
+            ? generation
+            : throw new InvalidOperationException($"Unknown PostgreSQL identity generation mode '{value}'.");
+    }
+
+    private static string IdentitySql(BlueTuskIdentityGeneration generation) => generation switch
+    {
+        BlueTuskIdentityGeneration.ByDefault => "BY DEFAULT",
+        BlueTuskIdentityGeneration.Always => "ALWAYS",
+        _ => throw new InvalidOperationException($"Unknown PostgreSQL identity generation mode '{generation}'."),
+    };
+
+    private void AppendAlterIdentity(
+        MigrationCommandListBuilder builder,
+        string table,
+        string column,
+        string alteration)
+    {
+        builder.Append("ALTER TABLE ").Append(table)
+            .Append(" ALTER COLUMN ").Append(column)
+            .Append(" ").Append(alteration);
+        EndStatement(builder);
+    }
+
+    private void GenerateVirtualGeneratedColumnGuard(
+        IReadOnlyList<AddColumnOperation> columns,
+        MigrationCommandListBuilder builder)
+    {
+        if (!columns.Any(column => column.ComputedColumnSql is not null && column.IsStored == false))
+        {
+            return;
+        }
+
+        GenerateMinimumVersionGuarded(
+            [],
+            180000,
+            "BlueTusk virtual generated columns require PostgreSQL 18 or later.",
+            "$BlueTuskVirtualGeneratedColumn$",
+            builder);
+    }
+
+    private void AppendCreateTableComments(
+        CreateTableOperation operation,
+        MigrationCommandListBuilder builder,
+        bool foreignTable)
+    {
+        if (operation.Comment is not null)
+        {
+            AppendTableComment(builder, operation.Name, operation.Schema, operation.Comment, foreignTable);
+        }
+
+        foreach (var column in operation.Columns.Where(column => column.Comment is not null))
+        {
+            AppendColumnComment(builder, operation.Name, operation.Schema, column.Name, column.Comment);
+        }
+    }
+
+    private void AppendTableComment(
+        MigrationCommandListBuilder builder,
+        string table,
+        string? schema,
+        string? comment,
+        bool foreignTable = false)
+    {
+        builder.Append(foreignTable ? "COMMENT ON FOREIGN TABLE " : "COMMENT ON TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table, schema))
+            .Append(" IS ")
+            .Append(comment is null ? "NULL" : $"'{EscapeLiteral(comment)}'");
+        EndStatement(builder);
+    }
+
+    private void AppendColumnComment(
+        MigrationCommandListBuilder builder,
+        string table,
+        string? schema,
+        string column,
+        string? comment)
+    {
+        builder.Append("COMMENT ON COLUMN ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table, schema))
+            .Append(".")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(column))
+            .Append(" IS ")
+            .Append(comment is null ? "NULL" : $"'{EscapeLiteral(comment)}'");
+        EndStatement(builder);
     }
 
     private void EndStatement(MigrationCommandListBuilder builder)

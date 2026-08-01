@@ -85,4 +85,50 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
             }
         }
     }
+
+    public override IEnumerable<IAnnotation> For(IColumn column, bool designTime)
+    {
+        ArgumentNullException.ThrowIfNull(column);
+        foreach (var annotation in base.For(column, designTime))
+        {
+            yield return annotation;
+        }
+
+        var mappedProperties = column.PropertyMappings.Select(mapping => mapping.Property).ToArray();
+        var explicitModes = mappedProperties
+            .Select(property => property.FindAnnotation(BlueTuskValueGenerationAnnotations.IdentityGeneration)?.Value)
+            .Where(value => value is not null)
+            .Select(value => Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture))
+            .Distinct()
+            .ToArray();
+        if (explicitModes.Length > 1)
+        {
+            throw new InvalidOperationException(
+                $"Column '{column.Table.Schema}.{column.Table.Name}.{column.Name}' has conflicting identity modes.");
+        }
+
+        if (explicitModes.Length == 1)
+        {
+            yield return new Annotation(
+                BlueTuskValueGenerationAnnotations.IdentityGeneration,
+                explicitModes[0]);
+            yield break;
+        }
+
+        if (mappedProperties.Any(property =>
+                property.ValueGenerated == ValueGenerated.OnAdd &&
+                property.IsPrimaryKey() &&
+                IsIdentityType(property.ClrType)))
+        {
+            yield return new Annotation(
+                BlueTuskValueGenerationAnnotations.IdentityGeneration,
+                (int)BlueTuskIdentityGeneration.ByDefault);
+        }
+    }
+
+    private static bool IsIdentityType(Type type)
+    {
+        type = Nullable.GetUnderlyingType(type) ?? type;
+        return type == typeof(short) || type == typeof(int) || type == typeof(long);
+    }
 }

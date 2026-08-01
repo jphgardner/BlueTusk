@@ -234,6 +234,27 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         return base.GenerateFluentApi(entityType, annotation);
     }
 
+    protected override MethodCallCodeFragment? GenerateFluentApi(
+        IProperty property,
+        IAnnotation annotation)
+    {
+        ArgumentNullException.ThrowIfNull(property);
+        ArgumentNullException.ThrowIfNull(annotation);
+
+        if (annotation.Name == BlueTuskValueGenerationAnnotations.IdentityGeneration &&
+            annotation.Value is not null)
+        {
+            var generation = (BlueTuskIdentityGeneration)Convert.ToInt32(
+                annotation.Value,
+                System.Globalization.CultureInfo.InvariantCulture);
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskPropertyBuilderExtensions.UseBlueTuskIdentityColumn),
+                generation);
+        }
+
+        return base.GenerateFluentApi(property, annotation);
+    }
+
     private static MethodCallCodeFragment Fragment(string method, string?[] arguments) =>
         new(method, arguments.Cast<object>().ToArray());
 

@@ -34,6 +34,14 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
             .Concat(index.GetAnnotations()
                 .Where(annotation => annotation.Name.StartsWith(BlueTuskIndexAnnotations.Prefix, StringComparison.Ordinal)));
     }
+
+    public override IEnumerable<IAnnotation> ForRemove(IColumn column)
+    {
+        ArgumentNullException.ThrowIfNull(column);
+        return base.ForRemove(column)
+            .Concat(column.GetAnnotations()
+                .Where(annotation => annotation.Name == BlueTuskValueGenerationAnnotations.IdentityGeneration));
+    }
 }
 
 #pragma warning restore EF1001
