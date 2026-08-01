@@ -6,6 +6,7 @@ using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
+using BlueTusk.EntityFrameworkCore.Rules.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
@@ -150,6 +151,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskTriggerBuilderExtensions.HasBlueTuskTriggers),
                 serializedTriggers);
+        }
+
+        if (annotation.Name == BlueTuskRuleMetadata.AnnotationName &&
+            annotation.Value is string serializedRules)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskRuleBuilderExtensions.HasBlueTuskRules),
+                serializedRules);
         }
 
         if (annotation.Name == BlueTuskTableInheritanceMetadata.AnnotationName &&

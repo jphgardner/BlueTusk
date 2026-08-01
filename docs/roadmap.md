@@ -304,6 +304,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Constraint-trigger referenced tables and deferrability, origin/disabled/replica/always firing modes, extension dependency, safe replace guard, rename, and default-`RESTRICT` drop
   - [x] Function/view/table dependency ordering plus canonical `pg_trigger` discovery with clone, internal, and extension-owned exclusion and generated fluent C#
   - [x] PostgreSQL 15–19 execution, firing-mode lifecycle, reverse-engineering, and scaffolding acceptance
+- [x] PostgreSQL rewrite rules
+  - [x] Typed INSERT/UPDATE/DELETE/SELECT events, `ALSO`/`INSTEAD`, trusted conditions and actions, and origin/disabled/replica/always firing modes
+  - [x] Create/replace/drop/rename/mode diffs with relation dependency ordering, rename-aware tables, destructive diagnostics, and default-`RESTRICT` drops
+  - [x] Canonical `pg_rewrite`/`pg_get_ruledef` discovery with generated fluent C#, extension-owned exclusion, and ordinary view `_RETURN` de-duplication
+  - [x] PostgreSQL 15–19 execution, lifecycle, reverse-engineering, and scaffolding acceptance
 - [x] Table partitioning metadata and migrations
   - [x] Typed RANGE, single-key LIST, multi-key HASH, expression-key, default-partition, and recursive subpartition metadata
   - [x] Create/add/drop/rename/schema-move diffs with destructive bound-change and unsupported root-strategy diagnostics
@@ -356,7 +361,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] PostgreSQL-complete migrations SQL generation
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
 - [ ] Remaining product-spec schema objects
-  - [ ] Event triggers and rewrite rules
+  - [ ] Event triggers
   - [ ] Publications and subscriptions
   - [ ] Foreign-data wrappers, servers, user mappings, and foreign tables
   - [ ] Operators, operator classes, operator families, casts, and aggregates

@@ -17,6 +17,8 @@ using BlueTusk.EntityFrameworkCore.Routines;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
+using BlueTusk.EntityFrameworkCore.Rules;
+using BlueTusk.EntityFrameworkCore.Rules.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers;
@@ -85,6 +87,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadConstraints(connection, tables);
         ReadExclusionConstraints(connection, tables);
         ReadTriggers(connection, tables);
+        ReadRules(connection, tables);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
         ReadTableInheritance(connection, tables);
@@ -761,6 +764,68 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         foreach (var (tableKey, triggers) in definitions)
         {
             tables[tableKey][BlueTuskTriggerMetadata.AnnotationName] = BlueTuskTriggerMetadata.Serialize(triggers);
+        }
+    }
+
+    private static void ReadRules(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   relation.relname,
+                   rewrite.rulename,
+                   pg_catalog.pg_get_ruledef(rewrite.oid, false),
+                   rewrite.ev_enabled::text
+            FROM pg_catalog.pg_rewrite AS rewrite
+            JOIN pg_catalog.pg_class AS relation ON relation.oid = rewrite.ev_class
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+            WHERE rewrite.rulename <> '_RETURN'
+              AND NOT EXISTS (
+                  SELECT 1 FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_rewrite'::pg_catalog.regclass
+                    AND dependency.objid = rewrite.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, relation.relname, rewrite.rulename
+            """;
+        var definitions = new Dictionary<(string Schema, string Table), List<BlueTuskRuleDefinition>>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var tableKey = (reader.GetString(0), reader.GetString(1));
+            if (!tables.ContainsKey(tableKey))
+            {
+                continue;
+            }
+
+            if (!definitions.TryGetValue(tableKey, out var rules))
+            {
+                rules = [];
+                definitions.Add(tableKey, rules);
+            }
+
+            rules.Add(new BlueTuskRuleDefinition(
+                reader.GetString(2),
+                BlueTuskRuleEvent.Insert,
+                IsInstead: false,
+                ConditionSql: null,
+                ActionSql: null,
+                reader.GetString(4) switch
+                {
+                    "O" => BlueTuskRuleEnabledMode.Origin,
+                    "D" => BlueTuskRuleEnabledMode.Disabled,
+                    "R" => BlueTuskRuleEnabledMode.Replica,
+                    "A" => BlueTuskRuleEnabledMode.Always,
+                    var value => throw new InvalidOperationException($"Unknown PostgreSQL rule mode '{value}'."),
+                },
+                reader.GetString(3)));
+        }
+
+        foreach (var (tableKey, rules) in definitions)
+        {
+            tables[tableKey][BlueTuskRuleMetadata.AnnotationName] = BlueTuskRuleMetadata.Serialize(rules);
         }
     }
 

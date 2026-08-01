@@ -6,6 +6,7 @@ using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
+using BlueTusk.EntityFrameworkCore.Rules.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views.Internal;
@@ -441,6 +442,34 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(", ")
                     .Append(Literal(alterTriggerMode.Schema))
                     .AppendLine(");");
+                break;
+            case CreateBlueTuskRuleOperation createRule:
+                builder.Append("migrationBuilder.CreateBlueTuskRule(")
+                    .Append(Dependencies.CSharpHelper.Literal(createRule.Table)).Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(BlueTuskRuleMetadata.Serialize(createRule.Definition)))
+                    .Append(", ").Append(Literal(createRule.Schema)).Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(createRule.OrReplace)).AppendLine(");");
+                break;
+            case DropBlueTuskRuleOperation dropRule:
+                builder.Append("migrationBuilder.DropBlueTuskRule(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropRule.Table)).Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropRule.Name)).Append(", ")
+                    .Append(Literal(dropRule.Schema)).AppendLine(");");
+                break;
+            case RenameBlueTuskRuleOperation renameRule:
+                builder.Append("migrationBuilder.RenameBlueTuskRule(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRule.Table)).Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRule.Name)).Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRule.NewName)).Append(", ")
+                    .Append(Literal(renameRule.Schema)).AppendLine(");");
+                break;
+            case AlterBlueTuskRuleEnabledModeOperation alterRuleMode:
+                builder.Append("migrationBuilder.AlterBlueTuskRuleEnabledMode(")
+                    .Append(Dependencies.CSharpHelper.Literal(alterRuleMode.Table)).Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(alterRuleMode.Name))
+                    .Append(", BlueTusk.EntityFrameworkCore.Rules.BlueTuskRuleEnabledMode.")
+                    .Append(alterRuleMode.EnabledMode.ToString()).Append(", ")
+                    .Append(Literal(alterRuleMode.Schema)).AppendLine(");");
                 break;
             case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
                 builder

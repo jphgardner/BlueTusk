@@ -38,7 +38,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskExtensionModelDiffer.HasDifferences(source, target) ||
         BlueTuskCollationModelDiffer.HasDifferences(source, target) ||
         BlueTuskExclusionConstraintModelDiffer.HasDifferences(source, target) ||
-        BlueTuskTriggerModelDiffer.HasDifferences(source, target);
+        BlueTuskTriggerModelDiffer.HasDifferences(source, target) ||
+        BlueTuskRuleModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -61,6 +62,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var viewAfter = new List<MigrationOperation>();
         var triggerBefore = new List<MigrationOperation>();
         var triggerAfter = new List<MigrationOperation>();
+        var ruleBefore = new List<MigrationOperation>();
+        var ruleAfter = new List<MigrationOperation>();
         var before = new List<MigrationOperation>();
         var after = new List<MigrationOperation>();
 
@@ -100,6 +103,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             baseOperations,
             triggerBefore,
             triggerAfter);
+        BlueTuskRuleModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            ruleBefore,
+            ruleAfter);
         BlueTuskExclusionConstraintModelDiffer.AddDifferences(
             source,
             target,
@@ -167,6 +176,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var operations = ensureSchemas.Concat(extensionBefore)
             .Concat(collationBefore)
             .Concat(typeBefore)
+            .Concat(ruleBefore)
             .Concat(triggerBefore)
             .Concat(viewBefore)
             .Concat(routineBefore)
@@ -176,6 +186,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             .Concat(routineAfter)
             .Concat(viewAfter)
             .Concat(triggerAfter)
+            .Concat(ruleAfter)
             .Concat(typeAfter)
             .Concat(collationAfter)
             .Concat(extensionAfter)

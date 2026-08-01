@@ -12,6 +12,8 @@ using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.Routines;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
+using BlueTusk.EntityFrameworkCore.Rules;
+using BlueTusk.EntityFrameworkCore.Rules.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
@@ -176,6 +178,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case AlterBlueTuskTriggerEnabledModeOperation alterTriggerMode:
                 Generate(alterTriggerMode, builder);
+                break;
+            case CreateBlueTuskRuleOperation createRule:
+                Generate(createRule, builder);
+                break;
+            case DropBlueTuskRuleOperation dropRule:
+                Generate(dropRule, builder);
+                break;
+            case RenameBlueTuskRuleOperation renameRule:
+                Generate(renameRule, builder);
+                break;
+            case AlterBlueTuskRuleEnabledModeOperation alterRuleMode:
+                Generate(alterRuleMode, builder);
                 break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
@@ -2645,6 +2659,114 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             BlueTuskTriggerEnabledMode.Replica => "ENABLE REPLICA TRIGGER ",
             BlueTuskTriggerEnabledMode.Always => "ENABLE ALWAYS TRIGGER ",
             _ => throw new InvalidOperationException($"Unknown trigger enabled mode '{mode}'."),
+        };
+        builder.Append("ALTER TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table, schema))
+            .Append(" ")
+            .Append(action)
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name));
+    }
+
+    private void Generate(CreateBlueTuskRuleOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        var definition = operation.Definition;
+        BlueTuskRuleMetadata.Validate(definition);
+        if (definition.CanonicalCreateSql is not null)
+        {
+            var sql = definition.CanonicalCreateSql.Trim().TrimEnd(';');
+            if (operation.OrReplace)
+            {
+                const string prefix = "CREATE RULE ";
+                if (!sql.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                {
+                    throw new InvalidOperationException(
+                        "A canonical rule definition must begin with CREATE RULE to use OR REPLACE.");
+                }
+
+                sql = "CREATE OR REPLACE RULE " + sql[prefix.Length..];
+            }
+
+            builder.Append(sql);
+        }
+        else
+        {
+            var helper = Dependencies.SqlGenerationHelper;
+            builder.Append(operation.OrReplace ? "CREATE OR REPLACE RULE " : "CREATE RULE ")
+                .Append(helper.DelimitIdentifier(definition.Name))
+                .Append(" AS ON ")
+                .Append(definition.Event.ToString().ToUpperInvariant())
+                .Append(" TO ")
+                .Append(helper.DelimitIdentifier(operation.Table, operation.Schema));
+            if (definition.ConditionSql is not null)
+            {
+                builder.Append(" WHERE (").Append(definition.ConditionSql).Append(")");
+            }
+
+            builder.Append(definition.IsInstead ? " DO INSTEAD " : " DO ALSO ")
+                .Append(definition.ActionSql!);
+        }
+
+        EndStatement(builder);
+        if (definition.EnabledMode != BlueTuskRuleEnabledMode.Origin)
+        {
+            AppendRuleEnabledMode(builder, operation.Table, operation.Schema, definition.Name, definition.EnabledMode);
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(DropBlueTuskRuleOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("DROP RULE ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(RenameBlueTuskRuleOperation operation, MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("ALTER RULE ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" RENAME TO ")
+            .Append(helper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskRuleEnabledModeOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        AppendRuleEnabledMode(builder, operation.Table, operation.Schema, operation.Name, operation.EnabledMode);
+        EndStatement(builder);
+    }
+
+    private void AppendRuleEnabledMode(
+        MigrationCommandListBuilder builder,
+        string table,
+        string? schema,
+        string name,
+        BlueTuskRuleEnabledMode mode)
+    {
+        var action = mode switch
+        {
+            BlueTuskRuleEnabledMode.Origin => "ENABLE RULE ",
+            BlueTuskRuleEnabledMode.Disabled => "DISABLE RULE ",
+            BlueTuskRuleEnabledMode.Replica => "ENABLE REPLICA RULE ",
+            BlueTuskRuleEnabledMode.Always => "ENABLE ALWAYS RULE ",
+            _ => throw new InvalidOperationException($"Unknown rule enabled mode '{mode}'."),
         };
         builder.Append("ALTER TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table, schema))
