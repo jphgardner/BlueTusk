@@ -433,7 +433,11 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Transaction-suppressed create/drop, dependency-safe ordering, rename, owner/option/comment alteration, reset semantics, and immutable-location rejection
     - [x] Direct `pg_tablespace`/`pg_tablespace_location`/shared-comment discovery, built-in exclusion, full-database fluent scaffolding, and generated migration C#
     - [x] PostgreSQL 15–19 filesystem-backed lifecycle, table placement, catalogue round-tripping, scaffolding, and empty-cluster-drop acceptance
-- [ ] Idempotent scripts, history-table behaviour, and version-aware DDL
+- [x] Idempotent scripts, history-table behaviour, and version-aware DDL
+  - [x] Live-tested ordinary idempotent up/down scripts, including safe repeated execution
+  - [x] Custom schema/table history repositories with quoted identifiers, locking, conditional guards, and live row lifecycle
+  - [x] Fail-fast idempotent generation for transaction-suppressed PostgreSQL DDL that cannot execute inside conditional `DO` blocks
+  - [x] Runtime server-version guards for version-dependent collations, generated columns, publications, subscriptions, foreign-data wrappers, event triggers, and SQL/PGQ DDL
 
 ## 0.5.0 — PostgreSQL 19 SQL/PGQ graph preview (Milestone 7)
 

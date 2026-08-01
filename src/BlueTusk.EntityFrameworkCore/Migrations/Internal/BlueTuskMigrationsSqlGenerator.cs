@@ -45,6 +45,24 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     MigrationsSqlGeneratorDependencies dependencies)
     : MigrationsSqlGenerator(dependencies)
 {
+    public override IReadOnlyList<MigrationCommand> Generate(
+        IReadOnlyList<MigrationOperation> operations,
+        IModel? model = null,
+        MigrationsSqlGenerationOptions options = MigrationsSqlGenerationOptions.Default)
+    {
+        var commands = base.Generate(operations, model, options);
+        if ((options & MigrationsSqlGenerationOptions.Idempotent) != 0
+            && commands.Any(command => command.TransactionSuppressed))
+        {
+            throw new NotSupportedException(
+                "PostgreSQL transaction-suppressed DDL cannot be generated inside an idempotent migration " +
+                "script because EF Core's conditional DO block runs in a transaction. Generate a normal " +
+                "migration script or replace the transaction-suppressed operation with transactional DDL.");
+        }
+
+        return commands;
+    }
+
     protected override void Generate(
         MigrationOperation operation,
         IModel? model,

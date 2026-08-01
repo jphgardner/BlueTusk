@@ -110,6 +110,51 @@ public sealed class MigrationsIntegrationTests
     }
 
     [Fact]
+    public async Task Custom_history_repository_round_trips_quoted_identifiers_on_PostgreSQL()
+    {
+        var connectionString = GetConnectionString();
+        const string schema = "History Schema";
+        const string table = "History \"Table";
+        await ExecuteNonQueryAsync(connectionString, "DROP SCHEMA IF EXISTS \"History Schema\" CASCADE");
+        await ExecuteNonQueryAsync(connectionString, "CREATE SCHEMA \"History Schema\"");
+
+        try
+        {
+            var options = new DbContextOptionsBuilder<MigrationContext>()
+                .UseBlueTusk(
+                    connectionString,
+                    provider => provider.MigrationsHistoryTable(table, schema))
+                .Options;
+            await using var context = new MigrationContext(options);
+            var repository = context.GetService<IHistoryRepository>();
+
+            Assert.False(await repository.ExistsAsync(CancellationToken.None));
+            await ExecuteNonQueryAsync(connectionString, repository.GetCreateIfNotExistsScript());
+            await ExecuteNonQueryAsync(connectionString, repository.GetCreateIfNotExistsScript());
+            Assert.True(await repository.ExistsAsync(CancellationToken.None));
+
+            await using (var transaction = await context.Database.BeginTransactionAsync())
+            {
+                await using var migrationLock = await repository.AcquireDatabaseLockAsync(CancellationToken.None);
+                await transaction.CommitAsync();
+            }
+
+            var row = new HistoryRow("202608010001_Quoted'History", "10.0.10");
+            await ExecuteNonQueryAsync(connectionString, repository.GetInsertScript(row));
+            var applied = Assert.Single(await repository.GetAppliedMigrationsAsync(CancellationToken.None));
+            Assert.Equal(row.MigrationId, applied.MigrationId);
+            Assert.Equal(row.ProductVersion, applied.ProductVersion);
+
+            await ExecuteNonQueryAsync(connectionString, repository.GetDeleteScript(row.MigrationId));
+            Assert.Empty(await repository.GetAppliedMigrationsAsync(CancellationToken.None));
+        }
+        finally
+        {
+            await ExecuteNonQueryAsync(connectionString, "DROP SCHEMA IF EXISTS \"History Schema\" CASCADE");
+        }
+    }
+
+    [Fact]
     public async Task Generated_create_table_commands_execute_on_PostgreSQL()
     {
         var connectionString = GetConnectionString();
