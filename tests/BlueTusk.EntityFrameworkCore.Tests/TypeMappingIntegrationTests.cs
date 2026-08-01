@@ -104,8 +104,106 @@ public sealed class TypeMappingIntegrationTests
     {
         var builder = new BlueTuskDataSourceBuilder(
             "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk_tests");
+        var locationTypeId = new BlueTuskTypeId(90_001);
+        builder.Types.Register(new BlueTuskTypeDescriptor
+        {
+            Id = locationTypeId,
+            Schema = "public",
+            Name = "ef_location",
+            Kind = BlueTuskTypeKind.Composite,
+            CompositeFields =
+            [
+                new BlueTuskCompositeField
+                {
+                    Position = 1,
+                    Name = "latitude",
+                    Type = BlueTuskBuiltInTypes.Float8.Id,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 2,
+                    Name = "longitude",
+                    Type = BlueTuskBuiltInTypes.Float8.Id,
+                },
+            ],
+        });
+        builder.Types.Register(new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(90_002),
+            Schema = "public",
+            Name = "ef_address",
+            Kind = BlueTuskTypeKind.Composite,
+            CompositeFields =
+            [
+                new BlueTuskCompositeField
+                {
+                    Position = 1,
+                    Name = "house_number",
+                    Type = BlueTuskBuiltInTypes.Int4.Id,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 2,
+                    Name = "street",
+                    Type = BlueTuskBuiltInTypes.Text.Id,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 3,
+                    Name = "note",
+                    Type = BlueTuskBuiltInTypes.Text.Id,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 4,
+                    Name = "location",
+                    Type = locationTypeId,
+                },
+            ],
+        });
+        builder.Types.Register(new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(90_003),
+            Schema = "public",
+            Name = "ef_record_address",
+            Kind = BlueTuskTypeKind.Composite,
+            CompositeFields =
+            [
+                new BlueTuskCompositeField
+                {
+                    Position = 1,
+                    Name = "house_number",
+                    Type = BlueTuskBuiltInTypes.Int4.Id,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 2,
+                    Name = "street",
+                    Type = BlueTuskBuiltInTypes.Text.Id,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 3,
+                    Name = "note",
+                    Type = BlueTuskBuiltInTypes.Text.Id,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 4,
+                    Name = "location",
+                    Type = locationTypeId,
+                },
+                new BlueTuskCompositeField
+                {
+                    Position = 5,
+                    Name = "street\"name",
+                    Type = BlueTuskBuiltInTypes.Text.Id,
+                },
+            ],
+        });
         builder.MapEnum<EfOrderStatus>("public.ef_order_status");
         builder.MapComposite<EfAddress>("public.ef_address");
+        builder.MapComposite<EfLocation>("public.ef_location");
         using var dataSource = builder.Build();
         using var context = CreateUserTypeContext(
             dataSource,
@@ -125,6 +223,8 @@ public sealed class TypeMappingIntegrationTests
                 value.Address.HouseNumber,
                 value.Address.Street,
                 value.Address.Note,
+                value.Address.Location.Latitude,
+                value.Address.Location.Longitude,
                 EF.Functions.RecordField<int>(value.RecordAddress, "house_number"),
                 EF.Functions.RecordField<string>(value.RecordAddress, "street"),
                 EF.Functions.RecordField<string?>(value.RecordAddress, "note")))
@@ -133,10 +233,28 @@ public sealed class TypeMappingIntegrationTests
         Assert.Contains("(\"e\".\"Address\").\"house_number\"", sql, StringComparison.Ordinal);
         Assert.Contains("(\"e\".\"Address\").\"street\"", sql, StringComparison.Ordinal);
         Assert.Contains("(\"e\".\"Address\").\"note\"", sql, StringComparison.Ordinal);
+        Assert.Contains(
+            "((\"e\".\"Address\").\"location\").\"latitude\"",
+            sql,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "((\"e\".\"Address\").\"location\").\"longitude\"",
+            sql,
+            StringComparison.Ordinal);
         Assert.Contains("(\"e\".\"RecordAddress\").\"house_number\"", sql, StringComparison.Ordinal);
         Assert.Contains("(\"e\".\"Address\").\"street\" = @street", sql, StringComparison.Ordinal);
         Assert.Contains("\"e\".\"Status\" = @status", sql, StringComparison.Ordinal);
         Assert.Contains("\"e\".\"DomainValue\" >= @minimumDomainValue", sql, StringComparison.Ordinal);
+
+        var nestedRecordSql = context.Values
+            .Select(value => EF.Functions
+                .RecordField<EfLocation>(value.RecordAddress, "location")
+                .Latitude)
+            .ToQueryString();
+        Assert.Contains(
+            "((\"e\".\"RecordAddress\").\"location\").\"latitude\"",
+            nestedRecordSql,
+            StringComparison.Ordinal);
 
         var quotedNameSql = context.Values
             .Select(value => EF.Functions.RecordField<string>(value.RecordAddress, "street\"name"))
@@ -150,6 +268,22 @@ public sealed class TypeMappingIntegrationTests
             .Select(value => EF.Functions.RecordField<string>(value.RecordAddress, ""))
             .ToQueryString());
         Assert.Equal("fieldName", invalidName.ParamName);
+
+        using var unloadedDataSource = new BlueTuskDataSourceBuilder(
+                "Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk_tests")
+            .MapComposite<EfAddress>("public.ef_address")
+            .MapComposite<EfLocation>("public.ef_location")
+            .Build();
+        using var unloadedContext = CreateUserTypeContext(
+            unloadedDataSource,
+            "ef_order_status",
+            "ef_positive_integer",
+            "ef_address",
+            "ef_record_address");
+        var missingCatalogue = Assert.Throws<InvalidOperationException>(() => unloadedContext.Values
+            .Select(value => value.Address.Location.Latitude)
+            .ToQueryString());
+        Assert.Contains("runtime type catalogue has been loaded", missingCatalogue.Message);
     }
 
     [Fact]
@@ -160,6 +294,7 @@ public sealed class TypeMappingIntegrationTests
         var enumName = $"ef_order_status_{suffix}";
         var domainName = $"ef_positive_integer_{suffix}";
         var compositeName = $"ef_address_{suffix}";
+        var locationName = $"ef_location_{suffix}";
         var recordName = $"ef_record_address_{suffix}";
         await ExecuteNonQueryAsync(
             connectionString,
@@ -167,8 +302,10 @@ public sealed class TypeMappingIntegrationTests
             DROP TABLE IF EXISTS "ef_user_type_values";
             CREATE TYPE public.{enumName} AS ENUM ('pending', 'in-progress', 'Complete');
             CREATE DOMAIN public.{domainName} AS int4 CHECK (VALUE > 0);
+            CREATE TYPE public.{locationName} AS
+                (latitude float8, longitude float8);
             CREATE TYPE public.{compositeName} AS
-                (house_number int4, street text, note text);
+                (house_number int4, street text, note text, location public.{locationName});
             CREATE TYPE public.{recordName} AS
                 (house_number int4, street text, note text);
             CREATE TABLE "ef_user_type_values" (
@@ -189,8 +326,10 @@ public sealed class TypeMappingIntegrationTests
 
         var builder = new BlueTuskDataSourceBuilder(connectionString);
         builder.MapEnum<EfOrderStatus>($"public.{enumName}");
+        builder.MapComposite<EfLocation>($"public.{locationName}");
         builder.MapComposite<EfAddress>($"public.{compositeName}");
         await using var dataSource = builder.Build();
+        await dataSource.ReloadTypesAsync();
         var expected = new UserTypeValue
         {
             Id = 1,
@@ -198,11 +337,11 @@ public sealed class TypeMappingIntegrationTests
             Statuses = [EfOrderStatus.Pending, EfOrderStatus.Complete],
             DomainValue = 42,
             DomainValues = [1, 2, 3],
-            Address = new EfAddress(221, "Baker Street", null),
+            Address = new EfAddress(221, "Baker Street", null, new EfLocation(51.5238, -0.1586)),
             Addresses =
             [
-                new EfAddress(221, "Baker Street", null),
-                new EfAddress(7, "Side Road", "rear entrance"),
+                new EfAddress(221, "Baker Street", null, new EfLocation(51.5238, -0.1586)),
+                new EfAddress(7, "Side Road", "rear entrance", new EfLocation(52.1, -1.2)),
             ],
             RecordAddress = CreateAddressRecord(19, "Record Road", null),
             RecordAddresses =
@@ -253,42 +392,73 @@ public sealed class TypeMappingIntegrationTests
                 var street = "Baker Street";
                 var status = EfOrderStatus.InProgress;
                 var minimumDomainValue = 40;
+                var minimumLatitude = 50d;
                 var fields = await context.Values
                     .AsNoTracking()
                     .Where(value => value.Status == status
                         && value.DomainValue >= minimumDomainValue
-                        && value.Address.Street == street)
+                        && value.Address.Street == street
+                        && value.Address.Location.Latitude >= minimumLatitude)
                     .Select(value => new CompositeFieldProjection(
                         value.Address.HouseNumber,
                         value.Address.Street,
                         value.Address.Note,
+                        value.Address.Location.Latitude,
+                        value.Address.Location.Longitude,
                         EF.Functions.RecordField<int>(value.RecordAddress, "house_number"),
                         EF.Functions.RecordField<string>(value.RecordAddress, "street"),
                         EF.Functions.RecordField<string?>(value.RecordAddress, "note")))
                     .SingleAsync();
                 Assert.Equal(
-                    new CompositeFieldProjection(221, "Baker Street", null, 19, "Record Road", null),
+                    new CompositeFieldProjection(
+                        221,
+                        "Baker Street",
+                        null,
+                        51.5238,
+                        -0.1586,
+                        19,
+                        "Record Road",
+                        null),
                     fields);
 
                 var compiledFields = EF.CompileQuery(
                     (UserTypeValueContext database,
                         EfOrderStatus requestedStatus,
                         int requestedMinimum,
-                        string requestedStreet) => database.Values
+                        string requestedStreet,
+                        double requestedLatitude) => database.Values
                         .AsNoTracking()
                         .Where(value => value.Status == requestedStatus
                             && value.DomainValue >= requestedMinimum
-                            && value.Address.Street == requestedStreet)
+                            && value.Address.Street == requestedStreet
+                            && value.Address.Location.Latitude >= requestedLatitude)
                         .Select(value => new CompositeFieldProjection(
                             value.Address.HouseNumber,
                             value.Address.Street,
                             value.Address.Note,
+                            value.Address.Location.Latitude,
+                            value.Address.Location.Longitude,
                             EF.Functions.RecordField<int>(value.RecordAddress, "house_number"),
                             EF.Functions.RecordField<string>(value.RecordAddress, "street"),
                             EF.Functions.RecordField<string?>(value.RecordAddress, "note"))));
                 Assert.Equal(
-                    [new CompositeFieldProjection(221, "Baker Street", null, 19, "Record Road", null)],
-                    compiledFields(context, status, minimumDomainValue, street).ToArray());
+                    [
+                        new CompositeFieldProjection(
+                            221,
+                            "Baker Street",
+                            null,
+                            51.5238,
+                            -0.1586,
+                            19,
+                            "Record Road",
+                            null),
+                    ],
+                    compiledFields(
+                        context,
+                        status,
+                        minimumDomainValue,
+                        street,
+                        minimumLatitude).ToArray());
             }
         }
         finally
@@ -299,6 +469,7 @@ public sealed class TypeMappingIntegrationTests
                 DROP TABLE IF EXISTS "ef_user_type_values";
                 DROP TYPE IF EXISTS public.{recordName};
                 DROP TYPE IF EXISTS public.{compositeName};
+                DROP TYPE IF EXISTS public.{locationName};
                 DROP DOMAIN IF EXISTS public.{domainName};
                 DROP TYPE IF EXISTS public.{enumName}
                 """);
@@ -1018,7 +1189,7 @@ public sealed class TypeMappingIntegrationTests
         public int DomainValue { get; set; }
         public int? OptionalDomainValue { get; set; }
         public int[] DomainValues { get; set; } = [];
-        public EfAddress Address { get; set; } = new(0, string.Empty, null);
+        public EfAddress Address { get; set; } = new(0, string.Empty, null, new EfLocation(0, 0));
         public EfAddress? OptionalAddress { get; set; }
         public EfAddress[] Addresses { get; set; } = [];
         public BlueTuskRecord RecordAddress { get; set; } = CreateAddressRecord(0, string.Empty, null);
@@ -1036,12 +1207,20 @@ public sealed class TypeMappingIntegrationTests
         Complete,
     }
 
-    private sealed record EfAddress(int HouseNumber, string Street, string? Note);
+    private sealed record EfLocation(double Latitude, double Longitude);
+
+    private sealed record EfAddress(
+        int HouseNumber,
+        string Street,
+        string? Note,
+        EfLocation Location);
 
     private sealed record CompositeFieldProjection(
         int HouseNumber,
         string Street,
         string? Note,
+        double Latitude,
+        double Longitude,
         int RecordHouseNumber,
         string RecordStreet,
         string? RecordNote);

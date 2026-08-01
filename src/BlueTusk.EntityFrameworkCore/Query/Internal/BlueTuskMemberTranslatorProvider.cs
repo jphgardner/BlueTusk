@@ -1,3 +1,5 @@
+using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
 
@@ -7,12 +9,19 @@ internal sealed class BlueTuskMemberTranslatorProvider : RelationalMemberTransla
 {
     public BlueTuskMemberTranslatorProvider(
         RelationalMemberTranslatorProviderDependencies dependencies,
-        IRelationalTypeMappingSource typeMappingSource)
+        IRelationalTypeMappingSource typeMappingSource,
+        ISqlGenerationHelper sqlGenerationHelper,
+        IDbContextOptions contextOptions)
         : base(dependencies)
     {
+        var dataSource = contextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource;
         AddTranslators(
         [
-            new BlueTuskCompositeMemberTranslator(typeMappingSource),
+            new BlueTuskCompositeMemberTranslator(
+                new BlueTuskCompositeFieldMappingResolver(
+                    typeMappingSource,
+                    sqlGenerationHelper,
+                    dataSource)),
             new BlueTuskStringMemberTranslator(dependencies.SqlExpressionFactory),
         ]);
     }

@@ -1,5 +1,6 @@
 using System.Reflection;
 using System.Text;
+using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Storage.Internal;
 using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
@@ -11,7 +12,7 @@ using Microsoft.EntityFrameworkCore.Storage;
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
 internal sealed class BlueTuskCompositeMemberTranslator(
-    IRelationalTypeMappingSource typeMappingSource)
+    BlueTuskCompositeFieldMappingResolver fieldMappingResolver)
     : IMemberTranslator
 {
     public SqlExpression? Translate(
@@ -28,21 +29,23 @@ internal sealed class BlueTuskCompositeMemberTranslator(
             return null;
         }
 
+        var fieldName = BlueTuskCompositeFieldName.Get(member);
         var resultType = Nullable.GetUnderlyingType(returnType) ?? returnType;
-        var resultMapping = typeMappingSource.FindMapping(member)
-            ?? typeMappingSource.FindMapping(resultType)
-            ?? throw new InvalidOperationException(
-                $"PostgreSQL composite field '{member.Name}' has no relational mapping for CLR type '{returnType.Name}'.");
+        var resultMapping = fieldMappingResolver.Resolve(
+            instance.TypeMapping,
+            fieldName,
+            resultType,
+            member);
         return new BlueTuskCompositeFieldExpression(
             instance,
-            BlueTuskCompositeFieldName.Get(member),
+            fieldName,
             resultType,
             resultMapping);
     }
 }
 
 internal sealed class BlueTuskRecordFieldTranslator(
-    IRelationalTypeMappingSource typeMappingSource)
+    BlueTuskCompositeFieldMappingResolver fieldMappingResolver)
     : IMethodCallTranslator
 {
     public SqlExpression? Translate(
@@ -57,7 +60,7 @@ internal sealed class BlueTuskRecordFieldTranslator(
             return null;
         }
 
-        if (arguments[1].TypeMapping is not BlueTuskUserDefinedTypeMapping)
+        if (arguments[1].TypeMapping is not BlueTuskUserDefinedTypeMapping recordMapping)
         {
             throw new InvalidOperationException(
                 "RecordField requires a BlueTuskRecord property mapped to a schema-qualified PostgreSQL composite type.");
@@ -71,15 +74,119 @@ internal sealed class BlueTuskRecordFieldTranslator(
 
         BlueTuskCompositeFieldName.Validate(fieldName);
         var resultType = Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType;
-        var resultMapping = typeMappingSource.FindMapping(resultType)
-            ?? throw new InvalidOperationException(
-                $"RecordField has no relational mapping for CLR type '{method.ReturnType.Name}'.");
+        var resultMapping = fieldMappingResolver.Resolve(
+            recordMapping,
+            fieldName,
+            resultType);
         return new BlueTuskCompositeFieldExpression(
             arguments[1],
             fieldName,
             resultType,
             resultMapping);
     }
+}
+
+internal sealed class BlueTuskCompositeFieldMappingResolver(
+    IRelationalTypeMappingSource typeMappingSource,
+    ISqlGenerationHelper sqlGenerationHelper,
+    BlueTuskDataSource? dataSource)
+{
+    public RelationalTypeMapping Resolve(
+        RelationalTypeMapping compositeMapping,
+        string fieldName,
+        Type resultType,
+        MemberInfo? member = null)
+    {
+        if (TryResolveCatalogueMapping(compositeMapping, fieldName, resultType, out var mapping))
+        {
+            return mapping;
+        }
+
+        return member is null
+            ? typeMappingSource.FindMapping(resultType)
+                ?? throw MissingMapping(fieldName, resultType)
+            : typeMappingSource.FindMapping(member)
+                ?? typeMappingSource.FindMapping(resultType)
+                ?? throw MissingMapping(fieldName, resultType);
+    }
+
+    private bool TryResolveCatalogueMapping(
+        RelationalTypeMapping compositeMapping,
+        string fieldName,
+        Type resultType,
+        out RelationalTypeMapping mapping)
+    {
+        mapping = null!;
+        var registry = dataSource?.TypeRegistry;
+        if (registry is null
+            || !TryParseTypeName(compositeMapping.StoreType, out var compositeName)
+            || !registry.TryGetType(compositeName, out var compositeType, out _)
+            || compositeType?.Kind != BlueTuskTypeKind.Composite)
+        {
+            return false;
+        }
+
+        var field = compositeType.CompositeFields.FirstOrDefault(
+            candidate => string.Equals(candidate.Name, fieldName, StringComparison.Ordinal));
+        if (field is null)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL composite '{compositeMapping.StoreType}' has no field named '{fieldName}'.");
+        }
+
+        if (!registry.TryGetType(field.Type, out var fieldType)
+            || fieldType is null)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL composite field '{compositeMapping.StoreType}.{fieldName}' references " +
+                $"unknown catalogue type OID {field.Type}.");
+        }
+
+        var storeType = GetStoreType(registry, fieldType);
+        mapping = typeMappingSource.FindMapping(resultType, storeType, keyOrIndex: false)
+            ?? throw new InvalidOperationException(
+                $"PostgreSQL composite field '{compositeMapping.StoreType}.{fieldName}' has store type " +
+                $"'{storeType}', which cannot map to CLR type '{resultType.Name}'.");
+        return true;
+    }
+
+    private string GetStoreType(BlueTuskTypeRegistry registry, BlueTuskTypeDescriptor type)
+    {
+        if (type.Kind == BlueTuskTypeKind.Array && type.ElementType is { } elementTypeId)
+        {
+            if (!registry.TryGetType(elementTypeId, out var elementType) || elementType is null)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL array type '{type.QualifiedName}' references unknown element OID {elementTypeId}.");
+            }
+
+            return $"{GetStoreType(registry, elementType)}[]";
+        }
+
+        return string.Equals(type.Schema, "pg_catalog", StringComparison.Ordinal)
+            ? type.Name
+            : sqlGenerationHelper.DelimitIdentifier(type.Name, type.Schema);
+    }
+
+    private static bool TryParseTypeName(string storeType, out BlueTuskTypeName typeName)
+    {
+        try
+        {
+            typeName = BlueTuskTypeName.Parse(storeType);
+            return true;
+        }
+        catch (FormatException)
+        {
+            typeName = default;
+            return false;
+        }
+    }
+
+    private static InvalidOperationException MissingMapping(string fieldName, Type resultType)
+        => new(
+            $"PostgreSQL composite field '{fieldName}' has no relational mapping for CLR type " +
+            $"'{resultType.Name}'. Nested composite fields require a BlueTuskDataSource whose " +
+            "runtime type catalogue has been loaded.");
 }
 
 internal static class BlueTuskCompositeFieldName

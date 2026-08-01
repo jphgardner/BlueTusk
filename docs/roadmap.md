@@ -319,7 +319,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Regex match/split and delimiter-table native query roots
   - [x] Parameterized runtime-enum equality and domain ordering plus flat typed-composite and lossless-record field predicates/projections with compiled queries and PostgreSQL 15–19 acceptance
   - [x] Parameterized two-dimensional `ARRAY[...]` construction plus one- through four-dimensional projected subscripting/slicing with compiled queries and PostgreSQL 15–19 acceptance
-  - [ ] Nested composite fields and other remaining PostgreSQL-native query families
+  - [x] Catalogue-resolved nested typed-composite and lossless-record-root field traversal with loaded-catalogue diagnostics, compiled queries, and PostgreSQL 15–19 acceptance
+  - [ ] Other remaining PostgreSQL-native query families
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback
   - [x] Provider SQL-expression quoting, nullability processing, and operator-family tests

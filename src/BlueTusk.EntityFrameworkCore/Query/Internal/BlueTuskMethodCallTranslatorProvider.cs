@@ -1,4 +1,7 @@
+using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
@@ -6,9 +9,15 @@ internal sealed class BlueTuskMethodCallTranslatorProvider
     : RelationalMethodCallTranslatorProvider
 {
     public BlueTuskMethodCallTranslatorProvider(
-        RelationalMethodCallTranslatorProviderDependencies dependencies)
+        RelationalMethodCallTranslatorProviderDependencies dependencies,
+        ISqlGenerationHelper sqlGenerationHelper,
+        IDbContextOptions contextOptions)
         : base(dependencies)
     {
+        var compositeFieldMappingResolver = new BlueTuskCompositeFieldMappingResolver(
+            dependencies.RelationalTypeMappingSource,
+            sqlGenerationHelper,
+            contextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource);
         AddTranslators(
         [
             new BlueTuskWindowFunctionTranslator(
@@ -23,7 +32,7 @@ internal sealed class BlueTuskMethodCallTranslatorProvider
             new BlueTuskArrayTranslator(
                 dependencies.SqlExpressionFactory,
                 dependencies.RelationalTypeMappingSource),
-            new BlueTuskRecordFieldTranslator(dependencies.RelationalTypeMappingSource),
+            new BlueTuskRecordFieldTranslator(compositeFieldMappingResolver),
             new BlueTuskPostgreSqlFunctionTranslator(
                 dependencies.SqlExpressionFactory,
                 dependencies.RelationalTypeMappingSource),
