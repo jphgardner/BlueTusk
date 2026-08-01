@@ -11,6 +11,7 @@ internal sealed class BlueTuskAggregateExpression(
     IReadOnlyList<SqlExpression> arguments,
     bool isDistinct,
     IReadOnlyList<OrderingExpression> orderings,
+    IReadOnlyList<OrderingExpression> withinGroupOrderings,
     SqlExpression? predicate,
     Type type,
     RelationalTypeMapping typeMapping)
@@ -26,14 +27,18 @@ internal sealed class BlueTuskAggregateExpression(
 
     public IReadOnlyList<OrderingExpression> Orderings { get; } = orderings;
 
+    public IReadOnlyList<OrderingExpression> WithinGroupOrderings { get; } = withinGroupOrderings;
+
     public SqlExpression? Predicate { get; } = predicate;
 
     public BlueTuskAggregateExpression Update(
         IReadOnlyList<SqlExpression> arguments,
         IReadOnlyList<OrderingExpression> orderings,
+        IReadOnlyList<OrderingExpression> withinGroupOrderings,
         SqlExpression? predicate)
         => arguments.SequenceEqual(Arguments)
             && orderings.SequenceEqual(Orderings)
+            && withinGroupOrderings.SequenceEqual(WithinGroupOrderings)
             && predicate == Predicate
                 ? this
                 : new BlueTuskAggregateExpression(
@@ -41,6 +46,7 @@ internal sealed class BlueTuskAggregateExpression(
                     arguments,
                     IsDistinct,
                     orderings,
+                    withinGroupOrderings,
                     predicate,
                     Type,
                     TypeMapping!);
@@ -53,11 +59,14 @@ internal sealed class BlueTuskAggregateExpression(
         var orderings = Orderings
             .Select(ordering => ordering.Update((SqlExpression)visitor.Visit(ordering.Expression)))
             .ToArray();
+        var withinGroupOrderings = WithinGroupOrderings
+            .Select(ordering => ordering.Update((SqlExpression)visitor.Visit(ordering.Expression)))
+            .ToArray();
         var predicate = Predicate is null
             ? null
             : (SqlExpression)visitor.Visit(Predicate);
 
-        return Update(arguments, orderings, predicate);
+        return Update(arguments, orderings, withinGroupOrderings, predicate);
     }
 
     public override Expression Quote()
@@ -69,6 +78,7 @@ internal sealed class BlueTuskAggregateExpression(
                 typeof(IReadOnlyList<SqlExpression>),
                 typeof(bool),
                 typeof(IReadOnlyList<OrderingExpression>),
+                typeof(IReadOnlyList<OrderingExpression>),
                 typeof(SqlExpression),
                 typeof(Type),
                 typeof(RelationalTypeMapping),
@@ -77,6 +87,9 @@ internal sealed class BlueTuskAggregateExpression(
             NewArrayInit(typeof(SqlExpression), Arguments.Select(argument => argument.Quote())),
             Constant(IsDistinct),
             NewArrayInit(typeof(OrderingExpression), Orderings.Select(ordering => ordering.Quote())),
+            NewArrayInit(
+                typeof(OrderingExpression),
+                WithinGroupOrderings.Select(ordering => ordering.Quote())),
             Predicate?.Quote() ?? Constant(null, typeof(SqlExpression)),
             Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
@@ -98,6 +111,13 @@ internal sealed class BlueTuskAggregateExpression(
         }
 
         expressionPrinter.Append(")");
+        if (WithinGroupOrderings.Count > 0)
+        {
+            expressionPrinter.Append(" WITHIN GROUP (ORDER BY ");
+            expressionPrinter.VisitCollection(WithinGroupOrderings);
+            expressionPrinter.Append(")");
+        }
+
         if (Predicate is not null)
         {
             expressionPrinter.Append(" FILTER (WHERE ");
@@ -113,6 +133,7 @@ internal sealed class BlueTuskAggregateExpression(
             && IsDistinct == other.IsDistinct
             && Arguments.SequenceEqual(other.Arguments)
             && Orderings.SequenceEqual(other.Orderings)
+            && WithinGroupOrderings.SequenceEqual(other.WithinGroupOrderings)
             && Equals(Predicate, other.Predicate);
 
     public override int GetHashCode()
@@ -127,6 +148,11 @@ internal sealed class BlueTuskAggregateExpression(
         }
 
         foreach (var ordering in Orderings)
+        {
+            hash.Add(ordering);
+        }
+
+        foreach (var ordering in WithinGroupOrderings)
         {
             hash.Add(ordering);
         }

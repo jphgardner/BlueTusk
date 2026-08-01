@@ -34,7 +34,42 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.StandardDeviationSample)] = "stddev_samp",
             [nameof(BlueTuskDbFunctionsExtensions.VariancePopulation)] = "var_pop",
             [nameof(BlueTuskDbFunctionsExtensions.VarianceSample)] = "var_samp",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregate)] = "json_object_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregate)] = "jsonb_object_agg",
+            [nameof(BlueTuskDbFunctionsExtensions.Correlation)] = "corr",
+            [nameof(BlueTuskDbFunctionsExtensions.CovariancePopulation)] = "covar_pop",
+            [nameof(BlueTuskDbFunctionsExtensions.CovarianceSample)] = "covar_samp",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionAverageX)] = "regr_avgx",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionAverageY)] = "regr_avgy",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionCount)] = "regr_count",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionIntercept)] = "regr_intercept",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionR2)] = "regr_r2",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionSlope)] = "regr_slope",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionSumSquaresX)] = "regr_sxx",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionSumProducts)] = "regr_sxy",
+            [nameof(BlueTuskDbFunctionsExtensions.RegressionSumSquaresY)] = "regr_syy",
+            [nameof(BlueTuskDbFunctionsExtensions.Mode)] = "mode",
+            [nameof(BlueTuskDbFunctionsExtensions.PercentileContinuous)] = "percentile_cont",
+            [nameof(BlueTuskDbFunctionsExtensions.PercentileDiscrete)] = "percentile_disc",
         };
+
+    private static readonly HashSet<string> PairFunctions =
+    [
+        nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregate),
+        nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregate),
+        nameof(BlueTuskDbFunctionsExtensions.Correlation),
+        nameof(BlueTuskDbFunctionsExtensions.CovariancePopulation),
+        nameof(BlueTuskDbFunctionsExtensions.CovarianceSample),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionAverageX),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionAverageY),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionCount),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionIntercept),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionR2),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionSlope),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionSumSquaresX),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionSumProducts),
+        nameof(BlueTuskDbFunctionsExtensions.RegressionSumSquaresY),
+    ];
 
     public SqlExpression? Translate(
         MethodInfo method,
@@ -43,22 +78,33 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
         IDiagnosticsLogger<DbLoggerCategory.Query> logger)
     {
         if (method.DeclaringType != typeof(BlueTuskDbFunctionsExtensions)
-            || source.Selector is not SqlExpression selector
             || !Functions.TryGetValue(method.Name, out var functionName))
         {
             return null;
         }
 
-        selector = sqlExpressionFactory.ApplyDefaultTypeMapping(selector)!;
-        var aggregateArguments = method.Name == nameof(BlueTuskDbFunctionsExtensions.StringAggregate)
+        if (method.Name is nameof(BlueTuskDbFunctionsExtensions.Mode)
+            or nameof(BlueTuskDbFunctionsExtensions.PercentileContinuous)
+            or nameof(BlueTuskDbFunctionsExtensions.PercentileDiscrete))
+        {
+            return TranslateOrderedSet(method, source, arguments, functionName);
+        }
+
+        var aggregateArguments = PairFunctions.Contains(method.Name)
+            ? source.Selector is BlueTuskRowValueExpression { Values.Count: 2 } row
+                ? row.Values.Select(value => sqlExpressionFactory.ApplyDefaultTypeMapping(value)!).ToArray()
+                : null
+            : source.Selector is not SqlExpression selector
+                ? null
+                : method.Name == nameof(BlueTuskDbFunctionsExtensions.StringAggregate)
             && arguments is [_, var delimiter]
                 ? new[]
                 {
-                    selector,
+                    sqlExpressionFactory.ApplyDefaultTypeMapping(selector)!,
                     sqlExpressionFactory.ApplyDefaultTypeMapping(delimiter)!,
                 }
                 : arguments.Count == 1
-                    ? [selector]
+                    ? [sqlExpressionFactory.ApplyDefaultTypeMapping(selector)!]
                     : null;
         if (aggregateArguments is null)
         {
@@ -74,6 +120,10 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
                 typeMappingSource.FindMapping("json"),
             nameof(BlueTuskDbFunctionsExtensions.JsonbAggregate) =>
                 typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonObjectAggregate) =>
+                typeMappingSource.FindMapping("json"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonbObjectAggregate) =>
+                typeMappingSource.FindMapping("jsonb"),
             nameof(BlueTuskDbFunctionsExtensions.XmlAggregate) =>
                 typeMappingSource.FindMapping("xml"),
             _ => typeMappingSource.FindMapping(resultType),
@@ -88,8 +138,53 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
             aggregateArguments,
             source.IsDistinct,
             source.Orderings,
+            [],
             source.Predicate,
             resultType,
             resultMapping);
+    }
+
+    private BlueTuskAggregateExpression? TranslateOrderedSet(
+        MethodInfo method,
+        EnumerableExpression source,
+        IReadOnlyList<SqlExpression> arguments,
+        string functionName)
+    {
+        if (source.Selector is not SqlExpression selector)
+        {
+            return null;
+        }
+
+        if (source.IsDistinct)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL ordered-set aggregates do not accept DISTINCT input.");
+        }
+
+        selector = sqlExpressionFactory.ApplyDefaultTypeMapping(selector)!;
+        IReadOnlyList<SqlExpression>? directArguments = method.Name == nameof(BlueTuskDbFunctionsExtensions.Mode)
+            && arguments.Count == 1
+                ? []
+                : arguments is [_, var fraction]
+                    ? [sqlExpressionFactory.ApplyDefaultTypeMapping(fraction)!]
+                    : null;
+        if (directArguments is null)
+        {
+            return null;
+        }
+
+        var resultType = Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType;
+        var resultMapping = typeMappingSource.FindMapping(resultType);
+        return resultMapping is null
+            ? null
+            : new BlueTuskAggregateExpression(
+                functionName,
+                directArguments,
+                isDistinct: false,
+                orderings: [],
+                withinGroupOrderings: [new OrderingExpression(selector, ascending: true)],
+                source.Predicate,
+                resultType,
+                resultMapping);
     }
 }

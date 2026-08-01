@@ -1,3 +1,4 @@
+using System.Text.Json;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.TypeSystem;
@@ -61,6 +62,30 @@ public sealed class PostgreSqlAggregateTranslationTests
                     group.Select(value => value.Amount)),
                 SampleVariance = EF.Functions.VarianceSample(
                     group.Select(value => value.Measurement)),
+                JsonObject = EF.Functions.JsonObjectAggregate(
+                    group.OrderBy(value => value.SortOrder)
+                        .Select(value => ValueTuple.Create(value.Text, value.Number))),
+                JsonbObject = EF.Functions.JsonbObjectAggregate(
+                    group.Select(value => ValueTuple.Create(value.Text, value.Json))),
+                Correlation = EF.Functions.Correlation(
+                    group.Select(value => ValueTuple.Create(
+                        value.Measurement,
+                        (double)value.Number))),
+                Covariance = EF.Functions.CovariancePopulation(
+                    group.Select(value => ValueTuple.Create(
+                        value.Measurement,
+                        (double)value.Number))),
+                Regression = EF.Functions.RegressionSlope(
+                    group.Select(value => ValueTuple.Create(
+                        value.Measurement,
+                        (double)value.Number))),
+                Mode = EF.Functions.Mode(group.Select(value => value.Number)),
+                ContinuousMedian = EF.Functions.PercentileContinuous(
+                    group.Select(value => value.Measurement),
+                    0.5),
+                DiscreteMedian = EF.Functions.PercentileDiscrete(
+                    group.Select(value => value.Number),
+                    0.5),
             })
             .ToQueryString();
 
@@ -81,10 +106,25 @@ public sealed class PostgreSqlAggregateTranslationTests
         Assert.Contains("stddev_samp(", sql, StringComparison.Ordinal);
         Assert.Contains("var_pop(", sql, StringComparison.Ordinal);
         Assert.Contains("var_samp(", sql, StringComparison.Ordinal);
+        Assert.Contains("json_object_agg(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_object_agg(", sql, StringComparison.Ordinal);
+        Assert.Contains("corr(", sql, StringComparison.Ordinal);
+        Assert.Contains("covar_pop(", sql, StringComparison.Ordinal);
+        Assert.Contains("regr_slope(", sql, StringComparison.Ordinal);
+        Assert.Contains("mode() WITHIN GROUP (ORDER BY", sql, StringComparison.Ordinal);
+        Assert.Contains("percentile_cont(", sql, StringComparison.Ordinal);
+        Assert.Contains("percentile_disc(", sql, StringComparison.Ordinal);
+        Assert.Contains("WITHIN GROUP (ORDER BY", sql, StringComparison.Ordinal);
         Assert.Contains(" ORDER BY ", sql, StringComparison.Ordinal);
         Assert.Contains(" FILTER (WHERE ", sql, StringComparison.Ordinal);
         Assert.Contains("@delimiter", sql, StringComparison.Ordinal);
         Assert.Contains("@minimum", sql, StringComparison.Ordinal);
+
+        var orderedSetDistinct = Assert.Throws<InvalidOperationException>(() => context.Values
+            .GroupBy(value => value.GroupId)
+            .Select(group => EF.Functions.Mode(group.Select(value => value.Number).Distinct()))
+            .ToQueryString());
+        Assert.Contains("do not accept DISTINCT", orderedSetDistinct.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -193,6 +233,66 @@ public sealed class PostgreSqlAggregateTranslationTests
                         group.Select(value => value.Measurement)),
                     DecimalSampleVariance = EF.Functions.VarianceSample(
                         group.Select(value => value.Amount)),
+                    JsonObject = EF.Functions.JsonObjectAggregate(
+                        group.OrderBy(value => value.SortOrder)
+                            .Select(value => ValueTuple.Create(value.Text, value.Number))),
+                    JsonbObject = EF.Functions.JsonbObjectAggregate(
+                        group.Select(value => ValueTuple.Create(value.Text, value.Json))),
+                    Correlation = EF.Functions.Correlation(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    PopulationCovariance = EF.Functions.CovariancePopulation(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    SampleCovariance = EF.Functions.CovarianceSample(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionAverageX = EF.Functions.RegressionAverageX(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionAverageY = EF.Functions.RegressionAverageY(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionCount = EF.Functions.RegressionCount(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionIntercept = EF.Functions.RegressionIntercept(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionR2 = EF.Functions.RegressionR2(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionSlope = EF.Functions.RegressionSlope(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionSumSquaresX = EF.Functions.RegressionSumSquaresX(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionSumProducts = EF.Functions.RegressionSumProducts(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    RegressionSumSquaresY = EF.Functions.RegressionSumSquaresY(
+                        group.Select(value => ValueTuple.Create(
+                            value.Measurement,
+                            (double)value.Number))),
+                    Mode = EF.Functions.Mode(group.Select(value => value.Number)),
+                    ContinuousMedian = EF.Functions.PercentileContinuous(
+                        group.Select(value => value.Measurement),
+                        0.5),
+                    DiscreteMedian = EF.Functions.PercentileDiscrete(
+                        group.Select(value => value.Number),
+                        0.5),
                 })
                 .SingleAsync();
 
@@ -237,6 +337,29 @@ public sealed class PostgreSqlAggregateTranslationTests
             Assert.Equal(2m / 3m, aggregate.DecimalPopulationVariance!.Value, 12);
             Assert.Equal(1, aggregate.DoubleSampleVariance);
             Assert.Equal(1, aggregate.DecimalSampleVariance);
+            using var jsonObject = JsonDocument.Parse(aggregate.JsonObject!);
+            Assert.Equal(10, jsonObject.RootElement.GetProperty("alpha").GetInt32());
+            Assert.Equal(20, jsonObject.RootElement.GetProperty("beta").GetInt32());
+            Assert.Equal(20, jsonObject.RootElement.GetProperty("gamma").GetInt32());
+            using var jsonbObject = JsonDocument.Parse(aggregate.JsonbObject!);
+            Assert.Equal(1, jsonbObject.RootElement.GetProperty("alpha").GetProperty("id").GetInt32());
+            Assert.Equal(2, jsonbObject.RootElement.GetProperty("beta").GetProperty("id").GetInt32());
+            Assert.Equal(3, jsonbObject.RootElement.GetProperty("gamma").GetProperty("id").GetInt32());
+            Assert.Equal(Math.Sqrt(3d) / 2d, aggregate.Correlation!.Value, 12);
+            Assert.Equal(10d / 3d, aggregate.PopulationCovariance!.Value, 12);
+            Assert.Equal(5d, aggregate.SampleCovariance!.Value, 12);
+            Assert.Equal(50d / 3d, aggregate.RegressionAverageX!.Value, 12);
+            Assert.Equal(2d, aggregate.RegressionAverageY!.Value, 12);
+            Assert.Equal(3, aggregate.RegressionCount);
+            Assert.Equal(-0.5d, aggregate.RegressionIntercept!.Value, 12);
+            Assert.Equal(0.75d, aggregate.RegressionR2!.Value, 12);
+            Assert.Equal(0.15d, aggregate.RegressionSlope!.Value, 12);
+            Assert.Equal(200d / 3d, aggregate.RegressionSumSquaresX!.Value, 12);
+            Assert.Equal(10d, aggregate.RegressionSumProducts!.Value, 12);
+            Assert.Equal(2d, aggregate.RegressionSumSquaresY!.Value, 12);
+            Assert.Equal(20, aggregate.Mode);
+            Assert.Equal(2d, aggregate.ContinuousMedian);
+            Assert.Equal(20, aggregate.DiscreteMedian);
         }
         finally
         {

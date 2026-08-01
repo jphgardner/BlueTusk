@@ -646,6 +646,16 @@ public static class BlueTuskDbFunctionsExtensions
     public static string? JsonbAggregate<T>(this DbFunctions _, IEnumerable<T> values)
         => ThrowTranslationOnly<string?>();
 
+    public static string? JsonObjectAggregate<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonbObjectAggregate<TValue>(
+        this DbFunctions _,
+        IEnumerable<(string Key, TValue Value)> values)
+        => ThrowTranslationOnly<string?>();
+
     public static string? XmlAggregate(this DbFunctions _, IEnumerable<string> values)
         => ThrowTranslationOnly<string?>();
 
@@ -697,6 +707,111 @@ public static class BlueTuskDbFunctionsExtensions
         => ThrowTranslationOnly<double?>();
 
     public static decimal? VarianceSample(this DbFunctions _, IEnumerable<decimal> values)
+        => ThrowTranslationOnly<decimal?>();
+
+    public static double? Correlation(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? CovariancePopulation(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? CovarianceSample(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? RegressionAverageX(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? RegressionAverageY(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static long RegressionCount(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<long>();
+
+    public static double? RegressionIntercept(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? RegressionR2(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? RegressionSlope(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? RegressionSumSquaresX(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? RegressionSumProducts(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static double? RegressionSumSquaresY(
+        this DbFunctions _,
+        IEnumerable<(double Y, double X)> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static int? Mode(this DbFunctions _, IEnumerable<int> values)
+        => ThrowTranslationOnly<int?>();
+
+    public static long? Mode(this DbFunctions _, IEnumerable<long> values)
+        => ThrowTranslationOnly<long?>();
+
+    public static double? Mode(this DbFunctions _, IEnumerable<double> values)
+        => ThrowTranslationOnly<double?>();
+
+    public static decimal? Mode(this DbFunctions _, IEnumerable<decimal> values)
+        => ThrowTranslationOnly<decimal?>();
+
+    public static string? Mode(this DbFunctions _, IEnumerable<string> values)
+        => ThrowTranslationOnly<string?>();
+
+    public static double? PercentileContinuous(
+        this DbFunctions _,
+        IEnumerable<double> values,
+        double fraction)
+        => ThrowTranslationOnly<double?>();
+
+    public static int? PercentileDiscrete(
+        this DbFunctions _,
+        IEnumerable<int> values,
+        double fraction)
+        => ThrowTranslationOnly<int?>();
+
+    public static long? PercentileDiscrete(
+        this DbFunctions _,
+        IEnumerable<long> values,
+        double fraction)
+        => ThrowTranslationOnly<long?>();
+
+    public static double? PercentileDiscrete(
+        this DbFunctions _,
+        IEnumerable<double> values,
+        double fraction)
+        => ThrowTranslationOnly<double?>();
+
+    public static decimal? PercentileDiscrete(
+        this DbFunctions _,
+        IEnumerable<decimal> values,
+        double fraction)
         => ThrowTranslationOnly<decimal?>();
 
     private static T ThrowTranslationOnly<T>()

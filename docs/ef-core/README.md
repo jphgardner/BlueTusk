@@ -273,11 +273,43 @@ var summaries = context.Events
     });
 ```
 
-Generated SQL and typed live tests cover both result mappings and numeric
-families across PostgreSQL 15–19. JSON object aggregates, paired regression and
-covariance aggregates, ordered-set/hypothetical-set aggregates, and remaining
-aggregate families are still planned; BlueTusk does not currently emulate their
-multi-input or `WITHIN GROUP` syntax with client code.
+JSON object aggregates consume a translated two-value tuple. Use
+`ValueTuple.Create` because C# expression trees do not support tuple literals:
+
+```csharp
+var advanced = context.Events
+    .GroupBy(item => item.Category)
+    .Select(group => new
+    {
+        PayloadByLabel = EF.Functions.JsonbObjectAggregate(
+            group.OrderBy(item => item.Position)
+                .Select(item => ValueTuple.Create(item.Label, item.Payload))),
+        Correlation = EF.Functions.Correlation(
+            group.Select(item => ValueTuple.Create(item.Measurement, item.Reference))),
+        Median = EF.Functions.PercentileContinuous(
+            group.Select(item => item.Measurement),
+            0.5),
+        MostCommon = EF.Functions.Mode(group.Select(item => item.Label)),
+    });
+```
+
+`JsonObjectAggregate` and `JsonbObjectAggregate` retain `json` and `jsonb`
+results and render both tuple values as native aggregate arguments. The same
+pair shape supports `Correlation`, population/sample covariance, and the full
+PostgreSQL linear-regression family: averages, count, intercept, R-squared,
+slope, sums of squares, and sum products. Pair order follows PostgreSQL's
+`(Y, X)` convention.
+
+`Mode`, `PercentileContinuous`, and `PercentileDiscrete` emit native ordered-set
+syntax with the input selector inside `WITHIN GROUP (ORDER BY ...)`; filters
+remain native `FILTER` clauses and percentile fractions remain parameters.
+Ordered-set `DISTINCT` input is rejected with a focused diagnostic because
+PostgreSQL does not accept that combination. Integer, `bigint`, floating-point,
+numeric, and text mode overloads plus matching scalar discrete-percentile
+families preserve their result mappings. Generated SQL and typed live tests
+cover these families across PostgreSQL 15–19. Hypothetical-set aggregates,
+array-valued percentiles, and other remaining aggregate families are still
+planned; no client-side aggregate emulation is used.
 
 ## Array expansion and lateral queries
 

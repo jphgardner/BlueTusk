@@ -35,11 +35,15 @@ internal sealed class BlueTuskSqlNullabilityProcessor(
                 .Select(ordering => ordering.Update(
                     Visit(ordering.Expression, allowOptimizedExpansion, out _)))
                 .ToArray();
+            var withinGroupOrderings = aggregate.WithinGroupOrderings
+                .Select(ordering => ordering.Update(
+                    Visit(ordering.Expression, allowOptimizedExpansion, out _)))
+                .ToArray();
             var predicate = aggregate.Predicate is null
                 ? null
                 : Visit(aggregate.Predicate, allowOptimizedExpansion, out _);
             nullable = true;
-            return aggregate.Update(arguments, orderings, predicate);
+            return aggregate.Update(arguments, orderings, withinGroupOrderings, predicate);
         }
 
         if (sqlExpression is BlueTuskQuantifiedComparisonExpression quantifiedComparison)

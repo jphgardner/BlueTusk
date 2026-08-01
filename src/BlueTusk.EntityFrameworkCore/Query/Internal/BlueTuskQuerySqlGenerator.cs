@@ -110,6 +110,24 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             }
 
             Sql.Append(")");
+            if (aggregate.WithinGroupOrderings.Count > 0)
+            {
+                Sql.Append(" WITHIN GROUP (ORDER BY ");
+                for (var index = 0; index < aggregate.WithinGroupOrderings.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(", ");
+                    }
+
+                    var ordering = aggregate.WithinGroupOrderings[index];
+                    Visit(ordering.Expression);
+                    Sql.Append(ordering.IsAscending ? " ASC" : " DESC");
+                }
+
+                Sql.Append(")");
+            }
+
             if (aggregate.Predicate is not null)
             {
                 Sql.Append(" FILTER (WHERE ");

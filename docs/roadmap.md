@@ -273,7 +273,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Initial array, string, boolean, range-union, and range-intersection aggregates
   - [x] Ordered JSON/JSONB/XML, integer/`bigint` bitwise, and double/numeric population/sample statistical aggregates
   - [x] Aggregate ordering, `DISTINCT`, `FILTER`, typed results, and PostgreSQL 15–19 acceptance
-  - [ ] Remaining scalar, JSON-object/multi-input statistical, ordered-set, and other PostgreSQL aggregate functions
+  - [ ] Remaining scalar and aggregate functions
+    - [x] Ordered JSON/JSONB object aggregates with typed tuple inputs
+    - [x] Paired correlation, population/sample covariance, and complete linear-regression aggregate family
+    - [x] Ordered-set scalar `mode`, continuous percentile, and discrete percentile with native `WITHIN GROUP`
+    - [ ] Hypothetical-set, array-valued percentile, and other remaining PostgreSQL aggregate functions
   - [x] Set-returning functions and lateral query roots
     - [x] Mapped-array `unnest` roots with ordinality, nullable elements, parameterized filters, and inner/outer lateral composition
     - [x] SQL-generation and PostgreSQL 15–19 live array-expansion acceptance
