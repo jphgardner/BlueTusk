@@ -35,7 +35,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskUserDefinedTypeModelDiffer.HasDifferences(source, target) ||
         BlueTuskRoutineModelDiffer.HasDifferences(source, target) ||
         BlueTuskViewModelDiffer.HasDifferences(source, target) ||
-        BlueTuskExtensionModelDiffer.HasDifferences(source, target);
+        BlueTuskExtensionModelDiffer.HasDifferences(source, target) ||
+        BlueTuskCollationModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -50,6 +51,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var typeAfter = new List<MigrationOperation>();
         var extensionBefore = new List<MigrationOperation>();
         var extensionAfter = new List<MigrationOperation>();
+        var collationBefore = new List<MigrationOperation>();
+        var collationAfter = new List<MigrationOperation>();
         var routineBefore = new List<MigrationOperation>();
         var routineAfter = new List<MigrationOperation>();
         var viewBefore = new List<MigrationOperation>();
@@ -63,6 +66,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             baseOperations,
             extensionBefore,
             extensionAfter);
+        BlueTuskCollationModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            collationBefore,
+            collationAfter);
         BlueTuskUserDefinedTypeModelDiffer.AddDifferences(
             source,
             target,
@@ -140,6 +149,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var relationalOperations = baseOperations.Where(
             operation => operation is not EnsureSchemaOperation and not DropSchemaOperation);
         var operations = ensureSchemas.Concat(extensionBefore)
+            .Concat(collationBefore)
             .Concat(typeBefore)
             .Concat(viewBefore)
             .Concat(routineBefore)
@@ -149,6 +159,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             .Concat(routineAfter)
             .Concat(viewAfter)
             .Concat(typeAfter)
+            .Concat(collationAfter)
             .Concat(extensionAfter)
             .Concat(dropSchemas)
             .ToArray();

@@ -310,6 +310,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Rename-aware add/remove/reorder diffs plus manual `INHERIT`/`NO INHERIT` migration operations
   - [x] `pg_inherits` direct-parent discovery without conflating declarative partitions
   - [x] PostgreSQL 15–19 inherited scans, `ONLY` behavior, lifecycle, discovery, and scaffolding acceptance
+- [x] PostgreSQL collation schema objects
+  - [x] Typed libc, ICU, and PostgreSQL 17+ built-in providers with locale, determinism, PostgreSQL 16+ ICU rules, and recorded version options
+  - [x] Collation-first create, dependency-preserving rename/schema moves, explicit copy/refresh operations, replacement diagnostics, and default-`RESTRICT` drops
+  - [x] Cross-version `pg_collation` discovery with system/extension exclusion, exact provider state, schema filters, and fluent model regeneration
+  - [x] PostgreSQL 15–19 comparison, capability guard, lifecycle, reverse-engineering, and scaffolding acceptance
 - [x] PostgreSQL extension installation lifecycle
   - [x] Typed install, version pin/update, schema relocation, dependency declaration, remove, snapshots, and generated migration C#
   - [x] Extension-first create and extension-last default-`RESTRICT` drop ordering around provider-owned schema objects

@@ -1,4 +1,6 @@
 using System.Text;
+using BlueTusk.EntityFrameworkCore.Collations;
+using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
@@ -41,6 +43,21 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case DropBlueTuskExtensionOperation dropExtension:
                 Generate(dropExtension, builder);
+                break;
+            case CreateBlueTuskCollationOperation createCollation:
+                Generate(createCollation, builder);
+                break;
+            case CreateBlueTuskCollationFromOperation createCollationFrom:
+                Generate(createCollationFrom, builder);
+                break;
+            case RenameBlueTuskCollationOperation renameCollation:
+                Generate(renameCollation, builder);
+                break;
+            case RefreshBlueTuskCollationVersionOperation refreshCollation:
+                Generate(refreshCollation, builder);
+                break;
+            case DropBlueTuskCollationOperation dropCollation:
+                Generate(dropCollation, builder);
                 break;
             case CreateBlueTuskViewOperation createView:
                 Generate(createView, builder);
@@ -243,6 +260,182 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         }
 
         builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(operation.Cascade ? " CASCADE" : " RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskCollationOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskCollationMetadata.Validate(operation.Definition);
+        var sql = BuildCreateCollationSql(operation.Definition, operation.IfNotExists);
+        var minimumVersion = operation.Definition.Provider == BlueTuskCollationProvider.Builtin
+            ? 170000
+            : operation.Definition.Rules is null
+                ? 0
+                : 160000;
+        if (minimumVersion == 0)
+        {
+            builder.Append(sql);
+            EndStatement(builder);
+            return;
+        }
+
+        const string delimiter = "$BlueTuskCollation$";
+        var message = minimumVersion == 170000
+            ? "BlueTusk built-in collations require PostgreSQL 17 or later."
+            : "BlueTusk ICU collation rules require PostgreSQL 16 or later.";
+        builder.Append("DO ").AppendLine(delimiter)
+            .AppendLine("BEGIN")
+            .Append("    IF current_setting('server_version_num')::integer < ")
+            .Append(minimumVersion.ToString(System.Globalization.CultureInfo.InvariantCulture))
+            .AppendLine(" THEN")
+            .AppendLine("        RAISE EXCEPTION USING")
+            .AppendLine("            ERRCODE = '0A000',")
+            .Append("            MESSAGE = '").Append(EscapeLiteral(message)).AppendLine("';")
+            .AppendLine("    END IF;")
+            .Append("    EXECUTE '").Append(EscapeLiteral(sql)).AppendLine("';")
+            .AppendLine("END;")
+            .Append(delimiter);
+        EndStatement(builder);
+    }
+
+    private string BuildCreateCollationSql(
+        BlueTuskCollationDefinition definition,
+        bool ifNotExists)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var sql = new StringBuilder("CREATE COLLATION ");
+        if (ifNotExists)
+        {
+            sql.Append("IF NOT EXISTS ");
+        }
+
+        sql.Append(helper.DelimitIdentifier(definition.Name, definition.Schema)).Append(" (");
+        var options = new List<string>();
+        if (definition.Locale is not null)
+        {
+            options.Add($"LOCALE = '{EscapeLiteral(definition.Locale)}'");
+        }
+
+        if (definition.LcCollate is not null)
+        {
+            options.Add($"LC_COLLATE = '{EscapeLiteral(definition.LcCollate)}'");
+        }
+
+        if (definition.LcCtype is not null)
+        {
+            options.Add($"LC_CTYPE = '{EscapeLiteral(definition.LcCtype)}'");
+        }
+
+        if (definition.Provider is { } provider)
+        {
+            options.Add($"PROVIDER = {ProviderSql(provider)}");
+        }
+
+        if (definition.IsDeterministic is { } deterministic)
+        {
+            options.Add($"DETERMINISTIC = {(deterministic ? "true" : "false")}");
+        }
+
+        if (definition.Rules is not null)
+        {
+            options.Add($"RULES = '{EscapeLiteral(definition.Rules)}'");
+        }
+
+        if (definition.Version is not null)
+        {
+            options.Add($"VERSION = '{EscapeLiteral(definition.Version)}'");
+        }
+
+        return sql.AppendJoin(", ", options).Append(')').ToString();
+    }
+
+    private static string ProviderSql(BlueTuskCollationProvider provider) => provider switch
+    {
+        BlueTuskCollationProvider.Libc => "libc",
+        BlueTuskCollationProvider.Icu => "icu",
+        BlueTuskCollationProvider.Builtin => "builtin",
+        _ => throw new InvalidOperationException($"Unknown PostgreSQL collation provider '{provider}'."),
+    };
+
+    private void Generate(
+        CreateBlueTuskCollationFromOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.SourceName);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("CREATE COLLATION ");
+        if (operation.IfNotExists)
+        {
+            builder.Append("IF NOT EXISTS ");
+        }
+
+        builder.Append(helper.DelimitIdentifier(operation.Name, operation.Schema))
+            .Append(" FROM ")
+            .Append(helper.DelimitIdentifier(operation.SourceName, operation.SourceSchema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskCollationOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        var currentSchema = operation.Schema;
+        if (!string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
+        {
+            if (operation.NewSchema is null)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL collation '{operation.Schema}.{operation.Name}' cannot be moved to an unspecified schema.");
+            }
+
+            builder.Append("ALTER COLLATION ")
+                .Append(helper.DelimitIdentifier(operation.Name, currentSchema))
+                .Append(" SET SCHEMA ")
+                .Append(helper.DelimitIdentifier(operation.NewSchema));
+            EndStatement(builder);
+            currentSchema = operation.NewSchema;
+        }
+
+        if (!string.Equals(operation.Name, operation.NewName, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER COLLATION ")
+                .Append(helper.DelimitIdentifier(operation.Name, currentSchema))
+                .Append(" RENAME TO ")
+                .Append(helper.DelimitIdentifier(operation.NewName));
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        RefreshBlueTuskCollationVersionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("ALTER COLLATION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+            .Append(" REFRESH VERSION");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskCollationOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP COLLATION ");
+        if (operation.IfExists)
+        {
+            builder.Append("IF EXISTS ");
+        }
+
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
             .Append(operation.Cascade ? " CASCADE" : " RESTRICT");
         EndStatement(builder);
     }

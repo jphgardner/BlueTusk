@@ -2,6 +2,8 @@ using System.Data;
 using System.Data.Common;
 using BlueTusk.Data;
 using BlueTusk.Data.Schema;
+using BlueTusk.EntityFrameworkCore.Collations;
+using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
@@ -84,6 +86,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadPartitioning(connection, tables);
         ReadSequences(connection, model, selection);
         ReadExtensions(connection, model, selection);
+        ReadCollations(connection, model, selection);
         ReadUserDefinedTypes(connection, model, selection);
         ReadRoutines(connection, model, selection);
         ReadViews(connection, model, tables, selection);
@@ -1144,6 +1147,91 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                             item.Value.Version,
                             item.Value.Dependencies))
                     .ToArray()));
+        }
+    }
+
+    private static void ReadCollations(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT collation_entry.collname,
+                   namespace.nspname,
+                   collation_entry.collprovider::text,
+                   collation_entry.collisdeterministic,
+                   collation_entry.collcollate,
+                   collation_entry.collctype,
+                   COALESCE(
+                       to_jsonb(collation_entry) ->> 'colllocale',
+                       to_jsonb(collation_entry) ->> 'colliculocale'),
+                   to_jsonb(collation_entry) ->> 'collicurules',
+                   collation_entry.collversion
+            FROM pg_catalog.pg_collation AS collation_entry
+            JOIN pg_catalog.pg_namespace AS namespace
+              ON namespace.oid = collation_entry.collnamespace
+            WHERE namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND collation_entry.collencoding IN (
+                  -1,
+                  pg_catalog.pg_char_to_encoding(current_setting('server_encoding')))
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_collation'::pg_catalog.regclass
+                    AND dependency.objid = collation_entry.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, collation_entry.collname
+            """;
+        var collations = new List<BlueTuskCollationDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var name = reader.GetString(0);
+            var schema = reader.GetString(1);
+            if (!selection.IncludesSchemaObject(schema))
+            {
+                continue;
+            }
+
+            var provider = reader.GetString(2) switch
+            {
+                "b" => BlueTuskCollationProvider.Builtin,
+                "c" => BlueTuskCollationProvider.Libc,
+                "i" => BlueTuskCollationProvider.Icu,
+                "d" => (BlueTuskCollationProvider?)null,
+                var value => throw new NotSupportedException(
+                    $"PostgreSQL collation '{schema}.{name}' uses unknown provider code '{value}'."),
+            };
+            var lcCollate = reader.IsDBNull(4) ? null : reader.GetString(4);
+            var lcCtype = reader.IsDBNull(5) ? null : reader.GetString(5);
+            var locale = reader.IsDBNull(6) ? null : reader.GetString(6);
+            if ((provider is null or BlueTuskCollationProvider.Libc) &&
+                string.Equals(lcCollate, lcCtype, StringComparison.Ordinal))
+            {
+                locale = lcCollate;
+                lcCollate = null;
+                lcCtype = null;
+            }
+
+            collations.Add(new BlueTuskCollationDefinition(
+                name,
+                schema,
+                provider,
+                locale,
+                lcCollate,
+                lcCtype,
+                reader.GetBoolean(3),
+                reader.IsDBNull(7) ? null : reader.GetString(7),
+                reader.IsDBNull(8) ? null : reader.GetString(8)));
+        }
+
+        if (collations.Count > 0)
+        {
+            model[BlueTuskCollationMetadata.AnnotationName] = BlueTuskCollationMetadata.Serialize(
+                new BlueTuskCollationDefinitionSet(collations));
         }
     }
 

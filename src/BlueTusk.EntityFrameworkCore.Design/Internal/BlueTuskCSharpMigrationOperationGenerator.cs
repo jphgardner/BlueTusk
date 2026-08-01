@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
@@ -27,6 +28,61 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskCollationOperation createCollation:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskCollation(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskCollationMetadata.Serialize(createCollation.Definition)))
+                    .Append(", ")
+                    .Append(createCollation.IfNotExists ? "true" : "false")
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskCollationFromOperation createCollationFrom:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskCollationFrom(")
+                    .Append(Dependencies.CSharpHelper.Literal(createCollationFrom.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(createCollationFrom.SourceName))
+                    .Append(", ")
+                    .Append(Literal(createCollationFrom.Schema))
+                    .Append(", ")
+                    .Append(Literal(createCollationFrom.SourceSchema))
+                    .Append(", ")
+                    .Append(createCollationFrom.IfNotExists ? "true" : "false")
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskCollationOperation renameCollation:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskCollation(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameCollation.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameCollation.NewName))
+                    .Append(", ")
+                    .Append(Literal(renameCollation.Schema))
+                    .Append(", ")
+                    .Append(Literal(renameCollation.NewSchema))
+                    .AppendLine(");");
+                break;
+            case RefreshBlueTuskCollationVersionOperation refreshCollation:
+                builder
+                    .Append("migrationBuilder.RefreshBlueTuskCollationVersion(")
+                    .Append(Dependencies.CSharpHelper.Literal(refreshCollation.Name))
+                    .Append(", ")
+                    .Append(Literal(refreshCollation.Schema))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskCollationOperation dropCollation:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskCollation(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropCollation.Name))
+                    .Append(", ")
+                    .Append(Literal(dropCollation.Schema))
+                    .Append(", ")
+                    .Append(dropCollation.IfExists ? "true" : "false")
+                    .Append(", ")
+                    .Append(dropCollation.Cascade ? "true" : "false")
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskExtensionOperation createExtension:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskExtension(")

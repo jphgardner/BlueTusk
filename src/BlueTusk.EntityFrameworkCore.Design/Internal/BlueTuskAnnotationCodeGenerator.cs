@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
@@ -24,6 +25,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         IModel model,
         IAnnotation annotation)
     {
+        if (annotation.Name == BlueTuskCollationMetadata.AnnotationName &&
+            annotation.Value is string serializedCollations)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskCollationModelBuilderExtensions.HasBlueTuskCollations),
+                serializedCollations);
+        }
+
         if (annotation.Name == BlueTuskExtensionMetadata.AnnotationName &&
             annotation.Value is string serializedExtensions)
         {
