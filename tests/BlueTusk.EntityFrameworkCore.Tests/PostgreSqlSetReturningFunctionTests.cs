@@ -1,5 +1,6 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 using Xunit.Sdk;
 
@@ -131,6 +132,51 @@ public sealed class PostgreSqlSetReturningFunctionTests
     }
 
     [Fact]
+    public void Json_set_returning_roots_translate_with_exact_mappings_and_ordinality()
+    {
+        using var context = CreateContext();
+        var json = "[\"captured\",null,\"value\"]";
+        var path = new BlueTuskJsonPath("$.*");
+
+        var elementsSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonArrayElements(value.JsonArray),
+                (value, element) => new { value.Id, Element = element })
+            .ToQueryString();
+        var textSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonArrayElementsText(value.JsonArray),
+                (value, element) => new { value.Id, Element = element })
+            .ToQueryString();
+        var keysSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonObjectKeys(value.JsonObject),
+                (value, key) => new { value.Id, Key = key })
+            .ToQueryString();
+        var pathSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonPathQuery(value.JsonObject, path),
+                (value, match) => new { value.Id, Match = match })
+            .ToQueryString();
+        var parameterSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.JsonArrayElementsText(json),
+                (_, element) => element)
+            .ToQueryString();
+
+        Assert.Contains("JOIN LATERAL", elementsSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_array_elements(", elementsSql, StringComparison.Ordinal);
+        Assert.Contains("WITH ORDINALITY", elementsSql, StringComparison.Ordinal);
+        Assert.Contains("(\"value\", \"ordinality\")", elementsSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_array_elements_text(", textSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_object_keys(", keysSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_path_query(", pathSql, StringComparison.Ordinal);
+        Assert.Contains("@path", pathSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_array_elements_text(", parameterSql, StringComparison.Ordinal);
+        Assert.Contains("@json", parameterSql, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Set_returning_functions_execute_and_materialize_typed_elements()
     {
         var connectionString = GetConnectionString();
@@ -142,12 +188,34 @@ public sealed class PostgreSqlSetReturningFunctionTests
             CREATE TABLE "ef_set_returning_values" (
                 "Id" integer PRIMARY KEY,
                 "Numbers" integer[] NOT NULL,
-                "Labels" text[] NOT NULL);
-            INSERT INTO "ef_set_returning_values" ("Id", "Numbers", "Labels")
+                "Labels" text[] NOT NULL,
+                "JsonArray" jsonb NOT NULL,
+                "JsonObject" jsonb NOT NULL);
+            INSERT INTO "ef_set_returning_values" (
+                "Id",
+                "Numbers",
+                "Labels",
+                "JsonArray",
+                "JsonObject")
             VALUES
-                (1, ARRAY[1, 3], ARRAY['one', NULL]::text[]),
-                (2, ARRAY[2, 4], ARRAY['two', 'four']),
-                (3, ARRAY[]::integer[], ARRAY[]::text[])
+                (
+                    1,
+                    ARRAY[1, 3],
+                    ARRAY['one', NULL]::text[],
+                    '["one",null,"one"]'::jsonb,
+                    '{"alpha":1,"beta":2}'::jsonb),
+                (
+                    2,
+                    ARRAY[2, 4],
+                    ARRAY['two', 'four'],
+                    '[1,2]'::jsonb,
+                    '{"gamma":3}'::jsonb),
+                (
+                    3,
+                    ARRAY[]::integer[],
+                    ARRAY[]::text[],
+                    '[]'::jsonb,
+                    '{}'::jsonb)
             """);
 
         try
@@ -179,6 +247,34 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 .SelectMany(
                     value => value.Labels,
                     (value, label) => new { value.Id, Label = label })
+                .ToListAsync();
+            var jsonElements = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.JsonArrayElements(value.JsonArray),
+                    (_, element) => element)
+                .ToListAsync();
+            var jsonTextElements = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.JsonArrayElementsText(value.JsonArray),
+                    (_, element) => element)
+                .ToListAsync();
+            var jsonKeys = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.JsonObjectKeys(value.JsonObject),
+                    (_, key) => key)
+                .OrderBy(key => key)
+                .ToListAsync();
+            var jsonPathMatches = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.JsonPathQuery(
+                        value.JsonObject,
+                        new BlueTuskJsonPath("$.*")),
+                    (_, match) => match)
+                .OrderBy(match => match)
                 .ToListAsync();
             var integerSeries = await context.Database
                 .GenerateSeries(2, 6, 2)
@@ -272,6 +368,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                             TimeSpan.FromHours(1)),
                         (_, generated) => generated)
                     .Count());
+            var compiledJsonElementCount = EF.CompileQuery(
+                (SetReturningContext database, string jsonValue) => database.Values
+                    .Where(value => value.Id == 1)
+                    .SelectMany(
+                        _ => EF.Functions.JsonArrayElementsText(jsonValue),
+                        (_, element) => element)
+                    .Count());
 
             Assert.Collection(
                 expanded,
@@ -307,6 +410,10 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Contains(labels, result => result.Id == 1 && result.Label is null);
             Assert.Contains(labels, result => result.Id == 2 && result.Label == "two");
             Assert.Contains(labels, result => result.Id == 2 && result.Label == "four");
+            Assert.Equal(["\"one\"", "null", "\"one\""], jsonElements);
+            Assert.Equal(["one", null, "one"], jsonTextElements);
+            Assert.Equal(["alpha", "beta"], jsonKeys);
+            Assert.Equal(["1", "2"], jsonPathMatches);
             Assert.Equal([2, 4, 6], integerSeries);
             Assert.Equal([5L, 3L, 1L], longSeries);
             Assert.Equal([1m, 2m, 3m], standaloneNumericSeries);
@@ -340,6 +447,9 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 compiledTimestampWithTimeZoneSeriesCount(
                     context,
                     timestampWithTimeZoneStart.AddHours(2)));
+            Assert.Equal(
+                3,
+                compiledJsonElementCount(context, "[\"captured\",null,\"value\"]"));
         }
         finally
         {
@@ -389,7 +499,12 @@ public sealed class PostgreSqlSetReturningFunctionTests
         public DbSet<SetReturningValue> Values => Set<SetReturningValue>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
-            => modelBuilder.Entity<SetReturningValue>().ToTable("ef_set_returning_values");
+        {
+            var value = modelBuilder.Entity<SetReturningValue>();
+            value.ToTable("ef_set_returning_values");
+            value.Property(item => item.JsonArray).HasColumnType("jsonb");
+            value.Property(item => item.JsonObject).HasColumnType("jsonb");
+        }
     }
 
     private sealed class SetReturningValue
@@ -399,5 +514,9 @@ public sealed class PostgreSqlSetReturningFunctionTests
         public int[] Numbers { get; set; } = [];
 
         public string?[] Labels { get; set; } = [];
+
+        public string JsonArray { get; set; } = "[]";
+
+        public string JsonObject { get; set; } = "{}";
     }
 }

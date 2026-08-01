@@ -216,6 +216,21 @@ public static class BlueTuskDbFunctionsExtensions
     public static int? ArrayCardinality<T>(this DbFunctions _, T[] array)
         => ThrowTranslationOnly<int?>();
 
+    public static IQueryable<string> JsonArrayElements(this DbFunctions _, string jsonb)
+        => ThrowTranslationOnly<IQueryable<string>>();
+
+    public static IQueryable<string?> JsonArrayElementsText(this DbFunctions _, string jsonb)
+        => ThrowTranslationOnly<IQueryable<string?>>();
+
+    public static IQueryable<string> JsonObjectKeys(this DbFunctions _, string jsonb)
+        => ThrowTranslationOnly<IQueryable<string>>();
+
+    public static IQueryable<string> JsonPathQuery(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskJsonPath path)
+        => ThrowTranslationOnly<IQueryable<string>>();
+
     public static IQueryable<int> GenerateSeries(this DbFunctions _, int start, int stop)
         => ThrowTranslationOnly<IQueryable<int>>();
 

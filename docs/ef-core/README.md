@@ -277,7 +277,30 @@ forms participate in compiled queries. `Database.GenerateSeries` rejects a zero
 step before execution; PostgreSQL retains its native empty-series and direction
 semantics. The translation-only `EF.Functions` form must not be called outside
 an EF query. The PostgreSQL 16+ timezone-name overload is not exposed yet so
-the same API executes across the PostgreSQL 15–19 support matrix. JSON/recordset
+the same API executes across the PostgreSQL 15–19 support matrix.
+
+BlueTusk also exposes four single-column JSONB roots:
+`JsonArrayElements`, `JsonArrayElementsText`, `JsonObjectKeys`, and
+`JsonPathQuery`. JSON-valued results remain mapped as `jsonb`; text elements
+materialize as nullable strings so a JSON `null` is not replaced with an empty
+value. JSON and JSONPath parameters receive exact store-type mappings, while
+mapped properties should be configured as `jsonb`:
+
+```csharp
+modelBuilder.Entity<Document>()
+    .Property(document => document.Payload)
+    .HasColumnType("jsonb");
+
+var elements = await context.Documents
+    .SelectMany(
+        document => EF.Functions.JsonArrayElementsText(document.Payload),
+        (document, element) => new { document.Id, Element = element })
+    .ToListAsync(cancellationToken);
+```
+
+These roots emit `WITH ORDINALITY` internally so duplicate values and JSON-null
+elements have stable row identity and source order. Correlated roots use lateral
+joins, and captured JSON/JSONPath values remain parameters. Record-shaped JSON
 functions, multi-argument `unnest`, and general user-defined table functions
 remain planned.
 
@@ -332,4 +355,4 @@ Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retain
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, and integer/bigint/numeric/temporal series roots across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus `unnest` filtering, ordinality, nullable elements, inner/outer lateral composition, and standalone/correlated/compiled `generate_series` execution are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series roots, and single-column JSONB set-returning roots across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus `unnest` filtering, ordinality, nullable elements, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, and JSONB element/key/path expansion are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

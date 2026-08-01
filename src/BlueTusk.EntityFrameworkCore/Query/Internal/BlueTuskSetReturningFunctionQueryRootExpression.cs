@@ -3,12 +3,27 @@ using Microsoft.EntityFrameworkCore.Query;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
-internal sealed class BlueTuskGenerateSeriesQueryRootExpression(
+internal sealed class BlueTuskSetReturningFunctionQueryRootExpression(
+    string name,
     Type elementType,
-    IReadOnlyList<Expression> arguments)
+    IReadOnlyList<Expression> arguments,
+    IReadOnlyList<string?> argumentStoreTypes,
+    string? resultStoreType,
+    bool isNullable,
+    bool withOrdinality)
     : QueryRootExpression(elementType)
 {
+    public string Name { get; } = name;
+
     public IReadOnlyList<Expression> Arguments { get; } = arguments;
+
+    public IReadOnlyList<string?> ArgumentStoreTypes { get; } = argumentStoreTypes;
+
+    public string? ResultStoreType { get; } = resultStoreType;
+
+    public bool IsNullable { get; } = isNullable;
+
+    public bool WithOrdinality { get; } = withOrdinality;
 
     public override Expression DetachQueryProvider()
         => this;
@@ -37,12 +52,19 @@ internal sealed class BlueTuskGenerateSeriesQueryRootExpression(
 
         return visitedArguments is null
             ? this
-            : new BlueTuskGenerateSeriesQueryRootExpression(ElementType, visitedArguments);
+            : new BlueTuskSetReturningFunctionQueryRootExpression(
+                Name,
+                ElementType,
+                visitedArguments,
+                ArgumentStoreTypes,
+                ResultStoreType,
+                IsNullable,
+                WithOrdinality);
     }
 
     protected override void Print(ExpressionPrinter expressionPrinter)
     {
-        expressionPrinter.Append("EF.Functions.GenerateSeries(");
+        expressionPrinter.Append(Name).Append("(");
         for (var index = 0; index < Arguments.Count; index++)
         {
             if (index > 0)
@@ -57,17 +79,31 @@ internal sealed class BlueTuskGenerateSeriesQueryRootExpression(
     }
 
     public override bool Equals(object? obj)
-        => obj is BlueTuskGenerateSeriesQueryRootExpression other
+        => obj is BlueTuskSetReturningFunctionQueryRootExpression other
             && base.Equals(other)
-            && Arguments.SequenceEqual(other.Arguments);
+            && Name == other.Name
+            && Arguments.SequenceEqual(other.Arguments)
+            && ArgumentStoreTypes.SequenceEqual(other.ArgumentStoreTypes)
+            && ResultStoreType == other.ResultStoreType
+            && IsNullable == other.IsNullable
+            && WithOrdinality == other.WithOrdinality;
 
     public override int GetHashCode()
     {
         var hash = new HashCode();
         hash.Add(base.GetHashCode());
+        hash.Add(Name, StringComparer.Ordinal);
+        hash.Add(ResultStoreType, StringComparer.Ordinal);
+        hash.Add(IsNullable);
+        hash.Add(WithOrdinality);
         foreach (var argument in Arguments)
         {
             hash.Add(argument);
+        }
+
+        foreach (var storeType in ArgumentStoreTypes)
+        {
+            hash.Add(storeType, StringComparer.Ordinal);
         }
 
         return hash.ToHashCode();
