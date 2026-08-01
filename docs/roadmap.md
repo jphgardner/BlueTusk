@@ -306,6 +306,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Included mapped columns, null-distinct unique indexes, and validated storage parameters
   - [x] Transaction-suppressed concurrent create/drop operations
   - [x] Column-based advanced-index catalogue discovery and fluent C# scaffolding
+  - [x] Standalone and mixed expression-index discovery with canonical key SQL, fluent C# scaffolding, replay, and PostgreSQL 15–19 lifecycle acceptance
 - [x] PostgreSQL exclusion constraints
   - [x] Typed column/expression elements, schema-qualified operators, access methods, collations, operator classes and parameters, sort/null ordering, included columns, storage parameters, tablespaces, partial predicates, and deferrability
   - [x] Create/drop/rename/replacement diffs with relational dependency ordering, rename-aware tables, destructive diagnostics, default-`RESTRICT` drops, and partitioned-root rejection

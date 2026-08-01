@@ -11,6 +11,8 @@ using BlueTusk.EntityFrameworkCore.EventTriggers;
 using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
+using BlueTusk.EntityFrameworkCore.ExpressionIndexes;
+using BlueTusk.EntityFrameworkCore.ExpressionIndexes.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData;
@@ -108,6 +110,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadRules(connection, tables);
         ReadPublications(connection, model);
         ReadSubscriptions(connection, model);
+        ReadExpressionIndexes(connection, tables);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
         ReadTableInheritance(connection, tables);
@@ -1379,6 +1382,196 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    private static void ReadExpressionIndexes(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   table_class.relname,
+                   index_class.relname,
+                   index_entry.indisunique,
+                   access_method.amname,
+                   pg_catalog.pg_get_expr(index_entry.indpred, index_entry.indrelid, false),
+                   index_entry.indnullsnotdistinct,
+                   index_class.reloptions,
+                   CASE WHEN index_class.reltablespace = 0 THEN NULL ELSE tablespace.spcname END,
+                   key.position,
+                   pg_catalog.pg_get_indexdef(index_entry.indexrelid, key.position::integer, false),
+                   index_entry.indnkeyatts,
+                   attribute.attname,
+                   operator_namespace.nspname,
+                   operator_class.opcname,
+                   collation_namespace.nspname,
+                   index_collation.collname,
+                   index_attribute.attoptions,
+                   pg_catalog.pg_index_column_has_property(
+                       index_entry.indexrelid,
+                       key.position::integer,
+                       'orderable'),
+                   ((index_entry.indoption)[key.position - 1] & 1) <> 0,
+                   ((index_entry.indoption)[key.position - 1] & 2) <> 0
+            FROM pg_catalog.pg_index AS index_entry
+            JOIN pg_catalog.pg_class AS table_class ON table_class.oid = index_entry.indrelid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = table_class.relnamespace
+            JOIN pg_catalog.pg_class AS index_class ON index_class.oid = index_entry.indexrelid
+            JOIN pg_catalog.pg_am AS access_method ON access_method.oid = index_class.relam
+            LEFT JOIN pg_catalog.pg_tablespace AS tablespace ON tablespace.oid = index_class.reltablespace
+            CROSS JOIN LATERAL unnest(index_entry.indkey) WITH ORDINALITY AS key(attnum, position)
+            LEFT JOIN pg_catalog.pg_attribute AS attribute
+              ON attribute.attrelid = index_entry.indrelid AND attribute.attnum = key.attnum
+            LEFT JOIN pg_catalog.pg_opclass AS operator_class
+              ON operator_class.oid = (index_entry.indclass)[key.position - 1]
+            LEFT JOIN pg_catalog.pg_namespace AS operator_namespace
+              ON operator_namespace.oid = operator_class.opcnamespace
+            LEFT JOIN pg_catalog.pg_collation AS index_collation
+              ON index_collation.oid = (index_entry.indcollation)[key.position - 1]
+            LEFT JOIN pg_catalog.pg_namespace AS collation_namespace
+              ON collation_namespace.oid = index_collation.collnamespace
+            LEFT JOIN pg_catalog.pg_attribute AS index_attribute
+              ON index_attribute.attrelid = index_entry.indexrelid
+             AND index_attribute.attnum = key.position
+            WHERE index_entry.indexprs IS NOT NULL
+              AND NOT index_entry.indisprimary
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_constraint AS constraint_entry
+                  WHERE constraint_entry.conindid = index_entry.indexrelid)
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_class'::pg_catalog.regclass
+                    AND dependency.objid = index_entry.indexrelid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, table_class.relname, index_class.relname, key.position
+            """;
+
+        var seeds = new Dictionary<
+            (string Schema, string Table, string Name),
+            ExpressionIndexSeed>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var tableKey = (reader.GetString(0), reader.GetString(1));
+            if (!tables.ContainsKey(tableKey))
+            {
+                continue;
+            }
+
+            var key = (tableKey.Item1, tableKey.Item2, reader.GetString(2));
+            if (!seeds.TryGetValue(key, out var seed))
+            {
+                var storageParameters = reader.IsDBNull(7)
+                    ? []
+                    : ParsePostgreSqlArray(reader.GetValue(7))
+                        .Select(value => value.Split('=', 2))
+                        .Where(parts => parts.Length == 2)
+                        .Select(parts => new BlueTuskExpressionIndexStorageParameterDefinition(parts[0], parts[1]))
+                        .ToArray();
+                var unique = reader.GetBoolean(3);
+                seed = new ExpressionIndexSeed(
+                    reader.GetString(4),
+                    unique,
+                    unique && reader.GetBoolean(6) ? false : null,
+                    GetNullableString(reader, 5),
+                    GetNullableString(reader, 8),
+                    storageParameters,
+                    [],
+                    []);
+                seeds.Add(key, seed);
+            }
+
+            if (reader.GetInt64(9) <= reader.GetInt16(11))
+            {
+                seed.KeySql.Add(ReadExpressionIndexKeySql(reader));
+            }
+            else
+            {
+                seed.IncludedColumns.Add(reader.GetString(12));
+            }
+        }
+
+        foreach (var tableGroup in seeds.GroupBy(seed => (seed.Key.Schema, seed.Key.Table)))
+        {
+            tables[tableGroup.Key][BlueTuskExpressionIndexMetadata.AnnotationName] =
+                BlueTuskExpressionIndexMetadata.Serialize(tableGroup.Select(seed =>
+                    new BlueTuskExpressionIndexDefinition(
+                        seed.Key.Name,
+                        seed.Value.Method,
+                        seed.Value.KeySql,
+                        seed.Value.IncludedColumns,
+                        seed.Value.StorageParameters,
+                        seed.Value.IsUnique,
+                        seed.Value.NullsDistinct,
+                        seed.Value.PredicateSql,
+                        seed.Value.Tablespace,
+                        IsConcurrent: false)));
+        }
+    }
+
+    private static string ReadExpressionIndexKeySql(DbDataReader reader)
+    {
+        var sql = new System.Text.StringBuilder(reader.GetString(10));
+        if (!reader.IsDBNull(16))
+        {
+            sql.Append(" COLLATE ").Append(QualifySqlIdentifier(reader.GetString(15), reader.GetString(16)));
+        }
+
+        if (!reader.IsDBNull(14))
+        {
+            sql.Append(' ').Append(QualifySqlIdentifier(reader.GetString(13), reader.GetString(14)));
+            if (!reader.IsDBNull(17))
+            {
+                var parameters = ParsePostgreSqlArray(reader.GetValue(17));
+                if (parameters.Length > 0)
+                {
+                    sql.Append(" (");
+                    for (var index = 0; index < parameters.Length; index++)
+                    {
+                        var parts = parameters[index].Split('=', 2);
+                        if (parts.Length != 2)
+                        {
+                            throw new InvalidOperationException(
+                                $"PostgreSQL returned invalid index operator-class option '{parameters[index]}'.");
+                        }
+
+                        BlueTuskExpressionIndexMetadata.ValidateStorageParameter(parts[0], parts[1]);
+                        if (index > 0)
+                        {
+                            sql.Append(", ");
+                        }
+
+                        sql.Append(parts[0]).Append(" = ").Append(parts[1]);
+                    }
+
+                    sql.Append(')');
+                }
+            }
+        }
+
+        if (reader.GetBoolean(18))
+        {
+            if (reader.GetBoolean(19))
+            {
+                sql.Append(" DESC");
+            }
+
+            sql.Append(reader.GetBoolean(20) ? " NULLS FIRST" : " NULLS LAST");
+        }
+
+        return sql.ToString();
+    }
+
+    private static string QualifySqlIdentifier(string schema, string name) =>
+        string.Equals(schema, "pg_catalog", StringComparison.Ordinal)
+            ? QuoteSqlIdentifier(name)
+            : $"{QuoteSqlIdentifier(schema)}.{QuoteSqlIdentifier(name)}";
+
+    private static string QuoteSqlIdentifier(string value) =>
+        $"\"{value.Replace("\"", "\"\"", StringComparison.Ordinal)}\"";
+
     private static void ReadIndexes(
         DbConnection connection,
         Dictionary<(string Schema, string Name), DatabaseTable> tables)
@@ -1418,9 +1611,16 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             LEFT JOIN pg_catalog.pg_namespace AS collation_namespace
                 ON collation_namespace.oid = index_collation.collnamespace
             WHERE NOT idx.indisprimary
+              AND idx.indexprs IS NULL
               AND NOT EXISTS (
                   SELECT 1 FROM pg_catalog.pg_constraint AS con
                   WHERE con.conindid = idx.indexrelid)
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_class'::pg_catalog.regclass
+                    AND dependency.objid = idx.indexrelid
+                    AND dependency.deptype = 'e')
             ORDER BY n.nspname, table_class.relname, index_class.relname, key.position
             """;
 
@@ -3172,6 +3372,16 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         IReadOnlyList<string> IncludedColumns,
         IReadOnlyList<BlueTuskExclusionParameterDefinition> StorageParameters,
         List<BlueTuskExclusionElementDefinition> Elements);
+
+    private sealed record ExpressionIndexSeed(
+        string Method,
+        bool IsUnique,
+        bool? NullsDistinct,
+        string? PredicateSql,
+        string? Tablespace,
+        IReadOnlyList<BlueTuskExpressionIndexStorageParameterDefinition> StorageParameters,
+        List<string> KeySql,
+        List<string> IncludedColumns);
 
     private sealed record ForeignTableSeed(
         string ServerName,

@@ -1,6 +1,7 @@
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
+using BlueTusk.EntityFrameworkCore.ExpressionIndexes.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
@@ -37,6 +38,37 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskExpressionIndexOperation createExpressionIndex:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskExpressionIndex(")
+                    .Append(Dependencies.CSharpHelper.Literal(createExpressionIndex.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskExpressionIndexMetadata.Serialize(createExpressionIndex.Definition)))
+                    .Append(", ")
+                    .Append(Literal(createExpressionIndex.Schema))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskExpressionIndexOperation dropExpressionIndex:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskExpressionIndex(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropExpressionIndex.Name))
+                    .Append(", ")
+                    .Append(Literal(dropExpressionIndex.Schema))
+                    .Append(", ")
+                    .Append(dropExpressionIndex.Concurrently ? "true" : "false")
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskExpressionIndexOperation renameExpressionIndex:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskExpressionIndex(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameExpressionIndex.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameExpressionIndex.NewName))
+                    .Append(", ")
+                    .Append(Literal(renameExpressionIndex.Schema))
+                    .AppendLine(");");
+                break;
             case ValidateBlueTuskCheckConstraintOperation validateCheckConstraint:
                 builder
                     .Append("migrationBuilder.ValidateBlueTuskCheckConstraint(")

@@ -6,6 +6,7 @@ using BlueTusk.EntityFrameworkCore.EventTriggers;
 using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
+using BlueTusk.EntityFrameworkCore.ExpressionIndexes.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData;
 using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
@@ -54,6 +55,15 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskExpressionIndexOperation createExpressionIndex:
+                Generate(createExpressionIndex, builder);
+                break;
+            case DropBlueTuskExpressionIndexOperation dropExpressionIndex:
+                Generate(dropExpressionIndex, builder);
+                break;
+            case RenameBlueTuskExpressionIndexOperation renameExpressionIndex:
+                Generate(renameExpressionIndex, builder);
+                break;
             case ValidateBlueTuskCheckConstraintOperation validateCheckConstraint:
                 Generate(validateCheckConstraint, builder);
                 break;
@@ -2090,6 +2100,99 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         {
             EndIndexStatement(builder, concurrently);
         }
+    }
+
+    private void Generate(
+        CreateBlueTuskExpressionIndexOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskExpressionIndexMetadata.Validate(operation.Definition);
+        var definition = BlueTuskExpressionIndexMetadata.Normalize(operation.Definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("CREATE ");
+        if (definition.IsUnique)
+        {
+            builder.Append("UNIQUE ");
+        }
+
+        builder.Append("INDEX ");
+        if (definition.IsConcurrent)
+        {
+            builder.Append("CONCURRENTLY ");
+        }
+
+        builder.Append(helper.DelimitIdentifier(definition.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" USING ");
+        AppendQualifiedIdentifier(builder, definition.Method);
+        builder.Append(" (").Append(string.Join(", ", definition.KeySql)).Append(")");
+        if (definition.IncludedColumns.Count > 0)
+        {
+            builder.Append(" INCLUDE (")
+                .Append(string.Join(", ", definition.IncludedColumns.Select(helper.DelimitIdentifier)))
+                .Append(")");
+        }
+
+        if (definition.NullsDistinct is { } nullsDistinct)
+        {
+            builder.Append(nullsDistinct ? " NULLS DISTINCT" : " NULLS NOT DISTINCT");
+        }
+
+        if (definition.StorageParameters.Count > 0)
+        {
+            builder.Append(" WITH (");
+            for (var index = 0; index < definition.StorageParameters.Count; index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                var parameter = definition.StorageParameters[index];
+                builder.Append(parameter.Name).Append(" = ").Append(parameter.Value);
+            }
+
+            builder.Append(")");
+        }
+
+        if (definition.Tablespace is not null)
+        {
+            builder.Append(" TABLESPACE ").Append(helper.DelimitIdentifier(definition.Tablespace));
+        }
+
+        if (definition.PredicateSql is not null)
+        {
+            builder.Append(" WHERE ").Append(definition.PredicateSql);
+        }
+
+        EndIndexStatement(builder, definition.IsConcurrent);
+    }
+
+    private void Generate(
+        DropBlueTuskExpressionIndexOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("DROP INDEX ");
+        if (operation.Concurrently)
+        {
+            builder.Append("CONCURRENTLY ");
+        }
+
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+            .Append(" RESTRICT");
+        EndIndexStatement(builder, operation.Concurrently);
+    }
+
+    private void Generate(
+        RenameBlueTuskExpressionIndexOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        builder.Append("ALTER INDEX ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+            .Append(" RENAME TO ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
     }
 
     protected override void Generate(

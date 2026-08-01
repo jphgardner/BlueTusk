@@ -2,6 +2,7 @@ using BlueTusk.EntityFrameworkCore.CheckConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.EventTriggers.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
+using BlueTusk.EntityFrameworkCore.ExpressionIndexes.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
@@ -206,6 +207,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskExclusionConstraintBuilderExtensions.HasBlueTuskExclusionConstraints),
                 serializedExclusionConstraints);
+        }
+
+        if (annotation.Name == BlueTuskExpressionIndexMetadata.AnnotationName &&
+            annotation.Value is string serializedExpressionIndexes)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskExpressionIndexBuilderExtensions.HasBlueTuskExpressionIndexes),
+                serializedExpressionIndexes);
         }
 
         if (annotation.Name == BlueTuskCheckConstraintMetadata.ScaffoldAnnotationName &&
