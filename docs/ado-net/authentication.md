@@ -1,7 +1,7 @@
 # Authentication
 
 BlueTusk negotiates PostgreSQL SCRAM-SHA-256, SCRAM-SHA-256-PLUS channel
-binding, legacy MD5 challenges, and cleartext password challenges. TLS server
+binding, PostgreSQL 18+ OAUTHBEARER, legacy MD5 challenges, and cleartext password challenges. TLS server
 certificate validation uses the platform policy by default. See PostgreSQL's
 [password authentication](https://www.postgresql.org/docs/current/auth-password.html)
 and [encryption options](https://www.postgresql.org/docs/current/encryption-options.html)
@@ -33,13 +33,17 @@ var builder = new BlueTuskDataSourceBuilder(connectionString)
 await using var dataSource = builder.Build();
 ```
 
-An access-token callback supplies a token in PostgreSQL's password field, as
-used by database services with short-lived IAM tokens. It is invoked once for
-each new physical connection, after TLS negotiation and only when the server
-requests a credential. Pool checkout does not refresh a token because an
-already-authenticated physical session does not authenticate again. Clearing or
-expiring a pooled session causes the next physical connection to request a new
-token.
+An access-token callback supplies a ready bearer/IAM token. When PostgreSQL 18+
+advertises `OAUTHBEARER`, BlueTusk sends the token with the
+[RFC 7628](https://www.rfc-editor.org/rfc/rfc7628) SASL mechanism. On servers requesting password, MD5, or SCRAM authentication, the
+same callback supplies the token as the password, as required by database
+services that use short-lived IAM tokens without PostgreSQL-native OAuth.
+
+The callback is invoked once for each new physical connection, after TLS
+negotiation and only when the server requests a credential. Pool checkout does
+not refresh a token because an already-authenticated physical session does not
+authenticate again. Clearing or expiring a pooled session causes the next
+physical connection to request a new token.
 
 ```csharp
 await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
@@ -48,8 +52,14 @@ await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
     .Build();
 ```
 
-This callback is not OAuth/OAUTHBEARER protocol support. OAuth SASL and cloud
-SDK-specific integrations remain separate post-initial features.
+Native OAUTHBEARER always requires TLS and is incompatible with required channel
+binding because the standardized mechanism has no channel-binding variant.
+BlueTusk accepts an already-issued token; OAuth discovery, browser/device flows,
+refresh-token storage, and cloud SDK bindings remain application concerns. This
+keeps issuer-, audience-, and provider-specific policy outside the database
+driver. PostgreSQL still requires a correctly configured server-side OAuth
+validator; see PostgreSQL's
+[OAuth authentication guide](https://www.postgresql.org/docs/current/auth-oauth.html).
 
 ## PostgreSQL password files
 
@@ -101,7 +111,7 @@ challenge is accepted over TLS. On plaintext transport it fails closed unless
 compatibility environment.
 
 Authentication protocol buffers are overwritten after transport flushes and
-temporary writable password/MD5 buffers are cleared. Immutable .NET strings
+temporary writable password/MD5/OAUTHBEARER buffers are cleared. Immutable .NET strings
 cannot be zeroed; keep connection strings and callback results short-lived and
 never log them. Callback failures are reported without retaining the original
 exception, preventing a callback exception message from leaking a credential.

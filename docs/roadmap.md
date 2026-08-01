@@ -25,6 +25,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Legacy PostgreSQL MD5 challenge compatibility with overwrite-on-flush credential buffers and PostgreSQL 15–19 acceptance
 - [x] Cleartext password compatibility over TLS, or by explicit plaintext-transport opt-in, with PostgreSQL 15–19 acceptance
 - [x] PostgreSQL password-file resolution plus lazy synchronous/asynchronous password and access-token callbacks
+- [x] PostgreSQL 18+ OAUTHBEARER with sync/async TLS conformance and a live validator gate
 - [x] TLS client-certificate collections and explicit certificate selection with safe server validation defaults
 - [x] Backend key data capture
 - [x] Cancellation channel (delivered in 0.0.4)
@@ -517,7 +518,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] PostgreSQL password-file (`pgpass`) resolution and password callbacks
   - [x] Access-token callbacks with per-new-physical-connection refresh lifecycle
   - [x] TLS client-certificate authentication and certificate-selection callbacks
-  - [ ] OAuth/OAUTHBEARER, GSSAPI/Kerberos, and cloud SDK-specific identity integrations
+  - [x] PostgreSQL 18+ native OAUTHBEARER with TLS enforcement, ready-token callbacks, sensitive buffers, error acknowledgement, and real validator acceptance
+  - [ ] GSSAPI/Kerberos and cloud SDK-specific identity integrations
 - [ ] Stress testing
 - [ ] Competitive benchmarks
 - [ ] Complete documentation

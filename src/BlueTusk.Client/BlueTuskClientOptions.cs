@@ -55,6 +55,9 @@ public sealed record BlueTuskClientOptions
 
     public BlueTuskAccessTokenProviderAsync? AccessTokenProviderAsync { get; init; }
 
+    internal bool HasAccessTokenProvider =>
+        AccessTokenProvider is not null || AccessTokenProviderAsync is not null;
+
     public string ApplicationName { get; init; } = "BlueTusk";
 
     public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(15);

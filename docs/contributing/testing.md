@@ -17,6 +17,18 @@ The checked-in compose `pg_hba.conf` reserves `bluetusk_md5_test` and
 default SCRAM rule. The tests create those roles only for their own lifetime;
 normal matrix users continue to authenticate with SCRAM-SHA-256.
 
+PostgreSQL 18 native OAUTHBEARER uses a separate `security-tests` compose
+profile. Its image compiles a deliberately fixed-token test validator, creates
+a short-lived self-signed TLS certificate, and exposes only the isolated test
+role on port 5618. It is conformance infrastructure, not an example production
+validator:
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait oauth18
+$env:BLUETUSK_OAUTH_TEST_CONNECTION_STRING = "Host=localhost;Port=5618;Username=bluetusk_oauth_test;Database=bluetusk_tests;SSL Mode=Require;Channel Binding=Disable"
+dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~Native_OAUTHBEARER
+```
+
 The compatibility project carries a test-only Npgsql dependency and runs equivalent value, parameter, transaction-error, cancellation, reuse, and schema-metadata operations through both providers. PostgreSQL internal type names (`int4`, `bool`) and SQL aliases (`integer`, `boolean`) are normalized before comparison; any other difference fails the suite and must be resolved against PostgreSQL behavior.
 
 The default stress scale runs bounded concurrent pool churn, cancellation storms, preparation, batches, and partially consumed sequential streams. Set `BLUETUSK_STRESS_SCALE` to a positive integer to multiply the worker count for longer soak runs.

@@ -68,8 +68,8 @@ Credential callbacks and TLS client identity are immutable data-source configura
 connection-string state. Data sources propagate that configuration to pools, unpooled paths,
 notification listeners, EF admin-database connections, and dedicated replication-option
 snapshots. Credential resolution is lazy and belongs to Client authentication; password-file
-parsing and permission checks remain in Security, while Transport only receives the final TLS
-certificate policy.
+parsing, SCRAM/MD5 derivation, and RFC 7628 OAUTHBEARER response construction remain in
+Security, while Transport only receives the final TLS certificate policy.
 
 ## Sync and async
 

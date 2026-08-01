@@ -113,3 +113,38 @@ jobs:
       - name: Stop PostgreSQL 19
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  oauth-authentication:
+    name: PostgreSQL 18 native OAUTHBEARER
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL OAuth validator
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait oauth18
+
+      - name: Run native OAUTHBEARER acceptance
+        env:
+          BLUETUSK_OAUTH_TEST_CONNECTION_STRING: Host=localhost;Port=5618;Username=bluetusk_oauth_test;Database=bluetusk_tests;SSL Mode=Require;Channel Binding=Disable
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Native_OAUTHBEARER
+          --logger trx
+          --results-directory artifacts/test-results/oauth18
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests logs oauth18
+
+      - name: Stop PostgreSQL OAuth validator
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests down --volumes

@@ -47,7 +47,7 @@ public sealed record BlueTuskServerCapabilities
             // SQL/PGQ requires an explicit PostgreSQL 19 catalogue/syntax probe before it is enabled.
             SupportsSqlPgq = false,
             SupportsVirtualGeneratedColumns = serverVersion.Major >= 18,
-            // BlueTusk does not advertise OAuth until both the server and client negotiation path are usable.
+            // Successful OAUTHBEARER negotiation promotes this connection-scoped value to true.
             SupportsOAuthBearer = false,
         };
     }

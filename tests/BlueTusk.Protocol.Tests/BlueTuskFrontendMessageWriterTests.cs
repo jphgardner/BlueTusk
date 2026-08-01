@@ -82,6 +82,20 @@ public sealed class BlueTuskFrontendMessageWriterTests
     }
 
     [Fact]
+    public void Writes_binary_sasl_responses_without_text_transcoding()
+    {
+        var initial = new ArrayBufferWriter<byte>();
+        var continuation = new ArrayBufferWriter<byte>();
+        var response = new byte[] { (byte)'n', (byte)',', (byte)',', 1, 0xff };
+
+        BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(initial, "OAUTHBEARER", response);
+        BlueTuskFrontendMessageWriter.WriteSaslResponse(continuation, new byte[] { 1 });
+
+        Assert.Equal(response, initial.WrittenSpan[^response.Length..].ToArray());
+        Assert.Equal("700000000501", Convert.ToHexString(continuation.WrittenSpan));
+    }
+
+    [Fact]
     public void Writes_a_password_message_from_caller_owned_bytes()
     {
         var output = new ArrayBufferWriter<byte>();

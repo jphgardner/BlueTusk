@@ -3320,6 +3320,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken)
     {
         BlueTuskScramSha256Client? scram = null;
+        var oauthBearerSelected = false;
+        var oauthErrorAcknowledged = false;
         string? credential = null;
         var authenticationComplete = false;
         try
@@ -3350,16 +3352,29 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                     cancellationToken).ConfigureAwait(false);
                                 break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
-                                credential ??= await BlueTuskCredentialResolver.ResolveAsync(
-                                    _options,
-                                    cancellationToken).ConfigureAwait(false);
-                                scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
-                                await _connection.WriteSensitiveAsync(
-                                    output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
-                                        output,
-                                        scram.Mechanism,
-                                        scram.ClientFirstMessage),
-                                    cancellationToken).ConfigureAwait(false);
+                                if (ShouldUseOAuthBearer(sasl.Mechanisms))
+                                {
+                                    EnsureOAuthBearerIsSecure();
+                                    credential ??= await BlueTuskCredentialResolver.ResolveAsync(
+                                        _options,
+                                        cancellationToken).ConfigureAwait(false);
+                                    oauthBearerSelected = true;
+                                    await SendOAuthBearerAsync(credential, cancellationToken).ConfigureAwait(false);
+                                }
+                                else
+                                {
+                                    credential ??= await BlueTuskCredentialResolver.ResolveAsync(
+                                        _options,
+                                        cancellationToken).ConfigureAwait(false);
+                                    scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
+                                    await _connection.WriteSensitiveAsync(
+                                        output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
+                                            output,
+                                            scram.Mechanism,
+                                            scram.ClientFirstMessage),
+                                        cancellationToken).ConfigureAwait(false);
+                                }
+
                                 break;
                             case BlueTuskAuthenticationRequest.SaslContinue continuation when scram is not null:
                                 var clientFinal = scram.CreateClientFinalMessage(continuation.Data);
@@ -3370,7 +3385,22 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                             case BlueTuskAuthenticationRequest.SaslFinal finalResponse when scram is not null:
                                 scram.VerifyServerFinalMessage(finalResponse.Data);
                                 break;
+                            case BlueTuskAuthenticationRequest.SaslContinue
+                                when oauthBearerSelected && !oauthErrorAcknowledged:
+                                oauthErrorAcknowledged = true;
+                                await _connection.WriteSensitiveAsync(
+                                    static output => BlueTuskFrontendMessageWriter.WriteSaslResponse(
+                                        output,
+                                        new byte[] { 1 }),
+                                    cancellationToken).ConfigureAwait(false);
+                                break;
                             case BlueTuskAuthenticationRequest.Ok:
+                                if (oauthErrorAcknowledged)
+                                {
+                                    throw new BlueTuskAuthenticationException(
+                                        "PostgreSQL accepted OAUTHBEARER after reporting a SASL error challenge.");
+                                }
+
                                 scram?.EnsureVerified();
                                 authenticationComplete = true;
                                 _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Initialising);
@@ -3399,7 +3429,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         }
 
                         TransactionStatus = BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message);
-                        Capabilities = BlueTuskServerCapabilities.Detect(_parameters);
+                        Capabilities = BlueTuskServerCapabilities.Detect(_parameters) with
+                        {
+                            SupportsOAuthBearer = oauthBearerSelected,
+                        };
                         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Ready);
                         return;
                     default:
@@ -3416,6 +3449,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private void AuthenticateAndInitialise(ReadOnlyMemory<byte>? channelBindingData)
     {
         BlueTuskScramSha256Client? scram = null;
+        var oauthBearerSelected = false;
+        var oauthErrorAcknowledged = false;
         string? credential = null;
         var authenticationComplete = false;
         try
@@ -3438,13 +3473,24 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 SendMd5Password(credential, md5.Salt.Span);
                                 break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
-                                credential ??= BlueTuskCredentialResolver.Resolve(_options);
-                                scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
-                                _connection.WriteSensitive(
-                                    output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
-                                        output,
-                                        scram.Mechanism,
-                                        scram.ClientFirstMessage));
+                                if (ShouldUseOAuthBearer(sasl.Mechanisms))
+                                {
+                                    EnsureOAuthBearerIsSecure();
+                                    credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                    oauthBearerSelected = true;
+                                    SendOAuthBearer(credential);
+                                }
+                                else
+                                {
+                                    credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                    scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
+                                    _connection.WriteSensitive(
+                                        output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
+                                            output,
+                                            scram.Mechanism,
+                                            scram.ClientFirstMessage));
+                                }
+
                                 break;
                             case BlueTuskAuthenticationRequest.SaslContinue continuation when scram is not null:
                                 var clientFinal = scram.CreateClientFinalMessage(continuation.Data);
@@ -3454,7 +3500,21 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                             case BlueTuskAuthenticationRequest.SaslFinal finalResponse when scram is not null:
                                 scram.VerifyServerFinalMessage(finalResponse.Data);
                                 break;
+                            case BlueTuskAuthenticationRequest.SaslContinue
+                                when oauthBearerSelected && !oauthErrorAcknowledged:
+                                oauthErrorAcknowledged = true;
+                                _connection.WriteSensitive(
+                                    static output => BlueTuskFrontendMessageWriter.WriteSaslResponse(
+                                        output,
+                                        new byte[] { 1 }));
+                                break;
                             case BlueTuskAuthenticationRequest.Ok:
+                                if (oauthErrorAcknowledged)
+                                {
+                                    throw new BlueTuskAuthenticationException(
+                                        "PostgreSQL accepted OAUTHBEARER after reporting a SASL error challenge.");
+                                }
+
                                 scram?.EnsureVerified();
                                 authenticationComplete = true;
                                 _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Initialising);
@@ -3483,7 +3543,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         }
 
                         TransactionStatus = BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message);
-                        Capabilities = BlueTuskServerCapabilities.Detect(_parameters);
+                        Capabilities = BlueTuskServerCapabilities.Detect(_parameters) with
+                        {
+                            SupportsOAuthBearer = oauthBearerSelected,
+                        };
                         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Ready);
                         return;
                     default:
@@ -3494,6 +3557,62 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         finally
         {
             scram?.Dispose();
+        }
+    }
+
+    private bool ShouldUseOAuthBearer(IReadOnlyList<string> mechanisms) =>
+        _options.HasAccessTokenProvider &&
+        mechanisms.Contains(BlueTuskOAuthBearerClient.MechanismName, StringComparer.Ordinal);
+
+    private void EnsureOAuthBearerIsSecure()
+    {
+        if (!IsEncrypted)
+        {
+            throw new BlueTuskAuthenticationException(
+                "PostgreSQL OAUTHBEARER authentication requires an encrypted TLS connection.");
+        }
+
+        if (_options.ChannelBinding == BlueTuskChannelBindingMode.Require)
+        {
+            throw new BlueTuskAuthenticationException(
+                "PostgreSQL OAUTHBEARER does not support required channel binding.");
+        }
+    }
+
+    private async ValueTask SendOAuthBearerAsync(
+        string credential,
+        CancellationToken cancellationToken)
+    {
+        var response = BlueTuskOAuthBearerClient.CreateInitialResponse(credential);
+        try
+        {
+            await _connection.WriteSensitiveAsync(
+                output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
+                    output,
+                    BlueTuskOAuthBearerClient.MechanismName,
+                    response),
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(response);
+        }
+    }
+
+    private void SendOAuthBearer(string credential)
+    {
+        var response = BlueTuskOAuthBearerClient.CreateInitialResponse(credential);
+        try
+        {
+            _connection.WriteSensitive(
+                output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
+                    output,
+                    BlueTuskOAuthBearerClient.MechanismName,
+                    response));
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(response);
         }
     }
 

@@ -1,3 +1,4 @@
+using System.Security.Cryptography.X509Certificates;
 using System.Text;
 using BlueTusk.Client;
 using BlueTusk.Data;
@@ -158,6 +159,73 @@ public sealed class BlueTuskAuthenticationIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Native_OAUTHBEARER_authenticates_sync_and_async_against_PostgreSQL_18()
+    {
+        var connectionString = Environment.GetEnvironmentVariable(
+            "BLUETUSK_OAUTH_TEST_CONNECTION_STRING");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw SkipException.ForSkip(
+                "BLUETUSK_OAUTH_TEST_CONNECTION_STRING is not configured.");
+        }
+
+        var baseOptions = BlueTuskClientOptions.FromConnectionString(connectionString) with
+        {
+            Password = null,
+            SslMode = BlueTuskSslMode.Require,
+            ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            CertificateRevocationCheckMode = X509RevocationMode.NoCheck,
+            RemoteCertificateValidationCallback = static (_, certificate, _, _) =>
+                certificate is not null &&
+                string.Equals(certificate.Subject, "CN=localhost", StringComparison.Ordinal),
+        };
+        var syncCalls = 0;
+        using (var session = BlueTuskSession.Open(
+                   baseOptions with
+                   {
+                       AccessTokenProvider = _ =>
+                       {
+                           syncCalls++;
+                           return "bluetusk-oauth-token";
+                       },
+                   }))
+        {
+            Assert.True(session.IsEncrypted);
+            Assert.True(session.Capabilities.SupportsOAuthBearer);
+            Assert.Equal("bluetusk_oauth_test", ReadCurrentUser(session));
+        }
+
+        var asyncCalls = 0;
+        await using (var session = await BlueTuskSession.OpenAsync(
+                         baseOptions with
+                         {
+                             AccessTokenProviderAsync = (_, _) =>
+                             {
+                                 asyncCalls++;
+                                 return ValueTask.FromResult("bluetusk-oauth-token");
+                             },
+                         }))
+        {
+            Assert.True(session.IsEncrypted);
+            Assert.True(session.Capabilities.SupportsOAuthBearer);
+            Assert.Equal("bluetusk_oauth_test", await ReadCurrentUserAsync(session));
+        }
+
+        Assert.Equal(1, syncCalls);
+        Assert.Equal(1, asyncCalls);
+
+        var exception = await Assert.ThrowsAsync<BlueTuskServerException>(
+            () => BlueTuskSession.OpenAsync(
+                baseOptions with
+                {
+                    AccessTokenProviderAsync = (_, _) =>
+                        ValueTask.FromResult("invalid-oauth-token"),
+                }).AsTask());
+        Assert.Equal("28000", exception.SqlState);
+        Assert.DoesNotContain("invalid-oauth-token", exception.ToString(), StringComparison.Ordinal);
+    }
+
     private static async Task ExecuteAdminAsync(
         BlueTuskConnectionStringBuilder settings,
         string sql)
@@ -185,6 +253,13 @@ public sealed class BlueTuskAuthenticationIntegrationTests
     private static async Task<string> ReadCurrentUserAsync(BlueTuskSession session)
     {
         var result = await session.ExecuteSimpleQueryAsync("SELECT current_user");
+        return Encoding.UTF8.GetString(
+            Assert.Single(Assert.Single(result.ResultSets).Rows).Values[0]!.Value.Span);
+    }
+
+    private static string ReadCurrentUser(BlueTuskSession session)
+    {
+        var result = session.ExecuteSimpleQuery("SELECT current_user");
         return Encoding.UTF8.GetString(
             Assert.Single(Assert.Single(result.ResultSets).Rows).Values[0]!.Value.Span);
     }

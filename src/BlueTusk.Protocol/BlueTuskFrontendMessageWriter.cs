@@ -76,12 +76,35 @@ public static class BlueTuskFrontendMessageWriter
 
         var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
         var responseLength = Encoding.UTF8.GetByteCount(response);
+        WriteSaslInitialResponseHeader(output, mechanism, mechanismLength, responseLength);
+        WriteUtf8(output, response, responseLength);
+    }
+
+    /// <summary>Writes a SASL initial response from caller-owned sensitive bytes.</summary>
+    public static void WriteSaslInitialResponse(
+        IBufferWriter<byte> output,
+        string mechanism,
+        ReadOnlySpan<byte> response)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(mechanism, nameof(mechanism));
+
+        var mechanismLength = Encoding.UTF8.GetByteCount(mechanism);
+        WriteSaslInitialResponseHeader(output, mechanism, mechanismLength, response.Length);
+        WriteBytes(output, response);
+    }
+
+    private static void WriteSaslInitialResponseHeader(
+        IBufferWriter<byte> output,
+        string mechanism,
+        int mechanismLength,
+        int responseLength)
+    {
         WriteByte(output, (byte)'p');
         WriteInt32(output, checked(sizeof(int) + mechanismLength + 1 + sizeof(int) + responseLength));
         WriteUtf8(output, mechanism, mechanismLength);
         WriteByte(output, 0);
         WriteInt32(output, responseLength);
-        WriteUtf8(output, response, responseLength);
     }
 
     public static void WriteSaslResponse(IBufferWriter<byte> output, string response)
@@ -93,6 +116,16 @@ public static class BlueTuskFrontendMessageWriter
         WriteByte(output, (byte)'p');
         WriteInt32(output, checked(sizeof(int) + responseLength));
         WriteUtf8(output, response, responseLength);
+    }
+
+    /// <summary>Writes a SASL response from caller-owned sensitive bytes.</summary>
+    public static void WriteSaslResponse(IBufferWriter<byte> output, ReadOnlySpan<byte> response)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+
+        WriteByte(output, (byte)'p');
+        WriteInt32(output, checked(sizeof(int) + response.Length));
+        WriteBytes(output, response);
     }
 
     /// <summary>Writes a PostgreSQL password response as a null-terminated byte string.</summary>

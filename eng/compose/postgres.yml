@@ -49,6 +49,29 @@ services:
     image: postgres:18-alpine
     ports: ["5418:5432"]
 
+  oauth18:
+    <<: *postgres-common
+    image: bluetusk/postgres-oauth-test:18
+    build:
+      context: ./oauth
+    profiles: ["security-tests"]
+    command:
+      - postgres
+      - -c
+      - hba_file=/etc/postgresql/bluetusk-pg_hba.conf
+      - -c
+      - oauth_validator_libraries=bluetusk_oauth_validator
+      - -c
+      - ssl=on
+      - -c
+      - ssl_cert_file=/var/lib/postgresql/server.crt
+      - -c
+      - ssl_key_file=/var/lib/postgresql/server.key
+    volumes:
+      - ./oauth/pg_hba.conf:/etc/postgresql/bluetusk-pg_hba.conf:ro
+      - ./oauth/init.sql:/docker-entrypoint-initdb.d/bluetusk-oauth.sql:ro
+    ports: ["5618:5432"]
+
   postgres19:
     <<: *postgres-common
     image: postgres:19beta2-alpine
