@@ -80,6 +80,58 @@ public static class BlueTuskQueryableExtensions
         [NotParameterized] string name)
         => CreateCteQuery(source, nameof(AsNotMaterializedCte), name);
 
+    public static IQueryable<TSource> RecursiveDescendants<TSource, TKey>(
+        this IQueryable<TSource> source,
+        Expression<Func<TSource, (TKey Key, TKey? ParentKey)>> hierarchyKeySelector,
+        TKey[] roots,
+        [NotParameterized] BlueTuskRecursiveUnionBehavior unionBehavior =
+            BlueTuskRecursiveUnionBehavior.Distinct)
+        where TKey : struct
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(hierarchyKeySelector);
+        ArgumentNullException.ThrowIfNull(roots);
+        if (!Enum.IsDefined(unionBehavior))
+        {
+            throw new ArgumentOutOfRangeException(nameof(unionBehavior), unionBehavior, null);
+        }
+
+        var method = GetMethod(nameof(RecursiveDescendants), genericArgumentCount: 2, parameterCount: 4)
+            .MakeGenericMethod(typeof(TSource), typeof(TKey));
+        var normalizedSelector = NormalizeTupleSelector(hierarchyKeySelector);
+        return source.Provider.CreateQuery<TSource>(
+            Expression.Call(
+                null,
+                method,
+                source.Expression,
+                Expression.Quote(normalizedSelector),
+                Expression.Constant(roots),
+                Expression.Constant(unionBehavior)));
+    }
+
+    private static Expression<Func<TSource, (TKey Key, TKey? ParentKey)>> NormalizeTupleSelector<TSource, TKey>(
+        Expression<Func<TSource, (TKey Key, TKey? ParentKey)>> selector)
+        where TKey : struct
+    {
+        if (selector.Body is not NewExpression { Arguments.Count: 2 } tuple
+            || !tuple.Type.IsGenericType
+            || tuple.Type.GetGenericTypeDefinition() != typeof(ValueTuple<,>))
+        {
+            return selector;
+        }
+
+        var createMethod = typeof(ValueTuple)
+            .GetMethods(BindingFlags.Public | BindingFlags.Static)
+            .Single(method =>
+                method.Name == nameof(ValueTuple.Create)
+                && method.IsGenericMethodDefinition
+                && method.GetGenericArguments().Length == 2)
+            .MakeGenericMethod(typeof(TKey), typeof(TKey?));
+        return Expression.Lambda<Func<TSource, (TKey Key, TKey? ParentKey)>>(
+            Expression.Call(createMethod, tuple.Arguments),
+            selector.Parameters);
+    }
+
     private static IQueryable<TSource> CreateSamplingQuery<TSource>(
         IQueryable<TSource> source,
         string methodName,
@@ -182,4 +234,14 @@ public enum BlueTuskRowLockingBehavior
     Wait,
     NoWait,
     SkipLocked,
+}
+
+/// <summary>Controls duplicate elimination in a recursive hierarchy traversal.</summary>
+public enum BlueTuskRecursiveUnionBehavior
+{
+    /// <summary>Uses <c>UNION</c>, preventing cycles from repeating an identical mapped row.</summary>
+    Distinct,
+
+    /// <summary>Uses <c>UNION ALL</c>; suitable only for hierarchies known to be acyclic.</summary>
+    All,
 }

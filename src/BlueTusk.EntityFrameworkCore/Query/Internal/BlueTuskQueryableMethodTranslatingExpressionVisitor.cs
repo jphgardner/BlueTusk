@@ -129,6 +129,12 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 ?? base.VisitExtension(extensionExpression);
         }
 
+        if (extensionExpression is BlueTuskRecursiveCteQueryRootExpression recursiveCte)
+        {
+            return TranslateRecursiveDescendants(recursiveCte)
+                ?? base.VisitExtension(extensionExpression);
+        }
+
         return base.VisitExtension(extensionExpression);
     }
 
@@ -219,10 +225,67 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 "The PostgreSQL CTE name must be a constant value.");
         }
 
+        if (selectExpression.Tables[0].FindAnnotation(
+                BlueTuskQueryAnnotationNames.RecursiveCommonTableExpression) is not null)
+        {
+            throw new InvalidOperationException(
+                "A recursive hierarchy query cannot also be wrapped in another PostgreSQL CTE.");
+        }
+
         AddQueryAnnotation(
             selectExpression,
             BlueTuskQueryAnnotationNames.CommonTableExpression,
             new BlueTuskCteClause(name, materialization));
+        return source;
+    }
+
+    private ShapedQueryExpression? TranslateRecursiveDescendants(
+        BlueTuskRecursiveCteQueryRootExpression recursiveCte)
+    {
+        if (base.VisitExtension(new EntityQueryRootExpression(recursiveCte.EntityType))
+                is not ShapedQueryExpression source
+            || source.QueryExpression is not SelectExpression { Tables: [TableExpression table] }
+                selectExpression)
+        {
+            return null;
+        }
+
+        var tableName = recursiveCte.EntityType.GetTableName();
+        if (tableName is null
+            || recursiveCte.EntityType.Model.GetRelationalModel().FindTable(
+                tableName,
+                recursiveCte.EntityType.GetSchema()) is not { } relationalTable
+            || recursiveCte.EntityType.FindProperty(recursiveCte.KeyProperty) is not { } keyProperty
+            || recursiveCte.EntityType.FindProperty(recursiveCte.ParentKeyProperty) is not { } parentKeyProperty
+            || relationalTable.FindColumn(keyProperty) is not { } key
+            || relationalTable.FindColumn(parentKeyProperty) is not { } parentKey)
+        {
+            return null;
+        }
+
+        if (!string.Equals(
+                key.StoreTypeMapping.StoreType,
+                parentKey.StoreTypeMapping.StoreType,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL recursive hierarchy key and parent-key columns must use the same store type.");
+        }
+
+        var roots = TranslateExpression(recursiveCte.Roots)
+            ?? throw new InvalidOperationException(
+                "The PostgreSQL recursive hierarchy root keys could not be translated as an array parameter.");
+        AddQueryAnnotation(
+            selectExpression,
+            BlueTuskQueryAnnotationNames.RecursiveCommonTableExpression,
+            new BlueTuskRecursiveCteClause(
+                $"bluetusk_{table.Alias}_hierarchy",
+                table.Name,
+                table.Schema,
+                key.Name,
+                parentKey.Name,
+                roots,
+                recursiveCte.UnionBehavior));
         return source;
     }
 

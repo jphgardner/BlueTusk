@@ -10,6 +10,8 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 {
     private bool _renderingCteBody;
 
+    private BlueTuskRecursiveCteClause? _recursiveCteSource;
+
     protected override Expression VisitExtension(Expression extensionExpression)
     {
         if (extensionExpression is BlueTuskUnnestExpression unnest)
@@ -250,6 +252,25 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 
     protected override Expression VisitSelect(SelectExpression selectExpression)
     {
+        if (!_renderingCteBody
+            && _recursiveCteSource is null
+            && GetQueryAnnotation(
+                    selectExpression,
+                    BlueTuskQueryAnnotationNames.RecursiveCommonTableExpression)?.Value
+                is BlueTuskRecursiveCteClause recursiveCte)
+        {
+            GenerateRecursiveCte(recursiveCte);
+            _recursiveCteSource = recursiveCte;
+            try
+            {
+                return base.VisitSelect(selectExpression);
+            }
+            finally
+            {
+                _recursiveCteSource = null;
+            }
+        }
+
         if (_renderingCteBody
             || GetQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.CommonTableExpression)?.Value
                 is not BlueTuskCteClause cte)
@@ -305,6 +326,18 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 
     protected override Expression VisitTable(TableExpression tableExpression)
     {
+        if (_recursiveCteSource is { } recursiveCte
+            && tableExpression.FindAnnotation(
+                    BlueTuskQueryAnnotationNames.RecursiveCommonTableExpression)?.Value
+                is BlueTuskRecursiveCteClause tableCte
+            && tableCte == recursiveCte)
+        {
+            Sql.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(recursiveCte.Name))
+                .Append(" AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(tableExpression.Alias));
+            return tableExpression;
+        }
+
         if (tableExpression.FindAnnotation(BlueTuskQueryAnnotationNames.TableSample)?.Value
             is not BlueTuskTableSampleClause sample)
         {
@@ -444,5 +477,62 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
                 Sql.Append(" DESC");
             }
         }
+    }
+
+    private void GenerateRecursiveCte(BlueTuskRecursiveCteClause cte)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        const string seedAlias = "seed";
+        const string childAlias = "child";
+        const string parentAlias = "parent";
+        Sql.Append("WITH RECURSIVE ")
+            .Append(helper.DelimitIdentifier(cte.Name))
+            .Append(" AS (")
+            .AppendLine()
+            .Append("SELECT ")
+            .Append(helper.DelimitIdentifier(seedAlias))
+            .Append(".*")
+            .AppendLine()
+            .Append("FROM ")
+            .Append(helper.DelimitIdentifier(cte.TableName, cte.TableSchema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(seedAlias))
+            .AppendLine()
+            .Append("WHERE ")
+            .Append(helper.DelimitIdentifier(seedAlias))
+            .Append(".")
+            .Append(helper.DelimitIdentifier(cte.KeyColumn))
+            .Append(" = ANY (");
+        Visit(cte.Roots);
+        Sql.Append(")")
+            .AppendLine()
+            .Append(cte.UnionBehavior == BlueTuskRecursiveUnionBehavior.All
+                ? "UNION ALL"
+                : "UNION")
+            .AppendLine()
+            .Append("SELECT ")
+            .Append(helper.DelimitIdentifier(childAlias))
+            .Append(".*")
+            .AppendLine()
+            .Append("FROM ")
+            .Append(helper.DelimitIdentifier(cte.TableName, cte.TableSchema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(childAlias))
+            .AppendLine()
+            .Append("INNER JOIN ")
+            .Append(helper.DelimitIdentifier(cte.Name))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(parentAlias))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(childAlias))
+            .Append(".")
+            .Append(helper.DelimitIdentifier(cte.ParentKeyColumn))
+            .Append(" = ")
+            .Append(helper.DelimitIdentifier(parentAlias))
+            .Append(".")
+            .Append(helper.DelimitIdentifier(cte.KeyColumn))
+            .AppendLine()
+            .Append(")")
+            .AppendLine();
     }
 }

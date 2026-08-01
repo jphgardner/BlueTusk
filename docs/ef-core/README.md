@@ -691,6 +691,34 @@ the same query fails with a focused diagnostic. Default, materialized, and
 non-materialized SQL generation plus compiled execution are covered across
 PostgreSQL 15–19.
 
+Self-referencing mapped tables also expose typed recursive traversal through
+`RecursiveDescendants`. Apply it directly to a `DbSet`, identify the
+non-nullable key and nullable parent key with `ValueTuple.Create`, and pass one
+or more root keys. BlueTusk emits a recursive CTE whose seed uses `= ANY (...)`
+with an array parameter, then joins mapped child and parent columns without
+accepting a table, column, or SQL string:
+
+```csharp
+var branch = await context.Categories
+    .RecursiveDescendants(
+        category => ValueTuple.Create(category.Id, category.ParentId),
+        rootCategoryIds)
+    .Where(category => category.IsVisible)
+    .OrderBy(category => category.Id)
+    .ToListAsync(cancellationToken);
+```
+
+The default `BlueTuskRecursiveUnionBehavior.Distinct` emits `UNION`, so a cycle
+that revisits an identical mapped row terminates instead of expanding forever.
+Use `All` only for a hierarchy known to be acyclic when retaining duplicate
+paths is intentional. Filters, projections, joins, and ordering compose after
+the recursive root. To keep the recursive table definition exact and avoid
+bypassing model filters during traversal, the root entity must use one table,
+must not participate in inheritance, and must not define a global query filter.
+The key pair must name direct mapped properties with the same PostgreSQL store
+type. Multi-root parameterization, compiled queries, both union modes, and
+cycle termination execute across PostgreSQL 15–19.
+
 Row-locking extensions cover `ForUpdate`, `ForNoKeyUpdate`, `ForShare`, and
 `ForKeyShare`. Each accepts `Wait`, `NoWait`, or `SkipLocked` behavior. Apply
 the locking operation after the final server projection and enumerate it inside

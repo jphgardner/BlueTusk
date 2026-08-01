@@ -28,6 +28,57 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
     {
         protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
         {
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskQueryableExtensions)
+                && methodCallExpression.Method.Name == nameof(BlueTuskQueryableExtensions.RecursiveDescendants))
+            {
+                if (Visit(methodCallExpression.Arguments[0]) is not EntityQueryRootExpression root)
+                {
+                    throw new InvalidOperationException(
+                        "PostgreSQL recursive hierarchy traversal must be applied directly to one mapped table root; compose filters, projections, and ordering afterward.");
+                }
+
+                if (root.EntityType.BaseType is not null
+                    || root.EntityType.GetDirectlyDerivedTypes().Any()
+                    || root.EntityType.GetDeclaredQueryFilters().Count != 0)
+                {
+                    throw new InvalidOperationException(
+                        "PostgreSQL recursive hierarchy traversal requires a non-inherited entity without a global query filter.");
+                }
+
+                var selector = (LambdaExpression)((UnaryExpression)methodCallExpression.Arguments[1]).Operand;
+                if (selector.Body is not MethodCallExpression
+                    {
+                        Method.DeclaringType: not null,
+                        Method.Name: nameof(ValueTuple.Create),
+                        Arguments: [MemberExpression key, MemberExpression parentKey],
+                    } tuple
+                    || tuple.Method.DeclaringType != typeof(ValueTuple)
+                    || key.Expression != selector.Parameters[0]
+                    || parentKey.Expression != selector.Parameters[0]
+                    || root.EntityType.FindProperty(key.Member.Name) is null
+                    || root.EntityType.FindProperty(parentKey.Member.Name) is null)
+                {
+                    throw new InvalidOperationException(
+                        "PostgreSQL recursive hierarchy selectors must use ValueTuple.Create with key and parent-key mapped properties directly.");
+                }
+
+                if (methodCallExpression.Arguments[3] is not ConstantExpression
+                    {
+                        Value: BlueTuskRecursiveUnionBehavior unionBehavior,
+                    })
+                {
+                    throw new InvalidOperationException(
+                        "The PostgreSQL recursive UNION behavior must be a constant value.");
+                }
+
+                return new BlueTuskRecursiveCteQueryRootExpression(
+                    root.EntityType,
+                    key.Member.Name,
+                    parentKey.Member.Name,
+                    Visit(methodCallExpression.Arguments[2]),
+                    unionBehavior);
+            }
+
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
                 && methodCallExpression.Method.Name == nameof(BlueTuskDbFunctionsExtensions.GenerateSeries))
             {

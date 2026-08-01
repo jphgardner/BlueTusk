@@ -11,6 +11,8 @@ internal static class BlueTuskQueryAnnotationNames
 
     public const string RowLocking = "BlueTusk:RowLocking";
 
+    public const string RecursiveCommonTableExpression = "BlueTusk:RecursiveCommonTableExpression";
+
     public const string TableSample = "BlueTusk:TableSample";
 }
 
@@ -38,6 +40,15 @@ internal enum BlueTuskCteMaterialization
 internal sealed record BlueTuskCteClause(
     string Name,
     BlueTuskCteMaterialization Materialization);
+
+internal sealed record BlueTuskRecursiveCteClause(
+    string Name,
+    string TableName,
+    string? TableSchema,
+    string KeyColumn,
+    string ParentKeyColumn,
+    SqlExpression Roots,
+    BlueTuskRecursiveUnionBehavior UnionBehavior);
 
 internal sealed record BlueTuskRowLockingClause(
     BlueTuskRowLockingStrength Strength,

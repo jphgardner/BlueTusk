@@ -134,6 +134,49 @@ public sealed class PostgreSqlQueryConstructTests
     }
 
     [Fact]
+    public void Recursive_hierarchy_translates_typed_keys_union_modes_and_diagnostics()
+    {
+        using var context = CreateContext();
+        int[] roots = [1, 4];
+
+        var distinctSql = context.Documents
+            .RecursiveDescendants(
+                document => ValueTuple.Create(document.Id, document.ParentId),
+                roots)
+            .Where(document => document.Score > 0)
+            .OrderBy(document => document.Id)
+            .ToQueryString();
+        var allSql = context.Documents
+            .RecursiveDescendants(
+                document => ValueTuple.Create(document.Id, document.ParentId),
+                roots,
+                BlueTuskRecursiveUnionBehavior.All)
+            .ToQueryString();
+
+        Assert.Contains("WITH RECURSIVE \"bluetusk_e_hierarchy\" AS (", distinctSql, StringComparison.Ordinal);
+        Assert.Contains("WHERE \"seed\".\"Id\" = ANY (", distinctSql, StringComparison.Ordinal);
+        Assert.Contains("INNER JOIN \"bluetusk_e_hierarchy\" AS \"parent\" ON \"child\".\"ParentId\" = \"parent\".\"Id\"", distinctSql, StringComparison.Ordinal);
+        Assert.Contains("FROM \"bluetusk_e_hierarchy\" AS \"e\"", distinctSql, StringComparison.Ordinal);
+        Assert.Contains(Environment.NewLine + "UNION" + Environment.NewLine, distinctSql, StringComparison.Ordinal);
+        Assert.Contains(Environment.NewLine + "UNION ALL" + Environment.NewLine, allSql, StringComparison.Ordinal);
+        Assert.DoesNotContain("IN (1, 4)", distinctSql, StringComparison.Ordinal);
+
+        var composedSource = Assert.Throws<InvalidOperationException>(() => context.Documents
+            .Where(document => document.Score > 0)
+            .RecursiveDescendants(document => ValueTuple.Create(document.Id, document.ParentId), roots)
+            .ToQueryString());
+        Assert.Contains("directly to one mapped table root", composedSource.Message, StringComparison.Ordinal);
+        var computedKey = Assert.Throws<InvalidOperationException>(() => context.Documents
+            .RecursiveDescendants(document => ValueTuple.Create(document.Id + 1, document.ParentId), roots)
+            .ToQueryString());
+        Assert.Contains("mapped properties directly", computedKey.Message, StringComparison.Ordinal);
+        Assert.Throws<ArgumentOutOfRangeException>(() => context.Documents.RecursiveDescendants(
+            document => ValueTuple.Create(document.Id, document.ParentId),
+            roots,
+            (BlueTuskRecursiveUnionBehavior)99));
+    }
+
+    [Fact]
     public void Window_functions_translate_partition_order_direction_and_typed_values()
     {
         using var context = CreateContext();
@@ -246,12 +289,13 @@ public sealed class PostgreSqlQueryConstructTests
             CREATE TABLE "ef_query_construct_documents" (
                 "Id" integer PRIMARY KEY,
                 "Category" text NOT NULL,
-                "Score" integer NOT NULL);
-            INSERT INTO "ef_query_construct_documents" ("Id", "Category", "Score")
+                "Score" integer NOT NULL,
+                "ParentId" integer NULL);
+            INSERT INTO "ef_query_construct_documents" ("Id", "Category", "Score", "ParentId")
             VALUES
-                (1, 'alpha', 1),
-                (2, 'alpha', 3),
-                (3, 'beta', 2)
+                (1, 'alpha', 1, NULL),
+                (2, 'alpha', 3, 1),
+                (3, 'beta', 2, 2)
             """);
 
         try
@@ -287,6 +331,13 @@ public sealed class PostgreSqlQueryConstructTests
                     .OrderBy(document => document.Id)
                     .Select(document => document.Id)
                     .AsMaterializedCte("compiled_documents"));
+            var compiledHierarchy = EF.CompileQuery(
+                (QueryConstructContext database, int[] roots) => database.Documents
+                    .RecursiveDescendants(
+                        document => ValueTuple.Create(document.Id, document.ParentId),
+                        roots)
+                    .OrderBy(document => document.Id)
+                    .Select(document => document.Id));
             var windows = await context.Documents
                 .OrderBy(document => document.Id)
                 .Select(document => new
@@ -356,6 +407,17 @@ public sealed class PostgreSqlQueryConstructTests
                 compiledDistinct(context, 2).Select(document => document.Id).ToArray());
             Assert.Equal([2L, 1L], compiledWindow(context, 2).ToArray());
             Assert.Equal([2, 3], compiledCte(context, 2).ToArray());
+            Assert.Equal([1, 2, 3], compiledHierarchy(context, [1]).ToArray());
+            Assert.Equal([2, 3], compiledHierarchy(context, [2]).ToArray());
+            var allDescendants = await context.Documents
+                .RecursiveDescendants(
+                    document => ValueTuple.Create(document.Id, document.ParentId),
+                    [1],
+                    BlueTuskRecursiveUnionBehavior.All)
+                .OrderBy(document => document.Id)
+                .Select(document => document.Id)
+                .ToArrayAsync();
+            Assert.Equal([1, 2, 3], allDescendants);
             Assert.Collection(
                 windows,
                 row => Assert.Equal(
@@ -382,6 +444,18 @@ public sealed class PostgreSqlQueryConstructTests
                 Assert.True(row.Ctid.OffsetNumber > 0);
             });
             Assert.Equal(3, systemColumns.Select(row => row.Ctid).Distinct().Count());
+
+            await ExecuteNonQueryAsync(
+                dataSource,
+                "UPDATE \"ef_query_construct_documents\" SET \"ParentId\" = 3 WHERE \"Id\" = 1");
+            var cycleSafeDescendants = await context.Documents
+                .RecursiveDescendants(
+                    document => ValueTuple.Create(document.Id, document.ParentId),
+                    [1])
+                .OrderBy(document => document.Id)
+                .Select(document => document.Id)
+                .ToArrayAsync();
+            Assert.Equal([1, 2, 3], cycleSafeDescendants);
 
             await using var lockingContext = CreateContext(dataSource);
             await using var lockingTransaction = await lockingContext.Database.BeginTransactionAsync();
@@ -503,5 +577,7 @@ public sealed class PostgreSqlQueryConstructTests
         public string Category { get; set; } = "";
 
         public int Score { get; set; }
+
+        public int? ParentId { get; set; }
     }
 }
