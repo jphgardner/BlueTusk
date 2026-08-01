@@ -34,6 +34,16 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
     protected override QueryableMethodTranslatingExpressionVisitor CreateSubqueryVisitor()
         => new BlueTuskQueryableMethodTranslatingExpressionVisitor(this);
 
+    protected override Expression VisitExtension(Expression extensionExpression)
+    {
+        if (extensionExpression is BlueTuskGenerateSeriesQueryRootExpression series)
+        {
+            return TranslateGenerateSeries(series) ?? base.VisitExtension(extensionExpression);
+        }
+
+        return base.VisitExtension(extensionExpression);
+    }
+
     protected override ShapedQueryExpression? TranslatePrimitiveCollection(
         SqlExpression sqlExpression,
         IProperty? property,
@@ -89,6 +99,55 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         }
 
         return new ShapedQueryExpression(selectExpression, shaperExpression);
+    }
+
+    private ShapedQueryExpression? TranslateGenerateSeries(
+        BlueTuskGenerateSeriesQueryRootExpression series)
+    {
+        var elementTypeMapping = _typeMappingSource.FindMapping(
+            series.ElementType,
+            RelationalDependencies.Model);
+        if (elementTypeMapping is null)
+        {
+            return null;
+        }
+
+        var arguments = new SqlExpression[series.Arguments.Count];
+        for (var index = 0; index < series.Arguments.Count; index++)
+        {
+            if (TranslateExpression(series.Arguments[index]) is not { } argument)
+            {
+                return null;
+            }
+
+            arguments[index] = RelationalDependencies.SqlExpressionFactory.ApplyTypeMapping(
+                argument,
+                elementTypeMapping);
+        }
+
+        var tableAlias = _queryCompilationContext.SqlAliasManager.GenerateTableAlias("generate_series");
+
+        var valueColumn = new ColumnExpression(
+            "value",
+            tableAlias,
+            series.ElementType,
+            elementTypeMapping,
+            nullable: false);
+
+#pragma warning disable EF1001 // SelectExpression constructors are provider-facing infrastructure.
+        var selectExpression = new SelectExpression(
+            [new BlueTuskGenerateSeriesTableExpression(tableAlias, arguments)],
+            valueColumn,
+            identifier: [(valueColumn, (ValueComparer)elementTypeMapping.Comparer)],
+            _queryCompilationContext.SqlAliasManager);
+#pragma warning restore EF1001
+
+        return new ShapedQueryExpression(
+            selectExpression,
+            new ProjectionBindingExpression(
+                selectExpression,
+                new ProjectionMember(),
+                series.ElementType));
     }
 
     private static Type? GetElementType(Type sequenceType)

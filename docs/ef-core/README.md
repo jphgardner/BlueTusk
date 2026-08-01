@@ -244,10 +244,38 @@ uniquification, ordinality preserves PostgreSQL array order, and nullable array
 elements materialize without being collapsed. For an outer expansion over a
 non-nullable value-type array, project the element to its nullable form before
 `DefaultIfEmpty()` so the absent row remains distinguishable from the CLR
-default value. This preview covers mapped array columns only. `generate_series`,
-JSON set-returning functions, recordset
-functions, multi-argument `unnest`, and general user-defined table functions
-remain planned.
+default value. This preview covers mapped array columns only.
+
+Integer and bigint series are also available as typed, composable query roots.
+Use `Database.GenerateSeries` for a standalone series; `int` maps to PostgreSQL
+`integer`, `long` maps to `bigint`, and the optional step defaults to one:
+
+```csharp
+var values = await context.Database
+    .GenerateSeries(2, 10, 2)
+    .Where(value => value >= minimum)
+    .OrderBy(value => value)
+    .ToListAsync(cancellationToken);
+```
+
+Use `EF.Functions.GenerateSeries` inside a translated query when a bound must
+refer to an outer row. BlueTusk represents the function as a query root before
+EF navigation expansion and emits a parameterized PostgreSQL lateral join:
+
+```csharp
+var expanded = await context.Documents
+    .SelectMany(
+        document => EF.Functions.GenerateSeries(1, document.PageCount),
+        (document, page) => new { document.Id, Page = page })
+    .ToListAsync(cancellationToken);
+```
+
+Both the two-argument and explicit-step forms participate in compiled queries.
+`Database.GenerateSeries` rejects a zero step before execution; PostgreSQL
+retains its native empty-series and direction semantics. The translation-only
+`EF.Functions` form must not be called outside an EF query. Numeric, timestamp,
+and timestamp-with-time-zone series, JSON/recordset functions, multi-argument
+`unnest`, and general user-defined table functions remain planned.
 
 ## Migrations
 
@@ -300,4 +328,4 @@ Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retain
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, and lateral array expansion across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus `unnest` filtering, ordinality, nullable elements, and inner/outer lateral composition are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, and integer/bigint series roots across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus `unnest` filtering, ordinality, nullable elements, inner/outer lateral composition, and standalone/correlated/compiled `generate_series` execution are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

@@ -216,6 +216,18 @@ public static class BlueTuskDbFunctionsExtensions
     public static int? ArrayCardinality<T>(this DbFunctions _, T[] array)
         => ThrowTranslationOnly<int?>();
 
+    public static IQueryable<int> GenerateSeries(this DbFunctions _, int start, int stop)
+        => ThrowTranslationOnly<IQueryable<int>>();
+
+    public static IQueryable<int> GenerateSeries(this DbFunctions _, int start, int stop, int step)
+        => ThrowTranslationOnly<IQueryable<int>>();
+
+    public static IQueryable<long> GenerateSeries(this DbFunctions _, long start, long stop)
+        => ThrowTranslationOnly<IQueryable<long>>();
+
+    public static IQueryable<long> GenerateSeries(this DbFunctions _, long start, long stop, long step)
+        => ThrowTranslationOnly<IQueryable<long>>();
+
     public static T? RangeLower<T>(this DbFunctions _, BlueTuskRange<T> range)
         where T : struct
         => ThrowTranslationOnly<T?>();

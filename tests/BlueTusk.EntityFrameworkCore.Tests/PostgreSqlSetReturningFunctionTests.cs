@@ -59,7 +59,49 @@ public sealed class PostgreSqlSetReturningFunctionTests
     }
 
     [Fact]
-    public async Task Lateral_unnest_executes_and_materializes_typed_elements()
+    public void Generate_series_roots_and_lateral_collections_translate_with_parameters()
+    {
+        using var context = CreateContext();
+        var start = 2;
+        var stop = 8;
+        var step = 2;
+        var minimum = 4;
+
+        var rootSql = context.Database
+            .GenerateSeries(start, stop, step)
+            .Where(value => value >= minimum)
+            .OrderBy(value => value)
+            .ToQueryString();
+        var lateralSql = context.Values
+            .SelectMany(
+                value => EF.Functions.GenerateSeries(start, value.Id),
+                (value, generated) => new { value.Id, Generated = generated })
+            .Where(result => result.Generated >= minimum)
+            .ToQueryString();
+
+        Assert.Contains("generate_series(", rootSql, StringComparison.Ordinal);
+        Assert.Contains("::integer", rootSql, StringComparison.Ordinal);
+        Assert.Contains("@p0", rootSql, StringComparison.Ordinal);
+        Assert.Contains("@minimum", rootSql, StringComparison.Ordinal);
+        Assert.Contains("JOIN LATERAL", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("generate_series(", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("AS \"g\"(\"value\")", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("@start", lateralSql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Generate_series_query_roots_reject_a_zero_step()
+    {
+        using var context = CreateContext();
+
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            context.Database.GenerateSeries(1, 5, 0));
+        Assert.Throws<ArgumentOutOfRangeException>(() =>
+            context.Database.GenerateSeries(1L, 5L, 0L));
+    }
+
+    [Fact]
+    public async Task Set_returning_functions_execute_and_materialize_typed_elements()
     {
         var connectionString = GetConnectionString();
         await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
@@ -108,6 +150,27 @@ public sealed class PostgreSqlSetReturningFunctionTests
                     value => value.Labels,
                     (value, label) => new { value.Id, Label = label })
                 .ToListAsync();
+            var integerSeries = await context.Database
+                .GenerateSeries(2, 6, 2)
+                .OrderBy(value => value)
+                .ToListAsync();
+            var longSeries = await context.Database
+                .GenerateSeries(5L, 1L, -2L)
+                .OrderByDescending(value => value)
+                .ToListAsync();
+            var correlatedSeries = await context.Values
+                .SelectMany(
+                    value => EF.Functions.GenerateSeries(1, value.Id),
+                    (value, generated) => new { value.Id, Generated = generated })
+                .OrderBy(result => result.Id)
+                .ThenBy(result => result.Generated)
+                .ToListAsync();
+            var compiledSeriesCount = EF.CompileQuery(
+                (SetReturningContext database, int seriesStart) => database.Values
+                    .SelectMany(
+                        value => EF.Functions.GenerateSeries(seriesStart, value.Id),
+                        (value, generated) => generated)
+                    .Count());
 
             Assert.Collection(
                 expanded,
@@ -143,6 +206,17 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Contains(labels, result => result.Id == 1 && result.Label is null);
             Assert.Contains(labels, result => result.Id == 2 && result.Label == "two");
             Assert.Contains(labels, result => result.Id == 2 && result.Label == "four");
+            Assert.Equal([2, 4, 6], integerSeries);
+            Assert.Equal([5L, 3L, 1L], longSeries);
+            Assert.Collection(
+                correlatedSeries,
+                result => Assert.Equal((1, 1), (result.Id, result.Generated)),
+                result => Assert.Equal((2, 1), (result.Id, result.Generated)),
+                result => Assert.Equal((2, 2), (result.Id, result.Generated)),
+                result => Assert.Equal((3, 1), (result.Id, result.Generated)),
+                result => Assert.Equal((3, 2), (result.Id, result.Generated)),
+                result => Assert.Equal((3, 3), (result.Id, result.Generated)));
+            Assert.Equal(6, compiledSeriesCount(context, 1));
         }
         finally
         {

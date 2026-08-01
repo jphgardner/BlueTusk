@@ -23,6 +23,27 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             return unnest;
         }
 
+        if (extensionExpression is BlueTuskGenerateSeriesTableExpression series)
+        {
+            Sql.Append("generate_series(");
+            for (var index = 0; index < series.Arguments.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(series.Arguments[index]);
+            }
+
+            Sql.Append(") AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(series.Alias))
+                .Append("(")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("value"))
+                .Append(")");
+            return series;
+        }
+
         if (extensionExpression is BlueTuskAggregateExpression aggregate)
         {
             Sql.Append(aggregate.Name).Append("(");
