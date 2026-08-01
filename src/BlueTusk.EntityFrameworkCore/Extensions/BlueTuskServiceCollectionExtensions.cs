@@ -31,6 +31,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IModelValidator, BlueTuskModelValidator>()
             .TryAdd<IProviderConventionSetBuilder, BlueTuskConventionSetBuilder>()
             .TryAdd<IMigrationsAnnotationProvider, BlueTuskMigrationsAnnotationProvider>()
+            .TryAdd<IMigrationsModelDiffer, BlueTuskMigrationsModelDiffer>()
             .TryAdd<IMigrationsSqlGenerator, BlueTuskMigrationsSqlGenerator>()
             .TryAdd<IHistoryRepository, BlueTuskHistoryRepository>()
             .TryAdd<IMethodCallTranslatorProvider, BlueTuskMethodCallTranslatorProvider>()

@@ -16,6 +16,10 @@ The live PostgreSQL 19 Beta 2 acceptance tests cover:
   pooling;
 - typed discovery of graphs, vertex and edge tables, key columns, labels,
   element properties, edge endpoints, column mappings, and property data types;
+- typed EF model configuration, migration diffing/scaffolding, and database-first
+  graph retention;
+- live capability-guarded and centrally quoted EF migration SQL for graph
+  creation, rename/schema alteration, and removal;
 - capability-guarded empty discovery results on PostgreSQL 15–18; and
 - the normal provider suite, including cancellation, pipeline mode, types,
   COPY, replication, and EF regression coverage.
@@ -81,6 +85,54 @@ dotnet run --project tooling/BlueTusk.SchemaInspector -- --schema application --
 The tool reports an empty graph collection and `supportsSqlPgq: false` on
 servers without SQL/PGQ instead of querying views that do not exist.
 
+## EF model, migrations, and reverse engineering
+
+Configure relational table/column mappings before adding the graph. The graph
+builder accepts only direct mapped-property selectors, so identifiers are
+resolved from EF metadata rather than caller-authored SQL:
+
+```csharp
+modelBuilder.HasBlueTuskPropertyGraph(
+    "social",
+    graph =>
+    {
+        graph.Vertex<Person>("people", vertex => vertex
+            .HasLabel("person")
+            .HasKey(person => person.Id)
+            .Properties(person => new { person.Id, person.Name }));
+
+        graph.Edge<Friendship>("friendships", edge => edge
+            .HasLabel("follows")
+            .HasKey(friendship => friendship.Id)
+            .HasSource<Person>(
+                friendship => friendship.FromPersonId,
+                person => person.Id)
+            .HasDestination<Person>(
+                friendship => friendship.ToPersonId,
+                person => person.Id));
+    },
+    schema: "application");
+```
+
+The model snapshot stores a deterministic provider annotation. Migration
+diffing emits graph creation after its relational tables and graph removal
+before table removal. A graph rename or schema move emits `ALTER PROPERTY
+GRAPH`; changing an element definition emits drop/create because PostgreSQL's
+individual label/element alterations cannot represent every model change as
+one atomic command.
+
+All generated graph DDL is executed inside a server-side guard. PostgreSQL
+15–18 receive SQLSTATE `0A000` with a BlueTusk-specific requirement message;
+the PostgreSQL 19 DDL is dynamic inside the guard so an older parser never sees
+SQL/PGQ syntax. Graph, schema, table, alias, key-column, label, and property
+identifiers use the provider's central SQL delimiter. Live tests include spaces
+and embedded double quotes in every relevant identifier category.
+
+Database-first scaffolding reuses the same documented information-schema
+reader and retains discovered graphs in generated context code through
+`HasBlueTuskPropertyGraphs`. The retained metadata participates in subsequent
+migration diffs even though query translation is still a later phase.
+
 ## Exact preview boundary
 
 Supported now:
@@ -88,21 +140,20 @@ Supported now:
 - all SQL/PGQ syntax accepted by PostgreSQL can pass through the ordinary
   command and batch APIs as caller-authored raw SQL;
 - values outside graph grammar can use ordinary positional or named BlueTusk
-  parameters; and
-- the typed schema model and inspector are read-only discovery APIs.
+  parameters;
+- the typed schema model and inspector are read-only discovery APIs; and
+- EF models, migrations, and database-first scaffolding retain property-graph
+  schema semantics.
 
 Still raw-SQL-only or planned:
 
 - graph names, labels, property names, graph patterns, and other SQL grammar
   cannot be parameters and have no typed query builder yet;
 - EF Core does not yet translate typed graph query roots or `GRAPH_TABLE`;
-- graph-aware EF migrations and reverse engineering are not yet implemented;
-  and
 - schema inspection does not create, alter, or drop graphs.
 
 Applications must not interpolate untrusted identifiers or graph patterns.
-Identifier quoting, capability-guarded EF migrations/reverse engineering, and
-typed EF graph translation remain tracked as separate roadmap gates. The core
+Typed EF graph translation remains tracked as a separate roadmap gate. The core
 PostgreSQL references are [Property Graphs](https://www.postgresql.org/docs/19/ddl-property-graphs.html),
 [Graph Queries](https://www.postgresql.org/docs/19/queries-graph.html), and
 [`CREATE PROPERTY GRAPH`](https://www.postgresql.org/docs/19/sql-create-property-graph.html).

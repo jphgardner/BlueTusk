@@ -273,11 +273,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` and `GRAPH_TABLE` raw-SQL tests
   - [x] Parameters, metadata, preparation, batches, cancellation, pooling, and mixed relational/graph coverage
   - [x] PostgreSQL 15–18 regression gate remains green
-- [ ] Phase B: property-graph metadata and schema
+- [x] Phase B: property-graph metadata and schema
   - [x] Graph, vertex, edge, key, label, and property model metadata
   - [x] PostgreSQL 19 `information_schema`/documented-catalogue discovery
-  - [ ] Capability-guarded migrations and reverse engineering
-  - [ ] Correct graph, label, property, and table identifier quoting
+  - [x] Capability-guarded migrations and reverse engineering
+  - [x] Correct graph, label, property, and table identifier quoting
 - [ ] Phase C: EF query support
   - [ ] Native typed graph query root and graph-pattern representation
   - [ ] Parameterised `GRAPH_TABLE` translation

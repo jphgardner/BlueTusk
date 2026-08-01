@@ -78,11 +78,11 @@ modelBuilder.Entity<Order>(entity =>
 
 Runtime migrations support the PostgreSQL `__EFMigrationsHistory` repository, transaction-scoped migration locking, up/down application, and idempotent scripts. The initial DDL surface covers tables, columns, keys and constraints, indexes, sequences, defaults, comments, schema moves, and alter/rename/drop operations. Acceptance tests apply an idempotent script twice, re-enter `Database.MigrateAsync()`, move back to an earlier migration, and finally revert to the empty database.
 
-Design-time migration authoring commands and PostgreSQL-specific schema features such as extensions, enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. Other PostgreSQL-specific schema features such as extensions, enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
 
 ## Database-first scaffolding
 
-The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, and standalone sequences. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
+The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, and PostgreSQL 19 property graphs. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
 
 ```bash
 dotnet ef dbcontext scaffold \
@@ -93,7 +93,7 @@ dotnet ef dbcontext scaffold \
   --schema public
 ```
 
-Generated contexts configure `UseBlueTusk`. PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, partition metadata, policies, routines, and property graphs—belongs to the advanced scaffolding milestone.
+Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retained through a provider model annotation and participate in later migration diffs. PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, partition metadata, policies, and routines—belongs to the advanced scaffolding milestone.
 
 ## Validation
 

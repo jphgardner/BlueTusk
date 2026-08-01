@@ -1,10 +1,15 @@
 using System.Data;
 using System.Data.Common;
 using BlueTusk.Data;
+using BlueTusk.Data.Schema;
+using BlueTusk.EntityFrameworkCore.Graphs;
+using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.EntityFrameworkCore.Scaffolding.Metadata;
+
+#pragma warning disable EF1001 // Provider design-time code consumes provider infrastructure metadata.
 
 namespace BlueTusk.EntityFrameworkCore.Design.Internal;
 
@@ -59,6 +64,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
         ReadSequences(connection, model, selection);
+        ReadPropertyGraphs(connection, model, selection);
         return model;
     }
 
@@ -446,6 +452,85 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         }
     }
 
+    private static void ReadPropertyGraphs(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        if (connection is not BlueTuskConnection blueTuskConnection)
+        {
+            return;
+        }
+
+        var inspector = new BlueTuskPropertyGraphSchemaInspector(blueTuskConnection);
+        var definitions = inspector.Inspect()
+            .Where(graph => selection.IncludesSchemaObject(graph.Name.Schema))
+            .Select(ToDefinition)
+            .ToArray();
+        if (definitions.Length > 0)
+        {
+            model[BlueTuskPropertyGraphMetadata.AnnotationName] =
+                BlueTuskPropertyGraphMetadata.Serialize(definitions);
+        }
+    }
+
+    private static BlueTuskPropertyGraphDefinition ToDefinition(
+        BlueTuskPropertyGraphSchema graph)
+    {
+        var labels = graph.Labels.ToDictionary(label => label.Name, StringComparer.Ordinal);
+        return new BlueTuskPropertyGraphDefinition(
+            graph.Name.Name,
+            graph.Name.Schema,
+            graph.ElementTables.Select(element =>
+            {
+                var elementProperties = element.Properties.ToDictionary(
+                    property => property.Name,
+                    StringComparer.Ordinal);
+                var elementLabels = element.Labels.Select(labelName =>
+                {
+                    labels.TryGetValue(labelName, out var label);
+                    var propertyNames = label?.Properties ?? elementProperties.Keys.ToArray();
+                    return new BlueTuskGraphLabelDefinition(
+                        labelName,
+                        propertyNames
+                            .Where(elementProperties.ContainsKey)
+                            .Select(propertyName =>
+                            {
+                                var property = elementProperties[propertyName];
+                                return new BlueTuskGraphPropertyDefinition(
+                                    property.Expression,
+                                    property.Name,
+                                    IsColumn: false);
+                            })
+                            .ToArray());
+                }).ToArray();
+                return new BlueTuskGraphElementTableDefinition(
+                    element.Alias,
+                    element.Kind == BlueTuskPropertyGraphElementKind.Vertex
+                        ? BlueTuskGraphElementKind.Vertex
+                        : BlueTuskGraphElementKind.Edge,
+                    element.Table.Name,
+                    element.Table.Schema,
+                    element.KeyColumns.Select(column => column.Name).ToArray(),
+                    elementLabels,
+                    ToEndpoint(element, BlueTuskPropertyGraphEdgeEnd.Source),
+                    ToEndpoint(element, BlueTuskPropertyGraphEdgeEnd.Destination));
+            }).ToArray());
+    }
+
+    private static BlueTuskGraphEndpointDefinition? ToEndpoint(
+        BlueTuskPropertyGraphElementTable element,
+        BlueTuskPropertyGraphEdgeEnd end)
+    {
+        var endpoint = element.Endpoints.SingleOrDefault(candidate => candidate.End == end);
+        return endpoint is null
+            ? null
+            : new BlueTuskGraphEndpointDefinition(
+                endpoint.VertexTableAlias,
+                endpoint.Columns.Select(column => column.EdgeTableColumn).ToArray(),
+                endpoint.Columns.Select(column => column.VertexTableColumn).ToArray());
+    }
+
     private static DatabaseColumn FindColumn(DatabaseTable table, string name)
         => table.Columns.Single(column => string.Equals(column.Name, name, StringComparison.Ordinal));
 
@@ -486,3 +571,5 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             => _tables.Count == 0 && (_schemas.Count == 0 || _schemas.Contains(schema));
     }
 }
+
+#pragma warning restore EF1001

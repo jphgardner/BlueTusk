@@ -3,6 +3,8 @@ using System.Reflection;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Design.Internal;
+using BlueTusk.EntityFrameworkCore.Graphs;
+using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Scaffolding;
@@ -70,6 +72,26 @@ public sealed class ReverseEngineeringTests
                     SELECT id, name FROM ef_reverse.parents;
                 """);
 
+            var supportsSqlPgq = await SupportsSqlPgqAsync(connectionString);
+            if (supportsSqlPgq)
+            {
+                await ExecuteNonQueryAsync(
+                    connectionString,
+                    """
+                    CREATE PROPERTY GRAPH ef_reverse.family
+                        VERTEX TABLES (
+                            ef_reverse.parents AS parents
+                                KEY (id)
+                                LABEL parent PROPERTIES (name AS display_name))
+                        EDGE TABLES (
+                            ef_reverse.children AS children
+                                KEY (id)
+                                SOURCE KEY (parent_id) REFERENCES parents (id)
+                                DESTINATION KEY (parent_id) REFERENCES parents (id)
+                                LABEL child_link)
+                    """);
+            }
+
             var factory = new BlueTuskDatabaseModelFactory();
             var model = factory.Create(
                 connectionString,
@@ -108,6 +130,20 @@ public sealed class ReverseEngineeringTests
             Assert.Equal(100, sequence.StartValue);
             Assert.Equal(5, sequence.IncrementBy);
 
+            if (supportsSqlPgq)
+            {
+                var graph = Assert.Single(BlueTuskPropertyGraphMetadata.Get(model));
+                Assert.Equal("family", graph.Name);
+                Assert.Equal("ef_reverse", graph.Schema);
+                Assert.Equal(2, graph.ElementTables.Count);
+                var vertex = Assert.Single(
+                    graph.ElementTables,
+                    element => element.Kind == BlueTuskGraphElementKind.Vertex);
+                Assert.Equal("parents", vertex.Alias);
+                Assert.Equal("display_name", Assert.Single(Assert.Single(vertex.Labels).Properties).Name);
+                Assert.False(Assert.Single(Assert.Single(vertex.Labels).Properties).IsColumn);
+            }
+
             var services = new ServiceCollection();
             services.AddEntityFrameworkDesignTimeServices();
             services.AddEntityFrameworkBlueTusk();
@@ -131,6 +167,11 @@ public sealed class ReverseEngineeringTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains("UseBlueTusk", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                if (supportsSqlPgq)
+                {
+                    Assert.Contains("HasBlueTuskPropertyGraphs", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                }
+
                 Assert.Contains(scaffolded.AdditionalFiles, file => file.Code.Contains("class Parent", StringComparison.Ordinal));
                 Assert.Contains(scaffolded.AdditionalFiles, file => file.Code.Contains("class Child", StringComparison.Ordinal));
             }
@@ -163,6 +204,13 @@ public sealed class ReverseEngineeringTests
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         _ = await command.ExecuteNonQueryAsync(CancellationToken.None);
+    }
+
+    private static async Task<bool> SupportsSqlPgqAsync(string connectionString)
+    {
+        await using var connection = new BlueTuskConnection(connectionString);
+        await connection.OpenAsync(CancellationToken.None);
+        return connection.ServerCapabilities is { SupportsSqlPgq: true };
     }
 
     private static string GetConnectionString()

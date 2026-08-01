@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore.Design;
+using Microsoft.EntityFrameworkCore.Migrations.Design;
 using Microsoft.EntityFrameworkCore.Scaffolding;
 using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace BlueTusk.EntityFrameworkCore.Design.Internal;
 
@@ -10,10 +12,16 @@ public sealed class BlueTuskDesignTimeServices : IDesignTimeServices
     {
         ArgumentNullException.ThrowIfNull(serviceCollection);
 
-        new EntityFrameworkRelationalDesignServicesBuilder(serviceCollection)
+        var builder = new EntityFrameworkRelationalDesignServicesBuilder(serviceCollection);
+        builder
             .TryAdd<IDatabaseModelFactory, BlueTuskDatabaseModelFactory>()
             .TryAdd<IProviderConfigurationCodeGenerator, BlueTuskProviderCodeGenerator>()
-            .TryAdd<IAnnotationCodeGenerator, AnnotationCodeGenerator>()
+            .TryAdd<IAnnotationCodeGenerator, BlueTuskAnnotationCodeGenerator>()
             .TryAddCoreServices();
+        builder.TryAddProviderSpecificServices(
+            services => services.ServiceCollection.Replace(
+                ServiceDescriptor.Singleton<
+                    ICSharpMigrationOperationGenerator,
+                    BlueTuskCSharpMigrationOperationGenerator>()));
     }
 }
