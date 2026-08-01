@@ -223,6 +223,64 @@ public sealed class AuthenticationConformanceTests
     }
 
     [Fact]
+    public async Task Rejects_a_TLS_required_access_token_before_password_negotiation()
+    {
+        await using var server = new FakePostgreSqlServer();
+        var serverTask = server.RunAsync(
+        [
+            new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+            new FakeServerStep.Send(AuthenticationRequest(5, Md5Salt)),
+        ], CancellationToken.None);
+        var calls = 0;
+
+        var exception = await Assert.ThrowsAsync<BlueTuskAuthenticationException>(
+            () => BlueTuskSession.OpenAsync(
+                Options(server.Port) with
+                {
+                    Password = null,
+                    AccessTokenRequiresTls = true,
+                    AccessTokenProviderAsync = (_, _) =>
+                    {
+                        calls++;
+                        return ValueTask.FromResult("must-not-be-resolved");
+                    },
+                }).AsTask());
+
+        Assert.Contains("requires an encrypted TLS connection", exception.Message, StringComparison.Ordinal);
+        Assert.Equal(0, calls);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task Rejects_a_TLS_required_access_token_before_synchronous_password_negotiation()
+    {
+        await using var server = new FakePostgreSqlServer();
+        var serverTask = server.RunAsync(
+        [
+            new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+            new FakeServerStep.Send(AuthenticationRequest(5, Md5Salt)),
+        ], CancellationToken.None);
+        var calls = 0;
+
+        var exception = Assert.Throws<BlueTuskAuthenticationException>(
+            () => BlueTuskSession.Open(
+                Options(server.Port) with
+                {
+                    Password = null,
+                    AccessTokenRequiresTls = true,
+                    AccessTokenProvider = _ =>
+                    {
+                        calls++;
+                        return "must-not-be-resolved";
+                    },
+                }));
+
+        Assert.Contains("requires an encrypted TLS connection", exception.Message, StringComparison.Ordinal);
+        Assert.Equal(0, calls);
+        await serverTask;
+    }
+
+    [Fact]
     public async Task Resolves_a_matching_PostgreSQL_password_file_entry()
     {
         var path = Path.Combine(Path.GetTempPath(), $"bluetusk-{Guid.NewGuid():N}.pgpass");

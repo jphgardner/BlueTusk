@@ -56,10 +56,11 @@ await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
 Native OAUTHBEARER always requires TLS and is incompatible with required channel
 binding because the standardized mechanism has no channel-binding variant.
 BlueTusk accepts an already-issued token; OAuth discovery, browser/device flows,
-refresh-token storage, and cloud SDK bindings remain application concerns. This
-keeps issuer-, audience-, and provider-specific policy outside the database
-driver. PostgreSQL still requires a correctly configured server-side OAuth
-validator; see PostgreSQL's
+and refresh-token storage remain application concerns. Optional, separately
+packaged [cloud identity adapters](cloud-identity.md) integrate AWS RDS/Aurora,
+Azure Database for PostgreSQL, and Google Cloud SQL SDK credentials without
+adding vendor dependencies to the core provider. PostgreSQL still requires a
+correctly configured server-side OAuth validator; see PostgreSQL's
 [OAuth authentication guide](https://www.postgresql.org/docs/current/auth-oauth.html).
 
 ## GSSAPI, Kerberos, and SSPI

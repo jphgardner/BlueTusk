@@ -45,6 +45,22 @@ dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~GSSAPI_K
 The fixed realm password, KDC database, service keytab, and ticket cache are
 test-only ephemeral infrastructure. They must not be copied into a deployment.
 
+Cloud identity adapter tests are deterministic by default. Optional
+external-account acceptance uses the default AWS, Azure, or Google SDK identity
+chain and one complete connection string per provider:
+
+```powershell
+$env:BLUETUSK_AWS_RDS_TEST_CONNECTION_STRING = "Host=...;Database=...;Username=...;SSL Mode=VerifyFull"
+$env:BLUETUSK_AZURE_POSTGRESQL_TEST_CONNECTION_STRING = "Host=...;Database=...;Username=...;SSL Mode=VerifyFull"
+$env:BLUETUSK_GOOGLE_CLOUD_SQL_TEST_CONNECTION_STRING = "Host=...;Database=...;Username=...;SSL Mode=VerifyFull"
+dotnet test tests/BlueTusk.Identity.Tests --no-restore
+```
+
+Unset variables skip only the corresponding account-backed test. Never place
+cloud tokens, SDK credentials, or populated connection strings in the
+repository or test output. Provider setup and lifecycle details are in the
+[cloud identity guide](../ado-net/cloud-identity.md).
+
 The compatibility project carries a test-only Npgsql dependency and runs equivalent value, parameter, transaction-error, cancellation, reuse, and schema-metadata operations through both providers. PostgreSQL internal type names (`int4`, `bool`) and SQL aliases (`integer`, `boolean`) are normalized before comparison; any other difference fails the suite and must be resolved against PostgreSQL behavior.
 
 The default stress scale runs bounded concurrent pool churn, cancellation storms, preparation, batches, and partially consumed sequential streams. Set `BLUETUSK_STRESS_SCALE` to a positive integer to multiply the worker count for longer soak runs.

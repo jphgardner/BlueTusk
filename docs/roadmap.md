@@ -521,7 +521,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] TLS client-certificate authentication and certificate-selection callbacks
   - [x] PostgreSQL 18+ native OAUTHBEARER with TLS enforcement, ready-token callbacks, sensitive buffers, error acknowledgement, and real validator acceptance
   - [x] GSSAPI/Kerberos and SSPI with platform security contexts, sensitive binary-token handling, mutual authentication, and real KDC acceptance
-  - [ ] Optional cloud SDK-specific identity adapters
+  - [x] Optional AWS RDS/Aurora, Azure Database for PostgreSQL, and Google Cloud SQL identity adapters with SDK-native credential chains, TLS-before-token enforcement, per-physical-connection refresh, deterministic contract tests, and opt-in account acceptance
 - [ ] Stress testing
 - [ ] Competitive benchmarks
 - [ ] Complete documentation

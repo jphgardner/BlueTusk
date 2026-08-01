@@ -81,6 +81,15 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     }
 
     /// <summary>
+    /// Requires TLS before an access-token callback may be invoked or its value sent to PostgreSQL.
+    /// </summary>
+    public BlueTuskDataSourceBuilder RequireTlsForAccessTokens()
+    {
+        _clientConfiguration = _clientConfiguration with { AccessTokenRequiresTls = true };
+        return this;
+    }
+
+    /// <summary>
     /// Uses an explicit credential for PostgreSQL GSSAPI/Kerberos or SSPI authentication.
     /// Omit this configuration to use the process identity or platform credential cache.
     /// </summary>

@@ -5,6 +5,7 @@ BlueTusk is split by responsibility so protocol correctness can be tested withou
 ```text
 Application
     ├──→ BlueTusk.EntityFrameworkCore ─→ BlueTusk.Data ─┐
+    ├──→ BlueTusk.Identity.* ──────────→ BlueTusk.Data ─┤
     ├──→ BlueTusk.Data ─────────────────────────────────┤
     └──→ BlueTusk.Replication.PgOutput                  │
                  ↓                                     │
@@ -31,6 +32,8 @@ PostgreSQL
 - **TypeSystem** owns catalogue type identities and codecs. Unknown types are values, not fatal errors.
 - **Client** coordinates sessions and PostgreSQL-native operations using protocol and type-system abstractions.
 - **Data** exposes `System.Data.Common` APIs, pooling, connection strings, and data sources.
+- **Identity packages** adapt vendor credential SDKs to Data's access-token callback.
+  Vendor dependencies do not enter Data, Client, Security, or lower layers.
 - **Replication** consumes `COPY BOTH` without introducing ADO.NET concepts into the protocol engine.
 - **Replication.PgOutput** statefully decodes standard logical-replication messages while preserving their WAL envelopes.
 - **EntityFrameworkCore** is the only layer allowed to depend on EF Core.
@@ -72,6 +75,8 @@ parsing, SCRAM/MD5 derivation, RFC 7628 OAUTHBEARER response construction, and t
 operating-system-backed GSSAPI/SSPI security context remain in Security, while Transport only
 receives the final TLS certificate policy. Client owns the PostgreSQL code 7/8/9 negotiation
 sequence and clears each opaque GSS token after the sensitive write path flushes it.
+Cloud identity packages configure those public callbacks and a TLS-before-token policy;
+they do not add provider-specific branches to the authentication state machine.
 
 ## Sync and async
 

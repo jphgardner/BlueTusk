@@ -171,6 +171,18 @@ public sealed class BlueTuskDataSourceBuilderTests
     }
 
     [Fact]
+    public void Data_source_builder_propagates_access_token_TLS_policy()
+    {
+        using var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Database=app;Username=worker")
+            .UseAccessTokenProvider(_ => "token")
+            .RequireTlsForAccessTokens()
+            .Build();
+
+        Assert.True(dataSource.CreateDedicatedSessionOptions().AccessTokenRequiresTls);
+    }
+
+    [Fact]
     public void Data_source_builder_propagates_TLS_client_identity_configuration()
     {
         using var key = RSA.Create(2048);

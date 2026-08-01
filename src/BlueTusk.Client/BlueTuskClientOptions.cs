@@ -57,6 +57,9 @@ public sealed record BlueTuskClientOptions
 
     public BlueTuskAccessTokenProviderAsync? AccessTokenProviderAsync { get; init; }
 
+    /// <summary>Gets whether access-token callbacks may be invoked only after TLS is established.</summary>
+    public bool AccessTokenRequiresTls { get; init; }
+
     internal bool HasAccessTokenProvider =>
         AccessTokenProvider is not null || AccessTokenProviderAsync is not null;
 

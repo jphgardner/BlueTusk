@@ -3338,15 +3338,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         switch (request)
                         {
                             case BlueTuskAuthenticationRequest.CleartextPassword:
-                                credential ??= await BlueTuskCredentialResolver.ResolveAsync(
-                                    _options,
-                                    cancellationToken).ConfigureAwait(false);
+                                credential ??= await ResolveCredentialAsync(cancellationToken).ConfigureAwait(false);
                                 await SendCleartextPasswordAsync(credential, cancellationToken).ConfigureAwait(false);
                                 break;
                             case BlueTuskAuthenticationRequest.Md5Password md5:
-                                credential ??= await BlueTuskCredentialResolver.ResolveAsync(
-                                    _options,
-                                    cancellationToken).ConfigureAwait(false);
+                                credential ??= await ResolveCredentialAsync(cancellationToken).ConfigureAwait(false);
                                 await SendMd5PasswordAsync(
                                     credential,
                                     md5.Salt,
@@ -3376,17 +3372,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 if (ShouldUseOAuthBearer(sasl.Mechanisms))
                                 {
                                     EnsureOAuthBearerIsSecure();
-                                    credential ??= await BlueTuskCredentialResolver.ResolveAsync(
-                                        _options,
-                                        cancellationToken).ConfigureAwait(false);
+                                    credential ??= await ResolveCredentialAsync(cancellationToken).ConfigureAwait(false);
                                     oauthBearerSelected = true;
                                     await SendOAuthBearerAsync(credential, cancellationToken).ConfigureAwait(false);
                                 }
                                 else
                                 {
-                                    credential ??= await BlueTuskCredentialResolver.ResolveAsync(
-                                        _options,
-                                        cancellationToken).ConfigureAwait(false);
+                                    credential ??= await ResolveCredentialAsync(cancellationToken).ConfigureAwait(false);
                                     scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
                                     await _connection.WriteSensitiveAsync(
                                         output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
@@ -3489,11 +3481,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         switch (request)
                         {
                             case BlueTuskAuthenticationRequest.CleartextPassword:
-                                credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                credential ??= ResolveCredential();
                                 SendCleartextPassword(credential);
                                 break;
                             case BlueTuskAuthenticationRequest.Md5Password md5:
-                                credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                credential ??= ResolveCredential();
                                 SendMd5Password(credential, md5.Salt.Span);
                                 break;
                             case BlueTuskAuthenticationRequest.Gss:
@@ -3511,13 +3503,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 if (ShouldUseOAuthBearer(sasl.Mechanisms))
                                 {
                                     EnsureOAuthBearerIsSecure();
-                                    credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                    credential ??= ResolveCredential();
                                     oauthBearerSelected = true;
                                     SendOAuthBearer(credential);
                                 }
                                 else
                                 {
-                                    credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                    credential ??= ResolveCredential();
                                     scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
                                     _connection.WriteSensitive(
                                         output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
@@ -3613,6 +3605,27 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 _options.KerberosServiceName,
                 _options.GssCredential,
                 useSspi);
+    }
+
+    private string ResolveCredential()
+    {
+        EnsureAccessTokenTransportIsSecure();
+        return BlueTuskCredentialResolver.Resolve(_options);
+    }
+
+    private ValueTask<string> ResolveCredentialAsync(CancellationToken cancellationToken)
+    {
+        EnsureAccessTokenTransportIsSecure();
+        return BlueTuskCredentialResolver.ResolveAsync(_options, cancellationToken);
+    }
+
+    private void EnsureAccessTokenTransportIsSecure()
+    {
+        if (_options.HasAccessTokenProvider && _options.AccessTokenRequiresTls && !IsEncrypted)
+        {
+            throw new BlueTuskAuthenticationException(
+                "The configured access-token provider requires an encrypted TLS connection.");
+        }
     }
 
     private async ValueTask SendGssResponseAsync(

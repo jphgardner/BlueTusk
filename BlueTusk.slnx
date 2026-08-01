@@ -15,6 +15,11 @@
     <Project Path="extensions/BlueTusk.Extensions.TimescaleDB/BlueTusk.Extensions.TimescaleDB.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.csproj" />
   </Folder>
+  <Folder Name="/identity/">
+    <Project Path="identity/BlueTusk.Identity.Aws/BlueTusk.Identity.Aws.csproj" />
+    <Project Path="identity/BlueTusk.Identity.Azure/BlueTusk.Identity.Azure.csproj" />
+    <Project Path="identity/BlueTusk.Identity.GoogleCloud/BlueTusk.Identity.GoogleCloud.csproj" />
+  </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj" />
     <Project Path="samples/BlueTusk.Samples.Copy/BlueTusk.Samples.Copy.csproj" />
@@ -56,6 +61,7 @@
     <Project Path="tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj" />
+    <Project Path="tests/BlueTusk.Identity.Tests/BlueTusk.Identity.Tests.csproj" />
     <Project Path="tests/BlueTusk.Protocol.Tests/BlueTusk.Protocol.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.PgOutput.Tests/BlueTusk.Replication.PgOutput.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.Tests/BlueTusk.Replication.Tests.csproj" />

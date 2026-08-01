@@ -17,6 +17,8 @@ internal sealed record BlueTuskClientConfiguration
 
     internal BlueTuskAccessTokenProviderAsync? AccessTokenProviderAsync { get; init; }
 
+    internal bool AccessTokenRequiresTls { get; init; }
+
     internal NetworkCredential? GssCredential { get; init; }
 
     internal IReadOnlyCollection<X509Certificate2> ClientCertificates { get; init; } = [];
@@ -31,6 +33,7 @@ internal sealed record BlueTuskClientConfiguration
         PasswordProviderAsync = PasswordProviderAsync,
         AccessTokenProvider = AccessTokenProvider,
         AccessTokenProviderAsync = AccessTokenProviderAsync,
+        AccessTokenRequiresTls = AccessTokenRequiresTls,
         GssCredential = GssCredential,
         ClientCertificates = ClientCertificates,
         LocalCertificateSelectionCallback = LocalCertificateSelectionCallback,

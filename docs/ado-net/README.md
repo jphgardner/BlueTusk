@@ -34,7 +34,10 @@ user remains configured for SCRAM-SHA-256.
 The [authentication guide](authentication.md) documents password-file lookup,
 password and access-token callbacks, refresh timing, credential precedence,
 GSSAPI/Kerberos service principals and credentials, TLS client certificates,
-and callback-based certificate selection.
+and callback-based certificate selection. Optional [cloud identity
+adapters](cloud-identity.md) integrate AWS RDS/Aurora, Azure Database for
+PostgreSQL, and Google Cloud SQL while keeping their SDKs out of the core
+provider.
 
 Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
 
