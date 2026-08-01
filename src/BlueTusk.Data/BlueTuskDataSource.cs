@@ -1,5 +1,6 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
+using BlueTusk.Client;
 using BlueTusk.Extensions;
 using BlueTusk.TypeSystem;
 
@@ -38,6 +39,55 @@ public sealed class BlueTuskDataSource : DbDataSource
 
     /// <summary>Gets the immutable optional-feature snapshot configured for this data source.</summary>
     public BlueTuskFeatureRegistry Features { get; }
+
+    /// <summary>
+    /// Creates options for a dedicated, unpooled session when exactly one host is configured.
+    /// </summary>
+    /// <remarks>
+    /// The returned snapshot includes credentials and transport security settings. It does not
+    /// lease a connection from this data source's pool and is suitable for APIs such as
+    /// <c>BlueTusk.Replication</c> that own a physical session for their full lifetime.
+    /// </remarks>
+    public BlueTuskClientOptions CreateDedicatedSessionOptions()
+    {
+        var endpoints = _settings.HostEndpoints;
+        if (endpoints.Count != 1)
+        {
+            throw new InvalidOperationException(
+                "A multi-host data source requires an explicit endpoint for a dedicated session.");
+        }
+
+        return CreateDedicatedSessionOptions(endpoints[0]);
+    }
+
+    /// <summary>Creates options for a dedicated, unpooled session on one configured host.</summary>
+    /// <param name="endpoint">A host endpoint present in this data source's configuration.</param>
+    /// <remarks>
+    /// Host selection is explicit for multi-host sources because replication resume and failover
+    /// policy belong to the caller. Creating the snapshot does not open or borrow a pooled session.
+    /// </remarks>
+    public BlueTuskClientOptions CreateDedicatedSessionOptions(BlueTuskHostEndpoint endpoint)
+    {
+        if (!_settings.HostEndpoints.Contains(endpoint))
+        {
+            throw new ArgumentException(
+                "The dedicated-session endpoint must be configured on this data source.",
+                nameof(endpoint));
+        }
+
+        return new BlueTuskClientOptions
+        {
+            Host = endpoint.Host,
+            Port = endpoint.Port,
+            Database = _settings.Database,
+            Username = _settings.Username,
+            Password = _settings.Password,
+            ApplicationName = _settings.ApplicationName,
+            ConnectTimeout = _settings.Timeout,
+            SslMode = _settings.SslMode,
+            ChannelBinding = _settings.ChannelBinding,
+        };
+    }
 
     public new BlueTuskConnection CreateConnection() => (BlueTuskConnection)base.CreateConnection();
 

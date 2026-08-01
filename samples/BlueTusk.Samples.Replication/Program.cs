@@ -1,3 +1,4 @@
+using BlueTusk.Data;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
 
@@ -23,10 +24,10 @@ Console.CancelKeyPress += (_, eventArgs) =>
     shutdown.Cancel();
 };
 
-await using var replication =
-    await BlueTuskLogicalReplicationConnection.OpenAsync(
-        connectionString,
-        shutdown.Token);
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
+    dataSource.CreateDedicatedSessionOptions(),
+    shutdown.Token);
 var identity = await replication.IdentifySystemAsync(shutdown.Token);
 Console.WriteLine(
     $"System {identity.SystemIdentifier}, timeline {identity.Timeline}, WAL {identity.WalPosition}");

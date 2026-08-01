@@ -181,7 +181,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] EF ownership, pool reuse, overload switching, and provider-service cache/debug-metadata coverage
 - [x] ADO.NET, EF Core, and root samples lead with one long-lived data source per configuration
 - [x] Directly constructed `BlueTuskConnection` documented as an unpooled compatibility/convenience path
-- [ ] Data-source-derived factory for dedicated, unpooled replication sessions
+- [x] Data-source-derived factory for dedicated, unpooled replication sessions
 
 ### PostgreSQL pipeline mode and transport evaluation
 
@@ -225,9 +225,10 @@ This file tracks executable repository status. The product vision is broader; un
 
 ### Replication preview gate
 
-- [ ] Data-source-derived dedicated-session ergonomics without pooling replication connections
-- [ ] Allocation/backpressure benchmarks and cancellation/disposal stress coverage
-- [ ] Reconnect/resume examples and explicit ownership/lifetime documentation
+- [x] Data-source-derived dedicated-session ergonomics without pooling replication connections
+- [x] Allocation/backpressure benchmarks
+- [x] Cancellation/disposal stress coverage
+- [x] Reconnect/resume examples and explicit ownership/lifetime documentation
 - [ ] PostgreSQL 19 live coverage
 - [ ] Long-running durability, feedback, and failure-recovery matrix required before production-ready status
 

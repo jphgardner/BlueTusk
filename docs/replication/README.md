@@ -4,6 +4,42 @@
 replication protocol directly. It uses a dedicated replication session and
 `COPY BOTH`; it does not borrow an ADO.NET pooled connection.
 
+Build one long-lived data source for the application configuration, then derive
+a fresh dedicated-session option snapshot for replication:
+
+```csharp
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
+    dataSource.CreateDedicatedSessionOptions(),
+    cancellationToken);
+```
+
+The data source remains the configuration root, but it does not own the
+replication connection. The replication object owns one unpooled physical
+session and must be disposed independently. Its lifetime may be much longer
+than an ADO.NET command or pooled checkout. Configured credentials, application
+name, timeout, TLS mode, and channel binding are copied into the snapshot;
+ADO.NET codecs and runtime catalogue state are intentionally irrelevant to raw
+replication payloads.
+
+The stream is pull-based and does not maintain a background prefetch queue.
+At most the current `CopyData` payload and decoded message are owned by the
+consumer path; PostgreSQL/socket flow control supplies backpressure until the
+consumer requests the next element. Process or hand off each payload promptly,
+and put an application-owned bounded queue in front of slower durable work only
+when that queue's capacity and failure semantics are deliberate.
+
+For a multi-host data source, select a configured endpoint explicitly:
+
+```csharp
+var endpoint = new BlueTuskHostEndpoint("primary.example.test", 5432);
+var options = dataSource.CreateDedicatedSessionOptions(endpoint);
+```
+
+BlueTusk does not silently fail a replication stream over to another host.
+The application must establish that the replacement server and slot are safe
+for its persisted resume position.
+
 BlueTusk supports PostgreSQL 15 through 18 and provides:
 
 - physical and logical replication connections;
@@ -34,7 +70,8 @@ connection:
 
 ```csharp
 await using var replication =
-    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+    await BlueTuskLogicalReplicationConnection.OpenAsync(
+        dataSource.CreateDedicatedSessionOptions());
 
 var slot = await replication.CreateReplicationSlotAsync(
     slotName: "app_slot",
@@ -144,7 +181,8 @@ Identify the system and begin at a retained WAL position:
 
 ```csharp
 await using var replication =
-    await BlueTuskPhysicalReplicationConnection.OpenAsync(connectionString);
+    await BlueTuskPhysicalReplicationConnection.OpenAsync(
+        dataSource.CreateDedicatedSessionOptions());
 var identity = await replication.IdentifySystemAsync(cancellationToken);
 
 await foreach (var message in replication.StartReplicationAsync(
@@ -196,3 +234,61 @@ not interpret custom formats.
 
 Cancellation or asynchronous enumerator disposal sends `CopyDone`, drains the
 server back to `ReadyForQuery`, and releases the replication operation.
+
+## Reconnect and resume
+
+Persist the last durably applied WAL position outside the replication process.
+On a transient disconnect, create a new dedicated replication connection from
+the data source and request that persisted position. Do not resume from the
+largest position merely received in memory.
+
+```csharp
+var resumePosition = await checkpoints.LoadAppliedPositionAsync(cancellationToken);
+
+while (!cancellationToken.IsCancellationRequested)
+{
+    try
+    {
+        await using var replication =
+            await BlueTuskLogicalReplicationConnection.OpenAsync(
+                dataSource.CreateDedicatedSessionOptions(),
+                cancellationToken);
+
+        var request = new BlueTuskPgOutputReplicationOptions
+        {
+            SlotName = "app_slot",
+            PublicationNames = ["app_publication"],
+            StartPosition = resumePosition,
+        };
+
+        await foreach (var envelope in replication
+            .StartReplicationAsync(request, cancellationToken)
+            .DecodePgOutputAsync(cancellationToken: cancellationToken))
+        {
+            await ApplyAndCommitAsync(envelope.Message, cancellationToken);
+            resumePosition = envelope.XLogData.WalEnd;
+            await checkpoints.StoreAppliedPositionAsync(
+                resumePosition,
+                cancellationToken);
+            await replication.SendStandbyStatusUpdateAsync(
+                new BlueTuskStandbyStatus(
+                    resumePosition,
+                    resumePosition,
+                    resumePosition),
+                cancellationToken);
+        }
+    }
+    catch (Exception exception) when (
+        IsTransientReplicationFailure(exception) &&
+        !cancellationToken.IsCancellationRequested)
+    {
+        await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);
+    }
+}
+```
+
+The slot must still retain WAL at or before the checkpoint. If it was removed,
+invalidated, or advanced beyond recoverable application state, stop and repair
+from an application-specific snapshot rather than skipping data. Recreate the
+decoder after reconnect so relation and streamed-transaction state cannot leak
+across sessions.

@@ -6,7 +6,9 @@
 - Conformance tests use a scriptable fake server to force network and protocol edge cases.
 - Integration tests run against every supported PostgreSQL major version.
 - Compatibility tests compare selected outcomes with libpq or other providers, then resolve differences against PostgreSQL behaviour.
-- Stress tests cover cancellation, pool churn, concurrent readers, and long-running replication.
+- Stress tests cover cancellation, pool churn, concurrent readers, pipeline recovery,
+  and dedicated replication cancellation/disposal. Long-running replication soaks
+  remain an explicit pre-1.0 gate.
 
 Tests requiring a server read `BLUETUSK_TEST_CONNECTION_STRING` and must skip with a clear reason when it is absent. Credentials must never be printed, including in failed test output.
 

@@ -9,6 +9,23 @@ namespace BlueTusk.IntegrationTests;
 public sealed class BlueTuskReplicationIntegrationTests
 {
     [Fact]
+    public async Task Data_source_derived_replication_session_is_dedicated_and_unpooled()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        {
+            Pooling = true,
+        };
+        await using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);
+
+        await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
+            dataSource.CreateDedicatedSessionOptions());
+        var identity = await replication.IdentifySystemAsync();
+
+        Assert.False(string.IsNullOrWhiteSpace(identity.SystemIdentifier));
+        Assert.Equal(0, dataSource.GetPoolStatistics().Total);
+    }
+
+    [Fact]
     public async Task Physical_connection_discovers_slots_streams_wal_and_sends_feedback()
     {
         var connectionString = GetConnectionString();

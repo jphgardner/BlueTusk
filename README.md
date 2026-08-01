@@ -101,7 +101,7 @@ command.Parameters.Add(new BlueTuskParameter<int>(22));
 var answer = await command.ExecuteScalarAsync<int>();
 ```
 
-Directly constructing `BlueTuskConnection` is supported for compatibility and dedicated ownership scenarios, but those connections are unpooled. Replication uses separate, dedicated unpooled sessions.
+Directly constructing `BlueTuskConnection` is supported for compatibility and dedicated ownership scenarios, but those connections are unpooled. Replication uses separate, dedicated unpooled sessions; derive their connection options from the long-lived data source so authentication and transport settings stay aligned without borrowing from its pool.
 
 ## License
 

@@ -81,6 +81,16 @@
       "benchmark": "BlueTusk.Benchmarks.ProtocolStreamingBenchmarks.StreamOneMegabyteBackendPayload",
       "maximumBytesPerOperation": 256,
       "reason": "Bounded incremental payload drain without materializing the one-megabyte field."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ReplicationBenchmarks.DecodeOneKilobyteXLogData",
+      "maximumBytesPerOperation": 80,
+      "reason": "One decoded message envelope; the one-kilobyte WAL payload remains zero-copy over caller-owned frame memory."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ReplicationBenchmarks.PullOneThousandBoundedXLogFrames",
+      "maximumBytesPerOperation": 80,
+      "reason": "Pull-based bounded replication consumption normalized per frame with no prefetch queue or WAL payload copy."
     }
   ]
 }
