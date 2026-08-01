@@ -1,0 +1,22 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <Description>Optional PostgreSQL sample_type integration for BlueTusk.</Description>
+    <PackageTags>postgresql;database;dotnet;bluetusk;sample_type</PackageTags>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="BlueTusk.Data" Version="0.3.0-preview.1" />
+    <PackageReference Include="BlueTusk.Extensions.Abstractions" Version="0.3.0-preview.1" />
+    <PackageReference Include="BlueTusk.TypeSystem" Version="0.3.0-preview.1" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

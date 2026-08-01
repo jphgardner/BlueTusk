@@ -219,8 +219,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Codec/type registration and data-source-builder ergonomics
   - [x] ADO.NET live tests, documentation, and package metadata
   - [ ] Separate EF translation/migration plug-in where required
-- [ ] Extension-authoring template
-- [ ] Extension compatibility-test harness
+- [x] Extension-authoring template
+- [x] Extension compatibility-test harness
 - [ ] Stabilise extension APIs only after the vertical slice and compatibility gate
 
 ### Replication preview gate
@@ -298,8 +298,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] citext package (tested ADO.NET preview; extension SDK remains unstable)
 - [ ] pg_trgm package
 - [ ] TimescaleDB package
-- [ ] Extension-authoring template
-- [ ] Extension compatibility-testing kit
+- [x] Extension-authoring template
+- [x] Extension compatibility-testing kit
 
 ## 1.0.0 — Production-ready BlueTusk platform (Milestone 9)
 

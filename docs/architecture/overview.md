@@ -32,6 +32,7 @@ PostgreSQL
 - **Replication.PgOutput** statefully decodes standard logical-replication messages while preserving their WAL envelopes.
 - **EntityFrameworkCore** is the only layer allowed to depend on EF Core.
 - **Extensions.Abstractions** is the public preview plug-in seam. Built data sources carry immutable type and feature snapshots; extension packages must not access protocol internals.
+- **Extensions.Testing** is an ADO.NET-level test utility that validates feature and runtime-codec contracts; production packages never depend on it.
 
 Dependencies should form a directed acyclic graph. A feature that would create a reverse reference needs a new abstraction in the lower-level package or an orchestration implementation in a higher-level package.
 

@@ -1,5 +1,6 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.Extensions.Testing;
 using BlueTusk.TypeSystem;
 using Xunit.Sdk;
 
@@ -61,10 +62,17 @@ public sealed class BlueTuskCitextTests
 
         var builder = new BlueTuskDataSourceBuilder(connectionString).UseCitext();
         await using var dataSource = builder.Build();
-        await using (var connection = await dataSource.OpenConnectionAsync(CancellationToken.None))
-        {
-            Assert.NotNull(connection);
-        }
+        var compatibility = await BlueTuskExtensionCompatibility.VerifyAsync(
+            dataSource,
+            new BlueTuskExtensionContract
+            {
+                FeatureName = BlueTuskCitextFeature.RegistryName,
+                FeatureType = typeof(BlueTuskCitextFeature),
+                PostgreSqlType = new BlueTuskTypeName("public", "citext"),
+                ClrType = typeof(BlueTuskCitext),
+                CodecType = typeof(BlueTuskCitextCodec),
+            });
+        Assert.Equal(typeof(BlueTuskCitextCodec), compatibility.CodecType);
 
         Assert.True(dataSource.TypeRegistry.TryGetType(typeof(BlueTuskCitext), out var type, out var codec));
         Assert.Equal("citext", type!.Name);

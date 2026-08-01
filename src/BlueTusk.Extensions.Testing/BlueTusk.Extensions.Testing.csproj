@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\BlueTusk.Extensions.Abstractions\BlueTusk.Extensions.Abstractions.csproj" />
+    <ProjectReference Include="..\BlueTusk.TypeSystem\BlueTusk.TypeSystem.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <PackageId>BlueTusk.Extensions.Testing</PackageId>
+    <Description>Framework-neutral compatibility contracts for BlueTusk extension packages.</Description>
+    <PackageTags>postgresql;database;dotnet;bluetusk;extensions;testing</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="$(MSBuildThisFileDirectory)..\..\README.md" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

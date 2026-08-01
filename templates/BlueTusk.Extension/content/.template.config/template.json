@@ -1,0 +1,31 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "BlueTusk contributors",
+  "classifications": [
+    "PostgreSQL",
+    "Database",
+    "Extension"
+  ],
+  "identity": "BlueTusk.Extension.CSharp",
+  "name": "BlueTusk PostgreSQL extension",
+  "shortName": "bluetusk-extension",
+  "sourceName": "BlueTusk.Extensions.Sample",
+  "preferNameDirectory": false,
+  "symbols": {
+    "ExtensionName": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "Sample",
+      "description": "PascalCase extension name used for public CLR types.",
+      "replaces": "Sample",
+      "fileRename": "Sample"
+    },
+    "PostgreSqlTypeName": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "sample_type",
+      "description": "Unqualified PostgreSQL type name registered by the extension.",
+      "replaces": "sample_type"
+    }
+  }
+}

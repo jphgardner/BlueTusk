@@ -19,8 +19,15 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\extensions\BlueTusk.Extensions.Citext\BlueTusk.Extensions.Citext.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Extensions.Abstractions\BlueTusk.Extensions.Abstractions.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Extensions.Testing\BlueTusk.Extensions.Testing.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.TypeSystem\BlueTusk.TypeSystem.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Compile Include="..\..\templates\BlueTusk.Extension\content\src\BlueTusk.Extensions.Sample\*.cs"
+             Link="Template\%(Filename)%(Extension)" />
   </ItemGroup>
 
 </Project>

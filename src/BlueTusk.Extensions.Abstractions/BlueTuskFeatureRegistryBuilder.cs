@@ -25,11 +25,16 @@ public sealed class BlueTuskFeatureRegistry
         return _features.ContainsKey(name);
     }
 
+    public bool TryGet(string name, out object? feature)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        return _features.TryGetValue(name, out feature);
+    }
+
     public bool TryGet<TFeature>(string name, out TFeature feature)
         where TFeature : notnull
     {
-        ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        if (_features.TryGetValue(name, out var registered) && registered is TFeature typed)
+        if (TryGet(name, out var registered) && registered is TFeature typed)
         {
             feature = typed;
             return true;

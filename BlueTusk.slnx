@@ -25,6 +25,7 @@
     <Project Path="src/BlueTusk.EntityFrameworkCore.Design/BlueTusk.EntityFrameworkCore.Design.csproj" />
     <Project Path="src/BlueTusk.EntityFrameworkCore/BlueTusk.EntityFrameworkCore.csproj" />
     <Project Path="src/BlueTusk.Extensions.Abstractions/BlueTusk.Extensions.Abstractions.csproj" />
+    <Project Path="src/BlueTusk.Extensions.Testing/BlueTusk.Extensions.Testing.csproj" />
     <Project Path="src/BlueTusk.Protocol/BlueTusk.Protocol.csproj" />
     <Project Path="src/BlueTusk.Replication.PgOutput/BlueTusk.Replication.PgOutput.csproj" />
     <Project Path="src/BlueTusk.Replication/BlueTusk.Replication.csproj" />
@@ -38,6 +39,7 @@
     <Project Path="tests/BlueTusk.ConformanceTests/BlueTusk.ConformanceTests.csproj" />
     <Project Path="tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj" />
     <Project Path="tests/BlueTusk.EntityFrameworkCore.Tests/BlueTusk.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/BlueTusk.ExtensionTemplate.Tests/BlueTusk.ExtensionTemplate.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.Citext.Tests/BlueTusk.Extensions.Citext.Tests.csproj" />
     <Project Path="tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj" />
     <Project Path="tests/BlueTusk.Protocol.Tests/BlueTusk.Protocol.Tests.csproj" />
@@ -47,6 +49,9 @@
     <Project Path="tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj" />
     <Project Path="tests/BlueTusk.Transport.Tests/BlueTusk.Transport.Tests.csproj" />
     <Project Path="tests/BlueTusk.TypeSystem.Tests/BlueTusk.TypeSystem.Tests.csproj" />
+  </Folder>
+  <Folder Name="/templates/">
+    <Project Path="templates/BlueTusk.Extension/BlueTusk.Templates.csproj" />
   </Folder>
   <Folder Name="/tooling/">
     <Project Path="tooling/BlueTusk.ProtocolInspector/BlueTusk.ProtocolInspector.csproj" />

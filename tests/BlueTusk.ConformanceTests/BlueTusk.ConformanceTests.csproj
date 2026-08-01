@@ -26,6 +26,7 @@
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore.Design\BlueTusk.EntityFrameworkCore.Design.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Extensions.Abstractions\BlueTusk.Extensions.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Extensions.Testing\BlueTusk.Extensions.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Protocol\BlueTusk.Protocol.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication\BlueTusk.Replication.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
