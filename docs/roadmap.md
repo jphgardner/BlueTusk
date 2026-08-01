@@ -218,7 +218,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Complete a `citext` vertical slice without extension-specific core dependencies
   - [x] Codec/type registration and data-source-builder ergonomics
   - [x] ADO.NET live tests, documentation, and package metadata
-  - [ ] Separate EF translation/migration plug-in where required
+  - [x] Separate EF type-mapping/query/migration plug-in with scalar and array coverage
 - [x] Extension-authoring template
 - [x] Extension compatibility-test harness
 - [ ] Stabilise extension APIs only after the vertical slice and compatibility gate
@@ -295,7 +295,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] pgvector package
 - [ ] hstore package
 - [ ] ltree package
-- [x] citext package (tested ADO.NET preview; extension SDK remains unstable)
+- [x] citext packages (tested ADO.NET and EF preview; extension SDK remains unstable)
 - [ ] pg_trgm package
 - [ ] TimescaleDB package
 - [x] Extension-authoring template

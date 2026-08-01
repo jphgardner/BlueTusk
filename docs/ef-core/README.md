@@ -25,6 +25,20 @@ services.AddDbContext<AppDbContext>(options =>
     options.UseBlueTusk(dataSource));
 ```
 
+Optional extensions keep their ADO.NET and EF registrations separate. For
+example, `citext` uses `BlueTusk.Extensions.Citext` for the data-source codec and
+`BlueTusk.Extensions.Citext.EntityFrameworkCore` for EF scalar/array mappings
+and migration helpers:
+
+```csharp
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UseCitext()
+    .Build();
+
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource, provider => provider.UseCitext()));
+```
+
 ## PostgreSQL type mappings
 
 In addition to the standard .NET relational types, the 0.3 query work maps BlueTusk's wire-native PostgreSQL scalar values. This includes `inet`/`cidr`, `macaddr`/`macaddr8`, all built-in geometric values, `bit`/`varbit`, arbitrary-precision `numeric`, `money`, `pg_lsn`, `tid`, `timetz`, native intervals, `jsonpath`, `tsvector`/`tsquery`, object identifiers, transaction values, and system-catalogue values. `string` can be explicitly mapped to `json`, `jsonb`, or `xml`.
@@ -78,7 +92,7 @@ modelBuilder.Entity<Order>(entity =>
 
 Runtime migrations support the PostgreSQL `__EFMigrationsHistory` repository, transaction-scoped migration locking, up/down application, and idempotent scripts. The initial DDL surface covers tables, columns, keys and constraints, indexes, sequences, defaults, comments, schema moves, and alter/rename/drop operations. Acceptance tests apply an idempotent script twice, re-enter `Database.MigrateAsync()`, move back to an earlier migration, and finally revert to the empty database.
 
-PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. Other PostgreSQL-specific schema features such as extensions, enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext EF package also provides explicit `EnsureBlueTuskCitext` and `DropBlueTuskCitext` migration operations. General extension modelling and other PostgreSQL-specific schema features such as enum types, operator classes, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
 
 ## PostgreSQL 19 property-graph queries
 

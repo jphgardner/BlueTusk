@@ -54,6 +54,43 @@ var value = reader.GetFieldValue<BlueTuskCitext>(1);
 
 `UseCitext("extensions")` supports an extension installed into a non-default schema. Scalar and array values use PostgreSQL's text/binary send and receive functions and the same runtime catalogue used by the rest of the data source.
 
+EF integration is deliberately a second package,
+`BlueTusk.Extensions.Citext.EntityFrameworkCore`. Register the codec on the data
+source and the EF mapping on the provider independently:
+
+```csharp
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UseCitext()
+    .Build();
+
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource, provider => provider.UseCitext()));
+```
+
+This maps `BlueTuskCitext` and `BlueTuskCitext[]` to schema-qualified PostgreSQL
+types. Normal EF equality queries remain parameterized and use PostgreSQL's
+case-insensitive `citext` operator semantics. The plug-in participates in EF's
+service-provider cache identity, so different installation schemas do not share
+an incompatible singleton mapping.
+
+Migrations that own installation of the PostgreSQL extension can use helpers
+from the companion package. Their extension-specific SQL stays outside the core
+provider:
+
+```csharp
+protected override void Up(MigrationBuilder migrationBuilder)
+{
+    migrationBuilder.EnsureBlueTuskCitext();
+    // Create citext-backed tables after this operation.
+}
+
+protected override void Down(MigrationBuilder migrationBuilder)
+{
+    // Drop dependent tables before removing the extension.
+    migrationBuilder.DropBlueTuskCitext();
+}
+```
+
 The immutable descriptor is available for integration code that must inspect configured optional behavior:
 
 ```csharp
@@ -61,4 +98,9 @@ var feature = dataSource.Features.GetRequired<BlueTuskCitextFeature>(
     BlueTuskCitextFeature.RegistryName);
 ```
 
-No citext SQL, CLR type, or package reference is present in `BlueTusk.Data`, `BlueTusk.Client`, or lower layers. EF-specific extension integration remains separate from this ADO.NET codec package. The authoring template and compatibility harness establish an executable preview contract, but stability still requires ecosystem feedback and an explicit versioning commitment.
+No citext SQL, CLR type, or package reference is present in `BlueTusk.Data`,
+`BlueTusk.Client`, `BlueTusk.EntityFrameworkCore`, or lower layers. The EF
+mapping and migration SQL live only in the companion package. The authoring
+template and compatibility harness establish an executable preview contract,
+but stability still requires ecosystem feedback and an explicit versioning
+commitment.

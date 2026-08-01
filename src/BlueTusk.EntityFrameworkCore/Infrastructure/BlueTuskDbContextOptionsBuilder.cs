@@ -12,4 +12,10 @@ public sealed class BlueTuskDbContextOptionsBuilder
         : base(optionsBuilder)
     {
     }
+
+    /// <summary>
+    /// Gets the underlying options builder so separately packaged provider plug-ins can
+    /// register immutable EF options extensions.
+    /// </summary>
+    public DbContextOptionsBuilder ContextOptionsBuilder => OptionsBuilder;
 }

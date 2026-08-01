@@ -16,4 +16,8 @@ command.Parameters.Add(new BlueTuskParameter<BlueTuskCitext>(new("BlueTusk")));
 
 PostgreSQL must have `CREATE EXTENSION citext` applied. Pass the installation schema to `UseCitext(schema)` when it is not `public`.
 
+Entity Framework Core integration is separately packaged as
+`BlueTusk.Extensions.Citext.EntityFrameworkCore`. This keeps EF dependencies,
+type mappings, and migration SQL out of the ADO.NET codec package.
+
 This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1` APIs, not stable or production-ready contracts.

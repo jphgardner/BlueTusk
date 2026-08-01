@@ -560,9 +560,10 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
                 return arrayMapping;
             }
 
-            return mappingInfo.StoreTypeName is { } arrayStoreType && IsSchemaQualified(arrayStoreType)
-                ? CreateUserDefinedMapping(arrayStoreType, clrType)
-                : null;
+            if (mappingInfo.StoreTypeName is { } arrayStoreType && IsSchemaQualified(arrayStoreType))
+            {
+                return CreateUserDefinedMapping(arrayStoreType, clrType);
+            }
         }
 
         if (mappingInfo.StoreTypeNameBase is { } storeTypeName

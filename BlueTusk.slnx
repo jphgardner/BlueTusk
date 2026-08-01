@@ -3,6 +3,7 @@
     <Project Path="benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/extensions/">
+    <Project Path="extensions/BlueTusk.Extensions.Citext.EntityFrameworkCore/BlueTusk.Extensions.Citext.EntityFrameworkCore.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.Citext/BlueTusk.Extensions.Citext.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.HStore/BlueTusk.Extensions.HStore.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.LTree/BlueTusk.Extensions.LTree.csproj" />
@@ -40,6 +41,7 @@
     <Project Path="tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj" />
     <Project Path="tests/BlueTusk.EntityFrameworkCore.Tests/BlueTusk.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.ExtensionTemplate.Tests/BlueTusk.ExtensionTemplate.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.Citext.EntityFrameworkCore.Tests/BlueTusk.Extensions.Citext.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.Citext.Tests/BlueTusk.Extensions.Citext.Tests.csproj" />
     <Project Path="tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj" />
     <Project Path="tests/BlueTusk.Protocol.Tests/BlueTusk.Protocol.Tests.csproj" />
