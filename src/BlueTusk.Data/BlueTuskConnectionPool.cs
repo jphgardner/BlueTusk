@@ -66,7 +66,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         BlueTuskConnectionStringBuilder settings,
         Func<CancellationToken, ValueTask<IBlueTuskPhysicalSession>>? sessionFactory = null,
         TimeProvider? timeProvider = null,
-        Func<IBlueTuskPhysicalSession>? synchronousSessionFactory = null)
+        Func<IBlueTuskPhysicalSession>? synchronousSessionFactory = null,
+        BlueTuskClientConfiguration? clientConfiguration = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Validate();
@@ -77,8 +78,9 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         _idleLifetime = settings.ConnectionIdleLifetime;
         _connectionLifetime = settings.ConnectionLifetime;
         _timeProvider = timeProvider ?? TimeProvider.System;
-        _sessionFactory = sessionFactory ?? (token => BlueTuskPhysicalSession.OpenAsync(settings, token));
-        _synchronousSessionFactory = synchronousSessionFactory ?? (() => BlueTuskPhysicalSession.Open(settings));
+        var configuration = clientConfiguration ?? BlueTuskClientConfiguration.Empty;
+        _sessionFactory = sessionFactory ?? (token => BlueTuskPhysicalSession.OpenAsync(settings, configuration, token));
+        _synchronousSessionFactory = synchronousSessionFactory ?? (() => BlueTuskPhysicalSession.Open(settings, configuration));
     }
 
     internal override BlueTuskPoolStatistics Statistics => new(

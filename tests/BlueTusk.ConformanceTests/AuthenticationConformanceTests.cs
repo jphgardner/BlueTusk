@@ -86,6 +86,194 @@ public sealed class AuthenticationConformanceTests
         await serverTask;
     }
 
+    [Fact]
+    public async Task Resolves_an_access_token_callback_for_each_async_physical_connection()
+    {
+        await using var server = new FakePostgreSqlServer();
+        var serverTask = server.RunAsync(
+        [
+            new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+            new FakeServerStep.Send(AuthenticationRequest(3)),
+            new FakeServerStep.ExpectFrontendMessage((byte)'p', CStrings("fresh-token")),
+            new FakeServerStep.Send(StartupComplete()),
+        ], CancellationToken.None);
+        BlueTuskCredentialRequest? request = null;
+        var calls = 0;
+
+        await using var session = await BlueTuskSession.OpenAsync(
+            Options(server.Port) with
+            {
+                AllowUnencryptedPassword = true,
+                AccessTokenProviderAsync = (context, _) =>
+                {
+                    request = context;
+                    calls++;
+                    return ValueTask.FromResult("fresh-token");
+                },
+            });
+
+        Assert.True(session.IsOpen);
+        Assert.Equal(1, calls);
+        Assert.Equal(
+            new BlueTuskCredentialRequest("127.0.0.1", server.Port, "app", "user"),
+            request);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task Resolves_a_password_callback_for_a_synchronous_connection()
+    {
+        await using var server = new FakePostgreSqlServer();
+        var serverTask = server.RunAsync(
+        [
+            new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+            new FakeServerStep.Send(AuthenticationRequest(3)),
+            new FakeServerStep.ExpectFrontendMessage((byte)'p', CStrings("callback-password")),
+            new FakeServerStep.Send(StartupComplete()),
+        ], CancellationToken.None);
+        var calls = 0;
+
+        using var session = BlueTuskSession.Open(
+            Options(server.Port) with
+            {
+                AllowUnencryptedPassword = true,
+                PasswordProvider = _ =>
+                {
+                    calls++;
+                    return "callback-password";
+                },
+            });
+
+        Assert.True(session.IsOpen);
+        Assert.Equal(1, calls);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task Credential_callback_failures_do_not_expose_callback_payloads()
+    {
+        await using var server = new FakePostgreSqlServer();
+        var serverTask = server.RunAsync(
+        [
+            new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+            new FakeServerStep.Send(AuthenticationRequest(3)),
+        ], CancellationToken.None);
+
+        var exception = await Assert.ThrowsAsync<BlueTuskAuthenticationException>(
+            () => BlueTuskSession.OpenAsync(
+                Options(server.Port) with
+                {
+                    Password = null,
+                    AccessTokenProviderAsync = (_, _) =>
+                        throw new InvalidOperationException("token-value-must-not-escape"),
+                }).AsTask());
+
+        Assert.DoesNotContain("token-value-must-not-escape", exception.ToString(), StringComparison.Ordinal);
+        Assert.Null(exception.InnerException);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task Does_not_invoke_a_credential_callback_when_authentication_needs_no_password()
+    {
+        await using var server = new FakePostgreSqlServer();
+        var serverTask = server.RunAsync(
+        [
+            new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+            new FakeServerStep.Send(StartupComplete()),
+        ], CancellationToken.None);
+
+        await using var session = await BlueTuskSession.OpenAsync(
+            Options(server.Port) with
+            {
+                Password = null,
+                PasswordProvider = _ => throw new InvalidOperationException("must not run"),
+            });
+
+        Assert.True(session.IsOpen);
+        await serverTask;
+    }
+
+    [Fact]
+    public async Task Resolves_a_matching_PostgreSQL_password_file_entry()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"bluetusk-{Guid.NewGuid():N}.pgpass");
+        await File.WriteAllTextAsync(path, "127.0.0.1:*:app:user:passfile-password\n");
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+
+        try
+        {
+            await using var server = new FakePostgreSqlServer();
+            var serverTask = server.RunAsync(
+            [
+                new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+                new FakeServerStep.Send(AuthenticationRequest(3)),
+                new FakeServerStep.ExpectFrontendMessage((byte)'p', CStrings("passfile-password")),
+                new FakeServerStep.Send(StartupComplete()),
+            ], CancellationToken.None);
+
+            await using var session = await BlueTuskSession.OpenAsync(
+                Options(server.Port) with
+                {
+                    Password = null,
+                    Passfile = path,
+                    AllowUnencryptedPassword = true,
+                });
+
+            Assert.True(session.IsOpen);
+            await serverTask;
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
+    [Fact]
+    public async Task Physical_replication_matches_the_special_password_file_database()
+    {
+        var path = Path.Combine(Path.GetTempPath(), $"bluetusk-{Guid.NewGuid():N}.pgpass");
+        await File.WriteAllTextAsync(
+            path,
+            "127.0.0.1:*:app:user:wrong-password\n" +
+            "127.0.0.1:*:replication:user:replication-password\n");
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+
+        try
+        {
+            await using var server = new FakePostgreSqlServer();
+            var serverTask = server.RunAsync(
+            [
+                new FakeServerStep.ExpectFrontendMessage(Identifier: null),
+                new FakeServerStep.Send(AuthenticationRequest(3)),
+                new FakeServerStep.ExpectFrontendMessage((byte)'p', CStrings("replication-password")),
+                new FakeServerStep.Send(StartupComplete()),
+            ], CancellationToken.None);
+
+            await using var session = await BlueTuskSession.OpenAsync(
+                Options(server.Port) with
+                {
+                    Password = null,
+                    Passfile = path,
+                    AllowUnencryptedPassword = true,
+                    ReplicationMode = BlueTuskReplicationMode.Physical,
+                });
+
+            Assert.True(session.IsOpen);
+            await serverTask;
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     private static BlueTuskClientOptions Options(int port) => new()
     {
         Host = "127.0.0.1",

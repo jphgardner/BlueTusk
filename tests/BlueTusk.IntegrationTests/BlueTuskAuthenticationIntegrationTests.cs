@@ -72,6 +72,92 @@ public sealed class BlueTuskAuthenticationIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Password_files_and_callbacks_authenticate_against_SCRAM()
+    {
+        var settings = GetSettings();
+        var password = settings.Password ?? throw SkipException.ForSkip(
+            "The matrix connection string does not contain a password for credential-source testing.");
+        var path = Path.Combine(Path.GetTempPath(), $"bluetusk-{Guid.NewGuid():N}.pgpass");
+        await File.WriteAllTextAsync(
+            path,
+            $"{settings.Host}:{settings.Port}:{settings.Database}:{settings.Username}:{password}\n");
+        if (!OperatingSystem.IsWindows())
+        {
+            File.SetUnixFileMode(path, UnixFileMode.UserRead | UnixFileMode.UserWrite);
+        }
+
+        try
+        {
+            await using (var passfileSession = await BlueTuskSession.OpenAsync(
+                             CreateOptions(settings, settings.Username, password: null) with
+                             {
+                                 Passfile = path,
+                             }))
+            {
+                Assert.Equal(settings.Username, await ReadCurrentUserAsync(passfileSession));
+            }
+
+            var accessTokenCalls = 0;
+            await using (var tokenSession = await BlueTuskSession.OpenAsync(
+                             CreateOptions(settings, settings.Username, "wrong-explicit-value") with
+                             {
+                                 AccessTokenProviderAsync = (_, _) =>
+                                 {
+                                     accessTokenCalls++;
+                                     return ValueTask.FromResult(password);
+                                 },
+                             }))
+            {
+                Assert.Equal(settings.Username, await ReadCurrentUserAsync(tokenSession));
+            }
+
+            Assert.Equal(1, accessTokenCalls);
+
+            var callbackCalls = 0;
+            var callbackSettings = new BlueTuskConnectionStringBuilder(settings.ConnectionString)
+            {
+                Password = null,
+                Pooling = true,
+                MinimumPoolSize = 0,
+                MaximumPoolSize = 1,
+            };
+            await using var dataSource = new BlueTuskDataSourceBuilder(callbackSettings.ConnectionString)
+                .UsePasswordProvider((_, _) =>
+                {
+                    callbackCalls++;
+                    return ValueTask.FromResult(password);
+                })
+                .Build();
+
+            await using (var connection = await dataSource.OpenConnectionAsync())
+            {
+                await using var command = new BlueTuskCommand("SELECT current_user", connection);
+                Assert.Equal(settings.Username, await command.ExecuteScalarAsync());
+            }
+
+            await using (var connection = await dataSource.OpenConnectionAsync())
+            {
+                await using var command = new BlueTuskCommand("SELECT current_user", connection);
+                Assert.Equal(settings.Username, await command.ExecuteScalarAsync());
+            }
+
+            Assert.Equal(1, callbackCalls);
+            await dataSource.ClearPoolAsync();
+            await using (var connection = await dataSource.OpenConnectionAsync())
+            {
+                await using var command = new BlueTuskCommand("SELECT current_user", connection);
+                Assert.Equal(settings.Username, await command.ExecuteScalarAsync());
+            }
+
+            Assert.Equal(2, callbackCalls);
+        }
+        finally
+        {
+            File.Delete(path);
+        }
+    }
+
     private static async Task ExecuteAdminAsync(
         BlueTuskConnectionStringBuilder settings,
         string sql)
@@ -85,7 +171,7 @@ public sealed class BlueTuskAuthenticationIntegrationTests
     private static BlueTuskClientOptions CreateOptions(
         BlueTuskConnectionStringBuilder settings,
         string username,
-        string password) => new()
+        string? password) => new()
         {
             Host = settings.Host,
             Port = settings.Port,
@@ -95,6 +181,13 @@ public sealed class BlueTuskAuthenticationIntegrationTests
             SslMode = BlueTuskSslMode.Disable,
             ChannelBinding = BlueTuskChannelBindingMode.Disable,
         };
+
+    private static async Task<string> ReadCurrentUserAsync(BlueTuskSession session)
+    {
+        var result = await session.ExecuteSimpleQueryAsync("SELECT current_user");
+        return Encoding.UTF8.GetString(
+            Assert.Single(Assert.Single(result.ResultSets).Rows).Values[0]!.Value.Span);
+    }
 
     private static BlueTuskConnectionStringBuilder GetSettings()
     {

@@ -74,7 +74,23 @@ public sealed class DatabaseCreatorTests
             Database = databaseName,
             MinimumPoolSize = 0,
         };
-        await using var dataSource = new BlueTuskDataSourceBuilder(targetSettings.ConnectionString).Build();
+        var password = targetSettings.Password ?? throw new InvalidOperationException(
+            "The database-lifecycle acceptance connection must provide a password.");
+        targetSettings.Password = null;
+        var synchronousPasswordCalls = 0;
+        var asynchronousPasswordCalls = 0;
+        await using var dataSource = new BlueTuskDataSourceBuilder(targetSettings.ConnectionString)
+            .UsePasswordProvider(_ =>
+            {
+                synchronousPasswordCalls++;
+                return password;
+            })
+            .UsePasswordProvider((_, _) =>
+            {
+                asynchronousPasswordCalls++;
+                return ValueTask.FromResult(password);
+            })
+            .Build();
         var options = new DbContextOptionsBuilder<DatabaseLifecycleContext>()
             .UseBlueTusk(
                 dataSource,
@@ -113,9 +129,13 @@ public sealed class DatabaseCreatorTests
             Assert.True(context.Database.EnsureDeleted());
             Assert.False(context.Database.CanConnect());
 
+            var explicitPasswordSettings = new BlueTuskConnectionStringBuilder(targetSettings.ConnectionString)
+            {
+                Password = password,
+            };
             var stringOptions = new DbContextOptionsBuilder<DatabaseLifecycleContext>()
                 .UseBlueTusk(
-                    targetSettings.ConnectionString,
+                    explicitPasswordSettings.ConnectionString,
                     provider => provider.UseAdminDatabase(adminSettings.Database))
                 .Options;
             await using (var stringContext = new DatabaseLifecycleContext(stringOptions))
@@ -124,7 +144,7 @@ public sealed class DatabaseCreatorTests
                 Assert.True(await stringContext.Database.EnsureDeletedAsync());
             }
 
-            await using var connection = new BlueTuskConnection(targetSettings.ConnectionString);
+            await using var connection = new BlueTuskConnection(explicitPasswordSettings.ConnectionString);
             var connectionOptions = new DbContextOptionsBuilder<DatabaseLifecycleContext>()
                 .UseBlueTusk(
                     connection,
@@ -141,6 +161,8 @@ public sealed class DatabaseCreatorTests
             await connection.OpenAsync();
             Assert.Equal(adminSettings.Database, connection.Database);
             await connection.CloseAsync();
+            Assert.True(synchronousPasswordCalls > 0);
+            Assert.True(asynchronousPasswordCalls > 0);
         }
         finally
         {

@@ -93,7 +93,7 @@ The current `0.3.0-preview.1` implementation provides:
 - a versioned, bounded protocol-capture format and redaction-aware inspector;
 - executable BenchmarkDotNet protocol/type workloads with checked-in reference baselines;
 - TLS negotiation with safe platform certificate validation by default;
-- SCRAM-SHA-256 and SCRAM-SHA-256-PLUS authentication, plus PostgreSQL 15–19-tested legacy MD5 and TLS/opt-in-gated cleartext password compatibility;
+- SCRAM-SHA-256 and SCRAM-SHA-256-PLUS authentication, PostgreSQL password files, per-physical-connection password/access-token callbacks, TLS client certificates, and PostgreSQL 15–19-tested legacy MD5 and gated cleartext compatibility;
 - startup metadata, structured errors/notices, and backend key data;
 - buffered simple-query execution with multiple results;
 - extended-query execution through Parse, Bind, Describe, Execute, and Sync;

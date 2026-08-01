@@ -12,22 +12,26 @@ public sealed class BlueTuskDataSource : DbDataSource
     private readonly BlueTuskConnectionStringBuilder _settings;
     private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
+    private readonly BlueTuskClientConfiguration _clientConfiguration;
 
     internal BlueTuskDataSource(
         string connectionString,
         BlueTuskTypeRegistry? configuredTypes = null,
-        BlueTuskFeatureRegistry? features = null)
+        BlueTuskFeatureRegistry? features = null,
+        BlueTuskClientConfiguration? clientConfiguration = null)
     {
         _settings = new BlueTuskConnectionStringBuilder(connectionString);
         _settings.Validate();
         ConnectionString = connectionString;
         Features = features ?? BlueTuskFeatureRegistry.Empty;
+        _clientConfiguration = clientConfiguration ?? BlueTuskClientConfiguration.Empty;
+        _clientConfiguration.Validate();
         _typeMetadata = new BlueTuskTypeMetadataCache(configuredTypes);
         if (_settings.Pooling)
         {
             _pool = _settings.HostEndpoints.Count > 1
-                ? new BlueTuskMultiHostConnectionPool(_settings)
-                : new BlueTuskConnectionPool(_settings);
+                ? new BlueTuskMultiHostConnectionPool(_settings, _clientConfiguration)
+                : new BlueTuskConnectionPool(_settings, clientConfiguration: _clientConfiguration);
         }
     }
 
@@ -75,22 +79,30 @@ public sealed class BlueTuskDataSource : DbDataSource
                 nameof(endpoint));
         }
 
-        return new BlueTuskClientOptions
+        return _clientConfiguration.Apply(new BlueTuskClientOptions
         {
             Host = endpoint.Host,
             Port = endpoint.Port,
             Database = _settings.Database,
             Username = _settings.Username,
             Password = _settings.Password,
+            Passfile = _settings.Passfile,
             ApplicationName = _settings.ApplicationName,
             ConnectTimeout = _settings.Timeout,
             SslMode = _settings.SslMode,
             ChannelBinding = _settings.ChannelBinding,
             AllowUnencryptedPassword = _settings.AllowUnencryptedPassword,
-        };
+        });
     }
 
     public new BlueTuskConnection CreateConnection() => (BlueTuskConnection)base.CreateConnection();
+
+    internal BlueTuskConnection CreateUnpooledConnection(string connectionString) =>
+        new(
+            connectionString ?? throw new ArgumentNullException(nameof(connectionString)),
+            pool: null,
+            new BlueTuskTypeMetadataCache(),
+            _clientConfiguration);
 
     public new BlueTuskConnection OpenConnection() => (BlueTuskConnection)base.OpenConnection();
 
@@ -140,7 +152,7 @@ public sealed class BlueTuskDataSource : DbDataSource
     public ValueTask ClearPoolAsync() => _pool?.ClearAsync() ?? ValueTask.CompletedTask;
 
     protected override DbConnection CreateDbConnection() =>
-        new BlueTuskConnection(ConnectionString, _pool, _typeMetadata);
+        new BlueTuskConnection(ConnectionString, _pool, _typeMetadata, _clientConfiguration);
 
     protected override DbConnection OpenDbConnection()
     {

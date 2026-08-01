@@ -1,3 +1,6 @@
+using System.Net.Security;
+using System.Security.Cryptography;
+using System.Security.Cryptography.X509Certificates;
 using BlueTusk.Client;
 using BlueTusk.TypeSystem;
 
@@ -89,6 +92,7 @@ public sealed class BlueTuskDataSourceBuilderTests
             Database = "app",
             Username = "replicator",
             Password = "secret",
+            Passfile = "C:\\credentials\\pgpass.conf",
             ApplicationName = "wal-reader",
             Timeout = TimeSpan.FromSeconds(7),
             Pooling = true,
@@ -105,6 +109,7 @@ public sealed class BlueTuskDataSourceBuilderTests
         Assert.Equal("app", options.Database);
         Assert.Equal("replicator", options.Username);
         Assert.Equal("secret", options.Password);
+        Assert.Equal("C:\\credentials\\pgpass.conf", options.Passfile);
         Assert.Equal("wal-reader", options.ApplicationName);
         Assert.Equal(TimeSpan.FromSeconds(7), options.ConnectTimeout);
         Assert.Equal(BlueTuskSslMode.Require, options.SslMode);
@@ -129,6 +134,66 @@ public sealed class BlueTuskDataSourceBuilderTests
         Assert.Throws<ArgumentException>(
             () => dataSource.CreateDedicatedSessionOptions(
                 new BlueTuskHostEndpoint("other", 5432)));
+    }
+
+    [Fact]
+    public void Data_source_builder_propagates_password_callbacks_to_dedicated_sessions()
+    {
+        BlueTuskPasswordProvider synchronous = request => $"{request.Username}-sync";
+        BlueTuskPasswordProviderAsync asynchronous = (request, _) =>
+            ValueTask.FromResult($"{request.Username}-async");
+        using var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Database=app;Username=worker;Passfile=")
+            .UsePasswordProvider(synchronous)
+            .UsePasswordProvider(asynchronous)
+            .Build();
+
+        var options = dataSource.CreateDedicatedSessionOptions();
+
+        Assert.Same(synchronous, options.PasswordProvider);
+        Assert.Same(asynchronous, options.PasswordProviderAsync);
+        Assert.Null(options.Password);
+        Assert.Null(options.Passfile);
+    }
+
+    [Fact]
+    public void Data_source_builder_rejects_ambiguous_password_and_access_token_callbacks()
+    {
+        var builder = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Database=app;Username=worker")
+            .UsePasswordProvider(_ => "password")
+            .UseAccessTokenProvider(_ => "token");
+
+        Assert.Throws<InvalidOperationException>(builder.Build);
+    }
+
+    [Fact]
+    public void Data_source_builder_propagates_TLS_client_identity_configuration()
+    {
+        using var key = RSA.Create(2048);
+        var request = new CertificateRequest(
+            "CN=bluetusk-client",
+            key,
+            HashAlgorithmName.SHA256,
+            RSASignaturePadding.Pkcs1);
+        using var certificate = request.CreateSelfSigned(
+            DateTimeOffset.UtcNow.AddMinutes(-1),
+            DateTimeOffset.UtcNow.AddDays(1));
+        LocalCertificateSelectionCallback selection = (_, _, certificates, _, _) => certificates[0];
+        RemoteCertificateValidationCallback validation = (_, _, _, errors) =>
+            errors == SslPolicyErrors.None;
+        using var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Database=app;Username=worker")
+            .UseClientCertificate(certificate)
+            .UseClientCertificateSelectionCallback(selection)
+            .UseRemoteCertificateValidationCallback(validation)
+            .Build();
+
+        var options = dataSource.CreateDedicatedSessionOptions();
+
+        Assert.Same(certificate, Assert.Single(options.ClientCertificates));
+        Assert.Same(selection, options.LocalCertificateSelectionCallback);
+        Assert.Same(validation, options.RemoteCertificateValidationCallback);
     }
 
     private enum OrderStatus

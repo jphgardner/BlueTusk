@@ -9,7 +9,9 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
     private readonly BlueTuskLoadBalanceHosts _loadBalanceHosts;
     private int _disposed;
 
-    internal BlueTuskMultiHostConnectionPool(BlueTuskConnectionStringBuilder settings)
+    internal BlueTuskMultiHostConnectionPool(
+        BlueTuskConnectionStringBuilder settings,
+        BlueTuskClientConfiguration? clientConfiguration = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Validate();
@@ -25,7 +27,11 @@ internal sealed class BlueTuskMultiHostConnectionPool : BlueTuskConnectionPoolBa
                     TargetSessionAttributes = BlueTuskTargetSessionAttributes.Any,
                     LoadBalanceHosts = BlueTuskLoadBalanceHosts.Disable,
                 };
-                return new PoolEntry(endpoint, new BlueTuskConnectionPool(hostSettings));
+                return new PoolEntry(
+                    endpoint,
+                    new BlueTuskConnectionPool(
+                        hostSettings,
+                        clientConfiguration: clientConfiguration));
             })
             .ToArray();
     }

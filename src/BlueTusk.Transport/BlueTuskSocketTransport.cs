@@ -145,6 +145,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
                     EnabledSslProtocols = options.EnabledProtocols,
                     CertificateRevocationCheckMode = options.CertificateRevocationCheckMode,
                     ClientCertificates = certificates,
+                    LocalCertificateSelectionCallback = options.LocalCertificateSelectionCallback,
                 },
                 cancellationToken).ConfigureAwait(false);
 
@@ -192,6 +193,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
                     EnabledSslProtocols = options.EnabledProtocols,
                     CertificateRevocationCheckMode = options.CertificateRevocationCheckMode,
                     ClientCertificates = certificates,
+                    LocalCertificateSelectionCallback = options.LocalCertificateSelectionCallback,
                 });
             _stream = tlsStream;
             _remoteCertificate = tlsStream.RemoteCertificate is { } certificate

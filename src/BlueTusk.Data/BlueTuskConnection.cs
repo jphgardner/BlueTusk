@@ -18,6 +18,7 @@ public sealed class BlueTuskConnection : DbConnection
     private const int NotificationBufferCapacity = 1_024;
     private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
+    private readonly BlueTuskClientConfiguration _clientConfiguration;
     private readonly SemaphoreSlim _largeObjectGate = new(1, 1);
     private readonly SemaphoreSlim _notificationGate = new(1, 1);
     private readonly object _notificationStateSync = new();
@@ -41,6 +42,7 @@ public sealed class BlueTuskConnection : DbConnection
     public BlueTuskConnection()
     {
         _typeMetadata = new BlueTuskTypeMetadataCache();
+        _clientConfiguration = BlueTuskClientConfiguration.Empty;
     }
 
     public BlueTuskConnection(string connectionString)
@@ -56,10 +58,12 @@ public sealed class BlueTuskConnection : DbConnection
     internal BlueTuskConnection(
         string connectionString,
         BlueTuskConnectionPoolBase? pool,
-        BlueTuskTypeMetadataCache typeMetadata)
+        BlueTuskTypeMetadataCache typeMetadata,
+        BlueTuskClientConfiguration? clientConfiguration = null)
     {
         _pool = pool;
         _typeMetadata = typeMetadata ?? throw new ArgumentNullException(nameof(typeMetadata));
+        _clientConfiguration = clientConfiguration ?? BlueTuskClientConfiguration.Empty;
         ConnectionString = connectionString;
     }
 
@@ -201,7 +205,7 @@ public sealed class BlueTuskConnection : DbConnection
         {
             if (_pool is null)
             {
-                _session = BlueTuskPhysicalSession.Open(_settings);
+                _session = BlueTuskPhysicalSession.Open(_settings, _clientConfiguration);
             }
             else
             {
@@ -245,7 +249,10 @@ public sealed class BlueTuskConnection : DbConnection
         {
             if (_pool is null)
             {
-                _session = await BlueTuskPhysicalSession.OpenAsync(_settings, cancellationToken).ConfigureAwait(false);
+                _session = await BlueTuskPhysicalSession.OpenAsync(
+                    _settings,
+                    _clientConfiguration,
+                    cancellationToken).ConfigureAwait(false);
             }
             else
             {
@@ -369,7 +376,7 @@ public sealed class BlueTuskConnection : DbConnection
                 return;
             }
 
-            listenerSession = BlueTuskPhysicalSession.Open(_settings);
+            listenerSession = BlueTuskPhysicalSession.Open(_settings, _clientConfiguration);
             _ = listenerSession.ExecuteSimpleQuery($"LISTEN {quotedChannel}");
 
             var subscription = new NotificationSubscription(
@@ -418,6 +425,7 @@ public sealed class BlueTuskConnection : DbConnection
 
             listenerSession = await BlueTuskPhysicalSession.OpenAsync(
                 _settings,
+                _clientConfiguration,
                 cancellationToken).ConfigureAwait(false);
             _ = await listenerSession.ExecuteSimpleQueryAsync(
                 $"LISTEN {quotedChannel}",

@@ -43,7 +43,7 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
     {
         var lifecycle = CreateLifecycleSettings();
         PrepareTargetDataSource();
-        using var connection = new BlueTuskConnection(lifecycle.AdminConnectionString);
+        using var connection = CreateAdminConnection(lifecycle.AdminConnectionString);
         connection.Open();
         using var command = connection.CreateCommand();
         command.CommandText = $"CREATE DATABASE {DelimitIdentifier(lifecycle.TargetDatabase)}";
@@ -55,7 +55,7 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
     {
         var lifecycle = CreateLifecycleSettings();
         await PrepareTargetDataSourceAsync().ConfigureAwait(false);
-        await using var connection = new BlueTuskConnection(lifecycle.AdminConnectionString);
+        await using var connection = CreateAdminConnection(lifecycle.AdminConnectionString);
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = $"CREATE DATABASE {DelimitIdentifier(lifecycle.TargetDatabase)}";
@@ -67,7 +67,7 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
     {
         var lifecycle = CreateLifecycleSettings();
         PrepareTargetDataSource();
-        using var connection = new BlueTuskConnection(lifecycle.AdminConnectionString);
+        using var connection = CreateAdminConnection(lifecycle.AdminConnectionString);
         connection.Open();
         using var command = connection.CreateCommand();
         command.CommandText = $"DROP DATABASE {DelimitIdentifier(lifecycle.TargetDatabase)} WITH (FORCE)";
@@ -78,7 +78,7 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
     {
         var lifecycle = CreateLifecycleSettings();
         await PrepareTargetDataSourceAsync().ConfigureAwait(false);
-        await using var connection = new BlueTuskConnection(lifecycle.AdminConnectionString);
+        await using var connection = CreateAdminConnection(lifecycle.AdminConnectionString);
         await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         await using var command = connection.CreateCommand();
         command.CommandText = $"DROP DATABASE {DelimitIdentifier(lifecycle.TargetDatabase)} WITH (FORCE)";
@@ -164,6 +164,10 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
             Dependencies.Connection.ConnectionString ?? string.Empty,
             options?.AdminDatabase);
     }
+
+    private BlueTuskConnection CreateAdminConnection(string connectionString) =>
+        GetDataSource()?.CreateUnpooledConnection(connectionString)
+        ?? new BlueTuskConnection(connectionString);
 
     private string DelimitIdentifier(string identifier) =>
         Dependencies.SqlGenerationHelper.DelimitIdentifier(identifier);

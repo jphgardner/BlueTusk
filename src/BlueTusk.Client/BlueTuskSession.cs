@@ -3256,6 +3256,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             {
                 TargetHost = _options.Host,
                 CertificateRevocationCheckMode = _options.CertificateRevocationCheckMode,
+                ClientCertificates = _options.ClientCertificates,
+                LocalCertificateSelectionCallback = _options.LocalCertificateSelectionCallback,
                 RemoteCertificateValidationCallback = _options.RemoteCertificateValidationCallback,
             },
             cancellationToken).ConfigureAwait(false);
@@ -3302,6 +3304,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             {
                 TargetHost = _options.Host,
                 CertificateRevocationCheckMode = _options.CertificateRevocationCheckMode,
+                ClientCertificates = _options.ClientCertificates,
+                LocalCertificateSelectionCallback = _options.LocalCertificateSelectionCallback,
                 RemoteCertificateValidationCallback = _options.RemoteCertificateValidationCallback,
             });
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Startup);
@@ -3316,6 +3320,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken)
     {
         BlueTuskScramSha256Client? scram = null;
+        string? credential = null;
         var authenticationComplete = false;
         try
         {
@@ -3330,13 +3335,25 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         switch (request)
                         {
                             case BlueTuskAuthenticationRequest.CleartextPassword:
-                                await SendCleartextPasswordAsync(cancellationToken).ConfigureAwait(false);
+                                credential ??= await BlueTuskCredentialResolver.ResolveAsync(
+                                    _options,
+                                    cancellationToken).ConfigureAwait(false);
+                                await SendCleartextPasswordAsync(credential, cancellationToken).ConfigureAwait(false);
                                 break;
                             case BlueTuskAuthenticationRequest.Md5Password md5:
-                                await SendMd5PasswordAsync(md5.Salt, cancellationToken).ConfigureAwait(false);
+                                credential ??= await BlueTuskCredentialResolver.ResolveAsync(
+                                    _options,
+                                    cancellationToken).ConfigureAwait(false);
+                                await SendMd5PasswordAsync(
+                                    credential,
+                                    md5.Salt,
+                                    cancellationToken).ConfigureAwait(false);
                                 break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
-                                scram = CreateScramClient(sasl.Mechanisms, channelBindingData);
+                                credential ??= await BlueTuskCredentialResolver.ResolveAsync(
+                                    _options,
+                                    cancellationToken).ConfigureAwait(false);
+                                scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
                                 await _connection.WriteSensitiveAsync(
                                     output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
                                         output,
@@ -3399,6 +3416,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private void AuthenticateAndInitialise(ReadOnlyMemory<byte>? channelBindingData)
     {
         BlueTuskScramSha256Client? scram = null;
+        string? credential = null;
         var authenticationComplete = false;
         try
         {
@@ -3412,13 +3430,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         switch (request)
                         {
                             case BlueTuskAuthenticationRequest.CleartextPassword:
-                                SendCleartextPassword();
+                                credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                SendCleartextPassword(credential);
                                 break;
                             case BlueTuskAuthenticationRequest.Md5Password md5:
-                                SendMd5Password(md5.Salt.Span);
+                                credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                SendMd5Password(credential, md5.Salt.Span);
                                 break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
-                                scram = CreateScramClient(sasl.Mechanisms, channelBindingData);
+                                credential ??= BlueTuskCredentialResolver.Resolve(_options);
+                                scram = CreateScramClient(sasl.Mechanisms, channelBindingData, credential);
                                 _connection.WriteSensitive(
                                     output => BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(
                                         output,
@@ -3476,10 +3497,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    private async ValueTask SendCleartextPasswordAsync(CancellationToken cancellationToken)
+    private async ValueTask SendCleartextPasswordAsync(
+        string credential,
+        CancellationToken cancellationToken)
     {
         EnsureCleartextPasswordIsPermitted();
-        var password = Encoding.UTF8.GetBytes(_options.Password);
+        var password = Encoding.UTF8.GetBytes(credential);
         try
         {
             await _connection.WriteSensitiveAsync(
@@ -3492,10 +3515,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    private void SendCleartextPassword()
+    private void SendCleartextPassword(string credential)
     {
         EnsureCleartextPasswordIsPermitted();
-        var password = Encoding.UTF8.GetBytes(_options.Password);
+        var password = Encoding.UTF8.GetBytes(credential);
         try
         {
             _connection.WriteSensitive(
@@ -3508,12 +3531,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     }
 
     private async ValueTask SendMd5PasswordAsync(
+        string credential,
         ReadOnlyMemory<byte> salt,
         CancellationToken cancellationToken)
     {
         var response = BlueTuskPostgreSqlMd5Password.CreateResponse(
             _options.Username,
-            _options.Password,
+            credential,
             salt.Span);
         try
         {
@@ -3527,11 +3551,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    private void SendMd5Password(ReadOnlySpan<byte> salt)
+    private void SendMd5Password(string credential, ReadOnlySpan<byte> salt)
     {
         var response = BlueTuskPostgreSqlMd5Password.CreateResponse(
             _options.Username,
-            _options.Password,
+            credential,
             salt);
         try
         {
@@ -3556,7 +3580,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private BlueTuskScramSha256Client CreateScramClient(
         IReadOnlyList<string> mechanisms,
-        ReadOnlyMemory<byte>? channelBindingData)
+        ReadOnlyMemory<byte>? channelBindingData,
+        string credential)
     {
         var supportsPlus = mechanisms.Contains(BlueTuskScramSha256Client.PlusMechanismName, StringComparer.Ordinal);
         var supportsStandard = mechanisms.Contains(BlueTuskScramSha256Client.MechanismName, StringComparer.Ordinal);
@@ -3564,7 +3589,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             return new BlueTuskScramSha256Client(
                 _options.Username,
-                _options.Password,
+                credential,
                 channelBindingData: channelBindingData);
         }
 
@@ -3575,7 +3600,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         return supportsStandard
-            ? new BlueTuskScramSha256Client(_options.Username, _options.Password)
+            ? new BlueTuskScramSha256Client(_options.Username, credential)
             : throw new BlueTuskAuthenticationException("PostgreSQL did not offer a supported SCRAM mechanism.");
     }
 

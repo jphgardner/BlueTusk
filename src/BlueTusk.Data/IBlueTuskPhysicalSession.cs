@@ -200,7 +200,9 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
     public BlueTuskTransactionStatus TransactionStatus => _session.TransactionStatus;
 
-    public static IBlueTuskPhysicalSession Open(BlueTuskConnectionStringBuilder settings)
+    public static IBlueTuskPhysicalSession Open(
+        BlueTuskConnectionStringBuilder settings,
+        BlueTuskClientConfiguration? clientConfiguration = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Validate();
@@ -229,7 +231,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             BlueTuskPhysicalSession? candidate = null;
             try
             {
-                candidate = OpenEndpoint(settings, endpoint);
+                candidate = OpenEndpoint(settings, endpoint, clientConfiguration);
                 if (requiredTarget == BlueTuskTargetSessionAttributes.Any)
                 {
                     fallback?.Dispose();
@@ -286,6 +288,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
     public static async ValueTask<IBlueTuskPhysicalSession> OpenAsync(
         BlueTuskConnectionStringBuilder settings,
+        CancellationToken cancellationToken) =>
+        await OpenAsync(settings, BlueTuskClientConfiguration.Empty, cancellationToken).ConfigureAwait(false);
+
+    public static async ValueTask<IBlueTuskPhysicalSession> OpenAsync(
+        BlueTuskConnectionStringBuilder settings,
+        BlueTuskClientConfiguration? clientConfiguration,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -319,6 +327,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 candidate = await OpenEndpointAsync(
                     settings,
                     endpoint,
+                    clientConfiguration,
                     cancellationToken).ConfigureAwait(false);
                 if (requiredTarget == BlueTuskTargetSessionAttributes.Any)
                 {
@@ -878,22 +887,25 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     private static async ValueTask<BlueTuskPhysicalSession> OpenEndpointAsync(
         BlueTuskConnectionStringBuilder settings,
         BlueTuskHostEndpoint endpoint,
+        BlueTuskClientConfiguration? clientConfiguration,
         CancellationToken cancellationToken)
     {
+        var options = new BlueTuskClientOptions
+        {
+            Host = endpoint.Host,
+            Port = endpoint.Port,
+            Database = settings.Database,
+            Username = settings.Username,
+            Password = settings.Password,
+            Passfile = settings.Passfile,
+            ApplicationName = settings.ApplicationName,
+            ConnectTimeout = settings.Timeout,
+            SslMode = settings.SslMode,
+            ChannelBinding = settings.ChannelBinding,
+            AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
+        };
         var session = await BlueTuskSession.OpenAsync(
-            new BlueTuskClientOptions
-            {
-                Host = endpoint.Host,
-                Port = endpoint.Port,
-                Database = settings.Database,
-                Username = settings.Username,
-                Password = settings.Password,
-                ApplicationName = settings.ApplicationName,
-                ConnectTimeout = settings.Timeout,
-                SslMode = settings.SslMode,
-                ChannelBinding = settings.ChannelBinding,
-                AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
-            },
+            (clientConfiguration ?? BlueTuskClientConfiguration.Empty).Apply(options),
             cancellationToken).ConfigureAwait(false);
         await session.ProbeOptionalCapabilitiesAsync(cancellationToken).ConfigureAwait(false);
         return new BlueTuskPhysicalSession(
@@ -905,22 +917,25 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
     private static BlueTuskPhysicalSession OpenEndpoint(
         BlueTuskConnectionStringBuilder settings,
-        BlueTuskHostEndpoint endpoint)
+        BlueTuskHostEndpoint endpoint,
+        BlueTuskClientConfiguration? clientConfiguration)
     {
+        var options = new BlueTuskClientOptions
+        {
+            Host = endpoint.Host,
+            Port = endpoint.Port,
+            Database = settings.Database,
+            Username = settings.Username,
+            Password = settings.Password,
+            Passfile = settings.Passfile,
+            ApplicationName = settings.ApplicationName,
+            ConnectTimeout = settings.Timeout,
+            SslMode = settings.SslMode,
+            ChannelBinding = settings.ChannelBinding,
+            AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
+        };
         var session = BlueTuskSession.Open(
-            new BlueTuskClientOptions
-            {
-                Host = endpoint.Host,
-                Port = endpoint.Port,
-                Database = settings.Database,
-                Username = settings.Username,
-                Password = settings.Password,
-                ApplicationName = settings.ApplicationName,
-                ConnectTimeout = settings.Timeout,
-                SslMode = settings.SslMode,
-                ChannelBinding = settings.ChannelBinding,
-                AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
-            });
+            (clientConfiguration ?? BlueTuskClientConfiguration.Empty).Apply(options));
         session.ProbeOptionalCapabilities();
         return new BlueTuskPhysicalSession(
             session,

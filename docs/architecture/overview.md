@@ -61,6 +61,13 @@ storage after the transport flushes it. Security-layer password derivations clea
 writable byte buffers; immutable caller-supplied .NET strings remain owned by the caller and
 cannot be zeroed by the provider.
 
+Credential callbacks and TLS client identity are immutable data-source configuration, not
+connection-string state. Data sources propagate that configuration to pools, unpooled paths,
+notification listeners, EF admin-database connections, and dedicated replication-option
+snapshots. Credential resolution is lazy and belongs to Client authentication; password-file
+parsing and permission checks remain in Security, while Transport only receives the final TLS
+certificate policy.
+
 ## Sync and async
 
 Asynchronous APIs use actual asynchronous socket operations. Synchronous APIs will use dedicated synchronous paths; they will not call asynchronous methods and block on the result.

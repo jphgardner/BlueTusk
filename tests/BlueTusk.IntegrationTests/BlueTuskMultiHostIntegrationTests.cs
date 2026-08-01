@@ -62,7 +62,7 @@ public sealed class BlueTuskMultiHostIntegrationTests
             () => connection.OpenAsync(CancellationToken.None));
 
         Assert.Contains("2 configured host(s)", exception.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain(settings.Password, exception.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(settings.Password!, exception.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

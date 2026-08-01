@@ -75,10 +75,46 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     }
 
     [PasswordPropertyText(true)]
-    public string Password
+    [AllowNull]
+    public string? Password
     {
-        get => GetString(nameof(Password), string.Empty);
-        set => this[nameof(Password)] = value ?? throw new ArgumentNullException(nameof(value));
+        get => TryGetValue(nameof(Password), out var value)
+            ? Convert.ToString(value, CultureInfo.InvariantCulture)
+            : null;
+        set
+        {
+            if (value is null)
+            {
+                Remove(nameof(Password));
+            }
+            else
+            {
+                this[nameof(Password)] = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets an explicit PostgreSQL password-file path. Null uses the platform default;
+    /// an empty value disables password-file lookup.
+    /// </summary>
+    [AllowNull]
+    public string? Passfile
+    {
+        get => TryGetValue(nameof(Passfile), out var value)
+            ? Convert.ToString(value, CultureInfo.InvariantCulture)
+            : null;
+        set
+        {
+            if (value is null)
+            {
+                Remove(nameof(Passfile));
+            }
+            else
+            {
+                this[nameof(Passfile)] = value;
+            }
+        }
     }
 
     public TimeSpan Timeout
@@ -219,6 +255,7 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = Host;
         _ = HostEndpoints;
         _ = Timeout;
+        _ = Passfile;
         _ = SslMode;
         _ = ChannelBinding;
         _ = AllowUnencryptedPassword;

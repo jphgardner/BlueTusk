@@ -15,6 +15,8 @@ public sealed record BlueTuskTlsOptions
 
     public IReadOnlyCollection<X509Certificate2> ClientCertificates { get; init; } = [];
 
+    public LocalCertificateSelectionCallback? LocalCertificateSelectionCallback { get; init; }
+
     public RemoteCertificateValidationCallback? RemoteCertificateValidationCallback { get; init; }
 
     internal void Validate()
@@ -23,4 +25,3 @@ public sealed record BlueTuskTlsOptions
         ArgumentNullException.ThrowIfNull(ClientCertificates);
     }
 }
-

@@ -22,6 +22,8 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal(BlueTuskTargetSessionAttributes.Any, builder.TargetSessionAttributes);
         Assert.Equal(BlueTuskLoadBalanceHosts.Disable, builder.LoadBalanceHosts);
         Assert.False(builder.AllowUnencryptedPassword);
+        Assert.Null(builder.Password);
+        Assert.Null(builder.Passfile);
         Assert.Equal([new BlueTuskHostEndpoint("localhost", 5432)], builder.HostEndpoints);
     }
 
@@ -37,6 +39,19 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.DoesNotContain("also-secret", redacted, StringComparison.Ordinal);
         Assert.Contains("db.example", redacted, StringComparison.Ordinal);
         Assert.Equal(2, redacted.Split("<redacted>", StringSplitOptions.None).Length - 1);
+    }
+
+    [Fact]
+    public void Parses_and_removes_an_explicit_password_file()
+    {
+        var builder = new BlueTuskConnectionStringBuilder("Passfile=C:\\credentials\\pgpass.conf");
+
+        Assert.Equal("C:\\credentials\\pgpass.conf", builder.Passfile);
+
+        builder.Passfile = null;
+
+        Assert.Null(builder.Passfile);
+        Assert.DoesNotContain("Passfile", builder.ConnectionString, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

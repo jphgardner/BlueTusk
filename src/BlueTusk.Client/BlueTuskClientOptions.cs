@@ -38,7 +38,22 @@ public sealed record BlueTuskClientOptions
 
     public required string Username { get; init; }
 
-    public required string Password { get; init; }
+    /// <summary>Gets the explicit password, or <see langword="null"/> to use another source.</summary>
+    public string? Password { get; init; }
+
+    /// <summary>
+    /// Gets an explicit PostgreSQL password-file path. A null value uses the platform default;
+    /// an empty value disables password-file lookup.
+    /// </summary>
+    public string? Passfile { get; init; }
+
+    public BlueTuskPasswordProvider? PasswordProvider { get; init; }
+
+    public BlueTuskPasswordProviderAsync? PasswordProviderAsync { get; init; }
+
+    public BlueTuskAccessTokenProvider? AccessTokenProvider { get; init; }
+
+    public BlueTuskAccessTokenProviderAsync? AccessTokenProviderAsync { get; init; }
 
     public string ApplicationName { get; init; } = "BlueTusk";
 
@@ -58,7 +73,16 @@ public sealed record BlueTuskClientOptions
 
     public X509RevocationMode CertificateRevocationCheckMode { get; init; } = X509RevocationMode.Online;
 
+    public IReadOnlyCollection<X509Certificate2> ClientCertificates { get; init; } = [];
+
+    public LocalCertificateSelectionCallback? LocalCertificateSelectionCallback { get; init; }
+
     public RemoteCertificateValidationCallback? RemoteCertificateValidationCallback { get; init; }
+
+    public override string ToString() =>
+        $"{nameof(BlueTuskClientOptions)} {{ Host = {Host}, Port = {Port}, Database = {Database}, " +
+        $"Username = {Username}, Password = <redacted>, Passfile = <redacted>, " +
+        $"SSL Mode = {SslMode}, Channel Binding = {ChannelBinding} }}";
 
     /// <summary>Creates client options from a BlueTusk connection string.</summary>
     public static BlueTuskClientOptions FromConnectionString(string connectionString)
@@ -72,7 +96,8 @@ public sealed record BlueTuskClientOptions
             Port = GetInt32(settings, "Port", 5432),
             Database = GetString(settings, "Database", string.Empty),
             Username = GetString(settings, "Username", string.Empty),
-            Password = GetString(settings, "Password", string.Empty),
+            Password = GetOptionalString(settings, "Password"),
+            Passfile = GetOptionalString(settings, "Passfile"),
             ApplicationName = GetString(settings, "Application Name", "BlueTusk"),
             ConnectTimeout = TimeSpan.FromSeconds(GetInt32(settings, "Timeout", 15)),
             SslMode = GetEnum(settings, "SSL Mode", BlueTuskSslMode.VerifyFull),
@@ -91,8 +116,8 @@ public sealed record BlueTuskClientOptions
         ArgumentOutOfRangeException.ThrowIfGreaterThan(Port, 65_535);
         ArgumentException.ThrowIfNullOrWhiteSpace(Database);
         ArgumentException.ThrowIfNullOrWhiteSpace(Username);
-        ArgumentNullException.ThrowIfNull(Password);
         ArgumentNullException.ThrowIfNull(ApplicationName);
+        ArgumentNullException.ThrowIfNull(ClientCertificates);
 
         if (ConnectTimeout <= TimeSpan.Zero && ConnectTimeout != Timeout.InfiniteTimeSpan)
         {
@@ -107,6 +132,14 @@ public sealed record BlueTuskClientOptions
         if (!Enum.IsDefined(ReplicationMode))
         {
             throw new ArgumentOutOfRangeException(nameof(ReplicationMode));
+        }
+
+        var hasPasswordProvider = PasswordProvider is not null || PasswordProviderAsync is not null;
+        var hasAccessTokenProvider = AccessTokenProvider is not null || AccessTokenProviderAsync is not null;
+        if (hasPasswordProvider && hasAccessTokenProvider)
+        {
+            throw new ArgumentException(
+                "Password and access-token providers are mutually exclusive credential sources.");
         }
     }
 
@@ -125,6 +158,11 @@ public sealed record BlueTuskClientOptions
         settings.TryGetValue(keyword, out var value)
             ? int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture)
             : defaultValue;
+
+    private static string? GetOptionalString(
+        Dictionary<string, string> settings,
+        string keyword) =>
+        settings.TryGetValue(keyword, out var value) ? value : null;
 
     private static TEnum GetEnum<TEnum>(
         Dictionary<string, string> settings,
