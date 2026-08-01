@@ -155,3 +155,32 @@ image.
 The current package deliberately covers the dense `vector` data path only.
 `halfvec`, `sparsevec`, vector-specific `bit` behavior, EF mappings, and LINQ
 distance translations are not claimed by this preview.
+
+## hstore preview
+
+`BlueTusk.Extensions.HStore` maps PostgreSQL's key/value type to an immutable
+`BlueTuskHStore` value. Install and register it before building the data source:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS hstore;
+```
+
+```csharp
+using BlueTusk.Data;
+using BlueTusk.Extensions.HStore;
+
+var attributes = new BlueTuskHStore(
+    new("owner", "BlueTusk"),
+    new("reviewed", null));
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UseHStore()
+    .Build();
+```
+
+The value preserves PostgreSQL's distinction between a null value and the text
+`"NULL"`, uses ordinal key identity, and compares independently of pair order.
+Its parser and formatter implement hstore quoting and backslash escaping. The
+native codec validates pair counts, length prefixes, UTF-8, duplicate keys, and
+trailing bytes. Runtime catalogue composition supplies `BlueTuskHStore[]` with
+no array-specific registration. The live gate covers scalar and array binary
+round trips plus key lookup, existence, and null-definition semantics.

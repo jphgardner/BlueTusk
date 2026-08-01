@@ -464,7 +464,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] PostGIS package
 - [x] pgvector ADO.NET package (live-tested dense `vector`, arrays, and distance execution)
 - [ ] pgvector `halfvec`/`sparsevec`, vector-specific `bit`, and EF integration
-- [ ] hstore package
+- [x] hstore ADO.NET package (live-tested binary/text values, arrays, and operators)
 - [ ] ltree package
 - [x] citext packages (tested ADO.NET and EF preview; extension SDK remains unstable)
 - [ ] pg_trgm package
