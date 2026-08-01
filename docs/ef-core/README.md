@@ -340,7 +340,37 @@ var pairs = await context.Documents
 
 Column-correlated inputs use a lateral join; captured arrays retain their exact
 array mappings and work in compiled queries. Additional element-type and arity
-combinations, and general user-defined table functions, remain planned.
+combinations remain planned.
+
+Application-defined table functions use EF Core's model metadata instead of a
+runtime string-based SQL API. Define a context method with `FromExpression`,
+map its row as a keyless entity, and register the method's PostgreSQL name and
+schema with `HasDbFunction`:
+
+```csharp
+public IQueryable<SearchResult> SearchDocuments(int minimumRank)
+    => FromExpression(() => SearchDocuments(minimumRank));
+
+protected override void OnModelCreating(ModelBuilder modelBuilder)
+{
+    modelBuilder.Entity<SearchResult>().HasNoKey();
+    modelBuilder
+        .HasDbFunction(typeof(AppDbContext).GetMethod(
+            nameof(SearchDocuments), [typeof(int)])!)
+        .HasName("search_documents")
+        .HasSchema("application");
+}
+```
+
+The function name and schema are fixed model metadata and are identifier-quoted;
+function arguments remain normal EF parameters. The returned keyless row can be
+filtered, ordered, projected, and used in compiled queries. A call whose
+argument refers to an outer row becomes a PostgreSQL `JOIN LATERAL`, so model-
+registered functions compose in correlated `SelectMany` queries as well. SQL-
+generation and live PostgreSQL 15–19 tests cover schema qualification,
+parameterization, typed materialization, correlation, and compiled execution.
+BlueTusk does not expose an API that accepts an application-provided function
+name or SQL fragment at query time.
 
 ## Migrations
 
@@ -393,4 +423,4 @@ Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retain
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, and integer/text multi-array expansion across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, and JSONB element/key/path/pair expansion are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, integer/text multi-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

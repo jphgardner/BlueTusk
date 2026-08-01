@@ -220,6 +220,34 @@ public sealed class PostgreSqlSetReturningFunctionTests
     }
 
     [Fact]
+    public void Model_registered_table_functions_translate_schema_arguments_and_lateral_composition()
+    {
+        using var context = CreateContext();
+        var minimum = 2;
+
+        var rootSql = context.UserDefinedRows(minimum)
+            .Where(row => row.Id >= minimum)
+            .OrderBy(row => row.Id)
+            .ToQueryString();
+        var lateralSql = context.Values
+            .SelectMany(
+                value => context.UserDefinedRows(value.Id),
+                (value, row) => new { value.Id, RowId = row.Id, row.Label })
+            .ToQueryString();
+
+        Assert.Contains(
+            "\"application\".\"ef_user_defined_rows\"(@minimum)",
+            rootSql,
+            StringComparison.Ordinal);
+        Assert.Contains("JOIN LATERAL", lateralSql, StringComparison.Ordinal);
+        Assert.Contains(
+            "\"application\".\"ef_user_defined_rows\"(\"e\".\"Id\")",
+            lateralSql,
+            StringComparison.Ordinal);
+        Assert.DoesNotContain("CROSS APPLY", lateralSql, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Set_returning_functions_execute_and_materialize_typed_elements()
     {
         var connectionString = GetConnectionString();
@@ -228,6 +256,8 @@ public sealed class PostgreSqlSetReturningFunctionTests
             dataSource,
             """
             DROP TABLE IF EXISTS "ef_set_returning_values";
+            DROP FUNCTION IF EXISTS "application"."ef_user_defined_rows"(integer);
+            CREATE SCHEMA IF NOT EXISTS "application";
             CREATE TABLE "ef_set_returning_values" (
                 "Id" integer PRIMARY KEY,
                 "Numbers" integer[] NOT NULL,
@@ -258,7 +288,15 @@ public sealed class PostgreSqlSetReturningFunctionTests
                     ARRAY[]::integer[],
                     ARRAY[]::text[],
                     '[]'::jsonb,
-                    '{}'::jsonb)
+                    '{}'::jsonb);
+            CREATE FUNCTION "application"."ef_user_defined_rows"(minimum integer)
+            RETURNS TABLE ("Id" integer, "Label" text)
+            LANGUAGE SQL
+            STABLE
+            AS $function$
+                SELECT value, 'row-' || value::text
+                FROM generate_series(minimum, minimum + 2) AS value
+            $function$
             """);
 
         try
@@ -338,6 +376,18 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 .SelectMany(
                     value => EF.Functions.Unnest(value.Numbers, value.Labels),
                     (_, pair) => pair)
+                .ToListAsync();
+            var userDefinedRows = await context.UserDefinedRows(2)
+                .Where(row => row.Id > 2)
+                .OrderBy(row => row.Id)
+                .ToListAsync();
+            var correlatedUserDefinedRows = await context.Values
+                .Where(value => value.Id <= 2)
+                .SelectMany(
+                    value => context.UserDefinedRows(value.Id),
+                    (value, row) => new { SourceId = value.Id, RowId = row.Id })
+                .OrderBy(row => row.SourceId)
+                .ThenBy(row => row.RowId)
                 .ToListAsync();
             var integerSeries = await context.Database
                 .GenerateSeries(2, 6, 2)
@@ -452,6 +502,10 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         _ => EF.Functions.Unnest(numbers, labels),
                         (_, pair) => pair)
                     .Count());
+            var compiledUserDefinedRowCount = EF.CompileQuery(
+                (SetReturningContext database, int minimumId) => database
+                    .UserDefinedRows(minimumId)
+                    .Count());
 
             Assert.Collection(
                 expanded,
@@ -510,6 +564,15 @@ public sealed class PostgreSqlSetReturningFunctionTests
                     new KeyValuePair<int?, string?>(null, "extra"),
                 ],
                 zippedArrays);
+            Assert.Collection(
+                userDefinedRows,
+                row => Assert.Equal((3, "row-3"), (row.Id, row.Label)),
+                row => Assert.Equal((4, "row-4"), (row.Id, row.Label)));
+            Assert.Equal(
+                [(1, 1), (1, 2), (1, 3), (2, 2), (2, 3), (2, 4)],
+                correlatedUserDefinedRows
+                    .Select(row => (row.SourceId, row.RowId))
+                    .ToArray());
             Assert.Equal([2, 4, 6], integerSeries);
             Assert.Equal([5L, 3L, 1L], longSeries);
             Assert.Equal([1m, 2m, 3m], standaloneNumericSeries);
@@ -552,10 +615,16 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Equal(
                 3,
                 compiledZippedArrayCount(context, [1, 2], ["one", null, "three"]));
+            Assert.Equal(3, compiledUserDefinedRowCount(context, 5));
         }
         finally
         {
-            await ExecuteNonQueryAsync(dataSource, "DROP TABLE IF EXISTS \"ef_set_returning_values\"");
+            await ExecuteNonQueryAsync(
+                dataSource,
+                """
+                DROP TABLE IF EXISTS "ef_set_returning_values";
+                DROP FUNCTION IF EXISTS "application"."ef_user_defined_rows"(integer)
+                """);
         }
     }
 
@@ -600,13 +669,32 @@ public sealed class PostgreSqlSetReturningFunctionTests
     {
         public DbSet<SetReturningValue> Values => Set<SetReturningValue>();
 
+        public IQueryable<UserDefinedFunctionRow> UserDefinedRows(int minimum)
+            => FromExpression(() => UserDefinedRows(minimum));
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             var value = modelBuilder.Entity<SetReturningValue>();
             value.ToTable("ef_set_returning_values");
             value.Property(item => item.JsonArray).HasColumnType("jsonb");
             value.Property(item => item.JsonObject).HasColumnType("jsonb");
+
+            modelBuilder.Entity<UserDefinedFunctionRow>().HasNoKey();
+            modelBuilder
+                .HasDbFunction(
+                    typeof(SetReturningContext).GetMethod(
+                        nameof(UserDefinedRows),
+                        [typeof(int)])!)
+                .HasName("ef_user_defined_rows")
+                .HasSchema("application");
         }
+    }
+
+    private sealed class UserDefinedFunctionRow
+    {
+        public int Id { get; set; }
+
+        public string Label { get; set; } = "";
     }
 
     private sealed class SetReturningValue
