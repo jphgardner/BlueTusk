@@ -319,8 +319,28 @@ var properties = await context.Documents
 These roots emit `WITH ORDINALITY` internally so duplicate values and JSON-null
 elements have stable row identity and source order. Correlated roots use lateral
 joins, and captured JSON/JSONPath values remain parameters. Arbitrary
-`jsonb_to_recordset` shapes, multi-argument `unnest`, and general user-defined
-table functions remain planned.
+`jsonb_to_recordset` shapes remain planned.
+
+The initial multi-argument `unnest` API pairs an `integer[]` with a nullable
+`text[]` and returns `KeyValuePair<int?, string?>` rows. Both outputs are
+nullable because PostgreSQL pads the shorter input with `NULL`:
+
+```csharp
+var pairs = await context.Documents
+    .SelectMany(
+        document => EF.Functions.Unnest(document.Scores, document.Labels),
+        (document, pair) => new
+        {
+            document.Id,
+            Score = pair.Key,
+            Label = pair.Value,
+        })
+    .ToListAsync(cancellationToken);
+```
+
+Column-correlated inputs use a lateral join; captured arrays retain their exact
+array mappings and work in compiled queries. Additional element-type and arity
+combinations, and general user-defined table functions, remain planned.
 
 ## Migrations
 
@@ -373,4 +393,4 @@ Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retain
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series roots, and scalar/key-value JSONB set-returning roots across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus `unnest` filtering, ordinality, nullable elements, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, and JSONB element/key/path/pair expansion are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, and integer/text multi-array expansion across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, and JSONB element/key/path/pair expansion are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

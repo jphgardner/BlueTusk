@@ -8,8 +8,7 @@ internal sealed class BlueTuskRecordSetReturningFunctionQueryRootExpression(
     Type elementType,
     IReadOnlyList<Expression> arguments,
     IReadOnlyList<string?> argumentStoreTypes,
-    string valueStoreType,
-    bool isValueNullable)
+    IReadOnlyList<BlueTuskSetReturningFunctionColumn> columns)
     : QueryRootExpression(elementType)
 {
     public string Name { get; } = name;
@@ -18,9 +17,7 @@ internal sealed class BlueTuskRecordSetReturningFunctionQueryRootExpression(
 
     public IReadOnlyList<string?> ArgumentStoreTypes { get; } = argumentStoreTypes;
 
-    public string ValueStoreType { get; } = valueStoreType;
-
-    public bool IsValueNullable { get; } = isValueNullable;
+    public IReadOnlyList<BlueTuskSetReturningFunctionColumn> Columns { get; } = columns;
 
     public override Expression DetachQueryProvider()
         => this;
@@ -54,8 +51,7 @@ internal sealed class BlueTuskRecordSetReturningFunctionQueryRootExpression(
                 ElementType,
                 visitedArguments,
                 ArgumentStoreTypes,
-                ValueStoreType,
-                IsValueNullable);
+                Columns);
     }
 
     protected override void Print(ExpressionPrinter expressionPrinter)
@@ -80,16 +76,13 @@ internal sealed class BlueTuskRecordSetReturningFunctionQueryRootExpression(
             && Name == other.Name
             && Arguments.SequenceEqual(other.Arguments)
             && ArgumentStoreTypes.SequenceEqual(other.ArgumentStoreTypes)
-            && ValueStoreType == other.ValueStoreType
-            && IsValueNullable == other.IsValueNullable;
+            && Columns.SequenceEqual(other.Columns);
 
     public override int GetHashCode()
     {
         var hash = new HashCode();
         hash.Add(base.GetHashCode());
         hash.Add(Name, StringComparer.Ordinal);
-        hash.Add(ValueStoreType, StringComparer.Ordinal);
-        hash.Add(IsValueNullable);
         foreach (var argument in Arguments)
         {
             hash.Add(argument);
@@ -98,6 +91,11 @@ internal sealed class BlueTuskRecordSetReturningFunctionQueryRootExpression(
         foreach (var storeType in ArgumentStoreTypes)
         {
             hash.Add(storeType, StringComparer.Ordinal);
+        }
+
+        foreach (var column in Columns)
+        {
+            hash.Add(column);
         }
 
         return hash.ToHashCode();

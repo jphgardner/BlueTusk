@@ -209,20 +209,27 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         }
 
         var tableAlias = _queryCompilationContext.SqlAliasManager.GenerateTableAlias(function.Name);
-        var keyMapping = _typeMappingSource.FindMapping("text")!;
-        var valueMapping = _typeMappingSource.FindMapping(function.ValueStoreType)!;
-        var keyColumn = new ColumnExpression(
-            "key",
-            tableAlias,
-            typeof(string),
-            keyMapping,
-            nullable: false);
-        var valueColumn = new ColumnExpression(
-            "value",
-            tableAlias,
-            typeof(string),
-            valueMapping,
-            function.IsValueNullable);
+        var columns = new ColumnExpression[function.Columns.Count];
+        for (var index = 0; index < function.Columns.Count; index++)
+        {
+            var column = function.Columns[index];
+            var columnClrType = Nullable.GetUnderlyingType(column.ClrType) ?? column.ClrType;
+            var columnMapping = column.StoreType is null
+                ? _typeMappingSource.FindMapping(columnClrType, RelationalDependencies.Model)
+                : _typeMappingSource.FindMapping(column.StoreType);
+            if (columnMapping is null)
+            {
+                return null;
+            }
+
+            columns[index] = new ColumnExpression(
+                column.Name,
+                tableAlias,
+                columnClrType,
+                columnMapping,
+                column.IsNullable);
+        }
+
         var ordinalityTypeMapping = _typeMappingSource.FindMapping(typeof(long))!;
         var ordinalityColumn = new ColumnExpression(
             "ordinality",
@@ -238,33 +245,40 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                     tableAlias,
                     function.Name,
                     arguments,
-                    ["key", "value"],
+                    function.Columns.Select(column => column.Name).ToArray(),
                     withOrdinality: true),
             ],
-            keyColumn,
+            columns[0],
             identifier: [(ordinalityColumn, (ValueComparer)ordinalityTypeMapping.Comparer)],
             _queryCompilationContext.SqlAliasManager);
 #pragma warning restore EF1001
-        var keyProperty = function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Key))!;
-        var valueProperty = function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Value))!;
-        var keyProjection = new ProjectionMember().Append(keyProperty);
-        var valueProjection = new ProjectionMember().Append(valueProperty);
+        var pairProperties = new[]
+        {
+            function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Key))!,
+            function.ElementType.GetProperty(nameof(KeyValuePair<string, string>.Value))!,
+        };
+        var projectionMembers = pairProperties
+            .Select(property => new ProjectionMember().Append(property))
+            .ToArray();
         selectExpression.ReplaceProjection(
-            new Dictionary<ProjectionMember, Expression>
-            {
-                [keyProjection] = keyColumn,
-                [valueProjection] = valueColumn,
-            });
+            projectionMembers
+                .Select((projection, index) => (projection, index))
+                .ToDictionary(
+                    item => item.projection,
+                    item => (Expression)columns[item.index]));
         selectExpression.AppendOrdering(new OrderingExpression(ordinalityColumn, ascending: true));
 
-        var constructor = function.ElementType.GetConstructor([typeof(string), typeof(string)])!;
+        var constructor = function.ElementType.GetConstructor(
+            function.ElementType.GetGenericArguments())!;
         var shaper = Expression.New(
             constructor,
-            [
-                new ProjectionBindingExpression(selectExpression, keyProjection, typeof(string)),
-                new ProjectionBindingExpression(selectExpression, valueProjection, typeof(string)),
-            ],
-            [keyProperty, valueProperty]);
+            projectionMembers
+                .Select((projection, index) =>
+                    (Expression)new ProjectionBindingExpression(
+                        selectExpression,
+                        projection,
+                        function.Columns[index].ClrType)),
+            pairProperties);
         return new ShapedQueryExpression(selectExpression, shaper);
     }
 

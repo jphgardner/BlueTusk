@@ -35,6 +35,30 @@ internal sealed class BlueTuskQueryTranslationPreprocessor(
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
+                && methodCallExpression.Method.Name == nameof(BlueTuskDbFunctionsExtensions.Unnest))
+            {
+                var elementType = methodCallExpression.Method.ReturnType.GetGenericArguments()[0];
+                var pairTypes = elementType.GetGenericArguments();
+                return new BlueTuskRecordSetReturningFunctionQueryRootExpression(
+                    "unnest",
+                    elementType,
+                    methodCallExpression.Arguments.Skip(1).Select(argument => Visit(argument)!).ToArray(),
+                    [null, null],
+                    [
+                        new BlueTuskSetReturningFunctionColumn(
+                            "first",
+                            pairTypes[0],
+                            StoreType: null,
+                            IsNullable: true),
+                        new BlueTuskSetReturningFunctionColumn(
+                            "second",
+                            pairTypes[1],
+                            StoreType: null,
+                            IsNullable: true),
+                    ]);
+            }
+
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
                 && TryGetJsonRecordFunction(methodCallExpression.Method.Name, out var recordSpecification))
             {
                 return new BlueTuskRecordSetReturningFunctionQueryRootExpression(
@@ -42,8 +66,18 @@ internal sealed class BlueTuskQueryTranslationPreprocessor(
                     methodCallExpression.Method.ReturnType.GetGenericArguments()[0],
                     methodCallExpression.Arguments.Skip(1).Select(argument => Visit(argument)!).ToArray(),
                     ["jsonb"],
-                    recordSpecification.ValueStoreType,
-                    recordSpecification.IsValueNullable);
+                    [
+                        new BlueTuskSetReturningFunctionColumn(
+                            "key",
+                            typeof(string),
+                            "text",
+                            IsNullable: false),
+                        new BlueTuskSetReturningFunctionColumn(
+                            "value",
+                            typeof(string),
+                            recordSpecification.ValueStoreType,
+                            recordSpecification.IsValueNullable),
+                    ]);
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)

@@ -235,6 +235,12 @@ public static class BlueTuskDbFunctionsExtensions
         string jsonb)
         => ThrowTranslationOnly<IQueryable<KeyValuePair<string, string?>>>();
 
+    public static IQueryable<KeyValuePair<int?, string?>> Unnest(
+        this DbFunctions _,
+        int[] first,
+        string?[] second)
+        => ThrowTranslationOnly<IQueryable<KeyValuePair<int?, string?>>>();
+
     public static IQueryable<string> JsonPathQuery(
         this DbFunctions _,
         string jsonb,

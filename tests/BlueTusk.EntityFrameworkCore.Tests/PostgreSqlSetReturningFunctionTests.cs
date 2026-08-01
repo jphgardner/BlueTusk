@@ -190,6 +190,36 @@ public sealed class PostgreSqlSetReturningFunctionTests
     }
 
     [Fact]
+    public void Multi_argument_unnest_translates_typed_nullable_pairs_and_parameters()
+    {
+        using var context = CreateContext();
+        var numbers = new[] { 1, 2 };
+        string?[] labels = ["one"];
+
+        var lateralSql = context.Values
+            .SelectMany(
+                value => EF.Functions.Unnest(value.Numbers, value.Labels),
+                (value, pair) => new { value.Id, Number = pair.Key, Label = pair.Value })
+            .ToQueryString();
+        var parameterSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.Unnest(numbers, labels),
+                (_, pair) => new { Number = pair.Key, Label = pair.Value })
+            .ToQueryString();
+
+        Assert.Contains("JOIN LATERAL", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("unnest(", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("WITH ORDINALITY", lateralSql, StringComparison.Ordinal);
+        Assert.Contains(
+            "(\"first\", \"second\", \"ordinality\")",
+            lateralSql,
+            StringComparison.Ordinal);
+        Assert.Contains("unnest(", parameterSql, StringComparison.Ordinal);
+        Assert.Contains("@numbers", parameterSql, StringComparison.Ordinal);
+        Assert.Contains("@labels", parameterSql, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public async Task Set_returning_functions_execute_and_materialize_typed_elements()
     {
         var connectionString = GetConnectionString();
@@ -214,7 +244,7 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 (
                     1,
                     ARRAY[1, 3],
-                    ARRAY['one', NULL]::text[],
+                    ARRAY['one', NULL, 'extra']::text[],
                     '["one",null,"one"]'::jsonb,
                     '{"alpha":1,"beta":2}'::jsonb),
                 (
@@ -302,6 +332,12 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         new BlueTuskJsonPath("$.*")),
                     (_, match) => match)
                 .OrderBy(match => match)
+                .ToListAsync();
+            var zippedArrays = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.Unnest(value.Numbers, value.Labels),
+                    (_, pair) => pair)
                 .ToListAsync();
             var integerSeries = await context.Database
                 .GenerateSeries(2, 6, 2)
@@ -409,6 +445,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         _ => EF.Functions.JsonEachText(jsonValue),
                         (_, pair) => pair)
                     .Count());
+            var compiledZippedArrayCount = EF.CompileQuery(
+                (SetReturningContext database, int[] numbers, string?[] labels) => database.Values
+                    .Where(value => value.Id == 1)
+                    .SelectMany(
+                        _ => EF.Functions.Unnest(numbers, labels),
+                        (_, pair) => pair)
+                    .Count());
 
             Assert.Collection(
                 expanded,
@@ -460,6 +503,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 ],
                 jsonTextPairs);
             Assert.Equal(["1", "2"], jsonPathMatches);
+            Assert.Equal(
+                [
+                    new KeyValuePair<int?, string?>(1, "one"),
+                    new KeyValuePair<int?, string?>(3, null),
+                    new KeyValuePair<int?, string?>(null, "extra"),
+                ],
+                zippedArrays);
             Assert.Equal([2, 4, 6], integerSeries);
             Assert.Equal([5L, 3L, 1L], longSeries);
             Assert.Equal([1m, 2m, 3m], standaloneNumericSeries);
@@ -499,6 +549,9 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Equal(
                 2,
                 compiledJsonPairCount(context, "{\"key\":\"value\",\"nullable\":null}"));
+            Assert.Equal(
+                3,
+                compiledZippedArrayCount(context, [1, 2], ["one", null, "three"]));
         }
         finally
         {
