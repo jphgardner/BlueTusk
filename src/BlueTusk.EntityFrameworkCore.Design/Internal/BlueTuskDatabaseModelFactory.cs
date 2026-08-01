@@ -32,6 +32,8 @@ using BlueTusk.EntityFrameworkCore.Subscriptions;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
+using BlueTusk.EntityFrameworkCore.Tablespaces;
+using BlueTusk.EntityFrameworkCore.Tablespaces.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
@@ -93,6 +95,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
     {
         var model = ReadDatabase(connection);
         var selection = new Selection(options);
+        ReadTablespaces(connection, model, selection);
         var tables = ReadTables(connection, model, selection);
         ReadColumns(connection, tables);
         ReadForeignData(connection, model, tables);
@@ -2045,6 +2048,63 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         }
     }
 
+    private static void ReadTablespaces(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        if (!selection.IncludesClusterObjects)
+        {
+            return;
+        }
+
+        const string sql = """
+            SELECT tablespace.spcname,
+                   pg_catalog.pg_tablespace_location(tablespace.oid),
+                   pg_catalog.pg_get_userbyid(tablespace.spcowner),
+                   tablespace.spcoptions,
+                   pg_catalog.shobj_description(tablespace.oid, 'pg_tablespace')
+            FROM pg_catalog.pg_tablespace AS tablespace
+            WHERE tablespace.spcname NOT IN ('pg_default', 'pg_global')
+              AND tablespace.spcname !~ '^pg_'
+            ORDER BY tablespace.spcname
+            """;
+        var tablespaces = new List<BlueTuskTablespaceDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var options = reader.IsDBNull(3)
+                ? []
+                : ParsePostgreSqlArray(reader.GetValue(3)).Select(ParseTablespaceOption).ToArray();
+            tablespaces.Add(new BlueTuskTablespaceDefinition(
+                reader.GetString(0),
+                reader.GetString(1),
+                reader.GetString(2),
+                options,
+                GetNullableString(reader, 4)));
+        }
+
+        if (tablespaces.Count > 0)
+        {
+            model[BlueTuskTablespaceMetadata.AnnotationName] = BlueTuskTablespaceMetadata.Serialize(
+                new BlueTuskTablespaceDefinitionSet(tablespaces));
+        }
+    }
+
+    private static BlueTuskTablespaceOptionDefinition ParseTablespaceOption(string option)
+    {
+        var separator = option.IndexOf('=');
+        if (separator <= 0 || separator == option.Length - 1)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL returned an invalid tablespace option '{option}'.");
+        }
+
+        return new BlueTuskTablespaceOptionDefinition(option[..separator], option[(separator + 1)..]);
+    }
+
     private static void ReadRoutines(
         DbConnection connection,
         DatabaseModel model,
@@ -3065,6 +3125,8 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
 
         public bool IncludesSchemaObject(string schema)
             => _tables.Count == 0 && (_schemas.Count == 0 || _schemas.Contains(schema));
+
+        public bool IncludesClusterObjects => _schemas.Count == 0 && _tables.Count == 0;
     }
 }
 

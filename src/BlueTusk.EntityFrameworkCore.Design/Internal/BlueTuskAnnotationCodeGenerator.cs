@@ -13,6 +13,7 @@ using BlueTusk.EntityFrameworkCore.Rules.Internal;
 using BlueTusk.EntityFrameworkCore.SchemaPrograms.Internal;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
+using BlueTusk.EntityFrameworkCore.Tablespaces.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views.Internal;
@@ -63,6 +64,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskEventTriggerModelBuilderExtensions.HasBlueTuskEventTriggers),
                 serializedEventTriggers);
+        }
+
+        if (annotation.Name == BlueTuskTablespaceMetadata.AnnotationName &&
+            annotation.Value is string serializedTablespaces)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskTablespaceModelBuilderExtensions.HasBlueTuskTablespaces),
+                serializedTablespaces);
         }
 
         if (annotation.Name == BlueTuskPropertyGraphMetadata.AnnotationName &&

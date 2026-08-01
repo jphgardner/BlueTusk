@@ -375,7 +375,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] PostgreSQL 15–19 execution, check enforcement, concurrent refresh, lifecycle, reverse-engineering, and scaffolding acceptance
 - [ ] PostgreSQL-complete migrations SQL generation
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
-- [ ] Remaining product-spec schema objects
+- [x] Remaining product-spec schema objects
   - [x] Event triggers
     - [x] Typed DDL-start/end, SQL-drop, table-rewrite, and PostgreSQL 17+ login events with command-tag filters and firing modes
     - [x] Routine-last create, migration-first drop, body replacement, rename, enable/disable/replica/always operations, generated migration C#, and default-`RESTRICT` removal
@@ -391,7 +391,11 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Dependency-ordered create/alter/replace/drop diffs, destructive diagnostics, generated migration C#, snapshots, and default-`RESTRICT` removal
     - [x] Direct `pg_operator`/`pg_opfamily`/`pg_opclass`/`pg_amop`/`pg_amproc`/`pg_cast`/`pg_aggregate` discovery with extension exclusion and fluent C# scaffolding
     - [x] PostgreSQL 15–19 lifecycle, precise family-member alteration, catalogue round-tripping, and database-first scaffolding acceptance
-  - [ ] Tablespace lifecycle
+  - [x] Tablespace lifecycle
+    - [x] Typed cluster-wide name/location/owner/options/comment metadata with model-builder and manual-migration APIs
+    - [x] Transaction-suppressed create/drop, dependency-safe ordering, rename, owner/option/comment alteration, reset semantics, and immutable-location rejection
+    - [x] Direct `pg_tablespace`/`pg_tablespace_location`/shared-comment discovery, built-in exclusion, full-database fluent scaffolding, and generated migration C#
+    - [x] PostgreSQL 15–19 filesystem-backed lifecycle, table placement, catalogue round-tripping, scaffolding, and empty-cluster-drop acceptance
 - [ ] Idempotent scripts, history-table behaviour, and version-aware DDL
 
 ## 0.5.0 — PostgreSQL 19 SQL/PGQ graph preview (Milestone 7)

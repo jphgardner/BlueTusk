@@ -24,6 +24,8 @@ using BlueTusk.EntityFrameworkCore.SchemaPrograms;
 using BlueTusk.EntityFrameworkCore.SchemaPrograms.Internal;
 using BlueTusk.EntityFrameworkCore.Subscriptions;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
+using BlueTusk.EntityFrameworkCore.Tablespaces;
+using BlueTusk.EntityFrameworkCore.Tablespaces.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
@@ -51,6 +53,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskTablespaceOperation createTablespace:
+                Generate(createTablespace, builder);
+                break;
+            case AlterBlueTuskTablespaceOperation alterTablespace:
+                Generate(alterTablespace, builder);
+                break;
+            case RenameBlueTuskTablespaceOperation renameTablespace:
+                Generate(renameTablespace, builder);
+                break;
+            case DropBlueTuskTablespaceOperation dropTablespace:
+                Generate(dropTablespace, builder);
+                break;
             case CreateBlueTuskExtensionOperation createExtension:
                 Generate(createExtension, builder);
                 break;
@@ -618,6 +632,154 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
             .Append(operation.Cascade ? " CASCADE" : " RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskTablespaceOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskTablespaceMetadata.Validate(operation.Definition);
+        var definition = BlueTuskTablespaceMetadata.Normalize(operation.Definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("CREATE TABLESPACE ")
+            .Append(helper.DelimitIdentifier(definition.Name));
+        if (definition.Owner is not null)
+        {
+            builder.Append(" OWNER ").Append(helper.DelimitIdentifier(definition.Owner));
+        }
+
+        builder.Append(" LOCATION '").Append(EscapeLiteral(definition.Location)).Append("'");
+        AppendTablespaceOptions(builder, " WITH", definition.Options);
+        EndSuppressedStatement(builder);
+        if (definition.Comment is not null)
+        {
+            AppendTablespaceComment(builder, definition.Name, definition.Comment);
+        }
+    }
+
+    private void Generate(
+        AlterBlueTuskTablespaceOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskTablespaceMetadata.Validate(operation.Definition);
+        BlueTuskTablespaceMetadata.Validate(operation.OldDefinition);
+        var definition = BlueTuskTablespaceMetadata.Normalize(operation.Definition);
+        var oldDefinition = BlueTuskTablespaceMetadata.Normalize(operation.OldDefinition);
+        if (!string.Equals(definition.Name, oldDefinition.Name, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Rename a PostgreSQL tablespace with a rename operation.");
+        }
+
+        if (!BlueTuskTablespaceMetadata.LocationEquals(definition, oldDefinition))
+        {
+            throw new InvalidOperationException(
+                $"Tablespace '{definition.Name}' cannot change its filesystem location in place.");
+        }
+
+        var helper = Dependencies.SqlGenerationHelper;
+        var identifier = helper.DelimitIdentifier(definition.Name);
+        if (!string.Equals(definition.Owner, oldDefinition.Owner, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER TABLESPACE ").Append(identifier).Append(" OWNER TO ")
+                .Append(definition.Owner is null
+                    ? "CURRENT_USER"
+                    : helper.DelimitIdentifier(definition.Owner));
+            EndStatement(builder);
+        }
+
+        var oldOptions = oldDefinition.Options.ToDictionary(option => option.Name, StringComparer.Ordinal);
+        var changedOptions = definition.Options.Where(option =>
+                !oldOptions.TryGetValue(option.Name, out var oldOption) ||
+                !string.Equals(option.Value, oldOption.Value, StringComparison.Ordinal))
+            .ToArray();
+        if (changedOptions.Length > 0)
+        {
+            builder.Append("ALTER TABLESPACE ").Append(identifier);
+            AppendTablespaceOptions(builder, " SET", changedOptions);
+            EndStatement(builder);
+        }
+
+        var currentOptions = definition.Options.Select(option => option.Name)
+            .ToHashSet(StringComparer.Ordinal);
+        var resetOptions = oldDefinition.Options.Where(option => !currentOptions.Contains(option.Name)).ToArray();
+        if (resetOptions.Length > 0)
+        {
+            builder.Append("ALTER TABLESPACE ").Append(identifier).Append(" RESET (")
+                .Append(string.Join(", ", resetOptions.Select(option => option.Name)))
+                .Append(")");
+            EndStatement(builder);
+        }
+
+        if (!string.Equals(definition.Comment, oldDefinition.Comment, StringComparison.Ordinal))
+        {
+            AppendTablespaceComment(builder, definition.Name, definition.Comment);
+        }
+    }
+
+    private void Generate(
+        RenameBlueTuskTablespaceOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("ALTER TABLESPACE ").Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" RENAME TO ").Append(helper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskTablespaceOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP TABLESPACE ");
+        if (operation.IfExists)
+        {
+            builder.Append("IF EXISTS ");
+        }
+
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name));
+        EndSuppressedStatement(builder);
+    }
+
+    private static void AppendTablespaceOptions(
+        MigrationCommandListBuilder builder,
+        string keyword,
+        IReadOnlyList<BlueTuskTablespaceOptionDefinition> options)
+    {
+        if (options.Count == 0)
+        {
+            return;
+        }
+
+        builder.Append(keyword).Append(" (");
+        for (var index = 0; index < options.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(options[index].Name)
+                .Append(" = '")
+                .Append(EscapeLiteral(options[index].Value))
+                .Append("'");
+        }
+
+        builder.Append(")");
+    }
+
+    private void AppendTablespaceComment(
+        MigrationCommandListBuilder builder,
+        string name,
+        string? comment)
+    {
+        builder.Append("COMMENT ON TABLESPACE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
+            .Append(" IS ")
+            .Append(comment is null ? "NULL" : $"'{EscapeLiteral(comment)}'");
         EndStatement(builder);
     }
 
@@ -2133,9 +2295,12 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     private void EndStatement(MigrationCommandListBuilder builder)
         => builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator).EndCommand();
 
+    private void EndSuppressedStatement(MigrationCommandListBuilder builder)
+        => builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
+            .EndCommand(suppressTransaction: true);
+
     private void EndIndexStatement(MigrationCommandListBuilder builder, bool suppressTransaction)
-        => builder
-            .AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
+        => builder.AppendLine(Dependencies.SqlGenerationHelper.StatementTerminator)
             .EndCommand(suppressTransaction: suppressTransaction);
 
     private static bool IsDescending(CreateIndexOperation operation, int index) =>

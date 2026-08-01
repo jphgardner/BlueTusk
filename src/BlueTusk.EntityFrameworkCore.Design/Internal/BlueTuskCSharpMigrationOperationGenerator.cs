@@ -12,6 +12,7 @@ using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
 using BlueTusk.EntityFrameworkCore.SchemaPrograms.Internal;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
+using BlueTusk.EntityFrameworkCore.Tablespaces.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views.Internal;
@@ -36,6 +37,39 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskTablespaceOperation createTablespace:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskTablespace(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskTablespaceMetadata.Serialize(createTablespace.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskTablespaceOperation alterTablespace:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskTablespace(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskTablespaceMetadata.Serialize(alterTablespace.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskTablespaceMetadata.Serialize(alterTablespace.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskTablespaceOperation renameTablespace:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskTablespace(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameTablespace.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameTablespace.NewName))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskTablespaceOperation dropTablespace:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskTablespace(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropTablespace.Name))
+                    .Append(", ")
+                    .Append(dropTablespace.IfExists ? "true" : "false")
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskCollationOperation createCollation:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskCollation(")
