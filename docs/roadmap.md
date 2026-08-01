@@ -316,7 +316,12 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Explicit diagnostics for enum removal/reordering, domain base/collation replacement, and composite reordering/insertion, with staged guidance for rename-plus-alter changes
   - [x] `pg_type`/`pg_enum`/`pg_constraint`/`pg_attribute` discovery with extension and table-row-type exclusion plus fluent model regeneration
   - [x] PostgreSQL 15–19 enforcement, alteration, lifecycle, reverse-engineering, and scaffolding acceptance
-- [ ] Functions and procedures
+- [x] Functions and procedures
+  - [x] Typed SQL/PLpgSQL builders for overloads, parameter modes/defaults, scalar/`SETOF` results, language, planner/null/parallel/security attributes, and local configuration
+  - [x] Signature-aware create/replace/drop/rename operations, generated migration C#, snapshots, destructive diagnostics, and collision-safe initial `CREATE`
+  - [x] UDT-first ordering plus relational dependency phases for string and SQL-standard tracked bodies
+  - [x] `pg_proc` canonical discovery for normal/window functions and procedures with aggregate, system, and extension-owned exclusion
+  - [x] PostgreSQL 15–19 overloaded execution, procedure lifecycle, replacement, reverse-engineering, and scaffolding acceptance
 - [ ] Views and materialised views
 - [ ] PostgreSQL-complete migrations SQL generation
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding

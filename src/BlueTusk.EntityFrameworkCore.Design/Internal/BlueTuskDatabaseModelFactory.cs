@@ -7,6 +7,8 @@ using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.Routines;
+using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance;
@@ -78,6 +80,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadPartitioning(connection, tables);
         ReadSequences(connection, model, selection);
         ReadUserDefinedTypes(connection, model, selection);
+        ReadRoutines(connection, model, selection);
         ReadPropertyGraphs(connection, model, selection);
         return model;
     }
@@ -1073,6 +1076,74 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         {
             model[BlueTuskUserDefinedTypeMetadata.AnnotationName] =
                 BlueTuskUserDefinedTypeMetadata.Serialize(definitions);
+        }
+    }
+
+    private static void ReadRoutines(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   routine_entry.proname,
+                   routine_entry.prokind::text,
+                   pg_catalog.oidvectortypes(routine_entry.proargtypes),
+                   pg_catalog.pg_get_function_identity_arguments(routine_entry.oid),
+                   pg_catalog.pg_get_function_arguments(routine_entry.oid),
+                   pg_catalog.pg_get_function_result(routine_entry.oid),
+                   pg_catalog.pg_get_functiondef(routine_entry.oid),
+                   routine_entry.prokind = 'w',
+                   routine_entry.prosqlbody IS NOT NULL
+            FROM pg_catalog.pg_proc AS routine_entry
+            JOIN pg_catalog.pg_namespace AS namespace
+              ON namespace.oid = routine_entry.pronamespace
+            WHERE routine_entry.prokind IN ('f', 'p', 'w')
+              AND namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_proc'::pg_catalog.regclass
+                    AND dependency.objid = routine_entry.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname,
+                     routine_entry.proname,
+                     pg_catalog.oidvectortypes(routine_entry.proargtypes),
+                     routine_entry.prokind
+            """;
+        var definitions = new List<BlueTuskRoutineDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var schema = reader.GetString(0);
+            if (!selection.IncludesSchemaObject(schema))
+            {
+                continue;
+            }
+
+            var kind = reader.GetString(2) == "p"
+                ? BlueTuskRoutineKind.Procedure
+                : BlueTuskRoutineKind.Function;
+            definitions.Add(new BlueTuskRoutineDefinition(
+                kind,
+                reader.GetString(1),
+                schema,
+                reader.GetString(3),
+                reader.GetString(4),
+                reader.GetString(5),
+                GetNullableString(reader, 6),
+                reader.GetString(7),
+                IsWindow: reader.GetBoolean(8),
+                HasTrackedBodyDependencies: reader.GetBoolean(9)));
+        }
+
+        if (definitions.Count > 0)
+        {
+            model[BlueTuskRoutineMetadata.AnnotationName] =
+                BlueTuskRoutineMetadata.Serialize(new BlueTuskRoutineDefinitionSet(definitions));
         }
     }
 

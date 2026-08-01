@@ -4,6 +4,8 @@ using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.Routines;
+using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
@@ -28,6 +30,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskRoutineOperation createRoutine:
+                Generate(createRoutine, builder);
+                break;
+            case ReplaceBlueTuskRoutineOperation replaceRoutine:
+                Generate(replaceRoutine, builder);
+                break;
+            case DropBlueTuskRoutineOperation dropRoutine:
+                Generate(dropRoutine, builder);
+                break;
+            case RenameBlueTuskRoutineOperation renameRoutine:
+                Generate(renameRoutine, builder);
+                break;
             case CreateBlueTuskEnumTypeOperation createEnum:
                 Generate(createEnum, builder);
                 break;
@@ -107,6 +121,86 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 base.Generate(operation, model, builder);
                 break;
         }
+    }
+
+    private void Generate(
+        CreateBlueTuskRoutineOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskRoutineMetadata.Validate(operation.Definition);
+        AppendRoutineDefinition(builder, operation.Definition, replace: false);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        ReplaceBlueTuskRoutineOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        BlueTuskRoutineAlterationPlanner.ValidateReplacement(operation.OldDefinition, operation.Definition);
+        AppendRoutineDefinition(builder, operation.Definition, replace: true);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskRoutineOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentNullException.ThrowIfNull(operation.IdentityArgumentsSql);
+        builder.Append(operation.Kind == BlueTuskRoutineKind.Function ? "DROP FUNCTION " : "DROP PROCEDURE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+            .Append("(").Append(operation.IdentityArgumentsSql).Append(")");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskRoutineOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        ArgumentNullException.ThrowIfNull(operation.IdentityArgumentsSql);
+        var helper = Dependencies.SqlGenerationHelper;
+        var keyword = operation.Kind == BlueTuskRoutineKind.Function ? "FUNCTION" : "PROCEDURE";
+        var currentSchema = operation.Schema;
+        if (!string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
+        {
+            if (operation.NewSchema is null)
+            {
+                throw new InvalidOperationException("A PostgreSQL routine cannot be moved to an unspecified schema.");
+            }
+
+            builder.Append("ALTER ").Append(keyword).Append(" ")
+                .Append(helper.DelimitIdentifier(operation.Name, currentSchema))
+                .Append("(").Append(operation.IdentityArgumentsSql).Append(")")
+                .Append(" SET SCHEMA ").Append(helper.DelimitIdentifier(operation.NewSchema));
+            EndStatement(builder);
+            currentSchema = operation.NewSchema;
+        }
+
+        if (!string.Equals(operation.Name, operation.NewName, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER ").Append(keyword).Append(" ")
+                .Append(helper.DelimitIdentifier(operation.Name, currentSchema))
+                .Append("(").Append(operation.IdentityArgumentsSql).Append(")")
+                .Append(" RENAME TO ").Append(helper.DelimitIdentifier(operation.NewName));
+            EndStatement(builder);
+        }
+    }
+
+    private static void AppendRoutineDefinition(
+        MigrationCommandListBuilder builder,
+        BlueTuskRoutineDefinition definition,
+        bool replace)
+    {
+        var sql = BlueTuskRoutineMetadata.Normalize(definition).CreateOrReplaceSql;
+        if (!replace)
+        {
+            const string prefix = "CREATE OR REPLACE ";
+            sql = $"CREATE {sql[prefix.Length..]}";
+        }
+
+        builder.Append(sql);
     }
 
     private void Generate(

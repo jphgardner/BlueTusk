@@ -1,6 +1,7 @@
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -24,6 +25,53 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskRoutineOperation createRoutine:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskRoutine(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskRoutineMetadata.Serialize(createRoutine.Definition)))
+                    .AppendLine(");");
+                break;
+            case ReplaceBlueTuskRoutineOperation replaceRoutine:
+                builder
+                    .Append("migrationBuilder.ReplaceBlueTuskRoutine(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskRoutineMetadata.Serialize(replaceRoutine.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskRoutineMetadata.Serialize(replaceRoutine.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskRoutineOperation dropRoutine:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskRoutine(")
+                    .Append("global::BlueTusk.EntityFrameworkCore.Routines.BlueTuskRoutineKind.")
+                    .Append(dropRoutine.Kind.ToString())
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropRoutine.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropRoutine.IdentityArgumentsSql))
+                    .Append(", ")
+                    .Append(Literal(dropRoutine.Schema))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskRoutineOperation renameRoutine:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskRoutine(")
+                    .Append("global::BlueTusk.EntityFrameworkCore.Routines.BlueTuskRoutineKind.")
+                    .Append(renameRoutine.Kind.ToString())
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRoutine.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRoutine.IdentityArgumentsSql))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameRoutine.NewName))
+                    .Append(", ")
+                    .Append(Literal(renameRoutine.Schema))
+                    .Append(", ")
+                    .Append(Literal(renameRoutine.NewSchema))
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskEnumTypeOperation createEnum:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskEnumType(")
