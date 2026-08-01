@@ -16,6 +16,12 @@ public static class BlueTuskDbFunctionsExtensions
     public static bool RegexIsMatchInsensitive(this DbFunctions _, string matchExpression, string pattern)
         => ThrowTranslationOnly<bool>();
 
+    public static bool RegexIsNotMatch(this DbFunctions _, string matchExpression, string pattern)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RegexIsNotMatchInsensitive(this DbFunctions _, string matchExpression, string pattern)
+        => ThrowTranslationOnly<bool>();
+
     public static bool ArrayContains<T>(this DbFunctions _, T[] array, T[] contained)
         => ThrowTranslationOnly<bool>();
 
@@ -97,6 +103,12 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskRange<T> contained)
         => ThrowTranslationOnly<bool>();
 
+    public static bool RangeContains<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> range,
+        BlueTuskMultirange<T> contained)
+        => ThrowTranslationOnly<bool>();
+
     public static bool RangeContains<T>(this DbFunctions _, BlueTuskRange<T> range, T element)
         => ThrowTranslationOnly<bool>();
 
@@ -106,10 +118,22 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskRange<T> container)
         => ThrowTranslationOnly<bool>();
 
+    public static bool RangeContainedBy<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> range,
+        BlueTuskMultirange<T> container)
+        => ThrowTranslationOnly<bool>();
+
     public static bool RangeOverlaps<T>(
         this DbFunctions _,
         BlueTuskRange<T> left,
         BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeOverlaps<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskMultirange<T> right)
         => ThrowTranslationOnly<bool>();
 
     public static bool RangeIsStrictlyLeftOf<T>(
@@ -118,7 +142,25 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskRange<T> right)
         => ThrowTranslationOnly<bool>();
 
+    public static bool RangeIsStrictlyLeftOf<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
     public static bool RangeIsStrictlyRightOf<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeIsStrictlyRightOf<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeIsAdjacentTo<T>(
         this DbFunctions _,
         BlueTuskRange<T> left,
         BlueTuskRange<T> right)
@@ -127,7 +169,31 @@ public static class BlueTuskDbFunctionsExtensions
     public static bool RangeIsAdjacentTo<T>(
         this DbFunctions _,
         BlueTuskRange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeDoesNotExtendRightOf<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
         BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeDoesNotExtendRightOf<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeDoesNotExtendLeftOf<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeDoesNotExtendLeftOf<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskMultirange<T> right)
         => ThrowTranslationOnly<bool>();
 
     public static bool MultirangeContains<T>(
@@ -154,10 +220,82 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskMultirange<T> container)
         => ThrowTranslationOnly<bool>();
 
+    public static bool MultirangeContainedBy<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> multirange,
+        BlueTuskRange<T> container)
+        => ThrowTranslationOnly<bool>();
+
     public static bool MultirangeOverlaps<T>(
         this DbFunctions _,
         BlueTuskMultirange<T> left,
         BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeOverlaps<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsStrictlyLeftOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsStrictlyLeftOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsStrictlyRightOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsStrictlyRightOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeDoesNotExtendRightOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeDoesNotExtendRightOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeDoesNotExtendLeftOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeDoesNotExtendLeftOf<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsAdjacentTo<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsAdjacentTo<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskRange<T> right)
         => ThrowTranslationOnly<bool>();
 
     public static bool JsonContains(this DbFunctions _, string jsonb, string contained)
@@ -187,6 +325,18 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskTextSearchQuery query)
         => ThrowTranslationOnly<bool>();
 
+    public static bool FullTextQueryContains(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery query,
+        BlueTuskTextSearchQuery contained)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool FullTextQueryContainedBy(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery query,
+        BlueTuskTextSearchQuery container)
+        => ThrowTranslationOnly<bool>();
+
     public static bool NetworkContains(
         this DbFunctions _,
         BlueTuskNetworkAddress network,
@@ -203,6 +353,18 @@ public static class BlueTuskDbFunctionsExtensions
         this DbFunctions _,
         BlueTuskNetworkAddress left,
         BlueTuskNetworkAddress right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool NetworkStrictlyContains(
+        this DbFunctions _,
+        BlueTuskNetworkAddress network,
+        BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool NetworkStrictlyContainedBy(
+        this DbFunctions _,
+        BlueTuskNetworkAddress address,
+        BlueTuskNetworkAddress network)
         => ThrowTranslationOnly<bool>();
 
     public static int? ArrayLength<T>(this DbFunctions _, T[] array, int dimension)

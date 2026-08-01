@@ -22,12 +22,16 @@ public sealed class PostgreSqlOperatorTranslationTests
             .Where(document =>
                 EF.Functions.ILike(document.Name, like)
                 && EF.Functions.RegexIsMatch(document.Name, regex)
-                && EF.Functions.RegexIsMatchInsensitive(document.Name, regex))
+                && EF.Functions.RegexIsMatchInsensitive(document.Name, regex)
+                && EF.Functions.RegexIsNotMatch(document.Name, "^other")
+                && EF.Functions.RegexIsNotMatchInsensitive(document.Name, "^other"))
             .ToQueryString();
 
         Assert.Contains(" ILIKE ", sql, StringComparison.Ordinal);
         Assert.Contains(" ~ ", sql, StringComparison.Ordinal);
         Assert.Contains(" ~* ", sql, StringComparison.Ordinal);
+        Assert.Contains(" !~ ", sql, StringComparison.Ordinal);
+        Assert.Contains(" !~* ", sql, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -47,12 +51,22 @@ public sealed class PostgreSqlOperatorTranslationTests
         var rangeSql = context.Documents
             .Where(document =>
                 EF.Functions.RangeContains(document.Range, range)
+                && EF.Functions.RangeContains(document.Range, multirange)
                 && EF.Functions.RangeContains(document.Range, 5)
                 && EF.Functions.RangeContainedBy(document.Range, range)
+                && EF.Functions.RangeContainedBy(document.Range, multirange)
                 && EF.Functions.RangeOverlaps(document.Range, range)
+                && EF.Functions.RangeOverlaps(document.Range, multirange)
                 && EF.Functions.RangeIsStrictlyLeftOf(document.Range, range)
+                && EF.Functions.RangeIsStrictlyLeftOf(document.Range, multirange)
                 && EF.Functions.RangeIsStrictlyRightOf(document.Range, range)
-                && EF.Functions.RangeIsAdjacentTo(document.Range, range))
+                && EF.Functions.RangeIsStrictlyRightOf(document.Range, multirange)
+                && EF.Functions.RangeIsAdjacentTo(document.Range, range)
+                && EF.Functions.RangeIsAdjacentTo(document.Range, multirange)
+                && EF.Functions.RangeDoesNotExtendRightOf(document.Range, range)
+                && EF.Functions.RangeDoesNotExtendRightOf(document.Range, multirange)
+                && EF.Functions.RangeDoesNotExtendLeftOf(document.Range, range)
+                && EF.Functions.RangeDoesNotExtendLeftOf(document.Range, multirange))
             .ToQueryString();
         var multirangeSql = context.Documents
             .Where(document =>
@@ -60,7 +74,19 @@ public sealed class PostgreSqlOperatorTranslationTests
                 && EF.Functions.MultirangeContains(document.Multirange, range)
                 && EF.Functions.MultirangeContains(document.Multirange, 5)
                 && EF.Functions.MultirangeContainedBy(document.Multirange, multirange)
-                && EF.Functions.MultirangeOverlaps(document.Multirange, multirange))
+                && EF.Functions.MultirangeContainedBy(document.Multirange, range)
+                && EF.Functions.MultirangeOverlaps(document.Multirange, multirange)
+                && EF.Functions.MultirangeOverlaps(document.Multirange, range)
+                && EF.Functions.MultirangeIsStrictlyLeftOf(document.Multirange, multirange)
+                && EF.Functions.MultirangeIsStrictlyLeftOf(document.Multirange, range)
+                && EF.Functions.MultirangeIsStrictlyRightOf(document.Multirange, multirange)
+                && EF.Functions.MultirangeIsStrictlyRightOf(document.Multirange, range)
+                && EF.Functions.MultirangeDoesNotExtendRightOf(document.Multirange, multirange)
+                && EF.Functions.MultirangeDoesNotExtendRightOf(document.Multirange, range)
+                && EF.Functions.MultirangeDoesNotExtendLeftOf(document.Multirange, multirange)
+                && EF.Functions.MultirangeDoesNotExtendLeftOf(document.Multirange, range)
+                && EF.Functions.MultirangeIsAdjacentTo(document.Multirange, multirange)
+                && EF.Functions.MultirangeIsAdjacentTo(document.Multirange, range))
             .ToQueryString();
 
         Assert.Contains(" @> ", arraySql, StringComparison.Ordinal);
@@ -69,9 +95,16 @@ public sealed class PostgreSqlOperatorTranslationTests
         Assert.Contains(" << ", rangeSql, StringComparison.Ordinal);
         Assert.Contains(" >> ", rangeSql, StringComparison.Ordinal);
         Assert.Contains(" -|- ", rangeSql, StringComparison.Ordinal);
+        Assert.Contains(" &< ", rangeSql, StringComparison.Ordinal);
+        Assert.Contains(" &> ", rangeSql, StringComparison.Ordinal);
         Assert.Contains(" @> ", multirangeSql, StringComparison.Ordinal);
         Assert.Contains(" <@ ", multirangeSql, StringComparison.Ordinal);
         Assert.Contains(" && ", multirangeSql, StringComparison.Ordinal);
+        Assert.Contains(" << ", multirangeSql, StringComparison.Ordinal);
+        Assert.Contains(" >> ", multirangeSql, StringComparison.Ordinal);
+        Assert.Contains(" &< ", multirangeSql, StringComparison.Ordinal);
+        Assert.Contains(" &> ", multirangeSql, StringComparison.Ordinal);
+        Assert.Contains(" -|- ", multirangeSql, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -204,13 +237,21 @@ public sealed class PostgreSqlOperatorTranslationTests
                 EF.Functions.NetworkContains(document.Network, network)
                 && EF.Functions.NetworkContainedBy(document.Network, network)
                 && EF.Functions.NetworkOverlaps(document.Network, network)
-                && EF.Functions.FullTextMatches(document.SearchVector, query))
+                && EF.Functions.NetworkStrictlyContains(document.Network, network)
+                && EF.Functions.NetworkStrictlyContainedBy(document.Network, network)
+                && EF.Functions.FullTextMatches(document.SearchVector, query)
+                && EF.Functions.FullTextQueryContains(query, query)
+                && EF.Functions.FullTextQueryContainedBy(query, query))
             .ToQueryString();
 
         Assert.Contains(" >>= ", sql, StringComparison.Ordinal);
         Assert.Contains(" <<= ", sql, StringComparison.Ordinal);
         Assert.Contains(" && ", sql, StringComparison.Ordinal);
+        Assert.Contains(" >> ", sql, StringComparison.Ordinal);
+        Assert.Contains(" << ", sql, StringComparison.Ordinal);
         Assert.Contains(" @@ ", sql, StringComparison.Ordinal);
+        Assert.Contains(" @> ", sql, StringComparison.Ordinal);
+        Assert.Contains(" <@ ", sql, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -252,7 +293,9 @@ public sealed class PostgreSqlOperatorTranslationTests
                 await context.Documents.CountAsync(document =>
                     EF.Functions.ILike(document.Name, "bluetusk%")
                     && EF.Functions.RegexIsMatch(document.Name, "^Blue")
-                    && EF.Functions.RegexIsMatchInsensitive(document.Name, "^blue")));
+                    && EF.Functions.RegexIsMatchInsensitive(document.Name, "^blue")
+                    && EF.Functions.RegexIsNotMatch(document.Name, "^Other")
+                    && EF.Functions.RegexIsNotMatchInsensitive(document.Name, "^other")));
             var containedNumbers = new[] { 1, 3 };
             var containingNumbers = new[] { 1, 2, 3, 4 };
             var overlappingNumbers = new[] { 3, 9 };
@@ -322,20 +365,33 @@ public sealed class PostgreSqlOperatorTranslationTests
             var rightRange = new BlueTuskRange<int>(20, 30);
             var leftRange = new BlueTuskRange<int>(-10, 0);
             var adjacentRange = new BlueTuskRange<int>(10, 12);
+            var containedMultirange = new BlueTuskMultirange<int>([containedRange]);
+            var containingMultirange = new BlueTuskMultirange<int>([containingRange]);
+            var overlappingMultirange = new BlueTuskMultirange<int>([overlappingRange]);
+            var rightMultirange = new BlueTuskMultirange<int>([rightRange]);
+            var leftMultirange = new BlueTuskMultirange<int>([leftRange]);
+            var adjacentMultirange = new BlueTuskMultirange<int>([adjacentRange]);
             Assert.Equal(
                 1,
                 await context.Documents.CountAsync(document =>
                     EF.Functions.RangeContains(document.Range, containedRange)
+                    && EF.Functions.RangeContains(document.Range, containedMultirange)
                     && EF.Functions.RangeContains(document.Range, 5)
                     && EF.Functions.RangeContainedBy(document.Range, containingRange)
+                    && EF.Functions.RangeContainedBy(document.Range, containingMultirange)
                     && EF.Functions.RangeOverlaps(document.Range, overlappingRange)
+                    && EF.Functions.RangeOverlaps(document.Range, overlappingMultirange)
                     && EF.Functions.RangeIsStrictlyLeftOf(document.Range, rightRange)
+                    && EF.Functions.RangeIsStrictlyLeftOf(document.Range, rightMultirange)
                     && EF.Functions.RangeIsStrictlyRightOf(document.Range, leftRange)
-                    && EF.Functions.RangeIsAdjacentTo(document.Range, adjacentRange)));
+                    && EF.Functions.RangeIsStrictlyRightOf(document.Range, leftMultirange)
+                    && EF.Functions.RangeIsAdjacentTo(document.Range, adjacentRange)
+                    && EF.Functions.RangeIsAdjacentTo(document.Range, adjacentMultirange)
+                    && EF.Functions.RangeDoesNotExtendRightOf(document.Range, rightRange)
+                    && EF.Functions.RangeDoesNotExtendRightOf(document.Range, rightMultirange)
+                    && EF.Functions.RangeDoesNotExtendLeftOf(document.Range, leftRange)
+                    && EF.Functions.RangeDoesNotExtendLeftOf(document.Range, leftMultirange)));
 
-            var containedMultirange = new BlueTuskMultirange<int>([containedRange]);
-            var containingMultirange = new BlueTuskMultirange<int>([containingRange]);
-            var overlappingMultirange = new BlueTuskMultirange<int>([overlappingRange]);
             Assert.Equal(
                 1,
                 await context.Documents.CountAsync(document =>
@@ -343,7 +399,19 @@ public sealed class PostgreSqlOperatorTranslationTests
                     && EF.Functions.MultirangeContains(document.Multirange, containedRange)
                     && EF.Functions.MultirangeContains(document.Multirange, 8)
                     && EF.Functions.MultirangeContainedBy(document.Multirange, containingMultirange)
-                    && EF.Functions.MultirangeOverlaps(document.Multirange, overlappingMultirange)));
+                    && EF.Functions.MultirangeContainedBy(document.Multirange, containingRange)
+                    && EF.Functions.MultirangeOverlaps(document.Multirange, overlappingMultirange)
+                    && EF.Functions.MultirangeOverlaps(document.Multirange, overlappingRange)
+                    && EF.Functions.MultirangeIsStrictlyLeftOf(document.Multirange, rightMultirange)
+                    && EF.Functions.MultirangeIsStrictlyLeftOf(document.Multirange, rightRange)
+                    && EF.Functions.MultirangeIsStrictlyRightOf(document.Multirange, leftMultirange)
+                    && EF.Functions.MultirangeIsStrictlyRightOf(document.Multirange, leftRange)
+                    && EF.Functions.MultirangeDoesNotExtendRightOf(document.Multirange, rightMultirange)
+                    && EF.Functions.MultirangeDoesNotExtendRightOf(document.Multirange, rightRange)
+                    && EF.Functions.MultirangeDoesNotExtendLeftOf(document.Multirange, leftMultirange)
+                    && EF.Functions.MultirangeDoesNotExtendLeftOf(document.Multirange, leftRange)
+                    && EF.Functions.MultirangeIsAdjacentTo(document.Multirange, adjacentMultirange)
+                    && EF.Functions.MultirangeIsAdjacentTo(document.Multirange, adjacentRange)));
 
             var jsonFragment = """{"kind":"provider"}""";
             var jsonContainer = """{"kind":"provider","version":3,"stable":false}""";
@@ -372,7 +440,11 @@ public sealed class PostgreSqlOperatorTranslationTests
                     EF.Functions.NetworkContains(document.Network, containedAddress)
                     && EF.Functions.NetworkContainedBy(document.Network, containingNetwork)
                     && EF.Functions.NetworkOverlaps(document.Network, overlappingNetwork)
-                    && EF.Functions.FullTextMatches(document.SearchVector, textSearchQuery)));
+                    && EF.Functions.NetworkStrictlyContains(document.Network, containedAddress)
+                    && EF.Functions.NetworkStrictlyContainedBy(document.Network, containingNetwork)
+                    && EF.Functions.FullTextMatches(document.SearchVector, textSearchQuery)
+                    && EF.Functions.FullTextQueryContains(textSearchQuery, textSearchQuery)
+                    && EF.Functions.FullTextQueryContainedBy(textSearchQuery, textSearchQuery)));
         }
         finally
         {

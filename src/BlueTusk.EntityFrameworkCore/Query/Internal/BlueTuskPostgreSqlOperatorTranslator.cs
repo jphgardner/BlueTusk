@@ -18,6 +18,8 @@ internal sealed class BlueTuskPostgreSqlOperatorTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.ILike)] = "ILIKE",
             [nameof(BlueTuskDbFunctionsExtensions.RegexIsMatch)] = "~",
             [nameof(BlueTuskDbFunctionsExtensions.RegexIsMatchInsensitive)] = "~*",
+            [nameof(BlueTuskDbFunctionsExtensions.RegexIsNotMatch)] = "!~",
+            [nameof(BlueTuskDbFunctionsExtensions.RegexIsNotMatchInsensitive)] = "!~*",
             [nameof(BlueTuskDbFunctionsExtensions.ArrayContains)] = "@>",
             [nameof(BlueTuskDbFunctionsExtensions.ArrayContainedBy)] = "<@",
             [nameof(BlueTuskDbFunctionsExtensions.ArrayOverlaps)] = "&&",
@@ -27,9 +29,16 @@ internal sealed class BlueTuskPostgreSqlOperatorTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.RangeIsStrictlyLeftOf)] = "<<",
             [nameof(BlueTuskDbFunctionsExtensions.RangeIsStrictlyRightOf)] = ">>",
             [nameof(BlueTuskDbFunctionsExtensions.RangeIsAdjacentTo)] = "-|-",
+            [nameof(BlueTuskDbFunctionsExtensions.RangeDoesNotExtendRightOf)] = "&<",
+            [nameof(BlueTuskDbFunctionsExtensions.RangeDoesNotExtendLeftOf)] = "&>",
             [nameof(BlueTuskDbFunctionsExtensions.MultirangeContains)] = "@>",
             [nameof(BlueTuskDbFunctionsExtensions.MultirangeContainedBy)] = "<@",
             [nameof(BlueTuskDbFunctionsExtensions.MultirangeOverlaps)] = "&&",
+            [nameof(BlueTuskDbFunctionsExtensions.MultirangeIsStrictlyLeftOf)] = "<<",
+            [nameof(BlueTuskDbFunctionsExtensions.MultirangeIsStrictlyRightOf)] = ">>",
+            [nameof(BlueTuskDbFunctionsExtensions.MultirangeDoesNotExtendRightOf)] = "&<",
+            [nameof(BlueTuskDbFunctionsExtensions.MultirangeDoesNotExtendLeftOf)] = "&>",
+            [nameof(BlueTuskDbFunctionsExtensions.MultirangeIsAdjacentTo)] = "-|-",
             [nameof(BlueTuskDbFunctionsExtensions.JsonContains)] = "@>",
             [nameof(BlueTuskDbFunctionsExtensions.JsonContainedBy)] = "<@",
             [nameof(BlueTuskDbFunctionsExtensions.JsonExists)] = "?",
@@ -38,9 +47,13 @@ internal sealed class BlueTuskPostgreSqlOperatorTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.JsonPathExists)] = "@?",
             [nameof(BlueTuskDbFunctionsExtensions.JsonPathMatches)] = "@@",
             [nameof(BlueTuskDbFunctionsExtensions.FullTextMatches)] = "@@",
+            [nameof(BlueTuskDbFunctionsExtensions.FullTextQueryContains)] = "@>",
+            [nameof(BlueTuskDbFunctionsExtensions.FullTextQueryContainedBy)] = "<@",
             [nameof(BlueTuskDbFunctionsExtensions.NetworkContains)] = ">>=",
             [nameof(BlueTuskDbFunctionsExtensions.NetworkContainedBy)] = "<<=",
             [nameof(BlueTuskDbFunctionsExtensions.NetworkOverlaps)] = "&&",
+            [nameof(BlueTuskDbFunctionsExtensions.NetworkStrictlyContains)] = ">>",
+            [nameof(BlueTuskDbFunctionsExtensions.NetworkStrictlyContainedBy)] = "<<",
         };
 
     private readonly RelationalTypeMapping _booleanMapping =
@@ -63,7 +76,9 @@ internal sealed class BlueTuskPostgreSqlOperatorTranslator(
         var right = arguments[2];
         if (UsesSameStoreType(method, left, right))
         {
-            var typeMapping = left.TypeMapping ?? right.TypeMapping;
+            var typeMapping = left.TypeMapping
+                ?? right.TypeMapping
+                ?? typeMappingSource.FindMapping(left.Type);
             left = sqlExpressionFactory.ApplyTypeMapping(left, typeMapping);
             right = sqlExpressionFactory.ApplyTypeMapping(right, typeMapping);
         }
@@ -84,9 +99,16 @@ internal sealed class BlueTuskPostgreSqlOperatorTranslator(
             or nameof(BlueTuskDbFunctionsExtensions.RangeIsStrictlyLeftOf)
             or nameof(BlueTuskDbFunctionsExtensions.RangeIsStrictlyRightOf)
             or nameof(BlueTuskDbFunctionsExtensions.RangeIsAdjacentTo)
+            or nameof(BlueTuskDbFunctionsExtensions.RangeDoesNotExtendRightOf)
+            or nameof(BlueTuskDbFunctionsExtensions.RangeDoesNotExtendLeftOf)
             or nameof(BlueTuskDbFunctionsExtensions.MultirangeContains)
             or nameof(BlueTuskDbFunctionsExtensions.MultirangeContainedBy)
-            or nameof(BlueTuskDbFunctionsExtensions.MultirangeOverlaps))
+            or nameof(BlueTuskDbFunctionsExtensions.MultirangeOverlaps)
+            or nameof(BlueTuskDbFunctionsExtensions.MultirangeIsStrictlyLeftOf)
+            or nameof(BlueTuskDbFunctionsExtensions.MultirangeIsStrictlyRightOf)
+            or nameof(BlueTuskDbFunctionsExtensions.MultirangeDoesNotExtendRightOf)
+            or nameof(BlueTuskDbFunctionsExtensions.MultirangeDoesNotExtendLeftOf)
+            or nameof(BlueTuskDbFunctionsExtensions.MultirangeIsAdjacentTo))
         {
             return left.Type == right.Type;
         }
@@ -94,6 +116,8 @@ internal sealed class BlueTuskPostgreSqlOperatorTranslator(
         return method.Name is nameof(BlueTuskDbFunctionsExtensions.ILike)
             or nameof(BlueTuskDbFunctionsExtensions.RegexIsMatch)
             or nameof(BlueTuskDbFunctionsExtensions.RegexIsMatchInsensitive)
+            or nameof(BlueTuskDbFunctionsExtensions.RegexIsNotMatch)
+            or nameof(BlueTuskDbFunctionsExtensions.RegexIsNotMatchInsensitive)
             or nameof(BlueTuskDbFunctionsExtensions.ArrayContains)
             or nameof(BlueTuskDbFunctionsExtensions.ArrayContainedBy)
             or nameof(BlueTuskDbFunctionsExtensions.ArrayOverlaps)
@@ -101,6 +125,10 @@ internal sealed class BlueTuskPostgreSqlOperatorTranslator(
             or nameof(BlueTuskDbFunctionsExtensions.JsonContainedBy)
             or nameof(BlueTuskDbFunctionsExtensions.NetworkContains)
             or nameof(BlueTuskDbFunctionsExtensions.NetworkContainedBy)
-            or nameof(BlueTuskDbFunctionsExtensions.NetworkOverlaps);
+            or nameof(BlueTuskDbFunctionsExtensions.NetworkOverlaps)
+            or nameof(BlueTuskDbFunctionsExtensions.NetworkStrictlyContains)
+            or nameof(BlueTuskDbFunctionsExtensions.NetworkStrictlyContainedBy)
+            or nameof(BlueTuskDbFunctionsExtensions.FullTextQueryContains)
+            or nameof(BlueTuskDbFunctionsExtensions.FullTextQueryContainedBy);
     }
 }

@@ -116,13 +116,14 @@ var documents = await context.Documents
 
 The preview covers:
 
-- text `ILIKE`, case-sensitive `~`, and case-insensitive `~*`;
+- text `ILIKE`, case-sensitive `~`/`!~`, and case-insensitive `~*`/`!~*`;
 - array containment (`@>`, `<@`) and overlap (`&&`);
-- range containment, element containment, overlap, strict left/right, and
-  adjacency, plus multirange containment and overlap;
+- range and multirange containment, overlap, strict left/right, non-extension,
+  and adjacency across every range/range, range/multirange,
+  multirange/range, and multirange/multirange form;
 - JSONB containment and key tests, and JSONPath `@?`/`@@`;
-- `inet`/`cidr` containment and overlap; and
-- `tsvector @@ tsquery` full-text matching;
+- `inet`/`cidr` inclusive/strict containment and overlap; and
+- `tsvector @@ tsquery` matching plus `tsquery` containment;
 - typed `=`, `<>`, `<`, `<=`, `>`, and `>=` comparisons with PostgreSQL
   `ANY(array)` and `ALL(array)`, plus `LIKE`/`ILIKE` quantifiers; and
 - two-or-more-element row comparisons using `ValueTuple.Create(...)` and all
