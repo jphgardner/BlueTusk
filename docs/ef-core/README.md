@@ -161,9 +161,42 @@ range and multirange bounds, inclusivity, infinity, and empty checks; JSONB
 type, array length, and first JSONPath result; regular-expression replace and
 count; network host/family/mask/network/broadcast; and full-text vector/query
 construction, lexeme/node counts, and rank. PostgreSQL's default text-search
-configuration applies to the current no-configuration overloads. Aggregate,
-set-returning, geometric, date/time, and remaining scalar functions are still
-planned and are not implied by this preview.
+configuration applies to the current no-configuration overloads. Geometric,
+date/time, and remaining scalar functions are still planned and are not
+implied by this preview.
+
+## PostgreSQL aggregate functions
+
+The initial aggregate surface translates grouping enumerables without losing
+EF's aggregate metadata:
+
+```csharp
+var summaries = await context.Events
+    .GroupBy(item => item.Category)
+    .Select(group => new
+    {
+        group.Key,
+        Values = EF.Functions.ArrayAggregate(
+            group.OrderBy(item => item.Position).Select(item => item.Value)),
+        Labels = EF.Functions.StringAggregate(
+            group.OrderBy(item => item.Position).Select(item => item.Label),
+            ", "),
+        AllValid = EF.Functions.BooleanAnd(group.Select(item => item.IsValid)),
+        Covered = EF.Functions.RangeAggregate(
+            group.Where(item => item.IsIncluded).Select(item => item.ValidRange)),
+    })
+    .ToListAsync(cancellationToken);
+```
+
+`ArrayAggregate`, `StringAggregate`, `BooleanAnd`, `BooleanOr`,
+`RangeAggregate`, and `RangeIntersectAggregate` map to PostgreSQL
+`array_agg`, `string_agg`, `bool_and`, `bool_or`, `range_agg`, and
+`range_intersect_agg`. Ordering stays inside the aggregate call, `Distinct()`
+becomes aggregate `DISTINCT`, and a grouping `Where(...)` becomes native
+`FILTER (WHERE ...)`. Delimiters and filter values remain normal parameters.
+The APIs return nullable results because PostgreSQL returns `NULL` when an
+aggregate has no selected input rows. JSON/statistical/ordered-set aggregates,
+set-returning functions, and lateral query roots remain planned.
 
 ## Migrations
 
@@ -216,4 +249,4 @@ Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retain
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates and the documented scalar-function subset across PostgreSQL 15–19; aggregate, set-returning, and remaining scalar function work remains in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, and typed array/string/boolean/range aggregates across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER` are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and remaining scalar functions are still in progress.

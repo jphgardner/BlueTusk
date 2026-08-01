@@ -26,6 +26,22 @@ internal sealed class BlueTuskSqlNullabilityProcessor(
         bool allowOptimizedExpansion,
         out bool nullable)
     {
+        if (sqlExpression is BlueTuskAggregateExpression aggregate)
+        {
+            var arguments = aggregate.Arguments
+                .Select(argument => Visit(argument, allowOptimizedExpansion, out _))
+                .ToArray();
+            var orderings = aggregate.Orderings
+                .Select(ordering => ordering.Update(
+                    Visit(ordering.Expression, allowOptimizedExpansion, out _)))
+                .ToArray();
+            var predicate = aggregate.Predicate is null
+                ? null
+                : Visit(aggregate.Predicate, allowOptimizedExpansion, out _);
+            nullable = true;
+            return aggregate.Update(arguments, orderings, predicate);
+        }
+
         if (sqlExpression is not BlueTuskBinaryExpression binary)
         {
             return base.VisitCustomSqlExpression(sqlExpression, allowOptimizedExpansion, out nullable);

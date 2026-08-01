@@ -285,6 +285,31 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskTextSearchQuery query)
         => ThrowTranslationOnly<float?>();
 
+    public static T[]? ArrayAggregate<T>(this DbFunctions _, IEnumerable<T> values)
+        => ThrowTranslationOnly<T[]?>();
+
+    public static string? StringAggregate(
+        this DbFunctions _,
+        IEnumerable<string> values,
+        string delimiter)
+        => ThrowTranslationOnly<string?>();
+
+    public static bool? BooleanAnd(this DbFunctions _, IEnumerable<bool> values)
+        => ThrowTranslationOnly<bool?>();
+
+    public static bool? BooleanOr(this DbFunctions _, IEnumerable<bool> values)
+        => ThrowTranslationOnly<bool?>();
+
+    public static BlueTuskMultirange<T>? RangeAggregate<T>(
+        this DbFunctions _,
+        IEnumerable<BlueTuskRange<T>> ranges)
+        => ThrowTranslationOnly<BlueTuskMultirange<T>?>();
+
+    public static BlueTuskRange<T>? RangeIntersectAggregate<T>(
+        this DbFunctions _,
+        IEnumerable<BlueTuskRange<T>> ranges)
+        => ThrowTranslationOnly<BlueTuskRange<T>?>();
+
     private static T ThrowTranslationOnly<T>()
         => throw new InvalidOperationException(
             "BlueTusk PostgreSQL database functions can only be used in translated EF Core queries.");

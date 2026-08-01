@@ -39,6 +39,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IMigrationsModelDiffer, BlueTuskMigrationsModelDiffer>()
             .TryAdd<IMigrationsSqlGenerator, BlueTuskMigrationsSqlGenerator>()
             .TryAdd<IHistoryRepository, BlueTuskHistoryRepository>()
+            .TryAdd<IAggregateMethodCallTranslatorProvider, BlueTuskAggregateMethodCallTranslatorProvider>()
             .TryAdd<IMethodCallTranslatorProvider, BlueTuskMethodCallTranslatorProvider>()
             .TryAdd<IMemberTranslatorProvider, BlueTuskMemberTranslatorProvider>()
             .TryAdd<IRelationalParameterBasedSqlProcessorFactory, BlueTuskParameterBasedSqlProcessorFactory>()
