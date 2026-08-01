@@ -4,6 +4,8 @@ using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
+using BlueTusk.EntityFrameworkCore.ForeignData;
+using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
@@ -227,6 +229,39 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case SkipBlueTuskSubscriptionTransactionOperation skipSubscriptionTransaction:
                 Generate(skipSubscriptionTransaction, builder);
+                break;
+            case CreateBlueTuskForeignDataWrapperOperation createWrapper:
+                Generate(createWrapper, builder);
+                break;
+            case AlterBlueTuskForeignDataWrapperOperation alterWrapper:
+                Generate(alterWrapper, builder);
+                break;
+            case DropBlueTuskForeignDataWrapperOperation dropWrapper:
+                Generate(dropWrapper, builder);
+                break;
+            case RenameBlueTuskForeignDataWrapperOperation renameWrapper:
+                Generate(renameWrapper, builder);
+                break;
+            case CreateBlueTuskForeignServerOperation createServer:
+                Generate(createServer, builder);
+                break;
+            case AlterBlueTuskForeignServerOperation alterServer:
+                Generate(alterServer, builder);
+                break;
+            case DropBlueTuskForeignServerOperation dropServer:
+                Generate(dropServer, builder);
+                break;
+            case RenameBlueTuskForeignServerOperation renameServer:
+                Generate(renameServer, builder);
+                break;
+            case CreateBlueTuskUserMappingOperation createMapping:
+                Generate(createMapping, builder);
+                break;
+            case AlterBlueTuskUserMappingOperation alterMapping:
+                Generate(alterMapping, builder);
+                break;
+            case DropBlueTuskUserMappingOperation dropMapping:
+                Generate(dropMapping, builder);
                 break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
@@ -1420,8 +1455,20 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     {
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(builder);
+        var foreignTable = operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] is string foreignJson
+            ? BlueTuskForeignDataMetadata.DeserializeForeignTable(foreignJson)
+            : null;
+        if (foreignTable is not null &&
+            (operation.PrimaryKey is not null || operation.UniqueConstraints.Count > 0 ||
+             operation.ForeignKeys.Count > 0))
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL foreign table '{operation.Schema}.{operation.Name}' can contain only CHECK and " +
+                "NOT NULL constraints. Configure the EF entity as keyless and model remote uniqueness separately.");
+        }
+
         builder
-            .Append("CREATE TABLE ")
+            .Append(foreignTable is null ? "CREATE TABLE " : "CREATE FOREIGN TABLE ")
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
             .AppendLine(" (");
         using (builder.Indent())
@@ -1432,7 +1479,19 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         }
 
         builder.Append(")");
-        if (operation[BlueTuskPartitionMetadata.AnnotationName] is string serializedDefinition)
+        if (foreignTable is not null)
+        {
+            if (operation[BlueTuskPartitionMetadata.AnnotationName] is not null)
+            {
+                throw new NotSupportedException(
+                    "Use explicit partition migration operations when a foreign table is a partition.");
+            }
+
+            builder.Append(" SERVER ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(foreignTable.ServerName));
+            AppendCreateForeignOptions(builder, foreignTable.Options);
+        }
+        else if (operation[BlueTuskPartitionMetadata.AnnotationName] is string serializedDefinition)
         {
             AppendPartitioningClause(builder, BlueTuskPartitionMetadata.Deserialize(serializedDefinition));
         }
@@ -1450,6 +1509,25 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     {
         ArgumentNullException.ThrowIfNull(operation);
         ArgumentNullException.ThrowIfNull(builder);
+        var currentForeign = operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] as string;
+        var previousForeign = operation.OldTable[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] as string;
+        if (currentForeign is not null || previousForeign is not null)
+        {
+            if (currentForeign is null || previousForeign is null)
+            {
+                throw new NotSupportedException(
+                    $"PostgreSQL cannot convert table '{operation.Schema}.{operation.Name}' between local and " +
+                    "foreign storage in place. Create an explicit replacement migration.");
+            }
+
+            GenerateForeignTableAlteration(
+                operation,
+                BlueTuskForeignDataMetadata.DeserializeForeignTable(previousForeign),
+                BlueTuskForeignDataMetadata.DeserializeForeignTable(currentForeign),
+                builder);
+            return;
+        }
+
         var current = operation[BlueTuskPartitionMetadata.AnnotationName] as string;
         var previous = operation.OldTable[BlueTuskPartitionMetadata.AnnotationName] as string;
         if (!string.Equals(current, previous, StringComparison.Ordinal))
@@ -1460,6 +1538,92 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         }
 
         base.Generate(operation, model, builder);
+    }
+
+    protected override void Generate(
+        DropTableOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder,
+        bool terminate = true)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(builder);
+        if (operation[BlueTuskForeignDataMetadata.ForeignTableAnnotationName] is null)
+        {
+            base.Generate(operation, model, builder, terminate);
+            return;
+        }
+
+        builder.Append("DROP FOREIGN TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
+        if (terminate)
+        {
+            EndStatement(builder);
+        }
+    }
+
+    private void GenerateForeignTableAlteration(
+        AlterTableOperation operation,
+        BlueTuskForeignTableDefinition oldDefinition,
+        BlueTuskForeignTableDefinition definition,
+        MigrationCommandListBuilder builder)
+    {
+        oldDefinition = BlueTuskForeignDataMetadata.Normalize(oldDefinition);
+        definition = BlueTuskForeignDataMetadata.Normalize(definition);
+        BlueTuskForeignDataMetadata.Validate(oldDefinition);
+        BlueTuskForeignDataMetadata.Validate(definition);
+        if (oldDefinition.ServerName != definition.ServerName)
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL cannot change the server of foreign table '{operation.Schema}.{operation.Name}' in " +
+                "place. Create an explicit replacement migration.");
+        }
+
+        var helper = Dependencies.SqlGenerationHelper;
+        var tableName = helper.DelimitIdentifier(operation.Name, operation.Schema);
+        if (BlueTuskForeignDataMetadata.SerializeOptions(oldDefinition.Options) !=
+            BlueTuskForeignDataMetadata.SerializeOptions(definition.Options))
+        {
+            builder.Append("ALTER FOREIGN TABLE ")
+                .Append(tableName);
+            AppendAlterForeignOptions(builder, oldDefinition.Options, definition.Options);
+            EndStatement(builder);
+        }
+
+        var oldColumns = oldDefinition.Columns.ToDictionary(column => column.Name, StringComparer.Ordinal);
+        foreach (var column in definition.Columns)
+        {
+            if (!oldColumns.TryGetValue(column.Name, out var oldColumn) ||
+                BlueTuskForeignDataMetadata.SerializeOptions(oldColumn.Options) ==
+                BlueTuskForeignDataMetadata.SerializeOptions(column.Options))
+            {
+                continue;
+            }
+
+            builder.Append("ALTER FOREIGN TABLE ")
+                .Append(tableName)
+                .Append(" ALTER COLUMN ")
+                .Append(helper.DelimitIdentifier(column.Name));
+            AppendAlterForeignOptions(builder, oldColumn.Options, column.Options);
+            EndStatement(builder);
+        }
+
+        if (operation.OldTable.Comment != operation.Comment)
+        {
+            builder.Append("COMMENT ON FOREIGN TABLE ")
+                .Append(tableName)
+                .Append(" IS ");
+            if (operation.Comment is null)
+            {
+                builder.Append("NULL");
+            }
+            else
+            {
+                AppendStringLiteral(builder, operation.Comment);
+            }
+
+            EndStatement(builder);
+        }
     }
 
     protected override void Generate(
@@ -1842,6 +2006,32 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         IModel? model,
         MigrationCommandListBuilder builder)
     {
+        if (operation[BlueTuskForeignDataMetadata.ForeignColumnOptionsAnnotationName] is string serializedOptions)
+        {
+            var columnType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model);
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
+                .Append(" ")
+                .Append(columnType);
+            AppendCreateForeignOptions(builder, BlueTuskForeignDataMetadata.DeserializeOptions(serializedOptions));
+            if (operation.Collation is not null)
+            {
+                builder.Append(" COLLATE ");
+                AppendQualifiedIdentifier(builder, operation.Collation);
+            }
+
+            if (operation.ComputedColumnSql is not null)
+            {
+                builder.Append(" GENERATED ALWAYS AS (")
+                    .Append(operation.ComputedColumnSql)
+                    .Append(operation.IsStored == false ? ") VIRTUAL" : ") STORED");
+                return;
+            }
+
+            builder.Append(operation.IsNullable ? " NULL" : " NOT NULL");
+            DefaultValue(operation.DefaultValue, operation.DefaultValueSql, columnType, builder);
+            return;
+        }
+
         base.ColumnDefinition(schema, table, name, operation, model, builder);
 
         if (IsIdentityColumn(schema, table, name, operation, model))
@@ -3131,6 +3321,366 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         return string.Join(", ", values);
     }
+
+    private void Generate(
+        CreateBlueTuskForeignDataWrapperOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
+        BlueTuskForeignDataMetadata.Validate(definition);
+        AppendForeignDataWrapperVersionCheck(definition, builder);
+        builder.Append("CREATE FOREIGN DATA WRAPPER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name));
+        AppendForeignDataWrapperFunction(builder, " HANDLER ", " NO HANDLER", definition.HandlerFunction);
+        AppendForeignDataWrapperFunction(builder, " VALIDATOR ", " NO VALIDATOR", definition.ValidatorFunction);
+        if (definition.ConnectionFunction is not null)
+        {
+            AppendForeignDataWrapperFunction(builder, " CONNECTION ", " NO CONNECTION",
+                definition.ConnectionFunction);
+        }
+
+        AppendCreateForeignOptions(builder, definition.Options);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskForeignDataWrapperOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = BlueTuskForeignDataMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
+        BlueTuskForeignDataMetadata.Validate(oldDefinition);
+        BlueTuskForeignDataMetadata.Validate(definition);
+        if (oldDefinition.Name != definition.Name)
+        {
+            throw new InvalidOperationException("A foreign-data wrapper alteration cannot also rename the wrapper.");
+        }
+
+        AppendForeignDataWrapperVersionCheck(oldDefinition, definition, builder);
+        builder.Append("ALTER FOREIGN DATA WRAPPER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name));
+        if (oldDefinition.HandlerFunction != definition.HandlerFunction)
+        {
+            AppendForeignDataWrapperFunction(builder, " HANDLER ", " NO HANDLER", definition.HandlerFunction);
+        }
+
+        if (oldDefinition.ValidatorFunction != definition.ValidatorFunction)
+        {
+            AppendForeignDataWrapperFunction(builder, " VALIDATOR ", " NO VALIDATOR",
+                definition.ValidatorFunction);
+        }
+
+        if (oldDefinition.ConnectionFunction != definition.ConnectionFunction)
+        {
+            AppendForeignDataWrapperFunction(builder, " CONNECTION ", " NO CONNECTION",
+                definition.ConnectionFunction);
+        }
+
+        AppendAlterForeignOptions(builder, oldDefinition.Options, definition.Options);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskForeignDataWrapperOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP FOREIGN DATA WRAPPER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskForeignDataWrapperOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        builder.Append("ALTER FOREIGN DATA WRAPPER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RENAME TO ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskForeignServerOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
+        BlueTuskForeignDataMetadata.Validate(definition);
+        builder.Append("CREATE SERVER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name));
+        if (definition.Type is not null)
+        {
+            builder.Append(" TYPE ");
+            AppendStringLiteral(builder, definition.Type);
+        }
+
+        if (definition.Version is not null)
+        {
+            builder.Append(" VERSION ");
+            AppendStringLiteral(builder, definition.Version);
+        }
+
+        builder.Append(" FOREIGN DATA WRAPPER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.ForeignDataWrapper));
+        AppendCreateForeignOptions(builder, definition.Options);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskForeignServerOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = BlueTuskForeignDataMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
+        BlueTuskForeignDataMetadata.Validate(oldDefinition);
+        BlueTuskForeignDataMetadata.Validate(definition);
+        if (oldDefinition.Name != definition.Name)
+        {
+            throw new InvalidOperationException("A foreign-server alteration cannot also rename the server.");
+        }
+
+        if (oldDefinition.ForeignDataWrapper != definition.ForeignDataWrapper ||
+            oldDefinition.Type != definition.Type)
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL cannot change the wrapper or type of foreign server '{definition.Name}' in place. " +
+                "Create an explicit drop/recreate migration after handling dependent foreign tables and mappings.");
+        }
+
+        builder.Append("ALTER SERVER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name));
+        if (oldDefinition.Version != definition.Version)
+        {
+            builder.Append(" VERSION ");
+            if (definition.Version is null)
+            {
+                builder.Append("NULL");
+            }
+            else
+            {
+                AppendStringLiteral(builder, definition.Version);
+            }
+        }
+
+        AppendAlterForeignOptions(builder, oldDefinition.Options, definition.Options);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskForeignServerOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP SERVER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskForeignServerOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        builder.Append("ALTER SERVER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RENAME TO ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskUserMappingOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
+        BlueTuskForeignDataMetadata.Validate(definition);
+        if (definition.OptionsRedacted)
+        {
+            throw new InvalidOperationException(
+                $"User mapping for '{definition.UserName ?? "PUBLIC"}' on server '{definition.ServerName}' has " +
+                "redacted options. Supply its credentials from a secret source in a manually reviewed migration.");
+        }
+
+        builder.Append("CREATE USER MAPPING FOR ");
+        AppendUserMappingTarget(builder, definition.UserName);
+        builder.Append(" SERVER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.ServerName));
+        AppendCreateForeignOptions(builder, definition.Options);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskUserMappingOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = BlueTuskForeignDataMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
+        BlueTuskForeignDataMetadata.Validate(oldDefinition);
+        BlueTuskForeignDataMetadata.Validate(definition);
+        if (oldDefinition.ServerName != definition.ServerName || oldDefinition.UserName != definition.UserName)
+        {
+            throw new InvalidOperationException("A user-mapping alteration cannot change its server or local role.");
+        }
+
+        if (oldDefinition.OptionsRedacted || definition.OptionsRedacted)
+        {
+            throw new InvalidOperationException(
+                "Redacted user-mapping options cannot generate an automatic alteration. " +
+                "Supply an explicit secret-backed migration operation.");
+        }
+
+        builder.Append("ALTER USER MAPPING FOR ");
+        AppendUserMappingTarget(builder, definition.UserName);
+        builder.Append(" SERVER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.ServerName));
+        AppendAlterForeignOptions(builder, oldDefinition.Options, definition.Options);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskUserMappingOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ServerName);
+        builder.Append("DROP USER MAPPING FOR ");
+        AppendUserMappingTarget(builder, operation.UserName);
+        builder.Append(" SERVER ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.ServerName));
+        EndStatement(builder);
+    }
+
+    private void AppendForeignDataWrapperVersionCheck(
+        BlueTuskForeignDataWrapperDefinition definition,
+        MigrationCommandListBuilder builder)
+    {
+        if (definition.ConnectionFunction is not null)
+        {
+            AppendForeignDataWrapperVersionCheck(definition.Name, builder);
+        }
+    }
+
+    private void AppendForeignDataWrapperVersionCheck(
+        BlueTuskForeignDataWrapperDefinition oldDefinition,
+        BlueTuskForeignDataWrapperDefinition definition,
+        MigrationCommandListBuilder builder)
+    {
+        if (oldDefinition.ConnectionFunction is not null || definition.ConnectionFunction is not null)
+        {
+            AppendForeignDataWrapperVersionCheck(definition.Name, builder);
+        }
+    }
+
+    private void AppendForeignDataWrapperVersionCheck(string name, MigrationCommandListBuilder builder) =>
+        GenerateMinimumVersionGuarded(
+            Array.Empty<string>(),
+            190000,
+            $"BlueTusk foreign-data wrapper '{name}' uses a connection function and requires PostgreSQL 19 or later.",
+            "$BlueTuskForeignData$",
+            builder);
+
+    private void AppendForeignDataWrapperFunction(
+        MigrationCommandListBuilder builder,
+        string prefix,
+        string absent,
+        string? function)
+    {
+        if (function is null)
+        {
+            builder.Append(absent);
+            return;
+        }
+
+        builder.Append(prefix);
+        AppendQualifiedIdentifier(builder, function);
+    }
+
+    private void AppendUserMappingTarget(MigrationCommandListBuilder builder, string? userName)
+    {
+        if (userName is null)
+        {
+            builder.Append("PUBLIC");
+        }
+        else
+        {
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(userName));
+        }
+    }
+
+    private void AppendCreateForeignOptions(
+        MigrationCommandListBuilder builder,
+        IReadOnlyList<BlueTuskForeignOptionDefinition> options)
+    {
+        if (options.Count == 0)
+        {
+            return;
+        }
+
+        builder.Append(" OPTIONS (");
+        for (var index = 0; index < options.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(options[index].Name)).Append(" ");
+            AppendStringLiteral(builder, options[index].Value);
+        }
+
+        builder.Append(")");
+    }
+
+    private void AppendAlterForeignOptions(
+        MigrationCommandListBuilder builder,
+        IReadOnlyList<BlueTuskForeignOptionDefinition> oldOptions,
+        IReadOnlyList<BlueTuskForeignOptionDefinition> options)
+    {
+        var oldByName = oldOptions.ToDictionary(option => option.Name, StringComparer.Ordinal);
+        var newByName = options.ToDictionary(option => option.Name, StringComparer.Ordinal);
+        var changes = oldByName.Keys.Except(newByName.Keys, StringComparer.Ordinal)
+            .Order(StringComparer.Ordinal)
+            .Select(name => new ForeignOptionChange("DROP", name, null))
+            .Concat(newByName.Values.Where(option => !oldByName.ContainsKey(option.Name))
+                .OrderBy(option => option.Name, StringComparer.Ordinal)
+                .Select(option => new ForeignOptionChange("ADD", option.Name, option.Value)))
+            .Concat(newByName.Values.Where(option =>
+                    oldByName.TryGetValue(option.Name, out var old) && old.Value != option.Value)
+                .OrderBy(option => option.Name, StringComparer.Ordinal)
+                .Select(option => new ForeignOptionChange("SET", option.Name, option.Value)))
+            .ToArray();
+        if (changes.Length == 0)
+        {
+            return;
+        }
+
+        builder.Append(" OPTIONS (");
+        for (var index = 0; index < changes.Length; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            var change = changes[index];
+            builder.Append(change.Action).Append(" ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(change.Name));
+            if (change.Value is not null)
+            {
+                builder.Append(" ");
+                AppendStringLiteral(builder, change.Value);
+            }
+        }
+
+        builder.Append(")");
+    }
+
+    private readonly record struct ForeignOptionChange(string Action, string Name, string? Value);
 
     private void Generate(
         CreateBlueTuskSubscriptionOperation operation,

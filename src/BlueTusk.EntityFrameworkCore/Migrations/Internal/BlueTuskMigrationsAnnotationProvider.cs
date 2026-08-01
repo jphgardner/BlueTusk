@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
@@ -20,6 +21,7 @@ internal sealed class BlueTuskMigrationsAnnotationProvider(
         return base.ForRemove(table)
             .Concat(table.GetAnnotations()
                 .Where(annotation => annotation.Name is
+                    BlueTuskForeignDataMetadata.ForeignTableAnnotationName or
                     BlueTuskPartitionMetadata.AnnotationName or
                     BlueTuskRowLevelSecurityMetadata.AnnotationName or
                     BlueTuskTableInheritanceMetadata.AnnotationName));

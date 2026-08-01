@@ -1,6 +1,7 @@
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
+using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
@@ -477,6 +478,82 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                 builder.Append("migrationBuilder.CreateBlueTuskPublication(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskPublicationMetadata.Serialize(createPublication.Definition)))
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskForeignDataWrapperOperation createWrapper:
+                builder.Append("migrationBuilder.CreateBlueTuskForeignDataWrapper(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(createWrapper.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskForeignDataWrapperOperation alterWrapper:
+                builder.Append("migrationBuilder.AlterBlueTuskForeignDataWrapper(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(alterWrapper.OldDefinition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(alterWrapper.Definition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskForeignDataWrapperOperation dropWrapper:
+                builder.Append("migrationBuilder.DropBlueTuskForeignDataWrapper(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropWrapper.Name))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskForeignDataWrapperOperation renameWrapper:
+                builder.Append("migrationBuilder.RenameBlueTuskForeignDataWrapper(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameWrapper.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameWrapper.NewName))
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskForeignServerOperation createServer:
+                builder.Append("migrationBuilder.CreateBlueTuskForeignServer(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(createServer.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskForeignServerOperation alterServer:
+                builder.Append("migrationBuilder.AlterBlueTuskForeignServer(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(alterServer.OldDefinition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(alterServer.Definition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskForeignServerOperation dropServer:
+                builder.Append("migrationBuilder.DropBlueTuskForeignServer(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropServer.Name))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskForeignServerOperation renameServer:
+                builder.Append("migrationBuilder.RenameBlueTuskForeignServer(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameServer.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameServer.NewName))
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskUserMappingOperation createMapping:
+                builder.Append("migrationBuilder.CreateBlueTuskUserMapping(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(createMapping.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskUserMappingOperation alterMapping:
+                builder.Append("migrationBuilder.AlterBlueTuskUserMapping(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(alterMapping.OldDefinition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskForeignDataMetadata.Serialize(alterMapping.Definition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskUserMappingOperation dropMapping:
+                builder.Append("migrationBuilder.DropBlueTuskUserMapping(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropMapping.ServerName))
+                    .Append(", ")
+                    .Append(Literal(dropMapping.UserName))
                     .AppendLine(");");
                 break;
             case AlterBlueTuskPublicationOperation alterPublication:

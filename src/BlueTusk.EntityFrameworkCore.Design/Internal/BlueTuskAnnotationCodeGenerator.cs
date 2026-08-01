@@ -1,6 +1,7 @@
 using BlueTusk.EntityFrameworkCore.Collations.Internal;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
+using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
@@ -44,6 +45,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskExtensionModelBuilderExtensions.HasBlueTuskExtensions),
                 serializedExtensions);
+        }
+
+        if (annotation.Name == BlueTuskForeignDataMetadata.AnnotationName &&
+            annotation.Value is string serializedForeignData)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskForeignDataModelBuilderExtensions.HasBlueTuskForeignData),
+                serializedForeignData);
         }
 
         if (annotation.Name == BlueTuskPropertyGraphMetadata.AnnotationName &&
@@ -145,6 +154,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskPartitioningBuilderExtensions.HasBlueTuskPartitioning),
                 serializedDefinition);
+        }
+
+        if (annotation.Name == BlueTuskForeignDataMetadata.ForeignTableAnnotationName &&
+            annotation.Value is string serializedForeignTable)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskForeignDataModelBuilderExtensions.HasBlueTuskForeignTableDefinition),
+                serializedForeignTable);
         }
 
         if (annotation.Name == BlueTuskRowLevelSecurityMetadata.AnnotationName &&

@@ -9,6 +9,8 @@ using BlueTusk.EntityFrameworkCore.ExclusionConstraints;
 using BlueTusk.EntityFrameworkCore.ExclusionConstraints.Internal;
 using BlueTusk.EntityFrameworkCore.Extensions;
 using BlueTusk.EntityFrameworkCore.Extensions.Internal;
+using BlueTusk.EntityFrameworkCore.ForeignData;
+using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
@@ -89,6 +91,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         var selection = new Selection(options);
         var tables = ReadTables(connection, model, selection);
         ReadColumns(connection, tables);
+        ReadForeignData(connection, model, tables);
         ReadConstraints(connection, tables);
         ReadExclusionConstraints(connection, tables);
         ReadTriggers(connection, tables);
@@ -145,7 +148,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                    pg_catalog.obj_description(c.oid, 'pg_class')
             FROM pg_catalog.pg_class AS c
             JOIN pg_catalog.pg_namespace AS n ON n.oid = c.relnamespace
-            WHERE c.relkind IN ('r', 'p', 'v', 'm')
+            WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f')
               AND NOT c.relispartition
               AND n.nspname NOT IN ('pg_catalog', 'information_schema')
               AND n.nspname !~ '^pg_toast'
@@ -467,7 +470,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             LEFT JOIN pg_catalog.pg_attrdef AS ad
                 ON ad.adrelid = a.attrelid AND ad.adnum = a.attnum
             LEFT JOIN pg_catalog.pg_collation AS coll ON coll.oid = a.attcollation
-            WHERE c.relkind IN ('r', 'p', 'v', 'm')
+            WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f')
               AND a.attnum > 0
               AND NOT a.attisdropped
               AND n.nspname NOT IN ('pg_catalog', 'information_schema')
@@ -515,6 +518,186 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
 
             table.Columns.Add(column);
         }
+    }
+
+    private static void ReadForeignData(
+        DbConnection connection,
+        DatabaseModel model,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        var version = ReadServerVersionNumber(connection);
+        var wrappers = new List<BlueTuskForeignDataWrapperDefinition>();
+        var wrapperSql = $"""
+            SELECT wrapper.fdwname,
+                   CASE WHEN wrapper.fdwhandler = 0 THEN NULL
+                        ELSE handler_namespace.nspname || '.' || handler.proname END,
+                   CASE WHEN wrapper.fdwvalidator = 0 THEN NULL
+                        ELSE validator_namespace.nspname || '.' || validator.proname END,
+                   {(version >= 190000 ? "CASE WHEN wrapper.fdwconnection = 0 THEN NULL ELSE connection_namespace.nspname || '.' || connection_function.proname END" : "NULL::text")},
+                   wrapper.fdwoptions
+            FROM pg_catalog.pg_foreign_data_wrapper AS wrapper
+            LEFT JOIN pg_catalog.pg_proc AS handler ON handler.oid = wrapper.fdwhandler
+            LEFT JOIN pg_catalog.pg_namespace AS handler_namespace ON handler_namespace.oid = handler.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS validator ON validator.oid = wrapper.fdwvalidator
+            LEFT JOIN pg_catalog.pg_namespace AS validator_namespace ON validator_namespace.oid = validator.pronamespace
+            {(version >= 190000 ? "LEFT JOIN pg_catalog.pg_proc AS connection_function ON connection_function.oid = wrapper.fdwconnection LEFT JOIN pg_catalog.pg_namespace AS connection_namespace ON connection_namespace.oid = connection_function.pronamespace" : string.Empty)}
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM pg_catalog.pg_depend AS dependency
+                WHERE dependency.classid = 'pg_catalog.pg_foreign_data_wrapper'::pg_catalog.regclass
+                  AND dependency.objid = wrapper.oid
+                  AND dependency.deptype = 'e')
+            ORDER BY wrapper.fdwname
+            """;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = wrapperSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                wrappers.Add(new BlueTuskForeignDataWrapperDefinition(
+                    reader.GetString(0),
+                    GetNullableString(reader, 1),
+                    GetNullableString(reader, 2),
+                    GetNullableString(reader, 3),
+                    ReadForeignOptions(reader, 4)));
+            }
+        }
+
+        const string serverSql = """
+            SELECT server.srvname,
+                   wrapper.fdwname,
+                   NULLIF(server.srvtype, ''),
+                   NULLIF(server.srvversion, ''),
+                   server.srvoptions
+            FROM pg_catalog.pg_foreign_server AS server
+            JOIN pg_catalog.pg_foreign_data_wrapper AS wrapper ON wrapper.oid = server.srvfdw
+            WHERE NOT EXISTS (
+                SELECT 1
+                FROM pg_catalog.pg_depend AS dependency
+                WHERE dependency.classid = 'pg_catalog.pg_foreign_server'::pg_catalog.regclass
+                  AND dependency.objid = server.oid
+                  AND dependency.deptype = 'e')
+            ORDER BY server.srvname
+            """;
+        var servers = new List<BlueTuskForeignServerDefinition>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = serverSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                servers.Add(new BlueTuskForeignServerDefinition(
+                    reader.GetString(0),
+                    reader.GetString(1),
+                    GetNullableString(reader, 2),
+                    GetNullableString(reader, 3),
+                    ReadForeignOptions(reader, 4)));
+            }
+        }
+
+        const string mappingSql = """
+            SELECT mapping.srvname,
+                   CASE WHEN mapping.umuser = 0 THEN NULL ELSE mapping.usename::text END
+            FROM pg_catalog.pg_user_mappings AS mapping
+            ORDER BY mapping.srvname, mapping.usename NULLS FIRST
+            """;
+        var mappings = new List<BlueTuskUserMappingDefinition>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = mappingSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                mappings.Add(new BlueTuskUserMappingDefinition(
+                    reader.GetString(0),
+                    GetNullableString(reader, 1),
+                    [],
+                    OptionsRedacted: true));
+            }
+        }
+
+        if (wrappers.Count > 0 || servers.Count > 0 || mappings.Count > 0)
+        {
+            model[BlueTuskForeignDataMetadata.AnnotationName] = BlueTuskForeignDataMetadata.Serialize(
+                new BlueTuskForeignDataDefinitionSet(wrappers, servers, mappings));
+        }
+
+        const string tableSql = """
+            SELECT namespace_entry.nspname,
+                   table_entry.relname,
+                   server.srvname,
+                   foreign_table.ftoptions,
+                   attribute_entry.attname,
+                   attribute_entry.attfdwoptions
+            FROM pg_catalog.pg_foreign_table AS foreign_table
+            JOIN pg_catalog.pg_class AS table_entry ON table_entry.oid = foreign_table.ftrelid
+            JOIN pg_catalog.pg_namespace AS namespace_entry ON namespace_entry.oid = table_entry.relnamespace
+            JOIN pg_catalog.pg_foreign_server AS server ON server.oid = foreign_table.ftserver
+            LEFT JOIN pg_catalog.pg_attribute AS attribute_entry
+              ON attribute_entry.attrelid = table_entry.oid
+             AND attribute_entry.attnum > 0
+             AND NOT attribute_entry.attisdropped
+            ORDER BY namespace_entry.nspname, table_entry.relname, attribute_entry.attnum
+            """;
+        var foreignTables = new Dictionary<(string Schema, string Name), ForeignTableSeed>();
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = tableSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var key = (reader.GetString(0), reader.GetString(1));
+                if (!tables.ContainsKey(key))
+                {
+                    continue;
+                }
+
+                if (!foreignTables.TryGetValue(key, out var seed))
+                {
+                    seed = new ForeignTableSeed(
+                        reader.GetString(2),
+                        ReadForeignOptions(reader, 3),
+                        []);
+                    foreignTables.Add(key, seed);
+                }
+
+                if (!reader.IsDBNull(4))
+                {
+                    var options = ReadForeignOptions(reader, 5);
+                    if (options.Length > 0)
+                    {
+                        seed.Columns.Add(new BlueTuskForeignColumnDefinition(reader.GetString(4), options));
+                    }
+                }
+            }
+        }
+
+        foreach (var (key, seed) in foreignTables)
+        {
+            tables[key][BlueTuskForeignDataMetadata.ForeignTableAnnotationName] =
+                BlueTuskForeignDataMetadata.Serialize(new BlueTuskForeignTableDefinition(
+                    seed.ServerName,
+                    seed.Options,
+                    seed.Columns));
+        }
+    }
+
+    private static BlueTuskForeignOptionDefinition[] ReadForeignOptions(
+        DbDataReader reader,
+        int ordinal) => reader.IsDBNull(ordinal)
+        ? Array.Empty<BlueTuskForeignOptionDefinition>()
+        : ParsePostgreSqlArray(reader.GetValue(ordinal)).Select(ParseForeignOption).ToArray();
+
+    private static BlueTuskForeignOptionDefinition ParseForeignOption(string option)
+    {
+        var separator = option.IndexOf('=');
+        if (separator <= 0)
+        {
+            throw new InvalidOperationException($"PostgreSQL returned an invalid foreign option '{option}'.");
+        }
+
+        return new BlueTuskForeignOptionDefinition(option[..separator], option[(separator + 1)..]);
     }
 
     private static void ReadConstraints(
@@ -2194,6 +2377,11 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         IReadOnlyList<string> IncludedColumns,
         IReadOnlyList<BlueTuskExclusionParameterDefinition> StorageParameters,
         List<BlueTuskExclusionElementDefinition> Elements);
+
+    private sealed record ForeignTableSeed(
+        string ServerName,
+        IReadOnlyList<BlueTuskForeignOptionDefinition> Options,
+        List<BlueTuskForeignColumnDefinition> Columns);
 
     private sealed class Selection
     {

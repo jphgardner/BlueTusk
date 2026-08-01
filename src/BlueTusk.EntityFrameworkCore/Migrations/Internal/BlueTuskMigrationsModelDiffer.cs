@@ -41,7 +41,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskTriggerModelDiffer.HasDifferences(source, target) ||
         BlueTuskRuleModelDiffer.HasDifferences(source, target) ||
         BlueTuskPublicationModelDiffer.HasDifferences(source, target) ||
-        BlueTuskSubscriptionModelDiffer.HasDifferences(source, target);
+        BlueTuskSubscriptionModelDiffer.HasDifferences(source, target) ||
+        BlueTuskForeignDataModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -70,6 +71,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var publicationAfter = new List<MigrationOperation>();
         var subscriptionBefore = new List<MigrationOperation>();
         var subscriptionAfter = new List<MigrationOperation>();
+        var foreignDataBefore = new List<MigrationOperation>();
+        var foreignDataAfter = new List<MigrationOperation>();
         var before = new List<MigrationOperation>();
         var after = new List<MigrationOperation>();
 
@@ -125,6 +128,12 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             target,
             subscriptionBefore,
             subscriptionAfter);
+        BlueTuskForeignDataModelDiffer.AddDifferences(
+            source,
+            target,
+            baseOperations,
+            foreignDataBefore,
+            foreignDataAfter);
         BlueTuskExclusionConstraintModelDiffer.AddDifferences(
             source,
             target,
@@ -198,9 +207,11 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             .Concat(triggerBefore)
             .Concat(viewBefore)
             .Concat(routineBefore)
+            .Concat(foreignDataBefore)
             .Concat(before)
             .Concat(relationalOperations)
             .Concat(after)
+            .Concat(foreignDataAfter)
             .Concat(routineAfter)
             .Concat(viewAfter)
             .Concat(triggerAfter)

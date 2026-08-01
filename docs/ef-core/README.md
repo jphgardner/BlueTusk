@@ -762,6 +762,78 @@ PostgreSQL 19 foreign-server sources are catalogued by object identity and can
 round-trip without redaction; their user mappings remain separate deployment
 policy.
 
+### Foreign data
+
+Foreign-data wrappers and servers are database-level model objects. User
+mappings are keyed by server plus a local role, or by `PUBLIC`. A keyless EF
+entity can map a foreign table and retain both table-level and store-column
+wrapper options:
+
+```csharp
+modelBuilder.HasBlueTuskForeignDataWrapper(
+    "application_fdw",
+    wrapper => wrapper.HasOption("debug", "false"));
+
+modelBuilder.HasBlueTuskForeignServer(
+    "application_remote",
+    "application_fdw",
+    server => server
+        .HasType("service")
+        .HasVersion("1")
+        .HasOption("endpoint", "primary"));
+
+modelBuilder.HasBlueTuskPublicUserMapping(
+    "application_remote",
+    mapping => mapping.HasOption("user", "reader"));
+
+modelBuilder.Entity<RemoteDocument>(entity =>
+{
+    entity.HasNoKey();
+    entity.ToTable("remote_documents", "application");
+    entity.HasBlueTuskForeignTable(
+        "application_remote",
+        table => table
+            .HasOption("table_name", "documents")
+            .HasColumnOption("document_id", "column_name", "id"));
+});
+```
+
+Migration diffs create wrappers before servers, mappings, and foreign tables,
+and reverse that dependency order for removal. Wrapper, server, mapping, table,
+and column option changes use PostgreSQL's `ADD`, `SET`, and `DROP` option
+actions. Wrapper and server names can be changed without rebuilding dependent
+objects. PostgreSQL cannot change a server's wrapper/type or a foreign table's
+server in place, so those changes report an explicit replacement diagnostic.
+Foreign tables must be keyless: PostgreSQL accepts `NOT NULL` and `CHECK` as
+local planner assertions but does not enforce primary, unique, or foreign-key
+constraints on a foreign table. Option values and any check expressions are
+trusted deployment-time metadata and must not contain request data.
+
+Wrapper connection functions are available on PostgreSQL 19 and generate an
+execution-time version guard on older servers. Wrapper handler, validator, and
+connection function names are schema-qualified and quoted by component. Object
+ownership, wrapper/server `USAGE`, and role grants remain deployment policy.
+Drops use PostgreSQL's default `RESTRICT` behavior so unmanaged dependents do
+not disappear silently.
+
+User-mapping options are a credential boundary. BlueTusk never selects their
+catalogue values during database-first discovery; every discovered mapping is
+stored with redacted options. Password-, secret-, token-, credential-, and API
+key-like option names are rejected from EF model annotations, snapshots, and
+generated migration C#. A manually authored migration can construct a typed
+mapping operation from a deployment secret, but generated C# deliberately
+refuses to serialize it. Redacted mappings cannot generate create or alter SQL
+until explicit values are supplied.
+
+Database-first discovery reads the PostgreSQL foreign-data catalogues directly,
+including table and column options, and regenerates keyless foreign-table fluent
+metadata. Extension-owned wrappers are excluded because their lifecycle belongs
+to the extension; user-created servers that reference such wrappers are still
+retained. PostgreSQL 15–19 acceptance covers create, option alteration, rename,
+drop ordering, exact catalogue discovery, generated C#, and foreign-table
+scaffolding. PostgreSQL 19 additionally executes and discovers a wrapper
+connection function.
+
 ### Declarative table partitioning
 
 Partition trees are part of the EF model rather than a collection of unrelated
@@ -1297,7 +1369,7 @@ in the [SQL/PGQ guide](../graph/README.md).
 
 ## Database-first scaffolding
 
-The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, exclusion constraints, table/view triggers, rewrite rules, logical-replication publications and subscriptions, indexes, comments, standalone sequences, provider-owned collations, installed extensions, declarative partition trees, direct table-inheritance parents, row-level security policies, provider-owned enums, domains, standalone composite, range, and multirange types, functions, procedures, and PostgreSQL 19 property graphs. Column-based indexes retain their access method, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and predicate; generated contexts use the BlueTusk fluent index APIs for those annotations. Exclusion constraints retain their access method, ordered canonical elements and exact operators, included columns, storage settings, tablespace, predicate, and deferrability without duplicating their backing indexes. Trigger discovery retains canonical PostgreSQL DDL, firing mode, and extension dependency while excluding internal clones and extension-owned objects. Rule discovery retains canonical PostgreSQL DDL and firing mode while excluding extension-owned rules and view `_RETURN` machinery. Publication discovery retains explicit tables, columns, filters, schemas, DML options, partition-root behavior, and version-specific generated-column/all-sequence/exclusion state while excluding extension-owned objects. Subscription discovery retains publications, slots, enabled and application options, cross-version streaming state, and version-specific origin/failover/retention settings while deliberately redacting direct connection information; PostgreSQL 19 foreign-server sources retain their server identity. Collation discovery retains the provider, locale categories, determinism, ICU rules, and recorded version while excluding system and extension-owned objects. Installed-extension discovery retains the exact version, installation schema, and extension dependency edges while excluding extensions installed into system schemas. Partition discovery retains PostgreSQL's exact catalogue key and bound expressions, including empty partitioned tables and recursive subpartitions. Child partitions are represented inside the root's fluent metadata instead of being scaffolded as unrelated EF entities. Direct inheritance discovery retains ordered multiple parents while excluding declarative-partition catalogue edges. RLS discovery retains enable/force flags, permissive/restrictive behavior, command scopes, roles, and catalogue-rendered `USING`/`WITH CHECK` expressions. User-defined-type discovery retains enum order, domain base/default/nullability/collation/check state, ordered composite attributes, and range subtype/operator-class/collation/function/multirange identities while excluding table row types, system schemas, and extension-owned types. Routine discovery retains overload identity, arguments/defaults, results, window status, tracked-body dependency phase, and the server's canonical `pg_get_functiondef` DDL; aggregates, system routines, and extension-owned routines are excluded. View discovery retains the stable, non-pretty `pg_get_viewdef` query, ordered output names, security/check options, materialisation kind, access method, storage parameters, tablespace, population state, and view-on-view dependency edges while excluding system and extension-owned relations. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
+The design-time provider integrates with EF Core reverse engineering. It discovers ordinary and foreign tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, exclusion constraints, table/view triggers, rewrite rules, logical-replication publications and subscriptions, foreign-data wrappers, servers and redacted user mappings, indexes, comments, standalone sequences, provider-owned collations, installed extensions, declarative partition trees, direct table-inheritance parents, row-level security policies, provider-owned enums, domains, standalone composite, range, and multirange types, functions, procedures, and PostgreSQL 19 property graphs. Column-based indexes retain their access method, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and predicate; generated contexts use the BlueTusk fluent index APIs for those annotations. Exclusion constraints retain their access method, ordered canonical elements and exact operators, included columns, storage settings, tablespace, predicate, and deferrability without duplicating their backing indexes. Foreign-data discovery retains wrapper functions/options, server identity/type/version/options, and foreign-table/column options, excludes extension-owned wrappers, and never reads user-mapping option values. Trigger discovery retains canonical PostgreSQL DDL, firing mode, and extension dependency while excluding internal clones and extension-owned objects. Rule discovery retains canonical PostgreSQL DDL and firing mode while excluding extension-owned rules and view `_RETURN` machinery. Publication discovery retains explicit tables, columns, filters, schemas, DML options, partition-root behavior, and version-specific generated-column/all-sequence/exclusion state while excluding extension-owned objects. Subscription discovery retains publications, slots, enabled and application options, cross-version streaming state, and version-specific origin/failover/retention settings while deliberately redacting direct connection information; PostgreSQL 19 foreign-server sources retain their server identity. Collation discovery retains the provider, locale categories, determinism, ICU rules, and recorded version while excluding system and extension-owned objects. Installed-extension discovery retains the exact version, installation schema, and extension dependency edges while excluding extensions installed into system schemas. Partition discovery retains PostgreSQL's exact catalogue key and bound expressions, including empty partitioned tables and recursive subpartitions. Child partitions are represented inside the root's fluent metadata instead of being scaffolded as unrelated EF entities. Direct inheritance discovery retains ordered multiple parents while excluding declarative-partition catalogue edges. RLS discovery retains enable/force flags, permissive/restrictive behavior, command scopes, roles, and catalogue-rendered `USING`/`WITH CHECK` expressions. User-defined-type discovery retains enum order, domain base/default/nullability/collation/check state, ordered composite attributes, and range subtype/operator-class/collation/function/multirange identities while excluding table row types, system schemas, and extension-owned types. Routine discovery retains overload identity, arguments/defaults, results, window status, tracked-body dependency phase, and the server's canonical `pg_get_functiondef` DDL; aggregates, system routines, and extension-owned routines are excluded. View discovery retains the stable, non-pretty `pg_get_viewdef` query, ordered output names, security/check options, materialisation kind, access method, storage parameters, tablespace, population state, and view-on-view dependency edges while excluding system and extension-owned relations. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
 
 ```bash
 dotnet ef dbcontext scaffold \
@@ -1308,7 +1380,7 @@ dotnet ef dbcontext scaffold \
   --schema public
 ```
 
-Generated contexts configure `UseBlueTusk`. Reverse-engineered exclusion constraints, triggers, rewrite rules, publications, credential-redacted subscriptions, collations, installed extensions, graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, ranges and paired multiranges, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. Expression-index creation is supported from model metadata, but standalone expression indexes are not scaffolded yet because EF requires a mapped-property key; canonical expression elements owned by exclusion constraints are retained. PostgreSQL-complete discovery—including standalone expression indexes, privileges, aggregates, and other executable schema objects—remains a separate roadmap item.
+Generated contexts configure `UseBlueTusk`. Reverse-engineered exclusion constraints, triggers, rewrite rules, publications, credential-redacted subscriptions and user mappings, foreign-data wrappers, servers and foreign tables, collations, installed extensions, graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, ranges and paired multiranges, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. Expression-index creation is supported from model metadata, but standalone expression indexes are not scaffolded yet because EF requires a mapped-property key; canonical expression elements owned by exclusion constraints are retained. PostgreSQL-complete discovery—including standalone expression indexes, privileges, aggregates, and other executable schema objects—remains a separate roadmap item.
 
 ## Validation
 
@@ -1359,5 +1431,11 @@ PostgreSQL 16–19 additionally execute parallel-streaming, password-policy,
 run-as-owner, and origin changes; PostgreSQL 17–19 round-trip failover state;
 PostgreSQL 19 verifies retention/receiver-timeout fields and foreign-server
 source identity.
+
+The PostgreSQL 15–19 foreign-data gate verifies wrapper/server/mapping/foreign-
+table creation, table and column option changes, dependency-safe rename and
+removal, exact catalogue round-tripping, credential-redacted mapping metadata,
+and generated keyless fluent C#. PostgreSQL 19 also executes and discovers a
+wrapper connection function.
 
 The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, advanced index creation/deletion, declarative partition lifecycles, direct table inheritance, row-level security enforcement, rewrite-rule lifecycles, catalogue round-tripping, and database-first C# generation. Advanced index acceptance runs on PostgreSQL 15–19 and verifies expression/partial keys, access methods, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and transaction-suppressed concurrent operations. Partition acceptance on the same server matrix verifies RANGE/LIST/HASH DDL, recursive row routing, default partitions, typed bounds, destructive-change diagnostics, exact catalogue discovery, generated fluent C#, and attach/detach operations. Table-inheritance acceptance verifies ordered multiple parents, inherited versus `ONLY` scans, add/remove lifecycle SQL, rename-aware diffs, `pg_inherits` discovery, and generated fluent C# across PostgreSQL 15–19. RLS acceptance verifies non-owner tenant filtering, successful and rejected `WITH CHECK` inserts, active enable/force state, policy lifecycle SQL, catalogue discovery, and generated fluent C# on PostgreSQL 15–19. User-defined-type acceptance on the same matrix verifies dependency-ordered enum/domain/composite creation, runtime enforcement, transaction-suppressed enum additions, supported alterations and renames, destructive diagnostics, exact catalogue discovery, and generated fluent C#. Routine acceptance across PostgreSQL 15–19 verifies overloaded functions, default arguments, optimizer/null/parallel attributes, PL/pgSQL procedures, UDT and relational dependency phases, signature-qualified lifecycle operations, canonical catalogue discovery, and generated fluent C#. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, integer/text multi-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair/recordset expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

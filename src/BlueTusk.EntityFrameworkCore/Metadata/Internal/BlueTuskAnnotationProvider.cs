@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.ForeignData.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
@@ -38,6 +39,13 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
             yield return new Annotation(
                 BlueTuskTableInheritanceMetadata.AnnotationName,
                 BlueTuskTableInheritanceMetadata.Serialize(inheritance));
+        }
+
+        if (BlueTuskForeignDataMetadata.GetTableDefinition(table) is { } foreignTable)
+        {
+            yield return new Annotation(
+                BlueTuskForeignDataMetadata.ForeignTableAnnotationName,
+                BlueTuskForeignDataMetadata.Serialize(foreignTable));
         }
     }
 

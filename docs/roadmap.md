@@ -319,6 +319,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Create/alter/drop/rename diffs plus explicit publication/sequence refresh and skipped-transaction operations, dependency ordering, destructive diagnostics, and transaction suppression where PostgreSQL requires it
   - [x] Cross-version `pg_subscription` discovery with PostgreSQL 15 boolean/16+ mode handling, credential-redacted database-first scaffolding, generated migration C#, and execution-time PostgreSQL 16/17/19 capability guards
   - [x] PostgreSQL 15–19 disconnected lifecycle, option alteration, rename, exact catalogue round-tripping, scaffolding, and PostgreSQL 19 foreign-server acceptance
+- [x] Foreign-data wrappers, servers, user mappings, and foreign tables
+  - [x] Typed wrapper handler/validator/PostgreSQL 19 connection functions, wrapper/server/mapping options, server type/version, and keyless foreign-table/column options
+  - [x] Dependency-ordered create/alter/drop/rename diffs, generated migration C#, replacement diagnostics, PostgreSQL 19 capability guards, and default-`RESTRICT` removal
+  - [x] Cross-version `pg_foreign_data_wrapper`/`pg_foreign_server`/`pg_user_mapping`/`pg_foreign_table` discovery, extension-owned wrapper exclusion, credential-redacted mappings, and fluent C# scaffolding
+  - [x] PostgreSQL 15–19 lifecycle, option alteration, rename, exact catalogue round-tripping, foreign-table scaffolding, and PostgreSQL 19 connection-function acceptance
 - [x] Table partitioning metadata and migrations
   - [x] Typed RANGE, single-key LIST, multi-key HASH, expression-key, default-partition, and recursive subpartition metadata
   - [x] Create/add/drop/rename/schema-move diffs with destructive bound-change and unsupported root-strategy diagnostics
@@ -372,8 +377,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] PostgreSQL-complete database reverse engineering and scaffolding
 - [ ] Remaining product-spec schema objects
   - [ ] Event triggers
-  - [ ] Subscriptions
-  - [ ] Foreign-data wrappers, servers, user mappings, and foreign tables
+  - [x] Subscriptions
+  - [x] Foreign-data wrappers, servers, user mappings, and foreign tables
   - [ ] Operators, operator classes, operator families, casts, and aggregates
   - [ ] Tablespace lifecycle
 - [ ] Idempotent scripts, history-table behaviour, and version-aware DDL
