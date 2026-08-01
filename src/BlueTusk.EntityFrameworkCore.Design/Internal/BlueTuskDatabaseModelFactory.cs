@@ -2,6 +2,8 @@ using System.Data;
 using System.Data.Common;
 using BlueTusk.Data;
 using BlueTusk.Data.Schema;
+using BlueTusk.EntityFrameworkCore.Extensions;
+using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
@@ -81,6 +83,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadRowLevelSecurity(connection, tables);
         ReadPartitioning(connection, tables);
         ReadSequences(connection, model, selection);
+        ReadExtensions(connection, model, selection);
         ReadUserDefinedTypes(connection, model, selection);
         ReadRoutines(connection, model, selection);
         ReadViews(connection, model, tables, selection);
@@ -1082,6 +1085,68 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         }
     }
 
+    private static void ReadExtensions(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT extension_entry.extname,
+                   namespace.nspname,
+                   extension_entry.extversion,
+                   dependency_extension.extname
+            FROM pg_catalog.pg_extension AS extension_entry
+            JOIN pg_catalog.pg_namespace AS namespace
+              ON namespace.oid = extension_entry.extnamespace
+            LEFT JOIN pg_catalog.pg_depend AS dependency
+              ON dependency.classid = 'pg_catalog.pg_extension'::pg_catalog.regclass
+             AND dependency.objid = extension_entry.oid
+             AND dependency.refclassid = 'pg_catalog.pg_extension'::pg_catalog.regclass
+             AND dependency.deptype = 'n'
+            LEFT JOIN pg_catalog.pg_extension AS dependency_extension
+              ON dependency_extension.oid = dependency.refobjid
+            WHERE namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+            ORDER BY extension_entry.extname, dependency_extension.extname
+            """;
+        var extensions = new Dictionary<string, ExtensionSeed>(StringComparer.Ordinal);
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var name = reader.GetString(0);
+            var schema = reader.GetString(1);
+            if (!selection.IncludesSchemaObject(schema))
+            {
+                continue;
+            }
+
+            if (!extensions.TryGetValue(name, out var extension))
+            {
+                extension = new ExtensionSeed(schema, reader.GetString(2), []);
+                extensions.Add(name, extension);
+            }
+
+            if (!reader.IsDBNull(3))
+            {
+                extension.Dependencies.Add(reader.GetString(3));
+            }
+        }
+
+        if (extensions.Count > 0)
+        {
+            model[BlueTuskExtensionMetadata.AnnotationName] = BlueTuskExtensionMetadata.Serialize(
+                new BlueTuskExtensionDefinitionSet(extensions.Select(item =>
+                        new BlueTuskExtensionDefinition(
+                            item.Key,
+                            item.Value.Schema,
+                            item.Value.Version,
+                            item.Value.Dependencies))
+                    .ToArray()));
+        }
+    }
+
     private static void ReadRoutines(
         DbConnection connection,
         DatabaseModel model,
@@ -1405,6 +1470,11 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         string? DefaultSql,
         bool IsNotNull,
         List<BlueTuskDomainConstraintDefinition> Constraints);
+
+    private sealed record ExtensionSeed(
+        string Schema,
+        string Version,
+        List<string> Dependencies);
 
     private sealed class Selection
     {

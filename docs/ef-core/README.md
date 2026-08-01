@@ -674,6 +674,64 @@ deterministic. Manual migrations can use `AddBlueTuskTableInheritance` and
 in place. Normal PostgreSQL queries against a parent include descendant rows,
 while `ONLY parent_table` restricts a query to the parent's own rows.
 
+### PostgreSQL extensions
+
+Provider-owned extension installations participate in migration diffing,
+snapshots, generated migration C#, dependency ordering, and database-first
+scaffolding:
+
+```csharp
+modelBuilder.HasBlueTuskExtension(
+    "hstore",
+    extension => extension
+        .UseSchema("application_types")
+        .HasVersion("1.8"));
+
+modelBuilder.HasBlueTuskExtension("postgis");
+modelBuilder.HasBlueTuskExtension(
+    "postgis_topology",
+    extension => extension
+        .DependsOnExtension("postgis")
+        .InstallDependencies());
+```
+
+An extension is created after its target schema but before provider-owned
+types, routines, tables, indexes, and views, so those objects may consume its
+types, functions, operators, or access methods. Declared provider-owned
+extension dependencies are installed first and removed last. PostgreSQL
+extension names are database-global rather than schema-qualified; `UseSchema`
+selects the installation schema and a later change emits `ALTER EXTENSION SET
+SCHEMA`. PostgreSQL accepts that move only for a relocatable extension.
+
+`HasVersion` pins initial installation and emits `ALTER EXTENSION ... UPDATE TO`
+when changed. PostgreSQL must provide a valid update path; BlueTusk does not
+promise downgrades. Removing the version requests PostgreSQL's next available
+update without pinning a target. A schema move and version update are emitted as
+separate statements, update first. If dependent model metadata contains textual
+schema-qualified extension object names, stage the extension move and those
+metadata changes in explicit migrations.
+
+Automatic creates deliberately omit `IF NOT EXISTS`, because that clause does
+not prove that an existing installation has the requested schema, version, or
+configuration. Automatic drops are destructive and explicitly use `RESTRICT`;
+dependent provider-owned objects are removed first, while unmanaged dependants
+make PostgreSQL reject the drop. Manual migrations can use
+`CreateBlueTuskExtension`, `AlterBlueTuskExtension`, and
+`DropBlueTuskExtension`, including explicit `IF NOT EXISTS` or `CASCADE`
+options when the application owns that risk. `InstallDependencies` adds
+`CASCADE` only during creation so PostgreSQL may recursively install missing
+required extensions.
+
+Reverse engineering reads the installed schema, exact version, and recorded
+extension-to-extension dependencies from `pg_extension` and `pg_depend`.
+Whether the original install used `CASCADE` is not stored by PostgreSQL, so
+scaffolding does not regenerate `InstallDependencies`. Owners, grants, and
+extension membership changes are also outside this metadata and require
+explicit migrations. Extension installation executes server-side package
+scripts with the installing role's privileges; install only reviewed extension
+packages and follow each extension's trusted/superuser and `search_path`
+guidance.
+
 ### PostgreSQL enum, domain, and composite types
 
 Provider-owned enum, domain, and standalone composite schema objects use typed
@@ -905,7 +963,7 @@ in the [SQL/PGQ guide](../graph/README.md).
 
 ## Database-first scaffolding
 
-The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, declarative partition trees, direct table-inheritance parents, row-level security policies, provider-owned enums, domains, standalone composite types, functions, procedures, and PostgreSQL 19 property graphs. Column-based indexes retain their access method, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and predicate; generated contexts use the BlueTusk fluent index APIs for those annotations. Partition discovery retains PostgreSQL's exact catalogue key and bound expressions, including empty partitioned tables and recursive subpartitions. Child partitions are represented inside the root's fluent metadata instead of being scaffolded as unrelated EF entities. Direct inheritance discovery retains ordered multiple parents while excluding declarative-partition catalogue edges. RLS discovery retains enable/force flags, permissive/restrictive behavior, command scopes, roles, and catalogue-rendered `USING`/`WITH CHECK` expressions. User-defined-type discovery retains enum order, domain base/default/nullability/collation/check state, and ordered composite attributes while excluding table row types, system schemas, and extension-owned types. Routine discovery retains overload identity, arguments/defaults, results, window status, tracked-body dependency phase, and the server's canonical `pg_get_functiondef` DDL; aggregates, system routines, and extension-owned routines are excluded. View discovery retains the stable, non-pretty `pg_get_viewdef` query, ordered output names, security/check options, materialisation kind, access method, storage parameters, tablespace, population state, and view-on-view dependency edges while excluding system and extension-owned relations. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
+The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, installed extensions, declarative partition trees, direct table-inheritance parents, row-level security policies, provider-owned enums, domains, standalone composite types, functions, procedures, and PostgreSQL 19 property graphs. Column-based indexes retain their access method, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and predicate; generated contexts use the BlueTusk fluent index APIs for those annotations. Installed-extension discovery retains the exact version, installation schema, and extension dependency edges while excluding extensions installed into system schemas. Partition discovery retains PostgreSQL's exact catalogue key and bound expressions, including empty partitioned tables and recursive subpartitions. Child partitions are represented inside the root's fluent metadata instead of being scaffolded as unrelated EF entities. Direct inheritance discovery retains ordered multiple parents while excluding declarative-partition catalogue edges. RLS discovery retains enable/force flags, permissive/restrictive behavior, command scopes, roles, and catalogue-rendered `USING`/`WITH CHECK` expressions. User-defined-type discovery retains enum order, domain base/default/nullability/collation/check state, and ordered composite attributes while excluding table row types, system schemas, and extension-owned types. Routine discovery retains overload identity, arguments/defaults, results, window status, tracked-body dependency phase, and the server's canonical `pg_get_functiondef` DDL; aggregates, system routines, and extension-owned routines are excluded. View discovery retains the stable, non-pretty `pg_get_viewdef` query, ordered output names, security/check options, materialisation kind, access method, storage parameters, tablespace, population state, and view-on-view dependency edges while excluding system and extension-owned relations. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
 
 ```bash
 dotnet ef dbcontext scaffold \
@@ -916,7 +974,7 @@ dotnet ef dbcontext scaffold \
   --schema public
 ```
 
-Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. Expression-index creation is supported from model metadata, but expression indexes are not scaffolded yet because EF requires a mapped-property key; PostgreSQL-complete discovery—including extensions, range and multirange schema objects, expression indexes, privileges, aggregates, and other executable schema objects—remains a separate roadmap item.
+Generated contexts configure `UseBlueTusk`. Reverse-engineered installed extensions, graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. Expression-index creation is supported from model metadata, but expression indexes are not scaffolded yet because EF requires a mapped-property key; PostgreSQL-complete discovery—including range and multirange schema objects, expression indexes, privileges, aggregates, and other executable schema objects—remains a separate roadmap item.
 
 ## Validation
 
@@ -924,5 +982,9 @@ The PostgreSQL 15–19 view gate verifies security/check enforcement, dependency
 ordering, normal and concurrent materialised refresh, constrained replacement,
 auxiliary alteration, rename, canonical catalogue discovery, and generated
 fluent C#.
+
+The PostgreSQL 15–19 extension gate verifies installation, dependency and schema
+ordering, exact version/schema catalogue round-tripping, generated fluent C#,
+relocation, and default-`RESTRICT` removal.
 
 The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, advanced index creation/deletion, declarative partition lifecycles, direct table inheritance, row-level security enforcement, catalogue round-tripping, and database-first C# generation. Advanced index acceptance runs on PostgreSQL 15–19 and verifies expression/partial keys, access methods, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and transaction-suppressed concurrent operations. Partition acceptance on the same server matrix verifies RANGE/LIST/HASH DDL, recursive row routing, default partitions, typed bounds, destructive-change diagnostics, exact catalogue discovery, generated fluent C#, and attach/detach operations. Table-inheritance acceptance verifies ordered multiple parents, inherited versus `ONLY` scans, add/remove lifecycle SQL, rename-aware diffs, `pg_inherits` discovery, and generated fluent C# across PostgreSQL 15–19. RLS acceptance verifies non-owner tenant filtering, successful and rejected `WITH CHECK` inserts, active enable/force state, policy lifecycle SQL, catalogue discovery, and generated fluent C# on PostgreSQL 15–19. User-defined-type acceptance on the same matrix verifies dependency-ordered enum/domain/composite creation, runtime enforcement, transaction-suppressed enum additions, supported alterations and renames, destructive diagnostics, exact catalogue discovery, and generated fluent C#. Routine acceptance across PostgreSQL 15–19 verifies overloaded functions, default arguments, optimizer/null/parallel attributes, PL/pgSQL procedures, UDT and relational dependency phases, signature-qualified lifecycle operations, canonical catalogue discovery, and generated fluent C#. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, integer/text multi-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair/recordset expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

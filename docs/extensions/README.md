@@ -73,9 +73,10 @@ case-insensitive `citext` operator semantics. The plug-in participates in EF's
 service-provider cache identity, so different installation schemas do not share
 an incompatible singleton mapping.
 
-Migrations that own installation of the PostgreSQL extension can use helpers
-from the companion package. Their extension-specific SQL stays outside the core
-provider:
+Migrations that own installation of the PostgreSQL extension can use the
+companion package's compatibility helpers. The core EF provider also has a
+generic typed PostgreSQL-extension lifecycle without taking a dependency on
+`citext` or any other extension-specific package:
 
 ```csharp
 protected override void Up(MigrationBuilder migrationBuilder)
@@ -90,6 +91,20 @@ protected override void Down(MigrationBuilder migrationBuilder)
     migrationBuilder.DropBlueTuskCitext();
 }
 ```
+
+For model-owned installation and database-first round-tripping, configure the
+generic lifecycle in `OnModelCreating`:
+
+```csharp
+modelBuilder.HasBlueTuskExtension(
+    "citext",
+    extension => extension.UseSchema("extensions"));
+```
+
+This metadata orders installation before extension-backed schema objects and
+removal after them. The `citext` CLR type, codec, query semantics, and
+extension-specific service registration remain isolated in the companion
+packages.
 
 The immutable descriptor is available for integration code that must inspect configured optional behavior:
 

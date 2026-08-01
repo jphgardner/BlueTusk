@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
@@ -23,6 +24,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         IModel model,
         IAnnotation annotation)
     {
+        if (annotation.Name == BlueTuskExtensionMetadata.AnnotationName &&
+            annotation.Value is string serializedExtensions)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskExtensionModelBuilderExtensions.HasBlueTuskExtensions),
+                serializedExtensions);
+        }
+
         if (annotation.Name == BlueTuskPropertyGraphMetadata.AnnotationName &&
             annotation.Value is string serializedDefinitions)
         {

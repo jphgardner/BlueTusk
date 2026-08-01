@@ -310,6 +310,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Rename-aware add/remove/reorder diffs plus manual `INHERIT`/`NO INHERIT` migration operations
   - [x] `pg_inherits` direct-parent discovery without conflating declarative partitions
   - [x] PostgreSQL 15–19 inherited scans, `ONLY` behavior, lifecycle, discovery, and scaffolding acceptance
+- [x] PostgreSQL extension installation lifecycle
+  - [x] Typed install, version pin/update, schema relocation, dependency declaration, remove, snapshots, and generated migration C#
+  - [x] Extension-first create and extension-last default-`RESTRICT` drop ordering around provider-owned schema objects
+  - [x] `pg_extension`/`pg_depend` discovery with exact installed version, schema, dependency edges, schema filters, and fluent model regeneration
+  - [x] PostgreSQL 15–19 install, relocation, lifecycle, reverse-engineering, and scaffolding acceptance
 - [x] Enum, domain, and composite type creation and alteration
   - [x] Typed model metadata, snapshots, migration operations, generated C#, identifier/literal quoting, and trusted SQL-fragment boundaries
   - [x] Dependency-ordered create/drop, schema/name moves, enum add/rename, domain default/nullability/check lifecycle, and composite attribute lifecycle

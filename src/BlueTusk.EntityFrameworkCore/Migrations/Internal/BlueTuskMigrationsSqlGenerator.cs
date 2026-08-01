@@ -1,4 +1,5 @@
 using System.Text;
+using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
@@ -32,6 +33,15 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskExtensionOperation createExtension:
+                Generate(createExtension, builder);
+                break;
+            case AlterBlueTuskExtensionOperation alterExtension:
+                Generate(alterExtension, builder);
+                break;
+            case DropBlueTuskExtensionOperation dropExtension:
+                Generate(dropExtension, builder);
+                break;
             case CreateBlueTuskViewOperation createView:
                 Generate(createView, builder);
                 break;
@@ -144,6 +154,97 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 base.Generate(operation, model, builder);
                 break;
         }
+    }
+
+    private void Generate(
+        CreateBlueTuskExtensionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskExtensionMetadata.Normalize(operation.Definition);
+        BlueTuskExtensionMetadata.Validate(definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder.Append("CREATE EXTENSION ");
+        if (operation.IfNotExists)
+        {
+            builder.Append("IF NOT EXISTS ");
+        }
+
+        builder.Append(helper.DelimitIdentifier(definition.Name));
+        if (definition.Schema is not null)
+        {
+            builder.Append(" WITH SCHEMA ").Append(helper.DelimitIdentifier(definition.Schema));
+        }
+
+        if (definition.Version is not null)
+        {
+            builder.Append(" VERSION ");
+            AppendStringLiteral(builder, definition.Version);
+        }
+
+        if (definition.InstallDependencies)
+        {
+            builder.Append(" CASCADE");
+        }
+
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskExtensionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = BlueTuskExtensionMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskExtensionMetadata.Normalize(operation.Definition);
+        BlueTuskExtensionMetadata.Validate(oldDefinition);
+        BlueTuskExtensionMetadata.Validate(definition);
+        if (!string.Equals(oldDefinition.Name, definition.Name, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL cannot rename an extension. Use an explicit create/drop migration.");
+        }
+
+        var name = Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Name);
+        if (!string.Equals(oldDefinition.Version, definition.Version, StringComparison.Ordinal))
+        {
+            builder.Append("ALTER EXTENSION ").Append(name).Append(" UPDATE");
+            if (definition.Version is not null)
+            {
+                builder.Append(" TO ");
+                AppendStringLiteral(builder, definition.Version);
+            }
+
+            EndStatement(builder);
+        }
+
+        if (!string.Equals(oldDefinition.Schema, definition.Schema, StringComparison.Ordinal))
+        {
+            if (definition.Schema is null)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL extension '{definition.Name}' cannot be moved to an unspecified schema.");
+            }
+
+            builder.Append("ALTER EXTENSION ").Append(name)
+                .Append(" SET SCHEMA ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.Schema));
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        DropBlueTuskExtensionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP EXTENSION ");
+        if (operation.IfExists)
+        {
+            builder.Append("IF EXISTS ");
+        }
+
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(operation.Cascade ? " CASCADE" : " RESTRICT");
+        EndStatement(builder);
     }
 
     private void Generate(

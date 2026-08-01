@@ -1,3 +1,4 @@
+using BlueTusk.EntityFrameworkCore.Extensions.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
@@ -26,6 +27,35 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskExtensionOperation createExtension:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskExtension(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskExtensionMetadata.Serialize(createExtension.Definition)))
+                    .Append(", ")
+                    .Append(createExtension.IfNotExists ? "true" : "false")
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskExtensionOperation alterExtension:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskExtension(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskExtensionMetadata.Serialize(alterExtension.Definition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskExtensionMetadata.Serialize(alterExtension.OldDefinition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskExtensionOperation dropExtension:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskExtension(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropExtension.Name))
+                    .Append(", ")
+                    .Append(dropExtension.IfExists ? "true" : "false")
+                    .Append(", ")
+                    .Append(dropExtension.Cascade ? "true" : "false")
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskViewOperation createView:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskView(")
