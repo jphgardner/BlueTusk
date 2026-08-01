@@ -469,7 +469,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] ltree ADO.NET package (live-tested `ltree`, `lquery`, `ltxtquery`, arrays, and operators)
 - [x] citext packages (tested ADO.NET and EF preview; extension SDK remains unstable)
 - [x] pg_trgm ADO.NET package (live-tested parameterized functions and operators, including quoted schemas)
-- [ ] TimescaleDB package
+- [x] TimescaleDB ADO.NET package (live-tested hypertable creation and retention-policy lifecycle)
+- [ ] Broader TimescaleDB query helpers and EF integration
 - [x] Extension-authoring template
 - [x] Extension compatibility-testing kit
 

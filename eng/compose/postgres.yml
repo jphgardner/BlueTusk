@@ -66,3 +66,9 @@ services:
     image: postgis/postgis:18-3.6
     profiles: ["extension-tests"]
     ports: ["5519:5432"]
+
+  timescaledb17:
+    <<: *postgres-common
+    image: timescale/timescaledb:latest-pg17
+    profiles: ["extension-tests"]
+    ports: ["5520:5432"]

@@ -274,3 +274,43 @@ distance, spatial predicates, and text-to-binary conversion.
 This transport slice deliberately leaves geometry parsing, coordinate-system
 rules, topology, and algorithms to PostGIS. A rich geometry object model and EF
 spatial translations are separately tracked rather than claimed here.
+
+## TimescaleDB preview
+
+TimescaleDB adds SQL behavior instead of a wire type, so
+`BlueTusk.Extensions.TimescaleDB` is a feature-only package. It provides typed
+ADO.NET operations for discovering the installed extension version, converting
+an existing table to a range hypertable, and adding or removing an interval-based
+retention policy:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS timescaledb;
+```
+
+```csharp
+using BlueTusk.Data;
+using BlueTusk.Extensions.TimescaleDB;
+using BlueTusk.TypeSystem;
+
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UseTimescaleDb()
+    .Build();
+
+var result = await dataSource.CreateHypertableAsync(
+    "public.metrics",
+    "recorded_at");
+
+var jobId = await dataSource.AddRetentionPolicyAsync(
+    "public.metrics",
+    new BlueTuskInterval(months: 0, days: 30, microseconds: 0));
+
+await dataSource.RemoveRetentionPolicyAsync("public.metrics");
+```
+
+Relations and time-column names are passed through PostgreSQL `regclass` and
+`name` parameters, while the configured extension schema is safely delimited.
+`migrateData` defaults to `false`: converting a populated table can take locks,
+so callers must opt into that behavior. The PostgreSQL 17/TimescaleDB live gate
+verifies version discovery, idempotent hypertable creation, quoted identifiers,
+and retention-policy creation and removal. Broader TimescaleDB query helpers and
+EF translations are not part of this preview.
