@@ -4,6 +4,7 @@ using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -25,6 +26,21 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
+                Generate(createPolicy, builder);
+                break;
+            case AlterBlueTuskRowSecurityPolicyOperation alterPolicy:
+                Generate(alterPolicy, builder);
+                break;
+            case DropBlueTuskRowSecurityPolicyOperation dropPolicy:
+                Generate(dropPolicy, builder);
+                break;
+            case RenameBlueTuskRowSecurityPolicyOperation renamePolicy:
+                Generate(renamePolicy, builder);
+                break;
+            case AlterBlueTuskRowLevelSecurityOperation alterRowLevelSecurity:
+                Generate(alterRowLevelSecurity, builder);
+                break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
                 break;
@@ -767,6 +783,180 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             default:
                 throw new InvalidOperationException($"Unknown partition bound kind '{bound.Kind}'.");
         }
+    }
+
+    private void Generate(
+        CreateBlueTuskRowSecurityPolicyOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentNullException.ThrowIfNull(operation.Definition);
+        BlueTuskRowLevelSecurityBuilder.ValidatePolicy(operation.Definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        var policy = operation.Definition;
+        builder
+            .Append("CREATE POLICY ")
+            .Append(helper.DelimitIdentifier(policy.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" AS ")
+            .Append(policy.Behavior switch
+            {
+                BlueTuskRowSecurityPolicyBehavior.Permissive => "PERMISSIVE",
+                BlueTuskRowSecurityPolicyBehavior.Restrictive => "RESTRICTIVE",
+                _ => throw new InvalidOperationException($"Unknown policy behavior '{policy.Behavior}'."),
+            })
+            .Append(" FOR ")
+            .Append(policy.Command switch
+            {
+                BlueTuskRowSecurityPolicyCommand.All => "ALL",
+                BlueTuskRowSecurityPolicyCommand.Select => "SELECT",
+                BlueTuskRowSecurityPolicyCommand.Insert => "INSERT",
+                BlueTuskRowSecurityPolicyCommand.Update => "UPDATE",
+                BlueTuskRowSecurityPolicyCommand.Delete => "DELETE",
+                _ => throw new InvalidOperationException($"Unknown policy command '{policy.Command}'."),
+            })
+            .Append(" TO ");
+        for (var index = 0; index < policy.Roles.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            AppendPolicyRole(builder, policy.Roles[index]);
+        }
+
+        if (policy.UsingSql is not null)
+        {
+            builder.Append(" USING (").Append(policy.UsingSql).Append(")");
+        }
+
+        if (policy.WithCheckSql is not null)
+        {
+            builder.Append(" WITH CHECK (").Append(policy.WithCheckSql).Append(")");
+        }
+
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskRowSecurityPolicyOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder
+            .Append("DROP POLICY ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskRowSecurityPolicyOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentNullException.ThrowIfNull(operation.Definition);
+        BlueTuskRowLevelSecurityBuilder.ValidatePolicy(operation.Definition);
+        var helper = Dependencies.SqlGenerationHelper;
+        var policy = operation.Definition;
+        builder
+            .Append("ALTER POLICY ")
+            .Append(helper.DelimitIdentifier(policy.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" TO ");
+        for (var index = 0; index < policy.Roles.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            AppendPolicyRole(builder, policy.Roles[index]);
+        }
+
+        if (policy.UsingSql is not null)
+        {
+            builder.Append(" USING (").Append(policy.UsingSql).Append(")");
+        }
+
+        if (policy.WithCheckSql is not null)
+        {
+            builder.Append(" WITH CHECK (").Append(policy.WithCheckSql).Append(")");
+        }
+
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RenameBlueTuskRowSecurityPolicyOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        builder
+            .Append("ALTER POLICY ")
+            .Append(helper.DelimitIdentifier(operation.Name))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(operation.Table, operation.Schema))
+            .Append(" RENAME TO ")
+            .Append(helper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskRowLevelSecurityOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
+        if (operation.Enabled is null && operation.Forced is null)
+        {
+            throw new InvalidOperationException("A row-level security operation has no setting changes.");
+        }
+
+        var table = Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Table, operation.Schema);
+        if (operation.Enabled is { } enabled)
+        {
+            builder
+                .Append("ALTER TABLE ")
+                .Append(table)
+                .Append(enabled ? " ENABLE" : " DISABLE")
+                .Append(" ROW LEVEL SECURITY");
+            EndStatement(builder);
+        }
+
+        if (operation.Forced is { } forced)
+        {
+            builder
+                .Append("ALTER TABLE ")
+                .Append(table)
+                .Append(forced ? " FORCE" : " NO FORCE")
+                .Append(" ROW LEVEL SECURITY");
+            EndStatement(builder);
+        }
+    }
+
+    private void AppendPolicyRole(
+        MigrationCommandListBuilder builder,
+        BlueTuskRowSecurityRoleDefinition role)
+    {
+        builder.Append(role.Kind switch
+        {
+            BlueTuskRowSecurityRoleKind.Named =>
+                Dependencies.SqlGenerationHelper.DelimitIdentifier(role.Name!),
+            BlueTuskRowSecurityRoleKind.Public => "PUBLIC",
+            BlueTuskRowSecurityRoleKind.CurrentRole => "CURRENT_ROLE",
+            BlueTuskRowSecurityRoleKind.CurrentUser => "CURRENT_USER",
+            BlueTuskRowSecurityRoleKind.SessionUser => "SESSION_USER",
+            _ => throw new InvalidOperationException($"Unknown policy role kind '{role.Kind}'."),
+        });
     }
 
     private void Generate(

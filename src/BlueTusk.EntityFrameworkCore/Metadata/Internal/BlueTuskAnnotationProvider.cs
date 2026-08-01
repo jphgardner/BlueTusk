@@ -1,5 +1,6 @@
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -22,6 +23,13 @@ internal sealed class BlueTuskAnnotationProvider(RelationalAnnotationProviderDep
             yield return new Annotation(
                 BlueTuskPartitionMetadata.AnnotationName,
                 BlueTuskPartitionMetadata.Serialize(definition));
+        }
+
+        if (BlueTuskRowLevelSecurityMetadata.GetTableDefinition(table) is { } rowLevelSecurity)
+        {
+            yield return new Annotation(
+                BlueTuskRowLevelSecurityMetadata.AnnotationName,
+                BlueTuskRowLevelSecurityMetadata.Serialize(rowLevelSecurity));
         }
     }
 

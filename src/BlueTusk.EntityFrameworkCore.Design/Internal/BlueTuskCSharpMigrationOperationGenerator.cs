@@ -1,6 +1,7 @@
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations.Design;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
@@ -22,6 +23,62 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
+                builder
+                    .Append("migrationBuilder.CreateBlueTuskRowSecurityPolicy(")
+                    .Append(Dependencies.CSharpHelper.Literal(createPolicy.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskRowLevelSecurityMetadata.Serialize(createPolicy.Definition)))
+                    .Append(", ")
+                    .Append(Literal(createPolicy.Schema))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskRowSecurityPolicyOperation alterPolicy:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskRowSecurityPolicy(")
+                    .Append(Dependencies.CSharpHelper.Literal(alterPolicy.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskRowLevelSecurityMetadata.Serialize(alterPolicy.Definition)))
+                    .Append(", ")
+                    .Append(Literal(alterPolicy.Schema))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskRowSecurityPolicyOperation dropPolicy:
+                builder
+                    .Append("migrationBuilder.DropBlueTuskRowSecurityPolicy(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropPolicy.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropPolicy.Name))
+                    .Append(", ")
+                    .Append(Literal(dropPolicy.Schema))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskRowSecurityPolicyOperation renamePolicy:
+                builder
+                    .Append("migrationBuilder.RenameBlueTuskRowSecurityPolicy(")
+                    .Append(Dependencies.CSharpHelper.Literal(renamePolicy.Table))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renamePolicy.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renamePolicy.NewName))
+                    .Append(", ")
+                    .Append(Literal(renamePolicy.Schema))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskRowLevelSecurityOperation alterRowLevelSecurity:
+                builder
+                    .Append("migrationBuilder.AlterBlueTuskRowLevelSecurity(")
+                    .Append(Dependencies.CSharpHelper.Literal(alterRowLevelSecurity.Table))
+                    .Append(", ")
+                    .Append(Literal(alterRowLevelSecurity.Enabled))
+                    .Append(", ")
+                    .Append(Literal(alterRowLevelSecurity.Forced))
+                    .Append(", ")
+                    .Append(Literal(alterRowLevelSecurity.Schema))
+                    .AppendLine(");");
+                break;
             case CreateBlueTuskPartitionOperation createPartition:
                 builder
                     .Append("migrationBuilder.CreateBlueTuskPartition(")
@@ -117,6 +174,14 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
     private string Literal(string? value) =>
         value is null ? "null" : Dependencies.CSharpHelper.Literal(value);
+
+    private static string Literal(bool? value) =>
+        value switch
+        {
+            true => "true",
+            false => "false",
+            null => "null",
+        };
 }
 
 #pragma warning restore EF1001

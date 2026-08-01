@@ -7,6 +7,8 @@ using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
+using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -67,6 +69,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadConstraints(connection, tables);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
+        ReadRowLevelSecurity(connection, tables);
         ReadPartitioning(connection, tables);
         ReadSequences(connection, model, selection);
         ReadPropertyGraphs(connection, model, selection);
@@ -214,6 +217,102 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                 BuildPartitioning(root, key, keys, childrenByParent));
         }
     }
+
+    private static void ReadRowLevelSecurity(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   relation.relname,
+                   relation.relrowsecurity,
+                   relation.relforcerowsecurity,
+                   policy.policyname,
+                   policy.permissive,
+                   policy.roles,
+                   policy.cmd,
+                   policy.qual,
+                   policy.with_check
+            FROM pg_catalog.pg_class AS relation
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = relation.relnamespace
+            LEFT JOIN pg_catalog.pg_policies AS policy
+              ON policy.schemaname = namespace.nspname
+             AND policy.tablename = relation.relname
+            WHERE relation.relkind IN ('r', 'p')
+              AND NOT relation.relispartition
+              AND namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+            ORDER BY namespace.nspname, relation.relname, policy.policyname
+            """;
+
+        var definitions = new Dictionary<
+            (string Schema, string Name),
+            (bool Enabled, bool Forced, List<BlueTuskRowSecurityPolicyDefinition> Policies)>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var key = (reader.GetString(0), reader.GetString(1));
+            if (!tables.ContainsKey(key))
+            {
+                continue;
+            }
+
+            if (!definitions.TryGetValue(key, out var definition))
+            {
+                definition = (reader.GetBoolean(2), reader.GetBoolean(3), []);
+                definitions.Add(key, definition);
+            }
+
+            if (reader.IsDBNull(4))
+            {
+                continue;
+            }
+
+            definition.Policies.Add(new BlueTuskRowSecurityPolicyDefinition(
+                reader.GetString(4),
+                reader.GetString(5).Equals("PERMISSIVE", StringComparison.OrdinalIgnoreCase)
+                    ? BlueTuskRowSecurityPolicyBehavior.Permissive
+                    : BlueTuskRowSecurityPolicyBehavior.Restrictive,
+                ParsePolicyCommand(reader.GetString(7)),
+                ParsePostgreSqlArray(reader.GetValue(6))
+                    .Select(role => role.Equals("public", StringComparison.OrdinalIgnoreCase)
+                        ? BlueTuskRowSecurityRoleDefinition.Public
+                        : BlueTuskRowSecurityRoleDefinition.Named(role))
+                    .ToArray(),
+                GetNullableString(reader, 8),
+                GetNullableString(reader, 9)));
+        }
+
+        foreach (var (key, definition) in definitions)
+        {
+            if (!definition.Enabled && !definition.Forced && definition.Policies.Count == 0)
+            {
+                continue;
+            }
+
+            var rowLevelSecurity = new BlueTuskRowLevelSecurityDefinition(
+                definition.Enabled,
+                definition.Forced,
+                definition.Policies);
+            BlueTuskRowLevelSecurityBuilder.ValidateDefinition(rowLevelSecurity);
+            tables[key][BlueTuskRowLevelSecurityMetadata.AnnotationName] =
+                BlueTuskRowLevelSecurityMetadata.Serialize(rowLevelSecurity);
+        }
+    }
+
+    private static BlueTuskRowSecurityPolicyCommand ParsePolicyCommand(string command) =>
+        command.ToUpperInvariant() switch
+        {
+            "ALL" => BlueTuskRowSecurityPolicyCommand.All,
+            "SELECT" => BlueTuskRowSecurityPolicyCommand.Select,
+            "INSERT" => BlueTuskRowSecurityPolicyCommand.Insert,
+            "UPDATE" => BlueTuskRowSecurityPolicyCommand.Update,
+            "DELETE" => BlueTuskRowSecurityPolicyCommand.Delete,
+            var value => throw new InvalidOperationException(
+                $"PostgreSQL returned an unknown row-security policy command '{value}'."),
+        };
 
     private static BlueTuskPartitioningDefinition BuildPartitioning(
         (string Schema, string Name) table,

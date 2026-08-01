@@ -1,6 +1,7 @@
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
+using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -77,6 +78,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskPartitioningBuilderExtensions.HasBlueTuskPartitioning),
                 serializedDefinition);
+        }
+
+        if (annotation.Name == BlueTuskRowLevelSecurityMetadata.AnnotationName &&
+            annotation.Value is string serializedRowLevelSecurity)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskRowLevelSecurityBuilderExtensions.HasBlueTuskRowLevelSecurity),
+                serializedRowLevelSecurity);
         }
 
         return base.GenerateFluentApi(entityType, annotation);

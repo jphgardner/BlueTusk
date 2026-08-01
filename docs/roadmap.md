@@ -300,7 +300,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Manual attach and normal/concurrent/finalize detach operations with transaction suppression where PostgreSQL requires it
   - [x] Exact catalogue key/bound discovery, child-table de-duplication, snapshot retention, and generated fluent C#
   - [x] PostgreSQL 15–19 row-routing, lifecycle, reverse-engineering, and scaffolding acceptance
-- [ ] Row-level security policies
+- [x] Row-level security policies
+  - [x] Typed enable/force state plus permissive/restrictive policies for every PostgreSQL command scope and role-target form
+  - [x] Create/alter/drop/rename/replacement diffs, trusted `USING`/`WITH CHECK` predicates, snapshots, and operation C# scaffolding
+  - [x] `pg_class`/`pg_policies` reverse engineering with fluent model regeneration
+  - [x] PostgreSQL 15–19 non-owner filtering, check enforcement, lifecycle, discovery, and scaffolding acceptance
 - [ ] Enum, domain, and composite type creation and alteration
 - [ ] Functions and procedures
 - [ ] Views and materialised views
