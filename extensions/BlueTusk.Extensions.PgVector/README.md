@@ -20,9 +20,12 @@ command.Parameters.Add(
 
 PostgreSQL must have `CREATE EXTENSION vector` applied before the data source
 is built. Pass the installation schema to `UsePgVector(schema)` when it is not
-`public`. The package currently owns the dense `vector` wire type; `halfvec`,
-`bit`, `sparsevec`, EF mappings, and LINQ distance translations remain future
-separately tested additions.
+`public`. Add the independently packaged
+`BlueTusk.Extensions.PgVector.EntityFrameworkCore` integration for EF scalar
+and array mappings, dimension-qualified store types, migration helpers, and
+typed LINQ distance translations. The current packages own only the dense
+`vector` path; `halfvec`, `bit`, and `sparsevec` remain future separately tested
+additions.
 
 This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
 APIs, not stable or production-ready contracts.

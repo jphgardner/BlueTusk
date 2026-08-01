@@ -152,9 +152,26 @@ as its invariant text form. Runtime catalogue composition also supports
 round trips plus Euclidean distance against the official PostgreSQL 18 pgvector
 image.
 
-The current package deliberately covers the dense `vector` data path only.
-`halfvec`, `sparsevec`, vector-specific `bit` behavior, EF mappings, and LINQ
-distance translations are not claimed by this preview.
+The separately packaged `BlueTusk.Extensions.PgVector.EntityFrameworkCore`
+integration maps scalar and array properties, preserves dimension-qualified
+store types such as `vector(768)`, and translates parameterized L2, negative
+inner-product, cosine, and L1 distance calls to `<->`, `<#>`, `<=>`, and `<+>`:
+
+```csharp
+var options = new DbContextOptionsBuilder<AppDbContext>()
+    .UseBlueTusk(dataSource, provider => provider.UsePgVector())
+    .Options;
+
+var nearest = await context.Items
+    .OrderBy(item => EF.Functions.L2Distance(item.Embedding, probe))
+    .Take(10)
+    .ToListAsync();
+```
+
+Its live gate verifies EF writes, materialisation, array round trips, and
+parameterized distance execution. The current packages deliberately cover the
+dense `vector` path only. `halfvec`, `sparsevec`, and vector-specific `bit`
+behavior remain separately tracked additions.
 
 ## hstore preview
 

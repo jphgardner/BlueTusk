@@ -39,6 +39,24 @@ services.AddDbContext<AppDbContext>(options =>
     options.UseBlueTusk(dataSource, provider => provider.UseCitext()));
 ```
 
+Dense pgvector integration follows the same split. The EF package preserves
+dimension-qualified store types and translates the index-compatible distance
+operators while the data source owns the wire codec:
+
+```csharp
+var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UsePgVector()
+    .Build();
+
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource, provider => provider.UsePgVector()));
+
+var nearest = await context.Items
+    .OrderBy(item => EF.Functions.L2Distance(item.Embedding, probe))
+    .Take(10)
+    .ToListAsync();
+```
+
 ## PostgreSQL type mappings
 
 In addition to the standard .NET relational types, the 0.3 query work maps BlueTusk's wire-native PostgreSQL scalar values. This includes `inet`/`cidr`, `macaddr`/`macaddr8`, all built-in geometric values, `bit`/`varbit`, arbitrary-precision `numeric`, `money`, `pg_lsn`, `tid`, `timetz`, native intervals, `jsonpath`, `tsvector`/`tsquery`, object identifiers, transaction values, and system-catalogue values. `string` can be explicitly mapped to `json`, `jsonb`, or `xml`.

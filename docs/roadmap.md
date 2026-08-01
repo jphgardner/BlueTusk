@@ -464,7 +464,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] PostGIS ADO.NET transport package (live-tested EWKB/WKT geometry, geography, arrays, and spatial execution)
 - [ ] PostGIS rich geometry model and EF spatial integration
 - [x] pgvector ADO.NET package (live-tested dense `vector`, arrays, and distance execution)
-- [ ] pgvector `halfvec`/`sparsevec`, vector-specific `bit`, and EF integration
+- [x] pgvector EF package (live-tested dense `vector` mappings, arrays, dimensions, migrations, and distance translations)
+- [ ] pgvector `halfvec`/`sparsevec` and vector-specific `bit` integration
 - [x] hstore ADO.NET package (live-tested binary/text values, arrays, and operators)
 - [x] ltree ADO.NET package (live-tested `ltree`, `lquery`, `ltxtquery`, arrays, and operators)
 - [x] citext packages (tested ADO.NET and EF preview; extension SDK remains unstable)
