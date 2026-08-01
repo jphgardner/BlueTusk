@@ -167,6 +167,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Live apply/revert coverage for alter, rename, sequence, index, and drop operations
 - [x] Initial database reverse engineering
   - [x] EF design-time provider discovery and `UseBlueTusk` context generation
+  - [x] Packaged `bluetusk scaffold` CLI with schema/table selection, naming options, safe overwrite behavior, and secure-by-default generated contexts
   - [x] Tables, views, columns, defaults, generated values, keys, foreign keys, indexes, and sequences
   - [x] Exact identity-generation modes, stored/virtual generated-column modes, server-normalized expressions, and comments
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage

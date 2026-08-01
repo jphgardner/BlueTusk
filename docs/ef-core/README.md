@@ -1600,7 +1600,28 @@ dotnet ef dbcontext scaffold \
   --schema public
 ```
 
-Generated contexts configure `UseBlueTusk`. Reverse-engineered exclusion constraints, relation and event triggers, rewrite rules, publications, credential-redacted subscriptions and user mappings, foreign-data wrappers, servers and foreign tables, tablespaces, operators, operator families and classes, casts, aggregates, collations, installed extensions, graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, ranges and paired multiranges, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. Expression-index creation is supported from model metadata, but standalone expression indexes are not scaffolded yet because EF requires a mapped-property key; canonical expression elements owned by exclusion constraints are retained. PostgreSQL-complete discovery—including standalone expression indexes, privileges, and other remaining schema objects—remains a separate roadmap item.
+The packaged BlueTusk tool provides the product-specific command shape and
+includes views, routines, and property graphs without requiring opt-in flags:
+
+```bash
+export BLUETUSK_CONNECTION_STRING="Host=localhost;Database=app;Username=app;Password=..."
+bluetusk scaffold \
+  --output Models \
+  --context AppDbContext \
+  --namespace App.Models \
+  --schema public
+```
+
+Install it with `dotnet tool install --global BlueTusk.Tool`. The CLI does not
+write its connection string into generated C# unless
+`--include-connection-string` is explicitly supplied. Repeat `--schema` or
+`--table` for selection, and use `--force` only when existing generated files
+should be overwritten. See the [tool reference](../../tooling/BlueTusk.Tool/README.md)
+for all options.
+
+Generated contexts use the BlueTusk provider; `dotnet ef` and the CLI's
+explicit connection-string mode also generate `UseBlueTusk` in
+`OnConfiguring`. Reverse-engineered exclusion constraints, relation and event triggers, rewrite rules, publications, credential-redacted subscriptions and user mappings, foreign-data wrappers, servers and foreign tables, tablespaces, operators, operator families and classes, casts, aggregates, collations, installed extensions, graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, ranges and paired multiranges, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. Expression-index creation is supported from model metadata, but standalone expression indexes are not scaffolded yet because EF requires a mapped-property key; canonical expression elements owned by exclusion constraints are retained. PostgreSQL-complete discovery—including standalone expression indexes, privileges, and other remaining schema objects—remains a separate roadmap item.
 
 ## Validation
 

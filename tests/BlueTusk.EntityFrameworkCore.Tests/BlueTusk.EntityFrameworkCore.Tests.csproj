@@ -24,6 +24,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore.Design\BlueTusk.EntityFrameworkCore.Design.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\tooling\BlueTusk.Tool\BlueTusk.Tool.csproj" />
   </ItemGroup>
 
 </Project>
