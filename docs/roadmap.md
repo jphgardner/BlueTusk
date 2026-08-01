@@ -298,9 +298,13 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Schema-qualified, model-registered user-defined table functions with typed keyless rows, parameters, lateral composition, and compiled-query execution
     - [x] Model-derived JSONB-to-recordset roots with quoted column definitions, exact store types, nullable fields, lateral composition, and compiled-query execution
     - [x] Generic two-, three-, and four-array `unnest` with nullable padding, ordinality, compiled-query execution, and PostgreSQL 15–19 acceptance
+    - [x] Typed `generate_subscripts` roots with dimension/reverse arguments, ordinality, correlation, and PostgreSQL 15–19 acceptance
+    - [x] Regex match/split and nullable `string_to_table` roots with capture arrays, flags, null markers, parameters, and compiled-query execution
+    - [x] Four-argument JSONPath-query roots with typed variables and silent-mode arguments
 - [ ] PostgreSQL-specific query roots and SQL constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
-  - [x] Array predicates, scalar functions, aggregates, lateral element expansion, typed series/JSONB roots, and initial multi-array expansion
+  - [x] Array predicates, scalar functions, aggregates, lateral element/subscript expansion, typed series/JSONB roots, and generic multi-array expansion
+  - [x] Regex match/split and delimiter-table native query roots
   - [ ] Remaining array forms and other PostgreSQL-native query families
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback

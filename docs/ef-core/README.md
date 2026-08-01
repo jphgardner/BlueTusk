@@ -438,6 +438,37 @@ semantics. The translation-only `EF.Functions` form must not be called outside
 an EF query. The PostgreSQL 16+ timezone-name overload is not exposed yet so
 the same API executes across the PostgreSQL 15–19 support matrix.
 
+`GenerateSubscripts` expands the valid indexes of a mapped PostgreSQL array.
+Its dimension is an ordinary typed argument, and the overload with `reverse`
+requests descending index order from PostgreSQL:
+
+```csharp
+var positions = await context.Documents
+    .SelectMany(
+        document => EF.Functions.GenerateSubscripts(
+            document.Scores,
+            dimension: 1,
+            reverse: true),
+        (document, position) => new { document.Id, Position = position })
+    .ToListAsync(cancellationToken);
+```
+
+Regex and delimiter expansion use the same typed query-root machinery.
+`RegexMatches` returns one `string[]` per match (and supports PostgreSQL flags),
+`RegexSplitToTable` returns text segments, and `StringToTable` supports an
+optional null marker whose rows materialize as nullable strings. Inputs remain
+parameters and correlated calls become lateral joins:
+
+```csharp
+var captures = context.Documents.SelectMany(
+    document => EF.Functions.RegexMatches(document.Title, "([A-Z]+)", "g"),
+    (document, match) => new { document.Id, Match = match });
+
+var fields = context.Documents.SelectMany(
+    document => EF.Functions.StringToTable(document.Csv, ",", "NULL"),
+    (document, field) => new { document.Id, Field = field });
+```
+
 BlueTusk also exposes four single-column JSONB roots:
 `JsonArrayElements`, `JsonArrayElementsText`, `JsonObjectKeys`, and
 `JsonPathQuery`. JSON-valued results remain mapped as `jsonb`; text elements
@@ -477,7 +508,9 @@ var properties = await context.Documents
 
 These roots emit `WITH ORDINALITY` internally so duplicate values and JSON-null
 elements have stable row identity and source order. Correlated roots use lateral
-joins, and captured JSON/JSONPath values remain parameters.
+joins, and captured JSON/JSONPath values remain parameters. The four-argument
+`JsonPathQuery` overload accepts a JSONB variables object and PostgreSQL's
+`silent` flag with exact `jsonb` and Boolean mappings.
 
 `JsonToRecordset<T>` expands a JSONB array of objects into an application row
 shape. `T` must be registered as a flat keyless entity. Its configured column
@@ -1899,4 +1932,4 @@ removal, exact catalogue round-tripping, credential-redacted mapping metadata,
 and generated keyless fluent C#. PostgreSQL 19 also executes and discovers a
 wrapper connection function.
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, advanced index creation/deletion, declarative partition lifecycles, direct table inheritance, row-level security enforcement, rewrite-rule lifecycles, catalogue round-tripping, and database-first C# generation. Advanced index acceptance runs on PostgreSQL 15–19 and verifies expression/partial keys, access methods, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and transaction-suppressed concurrent operations. Partition acceptance on the same server matrix verifies RANGE/LIST/HASH DDL, recursive row routing, default partitions, typed bounds, destructive-change diagnostics, exact catalogue discovery, generated fluent C#, and attach/detach operations. Table-inheritance acceptance verifies ordered multiple parents, inherited versus `ONLY` scans, add/remove lifecycle SQL, rename-aware diffs, `pg_inherits` discovery, and generated fluent C# across PostgreSQL 15–19. RLS acceptance verifies non-owner tenant filtering, successful and rejected `WITH CHECK` inserts, active enable/force state, policy lifecycle SQL, catalogue discovery, and generated fluent C# on PostgreSQL 15–19. User-defined-type acceptance on the same matrix verifies dependency-ordered enum/domain/composite creation, runtime enforcement, transaction-suppressed enum additions, supported alterations and renames, destructive diagnostics, exact catalogue discovery, and generated fluent C#. Routine acceptance across PostgreSQL 15–19 verifies overloaded functions, default arguments, optimizer/null/parallel attributes, PL/pgSQL procedures, UDT and relational dependency phases, signature-qualified lifecycle operations, canonical catalogue discovery, and generated fluent C#. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, generic two- through four-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair/recordset expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates and scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, advanced index creation/deletion, declarative partition lifecycles, direct table inheritance, row-level security enforcement, rewrite-rule lifecycles, catalogue round-tripping, and database-first C# generation. Advanced index acceptance runs on PostgreSQL 15–19 and verifies expression/partial keys, access methods, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and transaction-suppressed concurrent operations. Partition acceptance on the same server matrix verifies RANGE/LIST/HASH DDL, recursive row routing, default partitions, typed bounds, destructive-change diagnostics, exact catalogue discovery, generated fluent C#, and attach/detach operations. Table-inheritance acceptance verifies ordered multiple parents, inherited versus `ONLY` scans, add/remove lifecycle SQL, rename-aware diffs, `pg_inherits` discovery, and generated fluent C# across PostgreSQL 15–19. RLS acceptance verifies non-owner tenant filtering, successful and rejected `WITH CHECK` inserts, active enable/force state, policy lifecycle SQL, catalogue discovery, and generated fluent C# on PostgreSQL 15–19. User-defined-type acceptance on the same matrix verifies dependency-ordered enum/domain/composite creation, runtime enforcement, transaction-suppressed enum additions, supported alterations and renames, destructive diagnostics, exact catalogue discovery, and generated fluent C#. Routine acceptance across PostgreSQL 15–19 verifies overloaded functions, default arguments, optimizer/null/parallel attributes, PL/pgSQL procedures, UDT and relational dependency phases, signature-qualified lifecycle operations, canonical catalogue discovery, and generated fluent C#. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function surface, typed built-in aggregate families, lateral array expansion, typed series and JSONB roots, generic two- through four-array expansion, array-subscript generation, regex/delimiter table roots, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, `generate_subscripts`, JSONB element/key/path/pair/recordset expansion (including JSONPath variables and silent mode), regex captures/splitting, nullable delimiter splitting, and schema-qualified typed table-function materialization are covered in generated SQL and live execution. The roadmap retains the PostgreSQL query constructs and native query families that are not yet implemented.

@@ -42,6 +42,22 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
+                && TryGetNativeSetFunction(
+                    methodCallExpression.Method.Name,
+                    methodCallExpression.Arguments.Count - 1,
+                    out var nativeSpecification))
+            {
+                return new BlueTuskSetReturningFunctionQueryRootExpression(
+                    nativeSpecification.Name!,
+                    methodCallExpression.Method.ReturnType.GetGenericArguments()[0],
+                    methodCallExpression.Arguments.Skip(1).Select(argument => Visit(argument)!).ToArray(),
+                    nativeSpecification.ArgumentStoreTypes,
+                    nativeSpecification.ResultStoreType,
+                    nativeSpecification.IsNullable,
+                    withOrdinality: true);
+            }
+
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
                 && methodCallExpression.Method.Name == nameof(BlueTuskDbFunctionsExtensions.Unnest))
             {
                 var elementType = methodCallExpression.Method.ReturnType.GetGenericArguments()[0];
@@ -106,7 +122,10 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
-                && TryGetJsonFunction(methodCallExpression.Method.Name, out var specification))
+                && TryGetJsonFunction(
+                    methodCallExpression.Method.Name,
+                    methodCallExpression.Arguments.Count - 1,
+                    out var specification))
             {
                 return new BlueTuskSetReturningFunctionQueryRootExpression(
                     specification.Name!,
@@ -167,6 +186,7 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
 
         private static bool TryGetJsonFunction(
             string methodName,
+            int argumentCount,
             out JsonSetReturningFunctionSpecification specification)
         {
             specification = methodName switch
@@ -178,7 +198,50 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
                 nameof(BlueTuskDbFunctionsExtensions.JsonObjectKeys) =>
                     new("jsonb_object_keys", ["jsonb"], "text", IsNullable: false),
                 nameof(BlueTuskDbFunctionsExtensions.JsonPathQuery) =>
-                    new("jsonb_path_query", ["jsonb", "jsonpath"], "jsonb", IsNullable: false),
+                    new(
+                        "jsonb_path_query",
+                        argumentCount == 2
+                            ? ["jsonb", "jsonpath"]
+                            : ["jsonb", "jsonpath", "jsonb", "boolean"],
+                        "jsonb",
+                        IsNullable: false),
+                _ => default,
+            };
+
+            return specification.Name is not null;
+        }
+
+        private static bool TryGetNativeSetFunction(
+            string methodName,
+            int argumentCount,
+            out JsonSetReturningFunctionSpecification specification)
+        {
+            specification = methodName switch
+            {
+                nameof(BlueTuskDbFunctionsExtensions.GenerateSubscripts) =>
+                    new(
+                        "generate_subscripts",
+                        argumentCount == 2 ? [null, "integer"] : [null, "integer", "boolean"],
+                        "integer",
+                        IsNullable: false),
+                nameof(BlueTuskDbFunctionsExtensions.RegexMatches) =>
+                    new(
+                        "regexp_matches",
+                        Enumerable.Repeat<string?>("text", argumentCount).ToArray(),
+                        null,
+                        IsNullable: false),
+                nameof(BlueTuskDbFunctionsExtensions.RegexSplitToTable) =>
+                    new(
+                        "regexp_split_to_table",
+                        Enumerable.Repeat<string?>("text", argumentCount).ToArray(),
+                        "text",
+                        IsNullable: false),
+                nameof(BlueTuskDbFunctionsExtensions.StringToTable) =>
+                    new(
+                        "string_to_table",
+                        Enumerable.Repeat<string?>("text", argumentCount).ToArray(),
+                        "text",
+                        IsNullable: true),
                 _ => default,
             };
 
@@ -204,7 +267,7 @@ internal sealed class BlueTuskQueryTranslationPreprocessor
         private readonly record struct JsonSetReturningFunctionSpecification(
             string? Name,
             IReadOnlyList<string?> ArgumentStoreTypes,
-            string ResultStoreType,
+            string? ResultStoreType,
             bool IsNullable);
 
         private readonly record struct JsonRecordSetReturningFunctionSpecification(

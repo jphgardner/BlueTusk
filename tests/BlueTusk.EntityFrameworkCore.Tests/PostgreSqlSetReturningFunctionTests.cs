@@ -190,6 +190,60 @@ public sealed class PostgreSqlSetReturningFunctionTests
     }
 
     [Fact]
+    public void Native_set_returning_roots_translate_with_typed_arguments_and_ordinality()
+    {
+        using var context = CreateContext();
+        var input = "BlueTusk PostgreSQL";
+        var pattern = "([A-Z][A-Za-z]+)";
+        var flags = "g";
+        var variables = "{\"minimum\":1}";
+
+        var subscriptsSql = context.Values
+            .SelectMany(
+                value => EF.Functions.GenerateSubscripts(value.Numbers, 1, true),
+                (value, subscript) => new { value.Id, Subscript = subscript })
+            .ToQueryString();
+        var matchesSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.RegexMatches(input, pattern, flags),
+                (_, match) => match)
+            .ToQueryString();
+        var splitSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.RegexSplitToTable(input, "\\s+"),
+                (_, part) => part)
+            .ToQueryString();
+        var stringTableSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.StringToTable("one,NULL,three", ",", "NULL"),
+                (_, part) => part)
+            .ToQueryString();
+        var jsonPathSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonPathQuery(
+                    value.JsonObject,
+                    new BlueTuskJsonPath("$.* ? (@ > $minimum)"),
+                    variables,
+                    true),
+                (value, match) => new { value.Id, Match = match })
+            .ToQueryString();
+
+        Assert.Contains("JOIN LATERAL", subscriptsSql, StringComparison.Ordinal);
+        Assert.Contains("generate_subscripts(", subscriptsSql, StringComparison.Ordinal);
+        Assert.Contains("WITH ORDINALITY", subscriptsSql, StringComparison.Ordinal);
+        Assert.Contains("TRUE", subscriptsSql, StringComparison.Ordinal);
+        Assert.Contains("regexp_matches(", matchesSql, StringComparison.Ordinal);
+        Assert.Contains("@input", matchesSql, StringComparison.Ordinal);
+        Assert.Contains("@pattern", matchesSql, StringComparison.Ordinal);
+        Assert.Contains("@flags", matchesSql, StringComparison.Ordinal);
+        Assert.Contains("regexp_split_to_table(", splitSql, StringComparison.Ordinal);
+        Assert.Contains("string_to_table(", stringTableSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_path_query(", jsonPathSql, StringComparison.Ordinal);
+        Assert.Contains("@variables", jsonPathSql, StringComparison.Ordinal);
+        Assert.Contains("TRUE", jsonPathSql, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Json_recordsets_derive_quoted_columns_and_types_from_keyless_model_metadata()
     {
         using var context = CreateContext();
@@ -462,6 +516,49 @@ public sealed class PostgreSqlSetReturningFunctionTests
                     (_, match) => match)
                 .OrderBy(match => match)
                 .ToListAsync();
+            var jsonPathVariableMatches = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.JsonPathQuery(
+                        value.JsonObject,
+                        new BlueTuskJsonPath("$.* ? (@ > $minimum)"),
+                        "{\"minimum\":1}",
+                        true),
+                    (_, match) => match)
+                .ToListAsync();
+            var subscripts = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.GenerateSubscripts(value.Numbers, 1),
+                    (_, subscript) => subscript)
+                .ToListAsync();
+            var reverseSubscripts = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.GenerateSubscripts(value.Numbers, 1, true),
+                    (_, subscript) => subscript)
+                .ToListAsync();
+            var regexMatches = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    _ => EF.Functions.RegexMatches(
+                        "BlueTusk PostgreSQL",
+                        "([A-Z][A-Za-z]+)",
+                        "g"),
+                    (_, match) => match)
+                .ToListAsync();
+            var regexParts = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    _ => EF.Functions.RegexSplitToTable("alpha,beta;gamma", "[,;]"),
+                    (_, part) => part)
+                .ToListAsync();
+            var stringParts = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    _ => EF.Functions.StringToTable("alpha,NULL,gamma", ",", "NULL"),
+                    (_, part) => part)
+                .ToListAsync();
             var jsonRecords = await context.Values
                 .Where(value => value.Id == 1)
                 .SelectMany(
@@ -615,6 +712,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         _ => EF.Functions.JsonToRecordset<JsonRecordRow>(jsonValue),
                         (_, record) => record)
                     .Count());
+            var compiledRegexSplitCount = EF.CompileQuery(
+                (SetReturningContext database, string input) => database.Values
+                    .Where(value => value.Id == 1)
+                    .SelectMany(
+                        _ => EF.Functions.RegexSplitToTable(input, "[,;]"),
+                        (_, part) => part)
+                    .Count());
             var compiledZippedArrayCount = EF.CompileQuery(
                 (SetReturningContext database, int[] numbers, string?[] labels) => database.Values
                     .Where(value => value.Id == 1)
@@ -684,6 +788,15 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 ],
                 jsonTextPairs);
             Assert.Equal(["1", "2"], jsonPathMatches);
+            Assert.Equal(["2"], jsonPathVariableMatches);
+            Assert.Equal([1, 2], subscripts);
+            Assert.Equal([2, 1], reverseSubscripts);
+            Assert.Collection(
+                regexMatches,
+                match => Assert.Equal(["BlueTusk"], match),
+                match => Assert.Equal(["PostgreSQL"], match));
+            Assert.Equal(["alpha", "beta", "gamma"], regexParts);
+            Assert.Equal(["alpha", null, "gamma"], stringParts);
             Assert.Collection(
                 jsonRecords,
                 record => Assert.Equal((1, "one", true), (record.Id, record.Label, record.Active)),
@@ -756,6 +869,7 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 compiledJsonRecordCount(
                     context,
                     "[{\"id\":10,\"label\":\"ten\"},{\"id\":11,\"active\":true}]"));
+            Assert.Equal(3, compiledRegexSplitCount(context, "one,two;three"));
             Assert.Equal(
                 3,
                 compiledZippedArrayCount(context, [1, 2], ["one", null, "three"]));

@@ -1787,6 +1787,66 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskJsonPath path)
         => ThrowTranslationOnly<IQueryable<string>>();
 
+    public static IQueryable<string> JsonPathQuery(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskJsonPath path,
+        string variablesJsonb,
+        bool silent)
+        => ThrowTranslationOnly<IQueryable<string>>();
+
+    public static IQueryable<int> GenerateSubscripts<T>(
+        this DbFunctions _,
+        T[] array,
+        int dimension)
+        => ThrowTranslationOnly<IQueryable<int>>();
+
+    public static IQueryable<int> GenerateSubscripts<T>(
+        this DbFunctions _,
+        T[] array,
+        int dimension,
+        bool reverse)
+        => ThrowTranslationOnly<IQueryable<int>>();
+
+    public static IQueryable<string[]> RegexMatches(
+        this DbFunctions _,
+        string input,
+        string pattern)
+        => ThrowTranslationOnly<IQueryable<string[]>>();
+
+    public static IQueryable<string[]> RegexMatches(
+        this DbFunctions _,
+        string input,
+        string pattern,
+        string flags)
+        => ThrowTranslationOnly<IQueryable<string[]>>();
+
+    public static IQueryable<string> RegexSplitToTable(
+        this DbFunctions _,
+        string input,
+        string pattern)
+        => ThrowTranslationOnly<IQueryable<string>>();
+
+    public static IQueryable<string> RegexSplitToTable(
+        this DbFunctions _,
+        string input,
+        string pattern,
+        string flags)
+        => ThrowTranslationOnly<IQueryable<string>>();
+
+    public static IQueryable<string?> StringToTable(
+        this DbFunctions _,
+        string input,
+        string delimiter)
+        => ThrowTranslationOnly<IQueryable<string?>>();
+
+    public static IQueryable<string?> StringToTable(
+        this DbFunctions _,
+        string input,
+        string delimiter,
+        string nullString)
+        => ThrowTranslationOnly<IQueryable<string?>>();
+
     public static IQueryable<int> GenerateSeries(this DbFunctions _, int start, int stop)
         => ThrowTranslationOnly<IQueryable<int>>();
 
