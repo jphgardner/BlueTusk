@@ -11,6 +11,9 @@ internal sealed class BlueTuskMethodCallTranslatorProvider
     {
         AddTranslators(
         [
+            new BlueTuskPostgreSqlFunctionTranslator(
+                dependencies.SqlExpressionFactory,
+                dependencies.RelationalTypeMappingSource),
             new BlueTuskPostgreSqlOperatorTranslator(
                 dependencies.SqlExpressionFactory,
                 dependencies.RelationalTypeMappingSource),

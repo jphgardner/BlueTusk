@@ -257,6 +257,10 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] SQL-generation and PostgreSQL 15–19 live operator acceptance
   - [ ] `ANY`, `ALL`, row values, tuple comparison, and remaining operator forms
 - [ ] PostgreSQL scalar, aggregate, and set-returning function translations
+  - [x] Initial array, range/multirange, JSONB, regex, network, and full-text scalar functions
+  - [x] Composable nested functions with typed result materialisation and PostgreSQL 15–19 acceptance
+  - [ ] Remaining scalar and PostgreSQL aggregate functions
+  - [ ] Set-returning functions and lateral query roots
 - [ ] PostgreSQL-specific query roots and SQL constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
 - [ ] PostgreSQL-specific query diagnostics and translation tests

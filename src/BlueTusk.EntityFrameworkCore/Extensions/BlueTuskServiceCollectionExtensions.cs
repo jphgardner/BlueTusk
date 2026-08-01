@@ -11,6 +11,7 @@ using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.EntityFrameworkCore.Update;
+using Microsoft.Extensions.DependencyInjection.Extensions;
 
 namespace Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +23,10 @@ public static class BlueTuskServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.TryAddEnumerable(
+            ServiceDescriptor.Singleton<
+                IEvaluatableExpressionFilterPlugin,
+                BlueTuskEvaluatableExpressionFilterPlugin>());
         new EntityFrameworkRelationalServicesBuilder(services)
             .TryAdd<LoggingDefinitions, BlueTuskLoggingDefinitions>()
             .TryAdd<IDatabaseProvider, DatabaseProvider<BlueTuskOptionsExtension>>()

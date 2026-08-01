@@ -137,6 +137,154 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskNetworkAddress right)
         => ThrowTranslationOnly<bool>();
 
+    public static int? ArrayLength<T>(this DbFunctions _, T[] array, int dimension)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ArrayLowerBound<T>(this DbFunctions _, T[] array, int dimension)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ArrayUpperBound<T>(this DbFunctions _, T[] array, int dimension)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ArrayCardinality<T>(this DbFunctions _, T[] array)
+        => ThrowTranslationOnly<int?>();
+
+    public static T? RangeLower<T>(this DbFunctions _, BlueTuskRange<T> range)
+        where T : struct
+        => ThrowTranslationOnly<T?>();
+
+    public static T? RangeUpper<T>(this DbFunctions _, BlueTuskRange<T> range)
+        where T : struct
+        => ThrowTranslationOnly<T?>();
+
+    public static bool RangeIsEmpty<T>(this DbFunctions _, BlueTuskRange<T> range)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeIsLowerInclusive<T>(this DbFunctions _, BlueTuskRange<T> range)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeIsUpperInclusive<T>(this DbFunctions _, BlueTuskRange<T> range)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeIsLowerInfinite<T>(this DbFunctions _, BlueTuskRange<T> range)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool RangeIsUpperInfinite<T>(this DbFunctions _, BlueTuskRange<T> range)
+        => ThrowTranslationOnly<bool>();
+
+    public static T? MultirangeLower<T>(this DbFunctions _, BlueTuskMultirange<T> multirange)
+        where T : struct
+        => ThrowTranslationOnly<T?>();
+
+    public static T? MultirangeUpper<T>(this DbFunctions _, BlueTuskMultirange<T> multirange)
+        where T : struct
+        => ThrowTranslationOnly<T?>();
+
+    public static bool MultirangeIsEmpty<T>(this DbFunctions _, BlueTuskMultirange<T> multirange)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsLowerInclusive<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> multirange)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsUpperInclusive<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> multirange)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsLowerInfinite<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> multirange)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool MultirangeIsUpperInfinite<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> multirange)
+        => ThrowTranslationOnly<bool>();
+
+    public static string? JsonTypeOf(this DbFunctions _, string jsonb)
+        => ThrowTranslationOnly<string?>();
+
+    public static int? JsonArrayLength(this DbFunctions _, string jsonb)
+        => ThrowTranslationOnly<int?>();
+
+    public static string? JsonPathQueryFirst(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskJsonPath path)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? RegexReplace(
+        this DbFunctions _,
+        string input,
+        string pattern,
+        string replacement)
+        => ThrowTranslationOnly<string?>();
+
+    public static int? RegexCount(this DbFunctions _, string input, string pattern)
+        => ThrowTranslationOnly<int?>();
+
+    public static string? NetworkHost(this DbFunctions _, BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<string?>();
+
+    public static int? NetworkAddressFamily(this DbFunctions _, BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? NetworkMaskLength(this DbFunctions _, BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<int?>();
+
+    public static BlueTuskNetworkAddress NetworkPart(
+        this DbFunctions _,
+        BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static BlueTuskNetworkAddress NetworkBroadcast(
+        this DbFunctions _,
+        BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static BlueTuskTextSearchVector ToTextSearchVector(
+        this DbFunctions _,
+        string document)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
+
+    public static BlueTuskTextSearchQuery ToTextSearchQuery(
+        this DbFunctions _,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery PlainToTextSearchQuery(
+        this DbFunctions _,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery PhraseToTextSearchQuery(
+        this DbFunctions _,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery WebSearchToTextSearchQuery(
+        this DbFunctions _,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static int? TextSearchVectorLength(
+        this DbFunctions _,
+        BlueTuskTextSearchVector vector)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? TextSearchQueryNodeCount(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery query)
+        => ThrowTranslationOnly<int?>();
+
+    public static float? TextSearchRank(
+        this DbFunctions _,
+        BlueTuskTextSearchVector vector,
+        BlueTuskTextSearchQuery query)
+        => ThrowTranslationOnly<float?>();
+
     private static T ThrowTranslationOnly<T>()
         => throw new InvalidOperationException(
             "BlueTusk PostgreSQL database functions can only be used in translated EF Core queries.");
