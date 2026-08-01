@@ -303,13 +303,19 @@ slope, sums of squares, and sum products. Pair order follows PostgreSQL's
 `Mode`, `PercentileContinuous`, and `PercentileDiscrete` emit native ordered-set
 syntax with the input selector inside `WITHIN GROUP (ORDER BY ...)`; filters
 remain native `FILTER` clauses and percentile fractions remain parameters.
-Ordered-set `DISTINCT` input is rejected with a focused diagnostic because
+Scalar and array-valued fraction overloads preserve scalar and array result
+mappings. `HypotheticalRank`, `HypotheticalDenseRank`,
+`HypotheticalPercentRank`, and `HypotheticalCumulativeDistribution` use the
+same machinery, placing the hypothetical value in the direct-argument list and
+the grouped selector in the ordered set.
+
+Ordered-set `Distinct()` input is rejected with a focused diagnostic because
 PostgreSQL does not accept that combination. Integer, `bigint`, floating-point,
 numeric, and text mode overloads plus matching scalar discrete-percentile
-families preserve their result mappings. Generated SQL and typed live tests
-cover these families across PostgreSQL 15–19. Hypothetical-set aggregates,
-array-valued percentiles, and other remaining aggregate families are still
-planned; no client-side aggregate emulation is used.
+families preserve their result mappings. Generated SQL, scalar/array result
+materialisation, and typed live tests cover these families across PostgreSQL
+15–19. Other remaining aggregate families are still planned; no client-side
+aggregate emulation is used.
 
 ## Array expansion and lateral queries
 

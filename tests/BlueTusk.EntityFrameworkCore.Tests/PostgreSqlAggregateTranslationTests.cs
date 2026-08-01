@@ -18,6 +18,8 @@ public sealed class PostgreSqlAggregateTranslationTests
         using var context = CreateContext();
         var delimiter = "|";
         var minimum = 10;
+        var fractions = new[] { 0.25, 0.5, 0.75 };
+        var hypothetical = 15;
 
         var sql = context.Values
             .GroupBy(value => value.GroupId)
@@ -86,6 +88,24 @@ public sealed class PostgreSqlAggregateTranslationTests
                 DiscreteMedian = EF.Functions.PercentileDiscrete(
                     group.Select(value => value.Number),
                     0.5),
+                ContinuousQuartiles = EF.Functions.PercentileContinuous(
+                    group.Select(value => value.Measurement),
+                    fractions),
+                DiscreteQuartiles = EF.Functions.PercentileDiscrete(
+                    group.Select(value => value.Number),
+                    fractions),
+                HypotheticalRank = EF.Functions.HypotheticalRank(
+                    group.Select(value => value.Number),
+                    hypothetical),
+                HypotheticalDenseRank = EF.Functions.HypotheticalDenseRank(
+                    group.Select(value => value.Number),
+                    hypothetical),
+                HypotheticalPercentRank = EF.Functions.HypotheticalPercentRank(
+                    group.Select(value => value.Number),
+                    hypothetical),
+                HypotheticalDistribution = EF.Functions.HypotheticalCumulativeDistribution(
+                    group.Select(value => value.Number),
+                    hypothetical),
             })
             .ToQueryString();
 
@@ -114,11 +134,17 @@ public sealed class PostgreSqlAggregateTranslationTests
         Assert.Contains("mode() WITHIN GROUP (ORDER BY", sql, StringComparison.Ordinal);
         Assert.Contains("percentile_cont(", sql, StringComparison.Ordinal);
         Assert.Contains("percentile_disc(", sql, StringComparison.Ordinal);
+        Assert.Contains("rank(", sql, StringComparison.Ordinal);
+        Assert.Contains("dense_rank(", sql, StringComparison.Ordinal);
+        Assert.Contains("percent_rank(", sql, StringComparison.Ordinal);
+        Assert.Contains("cume_dist(", sql, StringComparison.Ordinal);
         Assert.Contains("WITHIN GROUP (ORDER BY", sql, StringComparison.Ordinal);
         Assert.Contains(" ORDER BY ", sql, StringComparison.Ordinal);
         Assert.Contains(" FILTER (WHERE ", sql, StringComparison.Ordinal);
         Assert.Contains("@delimiter", sql, StringComparison.Ordinal);
         Assert.Contains("@minimum", sql, StringComparison.Ordinal);
+        Assert.Contains("@fractions", sql, StringComparison.Ordinal);
+        Assert.Contains("@hypothetical", sql, StringComparison.Ordinal);
 
         var orderedSetDistinct = Assert.Throws<InvalidOperationException>(() => context.Values
             .GroupBy(value => value.GroupId)
@@ -182,6 +208,8 @@ public sealed class PostgreSqlAggregateTranslationTests
             await using var context = CreateContext(dataSource);
             var delimiter = "|";
             var minimum = 10;
+            var fractions = new[] { 0.25, 0.5, 0.75 };
+            var hypothetical = 15;
             var aggregate = await context.Values
                 .GroupBy(value => value.GroupId)
                 .Select(group => new
@@ -293,6 +321,24 @@ public sealed class PostgreSqlAggregateTranslationTests
                     DiscreteMedian = EF.Functions.PercentileDiscrete(
                         group.Select(value => value.Number),
                         0.5),
+                    ContinuousQuartiles = EF.Functions.PercentileContinuous(
+                        group.Select(value => value.Measurement),
+                        fractions),
+                    DiscreteQuartiles = EF.Functions.PercentileDiscrete(
+                        group.Select(value => value.Number),
+                        fractions),
+                    HypotheticalRank = EF.Functions.HypotheticalRank(
+                        group.Select(value => value.Number),
+                        hypothetical),
+                    HypotheticalDenseRank = EF.Functions.HypotheticalDenseRank(
+                        group.Select(value => value.Number),
+                        hypothetical),
+                    HypotheticalPercentRank = EF.Functions.HypotheticalPercentRank(
+                        group.Select(value => value.Number),
+                        hypothetical),
+                    HypotheticalDistribution = EF.Functions.HypotheticalCumulativeDistribution(
+                        group.Select(value => value.Number),
+                        hypothetical),
                 })
                 .SingleAsync();
 
@@ -360,6 +406,12 @@ public sealed class PostgreSqlAggregateTranslationTests
             Assert.Equal(20, aggregate.Mode);
             Assert.Equal(2d, aggregate.ContinuousMedian);
             Assert.Equal(20, aggregate.DiscreteMedian);
+            Assert.Equal([1.5, 2, 2.5], aggregate.ContinuousQuartiles!);
+            Assert.Equal([10, 20, 20], aggregate.DiscreteQuartiles!);
+            Assert.Equal(2, aggregate.HypotheticalRank);
+            Assert.Equal(2, aggregate.HypotheticalDenseRank);
+            Assert.Equal(1d / 3d, aggregate.HypotheticalPercentRank, 12);
+            Assert.Equal(0.5d, aggregate.HypotheticalDistribution, 12);
         }
         finally
         {

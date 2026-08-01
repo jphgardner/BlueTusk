@@ -790,11 +790,23 @@ public static class BlueTuskDbFunctionsExtensions
         double fraction)
         => ThrowTranslationOnly<double?>();
 
+    public static double[]? PercentileContinuous(
+        this DbFunctions _,
+        IEnumerable<double> values,
+        double[] fractions)
+        => ThrowTranslationOnly<double[]?>();
+
     public static int? PercentileDiscrete(
         this DbFunctions _,
         IEnumerable<int> values,
         double fraction)
         => ThrowTranslationOnly<int?>();
+
+    public static int[]? PercentileDiscrete(
+        this DbFunctions _,
+        IEnumerable<int> values,
+        double[] fractions)
+        => ThrowTranslationOnly<int[]?>();
 
     public static long? PercentileDiscrete(
         this DbFunctions _,
@@ -802,17 +814,53 @@ public static class BlueTuskDbFunctionsExtensions
         double fraction)
         => ThrowTranslationOnly<long?>();
 
+    public static long[]? PercentileDiscrete(
+        this DbFunctions _,
+        IEnumerable<long> values,
+        double[] fractions)
+        => ThrowTranslationOnly<long[]?>();
+
     public static double? PercentileDiscrete(
         this DbFunctions _,
         IEnumerable<double> values,
         double fraction)
         => ThrowTranslationOnly<double?>();
 
+    public static double[]? PercentileDiscrete(
+        this DbFunctions _,
+        IEnumerable<double> values,
+        double[] fractions)
+        => ThrowTranslationOnly<double[]?>();
+
     public static decimal? PercentileDiscrete(
         this DbFunctions _,
         IEnumerable<decimal> values,
         double fraction)
         => ThrowTranslationOnly<decimal?>();
+
+    public static long HypotheticalRank<T>(
+        this DbFunctions _,
+        IEnumerable<T> values,
+        T hypotheticalValue)
+        => ThrowTranslationOnly<long>();
+
+    public static long HypotheticalDenseRank<T>(
+        this DbFunctions _,
+        IEnumerable<T> values,
+        T hypotheticalValue)
+        => ThrowTranslationOnly<long>();
+
+    public static double HypotheticalPercentRank<T>(
+        this DbFunctions _,
+        IEnumerable<T> values,
+        T hypotheticalValue)
+        => ThrowTranslationOnly<double>();
+
+    public static double HypotheticalCumulativeDistribution<T>(
+        this DbFunctions _,
+        IEnumerable<T> values,
+        T hypotheticalValue)
+        => ThrowTranslationOnly<double>();
 
     private static T ThrowTranslationOnly<T>()
         => throw new InvalidOperationException(

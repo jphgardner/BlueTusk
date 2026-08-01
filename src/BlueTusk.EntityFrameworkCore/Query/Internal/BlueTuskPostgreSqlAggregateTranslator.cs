@@ -51,6 +51,10 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.Mode)] = "mode",
             [nameof(BlueTuskDbFunctionsExtensions.PercentileContinuous)] = "percentile_cont",
             [nameof(BlueTuskDbFunctionsExtensions.PercentileDiscrete)] = "percentile_disc",
+            [nameof(BlueTuskDbFunctionsExtensions.HypotheticalRank)] = "rank",
+            [nameof(BlueTuskDbFunctionsExtensions.HypotheticalDenseRank)] = "dense_rank",
+            [nameof(BlueTuskDbFunctionsExtensions.HypotheticalPercentRank)] = "percent_rank",
+            [nameof(BlueTuskDbFunctionsExtensions.HypotheticalCumulativeDistribution)] = "cume_dist",
         };
 
     private static readonly HashSet<string> PairFunctions =
@@ -85,7 +89,11 @@ internal sealed class BlueTuskPostgreSqlAggregateTranslator(
 
         if (method.Name is nameof(BlueTuskDbFunctionsExtensions.Mode)
             or nameof(BlueTuskDbFunctionsExtensions.PercentileContinuous)
-            or nameof(BlueTuskDbFunctionsExtensions.PercentileDiscrete))
+            or nameof(BlueTuskDbFunctionsExtensions.PercentileDiscrete)
+            or nameof(BlueTuskDbFunctionsExtensions.HypotheticalRank)
+            or nameof(BlueTuskDbFunctionsExtensions.HypotheticalDenseRank)
+            or nameof(BlueTuskDbFunctionsExtensions.HypotheticalPercentRank)
+            or nameof(BlueTuskDbFunctionsExtensions.HypotheticalCumulativeDistribution))
         {
             return TranslateOrderedSet(method, source, arguments, functionName);
         }
