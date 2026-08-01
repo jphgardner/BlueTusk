@@ -8,6 +8,7 @@ using BlueTusk.EntityFrameworkCore.Publications.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
+using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
 using BlueTusk.EntityFrameworkCore.Views.Internal;
@@ -497,6 +498,54 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Dependencies.CSharpHelper.Literal(renamePublication.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renamePublication.NewName))
+                    .AppendLine(");");
+                break;
+            case CreateBlueTuskSubscriptionOperation createSubscription:
+                builder.Append("migrationBuilder.CreateBlueTuskSubscription(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskSubscriptionMetadata.Serialize(createSubscription.Definition)))
+                    .AppendLine(");");
+                break;
+            case AlterBlueTuskSubscriptionOperation alterSubscription:
+                builder.Append("migrationBuilder.AlterBlueTuskSubscription(")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskSubscriptionMetadata.Serialize(alterSubscription.OldDefinition)))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(
+                        BlueTuskSubscriptionMetadata.Serialize(alterSubscription.Definition)))
+                    .AppendLine(");");
+                break;
+            case DropBlueTuskSubscriptionOperation dropSubscription:
+                builder.Append("migrationBuilder.DropBlueTuskSubscription(")
+                    .Append(Dependencies.CSharpHelper.Literal(dropSubscription.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(dropSubscription.HasSlot))
+                    .AppendLine(");");
+                break;
+            case RenameBlueTuskSubscriptionOperation renameSubscription:
+                builder.Append("migrationBuilder.RenameBlueTuskSubscription(")
+                    .Append(Dependencies.CSharpHelper.Literal(renameSubscription.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(renameSubscription.NewName))
+                    .AppendLine(");");
+                break;
+            case RefreshBlueTuskSubscriptionOperation refreshSubscription:
+                builder.Append("migrationBuilder.RefreshBlueTuskSubscription(")
+                    .Append(Dependencies.CSharpHelper.Literal(refreshSubscription.Name))
+                    .Append(", ")
+                    .Append(Dependencies.CSharpHelper.Literal(refreshSubscription.CopyData))
+                    .AppendLine(");");
+                break;
+            case RefreshBlueTuskSubscriptionSequencesOperation refreshSubscriptionSequences:
+                builder.Append("migrationBuilder.RefreshBlueTuskSubscriptionSequences(")
+                    .Append(Dependencies.CSharpHelper.Literal(refreshSubscriptionSequences.Name))
+                    .AppendLine(");");
+                break;
+            case SkipBlueTuskSubscriptionTransactionOperation skipSubscriptionTransaction:
+                builder.Append("migrationBuilder.SkipBlueTuskSubscriptionTransaction(")
+                    .Append(Dependencies.CSharpHelper.Literal(skipSubscriptionTransaction.Name))
+                    .Append(", ")
+                    .Append(Literal(skipSubscriptionTransaction.FinishLsn))
                     .AppendLine(");");
                 break;
             case CreateBlueTuskRowSecurityPolicyOperation createPolicy:

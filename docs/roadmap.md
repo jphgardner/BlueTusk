@@ -314,6 +314,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] PostgreSQL 18 generated-column publishing plus PostgreSQL 19 all-sequence and all-table exclusion metadata with explicit capability guards
   - [x] In-place membership/options changes, rename, destructive all-object mode transitions, relation dependency ordering, and default-`RESTRICT` drops
   - [x] Cross-version `pg_publication`/`pg_publication_rel`/`pg_publication_namespace` discovery, fluent C# scaffolding, and PostgreSQL 15–19 acceptance
+- [x] Logical-replication subscriptions
+  - [x] Typed connection-string, PostgreSQL 19 foreign-server, publication, slot, streaming, synchronous-commit, two-phase, origin, failover, error, owner, password-policy, and PostgreSQL 19 retention/receiver-timeout metadata
+  - [x] Create/alter/drop/rename diffs plus explicit publication/sequence refresh and skipped-transaction operations, dependency ordering, destructive diagnostics, and transaction suppression where PostgreSQL requires it
+  - [x] Cross-version `pg_subscription` discovery with PostgreSQL 15 boolean/16+ mode handling, credential-redacted database-first scaffolding, generated migration C#, and execution-time PostgreSQL 16/17/19 capability guards
+  - [x] PostgreSQL 15–19 disconnected lifecycle, option alteration, rename, exact catalogue round-tripping, scaffolding, and PostgreSQL 19 foreign-server acceptance
 - [x] Table partitioning metadata and migrations
   - [x] Typed RANGE, single-key LIST, multi-key HASH, expression-key, default-partition, and recursive subpartition metadata
   - [x] Create/add/drop/rename/schema-move diffs with destructive bound-change and unsupported root-strategy diagnostics

@@ -16,6 +16,8 @@ using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.Rules;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
+using BlueTusk.EntityFrameworkCore.Subscriptions;
+using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes;
@@ -204,6 +206,27 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case RenameBlueTuskPublicationOperation renamePublication:
                 Generate(renamePublication, builder);
+                break;
+            case CreateBlueTuskSubscriptionOperation createSubscription:
+                Generate(createSubscription, builder);
+                break;
+            case AlterBlueTuskSubscriptionOperation alterSubscription:
+                Generate(alterSubscription, builder);
+                break;
+            case DropBlueTuskSubscriptionOperation dropSubscription:
+                Generate(dropSubscription, builder);
+                break;
+            case RenameBlueTuskSubscriptionOperation renameSubscription:
+                Generate(renameSubscription, builder);
+                break;
+            case RefreshBlueTuskSubscriptionOperation refreshSubscription:
+                Generate(refreshSubscription, builder);
+                break;
+            case RefreshBlueTuskSubscriptionSequencesOperation refreshSubscriptionSequences:
+                Generate(refreshSubscriptionSequences, builder);
+                break;
+            case SkipBlueTuskSubscriptionTransactionOperation skipSubscriptionTransaction:
+                Generate(skipSubscriptionTransaction, builder);
                 break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
@@ -3108,6 +3131,441 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         return string.Join(", ", values);
     }
+
+    private void Generate(
+        CreateBlueTuskSubscriptionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSubscriptionMetadata.Normalize(operation.Definition);
+        BlueTuskSubscriptionMetadata.ValidateForCreate(definition);
+        if (definition.Connection.Kind == BlueTuskSubscriptionConnectionKind.Redacted)
+        {
+            throw new InvalidOperationException(
+                $"Subscription '{definition.Name}' has a redacted connection. Supply a connection string or " +
+                "PostgreSQL 19 foreign server in a manually reviewed migration before creating it.");
+        }
+
+        AppendSubscriptionVersionCheck(definition, builder);
+        builder.Append(BuildCreateSubscriptionSql(definition));
+        EndIndexStatement(
+            builder,
+            suppressTransaction: definition.ConnectOnCreate && definition.CreateSlot);
+    }
+
+    private void Generate(
+        AlterBlueTuskSubscriptionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = BlueTuskSubscriptionMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskSubscriptionMetadata.Normalize(operation.Definition);
+        BlueTuskSubscriptionMetadata.Validate(oldDefinition);
+        BlueTuskSubscriptionMetadata.Validate(definition);
+        if (!string.Equals(oldDefinition.Name, definition.Name, StringComparison.Ordinal))
+        {
+            throw new InvalidOperationException("Subscription alteration cannot also rename the subscription.");
+        }
+
+        AppendSubscriptionVersionCheck(oldDefinition, definition, builder);
+        foreach (var statement in BuildAlterSubscriptionSql(oldDefinition, definition))
+        {
+            builder.Append(statement.Sql);
+            EndIndexStatement(builder, statement.SuppressTransaction);
+        }
+    }
+
+    private void Generate(
+        DropBlueTuskSubscriptionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("DROP SUBSCRIPTION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RESTRICT");
+        EndIndexStatement(builder, suppressTransaction: operation.HasSlot);
+    }
+
+    private void Generate(
+        RenameBlueTuskSubscriptionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        builder.Append("ALTER SUBSCRIPTION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" RENAME TO ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.NewName));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        RefreshBlueTuskSubscriptionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder.Append("ALTER SUBSCRIPTION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" REFRESH PUBLICATION WITH (copy_data = ")
+            .Append(operation.CopyData ? "true" : "false")
+            .Append(")");
+        EndIndexStatement(builder, suppressTransaction: true);
+    }
+
+    private void Generate(
+        RefreshBlueTuskSubscriptionSequencesOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        GenerateMinimumVersionGuarded(
+            Array.Empty<string>(),
+            190000,
+            "BlueTusk subscription sequence refresh requires PostgreSQL 19 or later.",
+            "$BlueTuskSubscription$",
+            builder);
+        builder.Append("ALTER SUBSCRIPTION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" REFRESH SEQUENCES");
+        EndIndexStatement(builder, suppressTransaction: true);
+    }
+
+    private void Generate(
+        SkipBlueTuskSubscriptionTransactionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        if (operation.FinishLsn is not null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(operation.FinishLsn);
+        }
+
+        builder.Append("ALTER SUBSCRIPTION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name))
+            .Append(" SKIP (lsn = ");
+        if (operation.FinishLsn is null)
+        {
+            builder.Append("NONE");
+        }
+        else
+        {
+            AppendStringLiteral(builder, operation.FinishLsn);
+        }
+
+        builder.Append(")");
+        EndStatement(builder);
+    }
+
+    private string BuildCreateSubscriptionSql(BlueTuskSubscriptionDefinition definition)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var sql = new StringBuilder("CREATE SUBSCRIPTION ")
+            .Append(helper.DelimitIdentifier(definition.Name)).Append(' ');
+        AppendSubscriptionConnection(sql, definition.Connection);
+        sql.Append(" PUBLICATION ")
+            .AppendJoin(", ", definition.Publications.Select(helper.DelimitIdentifier));
+        var options = BuildCreateSubscriptionOptions(definition);
+        if (options.Count > 0)
+        {
+            sql.Append(" WITH (").AppendJoin(", ", options).Append(')');
+        }
+
+        return sql.ToString();
+    }
+
+    private List<SubscriptionStatement> BuildAlterSubscriptionSql(
+        BlueTuskSubscriptionDefinition oldDefinition,
+        BlueTuskSubscriptionDefinition definition)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        var name = helper.DelimitIdentifier(definition.Name);
+        var statements = new List<SubscriptionStatement>();
+        if (oldDefinition.Connection != definition.Connection)
+        {
+            if (definition.Connection.Kind == BlueTuskSubscriptionConnectionKind.Redacted)
+            {
+                throw new InvalidOperationException(
+                    $"Subscription '{definition.Name}' has a redacted target connection and cannot alter its connection.");
+            }
+
+            var sql = new StringBuilder("ALTER SUBSCRIPTION ").Append(name).Append(' ');
+            AppendSubscriptionConnection(sql, definition.Connection);
+            statements.Add(new SubscriptionStatement(sql.ToString(), SuppressTransaction: false));
+        }
+
+        if (!oldDefinition.Publications.SequenceEqual(definition.Publications, StringComparer.Ordinal))
+        {
+            statements.Add(new SubscriptionStatement(
+                new StringBuilder("ALTER SUBSCRIPTION ").Append(name)
+                    .Append(" SET PUBLICATION ")
+                    .AppendJoin(", ", definition.Publications.Select(helper.DelimitIdentifier))
+                    .Append(" WITH (refresh = false)")
+                    .ToString(),
+                SuppressTransaction: false));
+        }
+
+        if (oldDefinition.Enabled != definition.Enabled)
+        {
+            statements.Add(new SubscriptionStatement(
+                $"ALTER SUBSCRIPTION {name} {(definition.Enabled ? "ENABLE" : "DISABLE")}",
+                SuppressTransaction: false));
+        }
+
+        var options = BuildChangedSubscriptionOptions(oldDefinition, definition);
+        if (options.Count > 0)
+        {
+            statements.Add(new SubscriptionStatement(
+                new StringBuilder("ALTER SUBSCRIPTION ").Append(name)
+                    .Append(" SET (").AppendJoin(", ", options).Append(')').ToString(),
+                SuppressTransaction:
+                    oldDefinition.Failover != definition.Failover ||
+                    (oldDefinition.TwoPhase && !definition.TwoPhase)));
+        }
+
+        return statements;
+    }
+
+    private void AppendSubscriptionConnection(
+        StringBuilder sql,
+        BlueTuskSubscriptionConnection connection)
+    {
+        switch (connection.Kind)
+        {
+            case BlueTuskSubscriptionConnectionKind.ConnectionString:
+                sql.Append("CONNECTION '").Append(EscapeLiteral(connection.Value!)).Append('\'');
+                break;
+            case BlueTuskSubscriptionConnectionKind.ForeignServer:
+                sql.Append("SERVER ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(connection.Value!));
+                break;
+            case BlueTuskSubscriptionConnectionKind.Redacted:
+                throw new InvalidOperationException("A redacted subscription connection cannot generate SQL.");
+            default:
+                throw new InvalidOperationException($"Unknown subscription connection kind '{connection.Kind}'.");
+        }
+    }
+
+    private static List<string> BuildCreateSubscriptionOptions(BlueTuskSubscriptionDefinition definition)
+    {
+        var options = new List<string>();
+        if (!definition.ConnectOnCreate)
+        {
+            options.Add("connect = false");
+        }
+        else
+        {
+            if (!definition.CreateSlot)
+            {
+                options.Add("create_slot = false");
+            }
+
+            if (!definition.CopyData)
+            {
+                options.Add("copy_data = false");
+            }
+
+            if (!definition.Enabled)
+            {
+                options.Add("enabled = false");
+            }
+        }
+
+        if (definition.SlotName is null)
+        {
+            options.Add("slot_name = NONE");
+        }
+        else if (!string.Equals(definition.SlotName, definition.Name, StringComparison.Ordinal))
+        {
+            options.Add($"slot_name = '{EscapeLiteral(definition.SlotName)}'");
+        }
+
+        if (definition.Binary)
+        {
+            options.Add("binary = true");
+        }
+
+        options.Add("streaming = " + SubscriptionStreamingLiteral(definition.Streaming));
+        if (definition.SynchronousCommit != BlueTuskSubscriptionSynchronousCommit.Off)
+        {
+            options.Add($"synchronous_commit = '{SubscriptionSynchronousCommitLiteral(definition.SynchronousCommit)}'");
+        }
+
+        if (definition.TwoPhase)
+        {
+            options.Add("two_phase = true");
+        }
+
+        if (definition.DisableOnError)
+        {
+            options.Add("disable_on_error = true");
+        }
+
+        if (!definition.PasswordRequired)
+        {
+            options.Add("password_required = false");
+        }
+
+        if (definition.RunAsOwner)
+        {
+            options.Add("run_as_owner = true");
+        }
+
+        if (definition.Origin != BlueTuskSubscriptionOrigin.Any)
+        {
+            options.Add("origin = none");
+        }
+
+        if (definition.Failover)
+        {
+            options.Add("failover = true");
+        }
+
+        if (definition.RetainDeadTuples)
+        {
+            options.Add("retain_dead_tuples = true");
+        }
+
+        if (definition.MaxRetentionDuration > 0)
+        {
+            options.Add($"max_retention_duration = {definition.MaxRetentionDuration.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        }
+
+        if (definition.WalReceiverTimeout is not null)
+        {
+            options.Add($"wal_receiver_timeout = '{EscapeLiteral(definition.WalReceiverTimeout)}'");
+        }
+
+        return options;
+    }
+
+    private static List<string> BuildChangedSubscriptionOptions(
+        BlueTuskSubscriptionDefinition oldDefinition,
+        BlueTuskSubscriptionDefinition definition)
+    {
+        var options = new List<string>();
+        if (!string.Equals(oldDefinition.SlotName, definition.SlotName, StringComparison.Ordinal))
+        {
+            options.Add(definition.SlotName is null
+                ? "slot_name = NONE"
+                : $"slot_name = '{EscapeLiteral(definition.SlotName)}'");
+        }
+
+        if (oldDefinition.Binary != definition.Binary)
+        {
+            options.Add($"binary = {definition.Binary.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.Streaming != definition.Streaming)
+        {
+            options.Add("streaming = " + SubscriptionStreamingLiteral(definition.Streaming));
+        }
+
+        if (oldDefinition.SynchronousCommit != definition.SynchronousCommit)
+        {
+            options.Add($"synchronous_commit = '{SubscriptionSynchronousCommitLiteral(definition.SynchronousCommit)}'");
+        }
+
+        if (oldDefinition.TwoPhase != definition.TwoPhase)
+        {
+            options.Add($"two_phase = {definition.TwoPhase.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.DisableOnError != definition.DisableOnError)
+        {
+            options.Add($"disable_on_error = {definition.DisableOnError.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.PasswordRequired != definition.PasswordRequired)
+        {
+            options.Add($"password_required = {definition.PasswordRequired.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.RunAsOwner != definition.RunAsOwner)
+        {
+            options.Add($"run_as_owner = {definition.RunAsOwner.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.Origin != definition.Origin)
+        {
+            options.Add("origin = " + (definition.Origin == BlueTuskSubscriptionOrigin.Any ? "any" : "none"));
+        }
+
+        if (oldDefinition.Failover != definition.Failover)
+        {
+            options.Add($"failover = {definition.Failover.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.RetainDeadTuples != definition.RetainDeadTuples)
+        {
+            options.Add($"retain_dead_tuples = {definition.RetainDeadTuples.ToString().ToLowerInvariant()}");
+        }
+
+        if (oldDefinition.MaxRetentionDuration != definition.MaxRetentionDuration)
+        {
+            options.Add($"max_retention_duration = {definition.MaxRetentionDuration.ToString(System.Globalization.CultureInfo.InvariantCulture)}");
+        }
+
+        if (!string.Equals(oldDefinition.WalReceiverTimeout, definition.WalReceiverTimeout, StringComparison.Ordinal))
+        {
+            options.Add($"wal_receiver_timeout = '{EscapeLiteral(definition.WalReceiverTimeout ?? "-1")}'");
+        }
+
+        return options;
+    }
+
+    private void AppendSubscriptionVersionCheck(
+        BlueTuskSubscriptionDefinition definition,
+        MigrationCommandListBuilder builder)
+    {
+        var minimumVersion = BlueTuskSubscriptionMetadata.MinimumServerVersion(definition);
+        if (minimumVersion > 150000)
+        {
+            AppendSubscriptionVersionCheck(definition.Name, minimumVersion, builder);
+        }
+    }
+
+    private void AppendSubscriptionVersionCheck(
+        BlueTuskSubscriptionDefinition oldDefinition,
+        BlueTuskSubscriptionDefinition definition,
+        MigrationCommandListBuilder builder)
+    {
+        var minimumVersion = Math.Max(
+            BlueTuskSubscriptionMetadata.MinimumServerVersion(oldDefinition),
+            BlueTuskSubscriptionMetadata.MinimumServerVersion(definition));
+        if (minimumVersion > 150000)
+        {
+            AppendSubscriptionVersionCheck(definition.Name, minimumVersion, builder);
+        }
+    }
+
+    private void AppendSubscriptionVersionCheck(
+        string name,
+        int minimumVersion,
+        MigrationCommandListBuilder builder) =>
+        GenerateMinimumVersionGuarded(
+            Array.Empty<string>(),
+            minimumVersion,
+            $"BlueTusk subscription '{name}' requires PostgreSQL {minimumVersion / 10000} or later.",
+            "$BlueTuskSubscription$",
+            builder);
+
+    private static string SubscriptionStreamingLiteral(BlueTuskSubscriptionStreamingMode mode) => mode switch
+    {
+        BlueTuskSubscriptionStreamingMode.Off => "off",
+        BlueTuskSubscriptionStreamingMode.On => "on",
+        BlueTuskSubscriptionStreamingMode.Parallel => "parallel",
+        _ => throw new InvalidOperationException($"Unknown subscription streaming mode '{mode}'."),
+    };
+
+    private static string SubscriptionSynchronousCommitLiteral(BlueTuskSubscriptionSynchronousCommit mode) =>
+        mode switch
+        {
+            BlueTuskSubscriptionSynchronousCommit.Off => "off",
+            BlueTuskSubscriptionSynchronousCommit.Local => "local",
+            BlueTuskSubscriptionSynchronousCommit.RemoteWrite => "remote_write",
+            BlueTuskSubscriptionSynchronousCommit.On => "on",
+            BlueTuskSubscriptionSynchronousCommit.RemoteApply => "remote_apply",
+            _ => throw new InvalidOperationException($"Unknown synchronous-commit mode '{mode}'."),
+        };
+
+    private readonly record struct SubscriptionStatement(string Sql, bool SuppressTransaction);
 
     private void AppendPolicyRole(
         MigrationCommandListBuilder builder,

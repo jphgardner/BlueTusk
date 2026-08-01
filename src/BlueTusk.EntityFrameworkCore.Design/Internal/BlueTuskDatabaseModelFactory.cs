@@ -22,6 +22,8 @@ using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
+using BlueTusk.EntityFrameworkCore.Subscriptions;
+using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers;
@@ -92,6 +94,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadTriggers(connection, tables);
         ReadRules(connection, tables);
         ReadPublications(connection, model);
+        ReadSubscriptions(connection, model);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
         ReadTableInheritance(connection, tables);
@@ -988,6 +991,110 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                 Schemas = schemas[definition.Name],
             }).ToArray());
         model[BlueTuskPublicationMetadata.AnnotationName] = BlueTuskPublicationMetadata.Serialize(definitions);
+    }
+
+    private static void ReadSubscriptions(DbConnection connection, DatabaseModel model)
+    {
+        var version = ReadServerVersionNumber(connection);
+        var sql = $"""
+            SELECT subscription.subname,
+                   subscription.subenabled,
+                   subscription.subbinary,
+                   subscription.substream::text,
+                   subscription.subtwophasestate::text,
+                   subscription.subdisableonerr,
+                   {(version >= 160000 ? "subscription.subpasswordrequired" : "true")},
+                   {(version >= 160000 ? "subscription.subrunasowner" : "false")},
+                   {(version >= 160000 ? "subscription.suborigin" : "'any'::text")},
+                   {(version >= 170000 ? "subscription.subfailover" : "false")},
+                   {(version >= 190000 ? "subscription.subretaindeadtuples" : "false")},
+                   {(version >= 190000 ? "subscription.submaxretention" : "0")},
+                   {(version >= 190000 ? "subscription.subwalrcvtimeout::text" : "'-1'::text")},
+                   subscription.subslotname,
+                   subscription.subsynccommit,
+                   pg_catalog.array_to_json(subscription.subpublications)::text,
+                   {(version >= 190000 ? "foreign_server.srvname" : "NULL::text")}
+            FROM pg_catalog.pg_subscription AS subscription
+            {(version >= 190000 ? "LEFT JOIN pg_catalog.pg_foreign_server AS foreign_server ON foreign_server.oid = subscription.subserver" : string.Empty)}
+            WHERE subscription.subdbid = (
+                    SELECT database_entry.oid
+                    FROM pg_catalog.pg_database AS database_entry
+                    WHERE database_entry.datname = current_database())
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_subscription'::pg_catalog.regclass
+                    AND dependency.objid = subscription.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY subscription.subname
+            """;
+        var definitions = new List<BlueTuskSubscriptionDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var publications = JsonSerializer.Deserialize<string[]>(reader.GetString(15))
+                ?? throw new InvalidOperationException("Subscription publications were not a JSON array.");
+            definitions.Add(new BlueTuskSubscriptionDefinition(
+                reader.GetString(0),
+                reader.IsDBNull(16)
+                    ? BlueTuskSubscriptionConnection.Redacted
+                    : BlueTuskSubscriptionConnection.FromForeignServer(reader.GetString(16)),
+                publications,
+                GetNullableString(reader, 13),
+                reader.GetBoolean(1),
+                reader.GetBoolean(2),
+                reader.GetString(3) switch
+                {
+                    "false" or "f" => BlueTuskSubscriptionStreamingMode.Off,
+                    "true" or "t" => BlueTuskSubscriptionStreamingMode.On,
+                    "p" => BlueTuskSubscriptionStreamingMode.Parallel,
+                    var value => throw new InvalidOperationException(
+                        $"Unknown PostgreSQL subscription streaming mode '{value}'."),
+                },
+                reader.GetString(14) switch
+                {
+                    "off" => BlueTuskSubscriptionSynchronousCommit.Off,
+                    "local" => BlueTuskSubscriptionSynchronousCommit.Local,
+                    "remote_write" => BlueTuskSubscriptionSynchronousCommit.RemoteWrite,
+                    "on" => BlueTuskSubscriptionSynchronousCommit.On,
+                    "remote_apply" => BlueTuskSubscriptionSynchronousCommit.RemoteApply,
+                    var value => throw new InvalidOperationException(
+                        $"Unknown PostgreSQL subscription synchronous-commit mode '{value}'."),
+                },
+                reader.GetString(4) != "d",
+                reader.GetBoolean(5),
+                reader.GetBoolean(6),
+                reader.GetBoolean(7),
+                reader.GetString(8) switch
+                {
+                    "any" => BlueTuskSubscriptionOrigin.Any,
+                    "none" => BlueTuskSubscriptionOrigin.None,
+                    var value => throw new InvalidOperationException(
+                        $"Unknown PostgreSQL subscription origin '{value}'."),
+                },
+                reader.GetBoolean(9),
+                reader.GetBoolean(10),
+                reader.GetInt32(11),
+                reader.GetString(12),
+                ConnectOnCreate: false,
+                CreateSlot: false,
+                CopyData: false));
+        }
+
+        if (definitions.Count > 0)
+        {
+            model[BlueTuskSubscriptionMetadata.AnnotationName] = BlueTuskSubscriptionMetadata.Serialize(
+                new BlueTuskSubscriptionDefinitionSet(definitions));
+        }
+    }
+
+    private static int ReadServerVersionNumber(DbConnection connection)
+    {
+        using var command = connection.CreateCommand();
+        command.CommandText = "SELECT pg_catalog.current_setting('server_version_num')::integer";
+        return Convert.ToInt32(command.ExecuteScalar(), System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static void ReadIndexes(
