@@ -96,6 +96,16 @@ public sealed class BlueTuskFrontendMessageWriterTests
     }
 
     [Fact]
+    public void Writes_an_opaque_gssapi_response_without_text_transcoding()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteGssResponse(output, new byte[] { 0, 1, 255 });
+
+        Assert.Equal("70000000070001FF", Convert.ToHexString(output.WrittenSpan));
+    }
+
+    [Fact]
     public void Writes_a_password_message_from_caller_owned_bytes()
     {
         var output = new ArrayBufferWriter<byte>();

@@ -68,8 +68,10 @@ Credential callbacks and TLS client identity are immutable data-source configura
 connection-string state. Data sources propagate that configuration to pools, unpooled paths,
 notification listeners, EF admin-database connections, and dedicated replication-option
 snapshots. Credential resolution is lazy and belongs to Client authentication; password-file
-parsing, SCRAM/MD5 derivation, and RFC 7628 OAUTHBEARER response construction remain in
-Security, while Transport only receives the final TLS certificate policy.
+parsing, SCRAM/MD5 derivation, RFC 7628 OAUTHBEARER response construction, and the
+operating-system-backed GSSAPI/SSPI security context remain in Security, while Transport only
+receives the final TLS certificate policy. Client owns the PostgreSQL code 7/8/9 negotiation
+sequence and clears each opaque GSS token after the sensitive write path flushes it.
 
 ## Sync and async
 

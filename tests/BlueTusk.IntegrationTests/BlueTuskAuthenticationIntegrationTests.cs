@@ -226,6 +226,36 @@ public sealed class BlueTuskAuthenticationIntegrationTests
         Assert.DoesNotContain("invalid-oauth-token", exception.ToString(), StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task GSSAPI_Kerberos_authenticates_sync_and_async_against_PostgreSQL_18()
+    {
+        var connectionString = Environment.GetEnvironmentVariable(
+            "BLUETUSK_GSS_TEST_CONNECTION_STRING");
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw SkipException.ForSkip(
+                "BLUETUSK_GSS_TEST_CONNECTION_STRING is not configured.");
+        }
+
+        var options = BlueTuskClientOptions.FromConnectionString(connectionString) with
+        {
+            Password = null,
+            Passfile = string.Empty,
+            SslMode = BlueTuskSslMode.Disable,
+            ChannelBinding = BlueTuskChannelBindingMode.Disable,
+        };
+
+        using (var session = BlueTuskSession.Open(options))
+        {
+            Assert.Equal("bluetusk_gss_test", ReadCurrentUser(session));
+        }
+
+        await using (var session = await BlueTuskSession.OpenAsync(options))
+        {
+            Assert.Equal("bluetusk_gss_test", await ReadCurrentUserAsync(session));
+        }
+    }
+
     private static async Task ExecuteAdminAsync(
         BlueTuskConnectionStringBuilder settings,
         string sql)

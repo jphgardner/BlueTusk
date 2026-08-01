@@ -29,6 +29,22 @@ $env:BLUETUSK_OAUTH_TEST_CONNECTION_STRING = "Host=localhost;Port=5618;Username=
 dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~Native_OAUTHBEARER
 ```
 
+PostgreSQL 18 GSSAPI/Kerberos acceptance uses another isolated service in the
+same profile. The image runs an MIT KDC, creates only test realm principals and
+a PostgreSQL keytab, and exposes the KDC on port 5688 and PostgreSQL on port
+5718. On a Linux host with `krb5-user` installed:
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait gss18
+$env:KRB5_CONFIG = "$PWD/eng/compose/gssapi/krb5-client.conf"
+"bluetusk-gss-password" | kinit bluetusk_gss_test@BLUETUSK.TEST
+$env:BLUETUSK_GSS_TEST_CONNECTION_STRING = "Host=localhost;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres"
+dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~GSSAPI_Kerberos
+```
+
+The fixed realm password, KDC database, service keytab, and ticket cache are
+test-only ephemeral infrastructure. They must not be copied into a deployment.
+
 The compatibility project carries a test-only Npgsql dependency and runs equivalent value, parameter, transaction-error, cancellation, reuse, and schema-metadata operations through both providers. PostgreSQL internal type names (`int4`, `bool`) and SQL aliases (`integer`, `boolean`) are normalized before comparison; any other difference fails the suite and must be resolved against PostgreSQL behavior.
 
 The default stress scale runs bounded concurrent pool churn, cancellation storms, preparation, batches, and partially consumed sequential streams. Set `BLUETUSK_STRESS_SCALE` to a positive integer to multiply the worker count for longer soak runs.

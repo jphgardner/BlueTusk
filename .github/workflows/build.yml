@@ -148,3 +148,47 @@ jobs:
       - name: Stop PostgreSQL OAuth validator
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile security-tests down --volumes
+
+  gssapi-authentication:
+    name: PostgreSQL 18 GSSAPI/Kerberos
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Install Kerberos client
+        run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes krb5-user
+
+      - name: Start PostgreSQL and MIT Kerberos KDC
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait gss18
+
+      - name: Acquire test Kerberos ticket
+        env:
+          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+        run: printf '%s\n' 'bluetusk-gss-password' | kinit bluetusk_gss_test@BLUETUSK.TEST
+
+      - name: Run GSSAPI/Kerberos acceptance
+        env:
+          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+          BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=localhost;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~GSSAPI_Kerberos
+          --logger trx
+          --results-directory artifacts/test-results/gss18
+
+      - name: Capture PostgreSQL/Kerberos logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests logs gss18
+
+      - name: Stop PostgreSQL and MIT Kerberos KDC
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests down --volumes

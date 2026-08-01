@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography;
 using System.Security.Cryptography.X509Certificates;
@@ -99,6 +100,7 @@ public sealed class BlueTuskDataSourceBuilderTests
             SslMode = BlueTuskSslMode.Require,
             ChannelBinding = BlueTuskChannelBindingMode.Require,
             AllowUnencryptedPassword = true,
+            KerberosServiceName = "postgresql",
         };
         using var dataSource = BlueTuskDataSource.Create(settings.ConnectionString);
 
@@ -115,6 +117,7 @@ public sealed class BlueTuskDataSourceBuilderTests
         Assert.Equal(BlueTuskSslMode.Require, options.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Require, options.ChannelBinding);
         Assert.True(options.AllowUnencryptedPassword);
+        Assert.Equal("postgresql", options.KerberosServiceName);
         Assert.Equal(BlueTuskReplicationMode.None, options.ReplicationMode);
         Assert.Equal(0, dataSource.GetPoolStatistics().Total);
     }
@@ -194,6 +197,22 @@ public sealed class BlueTuskDataSourceBuilderTests
         Assert.Same(certificate, Assert.Single(options.ClientCertificates));
         Assert.Same(selection, options.LocalCertificateSelectionCallback);
         Assert.Same(validation, options.RemoteCertificateValidationCallback);
+    }
+
+    [Fact]
+    public void Data_source_builder_propagates_an_explicit_GSSAPI_credential()
+    {
+        var credential = new NetworkCredential("worker", "credential-secret", "BLUETUSK.TEST");
+        using var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Database=app;Username=worker;Kerberos Service Name=postgresql")
+            .UseGssCredential(credential)
+            .Build();
+
+        var options = dataSource.CreateDedicatedSessionOptions();
+
+        Assert.Same(credential, options.GssCredential);
+        Assert.Equal("postgresql", options.KerberosServiceName);
+        Assert.DoesNotContain("credential-secret", options.ToString(), StringComparison.Ordinal);
     }
 
     private enum OrderStatus

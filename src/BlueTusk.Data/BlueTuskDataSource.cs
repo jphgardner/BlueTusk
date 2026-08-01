@@ -87,6 +87,7 @@ public sealed class BlueTuskDataSource : DbDataSource
             Username = _settings.Username,
             Password = _settings.Password,
             Passfile = _settings.Passfile,
+            KerberosServiceName = _settings.KerberosServiceName,
             ApplicationName = _settings.ApplicationName,
             ConnectTimeout = _settings.Timeout,
             SslMode = _settings.SslMode,

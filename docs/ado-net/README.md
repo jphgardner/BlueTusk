@@ -5,7 +5,8 @@ The current preview provides native synchronous and asynchronous `BlueTuskConnec
 Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
 
 Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers
-SCRAM channel binding when PostgreSQL offers it. Legacy PostgreSQL MD5 challenges are
+SCRAM channel binding when PostgreSQL offers it. PostgreSQL GSSAPI/Kerberos and SSPI
+requests use the operating system security context with mutual authentication. Legacy PostgreSQL MD5 challenges are
 supported for compatibility, but MD5 is deprecated by PostgreSQL and should not be selected
 for new deployments. A server request for cleartext password authentication is accepted over
 an established TLS connection. It is rejected on an unencrypted connection unless the caller
@@ -32,7 +33,8 @@ user remains configured for SCRAM-SHA-256.
 
 The [authentication guide](authentication.md) documents password-file lookup,
 password and access-token callbacks, refresh timing, credential precedence,
-TLS client certificates, and callback-based certificate selection.
+GSSAPI/Kerberos service principals and credentials, TLS client certificates,
+and callback-based certificate selection.
 
 Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
 

@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using BlueTusk.Client;
@@ -76,6 +77,17 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     {
         ArgumentNullException.ThrowIfNull(provider);
         _clientConfiguration = _clientConfiguration with { AccessTokenProviderAsync = provider };
+        return this;
+    }
+
+    /// <summary>
+    /// Uses an explicit credential for PostgreSQL GSSAPI/Kerberos or SSPI authentication.
+    /// Omit this configuration to use the process identity or platform credential cache.
+    /// </summary>
+    public BlueTuskDataSourceBuilder UseGssCredential(NetworkCredential credential)
+    {
+        ArgumentNullException.ThrowIfNull(credential);
+        _clientConfiguration = _clientConfiguration with { GssCredential = credential };
         return this;
     }
 

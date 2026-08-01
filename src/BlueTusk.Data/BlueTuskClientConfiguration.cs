@@ -1,3 +1,4 @@
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using BlueTusk.Client;
@@ -16,6 +17,8 @@ internal sealed record BlueTuskClientConfiguration
 
     internal BlueTuskAccessTokenProviderAsync? AccessTokenProviderAsync { get; init; }
 
+    internal NetworkCredential? GssCredential { get; init; }
+
     internal IReadOnlyCollection<X509Certificate2> ClientCertificates { get; init; } = [];
 
     internal LocalCertificateSelectionCallback? LocalCertificateSelectionCallback { get; init; }
@@ -28,6 +31,7 @@ internal sealed record BlueTuskClientConfiguration
         PasswordProviderAsync = PasswordProviderAsync,
         AccessTokenProvider = AccessTokenProvider,
         AccessTokenProviderAsync = AccessTokenProviderAsync,
+        GssCredential = GssCredential,
         ClientCertificates = ClientCertificates,
         LocalCertificateSelectionCallback = LocalCertificateSelectionCallback,
         RemoteCertificateValidationCallback = RemoteCertificateValidationCallback,

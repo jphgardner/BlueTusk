@@ -1,7 +1,8 @@
 # Authentication
 
 BlueTusk negotiates PostgreSQL SCRAM-SHA-256, SCRAM-SHA-256-PLUS channel
-binding, PostgreSQL 18+ OAUTHBEARER, legacy MD5 challenges, and cleartext password challenges. TLS server
+binding, PostgreSQL 18+ OAUTHBEARER, GSSAPI/Kerberos and SSPI, legacy MD5
+challenges, and cleartext password challenges. TLS server
 certificate validation uses the platform policy by default. See PostgreSQL's
 [password authentication](https://www.postgresql.org/docs/current/auth-password.html)
 and [encryption options](https://www.postgresql.org/docs/current/encryption-options.html)
@@ -61,6 +62,43 @@ driver. PostgreSQL still requires a correctly configured server-side OAuth
 validator; see PostgreSQL's
 [OAuth authentication guide](https://www.postgresql.org/docs/current/auth-oauth.html).
 
+## GSSAPI, Kerberos, and SSPI
+
+When PostgreSQL requests GSSAPI, BlueTusk creates a platform
+`NegotiateAuthentication` context with the Kerberos package. A PostgreSQL SSPI
+request uses the platform Negotiate package and the same opaque-token wire
+exchange. Both genuine synchronous and asynchronous opens support multistep
+negotiation and require the server to be mutually authenticated before
+`AuthenticationOk` is accepted.
+
+The default service principal target is `postgres/<Host>`. Set
+`Kerberos Service Name` when PostgreSQL was configured with a different
+`krb_srvname` value:
+
+```text
+Host=db.example.test;Database=app;Username=worker;Kerberos Service Name=postgres
+```
+
+By default, the operating system supplies the process identity or credential
+cache. An application that deliberately owns a separate credential can attach
+it to the immutable data-source configuration; the credential is not placed in
+the connection string:
+
+```csharp
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UseGssCredential(await credentialVault.GetNetworkCredentialAsync())
+    .Build();
+```
+
+GSSAPI does not invoke BlueTusk password or access-token callbacks. Returned
+platform tokens and protocol write buffers are cleared after each transport
+flush, and provider failures are reported without their original exception or
+token content. Kerberos authenticates the peers but this PostgreSQL exchange
+does not enable GSS-encrypted transport; configure TLS when database traffic
+must be encrypted. Server principals, keytabs, role mapping, realms, and ticket
+lifetime remain deployment responsibilities. See PostgreSQL's
+[GSSAPI authentication guide](https://www.postgresql.org/docs/current/gssapi-auth.html).
+
 ## PostgreSQL password files
 
 Set `Passfile=/path/to/file` to select a password file. When neither a callback
@@ -111,7 +149,7 @@ challenge is accepted over TLS. On plaintext transport it fails closed unless
 compatibility environment.
 
 Authentication protocol buffers are overwritten after transport flushes and
-temporary writable password/MD5/OAUTHBEARER buffers are cleared. Immutable .NET strings
+temporary writable password/MD5/OAUTHBEARER/GSSAPI buffers are cleared. Immutable .NET strings
 cannot be zeroed; keep connection strings and callback results short-lived and
 never log them. Callback failures are reported without retaining the original
 exception, preventing a callback exception message from leaking a credential.

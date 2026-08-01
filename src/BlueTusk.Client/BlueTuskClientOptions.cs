@@ -1,7 +1,9 @@
 using System.Globalization;
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
 using System.Text;
+using BlueTusk.Security;
 
 namespace BlueTusk.Client;
 
@@ -58,6 +60,17 @@ public sealed record BlueTuskClientOptions
     internal bool HasAccessTokenProvider =>
         AccessTokenProvider is not null || AccessTokenProviderAsync is not null;
 
+    /// <summary>
+    /// Gets an explicit Kerberos/SSPI credential, or null to use the process identity or platform
+    /// credential cache.
+    /// </summary>
+    public NetworkCredential? GssCredential { get; init; }
+
+    /// <summary>Gets the Kerberos service name used to form the PostgreSQL service principal.</summary>
+    public string KerberosServiceName { get; init; } = "postgres";
+
+    internal Func<bool, BlueTuskGssApiClient>? GssApiClientFactory { get; init; }
+
     public string ApplicationName { get; init; } = "BlueTusk";
 
     public TimeSpan ConnectTimeout { get; init; } = TimeSpan.FromSeconds(15);
@@ -85,7 +98,7 @@ public sealed record BlueTuskClientOptions
     public override string ToString() =>
         $"{nameof(BlueTuskClientOptions)} {{ Host = {Host}, Port = {Port}, Database = {Database}, " +
         $"Username = {Username}, Password = <redacted>, Passfile = <redacted>, " +
-        $"SSL Mode = {SslMode}, Channel Binding = {ChannelBinding} }}";
+        $"GSS Credential = <redacted>, SSL Mode = {SslMode}, Channel Binding = {ChannelBinding} }}";
 
     /// <summary>Creates client options from a BlueTusk connection string.</summary>
     public static BlueTuskClientOptions FromConnectionString(string connectionString)
@@ -101,6 +114,7 @@ public sealed record BlueTuskClientOptions
             Username = GetString(settings, "Username", string.Empty),
             Password = GetOptionalString(settings, "Password"),
             Passfile = GetOptionalString(settings, "Passfile"),
+            KerberosServiceName = GetString(settings, "Kerberos Service Name", "postgres"),
             ApplicationName = GetString(settings, "Application Name", "BlueTusk"),
             ConnectTimeout = TimeSpan.FromSeconds(GetInt32(settings, "Timeout", 15)),
             SslMode = GetEnum(settings, "SSL Mode", BlueTuskSslMode.VerifyFull),
@@ -121,6 +135,14 @@ public sealed record BlueTuskClientOptions
         ArgumentException.ThrowIfNullOrWhiteSpace(Username);
         ArgumentNullException.ThrowIfNull(ApplicationName);
         ArgumentNullException.ThrowIfNull(ClientCertificates);
+        ArgumentException.ThrowIfNullOrWhiteSpace(KerberosServiceName);
+
+        if (KerberosServiceName.IndexOfAny(['/', '@', '\0']) >= 0)
+        {
+            throw new ArgumentException(
+                "A Kerberos service name cannot contain '/', '@', or a null character.",
+                nameof(KerberosServiceName));
+        }
 
         if (ConnectTimeout <= TimeSpan.Zero && ConnectTimeout != Timeout.InfiniteTimeSpan)
         {

@@ -26,6 +26,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Cleartext password compatibility over TLS, or by explicit plaintext-transport opt-in, with PostgreSQL 15–19 acceptance
 - [x] PostgreSQL password-file resolution plus lazy synchronous/asynchronous password and access-token callbacks
 - [x] PostgreSQL 18+ OAUTHBEARER with sync/async TLS conformance and a live validator gate
+- [x] GSSAPI/Kerberos and SSPI with mutual authentication, sync/async conformance, and a live MIT Kerberos/PostgreSQL 18 gate
 - [x] TLS client-certificate collections and explicit certificate selection with safe server validation defaults
 - [x] Backend key data capture
 - [x] Cancellation channel (delivered in 0.0.4)
@@ -519,7 +520,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Access-token callbacks with per-new-physical-connection refresh lifecycle
   - [x] TLS client-certificate authentication and certificate-selection callbacks
   - [x] PostgreSQL 18+ native OAUTHBEARER with TLS enforcement, ready-token callbacks, sensitive buffers, error acknowledgement, and real validator acceptance
-  - [ ] GSSAPI/Kerberos and cloud SDK-specific identity integrations
+  - [x] GSSAPI/Kerberos and SSPI with platform security contexts, sensitive binary-token handling, mutual authentication, and real KDC acceptance
+  - [ ] Optional cloud SDK-specific identity adapters
 - [ ] Stress testing
 - [ ] Competitive benchmarks
 - [ ] Complete documentation

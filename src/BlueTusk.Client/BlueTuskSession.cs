@@ -3320,6 +3320,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken)
     {
         BlueTuskScramSha256Client? scram = null;
+        BlueTuskGssApiClient? gssApi = null;
         var oauthBearerSelected = false;
         var oauthErrorAcknowledged = false;
         string? credential = null;
@@ -3349,6 +3350,26 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 await SendMd5PasswordAsync(
                                     credential,
                                     md5.Salt,
+                                    cancellationToken).ConfigureAwait(false);
+                                break;
+                            case BlueTuskAuthenticationRequest.Gss:
+                                gssApi = CreateGssApiClient(gssApi, useSspi: false);
+                                await SendGssResponseAsync(
+                                    gssApi,
+                                    ReadOnlyMemory<byte>.Empty,
+                                    cancellationToken).ConfigureAwait(false);
+                                break;
+                            case BlueTuskAuthenticationRequest.Sspi:
+                                gssApi = CreateGssApiClient(gssApi, useSspi: true);
+                                await SendGssResponseAsync(
+                                    gssApi,
+                                    ReadOnlyMemory<byte>.Empty,
+                                    cancellationToken).ConfigureAwait(false);
+                                break;
+                            case BlueTuskAuthenticationRequest.GssContinue continuation when gssApi is not null:
+                                await SendGssResponseAsync(
+                                    gssApi,
+                                    continuation.Data,
                                     cancellationToken).ConfigureAwait(false);
                                 break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
@@ -3402,6 +3423,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 }
 
                                 scram?.EnsureVerified();
+                                gssApi?.EnsureComplete();
                                 authenticationComplete = true;
                                 _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Initialising);
                                 break;
@@ -3443,12 +3465,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         finally
         {
             scram?.Dispose();
+            gssApi?.Dispose();
         }
     }
 
     private void AuthenticateAndInitialise(ReadOnlyMemory<byte>? channelBindingData)
     {
         BlueTuskScramSha256Client? scram = null;
+        BlueTuskGssApiClient? gssApi = null;
         var oauthBearerSelected = false;
         var oauthErrorAcknowledged = false;
         string? credential = null;
@@ -3471,6 +3495,17 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                             case BlueTuskAuthenticationRequest.Md5Password md5:
                                 credential ??= BlueTuskCredentialResolver.Resolve(_options);
                                 SendMd5Password(credential, md5.Salt.Span);
+                                break;
+                            case BlueTuskAuthenticationRequest.Gss:
+                                gssApi = CreateGssApiClient(gssApi, useSspi: false);
+                                SendGssResponse(gssApi, ReadOnlySpan<byte>.Empty);
+                                break;
+                            case BlueTuskAuthenticationRequest.Sspi:
+                                gssApi = CreateGssApiClient(gssApi, useSspi: true);
+                                SendGssResponse(gssApi, ReadOnlySpan<byte>.Empty);
+                                break;
+                            case BlueTuskAuthenticationRequest.GssContinue continuation when gssApi is not null:
+                                SendGssResponse(gssApi, continuation.Data.Span);
                                 break;
                             case BlueTuskAuthenticationRequest.Sasl sasl:
                                 if (ShouldUseOAuthBearer(sasl.Mechanisms))
@@ -3516,6 +3551,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                                 }
 
                                 scram?.EnsureVerified();
+                                gssApi?.EnsureComplete();
                                 authenticationComplete = true;
                                 _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Initialising);
                                 break;
@@ -3557,6 +3593,69 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         finally
         {
             scram?.Dispose();
+            gssApi?.Dispose();
+        }
+    }
+
+    private BlueTuskGssApiClient CreateGssApiClient(
+        BlueTuskGssApiClient? existing,
+        bool useSspi)
+    {
+        if (existing is not null)
+        {
+            throw new BlueTuskAuthenticationException(
+                "PostgreSQL attempted to restart an active GSSAPI authentication exchange.");
+        }
+
+        return _options.GssApiClientFactory?.Invoke(useSspi)
+            ?? new BlueTuskGssApiClient(
+                _options.Host,
+                _options.KerberosServiceName,
+                _options.GssCredential,
+                useSspi);
+    }
+
+    private async ValueTask SendGssResponseAsync(
+        BlueTuskGssApiClient gssApi,
+        ReadOnlyMemory<byte> incomingBlob,
+        CancellationToken cancellationToken)
+    {
+        var response = gssApi.GetOutgoingBlob(incomingBlob.Span);
+        if (response is null)
+        {
+            return;
+        }
+
+        try
+        {
+            await _connection.WriteSensitiveAsync(
+                output => BlueTuskFrontendMessageWriter.WriteGssResponse(output, response),
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(response);
+        }
+    }
+
+    private void SendGssResponse(
+        BlueTuskGssApiClient gssApi,
+        ReadOnlySpan<byte> incomingBlob)
+    {
+        var response = gssApi.GetOutgoingBlob(incomingBlob);
+        if (response is null)
+        {
+            return;
+        }
+
+        try
+        {
+            _connection.WriteSensitive(
+                output => BlueTuskFrontendMessageWriter.WriteGssResponse(output, response));
+        }
+        finally
+        {
+            BlueTuskSensitiveBuffer.Clear(response);
         }
     }
 

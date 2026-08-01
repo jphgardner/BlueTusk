@@ -72,6 +72,26 @@ services:
       - ./oauth/init.sql:/docker-entrypoint-initdb.d/bluetusk-oauth.sql:ro
     ports: ["5618:5432"]
 
+  gss18:
+    <<: *postgres-common
+    image: bluetusk/postgres-gss-test:18
+    build:
+      context: ./gssapi
+    profiles: ["security-tests"]
+    command:
+      - postgres
+      - -c
+      - hba_file=/etc/postgresql/bluetusk-pg_hba.conf
+      - -c
+      - krb_server_keyfile=/var/lib/postgresql/postgres.keytab
+    volumes:
+      - ./gssapi/pg_hba.conf:/etc/postgresql/bluetusk-pg_hba.conf:ro
+      - ./gssapi/init.sql:/docker-entrypoint-initdb.d/bluetusk-gss.sql:ro
+    ports:
+      - "5688:88/tcp"
+      - "5688:88/udp"
+      - "5718:5432"
+
   postgres19:
     <<: *postgres-common
     image: postgres:19beta2-alpine

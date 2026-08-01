@@ -128,6 +128,16 @@ public static class BlueTuskFrontendMessageWriter
         WriteBytes(output, response);
     }
 
+    /// <summary>Writes an opaque GSSAPI or SSPI negotiation token.</summary>
+    public static void WriteGssResponse(IBufferWriter<byte> output, ReadOnlySpan<byte> response)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+
+        WriteByte(output, (byte)'p');
+        WriteInt32(output, checked(sizeof(int) + response.Length));
+        WriteBytes(output, response);
+    }
+
     /// <summary>Writes a PostgreSQL password response as a null-terminated byte string.</summary>
     /// <remarks>
     /// The caller owns and must clear <paramref name="response"/> when it contains sensitive

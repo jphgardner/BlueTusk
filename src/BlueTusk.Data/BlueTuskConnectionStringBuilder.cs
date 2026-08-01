@@ -155,6 +155,15 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         set => this["Channel Binding"] = value.ToString();
     }
 
+    /// <summary>Gets or sets the Kerberos service name used for PostgreSQL GSSAPI authentication.</summary>
+    public string KerberosServiceName
+    {
+        get => GetString("Kerberos Service Name", "postgres");
+        set => this["Kerberos Service Name"] = string.IsNullOrWhiteSpace(value)
+            ? throw new ArgumentException("A Kerberos service name is required.", nameof(value))
+            : value;
+    }
+
     /// <summary>
     /// Gets or sets whether cleartext password authentication may be used without TLS.
     /// </summary>
@@ -258,6 +267,7 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = Passfile;
         _ = SslMode;
         _ = ChannelBinding;
+        _ = KerberosServiceName;
         _ = AllowUnencryptedPassword;
         _ = TargetSessionAttributes;
         _ = LoadBalanceHosts;
@@ -265,6 +275,13 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = ConnectionLifetime;
         _ = MaxAutoPrepare;
         _ = AutoPrepareMinUsages;
+
+        if (KerberosServiceName.IndexOfAny(['/', '@', '\0']) >= 0)
+        {
+            throw new ArgumentException(
+                "A Kerberos service name cannot contain '/', '@', or a null character.",
+                nameof(KerberosServiceName));
+        }
 
         if (MinimumPoolSize > MaximumPoolSize)
         {
