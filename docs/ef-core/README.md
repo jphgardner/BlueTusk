@@ -202,6 +202,24 @@ count; network host/family/mask/network/broadcast; and full-text vector/query
 construction, lexeme/node counts, and rank. PostgreSQL's default text-search
 configuration applies to the current no-configuration overloads.
 
+The extended array surface includes dimensions/rank, first/all positions,
+remove/replace/trim, string conversion, and string-to-array parsing.
+`ArrayShuffle`/`ArraySample` require PostgreSQL 16 and `ArrayReverse` requires
+PostgreSQL 18; the common methods execute unchanged on PostgreSQL 15–19.
+String translations cover character codes, bit/octet lengths, case formatting,
+left/right extraction, padding/trimming, MD5, identifier parsing and quoting,
+literal quoting, repetition, reversal, splitting, prefix tests, and character
+translation. Bytea values support encode/decode, byte/bit access and mutation,
+trimming, length/hash operations, and PostgreSQL 18+ reversal with typed binary
+results.
+
+Numeric translations include cube roots, angle conversion, integral numeric
+division, factorial, integer/`bigint`/numeric GCD and LCM, numeric scale
+inspection/trimming, and scalar/threshold-array `width_bucket`. `FormatValue`,
+`ParseDate`, `ParseNumber`, `ParseTimestamp`, and `UnixTimestamp` map to the
+typed PostgreSQL `to_char`, `to_date`, `to_number`, and `to_timestamp`
+families. Format strings and all application values remain parameters.
+
 The date/time surface includes `date_part`, `date_trunc`, `date_bin`, and
 two-argument `age`; date, time, timestamp, timestamp-with-time-zone, and
 interval constructors; and all three interval-justification functions.
@@ -233,8 +251,8 @@ the exact `BlueTuskBox`, `BlueTuskPath`, `BlueTuskCircle`,
 `BlueTuskLineSegment`, `BlueTuskPolygon`, and `BlueTuskPoint` mappings. Path
 area is nullable because PostgreSQL returns `NULL` for an open path. Generated
 SQL and live typed-parameter/result tests run across PostgreSQL 15–19. Other
-mathematical, formatting, string, binary, JSON, and full-text scalar overloads
-remain planned and are not implied by this preview. The function definitions
+additional JSON/JSONPath and full-text scalar overloads remain planned and are
+not implied by this preview. The function definitions
 follow PostgreSQL's [date/time](https://www.postgresql.org/docs/current/functions-datetime.html)
 and [geometric](https://www.postgresql.org/docs/current/functions-geometry.html)
 documentation.

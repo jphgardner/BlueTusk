@@ -276,6 +276,9 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Ordered JSON/JSONB/XML, integer/`bigint` bitwise, and double/numeric population/sample statistical aggregates
   - [x] Aggregate ordering, `DISTINCT`, `FILTER`, typed results, and PostgreSQL 15–19 acceptance
   - [ ] Remaining scalar functions
+    - [x] Array inspection/search/mutation/string conversion plus PostgreSQL 16 shuffle/sample and PostgreSQL 18 reverse
+    - [x] Text, identifier quoting/parsing, bytea encoding/editing, numeric, bucketing, and value-formatting families
+    - [ ] Remaining JSON/JSONPath and full-text overloads
     - [x] Ordered JSON/JSONB object aggregates with typed tuple inputs
     - [x] Paired correlation, population/sample covariance, and complete linear-regression aggregate family
     - [x] Ordered-set scalar `mode`, continuous percentile, and discrete percentile with native `WITHIN GROUP`

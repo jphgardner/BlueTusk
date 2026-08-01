@@ -1423,6 +1423,309 @@ public static class BlueTuskDbFunctionsExtensions
     public static int? ArrayCardinality<T>(this DbFunctions _, T[] array)
         => ThrowTranslationOnly<int?>();
 
+    public static string? ArrayDimensions<T>(this DbFunctions _, T[] array)
+        => ThrowTranslationOnly<string?>();
+
+    public static int? ArrayDimensionCount<T>(this DbFunctions _, T[] array)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ArrayPosition<T>(this DbFunctions _, T[] array, T value)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ArrayPosition<T>(this DbFunctions _, T[] array, T value, int start)
+        => ThrowTranslationOnly<int?>();
+
+    public static int[]? ArrayPositions<T>(this DbFunctions _, T[] array, T value)
+        => ThrowTranslationOnly<int[]?>();
+
+    public static T[] ArrayRemove<T>(this DbFunctions _, T[] array, T value)
+        => ThrowTranslationOnly<T[]>();
+
+    public static T[] ArrayReplace<T>(this DbFunctions _, T[] array, T oldValue, T newValue)
+        => ThrowTranslationOnly<T[]>();
+
+    public static T[] ArrayReverse<T>(this DbFunctions _, T[] array)
+        => ThrowTranslationOnly<T[]>();
+
+    public static T[] ArrayShuffle<T>(this DbFunctions _, T[] array)
+        => ThrowTranslationOnly<T[]>();
+
+    public static T[] ArraySample<T>(this DbFunctions _, T[] array, int count)
+        => ThrowTranslationOnly<T[]>();
+
+    public static T[] ArrayTrim<T>(this DbFunctions _, T[] array, int count)
+        => ThrowTranslationOnly<T[]>();
+
+    public static string? ArrayToString<T>(this DbFunctions _, T[] array, string delimiter)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? ArrayToString<T>(
+        this DbFunctions _,
+        T[] array,
+        string delimiter,
+        string nullString)
+        => ThrowTranslationOnly<string?>();
+
+    public static string[]? StringToArray(this DbFunctions _, string value, string delimiter)
+        => ThrowTranslationOnly<string[]?>();
+
+    public static string[]? StringToArray(
+        this DbFunctions _,
+        string value,
+        string delimiter,
+        string nullString)
+        => ThrowTranslationOnly<string[]?>();
+
+    public static int? StringAscii(this DbFunctions _, string value)
+        => ThrowTranslationOnly<int?>();
+
+    public static string? StringCharacter(this DbFunctions _, int codePoint)
+        => ThrowTranslationOnly<string?>();
+
+    public static int? BitLength(this DbFunctions _, string value)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? BitLength(this DbFunctions _, byte[] value)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? BitLength(this DbFunctions _, BlueTuskBitString value)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ByteLength(this DbFunctions _, string value)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ByteLength(this DbFunctions _, byte[] value)
+        => ThrowTranslationOnly<int?>();
+
+    public static int? ByteLength(this DbFunctions _, BlueTuskBitString value)
+        => ThrowTranslationOnly<int?>();
+
+    public static string? StringInitialCapital(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringLeft(this DbFunctions _, string value, int count)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringRight(this DbFunctions _, string value, int count)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringPadLeft(this DbFunctions _, string value, int length)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringPadLeft(
+        this DbFunctions _,
+        string value,
+        int length,
+        string fill)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringPadRight(this DbFunctions _, string value, int length)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringPadRight(
+        this DbFunctions _,
+        string value,
+        int length,
+        string fill)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringTrimLeft(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringTrimLeft(this DbFunctions _, string value, string characters)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringTrimRight(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringTrimRight(this DbFunctions _, string value, string characters)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringTrim(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringTrim(this DbFunctions _, string value, string characters)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? Md5(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? Md5(this DbFunctions _, byte[] value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string[]? ParseIdentifier(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string[]?>();
+
+    public static string[]? ParseIdentifier(this DbFunctions _, string value, bool strict)
+        => ThrowTranslationOnly<string[]?>();
+
+    public static string? QuoteIdentifier(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? QuoteLiteral<T>(this DbFunctions _, T value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? QuoteNullableLiteral<T>(this DbFunctions _, T? value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringRepeat(this DbFunctions _, string value, int count)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringReverse(this DbFunctions _, string value)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? StringSplitPart(
+        this DbFunctions _,
+        string value,
+        string delimiter,
+        int field)
+        => ThrowTranslationOnly<string?>();
+
+    public static bool StringStartsWith(this DbFunctions _, string value, string prefix)
+        => ThrowTranslationOnly<bool>();
+
+    public static string? StringTranslate(
+        this DbFunctions _,
+        string value,
+        string fromCharacters,
+        string toCharacters)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? BinaryEncode(this DbFunctions _, byte[] value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static byte[]? BinaryDecode(this DbFunctions _, string value, string format)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static int? BinaryGetByte(this DbFunctions _, byte[] value, int offset)
+        => ThrowTranslationOnly<int?>();
+
+    public static byte[]? BinarySetByte(
+        this DbFunctions _,
+        byte[] value,
+        int offset,
+        int newValue)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static int? BinaryGetBit(this DbFunctions _, byte[] value, long offset)
+        => ThrowTranslationOnly<int?>();
+
+    public static byte[]? BinarySetBit(
+        this DbFunctions _,
+        byte[] value,
+        long offset,
+        int newValue)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static byte[]? BinaryTrim(this DbFunctions _, byte[] value, byte[] bytes)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static byte[]? BinaryTrimLeft(this DbFunctions _, byte[] value, byte[] bytes)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static byte[]? BinaryTrimRight(this DbFunctions _, byte[] value, byte[] bytes)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static byte[]? BinaryReverse(this DbFunctions _, byte[] value)
+        => ThrowTranslationOnly<byte[]?>();
+
+    public static double CubeRoot(this DbFunctions _, double value)
+        => ThrowTranslationOnly<double>();
+
+    public static double Degrees(this DbFunctions _, double radians)
+        => ThrowTranslationOnly<double>();
+
+    public static double Radians(this DbFunctions _, double degrees)
+        => ThrowTranslationOnly<double>();
+
+    public static decimal NumericDivide(this DbFunctions _, decimal dividend, decimal divisor)
+        => ThrowTranslationOnly<decimal>();
+
+    public static decimal Factorial(this DbFunctions _, long value)
+        => ThrowTranslationOnly<decimal>();
+
+    public static int GreatestCommonDivisor(this DbFunctions _, int left, int right)
+        => ThrowTranslationOnly<int>();
+
+    public static long GreatestCommonDivisor(this DbFunctions _, long left, long right)
+        => ThrowTranslationOnly<long>();
+
+    public static decimal GreatestCommonDivisor(this DbFunctions _, decimal left, decimal right)
+        => ThrowTranslationOnly<decimal>();
+
+    public static int LeastCommonMultiple(this DbFunctions _, int left, int right)
+        => ThrowTranslationOnly<int>();
+
+    public static long LeastCommonMultiple(this DbFunctions _, long left, long right)
+        => ThrowTranslationOnly<long>();
+
+    public static decimal LeastCommonMultiple(this DbFunctions _, decimal left, decimal right)
+        => ThrowTranslationOnly<decimal>();
+
+    public static int NumericMinimumScale(this DbFunctions _, decimal value)
+        => ThrowTranslationOnly<int>();
+
+    public static int NumericScale(this DbFunctions _, decimal value)
+        => ThrowTranslationOnly<int>();
+
+    public static decimal NumericTrimScale(this DbFunctions _, decimal value)
+        => ThrowTranslationOnly<decimal>();
+
+    public static int WidthBucket(
+        this DbFunctions _,
+        double operand,
+        double low,
+        double high,
+        int count)
+        => ThrowTranslationOnly<int>();
+
+    public static int WidthBucket(
+        this DbFunctions _,
+        decimal operand,
+        decimal low,
+        decimal high,
+        int count)
+        => ThrowTranslationOnly<int>();
+
+    public static int WidthBucket<T>(this DbFunctions _, T operand, T[] thresholds)
+        => ThrowTranslationOnly<int>();
+
+    public static string? FormatValue(this DbFunctions _, int value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? FormatValue(this DbFunctions _, long value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? FormatValue(this DbFunctions _, double value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? FormatValue(this DbFunctions _, decimal value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? FormatValue(this DbFunctions _, DateTime value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? FormatValue(this DbFunctions _, DateTimeOffset value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? FormatValue(this DbFunctions _, BlueTuskInterval value, string format)
+        => ThrowTranslationOnly<string?>();
+
+    public static DateOnly ParseDate(this DbFunctions _, string value, string format)
+        => ThrowTranslationOnly<DateOnly>();
+
+    public static decimal ParseNumber(this DbFunctions _, string value, string format)
+        => ThrowTranslationOnly<decimal>();
+
+    public static DateTimeOffset ParseTimestamp(
+        this DbFunctions _,
+        string value,
+        string format)
+        => ThrowTranslationOnly<DateTimeOffset>();
+
+    public static DateTimeOffset UnixTimestamp(this DbFunctions _, double seconds)
+        => ThrowTranslationOnly<DateTimeOffset>();
+
     public static IQueryable<string> JsonArrayElements(this DbFunctions _, string jsonb)
         => ThrowTranslationOnly<IQueryable<string>>();
 

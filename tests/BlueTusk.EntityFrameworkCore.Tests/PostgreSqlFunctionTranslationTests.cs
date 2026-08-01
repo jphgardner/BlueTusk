@@ -246,10 +246,116 @@ public sealed class PostgreSqlFunctionTranslationTests
     }
 
     [Fact]
+    public void Array_string_binary_numeric_and_formatting_functions_translate()
+    {
+        using var context = CreateContext();
+        var bytes = new byte[] { 0x01, 0x02, 0x03 };
+        var bits = new BlueTuskBitString("1010");
+        var timestamp = new DateTime(2026, 8, 1, 12, 34, 56, DateTimeKind.Unspecified);
+        var interval = BlueTuskInterval.Parse("2 hours");
+        var thresholds = new[] { 0, 10, 20 };
+
+        var sql = context.Values
+            .Select(value => new
+            {
+                Dimensions = EF.Functions.ArrayDimensions(value.Numbers),
+                DimensionCount = EF.Functions.ArrayDimensionCount(value.Numbers),
+                Position = EF.Functions.ArrayPosition(value.Numbers, 2),
+                PositionFrom = EF.Functions.ArrayPosition(value.Numbers, 2, 2),
+                Positions = EF.Functions.ArrayPositions(value.Numbers, 2),
+                Removed = EF.Functions.ArrayRemove(value.Numbers, 2),
+                Replaced = EF.Functions.ArrayReplace(value.Numbers, 2, 9),
+                Reversed = EF.Functions.ArrayReverse(value.Numbers),
+                Shuffled = EF.Functions.ArrayShuffle(value.Numbers),
+                Sampled = EF.Functions.ArraySample(value.Numbers, 2),
+                Trimmed = EF.Functions.ArrayTrim(value.Numbers, 1),
+                Joined = EF.Functions.ArrayToString(value.Numbers, ","),
+                JoinedWithNull = EF.Functions.ArrayToString(value.Numbers, ",", "NULL"),
+                Split = EF.Functions.StringToArray(value.Text, " "),
+                SplitWithNull = EF.Functions.StringToArray(value.Text, " ", "NULL"),
+                Ascii = EF.Functions.StringAscii(value.Text),
+                Character = EF.Functions.StringCharacter(65),
+                TextBits = EF.Functions.BitLength(value.Text),
+                BinaryBits = EF.Functions.BitLength(bytes),
+                ValueBits = EF.Functions.BitLength(bits),
+                TextBytes = EF.Functions.ByteLength(value.Text),
+                BinaryBytes = EF.Functions.ByteLength(bytes),
+                InitialCapital = EF.Functions.StringInitialCapital(value.Text),
+                Left = EF.Functions.StringLeft(value.Text, 4),
+                Right = EF.Functions.StringRight(value.Text, 8),
+                LeftPad = EF.Functions.StringPadLeft(value.Text, 32, "."),
+                RightPad = EF.Functions.StringPadRight(value.Text, 32),
+                LeftTrim = EF.Functions.StringTrimLeft(value.Text, "B"),
+                RightTrim = EF.Functions.StringTrimRight(value.Text),
+                Trim = EF.Functions.StringTrim(value.Text),
+                TextMd5 = EF.Functions.Md5(value.Text),
+                BinaryMd5 = EF.Functions.Md5(bytes),
+                Identifier = EF.Functions.ParseIdentifier("public.table"),
+                QuotedIdentifier = EF.Functions.QuoteIdentifier("Mixed Name"),
+                QuotedLiteral = EF.Functions.QuoteLiteral(value.Text),
+                QuotedNullable = EF.Functions.QuoteNullableLiteral(value.Text),
+                Repeated = EF.Functions.StringRepeat(value.Text, 2),
+                ReversedText = EF.Functions.StringReverse(value.Text),
+                Part = EF.Functions.StringSplitPart(value.Text, " ", 2),
+                StartsWith = EF.Functions.StringStartsWith(value.Text, "Blue"),
+                Translated = EF.Functions.StringTranslate(value.Text, "BT", "bt"),
+                Encoded = EF.Functions.BinaryEncode(bytes, "hex"),
+                Decoded = EF.Functions.BinaryDecode("010203", "hex"),
+                Byte = EF.Functions.BinaryGetByte(bytes, 1),
+                SetByte = EF.Functions.BinarySetByte(bytes, 1, 9),
+                Bit = EF.Functions.BinaryGetBit(bytes, 0),
+                SetBit = EF.Functions.BinarySetBit(bytes, 0, 1),
+                TrimmedBytes = EF.Functions.BinaryTrim(bytes, new byte[] { 0x01 }),
+                ReversedBytes = EF.Functions.BinaryReverse(bytes),
+                CubeRoot = EF.Functions.CubeRoot(27),
+                Degrees = EF.Functions.Degrees(Math.PI),
+                Radians = EF.Functions.Radians(180),
+                Division = EF.Functions.NumericDivide(7, 2),
+                Factorial = EF.Functions.Factorial(5),
+                Gcd = EF.Functions.GreatestCommonDivisor(12, 18),
+                Lcm = EF.Functions.LeastCommonMultiple(12, 18),
+                MinimumScale = EF.Functions.NumericMinimumScale(1.2300m),
+                Scale = EF.Functions.NumericScale(1.2300m),
+                TrimScale = EF.Functions.NumericTrimScale(1.2300m),
+                Bucket = EF.Functions.WidthBucket(5d, 0d, 10d, 5),
+                ThresholdBucket = EF.Functions.WidthBucket(5, thresholds),
+                NumberText = EF.Functions.FormatValue(1234.5m, "FM9999.0"),
+                DateText = EF.Functions.FormatValue(timestamp, "YYYY-MM-DD"),
+                IntervalText = EF.Functions.FormatValue(interval, "HH24:MI"),
+                Date = EF.Functions.ParseDate("2026-08-01", "YYYY-MM-DD"),
+                Number = EF.Functions.ParseNumber("1,234.5", "9G999D9"),
+                Timestamp = EF.Functions.ParseTimestamp("2026-08-01 12:34", "YYYY-MM-DD HH24:MI"),
+                Unix = EF.Functions.UnixTimestamp(0),
+            })
+            .ToQueryString();
+
+        foreach (var function in new[]
+                 {
+                     "array_dims(", "array_ndims(", "array_position(", "array_positions(",
+                     "array_remove(", "array_replace(", "array_reverse(", "array_shuffle(",
+                     "array_sample(", "trim_array(", "array_to_string(", "string_to_array(",
+                     "ascii(", "chr(", "bit_length(", "octet_length(", "initcap(", "left(",
+                     "right(", "lpad(", "rpad(", "ltrim(", "rtrim(", "btrim(", "md5(",
+                     "parse_ident(", "quote_ident(", "quote_literal(", "quote_nullable(",
+                     "repeat(", "reverse(", "split_part(", "starts_with(", "translate(",
+                     "encode(", "decode(", "get_byte(", "set_byte(", "get_bit(", "set_bit(",
+                     "cbrt(", "degrees(", "radians(", "div(", "factorial(", "gcd(", "lcm(",
+                     "min_scale(", "scale(", "trim_scale(", "width_bucket(", "to_char(",
+                     "to_date(", "to_number(", "to_timestamp(",
+                 })
+        {
+            Assert.Contains(function, sql, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public async Task PostgreSQL_scalar_functions_execute_with_typed_results_and_parameters()
     {
         var connectionString = GetConnectionString();
         await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+        var serverVersion = Convert.ToInt32(
+            await ExecuteScalarAsync(dataSource, "SHOW server_version_num"),
+            System.Globalization.CultureInfo.InvariantCulture);
         await ExecuteNonQueryAsync(
             dataSource,
             """
@@ -321,6 +427,185 @@ public sealed class PostgreSqlFunctionTranslationTests
             Assert.False(collection.MultirangeUpperInclusive);
             Assert.False(collection.MultirangeLowerInfinite);
             Assert.False(collection.MultirangeUpperInfinite);
+
+            var bytes = new byte[] { 0x01, 0x02, 0x03 };
+            var bits = new BlueTuskBitString("1010");
+            var thresholds = new[] { 0, 10, 20 };
+            var trimValue = new byte[] { 0x01, 0x01, 0x02, 0x01 };
+            var leftTrimValue = new byte[] { 0x01, 0x01, 0x02 };
+            var rightTrimValue = new byte[] { 0x02, 0x01, 0x01 };
+            var trimBytes = new byte[] { 0x01 };
+            var common = await context.Values
+                .Select(value => new
+                {
+                    Dimensions = EF.Functions.ArrayDimensions(value.Numbers),
+                    DimensionCount = EF.Functions.ArrayDimensionCount(value.Numbers),
+                    Position = EF.Functions.ArrayPosition(value.Numbers, 2),
+                    PositionFrom = EF.Functions.ArrayPosition(value.Numbers, 2, 2),
+                    Positions = EF.Functions.ArrayPositions(value.Numbers, 2),
+                    Removed = EF.Functions.ArrayRemove(value.Numbers, 2),
+                    Replaced = EF.Functions.ArrayReplace(value.Numbers, 2, 9),
+                    Trimmed = EF.Functions.ArrayTrim(value.Numbers, 1),
+                    Joined = EF.Functions.ArrayToString(value.Numbers, ","),
+                    Split = EF.Functions.StringToArray(value.Text, " "),
+                    Ascii = EF.Functions.StringAscii(value.Text),
+                    Character = EF.Functions.StringCharacter(65),
+                    TextBits = EF.Functions.BitLength(value.Text),
+                    BinaryBits = EF.Functions.BitLength(bytes),
+                    ValueBits = EF.Functions.BitLength(bits),
+                    TextBytes = EF.Functions.ByteLength(value.Text),
+                    BinaryBytes = EF.Functions.ByteLength(bytes),
+                    ValueBytes = EF.Functions.ByteLength(bits),
+                    InitialCapital = EF.Functions.StringInitialCapital(value.Text),
+                    Left = EF.Functions.StringLeft(value.Text, 4),
+                    Right = EF.Functions.StringRight(value.Text, 8),
+                    LeftPad = EF.Functions.StringPadLeft("42", 4, "0"),
+                    RightPad = EF.Functions.StringPadRight("42", 4, "0"),
+                    LeftTrim = EF.Functions.StringTrimLeft("xxvalue", "x"),
+                    RightTrim = EF.Functions.StringTrimRight("valuexx", "x"),
+                    Trim = EF.Functions.StringTrim("xxvaluexx", "x"),
+                    TextMd5 = EF.Functions.Md5("abc"),
+                    BinaryMd5 = EF.Functions.Md5(bytes),
+                    Identifier = EF.Functions.ParseIdentifier("public.table"),
+                    QuotedIdentifier = EF.Functions.QuoteIdentifier("Mixed Name"),
+                    QuotedLiteral = EF.Functions.QuoteLiteral("Blue'Tusk"),
+                    QuotedNullable = EF.Functions.QuoteNullableLiteral<string>(null),
+                    Repeated = EF.Functions.StringRepeat("ab", 3),
+                    ReversedText = EF.Functions.StringReverse("abc"),
+                    Part = EF.Functions.StringSplitPart(value.Text, " ", 2),
+                    StartsWith = EF.Functions.StringStartsWith(value.Text, "Blue"),
+                    Translated = EF.Functions.StringTranslate("12345", "143", "ax"),
+                    Encoded = EF.Functions.BinaryEncode(bytes, "hex"),
+                    Decoded = EF.Functions.BinaryDecode("010203", "hex"),
+                    Byte = EF.Functions.BinaryGetByte(bytes, 1),
+                    SetByte = EF.Functions.BinarySetByte(bytes, 1, 9),
+                    Bit = EF.Functions.BinaryGetBit(bytes, 7),
+                    SetBit = EF.Functions.BinarySetBit(bytes, 7, 1),
+                    TrimmedBytes = EF.Functions.BinaryTrim(trimValue, trimBytes),
+                    LeftTrimmedBytes = EF.Functions.BinaryTrimLeft(leftTrimValue, trimBytes),
+                    RightTrimmedBytes = EF.Functions.BinaryTrimRight(rightTrimValue, trimBytes),
+                    CubeRoot = EF.Functions.CubeRoot(27),
+                    Degrees = EF.Functions.Degrees(Math.PI),
+                    Radians = EF.Functions.Radians(180),
+                    Division = EF.Functions.NumericDivide(7, 2),
+                    Factorial = EF.Functions.Factorial(5),
+                    Gcd = EF.Functions.GreatestCommonDivisor(12, 18),
+                    Lcm = EF.Functions.LeastCommonMultiple(12, 18),
+                    MinimumScale = EF.Functions.NumericMinimumScale(1.2300m),
+                    Scale = EF.Functions.NumericScale(1.2300m),
+                    TrimScale = EF.Functions.NumericTrimScale(1.2300m),
+                    Bucket = EF.Functions.WidthBucket(5d, 0d, 10d, 5),
+                    ThresholdBucket = EF.Functions.WidthBucket(15, thresholds),
+                    NumberText = EF.Functions.FormatValue(1234.5m, "FM9999.0"),
+                    DateText = EF.Functions.FormatValue(
+                        new DateTime(2026, 8, 1, 12, 34, 56, DateTimeKind.Unspecified),
+                        "YYYY-MM-DD"),
+                    IntervalText = EF.Functions.FormatValue(
+                        BlueTuskInterval.Parse("2 hours"),
+                        "HH24:MI"),
+                    Date = EF.Functions.ParseDate("2026-08-01", "YYYY-MM-DD"),
+                    Number = EF.Functions.ParseNumber("1,234.5", "9G999D9"),
+                    Timestamp = EF.Functions.ParseTimestamp(
+                        "2026-08-01 12:34 +00",
+                        "YYYY-MM-DD HH24:MI TZH"),
+                    Unix = EF.Functions.UnixTimestamp(0),
+                })
+                .SingleAsync();
+
+            Assert.Equal("[1:3]", common.Dimensions);
+            Assert.Equal(1, common.DimensionCount);
+            Assert.Equal(2, common.Position);
+            Assert.Equal(2, common.PositionFrom);
+            Assert.Equal([2], common.Positions!);
+            Assert.Equal([1, 3], common.Removed);
+            Assert.Equal([1, 9, 3], common.Replaced);
+            Assert.Equal([1, 2], common.Trimmed);
+            Assert.Equal("1,2,3", common.Joined);
+            Assert.Equal(["BlueTusk", "PostgreSQL", "provider"], common.Split!);
+            Assert.Equal(66, common.Ascii);
+            Assert.Equal("A", common.Character);
+            Assert.Equal(224, common.TextBits);
+            Assert.Equal(24, common.BinaryBits);
+            Assert.Equal(4, common.ValueBits);
+            Assert.Equal(28, common.TextBytes);
+            Assert.Equal(3, common.BinaryBytes);
+            Assert.Equal(1, common.ValueBytes);
+            Assert.Equal("Bluetusk Postgresql Provider", common.InitialCapital);
+            Assert.Equal("Blue", common.Left);
+            Assert.Equal("provider", common.Right);
+            Assert.Equal("0042", common.LeftPad);
+            Assert.Equal("4200", common.RightPad);
+            Assert.Equal("value", common.LeftTrim);
+            Assert.Equal("value", common.RightTrim);
+            Assert.Equal("value", common.Trim);
+            Assert.Equal("900150983cd24fb0d6963f7d28e17f72", common.TextMd5);
+            Assert.Equal("5289df737df57326fcdd22597afb1fac", common.BinaryMd5);
+            Assert.Equal(["public", "table"], common.Identifier!);
+            Assert.Equal("\"Mixed Name\"", common.QuotedIdentifier);
+            Assert.Equal("'Blue''Tusk'", common.QuotedLiteral);
+            Assert.Equal("NULL", common.QuotedNullable);
+            Assert.Equal("ababab", common.Repeated);
+            Assert.Equal("cba", common.ReversedText);
+            Assert.Equal("PostgreSQL", common.Part);
+            Assert.True(common.StartsWith);
+            Assert.Equal("a2x5", common.Translated);
+            Assert.Equal("010203", common.Encoded);
+            Assert.Equal(bytes, common.Decoded);
+            Assert.Equal(2, common.Byte);
+            Assert.Equal([0x01, 0x09, 0x03], common.SetByte);
+            Assert.Equal(0, common.Bit);
+            Assert.Equal([0x81, 0x02, 0x03], common.SetBit);
+            Assert.Equal([0x02], common.TrimmedBytes);
+            Assert.Equal([0x02], common.LeftTrimmedBytes);
+            Assert.Equal([0x02], common.RightTrimmedBytes);
+            Assert.Equal(3, common.CubeRoot);
+            Assert.Equal(180, common.Degrees, precision: 10);
+            Assert.Equal(Math.PI, common.Radians, precision: 10);
+            Assert.Equal(3, common.Division);
+            Assert.Equal(120m, common.Factorial);
+            Assert.Equal(6, common.Gcd);
+            Assert.Equal(36, common.Lcm);
+            Assert.Equal(2, common.MinimumScale);
+            Assert.Equal(2, common.Scale);
+            Assert.Equal(1.23m, common.TrimScale);
+            Assert.Equal(3, common.Bucket);
+            Assert.Equal(2, common.ThresholdBucket);
+            Assert.Equal("1234.5", common.NumberText);
+            Assert.Equal("2026-08-01", common.DateText);
+            Assert.Equal("02:00", common.IntervalText);
+            Assert.Equal(new DateOnly(2026, 8, 1), common.Date);
+            Assert.Equal(1234.5m, common.Number);
+            Assert.Equal(
+                new DateTimeOffset(2026, 8, 1, 12, 34, 0, TimeSpan.Zero),
+                common.Timestamp.ToUniversalTime());
+            Assert.Equal(DateTimeOffset.UnixEpoch, common.Unix.ToUniversalTime());
+
+            if (serverVersion >= 160000)
+            {
+                var randomized = await context.Values
+                    .Select(value => new
+                    {
+                        Shuffled = EF.Functions.ArrayShuffle(value.Numbers),
+                        Sampled = EF.Functions.ArraySample(value.Numbers, 2),
+                    })
+                    .SingleAsync();
+                Assert.Equal([1, 2, 3], randomized.Shuffled.Order());
+                Assert.Equal(2, randomized.Sampled.Length);
+                Assert.All(randomized.Sampled, item => Assert.InRange(item, 1, 3));
+            }
+
+            if (serverVersion >= 180000)
+            {
+                var reversed = await context.Values
+                    .Select(value => new
+                    {
+                        Array = EF.Functions.ArrayReverse(value.Numbers),
+                        Bytes = EF.Functions.BinaryReverse(bytes),
+                    })
+                    .SingleAsync();
+                Assert.Equal([3, 2, 1], reversed.Array);
+                Assert.Equal([0x03, 0x02, 0x01], reversed.Bytes);
+            }
 
             var jsonPath = new BlueTuskJsonPath("$.version");
             var scalar = await context.Values
@@ -586,6 +871,12 @@ public sealed class PostgreSqlFunctionTranslationTests
     {
         await using var command = dataSource.CreateCommand(sql);
         _ = await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task<object?> ExecuteScalarAsync(BlueTuskDataSource dataSource, string sql)
+    {
+        await using var command = dataSource.CreateCommand(sql);
+        return await command.ExecuteScalarAsync();
     }
 
     private static string GetConnectionString()
