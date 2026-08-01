@@ -228,6 +228,30 @@ public static class BlueTuskDbFunctionsExtensions
     public static IQueryable<long> GenerateSeries(this DbFunctions _, long start, long stop, long step)
         => ThrowTranslationOnly<IQueryable<long>>();
 
+    public static IQueryable<decimal> GenerateSeries(this DbFunctions _, decimal start, decimal stop)
+        => ThrowTranslationOnly<IQueryable<decimal>>();
+
+    public static IQueryable<decimal> GenerateSeries(
+        this DbFunctions _,
+        decimal start,
+        decimal stop,
+        decimal step)
+        => ThrowTranslationOnly<IQueryable<decimal>>();
+
+    public static IQueryable<DateTime> GenerateSeries(
+        this DbFunctions _,
+        DateTime start,
+        DateTime stop,
+        TimeSpan step)
+        => ThrowTranslationOnly<IQueryable<DateTime>>();
+
+    public static IQueryable<DateTimeOffset> GenerateSeries(
+        this DbFunctions _,
+        DateTimeOffset start,
+        DateTimeOffset stop,
+        TimeSpan step)
+        => ThrowTranslationOnly<IQueryable<DateTimeOffset>>();
+
     public static T? RangeLower<T>(this DbFunctions _, BlueTuskRange<T> range)
         where T : struct
         => ThrowTranslationOnly<T?>();

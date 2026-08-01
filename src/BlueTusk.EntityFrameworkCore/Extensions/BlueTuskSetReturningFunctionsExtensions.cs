@@ -40,4 +40,72 @@ public static class BlueTuskSetReturningFunctionsExtensions
             stop,
             step);
     }
+
+    public static IQueryable<decimal> GenerateSeries(
+        this DatabaseFacade database,
+        decimal start,
+        decimal stop,
+        decimal step = 1)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        ArgumentOutOfRangeException.ThrowIfZero(step);
+        return database.SqlQueryRaw<decimal>(
+            """
+            SELECT "Value"
+            FROM generate_series({0}::numeric, {1}::numeric, {2}::numeric) AS "series"("Value")
+            """,
+            start,
+            stop,
+            step);
+    }
+
+    public static IQueryable<DateTime> GenerateSeries(
+        this DatabaseFacade database,
+        DateTime start,
+        DateTime stop,
+        TimeSpan step)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        ThrowIfZero(step);
+        return database.SqlQueryRaw<DateTime>(
+            """
+            SELECT "Value"
+            FROM generate_series(
+                {0}::timestamp without time zone,
+                {1}::timestamp without time zone,
+                {2}::interval) AS "series"("Value")
+            """,
+            start,
+            stop,
+            step);
+    }
+
+    public static IQueryable<DateTimeOffset> GenerateSeries(
+        this DatabaseFacade database,
+        DateTimeOffset start,
+        DateTimeOffset stop,
+        TimeSpan step)
+    {
+        ArgumentNullException.ThrowIfNull(database);
+        ThrowIfZero(step);
+        return database.SqlQueryRaw<DateTimeOffset>(
+            """
+            SELECT "Value"
+            FROM generate_series(
+                {0}::timestamp with time zone,
+                {1}::timestamp with time zone,
+                {2}::interval) AS "series"("Value")
+            """,
+            start,
+            stop,
+            step);
+    }
+
+    private static void ThrowIfZero(TimeSpan step)
+    {
+        if (step == TimeSpan.Zero)
+        {
+            throw new ArgumentOutOfRangeException(nameof(step), step, "The series step cannot be zero.");
+        }
+    }
 }

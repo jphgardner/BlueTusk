@@ -120,9 +120,7 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
                 return null;
             }
 
-            arguments[index] = RelationalDependencies.SqlExpressionFactory.ApplyTypeMapping(
-                argument,
-                elementTypeMapping);
+            arguments[index] = argument;
         }
 
         var tableAlias = _queryCompilationContext.SqlAliasManager.GenerateTableAlias("generate_series");

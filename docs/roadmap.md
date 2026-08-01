@@ -268,10 +268,11 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Mapped-array `unnest` roots with ordinality, nullable elements, parameterized filters, and inner/outer lateral composition
     - [x] SQL-generation and PostgreSQL 15–19 live array-expansion acceptance
     - [x] Typed integer and bigint `generate_series` roots with parameterized standalone, correlated lateral, and compiled-query execution
-    - [ ] Numeric/temporal `generate_series`, JSON/recordset functions, multi-argument `unnest`, and user-defined table functions
+    - [x] Typed numeric, timestamp, and timestamp-with-time-zone `generate_series` roots with exact argument mappings
+    - [ ] JSON/recordset functions, multi-argument `unnest`, and user-defined table functions
 - [ ] PostgreSQL-specific query roots and SQL constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
-  - [x] Array predicates, scalar functions, aggregates, lateral element expansion, and integer/bigint series roots
+  - [x] Array predicates, scalar functions, aggregates, lateral element expansion, and typed series roots
   - [ ] Remaining array forms and other PostgreSQL-native query families
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback
