@@ -267,7 +267,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Negative regex, complete range/multirange positional and cross-family predicates, strict network containment, and `tsquery` containment
   - [x] Typed scalar-producing array, range/multirange, JSONB, full-text, network, and bit-string operators
   - [x] Geometric ordering, position, containment, intersection, relationship, distance, closest-point, arithmetic, and transformation operators
-- [ ] PostgreSQL scalar, aggregate, and set-returning function translations
+- [x] PostgreSQL scalar, aggregate, and set-returning function translations
   - [x] Initial array, range/multirange, JSONB, regex, network, and full-text scalar functions
   - [x] Typed date/time construction, extraction, truncation, binning, age, and interval-justification functions
   - [x] PostgreSQL box, path, circle, line-segment, polygon, and point scalar functions
@@ -275,10 +275,11 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Initial array, string, boolean, range-union, and range-intersection aggregates
   - [x] Ordered JSON/JSONB/XML, integer/`bigint` bitwise, and double/numeric population/sample statistical aggregates
   - [x] Aggregate ordering, `DISTINCT`, `FILTER`, typed results, and PostgreSQL 15–19 acceptance
-  - [ ] Remaining scalar functions
+  - [x] Remaining scalar functions
     - [x] Array inspection/search/mutation/string conversion plus PostgreSQL 16 shuffle/sample and PostgreSQL 18 reverse
     - [x] Text, identifier quoting/parsing, bytea encoding/editing, numeric, bucketing, and value-formatting families
-    - [ ] Remaining JSON/JSONPath and full-text overloads
+    - [x] JSONB mutation/pretty/strip, parameterized JSONPath variables, and typed query-array/first/predicate results
+    - [x] Configured text/JSONB vector and query construction, weights, stripping, query trees/rewrites, normalization/cover-density rank, and text/JSONB headlines
     - [x] Ordered JSON/JSONB object aggregates with typed tuple inputs
     - [x] Paired correlation, population/sample covariance, and complete linear-regression aggregate family
     - [x] Ordered-set scalar `mode`, continuous percentile, and discrete percentile with native `WITHIN GROUP`

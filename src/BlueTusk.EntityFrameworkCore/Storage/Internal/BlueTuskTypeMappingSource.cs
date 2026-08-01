@@ -6,7 +6,7 @@ namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
 internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
 {
-    private static readonly RelationalTypeMapping Bool = new BoolTypeMapping("boolean", DbType.Boolean);
+    private static readonly RelationalTypeMapping Bool = new BlueTuskBoolTypeMapping();
     private static readonly RelationalTypeMapping Byte = new ByteTypeMapping("smallint", DbType.Byte);
     private static readonly RelationalTypeMapping Short = new ShortTypeMapping("smallint", DbType.Int16);
     private static readonly RelationalTypeMapping Int = new IntTypeMapping("integer", DbType.Int32);

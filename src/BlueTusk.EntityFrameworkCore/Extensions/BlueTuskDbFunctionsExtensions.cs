@@ -1889,6 +1889,72 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskJsonPath path)
         => ThrowTranslationOnly<string?>();
 
+    public static string? JsonPathQueryFirst(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskJsonPath path,
+        string variablesJsonb,
+        bool silent)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonPathQueryArray(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskJsonPath path,
+        string variablesJsonb,
+        bool silent)
+        => ThrowTranslationOnly<string?>();
+
+    public static bool JsonPathExistsFunction(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskJsonPath path,
+        string variablesJsonb,
+        bool silent)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool JsonPathMatchesFunction(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskJsonPath path,
+        string variablesJsonb,
+        bool silent)
+        => ThrowTranslationOnly<bool>();
+
+    public static string? JsonPretty(this DbFunctions _, string jsonb)
+        => ThrowTranslationOnly<string?>();
+
+    public static string JsonStripNulls(this DbFunctions _, string jsonb)
+        => ThrowTranslationOnly<string>();
+
+    public static string JsonStripNulls(this DbFunctions _, string jsonb, bool stripInArrays)
+        => ThrowTranslationOnly<string>();
+
+    public static string JsonSet(
+        this DbFunctions _,
+        string jsonb,
+        string[] path,
+        string replacementJsonb,
+        bool createIfMissing)
+        => ThrowTranslationOnly<string>();
+
+    public static string JsonSetLax(
+        this DbFunctions _,
+        string jsonb,
+        string[] path,
+        string? replacementJsonb,
+        bool createIfMissing,
+        string nullValueTreatment)
+        => ThrowTranslationOnly<string>();
+
+    public static string JsonInsert(
+        this DbFunctions _,
+        string jsonb,
+        string[] path,
+        string replacementJsonb,
+        bool insertAfter)
+        => ThrowTranslationOnly<string>();
+
     public static string? RegexReplace(
         this DbFunctions _,
         string input,
@@ -1923,8 +1989,33 @@ public static class BlueTuskDbFunctionsExtensions
         string document)
         => ThrowTranslationOnly<BlueTuskTextSearchVector>();
 
+    public static BlueTuskTextSearchVector ToTextSearchVector(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
+        string document)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
+
+    public static BlueTuskTextSearchVector JsonToTextSearchVector(
+        this DbFunctions _,
+        string jsonb,
+        string filterJsonb)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
+
+    public static BlueTuskTextSearchVector JsonToTextSearchVector(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
+        string jsonb,
+        string filterJsonb)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
+
     public static BlueTuskTextSearchQuery ToTextSearchQuery(
         this DbFunctions _,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery ToTextSearchQuery(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
         string query)
         => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
 
@@ -1933,8 +2024,20 @@ public static class BlueTuskDbFunctionsExtensions
         string query)
         => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
 
+    public static BlueTuskTextSearchQuery PlainToTextSearchQuery(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
     public static BlueTuskTextSearchQuery PhraseToTextSearchQuery(
         this DbFunctions _,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery PhraseToTextSearchQuery(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
         string query)
         => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
 
@@ -1942,6 +2045,30 @@ public static class BlueTuskDbFunctionsExtensions
         this DbFunctions _,
         string query)
         => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery WebSearchToTextSearchQuery(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
+        string query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchVector TextSearchSetWeight(
+        this DbFunctions _,
+        BlueTuskTextSearchVector vector,
+        BlueTuskInternalChar weight)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
+
+    public static BlueTuskTextSearchVector TextSearchSetWeight(
+        this DbFunctions _,
+        BlueTuskTextSearchVector vector,
+        BlueTuskInternalChar weight,
+        string[] lexemes)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
+
+    public static BlueTuskTextSearchVector TextSearchStrip(
+        this DbFunctions _,
+        BlueTuskTextSearchVector vector)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
 
     public static int? TextSearchVectorLength(
         this DbFunctions _,
@@ -1953,11 +2080,83 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskTextSearchQuery query)
         => ThrowTranslationOnly<int?>();
 
+    public static string? TextSearchQueryTree(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery query)
+        => ThrowTranslationOnly<string?>();
+
+    public static BlueTuskTextSearchQuery TextSearchRewrite(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery query,
+        BlueTuskTextSearchQuery target,
+        BlueTuskTextSearchQuery substitute)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
     public static float? TextSearchRank(
         this DbFunctions _,
         BlueTuskTextSearchVector vector,
         BlueTuskTextSearchQuery query)
         => ThrowTranslationOnly<float?>();
+
+    public static float? TextSearchRank(
+        this DbFunctions _,
+        BlueTuskTextSearchVector vector,
+        BlueTuskTextSearchQuery query,
+        int normalization)
+        => ThrowTranslationOnly<float?>();
+
+    public static float? TextSearchRank(
+        this DbFunctions _,
+        float[] weights,
+        BlueTuskTextSearchVector vector,
+        BlueTuskTextSearchQuery query,
+        int normalization)
+        => ThrowTranslationOnly<float?>();
+
+    public static float? TextSearchCoverDensityRank(
+        this DbFunctions _,
+        BlueTuskTextSearchVector vector,
+        BlueTuskTextSearchQuery query,
+        int normalization)
+        => ThrowTranslationOnly<float?>();
+
+    public static float? TextSearchCoverDensityRank(
+        this DbFunctions _,
+        float[] weights,
+        BlueTuskTextSearchVector vector,
+        BlueTuskTextSearchQuery query,
+        int normalization)
+        => ThrowTranslationOnly<float?>();
+
+    public static string? TextSearchHeadline(
+        this DbFunctions _,
+        string document,
+        BlueTuskTextSearchQuery query,
+        string options)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? TextSearchHeadline(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
+        string document,
+        BlueTuskTextSearchQuery query,
+        string options)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonTextSearchHeadline(
+        this DbFunctions _,
+        string jsonb,
+        BlueTuskTextSearchQuery query,
+        string options)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonTextSearchHeadline(
+        this DbFunctions _,
+        BlueTuskRegConfig configuration,
+        string jsonb,
+        BlueTuskTextSearchQuery query,
+        string options)
+        => ThrowTranslationOnly<string?>();
 
     public static double DatePart(this DbFunctions _, string field, DateTime value)
         => ThrowTranslationOnly<double>();

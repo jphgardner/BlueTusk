@@ -202,6 +202,21 @@ count; network host/family/mask/network/broadcast; and full-text vector/query
 construction, lexeme/node counts, and rank. PostgreSQL's default text-search
 configuration applies to the current no-configuration overloads.
 
+JSONB methods additionally expose pretty printing, object/array null stripping,
+path-based set/lax-set/insert, and parameterized JSONPath variables for exists,
+match, first-result, and array-result functions. JSON documents, replacements,
+and variable objects retain `jsonb` mappings; `silent` and creation/insertion
+flags use native PostgreSQL Boolean literals or parameters. The
+`strip_in_arrays` overload requires PostgreSQL 18, while the one-argument form
+works across PostgreSQL 15–19.
+
+Full-text overloads accept typed `BlueTuskRegConfig` values for explicit search
+configuration. Text and JSONB vector construction, internal-character weights,
+lexeme-selective weighting, stripping, query-tree inspection, typed rewrites,
+normalization and custom rank weights, cover-density rank, and text/JSONB
+headlines remain composable with `@@`. JSONB headline results keep their JSONB
+mapping rather than silently becoming text.
+
 The extended array surface includes dimensions/rank, first/all positions,
 remove/replace/trim, string conversion, and string-to-array parsing.
 `ArrayShuffle`/`ArraySample` require PostgreSQL 16 and `ArrayReverse` requires
@@ -251,9 +266,10 @@ the exact `BlueTuskBox`, `BlueTuskPath`, `BlueTuskCircle`,
 `BlueTuskLineSegment`, `BlueTuskPolygon`, and `BlueTuskPoint` mappings. Path
 area is nullable because PostgreSQL returns `NULL` for an open path. Generated
 SQL and live typed-parameter/result tests run across PostgreSQL 15–19. Other
-additional JSON/JSONPath and full-text scalar overloads remain planned and are
-not implied by this preview. The function definitions
-follow PostgreSQL's [date/time](https://www.postgresql.org/docs/current/functions-datetime.html)
+The function definitions follow PostgreSQL's
+[date/time](https://www.postgresql.org/docs/current/functions-datetime.html),
+[JSON](https://www.postgresql.org/docs/current/functions-json.html),
+[full-text search](https://www.postgresql.org/docs/current/textsearch-controls.html),
 and [geometric](https://www.postgresql.org/docs/current/functions-geometry.html)
 documentation.
 

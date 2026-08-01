@@ -58,6 +58,10 @@ public sealed class PostgreSqlFunctionTranslationTests
     {
         using var context = CreateContext();
         var path = new BlueTuskJsonPath("$.version");
+        var predicate = new BlueTuskJsonPath("exists($.version ? (@ >= $minimum))");
+        var variables = "{\"minimum\":2}";
+        var propertyPath = new[] { "version" };
+        var arrayPath = new[] { "1" };
 
         var sql = context.Values
             .Select(value => new
@@ -65,6 +69,32 @@ public sealed class PostgreSqlFunctionTranslationTests
                 JsonType = EF.Functions.JsonTypeOf(value.Json),
                 JsonLength = EF.Functions.JsonArrayLength(value.JsonArray),
                 JsonValue = EF.Functions.JsonPathQueryFirst(value.Json, path),
+                JsonValueWithVariables = EF.Functions.JsonPathQueryFirst(
+                    value.Json,
+                    path,
+                    variables,
+                    false),
+                JsonArray = EF.Functions.JsonPathQueryArray(value.Json, path, variables, false),
+                JsonExists = EF.Functions.JsonPathExistsFunction(
+                    value.Json,
+                    path,
+                    variables,
+                    false),
+                JsonMatches = EF.Functions.JsonPathMatchesFunction(
+                    value.Json,
+                    predicate,
+                    variables,
+                    false),
+                JsonPretty = EF.Functions.JsonPretty(value.Json),
+                JsonStripped = EF.Functions.JsonStripNulls(value.Json, true),
+                JsonSet = EF.Functions.JsonSet(value.Json, propertyPath, "4", true),
+                JsonSetLax = EF.Functions.JsonSetLax(
+                    value.Json,
+                    propertyPath,
+                    null,
+                    true,
+                    "delete_key"),
+                JsonInsert = EF.Functions.JsonInsert(value.JsonArray, arrayPath, "4", false),
                 Replaced = EF.Functions.RegexReplace(value.Text, "provider", "driver"),
                 Matches = EF.Functions.RegexCount(value.Text, "[A-Z]"),
                 Host = EF.Functions.NetworkHost(value.Network),
@@ -78,6 +108,16 @@ public sealed class PostgreSqlFunctionTranslationTests
         Assert.Contains("jsonb_typeof(", sql, StringComparison.Ordinal);
         Assert.Contains("jsonb_array_length(", sql, StringComparison.Ordinal);
         Assert.Contains("jsonb_path_query_first(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_path_query_array(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_path_exists(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_path_match(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_pretty(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_strip_nulls(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_set(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_set_lax(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_insert(", sql, StringComparison.Ordinal);
+        Assert.Contains("FALSE", sql, StringComparison.Ordinal);
+        Assert.Contains("TRUE", sql, StringComparison.Ordinal);
         Assert.Contains("regexp_replace(", sql, StringComparison.Ordinal);
         Assert.Contains("regexp_count(", sql, StringComparison.Ordinal);
         Assert.Contains("host(", sql, StringComparison.Ordinal);
@@ -92,6 +132,12 @@ public sealed class PostgreSqlFunctionTranslationTests
     {
         using var context = CreateContext();
         var query = "PostgreSQL provider";
+        var configuration = new BlueTuskRegConfig("pg_catalog.simple");
+        var weight = new BlueTuskInternalChar((byte)'A');
+        var lexemes = new[] { "provider" };
+        var rankWeights = new[] { 0.1f, 0.2f, 0.4f, 1f };
+        var rewriteTarget = BlueTuskTextSearchQuery.Parse("'database'");
+        var rewriteSubstitute = BlueTuskTextSearchQuery.Parse("'postgresql'");
 
         var sql = context.Values
             .Where(value => EF.Functions.FullTextMatches(
@@ -112,6 +158,46 @@ public sealed class PostgreSqlFunctionTranslationTests
                 Rank = EF.Functions.TextSearchRank(
                     EF.Functions.ToTextSearchVector(value.Text),
                     EF.Functions.PlainToTextSearchQuery(query)),
+                ConfigVector = EF.Functions.ToTextSearchVector(configuration, value.Text),
+                JsonVector = EF.Functions.JsonToTextSearchVector(
+                    configuration,
+                    value.Json,
+                    "[\"string\",\"numeric\"]"),
+                ConfigQuery = EF.Functions.ToTextSearchQuery(configuration, "PostgreSQL & provider"),
+                ConfigPlain = EF.Functions.PlainToTextSearchQuery(configuration, query),
+                ConfigPhrase = EF.Functions.PhraseToTextSearchQuery(configuration, query),
+                ConfigWeb = EF.Functions.WebSearchToTextSearchQuery(configuration, query),
+                Weighted = EF.Functions.TextSearchSetWeight(
+                    EF.Functions.ToTextSearchVector(value.Text),
+                    weight,
+                    lexemes),
+                Stripped = EF.Functions.TextSearchStrip(EF.Functions.ToTextSearchVector(value.Text)),
+                QueryTree = EF.Functions.TextSearchQueryTree(
+                    EF.Functions.ToTextSearchQuery("PostgreSQL & provider")),
+                Rewritten = EF.Functions.TextSearchRewrite(
+                    EF.Functions.ToTextSearchQuery("database"),
+                    rewriteTarget,
+                    rewriteSubstitute),
+                NormalizedRank = EF.Functions.TextSearchRank(
+                    rankWeights,
+                    EF.Functions.ToTextSearchVector(value.Text),
+                    EF.Functions.PlainToTextSearchQuery(query),
+                    32),
+                CoverDensityRank = EF.Functions.TextSearchCoverDensityRank(
+                    rankWeights,
+                    EF.Functions.ToTextSearchVector(value.Text),
+                    EF.Functions.PlainToTextSearchQuery(query),
+                    32),
+                Headline = EF.Functions.TextSearchHeadline(
+                    configuration,
+                    value.Text,
+                    EF.Functions.PlainToTextSearchQuery(configuration, query),
+                    "StartSel=<b>,StopSel=</b>"),
+                JsonHeadline = EF.Functions.JsonTextSearchHeadline(
+                    configuration,
+                    value.Json,
+                    EF.Functions.PlainToTextSearchQuery(configuration, "provider"),
+                    "StartSel=<b>,StopSel=</b>"),
             })
             .ToQueryString();
 
@@ -123,6 +209,13 @@ public sealed class PostgreSqlFunctionTranslationTests
         Assert.Contains("length(", sql, StringComparison.Ordinal);
         Assert.Contains("numnode(", sql, StringComparison.Ordinal);
         Assert.Contains("ts_rank(", sql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_to_tsvector(", sql, StringComparison.Ordinal);
+        Assert.Contains("setweight(", sql, StringComparison.Ordinal);
+        Assert.Contains("strip(", sql, StringComparison.Ordinal);
+        Assert.Contains("querytree(", sql, StringComparison.Ordinal);
+        Assert.Contains("ts_rewrite(", sql, StringComparison.Ordinal);
+        Assert.Contains("ts_rank_cd(", sql, StringComparison.Ordinal);
+        Assert.Contains("ts_headline(", sql, StringComparison.Ordinal);
         Assert.Contains(" @@ ", sql, StringComparison.Ordinal);
     }
 
@@ -601,19 +694,58 @@ public sealed class PostgreSqlFunctionTranslationTests
                     {
                         Array = EF.Functions.ArrayReverse(value.Numbers),
                         Bytes = EF.Functions.BinaryReverse(bytes),
+                        Json = EF.Functions.JsonStripNulls(
+                            "{\"a\":null,\"b\":[null,1]}",
+                            true),
                     })
                     .SingleAsync();
                 Assert.Equal([3, 2, 1], reversed.Array);
                 Assert.Equal([0x03, 0x02, 0x01], reversed.Bytes);
+                Assert.Equal("{\"b\": [1]}", reversed.Json);
             }
 
             var jsonPath = new BlueTuskJsonPath("$.version");
+            var jsonPredicate = new BlueTuskJsonPath("exists($.version ? (@ >= $minimum))");
+            var jsonVariables = "{\"minimum\":3}";
+            var propertyPath = new[] { "version" };
+            var arrayPath = new[] { "1" };
             var scalar = await context.Values
                 .Select(value => new
                 {
                     JsonType = EF.Functions.JsonTypeOf(value.Json),
                     JsonLength = EF.Functions.JsonArrayLength(value.JsonArray),
                     JsonValue = EF.Functions.JsonPathQueryFirst(value.Json, jsonPath),
+                    JsonValueWithVariables = EF.Functions.JsonPathQueryFirst(
+                        value.Json,
+                        jsonPath,
+                        jsonVariables,
+                        false),
+                    JsonQueryArray = EF.Functions.JsonPathQueryArray(
+                        value.Json,
+                        jsonPath,
+                        jsonVariables,
+                        false),
+                    JsonExists = EF.Functions.JsonPathExistsFunction(
+                        value.Json,
+                        jsonPath,
+                        jsonVariables,
+                        false),
+                    JsonMatches = EF.Functions.JsonPathMatchesFunction(
+                        value.Json,
+                        jsonPredicate,
+                        jsonVariables,
+                        false),
+                    JsonPretty = EF.Functions.JsonPretty(value.Json),
+                    JsonStripped = EF.Functions.JsonStripNulls(
+                        "{\"a\":null,\"b\":[null,1]}"),
+                    JsonSet = EF.Functions.JsonSet(value.Json, propertyPath, "4", true),
+                    JsonSetLax = EF.Functions.JsonSetLax(
+                        value.Json,
+                        propertyPath,
+                        null,
+                        true,
+                        "delete_key"),
+                    JsonInsert = EF.Functions.JsonInsert(value.JsonArray, arrayPath, "4", false),
                     Replaced = EF.Functions.RegexReplace(value.Text, "PostgreSQL", "database"),
                     Capitals = EF.Functions.RegexCount(value.Text, "[A-Z]"),
                     Host = EF.Functions.NetworkHost(value.Network),
@@ -627,6 +759,15 @@ public sealed class PostgreSqlFunctionTranslationTests
             Assert.Equal("object", scalar.JsonType);
             Assert.Equal(3, scalar.JsonLength);
             Assert.Equal("3", scalar.JsonValue);
+            Assert.Equal("3", scalar.JsonValueWithVariables);
+            Assert.Equal("[3]", scalar.JsonQueryArray);
+            Assert.True(scalar.JsonExists);
+            Assert.True(scalar.JsonMatches);
+            Assert.Contains('\n', scalar.JsonPretty!);
+            Assert.Equal("{\"b\": [null, 1]}", scalar.JsonStripped);
+            Assert.Contains("\"version\": 4", scalar.JsonSet, StringComparison.Ordinal);
+            Assert.DoesNotContain("version", scalar.JsonSetLax, StringComparison.Ordinal);
+            Assert.Equal("[1, 4, 2, 3]", scalar.JsonInsert);
             Assert.Equal("BlueTusk database provider", scalar.Replaced);
             Assert.Equal(6, scalar.Capitals);
             Assert.Equal("10.0.0.42", scalar.Host);
@@ -637,6 +778,12 @@ public sealed class PostgreSqlFunctionTranslationTests
             Assert.Equal("10.0.0.255/24", scalar.Broadcast.ToString());
 
             var search = "PostgreSQL provider";
+            var searchConfiguration = new BlueTuskRegConfig("pg_catalog.simple");
+            var weight = new BlueTuskInternalChar((byte)'A');
+            var weightedLexemes = new[] { "provider" };
+            var rankWeights = new[] { 0.1f, 0.2f, 0.4f, 1f };
+            var rewriteTarget = BlueTuskTextSearchQuery.Parse("'database'");
+            var rewriteSubstitute = BlueTuskTextSearchQuery.Parse("'postgresql'");
             var textSearch = await context.Values
                 .Select(value => new
                 {
@@ -656,6 +803,59 @@ public sealed class PostgreSqlFunctionTranslationTests
                     Rank = EF.Functions.TextSearchRank(
                         EF.Functions.ToTextSearchVector(value.Text),
                         EF.Functions.PlainToTextSearchQuery(search)),
+                    ConfigVector = EF.Functions.ToTextSearchVector(
+                        searchConfiguration,
+                        value.Text),
+                    JsonVector = EF.Functions.JsonToTextSearchVector(
+                        searchConfiguration,
+                        value.Json,
+                        "[\"string\",\"numeric\"]"),
+                    ConfigRawQuery = EF.Functions.ToTextSearchQuery(
+                        searchConfiguration,
+                        "PostgreSQL & provider"),
+                    ConfigPlainQuery = EF.Functions.PlainToTextSearchQuery(
+                        searchConfiguration,
+                        search),
+                    ConfigPhraseQuery = EF.Functions.PhraseToTextSearchQuery(
+                        searchConfiguration,
+                        search),
+                    ConfigWebQuery = EF.Functions.WebSearchToTextSearchQuery(
+                        searchConfiguration,
+                        search),
+                    Weighted = EF.Functions.TextSearchSetWeight(
+                        EF.Functions.ToTextSearchVector(searchConfiguration, value.Text),
+                        weight,
+                        weightedLexemes),
+                    Stripped = EF.Functions.TextSearchStrip(
+                        EF.Functions.ToTextSearchVector(searchConfiguration, value.Text)),
+                    QueryTree = EF.Functions.TextSearchQueryTree(
+                        EF.Functions.ToTextSearchQuery(
+                            searchConfiguration,
+                            "PostgreSQL & provider")),
+                    Rewritten = EF.Functions.TextSearchRewrite(
+                        EF.Functions.ToTextSearchQuery(searchConfiguration, "database"),
+                        rewriteTarget,
+                        rewriteSubstitute),
+                    NormalizedRank = EF.Functions.TextSearchRank(
+                        rankWeights,
+                        EF.Functions.ToTextSearchVector(searchConfiguration, value.Text),
+                        EF.Functions.PlainToTextSearchQuery(searchConfiguration, search),
+                        32),
+                    CoverDensityRank = EF.Functions.TextSearchCoverDensityRank(
+                        rankWeights,
+                        EF.Functions.ToTextSearchVector(searchConfiguration, value.Text),
+                        EF.Functions.PlainToTextSearchQuery(searchConfiguration, search),
+                        32),
+                    Headline = EF.Functions.TextSearchHeadline(
+                        searchConfiguration,
+                        value.Text,
+                        EF.Functions.PlainToTextSearchQuery(searchConfiguration, "provider"),
+                        "StartSel=<b>,StopSel=</b>"),
+                    JsonHeadline = EF.Functions.JsonTextSearchHeadline(
+                        searchConfiguration,
+                        value.Json,
+                        EF.Functions.PlainToTextSearchQuery(searchConfiguration, "provider"),
+                        "StartSel=<b>,StopSel=</b>"),
                 })
                 .SingleAsync();
 
@@ -666,6 +866,20 @@ public sealed class PostgreSqlFunctionTranslationTests
             Assert.True(textSearch.PhraseNodes > 0);
             Assert.True(textSearch.WebNodes > 0);
             Assert.True(textSearch.Rank > 0);
+            Assert.True(textSearch.ConfigVector.Count > 0);
+            Assert.True(textSearch.JsonVector.Count > 0);
+            Assert.True(textSearch.ConfigRawQuery.Root is not null);
+            Assert.True(textSearch.ConfigPlainQuery.Root is not null);
+            Assert.True(textSearch.ConfigPhraseQuery.Root is not null);
+            Assert.True(textSearch.ConfigWebQuery.Root is not null);
+            Assert.Contains("A", textSearch.Weighted.ToString(), StringComparison.Ordinal);
+            Assert.DoesNotContain(":", textSearch.Stripped.ToString(), StringComparison.Ordinal);
+            Assert.Contains("provider", textSearch.QueryTree!, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("postgresql", textSearch.Rewritten.ToString(), StringComparison.OrdinalIgnoreCase);
+            Assert.True(textSearch.NormalizedRank > 0);
+            Assert.True(textSearch.CoverDensityRank > 0);
+            Assert.Contains("<b>provider</b>", textSearch.Headline!, StringComparison.OrdinalIgnoreCase);
+            Assert.Contains("<b>provider</b>", textSearch.JsonHeadline!, StringComparison.OrdinalIgnoreCase);
 
             var timestamp = new DateTime(
                 2026,

@@ -96,6 +96,14 @@ internal sealed class BlueTuskPostgreSqlFunctionTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.JsonTypeOf)] = "jsonb_typeof",
             [nameof(BlueTuskDbFunctionsExtensions.JsonArrayLength)] = "jsonb_array_length",
             [nameof(BlueTuskDbFunctionsExtensions.JsonPathQueryFirst)] = "jsonb_path_query_first",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonPathQueryArray)] = "jsonb_path_query_array",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonPathExistsFunction)] = "jsonb_path_exists",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonPathMatchesFunction)] = "jsonb_path_match",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonPretty)] = "jsonb_pretty",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonStripNulls)] = "jsonb_strip_nulls",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonSet)] = "jsonb_set",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonSetLax)] = "jsonb_set_lax",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonInsert)] = "jsonb_insert",
             [nameof(BlueTuskDbFunctionsExtensions.RegexReplace)] = "regexp_replace",
             [nameof(BlueTuskDbFunctionsExtensions.RegexCount)] = "regexp_count",
             [nameof(BlueTuskDbFunctionsExtensions.NetworkHost)] = "host",
@@ -104,13 +112,21 @@ internal sealed class BlueTuskPostgreSqlFunctionTranslator(
             [nameof(BlueTuskDbFunctionsExtensions.NetworkPart)] = "network",
             [nameof(BlueTuskDbFunctionsExtensions.NetworkBroadcast)] = "broadcast",
             [nameof(BlueTuskDbFunctionsExtensions.ToTextSearchVector)] = "to_tsvector",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonToTextSearchVector)] = "jsonb_to_tsvector",
             [nameof(BlueTuskDbFunctionsExtensions.ToTextSearchQuery)] = "to_tsquery",
             [nameof(BlueTuskDbFunctionsExtensions.PlainToTextSearchQuery)] = "plainto_tsquery",
             [nameof(BlueTuskDbFunctionsExtensions.PhraseToTextSearchQuery)] = "phraseto_tsquery",
             [nameof(BlueTuskDbFunctionsExtensions.WebSearchToTextSearchQuery)] = "websearch_to_tsquery",
             [nameof(BlueTuskDbFunctionsExtensions.TextSearchVectorLength)] = "length",
             [nameof(BlueTuskDbFunctionsExtensions.TextSearchQueryNodeCount)] = "numnode",
+            [nameof(BlueTuskDbFunctionsExtensions.TextSearchQueryTree)] = "querytree",
+            [nameof(BlueTuskDbFunctionsExtensions.TextSearchSetWeight)] = "setweight",
+            [nameof(BlueTuskDbFunctionsExtensions.TextSearchStrip)] = "strip",
+            [nameof(BlueTuskDbFunctionsExtensions.TextSearchRewrite)] = "ts_rewrite",
             [nameof(BlueTuskDbFunctionsExtensions.TextSearchRank)] = "ts_rank",
+            [nameof(BlueTuskDbFunctionsExtensions.TextSearchCoverDensityRank)] = "ts_rank_cd",
+            [nameof(BlueTuskDbFunctionsExtensions.TextSearchHeadline)] = "ts_headline",
+            [nameof(BlueTuskDbFunctionsExtensions.JsonTextSearchHeadline)] = "ts_headline",
             [nameof(BlueTuskDbFunctionsExtensions.DatePart)] = "date_part",
             [nameof(BlueTuskDbFunctionsExtensions.DateTrunc)] = "date_trunc",
             [nameof(BlueTuskDbFunctionsExtensions.DateBin)] = "date_bin",
@@ -151,14 +167,29 @@ internal sealed class BlueTuskPostgreSqlFunctionTranslator(
             return null;
         }
 
-        var functionArguments = arguments
-            .Skip(1)
-            .Select(argument => sqlExpressionFactory.ApplyDefaultTypeMapping(argument)!)
+        var rawArguments = arguments.Skip(1).ToArray();
+        var jsonbMapping = typeMappingSource.FindMapping("jsonb");
+        var functionArguments = rawArguments
+            .Select((argument, index) => UsesJsonbArgument(method.Name, index, rawArguments.Length)
+                ? sqlExpressionFactory.ApplyTypeMapping(argument, jsonbMapping)
+                : sqlExpressionFactory.ApplyDefaultTypeMapping(argument)!)
             .ToArray();
         var resultType = Nullable.GetUnderlyingType(method.ReturnType) ?? method.ReturnType;
         var resultMapping = method.Name switch
         {
             nameof(BlueTuskDbFunctionsExtensions.JsonPathQueryFirst) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonPathQueryArray) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonStripNulls) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonSet) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonSetLax) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonInsert) =>
+                typeMappingSource.FindMapping("jsonb"),
+            nameof(BlueTuskDbFunctionsExtensions.JsonTextSearchHeadline) =>
                 typeMappingSource.FindMapping("jsonb"),
             nameof(BlueTuskDbFunctionsExtensions.NetworkPart) =>
                 typeMappingSource.FindMapping("cidr"),
@@ -173,4 +204,28 @@ internal sealed class BlueTuskPostgreSqlFunctionTranslator(
             resultType,
             resultMapping);
     }
+
+    private static bool UsesJsonbArgument(string methodName, int argumentIndex, int argumentCount)
+        => methodName switch
+        {
+            nameof(BlueTuskDbFunctionsExtensions.JsonTypeOf)
+                or nameof(BlueTuskDbFunctionsExtensions.JsonArrayLength)
+                or nameof(BlueTuskDbFunctionsExtensions.JsonPretty)
+                or nameof(BlueTuskDbFunctionsExtensions.JsonStripNulls) => argumentIndex == 0,
+            nameof(BlueTuskDbFunctionsExtensions.JsonPathQueryFirst) =>
+                argumentIndex == 0 || argumentCount == 4 && argumentIndex == 2,
+            nameof(BlueTuskDbFunctionsExtensions.JsonPathQueryArray)
+                or nameof(BlueTuskDbFunctionsExtensions.JsonPathExistsFunction)
+                or nameof(BlueTuskDbFunctionsExtensions.JsonPathMatchesFunction) =>
+                argumentIndex is 0 or 2,
+            nameof(BlueTuskDbFunctionsExtensions.JsonSet)
+                or nameof(BlueTuskDbFunctionsExtensions.JsonSetLax)
+                or nameof(BlueTuskDbFunctionsExtensions.JsonInsert) =>
+                argumentIndex is 0 or 2,
+            nameof(BlueTuskDbFunctionsExtensions.JsonToTextSearchVector) =>
+                argumentCount == 2 || argumentIndex > 0,
+            nameof(BlueTuskDbFunctionsExtensions.JsonTextSearchHeadline) =>
+                argumentIndex == (argumentCount == 3 ? 0 : 1),
+            _ => false,
+        };
 }
