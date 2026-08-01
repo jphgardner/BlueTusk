@@ -273,7 +273,8 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] JSONB object key/value record roots with JSONB/text value mappings, nullable JSON-null text, and compiled-query execution
     - [x] Typed two-array integer/text `unnest` roots with unequal-length null padding, ordinality, lateral composition, and compiled parameters
     - [x] Schema-qualified, model-registered user-defined table functions with typed keyless rows, parameters, lateral composition, and compiled-query execution
-    - [ ] Arbitrary JSON-to-recordset functions and additional multi-array type/arity combinations
+    - [x] Model-derived JSONB-to-recordset roots with quoted column definitions, exact store types, nullable fields, lateral composition, and compiled-query execution
+    - [ ] Additional multi-array type/arity combinations
 - [ ] PostgreSQL-specific query roots and SQL constructs
 - [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element expansion, typed series/JSONB roots, and initial multi-array expansion

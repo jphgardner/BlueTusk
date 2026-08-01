@@ -1,23 +1,30 @@
 using System.Linq.Expressions;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
-internal sealed class BlueTuskQueryTranslationPreprocessor(
-    QueryTranslationPreprocessorDependencies dependencies,
-    RelationalQueryTranslationPreprocessorDependencies relationalDependencies,
-    QueryCompilationContext queryCompilationContext)
-    : RelationalQueryTranslationPreprocessor(
-        dependencies,
-        relationalDependencies,
-        queryCompilationContext)
+internal sealed class BlueTuskQueryTranslationPreprocessor
+    : RelationalQueryTranslationPreprocessor
 {
+    private readonly IModel _model;
+
+    public BlueTuskQueryTranslationPreprocessor(
+        QueryTranslationPreprocessorDependencies dependencies,
+        RelationalQueryTranslationPreprocessorDependencies relationalDependencies,
+        QueryCompilationContext queryCompilationContext)
+        : base(dependencies, relationalDependencies, queryCompilationContext)
+    {
+        _model = queryCompilationContext.Model;
+    }
+
     protected override Expression ProcessQueryRoots(Expression expression)
-        => new GenerateSeriesQueryRootRewritingExpressionVisitor().Visit(
+        => new GenerateSeriesQueryRootRewritingExpressionVisitor(_model).Visit(
             base.ProcessQueryRoots(expression));
 
-    private sealed class GenerateSeriesQueryRootRewritingExpressionVisitor : ExpressionVisitor
+    private sealed class GenerateSeriesQueryRootRewritingExpressionVisitor(IModel model)
+        : ExpressionVisitor
     {
         protected override Expression VisitMethodCall(MethodCallExpression methodCallExpression)
         {
@@ -56,6 +63,35 @@ internal sealed class BlueTuskQueryTranslationPreprocessor(
                             StoreType: null,
                             IsNullable: true),
                     ]);
+            }
+
+            if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)
+                && methodCallExpression.Method.Name == nameof(BlueTuskDbFunctionsExtensions.JsonToRecordset))
+            {
+                var elementType = methodCallExpression.Method.GetGenericArguments()[0];
+                var entityType = model.FindEntityType(elementType)
+                    ?? throw new InvalidOperationException(
+                        $"The JSON recordset row type '{elementType.Name}' is not part of the EF model. "
+                        + "Register it as a keyless entity before using JsonToRecordset.");
+                if (entityType.FindPrimaryKey() is not null)
+                {
+                    throw new InvalidOperationException(
+                        $"The JSON recordset row type '{elementType.Name}' must be configured as keyless.");
+                }
+
+                if (entityType.BaseType is not null
+                    || entityType.GetDirectlyDerivedTypes().Any()
+                    || entityType.GetNavigations().Any()
+                    || entityType.GetComplexProperties().Any())
+                {
+                    throw new InvalidOperationException(
+                        $"The JSON recordset row type '{elementType.Name}' must be a flat keyless entity "
+                        + "without inheritance, navigations, or complex properties.");
+                }
+
+                return new BlueTuskJsonToRecordsetQueryRootExpression(
+                    entityType,
+                    Visit(methodCallExpression.Arguments[1])!);
             }
 
             if (methodCallExpression.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions)

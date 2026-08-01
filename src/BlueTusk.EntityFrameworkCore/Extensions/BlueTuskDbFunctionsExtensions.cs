@@ -241,6 +241,10 @@ public static class BlueTuskDbFunctionsExtensions
         string?[] second)
         => ThrowTranslationOnly<IQueryable<KeyValuePair<int?, string?>>>();
 
+    public static IQueryable<T> JsonToRecordset<T>(this DbFunctions _, string jsonb)
+        where T : class
+        => ThrowTranslationOnly<IQueryable<T>>();
+
     public static IQueryable<string> JsonPathQuery(
         this DbFunctions _,
         string jsonb,

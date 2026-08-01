@@ -190,6 +190,44 @@ public sealed class PostgreSqlSetReturningFunctionTests
     }
 
     [Fact]
+    public void Json_recordsets_derive_quoted_columns_and_types_from_keyless_model_metadata()
+    {
+        using var context = CreateContext();
+        var json = "[{\"id\":7,\"label\":\"captured\",\"active\":true}]";
+
+        var lateralSql = context.Values
+            .SelectMany(
+                value => EF.Functions.JsonToRecordset<JsonRecordRow>(value.JsonRecords),
+                (value, record) => new
+                {
+                    value.Id,
+                    RecordId = record.Id,
+                    record.Label,
+                    record.Active,
+                })
+            .ToQueryString();
+        var parameterSql = context.Values
+            .SelectMany(
+                _ => EF.Functions.JsonToRecordset<JsonRecordRow>(json),
+                (_, record) => record)
+            .ToQueryString();
+
+        Assert.Contains("JOIN LATERAL", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("jsonb_to_recordset(", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("\"id\" integer", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("\"label\" text", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("\"active\" boolean", lateralSql, StringComparison.Ordinal);
+        Assert.Contains("@json", parameterSql, StringComparison.Ordinal);
+
+        var exception = Assert.Throws<InvalidOperationException>(() => context.Values
+            .SelectMany(
+                value => EF.Functions.JsonToRecordset<SetReturningValue>(value.JsonRecords),
+                (_, record) => record)
+            .ToQueryString());
+        Assert.Contains("must be configured as keyless", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Multi_argument_unnest_translates_typed_nullable_pairs_and_parameters()
     {
         using var context = CreateContext();
@@ -263,32 +301,37 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 "Numbers" integer[] NOT NULL,
                 "Labels" text[] NOT NULL,
                 "JsonArray" jsonb NOT NULL,
-                "JsonObject" jsonb NOT NULL);
+                "JsonObject" jsonb NOT NULL,
+                "JsonRecords" jsonb NOT NULL);
             INSERT INTO "ef_set_returning_values" (
                 "Id",
                 "Numbers",
                 "Labels",
                 "JsonArray",
-                "JsonObject")
+                "JsonObject",
+                "JsonRecords")
             VALUES
                 (
                     1,
                     ARRAY[1, 3],
                     ARRAY['one', NULL, 'extra']::text[],
                     '["one",null,"one"]'::jsonb,
-                    '{"alpha":1,"beta":2}'::jsonb),
+                    '{"alpha":1,"beta":2}'::jsonb,
+                    '[{"id":1,"label":"one","active":true},{"id":2,"label":null}]'::jsonb),
                 (
                     2,
                     ARRAY[2, 4],
                     ARRAY['two', 'four'],
                     '[1,2]'::jsonb,
-                    '{"gamma":3,"nullable":null}'::jsonb),
+                    '{"gamma":3,"nullable":null}'::jsonb,
+                    '[{"id":3,"label":"three","active":false}]'::jsonb),
                 (
                     3,
                     ARRAY[]::integer[],
                     ARRAY[]::text[],
                     '[]'::jsonb,
-                    '{}'::jsonb);
+                    '{}'::jsonb,
+                    '[]'::jsonb);
             CREATE FUNCTION "application"."ef_user_defined_rows"(minimum integer)
             RETURNS TABLE ("Id" integer, "Label" text)
             LANGUAGE SQL
@@ -370,6 +413,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         new BlueTuskJsonPath("$.*")),
                     (_, match) => match)
                 .OrderBy(match => match)
+                .ToListAsync();
+            var jsonRecords = await context.Values
+                .Where(value => value.Id == 1)
+                .SelectMany(
+                    value => EF.Functions.JsonToRecordset<JsonRecordRow>(value.JsonRecords),
+                    (_, record) => record)
+                .OrderBy(record => record.Id)
                 .ToListAsync();
             var zippedArrays = await context.Values
                 .Where(value => value.Id == 1)
@@ -495,6 +545,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
                         _ => EF.Functions.JsonEachText(jsonValue),
                         (_, pair) => pair)
                     .Count());
+            var compiledJsonRecordCount = EF.CompileQuery(
+                (SetReturningContext database, string jsonValue) => database.Values
+                    .Where(value => value.Id == 1)
+                    .SelectMany(
+                        _ => EF.Functions.JsonToRecordset<JsonRecordRow>(jsonValue),
+                        (_, record) => record)
+                    .Count());
             var compiledZippedArrayCount = EF.CompileQuery(
                 (SetReturningContext database, int[] numbers, string?[] labels) => database.Values
                     .Where(value => value.Id == 1)
@@ -557,6 +614,10 @@ public sealed class PostgreSqlSetReturningFunctionTests
                 ],
                 jsonTextPairs);
             Assert.Equal(["1", "2"], jsonPathMatches);
+            Assert.Collection(
+                jsonRecords,
+                record => Assert.Equal((1, "one", true), (record.Id, record.Label, record.Active)),
+                record => Assert.Equal((2, null, null), (record.Id, record.Label, record.Active)));
             Assert.Equal(
                 [
                     new KeyValuePair<int?, string?>(1, "one"),
@@ -612,6 +673,11 @@ public sealed class PostgreSqlSetReturningFunctionTests
             Assert.Equal(
                 2,
                 compiledJsonPairCount(context, "{\"key\":\"value\",\"nullable\":null}"));
+            Assert.Equal(
+                2,
+                compiledJsonRecordCount(
+                    context,
+                    "[{\"id\":10,\"label\":\"ten\"},{\"id\":11,\"active\":true}]"));
             Assert.Equal(
                 3,
                 compiledZippedArrayCount(context, [1, 2], ["one", null, "three"]));
@@ -678,6 +744,13 @@ public sealed class PostgreSqlSetReturningFunctionTests
             value.ToTable("ef_set_returning_values");
             value.Property(item => item.JsonArray).HasColumnType("jsonb");
             value.Property(item => item.JsonObject).HasColumnType("jsonb");
+            value.Property(item => item.JsonRecords).HasColumnType("jsonb");
+
+            var jsonRecord = modelBuilder.Entity<JsonRecordRow>();
+            jsonRecord.HasNoKey();
+            jsonRecord.Property(record => record.Id).HasColumnName("id").HasColumnType("integer");
+            jsonRecord.Property(record => record.Label).HasColumnName("label").HasColumnType("text");
+            jsonRecord.Property(record => record.Active).HasColumnName("active").HasColumnType("boolean");
 
             modelBuilder.Entity<UserDefinedFunctionRow>().HasNoKey();
             modelBuilder
@@ -697,6 +770,15 @@ public sealed class PostgreSqlSetReturningFunctionTests
         public string Label { get; set; } = "";
     }
 
+    private sealed class JsonRecordRow
+    {
+        public int Id { get; set; }
+
+        public string? Label { get; set; }
+
+        public bool? Active { get; set; }
+    }
+
     private sealed class SetReturningValue
     {
         public int Id { get; set; }
@@ -708,5 +790,7 @@ public sealed class PostgreSqlSetReturningFunctionTests
         public string JsonArray { get; set; } = "[]";
 
         public string JsonObject { get; set; } = "{}";
+
+        public string JsonRecords { get; set; } = "[]";
     }
 }

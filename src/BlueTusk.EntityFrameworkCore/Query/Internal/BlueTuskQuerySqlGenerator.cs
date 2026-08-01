@@ -55,6 +55,10 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
                 Sql.Append(
                     Dependencies.SqlGenerationHelper.DelimitIdentifier(
                         function.ColumnNames[index]));
+                if (function.ColumnStoreTypes[index] is { } storeType)
+                {
+                    Sql.Append(" ").Append(storeType);
+                }
             }
 
             if (function.WithOrdinality)

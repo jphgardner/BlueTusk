@@ -1,4 +1,5 @@
 using System.Linq.Expressions;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Query;
@@ -44,6 +45,12 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         if (extensionExpression is BlueTuskRecordSetReturningFunctionQueryRootExpression recordFunction)
         {
             return TranslateRecordSetReturningFunction(recordFunction)
+                ?? base.VisitExtension(extensionExpression);
+        }
+
+        if (extensionExpression is BlueTuskJsonToRecordsetQueryRootExpression jsonRecordset)
+        {
+            return TranslateJsonToRecordset(jsonRecordset)
                 ?? base.VisitExtension(extensionExpression);
         }
 
@@ -314,6 +321,84 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
         }
 
         return arguments;
+    }
+
+    private ShapedQueryExpression? TranslateJsonToRecordset(
+        BlueTuskJsonToRecordsetQueryRootExpression function)
+    {
+        if (TranslateSetReturningArguments([function.Json], ["jsonb"]) is not { } arguments)
+        {
+            return null;
+        }
+
+        var tableName = function.EntityType.GetTableName();
+        if (tableName is null
+            || function.EntityType.Model.GetRelationalModel().FindTable(
+                tableName,
+                function.EntityType.GetSchema()) is not { } table)
+        {
+            return null;
+        }
+
+        var tableAlias = _queryCompilationContext.SqlAliasManager.GenerateTableAlias(
+            "jsonb_to_recordset");
+        var propertyExpressions = new Dictionary<IProperty, ColumnExpression>();
+        var columnNames = new List<string>();
+        var columnStoreTypes = new List<string?>();
+        foreach (var property in function.EntityType.GetPropertiesInHierarchy())
+        {
+            var column = table.FindColumn(property);
+            if (column is null)
+            {
+                return null;
+            }
+
+            var typeMapping = column.StoreTypeMapping;
+            propertyExpressions[property] = new ColumnExpression(
+                column.Name,
+                tableAlias,
+                Nullable.GetUnderlyingType(property.ClrType) ?? property.ClrType,
+                typeMapping,
+                property.IsNullable);
+            columnNames.Add(column.Name);
+            columnStoreTypes.Add(typeMapping.StoreType);
+        }
+
+        if (propertyExpressions.Count == 0)
+        {
+            return null;
+        }
+
+        var tableExpression = new BlueTuskSetReturningFunctionTableExpression(
+            tableAlias,
+            "jsonb_to_recordset",
+            arguments,
+            columnNames,
+            columnStoreTypes,
+            withOrdinality: false);
+        var tableMap = new Dictionary<ITableBase, string> { [table] = tableAlias };
+#pragma warning disable EF1001 // EF relational projections are provider-facing infrastructure.
+        var projection = new StructuralTypeProjectionExpression(
+            function.EntityType,
+            propertyExpressions,
+            tableMap);
+
+        var selectExpression = new SelectExpression(
+            [tableExpression],
+            projection,
+            identifier: [],
+            _queryCompilationContext.SqlAliasManager);
+#pragma warning restore EF1001
+        return new ShapedQueryExpression(
+            selectExpression,
+            new RelationalStructuralTypeShaperExpression(
+                function.EntityType,
+                new ProjectionBindingExpression(
+                    selectExpression,
+                    new ProjectionMember(),
+                    typeof(ValueBuffer)),
+                nullable: false));
+#pragma warning restore EF1001
     }
 
     private static Type? GetElementType(Type sequenceType)
