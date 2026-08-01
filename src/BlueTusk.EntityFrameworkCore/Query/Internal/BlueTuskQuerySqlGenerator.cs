@@ -9,6 +9,20 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 {
     protected override Expression VisitExtension(Expression extensionExpression)
     {
+        if (extensionExpression is BlueTuskUnnestExpression unnest)
+        {
+            Sql.Append("unnest(");
+            Visit(unnest.Array);
+            Sql.Append(") WITH ORDINALITY AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(unnest.Alias))
+                .Append("(")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("value"))
+                .Append(", ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("ordinality"))
+                .Append(")");
+            return unnest;
+        }
+
         if (extensionExpression is BlueTuskAggregateExpression aggregate)
         {
             Sql.Append(aggregate.Name).Append("(");
@@ -65,6 +79,36 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         }
 
         return base.VisitExtension(extensionExpression);
+    }
+
+    protected override Expression VisitCrossApply(CrossApplyExpression crossApplyExpression)
+    {
+        Sql.Append("JOIN LATERAL ");
+        VisitLateralTable(crossApplyExpression.Table);
+        Sql.Append(" ON TRUE");
+        return crossApplyExpression;
+    }
+
+    protected override Expression VisitOuterApply(OuterApplyExpression outerApplyExpression)
+    {
+        Sql.Append("LEFT JOIN LATERAL ");
+        VisitLateralTable(outerApplyExpression.Table);
+        Sql.Append(" ON TRUE");
+        return outerApplyExpression;
+    }
+
+    private void VisitLateralTable(TableExpressionBase tableExpression)
+    {
+        if (tableExpression is TableExpression table)
+        {
+            Sql.Append("(SELECT * FROM ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table.Name, table.Schema))
+                .Append(") AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table.Alias));
+            return;
+        }
+
+        Visit(tableExpression);
     }
 
     protected override void GenerateLimitOffset(SelectExpression selectExpression)

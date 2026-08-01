@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, a `citext` codec and separately packaged EF integration preview plus authoring template and compatibility harness, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, PostgreSQL-native EF mappings plus typed operator, scalar-function, and aggregate-function subsets, and PostgreSQL 19 SQL/PGQ raw SQL, schema discovery/tooling, graph-aware migrations/reverse engineering, and a typed linear-path EF query subset. The measured transport evaluation retains ArrayPool/Span/Memory rather than adding `System.IO.Pipelines` to production packages. Stable extension APIs and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, a `citext` codec and separately packaged EF integration preview plus authoring template and compatibility harness, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, PostgreSQL-native EF mappings plus typed operator, scalar-function, aggregate-function, and lateral array-expansion subsets, and PostgreSQL 19 SQL/PGQ raw SQL, schema discovery/tooling, graph-aware migrations/reverse engineering, and a typed linear-path EF query subset. The measured transport evaluation retains ArrayPool/Span/Memory rather than adding `System.IO.Pipelines` to production packages. Stable extension APIs and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -88,7 +88,7 @@ The current `0.3.0-preview.1` implementation provides:
 - initial `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskDataReader`, and `BlueTuskDataSource` APIs.
 - explicit and automatic prepared statements, `DbBatch`, named parameters, and multi-host pools;
 - EF Core CRUD, transactions, generated values, core LINQ, typed PostgreSQL
-  operator predicates, scalar functions, and initial native aggregates, initial migrations and reverse engineering;
+  operator predicates, scalar functions, initial native aggregates, and lateral array expansion, initial migrations and reverse engineering;
 - PostgreSQL-native EF scalar, array, range, multirange, enum, domain, composite, and record mappings.
 - an immutable data-source feature registry plus independently packaged, live-tested `citext` ADO.NET and EF previews.
 - a packaged extension-authoring template and framework-neutral live compatibility harness.

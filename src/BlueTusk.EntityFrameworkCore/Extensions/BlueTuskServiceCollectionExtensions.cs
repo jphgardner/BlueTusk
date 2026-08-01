@@ -44,6 +44,7 @@ public static class BlueTuskServiceCollectionExtensions
             .TryAdd<IMemberTranslatorProvider, BlueTuskMemberTranslatorProvider>()
             .TryAdd<IRelationalParameterBasedSqlProcessorFactory, BlueTuskParameterBasedSqlProcessorFactory>()
             .TryAdd<IQuerySqlGeneratorFactory, BlueTuskQuerySqlGeneratorFactory>()
+            .TryAdd<IQueryableMethodTranslatingExpressionVisitorFactory, BlueTuskQueryableMethodTranslatingExpressionVisitorFactory>()
             .TryAdd<IUpdateSqlGenerator, BlueTuskUpdateSqlGenerator>()
             .TryAdd<IModificationCommandBatchFactory, BlueTuskModificationCommandBatchFactory>()
             .TryAdd<IRelationalConnection, BlueTuskRelationalConnection>()

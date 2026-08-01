@@ -196,7 +196,38 @@ becomes aggregate `DISTINCT`, and a grouping `Where(...)` becomes native
 `FILTER (WHERE ...)`. Delimiters and filter values remain normal parameters.
 The APIs return nullable results because PostgreSQL returns `NULL` when an
 aggregate has no selected input rows. JSON/statistical/ordered-set aggregates,
-set-returning functions, and lateral query roots remain planned.
+and remaining aggregates remain planned.
+
+## Array expansion and lateral queries
+
+Mapped PostgreSQL array properties can be queried as ordinary primitive
+collections. BlueTusk translates collection filters, projections, `Any`, and
+correlated `SelectMany` through `unnest(...) WITH ORDINALITY`. Correlated inner
+and outer collection selectors use PostgreSQL `JOIN LATERAL` and
+`LEFT JOIN LATERAL`; no SQL Server `APPLY` syntax leaks into generated SQL:
+
+```csharp
+var minimum = 10;
+
+var expanded = await context.Documents
+    .SelectMany(
+        document => document.Scores.Where(score => score >= minimum),
+        (document, score) => new { document.Id, Score = score })
+    .OrderBy(result => result.Id)
+    .ThenBy(result => result.Score)
+    .ToListAsync(cancellationToken);
+```
+
+The array value and filter inputs keep their relational type mappings and
+normal parameterization. Explicit output-column names survive EF alias
+uniquification, ordinality preserves PostgreSQL array order, and nullable array
+elements materialize without being collapsed. For an outer expansion over a
+non-nullable value-type array, project the element to its nullable form before
+`DefaultIfEmpty()` so the absent row remains distinguishable from the CLR
+default value. This preview covers mapped array columns only. `generate_series`,
+JSON set-returning functions, recordset
+functions, multi-argument `unnest`, and general user-defined table functions
+remain planned.
 
 ## Migrations
 
@@ -249,4 +280,4 @@ Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retain
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, and typed array/string/boolean/range aggregates across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER` are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and remaining scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, and database-first C# generation. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, and lateral array expansion across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus `unnest` filtering, ordinality, nullable elements, and inner/outer lateral composition are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.
