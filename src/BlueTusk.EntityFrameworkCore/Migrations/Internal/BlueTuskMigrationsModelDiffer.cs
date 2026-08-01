@@ -42,7 +42,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         BlueTuskRuleModelDiffer.HasDifferences(source, target) ||
         BlueTuskPublicationModelDiffer.HasDifferences(source, target) ||
         BlueTuskSubscriptionModelDiffer.HasDifferences(source, target) ||
-        BlueTuskForeignDataModelDiffer.HasDifferences(source, target);
+        BlueTuskForeignDataModelDiffer.HasDifferences(source, target) ||
+        BlueTuskSchemaProgramModelDiffer.HasDifferences(source, target);
 
     public override IReadOnlyList<MigrationOperation> GetDifferences(
         IRelationalModel? source,
@@ -73,6 +74,8 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         var subscriptionAfter = new List<MigrationOperation>();
         var foreignDataBefore = new List<MigrationOperation>();
         var foreignDataAfter = new List<MigrationOperation>();
+        var schemaProgramBefore = new List<MigrationOperation>();
+        var schemaProgramAfter = new List<MigrationOperation>();
         var before = new List<MigrationOperation>();
         var after = new List<MigrationOperation>();
 
@@ -134,6 +137,11 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             baseOperations,
             foreignDataBefore,
             foreignDataAfter);
+        BlueTuskSchemaProgramModelDiffer.AddDifferences(
+            source,
+            target,
+            schemaProgramBefore,
+            schemaProgramAfter);
         BlueTuskExclusionConstraintModelDiffer.AddDifferences(
             source,
             target,
@@ -207,11 +215,13 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             .Concat(triggerBefore)
             .Concat(viewBefore)
             .Concat(routineBefore)
+            .Concat(schemaProgramBefore)
             .Concat(foreignDataBefore)
             .Concat(before)
             .Concat(relationalOperations)
             .Concat(after)
             .Concat(foreignDataAfter)
+            .Concat(schemaProgramAfter)
             .Concat(routineAfter)
             .Concat(viewAfter)
             .Concat(triggerAfter)

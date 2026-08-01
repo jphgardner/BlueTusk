@@ -9,6 +9,7 @@ using BlueTusk.EntityFrameworkCore.Publications.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
+using BlueTusk.EntityFrameworkCore.SchemaPrograms.Internal;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
 using BlueTusk.EntityFrameworkCore.UserDefinedTypes.Internal;
@@ -556,6 +557,71 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(dropMapping.UserName))
                     .AppendLine(");");
                 break;
+            case CreateBlueTuskOperatorOperation createOperator:
+                GenerateSchemaProgram("CreateBlueTuskOperator",
+                    BlueTuskSchemaProgramMetadata.Serialize(createOperator.Definition), builder);
+                break;
+            case ReplaceBlueTuskOperatorOperation replaceOperator:
+                GenerateSchemaProgram("ReplaceBlueTuskOperator",
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceOperator.OldDefinition),
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceOperator.Definition), builder);
+                break;
+            case DropBlueTuskOperatorOperation dropOperator:
+                GenerateSchemaProgram("DropBlueTuskOperator",
+                    BlueTuskSchemaProgramMetadata.Serialize(dropOperator.Definition), builder);
+                break;
+            case CreateBlueTuskOperatorFamilyOperation createFamily:
+                GenerateSchemaProgram("CreateBlueTuskOperatorFamily",
+                    BlueTuskSchemaProgramMetadata.Serialize(createFamily.Definition), builder);
+                break;
+            case AlterBlueTuskOperatorFamilyOperation alterFamily:
+                GenerateSchemaProgram("AlterBlueTuskOperatorFamily",
+                    BlueTuskSchemaProgramMetadata.Serialize(alterFamily.OldDefinition),
+                    BlueTuskSchemaProgramMetadata.Serialize(alterFamily.Definition), builder);
+                break;
+            case DropBlueTuskOperatorFamilyOperation dropFamily:
+                GenerateSchemaProgram("DropBlueTuskOperatorFamily",
+                    BlueTuskSchemaProgramMetadata.Serialize(dropFamily.Definition), builder);
+                break;
+            case CreateBlueTuskOperatorClassOperation createClass:
+                GenerateSchemaProgram("CreateBlueTuskOperatorClass",
+                    BlueTuskSchemaProgramMetadata.Serialize(createClass.Definition), builder);
+                break;
+            case ReplaceBlueTuskOperatorClassOperation replaceClass:
+                GenerateSchemaProgram("ReplaceBlueTuskOperatorClass",
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceClass.OldDefinition),
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceClass.Definition), builder);
+                break;
+            case DropBlueTuskOperatorClassOperation dropClass:
+                GenerateSchemaProgram("DropBlueTuskOperatorClass",
+                    BlueTuskSchemaProgramMetadata.Serialize(dropClass.Definition), builder);
+                break;
+            case CreateBlueTuskCastOperation createCast:
+                GenerateSchemaProgram("CreateBlueTuskCast",
+                    BlueTuskSchemaProgramMetadata.Serialize(createCast.Definition), builder);
+                break;
+            case ReplaceBlueTuskCastOperation replaceCast:
+                GenerateSchemaProgram("ReplaceBlueTuskCast",
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceCast.OldDefinition),
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceCast.Definition), builder);
+                break;
+            case DropBlueTuskCastOperation dropCast:
+                GenerateSchemaProgram("DropBlueTuskCast",
+                    BlueTuskSchemaProgramMetadata.Serialize(dropCast.Definition), builder);
+                break;
+            case CreateBlueTuskAggregateOperation createAggregate:
+                GenerateSchemaProgram("CreateBlueTuskAggregate",
+                    BlueTuskSchemaProgramMetadata.Serialize(createAggregate.Definition), builder);
+                break;
+            case ReplaceBlueTuskAggregateOperation replaceAggregate:
+                GenerateSchemaProgram("ReplaceBlueTuskAggregate",
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceAggregate.OldDefinition),
+                    BlueTuskSchemaProgramMetadata.Serialize(replaceAggregate.Definition), builder);
+                break;
+            case DropBlueTuskAggregateOperation dropAggregate:
+                GenerateSchemaProgram("DropBlueTuskAggregate",
+                    BlueTuskSchemaProgramMetadata.Serialize(dropAggregate.Definition), builder);
+                break;
             case AlterBlueTuskPublicationOperation alterPublication:
                 builder.Append("migrationBuilder.AlterBlueTuskPublication(")
                     .Append(Dependencies.CSharpHelper.Literal(
@@ -776,6 +842,26 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
     private string Literal(string? value) =>
         value is null ? "null" : Dependencies.CSharpHelper.Literal(value);
+
+    private void GenerateSchemaProgram(string method, string definition, IndentedStringBuilder builder)
+    {
+        builder.Append("migrationBuilder.").Append(method).Append('(')
+            .Append(Dependencies.CSharpHelper.Literal(definition))
+            .AppendLine(");");
+    }
+
+    private void GenerateSchemaProgram(
+        string method,
+        string oldDefinition,
+        string definition,
+        IndentedStringBuilder builder)
+    {
+        builder.Append("migrationBuilder.").Append(method).Append('(')
+            .Append(Dependencies.CSharpHelper.Literal(oldDefinition))
+            .Append(", ")
+            .Append(Dependencies.CSharpHelper.Literal(definition))
+            .AppendLine(");");
+    }
 
     private void GenerateDropType(
         string method,

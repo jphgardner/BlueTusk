@@ -18,6 +18,8 @@ using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.Rules;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
+using BlueTusk.EntityFrameworkCore.SchemaPrograms;
+using BlueTusk.EntityFrameworkCore.SchemaPrograms.Internal;
 using BlueTusk.EntityFrameworkCore.Subscriptions;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers;
@@ -262,6 +264,51 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 break;
             case DropBlueTuskUserMappingOperation dropMapping:
                 Generate(dropMapping, builder);
+                break;
+            case CreateBlueTuskOperatorOperation createOperator:
+                Generate(createOperator, builder);
+                break;
+            case ReplaceBlueTuskOperatorOperation replaceOperator:
+                Generate(replaceOperator, builder);
+                break;
+            case DropBlueTuskOperatorOperation dropOperator:
+                Generate(dropOperator, builder);
+                break;
+            case CreateBlueTuskOperatorFamilyOperation createOperatorFamily:
+                Generate(createOperatorFamily, builder);
+                break;
+            case AlterBlueTuskOperatorFamilyOperation alterOperatorFamily:
+                Generate(alterOperatorFamily, builder);
+                break;
+            case DropBlueTuskOperatorFamilyOperation dropOperatorFamily:
+                Generate(dropOperatorFamily, builder);
+                break;
+            case CreateBlueTuskOperatorClassOperation createOperatorClass:
+                Generate(createOperatorClass, builder);
+                break;
+            case ReplaceBlueTuskOperatorClassOperation replaceOperatorClass:
+                Generate(replaceOperatorClass, builder);
+                break;
+            case DropBlueTuskOperatorClassOperation dropOperatorClass:
+                Generate(dropOperatorClass, builder);
+                break;
+            case CreateBlueTuskCastOperation createCast:
+                Generate(createCast, builder);
+                break;
+            case ReplaceBlueTuskCastOperation replaceCast:
+                Generate(replaceCast, builder);
+                break;
+            case DropBlueTuskCastOperation dropCast:
+                Generate(dropCast, builder);
+                break;
+            case CreateBlueTuskAggregateOperation createAggregate:
+                Generate(createAggregate, builder);
+                break;
+            case ReplaceBlueTuskAggregateOperation replaceAggregate:
+                Generate(replaceAggregate, builder);
+                break;
+            case DropBlueTuskAggregateOperation dropAggregate:
+                Generate(dropAggregate, builder);
                 break;
             case CreateBlueTuskPartitionOperation createPartition:
                 Generate(createPartition, builder);
@@ -3320,6 +3367,633 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         }
 
         return string.Join(", ", values);
+    }
+
+    private void Generate(CreateBlueTuskOperatorOperation operation, MigrationCommandListBuilder builder) =>
+        GenerateCreateOperator(operation.Definition, builder);
+
+    private void Generate(ReplaceBlueTuskOperatorOperation operation, MigrationCommandListBuilder builder)
+    {
+        if (BlueTuskSchemaProgramMetadata.OperatorKey.Create(operation.OldDefinition) !=
+            BlueTuskSchemaProgramMetadata.OperatorKey.Create(operation.Definition))
+        {
+            throw new InvalidOperationException("An operator replacement cannot change its identity.");
+        }
+
+        GenerateDropOperator(operation.OldDefinition, builder);
+        GenerateCreateOperator(operation.Definition, builder);
+    }
+
+    private void Generate(DropBlueTuskOperatorOperation operation, MigrationCommandListBuilder builder) =>
+        GenerateDropOperator(operation.Definition, builder);
+
+    private void GenerateCreateOperator(
+        BlueTuskOperatorDefinition value,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("CREATE OPERATOR ");
+        AppendOperatorName(builder, new BlueTuskOperatorName(definition.Name, definition.Schema), false);
+        builder.Append(" (FUNCTION = ");
+        AppendSchemaProgramName(builder, definition.Function);
+        if (definition.LeftType is not null)
+        {
+            builder.Append(", LEFTARG = ").Append(definition.LeftType);
+        }
+
+        builder.Append(", RIGHTARG = ").Append(definition.RightType);
+        AppendOperatorOption(builder, "COMMUTATOR", definition.Commutator);
+        AppendOperatorOption(builder, "NEGATOR", definition.Negator);
+        AppendNameOption(builder, "RESTRICT", definition.RestrictionFunction);
+        AppendNameOption(builder, "JOIN", definition.JoinFunction);
+        if (definition.SupportsHashJoins)
+        {
+            builder.Append(", HASHES");
+        }
+
+        if (definition.SupportsMergeJoins)
+        {
+            builder.Append(", MERGES");
+        }
+
+        builder.Append(")");
+        EndStatement(builder);
+    }
+
+    private void GenerateDropOperator(
+        BlueTuskOperatorDefinition value,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("DROP OPERATOR ");
+        AppendOperatorName(builder, new BlueTuskOperatorName(definition.Name, definition.Schema), false);
+        builder.Append(" (").Append(definition.LeftType ?? "NONE").Append(", ")
+            .Append(definition.RightType).Append(") RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskOperatorFamilyOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(operation.Definition);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("CREATE OPERATOR FAMILY ");
+        AppendSchemaProgramName(builder, new BlueTuskSchemaProgramName(definition.Name, definition.Schema));
+        builder.Append(" USING ").Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.IndexMethod));
+        EndStatement(builder);
+        AppendAlterOperatorFamilyMembers("ADD", definition, builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskOperatorFamilyOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var oldDefinition = BlueTuskSchemaProgramMetadata.Normalize(operation.OldDefinition);
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(operation.Definition);
+        BlueTuskSchemaProgramMetadata.Validate(oldDefinition);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        if (oldDefinition.Name != definition.Name || oldDefinition.Schema != definition.Schema ||
+            oldDefinition.IndexMethod != definition.IndexMethod)
+        {
+            throw new InvalidOperationException("An operator-family alteration cannot change its identity.");
+        }
+
+        var oldOperators = oldDefinition.Operators.ToDictionary(OperatorMemberKey);
+        var operators = definition.Operators.ToDictionary(OperatorMemberKey);
+        var oldFunctions = oldDefinition.Functions.ToDictionary(OperatorFunctionKey);
+        var functions = definition.Functions.ToDictionary(OperatorFunctionKey);
+        var drops = oldDefinition with
+        {
+            Operators = oldDefinition.Operators.Where(member =>
+                    !operators.TryGetValue(OperatorMemberKey(member), out var current) || current != member)
+                .ToArray(),
+            Functions = oldDefinition.Functions.Where(member =>
+                    !functions.TryGetValue(OperatorFunctionKey(member), out var current) ||
+                    !OperatorFunctionsEqual(current, member))
+                .ToArray(),
+        };
+        var additions = definition with
+        {
+            Operators = definition.Operators.Where(member =>
+                    !oldOperators.TryGetValue(OperatorMemberKey(member), out var previous) || previous != member)
+                .ToArray(),
+            Functions = definition.Functions.Where(member =>
+                    !oldFunctions.TryGetValue(OperatorFunctionKey(member), out var previous) ||
+                    !OperatorFunctionsEqual(previous, member))
+                .ToArray(),
+        };
+        AppendAlterOperatorFamilyMembers("DROP", drops, builder);
+        AppendAlterOperatorFamilyMembers("ADD", additions, builder);
+    }
+
+    private void Generate(
+        DropBlueTuskOperatorFamilyOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(operation.Definition);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("DROP OPERATOR FAMILY ");
+        AppendSchemaProgramName(builder, new BlueTuskSchemaProgramName(definition.Name, definition.Schema));
+        builder.Append(" USING ").Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.IndexMethod))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void AppendAlterOperatorFamilyMembers(
+        string action,
+        BlueTuskOperatorFamilyDefinition definition,
+        MigrationCommandListBuilder builder)
+    {
+        if (definition.Operators.Count == 0 && definition.Functions.Count == 0)
+        {
+            return;
+        }
+
+        builder.Append("ALTER OPERATOR FAMILY ");
+        AppendSchemaProgramName(builder, new BlueTuskSchemaProgramName(definition.Name, definition.Schema));
+        builder.Append(" USING ").Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.IndexMethod))
+            .Append(" ").Append(action).Append(" ");
+        var first = true;
+        foreach (var member in definition.Operators)
+        {
+            AppendListSeparator(builder, ref first);
+            if (action == "ADD")
+            {
+                AppendOperatorMember(builder, member);
+            }
+            else
+            {
+                builder.Append("OPERATOR ").Append(member.StrategyNumber.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture))
+                    .Append(" (").Append(member.LeftType).Append(", ").Append(member.RightType).Append(")");
+            }
+        }
+
+        foreach (var member in definition.Functions)
+        {
+            AppendListSeparator(builder, ref first);
+            if (action == "ADD")
+            {
+                AppendOperatorFunction(builder, member);
+            }
+            else
+            {
+                builder.Append("FUNCTION ").Append(member.SupportNumber.ToString(
+                        System.Globalization.CultureInfo.InvariantCulture))
+                    .Append(" (").Append(member.LeftType).Append(", ").Append(member.RightType).Append(")");
+            }
+        }
+
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        CreateBlueTuskOperatorClassOperation operation,
+        MigrationCommandListBuilder builder) => GenerateCreateOperatorClass(operation.Definition, builder);
+
+    private void Generate(
+        ReplaceBlueTuskOperatorClassOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        if (BlueTuskSchemaProgramMetadata.OperatorClassKey.Create(operation.OldDefinition) !=
+            BlueTuskSchemaProgramMetadata.OperatorClassKey.Create(operation.Definition))
+        {
+            throw new InvalidOperationException("An operator-class replacement cannot change its identity.");
+        }
+
+        GenerateDropOperatorClass(operation.OldDefinition, builder);
+        GenerateCreateOperatorClass(operation.Definition, builder);
+    }
+
+    private void Generate(
+        DropBlueTuskOperatorClassOperation operation,
+        MigrationCommandListBuilder builder) => GenerateDropOperatorClass(operation.Definition, builder);
+
+    private void GenerateCreateOperatorClass(
+        BlueTuskOperatorClassDefinition value,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("CREATE OPERATOR CLASS ");
+        AppendSchemaProgramName(builder, new BlueTuskSchemaProgramName(definition.Name, definition.Schema));
+        if (definition.IsDefault)
+        {
+            builder.Append(" DEFAULT");
+        }
+
+        builder.Append(" FOR TYPE ").Append(definition.DataType)
+            .Append(" USING ").Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.IndexMethod));
+        if (definition.Family is not null)
+        {
+            builder.Append(" FAMILY ");
+            AppendSchemaProgramName(builder, definition.Family);
+        }
+
+        builder.Append(" AS ");
+        var first = true;
+        foreach (var member in definition.Operators)
+        {
+            AppendListSeparator(builder, ref first);
+            AppendOperatorMember(builder, member);
+        }
+
+        foreach (var member in definition.Functions)
+        {
+            AppendListSeparator(builder, ref first);
+            AppendOperatorFunction(builder, member);
+        }
+
+        if (definition.StorageType is not null)
+        {
+            AppendListSeparator(builder, ref first);
+            builder.Append("STORAGE ").Append(definition.StorageType);
+        }
+
+        EndStatement(builder);
+    }
+
+    private void GenerateDropOperatorClass(
+        BlueTuskOperatorClassDefinition value,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("DROP OPERATOR CLASS ");
+        AppendSchemaProgramName(builder, new BlueTuskSchemaProgramName(definition.Name, definition.Schema));
+        builder.Append(" USING ").Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(definition.IndexMethod))
+            .Append(" RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(CreateBlueTuskCastOperation operation, MigrationCommandListBuilder builder) =>
+        GenerateCreateCast(operation.Definition, builder);
+
+    private void Generate(ReplaceBlueTuskCastOperation operation, MigrationCommandListBuilder builder)
+    {
+        if (BlueTuskSchemaProgramMetadata.CastKey.Create(operation.OldDefinition) !=
+            BlueTuskSchemaProgramMetadata.CastKey.Create(operation.Definition))
+        {
+            throw new InvalidOperationException("A cast replacement cannot change its identity.");
+        }
+
+        GenerateDropCast(operation.OldDefinition, builder);
+        GenerateCreateCast(operation.Definition, builder);
+    }
+
+    private void Generate(DropBlueTuskCastOperation operation, MigrationCommandListBuilder builder) =>
+        GenerateDropCast(operation.Definition, builder);
+
+    private void GenerateCreateCast(BlueTuskCastDefinition value, MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("CREATE CAST (").Append(definition.SourceType).Append(" AS ")
+            .Append(definition.TargetType).Append(") ");
+        switch (definition.Method)
+        {
+            case BlueTuskCastMethod.Function:
+                builder.Append("WITH FUNCTION ");
+                AppendSchemaProgramName(builder, definition.Function!.Function);
+                AppendTypeList(builder, definition.Function.ArgumentTypes);
+                break;
+            case BlueTuskCastMethod.Binary:
+                builder.Append("WITHOUT FUNCTION");
+                break;
+            case BlueTuskCastMethod.InOut:
+                builder.Append("WITH INOUT");
+                break;
+            default:
+                throw new InvalidOperationException("Unknown PostgreSQL cast method.");
+        }
+
+        if (definition.Context == BlueTuskCastContext.Assignment)
+        {
+            builder.Append(" AS ASSIGNMENT");
+        }
+        else if (definition.Context == BlueTuskCastContext.Implicit)
+        {
+            builder.Append(" AS IMPLICIT");
+        }
+
+        EndStatement(builder);
+    }
+
+    private void GenerateDropCast(BlueTuskCastDefinition value, MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("DROP CAST (").Append(definition.SourceType).Append(" AS ")
+            .Append(definition.TargetType).Append(") RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void Generate(CreateBlueTuskAggregateOperation operation, MigrationCommandListBuilder builder) =>
+        GenerateCreateAggregate(operation.Definition, false, builder);
+
+    private void Generate(ReplaceBlueTuskAggregateOperation operation, MigrationCommandListBuilder builder)
+    {
+        if (BlueTuskSchemaProgramMetadata.AggregateKey.Create(operation.OldDefinition) !=
+            BlueTuskSchemaProgramMetadata.AggregateKey.Create(operation.Definition))
+        {
+            throw new InvalidOperationException("An aggregate replacement cannot change its identity.");
+        }
+
+        GenerateCreateAggregate(operation.Definition, true, builder);
+    }
+
+    private void Generate(DropBlueTuskAggregateOperation operation, MigrationCommandListBuilder builder) =>
+        GenerateDropAggregate(operation.Definition, builder);
+
+    private void GenerateCreateAggregate(
+        BlueTuskAggregateDefinition value,
+        bool replace,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append(replace ? "CREATE OR REPLACE AGGREGATE " : "CREATE AGGREGATE ");
+        AppendSchemaProgramName(builder, new BlueTuskSchemaProgramName(definition.Name, definition.Schema));
+        builder.Append(" (").Append(string.IsNullOrEmpty(definition.IdentityArgumentsSql)
+            ? "*"
+            : definition.IdentityArgumentsSql).Append(") (");
+        var first = true;
+        AppendAggregateNameOption(builder, ref first, "SFUNC", definition.TransitionFunction);
+        AppendAggregateValueOption(builder, ref first, "STYPE", definition.StateType);
+        AppendAggregateIntegerOption(builder, ref first, "SSPACE", definition.StateSpace);
+        AppendAggregateNameOption(builder, ref first, "FINALFUNC", definition.FinalFunction);
+        AppendAggregateFlag(builder, ref first, "FINALFUNC_EXTRA", definition.FinalFunctionExtra);
+        if (definition.FinalFunction is not null)
+        {
+            AppendAggregateValueOption(builder, ref first, "FINALFUNC_MODIFY",
+                AggregateFinalModifySql(definition.FinalFunctionModify));
+        }
+
+        AppendAggregateNameOption(builder, ref first, "COMBINEFUNC", definition.CombineFunction);
+        AppendAggregateNameOption(builder, ref first, "SERIALFUNC", definition.SerialFunction);
+        AppendAggregateNameOption(builder, ref first, "DESERIALFUNC", definition.DeserialFunction);
+        AppendAggregateLiteralOption(builder, ref first, "INITCOND", definition.InitialCondition);
+        AppendAggregateNameOption(builder, ref first, "MSFUNC", definition.MovingTransitionFunction);
+        AppendAggregateNameOption(builder, ref first, "MINVFUNC", definition.MovingInverseFunction);
+        AppendAggregateValueOption(builder, ref first, "MSTYPE", definition.MovingStateType);
+        AppendAggregateIntegerOption(builder, ref first, "MSSPACE", definition.MovingStateSpace);
+        AppendAggregateNameOption(builder, ref first, "MFINALFUNC", definition.MovingFinalFunction);
+        AppendAggregateFlag(builder, ref first, "MFINALFUNC_EXTRA", definition.MovingFinalFunctionExtra);
+        if (definition.MovingFinalFunction is not null)
+        {
+            AppendAggregateValueOption(builder, ref first, "MFINALFUNC_MODIFY",
+                AggregateFinalModifySql(definition.MovingFinalFunctionModify));
+        }
+
+        AppendAggregateLiteralOption(builder, ref first, "MINITCOND", definition.MovingInitialCondition);
+        if (definition.SortOperator is not null)
+        {
+            AppendAggregateOptionPrefix(builder, ref first, "SORTOP");
+            AppendOperatorName(builder, definition.SortOperator, false);
+        }
+
+        AppendAggregateFlag(builder, ref first, "HYPOTHETICAL",
+            definition.Kind == BlueTuskAggregateKind.HypotheticalSet);
+        AppendAggregateValueOption(builder, ref first, "PARALLEL", definition.ParallelSafety switch
+        {
+            BlueTuskAggregateParallelSafety.Safe => "SAFE",
+            BlueTuskAggregateParallelSafety.Restricted => "RESTRICTED",
+            _ => "UNSAFE",
+        });
+        builder.Append(")");
+        EndStatement(builder);
+    }
+
+    private void GenerateDropAggregate(
+        BlueTuskAggregateDefinition value,
+        MigrationCommandListBuilder builder)
+    {
+        var definition = BlueTuskSchemaProgramMetadata.Normalize(value);
+        BlueTuskSchemaProgramMetadata.Validate(definition);
+        builder.Append("DROP AGGREGATE ");
+        AppendSchemaProgramName(builder, new BlueTuskSchemaProgramName(definition.Name, definition.Schema));
+        builder.Append(" (").Append(string.IsNullOrEmpty(definition.IdentityArgumentsSql)
+            ? "*"
+            : definition.IdentityArgumentsSql).Append(") RESTRICT");
+        EndStatement(builder);
+    }
+
+    private void AppendOperatorMember(
+        MigrationCommandListBuilder builder,
+        BlueTuskOperatorMemberDefinition member)
+    {
+        builder.Append("OPERATOR ").Append(member.StrategyNumber.ToString(
+                System.Globalization.CultureInfo.InvariantCulture)).Append(" ");
+        AppendOperatorName(builder, member.Operator, false);
+        builder.Append(" (").Append(member.LeftType).Append(", ").Append(member.RightType).Append(")");
+        if (member.Purpose == BlueTuskOperatorPurpose.OrderBy)
+        {
+            builder.Append(" FOR ORDER BY ");
+            AppendSchemaProgramName(builder, member.SortFamily!);
+        }
+        else
+        {
+            builder.Append(" FOR SEARCH");
+        }
+    }
+
+    private void AppendOperatorFunction(
+        MigrationCommandListBuilder builder,
+        BlueTuskOperatorFunctionDefinition member)
+    {
+        builder.Append("FUNCTION ").Append(member.SupportNumber.ToString(
+                System.Globalization.CultureInfo.InvariantCulture))
+            .Append(" (").Append(member.LeftType).Append(", ").Append(member.RightType).Append(") ");
+        AppendSchemaProgramName(builder, member.Function);
+        AppendTypeList(builder, member.ArgumentTypes);
+    }
+
+    private static void AppendTypeList(MigrationCommandListBuilder builder, IReadOnlyList<string> types)
+    {
+        builder.Append(" (");
+        for (var index = 0; index < types.Count; index++)
+        {
+            if (index > 0)
+            {
+                builder.Append(", ");
+            }
+
+            builder.Append(types[index]);
+        }
+
+        builder.Append(")");
+    }
+
+    private void AppendSchemaProgramName(MigrationCommandListBuilder builder, BlueTuskSchemaProgramName name) =>
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name.Name, name.Schema));
+
+    private void AppendOperatorName(
+        MigrationCommandListBuilder builder,
+        BlueTuskOperatorName name,
+        bool wrapped)
+    {
+        if (wrapped)
+        {
+            builder.Append("OPERATOR(");
+        }
+
+        if (name.Schema is not null)
+        {
+            builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name.Schema)).Append(".");
+        }
+
+        builder.Append(name.Name);
+        if (wrapped)
+        {
+            builder.Append(")");
+        }
+    }
+
+    private void AppendOperatorOption(
+        MigrationCommandListBuilder builder,
+        string option,
+        BlueTuskOperatorName? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        builder.Append(", ").Append(option).Append(" = ");
+        AppendOperatorName(builder, value, value.Schema is not null);
+    }
+
+    private void AppendNameOption(
+        MigrationCommandListBuilder builder,
+        string option,
+        BlueTuskSchemaProgramName? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        builder.Append(", ").Append(option).Append(" = ");
+        AppendSchemaProgramName(builder, value);
+    }
+
+    private static void AppendListSeparator(MigrationCommandListBuilder builder, ref bool first)
+    {
+        if (!first)
+        {
+            builder.Append(", ");
+        }
+
+        first = false;
+    }
+
+    private static (int Strategy, string LeftType, string RightType) OperatorMemberKey(
+        BlueTuskOperatorMemberDefinition value) => (value.StrategyNumber, value.LeftType, value.RightType);
+
+    private static (int Support, string LeftType, string RightType) OperatorFunctionKey(
+        BlueTuskOperatorFunctionDefinition value) => (value.SupportNumber, value.LeftType, value.RightType);
+
+    private static bool OperatorFunctionsEqual(
+        BlueTuskOperatorFunctionDefinition left,
+        BlueTuskOperatorFunctionDefinition right) =>
+        left.SupportNumber == right.SupportNumber &&
+        left.LeftType == right.LeftType &&
+        left.RightType == right.RightType &&
+        left.Function == right.Function &&
+        left.ArgumentTypes.SequenceEqual(right.ArgumentTypes, StringComparer.Ordinal);
+
+    private static string AggregateFinalModifySql(BlueTuskAggregateFinalFunctionModify value) => value switch
+    {
+        BlueTuskAggregateFinalFunctionModify.Shareable => "SHAREABLE",
+        BlueTuskAggregateFinalFunctionModify.ReadWrite => "READ_WRITE",
+        _ => "READ_ONLY",
+    };
+
+    private static void AppendAggregateOptionPrefix(
+        MigrationCommandListBuilder builder,
+        ref bool first,
+        string option)
+    {
+        AppendListSeparator(builder, ref first);
+        builder.Append(option).Append(" = ");
+    }
+
+    private void AppendAggregateNameOption(
+        MigrationCommandListBuilder builder,
+        ref bool first,
+        string option,
+        BlueTuskSchemaProgramName? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        AppendAggregateOptionPrefix(builder, ref first, option);
+        AppendSchemaProgramName(builder, value);
+    }
+
+    private static void AppendAggregateValueOption(
+        MigrationCommandListBuilder builder,
+        ref bool first,
+        string option,
+        string? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        AppendAggregateOptionPrefix(builder, ref first, option);
+        builder.Append(value);
+    }
+
+    private static void AppendAggregateIntegerOption(
+        MigrationCommandListBuilder builder,
+        ref bool first,
+        string option,
+        int? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        AppendAggregateOptionPrefix(builder, ref first, option);
+        builder.Append(value.Value.ToString(System.Globalization.CultureInfo.InvariantCulture));
+    }
+
+    private static void AppendAggregateLiteralOption(
+        MigrationCommandListBuilder builder,
+        ref bool first,
+        string option,
+        string? value)
+    {
+        if (value is null)
+        {
+            return;
+        }
+
+        AppendAggregateOptionPrefix(builder, ref first, option);
+        AppendStringLiteral(builder, value);
+    }
+
+    private static void AppendAggregateFlag(
+        MigrationCommandListBuilder builder,
+        ref bool first,
+        string option,
+        bool enabled)
+    {
+        if (!enabled)
+        {
+            return;
+        }
+
+        AppendListSeparator(builder, ref first);
+        builder.Append(option);
     }
 
     private void Generate(

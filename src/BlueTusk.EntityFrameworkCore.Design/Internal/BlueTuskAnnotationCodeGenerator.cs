@@ -9,6 +9,7 @@ using BlueTusk.EntityFrameworkCore.Publications.Internal;
 using BlueTusk.EntityFrameworkCore.Routines.Internal;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
+using BlueTusk.EntityFrameworkCore.SchemaPrograms.Internal;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance.Internal;
 using BlueTusk.EntityFrameworkCore.Triggers.Internal;
@@ -101,6 +102,14 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             return new MethodCallCodeFragment(
                 nameof(BlueTuskSubscriptionModelBuilderExtensions.HasBlueTuskSubscriptions),
                 serializedSubscriptions);
+        }
+
+        if (annotation.Name == BlueTuskSchemaProgramMetadata.AnnotationName &&
+            annotation.Value is string serializedSchemaPrograms)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskSchemaProgramModelBuilderExtensions.HasBlueTuskSchemaPrograms),
+                serializedSchemaPrograms);
         }
 
         return base.GenerateFluentApi(model, annotation);

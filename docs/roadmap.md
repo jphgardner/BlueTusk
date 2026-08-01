@@ -379,7 +379,14 @@ This file tracks executable repository status. The product vision is broader; un
   - [ ] Event triggers
   - [x] Subscriptions
   - [x] Foreign-data wrappers, servers, user mappings, and foreign tables
-  - [ ] Operators, operator classes, operator families, casts, and aggregates
+  - [x] Operators, operator classes, operator families, casts, and aggregates
+    - [x] Typed unary/binary operator metadata, implementation/planner functions, commutator/negator links, and hash/merge flags
+    - [x] Access-method-qualified operator families/classes with exact search/order strategies, support-function signatures, storage types, and loose-versus-class-owned members
+    - [x] Function, binary-coercible, and input/output casts with explicit, assignment, and implicit contexts
+    - [x] Ordinary, ordered-set, hypothetical-set, partial, serialised, moving-state, sort-operator, state-space, final-modify, and parallel aggregate metadata
+    - [x] Dependency-ordered create/alter/replace/drop diffs, destructive diagnostics, generated migration C#, snapshots, and default-`RESTRICT` removal
+    - [x] Direct `pg_operator`/`pg_opfamily`/`pg_opclass`/`pg_amop`/`pg_amproc`/`pg_cast`/`pg_aggregate` discovery with extension exclusion and fluent C# scaffolding
+    - [x] PostgreSQL 15–19 lifecycle, precise family-member alteration, catalogue round-tripping, and database-first scaffolding acceptance
   - [ ] Tablespace lifecycle
 - [ ] Idempotent scripts, history-table behaviour, and version-aware DDL
 

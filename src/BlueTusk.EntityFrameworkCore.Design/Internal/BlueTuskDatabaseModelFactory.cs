@@ -24,6 +24,8 @@ using BlueTusk.EntityFrameworkCore.RowLevelSecurity;
 using BlueTusk.EntityFrameworkCore.RowLevelSecurity.Internal;
 using BlueTusk.EntityFrameworkCore.Rules;
 using BlueTusk.EntityFrameworkCore.Rules.Internal;
+using BlueTusk.EntityFrameworkCore.SchemaPrograms;
+using BlueTusk.EntityFrameworkCore.SchemaPrograms.Internal;
 using BlueTusk.EntityFrameworkCore.Subscriptions;
 using BlueTusk.EntityFrameworkCore.Subscriptions.Internal;
 using BlueTusk.EntityFrameworkCore.TableInheritance;
@@ -108,6 +110,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadCollations(connection, model, selection);
         ReadUserDefinedTypes(connection, model, selection);
         ReadRoutines(connection, model, selection);
+        ReadSchemaPrograms(connection, model, selection);
         ReadViews(connection, model, tables, selection);
         ReadPropertyGraphs(connection, model, selection);
         return model;
@@ -2107,6 +2110,579 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         }
     }
 
+    private static void ReadSchemaPrograms(
+        DbConnection connection,
+        DatabaseModel model,
+        Selection selection)
+    {
+        var operators = ReadOperators(connection, selection);
+        var families = ReadOperatorFamilies(connection, selection);
+        var classes = ReadOperatorClasses(connection, selection);
+        ReadOperatorMembers(connection, families, classes);
+        var casts = ReadCasts(connection, selection);
+        var aggregates = ReadAggregates(connection, selection);
+        var definitions = new BlueTuskSchemaProgramDefinitionSet(
+            operators,
+            families.Values.Select(seed => new BlueTuskOperatorFamilyDefinition(
+                seed.Name, seed.Schema, seed.IndexMethod, seed.Operators, seed.Functions)).ToArray(),
+            classes.Values.Select(seed => new BlueTuskOperatorClassDefinition(
+                seed.Name,
+                seed.Schema,
+                seed.IndexMethod,
+                seed.DataType,
+                seed.IsDefault,
+                seed.Family,
+                seed.Operators,
+                seed.Functions,
+                seed.StorageType)).ToArray(),
+            casts,
+            aggregates);
+        if (definitions.Operators.Count > 0 || definitions.OperatorFamilies.Count > 0 ||
+            definitions.OperatorClasses.Count > 0 || definitions.Casts.Count > 0 ||
+            definitions.Aggregates.Count > 0)
+        {
+            model[BlueTuskSchemaProgramMetadata.AnnotationName] =
+                BlueTuskSchemaProgramMetadata.Serialize(definitions);
+        }
+    }
+
+    private static List<BlueTuskOperatorDefinition> ReadOperators(
+        DbConnection connection,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   operator_entry.oprname,
+                   CASE WHEN operator_entry.oprleft = 0 THEN NULL
+                        ELSE pg_catalog.format_type(operator_entry.oprleft, NULL) END,
+                   pg_catalog.format_type(operator_entry.oprright, NULL),
+                   function_namespace.nspname,
+                   function_entry.proname,
+                   commutator_namespace.nspname,
+                   commutator.oprname,
+                   negator_namespace.nspname,
+                   negator.oprname,
+                   restriction_namespace.nspname,
+                   restriction_entry.proname,
+                   join_namespace.nspname,
+                   join_entry.proname,
+                   operator_entry.oprcanhash,
+                   operator_entry.oprcanmerge
+            FROM pg_catalog.pg_operator AS operator_entry
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = operator_entry.oprnamespace
+            JOIN pg_catalog.pg_proc AS function_entry ON function_entry.oid = operator_entry.oprcode
+            JOIN pg_catalog.pg_namespace AS function_namespace
+              ON function_namespace.oid = function_entry.pronamespace
+            LEFT JOIN pg_catalog.pg_operator AS commutator ON commutator.oid = operator_entry.oprcom
+            LEFT JOIN pg_catalog.pg_namespace AS commutator_namespace
+              ON commutator_namespace.oid = commutator.oprnamespace
+            LEFT JOIN pg_catalog.pg_operator AS negator ON negator.oid = operator_entry.oprnegate
+            LEFT JOIN pg_catalog.pg_namespace AS negator_namespace ON negator_namespace.oid = negator.oprnamespace
+            LEFT JOIN pg_catalog.pg_proc AS restriction_entry ON restriction_entry.oid = operator_entry.oprrest
+            LEFT JOIN pg_catalog.pg_namespace AS restriction_namespace
+              ON restriction_namespace.oid = restriction_entry.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS join_entry ON join_entry.oid = operator_entry.oprjoin
+            LEFT JOIN pg_catalog.pg_namespace AS join_namespace ON join_namespace.oid = join_entry.pronamespace
+            WHERE namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_operator'::pg_catalog.regclass
+                    AND dependency.objid = operator_entry.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, operator_entry.oprname, operator_entry.oprleft, operator_entry.oprright
+            """;
+        var definitions = new List<BlueTuskOperatorDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var schema = reader.GetString(0);
+            if (!selection.IncludesSchemaObject(schema))
+            {
+                continue;
+            }
+
+            definitions.Add(new BlueTuskOperatorDefinition(
+                reader.GetString(1),
+                schema,
+                GetNullableString(reader, 2),
+                reader.GetString(3),
+                ReadSchemaProgramName(reader, 4, 5)!,
+                ReadOperatorName(reader, 6, 7),
+                ReadOperatorName(reader, 8, 9),
+                ReadSchemaProgramName(reader, 10, 11),
+                ReadSchemaProgramName(reader, 12, 13),
+                reader.GetBoolean(14),
+                reader.GetBoolean(15)));
+        }
+
+        return definitions;
+    }
+
+    private static Dictionary<long, OperatorFamilySeed> ReadOperatorFamilies(
+        DbConnection connection,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT family.oid::pg_catalog.int8,
+                   namespace.nspname,
+                   family.opfname,
+                   access_method.amname
+            FROM pg_catalog.pg_opfamily AS family
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = family.opfnamespace
+            JOIN pg_catalog.pg_am AS access_method ON access_method.oid = family.opfmethod
+            WHERE namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_opfamily'::pg_catalog.regclass
+                    AND dependency.objid = family.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, family.opfname, access_method.amname
+            """;
+        var families = new Dictionary<long, OperatorFamilySeed>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var schema = reader.GetString(1);
+            if (selection.IncludesSchemaObject(schema))
+            {
+                var oid = reader.GetInt64(0);
+                families.Add(oid, new OperatorFamilySeed(
+                    reader.GetString(2), schema, reader.GetString(3), [], []));
+            }
+        }
+
+        return families;
+    }
+
+    private static Dictionary<long, OperatorClassSeed> ReadOperatorClasses(
+        DbConnection connection,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT operator_class.oid::pg_catalog.int8,
+                   namespace.nspname,
+                   operator_class.opcname,
+                   access_method.amname,
+                   pg_catalog.format_type(operator_class.opcintype, NULL),
+                   operator_class.opcdefault,
+                   family_namespace.nspname,
+                   family.opfname,
+                   CASE WHEN operator_class.opckeytype = 0 THEN NULL
+                        ELSE pg_catalog.format_type(operator_class.opckeytype, NULL) END
+            FROM pg_catalog.pg_opclass AS operator_class
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = operator_class.opcnamespace
+            JOIN pg_catalog.pg_am AS access_method ON access_method.oid = operator_class.opcmethod
+            JOIN pg_catalog.pg_opfamily AS family ON family.oid = operator_class.opcfamily
+            JOIN pg_catalog.pg_namespace AS family_namespace ON family_namespace.oid = family.opfnamespace
+            WHERE namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_opclass'::pg_catalog.regclass
+                    AND dependency.objid = operator_class.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, operator_class.opcname, access_method.amname
+            """;
+        var classes = new Dictionary<long, OperatorClassSeed>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var schema = reader.GetString(1);
+            if (selection.IncludesSchemaObject(schema))
+            {
+                classes.Add(reader.GetInt64(0), new OperatorClassSeed(
+                    reader.GetString(2),
+                    schema,
+                    reader.GetString(3),
+                    reader.GetString(4),
+                    reader.GetBoolean(5),
+                    ReadSchemaProgramName(reader, 6, 7),
+                    GetNullableString(reader, 8),
+                    [],
+                    []));
+            }
+        }
+
+        return classes;
+    }
+
+    private static void ReadOperatorMembers(
+        DbConnection connection,
+        IReadOnlyDictionary<long, OperatorFamilySeed> families,
+        IReadOnlyDictionary<long, OperatorClassSeed> classes)
+    {
+        const string operatorSql = """
+            SELECT member.amopfamily::pg_catalog.int8,
+                   owner.refobjid::pg_catalog.int8,
+                   member.amopstrategy::pg_catalog.int4,
+                   operator_namespace.nspname,
+                   operator_entry.oprname,
+                   pg_catalog.format_type(member.amoplefttype, NULL),
+                   pg_catalog.format_type(member.amoprighttype, NULL),
+                   member.amoppurpose::pg_catalog.text,
+                   sort_namespace.nspname,
+                   sort_family.opfname
+            FROM pg_catalog.pg_amop AS member
+            JOIN pg_catalog.pg_operator AS operator_entry ON operator_entry.oid = member.amopopr
+            JOIN pg_catalog.pg_namespace AS operator_namespace
+              ON operator_namespace.oid = operator_entry.oprnamespace
+            LEFT JOIN pg_catalog.pg_opfamily AS sort_family ON sort_family.oid = member.amopsortfamily
+            LEFT JOIN pg_catalog.pg_namespace AS sort_namespace ON sort_namespace.oid = sort_family.opfnamespace
+            LEFT JOIN LATERAL (
+                SELECT dependency.refobjid
+                FROM pg_catalog.pg_depend AS dependency
+                WHERE dependency.classid = 'pg_catalog.pg_amop'::pg_catalog.regclass
+                  AND dependency.objid = member.oid
+                  AND dependency.refclassid = 'pg_catalog.pg_opclass'::pg_catalog.regclass
+                  AND dependency.deptype = 'i'
+                LIMIT 1) AS owner ON TRUE
+            ORDER BY member.amopfamily, member.amopstrategy, member.amoplefttype, member.amoprighttype
+            """;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = operatorSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var member = new BlueTuskOperatorMemberDefinition(
+                    reader.GetInt32(2),
+                    ReadOperatorName(reader, 3, 4)!,
+                    reader.GetString(5),
+                    reader.GetString(6),
+                    reader.GetString(7) == "o" ? BlueTuskOperatorPurpose.OrderBy : BlueTuskOperatorPurpose.Search,
+                    ReadSchemaProgramName(reader, 8, 9));
+                AddOperatorMember(reader, member, families, classes);
+            }
+        }
+
+        const string functionSql = """
+            SELECT member.amprocfamily::pg_catalog.int8,
+                   owner.refobjid::pg_catalog.int8,
+                   member.amprocnum::pg_catalog.int4,
+                   pg_catalog.format_type(member.amproclefttype, NULL),
+                   pg_catalog.format_type(member.amprocrighttype, NULL),
+                   function_namespace.nspname,
+                   function_entry.proname,
+                   COALESCE((
+                       SELECT pg_catalog.string_agg(
+                           pg_catalog.format_type(argument.type_oid, NULL),
+                           pg_catalog.chr(31) ORDER BY argument.ordinality)
+                       FROM pg_catalog.unnest(function_entry.proargtypes::pg_catalog.oid[])
+                           WITH ORDINALITY AS argument(type_oid, ordinality)), '')
+            FROM pg_catalog.pg_amproc AS member
+            JOIN pg_catalog.pg_proc AS function_entry ON function_entry.oid = member.amproc
+            JOIN pg_catalog.pg_namespace AS function_namespace
+              ON function_namespace.oid = function_entry.pronamespace
+            LEFT JOIN LATERAL (
+                SELECT dependency.refobjid
+                FROM pg_catalog.pg_depend AS dependency
+                WHERE dependency.classid = 'pg_catalog.pg_amproc'::pg_catalog.regclass
+                  AND dependency.objid = member.oid
+                  AND dependency.refclassid = 'pg_catalog.pg_opclass'::pg_catalog.regclass
+                  AND dependency.deptype = 'i'
+                LIMIT 1) AS owner ON TRUE
+            ORDER BY member.amprocfamily, member.amprocnum, member.amproclefttype, member.amprocrighttype
+            """;
+        using (var command = connection.CreateCommand())
+        {
+            command.CommandText = functionSql;
+            using var reader = command.ExecuteReader();
+            while (reader.Read())
+            {
+                var member = new BlueTuskOperatorFunctionDefinition(
+                    reader.GetInt32(2),
+                    reader.GetString(3),
+                    reader.GetString(4),
+                    ReadSchemaProgramName(reader, 5, 6)!,
+                    SplitTypeList(reader.GetString(7)));
+                AddOperatorFunction(reader, member, families, classes);
+            }
+        }
+    }
+
+    private static void AddOperatorMember(
+        DbDataReader reader,
+        BlueTuskOperatorMemberDefinition member,
+        IReadOnlyDictionary<long, OperatorFamilySeed> families,
+        IReadOnlyDictionary<long, OperatorClassSeed> classes)
+    {
+        if (!reader.IsDBNull(1))
+        {
+            if (classes.TryGetValue(reader.GetInt64(1), out var operatorClass))
+            {
+                operatorClass.Operators.Add(member);
+            }
+
+            return;
+        }
+
+        if (families.TryGetValue(reader.GetInt64(0), out var family))
+        {
+            family.Operators.Add(member);
+        }
+    }
+
+    private static void AddOperatorFunction(
+        DbDataReader reader,
+        BlueTuskOperatorFunctionDefinition member,
+        IReadOnlyDictionary<long, OperatorFamilySeed> families,
+        IReadOnlyDictionary<long, OperatorClassSeed> classes)
+    {
+        if (!reader.IsDBNull(1))
+        {
+            if (classes.TryGetValue(reader.GetInt64(1), out var operatorClass))
+            {
+                operatorClass.Functions.Add(member);
+            }
+
+            return;
+        }
+
+        if (families.TryGetValue(reader.GetInt64(0), out var family))
+        {
+            family.Functions.Add(member);
+        }
+    }
+
+    private static List<BlueTuskCastDefinition> ReadCasts(
+        DbConnection connection,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT pg_catalog.format_type(cast_entry.castsource, NULL),
+                   pg_catalog.format_type(cast_entry.casttarget, NULL),
+                   source_namespace.nspname,
+                   target_namespace.nspname,
+                   cast_entry.castmethod::pg_catalog.text,
+                   cast_entry.castcontext::pg_catalog.text,
+                   function_namespace.nspname,
+                   function_entry.proname,
+                   COALESCE((
+                       SELECT pg_catalog.string_agg(
+                           pg_catalog.format_type(argument.type_oid, NULL),
+                           pg_catalog.chr(31) ORDER BY argument.ordinality)
+                       FROM pg_catalog.unnest(function_entry.proargtypes::pg_catalog.oid[])
+                           WITH ORDINALITY AS argument(type_oid, ordinality)), '')
+            FROM pg_catalog.pg_cast AS cast_entry
+            JOIN pg_catalog.pg_type AS source_type ON source_type.oid = cast_entry.castsource
+            JOIN pg_catalog.pg_namespace AS source_namespace ON source_namespace.oid = source_type.typnamespace
+            JOIN pg_catalog.pg_type AS target_type ON target_type.oid = cast_entry.casttarget
+            JOIN pg_catalog.pg_namespace AS target_namespace ON target_namespace.oid = target_type.typnamespace
+            LEFT JOIN pg_catalog.pg_proc AS function_entry ON function_entry.oid = cast_entry.castfunc
+            LEFT JOIN pg_catalog.pg_namespace AS function_namespace
+              ON function_namespace.oid = function_entry.pronamespace
+            WHERE cast_entry.oid >= 16384
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_cast'::pg_catalog.regclass
+                    AND dependency.objid = cast_entry.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY cast_entry.castsource, cast_entry.casttarget
+            """;
+        var definitions = new List<BlueTuskCastDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            if (!selection.IncludesSchemaObject(reader.GetString(2)) &&
+                !selection.IncludesSchemaObject(reader.GetString(3)) &&
+                (reader.IsDBNull(6) || !selection.IncludesSchemaObject(reader.GetString(6))))
+            {
+                continue;
+            }
+
+            var method = reader.GetString(4) switch
+            {
+                "b" => BlueTuskCastMethod.Binary,
+                "i" => BlueTuskCastMethod.InOut,
+                _ => BlueTuskCastMethod.Function,
+            };
+            var functionName = ReadSchemaProgramName(reader, 6, 7);
+            definitions.Add(new BlueTuskCastDefinition(
+                reader.GetString(0),
+                reader.GetString(1),
+                method,
+                functionName is null
+                    ? null
+                    : new BlueTuskCastFunctionDefinition(functionName, SplitTypeList(reader.GetString(8))),
+                reader.GetString(5) switch
+                {
+                    "a" => BlueTuskCastContext.Assignment,
+                    "i" => BlueTuskCastContext.Implicit,
+                    _ => BlueTuskCastContext.Explicit,
+                }));
+        }
+
+        return definitions;
+    }
+
+    private static List<BlueTuskAggregateDefinition> ReadAggregates(
+        DbConnection connection,
+        Selection selection)
+    {
+        const string sql = """
+            SELECT namespace.nspname,
+                   aggregate_proc.proname,
+                   pg_catalog.pg_get_function_identity_arguments(aggregate_proc.oid),
+                   aggregate_entry.aggkind::pg_catalog.text,
+                   transition_namespace.nspname,
+                   transition_proc.proname,
+                   pg_catalog.format_type(aggregate_entry.aggtranstype, NULL),
+                   NULLIF(aggregate_entry.aggtransspace, 0),
+                   final_namespace.nspname,
+                   final_proc.proname,
+                   aggregate_entry.aggfinalextra,
+                   aggregate_entry.aggfinalmodify::pg_catalog.text,
+                   combine_namespace.nspname,
+                   combine_proc.proname,
+                   serial_namespace.nspname,
+                   serial_proc.proname,
+                   deserial_namespace.nspname,
+                   deserial_proc.proname,
+                   aggregate_entry.agginitval,
+                   moving_transition_namespace.nspname,
+                   moving_transition_proc.proname,
+                   moving_inverse_namespace.nspname,
+                   moving_inverse_proc.proname,
+                   CASE WHEN aggregate_entry.aggmtranstype = 0 THEN NULL
+                        ELSE pg_catalog.format_type(aggregate_entry.aggmtranstype, NULL) END,
+                   NULLIF(aggregate_entry.aggmtransspace, 0),
+                   moving_final_namespace.nspname,
+                   moving_final_proc.proname,
+                   aggregate_entry.aggmfinalextra,
+                   aggregate_entry.aggmfinalmodify::pg_catalog.text,
+                   aggregate_entry.aggminitval,
+                   sort_namespace.nspname,
+                   sort_operator.oprname,
+                   aggregate_proc.proparallel::pg_catalog.text
+            FROM pg_catalog.pg_aggregate AS aggregate_entry
+            JOIN pg_catalog.pg_proc AS aggregate_proc ON aggregate_proc.oid = aggregate_entry.aggfnoid
+            JOIN pg_catalog.pg_namespace AS namespace ON namespace.oid = aggregate_proc.pronamespace
+            JOIN pg_catalog.pg_proc AS transition_proc ON transition_proc.oid = aggregate_entry.aggtransfn
+            JOIN pg_catalog.pg_namespace AS transition_namespace
+              ON transition_namespace.oid = transition_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS final_proc ON final_proc.oid = aggregate_entry.aggfinalfn
+            LEFT JOIN pg_catalog.pg_namespace AS final_namespace ON final_namespace.oid = final_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS combine_proc ON combine_proc.oid = aggregate_entry.aggcombinefn
+            LEFT JOIN pg_catalog.pg_namespace AS combine_namespace ON combine_namespace.oid = combine_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS serial_proc ON serial_proc.oid = aggregate_entry.aggserialfn
+            LEFT JOIN pg_catalog.pg_namespace AS serial_namespace ON serial_namespace.oid = serial_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS deserial_proc ON deserial_proc.oid = aggregate_entry.aggdeserialfn
+            LEFT JOIN pg_catalog.pg_namespace AS deserial_namespace ON deserial_namespace.oid = deserial_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS moving_transition_proc
+              ON moving_transition_proc.oid = aggregate_entry.aggmtransfn
+            LEFT JOIN pg_catalog.pg_namespace AS moving_transition_namespace
+              ON moving_transition_namespace.oid = moving_transition_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS moving_inverse_proc
+              ON moving_inverse_proc.oid = aggregate_entry.aggminvtransfn
+            LEFT JOIN pg_catalog.pg_namespace AS moving_inverse_namespace
+              ON moving_inverse_namespace.oid = moving_inverse_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_proc AS moving_final_proc ON moving_final_proc.oid = aggregate_entry.aggmfinalfn
+            LEFT JOIN pg_catalog.pg_namespace AS moving_final_namespace
+              ON moving_final_namespace.oid = moving_final_proc.pronamespace
+            LEFT JOIN pg_catalog.pg_operator AS sort_operator ON sort_operator.oid = aggregate_entry.aggsortop
+            LEFT JOIN pg_catalog.pg_namespace AS sort_namespace ON sort_namespace.oid = sort_operator.oprnamespace
+            WHERE namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND namespace.nspname !~ '^pg_toast'
+              AND NOT EXISTS (
+                  SELECT 1
+                  FROM pg_catalog.pg_depend AS dependency
+                  WHERE dependency.classid = 'pg_catalog.pg_proc'::pg_catalog.regclass
+                    AND dependency.objid = aggregate_proc.oid
+                    AND dependency.deptype = 'e')
+            ORDER BY namespace.nspname, aggregate_proc.proname,
+                     pg_catalog.pg_get_function_identity_arguments(aggregate_proc.oid)
+            """;
+        var definitions = new List<BlueTuskAggregateDefinition>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var schema = reader.GetString(0);
+            if (!selection.IncludesSchemaObject(schema))
+            {
+                continue;
+            }
+
+            definitions.Add(new BlueTuskAggregateDefinition(
+                reader.GetString(1),
+                schema,
+                reader.GetString(2),
+                reader.GetString(3) switch
+                {
+                    "o" => BlueTuskAggregateKind.OrderedSet,
+                    "h" => BlueTuskAggregateKind.HypotheticalSet,
+                    _ => BlueTuskAggregateKind.Ordinary,
+                },
+                ReadSchemaProgramName(reader, 4, 5)!,
+                reader.GetString(6),
+                reader.IsDBNull(7) ? null : reader.GetInt32(7),
+                ReadSchemaProgramName(reader, 8, 9),
+                reader.GetBoolean(10),
+                ParseAggregateFinalModify(reader.GetString(11)),
+                ReadSchemaProgramName(reader, 12, 13),
+                ReadSchemaProgramName(reader, 14, 15),
+                ReadSchemaProgramName(reader, 16, 17),
+                GetNullableString(reader, 18),
+                ReadSchemaProgramName(reader, 19, 20),
+                ReadSchemaProgramName(reader, 21, 22),
+                GetNullableString(reader, 23),
+                reader.IsDBNull(24) ? null : reader.GetInt32(24),
+                ReadSchemaProgramName(reader, 25, 26),
+                reader.GetBoolean(27),
+                ParseAggregateFinalModify(reader.GetString(28)),
+                GetNullableString(reader, 29),
+                ReadOperatorName(reader, 30, 31),
+                reader.GetString(32) switch
+                {
+                    "s" => BlueTuskAggregateParallelSafety.Safe,
+                    "r" => BlueTuskAggregateParallelSafety.Restricted,
+                    _ => BlueTuskAggregateParallelSafety.Unsafe,
+                }));
+        }
+
+        return definitions;
+    }
+
+    private static BlueTuskAggregateFinalFunctionModify ParseAggregateFinalModify(string value) => value switch
+    {
+        "s" => BlueTuskAggregateFinalFunctionModify.Shareable,
+        "w" => BlueTuskAggregateFinalFunctionModify.ReadWrite,
+        _ => BlueTuskAggregateFinalFunctionModify.ReadOnly,
+    };
+
+    private static BlueTuskSchemaProgramName? ReadSchemaProgramName(
+        DbDataReader reader,
+        int schemaOrdinal,
+        int nameOrdinal) => reader.IsDBNull(nameOrdinal)
+        ? null
+        : new BlueTuskSchemaProgramName(reader.GetString(nameOrdinal), reader.GetString(schemaOrdinal));
+
+    private static BlueTuskOperatorName? ReadOperatorName(
+        DbDataReader reader,
+        int schemaOrdinal,
+        int nameOrdinal) => reader.IsDBNull(nameOrdinal)
+        ? null
+        : new BlueTuskOperatorName(reader.GetString(nameOrdinal), reader.GetString(schemaOrdinal));
+
+    private static string[] SplitTypeList(string value) => string.IsNullOrEmpty(value)
+        ? []
+        : value.Split((char)31, StringSplitOptions.None);
+
     private static void ReadViews(
         DbConnection connection,
         DatabaseModel model,
@@ -2382,6 +2958,24 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         string ServerName,
         IReadOnlyList<BlueTuskForeignOptionDefinition> Options,
         List<BlueTuskForeignColumnDefinition> Columns);
+
+    private sealed record OperatorFamilySeed(
+        string Name,
+        string Schema,
+        string IndexMethod,
+        List<BlueTuskOperatorMemberDefinition> Operators,
+        List<BlueTuskOperatorFunctionDefinition> Functions);
+
+    private sealed record OperatorClassSeed(
+        string Name,
+        string Schema,
+        string IndexMethod,
+        string DataType,
+        bool IsDefault,
+        BlueTuskSchemaProgramName? Family,
+        string? StorageType,
+        List<BlueTuskOperatorMemberDefinition> Operators,
+        List<BlueTuskOperatorFunctionDefinition> Functions);
 
     private sealed class Selection
     {
