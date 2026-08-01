@@ -1,11 +1,65 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.Data.Schema;
 using Xunit.Sdk;
 
 namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskSqlPgqIntegrationTests
 {
+    [Fact]
+    public async Task Data_source_inspector_discovers_persistent_graphs_and_guards_older_servers()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        var capabilities = Assert.IsType<BlueTuskServerCapabilities>(connection.ServerCapabilities);
+        var inspector = new BlueTuskPropertyGraphSchemaInspector(dataSource);
+        if (!capabilities.SupportsSqlPgq)
+        {
+            Assert.Empty(await inspector.InspectAsync(cancellationToken: CancellationToken.None));
+            Assert.Empty(inspector.Inspect());
+            return;
+        }
+
+        var schema = $"bluetusk_pgq_{Guid.NewGuid():N}";
+        await ExecuteAsync(
+            connection,
+            $"""
+            CREATE SCHEMA {schema};
+            CREATE TABLE {schema}.people (id int4 PRIMARY KEY, name text NOT NULL);
+            CREATE TABLE {schema}.knows (
+                id int4 PRIMARY KEY,
+                source_id int4 NOT NULL REFERENCES {schema}.people(id),
+                destination_id int4 NOT NULL REFERENCES {schema}.people(id));
+            CREATE PROPERTY GRAPH {schema}.social
+                VERTEX TABLES ({schema}.people LABEL person)
+                EDGE TABLES (
+                    {schema}.knows
+                        SOURCE KEY (source_id) REFERENCES people (id)
+                        DESTINATION KEY (destination_id) REFERENCES people (id)
+                        LABEL knows)
+            """);
+
+        try
+        {
+            var options = new BlueTuskPropertyGraphInspectionOptions
+            {
+                Catalog = "bluetusk_tests",
+                Schema = schema,
+                Name = "social",
+            };
+            var graph = Assert.Single(
+                await inspector.InspectAsync(options, CancellationToken.None));
+            Assert.Equal(schema, graph.Name.Schema);
+            Assert.Equal(2, graph.ElementTables.Count);
+            Assert.Equal(2, Assert.Single(inspector.Inspect(options)).ElementTables.Count);
+        }
+        finally
+        {
+            await ExecuteAsync(connection, $"DROP SCHEMA {schema} CASCADE");
+        }
+    }
+
     [Fact]
     public async Task PostgreSQL_19_property_graphs_cover_DDL_metadata_preparation_and_batches()
     {
@@ -16,6 +70,8 @@ public sealed class BlueTuskSqlPgqIntegrationTests
         if (capabilities.ServerVersion.Major < 19)
         {
             Assert.False(capabilities.SupportsSqlPgq);
+            var unavailableInspector = new BlueTuskPropertyGraphSchemaInspector(connection);
+            Assert.Empty(await unavailableInspector.InspectAsync(cancellationToken: CancellationToken.None));
             return;
         }
 
@@ -53,6 +109,65 @@ public sealed class BlueTuskSqlPgqIntegrationTests
                                 REFERENCES bluetusk_graph_people (id)
                             LABEL knows)
                 """);
+
+            var inspector = new BlueTuskPropertyGraphSchemaInspector(connection);
+            var graphs = await inspector.InspectAsync(
+                new BlueTuskPropertyGraphInspectionOptions
+                {
+                    Name = "bluetusk_graph",
+                },
+                CancellationToken.None);
+            var graph = Assert.Single(graphs);
+            Assert.Equal("bluetusk_tests", graph.Name.Catalog);
+            Assert.StartsWith("pg_temp_", graph.Name.Schema, StringComparison.Ordinal);
+            Assert.Equal("bluetusk_graph", graph.Name.Name);
+
+            var people = Assert.Single(
+                graph.ElementTables,
+                element => element.Alias == "bluetusk_graph_people");
+            Assert.Equal(BlueTuskPropertyGraphElementKind.Vertex, people.Kind);
+            Assert.Equal("bluetusk_graph_people", people.Table.Name);
+            Assert.Null(people.Definition);
+            Assert.Equal("id", Assert.Single(people.KeyColumns).Name);
+            Assert.Equal(["person"], people.Labels);
+            Assert.Equal(["id", "name"], people.Properties.Select(property => property.Name));
+            Assert.Empty(people.Endpoints);
+
+            var knows = Assert.Single(
+                graph.ElementTables,
+                element => element.Alias == "bluetusk_graph_knows");
+            Assert.Equal(BlueTuskPropertyGraphElementKind.Edge, knows.Kind);
+            Assert.Equal(["knows"], knows.Labels);
+            Assert.Equal(2, knows.Endpoints.Count);
+            var source = Assert.Single(
+                knows.Endpoints,
+                endpoint => endpoint.End == BlueTuskPropertyGraphEdgeEnd.Source);
+            Assert.Equal("bluetusk_graph_people", source.VertexTableAlias);
+            var sourceMapping = Assert.Single(source.Columns);
+            Assert.Equal("source_id", sourceMapping.EdgeTableColumn);
+            Assert.Equal("id", sourceMapping.VertexTableColumn);
+            var destination = Assert.Single(
+                knows.Endpoints,
+                endpoint => endpoint.End == BlueTuskPropertyGraphEdgeEnd.Destination);
+            Assert.Equal("destination_id", Assert.Single(destination.Columns).EdgeTableColumn);
+
+            var personLabel = Assert.Single(graph.Labels, label => label.Name == "person");
+            Assert.Equal(["id", "name"], personLabel.Properties);
+            var nameType = Assert.Single(
+                graph.PropertyDataTypes,
+                property => property.PropertyName == "name");
+            Assert.Equal("text", nameType.DataType);
+            Assert.Equal("pg_catalog", nameType.UserDefinedTypeSchema);
+            Assert.Equal("text", nameType.UserDefinedTypeName);
+            Assert.Equal("name", nameType.DtdIdentifier);
+
+            Assert.Empty(
+                inspector.Inspect(
+                    new BlueTuskPropertyGraphInspectionOptions
+                    {
+                        Schema = graph.Name.Schema,
+                        Name = "not_this_graph",
+                    }));
 
             await using (var query = new BlueTuskCommand(
                              """

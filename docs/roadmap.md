@@ -274,8 +274,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Parameters, metadata, preparation, batches, cancellation, pooling, and mixed relational/graph coverage
   - [x] PostgreSQL 15–18 regression gate remains green
 - [ ] Phase B: property-graph metadata and schema
-  - [ ] Graph, vertex, edge, key, label, and property model metadata
-  - [ ] PostgreSQL 19 `information_schema`/documented-catalogue discovery
+  - [x] Graph, vertex, edge, key, label, and property model metadata
+  - [x] PostgreSQL 19 `information_schema`/documented-catalogue discovery
   - [ ] Capability-guarded migrations and reverse engineering
   - [ ] Correct graph, label, property, and table identifier quoting
 - [ ] Phase C: EF query support
@@ -284,10 +284,10 @@ This file tracks executable repository status. The product vision is broader; un
   - [ ] Relational/graph composition, projections, filters, aliases, and materialisation
   - [ ] Explicit unsupported-construct diagnostics with no unsafe string fallback
   - [ ] SQL-generation unit tests and live PostgreSQL 19 acceptance tests
-- [ ] Phase D: sample and tooling
+- [x] Phase D: sample and tooling
   - [x] Executable PostgreSQL 19 graph sample replaces the placeholder
-  - [ ] Schema tooling displays property graphs
-  - [ ] Supported SQL/PGQ subset and raw-SQL-only remainder documented
+  - [x] Schema tooling displays property graphs
+  - [x] Supported SQL/PGQ subset and raw-SQL-only remainder documented
 
 ## Extension ecosystem (Milestone 8, pre-1.0)
 

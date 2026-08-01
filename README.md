@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, a `citext` extension preview plus authoring template and compatibility harness, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, the first PostgreSQL-specific EF mappings, and raw-SQL PostgreSQL 19 SQL/PGQ acceptance. The measured transport evaluation retains ArrayPool/Span/Memory rather than adding `System.IO.Pipelines` to production packages. Stable extension APIs, typed graph metadata/EF translation, and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, a `citext` extension preview plus authoring template and compatibility harness, replication preview APIs, EF Core CRUD, initial migrations/scaffolding, the first PostgreSQL-specific EF mappings, raw-SQL PostgreSQL 19 SQL/PGQ acceptance, and typed property-graph schema discovery/tooling. The measured transport evaluation retains ArrayPool/Span/Memory rather than adding `System.IO.Pipelines` to production packages. Stable extension APIs, graph-aware EF migrations/query translation, and the full production gate remain planned. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
 
 ## Build
 
@@ -90,7 +90,7 @@ The current `0.3.0-preview.1` implementation provides:
 - PostgreSQL-native EF scalar, array, range, multirange, enum, domain, composite, and record mappings.
 - an immutable data-source feature registry and independently packaged, live-tested `citext` codec preview.
 - a packaged extension-authoring template and framework-neutral live compatibility harness.
-- catalogue-probed PostgreSQL 19 SQL/PGQ capability detection and live raw-SQL property-graph coverage.
+- catalogue-probed PostgreSQL 19 SQL/PGQ capability detection, live raw-SQL property-graph coverage, typed information-schema discovery, and text/JSON schema tooling.
 - a benchmark-backed decision to retain the genuine sync/async ArrayPool/Span/Memory transport.
 
 Applications should build one long-lived data source per distinct configuration. It owns pooling, runtime codecs, and the PostgreSQL type catalogue:
