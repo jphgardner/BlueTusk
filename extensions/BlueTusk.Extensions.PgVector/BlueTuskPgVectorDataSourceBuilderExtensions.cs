@@ -4,7 +4,7 @@ namespace BlueTusk.Extensions.PgVector;
 
 public static class BlueTuskPgVectorDataSourceBuilderExtensions
 {
-    /// <summary>Adds PostgreSQL pgvector dense-vector support to a data source.</summary>
+    /// <summary>Adds PostgreSQL pgvector dense, half-precision, and sparse-vector support.</summary>
     public static BlueTuskDataSourceBuilder UsePgVector(
         this BlueTuskDataSourceBuilder builder,
         string schema = "public")

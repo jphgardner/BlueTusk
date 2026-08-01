@@ -10,7 +10,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>BlueTusk.Extensions.PgVector</PackageId>
-    <Description>Optional PostgreSQL pgvector codec and data-source integration for BlueTusk.</Description>
+    <Description>Optional PostgreSQL pgvector dense, half-precision, sparse, and bit-distance integration for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;pgvector;vector</PackageTags>
   </PropertyGroup>
 

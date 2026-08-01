@@ -122,9 +122,9 @@ commitment.
 
 ## pgvector preview
 
-`BlueTusk.Extensions.PgVector` provides the first executable pgvector slice.
-Install the extension before building the data source, then register the
-schema-local `vector` type:
+`BlueTusk.Extensions.PgVector` provides executable support for pgvector's
+`vector`, `halfvec`, and `sparsevec` types. Install the extension before building
+the data source, then register its schema-local types:
 
 ```sql
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -144,18 +144,21 @@ await using var command = dataSource.CreateCommand(
 command.Parameters.Add(new BlueTuskParameter<BlueTuskVector>(embedding));
 ```
 
-`BlueTuskVector` is immutable, structurally comparable, restricted to finite
-single-precision elements, and enforces pgvector's 1–16,000 dimension range.
-The codec implements pgvector's native binary header and float payload as well
-as its invariant text form. Runtime catalogue composition also supports
-`BlueTuskVector[]`. The package's live contract verifies scalar and array binary
-round trips plus Euclidean distance against the official PostgreSQL 18 pgvector
-image.
+`BlueTuskVector` and `BlueTuskHalfVector` are immutable, structurally comparable,
+restricted to finite elements, and enforce pgvector's 1–16,000 dimension range.
+`BlueTuskSparseVector` accepts zero-based CLR indices, stores up to 16,000 sorted
+non-zero float elements across as many as one billion dimensions, and formats
+the one-based SQL representation. Their codecs implement pgvector's native
+binary layouts and invariant text forms. Runtime catalogue composition supports
+arrays of all three values. The live contract verifies scalar/array binary round
+trips, distance execution, and pgvector's Hamming/Jaccard operators over the
+core provider's `BlueTuskBitString` against the official PostgreSQL 18 image.
 
 The separately packaged `BlueTusk.Extensions.PgVector.EntityFrameworkCore`
-integration maps scalar and array properties, preserves dimension-qualified
-store types such as `vector(768)`, and translates parameterized L2, negative
-inner-product, cosine, and L1 distance calls to `<->`, `<#>`, `<=>`, and `<+>`:
+integration maps scalar and array properties for all three types, preserves
+dimension-qualified store types such as `vector(768)`, and translates
+parameterized L2, negative-inner-product, cosine, and L1 distance calls to
+`<->`, `<#>`, `<=>`, and `<+>`:
 
 ```csharp
 var options = new DbContextOptionsBuilder<AppDbContext>()
@@ -168,10 +171,10 @@ var nearest = await context.Items
     .ToListAsync();
 ```
 
-Its live gate verifies EF writes, materialisation, array round trips, and
-parameterized distance execution. The current packages deliberately cover the
-dense `vector` path only. `halfvec`, `sparsevec`, and vector-specific `bit`
-behavior remain separately tracked additions.
+The EF package also translates `BlueTuskBitString` Hamming and Jaccard distances
+to `<~>` and `<%>`. Its live gate verifies EF writes, materialisation, array
+round trips, dimension constraints, and parameterized distance execution for
+the complete pgvector type family.
 
 ## hstore preview
 

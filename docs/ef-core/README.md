@@ -39,9 +39,10 @@ services.AddDbContext<AppDbContext>(options =>
     options.UseBlueTusk(dataSource, provider => provider.UseCitext()));
 ```
 
-Dense pgvector integration follows the same split. The EF package preserves
-dimension-qualified store types and translates the index-compatible distance
-operators while the data source owns the wire codec:
+Pgvector integration follows the same split. The EF package maps dense,
+half-precision, and sparse vectors, preserves dimension-qualified store types,
+and translates the index-compatible vector and bit distances while the data
+source owns the extension wire codecs:
 
 ```csharp
 var dataSource = new BlueTuskDataSourceBuilder(connectionString)

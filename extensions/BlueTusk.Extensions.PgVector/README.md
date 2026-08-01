@@ -1,8 +1,9 @@
 # BlueTusk.Extensions.PgVector
 
-Preview PostgreSQL `pgvector` support for BlueTusk. The package provides an
-immutable dense single-precision `BlueTuskVector`, native text and binary
-codecs, array composition, parameter inference, and data-source registration.
+Preview PostgreSQL `pgvector` support for BlueTusk. The package provides
+immutable `BlueTuskVector`, `BlueTuskHalfVector`, and `BlueTuskSparseVector`
+values, native text and binary codecs, array composition, parameter inference,
+and data-source registration.
 
 ```csharp
 using BlueTusk.Data;
@@ -23,9 +24,11 @@ is built. Pass the installation schema to `UsePgVector(schema)` when it is not
 `public`. Add the independently packaged
 `BlueTusk.Extensions.PgVector.EntityFrameworkCore` integration for EF scalar
 and array mappings, dimension-qualified store types, migration helpers, and
-typed LINQ distance translations. The current packages own only the dense
-`vector` path; `halfvec`, `bit`, and `sparsevec` remain future separately tested
-additions.
+typed LINQ distance translations. Sparse-vector indices are zero-based in CLR
+APIs and converted to pgvector's one-based text representation. The EF package
+also maps Hamming and Jaccard distance over the core provider's
+`BlueTuskBitString`, so PostgreSQL's general `bit` type remains outside the
+optional extension codec package.
 
 This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
 APIs, not stable or production-ready contracts.

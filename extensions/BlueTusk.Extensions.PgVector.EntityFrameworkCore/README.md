@@ -13,10 +13,12 @@ var options = new DbContextOptionsBuilder<AppDbContext>()
     .Options;
 ```
 
-`BlueTuskVector` and `BlueTuskVector[]` properties are mapped to `vector` and
-`vector[]`; dimension-qualified store types such as `vector(768)` are preserved.
-`EF.Functions.L2Distance`, `MaxInnerProduct`, `CosineDistance`, and `L1Distance`
-translate to pgvector's index-compatible `<->`, `<#>`, `<=>`, and `<+>` operators.
+`BlueTuskVector`, `BlueTuskHalfVector`, and `BlueTuskSparseVector` scalar and
+array properties are mapped to their matching pgvector types; dimension-qualified
+store types such as `vector(768)` are preserved. `EF.Functions.L2Distance`,
+`MaxInnerProduct`, `CosineDistance`, and `L1Distance` translate to pgvector's
+index-compatible `<->`, `<#>`, `<=>`, and `<+>` operators. `HammingDistance` and
+`JaccardDistance` translate `BlueTuskBitString` operands to `<~>` and `<%>`.
 
 Use `EnsureBlueTuskPgVector()` and `DropBlueTuskPgVector()` in migrations when
 the application owns the extension lifecycle. These APIs and the BlueTusk EF

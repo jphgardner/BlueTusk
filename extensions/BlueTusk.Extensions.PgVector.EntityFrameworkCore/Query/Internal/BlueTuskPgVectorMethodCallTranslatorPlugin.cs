@@ -32,6 +32,8 @@ internal sealed class BlueTuskPgVectorMethodCallTranslator(
             [nameof(BlueTuskPgVectorDbFunctionsExtensions.MaxInnerProduct)] = "<#>",
             [nameof(BlueTuskPgVectorDbFunctionsExtensions.CosineDistance)] = "<=>",
             [nameof(BlueTuskPgVectorDbFunctionsExtensions.L1Distance)] = "<+>",
+            [nameof(BlueTuskPgVectorDbFunctionsExtensions.HammingDistance)] = "<~>",
+            [nameof(BlueTuskPgVectorDbFunctionsExtensions.JaccardDistance)] = "<%>",
         };
 
     public SqlExpression? Translate(

@@ -11,7 +11,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
     <PackageId>BlueTusk.Extensions.PgVector.EntityFrameworkCore</PackageId>
-    <Description>Optional PostgreSQL pgvector mappings, operators, and migration integration for BlueTusk Entity Framework Core.</Description>
+    <Description>Optional PostgreSQL pgvector type mappings, vector/bit operators, and migration integration for BlueTusk Entity Framework Core.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;pgvector;vector;entity-framework-core</PackageTags>
   </PropertyGroup>
 

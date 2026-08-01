@@ -2,6 +2,7 @@ using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Query;
 using BlueTusk.Extensions.PgVector;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -33,17 +34,37 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
         Assert.Equal(
             "\"public\".\"vector\"[]",
             entityType.FindProperty(nameof(VectorValue.History))!.GetRelationalTypeMapping().StoreType);
+        Assert.Equal(
+            "halfvec(3)",
+            entityType.FindProperty(nameof(VectorValue.HalfEmbedding))!.GetRelationalTypeMapping().StoreType);
+        Assert.Equal(
+            "\"public\".\"halfvec\"[]",
+            entityType.FindProperty(nameof(VectorValue.HalfHistory))!.GetRelationalTypeMapping().StoreType);
+        Assert.Equal(
+            "sparsevec(5)",
+            entityType.FindProperty(nameof(VectorValue.SparseEmbedding))!.GetRelationalTypeMapping().StoreType);
+        Assert.Equal(
+            "\"public\".\"sparsevec\"[]",
+            entityType.FindProperty(nameof(VectorValue.SparseHistory))!.GetRelationalTypeMapping().StoreType);
         Assert.Contains("vector(3)", context.Database.GenerateCreateScript(), StringComparison.Ordinal);
+        Assert.Contains("halfvec(3)", context.Database.GenerateCreateScript(), StringComparison.Ordinal);
+        Assert.Contains("sparsevec(5)", context.Database.GenerateCreateScript(), StringComparison.Ordinal);
     }
 
     [Fact]
-    public void Plugin_translates_all_dense_distance_operators()
+    public void Plugin_translates_all_vector_and_bit_distance_operators()
     {
         using var dataSource = new BlueTuskDataSourceBuilder(OfflineConnectionString)
             .UsePgVector()
             .Build();
         using var context = CreateContext(dataSource);
         var probe = new BlueTuskVector(1, 2, 3);
+        var halfProbe = BlueTuskHalfVector.FromSinglePrecision(1, 2, 3);
+        var sparseProbe = new BlueTuskSparseVector(
+            5,
+            new BlueTuskSparseVectorElement(0, 1),
+            new BlueTuskSparseVectorElement(3, 2));
+        var bitProbe = new BlueTuskBitString("001");
 
         var sql = context.Values.Select(value => new
         {
@@ -51,13 +72,22 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
             InnerProduct = EF.Functions.MaxInnerProduct(value.Embedding, probe),
             Cosine = EF.Functions.CosineDistance(value.Embedding, probe),
             L1 = EF.Functions.L1Distance(value.Embedding, probe),
+            Half = EF.Functions.L2Distance(value.HalfEmbedding, halfProbe),
+            Sparse = EF.Functions.L2Distance(value.SparseEmbedding, sparseProbe),
+            Hamming = EF.Functions.HammingDistance(value.Bits, bitProbe),
+            Jaccard = EF.Functions.JaccardDistance(value.Bits, bitProbe),
         }).ToQueryString();
 
         Assert.Contains("<->", sql, StringComparison.Ordinal);
         Assert.Contains("<#>", sql, StringComparison.Ordinal);
         Assert.Contains("<=>", sql, StringComparison.Ordinal);
         Assert.Contains("<+>", sql, StringComparison.Ordinal);
+        Assert.Contains("<~>", sql, StringComparison.Ordinal);
+        Assert.Contains("<%>", sql, StringComparison.Ordinal);
         Assert.Contains("@probe", sql, StringComparison.Ordinal);
+        Assert.Contains("@halfProbe", sql, StringComparison.Ordinal);
+        Assert.Contains("@sparseProbe", sql, StringComparison.Ordinal);
+        Assert.Contains("@bitProbe", sql, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -123,7 +153,10 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
                          "CREATE EXTENSION IF NOT EXISTS vector; " +
                          "DROP TABLE IF EXISTS bluetusk_pgvector_ef_values; " +
                          "CREATE TABLE bluetusk_pgvector_ef_values (" +
-                         "id int4 PRIMARY KEY, embedding vector(3) NOT NULL, history vector[] NOT NULL)"))
+                         "id int4 PRIMARY KEY, embedding vector(3) NOT NULL, history vector[] NOT NULL, " +
+                         "half_embedding halfvec(3) NOT NULL, half_history halfvec[] NOT NULL, " +
+                         "sparse_embedding sparsevec(5) NOT NULL, sparse_history sparsevec[] NOT NULL, " +
+                         "bits bit(3) NOT NULL)"))
         {
             _ = await setup.ExecuteNonQueryAsync(CancellationToken.None);
         }
@@ -139,12 +172,37 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
                 Id = 1,
                 Embedding = new BlueTuskVector(1, 2, 3),
                 History = [new(3, 2, 1)],
+                HalfEmbedding = BlueTuskHalfVector.FromSinglePrecision(1, 2, 3),
+                HalfHistory = [BlueTuskHalfVector.FromSinglePrecision(3, 2, 1)],
+                SparseEmbedding = new BlueTuskSparseVector(
+                    5,
+                    new BlueTuskSparseVectorElement(0, 1),
+                    new BlueTuskSparseVectorElement(3, 2)),
+                SparseHistory =
+                [
+                    new BlueTuskSparseVector(
+                        5,
+                        new BlueTuskSparseVectorElement(1, 3)),
+                ],
+                Bits = new BlueTuskBitString("101"),
             };
             var far = new VectorValue
             {
                 Id = 2,
                 Embedding = new BlueTuskVector(10, 10, 10),
                 History = [new(1, 1, 1), new(2, 2, 2)],
+                HalfEmbedding = BlueTuskHalfVector.FromSinglePrecision(10, 10, 10),
+                HalfHistory = [BlueTuskHalfVector.FromSinglePrecision(1, 1, 1)],
+                SparseEmbedding = new BlueTuskSparseVector(
+                    5,
+                    new BlueTuskSparseVectorElement(1, 10)),
+                SparseHistory =
+                [
+                    new BlueTuskSparseVector(
+                        5,
+                        new BlueTuskSparseVectorElement(2, 10)),
+                ],
+                Bits = new BlueTuskBitString("111"),
             };
             context.AddRange(near, far);
             Assert.Equal(2, await context.SaveChangesAsync());
@@ -158,6 +216,11 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
             Assert.Equal(near.Id, nearest.Id);
             Assert.Equal(near.Embedding, nearest.Embedding);
             Assert.Equal(near.History, nearest.History);
+            Assert.Equal(near.HalfEmbedding, nearest.HalfEmbedding);
+            Assert.Equal(near.HalfHistory, nearest.HalfHistory);
+            Assert.Equal(near.SparseEmbedding, nearest.SparseEmbedding);
+            Assert.Equal(near.SparseHistory, nearest.SparseHistory);
+            Assert.Equal(near.Bits, nearest.Bits);
             Assert.Equal(
                 1d,
                 await context.Values
@@ -165,6 +228,26 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
                     .Select(value => EF.Functions.L2Distance(value.Embedding, probe))
                     .SingleAsync(),
                 12);
+            var halfProbe = BlueTuskHalfVector.FromSinglePrecision(1, 2, 4);
+            var sparseProbe = new BlueTuskSparseVector(
+                5,
+                new BlueTuskSparseVectorElement(0, 1),
+                new BlueTuskSparseVectorElement(4, 2));
+            var bitProbe = new BlueTuskBitString("001");
+            var extensionDistances = await context.Values
+                .Where(value => value.Id == near.Id)
+                .Select(value => new
+                {
+                    Half = EF.Functions.L2Distance(value.HalfEmbedding, halfProbe),
+                    Sparse = EF.Functions.L2Distance(value.SparseEmbedding, sparseProbe),
+                    Hamming = EF.Functions.HammingDistance(value.Bits, bitProbe),
+                    Jaccard = EF.Functions.JaccardDistance(value.Bits, bitProbe),
+                })
+                .SingleAsync();
+            Assert.Equal(1d, extensionDistances.Half, 12);
+            Assert.Equal(Math.Sqrt(8), extensionDistances.Sparse, 12);
+            Assert.Equal(1d, extensionDistances.Hamming, 12);
+            Assert.Equal(0.5d, extensionDistances.Jaccard, 12);
         }
         finally
         {
@@ -216,6 +299,15 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
                 entity.Property(value => value.Id).HasColumnName("id").ValueGeneratedNever();
                 entity.Property(value => value.Embedding).HasColumnName("embedding").HasColumnType("vector(3)");
                 entity.Property(value => value.History).HasColumnName("history");
+                entity.Property(value => value.HalfEmbedding)
+                    .HasColumnName("half_embedding")
+                    .HasColumnType("halfvec(3)");
+                entity.Property(value => value.HalfHistory).HasColumnName("half_history");
+                entity.Property(value => value.SparseEmbedding)
+                    .HasColumnName("sparse_embedding")
+                    .HasColumnType("sparsevec(5)");
+                entity.Property(value => value.SparseHistory).HasColumnName("sparse_history");
+                entity.Property(value => value.Bits).HasColumnName("bits").HasColumnType("bit(3)");
             });
         }
     }
@@ -227,5 +319,16 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
         public BlueTuskVector Embedding { get; set; } = new(0);
 
         public BlueTuskVector[] History { get; set; } = [];
+
+        public BlueTuskHalfVector HalfEmbedding { get; set; } =
+            BlueTuskHalfVector.FromSinglePrecision(0);
+
+        public BlueTuskHalfVector[] HalfHistory { get; set; } = [];
+
+        public BlueTuskSparseVector SparseEmbedding { get; set; } = new(1);
+
+        public BlueTuskSparseVector[] SparseHistory { get; set; } = [];
+
+        public BlueTuskBitString Bits { get; set; } = new("0");
     }
 }
