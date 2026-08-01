@@ -179,6 +179,14 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
             return binary;
         }
 
+        if (extensionExpression is BlueTuskUnaryExpression unary)
+        {
+            Sql.Append("(").Append(unary.OperatorToken).Append(" ");
+            Visit(unary.Operand);
+            Sql.Append(")");
+            return unary;
+        }
+
         return base.VisitExtension(extensionExpression);
     }
 

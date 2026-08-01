@@ -258,14 +258,15 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Built-in one- and multidimensional arrays with structural change tracking and exact element-family OIDs
   - [x] All six built-in range and multirange families, including their array types
   - [x] Runtime-registered enums, domains, composites, records, and their arrays
-- [ ] PostgreSQL operators and operator-aware LINQ translations
+- [x] PostgreSQL operators and operator-aware LINQ translations
   - [x] Parameterised `ILIKE` and POSIX regular-expression predicates
   - [x] Array, range/multirange, JSONB/JSONPath, network, and full-text predicates
   - [x] SQL-generation and PostgreSQL 15–19 live operator acceptance
   - [x] Typed comparison and pattern `ANY`/`ALL` over PostgreSQL array parameters
   - [x] Equal-arity row values and tuple comparisons across all six B-tree operators
   - [x] Negative regex, complete range/multirange positional and cross-family predicates, strict network containment, and `tsquery` containment
-  - [ ] Scalar-producing and geometric operator forms
+  - [x] Typed scalar-producing array, range/multirange, JSONB, full-text, network, and bit-string operators
+  - [x] Geometric ordering, position, containment, intersection, relationship, distance, closest-point, arithmetic, and transformation operators
 - [ ] PostgreSQL scalar, aggregate, and set-returning function translations
   - [x] Initial array, range/multirange, JSONB, regex, network, and full-text scalar functions
   - [x] Typed date/time construction, extraction, truncation, binning, age, and interval-justification functions

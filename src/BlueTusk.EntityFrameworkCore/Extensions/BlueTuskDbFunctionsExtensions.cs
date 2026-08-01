@@ -367,6 +367,1050 @@ public static class BlueTuskDbFunctionsExtensions
         BlueTuskNetworkAddress network)
         => ThrowTranslationOnly<bool>();
 
+    public static T[] ArrayConcatenate<T>(this DbFunctions _, T[] left, T[] right)
+        => ThrowTranslationOnly<T[]>();
+
+    public static T[] ArrayAppend<T>(this DbFunctions _, T[] array, T value)
+        => ThrowTranslationOnly<T[]>();
+
+    public static T[] ArrayPrepend<T>(this DbFunctions _, T value, T[] array)
+        => ThrowTranslationOnly<T[]>();
+
+    public static BlueTuskRange<T> RangeUnion<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<BlueTuskRange<T>>();
+
+    public static BlueTuskRange<T> RangeIntersect<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<BlueTuskRange<T>>();
+
+    public static BlueTuskRange<T> RangeExcept<T>(
+        this DbFunctions _,
+        BlueTuskRange<T> left,
+        BlueTuskRange<T> right)
+        => ThrowTranslationOnly<BlueTuskRange<T>>();
+
+    public static BlueTuskMultirange<T> MultirangeUnion<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<BlueTuskMultirange<T>>();
+
+    public static BlueTuskMultirange<T> MultirangeIntersect<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<BlueTuskMultirange<T>>();
+
+    public static BlueTuskMultirange<T> MultirangeExcept<T>(
+        this DbFunctions _,
+        BlueTuskMultirange<T> left,
+        BlueTuskMultirange<T> right)
+        => ThrowTranslationOnly<BlueTuskMultirange<T>>();
+
+    public static string JsonConcatenate(this DbFunctions _, string leftJsonb, string rightJsonb)
+        => ThrowTranslationOnly<string>();
+
+    public static string JsonDelete(this DbFunctions _, string jsonb, string key)
+        => ThrowTranslationOnly<string>();
+
+    public static string JsonDelete(this DbFunctions _, string jsonb, int arrayIndex)
+        => ThrowTranslationOnly<string>();
+
+    public static string JsonDeletePath(this DbFunctions _, string jsonb, string[] path)
+        => ThrowTranslationOnly<string>();
+
+    public static string? JsonGet(this DbFunctions _, string jsonb, string key)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonGet(this DbFunctions _, string jsonb, int arrayIndex)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonGetText(this DbFunctions _, string jsonb, string key)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonGetText(this DbFunctions _, string jsonb, int arrayIndex)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonGetPath(this DbFunctions _, string jsonb, string[] path)
+        => ThrowTranslationOnly<string?>();
+
+    public static string? JsonGetPathText(this DbFunctions _, string jsonb, string[] path)
+        => ThrowTranslationOnly<string?>();
+
+    public static BlueTuskTextSearchVector FullTextVectorConcatenate(
+        this DbFunctions _,
+        BlueTuskTextSearchVector left,
+        BlueTuskTextSearchVector right)
+        => ThrowTranslationOnly<BlueTuskTextSearchVector>();
+
+    public static BlueTuskTextSearchQuery FullTextQueryAnd(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery left,
+        BlueTuskTextSearchQuery right)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery FullTextQueryOr(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery left,
+        BlueTuskTextSearchQuery right)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery FullTextQueryPhrase(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery left,
+        BlueTuskTextSearchQuery right)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskTextSearchQuery FullTextQueryNot(
+        this DbFunctions _,
+        BlueTuskTextSearchQuery query)
+        => ThrowTranslationOnly<BlueTuskTextSearchQuery>();
+
+    public static BlueTuskNetworkAddress NetworkBitwiseNot(
+        this DbFunctions _,
+        BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static BlueTuskNetworkAddress NetworkBitwiseAnd(
+        this DbFunctions _,
+        BlueTuskNetworkAddress left,
+        BlueTuskNetworkAddress right)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static BlueTuskNetworkAddress NetworkBitwiseOr(
+        this DbFunctions _,
+        BlueTuskNetworkAddress left,
+        BlueTuskNetworkAddress right)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static BlueTuskNetworkAddress NetworkAdd(
+        this DbFunctions _,
+        BlueTuskNetworkAddress address,
+        long offset)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static BlueTuskNetworkAddress NetworkAdd(
+        this DbFunctions _,
+        long offset,
+        BlueTuskNetworkAddress address)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static BlueTuskNetworkAddress NetworkSubtract(
+        this DbFunctions _,
+        BlueTuskNetworkAddress address,
+        long offset)
+        => ThrowTranslationOnly<BlueTuskNetworkAddress>();
+
+    public static long NetworkDistance(
+        this DbFunctions _,
+        BlueTuskNetworkAddress left,
+        BlueTuskNetworkAddress right)
+        => ThrowTranslationOnly<long>();
+
+    public static BlueTuskBitString BitStringConcatenate(
+        this DbFunctions _,
+        BlueTuskBitString left,
+        BlueTuskBitString right)
+        => ThrowTranslationOnly<BlueTuskBitString>();
+
+    public static BlueTuskBitString BitStringAnd(
+        this DbFunctions _,
+        BlueTuskBitString left,
+        BlueTuskBitString right)
+        => ThrowTranslationOnly<BlueTuskBitString>();
+
+    public static BlueTuskBitString BitStringOr(
+        this DbFunctions _,
+        BlueTuskBitString left,
+        BlueTuskBitString right)
+        => ThrowTranslationOnly<BlueTuskBitString>();
+
+    public static BlueTuskBitString BitStringXor(
+        this DbFunctions _,
+        BlueTuskBitString left,
+        BlueTuskBitString right)
+        => ThrowTranslationOnly<BlueTuskBitString>();
+
+    public static BlueTuskBitString BitStringNot(
+        this DbFunctions _,
+        BlueTuskBitString value)
+        => ThrowTranslationOnly<BlueTuskBitString>();
+
+    public static BlueTuskBitString BitStringShiftLeft(
+        this DbFunctions _,
+        BlueTuskBitString value,
+        int count)
+        => ThrowTranslationOnly<BlueTuskBitString>();
+
+    public static BlueTuskBitString BitStringShiftRight(
+        this DbFunctions _,
+        BlueTuskBitString value,
+        int count)
+        => ThrowTranslationOnly<BlueTuskBitString>();
+
+    public static bool GeometryIsStrictlyLeftOf(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyLeftOf(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyLeftOf(
+        this DbFunctions _,
+        BlueTuskPolygon left,
+        BlueTuskPolygon right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyLeftOf(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyRightOf(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyRightOf(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyRightOf(
+        this DbFunctions _,
+        BlueTuskPolygon left,
+        BlueTuskPolygon right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyRightOf(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyBelow(
+        this DbFunctions _,
+        BlueTuskPoint lower,
+        BlueTuskPoint upper)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyBelow(
+        this DbFunctions _,
+        BlueTuskBox lower,
+        BlueTuskBox upper)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyBelow(
+        this DbFunctions _,
+        BlueTuskPolygon lower,
+        BlueTuskPolygon upper)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyBelow(
+        this DbFunctions _,
+        BlueTuskCircle lower,
+        BlueTuskCircle upper)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyAbove(
+        this DbFunctions _,
+        BlueTuskPoint upper,
+        BlueTuskPoint lower)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyAbove(
+        this DbFunctions _,
+        BlueTuskBox upper,
+        BlueTuskBox lower)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyAbove(
+        this DbFunctions _,
+        BlueTuskPolygon upper,
+        BlueTuskPolygon lower)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsStrictlyAbove(
+        this DbFunctions _,
+        BlueTuskCircle upper,
+        BlueTuskCircle lower)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendRightOf(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendRightOf(
+        this DbFunctions _,
+        BlueTuskPolygon left,
+        BlueTuskPolygon right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendRightOf(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendLeftOf(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendLeftOf(
+        this DbFunctions _,
+        BlueTuskPolygon left,
+        BlueTuskPolygon right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendLeftOf(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendAbove(
+        this DbFunctions _,
+        BlueTuskBox lower,
+        BlueTuskBox upper)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendAbove(
+        this DbFunctions _,
+        BlueTuskPolygon lower,
+        BlueTuskPolygon upper)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendAbove(
+        this DbFunctions _,
+        BlueTuskCircle lower,
+        BlueTuskCircle upper)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendBelow(
+        this DbFunctions _,
+        BlueTuskBox upper,
+        BlueTuskBox lower)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendBelow(
+        this DbFunctions _,
+        BlueTuskPolygon upper,
+        BlueTuskPolygon lower)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryDoesNotExtendBelow(
+        this DbFunctions _,
+        BlueTuskCircle upper,
+        BlueTuskCircle lower)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryOverlaps(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryOverlaps(
+        this DbFunctions _,
+        BlueTuskPolygon left,
+        BlueTuskPolygon right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryOverlaps(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometrySameAs(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometrySameAs(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometrySameAs(
+        this DbFunctions _,
+        BlueTuskPolygon left,
+        BlueTuskPolygon right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometrySameAs(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryEqual(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryEqual(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryEqual(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryEqual(
+        this DbFunctions _,
+        BlueTuskLine left,
+        BlueTuskLine right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryEqual(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryNotEqual(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryNotEqual(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryNotEqual(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThan(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThan(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThan(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThan(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThanOrEqual(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThanOrEqual(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThanOrEqual(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryLessThanOrEqual(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThan(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThan(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThan(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThan(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThanOrEqual(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThanOrEqual(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThanOrEqual(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryGreaterThanOrEqual(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContains(
+        this DbFunctions _,
+        BlueTuskPath container,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContains(
+        this DbFunctions _,
+        BlueTuskBox container,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContains(
+        this DbFunctions _,
+        BlueTuskBox container,
+        BlueTuskBox contained)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContains(
+        this DbFunctions _,
+        BlueTuskPolygon container,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContains(
+        this DbFunctions _,
+        BlueTuskPolygon container,
+        BlueTuskPolygon contained)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContains(
+        this DbFunctions _,
+        BlueTuskCircle container,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContains(
+        this DbFunctions _,
+        BlueTuskCircle container,
+        BlueTuskCircle contained)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskLineSegment container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskPath container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskBox container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskPolygon container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskLine container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskCircle container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskBox container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskLine container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskBox value,
+        BlueTuskBox container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskPolygon value,
+        BlueTuskPolygon container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryContainedBy(
+        this DbFunctions _,
+        BlueTuskCircle value,
+        BlueTuskCircle container)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIntersects(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIntersects(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskBox box)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIntersects(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskLine line)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIntersects(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIntersects(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIntersects(
+        this DbFunctions _,
+        BlueTuskLine line,
+        BlueTuskBox box)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIntersects(
+        this DbFunctions _,
+        BlueTuskLine left,
+        BlueTuskLine right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsPerpendicular(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsPerpendicular(
+        this DbFunctions _,
+        BlueTuskLine left,
+        BlueTuskLine right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsParallel(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsParallel(
+        this DbFunctions _,
+        BlueTuskLine left,
+        BlueTuskLine right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsHorizontal(this DbFunctions _, BlueTuskLineSegment value)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsHorizontal(this DbFunctions _, BlueTuskLine value)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsHorizontal(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsVertical(this DbFunctions _, BlueTuskLineSegment value)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsVertical(this DbFunctions _, BlueTuskLine value)
+        => ThrowTranslationOnly<bool>();
+
+    public static bool GeometryIsVertical(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<bool>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskLineSegment segment)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskPath path)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskBox box)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskPolygon polygon)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskLine line)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskCircle circle)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskBox box)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskLine line)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPath path,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskBox box,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskBox box,
+        BlueTuskLineSegment segment)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPolygon polygon,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPolygon left,
+        BlueTuskPolygon right)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskPolygon polygon,
+        BlueTuskCircle circle)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskLine line,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskLine line,
+        BlueTuskLineSegment segment)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskLine left,
+        BlueTuskLine right)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskCircle circle,
+        BlueTuskPoint point)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskCircle circle,
+        BlueTuskPolygon polygon)
+        => ThrowTranslationOnly<double>();
+
+    public static double GeometryDistance(
+        this DbFunctions _,
+        BlueTuskCircle left,
+        BlueTuskCircle right)
+        => ThrowTranslationOnly<double>();
+
+    public static BlueTuskPoint? GeometryIntersection(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<BlueTuskPoint?>();
+
+    public static BlueTuskBox? GeometryIntersection(
+        this DbFunctions _,
+        BlueTuskBox left,
+        BlueTuskBox right)
+        => ThrowTranslationOnly<BlueTuskBox?>();
+
+    public static BlueTuskPoint? GeometryIntersection(
+        this DbFunctions _,
+        BlueTuskLine left,
+        BlueTuskLine right)
+        => ThrowTranslationOnly<BlueTuskPoint?>();
+
+    public static BlueTuskPoint GeometryClosestPoint(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskLineSegment segment)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint GeometryClosestPoint(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskBox box)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint GeometryClosestPoint(
+        this DbFunctions _,
+        BlueTuskPoint point,
+        BlueTuskLine line)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint GeometryClosestPoint(
+        this DbFunctions _,
+        BlueTuskLineSegment left,
+        BlueTuskLineSegment right)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint GeometryClosestPoint(
+        this DbFunctions _,
+        BlueTuskLineSegment segment,
+        BlueTuskBox box)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint GeometryClosestPoint(
+        this DbFunctions _,
+        BlueTuskLine line,
+        BlueTuskLineSegment segment)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint PointAdd(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint PointSubtract(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint PointMultiply(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPoint PointDivide(
+        this DbFunctions _,
+        BlueTuskPoint left,
+        BlueTuskPoint right)
+        => ThrowTranslationOnly<BlueTuskPoint>();
+
+    public static BlueTuskPath PathTranslate(
+        this DbFunctions _,
+        BlueTuskPath path,
+        BlueTuskPoint offset)
+        => ThrowTranslationOnly<BlueTuskPath>();
+
+    public static BlueTuskPath PathTranslateNegative(
+        this DbFunctions _,
+        BlueTuskPath path,
+        BlueTuskPoint offset)
+        => ThrowTranslationOnly<BlueTuskPath>();
+
+    public static BlueTuskPath PathScale(
+        this DbFunctions _,
+        BlueTuskPath path,
+        BlueTuskPoint factors)
+        => ThrowTranslationOnly<BlueTuskPath>();
+
+    public static BlueTuskPath PathScaleInverse(
+        this DbFunctions _,
+        BlueTuskPath path,
+        BlueTuskPoint factors)
+        => ThrowTranslationOnly<BlueTuskPath>();
+
+    public static BlueTuskPath PathConcatenate(
+        this DbFunctions _,
+        BlueTuskPath left,
+        BlueTuskPath right)
+        => ThrowTranslationOnly<BlueTuskPath>();
+
+    public static BlueTuskBox BoxTranslate(
+        this DbFunctions _,
+        BlueTuskBox box,
+        BlueTuskPoint offset)
+        => ThrowTranslationOnly<BlueTuskBox>();
+
+    public static BlueTuskBox BoxTranslateNegative(
+        this DbFunctions _,
+        BlueTuskBox box,
+        BlueTuskPoint offset)
+        => ThrowTranslationOnly<BlueTuskBox>();
+
+    public static BlueTuskBox BoxScale(
+        this DbFunctions _,
+        BlueTuskBox box,
+        BlueTuskPoint factors)
+        => ThrowTranslationOnly<BlueTuskBox>();
+
+    public static BlueTuskBox BoxScaleInverse(
+        this DbFunctions _,
+        BlueTuskBox box,
+        BlueTuskPoint factors)
+        => ThrowTranslationOnly<BlueTuskBox>();
+
+    public static BlueTuskCircle CircleTranslate(
+        this DbFunctions _,
+        BlueTuskCircle circle,
+        BlueTuskPoint offset)
+        => ThrowTranslationOnly<BlueTuskCircle>();
+
+    public static BlueTuskCircle CircleTranslateNegative(
+        this DbFunctions _,
+        BlueTuskCircle circle,
+        BlueTuskPoint offset)
+        => ThrowTranslationOnly<BlueTuskCircle>();
+
+    public static BlueTuskCircle CircleScale(
+        this DbFunctions _,
+        BlueTuskCircle circle,
+        BlueTuskPoint factors)
+        => ThrowTranslationOnly<BlueTuskCircle>();
+
+    public static BlueTuskCircle CircleScaleInverse(
+        this DbFunctions _,
+        BlueTuskCircle circle,
+        BlueTuskPoint factors)
+        => ThrowTranslationOnly<BlueTuskCircle>();
+
     public static int? ArrayLength<T>(this DbFunctions _, T[] array, int dimension)
         => ThrowTranslationOnly<int?>();
 

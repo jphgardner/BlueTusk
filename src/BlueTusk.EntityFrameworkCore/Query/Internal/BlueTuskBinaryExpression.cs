@@ -10,10 +10,20 @@ internal sealed class BlueTuskBinaryExpression(
     SqlExpression left,
     SqlExpression right,
     string operatorToken,
+    Type resultType,
     RelationalTypeMapping typeMapping)
-    : SqlExpression(typeof(bool), typeMapping)
+    : SqlExpression(resultType, typeMapping)
 {
     private static ConstructorInfo? _quotingConstructor;
+
+    public BlueTuskBinaryExpression(
+        SqlExpression left,
+        SqlExpression right,
+        string operatorToken,
+        RelationalTypeMapping typeMapping)
+        : this(left, right, operatorToken, typeof(bool), typeMapping)
+    {
+    }
 
     public SqlExpression Left { get; } = left;
 
@@ -24,7 +34,7 @@ internal sealed class BlueTuskBinaryExpression(
     public BlueTuskBinaryExpression Update(SqlExpression left, SqlExpression right)
         => left == Left && right == Right
             ? this
-            : new BlueTuskBinaryExpression(left, right, OperatorToken, TypeMapping!);
+            : new BlueTuskBinaryExpression(left, right, OperatorToken, Type, TypeMapping!);
 
     protected override Expression VisitChildren(ExpressionVisitor visitor)
         => Update(
@@ -35,10 +45,17 @@ internal sealed class BlueTuskBinaryExpression(
 #pragma warning disable EF9100 // Provider expression quoting requires EF's provider-facing helper.
         => New(
             _quotingConstructor ??= typeof(BlueTuskBinaryExpression).GetConstructor(
-                [typeof(SqlExpression), typeof(SqlExpression), typeof(string), typeof(RelationalTypeMapping)])!,
+                [
+                    typeof(SqlExpression),
+                    typeof(SqlExpression),
+                    typeof(string),
+                    typeof(Type),
+                    typeof(RelationalTypeMapping),
+                ])!,
             Left.Quote(),
             Right.Quote(),
             Constant(OperatorToken),
+            Constant(Type),
             RelationalExpressionQuotingUtilities.QuoteTypeMapping(TypeMapping));
 #pragma warning restore EF9100
 

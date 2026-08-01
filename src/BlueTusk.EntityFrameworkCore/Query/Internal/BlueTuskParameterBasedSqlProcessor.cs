@@ -78,6 +78,13 @@ internal sealed class BlueTuskSqlNullabilityProcessor(
             return rowValue.Update(values);
         }
 
+        if (sqlExpression is BlueTuskUnaryExpression unary)
+        {
+            var operand = Visit(unary.Operand, allowOptimizedExpansion, out var operandNullable);
+            nullable = operandNullable;
+            return unary.Update(operand);
+        }
+
         if (sqlExpression is not BlueTuskBinaryExpression binary)
         {
             return base.VisitCustomSqlExpression(sqlExpression, allowOptimizedExpansion, out nullable);

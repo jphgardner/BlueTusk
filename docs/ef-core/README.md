@@ -117,13 +117,22 @@ var documents = await context.Documents
 The preview covers:
 
 - text `ILIKE`, case-sensitive `~`/`!~`, and case-insensitive `~*`/`!~*`;
-- array containment (`@>`, `<@`) and overlap (`&&`);
+- array containment (`@>`, `<@`), overlap (`&&`), append/prepend, and concatenation;
 - range and multirange containment, overlap, strict left/right, non-extension,
   and adjacency across every range/range, range/multirange,
   multirange/range, and multirange/multirange form;
-- JSONB containment and key tests, and JSONPath `@?`/`@@`;
-- `inet`/`cidr` inclusive/strict containment and overlap; and
-- `tsvector @@ tsquery` matching plus `tsquery` containment;
+- typed range and multirange union, intersection, and difference;
+- JSONB containment and key tests, JSONPath `@?`/`@@`, concatenation,
+  key/index/path deletion, and JSONB/text extraction;
+- `inet`/`cidr` inclusive/strict containment, overlap, bitwise operations,
+  address arithmetic, and address distance;
+- `tsvector @@ tsquery` matching, vector/query composition, phrase and negation,
+  plus `tsquery` containment;
+- variable-bit concatenation, bitwise operations, negation, and shifts;
+- geometric equality/ordering, relative position, overlap, containment,
+  intersection, perpendicular/parallel/horizontal/vertical tests, distance,
+  intersection/closest-point values, point arithmetic, and path/box/circle
+  translation/scaling;
 - typed `=`, `<>`, `<`, `<=`, `>`, and `>=` comparisons with PostgreSQL
   `ANY(array)` and `ALL(array)`, plus `LIKE`/`ILIKE` quantifiers; and
 - two-or-more-element row comparisons using `ValueTuple.Create(...)` and all
@@ -147,9 +156,18 @@ Operator behavior is defined by PostgreSQL's
 [range/multirange](https://www.postgresql.org/docs/current/functions-range.html),
 [JSON](https://www.postgresql.org/docs/current/functions-json.html),
 [network](https://www.postgresql.org/docs/current/functions-net.html), and
-[text-search](https://www.postgresql.org/docs/current/functions-textsearch.html)
+[text-search](https://www.postgresql.org/docs/current/functions-textsearch.html),
+[bit-string](https://www.postgresql.org/docs/current/functions-bitstring.html), and
+[geometric](https://www.postgresql.org/docs/current/functions-geometry.html)
 documentation. SQL-generation tests cover every exposed operator family, and
 live acceptance executes typed parameters against PostgreSQL 15–19.
+
+All scalar-producing operators carry their PostgreSQL result mapping through
+later composition and materialisation. JSONB-returning extraction stays
+`jsonb`, while the `->>` and `#>>` methods return text. PostgreSQL treats a
+point as a complex number for point multiplication and division; `PointMultiply`
+and `PointDivide` intentionally preserve that server behavior rather than
+performing coordinate-wise arithmetic.
 
 ## PostgreSQL scalar functions
 

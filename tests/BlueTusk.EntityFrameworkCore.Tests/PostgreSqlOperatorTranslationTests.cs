@@ -255,6 +255,169 @@ public sealed class PostgreSqlOperatorTranslationTests
     }
 
     [Fact]
+    public void Scalar_producing_operators_translate_with_typed_results()
+    {
+        using var context = CreateContext();
+        var numbers = new[] { 1, 2 };
+        var otherNumbers = new[] { 3, 4 };
+        var range = new BlueTuskRange<int>(1, 5);
+        var otherRange = new BlueTuskRange<int>(4, 8);
+        var multirange = new BlueTuskMultirange<int>([range]);
+        var otherMultirange = new BlueTuskMultirange<int>([otherRange]);
+        var query = BlueTuskTextSearchQuery.Parse("'blue'");
+        var otherQuery = BlueTuskTextSearchQuery.Parse("'tusk'");
+        var vector = BlueTuskTextSearchVector.Parse("'blue':1");
+        var otherVector = BlueTuskTextSearchVector.Parse("'tusk':1");
+        var network = BlueTuskNetworkAddress.Parse("10.0.0.4/24");
+        var otherNetwork = BlueTuskNetworkAddress.Parse("255.255.255.0");
+        var jsonPath = new[] { "a", "b" };
+        var bits = new BlueTuskBitString("101");
+        var otherBits = new BlueTuskBitString("011");
+
+        var sql = context.Documents
+            .Select(_ => new
+            {
+                ArrayConcat = EF.Functions.ArrayConcatenate(numbers, otherNumbers),
+                ArrayAppend = EF.Functions.ArrayAppend(numbers, 3),
+                ArrayPrepend = EF.Functions.ArrayPrepend(0, numbers),
+                RangeUnion = EF.Functions.RangeUnion(range, otherRange),
+                RangeIntersect = EF.Functions.RangeIntersect(range, otherRange),
+                RangeExcept = EF.Functions.RangeExcept(range, otherRange),
+                MultirangeUnion = EF.Functions.MultirangeUnion(multirange, otherMultirange),
+                MultirangeIntersect = EF.Functions.MultirangeIntersect(multirange, otherMultirange),
+                MultirangeExcept = EF.Functions.MultirangeExcept(multirange, otherMultirange),
+                JsonConcat = EF.Functions.JsonConcatenate("{\"left\":1}", "{\"right\":2}"),
+                JsonDeleteKey = EF.Functions.JsonDelete("{\"drop\":1}", "drop"),
+                JsonDeleteIndex = EF.Functions.JsonDelete("[1,2]", 0),
+                JsonDeletePath = EF.Functions.JsonDeletePath("{\"a\":{\"b\":1}}", jsonPath),
+                JsonGet = EF.Functions.JsonGet("{\"a\":1}", "a"),
+                JsonGetIndex = EF.Functions.JsonGet("[1,2]", 0),
+                JsonGetText = EF.Functions.JsonGetText("{\"a\":1}", "a"),
+                JsonGetIndexText = EF.Functions.JsonGetText("[1,2]", 0),
+                JsonGetPath = EF.Functions.JsonGetPath("{\"a\":{\"b\":1}}", jsonPath),
+                JsonGetPathText = EF.Functions.JsonGetPathText("{\"a\":{\"b\":1}}", jsonPath),
+                VectorConcat = EF.Functions.FullTextVectorConcatenate(vector, otherVector),
+                QueryAnd = EF.Functions.FullTextQueryAnd(query, otherQuery),
+                QueryOr = EF.Functions.FullTextQueryOr(query, otherQuery),
+                QueryPhrase = EF.Functions.FullTextQueryPhrase(query, otherQuery),
+                QueryNot = EF.Functions.FullTextQueryNot(query),
+                NetworkNot = EF.Functions.NetworkBitwiseNot(network),
+                NetworkAnd = EF.Functions.NetworkBitwiseAnd(network, otherNetwork),
+                NetworkOr = EF.Functions.NetworkBitwiseOr(network, otherNetwork),
+                NetworkAdd = EF.Functions.NetworkAdd(network, 2),
+                ReverseNetworkAdd = EF.Functions.NetworkAdd(2, network),
+                NetworkSubtract = EF.Functions.NetworkSubtract(network, 2),
+                NetworkDistance = EF.Functions.NetworkDistance(network, network),
+                BitConcat = EF.Functions.BitStringConcatenate(bits, otherBits),
+                BitAnd = EF.Functions.BitStringAnd(bits, otherBits),
+                BitOr = EF.Functions.BitStringOr(bits, otherBits),
+                BitXor = EF.Functions.BitStringXor(bits, otherBits),
+                BitNot = EF.Functions.BitStringNot(bits),
+                BitShiftLeft = EF.Functions.BitStringShiftLeft(bits, 1),
+                BitShiftRight = EF.Functions.BitStringShiftRight(bits, 1),
+            })
+            .ToQueryString();
+
+        Assert.Contains(" || ", sql, StringComparison.Ordinal);
+        Assert.Contains(" + ", sql, StringComparison.Ordinal);
+        Assert.Contains(" * ", sql, StringComparison.Ordinal);
+        Assert.Contains(" - ", sql, StringComparison.Ordinal);
+        Assert.Contains(" && ", sql, StringComparison.Ordinal);
+        Assert.Contains(" <-> ", sql, StringComparison.Ordinal);
+        Assert.Contains("(!! ", sql, StringComparison.Ordinal);
+        Assert.Contains("(~ ", sql, StringComparison.Ordinal);
+        Assert.Contains(" & ", sql, StringComparison.Ordinal);
+        Assert.Contains(" | ", sql, StringComparison.Ordinal);
+        Assert.Contains(" -> ", sql, StringComparison.Ordinal);
+        Assert.Contains(" ->> ", sql, StringComparison.Ordinal);
+        Assert.Contains(" #> ", sql, StringComparison.Ordinal);
+        Assert.Contains(" #>> ", sql, StringComparison.Ordinal);
+        Assert.Contains(" #- ", sql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Geometric_predicate_and_value_operators_translate_with_exact_tokens()
+    {
+        using var context = CreateContext();
+        var point = new BlueTuskPoint(0, 0);
+        var otherPoint = new BlueTuskPoint(3, 4);
+        var segment = new BlueTuskLineSegment(point, otherPoint);
+        var otherSegment = new BlueTuskLineSegment(new BlueTuskPoint(0, 4), new BlueTuskPoint(3, 0));
+        var line = new BlueTuskLine(1, 0, 0);
+        var otherLine = new BlueTuskLine(0, 1, 0);
+        var box = new BlueTuskBox(point, otherPoint);
+        var otherBox = new BlueTuskBox(new BlueTuskPoint(2, 2), new BlueTuskPoint(5, 5));
+        var path = new BlueTuskPath([point, otherPoint], isClosed: false);
+        var otherPath = new BlueTuskPath([new BlueTuskPoint(4, 0), point], isClosed: false);
+        var polygon = new BlueTuskPolygon([point, new BlueTuskPoint(4, 0), new BlueTuskPoint(0, 4)]);
+        var circle = new BlueTuskCircle(point, 5);
+
+        var predicateSql = context.Documents
+            .Where(_ =>
+                EF.Functions.GeometryIsStrictlyLeftOf(point, otherPoint)
+                || EF.Functions.GeometryIsStrictlyRightOf(otherBox, box)
+                || EF.Functions.GeometryIsStrictlyBelow(point, otherPoint)
+                || EF.Functions.GeometryIsStrictlyAbove(otherPoint, point)
+                || EF.Functions.GeometryDoesNotExtendRightOf(box, otherBox)
+                || EF.Functions.GeometryDoesNotExtendLeftOf(otherBox, box)
+                || EF.Functions.GeometryDoesNotExtendAbove(box, otherBox)
+                || EF.Functions.GeometryDoesNotExtendBelow(otherBox, box)
+                || EF.Functions.GeometryOverlaps(box, otherBox)
+                || EF.Functions.GeometrySameAs(point, point)
+                || EF.Functions.GeometryEqual(box, box)
+                || EF.Functions.GeometryNotEqual(point, otherPoint)
+                || EF.Functions.GeometryLessThan(box, otherBox)
+                || EF.Functions.GeometryLessThanOrEqual(box, otherBox)
+                || EF.Functions.GeometryGreaterThan(otherBox, box)
+                || EF.Functions.GeometryGreaterThanOrEqual(otherBox, box)
+                || EF.Functions.GeometryContains(polygon, point)
+                || EF.Functions.GeometryContainedBy(point, circle)
+                || EF.Functions.GeometryIntersects(segment, otherSegment)
+                || EF.Functions.GeometryIsPerpendicular(line, otherLine)
+                || EF.Functions.GeometryIsParallel(line, line)
+                || EF.Functions.GeometryIsHorizontal(segment)
+                || EF.Functions.GeometryIsHorizontal(point, otherPoint)
+                || EF.Functions.GeometryIsVertical(line))
+            .ToQueryString();
+        var valueSql = context.Documents
+            .Select(_ => new
+            {
+                Distance = EF.Functions.GeometryDistance(point, path),
+                Intersection = EF.Functions.GeometryIntersection(segment, otherSegment),
+                Closest = EF.Functions.GeometryClosestPoint(point, segment),
+                Add = EF.Functions.PointAdd(point, otherPoint),
+                Subtract = EF.Functions.PointSubtract(point, otherPoint),
+                Multiply = EF.Functions.PointMultiply(point, otherPoint),
+                Divide = EF.Functions.PointDivide(otherPoint, new BlueTuskPoint(1, 1)),
+                PathTranslate = EF.Functions.PathTranslate(path, otherPoint),
+                PathTranslateNegative = EF.Functions.PathTranslateNegative(path, otherPoint),
+                PathScale = EF.Functions.PathScale(path, otherPoint),
+                PathScaleInverse = EF.Functions.PathScaleInverse(path, new BlueTuskPoint(1, 1)),
+                PathConcat = EF.Functions.PathConcatenate(path, otherPath),
+                BoxTranslate = EF.Functions.BoxTranslate(box, otherPoint),
+                BoxScale = EF.Functions.BoxScale(box, otherPoint),
+                CircleTranslate = EF.Functions.CircleTranslate(circle, otherPoint),
+                CircleScale = EF.Functions.CircleScale(circle, otherPoint),
+            })
+            .ToQueryString();
+
+        foreach (var token in new[]
+                 {
+                     " << ", " >> ", " <<| ", " |>> ", " &< ", " &> ", " &<| ", " |&> ",
+                     " && ", " ~= ", " = ", " <> ", " < ", " <= ", " > ", " >= ", " @> ", " <@ ",
+                     " ?# ", " ?-| ", " ?|| ", "(?- ", " ?- ", "(?| ",
+                 })
+        {
+            Assert.Contains(token, predicateSql, StringComparison.Ordinal);
+        }
+
+        foreach (var token in new[] { " <-> ", " # ", " ## ", " + ", " - ", " * ", " / " })
+        {
+            Assert.Contains(token, valueSql, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
     public async Task PostgreSQL_native_operators_execute_with_typed_parameters()
     {
         var connectionString = GetConnectionString();
@@ -445,6 +608,184 @@ public sealed class PostgreSqlOperatorTranslationTests
                     && EF.Functions.FullTextMatches(document.SearchVector, textSearchQuery)
                     && EF.Functions.FullTextQueryContains(textSearchQuery, textSearchQuery)
                     && EF.Functions.FullTextQueryContainedBy(textSearchQuery, textSearchQuery)));
+
+            var leftNumbers = new[] { 1, 2 };
+            var rightNumbers = new[] { 3, 4 };
+            var scalarLeftRange = new BlueTuskRange<int>(1, 5);
+            var scalarRightRange = new BlueTuskRange<int>(4, 8);
+            var scalarLeftMultirange = new BlueTuskMultirange<int>([scalarLeftRange]);
+            var scalarRightMultirange = new BlueTuskMultirange<int>([scalarRightRange]);
+            var leftQuery = BlueTuskTextSearchQuery.Parse("'blue'");
+            var rightQuery = BlueTuskTextSearchQuery.Parse("'tusk'");
+            var leftVector = BlueTuskTextSearchVector.Parse("'blue':1");
+            var rightVector = BlueTuskTextSearchVector.Parse("'tusk':1");
+            var scalarNetwork = BlueTuskNetworkAddress.Parse("10.0.0.4/24");
+            var netmask = BlueTuskNetworkAddress.Parse("255.255.255.0");
+            var deletePath = new[] { "a", "b" };
+            var bits = new BlueTuskBitString("101");
+            var otherBits = new BlueTuskBitString("011");
+            var scalarValues = await context.Documents
+                .Select(_ => new
+                {
+                    ArrayConcat = EF.Functions.ArrayConcatenate(leftNumbers, rightNumbers),
+                    ArrayAppend = EF.Functions.ArrayAppend(leftNumbers, 3),
+                    ArrayPrepend = EF.Functions.ArrayPrepend(0, leftNumbers),
+                    RangeUnion = EF.Functions.RangeUnion(scalarLeftRange, scalarRightRange),
+                    RangeIntersect = EF.Functions.RangeIntersect(scalarLeftRange, scalarRightRange),
+                    RangeExcept = EF.Functions.RangeExcept(scalarLeftRange, scalarRightRange),
+                    MultirangeUnion = EF.Functions.MultirangeUnion(
+                        scalarLeftMultirange,
+                        scalarRightMultirange),
+                    MultirangeIntersect = EF.Functions.MultirangeIntersect(
+                        scalarLeftMultirange,
+                        scalarRightMultirange),
+                    MultirangeExcept = EF.Functions.MultirangeExcept(
+                        scalarLeftMultirange,
+                        scalarRightMultirange),
+                    JsonConcat = EF.Functions.JsonConcatenate("{\"left\":1}", "{\"right\":2}"),
+                    JsonDeleteKey = EF.Functions.JsonDelete("{\"keep\":1,\"drop\":2}", "drop"),
+                    JsonDeleteIndex = EF.Functions.JsonDelete("[1,2]", 0),
+                    JsonDeletePath = EF.Functions.JsonDeletePath(
+                        "{\"a\":{\"b\":1,\"c\":2}}",
+                        deletePath),
+                    JsonGet = EF.Functions.JsonGet("{\"a\":1}", "a"),
+                    JsonGetIndex = EF.Functions.JsonGet("[1,2]", 1),
+                    JsonGetText = EF.Functions.JsonGetText("{\"a\":1}", "a"),
+                    JsonGetIndexText = EF.Functions.JsonGetText("[1,2]", 1),
+                    JsonGetPath = EF.Functions.JsonGetPath("{\"a\":{\"b\":1}}", deletePath),
+                    JsonGetPathText = EF.Functions.JsonGetPathText(
+                        "{\"a\":{\"b\":1}}",
+                        deletePath),
+                    VectorConcat = EF.Functions.FullTextVectorConcatenate(leftVector, rightVector),
+                    QueryAnd = EF.Functions.FullTextQueryAnd(leftQuery, rightQuery),
+                    QueryOr = EF.Functions.FullTextQueryOr(leftQuery, rightQuery),
+                    QueryPhrase = EF.Functions.FullTextQueryPhrase(leftQuery, rightQuery),
+                    QueryNot = EF.Functions.FullTextQueryNot(leftQuery),
+                    NetworkNot = EF.Functions.NetworkBitwiseNot(scalarNetwork),
+                    NetworkAnd = EF.Functions.NetworkBitwiseAnd(scalarNetwork, netmask),
+                    NetworkOr = EF.Functions.NetworkBitwiseOr(scalarNetwork, netmask),
+                    NetworkAdd = EF.Functions.NetworkAdd(scalarNetwork, 2),
+                    ReverseNetworkAdd = EF.Functions.NetworkAdd(2, scalarNetwork),
+                    NetworkSubtract = EF.Functions.NetworkSubtract(scalarNetwork, 2),
+                    NetworkDistance = EF.Functions.NetworkDistance(scalarNetwork, scalarNetwork),
+                    BitConcat = EF.Functions.BitStringConcatenate(bits, otherBits),
+                    BitAnd = EF.Functions.BitStringAnd(bits, otherBits),
+                    BitOr = EF.Functions.BitStringOr(bits, otherBits),
+                    BitXor = EF.Functions.BitStringXor(bits, otherBits),
+                    BitNot = EF.Functions.BitStringNot(bits),
+                    BitShiftLeft = EF.Functions.BitStringShiftLeft(bits, 1),
+                    BitShiftRight = EF.Functions.BitStringShiftRight(bits, 1),
+                })
+                .SingleAsync();
+
+            Assert.Equal([1, 2, 3, 4], scalarValues.ArrayConcat);
+            Assert.Equal([1, 2, 3], scalarValues.ArrayAppend);
+            Assert.Equal([0, 1, 2], scalarValues.ArrayPrepend);
+            Assert.Equal(new BlueTuskRange<int>(1, 8), scalarValues.RangeUnion);
+            Assert.Equal(new BlueTuskRange<int>(4, 5), scalarValues.RangeIntersect);
+            Assert.Equal(new BlueTuskRange<int>(1, 4), scalarValues.RangeExcept);
+            Assert.Equal("{\"left\": 1, \"right\": 2}", scalarValues.JsonConcat);
+            Assert.Equal("{\"keep\": 1}", scalarValues.JsonDeleteKey);
+            Assert.Equal("[2]", scalarValues.JsonDeleteIndex);
+            Assert.Equal("{\"a\": {\"c\": 2}}", scalarValues.JsonDeletePath);
+            Assert.Equal("1", scalarValues.JsonGet);
+            Assert.Equal("2", scalarValues.JsonGetIndex);
+            Assert.Equal("1", scalarValues.JsonGetText);
+            Assert.Equal("2", scalarValues.JsonGetIndexText);
+            Assert.Equal("1", scalarValues.JsonGetPath);
+            Assert.Equal("1", scalarValues.JsonGetPathText);
+            Assert.Equal(0, scalarValues.NetworkDistance);
+            Assert.Equal("10.0.0.6/24", scalarValues.NetworkAdd.ToString());
+            Assert.Equal(scalarValues.NetworkAdd, scalarValues.ReverseNetworkAdd);
+            Assert.Equal("10.0.0.2/24", scalarValues.NetworkSubtract.ToString());
+            Assert.Equal("101011", scalarValues.BitConcat.ToString());
+            Assert.Equal("001", scalarValues.BitAnd.ToString());
+            Assert.Equal("111", scalarValues.BitOr.ToString());
+            Assert.Equal("110", scalarValues.BitXor.ToString());
+            Assert.Equal("010", scalarValues.BitNot.ToString());
+            Assert.Equal("010", scalarValues.BitShiftLeft.ToString());
+            Assert.Equal("010", scalarValues.BitShiftRight.ToString());
+
+            var origin = new BlueTuskPoint(0, 0);
+            var threeFour = new BlueTuskPoint(3, 4);
+            var horizontal = new BlueTuskLineSegment(origin, new BlueTuskPoint(4, 0));
+            var vertical = new BlueTuskLineSegment(new BlueTuskPoint(2, -2), new BlueTuskPoint(2, 2));
+            var parallel = new BlueTuskLineSegment(new BlueTuskPoint(0, 1), new BlueTuskPoint(4, 1));
+            var xAxis = new BlueTuskLine(0, 1, 0);
+            var yAxis = new BlueTuskLine(1, 0, 0);
+            var lowerLeftBox = new BlueTuskBox(new BlueTuskPoint(-4, -4), new BlueTuskPoint(-2, -2));
+            var upperRightBox = new BlueTuskBox(new BlueTuskPoint(2, 2), new BlueTuskPoint(4, 4));
+            var overlappingBox = new BlueTuskBox(new BlueTuskPoint(3, 3), new BlueTuskPoint(5, 5));
+            var smallBox = new BlueTuskBox(origin, new BlueTuskPoint(1, 1));
+            var largeBox = new BlueTuskBox(origin, new BlueTuskPoint(4, 4));
+            var path = new BlueTuskPath([origin, threeFour], isClosed: false);
+            var otherPath = new BlueTuskPath([threeFour, new BlueTuskPoint(5, 5)], isClosed: false);
+            Assert.Equal(
+                1,
+                await context.Documents.CountAsync(_ =>
+                    EF.Functions.GeometryIsStrictlyLeftOf(lowerLeftBox, upperRightBox)
+                    && EF.Functions.GeometryIsStrictlyRightOf(upperRightBox, lowerLeftBox)
+                    && EF.Functions.GeometryIsStrictlyBelow(lowerLeftBox, upperRightBox)
+                    && EF.Functions.GeometryIsStrictlyAbove(upperRightBox, lowerLeftBox)
+                    && EF.Functions.GeometryDoesNotExtendRightOf(lowerLeftBox, upperRightBox)
+                    && EF.Functions.GeometryDoesNotExtendLeftOf(upperRightBox, lowerLeftBox)
+                    && EF.Functions.GeometryDoesNotExtendAbove(lowerLeftBox, upperRightBox)
+                    && EF.Functions.GeometryDoesNotExtendBelow(upperRightBox, lowerLeftBox)
+                    && EF.Functions.GeometryOverlaps(upperRightBox, overlappingBox)
+                    && EF.Functions.GeometrySameAs(origin, origin)
+                    && EF.Functions.GeometryEqual(upperRightBox, upperRightBox)
+                    && EF.Functions.GeometryNotEqual(origin, threeFour)
+                    && EF.Functions.GeometryLessThan(smallBox, largeBox)
+                    && EF.Functions.GeometryLessThanOrEqual(smallBox, largeBox)
+                    && EF.Functions.GeometryGreaterThan(largeBox, smallBox)
+                    && EF.Functions.GeometryGreaterThanOrEqual(largeBox, smallBox)
+                    && EF.Functions.GeometryContains(upperRightBox, threeFour)
+                    && EF.Functions.GeometryContainedBy(threeFour, upperRightBox)
+                    && EF.Functions.GeometryIntersects(horizontal, vertical)
+                    && EF.Functions.GeometryIsPerpendicular(horizontal, vertical)
+                    && EF.Functions.GeometryIsParallel(horizontal, parallel)
+                    && EF.Functions.GeometryIsHorizontal(horizontal)
+                    && EF.Functions.GeometryIsHorizontal(origin, new BlueTuskPoint(4, 0))
+                    && EF.Functions.GeometryIsVertical(vertical)));
+
+            var geometricValues = await context.Documents
+                .Select(_ => new
+                {
+                    Distance = EF.Functions.GeometryDistance(origin, threeFour),
+                    SegmentIntersection = EF.Functions.GeometryIntersection(horizontal, vertical),
+                    LineIntersection = EF.Functions.GeometryIntersection(xAxis, yAxis),
+                    Closest = EF.Functions.GeometryClosestPoint(threeFour, horizontal),
+                    Add = EF.Functions.PointAdd(origin, threeFour),
+                    Subtract = EF.Functions.PointSubtract(threeFour, new BlueTuskPoint(1, 1)),
+                    Multiply = EF.Functions.PointMultiply(threeFour, new BlueTuskPoint(2, 2)),
+                    Divide = EF.Functions.PointDivide(threeFour, new BlueTuskPoint(3, 2)),
+                    PathTranslate = EF.Functions.PathTranslate(path, new BlueTuskPoint(1, 1)),
+                    PathTranslateNegative = EF.Functions.PathTranslateNegative(
+                        path,
+                        new BlueTuskPoint(1, 1)),
+                    PathScale = EF.Functions.PathScale(path, new BlueTuskPoint(2, 2)),
+                    PathScaleInverse = EF.Functions.PathScaleInverse(path, new BlueTuskPoint(2, 2)),
+                    PathConcat = EF.Functions.PathConcatenate(path, otherPath),
+                    BoxTranslate = EF.Functions.BoxTranslate(upperRightBox, new BlueTuskPoint(1, 1)),
+                    BoxScale = EF.Functions.BoxScale(upperRightBox, new BlueTuskPoint(2, 2)),
+                    CircleTranslate = EF.Functions.CircleTranslate(
+                        new BlueTuskCircle(origin, 2),
+                        new BlueTuskPoint(1, 1)),
+                    CircleScale = EF.Functions.CircleScale(
+                        new BlueTuskCircle(origin, 2),
+                        new BlueTuskPoint(2, 2)),
+                })
+                .SingleAsync();
+
+            Assert.Equal(5, geometricValues.Distance);
+            Assert.Equal(new BlueTuskPoint(2, 0), geometricValues.SegmentIntersection);
+            Assert.Equal(origin, geometricValues.LineIntersection);
+            Assert.Equal(new BlueTuskPoint(3, 0), geometricValues.Closest);
+            Assert.Equal(threeFour, geometricValues.Add);
+            Assert.Equal(new BlueTuskPoint(2, 3), geometricValues.Subtract);
+            Assert.Equal(new BlueTuskPoint(-2, 14), geometricValues.Multiply);
+            Assert.Equal(17d / 13, geometricValues.Divide.X, precision: 10);
+            Assert.Equal(6d / 13, geometricValues.Divide.Y, precision: 10);
         }
         finally
         {
