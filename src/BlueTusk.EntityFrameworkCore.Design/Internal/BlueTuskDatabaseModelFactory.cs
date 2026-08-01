@@ -5,6 +5,8 @@ using BlueTusk.Data.Schema;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
+using BlueTusk.EntityFrameworkCore.Partitioning;
+using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -65,6 +67,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         ReadConstraints(connection, tables);
         ReadIndexes(connection, tables);
         ReadForeignKeys(connection, tables);
+        ReadPartitioning(connection, tables);
         ReadSequences(connection, model, selection);
         ReadPropertyGraphs(connection, model, selection);
         return model;
@@ -106,6 +109,7 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             FROM pg_catalog.pg_class AS c
             JOIN pg_catalog.pg_namespace AS n ON n.oid = c.relnamespace
             WHERE c.relkind IN ('r', 'p', 'v', 'm')
+              AND NOT c.relispartition
               AND n.nspname NOT IN ('pg_catalog', 'information_schema')
               AND n.nspname !~ '^pg_toast'
             ORDER BY n.nspname, c.relname
@@ -146,6 +150,113 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
         }
 
         return tables;
+    }
+
+    private static void ReadPartitioning(
+        DbConnection connection,
+        Dictionary<(string Schema, string Name), DatabaseTable> tables)
+    {
+        const string sql = """
+            SELECT parent_namespace.nspname,
+                   parent.relname,
+                   child_namespace.nspname,
+                   child.relname,
+                   pg_catalog.pg_get_partkeydef(parent.oid),
+                   pg_catalog.pg_get_expr(child.relpartbound, child.oid, true)
+            FROM pg_catalog.pg_class AS parent
+            JOIN pg_catalog.pg_namespace AS parent_namespace ON parent_namespace.oid = parent.relnamespace
+            LEFT JOIN pg_catalog.pg_inherits AS inheritance ON inheritance.inhparent = parent.oid
+            LEFT JOIN pg_catalog.pg_class AS child
+                ON child.oid = inheritance.inhrelid AND child.relispartition
+            LEFT JOIN pg_catalog.pg_namespace AS child_namespace ON child_namespace.oid = child.relnamespace
+            WHERE parent.relkind = 'p'
+              AND parent_namespace.nspname NOT IN ('pg_catalog', 'information_schema')
+              AND parent_namespace.nspname !~ '^pg_toast'
+            ORDER BY parent_namespace.nspname, parent.relname, child_namespace.nspname, child.relname
+            """;
+
+        var relationships = new List<PartitionRelationship>();
+        var keys = new Dictionary<(string Schema, string Name), PartitionKey>();
+        using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        using var reader = command.ExecuteReader();
+        while (reader.Read())
+        {
+            var parent = (Schema: reader.GetString(0), Name: reader.GetString(1));
+            var key = ParsePartitionKey(reader.GetString(4));
+            if (keys.TryGetValue(parent, out var existing) && existing != key)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL returned inconsistent partition keys for '{parent.Schema}.{parent.Name}'.");
+            }
+
+            keys[parent] = key;
+            if (!reader.IsDBNull(2))
+            {
+                relationships.Add(new PartitionRelationship(
+                    parent,
+                    (reader.GetString(2), reader.GetString(3)),
+                    reader.GetString(5)));
+            }
+        }
+
+        var childrenByParent = relationships
+            .GroupBy(relationship => relationship.Parent)
+            .ToDictionary(group => group.Key, group => group.ToArray());
+        foreach (var (root, table) in tables)
+        {
+            if (!keys.TryGetValue(root, out var key))
+            {
+                continue;
+            }
+
+            table[BlueTuskPartitionMetadata.AnnotationName] = BlueTuskPartitionMetadata.Serialize(
+                BuildPartitioning(root, key, keys, childrenByParent));
+        }
+    }
+
+    private static BlueTuskPartitioningDefinition BuildPartitioning(
+        (string Schema, string Name) table,
+        PartitionKey key,
+        IReadOnlyDictionary<(string Schema, string Name), PartitionKey> keys,
+        IReadOnlyDictionary<(string Schema, string Name), PartitionRelationship[]> childrenByParent)
+    {
+        var partitions = childrenByParent.TryGetValue(table, out var children)
+            ? children.Select(child => new BlueTuskPartitionDefinition(
+                    child.Child.Name,
+                    child.Child.Schema,
+                    BlueTuskPartitionBound.FromSql(child.BoundSql),
+                    keys.TryGetValue(child.Child, out var childKey)
+                        ? BuildPartitioning(child.Child, childKey, keys, childrenByParent)
+                        : null))
+                .OrderBy(partition => partition.Schema, StringComparer.Ordinal)
+                .ThenBy(partition => partition.Name, StringComparer.Ordinal)
+                .ToArray()
+            : Array.Empty<BlueTuskPartitionDefinition>();
+        return new BlueTuskPartitioningDefinition(key.Strategy, [], partitions, key.Sql);
+    }
+
+    private static PartitionKey ParsePartitionKey(string definition)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(definition);
+        var openingParenthesis = definition.IndexOf('(');
+        var closingParenthesis = definition.LastIndexOf(')');
+        if (openingParenthesis <= 0 || closingParenthesis <= openingParenthesis)
+        {
+            throw new InvalidOperationException($"PostgreSQL returned an invalid partition key: '{definition}'.");
+        }
+
+        var strategy = definition[..openingParenthesis].Trim().ToUpperInvariant() switch
+        {
+            "RANGE" => BlueTuskPartitionStrategy.Range,
+            "LIST" => BlueTuskPartitionStrategy.List,
+            "HASH" => BlueTuskPartitionStrategy.Hash,
+            var value => throw new InvalidOperationException(
+                $"PostgreSQL returned an unknown partition strategy '{value}'."),
+        };
+        return new PartitionKey(
+            strategy,
+            definition[(openingParenthesis + 1)..closingParenthesis]);
     }
 
     private static void ReadColumns(
@@ -681,6 +792,13 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             "r" => ReferentialAction.Restrict,
             _ => ReferentialAction.NoAction,
         };
+
+    private readonly record struct PartitionRelationship(
+        (string Schema, string Name) Parent,
+        (string Schema, string Name) Child,
+        string BoundSql);
+
+    private readonly record struct PartitionKey(BlueTuskPartitionStrategy Strategy, string Sql);
 
     private sealed class Selection
     {

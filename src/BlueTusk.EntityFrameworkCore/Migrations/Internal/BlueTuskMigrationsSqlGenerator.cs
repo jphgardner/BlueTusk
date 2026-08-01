@@ -2,6 +2,8 @@ using System.Text;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
+using BlueTusk.EntityFrameworkCore.Partitioning;
+using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
@@ -23,6 +25,21 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
+            case CreateBlueTuskPartitionOperation createPartition:
+                Generate(createPartition, builder);
+                break;
+            case DropBlueTuskPartitionOperation dropPartition:
+                Generate(dropPartition, builder);
+                break;
+            case AlterBlueTuskPartitionOperation alterPartition:
+                Generate(alterPartition, builder);
+                break;
+            case AttachBlueTuskPartitionOperation attachPartition:
+                Generate(attachPartition, builder);
+                break;
+            case DetachBlueTuskPartitionOperation detachPartition:
+                Generate(detachPartition, builder);
+                break;
             case CreateBlueTuskPropertyGraphOperation create:
                 Generate(create, builder);
                 break;
@@ -36,6 +53,56 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 base.Generate(operation, model, builder);
                 break;
         }
+    }
+
+    protected override void Generate(
+        CreateTableOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder,
+        bool terminate = true)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(builder);
+        builder
+            .Append("CREATE TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema))
+            .AppendLine(" (");
+        using (builder.Indent())
+        {
+            CreateTableColumns(operation, model, builder);
+            CreateTableConstraints(operation, model, builder);
+            builder.AppendLine();
+        }
+
+        builder.Append(")");
+        if (operation[BlueTuskPartitionMetadata.AnnotationName] is string serializedDefinition)
+        {
+            AppendPartitioningClause(builder, BlueTuskPartitionMetadata.Deserialize(serializedDefinition));
+        }
+
+        if (terminate)
+        {
+            EndStatement(builder);
+        }
+    }
+
+    protected override void Generate(
+        AlterTableOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(builder);
+        var current = operation[BlueTuskPartitionMetadata.AnnotationName] as string;
+        var previous = operation.OldTable[BlueTuskPartitionMetadata.AnnotationName] as string;
+        if (!string.Equals(current, previous, StringComparison.Ordinal))
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL cannot change partition strategy or keys for table '{operation.Schema}.{operation.Name}' in place. " +
+                "Create an explicit data-preserving replacement migration.");
+        }
+
+        base.Generate(operation, model, builder);
     }
 
     protected override void Generate(
@@ -478,6 +545,227 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             }
 
             builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(parts[index]));
+        }
+    }
+
+    private void Generate(
+        CreateBlueTuskPartitionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
+        ArgumentNullException.ThrowIfNull(operation.Definition);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Definition.Name);
+        builder
+            .Append("CREATE TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                operation.Definition.Name,
+                operation.Definition.Schema))
+            .Append(" PARTITION OF ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                operation.ParentName,
+                operation.ParentSchema))
+            .Append(" ");
+        AppendPartitionBound(builder, operation.Definition.Bound);
+        if (operation.Definition.Partitioning is { } subpartitioning)
+        {
+            AppendPartitioningClause(builder, subpartitioning);
+        }
+
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DropBlueTuskPartitionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        builder
+            .Append("DROP TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema));
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        AlterBlueTuskPartitionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
+        var helper = Dependencies.SqlGenerationHelper;
+        var currentName = operation.Name;
+        var currentSchema = operation.Schema;
+        if (!string.Equals(operation.Name, operation.NewName, StringComparison.Ordinal))
+        {
+            builder
+                .Append("ALTER TABLE ")
+                .Append(helper.DelimitIdentifier(currentName, currentSchema))
+                .Append(" RENAME TO ")
+                .Append(helper.DelimitIdentifier(operation.NewName));
+            EndStatement(builder);
+            currentName = operation.NewName;
+        }
+
+        if (operation.NewSchema is not null &&
+            !string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
+        {
+            builder
+                .Append("ALTER TABLE ")
+                .Append(helper.DelimitIdentifier(currentName, currentSchema))
+                .Append(" SET SCHEMA ")
+                .Append(helper.DelimitIdentifier(operation.NewSchema));
+            EndStatement(builder);
+        }
+    }
+
+    private void Generate(
+        AttachBlueTuskPartitionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.PartitionName);
+        ArgumentNullException.ThrowIfNull(operation.Bound);
+        builder
+            .Append("ALTER TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                operation.ParentName,
+                operation.ParentSchema))
+            .Append(" ATTACH PARTITION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                operation.PartitionName,
+                operation.PartitionSchema))
+            .Append(" ");
+        AppendPartitionBound(builder, operation.Bound);
+        EndStatement(builder);
+    }
+
+    private void Generate(
+        DetachBlueTuskPartitionOperation operation,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operation.PartitionName);
+        builder
+            .Append("ALTER TABLE ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                operation.ParentName,
+                operation.ParentSchema))
+            .Append(" DETACH PARTITION ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                operation.PartitionName,
+                operation.PartitionSchema));
+        builder.Append(operation.Mode switch
+        {
+            BlueTuskPartitionDetachMode.Normal => string.Empty,
+            BlueTuskPartitionDetachMode.Concurrently => " CONCURRENTLY",
+            BlueTuskPartitionDetachMode.Finalize => " FINALIZE",
+            _ => throw new InvalidOperationException($"Unknown partition detach mode '{operation.Mode}'."),
+        });
+        if (operation.Mode == BlueTuskPartitionDetachMode.Concurrently)
+        {
+            EndIndexStatement(builder, suppressTransaction: true);
+        }
+        else
+        {
+            EndStatement(builder);
+        }
+    }
+
+    private void AppendPartitioningClause(
+        MigrationCommandListBuilder builder,
+        BlueTuskPartitioningDefinition definition)
+    {
+        BlueTuskPartitioningBuilder.ValidateDefinition(definition);
+        builder.Append(" PARTITION BY ").Append(definition.Strategy switch
+        {
+            BlueTuskPartitionStrategy.Range => "RANGE",
+            BlueTuskPartitionStrategy.List => "LIST",
+            BlueTuskPartitionStrategy.Hash => "HASH",
+            _ => throw new InvalidOperationException($"Unknown partition strategy '{definition.Strategy}'."),
+        }).Append(" (");
+        if (!string.IsNullOrWhiteSpace(definition.KeySql))
+        {
+            builder.Append(definition.KeySql);
+        }
+        else
+        {
+            for (var index = 0; index < definition.Keys.Count; index++)
+            {
+                if (index > 0)
+                {
+                    builder.Append(", ");
+                }
+
+                var key = definition.Keys[index];
+                if (key.IsColumn)
+                {
+                    builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(key.Expression));
+                }
+                else
+                {
+                    builder.Append("(").Append(key.Expression).Append(")");
+                }
+
+                if (key.Collation is not null)
+                {
+                    builder.Append(" COLLATE ");
+                    AppendQualifiedIdentifier(builder, key.Collation);
+                }
+
+                if (key.OperatorClass is not null)
+                {
+                    builder.Append(" ");
+                    AppendQualifiedIdentifier(builder, key.OperatorClass);
+                }
+            }
+        }
+
+        builder.Append(")");
+    }
+
+    private static void AppendPartitionBound(
+        MigrationCommandListBuilder builder,
+        BlueTuskPartitionBound bound)
+    {
+        ArgumentNullException.ThrowIfNull(bound);
+        switch (bound.Kind)
+        {
+            case BlueTuskPartitionBoundKind.Range:
+                builder.Append("FOR VALUES FROM (")
+                    .Append(string.Join(", ", bound.From))
+                    .Append(") TO (")
+                    .Append(string.Join(", ", bound.To))
+                    .Append(")");
+                break;
+            case BlueTuskPartitionBoundKind.List:
+                builder.Append("FOR VALUES IN (");
+                for (var index = 0; index < bound.Values.Length; index++)
+                {
+                    if (index > 0)
+                    {
+                        builder.Append(", ");
+                    }
+
+                    var tuple = bound.Values[index];
+                    builder.Append(tuple.Length == 1 ? tuple[0] : $"({string.Join(", ", tuple)})");
+                }
+
+                builder.Append(")");
+                break;
+            case BlueTuskPartitionBoundKind.Hash:
+                builder.Append("FOR VALUES WITH (MODULUS ")
+                    .Append(bound.Modulus.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                    .Append(", REMAINDER ")
+                    .Append(bound.Remainder.ToString(System.Globalization.CultureInfo.InvariantCulture))
+                    .Append(")");
+                break;
+            case BlueTuskPartitionBoundKind.Default:
+                builder.Append("DEFAULT");
+                break;
+            case BlueTuskPartitionBoundKind.Sql:
+                builder.Append(bound.Sql!);
+                break;
+            default:
+                throw new InvalidOperationException($"Unknown partition bound kind '{bound.Kind}'.");
         }
     }
 

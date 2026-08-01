@@ -522,7 +522,80 @@ therefore not a supported deployment path for migrations containing concurrent
 indexes; run normal EF migrations or use non-concurrent index DDL until the
 version-aware/idempotent DDL milestone is complete.
 
-PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext EF package also provides explicit `EnsureBlueTuskCitext` and `DropBlueTuskCitext` migration operations. Other PostgreSQL-specific schema features such as enum types, table partitioning, and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+### Declarative table partitioning
+
+Partition trees are part of the EF model rather than a collection of unrelated
+tables. RANGE, LIST, and HASH roots, default partitions, and recursive
+subpartitions use the same metadata in create scripts, migration diffs,
+snapshots, and reverse-engineered models:
+
+```csharp
+modelBuilder.Entity<Event>()
+    .HasBlueTuskRangePartitioning(item => item.OccurredOn)
+    .HasRangePartition(
+        "events_2025",
+        BlueTuskPartitionValue.Literal(new DateOnly(2025, 1, 1)),
+        BlueTuskPartitionValue.Literal(new DateOnly(2026, 1, 1)))
+    .HasRangePartition(
+        "events_2026",
+        BlueTuskPartitionValue.Literal(new DateOnly(2026, 1, 1)),
+        BlueTuskPartitionValue.Literal(new DateOnly(2027, 1, 1)))
+    .HasDefaultPartition("events_default")
+    .HasSubpartitioning(
+        "events_2026",
+        BlueTuskPartitionStrategy.Hash,
+        [BlueTuskPartitionKeyDefinition.Column(nameof(Event.TenantId))],
+        child => child
+            .HasHashPartition("events_2026_0", modulus: 2, remainder: 0)
+            .HasHashPartition("events_2026_1", modulus: 2, remainder: 1));
+```
+
+The property-expression helpers resolve EF property names to their mapped
+column names. Explicit keys may be columns or fixed trusted SQL expressions,
+with optional schema-qualified collation and operator-class identifiers. LIST
+partitioning accepts one key, matching PostgreSQL's restriction; RANGE and HASH
+may use multiple keys. Typed bound values cover strings, Booleans, integral and
+decimal numbers, dates, timestamps with time zone, UUIDs, `NULL`, `MINVALUE`,
+and `MAXVALUE`. `BlueTuskPartitionValue.FromSql` and
+`BlueTuskPartitionBound.FromSql` are deliberate escape hatches for fixed model
+metadata and must never receive request data or other user input.
+
+Migration diffing creates new partition trees and emits add, drop, rename, and
+schema-move operations for children. Changing a bound replaces that partition
+with a destructive drop/create pair. PostgreSQL cannot convert an existing
+table to a different partition strategy or key in place, so BlueTusk reports a
+diagnostic requiring an explicit data-preserving replacement migration instead
+of silently rebuilding the table.
+
+Existing compatible tables can be attached and partitions can be detached from
+manual migrations:
+
+```csharp
+migrationBuilder.AttachBlueTuskPartition(
+    "events",
+    "events_2027",
+    BlueTuskPartitionBound.Range(
+        BlueTuskPartitionValue.Literal(new DateOnly(2027, 1, 1)),
+        BlueTuskPartitionValue.Literal(new DateOnly(2028, 1, 1))),
+    parentSchema: "application",
+    partitionSchema: "application");
+
+migrationBuilder.DetachBlueTuskPartition(
+    "events",
+    "events_2027",
+    BlueTuskPartitionDetachMode.Concurrently,
+    parentSchema: "application",
+    partitionSchema: "application");
+```
+
+Concurrent detach is emitted as a transaction-suppressed migration command.
+PostgreSQL does not permit it when the partitioned table has a default
+partition, and interrupted concurrent detaches may require the `Finalize` mode.
+Attaching a new partition may also require validating or constraining existing
+rows in its table and the current default partition; plan those data steps in
+the migration before the attach operation.
+
+PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext EF package also provides explicit `EnsureBlueTuskCitext` and `DropBlueTuskCitext` migration operations. Other PostgreSQL-specific schema features such as enum types and row-level security remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
 
 ## PostgreSQL 19 property-graph queries
 
@@ -552,7 +625,7 @@ in the [SQL/PGQ guide](../graph/README.md).
 
 ## Database-first scaffolding
 
-The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, and PostgreSQL 19 property graphs. Column-based indexes retain their access method, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and predicate; generated contexts use the BlueTusk fluent index APIs for those annotations. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
+The design-time provider integrates with EF Core reverse engineering. It discovers ordinary tables and views, columns and PostgreSQL store types, defaults and generated values, primary and unique keys, foreign keys, indexes, comments, standalone sequences, declarative partition trees, and PostgreSQL 19 property graphs. Column-based indexes retain their access method, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and predicate; generated contexts use the BlueTusk fluent index APIs for those annotations. Partition discovery retains PostgreSQL's exact catalogue key and bound expressions, including empty partitioned tables and recursive subpartitions. Child partitions are represented inside the root's fluent metadata instead of being scaffolded as unrelated EF entities. Graph metadata includes vertex and edge tables, keys, labels, properties, and source/destination column mappings. Sequence metadata is read directly from PostgreSQL's catalogues, avoiding the relation-opening behavior of `pg_sequences` when another session is concurrently changing schema. Schema and table filters are supported, and caller-owned open connections remain open.
 
 ```bash
 dotnet ef dbcontext scaffold \
@@ -563,8 +636,8 @@ dotnet ef dbcontext scaffold \
   --schema public
 ```
 
-Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs are retained through a provider model annotation and participate in later migration diffs. Expression-index creation is supported from model metadata, but expression indexes are not scaffolded yet because EF requires a mapped-property key; PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, partition metadata, policies, and routines—remains a separate roadmap item.
+Generated contexts configure `UseBlueTusk`. Reverse-engineered graphs and partition trees are retained through provider model annotations and participate in later migration diffs. Expression-index creation is supported from model metadata, but expression indexes are not scaffolded yet because EF requires a mapped-property key; PostgreSQL-complete discovery—including extensions, enums, domains, composite and range types, expression indexes, table inheritance, policies, and routines—remains a separate roadmap item.
 
 ## Validation
 
-The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, advanced index creation/deletion and catalogue round-tripping, and database-first C# generation. Advanced index acceptance runs on PostgreSQL 15–19 and verifies expression/partial keys, access methods, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and transaction-suppressed concurrent operations. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, integer/text multi-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair/recordset expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.
+The provider gate runs against PostgreSQL and covers service lifetimes, core and wire-native scalar mappings, generated values and concurrency, CRUD and transactions, common LINQ and compiled queries, raw SQL composition and parameters, tracking modes and identity resolution, split-query includes and relationship fix-up, bulk update/delete, schema creation, migrations and idempotent scripts, advanced index creation/deletion, declarative partition lifecycles, catalogue round-tripping, and database-first C# generation. Advanced index acceptance runs on PostgreSQL 15–19 and verifies expression/partial keys, access methods, operator classes, collations, sort/null ordering, included columns, null-distinctness, storage parameters, and transaction-suppressed concurrent operations. Partition acceptance on the same server matrix verifies RANGE/LIST/HASH DDL, recursive row routing, default partitions, typed bounds, destructive-change diagnostics, exact catalogue discovery, generated fluent C#, and attach/detach operations. The native type gate round-trips network, geometric, bit-string, LSN, arbitrary-numeric, temporal, full-text, JSON/JSONB/XML, JSON-path, array, range, multirange, enum, domain, typed composite, and lossless record values through EF. The PostgreSQL-specific query gate executes parameterized operator predicates, the documented scalar-function subset, typed array/string/boolean/range aggregates, lateral array expansion, typed series and JSONB roots, integer/text multi-array expansion, and model-registered user-defined table functions across PostgreSQL 15–19. Aggregate ordering, `DISTINCT`, and `FILTER`, plus single/multi-array `unnest` filtering, ordinality, nullable elements, null padding, inner/outer lateral composition, standalone/correlated/compiled `generate_series`, JSONB element/key/path/pair/recordset expansion, and schema-qualified typed table-function materialization are covered in generated SQL and live execution; remaining aggregates, set-returning functions, and scalar functions are still in progress.

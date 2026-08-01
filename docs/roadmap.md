@@ -294,7 +294,12 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Included mapped columns, null-distinct unique indexes, and validated storage parameters
   - [x] Transaction-suppressed concurrent create/drop operations
   - [x] Column-based advanced-index catalogue discovery and fluent C# scaffolding
-- [ ] Table partitioning metadata and migrations
+- [x] Table partitioning metadata and migrations
+  - [x] Typed RANGE, single-key LIST, multi-key HASH, expression-key, default-partition, and recursive subpartition metadata
+  - [x] Create/add/drop/rename/schema-move diffs with destructive bound-change and unsupported root-strategy diagnostics
+  - [x] Manual attach and normal/concurrent/finalize detach operations with transaction suppression where PostgreSQL requires it
+  - [x] Exact catalogue key/bound discovery, child-table de-duplication, snapshot retention, and generated fluent C#
+  - [x] PostgreSQL 15–19 row-routing, lifecycle, reverse-engineering, and scaffolding acceptance
 - [ ] Row-level security policies
 - [ ] Enum, domain, and composite type creation and alteration
 - [ ] Functions and procedures

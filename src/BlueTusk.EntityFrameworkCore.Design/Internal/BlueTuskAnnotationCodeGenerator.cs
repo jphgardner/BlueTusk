@@ -1,5 +1,6 @@
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
 using BlueTusk.EntityFrameworkCore.Metadata.Internal;
+using BlueTusk.EntityFrameworkCore.Partitioning.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -61,6 +62,24 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
                     values.Select(value => string.IsNullOrEmpty(value) ? null : value).ToArray()),
             _ => base.GenerateFluentApi(index, annotation),
         };
+    }
+
+    protected override MethodCallCodeFragment? GenerateFluentApi(
+        IEntityType entityType,
+        IAnnotation annotation)
+    {
+        ArgumentNullException.ThrowIfNull(entityType);
+        ArgumentNullException.ThrowIfNull(annotation);
+
+        if (annotation.Name == BlueTuskPartitionMetadata.AnnotationName &&
+            annotation.Value is string serializedDefinition)
+        {
+            return new MethodCallCodeFragment(
+                nameof(BlueTuskPartitioningBuilderExtensions.HasBlueTuskPartitioning),
+                serializedDefinition);
+        }
+
+        return base.GenerateFluentApi(entityType, annotation);
     }
 
     private static MethodCallCodeFragment Fragment(string method, string?[] arguments) =>
