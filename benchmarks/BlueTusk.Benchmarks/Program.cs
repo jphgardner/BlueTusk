@@ -1,3 +1,4 @@
+using BenchmarkDotNet.Attributes;
 using BenchmarkDotNet.Columns;
 using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
@@ -27,6 +28,29 @@ var configuration = ManualConfig
     .Create(DefaultConfig.Instance)
     .WithArtifactsPath(Path.GetFullPath(artifactsPath))
     .AddColumn(StatisticColumn.P95);
+
+var competitiveConnectionString = Environment.GetEnvironmentVariable(
+    ProviderComparisonBenchmarks.ConnectionStringEnvironmentVariable);
+var requestsProviderComparison = args.Any(
+    argument => argument.Contains(
+        nameof(ProviderComparisonBenchmarks),
+        StringComparison.OrdinalIgnoreCase));
+if (string.IsNullOrWhiteSpace(competitiveConnectionString) && requestsProviderComparison)
+{
+    throw new InvalidOperationException(
+        $"{ProviderComparisonBenchmarks.ConnectionStringEnvironmentVariable} must be configured " +
+        "to run live provider-comparison benchmarks.");
+}
+
+var benchmarkTypes = typeof(ProtocolParserBenchmarks).Assembly
+    .GetTypes()
+    .Where(type => type.IsPublic &&
+        !type.IsGenericType &&
+        type.GetMethods().Any(
+            method => method.IsDefined(typeof(BenchmarkAttribute), inherit: true)) &&
+        (!string.IsNullOrWhiteSpace(competitiveConnectionString) ||
+            type != typeof(ProviderComparisonBenchmarks)))
+    .ToArray();
 _ = BenchmarkSwitcher
-    .FromAssembly(typeof(ProtocolParserBenchmarks).Assembly)
+    .FromTypes(benchmarkTypes)
     .Run(args, configuration);

@@ -94,7 +94,8 @@ The current `0.3.0-preview.1` implementation provides:
 - a fake backend message stream for conformance testing;
 - a Docker-based PostgreSQL version matrix;
 - a versioned, bounded protocol-capture format and redaction-aware inspector;
-- executable BenchmarkDotNet protocol/type workloads with checked-in reference baselines;
+- executable BenchmarkDotNet protocol/type workloads with checked-in reference baselines,
+  including equivalent live PostgreSQL 19 BlueTusk/Npgsql hot-path comparisons;
 - PostgreSQL 15–19 live stress coverage plus scheduled elevated-concurrency provider and replication-endurance gates;
 - TLS negotiation with safe platform certificate validation by default;
 - SCRAM-SHA-256 and SCRAM-SHA-256-PLUS authentication, PostgreSQL 18+ native OAUTHBEARER, GSSAPI/Kerberos and SSPI with mutual authentication and a live KDC gate, PostgreSQL password files, per-physical-connection password/access-token callbacks, TLS client certificates, and PostgreSQL 15–19-tested legacy MD5 and gated cleartext compatibility;

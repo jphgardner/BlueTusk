@@ -28,3 +28,15 @@ The 0.1.0 reader/streaming reports were added on 2026-07-31 with .NET SDK 10.0.3
 The 0.3.0 allocation-discipline reports were added on 2026-08-01 with the same SDK/runtime and processor. The in-memory full provider path allocates 1,048 B for a synchronous named binary `int4` parameter and scalar, 1,424 B for the text/string path, 2,560 B for a buffered reader over 100 typed `int4` values, and 1,352 B for the asynchronous scalar path. Warm simple and extended protocol-connection writes allocate 0 B after setup because their bounded session writer is reused. Run `pwsh -File eng/verify-allocation-budgets.ps1` after refreshing reports.
 
 The transport-pipeline decision reports were added on 2026-08-01. The bounded `System.IO.Pipelines` prototype improves the adversarial fragmented async batch and tiny cancellation-drain cases, but is approximately 2x slower for a 1 MiB field, 42% slower for synchronous COPY, effectively tied for asynchronous COPY and TLS, and 76% slower for asynchronous raw TCP. Both warm loopback readers report zero measured managed allocation; the prototype reports 96 B for the large-field batch. These short-run measurements support retaining the current transport, as recorded in ADR 0005.
+
+The live PostgreSQL 19 provider-comparison report was added on 2026-08-02
+against the local server on this machine. BlueTusk/Npgsql means were 474/343 µs
+for a parameterized scalar, 449/300 µs for an explicitly prepared scalar,
+14.6/0.52 ms for a sequential 1,000-row read, and 14.7/9.63 ms for a sequential
+1 MiB `bytea` stream. Warm pool checkout measured 460 µs/241 ns because the
+providers currently apply materially different reset work at the checkout
+boundary; that pair is retained deliberately as an end-to-end default-pool
+cost, not presented as an isolated pool-lock comparison. Managed allocation
+was also higher on every measured BlueTusk path. These three-iteration results
+are an optimization baseline, not a superiority claim or release performance
+guarantee.

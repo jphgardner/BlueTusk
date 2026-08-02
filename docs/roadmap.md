@@ -535,7 +535,9 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Stress testing
   - [x] PostgreSQL 15–19 pool churn, cancellation, preparation, batch, sequential-reader, pipeline, and replication lifecycle stress
   - [x] Scheduled/manual PostgreSQL 19 elevated-concurrency provider stress plus separate 1,000-epoch replication endurance
-- [ ] Competitive benchmarks
+- [x] Competitive benchmarks
+  - [x] Equivalent live BlueTusk/Npgsql warm-pool, parameterized, prepared, 1,000-row, and 1 MiB streaming workloads
+  - [x] Checked-in PostgreSQL 19 ShortRun latency/allocation baseline with explicit fairness limits and no runtime Npgsql dependency
 - [ ] Complete documentation
 - [x] Supported-version CI
 

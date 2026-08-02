@@ -103,3 +103,17 @@ The checked-in command, reader, streaming, and protocol-write reports have expli
 ```powershell
 pwsh -File eng/verify-allocation-budgets.ps1
 ```
+
+Refresh the live PostgreSQL 19 provider comparison separately so the ordinary
+suite remains server-independent:
+
+```powershell
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+$env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*ProviderComparisonBenchmarks*'
+```
+
+Commit only the brief JSON and GitHub Markdown reports. Record the PostgreSQL
+major version, machine profile, SDK/runtime, date, and any material semantic
+difference between the provider pairs. Never turn a ShortRun ratio into a
+universal performance claim.
