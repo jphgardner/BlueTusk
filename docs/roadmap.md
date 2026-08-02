@@ -585,7 +585,10 @@ explicit environment and workload gates below are executable in CI.
   - [x] Preview claims retain explicit production, optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 beta boundaries
 - [x] Supported-version CI
 - [x] Dedicated extension-image CI for pgvector, PostGIS, and TimescaleDB ADO.NET/EF gates
-- [ ] PgBouncer session/transaction-mode, primary/standby, locale/time-zone, and development-version environment gates
+- [x] PgBouncer session- and transaction-pooling CI with live prepared/transaction acceptance
+- [x] `en_GB`/London and `de_DE`/New York locale/time-zone CI with money and timestamp acceptance
+- [ ] Real primary/standby topology and target-session/failover acceptance
+- [ ] PostgreSQL development-version scheduled acceptance where a published image is available
 - [ ] Representative EF Core and SQL/PGQ benchmark workloads alongside the native ADO.NET comparisons
 
 Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.

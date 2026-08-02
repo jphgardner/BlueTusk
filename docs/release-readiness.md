@@ -94,6 +94,15 @@ Cloud identity adapters have deterministic SDK contract tests; their
 real-account acceptance tests remain opt-in because CI does not hold customer
 cloud credentials.
 
+The compatibility environment matrix also builds pinned, repository-owned
+PgBouncer session/transaction configurations and PostgreSQL 18 images for
+`en_GB.UTF-8`/`Europe/London` and `de_DE.UTF-8`/`America/New_York`. Live gates
+cover session-affine temporary/prepared state, transaction-pool-safe explicit
+transactions and prepared commands, locale-aware money text, and time-zone-safe
+timestamp decoding. PgBouncer's cleartext test authentication is confined to
+the isolated Docker network and requires the provider's explicit insecure-test
+opt-in.
+
 The complete serial solution matrix currently reports:
 
 | PostgreSQL | Passed | Intentional skips | Failed |
@@ -133,7 +142,9 @@ The normal CI build runs formatting, documentation-link validation,
 warnings-as-errors compilation, all offline tests, allocation budgets,
 packaging, and public API analysis on Windows and Linux. Live matrices run the
 solution against PostgreSQL 15, 16, 17, 18, and 19 and run pgvector, PostGIS,
-and TimescaleDB ADO.NET/EF acceptance on their dedicated images.
+and TimescaleDB ADO.NET/EF acceptance on their dedicated images. Additional
+live jobs enforce PgBouncer session/transaction pooling and two locale/time-zone
+combinations.
 Scheduled/manual jobs add elevated provider concurrency and a separate
 replication endurance run. See the
 checked-in workflow and

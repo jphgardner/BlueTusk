@@ -144,6 +144,104 @@ jobs:
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile extension-tests down --volumes
 
+  pgbouncer-integration:
+    name: PgBouncer session and transaction pooling
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL and PgBouncer modes
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          up -d --build --wait
+          pgbouncer-session18 pgbouncer-transaction18
+
+      - name: Run PgBouncer acceptance
+        env:
+          BLUETUSK_PGBOUNCER_SESSION_CONNECTION_STRING: Host=localhost;Port=5818;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false
+          BLUETUSK_PGBOUNCER_TRANSACTION_CONNECTION_STRING: Host=localhost;Port=5819;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~PgBouncer
+          --logger trx
+          --results-directory artifacts/test-results/pgbouncer
+
+      - name: Capture PgBouncer logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          logs postgres18 pgbouncer-session18 pgbouncer-transaction18
+
+      - name: Stop PostgreSQL and PgBouncer
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile compatibility-tests down --volumes
+
+  locale-timezone-integration:
+    name: PostgreSQL 18 ${{ matrix.locale }} / ${{ matrix.timezone }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: locale-en18
+            port: 5820
+            locale: en_GB.UTF-8
+            timezone: Europe/London
+          - service: locale-de18
+            port: 5821
+            locale: de_DE.UTF-8
+            timezone: America/New_York
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start locale/time-zone image
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          up -d --build --wait ${{ matrix.service }}
+
+      - name: Run locale/time-zone acceptance
+        env:
+          BLUETUSK_LOCALE_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Pooling=false
+          BLUETUSK_EXPECTED_LOCALE: ${{ matrix.locale }}
+          BLUETUSK_EXPECTED_TIME_ZONE: ${{ matrix.timezone }}
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Locale_and_time_zone
+          --logger trx
+          --results-directory artifacts/test-results/${{ matrix.service }}
+
+      - name: Capture locale/time-zone logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          logs ${{ matrix.service }}
+
+      - name: Stop locale/time-zone image
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile compatibility-tests down --volumes
+
   replication-endurance:
     name: PostgreSQL 19 replication endurance
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'

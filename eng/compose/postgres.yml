@@ -115,3 +115,74 @@ services:
     image: timescale/timescaledb:latest-pg17
     profiles: ["extension-tests"]
     ports: ["5520:5432"]
+
+  pgbouncer-session18:
+    image: bluetusk/pgbouncer-test:1.24.0
+    build:
+      context: ./pgbouncer
+    profiles: ["compatibility-tests"]
+    depends_on:
+      postgres18:
+        condition: service_healthy
+    ports: ["5818:6432"]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 6432"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    restart: "no"
+
+  pgbouncer-transaction18:
+    image: bluetusk/pgbouncer-test:1.24.0
+    build:
+      context: ./pgbouncer
+    command: ["/etc/pgbouncer/transaction.ini"]
+    profiles: ["compatibility-tests"]
+    depends_on:
+      postgres18:
+        condition: service_healthy
+    ports: ["5819:6432"]
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z 127.0.0.1 6432"]
+      interval: 2s
+      timeout: 5s
+      retries: 20
+    restart: "no"
+
+  locale-en18:
+    <<: *postgres-common
+    image: bluetusk/postgres-locale-test:18
+    build:
+      context: ./locale
+    profiles: ["compatibility-tests"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bluetusk_tests
+      POSTGRES_INITDB_ARGS: --locale=en_GB.UTF-8 --encoding=UTF8
+    command:
+      - postgres
+      - -c
+      - timezone=Europe/London
+      - -c
+      - hba_file=/etc/postgresql/bluetusk-pg_hba.conf
+    ports: ["5820:5432"]
+
+  locale-de18:
+    <<: *postgres-common
+    image: bluetusk/postgres-locale-test:18
+    build:
+      context: ./locale
+    profiles: ["compatibility-tests"]
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: bluetusk_tests
+      POSTGRES_INITDB_ARGS: --locale=de_DE.UTF-8 --encoding=UTF8
+    command:
+      - postgres
+      - -c
+      - timezone=America/New_York
+      - -c
+      - hba_file=/etc/postgresql/bluetusk-pg_hba.conf
+    ports: ["5821:5432"]

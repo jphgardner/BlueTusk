@@ -65,6 +65,29 @@ The live case must pass on its dedicated image. On a plain matrix image it
 dynamically skips only when `pg_available_extensions` confirms that the
 optional server extension is unavailable.
 
+## PgBouncer, locales, and time zones
+
+The `compatibility-tests` profile builds a pinned PgBouncer 1.24.0 image and
+runs both session and transaction pooling against PostgreSQL 18. The session
+gate exercises temporary-table and prepared-statement state. The transaction
+gate exercises explicit transactions and PgBouncer's protocol-level prepared
+statement tracking. The isolated test configuration uses cleartext client
+authentication on the Docker network, so its connection strings must explicitly
+set `Allow Unencrypted Password=true`; this is not deployment guidance.
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile compatibility-tests up -d --build --wait pgbouncer-session18 pgbouncer-transaction18
+$env:BLUETUSK_PGBOUNCER_SESSION_CONNECTION_STRING = "Host=localhost;Port=5818;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false"
+$env:BLUETUSK_PGBOUNCER_TRANSACTION_CONNECTION_STRING = "Host=localhost;Port=5819;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false"
+dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~PgBouncer
+```
+
+The same profile contains PostgreSQL 18 images initialized as `en_GB.UTF-8`
+with `Europe/London` and `de_DE.UTF-8` with `America/New_York`. Their CI matrix
+verifies the database collation, `lc_monetary`, locale-formatted `money` text,
+server time zone, and UTC-equivalent `timestamptz` decoding. Ports 5820 and 5821
+map to the English and German images respectively.
+
 Every restore audits direct and transitive dependencies at every advisory
 severity. To produce an explicit machine-readable review on .NET 10, run:
 
