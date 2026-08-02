@@ -87,7 +87,16 @@ hidden skips.
 
 The 223 complex-type/JSON query cases also run as a focused PostgreSQL 15–19
 matrix: each server reports 221 passes and the same two upstream EF skips. The
-complete 2,111-case official assembly is additionally gated on PostgreSQL 19.
+complete official-assembly results are:
+
+| PostgreSQL | Passed | Upstream skips | Version-excluded rows | Discovered |
+| --- | ---: | ---: | ---: | ---: |
+| 15 | 1,973 | 124 | 14 | 2,097 |
+| 16 | 1,973 | 124 | 14 | 2,097 |
+| 17 | 1,975 | 124 | 12 | 2,099 |
+| 18 | 1,987 | 124 | 0 | 2,111 |
+| 19 | 1,987 | 124 | 0 | 2,111 |
+
 Migration methods whose SQL is not supported by an older server carry explicit
 server-version discovery conditions: generated-column expression changes run
 on PostgreSQL 17 and later, while virtual generated-column cases run on
@@ -118,8 +127,9 @@ The Visual Studio test adapter discovers and runs both.
 This is the adopted official-suite coverage required by BlueTusk's product
 specification, not a claim that every test base published in Microsoft's entire
 relational specification assembly is inherited. The official 2,111-case gate
-is paired with BlueTusk's native 301-case provider project on each PostgreSQL
-15–19 server; the latter covers PostgreSQL-specific translations, migrations,
+on PostgreSQL 18 and 19, and the capability-adjusted official gate on 15–17,
+are paired with BlueTusk's native 301-case provider project on each PostgreSQL
+15–19 server. The latter covers PostgreSQL-specific translations, migrations,
 catalogue discovery, scaffolding, database lifecycle, and SQL/PGQ. Future EF
 upgrades must re-run both gates and explicitly review newly published official
 test bases rather than silently broadening or weakening this boundary.

@@ -35,6 +35,34 @@ Markdown file on both Windows and Linux. External links remain a release-review
 responsibility because network availability must not make the normal build
 nondeterministic.
 
+Each live PostgreSQL-version matrix entry has its own CI runner. When reproducing
+the complete matrix on one development machine, run `dotnet test BlueTusk.slnx`
+serially for each connection string. Multiple simultaneous copies of the full
+EF relational specification suite can exhaust host memory and turn database
+setup into misleading timeout failures.
+
+## Optional extension images
+
+The extension profile supplies the three images that are not available in a
+plain PostgreSQL distribution:
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile extension-tests up -d --wait
+```
+
+Run both the ADO.NET and EF package projects against the corresponding port:
+
+| Extension | Port | Test projects |
+| --- | ---: | --- |
+| pgvector | 5518 | `BlueTusk.Extensions.PgVector.Tests`, `BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests` |
+| PostGIS | 5519 | `BlueTusk.Extensions.PostGIS.Tests`, `BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests` |
+| TimescaleDB | 5520 | `BlueTusk.Extensions.TimescaleDB.Tests`, `BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests` |
+
+Set `BLUETUSK_TEST_CONNECTION_STRING` to the selected port before each pair.
+The live case must pass on its dedicated image. On a plain matrix image it
+dynamically skips only when `pg_available_extensions` confirms that the
+optional server extension is unavailable.
+
 Every restore audits direct and transitive dependencies at every advisory
 severity. To produce an explicit machine-readable review on .NET 10, run:
 

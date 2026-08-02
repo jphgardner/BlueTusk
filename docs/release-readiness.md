@@ -62,9 +62,11 @@ overload families with explicit no-token and required-token overloads.
 
 BlueTusk directly consumes Microsoft's EF Core 10.0.10 relational
 specification package. Its official assembly gate discovers 2,111 cases on
-PostgreSQL 19: 1,987 pass and 124 retain upstream EF skip declarations. The
-portable complex-type/JSON query slice additionally runs across PostgreSQL
-15–19. BlueTusk's native provider project runs 301 cases per supported server;
+PostgreSQL 18 and 19: 1,987 pass and 124 retain upstream EF skip declarations.
+PostgreSQL 15–17 run the same adopted suite with only unsupported
+generated-column rows excluded by explicit server-version conditions. The
+portable complex-type/JSON query slice runs unchanged across PostgreSQL 15–19.
+BlueTusk's native provider project runs 301 cases per supported server;
 PostgreSQL 15 passes 299 with two inapplicable cases and PostgreSQL 16–19 each
 pass 300 with only the filesystem-dependent tablespace case skipped when no
 server-owned directory is configured.
@@ -83,24 +85,36 @@ registry, extension template, and compatibility harness close the extension
 architecture gate. A live extension test first checks
 `pg_available_extensions`: a plain PostgreSQL image reports an intentional
 dynamic skip when the optional extension is absent, while each dedicated
-extension image requires the same test to pass. Cloud identity adapters have
-deterministic SDK contract tests; their real-account acceptance tests remain
-opt-in because CI does not hold customer cloud credentials.
+extension image requires the same test to pass. The dedicated-image gate reports
+23 pgvector, 10 PostGIS, and 9 TimescaleDB passes with no skips or failures.
+Cloud identity adapters have deterministic SDK contract tests; their
+real-account acceptance tests remain opt-in because CI does not hold customer
+cloud credentials.
 
-The complete solution gate on PostgreSQL 15 currently reports 2,948 passes,
-137 intentional skips, and zero failures. The total includes the native and
-official EF projects, all core and extension projects, compatibility,
-conformance, security, stress, and replication; version-specific official
-migration methods are excluded at discovery when the server cannot implement
-their generated-column SQL.
+The complete serial solution matrix currently reports:
+
+| PostgreSQL | Passed | Intentional skips | Failed |
+| --- | ---: | ---: | ---: |
+| 15 | 2,948 | 137 | 0 |
+| 16 | 2,949 | 136 | 0 |
+| 17 | 2,951 | 136 | 0 |
+| 18 | 2,963 | 136 | 0 |
+| 19 | 2,963 | 136 | 0 |
+
+Each total includes the native and official EF projects, all core and extension
+projects, compatibility, conformance, security, stress, and replication.
+Version-specific official migration methods are excluded at discovery when the
+server cannot implement their generated-column SQL.
 
 ## Release artifacts and documentation
 
 The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
 packages without warnings. Compiler-enforced public API/nullability baselines
-cover the stable core, replication, and extension-authoring seams. All 18
-checked-in allocation budgets pass, including command, typed reader, protocol
-writer, structured-codec, large-value streaming, and replication paths.
+cover the stable core, replication, and extension-authoring seams. The final
+direct-and-transitive NuGet vulnerability audit covers all 65 solution projects
+and reports zero vulnerable package entries. All 18 checked-in allocation
+budgets pass, including command, typed reader, protocol writer,
+structured-codec, large-value streaming, and replication paths.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
