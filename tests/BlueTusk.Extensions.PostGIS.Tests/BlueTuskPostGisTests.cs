@@ -73,6 +73,7 @@ public sealed class BlueTuskPostGisTests
     public async Task Postgis_plugin_executes_text_binary_array_and_spatial_live_paths()
     {
         var connectionString = GetConnectionString();
+        await RequireExtensionAvailableAsync(connectionString, "postgis");
         await using (var administration = BlueTuskDataSource.Create(connectionString))
         await using (var create = administration.CreateCommand("CREATE EXTENSION IF NOT EXISTS postgis"))
         {
@@ -143,6 +144,21 @@ public sealed class BlueTuskPostGisTests
         Name = name,
         Kind = BlueTuskTypeKind.Base,
     };
+
+    private static async Task RequireExtensionAvailableAsync(
+        string connectionString,
+        string extensionName)
+    {
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        await using var command = dataSource.CreateCommand(
+            "SELECT EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = $1)");
+        command.Parameters.Add(new BlueTuskParameter<string>(extensionName));
+        if (!await command.ExecuteScalarAsync<bool>(CancellationToken.None))
+        {
+            throw SkipException.ForSkip(
+                $"PostgreSQL extension '{extensionName}' is not available on the configured server.");
+        }
+    }
 
     private static string GetConnectionString()
     {

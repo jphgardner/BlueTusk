@@ -274,6 +274,12 @@ not interpret custom formats.
 
 Cancellation or asynchronous enumerator disposal sends `CopyDone`, drains the
 server back to `ReadyForQuery`, and releases the replication operation.
+Forced connection disposal instead closes the transport to interrupt a pending
+read. The protocol layer retains its rented receive buffer until that read has
+unwound, so cancellation or teardown cannot return storage to the shared pool
+while an asynchronous continuation still references it. A deterministic unit
+test and the live replication-disposal stress case enforce this ownership
+invariant.
 
 ## Reconnect and resume
 

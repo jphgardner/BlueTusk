@@ -80,9 +80,19 @@ Optional PostGIS, pgvector, citext, hstore, ltree, pg_trgm, and TimescaleDB
 packages remain independently installable and do not add their types or SQL to
 the core packages. Their live extension-image gates, the immutable feature
 registry, extension template, and compatibility harness close the extension
-architecture gate. Cloud identity adapters have deterministic SDK contract
-tests; their real-account acceptance tests remain opt-in because CI does not
-hold customer cloud credentials.
+architecture gate. A live extension test first checks
+`pg_available_extensions`: a plain PostgreSQL image reports an intentional
+dynamic skip when the optional extension is absent, while each dedicated
+extension image requires the same test to pass. Cloud identity adapters have
+deterministic SDK contract tests; their real-account acceptance tests remain
+opt-in because CI does not hold customer cloud credentials.
+
+The complete solution gate on PostgreSQL 15 currently reports 2,948 passes,
+137 intentional skips, and zero failures. The total includes the native and
+official EF projects, all core and extension projects, compatibility,
+conformance, security, stress, and replication; version-specific official
+migration methods are excluded at discovery when the server cannot implement
+their generated-column SQL.
 
 ## Release artifacts and documentation
 

@@ -28,6 +28,34 @@ public sealed class BlueTuskMigrationsTest
     public override Task Add_required_primitve_collection_with_custom_default_value_sql_to_existing_table()
         => Add_required_primitve_collection_with_custom_default_value_sql_to_existing_table_core("ARRAY[3,2,1]");
 
+    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
+    public override Task Create_table_with_computed_column(bool? stored)
+        => base.Create_table_with_computed_column(stored);
+
+    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
+    public override Task Alter_column_make_computed(bool? stored)
+        => base.Alter_column_make_computed(stored);
+
+    [BlueTuskServerVersionCondition(170000, "Generated-column expression changes")]
+    public override Task Alter_column_change_computed_recreates_indexes()
+        => base.Alter_column_change_computed_recreates_indexes();
+
+    [BlueTuskServerVersionCondition(170000, "Generated-column expression changes")]
+    public override Task Alter_column_change_computed()
+        => base.Alter_column_change_computed();
+
+    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
+    public override Task Add_column_computed_with_collation(bool stored)
+        => base.Add_column_computed_with_collation(stored);
+
+    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
+    public override Task Add_column_with_computedSql(bool? stored)
+        => base.Add_column_with_computedSql(stored);
+
+    [BlueTuskServerVersionCondition(180000, "Virtual generated-column cases")]
+    public override Task Alter_column_change_computed_type()
+        => base.Alter_column_change_computed_type();
+
     protected override string NonDefaultCollation
         => "POSIX";
 

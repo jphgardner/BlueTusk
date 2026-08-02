@@ -137,6 +137,7 @@ public sealed class BlueTuskTimescaleDbEntityFrameworkCoreTests
     public async Task Plugin_executes_buckets_hyperfunctions_compiled_queries_and_policies_live()
     {
         var connectionString = GetConnectionString();
+        await RequireExtensionAvailableAsync(connectionString, "timescaledb");
         await using (var administration = BlueTuskDataSource.Create(connectionString))
         await using (var setup = administration.CreateCommand(
                          "CREATE EXTENSION IF NOT EXISTS timescaledb; " +
@@ -272,6 +273,21 @@ public sealed class BlueTuskTimescaleDbEntityFrameworkCoreTests
         DbContextOptions<TimescaleContext> options) =>
         options.Extensions.Single(extension =>
             extension.Info.LogFragment.Contains("TimescaleDB", StringComparison.Ordinal));
+
+    private static async Task RequireExtensionAvailableAsync(
+        string connectionString,
+        string extensionName)
+    {
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        await using var command = dataSource.CreateCommand(
+            "SELECT EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = $1)");
+        command.Parameters.Add(new BlueTuskParameter<string>(extensionName));
+        if (!await command.ExecuteScalarAsync<bool>(CancellationToken.None))
+        {
+            throw SkipException.ForSkip(
+                $"PostgreSQL extension '{extensionName}' is not available on the configured server.");
+        }
+    }
 
     private static string GetConnectionString()
     {

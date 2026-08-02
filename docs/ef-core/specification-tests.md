@@ -88,6 +88,12 @@ hidden skips.
 The 223 complex-type/JSON query cases also run as a focused PostgreSQL 15–19
 matrix: each server reports 221 passes and the same two upstream EF skips. The
 complete 2,111-case official assembly is additionally gated on PostgreSQL 19.
+Migration methods whose SQL is not supported by an older server carry explicit
+server-version discovery conditions: generated-column expression changes run
+on PostgreSQL 17 and later, while virtual generated-column cases run on
+PostgreSQL 18 and later. These conditions exclude only the inapplicable
+parameterized method rows; BlueTusk's native migration suite continues to run
+the version-appropriate generated-column cases on every supported server.
 
 Run the gate directly with:
 

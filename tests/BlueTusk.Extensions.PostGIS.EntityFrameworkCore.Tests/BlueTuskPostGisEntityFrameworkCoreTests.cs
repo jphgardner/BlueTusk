@@ -157,6 +157,7 @@ public sealed class BlueTuskPostGisEntityFrameworkCoreTests
     public async Task Plugin_round_trips_rich_spatial_values_and_executes_compiled_queries_live()
     {
         var connectionString = GetConnectionString();
+        await RequireExtensionAvailableAsync(connectionString, "postgis");
         await using (var administration = BlueTuskDataSource.Create(connectionString))
         await using (var setup = administration.CreateCommand(
                          "CREATE EXTENSION IF NOT EXISTS postgis; " +
@@ -279,6 +280,21 @@ public sealed class BlueTuskPostGisEntityFrameworkCoreTests
         var factory = new GeometryFactory(new PrecisionModel(), 4326);
         return factory.CreatePolygon(
             coordinates.Select(coordinate => new Coordinate(coordinate.X, coordinate.Y)).ToArray());
+    }
+
+    private static async Task RequireExtensionAvailableAsync(
+        string connectionString,
+        string extensionName)
+    {
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        await using var command = dataSource.CreateCommand(
+            "SELECT EXISTS (SELECT 1 FROM pg_available_extensions WHERE name = $1)");
+        command.Parameters.Add(new BlueTuskParameter<string>(extensionName));
+        if (!await command.ExecuteScalarAsync<bool>(CancellationToken.None))
+        {
+            throw SkipException.ForSkip(
+                $"PostgreSQL extension '{extensionName}' is not available on the configured server.");
+        }
     }
 
     private static string GetConnectionString()

@@ -105,6 +105,19 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         Assert.Equal(["secret", "token"], transport.Writes.Select(Encoding.UTF8.GetString));
     }
 
+    [Fact]
+    public async Task Disposal_does_not_return_the_read_buffer_while_an_async_read_is_active()
+    {
+        var transport = new BlockingReadTransport();
+        var connection = new BlueTuskProtocolConnection(transport);
+        var read = connection.ReadMessageAsync(CancellationToken.None).AsTask();
+
+        await transport.ReadStarted;
+        await connection.DisposeAsync();
+
+        await Assert.ThrowsAsync<ObjectDisposedException>(() => read);
+    }
+
     private static byte[] Frame(byte code, byte[] payload)
     {
         var frame = new byte[payload.Length + 5];
@@ -175,5 +188,59 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         }
 
         public ValueTask DisposeAsync() => ValueTask.CompletedTask;
+    }
+
+    private sealed class BlockingReadTransport : IBlueTuskTransport
+    {
+        private readonly TaskCompletionSource _disposed = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        private readonly TaskCompletionSource _readStarted = new(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+
+        public Task ReadStarted => _readStarted.Task;
+
+        public EndPoint? RemoteEndPoint => null;
+
+        public void Connect(BlueTuskEndpoint endpoint, BlueTuskTransportOptions options)
+        {
+        }
+
+        public ValueTask ConnectAsync(
+            BlueTuskEndpoint endpoint,
+            BlueTuskTransportOptions options,
+            CancellationToken cancellationToken) => ValueTask.CompletedTask;
+
+        public async ValueTask<int> ReadAsync(
+            Memory<byte> buffer,
+            CancellationToken cancellationToken)
+        {
+            _readStarted.TrySetResult();
+            await _disposed.Task.WaitAsync(cancellationToken);
+            throw new ObjectDisposedException(nameof(BlockingReadTransport));
+        }
+
+        public int Read(Span<byte> buffer) => throw new NotSupportedException();
+
+        public ValueTask WriteAsync(
+            ReadOnlyMemory<byte> buffer,
+            CancellationToken cancellationToken) => ValueTask.CompletedTask;
+
+        public void Write(ReadOnlySpan<byte> buffer)
+        {
+        }
+
+        public ValueTask FlushAsync(CancellationToken cancellationToken) => ValueTask.CompletedTask;
+
+        public void Flush()
+        {
+        }
+
+        public void Dispose() => _disposed.TrySetResult();
+
+        public ValueTask DisposeAsync()
+        {
+            Dispose();
+            return ValueTask.CompletedTask;
+        }
     }
 }
