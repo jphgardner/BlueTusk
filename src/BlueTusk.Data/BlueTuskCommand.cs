@@ -1365,6 +1365,7 @@ public sealed class BlueTuskCommand : DbCommand
         private readonly Timer _timer;
         private long _dueTimestamp;
         private bool _active;
+        private bool _scheduled;
         private bool _disposed;
 
         public ReusableCommandTimeout(BlueTuskCommand command)
@@ -1393,7 +1394,11 @@ public sealed class BlueTuskCommand : DbCommand
                     Stopwatch.GetTimestamp() +
                     (long)(dueTime.TotalSeconds * Stopwatch.Frequency));
                 _active = true;
-                _timer.Change(dueTime, Timeout.InfiniteTimeSpan);
+                if (!_scheduled)
+                {
+                    _scheduled = true;
+                    _timer.Change(dueTime, Timeout.InfiniteTimeSpan);
+                }
             }
         }
 
@@ -1407,7 +1412,6 @@ public sealed class BlueTuskCommand : DbCommand
                 }
 
                 _active = false;
-                _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
             }
         }
 
@@ -1422,6 +1426,7 @@ public sealed class BlueTuskCommand : DbCommand
 
                 _disposed = true;
                 _active = false;
+                _scheduled = false;
                 _timer.Dispose();
             }
         }
@@ -1432,6 +1437,7 @@ public sealed class BlueTuskCommand : DbCommand
             {
                 if (_disposed || !_active)
                 {
+                    _scheduled = false;
                     return;
                 }
 
@@ -1445,6 +1451,7 @@ public sealed class BlueTuskCommand : DbCommand
                 }
 
                 _active = false;
+                _scheduled = false;
                 _command.CancelForTimeout();
             }
         }

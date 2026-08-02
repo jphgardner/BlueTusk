@@ -48,7 +48,9 @@ Prepared scalar commands reuse statement metadata captured by `Prepare`, and
 fixed-width prepared values reuse command-owned wire buffers while still being
 re-encoded after every value mutation. Timeout cancellation shares the command's
 CancelRequest timer instead of allocating linked cancellation sources per
-operation. Untouched logical connections avoid allocating rare transaction,
+operation. Prepared commands amortize native timer scheduling across adjacent
+executions: successful operations only refresh the protected deadline until the
+outstanding wake-up fires. Untouched logical connections avoid allocating rare transaction,
 notification, and large-object state. Large streamed payloads rent an adaptive
 read-ahead buffer, return legal partial reads without wrapping each transport
 wait at every abstraction layer, complete protocol/row/stream accounting in one

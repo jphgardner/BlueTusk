@@ -567,6 +567,35 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
     }
 
+    [Fact]
+    public async Task Prepared_command_timeout_reuses_the_outstanding_deadline_wakeup()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand(
+            "SELECT CASE WHEN @delay THEN pg_sleep(10) END",
+            connection)
+        {
+            CommandTimeout = 1,
+        };
+        var delay = new BlueTuskParameter<bool>(false) { ParameterName = "delay" };
+        command.Parameters.Add(delay);
+        await command.PrepareAsync(CancellationToken.None);
+
+        for (var execution = 0; execution < 3; execution++)
+        {
+            _ = await command.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        delay.Value = true;
+        _ = await Assert.ThrowsAsync<TimeoutException>(
+            () => command.ExecuteNonQueryAsync(CancellationToken.None));
+
+        Assert.Equal(ConnectionState.Open, connection.State);
+        await using var valid = new BlueTuskCommand("SELECT 42::int4", connection);
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

@@ -103,7 +103,9 @@ parameter collection changes, command timeouts use the existing CancelRequest
 timer rather than linked cancellation sources, and explicitly prepared scalar
 commands reuse the statement description returned by `Prepare`. The latter
 omits a redundant portal description while preserving binary/text format
-identity and server-error recovery.
+identity and server-error recovery. Repeated prepared executions refresh an
+in-memory deadline while one native timer wake-up remains outstanding, avoiding
+two operating-system timer reschedules on every successful command.
 
 Large sequential fields start with a 64 KiB per-session protocol buffer and can
 rent up to 1 MiB of read-ahead storage for the active large payload. The buffer
