@@ -110,6 +110,14 @@ role-incompatible endpoints, WAL replay visibility, and standby write
 rejection. This is distinct from the logical-replication decoder and endurance
 gates.
 
+For change detection beyond the pinned PostgreSQL 19 Beta 2 image, a
+scheduled/manual job verifies the checksum of the official nightly PostgreSQL
+19 branch snapshot, compiles it in a repository-owned multi-stage image, and
+runs the full solution against it. The 2026-08-02 snapshot identified itself as
+PostgreSQL 19beta2 and passed 2,967 cases with 146 intentional environment or
+upstream skips and no failures across 28 test assemblies. No unofficial
+PostgreSQL binary image enters the release gate.
+
 The complete serial solution matrix currently reports:
 
 | PostgreSQL | Passed | Intentional skips | Failed |
@@ -152,7 +160,8 @@ solution against PostgreSQL 15, 16, 17, 18, and 19 and run pgvector, PostGIS,
 and TimescaleDB ADO.NET/EF acceptance on their dedicated images. Additional
 live jobs enforce PgBouncer session/transaction pooling and two locale/time-zone
 combinations. A physical primary/standby job adds target-session selection and
-WAL-replay acceptance.
+WAL-replay acceptance. Scheduled/manual CI also builds the official PostgreSQL
+19 branch snapshot and runs the complete solution against that moving target.
 Scheduled/manual jobs add elevated provider concurrency and a separate
 replication endurance run. See the
 checked-in workflow and

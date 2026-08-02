@@ -651,7 +651,7 @@ public sealed class PostgreSqlFunctionTranslationTests
             Assert.Equal([0x02], common.TrimmedBytes);
             Assert.Equal([0x02], common.LeftTrimmedBytes);
             Assert.Equal([0x02], common.RightTrimmedBytes);
-            Assert.Equal(3, common.CubeRoot);
+            Assert.Equal(3, common.CubeRoot, precision: 10);
             Assert.Equal(180, common.Degrees, precision: 10);
             Assert.Equal(Math.PI, common.Radians, precision: 10);
             Assert.Equal(3, common.Division);

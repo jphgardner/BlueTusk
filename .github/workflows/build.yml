@@ -71,7 +71,7 @@ jobs:
       - name: Run live provider matrix
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests
-        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
 
       - name: Capture PostgreSQL logs on failure
         if: failure()
@@ -282,6 +282,48 @@ jobs:
       - name: Stop streaming-replication topology
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile topology-tests down --volumes
+
+  postgresql19-nightly:
+    name: PostgreSQL 19 official branch snapshot
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Build and start official PostgreSQL 19 snapshot
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile nightly-tests
+          up -d --build --wait postgres19-nightly
+
+      - name: Run full provider matrix against the branch snapshot
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test BlueTusk.slnx
+          --configuration Release
+          --no-restore
+          --maxcpucount:1
+          --logger trx
+          --results-directory artifacts/test-results/postgres19-nightly
+
+      - name: Capture PostgreSQL snapshot logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile nightly-tests
+          logs postgres19-nightly
+
+      - name: Stop PostgreSQL snapshot
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile nightly-tests down --volumes
 
   replication-endurance:
     name: PostgreSQL 19 replication endurance

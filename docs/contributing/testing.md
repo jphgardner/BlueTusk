@@ -37,9 +37,10 @@ nondeterministic.
 
 Each live PostgreSQL-version matrix entry has its own CI runner. When reproducing
 the complete matrix on one development machine, run `dotnet test BlueTusk.slnx`
-serially for each connection string. Multiple simultaneous copies of the full
-EF relational specification suite can exhaust host memory and turn database
-setup into misleading timeout failures.
+with `--maxcpucount:1` for each connection string. CI applies the same
+project-serial setting inside each server runner. Multiple simultaneous copies
+of the full EF relational specification suite can exhaust host memory and turn
+database setup into misleading timeout failures.
 
 ## Dedicated extension-image gates
 
@@ -106,6 +107,25 @@ dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~Topology
 The primary and standby are exposed on ports 5830 and 5831. Their credentials,
 base backup, and WAL are ephemeral test infrastructure removed with `docker
 compose down --volumes`.
+
+## PostgreSQL 19 nightly snapshot
+
+PostgreSQL publishes a checksummed PostgreSQL 19 branch snapshot from its
+official development server each night, but the official Docker image project
+does not publish a corresponding nightly tag. The `nightly-tests` profile
+therefore compiles that official source tarball in a multi-stage image after
+verifying its published SHA-256 file. Scheduled and manually dispatched CI runs
+the full solution against the resulting server on port 5899.
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile nightly-tests up -d --build --wait postgres19-nightly
+$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+dotnet test BlueTusk.slnx -c Release --no-restore --maxcpucount:1
+```
+
+The image is intentionally rebuilt from the moving snapshot. It is acceptance
+infrastructure for detecting PostgreSQL 19 branch changes, not a distributable
+database image or production dependency.
 
 Every restore audits direct and transitive dependencies at every advisory
 severity. To produce an explicit machine-readable review on .NET 10, run:

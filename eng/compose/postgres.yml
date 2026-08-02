@@ -212,3 +212,11 @@ services:
       timeout: 5s
       retries: 30
     restart: "no"
+
+  postgres19-nightly:
+    <<: *postgres-common
+    image: bluetusk/postgres-nightly-test:19
+    build:
+      context: ./nightly
+    profiles: ["nightly-tests"]
+    ports: ["5899:5432"]

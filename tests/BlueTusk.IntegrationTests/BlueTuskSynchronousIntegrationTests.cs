@@ -135,13 +135,14 @@ public sealed class BlueTuskSynchronousIntegrationTests
         }
 
         var failoverSettings = CreateSettings();
-        failoverSettings.Host = "localhost,localhost";
-        failoverSettings.Ports = "1,5418";
+        var configured = failoverSettings.HostEndpoints[0];
+        failoverSettings.Host = $"{configured.Host},{configured.Host}";
+        failoverSettings.Ports = $"1,{configured.Port}";
         failoverSettings.Pooling = false;
         failoverSettings.TargetSessionAttributes = BlueTuskTargetSessionAttributes.Primary;
         using var failover = new BlueTuskConnection(failoverSettings.ConnectionString);
         failover.Open();
-        Assert.Equal(new BlueTuskHostEndpoint("localhost", 5418), failover.ConnectedEndpoint);
+        Assert.Equal(configured, failover.ConnectedEndpoint);
     }
 
     private static BlueTuskConnectionStringBuilder CreateSettings()
