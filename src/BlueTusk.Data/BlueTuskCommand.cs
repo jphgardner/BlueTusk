@@ -244,15 +244,22 @@ public sealed class BlueTuskCommand : DbCommand
                 behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
                 GetTypeRegistry());
 
-    protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(
+    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))
         {
-            return await ExecuteStreamingDataReaderAsync(behavior, cancellationToken).ConfigureAwait(false);
+            return ExecuteStreamingDataReaderAsync(behavior, cancellationToken);
         }
 
+        return ExecuteBufferedDataReaderAsync(behavior, cancellationToken);
+    }
+
+    private async Task<DbDataReader> ExecuteBufferedDataReaderAsync(
+        CommandBehavior behavior,
+        CancellationToken cancellationToken)
+    {
         var result = await ExecuteCoreAsync(cancellationToken).ConfigureAwait(false);
         return new BlueTuskDataReader(
             result,
@@ -312,7 +319,7 @@ public sealed class BlueTuskCommand : DbCommand
         }
     }
 
-    private async ValueTask<BlueTuskDataReader> ExecuteStreamingDataReaderAsync(
+    private async Task<DbDataReader> ExecuteStreamingDataReaderAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
@@ -329,9 +336,22 @@ public sealed class BlueTuskCommand : DbCommand
         Exception? failure = null;
         try
         {
-            var connection = await GetStreamingConnectionAsync(
-                opened => ownedConnection = opened,
-                cancellationToken).ConfigureAwait(false);
+            var connection = _connection;
+            if (connection is null)
+            {
+                if (_dataSource is null)
+                {
+                    throw new InvalidOperationException("The command has no connection or data source.");
+                }
+
+                ownedConnection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                connection = ownedConnection;
+            }
+            else if (connection.State != ConnectionState.Open)
+            {
+                throw new InvalidOperationException("The command connection is not open.");
+            }
+
             connection.ValidateCommandTransaction(_transaction);
             ValidateStreamingCommand();
             telemetry = StartTelemetry(connection);
@@ -393,27 +413,6 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         ownedConnection = _dataSource!.OpenConnection();
-        return ownedConnection;
-    }
-
-    private async ValueTask<BlueTuskConnection> GetStreamingConnectionAsync(
-        Action<BlueTuskConnection> setOwnedConnection,
-        CancellationToken cancellationToken)
-    {
-        if (_connection is null && _dataSource is null)
-        {
-            throw new InvalidOperationException("The command has no connection or data source.");
-        }
-
-        if (_connection is not null)
-        {
-            return _connection.State == ConnectionState.Open
-                ? _connection
-                : throw new InvalidOperationException("The command connection is not open.");
-        }
-
-        var ownedConnection = await _dataSource!.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        setOwnedConnection(ownedConnection);
         return ownedConnection;
     }
 

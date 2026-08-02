@@ -5,6 +5,13 @@ namespace BlueTusk.Transport.Tests;
 
 public sealed class BlueTuskSocketTransportTests
 {
+    [Fact]
+    public void Default_socket_windows_prioritise_bulk_receive_throughput()
+    {
+        Assert.Equal(256 * 1024, BlueTuskTransportOptions.Default.ReceiveBufferSize);
+        Assert.Equal(32 * 1024, BlueTuskTransportOptions.Default.SendBufferSize);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

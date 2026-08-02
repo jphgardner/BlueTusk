@@ -47,6 +47,19 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
         _blueTuskConnection = await _blueTuskDataSource.OpenConnectionAsync();
         _npgsqlConnection = await _npgsqlDataSource.OpenConnectionAsync();
 
+        const string createPayloadTable =
+            "CREATE TEMP TABLE bluetusk_benchmark_payload ON COMMIT PRESERVE ROWS " +
+            "AS SELECT decode(repeat('ab', 1048576), 'hex') AS payload";
+        await using (var command = new BlueTuskCommand(createPayloadTable, _blueTuskConnection))
+        {
+            _ = await command.ExecuteNonQueryAsync();
+        }
+
+        await using (var command = new NpgsqlCommand(createPayloadTable, _npgsqlConnection))
+        {
+            _ = await command.ExecuteNonQueryAsync();
+        }
+
         _blueTuskPreparedCommand = new BlueTuskCommand(
             "SELECT @value::int4 + 1",
             _blueTuskConnection);
@@ -170,7 +183,7 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
     public async Task<long> BlueTuskSequentialOneMegabyteByteaAsync()
     {
         await using var command = new BlueTuskCommand(
-            "SELECT decode(repeat('ab', 1048576), 'hex')",
+            "SELECT payload FROM bluetusk_benchmark_payload",
             _blueTuskConnection);
         await using var reader = await command.ExecuteReaderAsync(
             CommandBehavior.SequentialAccess);
@@ -184,7 +197,7 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
     public async Task<long> NpgsqlSequentialOneMegabyteByteaAsync()
     {
         await using var command = new NpgsqlCommand(
-            "SELECT decode(repeat('ab', 1048576), 'hex')",
+            "SELECT payload FROM bluetusk_benchmark_payload",
             _npgsqlConnection);
         await using var reader = await command.ExecuteReaderAsync(
             CommandBehavior.SequentialAccess);

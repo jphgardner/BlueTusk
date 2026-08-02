@@ -19,10 +19,13 @@ real synchronous and asynchronous connection tests.
 ## Socket and stream behavior
 
 TCP keepalive and `NoDelay` are enabled by default. Send and receive socket buffers are bounded
-and configurable through `BlueTuskTransportOptions`; protocol-level framing uses pooled,
-bounded buffers above them. Reads and writes operate directly on caller-provided `Span<T>` or
-`Memory<T>`. Awaited writes provide network backpressure instead of creating an unbounded
-transport queue.
+and configurable through `BlueTuskTransportOptions`. The defaults use a 32 KiB send window and
+a 256 KiB receive window: commands are normally small writes, while measured sequential reads
+benefit from enough kernel-side capacity to keep the protocol consumer supplied. Applications
+with very large pools can reduce the receive value when native per-socket memory is more
+important than bulk-read throughput. Protocol-level framing uses pooled, bounded buffers above
+the socket. Reads and writes operate directly on caller-provided `Span<T>` or `Memory<T>`.
+Awaited writes provide network backpressure instead of creating an unbounded transport queue.
 
 Async connect, read, write, flush, and TLS operations pass cancellation to the underlying .NET
 network operation. A caller cancellation remains an `OperationCanceledException`. Expiration

@@ -207,9 +207,11 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             return;
         }
 
+        var row = _currentRow;
+        _currentRow = null;
         try
         {
-            _currentRow?.Finish();
+            row?.Finish();
         }
         finally
         {
@@ -217,6 +219,11 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             {
                 session.AbortPortal(this);
             }
+        }
+
+        if (row is not null)
+        {
+            session.ReturnPortalRow(row);
         }
     }
 
@@ -228,11 +235,13 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             return;
         }
 
+        var row = _currentRow;
+        _currentRow = null;
         try
         {
-            if (_currentRow is not null)
+            if (row is not null)
             {
-                await _currentRow.FinishAsync(CancellationToken.None).ConfigureAwait(false);
+                await row.FinishAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
         finally
@@ -241,6 +250,11 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             {
                 await session.AbortPortalAsync(this).ConfigureAwait(false);
             }
+        }
+
+        if (row is not null)
+        {
+            session.ReturnPortalRow(row);
         }
     }
 }
@@ -258,8 +272,7 @@ public sealed class BlueTuskPortalRow
 {
     private const int InlinePayloadCapacity = 64;
     private readonly BlueTuskSession _session;
-    private readonly BlueTuskPortal _portal;
-    private readonly byte[] _headerBuffer = new byte[sizeof(int)];
+    private BlueTuskPortal _portal;
     private readonly byte[] _inlinePayload = new byte[InlinePayloadCapacity];
     private int _payloadLength;
     private bool _payloadBuffered;
@@ -309,9 +322,9 @@ public sealed class BlueTuskPortalRow
         var row = reusableRow ?? new BlueTuskPortalRow(session, portal);
         row.Reset(payloadLength);
         await row.ReadExactlyAsync(
-            row._headerBuffer.AsMemory(0, sizeof(short)),
+            row._inlinePayload.AsMemory(0, sizeof(short)),
             cancellationToken).ConfigureAwait(false);
-        row.FieldCount = BinaryPrimitives.ReadInt16BigEndian(row._headerBuffer);
+        row.FieldCount = BinaryPrimitives.ReadInt16BigEndian(row._inlinePayload);
         row.ValidateFieldCount(expectedFieldCount);
         return row;
     }
@@ -324,6 +337,8 @@ public sealed class BlueTuskPortalRow
         FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
         ValidateFieldCount(expectedFieldCount);
     }
+
+    internal void Rebind(BlueTuskPortal portal) => _portal = portal;
 
     internal void ResetBuffered(int payloadLength, int expectedFieldCount)
     {
@@ -682,8 +697,10 @@ public sealed class BlueTuskPortalRow
 
     private async ValueTask ReadFieldHeaderAsync(CancellationToken cancellationToken)
     {
-        await ReadExactlyAsync(_headerBuffer, cancellationToken).ConfigureAwait(false);
-        SetActiveField(BinaryPrimitives.ReadInt32BigEndian(_headerBuffer));
+        await ReadExactlyAsync(
+            _inlinePayload.AsMemory(0, sizeof(int)),
+            cancellationToken).ConfigureAwait(false);
+        SetActiveField(BinaryPrimitives.ReadInt32BigEndian(_inlinePayload));
     }
 
     private void SetActiveField(int length)

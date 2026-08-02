@@ -59,6 +59,11 @@ internal static class BlueTuskParameterEncoder
         BlueTuskTypeRegistry? types = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
+        if (parameters.Count == 0)
+        {
+            return Array.Empty<BlueTuskExtendedQueryParameter>();
+        }
+
         var encoded = new BlueTuskExtendedQueryParameter[parameters.Count];
         for (var index = 0; index < parameters.Count; index++)
         {

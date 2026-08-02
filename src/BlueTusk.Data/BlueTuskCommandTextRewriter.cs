@@ -11,6 +11,7 @@ internal sealed record BlueTuskCommandPlan(
 internal static class BlueTuskCommandTextRewriter
 {
     private static readonly ConditionalWeakTable<string, NamedRewriteTemplate> NamedTemplates = new();
+    private static readonly ConditionalWeakTable<string, BlueTuskCommandPlan> ParameterlessPlans = new();
 
     public static BlueTuskCommandPlan Rewrite(
         string sql,
@@ -130,6 +131,16 @@ internal static class BlueTuskCommandTextRewriter
 
         if (rewritten is null)
         {
+            if (parameters.Count == 0)
+            {
+                return ParameterlessPlans.GetValue(
+                    sql,
+                    static commandText => new BlueTuskCommandPlan(
+                        commandText,
+                        Array.Empty<BlueTuskParameter>(),
+                        UsesNamedParameters: false));
+            }
+
             return new BlueTuskCommandPlan(sql, parameters.Items, UsesNamedParameters: false);
         }
 

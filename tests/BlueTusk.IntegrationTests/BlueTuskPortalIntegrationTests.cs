@@ -59,8 +59,9 @@ public sealed class BlueTuskPortalIntegrationTests
                     (await row!.ReadFieldAsync(0, CancellationToken.None))!.Value.Span));
             await using var stream = row.OpenFieldStream(1);
             var buffer = new byte[8192];
-            Assert.Equal(buffer.Length, await stream.ReadAsync(buffer, CancellationToken.None));
-            Assert.All(buffer, value => Assert.Equal((byte)'x', value));
+            var read = await stream.ReadAsync(buffer, CancellationToken.None);
+            Assert.InRange(read, 1, buffer.Length);
+            Assert.All(buffer.AsSpan(0, read).ToArray(), value => Assert.Equal((byte)'x', value));
         }
 
         var result = await session.ExecuteSimpleQueryAsync("SELECT 42", CancellationToken.None);

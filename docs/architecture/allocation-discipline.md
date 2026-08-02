@@ -57,7 +57,11 @@ wait at every abstraction layer, complete protocol/row/stream accounting in one
 pending-read continuation, and return to the 64 KiB steady-state window
 at the next frame.
 Sequential portal metadata is parsed directly from the shared protocol buffer;
-only DataRow payloads enter the incremental field-streaming path.
+only DataRow payloads enter the incremental field-streaming path. Unlimited
+sequential commands use the unnamed portal, share parameterless rewrite/encoding
+state, and return their row/header storage to the physical session at disposal.
+Portal frontend messages use struct-backed parameter views instead of copied
+type/value arrays and capturing writer delegates.
 The streaming reader holds its command and timeout directly instead of allocating
 capturing completion and exception-translation delegates for each reader.
 

@@ -48,7 +48,10 @@ The paired workloads cover asynchronous warm-pool checkout, parameterized and
 explicitly prepared scalar commands, a sequential 1,000-row read, and a
 sequential 1 MiB `bytea` stream. Each pair uses identical SQL and connection
 lifetimes, long-lived data sources and physical connections, and reusable stream
-buffers. The broader BlueTusk-only suite continues to cover the remaining type,
+buffers. Each connection builds its one-row 1 MiB temporary payload during global
+setup, so the timed stream pair measures query, wire, and provider work without
+repeatedly charging either provider for PostgreSQL's payload-generation CPU cost.
+The broader BlueTusk-only suite continues to cover the remaining type,
 batch, pipeline, COPY, concurrency, EF, graph, and replication workloads from
 the performance strategy.
 
@@ -80,8 +83,9 @@ provider-wide performance claim.
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
 1,000-row scan pay 32 additional network exchanges. The optimized path sends
 Parse/Bind/Describe/Execute/Sync in one transport write (with a metadata Flush
-before Execute), streams without a row limit by default, reuses its forward-only
-row object, and decodes buffered binary integers without boxing. Positive
+before Execute), uses the unnamed portal without a row limit by default, reuses
+session-owned row/header storage after reader disposal, writes parameters from
+struct-backed views, and decodes buffered binary integers without boxing. Positive
 `SequentialFetchSize` values still exercise bounded portal suspension. Keep both
 latency and allocation columns when evaluating this path; the checked-in report
 is refreshed only after the corresponding integration gates pass.
@@ -117,7 +121,8 @@ positions in the same continuation that completes a pending socket read.
 Portal startup parses the small Parse/Bind/RowDescription response directly from
 the protocol buffer before switching to incremental DataRow payload handling.
 Streaming readers retain their command and timeout directly, avoiding per-reader
-lifetime closures and delegate dispatch during cleanup.
+lifetime closures and delegate dispatch during cleanup. Parameterless commands
+share immutable rewrite plans and the empty encoded-parameter vector.
 The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
 it is not a memory-copy microbenchmark.
 

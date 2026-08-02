@@ -13,6 +13,15 @@ public sealed class BlueTuskParameterEncoderTests
     private static readonly int[] GeometricPayloadLengths = [16, 32, 37, 32, 36, 24, 24];
 
     [Fact]
+    public void Reuses_the_empty_parameter_vector()
+    {
+        var first = BlueTuskParameterEncoder.Encode(new BlueTuskParameterCollection());
+        var second = BlueTuskParameterEncoder.Encode(new BlueTuskParameterCollection());
+
+        Assert.Same(first, second);
+    }
+
+    [Fact]
     public void Encodes_int32_as_binary_int4()
     {
         var encoded = BlueTuskParameterEncoder.Encode(new BlueTuskParameter<int>(42));

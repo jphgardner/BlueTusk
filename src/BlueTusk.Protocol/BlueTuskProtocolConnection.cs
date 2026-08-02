@@ -636,6 +636,11 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     public void Write(Action<IBufferWriter<byte>> writeMessage)
         => WriteCore(writeMessage, clearBuffer: false);
 
+    internal void Write<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage) =>
+        WriteCore(state, writeMessage);
+
     /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
     public void WriteSensitive(Action<IBufferWriter<byte>> writeMessage)
         => WriteCore(writeMessage, clearBuffer: true);
@@ -655,6 +660,26 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         finally
         {
             EndWrite(clearBuffer);
+        }
+    }
+
+    private void WriteCore<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(writeMessage);
+
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output, state);
+            _transport.Write(output.WrittenSpan);
+            _transport.Flush();
+        }
+        finally
+        {
+            EndWrite(clearBuffer: false);
         }
     }
 
