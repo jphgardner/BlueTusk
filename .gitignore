@@ -5,10 +5,12 @@
 .idea/
 TestResults/
 artifacts/
+benchmarks/baselines/**/*.log
+benchmarks/baselines/**/*-report.csv
+benchmarks/baselines/**/*-report.html
 coverage/
 *.user
 *.suo
 *.nupkg
 *.snupkg
 .env
-

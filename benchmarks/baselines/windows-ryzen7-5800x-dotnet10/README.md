@@ -40,3 +40,14 @@ cost, not presented as an isolated pool-lock comparison. Managed allocation
 was also higher on every measured BlueTusk path. These three-iteration results
 are an optimization baseline, not a superiority claim or release performance
 guarantee.
+
+The live EF Core and SQL/PGQ application reports were added on 2026-08-02
+against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first
+execution measured 2.94 ms and 132,048 B; materializing 100 no-tracking orders
+measured 1.45 ms and 164,679 B. Normalized tracked inserts measured 1.51 ms and
+27,462 B per operation, while load/track/update measured 2.09 ms and 37,665 B.
+Traversing and consuming 999
+edges measured 1.09 ms and 187,936 B through a prepared raw `GRAPH_TABLE`
+command, and 2.98 ms and 685,864 B through the typed EF graph root. These
+ShortRun values include caller-owned materialized results and retain the same
+three-iteration limitations as the provider comparison.

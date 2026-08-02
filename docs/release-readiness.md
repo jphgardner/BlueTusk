@@ -139,9 +139,17 @@ The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
 packages without warnings. Compiler-enforced public API/nullability baselines
 cover the stable core, replication, and extension-authoring seams. The final
 direct-and-transitive NuGet vulnerability audit covers all 65 solution projects
-and reports zero vulnerable package entries. All 18 checked-in allocation
+and reports zero vulnerable package entries. All 24 checked-in allocation
 budgets pass, including command, typed reader, protocol writer,
-structured-codec, large-value streaming, and replication paths.
+structured-codec, large-value streaming, replication, EF Core application, and
+SQL/PGQ traversal paths.
+
+The live application benchmark gate adds fresh parameterized EF query
+compilation plus first execution, 100-entity materialization, normalized tracked
+inserts and load/update paths, plus traversal of a 1,000-vertex/999-edge
+PostgreSQL 19 property graph through both a prepared raw command and the typed
+EF graph API. The checked-in ShortRun reports and allocation budgets are
+regression evidence, not universal latency or throughput claims.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link

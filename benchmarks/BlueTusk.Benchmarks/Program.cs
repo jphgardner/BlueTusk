@@ -31,15 +31,20 @@ var configuration = ManualConfig
 
 var competitiveConnectionString = Environment.GetEnvironmentVariable(
     ProviderComparisonBenchmarks.ConnectionStringEnvironmentVariable);
-var requestsProviderComparison = args.Any(
-    argument => argument.Contains(
-        nameof(ProviderComparisonBenchmarks),
-        StringComparison.OrdinalIgnoreCase));
-if (string.IsNullOrWhiteSpace(competitiveConnectionString) && requestsProviderComparison)
+var liveBenchmarkTypes = new HashSet<Type>
+{
+    typeof(EntityFrameworkCoreBenchmarks),
+    typeof(ProviderComparisonBenchmarks),
+    typeof(SqlPgqBenchmarks),
+};
+var requestsLiveBenchmark = args.Any(
+    argument => liveBenchmarkTypes.Any(
+        type => argument.Contains(type.Name, StringComparison.OrdinalIgnoreCase)));
+if (string.IsNullOrWhiteSpace(competitiveConnectionString) && requestsLiveBenchmark)
 {
     throw new InvalidOperationException(
         $"{ProviderComparisonBenchmarks.ConnectionStringEnvironmentVariable} must be configured " +
-        "to run live provider-comparison benchmarks.");
+        "to run live PostgreSQL benchmarks.");
 }
 
 var benchmarkTypes = typeof(ProtocolParserBenchmarks).Assembly
@@ -48,8 +53,8 @@ var benchmarkTypes = typeof(ProtocolParserBenchmarks).Assembly
         !type.IsGenericType &&
         type.GetMethods().Any(
             method => method.IsDefined(typeof(BenchmarkAttribute), inherit: true)) &&
-        (!string.IsNullOrWhiteSpace(competitiveConnectionString) ||
-            type != typeof(ProviderComparisonBenchmarks)))
+        (!liveBenchmarkTypes.Contains(type) ||
+            !string.IsNullOrWhiteSpace(competitiveConnectionString)))
     .ToArray();
 _ = BenchmarkSwitcher
     .FromTypes(benchmarkTypes)

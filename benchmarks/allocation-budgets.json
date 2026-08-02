@@ -91,6 +91,36 @@
       "benchmark": "BlueTusk.Benchmarks.ReplicationBenchmarks.PullOneThousandBoundedXLogFrames",
       "maximumBytesPerOperation": 80,
       "reason": "Pull-based bounded replication consumption normalized per frame with no prefetch queue or WAL payload copy."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.EntityFrameworkCoreBenchmarks.CompileAndExecuteParameterizedQueryAsync",
+      "maximumBytesPerOperation": 150000,
+      "reason": "Fresh EF compiled-query construction plus first execution and one scalar result; the execution prevents measuring only delegate creation."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.EntityFrameworkCoreBenchmarks.MaterializeOneHundredOrdersAsync",
+      "maximumBytesPerOperation": 180000,
+      "reason": "Data-source-backed EF context, query infrastructure, and 100 caller-owned entity/string results."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.EntityFrameworkCoreBenchmarks.InsertOrdersAsync",
+      "maximumBytesPerOperation": 32000,
+      "reason": "One normalized tracked EF insert and SaveChanges path; transaction setup and rollback are amortized over 16 operations."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.EntityFrameworkCoreBenchmarks.LoadAndUpdateOrdersAsync",
+      "maximumBytesPerOperation": 44000,
+      "reason": "One normalized EF materialize, track, update, and SaveChanges path; transaction setup and rollback are amortized over 16 operations."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.SqlPgqBenchmarks.RawPreparedGraphTraversalAsync",
+      "maximumBytesPerOperation": 210000,
+      "reason": "Prepared SQL/PGQ traversal and typed reader consumption of 999 destination identifiers."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.SqlPgqBenchmarks.TypedEfGraphTraversalAsync",
+      "maximumBytesPerOperation": 760000,
+      "reason": "Typed EF graph translation, execution, and 999 caller-owned traversal result objects."
     }
   ]
 }

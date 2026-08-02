@@ -1,6 +1,6 @@
 # BlueTusk benchmarks
 
-The BenchmarkDotNet suite covers complete synchronous/asynchronous command parameter and result paths, protocol-connection writes, protocol parsing and incremental payload streaming, typed buffered readers and large field access, integer/numeric/temporal/JSONB codecs, catalogue-composed array/enum/range/composite encoding and decoding, binary COPY field encoding, notification decoding, replication WAL-frame decoding and bounded pull consumption, large-object stream transfer overhead, warm-session pool checkout, and the transport-pipeline decision. EF materialisation and graph workloads are added alongside those implementations. Pool, command, reader, protocol-streaming, replication, and large-object workloads isolate provider bookkeeping with in-memory sessions; live PostgreSQL behavior is covered by integration, stress, and compatibility tests.
+The BenchmarkDotNet suite covers complete synchronous/asynchronous command parameter and result paths, protocol-connection writes, protocol parsing and incremental payload streaming, typed buffered readers and large field access, integer/numeric/temporal/JSONB codecs, catalogue-composed array/enum/range/composite encoding and decoding, binary COPY field encoding, notification decoding, replication WAL-frame decoding and bounded pull consumption, large-object stream transfer overhead, warm-session pool checkout, EF query compilation/materialisation/writes, SQL/PGQ traversal, and the transport-pipeline decision. Pool, command, reader, protocol-streaming, replication, and large-object workloads isolate provider bookkeeping with in-memory sessions; the application and comparison fixtures execute against live PostgreSQL.
 
 `TransportPipelineBenchmarks` compares the production ArrayPool/Span/Memory reader with a benchmark-only, bounded `System.IO.Pipelines` prototype across fragmented rows, a 1 MiB field, COPY frames, and cancellation recovery, using genuine sync and async entry points. `TransportPipelineSocketBenchmarks` repeats the comparison over raw TCP and authenticated loopback TLS. The production packages do not reference `System.IO.Pipelines`; the resulting decision and limitations are in [ADR 0005](../docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md).
 
@@ -9,6 +9,32 @@ without a prefetch queue. This mirrors the replication async iterator's
 backpressure boundary: the connection reads the next `CopyData` payload only
 when the consumer requests the next message. The benchmark normalizes time and
 allocation per frame; it does not claim to measure server or network latency.
+
+## Live application workloads
+
+`EntityFrameworkCoreBenchmarks` uses one long-lived `BlueTuskDataSource` and a
+1,000-row table to measure fresh parameterized EF query compilation plus first
+execution, no-tracking materialization of 100 entities, inserts, and
+load/track/update operations. The
+write methods perform 16 `SaveChanges` operations inside a rolled-back
+transaction and declare `OperationsPerInvoke=16`, keeping the fixture stable
+while reporting per-operation cost.
+
+`SqlPgqBenchmarks` requires PostgreSQL 19. It creates a 1,000-vertex,
+999-edge property graph and traverses all outgoing edges from one source through
+both a prepared raw `GRAPH_TABLE` command and BlueTusk's typed EF graph query
+root. Both paths fully consume or materialize the results.
+
+Run the six application workloads against an isolated PostgreSQL 19 database:
+
+```powershell
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*EntityFrameworkCoreBenchmarks*' '*SqlPgqBenchmarks*'
+```
+
+These live fixtures use fixed `bluetusk_benchmark_*` object names and recreate
+their own tables/graph, so the configured database must be dedicated to the
+benchmark run.
 
 ## Live provider comparison
 
@@ -33,9 +59,10 @@ $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=b
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*ProviderComparisonBenchmarks*'
 ```
 
-The live comparison is excluded from an unfiltered benchmark run when the
-environment variable is absent. Supplying its filter without a connection
-string fails immediately instead of silently producing a server-free result.
+All live fixtures are excluded from an unfiltered benchmark run when the
+environment variable is absent. Supplying a live fixture filter without a
+connection string fails immediately instead of silently producing a
+server-free result.
 ShortRun measurements are environment-specific diagnostics with wide confidence
 intervals; they identify optimization work and are not a claim that one provider
 is universally faster.

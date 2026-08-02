@@ -589,6 +589,6 @@ explicit environment and workload gates below are executable in CI.
 - [x] `en_GB`/London and `de_DE`/New York locale/time-zone CI with money and timestamp acceptance
 - [x] Real primary/standby topology with target-session fallback, WAL replay, and read-only acceptance
 - [x] Scheduled full-solution acceptance against the checksummed official PostgreSQL 19 nightly branch snapshot
-- [ ] Representative EF Core and SQL/PGQ benchmark workloads alongside the native ADO.NET comparisons
+- [x] Representative EF query compilation/materialisation/write and raw/typed SQL/PGQ traversal benchmarks with checked-in ShortRun allocation baselines
 
 Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.

@@ -18,6 +18,10 @@ The Windows/Ryzen 7 5800X/.NET 10 short baseline currently records:
 | One-kilobyte WAL decode / bounded WAL pull | 64 B | decoded envelope; WAL payload remains a zero-copy slice |
 | Buffered one-megabyte `bytea` | 1,049,117 B | the caller-owned byte array is inherent |
 | Buffered one-megabyte text | 2,097,447 B | the caller-owned UTF-16 string is inherent |
+| EF compile plus first execution of a parameterized query | 132,048 B | fresh relational compilation, context/query state, and one scalar result |
+| EF materialization of 100 orders | 164,679 B | context/query state plus caller-owned entities and strings |
+| EF insert / load-and-update | 27,462 B / 37,665 B | normalized tracked write and `SaveChanges` paths |
+| Prepared raw / typed EF traversal of 999 edges | 187,936 B / 685,864 B | readers plus caller-owned typed graph results |
 
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 
