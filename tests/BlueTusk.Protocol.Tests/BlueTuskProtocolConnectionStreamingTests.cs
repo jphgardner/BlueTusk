@@ -10,9 +10,11 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
     [Fact]
     public void Streams_a_large_payload_without_buffering_the_next_frame()
     {
-        var payload = Enumerable.Range(0, 40_000).Select(static value => (byte)value).ToArray();
+        var payload = Enumerable.Range(0, 1_100_000).Select(static value => (byte)value).ToArray();
         var ready = Frame((byte)'Z', [(byte)'I']);
-        using var transport = new FragmentedTransport(Frame((byte)'D', payload).Concat(ready).ToArray(), 37);
+        using var transport = new FragmentedTransport(
+            Frame((byte)'D', payload).Concat(ready).ToArray(),
+            32 * 1024);
         using var connection = new BlueTuskProtocolConnection(transport);
 
         var header = connection.ReadMessageHeader();
@@ -23,7 +25,8 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         var offset = 0;
         while (offset < actual.Length)
         {
-            offset += connection.ReadMessagePayload(actual.AsSpan(offset, Math.Min(113, actual.Length - offset)));
+            offset += connection.ReadMessagePayload(
+                actual.AsSpan(offset, Math.Min(16 * 1024, actual.Length - offset)));
         }
 
         Assert.Equal(payload, actual);

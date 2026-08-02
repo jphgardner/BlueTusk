@@ -10,7 +10,7 @@ namespace BlueTusk.Protocol;
 public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 {
     private const int InitialBufferSize = 64 * 1024;
-    private const int MaximumPayloadReadAhead = 64 * 1024;
+    private const int MaximumPayloadReadAhead = 1024 * 1024;
     private const int InitialWriteBufferSize = 4 * 1024;
     private const int MaximumRetainedWriteBufferSize = 64 * 1024;
     private readonly IBlueTuskTransport _transport;
@@ -608,6 +608,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         _activePayloadRemaining = -1;
+        ShrinkReadBufferIfPossible();
     }
 
     private BlueTuskBackendMessageHeader ConsumeHeader()
@@ -682,6 +683,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         PrepareForRead();
+        GrowReadBufferForPayload();
         var readAheadLength = Math.Min(
             _buffer.Length - (_start + _count),
             MaximumPayloadReadAhead);
@@ -705,6 +707,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         PrepareForRead();
+        GrowReadBufferForPayload();
         var readAheadLength = Math.Min(
             _buffer.Length - (_start + _count),
             MaximumPayloadReadAhead);
@@ -755,6 +758,38 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             ? read
             : throw new EndOfStreamException(
                 "PostgreSQL disconnected in the middle of a protocol message payload.");
+
+    private void GrowReadBufferForPayload()
+    {
+        var desiredReadAhead = Math.Min(_activePayloadRemaining, MaximumPayloadReadAhead);
+        if (desiredReadAhead <= _buffer.Length - (_start + _count))
+        {
+            return;
+        }
+
+        var replacement = ArrayPool<byte>.Shared.Rent(
+            Math.Max(
+                Math.Min(checked(_count + desiredReadAhead), MaximumPayloadReadAhead),
+                InitialBufferSize));
+        _buffer.AsSpan(_start, _count).CopyTo(replacement);
+        ArrayPool<byte>.Shared.Return(_buffer);
+        _buffer = replacement;
+        _start = 0;
+    }
+
+    private void ShrinkReadBufferIfPossible()
+    {
+        if (_buffer.Length <= InitialBufferSize || _count > InitialBufferSize)
+        {
+            return;
+        }
+
+        var replacement = ArrayPool<byte>.Shared.Rent(InitialBufferSize);
+        _buffer.AsSpan(_start, _count).CopyTo(replacement);
+        ArrayPool<byte>.Shared.Return(_buffer);
+        _buffer = replacement;
+        _start = 0;
+    }
 
     private void EnsureNoActivePayload()
     {
