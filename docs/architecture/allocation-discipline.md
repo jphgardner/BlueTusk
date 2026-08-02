@@ -51,7 +51,8 @@ CancelRequest timer instead of allocating linked cancellation sources per
 operation. Untouched logical connections avoid allocating rare transaction,
 notification, and large-object state. Large streamed payloads rent an adaptive
 read-ahead buffer, return legal partial reads without wrapping each transport
-wait at every abstraction layer, and return to the 64 KiB steady-state window
+wait at every abstraction layer, complete protocol/row/stream accounting in one
+pending-read continuation, and return to the 64 KiB steady-state window
 at the next frame.
 
 Machine-readable limits live in `benchmarks/allocation-budgets.json`. They intentionally allow modest short-run/runtime variance while keeping zero-allocation protocol writes strict. Refresh the named reports, review any ownership change, and then run:

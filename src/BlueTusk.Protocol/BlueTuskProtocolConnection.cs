@@ -460,21 +460,61 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             EnsureActivePayload();
             if (destination.IsEmpty || _activePayloadRemaining == 0)
             {
+                var completed = complete(state, 0);
                 EndRead();
-                return ValueTask.FromResult(complete(state, 0));
+                return ValueTask.FromResult(completed);
             }
 
             var requested = Math.Min(destination.Length, _activePayloadRemaining);
-            var pendingRead = ReadPayloadBytesAsync(destination[..requested], cancellationToken);
-            if (!pendingRead.IsCompletedSuccessfully)
+            destination = destination[..requested];
+            if (_count != 0)
             {
-                return AwaitMessagePayloadAsync(pendingRead, state, complete);
+                var copied = CopyBufferedPayload(destination.Span);
+                _activePayloadRemaining -= copied;
+                var completed = complete(state, copied);
+                EndRead();
+                return ValueTask.FromResult(completed);
             }
 
-            var read = pendingRead.Result;
+            PrepareForRead();
+            GrowReadBufferForPayload();
+            var readAheadLength = Math.Min(
+                _buffer.Length - (_start + _count),
+                MaximumPayloadReadAhead);
+            if (destination.Length < readAheadLength)
+            {
+                var pendingReadAhead = _transport.ReadAsync(
+                    _buffer.AsMemory(_start + _count, readAheadLength),
+                    cancellationToken);
+                if (!pendingReadAhead.IsCompletedSuccessfully)
+                {
+                    return AwaitPayloadReadAheadAndCompleteAsync(
+                        pendingReadAhead,
+                        destination,
+                        state,
+                        complete);
+                }
+
+                var copied = CompletePayloadReadAhead(
+                    pendingReadAhead.Result,
+                    destination.Span);
+                _activePayloadRemaining -= copied;
+                var completed = complete(state, copied);
+                EndRead();
+                return ValueTask.FromResult(completed);
+            }
+
+            var pendingRead = _transport.ReadAsync(destination, cancellationToken);
+            if (!pendingRead.IsCompletedSuccessfully)
+            {
+                return AwaitPayloadReadAndCompleteAsync(pendingRead, state, complete);
+            }
+
+            var read = ValidatePayloadRead(pendingRead.Result);
             _activePayloadRemaining -= read;
+            var result = complete(state, read);
             EndRead();
-            return ValueTask.FromResult(complete(state, read));
+            return ValueTask.FromResult(result);
         }
         catch
         {
@@ -497,16 +537,36 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
-    private async ValueTask<int> AwaitMessagePayloadAsync<TState>(
+    private async ValueTask<int> AwaitPayloadReadAndCompleteAsync<TState>(
         ValueTask<int> pendingRead,
         TState state,
         Func<TState, int, int> complete)
     {
         try
         {
-            var read = await pendingRead.ConfigureAwait(false);
+            var read = ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
             _activePayloadRemaining -= read;
             return complete(state, read);
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    private async ValueTask<int> AwaitPayloadReadAheadAndCompleteAsync<TState>(
+        ValueTask<int> pendingRead,
+        Memory<byte> destination,
+        TState state,
+        Func<TState, int, int> complete)
+    {
+        try
+        {
+            var copied = CompletePayloadReadAhead(
+                await pendingRead.ConfigureAwait(false),
+                destination.Span);
+            _activePayloadRemaining -= copied;
+            return complete(state, copied);
         }
         finally
         {

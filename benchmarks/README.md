@@ -111,7 +111,7 @@ shrinks back to 64 KiB at the next frame boundary, so ordinary sessions do not
 retain the large window. Fast synchronous `ValueTask` completion through the
 field-stream stack reduces socket completions, while asynchronous stream reads
 return legal partial results and let the protocol completion update row/stream
-positions without redundant continuation layers.
+positions in the same continuation that completes a pending socket read.
 The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
 it is not a memory-copy microbenchmark.
 
