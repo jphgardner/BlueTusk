@@ -186,3 +186,29 @@ services:
       - -c
       - hba_file=/etc/postgresql/bluetusk-pg_hba.conf
     ports: ["5821:5432"]
+
+  topology-primary18:
+    <<: *postgres-common
+    image: postgres:18-alpine
+    profiles: ["topology-tests"]
+    ports: ["5830:5432"]
+
+  topology-standby18:
+    image: bluetusk/postgres-standby-test:18
+    build:
+      context: ./standby
+    profiles: ["topology-tests"]
+    environment:
+      PGDATA: /var/lib/postgresql/data
+    volumes:
+      - ./pg_hba.conf:/etc/postgresql/bluetusk-pg_hba.conf:ro
+    depends_on:
+      topology-primary18:
+        condition: service_healthy
+    ports: ["5831:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d bluetusk_tests"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    restart: "no"

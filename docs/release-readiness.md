@@ -103,6 +103,13 @@ timestamp decoding. PgBouncer's cleartext test authentication is confined to
 the isolated Docker network and requires the provider's explicit insecure-test
 opt-in.
 
+A separate PostgreSQL 18 streaming-replication topology takes a fresh physical
+base backup for every CI run. Its live tests prove strict and preferred
+primary/read-write/standby/read-only selection after unavailable and
+role-incompatible endpoints, WAL replay visibility, and standby write
+rejection. This is distinct from the logical-replication decoder and endurance
+gates.
+
 The complete serial solution matrix currently reports:
 
 | PostgreSQL | Passed | Intentional skips | Failed |
@@ -144,7 +151,8 @@ packaging, and public API analysis on Windows and Linux. Live matrices run the
 solution against PostgreSQL 15, 16, 17, 18, and 19 and run pgvector, PostGIS,
 and TimescaleDB ADO.NET/EF acceptance on their dedicated images. Additional
 live jobs enforce PgBouncer session/transaction pooling and two locale/time-zone
-combinations.
+combinations. A physical primary/standby job adds target-session selection and
+WAL-replay acceptance.
 Scheduled/manual jobs add elevated provider concurrency and a separate
 replication endurance run. See the
 checked-in workflow and

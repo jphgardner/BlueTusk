@@ -88,6 +88,25 @@ verifies the database collation, `lc_monetary`, locale-formatted `money` text,
 server time zone, and UTC-equivalent `timestamptz` decoding. Ports 5820 and 5821
 map to the English and German images respectively.
 
+## Primary/standby topology
+
+The `topology-tests` profile creates a PostgreSQL 18 primary and takes a real
+`pg_basebackup` for a hot standby that continuously streams WAL. The topology
+gate verifies strict and preferred primary/read-write/standby/read-only target
+selection after both unavailable and role-incompatible endpoints. It also
+writes on the primary, waits for the row to become visible on the standby, and
+proves that the standby rejects writes.
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile topology-tests up -d --build --wait topology-standby18
+$env:BLUETUSK_TOPOLOGY_CONNECTION_STRING = "Host=localhost,localhost;Port=5830,5831;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Pooling=false"
+dotnet test tests/BlueTusk.IntegrationTests --filter FullyQualifiedName~Topology
+```
+
+The primary and standby are exposed on ports 5830 and 5831. Their credentials,
+base backup, and WAL are ephemeral test infrastructure removed with `docker
+compose down --volumes`.
+
 Every restore audits direct and transitive dependencies at every advisory
 severity. To produce an explicit machine-readable review on .NET 10, run:
 

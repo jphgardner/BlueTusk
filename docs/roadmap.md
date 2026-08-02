@@ -587,7 +587,7 @@ explicit environment and workload gates below are executable in CI.
 - [x] Dedicated extension-image CI for pgvector, PostGIS, and TimescaleDB ADO.NET/EF gates
 - [x] PgBouncer session- and transaction-pooling CI with live prepared/transaction acceptance
 - [x] `en_GB`/London and `de_DE`/New York locale/time-zone CI with money and timestamp acceptance
-- [ ] Real primary/standby topology and target-session/failover acceptance
+- [x] Real primary/standby topology with target-session fallback, WAL replay, and read-only acceptance
 - [ ] PostgreSQL development-version scheduled acceptance where a published image is available
 - [ ] Representative EF Core and SQL/PGQ benchmark workloads alongside the native ADO.NET comparisons
 

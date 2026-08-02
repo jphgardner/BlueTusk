@@ -242,6 +242,47 @@ jobs:
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile compatibility-tests down --volumes
 
+  primary-standby-integration:
+    name: PostgreSQL 18 primary/standby topology
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start streaming-replication topology
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile topology-tests
+          up -d --build --wait topology-standby18
+
+      - name: Run topology and target-session acceptance
+        env:
+          BLUETUSK_TOPOLOGY_CONNECTION_STRING: Host=localhost,localhost;Port=5830,5831;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Pooling=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Topology
+          --logger trx
+          --results-directory artifacts/test-results/topology
+
+      - name: Capture topology logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile topology-tests
+          logs topology-primary18 topology-standby18
+
+      - name: Stop streaming-replication topology
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile topology-tests down --volumes
+
   replication-endurance:
     name: PostgreSQL 19 replication endurance
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
