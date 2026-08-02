@@ -2,6 +2,10 @@
 
 `BlueTusk.EntityFrameworkCore` is the EF Core provider over the BlueTusk ADO.NET driver. The current implementation supports provider registration, relational queries, change tracking and PostgreSQL CRUD, explicit transactions and savepoints, store-generated values, optimistic concurrency, and PostgreSQL-native type mappings.
 
+Microsoft's provider-facing relational test package is consumed by a dedicated
+test assembly. The exact adopted suites, commands, and remaining 1.0 coverage
+gate are recorded in [EF Core relational specification tests](specification-tests.md).
+
 ## Configure a context
 
 ```csharp

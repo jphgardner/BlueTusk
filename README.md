@@ -20,6 +20,11 @@ dotnet build BlueTusk.slnx --no-restore
 dotnet test BlueTusk.slnx --no-build
 ```
 
+The solution includes BlueTusk's native xUnit v3 tests and a separate xUnit v2
+assembly that consumes Microsoft's official EF Core relational specification
+package. See the [EF specification-test coverage](docs/ef-core/specification-tests.md)
+for the exact adopted suites and remaining 1.0 gate.
+
 Integration tests are opt-in. Start one of the test databases and set `BLUETUSK_TEST_CONNECTION_STRING` before running the integration suite.
 
 ```powershell

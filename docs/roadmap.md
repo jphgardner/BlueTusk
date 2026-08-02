@@ -182,7 +182,9 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
   - [x] Catalogue-only sequence discovery safe during concurrent schema changes
 - [x] Initial EF Core relational specification-suite coverage
-  - [x] Provider-service lifetime and isolation contracts
+  - [x] Official EF Core 10.0.10 relational specification package pinned with an isolated, solution-level test assembly
+  - [x] All official provider-service registration, idempotency, isolation, and lifetime contracts
+  - [x] All official migrations SQL-generator cases with BlueTusk PostgreSQL golden baselines, including PostGIS seed literals
   - [x] Raw SQL composition, parameterization, compiled queries, and nullable projections
   - [x] Tracking modes, identity resolution, split-query includes, and relationship fix-up
   - [x] Relational command execution and bulk update/delete
@@ -533,6 +535,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Bounded streaming, lifecycle/transaction ownership, abort/recovery, and PostgreSQL 15–19 acceptance for native data paths
   - [x] Replication API compatibility baselines, live version matrix, checkpoint/failure recovery, feedback safety, and scheduled endurance
 - [ ] EF Core relational specification coverage
+  - [x] Official service-registration and migrations SQL-generator suites (55 offline tests, no skips)
+  - [ ] Official live relational fixtures and broader query, update, model, migrations, and scaffolding suites
 - [ ] PostgreSQL-specific EF support
 - [x] Security review
   - [x] Repository threat model and control review covering credentials, TLS, authentication, protocol bounds, pooling, cancellation, SQL trust boundaries, diagnostics, and supply chain

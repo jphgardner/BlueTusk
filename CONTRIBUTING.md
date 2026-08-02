@@ -10,4 +10,11 @@ BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, a
 4. Run `dotnet format --verify-no-changes`, `dotnet build`, and `dotnet test`.
 5. Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions.
 
+EF provider changes must also preserve the official relational specification
+gate in `tests/BlueTusk.EntityFrameworkCore.SpecificationTests`. New inherited
+migration-generator cases require a BlueTusk override with an exact PostgreSQL
+SQL baseline; do not satisfy EF Core's override check without asserting the
+result. The current adopted suites and the broader coverage backlog are
+documented in [EF Core relational specification tests](docs/ef-core/specification-tests.md).
+
 Public API proposals should explain lifetime/ownership, synchronous and asynchronous behaviour, cancellation, and how unknown future PostgreSQL values degrade. The shipped ADO.NET, replication, and extension-authoring assemblies have `PublicAPI.Shipped.txt` contracts. Additive preview APIs belong in `PublicAPI.Unshipped.txt`; removing or changing a shipped signature requires an explicit compatibility/versioning decision and documentation update. See [API compatibility](docs/api-compatibility.md).
