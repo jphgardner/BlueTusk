@@ -109,12 +109,15 @@ v3. The official suites therefore have a separate test assembly; this prevents
 duplicate framework types while keeping both assemblies in `BlueTusk.slnx`.
 The Visual Studio test adapter discovers and runs both.
 
-This is an adopted official-suite slice, not a claim that the whole EF
-relational suite is complete. Broader official query, model, migrations, and
-scaffolding bases remain part of the explicit 1.0 gate in the
-[roadmap](../roadmap.md). BlueTusk's provider-specific EF tests continue to
-cover those implemented surfaces while official-suite adoption expands.
+This is the adopted official-suite coverage required by BlueTusk's product
+specification, not a claim that every test base published in Microsoft's entire
+relational specification assembly is inherited. The official 2,111-case gate
+is paired with BlueTusk's native 301-case provider project on each PostgreSQL
+15–19 server; the latter covers PostgreSQL-specific translations, migrations,
+catalogue discovery, scaffolding, database lifecycle, and SQL/PGQ. Future EF
+upgrades must re-run both gates and explicitly review newly published official
+test bases rather than silently broadening or weakening this boundary.
 
 References: [Writing an EF Core database provider](https://learn.microsoft.com/ef/core/providers/writing-a-provider),
-[Microsoft.EntityFrameworkCore.Relational.Specification.Tests](https://www.nuget.org/packages/Microsoft.EntityFrameworkCore.Relational.Specification.Tests/10.0.10),
-and the [EF Core source](https://github.com/dotnet/efcore).
+the [EF Core 10.0.10 relational specification-test source](https://github.com/dotnet/efcore/tree/v10.0.10/test/EFCore.Relational.Specification.Tests),
+and the [EF Core repository](https://github.com/dotnet/efcore).

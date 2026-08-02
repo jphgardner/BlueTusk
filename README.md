@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not yet a production-ready database driver as a whole. Its ADO.NET, pooling, cancellation, PostgreSQL-native data-path, replication, security, stress, and compatibility subsystem gates are complete and executable; EF, design tooling, identity adapters, individual extension APIs, documentation, and the final whole-product release audit remain preview work. The detailed implemented surface and every pending gate are tracked in the [roadmap](docs/roadmap.md) and [runtime release-readiness record](docs/release-readiness.md).
+> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production endorsement. The product-spec engineering gates are implemented and executable, including ADO.NET, EF Core, design tooling, PostgreSQL-native data paths, replication, extensions, security, stress, compatibility, documentation, and the PostgreSQL 15–19 matrix. The preview label remains while the project accumulates external production experience and PostgreSQL 19 syntax remains beta-sensitive. See the [roadmap](docs/roadmap.md), [release-readiness record](docs/release-readiness.md), and [support matrix](VERSIONING.md) for the exact evidence and boundaries.
 
 ## Build
 
@@ -23,7 +23,7 @@ dotnet test BlueTusk.slnx --no-build
 The solution includes BlueTusk's native xUnit v3 tests and a separate xUnit v2
 assembly that consumes Microsoft's official EF Core relational specification
 package. See the [EF specification-test coverage](docs/ef-core/specification-tests.md)
-for the exact adopted suites and remaining 1.0 gate.
+for the exact adopted suites, counts, upstream skips, and scope boundary.
 
 Integration tests are opt-in. Start one of the test databases and set `BLUETUSK_TEST_CONNECTION_STRING` before running the integration suite.
 

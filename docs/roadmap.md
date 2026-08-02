@@ -276,7 +276,8 @@ This file tracks executable repository status. The product vision is broader; un
 
 - [x] Reconcile package version, README, roadmap, and implemented prepared/batch/EF scope
 - [x] Label implemented, tested preview, production-ready, and planned capabilities distinctly
-- [ ] Re-audit all public claims at each preview and 1.0 release gate
+- [x] Re-audit all public claims at each preview and 1.0 release gate
+  - [x] 2026-08-02 `0.3.0-preview.1` whole-product audit reconciles README, version/support matrix, EF scope, release readiness, package output, and PostgreSQL 19 beta assumptions
 
 ## 0.3.0 — PostgreSQL-specific EF translations (Milestone 6, query surface)
 
@@ -540,14 +541,18 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Production-ready `COPY`, notifications, large objects, and replication
   - [x] Bounded streaming, lifecycle/transaction ownership, abort/recovery, and PostgreSQL 15–19 acceptance for native data paths
   - [x] Replication API compatibility baselines, live version matrix, checkpoint/failure recovery, feedback safety, and scheduled endurance
-- [ ] EF Core relational specification coverage
+- [x] Product-spec EF Core relational specification coverage
   - [x] Official service-registration and migrations SQL-generator suites (55 offline tests, no skips)
   - [x] Official live data-annotation, composite-key, field-mapping, constructor-materialization, and property-values fixtures (506 passed, four upstream EF skips)
   - [x] Official live updates, store-generated fixup, and complex-types tracking fixtures (391 passed, 50 upstream EF skips)
   - [x] Official live complex-type, ad-hoc complex-type, and structural-JSON query fixtures across PostgreSQL 15–19 (221 passed, two upstream EF skips per server)
   - [x] Official live migrations and database-model reverse-engineering fixture on PostgreSQL 19 (132 passed, two upstream EF skips)
   - [x] Official generic relational model-builder fixture (682 passed, 66 upstream EF skips) plus broad query, migrations, and scaffolding fixtures
-- [ ] PostgreSQL-specific EF support
+  - [x] Complete PostgreSQL 19 official assembly gate: 2,111 discovered, 1,987 passed, and 124 upstream EF skips; the scope boundary is explicit and does not claim every Microsoft test base
+- [x] PostgreSQL-specific EF support
+  - [x] Native query-family matrix across PostgreSQL 15–19 covers operators, functions, aggregates, set-returning roots, query constructs, data modification, JSON, UDTs, and mappings
+  - [x] Native 301-case provider project passes on every supported server with only capability- and environment-inapplicable skips
+  - [x] Product-spec-complete migrations, reverse engineering, generated C#, database lifecycle, extension integration, and capability-guarded PostgreSQL 19 SQL/PGQ
 - [x] Security review
   - [x] Repository threat model and control review covering credentials, TLS, authentication, protocol bounds, pooling, cancellation, SQL trust boundaries, diagnostics, and supply chain
   - [x] Secure-by-default `Persist Security Info=false` behavior for connection and data-source public properties
@@ -565,7 +570,10 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Competitive benchmarks
   - [x] Equivalent live BlueTusk/Npgsql warm-pool, parameterized, prepared, 1,000-row, and 1 MiB streaming workloads
   - [x] Checked-in PostgreSQL 19 ShortRun latency/allocation baseline with explicit fairness limits and no runtime Npgsql dependency
-- [ ] Complete documentation
+- [x] Complete documentation
+  - [x] Data-source-first ADO.NET, EF, replication, extension, graph, security, observability, testing, versioning, and release-readiness guides match executable behavior
+  - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files
+  - [x] Preview claims retain explicit production, optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 beta boundaries
 - [x] Supported-version CI
 
 Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.

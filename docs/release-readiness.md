@@ -1,10 +1,13 @@
 # Runtime release readiness
 
 BlueTusk records production-readiness decisions as executable subsystem gates,
-not as synonyms for package version. The 2026-08-02 review closes the pooling,
-cancellation, COPY, notification, large-object, and replication gates. The
-repository and NuGet packages remain `0.3.0-preview.1` until the remaining EF,
-schema, documentation, and whole-product release gates are complete.
+not as synonyms for package version. The 2026-08-02 whole-product review closes
+the product-spec engineering gates for the ADO.NET provider, EF Core and design
+tooling, PostgreSQL-specific schema/query support, native data paths,
+replication, extensions, security, performance, stress, compatibility, and
+documentation. The repository and packages remain `0.3.0-preview.1`: completing
+an engineering gate does not substitute for external production experience or
+the maintainer's explicit decision to publish a stable release.
 
 ## Connection pooling
 
@@ -55,16 +58,60 @@ The replication packages add 822 compiler-enforced shipped API/nullability
 signatures. Their pre-freeze review replaced ambiguous optional-parameter
 overload families with explicit no-token and required-token overloads.
 
+## EF Core, design tooling, and extensions
+
+BlueTusk directly consumes Microsoft's EF Core 10.0.10 relational
+specification package. Its official assembly gate discovers 2,111 cases on
+PostgreSQL 19: 1,987 pass and 124 retain upstream EF skip declarations. The
+portable complex-type/JSON query slice additionally runs across PostgreSQL
+15–19. BlueTusk's native provider project runs 301 cases per supported server;
+PostgreSQL 15 passes 299 with two inapplicable cases and PostgreSQL 16–19 each
+pass 300 with only the filesystem-dependent tablespace case skipped when no
+server-owned directory is configured.
+
+Together those gates cover CRUD, tracking, relational model building, queries,
+updates, physical database lifecycle, migrations, reverse engineering,
+generated code, PostgreSQL-specific types/operators/functions/schema objects,
+and capability-guarded PostgreSQL 19 SQL/PGQ. The exact official-suite boundary
+and upstream skip ownership are documented in the
+[EF specification-test record](ef-core/specification-tests.md).
+
+Optional PostGIS, pgvector, citext, hstore, ltree, pg_trgm, and TimescaleDB
+packages remain independently installable and do not add their types or SQL to
+the core packages. Their live extension-image gates, the immutable feature
+registry, extension template, and compatibility harness close the extension
+architecture gate. Cloud identity adapters have deterministic SDK contract
+tests; their real-account acceptance tests remain opt-in because CI does not
+hold customer cloud credentials.
+
+## Release artifacts and documentation
+
+The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
+packages without warnings. Compiler-enforced public API/nullability baselines
+cover the stable core, replication, and extension-authoring seams. All 18
+checked-in allocation budgets pass, including command, typed reader, protocol
+writer, structured-codec, large-value streaming, and replication paths.
+
+Documentation covers every public subsystem and is led by long-lived,
+data-source-first usage. A cross-platform CI script validates every local link
+in all tracked Markdown files; the 2026-08-02 review checked 55 local links
+across 73 files and separately resolved all 40 external Markdown references.
+The support matrix identifies .NET 10, EF Core 10.0.10,
+PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 preview, including the
+remaining beta-syntax risk.
+
 ## Automated gates
 
-The normal CI build runs formatting, warnings-as-errors compilation, all offline
-tests, allocation budgets, packaging, and public API analysis on Windows and
-Linux. A live matrix runs the solution against PostgreSQL 15, 16, 17, 18, and
-19. Scheduled/manual jobs add elevated provider concurrency and a separate
-replication endurance run. See the checked-in workflow and
+The normal CI build runs formatting, documentation-link validation,
+warnings-as-errors compilation, all offline tests, allocation budgets,
+packaging, and public API analysis on Windows and Linux. A live matrix runs the
+solution against PostgreSQL 15, 16, 17, 18, and 19. Scheduled/manual jobs add
+elevated provider concurrency and a separate replication endurance run. See the
+checked-in workflow and
 [testing guide](contributing/testing.md) for the exact commands and environment
 contract.
 
-This evidence closes the listed runtime subsystem gates. It does not promote
-the entire provider to 1.0 or claim production readiness for EF, design tooling,
-identity adapters, or individual extension-specific APIs.
+This evidence closes the repository's current product-spec engineering gates.
+It does not rename the packages to `1.0.0`, guarantee suitability for a
+particular production deployment, validate optional cloud credentials that were
+not supplied, or expand the documented raw-SQL and ownership/grant boundaries.

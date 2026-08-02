@@ -31,6 +31,10 @@ jobs:
       - name: Verify formatting
         run: dotnet format BlueTusk.slnx --no-restore --verify-no-changes
 
+      - name: Verify documentation
+        shell: pwsh
+        run: ./eng/verify-documentation.ps1
+
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
 

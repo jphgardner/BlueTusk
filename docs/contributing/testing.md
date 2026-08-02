@@ -12,6 +12,23 @@
 
 Tests requiring a server read `BLUETUSK_TEST_CONNECTION_STRING` and must skip with a clear reason when it is absent. Credentials must never be printed, including in failed test output.
 
+The normal local release gate mirrors CI:
+
+```powershell
+dotnet restore BlueTusk.slnx
+dotnet format BlueTusk.slnx --verify-no-changes --no-restore
+./eng/verify-documentation.ps1
+dotnet build BlueTusk.slnx -c Release --no-restore
+dotnet test BlueTusk.slnx -c Release --no-build --no-restore
+./eng/verify-allocation-budgets.ps1
+dotnet pack BlueTusk.slnx -c Release --no-build --no-restore --output artifacts/packages
+```
+
+The documentation check validates every repository-local link in every tracked
+Markdown file on both Windows and Linux. External links remain a release-review
+responsibility because network availability must not make the normal build
+nondeterministic.
+
 Every restore audits direct and transitive dependencies at every advisory
 severity. To produce an explicit machine-readable review on .NET 10, run:
 
