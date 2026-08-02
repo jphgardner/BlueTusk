@@ -79,6 +79,8 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
 
     private static readonly RelationalTypeMapping Json = Native("json", typeof(string), BlueTuskBuiltInTypes.Json);
     private static readonly RelationalTypeMapping Jsonb = Native("jsonb", typeof(string), BlueTuskBuiltInTypes.Jsonb);
+    private static readonly RelationalTypeMapping StructuralJson = new BlueTuskStructuralJsonTypeMapping("json");
+    private static readonly RelationalTypeMapping StructuralJsonb = new BlueTuskStructuralJsonTypeMapping("jsonb");
     private static readonly RelationalTypeMapping Xml = Native("xml", typeof(string), BlueTuskBuiltInTypes.Xml);
     private static readonly RelationalTypeMapping Name = Native("name", typeof(string), BlueTuskBuiltInTypes.Name);
 
@@ -563,6 +565,20 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         var clrType = mappingInfo.ClrType is { } requestedClrType
             ? Nullable.GetUnderlyingType(requestedClrType) ?? requestedClrType
             : null;
+
+        if (clrType == typeof(JsonTypePlaceholder))
+        {
+            if (mappingInfo.StoreTypeNameBase is not { } jsonStoreType)
+            {
+                return StructuralJsonb;
+            }
+
+            return jsonStoreType.Equals("json", StringComparison.OrdinalIgnoreCase)
+                ? StructuralJson
+                : jsonStoreType.Equals("jsonb", StringComparison.OrdinalIgnoreCase)
+                    ? StructuralJsonb
+                    : null;
+        }
 
         if (clrType is { IsArray: true } && clrType != typeof(byte[]))
         {

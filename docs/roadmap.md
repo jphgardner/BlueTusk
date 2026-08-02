@@ -536,7 +536,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Replication API compatibility baselines, live version matrix, checkpoint/failure recovery, feedback safety, and scheduled endurance
 - [ ] EF Core relational specification coverage
   - [x] Official service-registration and migrations SQL-generator suites (55 offline tests, no skips)
-  - [ ] Official live relational fixtures and broader query, update, model, migrations, and scaffolding suites
+  - [x] Official live data-annotation, composite-key, field-mapping, constructor-materialization, and property-values fixtures (506 passed, four upstream EF skips)
+  - [ ] Broader official query, update, model, migrations, and scaffolding suites
 - [ ] PostgreSQL-specific EF support
 - [x] Security review
   - [x] Repository threat model and control review covering credentials, TLS, authentication, protocol bounds, pooling, cancellation, SQL trust boundaries, diagnostics, and supply chain

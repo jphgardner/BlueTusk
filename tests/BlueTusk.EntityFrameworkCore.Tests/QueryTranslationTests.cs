@@ -1,3 +1,4 @@
+using System.Linq.Expressions;
 using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -130,6 +131,25 @@ public sealed class QueryTranslationTests
 
         Assert.NotNull(mapping);
         Assert.Equal(expectedClrType, mapping.ClrType);
+    }
+
+    [Fact]
+    public void EF_structural_JSON_uses_the_jsonb_mapping()
+    {
+        using var context = CreateContext();
+        var mappingSource = context.GetService<IRelationalTypeMappingSource>();
+        var mapping = mappingSource.FindMapping(typeof(JsonTypePlaceholder));
+
+        var jsonMapping = Assert.IsAssignableFrom<JsonTypeMapping>(mapping);
+        Assert.Equal("jsonb", jsonMapping.StoreType);
+        Assert.Equal(typeof(JsonTypePlaceholder), jsonMapping.ClrType);
+        Assert.Equal(typeof(string), jsonMapping.GetDataReaderMethod().ReturnType);
+        Assert.Equal(
+            typeof(MemoryStream),
+            jsonMapping.CustomizeDataReaderExpression(Expression.Parameter(typeof(string), "json")).Type);
+
+        Assert.Equal("json", mappingSource.FindMapping(typeof(JsonTypePlaceholder), "json")!.StoreType);
+        Assert.Equal("jsonb", mappingSource.FindMapping(typeof(JsonTypePlaceholder), "JSONB")!.StoreType);
     }
 
     [Theory]
