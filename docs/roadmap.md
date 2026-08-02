@@ -2,6 +2,22 @@
 
 This file tracks executable repository status. The product vision is broader; unchecked work is not implied by package names already present in the solution.
 
+## Real-time platform release trains
+
+- [x] Phase 0: accepted delivery, checkpoint, snapshot, spool, relay, Live security, and Sync connector decisions
+- [x] Phase 0: independent Provider, Streams, Sync, Live, Control Plane, and Continuous Graph version properties and release workflow
+- [x] Phase 0: machine-enforced application CDC boundary and family declarations
+- [x] Phase 0: public contracts, delivery gates, and operational defaults documented
+- [ ] Phase 1: Streams transaction kernel and bounded spool
+- [ ] Phase 2: checkpoint stores, leases, direct groups, and durable PostgreSQL relay
+- [ ] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams preview
+- [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
+- [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
+- [ ] Phase 6: authorised Live query platform and clients through 1.0
+- [ ] Phase 7: Continuous Graph preview
+
+The detailed contracts and release gates are maintained in the [real-time platform plan](realtime-platform/delivery-plan.md).
+
 ## 0.0.1 — Foundation (complete)
 
 - [x] Repository and package structure

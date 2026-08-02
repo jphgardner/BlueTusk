@@ -2,6 +2,8 @@
 
 BlueTusk is split by responsibility so protocol correctness can be tested without ADO.NET or EF Core and so higher layers cannot leak their concepts downward.
 
+The real-time products add a second enforced boundary: [BlueTusk Streams](../realtime-platform/README.md) is the only application-level CDC abstraction. Sync, Live, and Continuous Graph may depend on Streams contracts but cannot reference Replication or PgOutput directly.
+
 ```text
 Application
     ├──→ BlueTusk.EntityFrameworkCore ─→ BlueTusk.Data ─┐

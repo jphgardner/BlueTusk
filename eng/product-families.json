@@ -1,0 +1,35 @@
+{
+  "schemaVersion": 1,
+  "families": {
+    "Provider": {
+      "versionFile": "eng/versions/Provider.props",
+      "packages": [
+        "src",
+        "extensions",
+        "identity",
+        "templates",
+        "tooling"
+      ]
+    },
+    "Streams": {
+      "versionFile": "eng/versions/Streams.props",
+      "packages": []
+    },
+    "Sync": {
+      "versionFile": "eng/versions/Sync.props",
+      "packages": []
+    },
+    "Live": {
+      "versionFile": "eng/versions/Live.props",
+      "packages": []
+    },
+    "ControlPlane": {
+      "versionFile": "eng/versions/ControlPlane.props",
+      "packages": []
+    },
+    "ContinuousGraph": {
+      "versionFile": "eng/versions/ContinuousGraph.props",
+      "packages": []
+    }
+  }
+}

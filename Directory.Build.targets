@@ -1,0 +1,9 @@
+<Project>
+  <Import Project="$(MSBuildThisFileDirectory)eng\versions\$(BlueTuskProductFamily).props"
+          Condition="Exists('$(MSBuildThisFileDirectory)eng\versions\$(BlueTuskProductFamily).props')" />
+
+  <Target Name="ValidateBlueTuskProductFamily" BeforeTargets="PrepareForBuild">
+    <Error Condition="!Exists('$(MSBuildThisFileDirectory)eng\versions\$(BlueTuskProductFamily).props')"
+           Text="Unknown BlueTusk product family '$(BlueTuskProductFamily)'. Add eng/versions/$(BlueTuskProductFamily).props before building this project." />
+  </Target>
+</Project>

@@ -2,7 +2,7 @@
 
 **PostgreSQL, fully exposed to .NET.**
 
-BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
+BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, PostgreSQL SQL/PGQ support, and an independently versioned [real-time application platform](docs/realtime-platform/README.md)—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
 > BlueTusk is an experimental `0.3.0-preview.1` provider, not a production endorsement. The product-spec engineering gates are implemented and executable, including ADO.NET, EF Core, design tooling, PostgreSQL-native data paths, replication, extensions, security, stress, compatibility, documentation, and the PostgreSQL 15–19 matrix. The preview label remains while the project accumulates external production experience and PostgreSQL 19 syntax remains beta-sensitive. See the [roadmap](docs/roadmap.md), [release-readiness record](docs/release-readiness.md), and [support matrix](VERSIONING.md) for the exact evidence and boundaries.
@@ -76,6 +76,8 @@ Replication.PgOutput → Replication → Client
 ```
 
 See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [API compatibility](docs/api-compatibility.md), [runtime release readiness](docs/release-readiness.md), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [security review](docs/security.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+
+The real-time platform is delivered in independently gated Streams, Sync, Live, Control Plane, and Continuous Graph release trains. Package names in its [phased plan](docs/realtime-platform/delivery-plan.md) are commitments, not claims of already-published functionality.
 
 ## Status
 

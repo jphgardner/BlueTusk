@@ -1,0 +1,101 @@
+name: release product family
+
+on:
+  push:
+    tags:
+      - "provider-v*"
+      - "streams-v*"
+      - "sync-v*"
+      - "live-v*"
+      - "control-plane-v*"
+      - "continuous-graph-v*"
+  workflow_dispatch:
+    inputs:
+      family:
+        description: Product family to package
+        required: true
+        type: choice
+        options:
+          - Provider
+          - Streams
+          - Sync
+          - Live
+          - ControlPlane
+          - ContinuousGraph
+      publish:
+        description: Publish packages to NuGet after all gates pass
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Resolve release train
+        id: release
+        shell: pwsh
+        env:
+          REQUESTED_FAMILY: ${{ inputs.family }}
+        run: |
+          $family = $env:REQUESTED_FAMILY
+          if ([string]::IsNullOrWhiteSpace($family)) {
+            $prefix = $env:GITHUB_REF_NAME.Split('-v', 2)[0]
+            $family = switch ($prefix) {
+              'provider' { 'Provider' }
+              'streams' { 'Streams' }
+              'sync' { 'Sync' }
+              'live' { 'Live' }
+              'control-plane' { 'ControlPlane' }
+              'continuous-graph' { 'ContinuousGraph' }
+              default { throw "Unsupported release tag '$env:GITHUB_REF_NAME'." }
+            }
+          }
+          "family=$family" >> $env:GITHUB_OUTPUT
+
+      - name: Validate release manifest
+        shell: pwsh
+        run: ./eng/pack-product-family.ps1 -Family '${{ steps.release.outputs.family }}' -ValidateOnly
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Verify formatting and documentation
+        shell: pwsh
+        run: |
+          dotnet format BlueTusk.slnx --no-restore --verify-no-changes
+          ./eng/verify-documentation.ps1
+
+      - name: Build and test
+        run: |
+          dotnet build BlueTusk.slnx --configuration Release --no-restore
+          dotnet test BlueTusk.slnx --configuration Release --no-build
+
+      - name: Package selected release train
+        shell: pwsh
+        run: ./eng/pack-product-family.ps1 -Family '${{ steps.release.outputs.family }}' -NoRestore
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.release.outputs.family }}-packages
+          path: artifacts/packages/*
+          if-no-files-found: error
+
+      - name: Publish NuGet packages
+        if: startsWith(github.ref, 'refs/tags/') || inputs.publish == true
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: >-
+          dotnet nuget push "artifacts/packages/*.nupkg"
+          --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json
+          --skip-duplicate

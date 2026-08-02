@@ -14,8 +14,7 @@
     <Authors>BlueTusk contributors</Authors>
     <Company>BlueTusk</Company>
     <Product>BlueTusk</Product>
-    <VersionPrefix>0.3.0</VersionPrefix>
-    <VersionSuffix>preview.1</VersionSuffix>
+    <BlueTuskProductFamily Condition="'$(BlueTuskProductFamily)' == ''">Provider</BlueTuskProductFamily>
     <RepositoryType>git</RepositoryType>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
     <PackageReadmeFile>README.md</PackageReadmeFile>
