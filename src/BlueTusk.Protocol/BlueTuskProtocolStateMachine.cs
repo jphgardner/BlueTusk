@@ -3,81 +3,55 @@ namespace BlueTusk.Protocol;
 /// <summary>Guards the high-level lifecycle of a PostgreSQL protocol connection.</summary>
 public sealed class BlueTuskProtocolStateMachine
 {
-    private static readonly Dictionary<BlueTuskConnectionState, BlueTuskConnectionState[]> AllowedTransitions =
-        new Dictionary<BlueTuskConnectionState, BlueTuskConnectionState[]>
-        {
-            [BlueTuskConnectionState.Disconnected] = [BlueTuskConnectionState.TransportConnected],
-            [BlueTuskConnectionState.TransportConnected] =
-                [BlueTuskConnectionState.EncryptionNegotiation, BlueTuskConnectionState.Startup, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.EncryptionNegotiation] =
-                [BlueTuskConnectionState.Startup, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Startup] =
-                [BlueTuskConnectionState.Authentication, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Authentication] =
-                [BlueTuskConnectionState.Initialising, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Initialising] =
-                [BlueTuskConnectionState.Ready, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Ready] =
-                [
-                    BlueTuskConnectionState.Executing,
-                    BlueTuskConnectionState.CopyIn,
-                    BlueTuskConnectionState.CopyOut,
-                    BlueTuskConnectionState.CopyBoth,
-                    BlueTuskConnectionState.Replication,
-                    BlueTuskConnectionState.Resetting,
-                    BlueTuskConnectionState.Closing,
-                ],
-            [BlueTuskConnectionState.Executing] =
-                [
-                    BlueTuskConnectionState.Ready,
-                    BlueTuskConnectionState.CopyIn,
-                    BlueTuskConnectionState.CopyOut,
-                    BlueTuskConnectionState.CopyBoth,
-                    BlueTuskConnectionState.FailedTransaction,
-                    BlueTuskConnectionState.Cancelling,
-                    BlueTuskConnectionState.Closing,
-                ],
-            [BlueTuskConnectionState.CopyIn] =
-                [BlueTuskConnectionState.Ready, BlueTuskConnectionState.FailedTransaction, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.CopyOut] =
-                [BlueTuskConnectionState.Ready, BlueTuskConnectionState.FailedTransaction, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.CopyBoth] =
-                [BlueTuskConnectionState.Ready, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Replication] =
-                [BlueTuskConnectionState.Ready, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.FailedTransaction] =
-                [BlueTuskConnectionState.Executing, BlueTuskConnectionState.Resetting, BlueTuskConnectionState.Ready, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Cancelling] =
-                [BlueTuskConnectionState.Ready, BlueTuskConnectionState.FailedTransaction, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Resetting] =
-                [BlueTuskConnectionState.Ready, BlueTuskConnectionState.Closing],
-            [BlueTuskConnectionState.Closing] = [BlueTuskConnectionState.Disconnected],
-        };
+    private static readonly uint[] AllowedTransitions =
+    [
+        Mask(BlueTuskConnectionState.TransportConnected),
+        Mask(BlueTuskConnectionState.EncryptionNegotiation, BlueTuskConnectionState.Startup, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Startup, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Authentication, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Initialising, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Ready, BlueTuskConnectionState.Closing),
+        Mask(
+            BlueTuskConnectionState.Executing,
+            BlueTuskConnectionState.CopyIn,
+            BlueTuskConnectionState.CopyOut,
+            BlueTuskConnectionState.CopyBoth,
+            BlueTuskConnectionState.Replication,
+            BlueTuskConnectionState.Resetting,
+            BlueTuskConnectionState.Closing),
+        Mask(
+            BlueTuskConnectionState.Ready,
+            BlueTuskConnectionState.CopyIn,
+            BlueTuskConnectionState.CopyOut,
+            BlueTuskConnectionState.CopyBoth,
+            BlueTuskConnectionState.FailedTransaction,
+            BlueTuskConnectionState.Cancelling,
+            BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Ready, BlueTuskConnectionState.FailedTransaction, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Ready, BlueTuskConnectionState.FailedTransaction, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Ready, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Ready, BlueTuskConnectionState.Cancelling, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Executing, BlueTuskConnectionState.Resetting, BlueTuskConnectionState.Ready, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Ready, BlueTuskConnectionState.FailedTransaction, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Ready, BlueTuskConnectionState.Closing),
+        Mask(BlueTuskConnectionState.Disconnected),
+    ];
 
-    private readonly object _sync = new();
-    private BlueTuskConnectionState _state = BlueTuskConnectionState.Disconnected;
+    private int _state = (int)BlueTuskConnectionState.Disconnected;
 
-    public BlueTuskConnectionState State
-    {
-        get
-        {
-            lock (_sync)
-            {
-                return _state;
-            }
-        }
-    }
+    public BlueTuskConnectionState State =>
+        (BlueTuskConnectionState)Volatile.Read(ref _state);
 
     public void TransitionTo(BlueTuskConnectionState next)
     {
-        lock (_sync)
+        while (true)
         {
-            if (!AllowedTransitions.TryGetValue(_state, out var allowed) || !allowed.Contains(next))
+            var current = State;
+            ValidateTransition(current, next);
+            if (Interlocked.CompareExchange(ref _state, (int)next, (int)current) == (int)current)
             {
-                throw new InvalidOperationException($"Protocol state cannot transition from {_state} to {next}.");
+                return;
             }
-
-            _state = next;
         }
     }
 
@@ -85,20 +59,36 @@ public sealed class BlueTuskProtocolStateMachine
         BlueTuskConnectionState expected,
         BlueTuskConnectionState next)
     {
-        lock (_sync)
+        if (State != expected)
         {
-            if (_state != expected)
-            {
-                return false;
-            }
-
-            if (!AllowedTransitions.TryGetValue(_state, out var allowed) || !allowed.Contains(next))
-            {
-                throw new InvalidOperationException($"Protocol state cannot transition from {_state} to {next}.");
-            }
-
-            _state = next;
-            return true;
+            return false;
         }
+
+        ValidateTransition(expected, next);
+        return Interlocked.CompareExchange(ref _state, (int)next, (int)expected) == (int)expected;
+    }
+
+    private static void ValidateTransition(
+        BlueTuskConnectionState current,
+        BlueTuskConnectionState next)
+    {
+        if ((uint)current >= (uint)AllowedTransitions.Length ||
+            (uint)next >= (uint)AllowedTransitions.Length ||
+            (AllowedTransitions[(int)current] & (1u << (int)next)) == 0)
+        {
+            throw new InvalidOperationException(
+                $"Protocol state cannot transition from {current} to {next}.");
+        }
+    }
+
+    private static uint Mask(params BlueTuskConnectionState[] states)
+    {
+        var mask = 0u;
+        foreach (var state in states)
+        {
+            mask |= 1u << (int)state;
+        }
+
+        return mask;
     }
 }
