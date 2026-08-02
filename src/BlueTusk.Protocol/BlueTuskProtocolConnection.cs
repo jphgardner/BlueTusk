@@ -448,6 +448,41 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+    internal ValueTask<int> ReadMessagePayloadAsync<TState>(
+        Memory<byte> destination,
+        TState state,
+        Func<TState, int, int> complete,
+        CancellationToken cancellationToken)
+    {
+        BeginRead();
+        try
+        {
+            EnsureActivePayload();
+            if (destination.IsEmpty || _activePayloadRemaining == 0)
+            {
+                EndRead();
+                return ValueTask.FromResult(complete(state, 0));
+            }
+
+            var requested = Math.Min(destination.Length, _activePayloadRemaining);
+            var pendingRead = ReadPayloadBytesAsync(destination[..requested], cancellationToken);
+            if (!pendingRead.IsCompletedSuccessfully)
+            {
+                return AwaitMessagePayloadAsync(pendingRead, state, complete);
+            }
+
+            var read = pendingRead.Result;
+            _activePayloadRemaining -= read;
+            EndRead();
+            return ValueTask.FromResult(complete(state, read));
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
     private async ValueTask<int> AwaitMessagePayloadAsync(ValueTask<int> pendingRead)
     {
         try
@@ -455,6 +490,23 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             var read = await pendingRead.ConfigureAwait(false);
             _activePayloadRemaining -= read;
             return read;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    private async ValueTask<int> AwaitMessagePayloadAsync<TState>(
+        ValueTask<int> pendingRead,
+        TState state,
+        Func<TState, int, int> complete)
+    {
+        try
+        {
+            var read = await pendingRead.ConfigureAwait(false);
+            _activePayloadRemaining -= read;
+            return complete(state, read);
         }
         finally
         {

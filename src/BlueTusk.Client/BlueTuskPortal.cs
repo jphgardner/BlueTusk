@@ -589,25 +589,33 @@ public sealed class BlueTuskPortalRow
 
     internal ValueTask<int> ReadActiveFieldAsync(
         Memory<byte> destination,
+        BlueTuskPortalFieldStream stream,
         CancellationToken cancellationToken)
     {
         var count = Math.Min(destination.Length, _activeLength - _activePosition);
-        var pendingRead = ReadExactlyAsync(destination[..count], cancellationToken);
-        if (pendingRead.IsCompletedSuccessfully)
+        return _session.ReadPortalPayloadAsync(
+            destination[..count],
+            new ActiveFieldReadState(this, stream),
+            static (state, read) => state.Row.CompleteActiveFieldRead(read, state.Stream),
+            cancellationToken);
+    }
+
+    private int CompleteActiveFieldRead(int read, BlueTuskPortalFieldStream stream)
+    {
+        if (read == 0)
         {
-            _activePosition += count;
-            return ValueTask.FromResult(count);
+            throw new BlueTuskProtocolException("A backend message payload ended unexpectedly.");
         }
 
-        return AwaitActiveFieldAsync(pendingRead, count);
+        _payloadConsumed += read;
+        _activePosition += read;
+        stream.Advance(read);
+        return read;
     }
 
-    private async ValueTask<int> AwaitActiveFieldAsync(ValueTask pendingRead, int count)
-    {
-        await pendingRead.ConfigureAwait(false);
-        _activePosition += count;
-        return count;
-    }
+    private readonly record struct ActiveFieldReadState(
+        BlueTuskPortalRow Row,
+        BlueTuskPortalFieldStream Stream);
 
     internal void CompleteActiveStream(BlueTuskPortalFieldStream stream)
     {
@@ -906,22 +914,14 @@ internal sealed class BlueTuskPortalFieldStream : Stream
 
         var pendingRead = _row.ReadActiveFieldAsync(
             buffer[..Math.Min(buffer.Length, _remaining)],
+            this,
             cancellationToken);
-        if (pendingRead.IsCompletedSuccessfully)
-        {
-            var read = pendingRead.Result;
-            _remaining -= read;
-            return ValueTask.FromResult(read);
-        }
-
-        return AwaitReadAsync(pendingRead);
+        return pendingRead;
     }
 
-    private async ValueTask<int> AwaitReadAsync(ValueTask<int> pendingRead)
+    internal void Advance(int count)
     {
-        var read = await pendingRead.ConfigureAwait(false);
-        _remaining -= read;
-        return read;
+        _remaining -= count;
     }
 
     internal void CompleteFromOwner()

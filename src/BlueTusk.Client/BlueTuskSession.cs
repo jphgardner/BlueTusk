@@ -1661,6 +1661,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     internal bool TryReadBufferedPortalPayloadExactly(Span<byte> destination) =>
         _connection.TryReadBufferedMessagePayloadExactly(destination);
 
+    internal ValueTask<int> ReadPortalPayloadAsync<TState>(
+        Memory<byte> destination,
+        TState state,
+        Func<TState, int, int> complete,
+        CancellationToken cancellationToken) =>
+        _connection.ReadMessagePayloadAsync(destination, state, complete, cancellationToken);
+
     internal ValueTask ReadPortalPayloadExactlyAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
