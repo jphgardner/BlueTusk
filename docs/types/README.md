@@ -58,6 +58,34 @@ An unregistered OID is returned as `BlueTuskUnknownValue`, preserving its format
 
 Each data source loads PostgreSQL type relationships from the system catalogues. Arrays, domains, enums, composites, records, ranges, and multiranges are composed from the codecs of their contained types in both text and binary formats. Runtime codecs can be registered by schema-qualified catalogue name, while `MapEnum<TEnum>` and `MapComposite<T>` provide typed mappings for user-defined enums and composites.
 
+Applications that want compile-time composite member discovery can reference
+`BlueTusk.SourceGeneration` as an analyzer and annotate a top-level partial CLR type:
+
+```xml
+<PackageReference Include="BlueTusk.SourceGeneration"
+                  PrivateAssets="all"
+                  OutputItemType="Analyzer"
+                  ReferenceOutputAssembly="false" />
+```
+
+```csharp
+using BlueTusk.TypeSystem;
+
+[BlueTuskComposite("app", "address")]
+public sealed partial record Address(int HouseNumber, string Street);
+
+Address.RegisterBlueTuskCodec(dataSourceBuilder.Types);
+```
+
+The generator follows the runtime mapper's snake-case and `[BlueTuskName]`
+conventions. It emits typed member getters and CLR construction, while data-source
+initialization still resolves the PostgreSQL fields, OIDs, nested codecs, and array
+codec from the live catalogue. The generated CLR members must exactly cover the
+catalogue composite. `MapComposite<T>` remains the reflection-based fallback for
+types that do not opt in. See the
+[source-generator package guide](../../src/BlueTusk.SourceGeneration/README.md)
+for supported CLR shapes and registration details.
+
 Set `BlueTuskParameter.PostgreSqlTypeName` when a parameter—especially a null value—must select one of those catalogue-discovered types. Names are parsed using PostgreSQL identifier rules: unquoted identifiers fold to lowercase, quoted identifiers preserve case and may contain dots, and a trailing `[]` selects the discovered array type.
 
 `BlueTuskRange<T>` keeps empty ranges distinct from ranges with one or two unbounded sides. Construct finite bounds with `BlueTuskRangeBound.Inclusive(value)` or `BlueTuskRangeBound.Exclusive(value)`, and use `BlueTuskRangeBound.Unbounded<T>()` for an infinite side:

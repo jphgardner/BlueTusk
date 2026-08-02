@@ -68,6 +68,7 @@
     <Project Path="tests/BlueTusk.Replication.PgOutput.Tests/BlueTusk.Replication.PgOutput.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.Tests/BlueTusk.Replication.Tests.csproj" />
     <Project Path="tests/BlueTusk.Security.Tests/BlueTusk.Security.Tests.csproj" />
+    <Project Path="tests/BlueTusk.SourceGeneration.Tests/BlueTusk.SourceGeneration.Tests.csproj" />
     <Project Path="tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj" />
     <Project Path="tests/BlueTusk.Transport.Tests/BlueTusk.Transport.Tests.csproj" />
     <Project Path="tests/BlueTusk.TypeSystem.Tests/BlueTusk.TypeSystem.Tests.csproj" />

@@ -93,7 +93,8 @@ The current `0.3.0-preview.1` implementation provides:
 - advanced temporal, bit-string, transaction, object-identifier (including PostgreSQL 19 `oid8` and `regdatabase`), network, geometric, money, full-text, JSONPath, and system-catalogue values;
 - per-data-source catalogue discovery with explicit reload and unknown-value preservation;
 - catalogue-composed arrays, enums, domains, named and anonymous records, ranges, and multiranges;
-- convention- and attribute-based CLR enum and composite mappings plus public runtime codec registration;
+- convention- and attribute-based CLR enum and composite mappings, optional source-generated
+  composite member access/construction, and public runtime codec registration;
 - arbitrary-precision PostgreSQL `numeric`, including NaN and infinities, plus temporal infinity and 24:00 handling;
 - security redaction and observability primitives;
 - OpenTelemetry-compatible connection/command activities and metrics, redacted slow-command events, prepared-statement/retry/failover metrics, query tags, COPY throughput, and replication lag;

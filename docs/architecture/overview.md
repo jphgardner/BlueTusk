@@ -47,6 +47,12 @@ Dependencies should form a directed acyclic graph. A feature that would create a
 
 An executable architecture conformance test reads each built assembly's direct references and rejects reverse BlueTusk dependencies, EF references outside the EF packages, and `System.Data.Common` leakage below Data.
 
+Protocol's operation state machine validates legal wire-state transitions and owns
+message framing. Client owns the operation-specific loops for queries, COPY,
+notifications, and replication because those loops coordinate type decoding and
+session behavior. Keeping that orchestration above Protocol avoids importing
+higher-level operation semantics into the framing layer.
+
 ## EF provider boundary
 
 Entity Framework Core consumes a deliberately narrow Data-layer contract:

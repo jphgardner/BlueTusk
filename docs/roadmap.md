@@ -84,6 +84,9 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Catalogue-driven enums and domains with CLR enum mapping
 - [x] Composite metadata plus named and anonymous record wire values
 - [x] CLR composite mapping through `MapComposite<T>` with convention- and attribute-based member names
+- [x] Optional source-generated composite codecs with compile-time shape diagnostics,
+  catalogue-authoritative binding, generated construction/member access, array composition,
+  and binary/text round-trip coverage
 - [x] Catalogue-driven ranges and multiranges in binary and text formats
 - [x] Public runtime codec registration by discovered catalogue name or explicit OID
 
@@ -524,7 +527,13 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Extension-authoring template
 - [x] Extension compatibility-testing kit
 
-## 1.0.0 — Production-ready BlueTusk platform (Milestone 9)
+## 1.0.0 engineering gate (Milestone 9, final audit in progress)
+
+This milestone tracks the repository's 1.0 engineering gates. It does not declare a
+stable or production-endorsed release: published packages remain `0.3.0-preview.1`
+while the provider accumulates external production experience and PostgreSQL 19
+syntax remains beta-sensitive. The final product-spec audit remains open until the
+explicit environment and workload gates below are executable in CI.
 
 - [x] Stable ADO.NET APIs
   - [x] Compiler-enforced shipped API/nullability baselines for Transport, Protocol, Security, Diagnostics, TypeSystem, Client, and Data
@@ -575,5 +584,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files
   - [x] Preview claims retain explicit production, optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 beta boundaries
 - [x] Supported-version CI
+- [ ] Dedicated extension-image CI for pgvector, PostGIS, and TimescaleDB ADO.NET/EF gates
+- [ ] PgBouncer session/transaction-mode, primary/standby, locale/time-zone, and development-version environment gates
+- [ ] Representative EF Core and SQL/PGQ benchmark workloads alongside the native ADO.NET comparisons
 
 Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.
