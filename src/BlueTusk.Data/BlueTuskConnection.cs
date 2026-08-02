@@ -332,7 +332,7 @@ public sealed class BlueTuskConnection : DbConnection
         }
     }
 
-    public override async Task OpenAsync(CancellationToken cancellationToken)
+    public override Task OpenAsync(CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (_state != ConnectionState.Closed)
@@ -350,37 +350,121 @@ public sealed class BlueTuskConnection : DbConnection
         {
             if (_pool is null)
             {
-                _sessionLease = await BlueTuskPhysicalSession.OpenAsync(
-                    _settings,
-                    _clientConfiguration,
-                    cancellationToken).ConfigureAwait(false);
+                return OpenUnpooledAsync(cancellationToken);
             }
-            else
+
+            var renting = _pool.RentAsync(cancellationToken);
+            if (!renting.IsCompletedSuccessfully)
             {
-                _sessionLease = await _pool.RentAsync(cancellationToken).ConfigureAwait(false);
+                return CompletePooledOpenAsync(renting, cancellationToken);
             }
 
-            await _typeMetadata.EnsureLoadedAsync(PhysicalSession!, cancellationToken).ConfigureAwait(false);
-            _sessionTouched = false;
+            _sessionLease = renting.Result;
+            var loadingTypes = _typeMetadata.EnsureLoadedAsync(PhysicalSession!, cancellationToken);
+            if (!loadingTypes.IsCompletedSuccessfully)
+            {
+                return CompleteOpenAsync(loadingTypes);
+            }
 
-            BeginNotificationLifetime();
-            _hideSensitiveConnectionString = true;
-            SetState(ConnectionState.Open);
+            CompleteOpen();
+            return Task.CompletedTask;
         }
         catch
         {
-            var lease = Interlocked.Exchange(ref _sessionLease, null);
-            if (lease is BlueTuskPooledSession pooledSession)
-            {
-                _pool!.Return(pooledSession);
-            }
-            else if (lease is IBlueTuskPhysicalSession session)
-            {
-                await session.DisposeAsync().ConfigureAwait(false);
-            }
-            SetState(ConnectionState.Closed);
+            CleanupFailedOpen();
             throw;
         }
+    }
+
+    private async Task OpenUnpooledAsync(CancellationToken cancellationToken)
+    {
+        try
+        {
+            _sessionLease = await BlueTuskPhysicalSession.OpenAsync(
+                _settings,
+                _clientConfiguration,
+                cancellationToken).ConfigureAwait(false);
+            await _typeMetadata.EnsureLoadedAsync(
+                PhysicalSession!,
+                cancellationToken).ConfigureAwait(false);
+            CompleteOpen();
+        }
+        catch
+        {
+            await CleanupFailedOpenAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async Task CompletePooledOpenAsync(
+        ValueTask<BlueTuskPooledSession> renting,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            _sessionLease = await renting.ConfigureAwait(false);
+            await _typeMetadata.EnsureLoadedAsync(
+                PhysicalSession!,
+                cancellationToken).ConfigureAwait(false);
+            CompleteOpen();
+        }
+        catch
+        {
+            await CleanupFailedOpenAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private async Task CompleteOpenAsync(ValueTask loadingTypes)
+    {
+        try
+        {
+            await loadingTypes.ConfigureAwait(false);
+            CompleteOpen();
+        }
+        catch
+        {
+            await CleanupFailedOpenAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private void CompleteOpen()
+    {
+        _sessionTouched = false;
+        BeginNotificationLifetime();
+        _hideSensitiveConnectionString = true;
+        SetState(ConnectionState.Open);
+    }
+
+    private void CleanupFailedOpen()
+    {
+        var lease = Interlocked.Exchange(ref _sessionLease, null);
+        if (lease is BlueTuskPooledSession pooledSession)
+        {
+            _pool!.Return(pooledSession);
+        }
+        else if (lease is IBlueTuskPhysicalSession session)
+        {
+            session.Dispose();
+        }
+
+        SetState(ConnectionState.Closed);
+    }
+
+    private async ValueTask CleanupFailedOpenAsync()
+    {
+        var lease = Interlocked.Exchange(ref _sessionLease, null);
+        if (lease is BlueTuskPooledSession pooledSession)
+        {
+            _pool!.Return(pooledSession);
+        }
+        else if (lease is IBlueTuskPhysicalSession session)
+        {
+            await session.DisposeAsync().ConfigureAwait(false);
+        }
+
+        SetState(ConnectionState.Closed);
     }
 
     public override void Close()
@@ -1398,7 +1482,30 @@ public sealed class BlueTuskConnection : DbConnection
         base.Dispose(disposing);
     }
 
-    public override async ValueTask DisposeAsync()
+    public override ValueTask DisposeAsync()
+    {
+        if (!_disposed &&
+            _sessionLease is BlueTuskPooledSession &&
+            ReadNotificationState() is null)
+        {
+            try
+            {
+                Close();
+            }
+            finally
+            {
+                _disposed = true;
+            }
+
+            GC.SuppressFinalize(this);
+            return base.DisposeAsync();
+        }
+
+        GC.SuppressFinalize(this);
+        return DisposeAsyncSlow();
+    }
+
+    private async ValueTask DisposeAsyncSlow()
     {
         if (!_disposed)
         {
@@ -1414,7 +1521,6 @@ public sealed class BlueTuskConnection : DbConnection
         }
 
         await base.DisposeAsync().ConfigureAwait(false);
-        GC.SuppressFinalize(this);
     }
 
     internal void CompleteTransaction(BlueTuskTransaction transaction)

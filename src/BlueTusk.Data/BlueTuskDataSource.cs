@@ -113,8 +113,23 @@ public sealed class BlueTuskDataSource : DbDataSource
 
     public new BlueTuskConnection OpenConnection() => (BlueTuskConnection)base.OpenConnection();
 
-    public new async ValueTask<BlueTuskConnection> OpenConnectionAsync(CancellationToken cancellationToken = default) =>
-        (BlueTuskConnection)await base.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+    public new ValueTask<BlueTuskConnection> OpenConnectionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        var connection = CreateConnection();
+        try
+        {
+            var opening = connection.OpenAsync(cancellationToken);
+            return opening.IsCompletedSuccessfully
+                ? new ValueTask<BlueTuskConnection>(connection)
+                : CompleteOpenConnectionAsync(connection, opening);
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+    }
 
     public new BlueTuskCommand CreateCommand(string commandText) => (BlueTuskCommand)base.CreateCommand(commandText);
 
@@ -188,6 +203,22 @@ public sealed class BlueTuskDataSource : DbDataSource
         try
         {
             await connection.OpenAsync(cancellationToken).ConfigureAwait(false);
+            return connection;
+        }
+        catch
+        {
+            await connection.DisposeAsync().ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    private static async ValueTask<BlueTuskConnection> CompleteOpenConnectionAsync(
+        BlueTuskConnection connection,
+        Task opening)
+    {
+        try
+        {
+            await opening.ConfigureAwait(false);
             return connection;
         }
         catch
