@@ -1,7 +1,9 @@
 using System.Linq.Expressions;
+using BlueTusk.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Query.Internal;
 
@@ -317,6 +319,94 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         }
 
         return base.VisitExtension(extensionExpression);
+    }
+
+    protected override Expression VisitJsonScalar(JsonScalarExpression jsonScalarExpression)
+    {
+        if (jsonScalarExpression.Path.Count == 0)
+        {
+            Visit(jsonScalarExpression.Json);
+            return jsonScalarExpression;
+        }
+
+        var typeMapping = jsonScalarExpression.TypeMapping;
+        if (typeMapping is BlueTuskStructuralJsonTypeMapping
+            || typeMapping is { StoreType: "json" or "jsonb", ElementTypeMapping: not null })
+        {
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: false, jsonScalarExpression.Path);
+        }
+        else if (typeMapping is StringTypeMapping)
+        {
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+        }
+        else if (typeMapping is ByteArrayTypeMapping)
+        {
+            Sql.Append("decode(");
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+            Sql.Append(", 'base64')");
+        }
+        else
+        {
+            Sql.Append("CAST(");
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+            Sql.Append(" AS ").Append(typeMapping!.StoreType).Append(")");
+        }
+
+        return jsonScalarExpression;
+    }
+
+    private void GenerateJsonPath(
+        SqlExpression json,
+        bool returnsText,
+        IReadOnlyList<PathSegment> path)
+    {
+        Visit(json);
+        if (path.Count == 1)
+        {
+            Sql.Append(returnsText ? " ->> " : " -> ");
+            GenerateJsonPathSegment(path[0], inArray: false);
+            return;
+        }
+
+        Sql.Append(returnsText ? " #>> ARRAY[" : " #> ARRAY[");
+        for (var index = 0; index < path.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            GenerateJsonPathSegment(path[index], inArray: true);
+        }
+
+        Sql.Append("]::text[]");
+    }
+
+    private void GenerateJsonPathSegment(PathSegment segment, bool inArray)
+    {
+        if (segment.PropertyName is { } propertyName)
+        {
+            Sql.Append("'")
+                .Append(propertyName.Replace("'", "''", StringComparison.Ordinal))
+                .Append("'");
+            return;
+        }
+
+        if (segment.ArrayIndex is not { } arrayIndex)
+        {
+            throw new InvalidOperationException("A JSON path segment must contain a property name or an array index.");
+        }
+
+        if (inArray)
+        {
+            Sql.Append("CAST(");
+        }
+
+        Visit(arrayIndex);
+        if (inArray)
+        {
+            Sql.Append(" AS text)");
+        }
     }
 
     protected override Expression VisitSelect(SelectExpression selectExpression)

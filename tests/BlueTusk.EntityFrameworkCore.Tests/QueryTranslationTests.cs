@@ -93,10 +93,12 @@ public sealed class QueryTranslationTests
     public static TheoryData<Type, string, Type> ArrayMappings => new()
     {
         { typeof(bool[]), "boolean[]", typeof(bool) },
+        { typeof(List<int>), "integer[]", typeof(int) },
         { typeof(short[]), "smallint[]", typeof(short) },
         { typeof(int[]), "integer[]", typeof(int) },
         { typeof(int[,]), "integer[]", typeof(int) },
         { typeof(string[]), "text[]", typeof(string) },
+        { typeof(List<string>), "text[]", typeof(string) },
         { typeof(byte[][]), "bytea[]", typeof(byte[]) },
         { typeof(Guid[]), "uuid[]", typeof(Guid) },
         { typeof(DateOnly[]), "date[]", typeof(DateOnly) },
@@ -154,18 +156,44 @@ public sealed class QueryTranslationTests
 
     [Theory]
     [MemberData(nameof(ArrayMappings))]
-    public void CLR_arrays_have_structural_PostgreSQL_array_mappings(
-        Type arrayType,
+    public void CLR_arrays_and_mutable_collections_have_structural_PostgreSQL_array_mappings(
+        Type collectionType,
         string expectedStoreType,
         Type expectedElementType)
     {
         using var context = CreateContext();
-        var mapping = context.GetService<IRelationalTypeMappingSource>().FindMapping(arrayType);
+        var mapping = context.GetService<IRelationalTypeMappingSource>().FindMapping(collectionType);
 
         Assert.NotNull(mapping);
         Assert.Equal(expectedStoreType, mapping.StoreType);
         Assert.Equal(expectedElementType, mapping.ElementTypeMapping!.ClrType);
         Assert.NotNull(mapping.Comparer);
+    }
+
+    [Fact]
+    public void Mutable_collection_mappings_convert_to_arrays_and_take_deep_snapshots()
+    {
+        using var context = CreateContext();
+        var mapping = context.GetService<IRelationalTypeMappingSource>().FindMapping(typeof(List<string>))!;
+        var values = new List<string> { "blue", "tusk" };
+
+        var providerValues = Assert.IsType<string[]>(mapping.Converter!.ConvertToProvider(values));
+        Assert.Equal(values, providerValues);
+
+        var snapshot = Assert.IsType<List<string>>(mapping.Comparer!.Snapshot(values));
+        values[0] = "changed";
+
+        Assert.Equal(["blue", "tusk"], snapshot);
+        Assert.False(mapping.Comparer.Equals(values, snapshot));
+        Assert.NotNull(mapping.JsonValueReaderWriter);
+
+        var userDefinedMapping = context.GetService<IRelationalTypeMappingSource>()
+            .FindMapping(typeof(List<int>), "app.positive_integer[]")!;
+        Assert.Equal("app.positive_integer[]", userDefinedMapping.StoreType);
+        Assert.Equal(
+            "app.positive_integer",
+            ((RelationalTypeMapping)userDefinedMapping.ElementTypeMapping!).StoreType);
+        Assert.Equal(typeof(int[]), userDefinedMapping.Converter!.ProviderClrType);
     }
 
     [Fact]

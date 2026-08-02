@@ -285,7 +285,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Network, geometric, bit-string, money, arbitrary numeric, full-text, JSON path, system identifier, transaction, and catalogue CLR values
   - [x] PostgreSQL 19 unsigned `oid8` and `regdatabase` scalars/arrays with exact wire formats and older-version catalogue isolation
   - [x] Explicit `json`, `jsonb`, `xml`, `cidr`, `bit`, and legacy snapshot store-type selection
-  - [x] Built-in one- and multidimensional arrays with structural change tracking and exact element-family OIDs
+  - [x] Built-in one- and multidimensional arrays plus mutable generic collections with structural change tracking and exact element-family OIDs
   - [x] All six built-in range and multirange families, including their array types
   - [x] Runtime-registered enums, domains, composites, records, and their arrays
 - [x] PostgreSQL operators and operator-aware LINQ translations
@@ -350,6 +350,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Parameterized runtime-enum equality and domain ordering plus flat typed-composite and lossless-record field predicates/projections with compiled queries and PostgreSQL 15–19 acceptance
   - [x] Parameterized two-dimensional `ARRAY[...]` construction plus one- through four-dimensional projected subscripting/slicing with compiled queries and PostgreSQL 15–19 acceptance
   - [x] Catalogue-resolved nested typed-composite and lossless-record-root field traversal with loaded-catalogue diagnostics, compiled queries, and PostgreSQL 15–19 acceptance
+  - [x] EF structural-JSON scalar, collection, and nested-document traversal with typed PostgreSQL JSON operators and live complex-graph persistence/query acceptance
   - [ ] Other remaining PostgreSQL-native query families
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback
@@ -537,7 +538,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] EF Core relational specification coverage
   - [x] Official service-registration and migrations SQL-generator suites (55 offline tests, no skips)
   - [x] Official live data-annotation, composite-key, field-mapping, constructor-materialization, and property-values fixtures (506 passed, four upstream EF skips)
-  - [ ] Broader official query, update, model, migrations, and scaffolding suites
+  - [x] Official live updates, store-generated fixup, and complex-types tracking fixtures (391 passed, 50 upstream EF skips)
+  - [ ] Broader official query, model, migrations, and scaffolding suites
 - [ ] PostgreSQL-specific EF support
 - [x] Security review
   - [x] Repository threat model and control review covering credentials, TLS, authentication, protocol bounds, pooling, cancellation, SQL trust boundaries, diagnostics, and supply chain

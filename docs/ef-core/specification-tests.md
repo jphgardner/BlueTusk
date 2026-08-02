@@ -25,18 +25,32 @@ these official suites:
   cases; and
 - `PropertyValuesRelationalTestBase`: 198 passing live current, original,
   store, inheritance, complex-type, and structural-JSON value cases, plus four
-  skips declared by EF Core itself for its open complex-collection query issue.
+  skips declared by EF Core itself for its open complex-collection query issue;
+- `UpdatesRelationalTestBase`: all 36 live insert, update, delete, concurrency,
+  generated-value, batching, filtered-index, and identifier-length contracts;
+- `StoreGeneratedFixupRelationalTestBase`: all 119 live temporary-key,
+  generated-key, relationship-fixup, and composite-key contracts; and
+- `ComplexTypesTrackingRelationalTestBase`: 235 passing inherited live
+  tracking, mutation, JSON persistence, and JSON-query contracts, 50 skips
+  declared by EF Core itself for open complex-struct collection scenarios, and
+  one provider regression that recursively verifies every nested JSON scalar
+  has an EF JSON reader/writer.
 
-The current offline gate is 55 tests with no skips. Every virtual migration
-test is overridden because EF Core's own compliance test fails when a provider
-inherits a generator case without asserting its generated SQL.
+Without live credentials, the executable gate is 55 passing tests. Discovery
+also reports the 50 static skip declarations owned by EF Core's complex-struct
+collection backlog; no BlueTusk test is skipped to hide a provider failure.
+Every virtual migration test is overridden because EF Core's own compliance
+test fails when a provider inherits a generator case without asserting its
+generated SQL.
 
-The adopted live gate discovers 510 cases: 506 pass and the four inherited EF
-Core complex-collection cases are skipped. The data-annotation fixture follows
-PostgreSQL provider semantics by overriding the three relational expectations
-that require a length exception or SQL Server-style rowversion behavior; these
-are provider-specific no-op assertions, matching the reference PostgreSQL
-provider's contract rather than hidden skips.
+The adopted live gate discovers 951 cases: 897 pass and 54 cases explicitly
+skipped by EF Core are reported as skips. Combined with the offline gate, the
+assembly discovers 1,006 cases: 952 pass and 54 retain their upstream skip
+declarations. The data-annotation fixture follows PostgreSQL provider semantics
+by overriding the three relational expectations that require a length exception
+or SQL Server-style rowversion behavior; these are provider-specific no-op
+assertions, matching the reference PostgreSQL provider's contract rather than
+hidden skips.
 
 Run the gate directly with:
 
@@ -59,8 +73,8 @@ duplicate framework types while keeping both assemblies in `BlueTusk.slnx`.
 The Visual Studio test adapter discovers and runs both.
 
 This is an adopted official-suite slice, not a claim that the whole EF
-relational suite is complete. Broader official query, update, model,
-migrations, and scaffolding bases remain part of the explicit 1.0 gate in the
+relational suite is complete. Broader official query, model, migrations, and
+scaffolding bases remain part of the explicit 1.0 gate in the
 [roadmap](../roadmap.md). BlueTusk's provider-specific EF tests continue to
 cover those implemented surfaces while official-suite adoption expands.
 

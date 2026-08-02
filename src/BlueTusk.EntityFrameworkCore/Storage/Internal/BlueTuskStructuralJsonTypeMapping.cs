@@ -48,7 +48,7 @@ internal sealed class BlueTuskStructuralJsonTypeMapping : JsonTypeMapping
         base.ConfigureParameter(parameter);
         if (parameter is BlueTuskParameter blueTuskParameter)
         {
-            blueTuskParameter.PostgreSqlTypeName = StoreType;
+            blueTuskParameter.PostgreSqlTypeOid = StoreType == "json" ? 114u : 3802u;
         }
     }
 

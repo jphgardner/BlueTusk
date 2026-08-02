@@ -1,11 +1,16 @@
 using Microsoft.EntityFrameworkCore.Storage;
+using Microsoft.EntityFrameworkCore.Storage.Json;
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
 internal sealed class BlueTuskBoolTypeMapping : RelationalTypeMapping
 {
     public BlueTuskBoolTypeMapping()
-        : base("boolean", typeof(bool), System.Data.DbType.Boolean)
+        : base(
+            "boolean",
+            typeof(bool),
+            System.Data.DbType.Boolean,
+            jsonValueReaderWriter: JsonBoolReaderWriter.Instance)
     {
     }
 

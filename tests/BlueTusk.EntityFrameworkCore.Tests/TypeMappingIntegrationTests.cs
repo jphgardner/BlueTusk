@@ -583,6 +583,7 @@ public sealed class TypeMappingIntegrationTests
         {
             Id = 1,
             IntValues = [1, 2, 3],
+            ListValues = ["blue", "tusk"],
             MatrixValues = new[,] { { 1, 2 }, { 3, 4 } },
             TextValues = ["blue", null, "tusk"],
             BytesValues = [[0, 1, 2], [253, 254, 255]],
@@ -614,6 +615,7 @@ public sealed class TypeMappingIntegrationTests
             {
                 var tracked = await context.Values.SingleAsync();
                 tracked.IntValues[0] = 42;
+                tracked.ListValues.Add("provider");
                 Assert.Equal(1, await context.SaveChangesAsync());
             }
 
@@ -621,6 +623,7 @@ public sealed class TypeMappingIntegrationTests
             {
                 var actual = await context.Values.AsNoTracking().SingleAsync();
                 Assert.Equal([42, 2, 3], actual.IntValues);
+                Assert.Equal(["blue", "tusk", "provider"], actual.ListValues);
                 Assert.Equal(expected.MatrixValues.Cast<int>(), actual.MatrixValues.Cast<int>());
                 Assert.Equal(expected.TextValues, actual.TextValues);
                 Assert.Equal(expected.BytesValues, actual.BytesValues);
@@ -955,6 +958,7 @@ public sealed class TypeMappingIntegrationTests
         CREATE TABLE "ef_array_values" (
             "Id" integer PRIMARY KEY,
             "IntValues" integer[] NOT NULL,
+            "ListValues" text[] NOT NULL,
             "MatrixValues" integer[] NOT NULL,
             "TextValues" text[] NOT NULL,
             "BytesValues" bytea[] NOT NULL,
@@ -1233,6 +1237,7 @@ public sealed class TypeMappingIntegrationTests
     {
         public int Id { get; set; }
         public int[] IntValues { get; set; } = [];
+        public List<string> ListValues { get; set; } = [];
         public int[,] MatrixValues { get; set; } = new int[0, 0];
         public string?[] TextValues { get; set; } = [];
         public byte[][] BytesValues { get; set; } = [];

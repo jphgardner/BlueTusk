@@ -115,7 +115,7 @@ continuous-aggregate policy operations.
 
 ## PostgreSQL type mappings
 
-In addition to the standard .NET relational types, the 0.3 query work maps BlueTusk's wire-native PostgreSQL scalar values. This includes `inet`/`cidr`, `macaddr`/`macaddr8`, all built-in geometric values, `bit`/`varbit`, arbitrary-precision `numeric`, `money`, `pg_lsn`, `tid`, `timetz`, native intervals, `jsonpath`, `tsvector`/`tsquery`, object identifiers, transaction values, and system-catalogue values. PostgreSQL 19 `oid8` and `regdatabase` use `BlueTuskObjectIdentifier64` and `BlueTuskRegDatabase`, including arrays. `string` can be explicitly mapped to `json`, `jsonb`, or `xml`. EF structural JSON configured with `ToJson()` defaults to `jsonb`, reads through EF's UTF-8 JSON stream contract, and writes parameters with an explicit PostgreSQL JSON store type.
+In addition to the standard .NET relational types, the 0.3 query work maps BlueTusk's wire-native PostgreSQL scalar values. This includes `inet`/`cidr`, `macaddr`/`macaddr8`, all built-in geometric values, `bit`/`varbit`, arbitrary-precision `numeric`, `money`, `pg_lsn`, `tid`, `timetz`, native intervals, `jsonpath`, `tsvector`/`tsquery`, object identifiers, transaction values, and system-catalogue values. PostgreSQL 19 `oid8` and `regdatabase` use `BlueTuskObjectIdentifier64` and `BlueTuskRegDatabase`, including arrays. `string` can be explicitly mapped to `json`, `jsonb`, or `xml`. EF structural JSON configured with `ToJson()` defaults to `jsonb`, reads through EF's UTF-8 JSON stream contract, and writes parameters with the exact built-in JSON/JSONB OID. Nested scalar, collection, and structural member projections use PostgreSQL's native `->`, `->>`, `#>`, and `#>>` traversal with typed casts.
 
 Ambiguous types default to the general-purpose mapping: `BlueTuskNetworkAddress` uses `inet`, `BlueTuskBitString` uses `bit varying`, and `BlueTuskTransactionSnapshot` uses `pg_snapshot`. Select the alternative with normal EF configuration:
 
@@ -130,7 +130,7 @@ modelBuilder.Entity<NetworkRule>(entity =>
 
 Provider mappings carry the exact PostgreSQL OID into every parameter, including null parameters, so store-type intent is preserved on the wire.
 
-CLR arrays of supported wire-native elements map to PostgreSQL arrays. Both one- and multidimensional CLR arrays preserve shape, null reference-type elements, and exact store intent such as `cidr[]`, `bit(128)[]`, and `jsonb[]`. The mapping uses structural snapshots, so mutating an array element in place is detected by EF change tracking. `byte[]` remains the scalar `bytea` mapping; use `byte[][]` for `bytea[]`.
+CLR arrays and supported mutable generic collections such as `List<T>` map to PostgreSQL arrays. One- and multidimensional CLR arrays preserve shape, while one-dimensional collections convert to native wire arrays and materialize back to their declared collection shape. Both forms preserve null reference-type elements and exact store intent such as `cidr[]`, `bit(128)[]`, `jsonb[]`, and schema-qualified user-defined arrays. Structural snapshots detect in-place element changes and list additions. `byte[]` remains the scalar `bytea` mapping; use `byte[][]` for `bytea[]`.
 
 One- through four-dimensional arrays support native projected element access and
 inclusive slicing. PostgreSQL subscripts and bounds are one-based. `Array2D`

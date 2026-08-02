@@ -1,5 +1,7 @@
 using System.Data;
 using BlueTusk.TypeSystem;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
@@ -630,12 +632,34 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         Type? providerClrType,
         CoreTypeMapping? elementMapping)
     {
-        if (modelClrType.IsArray
-            && providerClrType?.IsArray == true
-            && modelClrType != typeof(byte[])
-            && elementMapping is RelationalTypeMapping relationalElementMapping)
+        if (mappingInfo.StoreTypeNameBase is { } collectionStoreType
+            && (collectionStoreType.Equals("json", StringComparison.OrdinalIgnoreCase)
+                || collectionStoreType.Equals("jsonb", StringComparison.OrdinalIgnoreCase)))
         {
-            var arrayMapping = FindArrayMapping(mappingInfo, modelClrType, relationalElementMapping);
+#pragma warning disable EF1001 // Provider implementation of EF's relational collection-mapping seam.
+            return base.FindCollectionMapping(mappingInfo, modelClrType, providerClrType, elementMapping);
+#pragma warning restore EF1001
+        }
+
+        var elementClrType = FindSequenceElementType(modelClrType);
+        var relationalElementMapping = elementMapping as RelationalTypeMapping;
+        if (relationalElementMapping is null
+            && elementClrType is not null)
+        {
+            var lookupElementType = Nullable.GetUnderlyingType(elementClrType) ?? elementClrType;
+            _ = ClrMappings.TryGetValue(lookupElementType, out relationalElementMapping);
+        }
+
+        if (elementClrType is not null
+            && modelClrType != typeof(byte[])
+            && CanMaterializeCollection(modelClrType, elementClrType)
+            && relationalElementMapping is not null)
+        {
+            var arrayMapping = FindArrayMapping(
+                mappingInfo,
+                modelClrType,
+                relationalElementMapping,
+                elementClrType);
             if (arrayMapping is not null)
             {
                 return arrayMapping;
@@ -648,6 +672,29 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         }
 
         return null;
+    }
+
+    public override RelationalTypeMapping? FindMapping(IProperty property)
+    {
+        var typeMapping = (RelationalTypeMapping?)base.FindMapping(property);
+        if (typeMapping is BlueTuskArrayTypeMapping arrayMapping
+            && property.DeclaringType.IsMappedToJson())
+        {
+            var storeType = property.DeclaringType.GetContainerColumnType() ?? "jsonb";
+#pragma warning disable EF1001 // Provider implementation of EF's relational collection-mapping seam.
+            return base.FindCollectionMapping(
+                new RelationalTypeMappingInfo(
+                    property.ClrType,
+                    (RelationalTypeMapping?)arrayMapping.ElementTypeMapping,
+                    storeTypeName: storeType,
+                    storeTypeNameBase: storeType),
+                property.ClrType,
+                property.GetProviderClrType(),
+                arrayMapping.ElementTypeMapping);
+#pragma warning restore EF1001
+        }
+
+        return typeMapping;
     }
 
     private static RelationalTypeMapping ApplyFacets(
@@ -726,10 +773,11 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
     private static BlueTuskArrayTypeMapping? FindArrayMapping(
         in RelationalTypeMappingInfo mappingInfo,
         Type arrayType,
-        RelationalTypeMapping? elementTypeMapping)
+        RelationalTypeMapping? elementTypeMapping,
+        Type? sequenceElementType = null)
     {
-        var elementClrType = Nullable.GetUnderlyingType(arrayType.GetElementType()!)
-            ?? arrayType.GetElementType()!;
+        var declaredElementType = sequenceElementType ?? FindSequenceElementType(arrayType)!;
+        var elementClrType = Nullable.GetUnderlyingType(declaredElementType) ?? declaredElementType;
         BlueTuskTypeDescriptor? elementDescriptor = null;
         string? requestedElementStoreType = null;
         if (mappingInfo.StoreTypeName is { } requestedStoreType)
@@ -784,7 +832,9 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
 
     private static RelationalTypeMapping CreateUserDefinedMapping(string storeType, Type clrType)
     {
-        if (!clrType.IsArray)
+        var elementClrType = FindSequenceElementType(clrType);
+        if (elementClrType is null
+            || !storeType.AsSpan().Trim().EndsWith("[]", StringComparison.Ordinal))
         {
             return new BlueTuskUserDefinedTypeMapping(storeType, clrType, storeType);
         }
@@ -795,7 +845,6 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             elementStoreType = elementStoreType[..^2].TrimEnd();
         }
 
-        var elementClrType = clrType.GetElementType()!;
         var elementMapping = new BlueTuskUserDefinedTypeMapping(
             elementStoreType,
             elementClrType,
@@ -820,5 +869,36 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
         {
             return false;
         }
+    }
+
+    internal static Type? FindSequenceElementType(Type sequenceType)
+    {
+        if (sequenceType.IsArray)
+        {
+            return sequenceType.GetElementType();
+        }
+
+        if (sequenceType == typeof(string))
+        {
+            return null;
+        }
+
+        return sequenceType
+            .GetInterfaces()
+            .Prepend(sequenceType)
+            .FirstOrDefault(type => type.IsGenericType && type.GetGenericTypeDefinition() == typeof(IEnumerable<>))
+            ?.GetGenericArguments()[0];
+    }
+
+    private static bool CanMaterializeCollection(Type collectionType, Type elementType)
+    {
+        if (collectionType.IsArray)
+        {
+            return true;
+        }
+
+        var listType = typeof(List<>).MakeGenericType(elementType);
+        return collectionType.IsAssignableFrom(listType)
+            || collectionType.GetConstructor([typeof(IEnumerable<>).MakeGenericType(elementType)]) is not null;
     }
 }
