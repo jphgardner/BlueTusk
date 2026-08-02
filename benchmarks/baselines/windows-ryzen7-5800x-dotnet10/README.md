@@ -15,7 +15,7 @@ $env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-d
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*'
 ```
 
-The checked-in GitHub Markdown reports are human-readable; the brief JSON reports support automated comparison. A short job has only three measured iterations and is a development reference, not a universal performance guarantee or a substitute for release-grade runs.
+The checked-in GitHub Markdown reports are human-readable; the brief JSON reports support automated comparison. Most fixtures use a short job with only three measured iterations and are development references, not universal performance guarantees or substitutes for release-grade runs. The live provider comparison is the documented MediumRun exception.
 
 The frontend-writer report was regenerated after removing interface-enumerator allocations from extended Bind messages. Both simple and extended writer workloads report zero managed allocation per operation.
 
@@ -31,24 +31,25 @@ The transport-pipeline decision reports were added on 2026-08-01. The bounded `S
 
 The live PostgreSQL 19 provider-comparison report was refreshed on 2026-08-02
 against the local server on this machine after the command, pool, transport, and
-streaming hot-path work. The large-field fixture creates the same one-row 1 MiB
+streaming hot-path work. Unlike the short iteration runs used during profiling,
+the checked-in report is a MediumRun with two launches, ten warmups, and fifteen
+measured iterations. The large-field fixture creates the same one-row 1 MiB
 temporary payload on each provider connection during setup, keeping PostgreSQL
 payload-generation CPU outside the timed operations. BlueTusk/Npgsql means are
-477/499 µs and 2,064/2,067 B for a parameterized scalar, 443/428 µs and
-992/1,065 B for an explicitly prepared scalar, 302/326 ns and 168/184 B for an
-untouched warm pool checkout, 857/728 µs and 3,701/1,505 B for a sequential
-1,000-row read, and 4.66/4.82 ms and 6,041/8,782 B for a sequential 1 MiB
+481/481 µs and 1,642/2,079 B for a parameterized scalar, 437/440 µs and
+772/1,074 B for an explicitly prepared scalar, 303/327 ns and 168/184 B for an
+untouched warm pool checkout, 767/710 µs and 1,558/1,496 B for a sequential
+1,000-row read, and 4.660/4.665 ms and 4,288/8,829 B for a sequential 1 MiB
 `bytea` stream.
 
-The current ShortRun therefore records BlueTusk latency and managed-allocation
-wins for parameterized scalar execution, untouched warm checkout, and the
-isolated large-field stream. Prepared execution allocates 6.9% less while its
-mean is 3.6% slower. The 1,000-row reader remains 17.7% slower and allocates
-2.46x as much; it is the explicit remaining provider-comparison gap. Compared
-with the preceding checked-in report, BlueTusk's row allocation fell 33% and its
-large-stream allocation fell 52%. These three-iteration results are an
-optimization and regression baseline, not a provider-wide superiority claim or
-release performance guarantee.
+The current MediumRun therefore records BlueTusk at parity or ahead on four of
+five latency means and lower managed allocation on four of five pairs. Warm
+checkout is the clear latency win; the scalar and large-stream confidence
+intervals overlap and are treated as parity. The 1,000-row reader remains 8.0%
+slower and allocates 4.1% more, but those gaps have narrowed from 17.7% and 146%
+in the preceding checked-in ShortRun. These results are an optimization and
+regression baseline, not a provider-wide superiority claim or release
+performance guarantee.
 
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first

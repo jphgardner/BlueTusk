@@ -3,26 +3,26 @@
 BenchmarkDotNet v0.15.8, Windows 11 (10.0.26200.8973/25H2/2025Update/HudsonValley2)
 AMD Ryzen 7 5800X 3.80GHz, 1 CPU, 16 logical and 8 physical cores
 .NET SDK 10.0.302
-  [Host]   : .NET 10.0.10 (10.0.10, 10.0.1026.32716), X64 RyuJIT x86-64-v3
-  ShortRun : .NET 10.0.10 (10.0.10, 10.0.1026.32716), X64 RyuJIT x86-64-v3
+  [Host]    : .NET 10.0.10 (10.0.10, 10.0.1026.32716), X64 RyuJIT x86-64-v3
+  MediumRun : .NET 10.0.10 (10.0.10, 10.0.1026.32716), X64 RyuJIT x86-64-v3
 
-Job=ShortRun  IterationCount=3  LaunchCount=1  
-WarmupCount=3  
+Job=MediumRun  IterationCount=15  LaunchCount=2
+WarmupCount=10
 
 ```
-| Method                                  | Categories                 | Mean           | Error           | StdDev        | P95            | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
-|---------------------------------------- |--------------------------- |---------------:|----------------:|--------------:|---------------:|------:|--------:|-------:|----------:|------------:|
-| BlueTuskParameterizedScalarAsync        | ParameterizedScalar        |   476,935.6 ns |   160,315.59 ns |   8,787.44 ns |   484,854.5 ns |  1.00 |    0.02 |      - |    2064 B |        1.00 |
-| NpgsqlParameterizedScalarAsync          | ParameterizedScalar        |   498,507.9 ns |   125,337.65 ns |   6,870.18 ns |   505,256.2 ns |  1.05 |    0.02 |      - |    2067 B |        1.00 |
-|                                         |                            |                |                 |               |                |       |         |        |           |             |
-| BlueTuskPoolCheckoutAsync               | PoolCheckout               |       301.6 ns |       224.77 ns |      12.32 ns |       312.3 ns |  1.00 |    0.05 | 0.0100 |     168 B |        1.00 |
-| NpgsqlPoolCheckoutAsync                 | PoolCheckout               |       326.2 ns |        15.91 ns |       0.87 ns |       327.0 ns |  1.08 |    0.04 | 0.0110 |     184 B |        1.10 |
-|                                         |                            |                |                 |               |                |       |         |        |           |             |
-| BlueTuskPreparedScalarAsync             | PreparedScalar             |   443,197.1 ns |   179,867.98 ns |   9,859.17 ns |   452,442.6 ns |  1.00 |    0.03 |      - |     992 B |        1.00 |
-| NpgsqlPreparedScalarAsync               | PreparedScalar             |   427,858.4 ns |   221,844.69 ns |  12,160.06 ns |   439,196.0 ns |  0.97 |    0.03 |      - |    1065 B |        1.07 |
-|                                         |                            |                |                 |               |                |       |         |        |           |             |
-| BlueTuskSequential1000RowsAsync         | Sequential1000Rows         |   856,660.2 ns | 1,603,840.65 ns |  87,911.92 ns |   934,881.9 ns |  1.01 |    0.13 |      - |    3701 B |        1.00 |
-| NpgsqlSequential1000RowsAsync           | Sequential1000Rows         |   727,846.9 ns |    45,234.60 ns |   2,479.46 ns |   730,095.1 ns |  0.86 |    0.08 |      - |    1505 B |        0.41 |
-|                                         |                            |                |                 |               |                |       |         |        |           |             |
-| BlueTuskSequentialOneMegabyteByteaAsync | SequentialOneMegabyteBytea | 4,658,900.3 ns | 4,879,038.35 ns | 267,436.56 ns | 4,922,734.4 ns |  1.00 |    0.07 |      - |    6041 B |        1.00 |
-| NpgsqlSequentialOneMegabyteByteaAsync   | SequentialOneMegabyteBytea | 4,817,868.2 ns | 4,177,579.66 ns | 228,987.24 ns | 4,971,873.7 ns |  1.04 |    0.07 |      - |    8782 B |        1.45 |
+| Method                                  | Categories                 | Mean           | Error         | StdDev        | P95            | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
+|---------------------------------------- |--------------------------- |---------------:|--------------:|--------------:|---------------:|------:|--------:|-------:|----------:|------------:|
+| BlueTuskParameterizedScalarAsync        | ParameterizedScalar        |   480,511.8 ns |  10,202.94 ns |  14,955.33 ns |   504,302.5 ns |  1.00 |    0.04 |      - |    1642 B |        1.00 |
+| NpgsqlParameterizedScalarAsync          | ParameterizedScalar        |   480,799.8 ns |  10,197.50 ns |  15,263.14 ns |   505,675.7 ns |  1.00 |    0.04 |      - |    2079 B |        1.27 |
+|                                         |                            |                |               |               |                |       |         |        |           |             |
+| BlueTuskPoolCheckoutAsync               | PoolCheckout               |       303.0 ns |       7.57 ns |      11.34 ns |       318.7 ns |  1.00 |    0.05 | 0.0100 |     168 B |        1.00 |
+| NpgsqlPoolCheckoutAsync                 | PoolCheckout               |       327.1 ns |      11.81 ns |      17.68 ns |       345.9 ns |  1.08 |    0.07 | 0.0110 |     184 B |        1.10 |
+|                                         |                            |                |               |               |                |       |         |        |           |             |
+| BlueTuskPreparedScalarAsync             | PreparedScalar             |   436,637.5 ns |  11,327.79 ns |  16,954.91 ns |   457,792.7 ns |  1.00 |    0.05 |      - |     772 B |        1.00 |
+| NpgsqlPreparedScalarAsync               | PreparedScalar             |   439,543.6 ns |   9,031.54 ns |  13,517.98 ns |   455,052.2 ns |  1.01 |    0.05 |      - |    1074 B |        1.39 |
+|                                         |                            |                |               |               |                |       |         |        |           |             |
+| BlueTuskSequential1000RowsAsync         | Sequential1000Rows         |   767,362.1 ns |  18,631.41 ns |  27,886.61 ns |   818,840.6 ns |  1.00 |    0.05 |      - |    1558 B |        1.00 |
+| NpgsqlSequential1000RowsAsync           | Sequential1000Rows         |   710,371.0 ns |  14,952.10 ns |  21,916.59 ns |   744,700.4 ns |  0.93 |    0.04 |      - |    1496 B |        0.96 |
+|                                         |                            |                |               |               |                |       |         |        |           |             |
+| BlueTuskSequentialOneMegabyteByteaAsync | SequentialOneMegabyteBytea | 4,660,317.5 ns | 156,971.15 ns | 234,947.04 ns | 4,947,639.7 ns |  1.00 |    0.07 |      - |    4288 B |        1.00 |
+| NpgsqlSequentialOneMegabyteByteaAsync   | SequentialOneMegabyteBytea | 4,665,226.0 ns | 151,468.21 ns | 226,710.50 ns | 4,937,744.6 ns |  1.00 |    0.07 |      - |    8829 B |        2.06 |

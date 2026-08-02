@@ -24,21 +24,23 @@ The Windows/Ryzen 7 5800X/.NET 10 short baseline currently records:
 | Prepared raw / typed EF traversal of 999 edges | 187,936 B / 685,864 B | readers plus caller-owned typed graph results |
 
 The live PostgreSQL 19 comparison separates provider efficiency from the
-in-memory ownership budgets above. Its final 2026-08-02 ShortRun records:
+in-memory ownership budgets above. Its final 2026-08-02 MediumRun records:
 
 | Workload | BlueTusk | Npgsql | Current result |
 | --- | ---: | ---: | --- |
-| Parameterized scalar | 2,064 B | 2,067 B | effectively tied; BlueTusk 3 B lower |
-| Explicitly prepared scalar | 992 B | 1,065 B | BlueTusk 6.9% lower |
+| Parameterized scalar | 1,642 B | 2,079 B | BlueTusk 21.0% lower |
+| Explicitly prepared scalar | 772 B | 1,074 B | BlueTusk 28.1% lower |
 | Untouched warm checkout | 168 B | 184 B | BlueTusk 8.7% lower |
-| Sequential 1,000-row read | 3,701 B | 1,505 B | BlueTusk 2.46x higher; open gap |
-| Sequential 1 MiB `bytea` | 6,041 B | 8,782 B | BlueTusk 31.2% lower |
+| Sequential 1,000-row read | 1,558 B | 1,496 B | BlueTusk 4.1% higher; open gap |
+| Sequential 1 MiB `bytea` | 4,288 B | 8,829 B | BlueTusk 51.4% lower |
 
-The same run measures BlueTusk faster for parameterized scalar execution
-(477 versus 499 us), warm checkout (302 versus 326 ns), and the isolated 1 MiB
-stream (4.66 versus 4.82 ms). Prepared scalar execution is 3.6% slower and the
-1,000-row reader is 17.7% slower. These ShortRun results have wide confidence
-intervals and are not presented as provider-wide latency wins.
+The same run measures BlueTusk/Npgsql at 481/481 us for parameterized scalar
+execution, 303/327 ns for warm checkout, 437/440 us for prepared scalar execution,
+767/710 us for the 1,000-row reader, and 4.660/4.665 ms for the isolated 1 MiB
+stream. Only warm checkout is a clear latency win at this sample size; the scalar
+and stream intervals overlap and are treated as parity. The row reader remains
+8.0% slower. These longer paired results are regression evidence, not a
+provider-wide latency guarantee.
 
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session and uses that same storage as bounded read-ahead for incremental large fields; the socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 
@@ -88,4 +90,4 @@ Machine-readable limits live in `benchmarks/allocation-budgets.json`. They inten
 pwsh -File eng/verify-allocation-budgets.ps1
 ```
 
-Raising a budget requires an explanation in the budget file and updated benchmark evidence. A release-grade performance claim still requires longer runs across supported environments; these short baselines are regression evidence, not universal throughput promises.
+Raising a budget requires an explanation in the budget file and updated benchmark evidence. A release-grade performance claim still requires longer runs across supported environments; the short baselines and paired MediumRun are regression evidence, not universal throughput promises.

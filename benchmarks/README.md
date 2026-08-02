@@ -59,26 +59,28 @@ Set a dedicated live connection string and run the comparison explicitly:
 
 ```powershell
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*ProviderComparisonBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --filter '*ProviderComparisonBenchmarks*'
 ```
 
 All live fixtures are excluded from an unfiltered benchmark run when the
 environment variable is absent. Supplying a live fixture filter without a
 connection string fails immediately instead of silently producing a
 server-free result.
-ShortRun measurements are environment-specific diagnostics with wide confidence
-intervals; they identify optimization work and are not a claim that one provider
-is universally faster.
+ShortRun measurements are useful iteration diagnostics but have wide confidence
+intervals. The checked-in provider comparison therefore uses `--job medium`
+(two launches, ten warmups, and fifteen measured iterations) and still does not
+claim that one provider is universally faster.
 
-The final 2026-08-02 Windows/Ryzen 7 5800X reference run records three latency
-wins and four managed-allocation wins across the five pairs. BlueTusk measures
-477/499 us and 2,064/2,067 B for the parameterized scalar, 302/326 ns and
-168/184 B for warm checkout, and 4.66/4.82 ms and 6,041/8,782 B for the isolated
-1 MiB stream. The explicitly prepared scalar allocates 992 B versus 1,065 B but
-is 443/428 us, while the 1,000-row reader remains the open gap at 857/728 us and
-3,701/1,505 B. The exact values and environment are checked in under
-`baselines/windows-ryzen7-5800x-dotnet10`; measured wins and remaining gaps are
-both retained instead of being converted into an unmeasured provider-wide
+The final 2026-08-02 Windows/Ryzen 7 5800X MediumRun records BlueTusk at parity
+or ahead on four of five latency means and lower on four of five managed-allocation
+results. BlueTusk/Npgsql measure 481/481 us and 1,642/2,079 B for the parameterized
+scalar, 303/327 ns and 168/184 B for warm checkout, 437/440 us and 772/1,074 B for
+the prepared scalar, and 4.660/4.665 ms and 4,288/8,829 B for the isolated 1 MiB
+stream. The remaining 1,000-row gap is 767/710 us and 1,558/1,496 B: 8.0% slower
+and 4.1% higher allocation, down from the previous ShortRun's 17.7% and 146%
+gaps. The exact values and environment are checked in under
+`baselines/windows-ryzen7-5800x-dotnet10`; overlapping intervals are treated as
+parity, and the remaining loss is retained rather than hidden in a provider-wide
 performance claim.
 
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
