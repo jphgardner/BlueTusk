@@ -68,11 +68,11 @@ intervals; they identify optimization work and are not a claim that one provider
 is universally faster.
 
 The final 2026-08-02 Windows/Ryzen 7 5800X reference run records a 199 ns / 168 B
-BlueTusk warm checkout versus 215 ns / 184 B for Npgsql. Parameterized and
-prepared BlueTusk scalars also use less managed memory (2,064 B versus 2,109 B,
-and 992 B versus 1,118 B), although their loopback latencies remain 1.36x and
-1.48x Npgsql. The sequential 1,000-row and 1 MiB stream paths remain 1.41x and
-1.45x slower and allocate more. The exact current values and environment are
+BlueTusk warm checkout versus 210 ns / 184 B for Npgsql. Parameterized and
+prepared BlueTusk scalars also use less managed memory (2,064 B versus 2,113 B,
+and 992 B versus 1,132 B), although their loopback latencies remain 1.42x and
+1.50x Npgsql. The sequential 1,000-row and 1 MiB stream paths remain 1.28x and
+1.34x slower and allocate more. The exact current values and environment are
 checked in under `baselines/windows-ryzen7-5800x-dotnet10`; measured wins and
 remaining gaps are both retained instead of being converted into an unmeasured
 provider-wide performance claim.
@@ -109,7 +109,9 @@ Large sequential fields start with a 64 KiB per-session protocol buffer and can
 rent up to 1 MiB of read-ahead storage for the active large payload. The buffer
 shrinks back to 64 KiB at the next frame boundary, so ordinary sessions do not
 retain the large window. Fast synchronous `ValueTask` completion through the
-field-stream stack reduces socket completions and async state-machine allocation.
+field-stream stack reduces socket completions, while asynchronous stream reads
+return legal partial results and let the protocol completion update row/stream
+positions without redundant continuation layers.
 The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
 it is not a memory-copy microbenchmark.
 

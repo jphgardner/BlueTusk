@@ -31,24 +31,24 @@ The transport-pipeline decision reports were added on 2026-08-01. The bounded `S
 
 The live PostgreSQL 19 provider-comparison report was refreshed on 2026-08-02
 against the local server on this machine after the command, pool, and streaming
-hot-path work. BlueTusk/Npgsql means are 474/348 µs and 2,064/2,109 B for a
-parameterized scalar, 449/304 µs and 992/1,118 B for an explicitly prepared
-scalar, 199/215 ns and 168/184 B for an untouched warm pool checkout, 742/528 µs
-and 5,519/1,611 B for a sequential 1,000-row read, and 15.08/10.41 ms and
-24,977/8,941 B for a sequential 1 MiB `bytea` stream.
+hot-path work. BlueTusk/Npgsql means are 482/340 µs and 2,064/2,113 B for a
+parameterized scalar, 452/302 µs and 992/1,132 B for an explicitly prepared
+scalar, 199/210 ns and 168/184 B for an untouched warm pool checkout, 713/555 µs
+and 5,519/1,600 B for a sequential 1,000-row read, and 13.97/10.44 ms and
+12,610/8,983 B for a sequential 1 MiB `bytea` stream.
 
 The current ShortRun therefore establishes measured BlueTusk wins for both
-latency and managed allocation on untouched warm checkout: approximately 7.2%
+latency and managed allocation on untouched warm checkout: approximately 4.9%
 faster and 8.7% smaller. Parameterized and prepared scalar commands allocate
-approximately 2.1% and 11.3% less than Npgsql, respectively, while remaining
-1.36x and 1.48x slower in this loopback run. The sequential row and `bytea`
-paths remain 1.41x and 1.45x slower and allocate 3.43x and 2.79x as much.
+approximately 2.3% and 12.4% less than Npgsql, respectively, while remaining
+1.42x and 1.50x slower in this loopback run. The sequential row and `bytea`
+paths remain 1.28x and 1.34x slower and allocate 3.45x and 1.40x as much.
 
 Relative to the pre-optimization measurements from the same work session, the
 untouched pool path is approximately 2,390x faster and allocates 39x less, while
 the 1,000-row reader is approximately 21x faster and allocates 43x less. The
 prepared scalar allocates 77% less, the parameterized scalar allocates 58% less,
-and the 1 MiB stream is approximately 5% faster with 28% less allocation. These
+and the 1 MiB stream is approximately 12% faster with 64% less allocation. These
 three-iteration results are an optimization and regression baseline, not a
 provider-wide superiority claim or release performance guarantee.
 
