@@ -295,6 +295,7 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
             [typeof(long)] = BlueTuskBuiltInTypes.Int8,
             [typeof(float)] = BlueTuskBuiltInTypes.Float4,
             [typeof(double)] = BlueTuskBuiltInTypes.Float8,
+            [typeof(decimal)] = BlueTuskBuiltInTypes.Numeric,
             [typeof(string)] = BlueTuskBuiltInTypes.Text,
             [typeof(byte[])] = BlueTuskBuiltInTypes.Bytea,
             [typeof(Guid)] = BlueTuskBuiltInTypes.Uuid,

@@ -600,6 +600,7 @@ public sealed class TypeMappingIntegrationTests
                 BlueTuskNetworkAddress.Parse("192.0.2.0/24", isCidr: true),
                 BlueTuskNetworkAddress.Parse("2001:db8::/48", isCidr: true),
             ],
+            DecimalValues = [12.3400m, -0.1250m],
             BitValues = [new BlueTuskBitString("1010"), new BlueTuskBitString("0101")],
             JsonbValues = ["{\"index\":1}", "{\"index\":2}"],
         };
@@ -632,6 +633,7 @@ public sealed class TypeMappingIntegrationTests
                 Assert.Equal(expected.DateValues, actual.DateValues);
                 Assert.Equal(expected.PointValues, actual.PointValues);
                 Assert.Equal(expected.CidrValues, actual.CidrValues);
+                Assert.Equal(expected.DecimalValues, actual.DecimalValues);
                 Assert.Equal(expected.BitValues, actual.BitValues);
                 for (var index = 0; index < expected.JsonbValues.Length; index++)
                 {
@@ -967,6 +969,7 @@ public sealed class TypeMappingIntegrationTests
             "DateValues" date[] NOT NULL,
             "PointValues" point[] NOT NULL,
             "CidrValues" cidr[] NOT NULL,
+            "DecimalValues" numeric(18,4)[] NOT NULL,
             "BitValues" bit(4)[] NOT NULL,
             "JsonbValues" jsonb[] NOT NULL,
             "OptionalIntValues" integer[] NULL)
@@ -1116,6 +1119,8 @@ public sealed class TypeMappingIntegrationTests
             value.HasKey(entity => entity.Id);
             value.Property(entity => entity.Id).ValueGeneratedNever();
             value.Property(entity => entity.CidrValues).HasColumnType("cidr[]");
+            value.PrimitiveCollection(entity => entity.DecimalValues)
+                .ElementType(element => element.HasPrecision(18, 4));
             value.Property(entity => entity.BitValues).HasColumnType("bit(4)[]");
             value.Property(entity => entity.JsonbValues).HasColumnType("jsonb[]");
         }
@@ -1270,6 +1275,7 @@ public sealed class TypeMappingIntegrationTests
         public DateOnly[] DateValues { get; set; } = [];
         public BlueTuskPoint[] PointValues { get; set; } = [];
         public BlueTuskNetworkAddress[] CidrValues { get; set; } = [];
+        public decimal[] DecimalValues { get; set; } = [];
         public BlueTuskBitString[] BitValues { get; set; } = [];
         public string[] JsonbValues { get; set; } = [];
         public int[]? OptionalIntValues { get; set; }

@@ -260,28 +260,87 @@ public sealed class BlueTuskDataReader : DbDataReader
             throw new InvalidCastException("A database NULL cannot be read as a non-null value.");
         }
 
-        if (value is BlueTuskNumeric numeric && typeof(T) == typeof(decimal))
+        if (value is T typed)
         {
-            return (T)(object)numeric.ToDecimal();
+            return typed;
         }
 
-        if (value is TimeSpan time && typeof(T) == typeof(TimeOnly) && time < TimeSpan.FromDays(1))
+        if (value is Array array && typeof(T).IsArray)
         {
-            return (T)(object)TimeOnly.FromTimeSpan(time);
+            return (T)(object)ConvertArray(array, typeof(T));
+        }
+
+        return (T)ConvertFieldValue(value, typeof(T));
+    }
+
+    private static Array ConvertArray(Array value, Type targetType)
+    {
+        if (targetType.GetArrayRank() != value.Rank)
+        {
+            throw new InvalidCastException(
+                $"A rank-{value.Rank} array cannot be read as {targetType.FullName}.");
+        }
+
+        var elementType = targetType.GetElementType()!;
+        var lengths = Enumerable.Range(0, value.Rank).Select(value.GetLength).ToArray();
+        var lowerBounds = Enumerable.Range(0, value.Rank).Select(value.GetLowerBound).ToArray();
+        var result = Array.CreateInstance(elementType, lengths, lowerBounds);
+        var indexes = (int[])lowerBounds.Clone();
+        foreach (var item in value)
+        {
+            result.SetValue(
+                item is null ? null : ConvertFieldValue(item, elementType),
+                indexes);
+            MoveNext(value, indexes);
+        }
+
+        return result;
+    }
+
+    private static object ConvertFieldValue(object value, Type targetType)
+    {
+        var nonNullableTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        if (nonNullableTargetType.IsInstanceOfType(value))
+        {
+            return value;
+        }
+
+        if (value is BlueTuskNumeric numeric && nonNullableTargetType == typeof(decimal))
+        {
+            return numeric.ToDecimal();
+        }
+
+        if (value is TimeSpan time
+            && nonNullableTargetType == typeof(TimeOnly)
+            && time < TimeSpan.FromDays(1))
+        {
+            return TimeOnly.FromTimeSpan(time);
         }
 
         if (value is BlueTuskInterval { IsFinite: true, Months: 0 } interval
-            && typeof(T) == typeof(TimeSpan))
+            && nonNullableTargetType == typeof(TimeSpan))
         {
             var ticks = checked(
                 (interval.Days * TimeSpan.TicksPerDay)
                 + (interval.Microseconds * 10));
-            return (T)(object)TimeSpan.FromTicks(ticks);
+            return TimeSpan.FromTicks(ticks);
         }
 
-        return value is T typed
-            ? typed
-            : (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
+        return Convert.ChangeType(value, nonNullableTargetType, CultureInfo.InvariantCulture);
+    }
+
+    private static void MoveNext(Array value, int[] indexes)
+    {
+        for (var dimension = value.Rank - 1; dimension >= 0; dimension--)
+        {
+            if (indexes[dimension] < value.GetUpperBound(dimension))
+            {
+                indexes[dimension]++;
+                return;
+            }
+
+            indexes[dimension] = value.GetLowerBound(dimension);
+        }
     }
 
     public override async Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)

@@ -24,6 +24,12 @@ these official suites:
   by EF Core itself. PostgreSQL's rejection of implicit arbitrary text-to-JSONB
   casts is asserted explicitly in the three applicable cases rather than
   skipped;
+- `RelationalModelBuilderTest`: 682 passing offline generic model-building
+  contracts covering non-relationship mappings, primitive-collection element
+  facets, complex types and collections, inheritance, one-to-many,
+  many-to-one, one-to-one, many-to-many, and owned types. The remaining 66
+  cases retain EF Core's own `#35613` and `#31411` skip declarations. This gate
+  found and closed BlueTusk's missing `decimal`/`numeric` array-element mapping;
 - `DataAnnotationRelationalTestBase`: 97 live model, validation, concurrency,
   transaction, and data-annotation cases;
 - `CompositeKeyEndToEndTestBase`: all three live composite-key cases;
@@ -60,17 +66,19 @@ these official suites:
   seed data exercises valid `jsonb` documents with deliberately missing, null,
   or structurally incompatible members rather than bypassing those cases.
 
-Without live credentials, the executable gate is 55 passing tests. Discovery
-also reports 51 static skip declarations owned by EF Core: 50 from its
-complex-struct collection backlog and one from its duplicate complex-projection
-pushdown backlog. No BlueTusk test is skipped to hide a provider failure.
+Without live credentials, the executable gate is 737 passing tests. Discovery
+also reports 117 static skip declarations owned by EF Core: 65 model-building
+cases for issue `#35613`, one model-building case for issue `#31411`, 50 from
+its complex-struct collection backlog, and one from its duplicate
+complex-projection pushdown backlog. No BlueTusk test is skipped to hide a
+provider failure.
 Every virtual migration test is overridden because EF Core's own compliance
 test fails when a provider inherits a generator case without asserting its
 generated SQL.
 
 The adopted live gate discovers 1,308 cases: 1,250 pass and 58 cases explicitly
 skipped by EF Core are reported as skips. Combined with the offline gate, the
-assembly discovers 1,363 cases: 1,305 pass and 58 retain their upstream skip
+assembly discovers 2,111 cases: 1,987 pass and 124 retain their upstream skip
 declarations. The data-annotation fixture follows PostgreSQL provider semantics
 by overriding the three relational expectations that require a length exception
 or SQL Server-style rowversion behavior; these are provider-specific no-op
@@ -79,7 +87,7 @@ hidden skips.
 
 The 223 complex-type/JSON query cases also run as a focused PostgreSQL 15–19
 matrix: each server reports 221 passes and the same two upstream EF skips. The
-complete 1,363-case official assembly is additionally gated on PostgreSQL 19.
+complete 2,111-case official assembly is additionally gated on PostgreSQL 19.
 
 Run the gate directly with:
 

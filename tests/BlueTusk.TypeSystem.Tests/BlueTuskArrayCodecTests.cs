@@ -81,6 +81,29 @@ public sealed class BlueTuskArrayCodecTests
     }
 
     [Fact]
+    public void Decimal_arrays_adapt_to_the_lossless_numeric_codec()
+    {
+        var arrayType = Int4Array with
+        {
+            Id = new BlueTuskTypeId(1231),
+            Name = "_numeric",
+            ElementType = BlueTuskBuiltInTypes.Numeric.Id,
+        };
+        var codec = new BlueTuskArrayCodec(
+            BlueTuskBuiltInTypes.Numeric,
+            new BlueTuskNumericCodec());
+        decimal[] expected = [12.3400m, -0.1250m];
+
+        var binary = Assert.IsType<BlueTuskNumeric[]>(
+            RoundTrip(codec, arrayType, expected, BlueTuskDataFormat.Binary));
+        var text = Assert.IsType<BlueTuskNumeric[]>(
+            RoundTrip(codec, arrayType, expected, BlueTuskDataFormat.Text));
+
+        Assert.Equal(expected, binary.Select(value => value.ToDecimal()));
+        Assert.Equal(expected, text.Select(value => value.ToDecimal()));
+    }
+
+    [Fact]
     public void Element_delimiter_comes_from_the_catalogue_element_type()
     {
         var elementType = BlueTuskBuiltInTypes.Text with { Delimiter = ';' };
