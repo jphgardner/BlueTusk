@@ -24,9 +24,9 @@ An empty project-only result means no advisory matched. Any `NU1901` through
 documented security-review update and expiry decision.
 
 Normal Release builds also enforce the checked-in public API contracts for the
-ADO.NET stack and extension-authoring seam. A missing, changed, or incorrectly
-ordered declaration fails the build. After an approved additive change, place
-the analyzer's canonical signature in that project's
+ADO.NET stack, replication packages, and extension-authoring seam. A missing,
+changed, or incorrectly ordered declaration fails the build. After an approved
+additive change, place the analyzer's canonical signature in that project's
 `PublicAPI.Unshipped.txt`; do not edit a shipped line merely to make a breaking
 change pass. The compatibility policy and covered assemblies are in
 [API compatibility](../api-compatibility.md).

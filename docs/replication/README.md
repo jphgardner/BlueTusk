@@ -46,7 +46,7 @@ BlueTusk does not silently fail a replication stream over to another host.
 The application must establish that the replacement server and slot are safe
 for its persisted resume position.
 
-BlueTusk supports PostgreSQL 15 through 18 and provides:
+BlueTusk supports PostgreSQL 15 through 19 and provides:
 
 - physical and logical replication connections;
 - system identification, settings, replication-slot discovery, and slot
@@ -58,9 +58,11 @@ BlueTusk supports PostgreSQL 15 through 18 and provides:
 - raw payloads for any logical decoding output plugin; and
 - complete `pgoutput` decoding in `BlueTusk.Replication.PgOutput`.
 
-The same live suite also runs against PostgreSQL 19. Replication remains a
-preview because production readiness is a whole-product release claim, not a
-consequence of one passing protocol matrix.
+The replication subsystem has passed its production-readiness gate: the live
+version matrix, compatibility baselines, durability and feedback checks,
+failure-recovery cases, allocation/backpressure benchmarks, cancellation stress,
+and scheduled endurance are all executable. The packages retain the repository's
+preview version until the remaining whole-product 1.0 gates complete.
 
 ## Server setup
 

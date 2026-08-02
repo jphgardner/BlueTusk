@@ -1,12 +1,13 @@
 # API compatibility
 
-BlueTusk protects the shipped ADO.NET stack and extension-authoring seam with
-compiler-enforced public API contracts. The analyzer is a private build
-dependency; it does not become a runtime or package dependency of BlueTusk.
+BlueTusk protects the shipped ADO.NET stack, replication packages, and
+extension-authoring seam with compiler-enforced public API contracts. The
+analyzer is a private build dependency; it does not become a runtime or package
+dependency of BlueTusk.
 
 ## Baseline scope
 
-The 2026-08-02 baseline records 3,005 public and protected signatures, including
+The 2026-08-02 baseline records 3,827 public and protected signatures, including
 nullable annotations and compiler-generated record members:
 
 | Assembly | Shipped signatures | Contract role |
@@ -18,14 +19,16 @@ nullable annotations and compiler-generated record members:
 | `BlueTusk.TypeSystem` | 1,327 | Built-in/runtime type descriptors, values, and codec SDK |
 | `BlueTusk.Client` | 358 | Physical session, authentication, pipeline, and capability APIs |
 | `BlueTusk.Data` | 627 | ADO.NET provider, pooling, COPY, notifications, and large objects |
+| `BlueTusk.Replication` | 326 | Physical/logical replication sessions, messages, slots, and feedback |
+| `BlueTusk.Replication.PgOutput` | 496 | Pgoutput decoding, transaction envelopes, and checkpoint APIs |
 | `BlueTusk.Extensions.Abstractions` | 21 | Immutable plug-in and feature registry seam |
 | `BlueTusk.Extensions.Testing` | 41 | Framework-neutral extension compatibility contract |
 
-EF Core, EF design tooling, replication, identity adapters, source generation,
-and individual extension packages remain preview surfaces. Their exclusion is
-explicit: those APIs will receive their own shipped baselines when their
-separate roadmap production gates complete. Exclusion does not weaken normal
-compiler, analyzer, test, or package validation.
+EF Core, EF design tooling, identity adapters, source generation, and individual
+extension packages remain preview surfaces. Their exclusion is explicit: those
+APIs will receive their own shipped baselines when their separate roadmap
+production gates complete. Exclusion does not weaken normal compiler, analyzer,
+test, or package validation.
 
 ## Change policy
 

@@ -268,6 +268,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Monotonic ordered feedback and exact pgoutput transaction checkpoints
   - [x] Wrong-system, missing, active, stale, and lost-WAL safety diagnostics
   - [x] Scheduled/manual PostgreSQL 19 1,000-epoch endurance job
+- [x] Compiler-enforced shipped API/nullability baselines for both replication packages
 
 ### Release truthfulness
 
@@ -522,9 +523,15 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Compiler-enforced shipped API/nullability baselines for Extensions.Abstractions and Extensions.Testing after the citext vertical slice and compatibility harness
 - [x] Full built-in PostgreSQL type support
   - [x] PostgreSQL 15–19 catalogue gate requires a codec for every queryable built-in base, range, and multirange type
-- [ ] Production-grade connection pooling
-- [ ] Reliable cancellation
-- [ ] Production-ready `COPY`, notifications, large objects, and replication
+- [x] Production-grade connection pooling
+  - [x] Bounded per-host capacity, cancellable waiters, warm-up, lifetime/health rotation, credential refresh, reset, clear/drain, and disposal invariants
+  - [x] PostgreSQL 15–19 acceptance, scheduled concurrency stress, metrics/statistics, and checkout benchmarks
+- [x] Reliable cancellation
+  - [x] Dedicated PostgreSQL cancellation channel with `ReadyForQuery` draining across commands, batches, readers, pipeline groups, COPY, notifications, and replication
+  - [x] Sync/async token, timeout, explicit-cancel, transaction-state, connection-reuse, and cancellation-storm coverage
+- [x] Production-ready `COPY`, notifications, large objects, and replication
+  - [x] Bounded streaming, lifecycle/transaction ownership, abort/recovery, and PostgreSQL 15–19 acceptance for native data paths
+  - [x] Replication API compatibility baselines, live version matrix, checkpoint/failure recovery, feedback safety, and scheduled endurance
 - [ ] EF Core relational specification coverage
 - [ ] PostgreSQL-specific EF support
 - [x] Security review

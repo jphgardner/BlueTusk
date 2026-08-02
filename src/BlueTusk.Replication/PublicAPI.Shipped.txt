@@ -1,0 +1,328 @@
+#nullable enable
+
+~override BlueTusk.Replication.BlueTuskHotStandbyFeedback.Equals(object obj) -> bool
+~override BlueTusk.Replication.BlueTuskHotStandbyFeedback.ToString() -> string
+~override BlueTusk.Replication.BlueTuskStandbyStatus.Equals(object obj) -> bool
+~override BlueTusk.Replication.BlueTuskStandbyStatus.ToString() -> string
+abstract BlueTusk.Replication.BlueTuskReplicationMessage.<Clone>$() -> BlueTusk.Replication.BlueTuskReplicationMessage!
+BlueTusk.Replication.BlueTuskHotStandbyFeedback
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.BlueTuskHotStandbyFeedback() -> void
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.BlueTuskHotStandbyFeedback(uint Xmin, uint XminEpoch, uint CatalogXmin, uint CatalogXminEpoch) -> void
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.CatalogXmin.get -> uint
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.CatalogXmin.init -> void
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.CatalogXminEpoch.get -> uint
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.CatalogXminEpoch.init -> void
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.Deconstruct(out uint Xmin, out uint XminEpoch, out uint CatalogXmin, out uint CatalogXminEpoch) -> void
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.Equals(BlueTusk.Replication.BlueTuskHotStandbyFeedback other) -> bool
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.Xmin.get -> uint
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.Xmin.init -> void
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.XminEpoch.get -> uint
+BlueTusk.Replication.BlueTuskHotStandbyFeedback.XminEpoch.init -> void
+BlueTusk.Replication.BlueTuskLogicalOriginMode
+BlueTusk.Replication.BlueTuskLogicalOriginMode.Any = 0 -> BlueTusk.Replication.BlueTuskLogicalOriginMode
+BlueTusk.Replication.BlueTuskLogicalOriginMode.None = 1 -> BlueTusk.Replication.BlueTuskLogicalOriginMode
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.<Clone>$() -> BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint!
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.AppliedPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.AppliedPosition.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.BlueTuskLogicalReplicationCheckpoint(string! SystemIdentifier, string! DatabaseName, string! SlotName, string! OutputPlugin, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber AppliedPosition) -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.DatabaseName.get -> string!
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.DatabaseName.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.Deconstruct(out string! SystemIdentifier, out string! DatabaseName, out string! SlotName, out string! OutputPlugin, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber AppliedPosition) -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.Equals(BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint? other) -> bool
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.OutputPlugin.get -> string!
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.OutputPlugin.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.SlotName.get -> string!
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.SlotName.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.SystemIdentifier.get -> string!
+BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.SystemIdentifier.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.CreateReplicationSlotAsync(string! slotName, string! outputPlugin = "pgoutput", bool temporary = false, bool twoPhase = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskReplicationSlotCreationResult!>
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.DropReplicationSlotAsync(string! slotName, bool wait = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.GetPublicationsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.BlueTuskPublicationInfo!>!>
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.GetPublicationTablesAsync(string! publicationName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.BlueTuskPublicationTableInfo!>!>
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.StartReplicationAsync(BlueTusk.Replication.BlueTuskLogicalReplicationRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>!
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.StartReplicationAsync(BlueTusk.Replication.BlueTuskLogicalReplicationRequest! request) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>!
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.StartReplicationAsync(BlueTusk.Replication.BlueTuskPgOutputReplicationOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>!
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.StartReplicationAsync(BlueTusk.Replication.BlueTuskPgOutputReplicationOptions! options) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>!
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.StartReplicationAsync(string! slotName, string! publicationName, System.Threading.CancellationToken cancellationToken) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>!
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.StartReplicationAsync(string! slotName, string! publicationName) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>!
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.ValidateResumeCheckpointAsync(BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint! checkpoint, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskReplicationSlotInfo!>
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.<Clone>$() -> BlueTusk.Replication.BlueTuskLogicalReplicationRequest!
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.BlueTuskLogicalReplicationRequest() -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.Equals(BlueTusk.Replication.BlueTuskLogicalReplicationRequest? other) -> bool
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.PluginOptions.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string?>!
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.PluginOptions.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.SlotName.get -> string!
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.SlotName.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.StartPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskLogicalReplicationRequest.StartPosition.init -> void
+BlueTusk.Replication.BlueTuskLogicalStreamingMode
+BlueTusk.Replication.BlueTuskLogicalStreamingMode.Off = 0 -> BlueTusk.Replication.BlueTuskLogicalStreamingMode
+BlueTusk.Replication.BlueTuskLogicalStreamingMode.On = 1 -> BlueTusk.Replication.BlueTuskLogicalStreamingMode
+BlueTusk.Replication.BlueTuskLogicalStreamingMode.Parallel = 2 -> BlueTusk.Replication.BlueTuskLogicalStreamingMode
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.<Clone>$() -> BlueTusk.Replication.BlueTuskPgOutputReplicationOptions!
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.Binary.get -> bool
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.Binary.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.BlueTuskPgOutputReplicationOptions() -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.Equals(BlueTusk.Replication.BlueTuskPgOutputReplicationOptions? other) -> bool
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.Messages.get -> bool
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.Messages.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.OriginMode.get -> BlueTusk.Replication.BlueTuskLogicalOriginMode
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.OriginMode.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.ProtocolVersion.get -> int
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.ProtocolVersion.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.PublicationNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.PublicationNames.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.SlotName.get -> string!
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.SlotName.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.StartPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.StartPosition.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.StreamingMode.get -> BlueTusk.Replication.BlueTuskLogicalStreamingMode
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.StreamingMode.init -> void
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.TwoPhase.get -> bool
+BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.TwoPhase.init -> void
+BlueTusk.Replication.BlueTuskPhysicalReplicationConnection
+BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.CreateReplicationSlotAsync(string! slotName, bool temporary = false, bool reserveWal = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskReplicationSlotCreationResult!>
+BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.DropReplicationSlotAsync(string! slotName, bool wait = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.ReadReplicationSlotAsync(string! slotName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskPhysicalReplicationSlot!>
+BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.StartReplicationAsync(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber startPosition, string? slotName = null, uint? timeline = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>!
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.<Clone>$() -> BlueTusk.Replication.BlueTuskPhysicalReplicationSlot!
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.BlueTuskPhysicalReplicationSlot(string? SlotType, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? RestartPosition, ulong? RestartTimeline) -> void
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.Deconstruct(out string? SlotType, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? RestartPosition, out ulong? RestartTimeline) -> void
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.Equals(BlueTusk.Replication.BlueTuskPhysicalReplicationSlot? other) -> bool
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.RestartPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.RestartPosition.init -> void
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.RestartTimeline.get -> ulong?
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.RestartTimeline.init -> void
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.SlotType.get -> string?
+BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.SlotType.init -> void
+BlueTusk.Replication.BlueTuskPrimaryKeepalive
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.BlueTuskPrimaryKeepalive(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ServerWalEnd, System.DateTimeOffset ServerClock, bool ReplyRequested) -> void
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ServerWalEnd, out System.DateTimeOffset ServerClock, out bool ReplyRequested) -> void
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.Equals(BlueTusk.Replication.BlueTuskPrimaryKeepalive? other) -> bool
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.ReplyRequested.get -> bool
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.ReplyRequested.init -> void
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.ServerClock.get -> System.DateTimeOffset
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.ServerClock.init -> void
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.ServerWalEnd.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskPrimaryKeepalive.ServerWalEnd.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo
+BlueTusk.Replication.BlueTuskPublicationInfo.<Clone>$() -> BlueTusk.Replication.BlueTuskPublicationInfo!
+BlueTusk.Replication.BlueTuskPublicationInfo.BlueTuskPublicationInfo(uint Oid, string! Name, string! Owner, bool PublishesAllTables, bool PublishesInserts, bool PublishesUpdates, bool PublishesDeletes, bool PublishesTruncates, bool PublishesViaPartitionRoot) -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.Deconstruct(out uint Oid, out string! Name, out string! Owner, out bool PublishesAllTables, out bool PublishesInserts, out bool PublishesUpdates, out bool PublishesDeletes, out bool PublishesTruncates, out bool PublishesViaPartitionRoot) -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.Equals(BlueTusk.Replication.BlueTuskPublicationInfo? other) -> bool
+BlueTusk.Replication.BlueTuskPublicationInfo.Name.get -> string!
+BlueTusk.Replication.BlueTuskPublicationInfo.Name.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.Oid.get -> uint
+BlueTusk.Replication.BlueTuskPublicationInfo.Oid.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.Owner.get -> string!
+BlueTusk.Replication.BlueTuskPublicationInfo.Owner.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesAllTables.get -> bool
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesAllTables.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesDeletes.get -> bool
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesDeletes.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesInserts.get -> bool
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesInserts.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesTruncates.get -> bool
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesTruncates.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesUpdates.get -> bool
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesUpdates.init -> void
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesViaPartitionRoot.get -> bool
+BlueTusk.Replication.BlueTuskPublicationInfo.PublishesViaPartitionRoot.init -> void
+BlueTusk.Replication.BlueTuskPublicationTableInfo
+BlueTusk.Replication.BlueTuskPublicationTableInfo.<Clone>$() -> BlueTusk.Replication.BlueTuskPublicationTableInfo!
+BlueTusk.Replication.BlueTuskPublicationTableInfo.BlueTuskPublicationTableInfo(string! PublicationName, string! SchemaName, string! TableName, System.Collections.Generic.IReadOnlyList<string!>? Columns, string? RowFilter) -> void
+BlueTusk.Replication.BlueTuskPublicationTableInfo.Columns.get -> System.Collections.Generic.IReadOnlyList<string!>?
+BlueTusk.Replication.BlueTuskPublicationTableInfo.Columns.init -> void
+BlueTusk.Replication.BlueTuskPublicationTableInfo.Deconstruct(out string! PublicationName, out string! SchemaName, out string! TableName, out System.Collections.Generic.IReadOnlyList<string!>? Columns, out string? RowFilter) -> void
+BlueTusk.Replication.BlueTuskPublicationTableInfo.Equals(BlueTusk.Replication.BlueTuskPublicationTableInfo? other) -> bool
+BlueTusk.Replication.BlueTuskPublicationTableInfo.PublicationName.get -> string!
+BlueTusk.Replication.BlueTuskPublicationTableInfo.PublicationName.init -> void
+BlueTusk.Replication.BlueTuskPublicationTableInfo.RowFilter.get -> string?
+BlueTusk.Replication.BlueTuskPublicationTableInfo.RowFilter.init -> void
+BlueTusk.Replication.BlueTuskPublicationTableInfo.SchemaName.get -> string!
+BlueTusk.Replication.BlueTuskPublicationTableInfo.SchemaName.init -> void
+BlueTusk.Replication.BlueTuskPublicationTableInfo.TableName.get -> string!
+BlueTusk.Replication.BlueTuskPublicationTableInfo.TableName.init -> void
+BlueTusk.Replication.BlueTuskReplicationCheckpointException
+BlueTusk.Replication.BlueTuskReplicationCheckpointException.BlueTuskReplicationCheckpointException(string! message) -> void
+BlueTusk.Replication.BlueTuskReplicationConnection
+BlueTusk.Replication.BlueTuskReplicationConnection.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Replication.BlueTuskReplicationConnection.GetReplicationSlotsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.BlueTuskReplicationSlotInfo!>!>
+BlueTusk.Replication.BlueTuskReplicationConnection.IdentifySystemAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskReplicationSystemIdentity!>
+BlueTusk.Replication.BlueTuskReplicationConnection.IsOpen.get -> bool
+BlueTusk.Replication.BlueTuskReplicationConnection.IsStreaming.get -> bool
+BlueTusk.Replication.BlueTuskReplicationConnection.LastReceivedWalPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskReplicationConnection.SendHotStandbyFeedbackAsync(BlueTusk.Replication.BlueTuskHotStandbyFeedback feedback, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Replication.BlueTuskReplicationConnection.SendStandbyStatusUpdateAsync(BlueTusk.Replication.BlueTuskStandbyStatus status, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Replication.BlueTuskReplicationConnection.ServerParameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+BlueTusk.Replication.BlueTuskReplicationConnection.ShowAsync(string! parameterName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+BlueTusk.Replication.BlueTuskReplicationConnection.StandbyStatus.get -> BlueTusk.Replication.BlueTuskStandbyStatus
+BlueTusk.Replication.BlueTuskReplicationMessage
+BlueTusk.Replication.BlueTuskReplicationMessage.BlueTuskReplicationMessage() -> void
+BlueTusk.Replication.BlueTuskReplicationMessage.BlueTuskReplicationMessage(BlueTusk.Replication.BlueTuskReplicationMessage! original) -> void
+BlueTusk.Replication.BlueTuskReplicationProtocolException
+BlueTusk.Replication.BlueTuskReplicationProtocolException.BlueTuskReplicationProtocolException(string! message, System.Exception! innerException) -> void
+BlueTusk.Replication.BlueTuskReplicationProtocolException.BlueTuskReplicationProtocolException(string! message) -> void
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.<Clone>$() -> BlueTusk.Replication.BlueTuskReplicationSlotCreationResult!
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.BlueTuskReplicationSlotCreationResult(string! SlotName, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ConsistentPoint, string? SnapshotName, string? OutputPlugin) -> void
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.ConsistentPoint.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.ConsistentPoint.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.Deconstruct(out string! SlotName, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ConsistentPoint, out string? SnapshotName, out string? OutputPlugin) -> void
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.Equals(BlueTusk.Replication.BlueTuskReplicationSlotCreationResult? other) -> bool
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.OutputPlugin.get -> string?
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.OutputPlugin.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.SlotName.get -> string!
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.SlotName.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.SnapshotName.get -> string?
+BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.SnapshotName.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.<Clone>$() -> BlueTusk.Replication.BlueTuskReplicationSlotInfo!
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.ActiveProcessId.get -> int?
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.ActiveProcessId.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.BlueTuskReplicationSlotInfo(string! SlotName, string? OutputPlugin, string! SlotType, string? DatabaseName, bool IsTemporary, bool IsActive, int? ActiveProcessId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? RestartPosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? ConfirmedFlushPosition, string? WalStatus) -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.ConfirmedFlushPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.ConfirmedFlushPosition.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.DatabaseName.get -> string?
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.DatabaseName.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.Deconstruct(out string! SlotName, out string? OutputPlugin, out string! SlotType, out string? DatabaseName, out bool IsTemporary, out bool IsActive, out int? ActiveProcessId, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? RestartPosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? ConfirmedFlushPosition, out string? WalStatus) -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.Equals(BlueTusk.Replication.BlueTuskReplicationSlotInfo? other) -> bool
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.IsActive.get -> bool
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.IsActive.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.IsTemporary.get -> bool
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.IsTemporary.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.OutputPlugin.get -> string?
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.OutputPlugin.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.RestartPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.RestartPosition.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.SlotName.get -> string!
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.SlotName.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.SlotType.get -> string!
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.SlotType.init -> void
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.WalStatus.get -> string?
+BlueTusk.Replication.BlueTuskReplicationSlotInfo.WalStatus.init -> void
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.<Clone>$() -> BlueTusk.Replication.BlueTuskReplicationSystemIdentity!
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.BlueTuskReplicationSystemIdentity(string! SystemIdentifier, uint Timeline, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber WalPosition, string? DatabaseName) -> void
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.DatabaseName.get -> string?
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.DatabaseName.init -> void
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.Deconstruct(out string! SystemIdentifier, out uint Timeline, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber WalPosition, out string? DatabaseName) -> void
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.Equals(BlueTusk.Replication.BlueTuskReplicationSystemIdentity? other) -> bool
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.SystemIdentifier.get -> string!
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.SystemIdentifier.init -> void
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.Timeline.get -> uint
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.Timeline.init -> void
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.WalPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskReplicationSystemIdentity.WalPosition.init -> void
+BlueTusk.Replication.BlueTuskStandbyStatus
+BlueTusk.Replication.BlueTuskStandbyStatus.Applied.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskStandbyStatus.Applied.init -> void
+BlueTusk.Replication.BlueTuskStandbyStatus.BlueTuskStandbyStatus() -> void
+BlueTusk.Replication.BlueTuskStandbyStatus.BlueTuskStandbyStatus(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Written, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Flushed, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Applied, bool ReplyRequested = false) -> void
+BlueTusk.Replication.BlueTuskStandbyStatus.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Written, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Flushed, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Applied, out bool ReplyRequested) -> void
+BlueTusk.Replication.BlueTuskStandbyStatus.Equals(BlueTusk.Replication.BlueTuskStandbyStatus other) -> bool
+BlueTusk.Replication.BlueTuskStandbyStatus.Flushed.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskStandbyStatus.Flushed.init -> void
+BlueTusk.Replication.BlueTuskStandbyStatus.ReplyRequested.get -> bool
+BlueTusk.Replication.BlueTuskStandbyStatus.ReplyRequested.init -> void
+BlueTusk.Replication.BlueTuskStandbyStatus.Written.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskStandbyStatus.Written.init -> void
+BlueTusk.Replication.BlueTuskXLogData
+BlueTusk.Replication.BlueTuskXLogData.BlueTuskXLogData(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber WalStart, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ServerWalEnd, System.DateTimeOffset ServerClock, System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.Replication.BlueTuskXLogData.Data.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Replication.BlueTuskXLogData.Data.init -> void
+BlueTusk.Replication.BlueTuskXLogData.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber WalStart, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ServerWalEnd, out System.DateTimeOffset ServerClock, out System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.Replication.BlueTuskXLogData.Equals(BlueTusk.Replication.BlueTuskXLogData? other) -> bool
+BlueTusk.Replication.BlueTuskXLogData.ServerClock.get -> System.DateTimeOffset
+BlueTusk.Replication.BlueTuskXLogData.ServerClock.init -> void
+BlueTusk.Replication.BlueTuskXLogData.ServerWalEnd.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskXLogData.ServerWalEnd.init -> void
+BlueTusk.Replication.BlueTuskXLogData.WalEnd.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskXLogData.WalStart.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.BlueTuskXLogData.WalStart.init -> void
+override BlueTusk.Replication.BlueTuskHotStandbyFeedback.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.ToString() -> string!
+override BlueTusk.Replication.BlueTuskLogicalReplicationRequest.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskLogicalReplicationRequest.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskLogicalReplicationRequest.ToString() -> string!
+override BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.ToString() -> string!
+override BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.ToString() -> string!
+override BlueTusk.Replication.BlueTuskPrimaryKeepalive.<Clone>$() -> BlueTusk.Replication.BlueTuskPrimaryKeepalive!
+override BlueTusk.Replication.BlueTuskPrimaryKeepalive.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskPrimaryKeepalive.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskPrimaryKeepalive.ToString() -> string!
+override BlueTusk.Replication.BlueTuskPublicationInfo.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskPublicationInfo.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskPublicationInfo.ToString() -> string!
+override BlueTusk.Replication.BlueTuskPublicationTableInfo.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskPublicationTableInfo.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskPublicationTableInfo.ToString() -> string!
+override BlueTusk.Replication.BlueTuskReplicationMessage.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskReplicationMessage.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskReplicationMessage.ToString() -> string!
+override BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.ToString() -> string!
+override BlueTusk.Replication.BlueTuskReplicationSlotInfo.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskReplicationSlotInfo.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskReplicationSlotInfo.ToString() -> string!
+override BlueTusk.Replication.BlueTuskReplicationSystemIdentity.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskReplicationSystemIdentity.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskReplicationSystemIdentity.ToString() -> string!
+override BlueTusk.Replication.BlueTuskStandbyStatus.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskXLogData.<Clone>$() -> BlueTusk.Replication.BlueTuskXLogData!
+override BlueTusk.Replication.BlueTuskXLogData.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskXLogData.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskXLogData.ToString() -> string!
+override sealed BlueTusk.Replication.BlueTuskPrimaryKeepalive.Equals(BlueTusk.Replication.BlueTuskReplicationMessage? other) -> bool
+override sealed BlueTusk.Replication.BlueTuskXLogData.Equals(BlueTusk.Replication.BlueTuskReplicationMessage? other) -> bool
+static BlueTusk.Replication.BlueTuskHotStandbyFeedback.operator !=(BlueTusk.Replication.BlueTuskHotStandbyFeedback left, BlueTusk.Replication.BlueTuskHotStandbyFeedback right) -> bool
+static BlueTusk.Replication.BlueTuskHotStandbyFeedback.operator ==(BlueTusk.Replication.BlueTuskHotStandbyFeedback left, BlueTusk.Replication.BlueTuskHotStandbyFeedback right) -> bool
+static BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.operator !=(BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint? left, BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint? right) -> bool
+static BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint.operator ==(BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint? left, BlueTusk.Replication.BlueTuskLogicalReplicationCheckpoint? right) -> bool
+static BlueTusk.Replication.BlueTuskLogicalReplicationConnection.OpenAsync(BlueTusk.Client.BlueTuskClientOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskLogicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskLogicalReplicationConnection.OpenAsync(BlueTusk.Client.BlueTuskClientOptions! options) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskLogicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskLogicalReplicationConnection.OpenAsync(string! connectionString, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskLogicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskLogicalReplicationConnection.OpenAsync(string! connectionString) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskLogicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskLogicalReplicationRequest.operator !=(BlueTusk.Replication.BlueTuskLogicalReplicationRequest? left, BlueTusk.Replication.BlueTuskLogicalReplicationRequest? right) -> bool
+static BlueTusk.Replication.BlueTuskLogicalReplicationRequest.operator ==(BlueTusk.Replication.BlueTuskLogicalReplicationRequest? left, BlueTusk.Replication.BlueTuskLogicalReplicationRequest? right) -> bool
+static BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.operator !=(BlueTusk.Replication.BlueTuskPgOutputReplicationOptions? left, BlueTusk.Replication.BlueTuskPgOutputReplicationOptions? right) -> bool
+static BlueTusk.Replication.BlueTuskPgOutputReplicationOptions.operator ==(BlueTusk.Replication.BlueTuskPgOutputReplicationOptions? left, BlueTusk.Replication.BlueTuskPgOutputReplicationOptions? right) -> bool
+static BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.OpenAsync(BlueTusk.Client.BlueTuskClientOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskPhysicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.OpenAsync(BlueTusk.Client.BlueTuskClientOptions! options) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskPhysicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.OpenAsync(string! connectionString, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskPhysicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskPhysicalReplicationConnection.OpenAsync(string! connectionString) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskPhysicalReplicationConnection!>
+static BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.operator !=(BlueTusk.Replication.BlueTuskPhysicalReplicationSlot? left, BlueTusk.Replication.BlueTuskPhysicalReplicationSlot? right) -> bool
+static BlueTusk.Replication.BlueTuskPhysicalReplicationSlot.operator ==(BlueTusk.Replication.BlueTuskPhysicalReplicationSlot? left, BlueTusk.Replication.BlueTuskPhysicalReplicationSlot? right) -> bool
+static BlueTusk.Replication.BlueTuskPrimaryKeepalive.operator !=(BlueTusk.Replication.BlueTuskPrimaryKeepalive? left, BlueTusk.Replication.BlueTuskPrimaryKeepalive? right) -> bool
+static BlueTusk.Replication.BlueTuskPrimaryKeepalive.operator ==(BlueTusk.Replication.BlueTuskPrimaryKeepalive? left, BlueTusk.Replication.BlueTuskPrimaryKeepalive? right) -> bool
+static BlueTusk.Replication.BlueTuskPublicationInfo.operator !=(BlueTusk.Replication.BlueTuskPublicationInfo? left, BlueTusk.Replication.BlueTuskPublicationInfo? right) -> bool
+static BlueTusk.Replication.BlueTuskPublicationInfo.operator ==(BlueTusk.Replication.BlueTuskPublicationInfo? left, BlueTusk.Replication.BlueTuskPublicationInfo? right) -> bool
+static BlueTusk.Replication.BlueTuskPublicationTableInfo.operator !=(BlueTusk.Replication.BlueTuskPublicationTableInfo? left, BlueTusk.Replication.BlueTuskPublicationTableInfo? right) -> bool
+static BlueTusk.Replication.BlueTuskPublicationTableInfo.operator ==(BlueTusk.Replication.BlueTuskPublicationTableInfo? left, BlueTusk.Replication.BlueTuskPublicationTableInfo? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationMessage.operator !=(BlueTusk.Replication.BlueTuskReplicationMessage? left, BlueTusk.Replication.BlueTuskReplicationMessage? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationMessage.operator ==(BlueTusk.Replication.BlueTuskReplicationMessage? left, BlueTusk.Replication.BlueTuskReplicationMessage? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.operator !=(BlueTusk.Replication.BlueTuskReplicationSlotCreationResult? left, BlueTusk.Replication.BlueTuskReplicationSlotCreationResult? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationSlotCreationResult.operator ==(BlueTusk.Replication.BlueTuskReplicationSlotCreationResult? left, BlueTusk.Replication.BlueTuskReplicationSlotCreationResult? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationSlotInfo.operator !=(BlueTusk.Replication.BlueTuskReplicationSlotInfo? left, BlueTusk.Replication.BlueTuskReplicationSlotInfo? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationSlotInfo.operator ==(BlueTusk.Replication.BlueTuskReplicationSlotInfo? left, BlueTusk.Replication.BlueTuskReplicationSlotInfo? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationSystemIdentity.operator !=(BlueTusk.Replication.BlueTuskReplicationSystemIdentity? left, BlueTusk.Replication.BlueTuskReplicationSystemIdentity? right) -> bool
+static BlueTusk.Replication.BlueTuskReplicationSystemIdentity.operator ==(BlueTusk.Replication.BlueTuskReplicationSystemIdentity? left, BlueTusk.Replication.BlueTuskReplicationSystemIdentity? right) -> bool
+static BlueTusk.Replication.BlueTuskStandbyStatus.operator !=(BlueTusk.Replication.BlueTuskStandbyStatus left, BlueTusk.Replication.BlueTuskStandbyStatus right) -> bool
+static BlueTusk.Replication.BlueTuskStandbyStatus.operator ==(BlueTusk.Replication.BlueTuskStandbyStatus left, BlueTusk.Replication.BlueTuskStandbyStatus right) -> bool
+static BlueTusk.Replication.BlueTuskXLogData.operator !=(BlueTusk.Replication.BlueTuskXLogData? left, BlueTusk.Replication.BlueTuskXLogData? right) -> bool
+static BlueTusk.Replication.BlueTuskXLogData.operator ==(BlueTusk.Replication.BlueTuskXLogData? left, BlueTusk.Replication.BlueTuskXLogData? right) -> bool
+virtual BlueTusk.Replication.BlueTuskReplicationMessage.EqualityContract.get -> System.Type!
+virtual BlueTusk.Replication.BlueTuskReplicationMessage.Equals(BlueTusk.Replication.BlueTuskReplicationMessage? other) -> bool
+virtual BlueTusk.Replication.BlueTuskReplicationMessage.PrintMembers(System.Text.StringBuilder! builder) -> bool

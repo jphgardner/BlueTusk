@@ -5,7 +5,7 @@
 BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production-ready database driver. Executable tests currently cover pooled ADO.NET queries, prepared statements, batches, streaming APIs, PostgreSQL-native types, Client-layer PostgreSQL pipeline mode, live-tested PostGIS, TimescaleDB, `citext`, `hstore`, `ltree`, `pg_trgm`, and pgvector integrations, separately packaged citext, pgvector, NetTopologySuite PostGIS, and typed TimescaleDB EF integration previews, extension authoring and compatibility tooling, replication preview APIs, EF Core CRUD, table CHECK and exclusion constraints, advanced PostgreSQL indexes, table/view/event-trigger, rewrite-rule, logical-publication/subscription, foreign-data-wrapper/server/user-mapping/foreign-table, tablespace, operator/operator-family/operator-class/cast/aggregate, declarative table-partition, row-level-security, direct table-inheritance, collation, installed-extension, enum/domain/composite/range/multirange-type, function/procedure, and ordinary materialised-view migrations/scaffolding, PostgreSQL-native EF mappings plus typed native operators including quantified and row-value comparisons, scalar and aggregate function families, lateral array element/subscript expansion, typed `generate_series`, JSONB set-returning and model-derived recordset roots, generic multi-array `unnest`, regex/delimiter table roots, `DISTINCT ON`, table sampling, row locking, typed window projections, recursive/materialized CTEs, returned-row data modification, single-row conflict handling and `MERGE`, system columns with `xmin` concurrency, and model-registered user-defined table functions, and PostgreSQL 19 SQL/PGQ raw SQL, schema discovery/tooling, graph-aware migrations/reverse engineering, and a typed linear-path EF query subset. The measured transport evaluation retains ArrayPool/Span/Memory rather than adding `System.IO.Pipelines` to production packages. The shipped ADO.NET and extension-authoring surfaces now have compiler-enforced compatibility baselines; EF, replication, identity, and individual extension packages remain preview until their separate gates complete. Track exact implemented and pending scope in the [roadmap](docs/roadmap.md).
+> BlueTusk is an experimental `0.3.0-preview.1` provider, not yet a production-ready database driver as a whole. Its ADO.NET, pooling, cancellation, PostgreSQL-native data-path, replication, security, stress, and compatibility subsystem gates are complete and executable; EF, design tooling, identity adapters, individual extension APIs, documentation, and the final whole-product release audit remain preview work. The detailed implemented surface and every pending gate are tracked in the [roadmap](docs/roadmap.md) and [runtime release-readiness record](docs/release-readiness.md).
 
 ## Build
 
@@ -69,7 +69,7 @@ EntityFrameworkCore → Data → Client → Protocol → Transport
 Replication.PgOutput → Replication → Client
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [API compatibility](docs/api-compatibility.md), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [security review](docs/security.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [API compatibility](docs/api-compatibility.md), [runtime release readiness](docs/release-readiness.md), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [security review](docs/security.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
 ## Status
 
@@ -77,7 +77,7 @@ The current `0.3.0-preview.1` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
-- compiler-enforced shipped API/nullability baselines for the ADO.NET stack and extension-authoring seam;
+- compiler-enforced shipped API/nullability baselines for the ADO.NET stack, replication packages, and extension-authoring seam;
 - TCP and Unix-domain transports with deterministic DNS/address fallback, total connect
   deadlines, cancellation, TCP keepalive, bounded socket buffers, and classified connection
   failures;

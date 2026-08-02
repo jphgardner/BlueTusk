@@ -50,3 +50,7 @@ The reset round trip is also the health check. A closed session, failed reset, e
 - Disposing the data source cancels queued opens, closes idle sessions, and drains active sessions as their logical connections close.
 
 The `BlueTusk.Diagnostics` meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Multi-host retries and non-first-host selections have separate counters. Statistics are scoped to one data source; meter instruments are process-wide aggregates. See [Diagnostics and observability](../observability.md) for names, dimensions, and redaction rules.
+
+The pooling production gate, its failure invariants, live version matrix, stress
+coverage, and deliberate non-multiplexing boundary are recorded in
+[Runtime release readiness](../release-readiness.md).

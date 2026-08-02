@@ -17,15 +17,23 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
     }
 
     public static ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
+        string connectionString) =>
+        OpenAsync(connectionString, CancellationToken.None);
+
+    public static ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
         string connectionString,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken) =>
         OpenAsync(
             BlueTuskClientOptions.FromConnectionString(connectionString),
             cancellationToken);
 
+    public static ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
+        BlueTuskClientOptions options) =>
+        OpenAsync(options, CancellationToken.None);
+
     public static async ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
         BlueTuskClientOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
         var session = await BlueTuskSession.OpenAsync(
@@ -209,8 +217,14 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
     /// <summary>Streams pgoutput changes for one publication.</summary>
     public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
         string slotName,
+        string publicationName) =>
+        StartReplicationAsync(slotName, publicationName, CancellationToken.None);
+
+    /// <summary>Streams pgoutput changes for one publication.</summary>
+    public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
+        string slotName,
         string publicationName,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken) =>
         StartReplicationAsync(
             new BlueTuskPgOutputReplicationOptions
             {
@@ -221,8 +235,13 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
 
     /// <summary>Streams changes using typed pgoutput plugin options.</summary>
     public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
+        BlueTuskPgOutputReplicationOptions options) =>
+        StartReplicationAsync(options, CancellationToken.None);
+
+    /// <summary>Streams changes using typed pgoutput plugin options.</summary>
+    public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
         BlueTuskPgOutputReplicationOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
         options.Validate();
@@ -276,8 +295,13 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
 
     /// <summary>Streams output from a logical decoding plugin.</summary>
     public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
+        BlueTuskLogicalReplicationRequest request) =>
+        StartReplicationAsync(request, CancellationToken.None);
+
+    /// <summary>Streams output from a logical decoding plugin.</summary>
+    public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
         BlueTuskLogicalReplicationRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.SlotName);

@@ -13,15 +13,23 @@ public sealed class BlueTuskPhysicalReplicationConnection : BlueTuskReplicationC
     }
 
     public static ValueTask<BlueTuskPhysicalReplicationConnection> OpenAsync(
+        string connectionString) =>
+        OpenAsync(connectionString, CancellationToken.None);
+
+    public static ValueTask<BlueTuskPhysicalReplicationConnection> OpenAsync(
         string connectionString,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken) =>
         OpenAsync(
             BlueTuskClientOptions.FromConnectionString(connectionString),
             cancellationToken);
 
+    public static ValueTask<BlueTuskPhysicalReplicationConnection> OpenAsync(
+        BlueTuskClientOptions options) =>
+        OpenAsync(options, CancellationToken.None);
+
     public static async ValueTask<BlueTuskPhysicalReplicationConnection> OpenAsync(
         BlueTuskClientOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
         var session = await BlueTuskSession.OpenAsync(
