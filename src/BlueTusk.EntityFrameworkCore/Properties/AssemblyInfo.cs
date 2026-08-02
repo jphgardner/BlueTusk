@@ -5,4 +5,4 @@ using Microsoft.EntityFrameworkCore.Design;
 [assembly: InternalsVisibleTo("BlueTusk.EntityFrameworkCore.Tests")]
 
 [assembly: DesignTimeProviderServices(
-    "BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDesignTimeServices, BlueTusk.EntityFrameworkCore.Design")]
+    "BlueTusk.EntityFrameworkCore.Infrastructure.Internal.BlueTuskDesignTimeServicesBridge")]

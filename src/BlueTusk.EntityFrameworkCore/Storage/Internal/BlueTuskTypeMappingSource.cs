@@ -709,6 +709,11 @@ internal sealed class BlueTuskTypeMappingSource : RelationalTypeMappingSource
                 return mapping;
             }
 
+            if (mappingInfo.Size is <= 0)
+            {
+                return String;
+            }
+
             return mappingInfo.IsFixedLength == true
                 ? new StringTypeMapping(
                     "character",

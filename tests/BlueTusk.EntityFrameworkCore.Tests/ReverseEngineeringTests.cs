@@ -27,7 +27,7 @@ public sealed class ReverseEngineeringTests
 
         Assert.NotNull(attribute);
         Assert.Equal(
-            "BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDesignTimeServices, BlueTusk.EntityFrameworkCore.Design",
+            "BlueTusk.EntityFrameworkCore.Infrastructure.Internal.BlueTuskDesignTimeServicesBridge",
             attribute.TypeName);
 
         var services = new ServiceCollection();

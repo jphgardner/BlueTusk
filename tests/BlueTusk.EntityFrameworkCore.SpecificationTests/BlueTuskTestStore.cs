@@ -40,6 +40,38 @@ internal sealed class BlueTuskTestStore(string name, bool shared)
     public override Task OpenConnectionAsync()
         => Connection.OpenAsync();
 
+    public override async Task CleanAsync(DbContext context)
+    {
+        await context.Database.CloseConnectionAsync().ConfigureAwait(false);
+        if (Connection.State != ConnectionState.Closed)
+        {
+            await Connection.CloseAsync().ConfigureAwait(false);
+        }
+
+        await using var cleanup = new BlueTuskConnection(ConnectionString);
+        await cleanup.OpenAsync().ConfigureAwait(false);
+        await ExecuteNonQueryAsync(
+                cleanup,
+                """
+                DO $bluetusk_clean$
+                DECLARE schema_name text;
+                BEGIN
+                    FOR schema_name IN
+                        SELECT nspname
+                        FROM pg_namespace
+                        WHERE nspname NOT IN ('pg_catalog', 'information_schema', 'public')
+                          AND nspname NOT LIKE 'pg_toast%'
+                          AND nspname NOT LIKE 'pg_temp_%'
+                    LOOP
+                        EXECUTE format('DROP SCHEMA %I CASCADE', schema_name);
+                    END LOOP;
+                END $bluetusk_clean$;
+                DROP SCHEMA IF EXISTS public CASCADE;
+                CREATE SCHEMA public;
+                """)
+            .ConfigureAwait(false);
+    }
+
     private async Task RecreateDatabaseAsync()
     {
         if (Connection.State != ConnectionState.Closed)

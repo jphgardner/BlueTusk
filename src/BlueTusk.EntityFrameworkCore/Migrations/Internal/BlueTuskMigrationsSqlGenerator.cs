@@ -38,6 +38,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Internal;
 
@@ -2236,18 +2237,16 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         {
             if (generatedSql is not null && oldGeneratedSql is null)
             {
-                throw new NotSupportedException(
-                    $"PostgreSQL cannot convert '{operation.Schema}.{operation.Table}.{operation.Name}' " +
-                    "from an ordinary column to a generated column in place. Drop and recreate the column explicitly.");
+                RecreateColumn(operation, table, column, model, builder);
+                return;
             }
 
             if (generatedSql is not null && oldGeneratedSql is not null)
             {
                 if (operation.IsStored != operation.OldColumn.IsStored)
                 {
-                    throw new NotSupportedException(
-                        $"PostgreSQL cannot change '{operation.Schema}.{operation.Table}.{operation.Name}' " +
-                        "between stored and virtual generation in place. Drop and recreate the column explicitly.");
+                    RecreateColumn(operation, table, column, model, builder);
+                    return;
                 }
 
                 if (!string.Equals(columnType, operation.OldColumn.ColumnType, StringComparison.OrdinalIgnoreCase) ||
@@ -2323,12 +2322,30 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             {
                 builder.Append(" COLLATE ").Append(helper.DelimitIdentifier(operation.Collation));
             }
+            else if (operation.OldColumn.Collation is not null)
+            {
+                builder.Append(" COLLATE ").Append(helper.DelimitIdentifier("default"));
+            }
 
             EndStatement(builder);
         }
 
         if (operation.IsNullable != operation.OldColumn.IsNullable)
         {
+            if (!operation.IsNullable
+                && (operation.DefaultValue is not null || operation.DefaultValueSql is not null))
+            {
+                builder.Append("UPDATE ").Append(table)
+                    .Append(" SET ").Append(column).Append(" = ");
+                AppendDefaultValueExpression(
+                    operation.DefaultValue,
+                    operation.DefaultValueSql,
+                    columnType,
+                    builder);
+                builder.Append(" WHERE ").Append(column).Append(" IS NULL");
+                EndStatement(builder);
+            }
+
             builder
                 .Append("ALTER TABLE ").Append(table)
                 .Append(" ALTER COLUMN ").Append(column)
@@ -2348,8 +2365,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             }
             else if (operation.DefaultValue is not null)
             {
-                builder.Append(" SET DEFAULT ");
-                DefaultValue(operation.DefaultValue, columnType, operation.Name, builder);
+                builder.Append(" SET");
+                DefaultValue(operation.DefaultValue, null, columnType, builder);
             }
             else
             {
@@ -2459,6 +2476,28 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     protected override void Generate(
+        RestartSequenceOperation operation,
+        IModel? model,
+        MigrationCommandListBuilder builder)
+    {
+        ArgumentNullException.ThrowIfNull(operation);
+        ArgumentNullException.ThrowIfNull(builder);
+
+        var sequence = Dependencies.SqlGenerationHelper.DelimitIdentifier(operation.Name, operation.Schema);
+        if (operation.StartValue is { } startValue)
+        {
+            var longTypeMapping = Dependencies.TypeMappingSource.GetMapping(typeof(long));
+            builder.Append("ALTER SEQUENCE ").Append(sequence)
+                .Append(" START WITH ")
+                .Append(longTypeMapping.GenerateSqlLiteral(startValue));
+            EndStatement(builder);
+        }
+
+        builder.Append("ALTER SEQUENCE ").Append(sequence).Append(" RESTART");
+        EndStatement(builder);
+    }
+
+    protected override void Generate(
         RenameSequenceOperation operation,
         IModel? model,
         MigrationCommandListBuilder builder)
@@ -2535,7 +2574,8 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
             builder.Append(" GENERATED ALWAYS AS (")
                 .Append(operation.ComputedColumnSql)
-                .Append(operation.IsStored == false ? ") VIRTUAL" : ") STORED");
+                .Append(operation.IsStored == false ? ") VIRTUAL" : ") STORED")
+                .Append(operation.IsNullable ? string.Empty : " NOT NULL");
             return;
         }
 
@@ -2557,7 +2597,18 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             return;
         }
 
-        base.ColumnDefinition(schema, table, name, operation, model, builder);
+        var relationalType = operation.ColumnType ?? GetColumnType(schema, table, name, operation, model);
+        builder.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name))
+            .Append(" ")
+            .Append(relationalType);
+        if (operation.Collation is not null)
+        {
+            builder.Append(" COLLATE ");
+            AppendQualifiedIdentifier(builder, operation.Collation);
+        }
+
+        builder.Append(operation.IsNullable ? " NULL" : " NOT NULL");
+        DefaultValue(operation.DefaultValue, operation.DefaultValueSql, relationalType, builder);
 
         var identity = GetIdentityGeneration(schema, table, name, operation, model);
         if (identity is not null)
@@ -2566,6 +2617,55 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
                 .Append(IdentitySql(identity.Value))
                 .Append(" AS IDENTITY");
         }
+    }
+
+    private void RecreateColumn(
+        AlterColumnOperation operation,
+        string table,
+        string column,
+        IModel? model,
+        MigrationCommandListBuilder builder)
+    {
+        if (operation.IsStored == false)
+        {
+            GenerateMinimumVersionGuarded(
+                [],
+                180000,
+                "BlueTusk virtual generated columns require PostgreSQL 18 or later.",
+                "$BlueTuskVirtualGeneratedColumn$",
+                builder);
+        }
+
+        builder.Append("ALTER TABLE ").Append(table)
+            .Append(" DROP COLUMN ").Append(column);
+        EndStatement(builder);
+        builder.Append("ALTER TABLE ").Append(table)
+            .Append(" ADD ");
+        ColumnDefinition(
+            operation.Schema,
+            operation.Table,
+            operation.Name,
+            operation,
+            model,
+            builder);
+        EndStatement(builder);
+    }
+
+    private void AppendDefaultValueExpression(
+        object? defaultValue,
+        string? defaultValueSql,
+        string columnType,
+        MigrationCommandListBuilder builder)
+    {
+        if (defaultValueSql is not null)
+        {
+            builder.Append("(").Append(defaultValueSql).Append(")");
+            return;
+        }
+
+        var typeMapping = (Dependencies.TypeMappingSource.FindMapping(defaultValue!.GetType(), columnType)
+                ?? Dependencies.TypeMappingSource.GetMappingForValue(defaultValue));
+        builder.Append(typeMapping.GenerateSqlLiteral(defaultValue));
     }
 
     private static BlueTuskIdentityGeneration? GetIdentityGeneration(

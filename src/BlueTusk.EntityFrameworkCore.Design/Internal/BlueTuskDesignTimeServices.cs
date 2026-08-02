@@ -12,6 +12,8 @@ public sealed class BlueTuskDesignTimeServices : IDesignTimeServices
     {
         ArgumentNullException.ThrowIfNull(serviceCollection);
 
+        serviceCollection.AddEntityFrameworkBlueTusk();
+
         var builder = new EntityFrameworkRelationalDesignServicesBuilder(serviceCollection);
         builder
             .TryAdd<IDatabaseModelFactory, BlueTuskDatabaseModelFactory>()

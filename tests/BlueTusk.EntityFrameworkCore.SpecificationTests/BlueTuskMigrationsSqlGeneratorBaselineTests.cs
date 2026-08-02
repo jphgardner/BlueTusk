@@ -446,7 +446,10 @@ RETURNING 1;
         AssertSql(
             startsAt.HasValue
                 ? $"""
-ALTER SEQUENCE "dbo"."TestRestartSequenceOperation" RESTART WITH {startsAt};
+ALTER SEQUENCE "dbo"."TestRestartSequenceOperation" START WITH {startsAt};
+GO
+
+ALTER SEQUENCE "dbo"."TestRestartSequenceOperation" RESTART;
 """
                 : """ALTER SEQUENCE "dbo"."TestRestartSequenceOperation" RESTART;""");
     }

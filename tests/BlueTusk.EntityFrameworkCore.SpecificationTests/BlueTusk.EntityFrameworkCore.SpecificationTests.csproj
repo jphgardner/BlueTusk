@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
     <IsPackable>false</IsPackable>
     <IsTestProject>true</IsTestProject>
+    <PreserveCompilationContext>true</PreserveCompilationContext>
   </PropertyGroup>
 
   <ItemGroup>
@@ -25,6 +26,7 @@
   <ItemGroup>
     <ProjectReference Include="..\..\extensions\BlueTusk.Extensions.PostGIS.EntityFrameworkCore\BlueTusk.Extensions.PostGIS.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore.Design\BlueTusk.EntityFrameworkCore.Design.csproj" />
   </ItemGroup>
 
 </Project>

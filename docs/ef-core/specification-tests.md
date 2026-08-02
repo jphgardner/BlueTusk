@@ -16,6 +16,14 @@ these official suites:
   renames, seed insert/update/delete operations, multiline defaults, sequence
   restart operations, unsupported store-type diagnostics, and PostGIS spatial
   literals;
+- `MigrationsTestBase`: 132 passing live schema-evolution and catalogue
+  round-trip contracts covering tables, columns, keys, indexes, sequences,
+  comments, collations, generated columns, JSON mappings, primitive
+  collections, seed data, migration snapshot compilation, and database-model
+  reverse engineering, plus two primitive-collection converter skips declared
+  by EF Core itself. PostgreSQL's rejection of implicit arbitrary text-to-JSONB
+  casts is asserted explicitly in the three applicable cases rather than
+  skipped;
 - `DataAnnotationRelationalTestBase`: 97 live model, validation, concurrency,
   transaction, and data-annotation cases;
 - `CompositeKeyEndToEndTestBase`: all three live composite-key cases;
@@ -60,9 +68,9 @@ Every virtual migration test is overridden because EF Core's own compliance
 test fails when a provider inherits a generator case without asserting its
 generated SQL.
 
-The adopted live gate discovers 1,174 cases: 1,118 pass and 56 cases explicitly
+The adopted live gate discovers 1,308 cases: 1,250 pass and 58 cases explicitly
 skipped by EF Core are reported as skips. Combined with the offline gate, the
-assembly discovers 1,229 cases: 1,173 pass and 56 retain their upstream skip
+assembly discovers 1,363 cases: 1,305 pass and 58 retain their upstream skip
 declarations. The data-annotation fixture follows PostgreSQL provider semantics
 by overriding the three relational expectations that require a length exception
 or SQL Server-style rowversion behavior; these are provider-specific no-op
@@ -71,7 +79,7 @@ hidden skips.
 
 The 223 complex-type/JSON query cases also run as a focused PostgreSQL 15–19
 matrix: each server reports 221 passes and the same two upstream EF skips. The
-complete 1,229-case official assembly is additionally gated on PostgreSQL 19.
+complete 1,363-case official assembly is additionally gated on PostgreSQL 19.
 
 Run the gate directly with:
 

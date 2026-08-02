@@ -541,6 +541,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Official live data-annotation, composite-key, field-mapping, constructor-materialization, and property-values fixtures (506 passed, four upstream EF skips)
   - [x] Official live updates, store-generated fixup, and complex-types tracking fixtures (391 passed, 50 upstream EF skips)
   - [x] Official live complex-type, ad-hoc complex-type, and structural-JSON query fixtures across PostgreSQL 15–19 (221 passed, two upstream EF skips per server)
+  - [x] Official live migrations and database-model reverse-engineering fixture on PostgreSQL 19 (132 passed, two upstream EF skips)
   - [ ] Broader official query, model, migrations, and scaffolding suites
 - [ ] PostgreSQL-specific EF support
 - [x] Security review

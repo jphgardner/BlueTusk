@@ -482,9 +482,12 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
             FROM pg_catalog.pg_attribute AS a
             JOIN pg_catalog.pg_class AS c ON c.oid = a.attrelid
             JOIN pg_catalog.pg_namespace AS n ON n.oid = c.relnamespace
+            JOIN pg_catalog.pg_type AS attribute_type ON attribute_type.oid = a.atttypid
             LEFT JOIN pg_catalog.pg_attrdef AS ad
                 ON ad.adrelid = a.attrelid AND ad.adnum = a.attnum
-            LEFT JOIN pg_catalog.pg_collation AS coll ON coll.oid = a.attcollation
+            LEFT JOIN pg_catalog.pg_collation AS coll
+                ON coll.oid = a.attcollation
+               AND a.attcollation <> attribute_type.typcollation
             WHERE c.relkind IN ('r', 'p', 'v', 'm', 'f')
               AND a.attnum > 0
               AND NOT a.attisdropped
