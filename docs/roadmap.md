@@ -230,6 +230,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Per-command writers, per-parameter arrays, boxing, and text transcoding
   - [x] Structured codecs, COPY field buffers, and large-field materialisation
 - [x] Introduce safe per-session reuse, pooling, sizing passes, or direct `IBufferWriter` encoding where measurements justify them
+  - [x] Track untouched pool leases, share immutable data-source settings, and lazily allocate notification/large-object state while retaining dirty-lease reset isolation
 - [x] Check in end-to-end allocation baselines and explicit regression budgets
 - [x] Describe inherently allocating returned CLR values accurately; no blanket “allocation-free” claim
 

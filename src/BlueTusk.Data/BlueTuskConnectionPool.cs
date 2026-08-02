@@ -709,6 +709,12 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
         try
         {
+            if (!pooledSession.RequiresReset &&
+                session.TransactionStatus == BlueTuskTransactionStatus.Idle)
+            {
+                return true;
+            }
+
             if (session.TransactionStatus != BlueTuskTransactionStatus.Idle)
             {
                 _ = await session.ExecuteSimpleQueryAsync("ROLLBACK", cancellationToken).ConfigureAwait(false);
@@ -726,6 +732,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             }
 
             BlueTuskDiagnostics.PoolResets.Add(1);
+            pooledSession.ResetCompleted();
             return true;
         }
         catch (OperationCanceledException)
@@ -748,6 +755,12 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
         try
         {
+            if (!pooledSession.RequiresReset &&
+                session.TransactionStatus == BlueTuskTransactionStatus.Idle)
+            {
+                return true;
+            }
+
             if (session.TransactionStatus != BlueTuskTransactionStatus.Idle)
             {
                 _ = session.ExecuteSimpleQuery("ROLLBACK");
@@ -765,6 +778,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             }
 
             BlueTuskDiagnostics.PoolResets.Add(1);
+            pooledSession.ResetCompleted();
             return true;
         }
         catch (Exception exception) when (exception is not OutOfMemoryException)
@@ -962,4 +976,12 @@ internal sealed class BlueTuskPooledSession(
     internal int Generation { get; } = generation;
 
     internal BlueTuskConnectionPool Owner { get; } = owner;
+
+    internal bool RequiresReset => Volatile.Read(ref _requiresReset) != 0;
+
+    private int _requiresReset;
+
+    internal void MarkDirty() => Volatile.Write(ref _requiresReset, 1);
+
+    internal void ResetCompleted() => Volatile.Write(ref _requiresReset, 0);
 }

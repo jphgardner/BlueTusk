@@ -33,13 +33,13 @@ Multi-host data sources own one pool per configured endpoint. Checkout tries ava
 
 ## Reset and validation
 
-Closing a logical connection makes its physical session available but does not block on network I/O. Before reuse, BlueTusk:
+Closing a logical connection makes its physical session available but does not block on network I/O. An open/close cycle that never accesses the physical session is marked clean and can be leased again without a server exchange. After any command, transaction, COPY, large-object, type-reload, or other session operation, BlueTusk resets the session before reuse:
 
 1. sends `ROLLBACK` if PostgreSQL reports an open or failed transaction;
 2. sends `DISCARD ALL`, which clears temporary objects, prepared statements, listeners, advisory locks, plans, sequence state, and changed session settings;
 3. verifies that the session remains open and PostgreSQL reports the idle transaction state.
 
-The reset round trip is also the health check. A closed session, failed reset, expired session, or session from an earlier pool generation is discarded and replaced within the configured maximum.
+The reset round trip is also the health check for a touched lease. An untouched lease still verifies the locally observed open and idle state. A closed session, failed reset, expired session, or session from an earlier pool generation is discarded and replaced within the configured maximum. Logical connections reuse the data source's validated immutable connection settings, and optional notification/large-object coordination state is allocated only when those features are used.
 
 ## Operations and diagnostics
 

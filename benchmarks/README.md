@@ -76,6 +76,13 @@ row object, and decodes buffered binary integers without boxing. Positive
 latency and allocation columns when evaluating this path; the checked-in report
 is refreshed only after the corresponding integration gates pass.
 
+The warm-pool comparison distinguishes untouched logical checkouts from leases
+that reached the physical session. Untouched open/close cycles require no reset;
+touched leases still run rollback when necessary plus `DISCARD ALL` before reuse.
+The hot path shares the data source's immutable parsed settings and leaves
+notification/large-object coordination unallocated until requested. The live
+pool isolation test remains the authority for the dirty-lease reset invariant.
+
 Run the complete suite in Release mode:
 
 ```powershell

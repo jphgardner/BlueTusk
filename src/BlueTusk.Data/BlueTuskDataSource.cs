@@ -164,7 +164,8 @@ public sealed class BlueTuskDataSource : DbDataSource
             _pool,
             _typeMetadata,
             _clientConfiguration,
-            hideSensitiveConnectionString: true);
+            hideSensitiveConnectionString: true,
+            sharedSettings: _settings);
 
     protected override DbConnection OpenDbConnection()
     {
