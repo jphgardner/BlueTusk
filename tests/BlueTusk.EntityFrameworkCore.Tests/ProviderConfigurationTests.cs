@@ -48,7 +48,9 @@ public sealed class ProviderConfigurationTests
 
         using var context = new TestContext(options);
 
-        Assert.Equal(ConnectionString, context.Database.GetConnectionString());
+        var exposedConnectionString = context.Database.GetConnectionString();
+        Assert.Equal(dataSource.ConnectionString, exposedConnectionString);
+        Assert.Null(new BlueTuskConnectionStringBuilder(exposedConnectionString!).Password);
         Assert.IsType<BlueTuskConnection>(context.Database.GetDbConnection());
     }
 

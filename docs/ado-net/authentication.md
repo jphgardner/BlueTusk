@@ -34,6 +34,22 @@ var builder = new BlueTuskDataSourceBuilder(connectionString)
 await using var dataSource = builder.Build();
 ```
 
+## Connection-string secrecy
+
+`Persist Security Info` defaults to `false`. A `BlueTuskConnection` exposes the
+original connection string until its first successful open, then permanently
+omits `Password` and `Passfile` from the public `ConnectionString` property.
+`BlueTuskDataSource.ConnectionString` omits them immediately because a data
+source is ready to open physical sessions as soon as it is built. Authentication
+continues to use the private immutable configuration, including on a later
+reopen or when a pool creates another physical session.
+
+Set `Persist Security Info=true` only when an application deliberately needs to
+read those values back. This weakens accidental-disclosure protection and must
+not be used as a substitute for a credential vault or token callback. The
+connection-string builder necessarily exposes values while an application is
+constructing configuration; never log the builder or its `ConnectionString`.
+
 An access-token callback supplies a ready bearer/IAM token. When PostgreSQL 18+
 advertises `OAUTHBEARER`, BlueTusk sends the token with the
 [RFC 7628](https://www.rfc-editor.org/rfc/rfc7628) SASL mechanism. On servers requesting password, MD5, or SCRAM authentication, the

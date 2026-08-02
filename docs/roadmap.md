@@ -524,7 +524,10 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Production-ready `COPY`, notifications, large objects, and replication
 - [ ] EF Core relational specification coverage
 - [ ] PostgreSQL-specific EF support
-- [ ] Security review
+- [x] Security review
+  - [x] Repository threat model and control review covering credentials, TLS, authentication, protocol bounds, pooling, cancellation, SQL trust boundaries, diagnostics, and supply chain
+  - [x] Secure-by-default `Persist Security Info=false` behavior for connection and data-source public properties
+  - [x] Direct/transitive, all-severity NuGet audit enforced by restore with no advisory suppressions
   - [x] SCRAM channel binding, legacy MD5 compatibility, gated cleartext passwords, secret redaction, and overwrite-on-flush authentication buffers
   - [x] PostgreSQL password-file (`pgpass`) resolution and password callbacks
   - [x] Access-token callbacks with per-new-physical-connection refresh lifecycle

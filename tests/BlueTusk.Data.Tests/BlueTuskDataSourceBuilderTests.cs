@@ -124,6 +124,34 @@ public sealed class BlueTuskDataSourceBuilderTests
     }
 
     [Fact]
+    public void Data_source_connection_string_hides_credentials_by_default()
+    {
+        var settings = new BlueTuskConnectionStringBuilder
+        {
+            Host = "db.example.test",
+            Database = "app",
+            Username = "worker",
+            Password = "top-secret",
+            Passfile = "C:\\credentials\\pgpass.conf",
+        };
+        using var safeDataSource = BlueTuskDataSource.Create(settings.ConnectionString);
+
+        Assert.DoesNotContain("top-secret", safeDataSource.ConnectionString, StringComparison.Ordinal);
+        Assert.DoesNotContain("pgpass.conf", safeDataSource.ConnectionString, StringComparison.Ordinal);
+        using var safeConnection = safeDataSource.CreateConnection();
+        Assert.Null(new BlueTuskConnectionStringBuilder(safeConnection.ConnectionString).Password);
+        Assert.Null(new BlueTuskConnectionStringBuilder(safeConnection.ConnectionString).Passfile);
+        var dedicatedOptions = safeDataSource.CreateDedicatedSessionOptions();
+        Assert.Equal("top-secret", dedicatedOptions.Password);
+        Assert.Equal("C:\\credentials\\pgpass.conf", dedicatedOptions.Passfile);
+
+        settings.PersistSecurityInfo = true;
+        using var persistentDataSource = BlueTuskDataSource.Create(settings.ConnectionString);
+        Assert.Contains("top-secret", persistentDataSource.ConnectionString, StringComparison.Ordinal);
+        Assert.Contains("pgpass.conf", persistentDataSource.ConnectionString, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Multi_host_dedicated_sessions_require_a_configured_endpoint()
     {
         using var dataSource = BlueTuskDataSource.Create(

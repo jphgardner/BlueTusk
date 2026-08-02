@@ -22,6 +22,7 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal(BlueTuskTargetSessionAttributes.Any, builder.TargetSessionAttributes);
         Assert.Equal(BlueTuskLoadBalanceHosts.Disable, builder.LoadBalanceHosts);
         Assert.False(builder.AllowUnencryptedPassword);
+        Assert.False(builder.PersistSecurityInfo);
         Assert.Equal("postgres", builder.KerberosServiceName);
         Assert.Null(builder.Password);
         Assert.Null(builder.Passfile);

@@ -14,6 +14,7 @@ public sealed class BlueTuskDataSource : DbDataSource
     private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
     private readonly BlueTuskClientConfiguration _clientConfiguration;
+    private readonly string _connectionString;
 
     internal BlueTuskDataSource(
         string connectionString,
@@ -23,7 +24,8 @@ public sealed class BlueTuskDataSource : DbDataSource
     {
         _settings = new BlueTuskConnectionStringBuilder(connectionString);
         _settings.Validate();
-        ConnectionString = connectionString;
+        _connectionString = connectionString;
+        ConnectionString = _settings.GetPublicConnectionString();
         Features = features ?? BlueTuskFeatureRegistry.Empty;
         _clientConfiguration = clientConfiguration ?? BlueTuskClientConfiguration.Empty;
         _clientConfiguration.Validate();
@@ -106,7 +108,8 @@ public sealed class BlueTuskDataSource : DbDataSource
             connectionString ?? throw new ArgumentNullException(nameof(connectionString)),
             pool: null,
             new BlueTuskTypeMetadataCache(),
-            _clientConfiguration);
+            _clientConfiguration,
+            hideSensitiveConnectionString: true);
 
     public new BlueTuskConnection OpenConnection() => (BlueTuskConnection)base.OpenConnection();
 
@@ -156,7 +159,12 @@ public sealed class BlueTuskDataSource : DbDataSource
     public ValueTask ClearPoolAsync() => _pool?.ClearAsync() ?? ValueTask.CompletedTask;
 
     protected override DbConnection CreateDbConnection() =>
-        new BlueTuskConnection(ConnectionString, _pool, _typeMetadata, _clientConfiguration);
+        new BlueTuskConnection(
+            _connectionString,
+            _pool,
+            _typeMetadata,
+            _clientConfiguration,
+            hideSensitiveConnectionString: true);
 
     protected override DbConnection OpenDbConnection()
     {

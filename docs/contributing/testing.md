@@ -12,6 +12,17 @@
 
 Tests requiring a server read `BLUETUSK_TEST_CONNECTION_STRING` and must skip with a clear reason when it is absent. Credentials must never be printed, including in failed test output.
 
+Every restore audits direct and transitive dependencies at every advisory
+severity. To produce an explicit machine-readable review on .NET 10, run:
+
+```powershell
+dotnet package list --project BlueTusk.slnx --vulnerable --include-transitive --format json
+```
+
+An empty project-only result means no advisory matched. Any `NU1901` through
+`NU1904` restore diagnostic is an error; advisory suppressions require a
+documented security-review update and expiry decision.
+
 The checked-in compose `pg_hba.conf` reserves `bluetusk_md5_test` and
 `bluetusk_cleartext_test` for authentication compatibility tests before the
 default SCRAM rule. The tests create those roles only for their own lifetime;

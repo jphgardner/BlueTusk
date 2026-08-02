@@ -892,6 +892,44 @@ public sealed class BlueTuskSessionIntegrationTests
         await transaction.CommitAsync(CancellationToken.None);
     }
 
+    [Fact]
+    public async Task Connection_string_security_information_is_not_persisted_by_default()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        {
+            Pooling = false,
+        };
+        var password = settings.Password ?? throw SkipException.ForSkip(
+            "The configured integration connection does not contain a password.");
+
+        await using var connection = new BlueTuskConnection(settings.ConnectionString);
+        Assert.Equal(
+            password,
+            new BlueTuskConnectionStringBuilder(connection.ConnectionString).Password);
+
+        await connection.OpenAsync(CancellationToken.None);
+        Assert.Null(new BlueTuskConnectionStringBuilder(connection.ConnectionString).Password);
+        await connection.CloseAsync();
+        Assert.Null(new BlueTuskConnectionStringBuilder(connection.ConnectionString).Password);
+
+        await connection.OpenAsync(CancellationToken.None);
+        await connection.CloseAsync();
+
+        using (var synchronousConnection = new BlueTuskConnection(settings.ConnectionString))
+        {
+            synchronousConnection.Open();
+            Assert.Null(
+                new BlueTuskConnectionStringBuilder(synchronousConnection.ConnectionString).Password);
+        }
+
+        settings.PersistSecurityInfo = true;
+        await using var persistentConnection = new BlueTuskConnection(settings.ConnectionString);
+        await persistentConnection.OpenAsync(CancellationToken.None);
+        Assert.Equal(
+            password,
+            new BlueTuskConnectionStringBuilder(persistentConnection.ConnectionString).Password);
+    }
+
     private static string ReadSingleText(BlueTuskResultSet resultSet) =>
         Encoding.UTF8.GetString(Assert.Single(resultSet.Rows).Values[0]!.Value.Span);
 

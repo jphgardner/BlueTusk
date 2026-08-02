@@ -137,6 +137,16 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         set => this[nameof(Pooling)] = value;
     }
 
+    /// <summary>
+    /// Gets or sets whether security-sensitive connection information remains publicly visible
+    /// after a connection has opened. The secure default is <see langword="false"/>.
+    /// </summary>
+    public bool PersistSecurityInfo
+    {
+        get => GetBoolean("Persist Security Info", false);
+        set => this["Persist Security Info"] = value;
+    }
+
     public string ApplicationName
     {
         get => GetString("Application Name", "BlueTusk");
@@ -271,6 +281,7 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = AllowUnencryptedPassword;
         _ = TargetSessionAttributes;
         _ = LoadBalanceHosts;
+        _ = PersistSecurityInfo;
         _ = ConnectionIdleLifetime;
         _ = ConnectionLifetime;
         _ = MaxAutoPrepare;
@@ -287,6 +298,21 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         {
             throw new ArgumentException("Minimum Pool Size cannot exceed Maximum Pool Size.");
         }
+    }
+
+    internal string GetPublicConnectionString()
+    {
+        if (PersistSecurityInfo)
+        {
+            return ConnectionString;
+        }
+
+        var publicSettings = new BlueTuskConnectionStringBuilder(ConnectionString)
+        {
+            Password = null,
+            Passfile = null,
+        };
+        return publicSettings.ConnectionString;
     }
 
     private string GetString(string keyword, string defaultValue) =>

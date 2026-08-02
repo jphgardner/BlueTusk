@@ -37,6 +37,7 @@ public sealed class BlueTuskConnection : DbConnection
     private Channel<BlueTuskNotification> _notificationChannel = CreateNotificationChannel();
     private bool _notificationChannelCompleted;
     private bool _acceptingNotificationSubscriptions;
+    private bool _hideSensitiveConnectionString;
     private bool _disposed;
     private ConnectionState _state = ConnectionState.Closed;
 
@@ -60,18 +61,20 @@ public sealed class BlueTuskConnection : DbConnection
         string connectionString,
         BlueTuskConnectionPoolBase? pool,
         BlueTuskTypeMetadataCache typeMetadata,
-        BlueTuskClientConfiguration? clientConfiguration = null)
+        BlueTuskClientConfiguration? clientConfiguration = null,
+        bool hideSensitiveConnectionString = false)
     {
         _pool = pool;
         _typeMetadata = typeMetadata ?? throw new ArgumentNullException(nameof(typeMetadata));
         _clientConfiguration = clientConfiguration ?? BlueTuskClientConfiguration.Empty;
         ConnectionString = connectionString;
+        _hideSensitiveConnectionString = hideSensitiveConnectionString;
     }
 
     [AllowNull]
     public override string ConnectionString
     {
-        get => _connectionString;
+        get => _hideSensitiveConnectionString ? _settings.GetPublicConnectionString() : _connectionString;
         set
         {
             if (_state != ConnectionState.Closed)
@@ -90,6 +93,7 @@ public sealed class BlueTuskConnection : DbConnection
             _settings = new BlueTuskConnectionStringBuilder(value ?? string.Empty);
             _settings.Validate();
             _connectionString = value ?? string.Empty;
+            _hideSensitiveConnectionString = false;
         }
     }
 
@@ -221,6 +225,7 @@ public sealed class BlueTuskConnection : DbConnection
 
             _typeMetadata.EnsureLoaded(_session);
             BeginNotificationLifetime();
+            _hideSensitiveConnectionString = true;
             SetState(ConnectionState.Open);
         }
         catch
@@ -269,6 +274,7 @@ public sealed class BlueTuskConnection : DbConnection
             await _typeMetadata.EnsureLoadedAsync(_session, cancellationToken).ConfigureAwait(false);
 
             BeginNotificationLifetime();
+            _hideSensitiveConnectionString = true;
             SetState(ConnectionState.Open);
         }
         catch

@@ -69,7 +69,7 @@ EntityFrameworkCore → Data → Client → Protocol → Transport
 Replication.PgOutput → Replication → Client
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [security review](docs/security.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
 ## Status
 
@@ -98,6 +98,7 @@ The current `0.3.0-preview.1` implementation provides:
   including equivalent live PostgreSQL 19 BlueTusk/Npgsql hot-path comparisons;
 - PostgreSQL 15–19 live stress coverage plus scheduled elevated-concurrency provider and replication-endurance gates;
 - TLS negotiation with safe platform certificate validation by default;
+- secure-by-default `Persist Security Info=false` connection/data-source properties and enforced direct/transitive NuGet vulnerability auditing;
 - SCRAM-SHA-256 and SCRAM-SHA-256-PLUS authentication, PostgreSQL 18+ native OAUTHBEARER, GSSAPI/Kerberos and SSPI with mutual authentication and a live KDC gate, PostgreSQL password files, per-physical-connection password/access-token callbacks, TLS client certificates, and PostgreSQL 15–19-tested legacy MD5 and gated cleartext compatibility;
 - optional AWS RDS/Aurora, Azure Database for PostgreSQL, and Google Cloud SQL identity packages with TLS-enforced per-physical-connection token acquisition;
 - startup metadata, structured errors/notices, and backend key data;
