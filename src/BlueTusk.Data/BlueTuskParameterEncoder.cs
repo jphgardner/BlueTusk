@@ -68,9 +68,38 @@ internal static class BlueTuskParameterEncoder
         return encoded;
     }
 
+    internal static void Encode(
+        IReadOnlyList<BlueTuskParameter> parameters,
+        BlueTuskTypeRegistry? types,
+        BlueTuskExtendedQueryParameter[] destination,
+        byte[]?[] reusableBuffers)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(reusableBuffers);
+        if (destination.Length != parameters.Count || reusableBuffers.Length != parameters.Count)
+        {
+            throw new ArgumentException("Reusable parameter storage must match the parameter count.");
+        }
+
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            destination[index] = Encode(parameters[index], types, ref reusableBuffers[index]);
+        }
+    }
+
     public static BlueTuskExtendedQueryParameter Encode(
         BlueTuskParameter parameter,
         BlueTuskTypeRegistry? types = null)
+    {
+        byte[]? reusableBuffer = null;
+        return Encode(parameter, types, ref reusableBuffer);
+    }
+
+    private static BlueTuskExtendedQueryParameter Encode(
+        BlueTuskParameter parameter,
+        BlueTuskTypeRegistry? types,
+        ref byte[]? reusableBuffer)
     {
         ArgumentNullException.ThrowIfNull(parameter);
         var value = parameter.Value is DBNull ? null : parameter.Value;
@@ -85,7 +114,7 @@ internal static class BlueTuskParameterEncoder
 
         return value is null
             ? new BlueTuskExtendedQueryParameter(typeOid, 0, null)
-            : EncodeValue(typeOid, value, types);
+            : EncodeValue(typeOid, value, types, ref reusableBuffer);
     }
 
     private static uint ResolveTypeOid(
@@ -207,17 +236,19 @@ internal static class BlueTuskParameterEncoder
     private static BlueTuskExtendedQueryParameter EncodeValue(
         uint typeOid,
         object value,
-        BlueTuskTypeRegistry? types) => typeOid switch
+        BlueTuskTypeRegistry? types,
+        ref byte[]? reusableBuffer) => typeOid switch
         {
-            BooleanOid => Binary(
+            BooleanOid => BinaryBoolean(
                 typeOid,
-                new byte[] { (byte)(Convert.ToBoolean(value, CultureInfo.InvariantCulture) ? 1 : 0) }),
-            Int2Oid => BinaryInt16(typeOid, Convert.ToInt16(value, CultureInfo.InvariantCulture)),
-            Int4Oid => BinaryInt32(typeOid, Convert.ToInt32(value, CultureInfo.InvariantCulture)),
-            OidOid => BinaryUInt32(typeOid, Convert.ToUInt32(value, CultureInfo.InvariantCulture)),
-            Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture)),
-            Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
-            Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
+                Convert.ToBoolean(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
+            Int2Oid => BinaryInt16(typeOid, Convert.ToInt16(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Int4Oid => BinaryInt32(typeOid, Convert.ToInt32(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            OidOid => BinaryUInt32(typeOid, Convert.ToUInt32(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture), ref reusableBuffer),
             PointOid => EncodeBinary(
                 typeOid,
                 new BlueTuskPointCodec(),
@@ -327,39 +358,83 @@ internal static class BlueTuskParameterEncoder
             _ => EncodeFallback(typeOid, value, types),
         };
 
-    private static BlueTuskExtendedQueryParameter BinaryInt16(uint typeOid, short value)
+    private static BlueTuskExtendedQueryParameter BinaryBoolean(
+        uint typeOid,
+        bool value,
+        ref byte[]? reusableBuffer)
     {
-        var bytes = new byte[sizeof(short)];
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(byte));
+        bytes[0] = value ? (byte)1 : (byte)0;
+        return Binary(typeOid, bytes);
+    }
+
+    private static BlueTuskExtendedQueryParameter BinaryInt16(
+        uint typeOid,
+        short value,
+        ref byte[]? reusableBuffer)
+    {
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(short));
         BinaryPrimitives.WriteInt16BigEndian(bytes, value);
         return Binary(typeOid, bytes);
     }
 
-    private static BlueTuskExtendedQueryParameter BinaryInt32(uint typeOid, int value)
+    private static BlueTuskExtendedQueryParameter BinaryInt32(
+        uint typeOid,
+        int value,
+        ref byte[]? reusableBuffer)
     {
-        var bytes = new byte[sizeof(int)];
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(int));
         BinaryPrimitives.WriteInt32BigEndian(bytes, value);
         return Binary(typeOid, bytes);
     }
 
-    private static BlueTuskExtendedQueryParameter BinaryUInt32(uint typeOid, uint value)
+    private static BlueTuskExtendedQueryParameter BinaryUInt32(
+        uint typeOid,
+        uint value,
+        ref byte[]? reusableBuffer)
     {
-        var bytes = new byte[sizeof(uint)];
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(uint));
         BinaryPrimitives.WriteUInt32BigEndian(bytes, value);
+        return Binary(typeOid, bytes);
+    }
+
+    private static BlueTuskExtendedQueryParameter BinaryInt64(
+        uint typeOid,
+        long value,
+        ref byte[]? reusableBuffer)
+    {
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(long));
+        BinaryPrimitives.WriteInt64BigEndian(bytes, value);
         return Binary(typeOid, bytes);
     }
 
     private static BlueTuskExtendedQueryParameter BinaryInt64(uint typeOid, long value)
     {
-        var bytes = new byte[sizeof(long)];
-        BinaryPrimitives.WriteInt64BigEndian(bytes, value);
-        return Binary(typeOid, bytes);
+        byte[]? reusableBuffer = null;
+        return BinaryInt64(typeOid, value, ref reusableBuffer);
     }
 
-    private static BlueTuskExtendedQueryParameter BinarySingle(uint typeOid, float value) =>
-        BinaryInt32(typeOid, BitConverter.SingleToInt32Bits(value));
+    private static BlueTuskExtendedQueryParameter BinarySingle(
+        uint typeOid,
+        float value,
+        ref byte[]? reusableBuffer) =>
+        BinaryInt32(typeOid, BitConverter.SingleToInt32Bits(value), ref reusableBuffer);
 
-    private static BlueTuskExtendedQueryParameter BinaryDouble(uint typeOid, double value) =>
-        BinaryInt64(typeOid, BitConverter.DoubleToInt64Bits(value));
+    private static BlueTuskExtendedQueryParameter BinaryDouble(
+        uint typeOid,
+        double value,
+        ref byte[]? reusableBuffer) =>
+        BinaryInt64(typeOid, BitConverter.DoubleToInt64Bits(value), ref reusableBuffer);
+
+    private static byte[] GetReusableBuffer(ref byte[]? reusableBuffer, int length)
+    {
+        if (reusableBuffer is null || reusableBuffer.Length != length)
+        {
+            reusableBuffer = new byte[length];
+        }
+
+        return reusableBuffer;
+    }
 
     private static BlueTuskExtendedQueryParameter Binary(uint typeOid, ReadOnlyMemory<byte> value) =>
         new(typeOid, 1, value);

@@ -538,7 +538,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
     }
 
-    public async ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
+    public ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
@@ -546,13 +546,26 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     {
         if (_maximumAutoPreparedStatements == 0)
         {
-            return await _session.ExecuteExtendedScalarAsync(
+            return _session.ExecuteExtendedScalarAsync(
                 sql,
                 parameters,
                 useBinaryResults,
-                cancellationToken).ConfigureAwait(false);
+                cancellationToken);
         }
 
+        return ExecuteAutoPreparedScalarAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            cancellationToken);
+    }
+
+    private async ValueTask<BlueTuskScalarQueryResult> ExecuteAutoPreparedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken)
+    {
         return BlueTuskScalarQueryResult.FromQueryResult(
             await ExecuteExtendedQueryAsync(
                 sql,

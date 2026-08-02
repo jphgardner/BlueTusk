@@ -1,4 +1,5 @@
 using System.Text;
+using System.Runtime.CompilerServices;
 
 namespace BlueTusk.Data;
 
@@ -9,16 +10,23 @@ internal sealed record BlueTuskCommandPlan(
 
 internal static class BlueTuskCommandTextRewriter
 {
+    private static readonly ConditionalWeakTable<string, NamedRewriteTemplate> NamedTemplates = new();
+
     public static BlueTuskCommandPlan Rewrite(
         string sql,
         BlueTuskParameterCollection parameters)
     {
         ArgumentNullException.ThrowIfNull(sql);
         ArgumentNullException.ThrowIfNull(parameters);
+        if (NamedTemplates.TryGetValue(sql, out var cachedTemplate))
+        {
+            return cachedTemplate.Bind(parameters);
+        }
 
         Dictionary<string, BlueTuskParameter>? namedParameters = null;
         Dictionary<string, int>? ordinals = null;
         List<BlueTuskParameter>? ordered = null;
+        List<string>? orderedNames = null;
         StringBuilder? rewritten = null;
         var segmentStart = 0;
         var hasPositionalParameters = false;
@@ -108,6 +116,7 @@ internal static class BlueTuskCommandTextRewriter
             if (!ordinals.TryGetValue(name, out var ordinal))
             {
                 ordered.Add(parameter);
+                (orderedNames ??= []).Add(name);
                 ordinal = ordered.Count;
                 ordinals.Add(name, ordinal);
             }
@@ -125,10 +134,10 @@ internal static class BlueTuskCommandTextRewriter
         }
 
         rewritten.Append(sql, segmentStart, sql.Length - segmentStart);
-        return new BlueTuskCommandPlan(
+        var template = new NamedRewriteTemplate(
             rewritten.ToString(),
-            ordered!,
-            UsesNamedParameters: true);
+            orderedNames!.ToArray());
+        return NamedTemplates.GetValue(sql, _ => template).Bind(parameters);
     }
 
     private static Dictionary<string, BlueTuskParameter> BuildNamedParameterMap(
@@ -286,4 +295,61 @@ internal static class BlueTuskCommandTextRewriter
 
     private static bool IsParameterNamePart(char value) =>
         value == '_' || char.IsLetterOrDigit(value);
+
+    private sealed record NamedRewriteTemplate(string Sql, string[] OrderedNames)
+    {
+        public BlueTuskCommandPlan Bind(BlueTuskParameterCollection parameters)
+        {
+            ValidateUniqueNames(parameters.Items);
+            var ordered = new BlueTuskParameter[OrderedNames.Length];
+            for (var nameIndex = 0; nameIndex < OrderedNames.Length; nameIndex++)
+            {
+                var name = OrderedNames[nameIndex];
+                BlueTuskParameter? match = null;
+                foreach (var parameter in parameters.Items)
+                {
+                    if (NormalizedNameEquals(parameter.ParameterName, name))
+                    {
+                        match = parameter;
+                        break;
+                    }
+                }
+
+                ordered[nameIndex] = match ?? throw new InvalidOperationException(
+                    $"Command text references named parameter '{name}', but the parameter collection does not contain it.");
+            }
+
+            return new BlueTuskCommandPlan(Sql, ordered, UsesNamedParameters: true);
+        }
+
+        private static void ValidateUniqueNames(IReadOnlyList<BlueTuskParameter> parameters)
+        {
+            for (var leftIndex = 0; leftIndex < parameters.Count; leftIndex++)
+            {
+                var leftName = NormalizeParameterNameSpan(parameters[leftIndex].ParameterName);
+                if (leftName.IsEmpty)
+                {
+                    continue;
+                }
+
+                for (var rightIndex = leftIndex + 1; rightIndex < parameters.Count; rightIndex++)
+                {
+                    var rightName = NormalizeParameterNameSpan(parameters[rightIndex].ParameterName);
+                    if (leftName.Equals(rightName, StringComparison.OrdinalIgnoreCase))
+                    {
+                        throw new InvalidOperationException(
+                            $"The parameter collection contains duplicate named parameter '{leftName.ToString()}'.");
+                    }
+                }
+            }
+        }
+
+        private static bool NormalizedNameEquals(string candidate, string expected) =>
+            NormalizeParameterNameSpan(candidate).Equals(
+                expected.AsSpan(),
+                StringComparison.OrdinalIgnoreCase);
+
+        private static ReadOnlySpan<char> NormalizeParameterNameSpan(string name) =>
+            name.AsSpan(name.Length > 0 && name[0] is '@' or ':' ? 1 : 0);
+    }
 }

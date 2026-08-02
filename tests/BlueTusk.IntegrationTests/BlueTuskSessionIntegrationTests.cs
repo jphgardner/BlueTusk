@@ -308,6 +308,8 @@ public sealed class BlueTuskSessionIntegrationTests
 
         left.TypedValue = 6;
         right.TypedValue = 7;
+        Assert.Equal(13, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+
         command.CommandText = "SELECT $1::int4 * $2::int4";
         Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
 

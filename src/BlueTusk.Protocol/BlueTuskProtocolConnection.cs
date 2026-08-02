@@ -148,6 +148,64 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+    internal bool TryBeginReadMessage(
+        out BlueTuskBackendMessage message,
+        out Memory<byte> destination)
+    {
+        BeginRead();
+        try
+        {
+            EnsureNoActivePayload();
+            var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
+            var originalLength = sequence.Length;
+            if (_parser.TryParse(ref sequence, out message))
+            {
+                var consumed = checked((int)(originalLength - sequence.Length));
+                _start += consumed;
+                _count -= consumed;
+                destination = default;
+                EndRead();
+                return true;
+            }
+
+            PrepareForRead();
+            destination = _buffer.AsMemory(_start + _count);
+            return false;
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
+    internal ValueTask<int> ReadTransportAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken) =>
+        _transport.ReadAsync(destination, cancellationToken);
+
+    internal void CompleteReadMessage(int read)
+    {
+        try
+        {
+            if (read == 0)
+            {
+                throw new EndOfStreamException(
+                    _count == 0
+                        ? "PostgreSQL closed the connection."
+                        : "PostgreSQL disconnected in the middle of a protocol message.");
+            }
+
+            _count += read;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    internal void AbortReadMessage() => EndRead();
+
     /// <remarks>The returned payload remains valid only until the next read from this connection.</remarks>
     public BlueTuskBackendMessage ReadMessage()
     {
@@ -404,16 +462,22 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
-    public async ValueTask WriteAsync(
+    public ValueTask WriteAsync(
         Action<IBufferWriter<byte>> writeMessage,
-        CancellationToken cancellationToken)
-        => await WriteCoreAsync(writeMessage, clearBuffer: false, cancellationToken).ConfigureAwait(false);
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(writeMessage, clearBuffer: false, cancellationToken);
+
+    internal ValueTask WriteAsync<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage,
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(state, writeMessage, cancellationToken);
 
     /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
-    public async ValueTask WriteSensitiveAsync(
+    public ValueTask WriteSensitiveAsync(
         Action<IBufferWriter<byte>> writeMessage,
-        CancellationToken cancellationToken)
-        => await WriteCoreAsync(writeMessage, clearBuffer: true, cancellationToken).ConfigureAwait(false);
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(writeMessage, clearBuffer: true, cancellationToken);
 
     private async ValueTask WriteCoreAsync(
         Action<IBufferWriter<byte>> writeMessage,
@@ -433,6 +497,27 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         finally
         {
             EndWrite(clearBuffer);
+        }
+    }
+
+    private async ValueTask WriteCoreAsync<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(writeMessage);
+
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output, state);
+            await _transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            EndWrite(clearBuffer: false);
         }
     }
 

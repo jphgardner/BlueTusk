@@ -172,10 +172,24 @@ public static class BlueTuskFrontendMessageWriter
         string sql,
         IReadOnlyList<uint> parameterTypeOids)
     {
+        ArgumentNullException.ThrowIfNull(parameterTypeOids);
+        WriteParse(
+            output,
+            statementName,
+            sql,
+            new TypeOidListSource(parameterTypeOids));
+    }
+
+    internal static void WriteParse<TTypeOids>(
+        IBufferWriter<byte> output,
+        string statementName,
+        string sql,
+        TTypeOids parameterTypeOids)
+        where TTypeOids : struct, IBlueTuskTypeOidSource
+    {
         ArgumentNullException.ThrowIfNull(output);
         ValidateCString(statementName, nameof(statementName));
         ValidateCString(sql, nameof(sql));
-        ArgumentNullException.ThrowIfNull(parameterTypeOids);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(parameterTypeOids.Count, short.MaxValue);
 
         var statementLength = Encoding.UTF8.GetByteCount(statementName);
@@ -191,8 +205,16 @@ public static class BlueTuskFrontendMessageWriter
         WriteInt16(output, checked((short)parameterTypeOids.Count));
         for (var index = 0; index < parameterTypeOids.Count; index++)
         {
-            WriteInt32(output, unchecked((int)parameterTypeOids[index]));
+            WriteInt32(output, unchecked((int)parameterTypeOids.GetTypeOid(index)));
         }
+    }
+
+    private readonly struct TypeOidListSource(
+        IReadOnlyList<uint> typeOids) : IBlueTuskTypeOidSource
+    {
+        public int Count => typeOids.Count;
+
+        public uint GetTypeOid(int index) => typeOids[index];
     }
 
     public static void WriteBind(
@@ -202,10 +224,26 @@ public static class BlueTuskFrontendMessageWriter
         IReadOnlyList<BlueTuskBindParameter> parameters,
         IReadOnlyList<short>? resultFormatCodes = null)
     {
+        ArgumentNullException.ThrowIfNull(parameters);
+        WriteBind(
+            output,
+            portalName,
+            statementName,
+            new BindParameterListSource(parameters),
+            resultFormatCodes);
+    }
+
+    internal static void WriteBind<TParameters>(
+        IBufferWriter<byte> output,
+        string portalName,
+        string statementName,
+        TParameters parameters,
+        IReadOnlyList<short>? resultFormatCodes = null)
+        where TParameters : struct, IBlueTuskBindParameterSource
+    {
         ArgumentNullException.ThrowIfNull(output);
         ValidateCString(portalName, nameof(portalName));
         ValidateCString(statementName, nameof(statementName));
-        ArgumentNullException.ThrowIfNull(parameters);
         resultFormatCodes ??= Array.Empty<short>();
         ArgumentOutOfRangeException.ThrowIfGreaterThan(parameters.Count, short.MaxValue);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(resultFormatCodes.Count, short.MaxValue);
@@ -218,8 +256,7 @@ public static class BlueTuskFrontendMessageWriter
             (sizeof(short) * resultFormatCodes.Count));
         for (var index = 0; index < parameters.Count; index++)
         {
-            var parameter = parameters[index];
-            length = checked(length + sizeof(int) + (parameter.Value?.Length ?? 0));
+            length = checked(length + sizeof(int) + (parameters.GetValue(index)?.Length ?? 0));
         }
 
         WriteByte(output, (byte)'B');
@@ -231,20 +268,19 @@ public static class BlueTuskFrontendMessageWriter
         WriteInt16(output, checked((short)parameters.Count));
         for (var index = 0; index < parameters.Count; index++)
         {
-            var parameter = parameters[index];
-            if (parameter.FormatCode is not (0 or 1))
+            var formatCode = parameters.GetFormatCode(index);
+            if (formatCode is not (0 or 1))
             {
                 throw new ArgumentOutOfRangeException(nameof(parameters), "Parameter format codes must be text (0) or binary (1).");
             }
 
-            WriteInt16(output, parameter.FormatCode);
+            WriteInt16(output, formatCode);
         }
 
         WriteInt16(output, checked((short)parameters.Count));
         for (var index = 0; index < parameters.Count; index++)
         {
-            var parameter = parameters[index];
-            if (parameter.Value is not { } value)
+            if (parameters.GetValue(index) is not { } value)
             {
                 WriteInt32(output, -1);
                 continue;
@@ -265,6 +301,16 @@ public static class BlueTuskFrontendMessageWriter
 
             WriteInt16(output, formatCode);
         }
+    }
+
+    private readonly struct BindParameterListSource(
+        IReadOnlyList<BlueTuskBindParameter> parameters) : IBlueTuskBindParameterSource
+    {
+        public int Count => parameters.Count;
+
+        public short GetFormatCode(int index) => parameters[index].FormatCode;
+
+        public ReadOnlyMemory<byte>? GetValue(int index) => parameters[index].Value;
     }
 
     public static void WriteDescribePortal(IBufferWriter<byte> output, string portalName)
@@ -416,4 +462,20 @@ public static class BlueTuskFrontendMessageWriter
             throw new ArgumentException("PostgreSQL C strings cannot contain a null character.", parameterName);
         }
     }
+}
+
+internal interface IBlueTuskBindParameterSource
+{
+    int Count { get; }
+
+    short GetFormatCode(int index);
+
+    ReadOnlyMemory<byte>? GetValue(int index);
+}
+
+internal interface IBlueTuskTypeOidSource
+{
+    int Count { get; }
+
+    uint GetTypeOid(int index);
 }

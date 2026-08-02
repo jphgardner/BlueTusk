@@ -20,16 +20,9 @@ public sealed class BlueTuskConnection : DbConnection
     private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
     private readonly BlueTuskClientConfiguration _clientConfiguration;
-    private SemaphoreSlim? _largeObjectGate;
-    private NotificationState? _notificationState;
-    private string _connectionString = string.Empty;
-    private BlueTuskConnectionStringBuilder _settings = new();
-    private IBlueTuskPhysicalSession? _session;
-    private BlueTuskPooledSession? _pooledSession;
-    private BlueTuskTransaction? _currentTransaction;
-    private BlueTuskTransaction? _implicitLargeObjectTransaction;
-    private bool _startingTransaction;
-    private readonly object _transactionSync = new();
+    private OptionalState? _optionalState;
+    private BlueTuskConnectionStringBuilder _settings = null!;
+    private object? _sessionLease;
     private bool _hideSensitiveConnectionString;
     private bool _sessionTouched;
     private bool _disposed;
@@ -39,6 +32,7 @@ public sealed class BlueTuskConnection : DbConnection
     {
         _typeMetadata = new BlueTuskTypeMetadataCache();
         _clientConfiguration = BlueTuskClientConfiguration.Empty;
+        _settings = new BlueTuskConnectionStringBuilder();
     }
 
     public BlueTuskConnection(string connectionString)
@@ -69,7 +63,6 @@ public sealed class BlueTuskConnection : DbConnection
         else
         {
             _settings = sharedSettings;
-            _connectionString = connectionString;
         }
 
         _hideSensitiveConnectionString = hideSensitiveConnectionString;
@@ -78,7 +71,9 @@ public sealed class BlueTuskConnection : DbConnection
     [AllowNull]
     public override string ConnectionString
     {
-        get => _hideSensitiveConnectionString ? _settings.GetPublicConnectionString() : _connectionString;
+        get => _hideSensitiveConnectionString
+            ? _settings.GetPublicConnectionString()
+            : _settings.ConnectionString;
         set
         {
             if (_state != ConnectionState.Closed)
@@ -87,8 +82,12 @@ public sealed class BlueTuskConnection : DbConnection
             }
 
             if (_pool is not null &&
-                _connectionString.Length > 0 &&
-                !string.Equals(_connectionString, value, StringComparison.Ordinal))
+                _settings is not null &&
+                _settings.ConnectionString.Length > 0 &&
+                !string.Equals(
+                    _settings.ConnectionString,
+                    new BlueTuskConnectionStringBuilder(value ?? string.Empty).ConnectionString,
+                    StringComparison.Ordinal))
             {
                 throw new InvalidOperationException(
                     "A connection created by a data source cannot use a different connection string.");
@@ -96,7 +95,6 @@ public sealed class BlueTuskConnection : DbConnection
 
             _settings = new BlueTuskConnectionStringBuilder(value ?? string.Empty);
             _settings.Validate();
-            _connectionString = value ?? string.Empty;
             _hideSensitiveConnectionString = false;
         }
     }
@@ -106,19 +104,21 @@ public sealed class BlueTuskConnection : DbConnection
     public override string DataSource => ConnectedEndpoint?.Host ?? _settings.Host;
 
     /// <summary>Gets the host and port selected for the current physical connection.</summary>
-    public BlueTuskHostEndpoint? ConnectedEndpoint => _session?.Endpoint;
+    public BlueTuskHostEndpoint? ConnectedEndpoint => PhysicalSession?.Endpoint;
 
     public override string ServerVersion =>
-        _session?.Parameters.TryGetValue("server_version", out var version) == true ? version : string.Empty;
+        PhysicalSession?.Parameters.TryGetValue("server_version", out var version) == true
+            ? version
+            : string.Empty;
 
     /// <summary>Gets the capabilities detected for the currently open physical session.</summary>
-    public BlueTuskServerCapabilities? ServerCapabilities => _session?.Capabilities;
+    public BlueTuskServerCapabilities? ServerCapabilities => PhysicalSession?.Capabilities;
 
     /// <summary>
     /// Gets whether the current physical session supports SQL/PGQ, or <see langword="null"/>
     /// while no physical session is open.
     /// </summary>
-    public bool? SupportsSqlPgq => _session?.Capabilities.SupportsSqlPgq;
+    public bool? SupportsSqlPgq => PhysicalSession?.Capabilities.SupportsSqlPgq;
 
     public override ConnectionState State => _state;
 
@@ -171,20 +171,74 @@ public sealed class BlueTuskConnection : DbConnection
         get
         {
             _sessionTouched = true;
-            return _session ?? throw new InvalidOperationException("The connection is not open.");
+            return PhysicalSession ?? throw new InvalidOperationException("The connection is not open.");
         }
     }
 
-    internal bool HasOpenSession => _session is { IsOpen: true };
+    internal bool HasOpenSession => PhysicalSession is { IsOpen: true };
+
+    private IBlueTuskPhysicalSession? PhysicalSession => _sessionLease switch
+    {
+        BlueTuskPooledSession pooledSession => pooledSession.Session,
+        IBlueTuskPhysicalSession session => session,
+        _ => null,
+    };
 
     private SemaphoreSlim LargeObjectGate =>
         LazyInitializer.EnsureInitialized(
-            ref _largeObjectGate,
+            ref Optional.LargeObjectGate,
             static () => new SemaphoreSlim(1, 1));
+
+    private OptionalState Optional =>
+        LazyInitializer.EnsureInitialized(
+            ref _optionalState,
+            static () => new OptionalState());
+
+    private OptionalState Transactions => Optional;
+
+    private NotificationState? ReadNotificationState()
+    {
+        var optional = Volatile.Read(ref _optionalState);
+        return optional is null
+            ? null
+            : Volatile.Read(ref optional.Notifications);
+    }
+
+    private BlueTuskTransaction? ReadImplicitLargeObjectTransaction()
+    {
+        var transactions = Volatile.Read(ref _optionalState);
+        return transactions is null
+            ? null
+            : Volatile.Read(ref transactions.ImplicitLargeObject);
+    }
+
+    private void SetImplicitLargeObjectTransaction(BlueTuskTransaction transaction) =>
+        Volatile.Write(ref Transactions.ImplicitLargeObject, transaction);
+
+    private void ClearImplicitLargeObjectTransaction()
+    {
+        var transactions = Volatile.Read(ref _optionalState);
+        if (transactions is not null)
+        {
+            Interlocked.Exchange(ref transactions.ImplicitLargeObject, null);
+        }
+    }
+
+    private void ClearImplicitLargeObjectTransaction(BlueTuskTransaction transaction)
+    {
+        var transactions = Volatile.Read(ref _optionalState);
+        if (transactions is not null)
+        {
+            _ = Interlocked.CompareExchange(
+                ref transactions.ImplicitLargeObject,
+                null,
+                transaction);
+        }
+    }
 
     internal BlueTuskDiagnosticsOptions DiagnosticsOptions => _clientConfiguration.Diagnostics;
 
-    internal string UnredactedConnectionString => _connectionString;
+    internal string UnredactedConnectionString => _settings.ConnectionString;
 
     internal BlueTuskHostEndpoint DiagnosticEndpoint =>
         ConnectedEndpoint ?? _settings.HostEndpoints[0];
@@ -218,9 +272,15 @@ public sealed class BlueTuskConnection : DbConnection
     {
         get
         {
-            lock (_transactionSync)
+            var transactions = Volatile.Read(ref _optionalState);
+            if (transactions is null)
             {
-                return _currentTransaction;
+                return null;
+            }
+
+            lock (transactions.Sync)
+            {
+                return transactions.Current;
             }
         }
     }
@@ -233,7 +293,7 @@ public sealed class BlueTuskConnection : DbConnection
             throw new InvalidOperationException("The connection is already open or opening.");
         }
 
-        if (string.IsNullOrWhiteSpace(_connectionString))
+        if (string.IsNullOrWhiteSpace(_settings.ConnectionString))
         {
             throw new InvalidOperationException("A connection string is required.");
         }
@@ -243,15 +303,14 @@ public sealed class BlueTuskConnection : DbConnection
         {
             if (_pool is null)
             {
-                _session = BlueTuskPhysicalSession.Open(_settings, _clientConfiguration);
+                _sessionLease = BlueTuskPhysicalSession.Open(_settings, _clientConfiguration);
             }
             else
             {
-                _pooledSession = _pool.Rent();
-                _session = _pooledSession.Session;
+                _sessionLease = _pool.Rent();
             }
 
-            _typeMetadata.EnsureLoaded(_session);
+            _typeMetadata.EnsureLoaded(PhysicalSession!);
             _sessionTouched = false;
             BeginNotificationLifetime();
             _hideSensitiveConnectionString = true;
@@ -259,13 +318,15 @@ public sealed class BlueTuskConnection : DbConnection
         }
         catch
         {
-            var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
-            if (pooledSession is not null)
+            var lease = Interlocked.Exchange(ref _sessionLease, null);
+            if (lease is BlueTuskPooledSession pooledSession)
             {
                 _pool!.Return(pooledSession);
             }
-
-            _session = null;
+            else if (lease is IBlueTuskPhysicalSession session)
+            {
+                session.Dispose();
+            }
             SetState(ConnectionState.Closed);
             throw;
         }
@@ -279,7 +340,7 @@ public sealed class BlueTuskConnection : DbConnection
             throw new InvalidOperationException("The connection is already open or opening.");
         }
 
-        if (string.IsNullOrWhiteSpace(_connectionString))
+        if (string.IsNullOrWhiteSpace(_settings.ConnectionString))
         {
             throw new InvalidOperationException("A connection string is required.");
         }
@@ -289,18 +350,17 @@ public sealed class BlueTuskConnection : DbConnection
         {
             if (_pool is null)
             {
-                _session = await BlueTuskPhysicalSession.OpenAsync(
+                _sessionLease = await BlueTuskPhysicalSession.OpenAsync(
                     _settings,
                     _clientConfiguration,
                     cancellationToken).ConfigureAwait(false);
             }
             else
             {
-                _pooledSession = await _pool.RentAsync(cancellationToken).ConfigureAwait(false);
-                _session = _pooledSession.Session;
+                _sessionLease = await _pool.RentAsync(cancellationToken).ConfigureAwait(false);
             }
 
-            await _typeMetadata.EnsureLoadedAsync(_session, cancellationToken).ConfigureAwait(false);
+            await _typeMetadata.EnsureLoadedAsync(PhysicalSession!, cancellationToken).ConfigureAwait(false);
             _sessionTouched = false;
 
             BeginNotificationLifetime();
@@ -309,13 +369,15 @@ public sealed class BlueTuskConnection : DbConnection
         }
         catch
         {
-            var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
-            if (pooledSession is not null)
+            var lease = Interlocked.Exchange(ref _sessionLease, null);
+            if (lease is BlueTuskPooledSession pooledSession)
             {
                 _pool!.Return(pooledSession);
             }
-
-            _session = null;
+            else if (lease is IBlueTuskPhysicalSession session)
+            {
+                await session.DisposeAsync().ConfigureAwait(false);
+            }
             SetState(ConnectionState.Closed);
             throw;
         }
@@ -324,7 +386,7 @@ public sealed class BlueTuskConnection : DbConnection
     public override void Close()
     {
         var transaction = DetachTransaction();
-        Interlocked.Exchange(ref _implicitLargeObjectTransaction, null);
+        ClearImplicitLargeObjectTransaction();
         transaction?.ConnectionClosed();
         var subscriptions = DetachNotificationSubscriptions();
         try
@@ -338,9 +400,8 @@ public sealed class BlueTuskConnection : DbConnection
         {
             try
             {
-                var session = Interlocked.Exchange(ref _session, null);
-                var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
-                if (pooledSession is not null)
+                var lease = Interlocked.Exchange(ref _sessionLease, null);
+                if (lease is BlueTuskPooledSession pooledSession)
                 {
                     if (_sessionTouched)
                     {
@@ -349,9 +410,9 @@ public sealed class BlueTuskConnection : DbConnection
 
                     _pool!.Return(pooledSession);
                 }
-                else
+                else if (lease is IBlueTuskPhysicalSession session)
                 {
-                    session?.Dispose();
+                    session.Dispose();
                 }
             }
             finally
@@ -366,7 +427,7 @@ public sealed class BlueTuskConnection : DbConnection
     public override async Task CloseAsync()
     {
         var transaction = DetachTransaction();
-        Interlocked.Exchange(ref _implicitLargeObjectTransaction, null);
+        ClearImplicitLargeObjectTransaction();
         transaction?.ConnectionClosed();
         var subscriptions = await DetachNotificationSubscriptionsAsync().ConfigureAwait(false);
         try
@@ -380,9 +441,8 @@ public sealed class BlueTuskConnection : DbConnection
         {
             try
             {
-                var session = Interlocked.Exchange(ref _session, null);
-                var pooledSession = Interlocked.Exchange(ref _pooledSession, null);
-                if (pooledSession is not null)
+                var lease = Interlocked.Exchange(ref _sessionLease, null);
+                if (lease is BlueTuskPooledSession pooledSession)
                 {
                     if (_sessionTouched)
                     {
@@ -391,7 +451,7 @@ public sealed class BlueTuskConnection : DbConnection
 
                     _pool!.Return(pooledSession);
                 }
-                else if (session is not null)
+                else if (lease is IBlueTuskPhysicalSession session)
                 {
                     await session.DisposeAsync().ConfigureAwait(false);
                 }
@@ -509,7 +569,7 @@ public sealed class BlueTuskConnection : DbConnection
     public void Unlisten(string channel)
     {
         _ = BlueTuskSql.QuoteIdentifier(channel);
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return;
@@ -535,7 +595,7 @@ public sealed class BlueTuskConnection : DbConnection
         CancellationToken cancellationToken = default)
     {
         _ = BlueTuskSql.QuoteIdentifier(channel);
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return;
@@ -561,7 +621,7 @@ public sealed class BlueTuskConnection : DbConnection
     /// <summary>Stops receiving notifications for every channel on this connection.</summary>
     public void UnlistenAll()
     {
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return;
@@ -588,7 +648,7 @@ public sealed class BlueTuskConnection : DbConnection
     /// <summary>Stops receiving notifications for every channel on this connection.</summary>
     public async ValueTask UnlistenAllAsync(CancellationToken cancellationToken = default)
     {
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return;
@@ -656,7 +716,7 @@ public sealed class BlueTuskConnection : DbConnection
         try
         {
             EnsureLargeObjectsAvailable();
-            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            if (ReadImplicitLargeObjectTransaction() is not null)
             {
                 throw new InvalidOperationException(
                     "Only one implicitly transactional large-object stream can be open at a time. " +
@@ -668,7 +728,7 @@ public sealed class BlueTuskConnection : DbConnection
             {
                 transaction = BeginTransaction(IsolationLevel.ReadCommitted);
                 ownsTransaction = true;
-                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+                SetImplicitLargeObjectTransaction(transaction);
             }
 
             try
@@ -774,7 +834,7 @@ public sealed class BlueTuskConnection : DbConnection
         try
         {
             EnsureLargeObjectsAvailable();
-            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            if (ReadImplicitLargeObjectTransaction() is not null)
             {
                 throw new InvalidOperationException(
                     "Only one implicitly transactional large-object stream can be open at a time. " +
@@ -788,7 +848,7 @@ public sealed class BlueTuskConnection : DbConnection
                     IsolationLevel.ReadCommitted,
                     cancellationToken).ConfigureAwait(false);
                 ownsTransaction = true;
-                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+                SetImplicitLargeObjectTransaction(transaction);
             }
 
             try
@@ -1210,14 +1270,15 @@ public sealed class BlueTuskConnection : DbConnection
             throw new InvalidOperationException("The connection must be open to begin a transaction.");
         }
 
-        lock (_transactionSync)
+        var transactions = Transactions;
+        lock (transactions.Sync)
         {
-            if (_currentTransaction is not null || _startingTransaction)
+            if (transactions.Current is not null || transactions.Starting)
             {
                 throw new InvalidOperationException("The connection already has an active transaction.");
             }
 
-            _startingTransaction = true;
+            transactions.Starting = true;
         }
 
         try
@@ -1237,18 +1298,18 @@ public sealed class BlueTuskConnection : DbConnection
             }
 
             var transaction = new BlueTuskTransaction(this, isolationLevel);
-            lock (_transactionSync)
+            lock (transactions.Sync)
             {
-                _currentTransaction = transaction;
+                transactions.Current = transaction;
             }
 
             return transaction;
         }
         finally
         {
-            lock (_transactionSync)
+            lock (transactions.Sync)
             {
-                _startingTransaction = false;
+                transactions.Starting = false;
             }
         }
     }
@@ -1262,14 +1323,15 @@ public sealed class BlueTuskConnection : DbConnection
             throw new InvalidOperationException("The connection must be open to begin a transaction.");
         }
 
-        lock (_transactionSync)
+        var transactions = Transactions;
+        lock (transactions.Sync)
         {
-            if (_currentTransaction is not null || _startingTransaction)
+            if (transactions.Current is not null || transactions.Starting)
             {
                 throw new InvalidOperationException("The connection already has an active transaction.");
             }
 
-            _startingTransaction = true;
+            transactions.Starting = true;
         }
 
         try
@@ -1296,18 +1358,18 @@ public sealed class BlueTuskConnection : DbConnection
             }
 
             var transaction = new BlueTuskTransaction(this, isolationLevel);
-            lock (_transactionSync)
+            lock (transactions.Sync)
             {
-                _currentTransaction = transaction;
+                transactions.Current = transaction;
             }
 
             return transaction;
         }
         finally
         {
-            lock (_transactionSync)
+            lock (transactions.Sync)
             {
-                _startingTransaction = false;
+                transactions.Starting = false;
             }
         }
     }
@@ -1357,20 +1419,32 @@ public sealed class BlueTuskConnection : DbConnection
 
     internal void CompleteTransaction(BlueTuskTransaction transaction)
     {
-        lock (_transactionSync)
+        var transactions = Transactions;
+        lock (transactions.Sync)
         {
-            if (ReferenceEquals(_currentTransaction, transaction))
+            if (ReferenceEquals(transactions.Current, transaction))
             {
-                _currentTransaction = null;
+                transactions.Current = null;
             }
         }
     }
 
     internal void ValidateCommandTransaction(BlueTuskTransaction? transaction)
     {
-        lock (_transactionSync)
+        var transactions = Volatile.Read(ref _optionalState);
+        if (transactions is null)
         {
-            if (_currentTransaction is null)
+            if (transaction is not null)
+            {
+                throw new InvalidOperationException("The command transaction is not active on this connection.");
+            }
+
+            return;
+        }
+
+        lock (transactions.Sync)
+        {
+            if (transactions.Current is null)
             {
                 if (transaction is not null)
                 {
@@ -1380,7 +1454,7 @@ public sealed class BlueTuskConnection : DbConnection
                 return;
             }
 
-            if (!ReferenceEquals(_currentTransaction, transaction))
+            if (!ReferenceEquals(transactions.Current, transaction))
             {
                 throw new InvalidOperationException(
                     "A command executed while the connection has an active transaction must enlist in that transaction.");
@@ -1390,11 +1464,17 @@ public sealed class BlueTuskConnection : DbConnection
 
     private BlueTuskTransaction? DetachTransaction()
     {
-        lock (_transactionSync)
+        var transactions = Volatile.Read(ref _optionalState);
+        if (transactions is null)
         {
-            var transaction = _currentTransaction;
-            _currentTransaction = null;
-            _startingTransaction = false;
+            return null;
+        }
+
+        lock (transactions.Sync)
+        {
+            var transaction = transactions.Current;
+            transactions.Current = null;
+            transactions.Starting = false;
             return transaction;
         }
     }
@@ -1407,9 +1487,7 @@ public sealed class BlueTuskConnection : DbConnection
         LargeObjectGate.Wait();
         try
         {
-            if (ReferenceEquals(
-                    Volatile.Read(ref _implicitLargeObjectTransaction),
-                    transaction))
+            if (ReferenceEquals(ReadImplicitLargeObjectTransaction(), transaction))
             {
                 CompleteImplicitLargeObjectTransactionCore(transaction, commit);
             }
@@ -1429,9 +1507,7 @@ public sealed class BlueTuskConnection : DbConnection
         await LargeObjectGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            if (ReferenceEquals(
-                    Volatile.Read(ref _implicitLargeObjectTransaction),
-                    transaction))
+            if (ReferenceEquals(ReadImplicitLargeObjectTransaction(), transaction))
             {
                 await CompleteImplicitLargeObjectTransactionCoreAsync(
                     transaction,
@@ -1455,7 +1531,7 @@ public sealed class BlueTuskConnection : DbConnection
         try
         {
             EnsureLargeObjectsAvailable();
-            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            if (ReadImplicitLargeObjectTransaction() is not null)
             {
                 throw new InvalidOperationException(
                     "A large-object management operation cannot run while an implicitly " +
@@ -1469,7 +1545,7 @@ public sealed class BlueTuskConnection : DbConnection
                     IsolationLevel.ReadCommitted,
                     cancellationToken).ConfigureAwait(false);
                 ownsTransaction = true;
-                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+                SetImplicitLargeObjectTransaction(transaction);
             }
 
             try
@@ -1511,7 +1587,7 @@ public sealed class BlueTuskConnection : DbConnection
         try
         {
             EnsureLargeObjectsAvailable();
-            if (Volatile.Read(ref _implicitLargeObjectTransaction) is not null)
+            if (ReadImplicitLargeObjectTransaction() is not null)
             {
                 throw new InvalidOperationException(
                     "A large-object management operation cannot run while an implicitly " +
@@ -1523,7 +1599,7 @@ public sealed class BlueTuskConnection : DbConnection
             {
                 transaction = BeginTransaction(IsolationLevel.ReadCommitted);
                 ownsTransaction = true;
-                Volatile.Write(ref _implicitLargeObjectTransaction, transaction);
+                SetImplicitLargeObjectTransaction(transaction);
             }
 
             try
@@ -1572,10 +1648,7 @@ public sealed class BlueTuskConnection : DbConnection
         }
         finally
         {
-            _ = Interlocked.CompareExchange(
-                ref _implicitLargeObjectTransaction,
-                null,
-                transaction);
+            ClearImplicitLargeObjectTransaction(transaction);
         }
     }
 
@@ -1599,10 +1672,7 @@ public sealed class BlueTuskConnection : DbConnection
         }
         finally
         {
-            _ = Interlocked.CompareExchange(
-                ref _implicitLargeObjectTransaction,
-                null,
-                transaction);
+            ClearImplicitLargeObjectTransaction(transaction);
         }
     }
 
@@ -1618,7 +1688,7 @@ public sealed class BlueTuskConnection : DbConnection
 
     private void BeginNotificationLifetime()
     {
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return;
@@ -1647,7 +1717,7 @@ public sealed class BlueTuskConnection : DbConnection
 
     private void CompleteNotificationLifetime(Exception? exception = null)
     {
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return;
@@ -1683,7 +1753,7 @@ public sealed class BlueTuskConnection : DbConnection
 
     private NotificationState GetNotificationState()
     {
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is not null)
         {
             return notifications;
@@ -1693,7 +1763,7 @@ public sealed class BlueTuskConnection : DbConnection
         {
             AcceptingSubscriptions = _state == ConnectionState.Open,
         };
-        return Interlocked.CompareExchange(ref _notificationState, created, null) ?? created;
+        return Interlocked.CompareExchange(ref Optional.Notifications, created, null) ?? created;
     }
 
     private void EnsureNotificationsAvailable()
@@ -1708,7 +1778,7 @@ public sealed class BlueTuskConnection : DbConnection
 
     private NotificationSubscription[] DetachNotificationSubscriptions()
     {
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return [];
@@ -1730,7 +1800,7 @@ public sealed class BlueTuskConnection : DbConnection
 
     private async ValueTask<NotificationSubscription[]> DetachNotificationSubscriptionsAsync()
     {
-        var notifications = Volatile.Read(ref _notificationState);
+        var notifications = ReadNotificationState();
         if (notifications is null)
         {
             return [];
@@ -1764,7 +1834,7 @@ public sealed class BlueTuskConnection : DbConnection
                         response.Channel,
                         response.Payload),
                     subscription.CancellationToken).ConfigureAwait(false);
-                Volatile.Read(ref _notificationState)?.Available.Set();
+                ReadNotificationState()?.Available.Set();
             }
         }
         catch (OperationCanceledException) when (subscription.IsCancellationRequested)
@@ -1799,7 +1869,7 @@ public sealed class BlueTuskConnection : DbConnection
                     spinWait.SpinOnce();
                 }
 
-                Volatile.Read(ref _notificationState)?.Available.Set();
+                ReadNotificationState()?.Available.Set();
             }
         }
         catch (Exception) when (subscription.IsCancellationRequested)
@@ -1819,9 +1889,15 @@ public sealed class BlueTuskConnection : DbConnection
             throw new InvalidOperationException("The connection must be open to start COPY.");
         }
 
-        lock (_transactionSync)
+        var transactions = Volatile.Read(ref _optionalState);
+        if (transactions is null)
         {
-            if (_startingTransaction)
+            return;
+        }
+
+        lock (transactions.Sync)
+        {
+            if (transactions.Starting)
             {
                 throw new InvalidOperationException(
                     "COPY cannot start while a transaction is being opened.");
@@ -1922,7 +1998,7 @@ public sealed class BlueTuskConnection : DbConnection
         Justification = "A failed cleanup closes the physical connection; the original cancellation remains authoritative.")]
     private async ValueTask RecoverCancelledBeginAsync()
     {
-        if (_session is not { IsOpen: true } session ||
+        if (PhysicalSession is not { IsOpen: true } session ||
             session.TransactionStatus == BlueTuskTransactionStatus.Idle)
         {
             return;
@@ -1946,6 +2022,21 @@ public sealed class BlueTuskConnection : DbConnection
         {
             OnStateChange(new StateChangeEventArgs(previous, state));
         }
+    }
+
+    private sealed class OptionalState
+    {
+        internal object Sync { get; } = new();
+
+        internal SemaphoreSlim? LargeObjectGate;
+
+        internal NotificationState? Notifications;
+
+        internal BlueTuskTransaction? Current;
+
+        internal BlueTuskTransaction? ImplicitLargeObject;
+
+        internal bool Starting;
     }
 
     private sealed class NotificationState
