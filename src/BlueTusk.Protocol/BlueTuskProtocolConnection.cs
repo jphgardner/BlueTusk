@@ -344,15 +344,80 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+    internal bool TryBeginReadMessageHeader(
+        out BlueTuskBackendMessageHeader header,
+        out Memory<byte> destination)
+    {
+        BeginRead();
+        try
+        {
+            BeginNextMessage();
+            if (_count >= HeaderSize)
+            {
+                header = ConsumeHeader();
+                destination = default;
+                EndRead();
+                return true;
+            }
+
+            PrepareForRead();
+            header = default;
+            destination = _buffer.AsMemory(_start + _count);
+            return false;
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
     /// <summary>Asynchronously reads a backend frame header while leaving its payload on the transport.</summary>
-    public async ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderAsync(
+    public ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderAsync(
         CancellationToken cancellationToken)
     {
         BeginRead();
         try
         {
             BeginNextMessage();
-            await EnsureBufferedAsync(HeaderSize, cancellationToken).ConfigureAwait(false);
+            if (_count >= HeaderSize)
+            {
+                var header = ConsumeHeader();
+                EndRead();
+                return ValueTask.FromResult(header);
+            }
+
+            return ReadMessageHeaderSlowAsync(cancellationToken);
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
+    private async ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderSlowAsync(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (_count < HeaderSize)
+            {
+                PrepareForRead();
+                var read = await _transport.ReadAsync(
+                    _buffer.AsMemory(_start + _count),
+                    cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    throw new EndOfStreamException(
+                        _count == 0
+                            ? "PostgreSQL closed the connection."
+                            : "PostgreSQL disconnected in the middle of a protocol message header.");
+                }
+
+                _count += read;
+            }
+
             return ConsumeHeader();
         }
         finally
@@ -776,26 +841,6 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         {
             PrepareForRead();
             var read = _transport.Read(_buffer.AsSpan(_start + _count));
-            if (read == 0)
-            {
-                throw new EndOfStreamException(
-                    _count == 0
-                        ? "PostgreSQL closed the connection."
-                        : "PostgreSQL disconnected in the middle of a protocol message header.");
-            }
-
-            _count += read;
-        }
-    }
-
-    private async ValueTask EnsureBufferedAsync(int minimumCount, CancellationToken cancellationToken)
-    {
-        while (_count < minimumCount)
-        {
-            PrepareForRead();
-            var read = await _transport.ReadAsync(
-                _buffer.AsMemory(_start + _count),
-                cancellationToken).ConfigureAwait(false);
             if (read == 0)
             {
                 throw new EndOfStreamException(

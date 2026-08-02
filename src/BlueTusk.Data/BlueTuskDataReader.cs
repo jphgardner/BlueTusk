@@ -26,7 +26,7 @@ public sealed class BlueTuskDataReader : DbDataReader
     private readonly BlueTuskTypeRegistry _types;
     private readonly bool _singleRow;
     private readonly BlueTuskCommand? _streamingCommand;
-    private readonly Timer? _streamingTimeoutTimer;
+    private readonly BlueTuskCommandTimeout? _streamingTimeoutTimer;
     private readonly BlueTuskConnection? _executionConnection;
     private BlueTuskConnection? _connectionToClose;
     private BlueTuskPortal? _portal;
@@ -55,7 +55,7 @@ public sealed class BlueTuskDataReader : DbDataReader
         BlueTuskTypeRegistry types,
         bool singleRow,
         BlueTuskCommand streamingCommand,
-        Timer? streamingTimeoutTimer)
+        BlueTuskCommandTimeout? streamingTimeoutTimer)
     {
         _portal = portal ?? throw new ArgumentNullException(nameof(portal));
         _executionConnection = executionConnection ?? throw new ArgumentNullException(nameof(executionConnection));
@@ -146,13 +146,26 @@ public sealed class BlueTuskDataReader : DbDataReader
                 return Task.FromResult(true);
             }
 
-            var pendingRow = ReadPortalRowAsync(cancellationToken);
-            if (!pendingRow.IsCompletedSuccessfully)
+            ValueTask<BlueTuskPortalRow?> pendingRow;
+            try
             {
-                return AwaitRowAsync(pendingRow);
-            }
+                pendingRow = _portal.ReadAsync(cancellationToken);
+                if (!pendingRow.IsCompletedSuccessfully)
+                {
+                    return AwaitRowAsync(pendingRow);
+                }
 
-            _streamingRow = pendingRow.Result;
+                _streamingRow = pendingRow.Result;
+            }
+            catch (BlueTuskServerException exception)
+            {
+                throw TranslateServerException(exception);
+            }
+            catch (Exception) when (_executionConnection is { HasOpenSession: false })
+            {
+                _executionConnection.Close();
+                throw;
+            }
         }
 
         if (_streamingRow is null)
@@ -173,14 +186,26 @@ public sealed class BlueTuskDataReader : DbDataReader
 
     private async Task<bool> AwaitRowAsync(ValueTask<BlueTuskPortalRow?> pendingRow)
     {
-        _streamingRow = await pendingRow.ConfigureAwait(false);
-        if (_streamingRow is null)
+        try
         {
-            return false;
-        }
+            _streamingRow = await pendingRow.ConfigureAwait(false);
+            if (_streamingRow is null)
+            {
+                return false;
+            }
 
-        _streamingRowsReturned++;
-        return true;
+            _streamingRowsReturned++;
+            return true;
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw TranslateServerException(exception);
+        }
+        catch (Exception) when (_executionConnection is { HasOpenSession: false })
+        {
+            await _executionConnection.CloseAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     public override bool NextResult()
@@ -726,44 +751,6 @@ public sealed class BlueTuskDataReader : DbDataReader
         catch (Exception) when (_executionConnection is { HasOpenSession: false })
         {
             _executionConnection.Close();
-            throw;
-        }
-    }
-
-    private ValueTask<BlueTuskPortalRow?> ReadPortalRowAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            var pendingRow = _portal!.ReadAsync(cancellationToken);
-            return pendingRow.IsCompletedSuccessfully
-                ? ValueTask.FromResult(pendingRow.Result)
-                : AwaitPortalRowAsync(pendingRow);
-        }
-        catch (BlueTuskServerException exception)
-        {
-            throw TranslateServerException(exception);
-        }
-        catch (Exception) when (_executionConnection is { HasOpenSession: false })
-        {
-            _executionConnection.Close();
-            throw;
-        }
-    }
-
-    private async ValueTask<BlueTuskPortalRow?> AwaitPortalRowAsync(
-        ValueTask<BlueTuskPortalRow?> pendingRow)
-    {
-        try
-        {
-            return await pendingRow.ConfigureAwait(false);
-        }
-        catch (BlueTuskServerException exception)
-        {
-            throw TranslateServerException(exception);
-        }
-        catch (Exception) when (_executionConnection is { HasOpenSession: false })
-        {
-            await _executionConnection.CloseAsync().ConfigureAwait(false);
             throw;
         }
     }

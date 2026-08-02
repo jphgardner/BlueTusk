@@ -269,8 +269,16 @@ public static class BlueTuskBackendMessageDecoder
         _ => throw new BlueTuskProtocolException($"COPY response contained unknown format code {value}."),
     };
 
-    private static BlueTuskBackendPayloadReader CreateReader(BlueTuskBackendMessage message, out byte[] bytes)
+    private static BlueTuskBackendPayloadReader CreateReader(
+        BlueTuskBackendMessage message,
+        out byte[]? bytes)
     {
+        if (message.Payload.IsSingleSegment)
+        {
+            bytes = null;
+            return new BlueTuskBackendPayloadReader(message.Payload.FirstSpan);
+        }
+
         bytes = message.ToPayloadArray();
         return new BlueTuskBackendPayloadReader(bytes);
     }

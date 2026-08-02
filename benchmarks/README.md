@@ -123,7 +123,13 @@ Portal startup parses the small Parse/Bind/RowDescription response directly from
 the protocol buffer before switching to incremental DataRow payload handling.
 Streaming readers retain their command and timeout directly, avoiding per-reader
 lifetime closures and delegate dispatch during cleanup. Parameterless commands
-share immutable rewrite plans and the empty encoded-parameter vector.
+share immutable rewrite plans and the empty encoded-parameter vector, and do not
+create a parameter collection unless the caller requests one. Portal startup and
+prepared scalar execution use pooled `ValueTask` state; row delivery reuses a
+per-session completion source. Single-segment backend frames decode without an
+intermediate payload array, small streamed control frames reuse session storage,
+repeated command tags reuse the last decoded value, and ordinary command
+timeouts rent warmed registrations instead of constructing native timers.
 The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
 it is not a memory-copy microbenchmark.
 

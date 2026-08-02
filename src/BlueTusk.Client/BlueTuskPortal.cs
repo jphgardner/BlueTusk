@@ -123,7 +123,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
                 return ValueTask.FromResult(_currentRow);
             }
 
-            return ReadFromSessionAsync(cancellationToken);
+            return _session.ReadPortalRowAsync(this, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -143,7 +143,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         try
         {
             await finish.ConfigureAwait(false);
-            return await ReadFromSessionAsync(cancellationToken).ConfigureAwait(false);
+            return await _session!.ReadPortalRowAsync(this, cancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -156,27 +156,12 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         }
     }
 
-    private async ValueTask<BlueTuskPortalRow?> ReadFromSessionAsync(
-        CancellationToken cancellationToken)
+    internal void SetAsyncReadResult(BlueTuskPortalRow? row)
     {
-        try
+        _currentRow = row;
+        if (row is not null)
         {
-            _currentRow = await _session!.ReadPortalRowAsync(this, cancellationToken).ConfigureAwait(false);
-            if (_currentRow is not null)
-            {
-                RowsRead++;
-            }
-
-            return _currentRow;
-        }
-        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
-        {
-            return await CancelAndAbortAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch
-        {
-            await _session!.AbortPortalAsync(this).ConfigureAwait(false);
-            throw;
+            RowsRead++;
         }
     }
 
