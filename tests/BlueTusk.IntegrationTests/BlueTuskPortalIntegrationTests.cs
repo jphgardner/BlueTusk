@@ -68,6 +68,72 @@ public sealed class BlueTuskPortalIntegrationTests
         Assert.Equal("42", ReadText(result));
     }
 
+    [Fact]
+    public async Task Repeated_unlimited_portals_survive_unnamed_statement_invalidation()
+    {
+        await using var session = await BlueTuskSession.OpenAsync(
+            CreateOptions(),
+            CancellationToken.None);
+        const string repeatedSql =
+            "SELECT value FROM generate_series(1, 3) AS value ORDER BY value";
+
+        var values = await ReadValuesAsync(repeatedSql);
+        Assert.Equal([1, 2, 3], values);
+        values = await ReadValuesAsync(repeatedSql);
+        Assert.Equal([1, 2, 3], values);
+
+        values = await ReadValuesAsync("SELECT 9");
+        Assert.Equal([9], values);
+        values = await ReadValuesAsync(repeatedSql);
+        Assert.Equal([1, 2, 3], values);
+
+        var simpleResult = await session.ExecuteSimpleQueryAsync(
+            "SELECT 10",
+            CancellationToken.None);
+        Assert.Equal("10", ReadText(simpleResult));
+        values = await ReadValuesAsync(repeatedSql);
+        Assert.Equal([1, 2, 3], values);
+
+        _ = await session.ExecuteExtendedQueryAsync(
+            "SELECT 11",
+            [],
+            CancellationToken.None);
+        values = await ReadValuesAsync(repeatedSql);
+        Assert.Equal([1, 2, 3], values);
+
+        _ = await session.ExecuteBatchAsync(
+            [new BlueTuskBatchQuery("SELECT 12", [], UseBinaryResults: true)],
+            CancellationToken.None);
+        values = await ReadValuesAsync(repeatedSql);
+        Assert.Equal([1, 2, 3], values);
+
+        _ = await session.ExecutePipelineAsync(
+            [
+                new BlueTuskPipelineGroup(
+                    [new BlueTuskBatchQuery("SELECT 13", [], UseBinaryResults: true)]),
+            ],
+            CancellationToken.None);
+        values = await ReadValuesAsync(repeatedSql);
+        Assert.Equal([1, 2, 3], values);
+
+        async Task<int[]> ReadValuesAsync(string sql)
+        {
+            var values = new List<int>();
+            await using var portal = await session.BeginPortalAsync(
+                sql,
+                [],
+                cancellationToken: CancellationToken.None);
+            BlueTuskPortalRow? row;
+            while ((row = await portal.ReadAsync(CancellationToken.None)) is not null)
+            {
+                values.Add(BinaryPrimitives.ReadInt32BigEndian(
+                    (await row.ReadFieldAsync(0, CancellationToken.None))!.Value.Span));
+            }
+
+            return [.. values];
+        }
+    }
+
     private static string ReadText(BlueTuskQueryResult result) =>
         System.Text.Encoding.UTF8.GetString(
             Assert.Single(Assert.Single(result.ResultSets).Rows).Values[0]!.Value.Span);

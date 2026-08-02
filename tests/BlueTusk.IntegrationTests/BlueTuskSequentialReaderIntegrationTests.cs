@@ -130,9 +130,10 @@ public sealed class BlueTuskSequentialReaderIntegrationTests
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());
         await connection.OpenAsync(CancellationToken.None);
-        await using (var command = connection.CreateCommand())
+        await using (var command = (BlueTuskCommand)connection.CreateCommand())
         {
             command.CommandText = "SELECT pg_sleep(10), 1";
+            command.SequentialFetchSize = 1;
             await using var reader = await command.ExecuteReaderAsync(
                 CommandBehavior.SequentialAccess,
                 CancellationToken.None);
@@ -152,10 +153,11 @@ public sealed class BlueTuskSequentialReaderIntegrationTests
     {
         using var connection = new BlueTuskConnection(GetConnectionString());
         connection.Open();
-        using (var command = connection.CreateCommand())
+        using (var command = (BlueTuskCommand)connection.CreateCommand())
         {
             command.CommandText = "SELECT pg_sleep(10), 1";
             command.CommandTimeout = 1;
+            command.SequentialFetchSize = 1;
             using var reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.Throws<TimeoutException>(() => reader.Read());

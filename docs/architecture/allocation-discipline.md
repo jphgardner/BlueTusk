@@ -28,18 +28,18 @@ in-memory ownership budgets above. Its final 2026-08-02 MediumRun records:
 
 | Workload | BlueTusk | Npgsql | Current result |
 | --- | ---: | ---: | --- |
-| Parameterized scalar | 1,642 B | 2,079 B | BlueTusk 21.0% lower |
-| Explicitly prepared scalar | 772 B | 1,074 B | BlueTusk 28.1% lower |
+| Parameterized scalar | 1,650 B | 2,084 B | BlueTusk 20.8% lower |
+| Explicitly prepared scalar | 792 B | 1,089 B | BlueTusk 27.3% lower |
 | Untouched warm checkout | 168 B | 184 B | BlueTusk 8.7% lower |
-| Sequential 1,000-row read | 1,558 B | 1,496 B | BlueTusk 4.1% higher; open gap |
-| Sequential 1 MiB `bytea` | 4,288 B | 8,829 B | BlueTusk 51.4% lower |
+| Sequential 1,000-row read | 1,389 B | 1,508 B | BlueTusk 7.9% lower |
+| Sequential 1 MiB `bytea` | 4,132 B | 8,851 B | BlueTusk 53.3% lower |
 
-The same run measures BlueTusk/Npgsql at 481/481 us for parameterized scalar
-execution, 303/327 ns for warm checkout, 437/440 us for prepared scalar execution,
-767/710 us for the 1,000-row reader, and 4.660/4.665 ms for the isolated 1 MiB
-stream. Only warm checkout is a clear latency win at this sample size; the scalar
-and stream intervals overlap and are treated as parity. The row reader remains
-8.0% slower. These longer paired results are regression evidence, not a
+The same run measures BlueTusk/Npgsql at 497/487 us for parameterized scalar
+execution, 296/332 ns for warm checkout, 443/444 us for prepared scalar execution,
+678/737 us for the 1,000-row reader, and 4.395/4.213 ms for the isolated 1 MiB
+stream. Warm checkout and the row reader are clear latency wins at this sample
+size; the parameterized, prepared, and stream intervals overlap and are treated
+as parity. These longer paired results are regression evidence, not a
 provider-wide latency guarantee.
 
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session and uses that same storage as bounded read-ahead for incremental large fields; the socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
@@ -63,9 +63,11 @@ pending-read continuation, and return to the 64 KiB steady-state window
 at the next frame.
 Sequential portal metadata is parsed directly from the shared protocol buffer;
 only DataRow payloads enter the incremental field-streaming path. Unlimited
-sequential commands use the unnamed portal, share parameterless rewrite/encoding
-state, create their parameter collection only when it is requested, and return
-their row/header storage to the physical session at disposal. Single-segment
+sequential commands avoid an intermediate metadata flush, use the unnamed portal,
+reuse the server's unnamed statement for repeated exact parameterless SQL, share
+parameterless rewrite/encoding state, create their parameter collection only when
+it is requested, and return their row/header storage to the physical session at
+disposal. Single-segment
 backend frames decode in place. Portal startup and prepared scalar continuations
 use pooled `ValueTask` state, while the row reader reuses one per-session
 completion source. Small streamed control payloads and repeated command tags are

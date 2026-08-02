@@ -71,25 +71,28 @@ intervals. The checked-in provider comparison therefore uses `--job medium`
 (two launches, ten warmups, and fifteen measured iterations) and still does not
 claim that one provider is universally faster.
 
-The final 2026-08-02 Windows/Ryzen 7 5800X MediumRun records BlueTusk at parity
-or ahead on four of five latency means and lower on four of five managed-allocation
-results. BlueTusk/Npgsql measure 481/481 us and 1,642/2,079 B for the parameterized
-scalar, 303/327 ns and 168/184 B for warm checkout, 437/440 us and 772/1,074 B for
-the prepared scalar, and 4.660/4.665 ms and 4,288/8,829 B for the isolated 1 MiB
-stream. The remaining 1,000-row gap is 767/710 us and 1,558/1,496 B: 8.0% slower
-and 4.1% higher allocation, down from the previous ShortRun's 17.7% and 146%
-gaps. The exact values and environment are checked in under
-`baselines/windows-ryzen7-5800x-dotnet10`; overlapping intervals are treated as
-parity, and the remaining loss is retained rather than hidden in a provider-wide
-performance claim.
+The final 2026-08-02 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
+managed allocation on all five paired workloads and latency at parity or better
+on all five. BlueTusk/Npgsql measure 497/487 us and 1,650/2,084 B for the
+parameterized scalar, 296/332 ns and 168/184 B for warm checkout, 443/444 us and
+792/1,089 B for the prepared scalar, 678/737 us and 1,389/1,508 B for the
+1,000-row reader, and 4.395/4.213 ms and 4,132/8,851 B for the isolated 1 MiB
+stream. Checkout and the row reader are clear latency wins; the parameterized,
+prepared, and large-stream intervals overlap and are treated as parity. The row
+path moved from 8.0% slower and 4.1% higher allocation to 8.1% faster and 7.9%
+lower allocation. The exact values and environment are checked in under
+`baselines/windows-ryzen7-5800x-dotnet10`; these paired results are not a
+provider-wide performance guarantee.
 
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
-1,000-row scan pay 32 additional network exchanges. The optimized path sends
-Parse/Bind/Describe/Execute/Sync in one transport write (with a metadata Flush
-before Execute), uses the unnamed portal without a row limit by default, reuses
-session-owned row/header storage after reader disposal, writes parameters from
-struct-backed views, and decodes buffered binary integers without boxing. Positive
-`SequentialFetchSize` values still exercise bounded portal suspension. Keep both
+1,000-row scan pay 32 additional network exchanges. The optimized unlimited path
+sends Parse/Bind/Describe/Execute/Sync in one transport write without an
+intermediate metadata `Flush`, uses the unnamed portal without a row limit, and
+reuses the server's unnamed parameterless statement when the exact SQL repeats.
+It also reuses session-owned row/header storage after reader disposal, writes
+parameters from struct-backed views, and decodes buffered binary integers without
+boxing. Positive `SequentialFetchSize` values retain the metadata flush and
+exercise bounded portal suspension for early-reader cancellation. Keep both
 latency and allocation columns when evaluating this path; the checked-in report
 is refreshed only after the corresponding integration gates pass.
 

@@ -581,9 +581,9 @@ explicit environment and workload gate below is executable and checked.
   - [x] Scheduled/manual PostgreSQL 19 elevated-concurrency provider stress plus separate 1,000-epoch replication endurance
 - [x] Competitive benchmarks
   - [x] Equivalent live BlueTusk/Npgsql warm-pool, parameterized, prepared, 1,000-row, and 1 MiB streaming workloads
-  - [x] Checked-in PostgreSQL 19 ShortRun latency/allocation baseline with explicit fairness limits and no runtime Npgsql dependency
+  - [x] Checked-in PostgreSQL 19 MediumRun latency/allocation baseline with explicit fairness limits and no runtime Npgsql dependency
   - [x] Eliminate sequential-reader portal-suspension round trips, reuse streamed row state, and add buffered typed-scalar fast paths with cancellation/recovery acceptance
-  - [x] Beat the paired Npgsql parameterized-scalar, warm-checkout, and 1 MiB stream latency/allocation results plus prepared-scalar allocation; retain the 1,000-row and prepared-latency gaps explicitly in the baseline
+  - [x] Record lower managed allocation than Npgsql on all five paired workloads, clear latency wins for warm checkout and 1,000-row streaming, and statistically overlapping parameterized, prepared, and 1 MiB stream latency intervals
 - [x] Complete documentation
   - [x] Data-source-first ADO.NET, EF, replication, extension, graph, security, observability, testing, versioning, and release-readiness guides match executable behavior
   - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files
