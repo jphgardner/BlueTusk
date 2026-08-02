@@ -122,14 +122,16 @@ The complete serial solution matrix currently reports:
 
 | PostgreSQL | Passed | Intentional skips | Failed |
 | --- | ---: | ---: | ---: |
-| 15 | 2,948 | 137 | 0 |
-| 16 | 2,949 | 136 | 0 |
-| 17 | 2,951 | 136 | 0 |
-| 18 | 2,963 | 136 | 0 |
-| 19 | 2,963 | 136 | 0 |
+| 15 | 2,952 | 147 | 0 |
+| 16 | 2,953 | 146 | 0 |
+| 17 | 2,955 | 146 | 0 |
+| 18 | 2,967 | 146 | 0 |
+| 19 | 2,967 | 146 | 0 |
 
 Each total includes the native and official EF projects, all core and extension
-projects, compatibility, conformance, security, stress, and replication.
+projects, source generation, compatibility, conformance, security, stress, and
+replication. The server-free run reports 1,538 passes, 318 intentional skips,
+and no failures across the same 28 test assemblies.
 Version-specific official migration methods are excluded at discovery when the
 server cannot implement their generated-column SQL.
 
@@ -138,7 +140,7 @@ server cannot implement their generated-column SQL.
 The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
 packages without warnings. Compiler-enforced public API/nullability baselines
 cover the stable core, replication, and extension-authoring seams. The final
-direct-and-transitive NuGet vulnerability audit covers all 65 solution projects
+direct-and-transitive NuGet vulnerability audit covers all 66 solution projects
 and reports zero vulnerable package entries. All 24 checked-in allocation
 budgets pass, including command, typed reader, protocol writer,
 structured-codec, large-value streaming, replication, EF Core application, and
@@ -153,8 +155,8 @@ regression evidence, not universal latency or throughput claims.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
-in all tracked Markdown files; the 2026-08-02 review checked 55 local links
-across 73 files and separately resolved all 40 external Markdown references.
+in all tracked Markdown files; the 2026-08-02 review checked 56 local links
+across 78 files and separately resolved all 40 external Markdown references.
 The support matrix identifies .NET 10, EF Core 10.0.10,
 PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 preview, including the
 remaining beta-syntax risk.

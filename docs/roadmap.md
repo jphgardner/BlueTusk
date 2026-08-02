@@ -527,13 +527,13 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Extension-authoring template
 - [x] Extension compatibility-testing kit
 
-## 1.0.0 engineering gate (Milestone 9, final audit in progress)
+## 1.0.0 engineering gate (Milestone 9, complete)
 
 This milestone tracks the repository's 1.0 engineering gates. It does not declare a
 stable or production-endorsed release: published packages remain `0.3.0-preview.1`
 while the provider accumulates external production experience and PostgreSQL 19
-syntax remains beta-sensitive. The final product-spec audit remains open until the
-explicit environment and workload gates below are executable in CI.
+syntax remains beta-sensitive. The product-spec audit is complete: every
+explicit environment and workload gate below is executable and checked.
 
 - [x] Stable ADO.NET APIs
   - [x] Compiler-enforced shipped API/nullability baselines for Transport, Protocol, Security, Diagnostics, TypeSystem, Client, and Data

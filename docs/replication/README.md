@@ -62,7 +62,8 @@ The replication subsystem has passed its production-readiness gate: the live
 version matrix, compatibility baselines, durability and feedback checks,
 failure-recovery cases, allocation/backpressure benchmarks, cancellation stress,
 and scheduled endurance are all executable. The packages retain the repository's
-preview version until the remaining whole-product 1.0 gates complete.
+preview version while the provider accumulates external production experience
+and until the maintainer explicitly chooses a stable release.
 
 ## Server setup
 
