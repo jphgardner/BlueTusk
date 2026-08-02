@@ -25,9 +25,8 @@ public sealed class BlueTuskDataReader : DbDataReader
     private readonly BlueTuskQueryResult? _result;
     private readonly BlueTuskTypeRegistry _types;
     private readonly bool _singleRow;
-    private readonly Action? _readerClosed;
-    private readonly Func<ValueTask>? _readerClosedAsync;
-    private readonly Func<BlueTuskServerException, Exception>? _readerExceptionFactory;
+    private readonly BlueTuskCommand? _streamingCommand;
+    private readonly Timer? _streamingTimeoutTimer;
     private readonly BlueTuskConnection? _executionConnection;
     private BlueTuskConnection? _connectionToClose;
     private BlueTuskPortal? _portal;
@@ -55,18 +54,16 @@ public sealed class BlueTuskDataReader : DbDataReader
         BlueTuskConnection? connectionToClose,
         BlueTuskTypeRegistry types,
         bool singleRow,
-        Action readerClosed,
-        Func<ValueTask> readerClosedAsync,
-        Func<BlueTuskServerException, Exception> readerExceptionFactory)
+        BlueTuskCommand streamingCommand,
+        Timer? streamingTimeoutTimer)
     {
         _portal = portal ?? throw new ArgumentNullException(nameof(portal));
         _executionConnection = executionConnection ?? throw new ArgumentNullException(nameof(executionConnection));
         _connectionToClose = connectionToClose;
         _types = types ?? throw new ArgumentNullException(nameof(types));
         _singleRow = singleRow;
-        _readerClosed = readerClosed ?? throw new ArgumentNullException(nameof(readerClosed));
-        _readerClosedAsync = readerClosedAsync ?? throw new ArgumentNullException(nameof(readerClosedAsync));
-        _readerExceptionFactory = readerExceptionFactory ?? throw new ArgumentNullException(nameof(readerExceptionFactory));
+        _streamingCommand = streamingCommand ?? throw new ArgumentNullException(nameof(streamingCommand));
+        _streamingTimeoutTimer = streamingTimeoutTimer;
     }
 
     public override int FieldCount => CurrentFields.Count;
@@ -784,29 +781,24 @@ public sealed class BlueTuskDataReader : DbDataReader
         GetStreamingRow().ReadFieldExactly(ordinal, destination);
 
     private Exception TranslateServerException(BlueTuskServerException exception) =>
-        _readerExceptionFactory?.Invoke(exception) ?? new BlueTuskException(exception);
+        _streamingCommand?.TranslateReaderServerException(exception) ?? new BlueTuskException(exception);
 
     private void CompleteReaderLifetime()
     {
         if (Interlocked.Exchange(ref _lifetimeCompleted, 1) == 0)
         {
-            _readerClosed?.Invoke();
+            _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
         }
     }
 
-    private async ValueTask CompleteReaderLifetimeAsync()
+    private ValueTask CompleteReaderLifetimeAsync()
     {
         if (Interlocked.Exchange(ref _lifetimeCompleted, 1) == 0)
         {
-            if (_readerClosedAsync is not null)
-            {
-                await _readerClosedAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                _readerClosed?.Invoke();
-            }
+            _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
         }
+
+        return ValueTask.CompletedTask;
     }
 
     private static bool IsStreamingTextType(uint oid) =>

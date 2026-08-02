@@ -56,6 +56,8 @@ pending-read continuation, and return to the 64 KiB steady-state window
 at the next frame.
 Sequential portal metadata is parsed directly from the shared protocol buffer;
 only DataRow payloads enter the incremental field-streaming path.
+The streaming reader holds its command and timeout directly instead of allocating
+capturing completion and exception-translation delegates for each reader.
 
 Machine-readable limits live in `benchmarks/allocation-budgets.json`. They intentionally allow modest short-run/runtime variance while keeping zero-allocation protocol writes strict. Refresh the named reports, review any ownership change, and then run:
 

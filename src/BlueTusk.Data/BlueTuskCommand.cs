@@ -546,18 +546,8 @@ public sealed class BlueTuskCommand : DbCommand
             connectionToClose,
             connection.TypeRegistry,
             behavior.HasFlag(CommandBehavior.SingleRow),
-            () =>
-            {
-                timeoutTimer?.Dispose();
-                CompleteStreamingExecution();
-            },
-            () =>
-            {
-                timeoutTimer?.Dispose();
-                CompleteStreamingExecution();
-                return ValueTask.CompletedTask;
-            },
-            TranslateReaderServerException);
+            this,
+            timeoutTimer);
     }
 
     private Timer? CreateTimeoutTimer() => CommandTimeout > 0
@@ -574,13 +564,14 @@ public sealed class BlueTuskCommand : DbCommand
             TimeSpan.FromSeconds(CommandTimeout))
         : default;
 
-    private void CompleteStreamingExecution()
+    internal void CompleteStreamingExecution(Timer? timeoutTimer = null)
     {
+        timeoutTimer?.Dispose();
         Volatile.Write(ref _executingConnection, null);
         Volatile.Write(ref _executing, 0);
     }
 
-    private Exception TranslateReaderServerException(BlueTuskServerException exception)
+    internal Exception TranslateReaderServerException(BlueTuskServerException exception)
     {
         if (exception.SqlState == "57014" && Volatile.Read(ref _timeoutRequested) != 0)
         {
