@@ -28,18 +28,19 @@ in-memory ownership budgets above. Its final 2026-08-02 MediumRun records:
 
 | Workload | BlueTusk | Npgsql | Current result |
 | --- | ---: | ---: | --- |
-| Parameterized scalar | 1,650 B | 2,084 B | BlueTusk 20.8% lower |
-| Explicitly prepared scalar | 792 B | 1,089 B | BlueTusk 27.3% lower |
+| Parameterized scalar | 1,663 B | 2,094 B | BlueTusk 20.6% lower |
+| Explicitly prepared scalar | 796 B | 1,099 B | BlueTusk 27.6% lower |
 | Untouched warm checkout | 168 B | 184 B | BlueTusk 8.7% lower |
-| Sequential 1,000-row read | 1,389 B | 1,508 B | BlueTusk 7.9% lower |
-| Sequential 1 MiB `bytea` | 4,132 B | 8,851 B | BlueTusk 53.3% lower |
+| Sequential 1,000-row read | 1,400 B | 1,529 B | BlueTusk 8.4% lower |
+| Sequential 1 MiB `bytea` | 3,900 B | 8,938 B | BlueTusk 56.4% lower |
 
-The same run measures BlueTusk/Npgsql at 497/487 us for parameterized scalar
-execution, 296/332 ns for warm checkout, 443/444 us for prepared scalar execution,
-678/737 us for the 1,000-row reader, and 4.395/4.213 ms for the isolated 1 MiB
-stream. Warm checkout and the row reader are clear latency wins at this sample
-size; the parameterized, prepared, and stream intervals overlap and are treated
-as parity. These longer paired results are regression evidence, not a
+The same run measures BlueTusk/Npgsql at 446/487 us for parameterized scalar
+execution, 288/326 ns for warm checkout, 436/445 us for prepared scalar execution,
+672/743 us for the 1,000-row reader, and 4.390/4.482 ms for the isolated 1 MiB
+stream. Parameterized execution, warm checkout, and the row reader have
+non-overlapping latency intervals at this sample size; prepared and stream
+intervals overlap and are treated as parity despite lower BlueTusk means. These
+longer paired results are regression evidence, not a
 provider-wide latency guarantee.
 
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session. Incremental field reads of at least 8 KiB pass the caller's buffer directly to the transport after consuming buffered bytes, avoiding both an intermediate copy and a transient large rental; smaller reads use adaptive bounded read-ahead. The socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.

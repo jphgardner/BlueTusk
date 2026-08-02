@@ -72,15 +72,14 @@ intervals. The checked-in provider comparison therefore uses `--job medium`
 claim that one provider is universally faster.
 
 The final 2026-08-02 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
-managed allocation on all five paired workloads and latency at parity or better
-on all five. BlueTusk/Npgsql measure 497/487 us and 1,650/2,084 B for the
-parameterized scalar, 296/332 ns and 168/184 B for warm checkout, 443/444 us and
-792/1,089 B for the prepared scalar, 678/737 us and 1,389/1,508 B for the
-1,000-row reader, and 4.395/4.213 ms and 4,132/8,851 B for the isolated 1 MiB
-stream. Checkout and the row reader are clear latency wins; the parameterized,
-prepared, and large-stream intervals overlap and are treated as parity. The row
-path moved from 8.0% slower and 4.1% higher allocation to 8.1% faster and 7.9%
-lower allocation. The exact values and environment are checked in under
+mean latency and managed allocation on all five paired workloads. BlueTusk/Npgsql
+measure 446/487 us and 1,663/2,094 B for the parameterized scalar, 288/326 ns and
+168/184 B for warm checkout, 436/445 us and 796/1,099 B for the prepared scalar,
+672/743 us and 1,400/1,529 B for the 1,000-row reader, and 4.390/4.482 ms and
+3,900/8,938 B for the isolated 1 MiB stream. Parameterized execution, checkout,
+and the row reader have non-overlapping latency intervals; prepared and
+large-stream intervals overlap and are conservatively treated as parity despite
+their lower BlueTusk means. The exact values and environment are checked in under
 `baselines/windows-ryzen7-5800x-dotnet10`; these paired results are not a
 provider-wide performance guarantee.
 

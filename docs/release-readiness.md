@@ -153,13 +153,14 @@ PostgreSQL 19 property graph through both a prepared raw command and the typed
 EF graph API. The checked-in ShortRun reports and allocation budgets are
 regression evidence, not universal latency or throughput claims.
 
-The paired PostgreSQL 19 provider gate additionally records BlueTusk below
-Npgsql for latency and managed allocation on parameterized scalar execution,
-untouched warm checkout, and isolated 1 MiB streaming. Explicitly prepared
-execution allocates less with a small latency deficit. The current 1,000-row
-latency/allocation gap remains documented in the checked-in report; release
-readiness does not reinterpret these environment-specific ShortRun results as
-blanket provider superiority.
+The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and
+managed allocation on parameterized and explicitly prepared scalar execution,
+untouched warm checkout, sequential 1,000-row reads, and isolated 1 MiB
+streaming. The MediumRun confidence intervals establish clear latency wins for
+parameterized execution, checkout, and row streaming; prepared and large-stream
+latency remain statistical parity despite lower BlueTusk means. Release
+readiness does not reinterpret these environment-specific results as blanket
+provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link

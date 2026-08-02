@@ -36,19 +36,18 @@ the checked-in report is a MediumRun with two launches, ten warmups, and fifteen
 measured iterations. The large-field fixture creates the same one-row 1 MiB
 temporary payload on each provider connection during setup, keeping PostgreSQL
 payload-generation CPU outside the timed operations. BlueTusk/Npgsql means are
-497/487 µs and 1,650/2,084 B for a parameterized scalar, 443/444 µs and
-792/1,089 B for an explicitly prepared scalar, 296/332 ns and 168/184 B for an
-untouched warm pool checkout, 678/737 µs and 1,389/1,508 B for a sequential
-1,000-row read, and 4.395/4.213 ms and 4,132/8,851 B for a sequential 1 MiB
+446/487 µs and 1,663/2,094 B for a parameterized scalar, 436/445 µs and
+796/1,099 B for an explicitly prepared scalar, 288/326 ns and 168/184 B for an
+untouched warm pool checkout, 672/743 µs and 1,400/1,529 B for a sequential
+1,000-row read, and 4.390/4.482 ms and 3,900/8,938 B for a sequential 1 MiB
 `bytea` stream.
 
-The current MediumRun therefore records lower BlueTusk managed allocation on all
-five pairs and latency at parity or better on all five. Warm checkout and the
-1,000-row reader are clear latency wins; parameterized scalar, prepared scalar,
-and large-stream confidence intervals overlap and are treated as parity. The row
-reader moved from 8.0% slower and 4.1% higher allocation to 8.1% faster and 7.9%
-lower allocation. These results are an optimization and regression baseline,
-not a provider-wide superiority claim or release performance guarantee.
+The current MediumRun therefore records lower BlueTusk mean latency and managed
+allocation on all five pairs. Parameterized scalar execution, warm checkout, and
+the 1,000-row reader have non-overlapping latency intervals; prepared scalar and
+large-stream intervals overlap and are treated as parity despite lower BlueTusk
+means. These results are an optimization and regression baseline, not a
+provider-wide superiority claim or release performance guarantee.
 
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first
