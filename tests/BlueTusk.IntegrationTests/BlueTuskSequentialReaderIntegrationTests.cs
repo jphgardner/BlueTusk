@@ -116,7 +116,7 @@ public sealed class BlueTuskSequentialReaderIntegrationTests
             Assert.Equal(1, reader.GetInt32(0));
             await using var textBytes = reader.GetStream(1);
             var buffer = new byte[8192];
-            Assert.Equal(buffer.Length, await textBytes.ReadAsync(buffer, CancellationToken.None));
+            await textBytes.ReadExactlyAsync(buffer, CancellationToken.None);
             Assert.All(buffer, value => Assert.Equal((byte)'z', value));
         }
 
