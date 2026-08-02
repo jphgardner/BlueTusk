@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Security.Cryptography;
 using BlueTusk.Transport;
@@ -302,7 +303,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     }
 
     internal bool TryReadBufferedDataRow(
-        Span<byte> payloadDestination,
+        out ReadOnlyMemory<byte> payload,
         out BlueTuskBackendMessageHeader header)
     {
         BeginRead();
@@ -311,6 +312,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             BeginNextMessage();
             if (_count < HeaderSize || _buffer[_start] != (byte)'D')
             {
+                payload = default;
                 header = default;
                 return false;
             }
@@ -324,15 +326,15 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             }
 
             var payloadLength = length - sizeof(int);
-            if (payloadLength > payloadDestination.Length ||
-                _count < HeaderSize + payloadLength)
+            if (_count < HeaderSize + payloadLength)
             {
+                payload = default;
                 header = default;
                 return false;
             }
 
             header = ConsumeHeader();
-            _buffer.AsSpan(_start, payloadLength).CopyTo(payloadDestination);
+            payload = _buffer.AsMemory(_start, payloadLength);
             _start += payloadLength;
             _count -= payloadLength;
             _activePayloadRemaining = 0;
@@ -656,6 +658,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken) =>
         WriteCoreAsync(writeMessage, clearBuffer: true, cancellationToken);
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask WriteCoreAsync(
         Action<IBufferWriter<byte>> writeMessage,
         bool clearBuffer,
@@ -677,6 +680,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask WriteCoreAsync<TState>(
         TState state,
         Action<IBufferWriter<byte>, TState> writeMessage,

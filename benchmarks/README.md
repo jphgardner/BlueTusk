@@ -130,6 +130,10 @@ per-session completion source. Single-segment backend frames decode without an
 intermediate payload array, small streamed control frames reuse session storage,
 repeated command tags reuse the last decoded value, and ordinary command
 timeouts rent warmed registrations instead of constructing native timers.
+Already buffered rows are read directly from the protocol window for the current
+reader iteration, avoiding one small copy per row. Repeated portal descriptions
+reuse immutable field metadata only after a byte-for-byte match against the new
+server frame.
 The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
 it is not a memory-copy microbenchmark.
 

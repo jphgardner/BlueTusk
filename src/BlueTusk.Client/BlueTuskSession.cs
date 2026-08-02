@@ -29,6 +29,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         new(StringComparer.Ordinal);
     private readonly byte[] _streamedControlPayload = new byte[256];
     private readonly byte[] _lastCommandTagBytes = new byte[64];
+    private readonly byte[] _lastPortalDescriptionBytes = new byte[1024];
     private readonly object _cancellationSync = new();
     private readonly PortalRowReadSource _portalRowReadSource;
     private TaskCompletionSource<bool>? _cancellationRequest;
@@ -38,6 +39,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private BlueTuskPortalRow? _reusablePortalRow;
     private string? _lastCommandTag;
     private int _lastCommandTagLength;
+    private IReadOnlyList<BlueTuskFieldDescription>? _lastPortalDescription;
+    private int _lastPortalDescriptionLength;
     private long _portalSequence;
     private bool _open;
     private bool _disposed;
@@ -1408,7 +1411,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     case '2':
                         break;
                     case 'T':
-                        fields = BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                        fields = DecodePortalRowDescription(message);
                         break;
                     case 'n':
                         fields = [];
@@ -1501,7 +1504,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 case '2':
                     break;
                 case 'T':
-                    return BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                    return DecodePortalRowDescription(message);
                 case 'n':
                     return [];
                 case 'A':
@@ -1579,10 +1582,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         EnsurePortalOperation();
         if (portal.CurrentRow is { } bufferedRow &&
-            _connection.TryReadBufferedDataRow(bufferedRow.InlinePayload, out var bufferedHeader))
+            _connection.TryReadBufferedDataRow(out var bufferedPayload, out var bufferedHeader))
         {
             BlueTuskDiagnostics.ProtocolMessageSize.Record(bufferedHeader.PayloadLength + 5);
-            bufferedRow.ResetBuffered(bufferedHeader.PayloadLength, portal.Fields.Count);
+            bufferedRow.ResetBuffered(bufferedPayload, portal.Fields.Count);
             row = bufferedRow;
             return true;
         }
@@ -2146,6 +2149,34 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         return BlueTuskBackendMessageDecoder.DecodeCommandComplete(message);
+    }
+
+    private IReadOnlyList<BlueTuskFieldDescription> DecodePortalRowDescription(
+        BlueTuskBackendMessage message)
+    {
+        if (message.Payload.IsSingleSegment)
+        {
+            var payload = message.Payload.FirstSpan;
+            if (_lastPortalDescription is not null &&
+                payload.Length == _lastPortalDescriptionLength &&
+                payload.SequenceEqual(
+                    _lastPortalDescriptionBytes.AsSpan(0, _lastPortalDescriptionLength)))
+            {
+                return _lastPortalDescription;
+            }
+
+            var fields = BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+            if (payload.Length <= _lastPortalDescriptionBytes.Length)
+            {
+                payload.CopyTo(_lastPortalDescriptionBytes);
+                _lastPortalDescription = fields;
+                _lastPortalDescriptionLength = payload.Length;
+            }
+
+            return fields;
+        }
+
+        return BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
     }
 
     private async ValueTask<BlueTuskBackendMessage> ReadStreamedMessageAsync(
@@ -3644,6 +3675,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private Task CompleteReadyForQuery(BlueTuskTransactionStatus transactionStatus)
     {
+        if (TryCompleteReadyForQuery(transactionStatus))
+        {
+            return Task.CompletedTask;
+        }
+
         lock (_cancellationSync)
         {
             TransactionStatus = transactionStatus;
@@ -3657,6 +3693,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void CompleteReadyForQuerySynchronously(BlueTuskTransactionStatus transactionStatus)
     {
+        if (TryCompleteReadyForQuery(transactionStatus))
+        {
+            return;
+        }
+
         Task cancellationCompletion;
         lock (_cancellationSync)
         {
@@ -3669,6 +3710,22 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         cancellationCompletion.GetAwaiter().GetResult();
+    }
+
+    private bool TryCompleteReadyForQuery(BlueTuskTransactionStatus transactionStatus)
+    {
+        var state = _connection.StateMachine.State;
+        var readyState = transactionStatus == BlueTuskTransactionStatus.FailedTransaction
+            ? BlueTuskConnectionState.FailedTransaction
+            : BlueTuskConnectionState.Ready;
+        if (state == BlueTuskConnectionState.Cancelling ||
+            !_connection.StateMachine.TryTransition(state, readyState))
+        {
+            return false;
+        }
+
+        TransactionStatus = transactionStatus;
+        return true;
     }
 
     private void EnqueueNotification(BlueTuskBackendMessage message) =>

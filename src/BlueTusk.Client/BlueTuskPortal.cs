@@ -261,6 +261,7 @@ public sealed class BlueTuskPortalRow
     private readonly byte[] _inlinePayload = new byte[InlinePayloadCapacity];
     private int _payloadLength;
     private bool _payloadBuffered;
+    private ReadOnlyMemory<byte> _bufferedPayload;
     private int _payloadConsumed;
     private int _activeOrdinal = -1;
     private int _activeLength = -2;
@@ -294,8 +295,6 @@ public sealed class BlueTuskPortalRow
 
     public int FieldCount { get; private set; }
 
-    internal Span<byte> InlinePayload => _inlinePayload;
-
     internal static async ValueTask<BlueTuskPortalRow> CreateAsync(
         BlueTuskSession session,
         BlueTuskPortal portal,
@@ -325,9 +324,12 @@ public sealed class BlueTuskPortalRow
 
     internal void Rebind(BlueTuskPortal portal) => _portal = portal;
 
-    internal void ResetBuffered(int payloadLength, int expectedFieldCount)
+    internal void ResetBuffered(
+        ReadOnlyMemory<byte> payload,
+        int expectedFieldCount)
     {
-        ResetState(payloadLength, payloadBuffered: true);
+        ResetState(payload.Length, payloadBuffered: true);
+        _bufferedPayload = payload;
         Span<byte> countBytes = stackalloc byte[sizeof(short)];
         ReadExactly(countBytes);
         FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
@@ -448,7 +450,7 @@ public sealed class BlueTuskPortalRow
         }
 
         var length = BinaryPrimitives.ReadInt32BigEndian(
-            _inlinePayload.AsSpan(_payloadConsumed, sizeof(int)));
+            _bufferedPayload.Span.Slice(_payloadConsumed, sizeof(int)));
         if (length != sizeof(int))
         {
             value = default;
@@ -456,7 +458,7 @@ public sealed class BlueTuskPortalRow
         }
 
         value = BinaryPrimitives.ReadInt32BigEndian(
-            _inlinePayload.AsSpan(_payloadConsumed + sizeof(int), sizeof(int)));
+            _bufferedPayload.Span.Slice(_payloadConsumed + sizeof(int), sizeof(int)));
         _payloadConsumed += sizeof(int) * 2;
         _activeOrdinal++;
         _activeLength = sizeof(int);
@@ -751,7 +753,7 @@ public sealed class BlueTuskPortalRow
         EnsurePayloadAvailable(destination.Length);
         if (_payloadBuffered)
         {
-            _inlinePayload.AsSpan(_payloadConsumed, destination.Length).CopyTo(destination);
+            _bufferedPayload.Span.Slice(_payloadConsumed, destination.Length).CopyTo(destination);
         }
         else
         {
@@ -768,7 +770,7 @@ public sealed class BlueTuskPortalRow
         EnsurePayloadAvailable(destination.Length);
         if (_payloadBuffered)
         {
-            _inlinePayload.AsMemory(_payloadConsumed, destination.Length).CopyTo(destination);
+            _bufferedPayload.Slice(_payloadConsumed, destination.Length).CopyTo(destination);
             _payloadConsumed += destination.Length;
             return ValueTask.CompletedTask;
         }
@@ -845,6 +847,10 @@ public sealed class BlueTuskPortalRow
         ResetState(payloadLength, payloadBuffered: false);
         _payloadBuffered = payloadLength <= _inlinePayload.Length &&
             _session.TryReadBufferedPortalPayloadExactly(_inlinePayload.AsSpan(0, payloadLength));
+        if (_payloadBuffered)
+        {
+            _bufferedPayload = _inlinePayload.AsMemory(0, payloadLength);
+        }
     }
 
     private void ResetState(int payloadLength, bool payloadBuffered)
@@ -852,6 +858,7 @@ public sealed class BlueTuskPortalRow
         _payloadLength = payloadLength;
         _payloadConsumed = 0;
         _payloadBuffered = payloadBuffered;
+        _bufferedPayload = default;
         _activeOrdinal = -1;
         _activeLength = -2;
         _activePosition = 0;

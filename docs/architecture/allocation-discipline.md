@@ -40,7 +40,7 @@ stream (4.66 versus 4.82 ms). Prepared scalar execution is 3.6% slower and the
 1,000-row reader is 17.7% slower. These ShortRun results have wide confidence
 intervals and are not presented as provider-wide latency wins.
 
-`BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 256 KiB buffer per physical session and uses that same storage as bounded read-ahead for incremental large fields; caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
+`BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session and uses that same storage as bounded read-ahead for incremental large fields; the socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 
 Warm command instances cache the structural named-parameter plan, but parameter
 values are encoded on every execution and prepared-statement type identity is
@@ -68,6 +68,11 @@ backend frames decode in place. Portal startup and prepared scalar continuations
 use pooled `ValueTask` state, while the row reader reuses one per-session
 completion source. Small streamed control payloads and repeated command tags are
 also retained by the physical session rather than copied for every reader.
+Fully buffered DataRows remain a read-only view over the protocol window for the
+current reader iteration instead of being copied into row-local storage. Repeated
+portal metadata is reused only after the newly received `RowDescription` matches
+the cached wire payload byte for byte, so schema or format changes still replace
+the cache immediately.
 Portal frontend messages use struct-backed parameter views instead of copied
 type/value arrays and capturing writer delegates.
 The streaming reader holds its command and timeout directly instead of allocating
