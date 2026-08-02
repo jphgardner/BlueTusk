@@ -12,6 +12,12 @@
 
 Tests requiring a server read `BLUETUSK_TEST_CONNECTION_STRING` and must skip with a clear reason when it is absent. Credentials must never be printed, including in failed test output.
 
+Test cases within a project may execute concurrently against the configured
+database. Live tests must therefore use unique object names or otherwise scope
+database-wide effects to their own schema. In particular, event-trigger
+fixtures filter `pg_event_trigger_ddl_commands()` by schema so unrelated
+concurrent DDL cannot change their assertions.
+
 The normal local release gate mirrors CI:
 
 ```powershell

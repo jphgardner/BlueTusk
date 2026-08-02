@@ -132,6 +132,11 @@ public sealed class EventTriggerMigrationsTests
             await Execute(cs, "CREATE TABLE event_trigger_tests.probe_one (id integer)");
             Assert.Equal(1L, await Scalar(cs,
                 "SELECT count(*) FROM event_trigger_tests.audit_entries WHERE tag = 'CREATE TABLE'"));
+            await Execute(cs,
+                "CREATE SCHEMA event_trigger_noise; " +
+                "CREATE TABLE event_trigger_noise.unrelated_probe (id integer)");
+            Assert.Equal(1L, await Scalar(cs,
+                "SELECT count(*) FROM event_trigger_tests.audit_entries WHERE tag = 'CREATE TABLE'"));
 
             var database = new BlueTuskDatabaseModelFactory().Create(
                 cs,
@@ -231,7 +236,17 @@ public sealed class EventTriggerMigrationsTests
         modelBuilder.HasBlueTuskFunction(
             "capture_ddl",
             "event_trigger",
-            "BEGIN INSERT INTO event_trigger_tests.audit_entries(tag) VALUES (TG_TAG); END",
+            """
+            BEGIN
+                IF TG_EVENT = 'ddl_command_end' AND EXISTS (
+                    SELECT 1
+                    FROM pg_event_trigger_ddl_commands()
+                    WHERE schema_name = 'event_trigger_tests')
+                THEN
+                    INSERT INTO event_trigger_tests.audit_entries(tag) VALUES (TG_TAG);
+                END IF;
+            END
+            """,
             function => function.UseLanguage("plpgsql"),
             Schema);
         modelBuilder.HasBlueTuskEventTrigger(
@@ -287,6 +302,7 @@ public sealed class EventTriggerMigrationsTests
         "DROP EVENT TRIGGER IF EXISTS bluetusk_capture_ddl; " +
         "DROP EVENT TRIGGER IF EXISTS bluetusk_capture_ddl_v2; " +
         "DROP EVENT TRIGGER IF EXISTS bluetusk_login_audit; " +
+        "DROP SCHEMA IF EXISTS event_trigger_noise CASCADE; " +
         "DROP SCHEMA IF EXISTS event_trigger_tests CASCADE");
 
     private static string ConnectionString()
