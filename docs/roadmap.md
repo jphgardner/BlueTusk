@@ -350,12 +350,13 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Parameterized runtime-enum equality and domain ordering plus flat typed-composite and lossless-record field predicates/projections with compiled queries and PostgreSQL 15–19 acceptance
   - [x] Parameterized two-dimensional `ARRAY[...]` construction plus one- through four-dimensional projected subscripting/slicing with compiled queries and PostgreSQL 15–19 acceptance
   - [x] Catalogue-resolved nested typed-composite and lossless-record-root field traversal with loaded-catalogue diagnostics, compiled queries, and PostgreSQL 15–19 acceptance
-  - [x] EF structural-JSON scalar, collection, and nested-document traversal with typed PostgreSQL JSON operators and live complex-graph persistence/query acceptance
+  - [x] EF structural-JSON scalar and nested-document traversal with typed PostgreSQL JSON operators, primitive-array expansion, typed structural-recordset expansion, and live complex-graph/ad-hoc query acceptance
   - [ ] Other remaining PostgreSQL-native query families
 - [ ] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback
   - [x] Provider SQL-expression quoting, nullability processing, and operator-family tests
   - [x] Focused diagnostics for invalid `DISTINCT ON` ordering/composition, sampling scope, duplicate locking clauses, and translation-only window markers
+  - [x] Official ad-hoc complex/JSON query regressions plus offline SQL-shape tests for primitive and structural JSON collection expansion
 
 ## 0.4.0 — Advanced migrations and scaffolding (Milestone 6, schema surface)
 
@@ -539,6 +540,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Official service-registration and migrations SQL-generator suites (55 offline tests, no skips)
   - [x] Official live data-annotation, composite-key, field-mapping, constructor-materialization, and property-values fixtures (506 passed, four upstream EF skips)
   - [x] Official live updates, store-generated fixup, and complex-types tracking fixtures (391 passed, 50 upstream EF skips)
+  - [x] Official live ad-hoc complex-type and structural-JSON query fixtures across PostgreSQL 15–19 (75 passed, one upstream EF skip per server)
   - [ ] Broader official query, model, migrations, and scaffolding suites
 - [ ] PostgreSQL-specific EF support
 - [x] Security review

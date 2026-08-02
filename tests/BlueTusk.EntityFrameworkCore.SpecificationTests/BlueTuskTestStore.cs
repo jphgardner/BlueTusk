@@ -1,3 +1,4 @@
+using System.Data;
 using System.Data.Common;
 using BlueTusk.Data;
 using Microsoft.Extensions.DependencyInjection;
@@ -41,6 +42,11 @@ internal sealed class BlueTuskTestStore(string name, bool shared)
 
     private async Task RecreateDatabaseAsync()
     {
+        if (Connection.State != ConnectionState.Closed)
+        {
+            await Connection.CloseAsync().ConfigureAwait(false);
+        }
+
         await using var administration = new BlueTuskConnection(CreateConnectionString("postgres"));
         await administration.OpenAsync().ConfigureAwait(false);
 

@@ -32,6 +32,27 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
 
         if (extensionExpression is BlueTuskSetReturningFunctionTableExpression function)
         {
+            if (function.WithOrdinality
+                && function.ColumnStoreTypes.Any(storeType => storeType is not null))
+            {
+                Sql.Append("ROWS FROM (").Append(function.Name).Append("(");
+                for (var index = 0; index < function.Arguments.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(", ");
+                    }
+
+                    Visit(function.Arguments[index]);
+                }
+
+                Sql.Append(") AS (");
+                AppendSetReturningFunctionColumns(function);
+                Sql.Append(")) WITH ORDINALITY AS ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(function.Alias));
+                return function;
+            }
+
             Sql.Append(function.Name).Append("(");
             for (var index = 0; index < function.Arguments.Count; index++)
             {
@@ -59,13 +80,7 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
                     Sql.Append(", ");
                 }
 
-                Sql.Append(
-                    Dependencies.SqlGenerationHelper.DelimitIdentifier(
-                        function.ColumnNames[index]));
-                if (function.ColumnStoreTypes[index] is { } storeType)
-                {
-                    Sql.Append(" ").Append(storeType);
-                }
+                AppendSetReturningFunctionColumn(function, index);
             }
 
             if (function.WithOrdinality)
@@ -319,6 +334,33 @@ internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies de
         }
 
         return base.VisitExtension(extensionExpression);
+    }
+
+    private void AppendSetReturningFunctionColumns(
+        BlueTuskSetReturningFunctionTableExpression function)
+    {
+        for (var index = 0; index < function.ColumnNames.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            AppendSetReturningFunctionColumn(function, index);
+        }
+    }
+
+    private void AppendSetReturningFunctionColumn(
+        BlueTuskSetReturningFunctionTableExpression function,
+        int index)
+    {
+        Sql.Append(
+            Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                function.ColumnNames[index]));
+        if (function.ColumnStoreTypes[index] is { } storeType)
+        {
+            Sql.Append(" ").Append(storeType);
+        }
     }
 
     protected override Expression VisitJsonScalar(JsonScalarExpression jsonScalarExpression)

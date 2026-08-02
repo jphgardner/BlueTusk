@@ -534,6 +534,98 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
 #pragma warning restore EF1001
     }
 
+    protected override ShapedQueryExpression TransformJsonQueryToTable(
+        JsonQueryExpression jsonQueryExpression)
+    {
+        var lastNamedPathSegment = jsonQueryExpression.Path.LastOrDefault(
+            segment => segment.PropertyName is not null);
+        var tableAlias = _queryCompilationContext.SqlAliasManager.GenerateTableAlias(
+            lastNamedPathSegment.PropertyName ?? jsonQueryExpression.JsonColumn.Name);
+        var jsonTypeMapping = jsonQueryExpression.JsonColumn.TypeMapping
+            ?? throw new InvalidOperationException("A PostgreSQL JSON column requires a relational type mapping.");
+        var functionName = jsonTypeMapping.StoreType switch
+        {
+            "jsonb" => "jsonb_to_recordset",
+            "json" => "json_to_recordset",
+            _ => throw new InvalidOperationException(
+                $"The store type '{jsonTypeMapping.StoreType}' cannot be expanded as a PostgreSQL JSON recordset."),
+        };
+
+        var columnNames = new List<string>();
+        var columnStoreTypes = new List<string?>();
+        foreach (var property in jsonQueryExpression.StructuralType.GetPropertiesInHierarchy())
+        {
+            if (property.GetJsonPropertyName() is { } jsonPropertyName)
+            {
+                columnNames.Add(jsonPropertyName);
+                columnStoreTypes.Add(property.GetRelationalTypeMapping().StoreType);
+            }
+        }
+
+        switch (jsonQueryExpression.StructuralType)
+        {
+            case IEntityType entityType:
+                foreach (var navigation in entityType.GetNavigationsInHierarchy()
+                    .Where(navigation => navigation.ForeignKey.IsOwnership
+                        && navigation.TargetEntityType.IsMappedToJson()
+                        && navigation.ForeignKey.PrincipalToDependent == navigation))
+                {
+                    if (navigation.TargetEntityType.GetJsonPropertyName() is { } jsonPropertyName)
+                    {
+                        columnNames.Add(jsonPropertyName);
+                        columnStoreTypes.Add(jsonTypeMapping.StoreType);
+                    }
+                }
+
+                break;
+
+            case IComplexType complexType:
+                foreach (var complexProperty in complexType.GetComplexProperties())
+                {
+                    if (complexProperty.ComplexType.GetJsonPropertyName() is { } jsonPropertyName)
+                    {
+                        columnNames.Add(jsonPropertyName);
+                        columnStoreTypes.Add(jsonTypeMapping.StoreType);
+                    }
+                }
+
+                break;
+        }
+
+        var jsonScalarExpression = new JsonScalarExpression(
+            jsonQueryExpression.JsonColumn,
+            jsonQueryExpression.Path,
+            typeof(string),
+            jsonTypeMapping,
+            jsonQueryExpression.IsNullable);
+        var jsonToRecordset = new BlueTuskSetReturningFunctionTableExpression(
+            tableAlias,
+            functionName,
+            [jsonScalarExpression],
+            columnNames,
+            columnStoreTypes,
+            withOrdinality: true);
+
+#pragma warning disable EF1001 // Provider implementation of EF's JSON collection expansion seam.
+        var selectExpression = CreateSelect(
+            jsonQueryExpression,
+            jsonToRecordset,
+            "ordinality",
+            typeof(int),
+            _typeMappingSource.FindMapping(typeof(int))!);
+#pragma warning restore EF1001
+
+        return new ShapedQueryExpression(
+            selectExpression,
+            new RelationalStructuralTypeShaperExpression(
+                jsonQueryExpression.StructuralType,
+                new ProjectionBindingExpression(
+                    selectExpression,
+                    new ProjectionMember(),
+                    typeof(ValueBuffer)),
+                nullable: false));
+    }
+
     protected override ShapedQueryExpression? TranslatePrimitiveCollection(
         SqlExpression sqlExpression,
         IProperty? property,
@@ -564,16 +656,53 @@ internal sealed class BlueTuskQueryableMethodTranslatingExpressionVisitor
             nullable: false);
 
 #pragma warning disable EF1001 // SelectExpression constructors are provider-facing infrastructure.
-        var selectExpression = new SelectExpression(
-            [new BlueTuskUnnestExpression(tableAlias, sqlExpression)],
-            new ColumnExpression(
+        SelectExpression selectExpression;
+        if (sqlExpression.TypeMapping is
+            { StoreType: var jsonStoreType, ElementTypeMapping: not null }
+            && jsonStoreType is "json" or "jsonb")
+        {
+            SqlExpression elementProjection = new ColumnExpression(
                 "value",
                 tableAlias,
-                elementType,
-                elementTypeMapping,
-                isElementNullable),
-            identifier: [(ordinalityColumn, (ValueComparer)ordinalityTypeMapping.Comparer)],
-            _queryCompilationContext.SqlAliasManager);
+                typeof(string),
+                _typeMappingSource.FindMapping(typeof(string)),
+                isElementNullable);
+            if (!elementTypeMapping.StoreType.Equals("text", StringComparison.OrdinalIgnoreCase))
+            {
+                elementProjection = RelationalDependencies.SqlExpressionFactory.Convert(
+                    elementProjection,
+                    elementType,
+                    elementTypeMapping);
+            }
+
+            selectExpression = new SelectExpression(
+                [
+                    new BlueTuskSetReturningFunctionTableExpression(
+                        tableAlias,
+                        jsonStoreType == "jsonb"
+                            ? "jsonb_array_elements_text"
+                            : "json_array_elements_text",
+                        [sqlExpression],
+                        ["value"],
+                        withOrdinality: true),
+                ],
+                elementProjection,
+                identifier: [(ordinalityColumn, (ValueComparer)ordinalityTypeMapping.Comparer)],
+                _queryCompilationContext.SqlAliasManager);
+        }
+        else
+        {
+            selectExpression = new SelectExpression(
+                [new BlueTuskUnnestExpression(tableAlias, sqlExpression)],
+                new ColumnExpression(
+                    "value",
+                    tableAlias,
+                    elementType,
+                    elementTypeMapping,
+                    isElementNullable),
+                identifier: [(ordinalityColumn, (ValueComparer)ordinalityTypeMapping.Comparer)],
+                _queryCompilationContext.SqlAliasManager);
+        }
 #pragma warning restore EF1001
         selectExpression.AppendOrdering(new OrderingExpression(ordinalityColumn, ascending: true));
 
