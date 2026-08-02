@@ -67,14 +67,15 @@ ShortRun measurements are environment-specific diagnostics with wide confidence
 intervals; they identify optimization work and are not a claim that one provider
 is universally faster.
 
-The 2026-08-02 Windows/Ryzen 7 5800X reference run records BlueTusk at 1.31x to
-1.54x Npgsql latency and 1.61x to 3.35x Npgsql managed allocation across the
-five pairs. It also records the optimization progress from the original run:
-the untouched pool path moved from a network reset to a 404 ns local checkout,
-and the 1,000-row path moved from 15.3 ms and 235,704 B to 728 µs and 5,212 B.
-The exact current values and environment are checked in under
-`baselines/windows-ryzen7-5800x-dotnet10`; remaining gaps are tracked from data,
-not converted into an unmeasured provider-wide performance claim.
+The final 2026-08-02 Windows/Ryzen 7 5800X reference run records a 199 ns / 168 B
+BlueTusk warm checkout versus 215 ns / 184 B for Npgsql. Parameterized and
+prepared BlueTusk scalars also use less managed memory (2,064 B versus 2,109 B,
+and 992 B versus 1,118 B), although their loopback latencies remain 1.36x and
+1.48x Npgsql. The sequential 1,000-row and 1 MiB stream paths remain 1.41x and
+1.45x slower and allocate more. The exact current values and environment are
+checked in under `baselines/windows-ryzen7-5800x-dotnet10`; measured wins and
+remaining gaps are both retained instead of being converted into an unmeasured
+provider-wide performance claim.
 
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
 1,000-row scan pay 32 additional network exchanges. The optimized path sends
@@ -88,9 +89,12 @@ is refreshed only after the corresponding integration gates pass.
 The warm-pool comparison distinguishes untouched logical checkouts from leases
 that reached the physical session. Untouched open/close cycles require no reset;
 touched leases still run rollback when necessary plus `DISCARD ALL` before reuse.
-The hot path shares the data source's immutable parsed settings and leaves
-notification/large-object coordination unallocated until requested. The live
-pool isolation test remains the authority for the dirty-lease reset invariant.
+The hot path shares the data source's immutable parsed settings, uses one
+lock-free clean-session slot ahead of the contended channel, completes typed
+data-source opens synchronously when the lease is ready, and leaves transaction,
+notification, and large-object coordination unallocated until requested. The
+live pool isolation and stress tests remain the authority for dirty-lease reset,
+waiter wake-up, clear, and disposal invariants.
 
 Scalar execution has a dedicated response path: it retains only the first field
 of the first row instead of building buffered result-set and row collections.
@@ -101,11 +105,13 @@ commands reuse the statement description returned by `Prepare`. The latter
 omits a redundant portal description while preserving binary/text format
 identity and server-error recovery.
 
-Large sequential fields use a 64 KiB per-session protocol read-ahead window and
-fast synchronous `ValueTask` completion through the field-stream stack. This
-keeps caller-visible streaming bounded while reducing socket completions and
-async state-machine allocation. The 1 MiB comparison remains an end-to-end SQL,
-wire, and provider measurement; it is not a memory-copy microbenchmark.
+Large sequential fields start with a 64 KiB per-session protocol buffer and can
+rent up to 1 MiB of read-ahead storage for the active large payload. The buffer
+shrinks back to 64 KiB at the next frame boundary, so ordinary sessions do not
+retain the large window. Fast synchronous `ValueTask` completion through the
+field-stream stack reduces socket completions and async state-machine allocation.
+The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
+it is not a memory-copy microbenchmark.
 
 Run the complete suite in Release mode:
 

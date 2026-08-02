@@ -1119,7 +1119,9 @@ public sealed class BlueTuskCommand : DbCommand
             result.Value);
         if (value is null or DBNull)
         {
-            return default;
+            return typeof(T) == typeof(object)
+                ? (T)(object)DBNull.Value
+                : default;
         }
 
         return value is T typed

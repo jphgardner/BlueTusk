@@ -31,22 +31,26 @@ The transport-pipeline decision reports were added on 2026-08-01. The bounded `S
 
 The live PostgreSQL 19 provider-comparison report was refreshed on 2026-08-02
 against the local server on this machine after the command, pool, and streaming
-hot-path work. BlueTusk/Npgsql means are 499/356 µs for a parameterized scalar,
-451/319 µs for an explicitly prepared scalar, 404/262 ns for an untouched warm
-pool checkout, 728/554 µs for a sequential 1,000-row read, and 14.94/10.22 ms
-for a sequential 1 MiB `bytea` stream. The measured BlueTusk/Npgsql latency
-ratios are therefore 1.40x, 1.41x, 1.54x, 1.31x, and 1.46x respectively; the
-current report does not establish a BlueTusk latency or allocation win over
-Npgsql on any of these five pairs.
+hot-path work. BlueTusk/Npgsql means are 474/348 µs and 2,064/2,109 B for a
+parameterized scalar, 449/304 µs and 992/1,118 B for an explicitly prepared
+scalar, 199/215 ns and 168/184 B for an untouched warm pool checkout, 742/528 µs
+and 5,519/1,611 B for a sequential 1,000-row read, and 15.08/10.41 ms and
+24,977/8,941 B for a sequential 1 MiB `bytea` stream.
+
+The current ShortRun therefore establishes measured BlueTusk wins for both
+latency and managed allocation on untouched warm checkout: approximately 7.2%
+faster and 8.7% smaller. Parameterized and prepared scalar commands allocate
+approximately 2.1% and 11.3% less than Npgsql, respectively, while remaining
+1.36x and 1.48x slower in this loopback run. The sequential row and `bytea`
+paths remain 1.41x and 1.45x slower and allocate 3.43x and 2.79x as much.
 
 Relative to the pre-optimization measurements from the same work session, the
-untouched pool path is approximately 1,180x faster and allocates 22x less, while
-the 1,000-row reader is approximately 21x faster and allocates 45x less. The
-prepared scalar allocates 37% less, and the 1 MiB stream is approximately 6%
-faster with 21% less allocation. Parameterized-scalar latency remained within
-ShortRun noise while allocation fell approximately 11%. These three-iteration
-results are an optimization and regression baseline, not a superiority claim
-or release performance guarantee.
+untouched pool path is approximately 2,390x faster and allocates 39x less, while
+the 1,000-row reader is approximately 21x faster and allocates 43x less. The
+prepared scalar allocates 77% less, the parameterized scalar allocates 58% less,
+and the 1 MiB stream is approximately 5% faster with 28% less allocation. These
+three-iteration results are an optimization and regression baseline, not a
+provider-wide superiority claim or release performance guarantee.
 
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first

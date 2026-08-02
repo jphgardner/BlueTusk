@@ -656,6 +656,17 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task AdoNet_async_object_scalar_preserves_database_null()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand("SELECT NULL::int4", connection);
+
+        Assert.Same(DBNull.Value, await command.ExecuteScalarAsync(CancellationToken.None));
+        Assert.Null(await command.ExecuteScalarAsync<int?>(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task AdoNet_parameters_execute_through_the_extended_protocol()
     {
         await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());

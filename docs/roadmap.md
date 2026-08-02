@@ -583,6 +583,7 @@ explicit environment and workload gate below is executable and checked.
   - [x] Equivalent live BlueTusk/Npgsql warm-pool, parameterized, prepared, 1,000-row, and 1 MiB streaming workloads
   - [x] Checked-in PostgreSQL 19 ShortRun latency/allocation baseline with explicit fairness limits and no runtime Npgsql dependency
   - [x] Eliminate sequential-reader portal-suspension round trips, reuse streamed row state, and add buffered typed-scalar fast paths with cancellation/recovery acceptance
+  - [x] Beat the paired Npgsql warm-checkout latency/allocation result and the parameterized/prepared scalar allocation results; retain the remaining network-latency and sequential-allocation gaps explicitly in the baseline
 - [x] Complete documentation
   - [x] Data-source-first ADO.NET, EF, replication, extension, graph, security, observability, testing, versioning, and release-readiness guides match executable behavior
   - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files
