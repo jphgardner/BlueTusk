@@ -451,8 +451,12 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Destructive materialised-query replacement with transitive provider-owned dependent reconstruction and default-`RESTRICT` drops
   - [x] `pg_class`/`pg_rewrite`/`pg_depend`/`pg_get_viewdef` discovery with system/extension exclusion plus fluent model regeneration
   - [x] PostgreSQL 15–19 execution, check enforcement, concurrent refresh, lifecycle, reverse-engineering, and scaffolding acceptance
-- [ ] PostgreSQL-complete migrations SQL generation
-- [ ] PostgreSQL-complete database reverse engineering and scaffolding
+- [x] Product-spec-complete PostgreSQL migrations SQL generation
+  - [x] Every core and PostgreSQL-specific schema object in product-spec section 19 has typed metadata, dependency-aware operations, SQL generation, and generated migration C# where applicable
+  - [x] Full native EF project acceptance across PostgreSQL 15–19: 301 cases per server, with only the environment-gated tablespace test and the PostgreSQL 16 aggregate capability test skipped where inapplicable
+- [x] Product-spec-complete PostgreSQL database reverse engineering and scaffolding
+  - [x] Every discovery category in product-spec section 21 retains its PostgreSQL semantics through provider annotations and generated fluent C#
+  - [x] Owners, privileges, and application-specific grants remain intentionally outside generated model metadata and require explicit security-reviewed migrations
 - [x] Remaining product-spec schema objects
   - [x] Event triggers
     - [x] Typed DDL-start/end, SQL-drop, table-rewrite, and PostgreSQL 17+ login events with command-tag filters and firing modes

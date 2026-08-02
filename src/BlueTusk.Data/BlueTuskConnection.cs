@@ -166,8 +166,18 @@ public sealed class BlueTuskConnection : DbConnection
 
     internal BlueTuskDiagnosticsOptions DiagnosticsOptions => _clientConfiguration.Diagnostics;
 
+    internal string UnredactedConnectionString => _connectionString;
+
     internal BlueTuskHostEndpoint DiagnosticEndpoint =>
         ConnectedEndpoint ?? _settings.HostEndpoints[0];
+
+    internal BlueTuskConnection CreateUnpooledConnection(string connectionString) =>
+        new(
+            connectionString ?? throw new ArgumentNullException(nameof(connectionString)),
+            pool: null,
+            new BlueTuskTypeMetadataCache(),
+            _clientConfiguration,
+            hideSensitiveConnectionString: true);
 
     /// <summary>Gets the current immutable PostgreSQL type-registry snapshot.</summary>
     public BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;

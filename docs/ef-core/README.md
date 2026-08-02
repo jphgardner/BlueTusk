@@ -2270,7 +2270,7 @@ queries are dependency-tracked by PostgreSQL, and `security_invoker` changes
 whose privileges and row-level-security policies apply to underlying relations;
 review both the query and grants as security-sensitive schema.
 
-PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext, pgvector, PostGIS, and TimescaleDB EF packages provide their own extension lifecycle migration helpers. Other PostgreSQL-specific schema features remain in progress. See [the executable roadmap](../roadmap.md) for the exact status.
+PostgreSQL 19 property graphs have typed model metadata, migration diffing and operation scaffolding, central identifier quoting, live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` coverage, and an execution-time SQL/PGQ capability guard. The optional citext, pgvector, PostGIS, and TimescaleDB EF packages provide their own extension lifecycle migration helpers. The complete schema surface defined by product-spec sections 19 and 21 is implemented and acceptance-tested across PostgreSQL 15–19. Ownership, privileges, and application-specific grants remain deliberately explicit migrations rather than generated model metadata.
 
 ## PostgreSQL 19 property-graph queries
 
@@ -2334,9 +2334,17 @@ for all options.
 
 Generated contexts use the BlueTusk provider; `dotnet ef` and the CLI's
 explicit connection-string mode also generate `UseBlueTusk` in
-`OnConfiguring`. Reverse-engineered table CHECK and exclusion constraints, standalone and mixed expression indexes, relation and event triggers, rewrite rules, publications, credential-redacted subscriptions and user mappings, foreign-data wrappers, servers and foreign tables, tablespaces, operators, operator families and classes, casts, aggregates, collations, installed extensions, graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, ranges and paired multiranges, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. PostgreSQL-complete discovery—including privileges and other remaining schema objects—remains a separate roadmap item.
+`OnConfiguring`. Reverse-engineered table CHECK and exclusion constraints, standalone and mixed expression indexes, relation and event triggers, rewrite rules, publications, credential-redacted subscriptions and user mappings, foreign-data wrappers, servers and foreign tables, tablespaces, operators, operator families and classes, casts, aggregates, collations, installed extensions, graphs, partition trees, table-inheritance relationships, RLS policies, enums, domains, standalone composites, ranges and paired multiranges, functions, procedures, ordinary views, and materialised views are retained through provider model annotations and participate in later migration diffs. This completes the database-first discovery surface defined by the product specification. Owners, privileges, and application-specific grants are intentionally not inferred into generated models; use explicit migrations for those deployment security decisions.
 
 ## Validation
+
+The full native EF provider project runs 301 cases on each supported server.
+PostgreSQL 15 passes 299 cases with the filesystem-dependent tablespace case
+and the PostgreSQL 16 aggregate-capability case skipped; PostgreSQL 16–19 each
+pass 300 cases with only the tablespace case skipped when no server-owned test
+directory is configured. The matrix covers query translation and execution,
+database lifecycle, migrations, catalogue discovery, generated code, and
+product-specific schema objects.
 
 The PostgreSQL 15–19 table-CHECK gate verifies inline and deferred creation,
 `NO INHERIT`, enforcement of unvalidated constraints for new rows, PostgreSQL

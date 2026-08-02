@@ -161,12 +161,15 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
     {
         var options = Dependencies.ContextOptions.FindExtension<BlueTuskOptionsExtension>();
         return CreateLifecycleSettings(
-            Dependencies.Connection.ConnectionString ?? string.Empty,
+            GetConnection()?.UnredactedConnectionString
+                ?? Dependencies.Connection.ConnectionString
+                ?? string.Empty,
             options?.AdminDatabase);
     }
 
     private BlueTuskConnection CreateAdminConnection(string connectionString) =>
         GetDataSource()?.CreateUnpooledConnection(connectionString)
+        ?? GetConnection()?.CreateUnpooledConnection(connectionString)
         ?? new BlueTuskConnection(connectionString);
 
     private string DelimitIdentifier(string identifier) =>
@@ -216,6 +219,9 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
 
     private BlueTuskDataSource? GetDataSource() =>
         (Dependencies.Connection as BlueTuskRelationalConnection)?.DataSource;
+
+    private BlueTuskConnection? GetConnection() =>
+        Dependencies.Connection.DbConnection as BlueTuskConnection;
 }
 
 internal sealed record BlueTuskDatabaseLifecycleSettings(
