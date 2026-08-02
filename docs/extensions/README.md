@@ -2,7 +2,14 @@
 
 Extensions register types and immutable feature descriptors through `BlueTusk.Extensions.Abstractions`. `BlueTuskDataSourceBuilder.Build()` snapshots both registries into the resulting data source. Later builder changes do not mutate an existing data source, and optional packages remain independently deployable without extension-specific dependencies in BlueTusk core packages.
 
-The API is still preview. `BlueTusk.Extensions.Citext` is the first executable compatibility slice; it does not make the broader extension SDK stable.
+The extension-authoring seam is compatibility-stable: the public surfaces of
+`BlueTusk.Extensions.Abstractions`, `BlueTusk.Extensions.Testing`,
+`BlueTusk.TypeSystem`, and the ADO.NET integration points have compiler-enforced
+shipped API/nullability baselines. `BlueTusk.Extensions.Citext` supplied the
+first executable compatibility slice and the packaged template exercises the
+same contract. Individual extension packages and their EF integrations remain
+preview and may evolve independently until their own public surfaces are
+baselined.
 
 ## Start an extension package
 
@@ -116,9 +123,9 @@ var feature = dataSource.Features.GetRequired<BlueTuskCitextFeature>(
 No citext SQL, CLR type, or package reference is present in `BlueTusk.Data`,
 `BlueTusk.Client`, `BlueTusk.EntityFrameworkCore`, or lower layers. The EF
 mapping and migration SQL live only in the companion package. The authoring
-template and compatibility harness establish an executable preview contract,
-but stability still requires ecosystem feedback and an explicit versioning
-commitment.
+template and compatibility harness establish the executable stable authoring
+contract. Citext-specific and EF-specific convenience APIs remain preview;
+stability of the seam does not promote every optional package to 1.0.
 
 ## pgvector preview
 

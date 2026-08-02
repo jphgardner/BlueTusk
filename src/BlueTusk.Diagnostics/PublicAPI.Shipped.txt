@@ -1,0 +1,37 @@
+#nullable enable
+BlueTusk.Diagnostics.BlueTuskDiagnostics
+BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions
+BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.<Clone>$() -> BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions!
+BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.BlueTuskDiagnosticsOptions() -> void
+BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.Equals(BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions? other) -> bool
+BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.SlowCommandThreshold.get -> System.TimeSpan?
+BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.SlowCommandThreshold.init -> void
+const BlueTusk.Diagnostics.BlueTuskDiagnostics.InstrumentationName = "BlueTusk.Diagnostics" -> string!
+const BlueTusk.Diagnostics.BlueTuskDiagnostics.SlowCommandEventSourceName = "BlueTusk-Diagnostics" -> string!
+override BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.Equals(object? obj) -> bool
+override BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.GetHashCode() -> int
+override BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.ToString() -> string!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ActivitySource.get -> System.Diagnostics.ActivitySource!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.CommandDuration.get -> System.Diagnostics.Metrics.Histogram<double>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.CommandsExecuted.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.CommandsFailed.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ConnectionFailovers.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ConnectionRetries.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ConnectionsFailed.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ConnectionsOpened.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.CopyBytes.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.DatabaseClientOperationDuration.get -> System.Diagnostics.Metrics.Histogram<double>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.Meter.get -> System.Diagnostics.Metrics.Meter!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PoolCheckoutDuration.get -> System.Diagnostics.Metrics.Histogram<double>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PoolConnections.get -> System.Diagnostics.Metrics.UpDownCounter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PoolDiscards.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PoolLeases.get -> System.Diagnostics.Metrics.UpDownCounter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PoolResets.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PoolReuses.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PoolWaiters.get -> System.Diagnostics.Metrics.UpDownCounter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.PreparedStatements.get -> System.Diagnostics.Metrics.Counter<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ProtocolMessageSize.get -> System.Diagnostics.Metrics.Histogram<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ReplicationReceiveLag.get -> System.Diagnostics.Metrics.Histogram<double>!
+static BlueTusk.Diagnostics.BlueTuskDiagnostics.ReplicationWalLag.get -> System.Diagnostics.Metrics.Histogram<long>!
+static BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.operator !=(BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions? left, BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions? right) -> bool
+static BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions.operator ==(BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions? left, BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions? right) -> bool

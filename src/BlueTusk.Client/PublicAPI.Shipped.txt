@@ -1,0 +1,359 @@
+#nullable enable
+~override BlueTusk.Client.BlueTuskExtendedQueryParameter.Equals(object obj) -> bool
+~override BlueTusk.Client.BlueTuskExtendedQueryParameter.ToString() -> string
+BlueTusk.Client.BlueTuskAccessTokenProvider
+BlueTusk.Client.BlueTuskAccessTokenProviderAsync
+BlueTusk.Client.BlueTuskBatchQuery
+BlueTusk.Client.BlueTuskBatchQuery.<Clone>$() -> BlueTusk.Client.BlueTuskBatchQuery!
+BlueTusk.Client.BlueTuskBatchQuery.BlueTuskBatchQuery(string! Sql, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! Parameters, bool UseBinaryResults = true) -> void
+BlueTusk.Client.BlueTuskBatchQuery.Deconstruct(out string! Sql, out System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! Parameters, out bool UseBinaryResults) -> void
+BlueTusk.Client.BlueTuskBatchQuery.Equals(BlueTusk.Client.BlueTuskBatchQuery? other) -> bool
+BlueTusk.Client.BlueTuskBatchQuery.Parameters.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>!
+BlueTusk.Client.BlueTuskBatchQuery.Parameters.init -> void
+BlueTusk.Client.BlueTuskBatchQuery.Sql.get -> string!
+BlueTusk.Client.BlueTuskBatchQuery.Sql.init -> void
+BlueTusk.Client.BlueTuskBatchQuery.UseBinaryResults.get -> bool
+BlueTusk.Client.BlueTuskBatchQuery.UseBinaryResults.init -> void
+BlueTusk.Client.BlueTuskChannelBindingMode
+BlueTusk.Client.BlueTuskChannelBindingMode.Disable = 0 -> BlueTusk.Client.BlueTuskChannelBindingMode
+BlueTusk.Client.BlueTuskChannelBindingMode.Prefer = 1 -> BlueTusk.Client.BlueTuskChannelBindingMode
+BlueTusk.Client.BlueTuskChannelBindingMode.Require = 2 -> BlueTusk.Client.BlueTuskChannelBindingMode
+BlueTusk.Client.BlueTuskClientOptions
+BlueTusk.Client.BlueTuskClientOptions.<Clone>$() -> BlueTusk.Client.BlueTuskClientOptions!
+BlueTusk.Client.BlueTuskClientOptions.AccessTokenProvider.get -> BlueTusk.Client.BlueTuskAccessTokenProvider?
+BlueTusk.Client.BlueTuskClientOptions.AccessTokenProvider.init -> void
+BlueTusk.Client.BlueTuskClientOptions.AccessTokenProviderAsync.get -> BlueTusk.Client.BlueTuskAccessTokenProviderAsync?
+BlueTusk.Client.BlueTuskClientOptions.AccessTokenProviderAsync.init -> void
+BlueTusk.Client.BlueTuskClientOptions.AccessTokenRequiresTls.get -> bool
+BlueTusk.Client.BlueTuskClientOptions.AccessTokenRequiresTls.init -> void
+BlueTusk.Client.BlueTuskClientOptions.AllowUnencryptedPassword.get -> bool
+BlueTusk.Client.BlueTuskClientOptions.AllowUnencryptedPassword.init -> void
+BlueTusk.Client.BlueTuskClientOptions.ApplicationName.get -> string!
+BlueTusk.Client.BlueTuskClientOptions.ApplicationName.init -> void
+BlueTusk.Client.BlueTuskClientOptions.BlueTuskClientOptions() -> void
+BlueTusk.Client.BlueTuskClientOptions.CertificateRevocationCheckMode.get -> System.Security.Cryptography.X509Certificates.X509RevocationMode
+BlueTusk.Client.BlueTuskClientOptions.CertificateRevocationCheckMode.init -> void
+BlueTusk.Client.BlueTuskClientOptions.ChannelBinding.get -> BlueTusk.Client.BlueTuskChannelBindingMode
+BlueTusk.Client.BlueTuskClientOptions.ChannelBinding.init -> void
+BlueTusk.Client.BlueTuskClientOptions.ClientCertificates.get -> System.Collections.Generic.IReadOnlyCollection<System.Security.Cryptography.X509Certificates.X509Certificate2!>!
+BlueTusk.Client.BlueTuskClientOptions.ClientCertificates.init -> void
+BlueTusk.Client.BlueTuskClientOptions.ConnectTimeout.get -> System.TimeSpan
+BlueTusk.Client.BlueTuskClientOptions.ConnectTimeout.init -> void
+BlueTusk.Client.BlueTuskClientOptions.Database.get -> string!
+BlueTusk.Client.BlueTuskClientOptions.Database.init -> void
+BlueTusk.Client.BlueTuskClientOptions.Equals(BlueTusk.Client.BlueTuskClientOptions? other) -> bool
+BlueTusk.Client.BlueTuskClientOptions.GssCredential.get -> System.Net.NetworkCredential?
+BlueTusk.Client.BlueTuskClientOptions.GssCredential.init -> void
+BlueTusk.Client.BlueTuskClientOptions.Host.get -> string!
+BlueTusk.Client.BlueTuskClientOptions.Host.init -> void
+BlueTusk.Client.BlueTuskClientOptions.KerberosServiceName.get -> string!
+BlueTusk.Client.BlueTuskClientOptions.KerberosServiceName.init -> void
+BlueTusk.Client.BlueTuskClientOptions.LocalCertificateSelectionCallback.get -> System.Net.Security.LocalCertificateSelectionCallback?
+BlueTusk.Client.BlueTuskClientOptions.LocalCertificateSelectionCallback.init -> void
+BlueTusk.Client.BlueTuskClientOptions.Passfile.get -> string?
+BlueTusk.Client.BlueTuskClientOptions.Passfile.init -> void
+BlueTusk.Client.BlueTuskClientOptions.Password.get -> string?
+BlueTusk.Client.BlueTuskClientOptions.Password.init -> void
+BlueTusk.Client.BlueTuskClientOptions.PasswordProvider.get -> BlueTusk.Client.BlueTuskPasswordProvider?
+BlueTusk.Client.BlueTuskClientOptions.PasswordProvider.init -> void
+BlueTusk.Client.BlueTuskClientOptions.PasswordProviderAsync.get -> BlueTusk.Client.BlueTuskPasswordProviderAsync?
+BlueTusk.Client.BlueTuskClientOptions.PasswordProviderAsync.init -> void
+BlueTusk.Client.BlueTuskClientOptions.Port.get -> int
+BlueTusk.Client.BlueTuskClientOptions.Port.init -> void
+BlueTusk.Client.BlueTuskClientOptions.RemoteCertificateValidationCallback.get -> System.Net.Security.RemoteCertificateValidationCallback?
+BlueTusk.Client.BlueTuskClientOptions.RemoteCertificateValidationCallback.init -> void
+BlueTusk.Client.BlueTuskClientOptions.ReplicationMode.get -> BlueTusk.Client.BlueTuskReplicationMode
+BlueTusk.Client.BlueTuskClientOptions.ReplicationMode.init -> void
+BlueTusk.Client.BlueTuskClientOptions.SslMode.get -> BlueTusk.Client.BlueTuskSslMode
+BlueTusk.Client.BlueTuskClientOptions.SslMode.init -> void
+BlueTusk.Client.BlueTuskClientOptions.Username.get -> string!
+BlueTusk.Client.BlueTuskClientOptions.Username.init -> void
+BlueTusk.Client.BlueTuskCommandExecutionMode
+BlueTusk.Client.BlueTuskCommandExecutionMode.Auto = 0 -> BlueTusk.Client.BlueTuskCommandExecutionMode
+BlueTusk.Client.BlueTuskCommandExecutionMode.Extended = 2 -> BlueTusk.Client.BlueTuskCommandExecutionMode
+BlueTusk.Client.BlueTuskCommandExecutionMode.Simple = 1 -> BlueTusk.Client.BlueTuskCommandExecutionMode
+BlueTusk.Client.BlueTuskCopyBothChannel
+BlueTusk.Client.BlueTuskCopyBothChannel.CommandTag.get -> string?
+BlueTusk.Client.BlueTuskCopyBothChannel.CompleteAsync() -> System.Threading.Tasks.ValueTask<string?>
+BlueTusk.Client.BlueTuskCopyBothChannel.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskCopyBothChannel.IsCompleted.get -> bool
+BlueTusk.Client.BlueTuskCopyBothChannel.ReadAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>?>
+BlueTusk.Client.BlueTuskCopyBothChannel.Response.get -> BlueTusk.Protocol.BlueTuskCopyResponse!
+BlueTusk.Client.BlueTuskCopyBothChannel.WriteAsync(System.ReadOnlyMemory<byte> data, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskCopyInOperation
+BlueTusk.Client.BlueTuskCopyInOperation.Complete() -> BlueTusk.Client.BlueTuskCopyResult!
+BlueTusk.Client.BlueTuskCopyInOperation.Dispose() -> void
+BlueTusk.Client.BlueTuskCopyInOperation.Response.get -> BlueTusk.Protocol.BlueTuskCopyResponse!
+BlueTusk.Client.BlueTuskCopyInOperation.Write(System.ReadOnlySpan<byte> data) -> void
+BlueTusk.Client.BlueTuskCopyOutOperation
+BlueTusk.Client.BlueTuskCopyOutOperation.Dispose() -> void
+BlueTusk.Client.BlueTuskCopyOutOperation.Read(System.Span<byte> destination) -> int
+BlueTusk.Client.BlueTuskCopyOutOperation.Response.get -> BlueTusk.Protocol.BlueTuskCopyResponse!
+BlueTusk.Client.BlueTuskCopyOutOperation.Result.get -> BlueTusk.Client.BlueTuskCopyResult?
+BlueTusk.Client.BlueTuskCopyResult
+BlueTusk.Client.BlueTuskCopyResult.<Clone>$() -> BlueTusk.Client.BlueTuskCopyResult!
+BlueTusk.Client.BlueTuskCopyResult.BlueTuskCopyResult(BlueTusk.Protocol.BlueTuskCopyResponse! Response, string! CommandTag, long BytesTransferred) -> void
+BlueTusk.Client.BlueTuskCopyResult.BytesTransferred.get -> long
+BlueTusk.Client.BlueTuskCopyResult.BytesTransferred.init -> void
+BlueTusk.Client.BlueTuskCopyResult.CommandTag.get -> string!
+BlueTusk.Client.BlueTuskCopyResult.CommandTag.init -> void
+BlueTusk.Client.BlueTuskCopyResult.Deconstruct(out BlueTusk.Protocol.BlueTuskCopyResponse! Response, out string! CommandTag, out long BytesTransferred) -> void
+BlueTusk.Client.BlueTuskCopyResult.Equals(BlueTusk.Client.BlueTuskCopyResult? other) -> bool
+BlueTusk.Client.BlueTuskCopyResult.Response.get -> BlueTusk.Protocol.BlueTuskCopyResponse!
+BlueTusk.Client.BlueTuskCopyResult.Response.init -> void
+BlueTusk.Client.BlueTuskCredentialRequest
+BlueTusk.Client.BlueTuskCredentialRequest.<Clone>$() -> BlueTusk.Client.BlueTuskCredentialRequest!
+BlueTusk.Client.BlueTuskCredentialRequest.BlueTuskCredentialRequest(string! Host, int Port, string! Database, string! Username) -> void
+BlueTusk.Client.BlueTuskCredentialRequest.Database.get -> string!
+BlueTusk.Client.BlueTuskCredentialRequest.Database.init -> void
+BlueTusk.Client.BlueTuskCredentialRequest.Deconstruct(out string! Host, out int Port, out string! Database, out string! Username) -> void
+BlueTusk.Client.BlueTuskCredentialRequest.Equals(BlueTusk.Client.BlueTuskCredentialRequest? other) -> bool
+BlueTusk.Client.BlueTuskCredentialRequest.Host.get -> string!
+BlueTusk.Client.BlueTuskCredentialRequest.Host.init -> void
+BlueTusk.Client.BlueTuskCredentialRequest.Port.get -> int
+BlueTusk.Client.BlueTuskCredentialRequest.Port.init -> void
+BlueTusk.Client.BlueTuskCredentialRequest.Username.get -> string!
+BlueTusk.Client.BlueTuskCredentialRequest.Username.init -> void
+BlueTusk.Client.BlueTuskExtendedQueryParameter
+BlueTusk.Client.BlueTuskExtendedQueryParameter.BlueTuskExtendedQueryParameter() -> void
+BlueTusk.Client.BlueTuskExtendedQueryParameter.BlueTuskExtendedQueryParameter(uint TypeOid, short FormatCode, System.ReadOnlyMemory<byte>? Value) -> void
+BlueTusk.Client.BlueTuskExtendedQueryParameter.Deconstruct(out uint TypeOid, out short FormatCode, out System.ReadOnlyMemory<byte>? Value) -> void
+BlueTusk.Client.BlueTuskExtendedQueryParameter.Equals(BlueTusk.Client.BlueTuskExtendedQueryParameter other) -> bool
+BlueTusk.Client.BlueTuskExtendedQueryParameter.FormatCode.get -> short
+BlueTusk.Client.BlueTuskExtendedQueryParameter.FormatCode.init -> void
+BlueTusk.Client.BlueTuskExtendedQueryParameter.TypeOid.get -> uint
+BlueTusk.Client.BlueTuskExtendedQueryParameter.TypeOid.init -> void
+BlueTusk.Client.BlueTuskExtendedQueryParameter.Value.get -> System.ReadOnlyMemory<byte>?
+BlueTusk.Client.BlueTuskExtendedQueryParameter.Value.init -> void
+BlueTusk.Client.BlueTuskPasswordProvider
+BlueTusk.Client.BlueTuskPasswordProviderAsync
+BlueTusk.Client.BlueTuskPipelineGroup
+BlueTusk.Client.BlueTuskPipelineGroup.<Clone>$() -> BlueTusk.Client.BlueTuskPipelineGroup!
+BlueTusk.Client.BlueTuskPipelineGroup.BlueTuskPipelineGroup(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskBatchQuery!>! Queries) -> void
+BlueTusk.Client.BlueTuskPipelineGroup.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskBatchQuery!>! Queries) -> void
+BlueTusk.Client.BlueTuskPipelineGroup.Equals(BlueTusk.Client.BlueTuskPipelineGroup? other) -> bool
+BlueTusk.Client.BlueTuskPipelineGroup.Queries.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskBatchQuery!>!
+BlueTusk.Client.BlueTuskPipelineGroup.Queries.init -> void
+BlueTusk.Client.BlueTuskPipelineGroupResult
+BlueTusk.Client.BlueTuskPipelineGroupResult.<Clone>$() -> BlueTusk.Client.BlueTuskPipelineGroupResult!
+BlueTusk.Client.BlueTuskPipelineGroupResult.BlueTuskPipelineGroupResult(BlueTusk.Client.BlueTuskQueryResult! Result, BlueTusk.Client.BlueTuskServerException? Error) -> void
+BlueTusk.Client.BlueTuskPipelineGroupResult.Deconstruct(out BlueTusk.Client.BlueTuskQueryResult! Result, out BlueTusk.Client.BlueTuskServerException? Error) -> void
+BlueTusk.Client.BlueTuskPipelineGroupResult.Equals(BlueTusk.Client.BlueTuskPipelineGroupResult? other) -> bool
+BlueTusk.Client.BlueTuskPipelineGroupResult.Error.get -> BlueTusk.Client.BlueTuskServerException?
+BlueTusk.Client.BlueTuskPipelineGroupResult.Error.init -> void
+BlueTusk.Client.BlueTuskPipelineGroupResult.Result.get -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskPipelineGroupResult.Result.init -> void
+BlueTusk.Client.BlueTuskPipelineGroupResult.Succeeded.get -> bool
+BlueTusk.Client.BlueTuskPipelineResult
+BlueTusk.Client.BlueTuskPipelineResult.<Clone>$() -> BlueTusk.Client.BlueTuskPipelineResult!
+BlueTusk.Client.BlueTuskPipelineResult.BlueTuskPipelineResult(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskPipelineGroupResult!>! Groups) -> void
+BlueTusk.Client.BlueTuskPipelineResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskPipelineGroupResult!>! Groups) -> void
+BlueTusk.Client.BlueTuskPipelineResult.Equals(BlueTusk.Client.BlueTuskPipelineResult? other) -> bool
+BlueTusk.Client.BlueTuskPipelineResult.Groups.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskPipelineGroupResult!>!
+BlueTusk.Client.BlueTuskPipelineResult.Groups.init -> void
+BlueTusk.Client.BlueTuskPipelineResult.Succeeded.get -> bool
+BlueTusk.Client.BlueTuskPortal
+BlueTusk.Client.BlueTuskPortal.CommandTag.get -> string?
+BlueTusk.Client.BlueTuskPortal.Dispose() -> void
+BlueTusk.Client.BlueTuskPortal.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskPortal.FetchSize.get -> int
+BlueTusk.Client.BlueTuskPortal.Fields.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskFieldDescription!>!
+BlueTusk.Client.BlueTuskPortal.IsCompleted.get -> bool
+BlueTusk.Client.BlueTuskPortal.Name.get -> string!
+BlueTusk.Client.BlueTuskPortal.Read() -> BlueTusk.Client.BlueTuskPortalRow?
+BlueTusk.Client.BlueTuskPortal.ReadAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskPortalRow?>
+BlueTusk.Client.BlueTuskPortal.RowsRead.get -> long
+BlueTusk.Client.BlueTuskPortalRow
+BlueTusk.Client.BlueTuskPortalRow.FieldCount.get -> int
+BlueTusk.Client.BlueTuskPortalRow.GetFieldLength(int ordinal) -> int
+BlueTusk.Client.BlueTuskPortalRow.GetFieldLengthAsync(int ordinal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Client.BlueTuskPortalRow.IsDBNull(int ordinal) -> bool
+BlueTusk.Client.BlueTuskPortalRow.IsDBNullAsync(int ordinal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Client.BlueTuskPortalRow.OpenFieldStream(int ordinal) -> System.IO.Stream!
+BlueTusk.Client.BlueTuskPortalRow.ReadBytes(int ordinal, long dataOffset, System.Span<byte> destination) -> long
+BlueTusk.Client.BlueTuskPortalRow.ReadField(int ordinal) -> System.ReadOnlyMemory<byte>?
+BlueTusk.Client.BlueTuskPortalRow.ReadFieldAsync(int ordinal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>?>
+BlueTusk.Client.BlueTuskPreparedBatchQuery
+BlueTusk.Client.BlueTuskPreparedBatchQuery.<Clone>$() -> BlueTusk.Client.BlueTuskPreparedBatchQuery!
+BlueTusk.Client.BlueTuskPreparedBatchQuery.BlueTuskPreparedBatchQuery(string! StatementName, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! Parameters, bool UseBinaryResults = true) -> void
+BlueTusk.Client.BlueTuskPreparedBatchQuery.Deconstruct(out string! StatementName, out System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! Parameters, out bool UseBinaryResults) -> void
+BlueTusk.Client.BlueTuskPreparedBatchQuery.Equals(BlueTusk.Client.BlueTuskPreparedBatchQuery? other) -> bool
+BlueTusk.Client.BlueTuskPreparedBatchQuery.Parameters.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>!
+BlueTusk.Client.BlueTuskPreparedBatchQuery.Parameters.init -> void
+BlueTusk.Client.BlueTuskPreparedBatchQuery.StatementName.get -> string!
+BlueTusk.Client.BlueTuskPreparedBatchQuery.StatementName.init -> void
+BlueTusk.Client.BlueTuskPreparedBatchQuery.UseBinaryResults.get -> bool
+BlueTusk.Client.BlueTuskPreparedBatchQuery.UseBinaryResults.init -> void
+BlueTusk.Client.BlueTuskQueryResult
+BlueTusk.Client.BlueTuskQueryResult.<Clone>$() -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskQueryResult.BlueTuskQueryResult(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskResultSet!>! ResultSets) -> void
+BlueTusk.Client.BlueTuskQueryResult.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskResultSet!>! ResultSets) -> void
+BlueTusk.Client.BlueTuskQueryResult.Equals(BlueTusk.Client.BlueTuskQueryResult? other) -> bool
+BlueTusk.Client.BlueTuskQueryResult.FirstOrDefault.get -> BlueTusk.Client.BlueTuskResultSet?
+BlueTusk.Client.BlueTuskQueryResult.ResultSets.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskResultSet!>!
+BlueTusk.Client.BlueTuskQueryResult.ResultSets.init -> void
+BlueTusk.Client.BlueTuskReplicationMode
+BlueTusk.Client.BlueTuskReplicationMode.Database = 2 -> BlueTusk.Client.BlueTuskReplicationMode
+BlueTusk.Client.BlueTuskReplicationMode.None = 0 -> BlueTusk.Client.BlueTuskReplicationMode
+BlueTusk.Client.BlueTuskReplicationMode.Physical = 1 -> BlueTusk.Client.BlueTuskReplicationMode
+BlueTusk.Client.BlueTuskResultSet
+BlueTusk.Client.BlueTuskResultSet.<Clone>$() -> BlueTusk.Client.BlueTuskResultSet!
+BlueTusk.Client.BlueTuskResultSet.BlueTuskResultSet(System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskFieldDescription!>! Fields, System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskDataRow!>! Rows, string! CommandTag) -> void
+BlueTusk.Client.BlueTuskResultSet.CommandTag.get -> string!
+BlueTusk.Client.BlueTuskResultSet.CommandTag.init -> void
+BlueTusk.Client.BlueTuskResultSet.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskFieldDescription!>! Fields, out System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskDataRow!>! Rows, out string! CommandTag) -> void
+BlueTusk.Client.BlueTuskResultSet.Equals(BlueTusk.Client.BlueTuskResultSet? other) -> bool
+BlueTusk.Client.BlueTuskResultSet.Fields.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskFieldDescription!>!
+BlueTusk.Client.BlueTuskResultSet.Fields.init -> void
+BlueTusk.Client.BlueTuskResultSet.Rows.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskDataRow!>!
+BlueTusk.Client.BlueTuskResultSet.Rows.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities
+BlueTusk.Client.BlueTuskServerCapabilities.<Clone>$() -> BlueTusk.Client.BlueTuskServerCapabilities!
+BlueTusk.Client.BlueTuskServerCapabilities.BlueTuskServerCapabilities() -> void
+BlueTusk.Client.BlueTuskServerCapabilities.Equals(BlueTusk.Client.BlueTuskServerCapabilities? other) -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.Extensions.get -> System.Collections.Generic.IReadOnlyDictionary<string!, System.Version!>!
+BlueTusk.Client.BlueTuskServerCapabilities.Extensions.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.ProtocolVersion.get -> BlueTusk.Protocol.BlueTuskProtocolVersion
+BlueTusk.Client.BlueTuskServerCapabilities.ProtocolVersion.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.ServerVersion.get -> System.Version!
+BlueTusk.Client.BlueTuskServerCapabilities.ServerVersion.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsMerge.get -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsMerge.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsMultiranges.get -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsMultiranges.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsOAuthBearer.get -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsOAuthBearer.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsPipelineMode.get -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsPipelineMode.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsSqlPgq.get -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsSqlPgq.init -> void
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsVirtualGeneratedColumns.get -> bool
+BlueTusk.Client.BlueTuskServerCapabilities.SupportsVirtualGeneratedColumns.init -> void
+BlueTusk.Client.BlueTuskServerException
+BlueTusk.Client.BlueTuskServerException.BlueTuskServerException(BlueTusk.Protocol.BlueTuskError! error) -> void
+BlueTusk.Client.BlueTuskServerException.Error.get -> BlueTusk.Protocol.BlueTuskError!
+BlueTusk.Client.BlueTuskServerException.Severity.get -> string!
+BlueTusk.Client.BlueTuskServerException.SqlState.get -> string?
+BlueTusk.Client.BlueTuskSession
+BlueTusk.Client.BlueTuskSession.BackendKeyData.get -> BlueTusk.Protocol.BlueTuskBackendKeyData?
+BlueTusk.Client.BlueTuskSession.BeginCopyBothAsync(string! sql, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskCopyBothChannel!>
+BlueTusk.Client.BlueTuskSession.BeginCopyIn(string! sql) -> BlueTusk.Client.BlueTuskCopyInOperation!
+BlueTusk.Client.BlueTuskSession.BeginCopyOut(string! sql) -> BlueTusk.Client.BlueTuskCopyOutOperation!
+BlueTusk.Client.BlueTuskSession.BeginPortal(string! sql, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults = true, int fetchSize = 32) -> BlueTusk.Client.BlueTuskPortal!
+BlueTusk.Client.BlueTuskSession.BeginPortalAsync(string! sql, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults = true, int fetchSize = 32, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskPortal!>
+BlueTusk.Client.BlueTuskSession.BeginPreparedPortal(string! statementName, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults = true, int fetchSize = 32) -> BlueTusk.Client.BlueTuskPortal!
+BlueTusk.Client.BlueTuskSession.BeginPreparedPortalAsync(string! statementName, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults = true, int fetchSize = 32, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskPortal!>
+BlueTusk.Client.BlueTuskSession.Cancel() -> void
+BlueTusk.Client.BlueTuskSession.CancelAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskSession.Capabilities.get -> BlueTusk.Client.BlueTuskServerCapabilities!
+BlueTusk.Client.BlueTuskSession.ClosePreparedStatement(string! statementName) -> void
+BlueTusk.Client.BlueTuskSession.ClosePreparedStatementAsync(string! statementName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskSession.CopyIn(string! sql, System.IO.Stream! source, System.Action<BlueTusk.Protocol.BlueTuskCopyResponse!>? copyStarted) -> BlueTusk.Client.BlueTuskCopyResult!
+BlueTusk.Client.BlueTuskSession.CopyIn(string! sql, System.IO.Stream! source) -> BlueTusk.Client.BlueTuskCopyResult!
+BlueTusk.Client.BlueTuskSession.CopyInAsync(string! sql, System.IO.Stream! source, System.Action<BlueTusk.Protocol.BlueTuskCopyResponse!>? copyStarted, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskCopyResult!>
+BlueTusk.Client.BlueTuskSession.CopyInAsync(string! sql, System.IO.Stream! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskCopyResult!>
+BlueTusk.Client.BlueTuskSession.CopyOut(string! sql, System.IO.Stream! destination, System.Action<BlueTusk.Protocol.BlueTuskCopyResponse!>? copyStarted) -> BlueTusk.Client.BlueTuskCopyResult!
+BlueTusk.Client.BlueTuskSession.CopyOut(string! sql, System.IO.Stream! destination) -> BlueTusk.Client.BlueTuskCopyResult!
+BlueTusk.Client.BlueTuskSession.CopyOutAsync(string! sql, System.IO.Stream! destination, System.Action<BlueTusk.Protocol.BlueTuskCopyResponse!>? copyStarted, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskCopyResult!>
+BlueTusk.Client.BlueTuskSession.CopyOutAsync(string! sql, System.IO.Stream! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskCopyResult!>
+BlueTusk.Client.BlueTuskSession.Dispose() -> void
+BlueTusk.Client.BlueTuskSession.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskSession.ExecuteBatch(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskBatchQuery!>! queries) -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskSession.ExecuteBatchAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskBatchQuery!>! queries, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskQueryResult!>
+BlueTusk.Client.BlueTuskSession.ExecuteExtendedQuery(string! sql, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults) -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskSession.ExecuteExtendedQuery(string! sql, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters) -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskSession.ExecuteExtendedQueryAsync(string! sql, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskQueryResult!>
+BlueTusk.Client.BlueTuskSession.ExecuteExtendedQueryAsync(string! sql, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskQueryResult!>
+BlueTusk.Client.BlueTuskSession.ExecutePipeline(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskPipelineGroup!>! groups) -> BlueTusk.Client.BlueTuskPipelineResult!
+BlueTusk.Client.BlueTuskSession.ExecutePipelineAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskPipelineGroup!>! groups, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskPipelineResult!>
+BlueTusk.Client.BlueTuskSession.ExecutePreparedBatch(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskPreparedBatchQuery!>! queries) -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskSession.ExecutePreparedBatchAsync(System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskPreparedBatchQuery!>! queries, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskQueryResult!>
+BlueTusk.Client.BlueTuskSession.ExecutePreparedStatement(string! statementName, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults = true) -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskSession.ExecutePreparedStatementAsync(string! statementName, System.Collections.Generic.IReadOnlyList<BlueTusk.Client.BlueTuskExtendedQueryParameter>! parameters, bool useBinaryResults = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskQueryResult!>
+BlueTusk.Client.BlueTuskSession.ExecuteSimpleQuery(string! sql) -> BlueTusk.Client.BlueTuskQueryResult!
+BlueTusk.Client.BlueTuskSession.ExecuteSimpleQueryAsync(string! sql, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskQueryResult!>
+BlueTusk.Client.BlueTuskSession.IsEncrypted.get -> bool
+BlueTusk.Client.BlueTuskSession.IsOpen.get -> bool
+BlueTusk.Client.BlueTuskSession.Notices.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskError!>!
+BlueTusk.Client.BlueTuskSession.Parameters.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+BlueTusk.Client.BlueTuskSession.PrepareStatement(string! statementName, string! sql, System.Collections.Generic.IReadOnlyList<uint>! parameterTypeOids) -> void
+BlueTusk.Client.BlueTuskSession.PrepareStatementAsync(string! statementName, string! sql, System.Collections.Generic.IReadOnlyList<uint>! parameterTypeOids, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskSession.ProbeOptionalCapabilities() -> void
+BlueTusk.Client.BlueTuskSession.ProbeOptionalCapabilitiesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Client.BlueTuskSession.TransactionStatus.get -> BlueTusk.Protocol.BlueTuskTransactionStatus
+BlueTusk.Client.BlueTuskSession.WaitForNotification() -> BlueTusk.Protocol.BlueTuskNotificationResponse!
+BlueTusk.Client.BlueTuskSession.WaitForNotificationAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Protocol.BlueTuskNotificationResponse!>
+BlueTusk.Client.BlueTuskSql
+BlueTusk.Client.BlueTuskSslMode
+BlueTusk.Client.BlueTuskSslMode.Disable = 0 -> BlueTusk.Client.BlueTuskSslMode
+BlueTusk.Client.BlueTuskSslMode.Prefer = 1 -> BlueTusk.Client.BlueTuskSslMode
+BlueTusk.Client.BlueTuskSslMode.Require = 2 -> BlueTusk.Client.BlueTuskSslMode
+BlueTusk.Client.BlueTuskSslMode.VerifyFull = 3 -> BlueTusk.Client.BlueTuskSslMode
+override BlueTusk.Client.BlueTuskBatchQuery.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskBatchQuery.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskBatchQuery.ToString() -> string!
+override BlueTusk.Client.BlueTuskClientOptions.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskClientOptions.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskClientOptions.ToString() -> string!
+override BlueTusk.Client.BlueTuskCopyResult.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskCopyResult.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskCopyResult.ToString() -> string!
+override BlueTusk.Client.BlueTuskCredentialRequest.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskCredentialRequest.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskCredentialRequest.ToString() -> string!
+override BlueTusk.Client.BlueTuskExtendedQueryParameter.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskPipelineGroup.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskPipelineGroup.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskPipelineGroup.ToString() -> string!
+override BlueTusk.Client.BlueTuskPipelineGroupResult.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskPipelineGroupResult.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskPipelineGroupResult.ToString() -> string!
+override BlueTusk.Client.BlueTuskPipelineResult.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskPipelineResult.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskPipelineResult.ToString() -> string!
+override BlueTusk.Client.BlueTuskPreparedBatchQuery.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskPreparedBatchQuery.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskPreparedBatchQuery.ToString() -> string!
+override BlueTusk.Client.BlueTuskQueryResult.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskQueryResult.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskQueryResult.ToString() -> string!
+override BlueTusk.Client.BlueTuskResultSet.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskResultSet.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskResultSet.ToString() -> string!
+override BlueTusk.Client.BlueTuskServerCapabilities.Equals(object? obj) -> bool
+override BlueTusk.Client.BlueTuskServerCapabilities.GetHashCode() -> int
+override BlueTusk.Client.BlueTuskServerCapabilities.ToString() -> string!
+static BlueTusk.Client.BlueTuskBatchQuery.operator !=(BlueTusk.Client.BlueTuskBatchQuery? left, BlueTusk.Client.BlueTuskBatchQuery? right) -> bool
+static BlueTusk.Client.BlueTuskBatchQuery.operator ==(BlueTusk.Client.BlueTuskBatchQuery? left, BlueTusk.Client.BlueTuskBatchQuery? right) -> bool
+static BlueTusk.Client.BlueTuskClientOptions.FromConnectionString(string! connectionString) -> BlueTusk.Client.BlueTuskClientOptions!
+static BlueTusk.Client.BlueTuskClientOptions.operator !=(BlueTusk.Client.BlueTuskClientOptions? left, BlueTusk.Client.BlueTuskClientOptions? right) -> bool
+static BlueTusk.Client.BlueTuskClientOptions.operator ==(BlueTusk.Client.BlueTuskClientOptions? left, BlueTusk.Client.BlueTuskClientOptions? right) -> bool
+static BlueTusk.Client.BlueTuskCopyResult.operator !=(BlueTusk.Client.BlueTuskCopyResult? left, BlueTusk.Client.BlueTuskCopyResult? right) -> bool
+static BlueTusk.Client.BlueTuskCopyResult.operator ==(BlueTusk.Client.BlueTuskCopyResult? left, BlueTusk.Client.BlueTuskCopyResult? right) -> bool
+static BlueTusk.Client.BlueTuskCredentialRequest.operator !=(BlueTusk.Client.BlueTuskCredentialRequest? left, BlueTusk.Client.BlueTuskCredentialRequest? right) -> bool
+static BlueTusk.Client.BlueTuskCredentialRequest.operator ==(BlueTusk.Client.BlueTuskCredentialRequest? left, BlueTusk.Client.BlueTuskCredentialRequest? right) -> bool
+static BlueTusk.Client.BlueTuskExtendedQueryParameter.operator !=(BlueTusk.Client.BlueTuskExtendedQueryParameter left, BlueTusk.Client.BlueTuskExtendedQueryParameter right) -> bool
+static BlueTusk.Client.BlueTuskExtendedQueryParameter.operator ==(BlueTusk.Client.BlueTuskExtendedQueryParameter left, BlueTusk.Client.BlueTuskExtendedQueryParameter right) -> bool
+static BlueTusk.Client.BlueTuskPipelineGroup.operator !=(BlueTusk.Client.BlueTuskPipelineGroup? left, BlueTusk.Client.BlueTuskPipelineGroup? right) -> bool
+static BlueTusk.Client.BlueTuskPipelineGroup.operator ==(BlueTusk.Client.BlueTuskPipelineGroup? left, BlueTusk.Client.BlueTuskPipelineGroup? right) -> bool
+static BlueTusk.Client.BlueTuskPipelineGroupResult.operator !=(BlueTusk.Client.BlueTuskPipelineGroupResult? left, BlueTusk.Client.BlueTuskPipelineGroupResult? right) -> bool
+static BlueTusk.Client.BlueTuskPipelineGroupResult.operator ==(BlueTusk.Client.BlueTuskPipelineGroupResult? left, BlueTusk.Client.BlueTuskPipelineGroupResult? right) -> bool
+static BlueTusk.Client.BlueTuskPipelineResult.operator !=(BlueTusk.Client.BlueTuskPipelineResult? left, BlueTusk.Client.BlueTuskPipelineResult? right) -> bool
+static BlueTusk.Client.BlueTuskPipelineResult.operator ==(BlueTusk.Client.BlueTuskPipelineResult? left, BlueTusk.Client.BlueTuskPipelineResult? right) -> bool
+static BlueTusk.Client.BlueTuskPreparedBatchQuery.operator !=(BlueTusk.Client.BlueTuskPreparedBatchQuery? left, BlueTusk.Client.BlueTuskPreparedBatchQuery? right) -> bool
+static BlueTusk.Client.BlueTuskPreparedBatchQuery.operator ==(BlueTusk.Client.BlueTuskPreparedBatchQuery? left, BlueTusk.Client.BlueTuskPreparedBatchQuery? right) -> bool
+static BlueTusk.Client.BlueTuskQueryResult.operator !=(BlueTusk.Client.BlueTuskQueryResult? left, BlueTusk.Client.BlueTuskQueryResult? right) -> bool
+static BlueTusk.Client.BlueTuskQueryResult.operator ==(BlueTusk.Client.BlueTuskQueryResult? left, BlueTusk.Client.BlueTuskQueryResult? right) -> bool
+static BlueTusk.Client.BlueTuskResultSet.operator !=(BlueTusk.Client.BlueTuskResultSet? left, BlueTusk.Client.BlueTuskResultSet? right) -> bool
+static BlueTusk.Client.BlueTuskResultSet.operator ==(BlueTusk.Client.BlueTuskResultSet? left, BlueTusk.Client.BlueTuskResultSet? right) -> bool
+static BlueTusk.Client.BlueTuskServerCapabilities.operator !=(BlueTusk.Client.BlueTuskServerCapabilities? left, BlueTusk.Client.BlueTuskServerCapabilities? right) -> bool
+static BlueTusk.Client.BlueTuskServerCapabilities.operator ==(BlueTusk.Client.BlueTuskServerCapabilities? left, BlueTusk.Client.BlueTuskServerCapabilities? right) -> bool
+static BlueTusk.Client.BlueTuskServerCapabilities.Unknown.get -> BlueTusk.Client.BlueTuskServerCapabilities!
+static BlueTusk.Client.BlueTuskSession.Open(BlueTusk.Client.BlueTuskClientOptions! options) -> BlueTusk.Client.BlueTuskSession!
+static BlueTusk.Client.BlueTuskSession.OpenAsync(BlueTusk.Client.BlueTuskClientOptions! options, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Client.BlueTuskSession!>
+static BlueTusk.Client.BlueTuskSql.QuoteIdentifier(string! identifier) -> string!
+static BlueTusk.Client.BlueTuskSql.QuoteLiteral(string! value) -> string!
+virtual BlueTusk.Client.BlueTuskAccessTokenProvider.Invoke(BlueTusk.Client.BlueTuskCredentialRequest! request) -> string!
+virtual BlueTusk.Client.BlueTuskAccessTokenProviderAsync.Invoke(BlueTusk.Client.BlueTuskCredentialRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string!>
+virtual BlueTusk.Client.BlueTuskPasswordProvider.Invoke(BlueTusk.Client.BlueTuskCredentialRequest! request) -> string!
+virtual BlueTusk.Client.BlueTuskPasswordProviderAsync.Invoke(BlueTusk.Client.BlueTuskCredentialRequest! request, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<string!>

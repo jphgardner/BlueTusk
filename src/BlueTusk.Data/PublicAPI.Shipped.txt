@@ -1,0 +1,628 @@
+#nullable enable
+~override BlueTusk.Data.BlueTuskHostEndpoint.Equals(object obj) -> bool
+~override BlueTusk.Data.BlueTuskPoolStatistics.Equals(object obj) -> bool
+~override BlueTusk.Data.BlueTuskPoolStatistics.ToString() -> string
+BlueTusk.Data.BlueTuskBatch
+BlueTusk.Data.BlueTuskBatch.BatchCommands.get -> BlueTusk.Data.BlueTuskBatchCommandCollection!
+BlueTusk.Data.BlueTuskBatch.BlueTuskBatch() -> void
+BlueTusk.Data.BlueTuskBatch.BlueTuskBatch(BlueTusk.Data.BlueTuskConnection! connection) -> void
+BlueTusk.Data.BlueTuskBatch.CancelAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.Data.BlueTuskBatch.Connection.get -> BlueTusk.Data.BlueTuskConnection?
+BlueTusk.Data.BlueTuskBatch.Connection.set -> void
+BlueTusk.Data.BlueTuskBatch.Transaction.get -> BlueTusk.Data.BlueTuskTransaction?
+BlueTusk.Data.BlueTuskBatch.Transaction.set -> void
+BlueTusk.Data.BlueTuskBatchCommand
+BlueTusk.Data.BlueTuskBatchCommand.BlueTuskBatchCommand() -> void
+BlueTusk.Data.BlueTuskBatchCommand.BlueTuskBatchCommand(string! commandText) -> void
+BlueTusk.Data.BlueTuskBatchCommand.Parameters.get -> BlueTusk.Data.BlueTuskParameterCollection!
+BlueTusk.Data.BlueTuskBatchCommandCollection
+BlueTusk.Data.BlueTuskBatchCommandCollection.Add(BlueTusk.Data.BlueTuskBatchCommand! command) -> void
+BlueTusk.Data.BlueTuskBatchCommandCollection.Add(string! commandText) -> BlueTusk.Data.BlueTuskBatchCommand!
+BlueTusk.Data.BlueTuskBatchCommandCollection.BlueTuskBatchCommandCollection() -> void
+BlueTusk.Data.BlueTuskCommand
+BlueTusk.Data.BlueTuskCommand.BlueTuskCommand() -> void
+BlueTusk.Data.BlueTuskCommand.BlueTuskCommand(string! commandText, BlueTusk.Data.BlueTuskConnection! connection) -> void
+BlueTusk.Data.BlueTuskCommand.CancelAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.Data.BlueTuskCommand.Connection.get -> BlueTusk.Data.BlueTuskConnection?
+BlueTusk.Data.BlueTuskCommand.Connection.set -> void
+BlueTusk.Data.BlueTuskCommand.ExecuteScalarAsync<T>(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<T?>!
+BlueTusk.Data.BlueTuskCommand.ExecutionMode.get -> BlueTusk.Client.BlueTuskCommandExecutionMode
+BlueTusk.Data.BlueTuskCommand.ExecutionMode.set -> void
+BlueTusk.Data.BlueTuskCommand.Parameters.get -> BlueTusk.Data.BlueTuskParameterCollection!
+BlueTusk.Data.BlueTuskCommand.SequentialFetchSize.get -> int
+BlueTusk.Data.BlueTuskCommand.SequentialFetchSize.set -> void
+BlueTusk.Data.BlueTuskCommand.Transaction.get -> BlueTusk.Data.BlueTuskTransaction?
+BlueTusk.Data.BlueTuskCommand.Transaction.set -> void
+BlueTusk.Data.BlueTuskConnection
+BlueTusk.Data.BlueTuskConnection.BeginBinaryExport(string! copyCommand) -> BlueTusk.Data.Copy.BlueTuskBinaryExporter!
+BlueTusk.Data.BlueTuskConnection.BeginBinaryExportAsync(string! copyCommand, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.Copy.BlueTuskBinaryExporter!>
+BlueTusk.Data.BlueTuskConnection.BeginBinaryImport(string! copyCommand) -> BlueTusk.Data.Copy.BlueTuskBinaryImporter!
+BlueTusk.Data.BlueTuskConnection.BeginBinaryImportAsync(string! copyCommand, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.Copy.BlueTuskBinaryImporter!>
+BlueTusk.Data.BlueTuskConnection.BeginTransaction() -> BlueTusk.Data.BlueTuskTransaction!
+BlueTusk.Data.BlueTuskConnection.BeginTransaction(System.Data.IsolationLevel isolationLevel) -> BlueTusk.Data.BlueTuskTransaction!
+BlueTusk.Data.BlueTuskConnection.BeginTransactionAsync(System.Data.IsolationLevel isolationLevel, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.BlueTuskTransaction!>
+BlueTusk.Data.BlueTuskConnection.BeginTransactionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.BlueTuskTransaction!>
+BlueTusk.Data.BlueTuskConnection.BlueTuskConnection() -> void
+BlueTusk.Data.BlueTuskConnection.BlueTuskConnection(string! connectionString) -> void
+BlueTusk.Data.BlueTuskConnection.ConnectedEndpoint.get -> BlueTusk.Data.BlueTuskHostEndpoint?
+BlueTusk.Data.BlueTuskConnection.CopyFrom(string! copyCommand, System.IO.Stream! source) -> BlueTusk.Data.Copy.BlueTuskRawCopyResult!
+BlueTusk.Data.BlueTuskConnection.CopyFromAsync(string! copyCommand, System.IO.Stream! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.Copy.BlueTuskRawCopyResult!>
+BlueTusk.Data.BlueTuskConnection.CopyTextFrom(string! copyCommand, System.IO.TextReader! source) -> BlueTusk.Data.Copy.BlueTuskRawCopyResult!
+BlueTusk.Data.BlueTuskConnection.CopyTextFromAsync(string! copyCommand, System.IO.TextReader! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.Copy.BlueTuskRawCopyResult!>
+BlueTusk.Data.BlueTuskConnection.CopyTextTo(string! copyCommand, System.IO.TextWriter! destination) -> BlueTusk.Data.Copy.BlueTuskRawCopyResult!
+BlueTusk.Data.BlueTuskConnection.CopyTextToAsync(string! copyCommand, System.IO.TextWriter! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.Copy.BlueTuskRawCopyResult!>
+BlueTusk.Data.BlueTuskConnection.CopyTo(string! copyCommand, System.IO.Stream! destination) -> BlueTusk.Data.Copy.BlueTuskRawCopyResult!
+BlueTusk.Data.BlueTuskConnection.CopyToAsync(string! copyCommand, System.IO.Stream! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.Copy.BlueTuskRawCopyResult!>
+BlueTusk.Data.BlueTuskConnection.CreateBatch() -> BlueTusk.Data.BlueTuskBatch!
+BlueTusk.Data.BlueTuskConnection.CreateLargeObject() -> uint
+BlueTusk.Data.BlueTuskConnection.CreateLargeObject(uint preferredObjectId) -> uint
+BlueTusk.Data.BlueTuskConnection.CreateLargeObjectAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<uint>
+BlueTusk.Data.BlueTuskConnection.CreateLargeObjectAsync(uint preferredObjectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<uint>
+BlueTusk.Data.BlueTuskConnection.DeleteLargeObject(uint objectId) -> void
+BlueTusk.Data.BlueTuskConnection.DeleteLargeObjectAsync(uint objectId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskConnection.Listen(string! channel) -> void
+BlueTusk.Data.BlueTuskConnection.ListenAsync(string! channel, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskConnection.Notifications.get -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Data.Notifications.BlueTuskNotification!>!
+BlueTusk.Data.BlueTuskConnection.OpenLargeObject(uint objectId, System.IO.FileAccess access) -> BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream!
+BlueTusk.Data.BlueTuskConnection.OpenLargeObjectAsync(uint objectId, System.IO.FileAccess access, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream!>
+BlueTusk.Data.BlueTuskConnection.ReloadTypes() -> void
+BlueTusk.Data.BlueTuskConnection.ReloadTypesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskConnection.ServerCapabilities.get -> BlueTusk.Client.BlueTuskServerCapabilities?
+BlueTusk.Data.BlueTuskConnection.SupportsSqlPgq.get -> bool?
+BlueTusk.Data.BlueTuskConnection.TypeRegistry.get -> BlueTusk.TypeSystem.BlueTuskTypeRegistry!
+BlueTusk.Data.BlueTuskConnection.Unlisten(string! channel) -> void
+BlueTusk.Data.BlueTuskConnection.UnlistenAll() -> void
+BlueTusk.Data.BlueTuskConnection.UnlistenAllAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskConnection.UnlistenAsync(string! channel, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskConnection.WaitForNotification() -> BlueTusk.Data.Notifications.BlueTuskNotification!
+BlueTusk.Data.BlueTuskConnectionStringBuilder
+BlueTusk.Data.BlueTuskConnectionStringBuilder.AllowUnencryptedPassword.get -> bool
+BlueTusk.Data.BlueTuskConnectionStringBuilder.AllowUnencryptedPassword.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ApplicationName.get -> string!
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ApplicationName.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.AutoPrepareMinUsages.get -> int
+BlueTusk.Data.BlueTuskConnectionStringBuilder.AutoPrepareMinUsages.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.BlueTuskConnectionStringBuilder() -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.BlueTuskConnectionStringBuilder(string! connectionString) -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ChannelBinding.get -> BlueTusk.Client.BlueTuskChannelBindingMode
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ChannelBinding.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ConnectionIdleLifetime.get -> System.TimeSpan
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ConnectionIdleLifetime.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ConnectionLifetime.get -> System.TimeSpan
+BlueTusk.Data.BlueTuskConnectionStringBuilder.ConnectionLifetime.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Database.get -> string!
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Database.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Host.get -> string!
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Host.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.HostEndpoints.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.BlueTuskHostEndpoint>!
+BlueTusk.Data.BlueTuskConnectionStringBuilder.KerberosServiceName.get -> string!
+BlueTusk.Data.BlueTuskConnectionStringBuilder.KerberosServiceName.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.LoadBalanceHosts.get -> BlueTusk.Data.BlueTuskLoadBalanceHosts
+BlueTusk.Data.BlueTuskConnectionStringBuilder.LoadBalanceHosts.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.MaxAutoPrepare.get -> int
+BlueTusk.Data.BlueTuskConnectionStringBuilder.MaxAutoPrepare.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.MaximumPoolSize.get -> int
+BlueTusk.Data.BlueTuskConnectionStringBuilder.MaximumPoolSize.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.MinimumPoolSize.get -> int
+BlueTusk.Data.BlueTuskConnectionStringBuilder.MinimumPoolSize.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Passfile.get -> string?
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Passfile.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Password.get -> string?
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Password.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.PersistSecurityInfo.get -> bool
+BlueTusk.Data.BlueTuskConnectionStringBuilder.PersistSecurityInfo.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Pooling.get -> bool
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Pooling.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Port.get -> int
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Port.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Ports.get -> string!
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Ports.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.SslMode.get -> BlueTusk.Client.BlueTuskSslMode
+BlueTusk.Data.BlueTuskConnectionStringBuilder.SslMode.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.TargetSessionAttributes.get -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskConnectionStringBuilder.TargetSessionAttributes.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Timeout.get -> System.TimeSpan
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Timeout.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Username.get -> string!
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Username.set -> void
+BlueTusk.Data.BlueTuskDataReader
+BlueTusk.Data.BlueTuskDataSource
+BlueTusk.Data.BlueTuskDataSource.ClearPool() -> void
+BlueTusk.Data.BlueTuskDataSource.ClearPoolAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskDataSource.CreateBatch() -> BlueTusk.Data.BlueTuskBatch!
+BlueTusk.Data.BlueTuskDataSource.CreateCommand(string! commandText) -> BlueTusk.Data.BlueTuskCommand!
+BlueTusk.Data.BlueTuskDataSource.CreateConnection() -> BlueTusk.Data.BlueTuskConnection!
+BlueTusk.Data.BlueTuskDataSource.CreateDedicatedSessionOptions() -> BlueTusk.Client.BlueTuskClientOptions!
+BlueTusk.Data.BlueTuskDataSource.CreateDedicatedSessionOptions(BlueTusk.Data.BlueTuskHostEndpoint endpoint) -> BlueTusk.Client.BlueTuskClientOptions!
+BlueTusk.Data.BlueTuskDataSource.Features.get -> BlueTusk.Extensions.BlueTuskFeatureRegistry!
+BlueTusk.Data.BlueTuskDataSource.GetHostPoolStatistics() -> System.Collections.Generic.IReadOnlyDictionary<BlueTusk.Data.BlueTuskHostEndpoint, BlueTusk.Data.BlueTuskPoolStatistics>!
+BlueTusk.Data.BlueTuskDataSource.GetPoolStatistics() -> BlueTusk.Data.BlueTuskPoolStatistics
+BlueTusk.Data.BlueTuskDataSource.OpenConnection() -> BlueTusk.Data.BlueTuskConnection!
+BlueTusk.Data.BlueTuskDataSource.OpenConnectionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Data.BlueTuskConnection!>
+BlueTusk.Data.BlueTuskDataSource.ReloadTypes() -> void
+BlueTusk.Data.BlueTuskDataSource.ReloadTypesAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskDataSource.TypeRegistry.get -> BlueTusk.TypeSystem.BlueTuskTypeRegistry!
+BlueTusk.Data.BlueTuskDataSource.WarmUp() -> void
+BlueTusk.Data.BlueTuskDataSource.WarmUpAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.BlueTuskDataSourceBuilder
+BlueTusk.Data.BlueTuskDataSourceBuilder.BlueTuskDataSourceBuilder(string! connectionString) -> void
+BlueTusk.Data.BlueTuskDataSourceBuilder.Build() -> BlueTusk.Data.BlueTuskDataSource!
+BlueTusk.Data.BlueTuskDataSourceBuilder.ConfigureDiagnostics(BlueTusk.Diagnostics.BlueTuskDiagnosticsOptions! options) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.Features.get -> BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.MapComposite<T>(string! postgresTypeName) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.MapEnum<TEnum>(string! postgresTypeName, System.Collections.Generic.IReadOnlyDictionary<TEnum, string!>? labels = null) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.RequireTlsForAccessTokens() -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.Types.get -> BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UseAccessTokenProvider(BlueTusk.Client.BlueTuskAccessTokenProvider! provider) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UseAccessTokenProvider(BlueTusk.Client.BlueTuskAccessTokenProviderAsync! provider) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UseClientCertificate(System.Security.Cryptography.X509Certificates.X509Certificate2! certificate) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UseClientCertificateSelectionCallback(System.Net.Security.LocalCertificateSelectionCallback! callback) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UseGssCredential(System.Net.NetworkCredential! credential) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UsePasswordProvider(BlueTusk.Client.BlueTuskPasswordProvider! provider) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UsePasswordProvider(BlueTusk.Client.BlueTuskPasswordProviderAsync! provider) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UsePlugin(BlueTusk.Extensions.IBlueTuskPlugin! plugin) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskDataSourceBuilder.UseRemoteCertificateValidationCallback(System.Net.Security.RemoteCertificateValidationCallback! callback) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskException
+BlueTusk.Data.BlueTuskException.BlueTuskException() -> void
+BlueTusk.Data.BlueTuskException.BlueTuskException(string! message, System.Exception! innerException) -> void
+BlueTusk.Data.BlueTuskException.BlueTuskException(string! message) -> void
+BlueTusk.Data.BlueTuskException.Severity.get -> string?
+BlueTusk.Data.BlueTuskHostEndpoint
+BlueTusk.Data.BlueTuskHostEndpoint.BlueTuskHostEndpoint() -> void
+BlueTusk.Data.BlueTuskHostEndpoint.BlueTuskHostEndpoint(string! Host, int Port) -> void
+BlueTusk.Data.BlueTuskHostEndpoint.Deconstruct(out string! Host, out int Port) -> void
+BlueTusk.Data.BlueTuskHostEndpoint.Equals(BlueTusk.Data.BlueTuskHostEndpoint other) -> bool
+BlueTusk.Data.BlueTuskHostEndpoint.Host.get -> string!
+BlueTusk.Data.BlueTuskHostEndpoint.Host.init -> void
+BlueTusk.Data.BlueTuskHostEndpoint.Port.get -> int
+BlueTusk.Data.BlueTuskHostEndpoint.Port.init -> void
+BlueTusk.Data.BlueTuskLoadBalanceHosts
+BlueTusk.Data.BlueTuskLoadBalanceHosts.Disable = 0 -> BlueTusk.Data.BlueTuskLoadBalanceHosts
+BlueTusk.Data.BlueTuskLoadBalanceHosts.Random = 1 -> BlueTusk.Data.BlueTuskLoadBalanceHosts
+BlueTusk.Data.BlueTuskParameter
+BlueTusk.Data.BlueTuskParameter.BlueTuskParameter() -> void
+BlueTusk.Data.BlueTuskParameter.BlueTuskParameter(object? value) -> void
+BlueTusk.Data.BlueTuskParameter.PostgreSqlTypeName.get -> string?
+BlueTusk.Data.BlueTuskParameter.PostgreSqlTypeName.set -> void
+BlueTusk.Data.BlueTuskParameter.PostgreSqlTypeOid.get -> uint?
+BlueTusk.Data.BlueTuskParameter.PostgreSqlTypeOid.set -> void
+BlueTusk.Data.BlueTuskParameter<T>
+BlueTusk.Data.BlueTuskParameter<T>.BlueTuskParameter() -> void
+BlueTusk.Data.BlueTuskParameter<T>.BlueTuskParameter(T? value) -> void
+BlueTusk.Data.BlueTuskParameter<T>.TypedValue.get -> T?
+BlueTusk.Data.BlueTuskParameter<T>.TypedValue.set -> void
+BlueTusk.Data.BlueTuskParameterCollection
+BlueTusk.Data.BlueTuskParameterCollection.Add(BlueTusk.Data.BlueTuskParameter! parameter) -> BlueTusk.Data.BlueTuskParameter!
+BlueTusk.Data.BlueTuskParameterCollection.BlueTuskParameterCollection() -> void
+BlueTusk.Data.BlueTuskPoolStatistics
+BlueTusk.Data.BlueTuskPoolStatistics.BlueTuskPoolStatistics() -> void
+BlueTusk.Data.BlueTuskPoolStatistics.BlueTuskPoolStatistics(bool PoolingEnabled, int MinimumSize, int MaximumSize, int Total, int Idle, int Busy, int Waiting, long Opened, long Reused, long Discarded) -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Busy.get -> int
+BlueTusk.Data.BlueTuskPoolStatistics.Busy.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Deconstruct(out bool PoolingEnabled, out int MinimumSize, out int MaximumSize, out int Total, out int Idle, out int Busy, out int Waiting, out long Opened, out long Reused, out long Discarded) -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Discarded.get -> long
+BlueTusk.Data.BlueTuskPoolStatistics.Discarded.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Equals(BlueTusk.Data.BlueTuskPoolStatistics other) -> bool
+BlueTusk.Data.BlueTuskPoolStatistics.Idle.get -> int
+BlueTusk.Data.BlueTuskPoolStatistics.Idle.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.MaximumSize.get -> int
+BlueTusk.Data.BlueTuskPoolStatistics.MaximumSize.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.MinimumSize.get -> int
+BlueTusk.Data.BlueTuskPoolStatistics.MinimumSize.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Opened.get -> long
+BlueTusk.Data.BlueTuskPoolStatistics.Opened.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.PoolingEnabled.get -> bool
+BlueTusk.Data.BlueTuskPoolStatistics.PoolingEnabled.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Reused.get -> long
+BlueTusk.Data.BlueTuskPoolStatistics.Reused.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Total.get -> int
+BlueTusk.Data.BlueTuskPoolStatistics.Total.init -> void
+BlueTusk.Data.BlueTuskPoolStatistics.Waiting.get -> int
+BlueTusk.Data.BlueTuskPoolStatistics.Waiting.init -> void
+BlueTusk.Data.BlueTuskProviderFactory
+BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTargetSessionAttributes.Any = 0 -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTargetSessionAttributes.PreferPrimary = 3 -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTargetSessionAttributes.PreferStandby = 4 -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTargetSessionAttributes.Primary = 1 -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTargetSessionAttributes.ReadOnly = 6 -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTargetSessionAttributes.ReadWrite = 5 -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTargetSessionAttributes.Standby = 2 -> BlueTusk.Data.BlueTuskTargetSessionAttributes
+BlueTusk.Data.BlueTuskTransaction
+BlueTusk.Data.BlueTuskTransaction.Connection.get -> BlueTusk.Data.BlueTuskConnection?
+BlueTusk.Data.Copy.BlueTuskBinaryExporter
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.Dispose() -> void
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.Read<T>(uint? postgreSqlTypeOid = null) -> T?
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.ReadAsync<T>(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<T?>
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.ReadAsync<T>(uint? postgreSqlTypeOid, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<T?>
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.StartRow() -> int
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.StartRowAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Data.Copy.BlueTuskBinaryImporter
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.Complete() -> long
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.CompleteAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.Dispose() -> void
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.StartRow() -> void
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.StartRowAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.Write<T>(T? value, uint? postgreSqlTypeOid = null) -> void
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.WriteAsync<T>(T? value, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Copy.BlueTuskBinaryImporter.WriteAsync<T>(T? value, uint? postgreSqlTypeOid, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Copy.BlueTuskCopyDataFormat
+BlueTusk.Data.Copy.BlueTuskCopyDataFormat.Binary = 1 -> BlueTusk.Data.Copy.BlueTuskCopyDataFormat
+BlueTusk.Data.Copy.BlueTuskCopyDataFormat.Text = 0 -> BlueTusk.Data.Copy.BlueTuskCopyDataFormat
+BlueTusk.Data.Copy.BlueTuskRawCopyResult
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.<Clone>$() -> BlueTusk.Data.Copy.BlueTuskRawCopyResult!
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.BlueTuskRawCopyResult(BlueTusk.Data.Copy.BlueTuskCopyDataFormat Format, System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Copy.BlueTuskCopyDataFormat>! ColumnFormats, long RowsAffected, long BytesTransferred) -> void
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.BytesTransferred.get -> long
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.BytesTransferred.init -> void
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.ColumnFormats.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Copy.BlueTuskCopyDataFormat>!
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.ColumnFormats.init -> void
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.Deconstruct(out BlueTusk.Data.Copy.BlueTuskCopyDataFormat Format, out System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Copy.BlueTuskCopyDataFormat>! ColumnFormats, out long RowsAffected, out long BytesTransferred) -> void
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.Equals(BlueTusk.Data.Copy.BlueTuskRawCopyResult? other) -> bool
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.Format.get -> BlueTusk.Data.Copy.BlueTuskCopyDataFormat
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.Format.init -> void
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.RowsAffected.get -> long
+BlueTusk.Data.Copy.BlueTuskRawCopyResult.RowsAffected.init -> void
+BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream
+BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.ObjectId.get -> uint
+BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.SeekAsync(long offset, System.IO.SeekOrigin origin, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.SetLengthAsync(long value, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Data.Notifications.BlueTuskNotification
+BlueTusk.Data.Notifications.BlueTuskNotification.<Clone>$() -> BlueTusk.Data.Notifications.BlueTuskNotification!
+BlueTusk.Data.Notifications.BlueTuskNotification.BlueTuskNotification(int ProcessId, string! Channel, string! Payload) -> void
+BlueTusk.Data.Notifications.BlueTuskNotification.Channel.get -> string!
+BlueTusk.Data.Notifications.BlueTuskNotification.Channel.init -> void
+BlueTusk.Data.Notifications.BlueTuskNotification.Deconstruct(out int ProcessId, out string! Channel, out string! Payload) -> void
+BlueTusk.Data.Notifications.BlueTuskNotification.Equals(BlueTusk.Data.Notifications.BlueTuskNotification? other) -> bool
+BlueTusk.Data.Notifications.BlueTuskNotification.Payload.get -> string!
+BlueTusk.Data.Notifications.BlueTuskNotification.Payload.init -> void
+BlueTusk.Data.Notifications.BlueTuskNotification.ProcessId.get -> int
+BlueTusk.Data.Notifications.BlueTuskNotification.ProcessId.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.<Clone>$() -> BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.BlueTuskPropertyGraphEdgeColumnMapping(string! EdgeTableColumn, string! VertexTableColumn, int OrdinalPosition) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.Deconstruct(out string! EdgeTableColumn, out string! VertexTableColumn, out int OrdinalPosition) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.EdgeTableColumn.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.EdgeTableColumn.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.Equals(BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping? other) -> bool
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.OrdinalPosition.get -> int
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.OrdinalPosition.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.VertexTableColumn.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.VertexTableColumn.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEnd
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEnd.Destination = 1 -> BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEnd
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEnd.Source = 0 -> BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEnd
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEndpoint
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEndpoint.Columns.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEndpoint.End.get -> BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEnd
+BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEndpoint.VertexTableAlias.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementKind
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementKind.Edge = 1 -> BlueTusk.Data.Schema.BlueTuskPropertyGraphElementKind
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementKind.Vertex = 0 -> BlueTusk.Data.Schema.BlueTuskPropertyGraphElementKind
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.<Clone>$() -> BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.BlueTuskPropertyGraphElementProperty(string! Name, string! Expression) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.Deconstruct(out string! Name, out string! Expression) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.Equals(BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty? other) -> bool
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.Expression.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.Expression.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.Name.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.Name.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.Alias.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.Definition.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.Endpoints.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeEndpoint!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.KeyColumns.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.Kind.get -> BlueTusk.Data.Schema.BlueTuskPropertyGraphElementKind
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.Labels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.Properties.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable.Table.get -> BlueTusk.Data.Schema.BlueTuskSchemaObjectName!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.<Clone>$() -> BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.BlueTuskPropertyGraphInspectionOptions() -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Catalog.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Catalog.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Equals(BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions? other) -> bool
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Name.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Name.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Schema.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Schema.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.<Clone>$() -> BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.BlueTuskPropertyGraphKeyColumn(string! Name, int OrdinalPosition) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.Deconstruct(out string! Name, out int OrdinalPosition) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.Equals(BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn? other) -> bool
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.Name.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.Name.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.OrdinalPosition.get -> int
+BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.OrdinalPosition.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphLabel
+BlueTusk.Data.Schema.BlueTuskPropertyGraphLabel.Name.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphLabel.Properties.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.<Clone>$() -> BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.BlueTuskPropertyGraphPropertyDataType(string! PropertyName, string! DataType, int? CharacterMaximumLength, int? CharacterOctetLength, string? CharacterSetCatalog, string? CharacterSetSchema, string? CharacterSetName, string? CollationCatalog, string? CollationSchema, string? CollationName, int? NumericPrecision, int? NumericPrecisionRadix, int? NumericScale, int? DateTimePrecision, string? IntervalType, int? IntervalPrecision, string? UserDefinedTypeCatalog, string? UserDefinedTypeSchema, string? UserDefinedTypeName, string? ScopeCatalog, string? ScopeSchema, string? ScopeName, long? MaximumCardinality, string! DtdIdentifier) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterMaximumLength.get -> int?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterMaximumLength.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterOctetLength.get -> int?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterOctetLength.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterSetCatalog.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterSetCatalog.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterSetName.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterSetName.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterSetSchema.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CharacterSetSchema.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CollationCatalog.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CollationCatalog.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CollationName.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CollationName.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CollationSchema.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.CollationSchema.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.DataType.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.DataType.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.DateTimePrecision.get -> int?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.DateTimePrecision.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.Deconstruct(out string! PropertyName, out string! DataType, out int? CharacterMaximumLength, out int? CharacterOctetLength, out string? CharacterSetCatalog, out string? CharacterSetSchema, out string? CharacterSetName, out string? CollationCatalog, out string? CollationSchema, out string? CollationName, out int? NumericPrecision, out int? NumericPrecisionRadix, out int? NumericScale, out int? DateTimePrecision, out string? IntervalType, out int? IntervalPrecision, out string? UserDefinedTypeCatalog, out string? UserDefinedTypeSchema, out string? UserDefinedTypeName, out string? ScopeCatalog, out string? ScopeSchema, out string? ScopeName, out long? MaximumCardinality, out string! DtdIdentifier) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.DtdIdentifier.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.DtdIdentifier.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.Equals(BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? other) -> bool
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.IntervalPrecision.get -> int?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.IntervalPrecision.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.IntervalType.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.IntervalType.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.MaximumCardinality.get -> long?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.MaximumCardinality.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.NumericPrecision.get -> int?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.NumericPrecision.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.NumericPrecisionRadix.get -> int?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.NumericPrecisionRadix.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.NumericScale.get -> int?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.NumericScale.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.PropertyName.get -> string!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.PropertyName.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.ScopeCatalog.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.ScopeCatalog.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.ScopeName.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.ScopeName.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.ScopeSchema.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.ScopeSchema.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.UserDefinedTypeCatalog.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.UserDefinedTypeCatalog.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.UserDefinedTypeName.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.UserDefinedTypeName.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.UserDefinedTypeSchema.get -> string?
+BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.UserDefinedTypeSchema.init -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchema
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchema.ElementTables.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphElementTable!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchema.Labels.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphLabel!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchema.Name.get -> BlueTusk.Data.Schema.BlueTuskSchemaObjectName!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchema.PropertyDataTypes.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchemaInspector
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchemaInspector.BlueTuskPropertyGraphSchemaInspector(BlueTusk.Data.BlueTuskConnection! connection) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchemaInspector.BlueTuskPropertyGraphSchemaInspector(BlueTusk.Data.BlueTuskDataSource! dataSource) -> void
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchemaInspector.Inspect(BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions? options = null) -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphSchema!>!
+BlueTusk.Data.Schema.BlueTuskPropertyGraphSchemaInspector.InspectAsync(BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Schema.BlueTuskPropertyGraphSchema!>!>!
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.<Clone>$() -> BlueTusk.Data.Schema.BlueTuskSchemaObjectName!
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.BlueTuskSchemaObjectName(string! Catalog, string! Schema, string! Name) -> void
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Catalog.get -> string!
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Catalog.init -> void
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Deconstruct(out string! Catalog, out string! Schema, out string! Name) -> void
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Equals(BlueTusk.Data.Schema.BlueTuskSchemaObjectName? other) -> bool
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Name.get -> string!
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Name.init -> void
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Schema.get -> string!
+BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Schema.init -> void
+override BlueTusk.Data.BlueTuskBatch.Cancel() -> void
+override BlueTusk.Data.BlueTuskBatch.ExecuteNonQuery() -> int
+override BlueTusk.Data.BlueTuskBatch.ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<int>!
+override BlueTusk.Data.BlueTuskBatch.ExecuteScalar() -> object?
+override BlueTusk.Data.BlueTuskBatch.ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<object?>!
+override BlueTusk.Data.BlueTuskBatch.Prepare() -> void
+override BlueTusk.Data.BlueTuskBatch.PrepareAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+override BlueTusk.Data.BlueTuskBatch.Timeout.get -> int
+override BlueTusk.Data.BlueTuskBatch.Timeout.set -> void
+override BlueTusk.Data.BlueTuskBatchCommand.CanCreateParameter.get -> bool
+override BlueTusk.Data.BlueTuskBatchCommand.CommandText.get -> string!
+override BlueTusk.Data.BlueTuskBatchCommand.CommandText.set -> void
+override BlueTusk.Data.BlueTuskBatchCommand.CommandType.get -> System.Data.CommandType
+override BlueTusk.Data.BlueTuskBatchCommand.CommandType.set -> void
+override BlueTusk.Data.BlueTuskBatchCommand.CreateParameter() -> System.Data.Common.DbParameter!
+override BlueTusk.Data.BlueTuskBatchCommand.RecordsAffected.get -> int
+override BlueTusk.Data.BlueTuskBatchCommandCollection.Add(System.Data.Common.DbBatchCommand! item) -> void
+override BlueTusk.Data.BlueTuskBatchCommandCollection.Clear() -> void
+override BlueTusk.Data.BlueTuskBatchCommandCollection.Contains(System.Data.Common.DbBatchCommand! item) -> bool
+override BlueTusk.Data.BlueTuskBatchCommandCollection.CopyTo(System.Data.Common.DbBatchCommand![]! array, int arrayIndex) -> void
+override BlueTusk.Data.BlueTuskBatchCommandCollection.Count.get -> int
+override BlueTusk.Data.BlueTuskBatchCommandCollection.GetEnumerator() -> System.Collections.Generic.IEnumerator<System.Data.Common.DbBatchCommand!>!
+override BlueTusk.Data.BlueTuskBatchCommandCollection.IndexOf(System.Data.Common.DbBatchCommand! item) -> int
+override BlueTusk.Data.BlueTuskBatchCommandCollection.Insert(int index, System.Data.Common.DbBatchCommand! item) -> void
+override BlueTusk.Data.BlueTuskBatchCommandCollection.IsReadOnly.get -> bool
+override BlueTusk.Data.BlueTuskBatchCommandCollection.Remove(System.Data.Common.DbBatchCommand! item) -> bool
+override BlueTusk.Data.BlueTuskBatchCommandCollection.RemoveAt(int index) -> void
+override BlueTusk.Data.BlueTuskCommand.Cancel() -> void
+override BlueTusk.Data.BlueTuskCommand.CommandText.get -> string!
+override BlueTusk.Data.BlueTuskCommand.CommandText.set -> void
+override BlueTusk.Data.BlueTuskCommand.CommandTimeout.get -> int
+override BlueTusk.Data.BlueTuskCommand.CommandTimeout.set -> void
+override BlueTusk.Data.BlueTuskCommand.CommandType.get -> System.Data.CommandType
+override BlueTusk.Data.BlueTuskCommand.CommandType.set -> void
+override BlueTusk.Data.BlueTuskCommand.DesignTimeVisible.get -> bool
+override BlueTusk.Data.BlueTuskCommand.DesignTimeVisible.set -> void
+override BlueTusk.Data.BlueTuskCommand.ExecuteNonQuery() -> int
+override BlueTusk.Data.BlueTuskCommand.ExecuteNonQueryAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+override BlueTusk.Data.BlueTuskCommand.ExecuteScalar() -> object?
+override BlueTusk.Data.BlueTuskCommand.ExecuteScalarAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<object?>!
+override BlueTusk.Data.BlueTuskCommand.Prepare() -> void
+override BlueTusk.Data.BlueTuskCommand.PrepareAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+override BlueTusk.Data.BlueTuskCommand.UpdatedRowSource.get -> System.Data.UpdateRowSource
+override BlueTusk.Data.BlueTuskCommand.UpdatedRowSource.set -> void
+override BlueTusk.Data.BlueTuskConnection.CanCreateBatch.get -> bool
+override BlueTusk.Data.BlueTuskConnection.ChangeDatabase(string! databaseName) -> void
+override BlueTusk.Data.BlueTuskConnection.Close() -> void
+override BlueTusk.Data.BlueTuskConnection.CloseAsync() -> System.Threading.Tasks.Task!
+override BlueTusk.Data.BlueTuskConnection.ConnectionString.get -> string!
+override BlueTusk.Data.BlueTuskConnection.ConnectionString.set -> void
+override BlueTusk.Data.BlueTuskConnection.ConnectionTimeout.get -> int
+override BlueTusk.Data.BlueTuskConnection.Database.get -> string!
+override BlueTusk.Data.BlueTuskConnection.DataSource.get -> string!
+override BlueTusk.Data.BlueTuskConnection.DisposeAsync() -> System.Threading.Tasks.ValueTask
+override BlueTusk.Data.BlueTuskConnection.Open() -> void
+override BlueTusk.Data.BlueTuskConnection.OpenAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+override BlueTusk.Data.BlueTuskConnection.ServerVersion.get -> string!
+override BlueTusk.Data.BlueTuskConnection.State.get -> System.Data.ConnectionState
+override BlueTusk.Data.BlueTuskDataReader.Close() -> void
+override BlueTusk.Data.BlueTuskDataReader.CloseAsync() -> System.Threading.Tasks.Task!
+override BlueTusk.Data.BlueTuskDataReader.Depth.get -> int
+override BlueTusk.Data.BlueTuskDataReader.DisposeAsync() -> System.Threading.Tasks.ValueTask
+override BlueTusk.Data.BlueTuskDataReader.FieldCount.get -> int
+override BlueTusk.Data.BlueTuskDataReader.GetBoolean(int ordinal) -> bool
+override BlueTusk.Data.BlueTuskDataReader.GetByte(int ordinal) -> byte
+override BlueTusk.Data.BlueTuskDataReader.GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length) -> long
+override BlueTusk.Data.BlueTuskDataReader.GetChar(int ordinal) -> char
+override BlueTusk.Data.BlueTuskDataReader.GetChars(int ordinal, long dataOffset, char[]? buffer, int bufferOffset, int length) -> long
+override BlueTusk.Data.BlueTuskDataReader.GetDataTypeName(int ordinal) -> string!
+override BlueTusk.Data.BlueTuskDataReader.GetDateTime(int ordinal) -> System.DateTime
+override BlueTusk.Data.BlueTuskDataReader.GetDecimal(int ordinal) -> decimal
+override BlueTusk.Data.BlueTuskDataReader.GetDouble(int ordinal) -> double
+override BlueTusk.Data.BlueTuskDataReader.GetEnumerator() -> System.Collections.IEnumerator!
+override BlueTusk.Data.BlueTuskDataReader.GetFieldType(int ordinal) -> System.Type!
+override BlueTusk.Data.BlueTuskDataReader.GetFieldValue<T>(int ordinal) -> T
+override BlueTusk.Data.BlueTuskDataReader.GetFieldValueAsync<T>(int ordinal, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<T>!
+override BlueTusk.Data.BlueTuskDataReader.GetFloat(int ordinal) -> float
+override BlueTusk.Data.BlueTuskDataReader.GetGuid(int ordinal) -> System.Guid
+override BlueTusk.Data.BlueTuskDataReader.GetInt16(int ordinal) -> short
+override BlueTusk.Data.BlueTuskDataReader.GetInt32(int ordinal) -> int
+override BlueTusk.Data.BlueTuskDataReader.GetInt64(int ordinal) -> long
+override BlueTusk.Data.BlueTuskDataReader.GetName(int ordinal) -> string!
+override BlueTusk.Data.BlueTuskDataReader.GetOrdinal(string! name) -> int
+override BlueTusk.Data.BlueTuskDataReader.GetSchemaTable() -> System.Data.DataTable?
+override BlueTusk.Data.BlueTuskDataReader.GetStream(int ordinal) -> System.IO.Stream!
+override BlueTusk.Data.BlueTuskDataReader.GetString(int ordinal) -> string!
+override BlueTusk.Data.BlueTuskDataReader.GetTextReader(int ordinal) -> System.IO.TextReader!
+override BlueTusk.Data.BlueTuskDataReader.GetValue(int ordinal) -> object!
+override BlueTusk.Data.BlueTuskDataReader.GetValues(object![]! values) -> int
+override BlueTusk.Data.BlueTuskDataReader.HasRows.get -> bool
+override BlueTusk.Data.BlueTuskDataReader.IsClosed.get -> bool
+override BlueTusk.Data.BlueTuskDataReader.IsDBNull(int ordinal) -> bool
+override BlueTusk.Data.BlueTuskDataReader.IsDBNullAsync(int ordinal, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+override BlueTusk.Data.BlueTuskDataReader.NextResult() -> bool
+override BlueTusk.Data.BlueTuskDataReader.NextResultAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+override BlueTusk.Data.BlueTuskDataReader.Read() -> bool
+override BlueTusk.Data.BlueTuskDataReader.ReadAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<bool>!
+override BlueTusk.Data.BlueTuskDataReader.RecordsAffected.get -> int
+override BlueTusk.Data.BlueTuskDataReader.this[int ordinal].get -> object!
+override BlueTusk.Data.BlueTuskDataReader.this[string! name].get -> object!
+override BlueTusk.Data.BlueTuskDataSource.ConnectionString.get -> string!
+override BlueTusk.Data.BlueTuskException.SqlState.get -> string?
+override BlueTusk.Data.BlueTuskHostEndpoint.GetHashCode() -> int
+override BlueTusk.Data.BlueTuskHostEndpoint.ToString() -> string!
+override BlueTusk.Data.BlueTuskParameter.DbType.get -> System.Data.DbType
+override BlueTusk.Data.BlueTuskParameter.DbType.set -> void
+override BlueTusk.Data.BlueTuskParameter.Direction.get -> System.Data.ParameterDirection
+override BlueTusk.Data.BlueTuskParameter.Direction.set -> void
+override BlueTusk.Data.BlueTuskParameter.IsNullable.get -> bool
+override BlueTusk.Data.BlueTuskParameter.IsNullable.set -> void
+override BlueTusk.Data.BlueTuskParameter.ParameterName.get -> string!
+override BlueTusk.Data.BlueTuskParameter.ParameterName.set -> void
+override BlueTusk.Data.BlueTuskParameter.ResetDbType() -> void
+override BlueTusk.Data.BlueTuskParameter.Size.get -> int
+override BlueTusk.Data.BlueTuskParameter.Size.set -> void
+override BlueTusk.Data.BlueTuskParameter.SourceColumn.get -> string!
+override BlueTusk.Data.BlueTuskParameter.SourceColumn.set -> void
+override BlueTusk.Data.BlueTuskParameter.SourceColumnNullMapping.get -> bool
+override BlueTusk.Data.BlueTuskParameter.SourceColumnNullMapping.set -> void
+override BlueTusk.Data.BlueTuskParameter.Value.get -> object?
+override BlueTusk.Data.BlueTuskParameter.Value.set -> void
+override BlueTusk.Data.BlueTuskParameterCollection.Add(object! value) -> int
+override BlueTusk.Data.BlueTuskParameterCollection.AddRange(System.Array! values) -> void
+override BlueTusk.Data.BlueTuskParameterCollection.Clear() -> void
+override BlueTusk.Data.BlueTuskParameterCollection.Contains(object! value) -> bool
+override BlueTusk.Data.BlueTuskParameterCollection.Contains(string! value) -> bool
+override BlueTusk.Data.BlueTuskParameterCollection.CopyTo(System.Array! array, int index) -> void
+override BlueTusk.Data.BlueTuskParameterCollection.Count.get -> int
+override BlueTusk.Data.BlueTuskParameterCollection.GetEnumerator() -> System.Collections.IEnumerator!
+override BlueTusk.Data.BlueTuskParameterCollection.IndexOf(object! value) -> int
+override BlueTusk.Data.BlueTuskParameterCollection.IndexOf(string! parameterName) -> int
+override BlueTusk.Data.BlueTuskParameterCollection.Insert(int index, object! value) -> void
+override BlueTusk.Data.BlueTuskParameterCollection.Remove(object! value) -> void
+override BlueTusk.Data.BlueTuskParameterCollection.RemoveAt(int index) -> void
+override BlueTusk.Data.BlueTuskParameterCollection.RemoveAt(string! parameterName) -> void
+override BlueTusk.Data.BlueTuskParameterCollection.SyncRoot.get -> object!
+override BlueTusk.Data.BlueTuskPoolStatistics.GetHashCode() -> int
+override BlueTusk.Data.BlueTuskProviderFactory.CanCreateBatch.get -> bool
+override BlueTusk.Data.BlueTuskProviderFactory.CreateBatch() -> System.Data.Common.DbBatch!
+override BlueTusk.Data.BlueTuskProviderFactory.CreateBatchCommand() -> System.Data.Common.DbBatchCommand!
+override BlueTusk.Data.BlueTuskProviderFactory.CreateCommand() -> System.Data.Common.DbCommand!
+override BlueTusk.Data.BlueTuskProviderFactory.CreateConnection() -> System.Data.Common.DbConnection!
+override BlueTusk.Data.BlueTuskProviderFactory.CreateConnectionStringBuilder() -> System.Data.Common.DbConnectionStringBuilder!
+override BlueTusk.Data.BlueTuskProviderFactory.CreateDataSource(string! connectionString) -> System.Data.Common.DbDataSource!
+override BlueTusk.Data.BlueTuskProviderFactory.CreateParameter() -> System.Data.Common.DbParameter!
+override BlueTusk.Data.BlueTuskTransaction.Commit() -> void
+override BlueTusk.Data.BlueTuskTransaction.CommitAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+override BlueTusk.Data.BlueTuskTransaction.DisposeAsync() -> System.Threading.Tasks.ValueTask
+override BlueTusk.Data.BlueTuskTransaction.IsolationLevel.get -> System.Data.IsolationLevel
+override BlueTusk.Data.BlueTuskTransaction.Rollback() -> void
+override BlueTusk.Data.BlueTuskTransaction.RollbackAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+override BlueTusk.Data.Copy.BlueTuskRawCopyResult.Equals(object? obj) -> bool
+override BlueTusk.Data.Copy.BlueTuskRawCopyResult.GetHashCode() -> int
+override BlueTusk.Data.Copy.BlueTuskRawCopyResult.ToString() -> string!
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.CanRead.get -> bool
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.CanSeek.get -> bool
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.CanWrite.get -> bool
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.DisposeAsync() -> System.Threading.Tasks.ValueTask
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.Flush() -> void
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.FlushAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.Length.get -> long
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.Position.get -> long
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.Position.set -> void
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.Read(byte[]! buffer, int offset, int count) -> int
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.ReadAsync(System.Memory<byte> buffer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.Seek(long offset, System.IO.SeekOrigin origin) -> long
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.SetLength(long value) -> void
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.Write(byte[]! buffer, int offset, int count) -> void
+override BlueTusk.Data.LargeObjects.BlueTuskLargeObjectStream.WriteAsync(System.ReadOnlyMemory<byte> buffer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+override BlueTusk.Data.Notifications.BlueTuskNotification.Equals(object? obj) -> bool
+override BlueTusk.Data.Notifications.BlueTuskNotification.GetHashCode() -> int
+override BlueTusk.Data.Notifications.BlueTuskNotification.ToString() -> string!
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.Equals(object? obj) -> bool
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.GetHashCode() -> int
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.ToString() -> string!
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.Equals(object? obj) -> bool
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.GetHashCode() -> int
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.ToString() -> string!
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.Equals(object? obj) -> bool
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.GetHashCode() -> int
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.ToString() -> string!
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.Equals(object? obj) -> bool
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.GetHashCode() -> int
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.ToString() -> string!
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.Equals(object? obj) -> bool
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.GetHashCode() -> int
+override BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.ToString() -> string!
+override BlueTusk.Data.Schema.BlueTuskSchemaObjectName.Equals(object? obj) -> bool
+override BlueTusk.Data.Schema.BlueTuskSchemaObjectName.GetHashCode() -> int
+override BlueTusk.Data.Schema.BlueTuskSchemaObjectName.ToString() -> string!
+static BlueTusk.Data.BlueTuskDataSource.Create(string! connectionString) -> BlueTusk.Data.BlueTuskDataSource!
+static BlueTusk.Data.BlueTuskHostEndpoint.operator !=(BlueTusk.Data.BlueTuskHostEndpoint left, BlueTusk.Data.BlueTuskHostEndpoint right) -> bool
+static BlueTusk.Data.BlueTuskHostEndpoint.operator ==(BlueTusk.Data.BlueTuskHostEndpoint left, BlueTusk.Data.BlueTuskHostEndpoint right) -> bool
+static BlueTusk.Data.BlueTuskPoolStatistics.operator !=(BlueTusk.Data.BlueTuskPoolStatistics left, BlueTusk.Data.BlueTuskPoolStatistics right) -> bool
+static BlueTusk.Data.BlueTuskPoolStatistics.operator ==(BlueTusk.Data.BlueTuskPoolStatistics left, BlueTusk.Data.BlueTuskPoolStatistics right) -> bool
+static BlueTusk.Data.BlueTuskProviderFactory.Instance.get -> BlueTusk.Data.BlueTuskProviderFactory!
+static BlueTusk.Data.Copy.BlueTuskRawCopyResult.operator !=(BlueTusk.Data.Copy.BlueTuskRawCopyResult? left, BlueTusk.Data.Copy.BlueTuskRawCopyResult? right) -> bool
+static BlueTusk.Data.Copy.BlueTuskRawCopyResult.operator ==(BlueTusk.Data.Copy.BlueTuskRawCopyResult? left, BlueTusk.Data.Copy.BlueTuskRawCopyResult? right) -> bool
+static BlueTusk.Data.Notifications.BlueTuskNotification.operator !=(BlueTusk.Data.Notifications.BlueTuskNotification? left, BlueTusk.Data.Notifications.BlueTuskNotification? right) -> bool
+static BlueTusk.Data.Notifications.BlueTuskNotification.operator ==(BlueTusk.Data.Notifications.BlueTuskNotification? left, BlueTusk.Data.Notifications.BlueTuskNotification? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.operator !=(BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping.operator ==(BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphEdgeColumnMapping? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.operator !=(BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty.operator ==(BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphElementProperty? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.operator !=(BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions.operator ==(BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphInspectionOptions? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.operator !=(BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn.operator ==(BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphKeyColumn? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.operator !=(BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.operator ==(BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskSchemaObjectName.operator !=(BlueTusk.Data.Schema.BlueTuskSchemaObjectName? left, BlueTusk.Data.Schema.BlueTuskSchemaObjectName? right) -> bool
+static BlueTusk.Data.Schema.BlueTuskSchemaObjectName.operator ==(BlueTusk.Data.Schema.BlueTuskSchemaObjectName? left, BlueTusk.Data.Schema.BlueTuskSchemaObjectName? right) -> bool

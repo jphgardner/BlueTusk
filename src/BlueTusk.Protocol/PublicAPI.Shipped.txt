@@ -1,0 +1,426 @@
+#nullable enable
+~override BlueTusk.Protocol.BlueTuskBackendKeyData.Equals(object obj) -> bool
+~override BlueTusk.Protocol.BlueTuskBackendKeyData.ToString() -> string
+~override BlueTusk.Protocol.BlueTuskBackendMessage.Equals(object obj) -> bool
+~override BlueTusk.Protocol.BlueTuskBackendMessage.ToString() -> string
+~override BlueTusk.Protocol.BlueTuskBackendMessageHeader.Equals(object obj) -> bool
+~override BlueTusk.Protocol.BlueTuskBackendMessageHeader.ToString() -> string
+~override BlueTusk.Protocol.BlueTuskBindParameter.Equals(object obj) -> bool
+~override BlueTusk.Protocol.BlueTuskBindParameter.ToString() -> string
+~override BlueTusk.Protocol.BlueTuskProtocolVersion.Equals(object obj) -> bool
+abstract BlueTusk.Protocol.BlueTuskAuthenticationRequest.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest!
+BlueTusk.Protocol.BlueTuskAuthenticationRequest
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.BlueTuskAuthenticationRequest(BlueTusk.Protocol.BlueTuskAuthenticationRequest! original) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.CleartextPassword() -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.Gss() -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.Data.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.Data.init -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.Deconstruct(out System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.GssContinue(System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.Deconstruct(out System.ReadOnlyMemory<byte> Salt) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.Md5Password(System.ReadOnlyMemory<byte> Salt) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.Salt.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.Salt.init -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.Ok() -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.Deconstruct(out System.Collections.Generic.IReadOnlyList<string!>! Mechanisms) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.Mechanisms.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.Mechanisms.init -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.Sasl(System.Collections.Generic.IReadOnlyList<string!>! Mechanisms) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.Data.get -> string!
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.Data.init -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.Deconstruct(out string! Data) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.SaslContinue(string! Data) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.Data.get -> string!
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.Data.init -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.Deconstruct(out string! Data) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.SaslFinal(string! Data) -> void
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi? other) -> bool
+BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.Sspi() -> void
+BlueTusk.Protocol.BlueTuskBackendKeyData
+BlueTusk.Protocol.BlueTuskBackendKeyData.BlueTuskBackendKeyData() -> void
+BlueTusk.Protocol.BlueTuskBackendKeyData.BlueTuskBackendKeyData(int ProcessId, int SecretKey) -> void
+BlueTusk.Protocol.BlueTuskBackendKeyData.Deconstruct(out int ProcessId, out int SecretKey) -> void
+BlueTusk.Protocol.BlueTuskBackendKeyData.Equals(BlueTusk.Protocol.BlueTuskBackendKeyData other) -> bool
+BlueTusk.Protocol.BlueTuskBackendKeyData.ProcessId.get -> int
+BlueTusk.Protocol.BlueTuskBackendKeyData.ProcessId.init -> void
+BlueTusk.Protocol.BlueTuskBackendKeyData.SecretKey.get -> int
+BlueTusk.Protocol.BlueTuskBackendKeyData.SecretKey.init -> void
+BlueTusk.Protocol.BlueTuskBackendMessage
+BlueTusk.Protocol.BlueTuskBackendMessage.BlueTuskBackendMessage() -> void
+BlueTusk.Protocol.BlueTuskBackendMessage.BlueTuskBackendMessage(byte Code, System.Buffers.ReadOnlySequence<byte> Payload) -> void
+BlueTusk.Protocol.BlueTuskBackendMessage.Code.get -> byte
+BlueTusk.Protocol.BlueTuskBackendMessage.Code.init -> void
+BlueTusk.Protocol.BlueTuskBackendMessage.Deconstruct(out byte Code, out System.Buffers.ReadOnlySequence<byte> Payload) -> void
+BlueTusk.Protocol.BlueTuskBackendMessage.Equals(BlueTusk.Protocol.BlueTuskBackendMessage other) -> bool
+BlueTusk.Protocol.BlueTuskBackendMessage.Identifier.get -> char
+BlueTusk.Protocol.BlueTuskBackendMessage.Length.get -> long
+BlueTusk.Protocol.BlueTuskBackendMessage.Payload.get -> System.Buffers.ReadOnlySequence<byte>
+BlueTusk.Protocol.BlueTuskBackendMessage.Payload.init -> void
+BlueTusk.Protocol.BlueTuskBackendMessage.ToPayloadArray() -> byte[]!
+BlueTusk.Protocol.BlueTuskBackendMessageDecoder
+BlueTusk.Protocol.BlueTuskBackendMessageHeader
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.BlueTuskBackendMessageHeader() -> void
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.BlueTuskBackendMessageHeader(byte Code, int PayloadLength) -> void
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.Code.get -> byte
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.Code.init -> void
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.Deconstruct(out byte Code, out int PayloadLength) -> void
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.Equals(BlueTusk.Protocol.BlueTuskBackendMessageHeader other) -> bool
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.Identifier.get -> char
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.PayloadLength.get -> int
+BlueTusk.Protocol.BlueTuskBackendMessageHeader.PayloadLength.init -> void
+BlueTusk.Protocol.BlueTuskBackendMessageParser
+BlueTusk.Protocol.BlueTuskBackendMessageParser.BlueTuskBackendMessageParser(int maximumMessageSize = 67108864) -> void
+BlueTusk.Protocol.BlueTuskBackendMessageParser.MaximumMessageSize.get -> int
+BlueTusk.Protocol.BlueTuskBackendMessageParser.TryParse(ref System.Buffers.ReadOnlySequence<byte> buffer, out BlueTusk.Protocol.BlueTuskBackendMessage message) -> bool
+BlueTusk.Protocol.BlueTuskBindParameter
+BlueTusk.Protocol.BlueTuskBindParameter.BlueTuskBindParameter() -> void
+BlueTusk.Protocol.BlueTuskBindParameter.BlueTuskBindParameter(short FormatCode, System.ReadOnlyMemory<byte>? Value) -> void
+BlueTusk.Protocol.BlueTuskBindParameter.Deconstruct(out short FormatCode, out System.ReadOnlyMemory<byte>? Value) -> void
+BlueTusk.Protocol.BlueTuskBindParameter.Equals(BlueTusk.Protocol.BlueTuskBindParameter other) -> bool
+BlueTusk.Protocol.BlueTuskBindParameter.FormatCode.get -> short
+BlueTusk.Protocol.BlueTuskBindParameter.FormatCode.init -> void
+BlueTusk.Protocol.BlueTuskBindParameter.Value.get -> System.ReadOnlyMemory<byte>?
+BlueTusk.Protocol.BlueTuskBindParameter.Value.init -> void
+BlueTusk.Protocol.BlueTuskCancellationChannel
+BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Authentication = 4 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Cancelling = 13 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Closing = 15 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.CopyBoth = 10 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.CopyIn = 8 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.CopyOut = 9 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Disconnected = 0 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.EncryptionNegotiation = 2 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Executing = 7 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.FailedTransaction = 12 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Initialising = 5 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Ready = 6 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Replication = 11 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Resetting = 14 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.Startup = 3 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskConnectionState.TransportConnected = 1 -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskCopyFormat
+BlueTusk.Protocol.BlueTuskCopyFormat.Binary = 1 -> BlueTusk.Protocol.BlueTuskCopyFormat
+BlueTusk.Protocol.BlueTuskCopyFormat.Text = 0 -> BlueTusk.Protocol.BlueTuskCopyFormat
+BlueTusk.Protocol.BlueTuskCopyResponse
+BlueTusk.Protocol.BlueTuskCopyResponse.<Clone>$() -> BlueTusk.Protocol.BlueTuskCopyResponse!
+BlueTusk.Protocol.BlueTuskCopyResponse.BlueTuskCopyResponse(BlueTusk.Protocol.BlueTuskCopyFormat Format, System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskCopyFormat>! ColumnFormats) -> void
+BlueTusk.Protocol.BlueTuskCopyResponse.ColumnFormats.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskCopyFormat>!
+BlueTusk.Protocol.BlueTuskCopyResponse.ColumnFormats.init -> void
+BlueTusk.Protocol.BlueTuskCopyResponse.Deconstruct(out BlueTusk.Protocol.BlueTuskCopyFormat Format, out System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskCopyFormat>! ColumnFormats) -> void
+BlueTusk.Protocol.BlueTuskCopyResponse.Equals(BlueTusk.Protocol.BlueTuskCopyResponse? other) -> bool
+BlueTusk.Protocol.BlueTuskCopyResponse.Format.get -> BlueTusk.Protocol.BlueTuskCopyFormat
+BlueTusk.Protocol.BlueTuskCopyResponse.Format.init -> void
+BlueTusk.Protocol.BlueTuskDataRow
+BlueTusk.Protocol.BlueTuskDataRow.<Clone>$() -> BlueTusk.Protocol.BlueTuskDataRow!
+BlueTusk.Protocol.BlueTuskDataRow.BlueTuskDataRow(System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<byte>?>! Values) -> void
+BlueTusk.Protocol.BlueTuskDataRow.Deconstruct(out System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<byte>?>! Values) -> void
+BlueTusk.Protocol.BlueTuskDataRow.Equals(BlueTusk.Protocol.BlueTuskDataRow? other) -> bool
+BlueTusk.Protocol.BlueTuskDataRow.Values.get -> System.Collections.Generic.IReadOnlyList<System.ReadOnlyMemory<byte>?>!
+BlueTusk.Protocol.BlueTuskDataRow.Values.init -> void
+BlueTusk.Protocol.BlueTuskError
+BlueTusk.Protocol.BlueTuskError.<Clone>$() -> BlueTusk.Protocol.BlueTuskError!
+BlueTusk.Protocol.BlueTuskError.BlueTuskError(System.Collections.Generic.IReadOnlyDictionary<char, string!>! Fields) -> void
+BlueTusk.Protocol.BlueTuskError.Deconstruct(out System.Collections.Generic.IReadOnlyDictionary<char, string!>! Fields) -> void
+BlueTusk.Protocol.BlueTuskError.Detail.get -> string?
+BlueTusk.Protocol.BlueTuskError.Equals(BlueTusk.Protocol.BlueTuskError? other) -> bool
+BlueTusk.Protocol.BlueTuskError.Fields.get -> System.Collections.Generic.IReadOnlyDictionary<char, string!>!
+BlueTusk.Protocol.BlueTuskError.Fields.init -> void
+BlueTusk.Protocol.BlueTuskError.Hint.get -> string?
+BlueTusk.Protocol.BlueTuskError.Message.get -> string!
+BlueTusk.Protocol.BlueTuskError.Severity.get -> string!
+BlueTusk.Protocol.BlueTuskError.SqlState.get -> string?
+BlueTusk.Protocol.BlueTuskFieldDescription
+BlueTusk.Protocol.BlueTuskFieldDescription.<Clone>$() -> BlueTusk.Protocol.BlueTuskFieldDescription!
+BlueTusk.Protocol.BlueTuskFieldDescription.BlueTuskFieldDescription(string! Name, uint TableOid, short ColumnAttributeNumber, uint TypeOid, short TypeSize, int TypeModifier, short FormatCode) -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.ColumnAttributeNumber.get -> short
+BlueTusk.Protocol.BlueTuskFieldDescription.ColumnAttributeNumber.init -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.Deconstruct(out string! Name, out uint TableOid, out short ColumnAttributeNumber, out uint TypeOid, out short TypeSize, out int TypeModifier, out short FormatCode) -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.Equals(BlueTusk.Protocol.BlueTuskFieldDescription? other) -> bool
+BlueTusk.Protocol.BlueTuskFieldDescription.FormatCode.get -> short
+BlueTusk.Protocol.BlueTuskFieldDescription.FormatCode.init -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.Name.get -> string!
+BlueTusk.Protocol.BlueTuskFieldDescription.Name.init -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.TableOid.get -> uint
+BlueTusk.Protocol.BlueTuskFieldDescription.TableOid.init -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.TypeModifier.get -> int
+BlueTusk.Protocol.BlueTuskFieldDescription.TypeModifier.init -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.TypeOid.get -> uint
+BlueTusk.Protocol.BlueTuskFieldDescription.TypeOid.init -> void
+BlueTusk.Protocol.BlueTuskFieldDescription.TypeSize.get -> short
+BlueTusk.Protocol.BlueTuskFieldDescription.TypeSize.init -> void
+BlueTusk.Protocol.BlueTuskFrontendMessageWriter
+BlueTusk.Protocol.BlueTuskNotificationResponse
+BlueTusk.Protocol.BlueTuskNotificationResponse.<Clone>$() -> BlueTusk.Protocol.BlueTuskNotificationResponse!
+BlueTusk.Protocol.BlueTuskNotificationResponse.BlueTuskNotificationResponse(int ProcessId, string! Channel, string! Payload) -> void
+BlueTusk.Protocol.BlueTuskNotificationResponse.Channel.get -> string!
+BlueTusk.Protocol.BlueTuskNotificationResponse.Channel.init -> void
+BlueTusk.Protocol.BlueTuskNotificationResponse.Deconstruct(out int ProcessId, out string! Channel, out string! Payload) -> void
+BlueTusk.Protocol.BlueTuskNotificationResponse.Equals(BlueTusk.Protocol.BlueTuskNotificationResponse? other) -> bool
+BlueTusk.Protocol.BlueTuskNotificationResponse.Payload.get -> string!
+BlueTusk.Protocol.BlueTuskNotificationResponse.Payload.init -> void
+BlueTusk.Protocol.BlueTuskNotificationResponse.ProcessId.get -> int
+BlueTusk.Protocol.BlueTuskNotificationResponse.ProcessId.init -> void
+BlueTusk.Protocol.BlueTuskParameterStatus
+BlueTusk.Protocol.BlueTuskParameterStatus.<Clone>$() -> BlueTusk.Protocol.BlueTuskParameterStatus!
+BlueTusk.Protocol.BlueTuskParameterStatus.BlueTuskParameterStatus(string! Name, string! Value) -> void
+BlueTusk.Protocol.BlueTuskParameterStatus.Deconstruct(out string! Name, out string! Value) -> void
+BlueTusk.Protocol.BlueTuskParameterStatus.Equals(BlueTusk.Protocol.BlueTuskParameterStatus? other) -> bool
+BlueTusk.Protocol.BlueTuskParameterStatus.Name.get -> string!
+BlueTusk.Protocol.BlueTuskParameterStatus.Name.init -> void
+BlueTusk.Protocol.BlueTuskParameterStatus.Value.get -> string!
+BlueTusk.Protocol.BlueTuskParameterStatus.Value.init -> void
+BlueTusk.Protocol.BlueTuskProtocolConnection
+BlueTusk.Protocol.BlueTuskProtocolConnection.ActiveMessagePayloadRemaining.get -> int
+BlueTusk.Protocol.BlueTuskProtocolConnection.BlueTuskProtocolConnection(BlueTusk.Transport.IBlueTuskTransport! transport, int maximumMessageSize = 67108864) -> void
+BlueTusk.Protocol.BlueTuskProtocolConnection.Connect(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! options) -> void
+BlueTusk.Protocol.BlueTuskProtocolConnection.ConnectAsync(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Protocol.BlueTuskProtocolConnection.Dispose() -> void
+BlueTusk.Protocol.BlueTuskProtocolConnection.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadMessage() -> BlueTusk.Protocol.BlueTuskBackendMessage
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadMessageAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Protocol.BlueTuskBackendMessage>
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadMessageHeader() -> BlueTusk.Protocol.BlueTuskBackendMessageHeader
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadMessageHeaderAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Protocol.BlueTuskBackendMessageHeader>
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadMessagePayload(System.Span<byte> destination) -> int
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadMessagePayloadAsync(System.Memory<byte> destination, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadUnframedByte() -> byte
+BlueTusk.Protocol.BlueTuskProtocolConnection.ReadUnframedByteAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<byte>
+BlueTusk.Protocol.BlueTuskProtocolConnection.StateMachine.get -> BlueTusk.Protocol.BlueTuskProtocolStateMachine!
+BlueTusk.Protocol.BlueTuskProtocolConnection.Transport.get -> BlueTusk.Transport.IBlueTuskTransport!
+BlueTusk.Protocol.BlueTuskProtocolConnection.Write(System.Action<System.Buffers.IBufferWriter<byte>!>! writeMessage) -> void
+BlueTusk.Protocol.BlueTuskProtocolConnection.WriteAsync(System.Action<System.Buffers.IBufferWriter<byte>!>! writeMessage, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Protocol.BlueTuskProtocolConnection.WriteSensitive(System.Action<System.Buffers.IBufferWriter<byte>!>! writeMessage) -> void
+BlueTusk.Protocol.BlueTuskProtocolConnection.WriteSensitiveAsync(System.Action<System.Buffers.IBufferWriter<byte>!>! writeMessage, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Protocol.BlueTuskProtocolException
+BlueTusk.Protocol.BlueTuskProtocolException.BlueTuskProtocolException(string! message, System.Exception! innerException) -> void
+BlueTusk.Protocol.BlueTuskProtocolException.BlueTuskProtocolException(string! message) -> void
+BlueTusk.Protocol.BlueTuskProtocolStateMachine
+BlueTusk.Protocol.BlueTuskProtocolStateMachine.BlueTuskProtocolStateMachine() -> void
+BlueTusk.Protocol.BlueTuskProtocolStateMachine.State.get -> BlueTusk.Protocol.BlueTuskConnectionState
+BlueTusk.Protocol.BlueTuskProtocolStateMachine.TransitionTo(BlueTusk.Protocol.BlueTuskConnectionState next) -> void
+BlueTusk.Protocol.BlueTuskProtocolStateMachine.TryTransition(BlueTusk.Protocol.BlueTuskConnectionState expected, BlueTusk.Protocol.BlueTuskConnectionState next) -> bool
+BlueTusk.Protocol.BlueTuskProtocolVersion
+BlueTusk.Protocol.BlueTuskProtocolVersion.BlueTuskProtocolVersion() -> void
+BlueTusk.Protocol.BlueTuskProtocolVersion.BlueTuskProtocolVersion(ushort Major, ushort Minor) -> void
+BlueTusk.Protocol.BlueTuskProtocolVersion.Deconstruct(out ushort Major, out ushort Minor) -> void
+BlueTusk.Protocol.BlueTuskProtocolVersion.Equals(BlueTusk.Protocol.BlueTuskProtocolVersion other) -> bool
+BlueTusk.Protocol.BlueTuskProtocolVersion.Major.get -> ushort
+BlueTusk.Protocol.BlueTuskProtocolVersion.Major.init -> void
+BlueTusk.Protocol.BlueTuskProtocolVersion.Minor.get -> ushort
+BlueTusk.Protocol.BlueTuskProtocolVersion.Minor.init -> void
+BlueTusk.Protocol.BlueTuskProtocolVersion.ToWireValue() -> int
+BlueTusk.Protocol.BlueTuskTransactionStatus
+BlueTusk.Protocol.BlueTuskTransactionStatus.FailedTransaction = 69 -> BlueTusk.Protocol.BlueTuskTransactionStatus
+BlueTusk.Protocol.BlueTuskTransactionStatus.Idle = 73 -> BlueTusk.Protocol.BlueTuskTransactionStatus
+BlueTusk.Protocol.BlueTuskTransactionStatus.InTransaction = 84 -> BlueTusk.Protocol.BlueTuskTransactionStatus
+BlueTusk.Protocol.Capture.BlueTuskCaptureDirection
+BlueTusk.Protocol.Capture.BlueTuskCaptureDirection.Backend = 1 -> BlueTusk.Protocol.Capture.BlueTuskCaptureDirection
+BlueTusk.Protocol.Capture.BlueTuskCaptureDirection.Frontend = 0 -> BlueTusk.Protocol.Capture.BlueTuskCaptureDirection
+BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes
+BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes.Encrypted = 2 -> BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes
+BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes.None = 0 -> BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes
+BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes.Redacted = 1 -> BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureReader
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureReader.BlueTuskProtocolCaptureReader(System.IO.Stream! input, int maximumPayloadLength = 67108864) -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureReader.CreatedAt.get -> System.DateTimeOffset
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureReader.ReadRecord() -> BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord?
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureReader.ReadRecordAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord?>
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.<Clone>$() -> BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord!
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Attributes.get -> BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Attributes.init -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.BlueTuskProtocolCaptureRecord(BlueTusk.Protocol.Capture.BlueTuskCaptureDirection Direction, BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes Attributes, System.TimeSpan Elapsed, System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Deconstruct(out BlueTusk.Protocol.Capture.BlueTuskCaptureDirection Direction, out BlueTusk.Protocol.Capture.BlueTuskCaptureRecordAttributes Attributes, out System.TimeSpan Elapsed, out System.ReadOnlyMemory<byte> Payload) -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Direction.get -> BlueTusk.Protocol.Capture.BlueTuskCaptureDirection
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Direction.init -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Elapsed.get -> System.TimeSpan
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Elapsed.init -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Equals(BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord? other) -> bool
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Payload.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Payload.init -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureWriter
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureWriter.BlueTuskProtocolCaptureWriter(System.IO.Stream! output, System.DateTimeOffset? createdAt = null) -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureWriter.CreatedAt.get -> System.DateTimeOffset
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureWriter.WriteRecord(BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord! record) -> void
+BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureWriter.WriteRecordAsync(BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+const BlueTusk.Protocol.BlueTuskBackendMessageParser.DefaultMaximumMessageSize = 67108864 -> int
+const BlueTusk.Protocol.BlueTuskFrontendMessageWriter.CancelRequestCode = 80877102 -> int
+const BlueTusk.Protocol.BlueTuskFrontendMessageWriter.ProtocolVersion30 = 196608 -> int
+const BlueTusk.Protocol.BlueTuskFrontendMessageWriter.SslRequestCode = 80877103 -> int
+const BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureReader.DefaultMaximumPayloadLength = 67108864 -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.<Clone>$() -> BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskAuthenticationRequest.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskBackendKeyData.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskBackendMessage.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskBackendMessageHeader.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskBindParameter.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskCopyResponse.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskCopyResponse.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskCopyResponse.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskDataRow.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskDataRow.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskDataRow.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskError.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskError.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskError.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskFieldDescription.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskFieldDescription.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskFieldDescription.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskNotificationResponse.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskNotificationResponse.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskNotificationResponse.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskParameterStatus.Equals(object? obj) -> bool
+override BlueTusk.Protocol.BlueTuskParameterStatus.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskParameterStatus.ToString() -> string!
+override BlueTusk.Protocol.BlueTuskProtocolVersion.GetHashCode() -> int
+override BlueTusk.Protocol.BlueTuskProtocolVersion.ToString() -> string!
+override BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.Equals(object? obj) -> bool
+override BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.GetHashCode() -> int
+override BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.ToString() -> string!
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+override sealed BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.CleartextPassword? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Gss? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.GssContinue? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Md5Password? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Ok? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sasl? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslContinue? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.SaslFinal? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.operator !=(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi? right) -> bool
+static BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi.operator ==(BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi? left, BlueTusk.Protocol.BlueTuskAuthenticationRequest.Sspi? right) -> bool
+static BlueTusk.Protocol.BlueTuskBackendKeyData.operator !=(BlueTusk.Protocol.BlueTuskBackendKeyData left, BlueTusk.Protocol.BlueTuskBackendKeyData right) -> bool
+static BlueTusk.Protocol.BlueTuskBackendKeyData.operator ==(BlueTusk.Protocol.BlueTuskBackendKeyData left, BlueTusk.Protocol.BlueTuskBackendKeyData right) -> bool
+static BlueTusk.Protocol.BlueTuskBackendMessage.operator !=(BlueTusk.Protocol.BlueTuskBackendMessage left, BlueTusk.Protocol.BlueTuskBackendMessage right) -> bool
+static BlueTusk.Protocol.BlueTuskBackendMessage.operator ==(BlueTusk.Protocol.BlueTuskBackendMessage left, BlueTusk.Protocol.BlueTuskBackendMessage right) -> bool
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeAuthentication(BlueTusk.Protocol.BlueTuskBackendMessage message) -> BlueTusk.Protocol.BlueTuskAuthenticationRequest!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeBackendKeyData(BlueTusk.Protocol.BlueTuskBackendMessage message) -> BlueTusk.Protocol.BlueTuskBackendKeyData
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeCommandComplete(BlueTusk.Protocol.BlueTuskBackendMessage message) -> string!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeCopyData(BlueTusk.Protocol.BlueTuskBackendMessage message) -> byte[]!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeCopyResponse(BlueTusk.Protocol.BlueTuskBackendMessage message) -> BlueTusk.Protocol.BlueTuskCopyResponse!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeDataRow(BlueTusk.Protocol.BlueTuskBackendMessage message, int? expectedFieldCount = null) -> BlueTusk.Protocol.BlueTuskDataRow!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(BlueTusk.Protocol.BlueTuskBackendMessage message) -> BlueTusk.Protocol.BlueTuskError!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeNotificationResponse(BlueTusk.Protocol.BlueTuskBackendMessage message) -> BlueTusk.Protocol.BlueTuskNotificationResponse!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeParameterStatus(BlueTusk.Protocol.BlueTuskBackendMessage message) -> BlueTusk.Protocol.BlueTuskParameterStatus!
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeReadyForQuery(BlueTusk.Protocol.BlueTuskBackendMessage message) -> BlueTusk.Protocol.BlueTuskTransactionStatus
+static BlueTusk.Protocol.BlueTuskBackendMessageDecoder.DecodeRowDescription(BlueTusk.Protocol.BlueTuskBackendMessage message) -> System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskFieldDescription!>!
+static BlueTusk.Protocol.BlueTuskBackendMessageHeader.operator !=(BlueTusk.Protocol.BlueTuskBackendMessageHeader left, BlueTusk.Protocol.BlueTuskBackendMessageHeader right) -> bool
+static BlueTusk.Protocol.BlueTuskBackendMessageHeader.operator ==(BlueTusk.Protocol.BlueTuskBackendMessageHeader left, BlueTusk.Protocol.BlueTuskBackendMessageHeader right) -> bool
+static BlueTusk.Protocol.BlueTuskBindParameter.operator !=(BlueTusk.Protocol.BlueTuskBindParameter left, BlueTusk.Protocol.BlueTuskBindParameter right) -> bool
+static BlueTusk.Protocol.BlueTuskBindParameter.operator ==(BlueTusk.Protocol.BlueTuskBindParameter left, BlueTusk.Protocol.BlueTuskBindParameter right) -> bool
+static BlueTusk.Protocol.BlueTuskCancellationChannel.Send(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! transportOptions, BlueTusk.Protocol.BlueTuskBackendKeyData backendKeyData) -> void
+static BlueTusk.Protocol.BlueTuskCancellationChannel.SendAsync(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! transportOptions, BlueTusk.Protocol.BlueTuskBackendKeyData backendKeyData, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+static BlueTusk.Protocol.BlueTuskCopyResponse.operator !=(BlueTusk.Protocol.BlueTuskCopyResponse? left, BlueTusk.Protocol.BlueTuskCopyResponse? right) -> bool
+static BlueTusk.Protocol.BlueTuskCopyResponse.operator ==(BlueTusk.Protocol.BlueTuskCopyResponse? left, BlueTusk.Protocol.BlueTuskCopyResponse? right) -> bool
+static BlueTusk.Protocol.BlueTuskDataRow.operator !=(BlueTusk.Protocol.BlueTuskDataRow? left, BlueTusk.Protocol.BlueTuskDataRow? right) -> bool
+static BlueTusk.Protocol.BlueTuskDataRow.operator ==(BlueTusk.Protocol.BlueTuskDataRow? left, BlueTusk.Protocol.BlueTuskDataRow? right) -> bool
+static BlueTusk.Protocol.BlueTuskError.operator !=(BlueTusk.Protocol.BlueTuskError? left, BlueTusk.Protocol.BlueTuskError? right) -> bool
+static BlueTusk.Protocol.BlueTuskError.operator ==(BlueTusk.Protocol.BlueTuskError? left, BlueTusk.Protocol.BlueTuskError? right) -> bool
+static BlueTusk.Protocol.BlueTuskFieldDescription.operator !=(BlueTusk.Protocol.BlueTuskFieldDescription? left, BlueTusk.Protocol.BlueTuskFieldDescription? right) -> bool
+static BlueTusk.Protocol.BlueTuskFieldDescription.operator ==(BlueTusk.Protocol.BlueTuskFieldDescription? left, BlueTusk.Protocol.BlueTuskFieldDescription? right) -> bool
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteBind(System.Buffers.IBufferWriter<byte>! output, string! portalName, string! statementName, System.Collections.Generic.IReadOnlyList<BlueTusk.Protocol.BlueTuskBindParameter>! parameters, System.Collections.Generic.IReadOnlyList<short>? resultFormatCodes = null) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteCancelRequest(System.Buffers.IBufferWriter<byte>! output, BlueTusk.Protocol.BlueTuskBackendKeyData backendKeyData) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteClosePortal(System.Buffers.IBufferWriter<byte>! output, string! portalName) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteCloseStatement(System.Buffers.IBufferWriter<byte>! output, string! statementName) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteCopyData(System.Buffers.IBufferWriter<byte>! output, System.ReadOnlySpan<byte> data) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteCopyDone(System.Buffers.IBufferWriter<byte>! output) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteCopyFail(System.Buffers.IBufferWriter<byte>! output, string! message) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteDescribePortal(System.Buffers.IBufferWriter<byte>! output, string! portalName) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteDescribeStatement(System.Buffers.IBufferWriter<byte>! output, string! statementName) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteExecute(System.Buffers.IBufferWriter<byte>! output, string! portalName, int maximumRows = 0) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteFlush(System.Buffers.IBufferWriter<byte>! output) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteGssResponse(System.Buffers.IBufferWriter<byte>! output, System.ReadOnlySpan<byte> response) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteParse(System.Buffers.IBufferWriter<byte>! output, string! statementName, string! sql, System.Collections.Generic.IReadOnlyList<uint>! parameterTypeOids) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WritePasswordMessage(System.Buffers.IBufferWriter<byte>! output, System.ReadOnlySpan<byte> response) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(System.Buffers.IBufferWriter<byte>! output, string! mechanism, string! response) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(System.Buffers.IBufferWriter<byte>! output, string! mechanism, System.ReadOnlySpan<byte> response) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteSaslResponse(System.Buffers.IBufferWriter<byte>! output, string! response) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteSaslResponse(System.Buffers.IBufferWriter<byte>! output, System.ReadOnlySpan<byte> response) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteSimpleQuery(System.Buffers.IBufferWriter<byte>! output, string! sql) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteSslRequest(System.Buffers.IBufferWriter<byte>! output) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteStartupMessage(System.Buffers.IBufferWriter<byte>! output, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! parameters) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteSync(System.Buffers.IBufferWriter<byte>! output) -> void
+static BlueTusk.Protocol.BlueTuskFrontendMessageWriter.WriteTerminate(System.Buffers.IBufferWriter<byte>! output) -> void
+static BlueTusk.Protocol.BlueTuskNotificationResponse.operator !=(BlueTusk.Protocol.BlueTuskNotificationResponse? left, BlueTusk.Protocol.BlueTuskNotificationResponse? right) -> bool
+static BlueTusk.Protocol.BlueTuskNotificationResponse.operator ==(BlueTusk.Protocol.BlueTuskNotificationResponse? left, BlueTusk.Protocol.BlueTuskNotificationResponse? right) -> bool
+static BlueTusk.Protocol.BlueTuskParameterStatus.operator !=(BlueTusk.Protocol.BlueTuskParameterStatus? left, BlueTusk.Protocol.BlueTuskParameterStatus? right) -> bool
+static BlueTusk.Protocol.BlueTuskParameterStatus.operator ==(BlueTusk.Protocol.BlueTuskParameterStatus? left, BlueTusk.Protocol.BlueTuskParameterStatus? right) -> bool
+static BlueTusk.Protocol.BlueTuskProtocolVersion.operator !=(BlueTusk.Protocol.BlueTuskProtocolVersion left, BlueTusk.Protocol.BlueTuskProtocolVersion right) -> bool
+static BlueTusk.Protocol.BlueTuskProtocolVersion.operator ==(BlueTusk.Protocol.BlueTuskProtocolVersion left, BlueTusk.Protocol.BlueTuskProtocolVersion right) -> bool
+static BlueTusk.Protocol.BlueTuskProtocolVersion.Version30.get -> BlueTusk.Protocol.BlueTuskProtocolVersion
+static BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.operator !=(BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord? left, BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord? right) -> bool
+static BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord.operator ==(BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord? left, BlueTusk.Protocol.Capture.BlueTuskProtocolCaptureRecord? right) -> bool
+virtual BlueTusk.Protocol.BlueTuskAuthenticationRequest.EqualityContract.get -> System.Type!
+virtual BlueTusk.Protocol.BlueTuskAuthenticationRequest.Equals(BlueTusk.Protocol.BlueTuskAuthenticationRequest? other) -> bool
+virtual BlueTusk.Protocol.BlueTuskAuthenticationRequest.PrintMembers(System.Text.StringBuilder! builder) -> bool

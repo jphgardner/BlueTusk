@@ -253,7 +253,8 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Separate EF type-mapping/query/migration plug-in with scalar and array coverage
 - [x] Extension-authoring template
 - [x] Extension compatibility-test harness
-- [ ] Stabilise extension APIs only after the vertical slice and compatibility gate
+- [x] Stabilise extension APIs only after the vertical slice and compatibility gate
+  - [x] Compiler-enforced shipped API/nullability baselines across the authoring seam
 
 ### Replication preview gate
 
@@ -506,7 +507,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] pgvector EF package (live-tested type mappings, arrays, dimensions, migrations, and vector/bit distance translations)
 - [x] hstore ADO.NET package (live-tested binary/text values, arrays, and operators)
 - [x] ltree ADO.NET package (live-tested `ltree`, `lquery`, `ltxtquery`, arrays, and operators)
-- [x] citext packages (tested ADO.NET and EF preview; extension SDK remains unstable)
+- [x] citext packages (tested ADO.NET and EF preview; stable extension-authoring seam)
 - [x] pg_trgm ADO.NET package (live-tested parameterized functions and operators, including quoted schemas)
 - [x] TimescaleDB ADO.NET package (live-tested hypertable creation, approximate counts, retention, current Hypercore columnstore, and continuous-aggregate policy/refresh lifecycle)
 - [x] TimescaleDB query helpers and EF integration (schema-qualified temporal/integer `time_bucket`, typed `first`/`last`/`histogram` aggregates with modifiers, migrations, compiled queries, and PostgreSQL 17/TimescaleDB 2.29 acceptance)
@@ -515,8 +516,10 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 1.0.0 — Production-ready BlueTusk platform (Milestone 9)
 
-- [ ] Stable ADO.NET APIs
-- [ ] Stable extension APIs
+- [x] Stable ADO.NET APIs
+  - [x] Compiler-enforced shipped API/nullability baselines for Transport, Protocol, Security, Diagnostics, TypeSystem, Client, and Data
+- [x] Stable extension APIs
+  - [x] Compiler-enforced shipped API/nullability baselines for Extensions.Abstractions and Extensions.Testing after the citext vertical slice and compatibility harness
 - [x] Full built-in PostgreSQL type support
   - [x] PostgreSQL 15–19 catalogue gate requires a codec for every queryable built-in base, range, and multirange type
 - [ ] Production-grade connection pooling
