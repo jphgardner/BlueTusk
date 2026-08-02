@@ -87,6 +87,9 @@ architecture gate. A live extension test first checks
 dynamic skip when the optional extension is absent, while each dedicated
 extension image requires the same test to pass. The dedicated-image gate reports
 23 pgvector, 10 PostGIS, and 9 TimescaleDB passes with no skips or failures.
+The checked-in workflow enforces these as three independent CI matrix entries,
+each running the extension's ADO.NET and EF Core projects against its dedicated
+image and retaining container logs on failure.
 Cloud identity adapters have deterministic SDK contract tests; their
 real-account acceptance tests remain opt-in because CI does not hold customer
 cloud credentials.
@@ -128,9 +131,11 @@ remaining beta-syntax risk.
 
 The normal CI build runs formatting, documentation-link validation,
 warnings-as-errors compilation, all offline tests, allocation budgets,
-packaging, and public API analysis on Windows and Linux. A live matrix runs the
-solution against PostgreSQL 15, 16, 17, 18, and 19. Scheduled/manual jobs add
-elevated provider concurrency and a separate replication endurance run. See the
+packaging, and public API analysis on Windows and Linux. Live matrices run the
+solution against PostgreSQL 15, 16, 17, 18, and 19 and run pgvector, PostGIS,
+and TimescaleDB ADO.NET/EF acceptance on their dedicated images.
+Scheduled/manual jobs add elevated provider concurrency and a separate
+replication endurance run. See the
 checked-in workflow and
 [testing guide](contributing/testing.md) for the exact commands and environment
 contract.

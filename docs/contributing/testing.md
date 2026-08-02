@@ -41,10 +41,12 @@ serially for each connection string. Multiple simultaneous copies of the full
 EF relational specification suite can exhaust host memory and turn database
 setup into misleading timeout failures.
 
-## Optional extension images
+## Dedicated extension-image gates
 
 The extension profile supplies the three images that are not available in a
-plain PostgreSQL distribution:
+plain PostgreSQL distribution. CI runs each image in its own required matrix
+entry and executes both its ADO.NET and EF Core project, so a dynamically
+skipped plain-image test cannot satisfy the extension acceptance gate:
 
 ```powershell
 docker compose -f eng/compose/postgres.yml --profile extension-tests up -d --wait

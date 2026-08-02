@@ -39,6 +39,7 @@ The extension packages have an opt-in PostgreSQL 18 service and live gates:
 docker compose -f eng/compose/postgres.yml --profile extension-tests up -d pgvector18
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5518;Username=postgres;Password=postgres;Database=bluetusk_tests"
 dotnet test tests/BlueTusk.Extensions.PgVector.Tests
+dotnet test tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests
 dotnet test tests/BlueTusk.Extensions.HStore.Tests
 dotnet test tests/BlueTusk.Extensions.LTree.Tests
 dotnet test tests/BlueTusk.Extensions.PgTrgm.Tests

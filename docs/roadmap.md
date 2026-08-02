@@ -584,7 +584,7 @@ explicit environment and workload gates below are executable in CI.
   - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files
   - [x] Preview claims retain explicit production, optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 beta boundaries
 - [x] Supported-version CI
-- [ ] Dedicated extension-image CI for pgvector, PostGIS, and TimescaleDB ADO.NET/EF gates
+- [x] Dedicated extension-image CI for pgvector, PostGIS, and TimescaleDB ADO.NET/EF gates
 - [ ] PgBouncer session/transaction-mode, primary/standby, locale/time-zone, and development-version environment gates
 - [ ] Representative EF Core and SQL/PGQ benchmark workloads alongside the native ADO.NET comparisons
 

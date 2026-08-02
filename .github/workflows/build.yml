@@ -81,6 +81,69 @@ jobs:
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
 
+  extension-integration:
+    name: ${{ matrix.name }} dedicated extension image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: pgvector
+            service: pgvector18
+            port: 5518
+            ado_project: tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj
+          - name: PostGIS
+            service: postgis18
+            port: 5519
+            ado_project: tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj
+          - name: TimescaleDB
+            service: timescaledb17
+            port: 5520
+            ado_project: tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start dedicated extension image
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests up -d --wait ${{ matrix.service }}
+
+      - name: Run ADO.NET extension acceptance
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests
+        run: >-
+          dotnet test ${{ matrix.ado_project }}
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/extensions/${{ matrix.service }}/ado
+
+      - name: Run EF Core extension acceptance
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests
+        run: >-
+          dotnet test ${{ matrix.ef_project }}
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/extensions/${{ matrix.service }}/ef
+
+      - name: Capture extension logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests logs ${{ matrix.service }}
+
+      - name: Stop dedicated extension image
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests down --volumes
+
   replication-endurance:
     name: PostgreSQL 19 replication endurance
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
