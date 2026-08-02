@@ -232,7 +232,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Introduce safe per-session reuse, pooling, sizing passes, or direct `IBufferWriter` encoding where measurements justify them
   - [x] Track untouched pool leases, share immutable data-source settings, and lazily allocate notification/large-object state while retaining dirty-lease reset isolation
   - [x] Collapse clean pool checkout arbitration to one lock, cache warm command plans and prepared scalar metadata, and retain only the first scalar response value
-  - [x] Flatten sequential field `ValueTask` layers and add bounded 64 KiB protocol read-ahead for large streamed fields
+  - [x] Flatten sequential field `ValueTask` layers and add adaptive bounded protocol read-ahead (64 KiB steady state, up to 1 MiB while streaming a large field)
 - [x] Check in end-to-end allocation baselines and explicit regression budgets
 - [x] Describe inherently allocating returned CLR values accurately; no blanket “allocation-free” claim
 
@@ -583,7 +583,7 @@ explicit environment and workload gate below is executable and checked.
   - [x] Equivalent live BlueTusk/Npgsql warm-pool, parameterized, prepared, 1,000-row, and 1 MiB streaming workloads
   - [x] Checked-in PostgreSQL 19 ShortRun latency/allocation baseline with explicit fairness limits and no runtime Npgsql dependency
   - [x] Eliminate sequential-reader portal-suspension round trips, reuse streamed row state, and add buffered typed-scalar fast paths with cancellation/recovery acceptance
-  - [x] Beat the paired Npgsql warm-checkout latency/allocation result and the parameterized/prepared scalar allocation results; retain the remaining network-latency and sequential-allocation gaps explicitly in the baseline
+  - [x] Beat the paired Npgsql parameterized-scalar, warm-checkout, and 1 MiB stream latency/allocation results plus prepared-scalar allocation; retain the 1,000-row and prepared-latency gaps explicitly in the baseline
 - [x] Complete documentation
   - [x] Data-source-first ADO.NET, EF, replication, extension, graph, security, observability, testing, versioning, and release-readiness guides match executable behavior
   - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files

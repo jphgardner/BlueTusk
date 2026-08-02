@@ -154,11 +154,12 @@ EF graph API. The checked-in ShortRun reports and allocation budgets are
 regression evidence, not universal latency or throughput claims.
 
 The paired PostgreSQL 19 provider gate additionally records BlueTusk below
-Npgsql for untouched warm-checkout latency and allocation, and below Npgsql for
-managed allocation on both parameterized and explicitly prepared scalar
-commands. The current sequential row/large-field allocation and four networked
-latency gaps remain documented in the checked-in report; release readiness does
-not reinterpret those mixed results as blanket provider superiority.
+Npgsql for latency and managed allocation on parameterized scalar execution,
+untouched warm checkout, and isolated 1 MiB streaming. Explicitly prepared
+execution allocates less with a small latency deficit. The current 1,000-row
+latency/allocation gap remains documented in the checked-in report; release
+readiness does not reinterpret these environment-specific ShortRun results as
+blanket provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link

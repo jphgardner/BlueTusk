@@ -70,15 +70,16 @@ ShortRun measurements are environment-specific diagnostics with wide confidence
 intervals; they identify optimization work and are not a claim that one provider
 is universally faster.
 
-The final 2026-08-02 Windows/Ryzen 7 5800X reference run records a 199 ns / 168 B
-BlueTusk warm checkout versus 210 ns / 184 B for Npgsql. Parameterized and
-prepared BlueTusk scalars also use less managed memory (2,064 B versus 2,113 B,
-and 992 B versus 1,132 B), although their loopback latencies remain 1.42x and
-1.50x Npgsql. The sequential 1,000-row and 1 MiB stream paths remain 1.28x and
-1.34x slower and allocate more. The exact current values and environment are
-checked in under `baselines/windows-ryzen7-5800x-dotnet10`; measured wins and
-remaining gaps are both retained instead of being converted into an unmeasured
-provider-wide performance claim.
+The final 2026-08-02 Windows/Ryzen 7 5800X reference run records three latency
+wins and four managed-allocation wins across the five pairs. BlueTusk measures
+477/499 us and 2,064/2,067 B for the parameterized scalar, 302/326 ns and
+168/184 B for warm checkout, and 4.66/4.82 ms and 6,041/8,782 B for the isolated
+1 MiB stream. The explicitly prepared scalar allocates 992 B versus 1,065 B but
+is 443/428 us, while the 1,000-row reader remains the open gap at 857/728 us and
+3,701/1,505 B. The exact values and environment are checked in under
+`baselines/windows-ryzen7-5800x-dotnet10`; measured wins and remaining gaps are
+both retained instead of being converted into an unmeasured provider-wide
+performance claim.
 
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
 1,000-row scan pay 32 additional network exchanges. The optimized path sends

@@ -28,15 +28,17 @@ in-memory ownership budgets above. Its final 2026-08-02 ShortRun records:
 
 | Workload | BlueTusk | Npgsql | Current result |
 | --- | ---: | ---: | --- |
-| Parameterized scalar | 2,064 B | 2,113 B | BlueTusk 2.3% lower |
-| Explicitly prepared scalar | 992 B | 1,132 B | BlueTusk 12.4% lower |
+| Parameterized scalar | 2,064 B | 2,067 B | effectively tied; BlueTusk 3 B lower |
+| Explicitly prepared scalar | 992 B | 1,065 B | BlueTusk 6.9% lower |
 | Untouched warm checkout | 168 B | 184 B | BlueTusk 8.7% lower |
-| Sequential 1,000-row read | 5,519 B | 1,600 B | BlueTusk 3.45x higher; open gap |
-| Sequential 1 MiB `bytea` | 12,610 B | 8,983 B | BlueTusk 1.40x higher; open gap |
+| Sequential 1,000-row read | 3,701 B | 1,505 B | BlueTusk 2.46x higher; open gap |
+| Sequential 1 MiB `bytea` | 6,041 B | 8,782 B | BlueTusk 31.2% lower |
 
-The same run measures warm checkout at 199 ns for BlueTusk and 210 ns for
-Npgsql. The other four BlueTusk latency results remain 1.28x to 1.50x Npgsql;
-allocation wins are not presented as provider-wide latency wins.
+The same run measures BlueTusk faster for parameterized scalar execution
+(477 versus 499 us), warm checkout (302 versus 326 ns), and the isolated 1 MiB
+stream (4.66 versus 4.82 ms). Prepared scalar execution is 3.6% slower and the
+1,000-row reader is 17.7% slower. These ShortRun results have wide confidence
+intervals and are not presented as provider-wide latency wins.
 
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB buffer per physical session and uses that same storage as bounded read-ahead for incremental large fields; caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 

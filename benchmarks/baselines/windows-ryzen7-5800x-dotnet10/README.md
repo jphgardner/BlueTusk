@@ -30,27 +30,25 @@ The 0.3.0 allocation-discipline reports were added on 2026-08-01 with the same S
 The transport-pipeline decision reports were added on 2026-08-01. The bounded `System.IO.Pipelines` prototype improves the adversarial fragmented async batch and tiny cancellation-drain cases, but is approximately 2x slower for a 1 MiB field, 42% slower for synchronous COPY, effectively tied for asynchronous COPY and TLS, and 76% slower for asynchronous raw TCP. Both warm loopback readers report zero measured managed allocation; the prototype reports 96 B for the large-field batch. These short-run measurements support retaining the current transport, as recorded in ADR 0005.
 
 The live PostgreSQL 19 provider-comparison report was refreshed on 2026-08-02
-against the local server on this machine after the command, pool, and streaming
-hot-path work. BlueTusk/Npgsql means are 482/340 µs and 2,064/2,113 B for a
-parameterized scalar, 452/302 µs and 992/1,132 B for an explicitly prepared
-scalar, 199/210 ns and 168/184 B for an untouched warm pool checkout, 713/555 µs
-and 5,519/1,600 B for a sequential 1,000-row read, and 13.97/10.44 ms and
-12,610/8,983 B for a sequential 1 MiB `bytea` stream.
+against the local server on this machine after the command, pool, transport, and
+streaming hot-path work. The large-field fixture creates the same one-row 1 MiB
+temporary payload on each provider connection during setup, keeping PostgreSQL
+payload-generation CPU outside the timed operations. BlueTusk/Npgsql means are
+477/499 µs and 2,064/2,067 B for a parameterized scalar, 443/428 µs and
+992/1,065 B for an explicitly prepared scalar, 302/326 ns and 168/184 B for an
+untouched warm pool checkout, 857/728 µs and 3,701/1,505 B for a sequential
+1,000-row read, and 4.66/4.82 ms and 6,041/8,782 B for a sequential 1 MiB
+`bytea` stream.
 
-The current ShortRun therefore establishes measured BlueTusk wins for both
-latency and managed allocation on untouched warm checkout: approximately 4.9%
-faster and 8.7% smaller. Parameterized and prepared scalar commands allocate
-approximately 2.3% and 12.4% less than Npgsql, respectively, while remaining
-1.42x and 1.50x slower in this loopback run. The sequential row and `bytea`
-paths remain 1.28x and 1.34x slower and allocate 3.45x and 1.40x as much.
-
-Relative to the pre-optimization measurements from the same work session, the
-untouched pool path is approximately 2,390x faster and allocates 39x less, while
-the 1,000-row reader is approximately 21x faster and allocates 43x less. The
-prepared scalar allocates 77% less, the parameterized scalar allocates 58% less,
-and the 1 MiB stream is approximately 12% faster with 64% less allocation. These
-three-iteration results are an optimization and regression baseline, not a
-provider-wide superiority claim or release performance guarantee.
+The current ShortRun therefore records BlueTusk latency and managed-allocation
+wins for parameterized scalar execution, untouched warm checkout, and the
+isolated large-field stream. Prepared execution allocates 6.9% less while its
+mean is 3.6% slower. The 1,000-row reader remains 17.7% slower and allocates
+2.46x as much; it is the explicit remaining provider-comparison gap. Compared
+with the preceding checked-in report, BlueTusk's row allocation fell 33% and its
+large-stream allocation fell 52%. These three-iteration results are an
+optimization and regression baseline, not a provider-wide superiority claim or
+release performance guarantee.
 
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first

@@ -50,7 +50,7 @@ PostgreSQL `time` can represent `24:00:00`, so its default CLR type is `TimeSpan
 
 UUID binary values use PostgreSQL network byte order, JSONB validates its version byte, and `bytea` accepts binary, hexadecimal text, and legacy escape text. UTF-8 decoding is strict so malformed server text is rejected rather than silently replaced.
 
-The default data reader buffers complete result sets for random field access. A reader created with `CommandBehavior.SequentialAccess` instead uses a named portal and consumes fields directly from the transport: fields must be visited in ordinal order, binary `bytea` is exposed through `GetStream`, and text, JSON, and JSONB are decoded incrementally through `GetTextReader`. The default unlimited portal execution avoids suspension round trips; set `BlueTuskCommand.SequentialFetchSize` to a positive row count when server-side bounded fetches are preferable. Materializing a scalar value buffers only that field.
+The default data reader buffers complete result sets for random field access. A reader created with `CommandBehavior.SequentialAccess` instead uses an incremental portal and consumes fields directly from the transport: fields must be visited in ordinal order, binary `bytea` is exposed through `GetStream`, and text, JSON, and JSONB are decoded incrementally through `GetTextReader`. The default unlimited execution uses PostgreSQL's unnamed portal and avoids suspension round trips; set `BlueTuskCommand.SequentialFetchSize` to a positive row count to use a generated named portal when server-side bounded fetches are preferable. Materializing a scalar value buffers only that field.
 
 An unregistered OID is returned as `BlueTuskUnknownValue`, preserving its format and raw bytes.
 

@@ -139,4 +139,4 @@ Transactional [large-object streams](large-objects.md) support asynchronous crea
 connection/command activities, OpenTelemetry metrics, query tags, and opt-in
 slow-command events.
 
-[Sequential readers](sequential-readers.md) use bounded named portals and incremental backend-frame reads. Their `GetStream` and `GetTextReader` paths consume binary `bytea`, text, JSON, and JSONB directly from the active network payload. Buffered readers retain the existing random-access behavior. Raw/text/typed-binary COPY, notification subscription and waiting, and large-object streams have separate native synchronous and asynchronous paths.
+[Sequential readers](sequential-readers.md) use incremental portals and backend-frame reads. Unlimited reads use the unnamed portal; positive fetch sizes use bounded named portals. Their `GetStream` and `GetTextReader` paths consume binary `bytea`, text, JSON, and JSONB directly from the active network payload. Buffered readers retain the existing random-access behavior. Raw/text/typed-binary COPY, notification subscription and waiting, and large-object streams have separate native synchronous and asynchronous paths.
