@@ -28,6 +28,7 @@ public sealed class BlueTuskDataReader : DbDataReader
     private readonly BlueTuskCommand? _streamingCommand;
     private readonly BlueTuskCommandTimeout? _streamingTimeoutTimer;
     private readonly BlueTuskConnection? _executionConnection;
+    private readonly BlueTuskFieldDescription[]? _streamingFields;
     private BlueTuskConnection? _connectionToClose;
     private BlueTuskPortal? _portal;
     private BlueTuskPortalRow? _streamingRow;
@@ -61,12 +62,13 @@ public sealed class BlueTuskDataReader : DbDataReader
         _executionConnection = executionConnection ?? throw new ArgumentNullException(nameof(executionConnection));
         _connectionToClose = connectionToClose;
         _types = types ?? throw new ArgumentNullException(nameof(types));
+        _streamingFields = portal.Fields as BlueTuskFieldDescription[] ?? [.. portal.Fields];
         _singleRow = singleRow;
         _streamingCommand = streamingCommand ?? throw new ArgumentNullException(nameof(streamingCommand));
         _streamingTimeoutTimer = streamingTimeoutTimer;
     }
 
-    public override int FieldCount => CurrentFields.Count;
+    public override int FieldCount => _streamingFields?.Length ?? CurrentFields.Count;
 
     public override bool HasRows => _portal is not null
         ? _streamingRowsReturned != 0 || PrefetchStreamingRow() is not null
@@ -88,7 +90,7 @@ public sealed class BlueTuskDataReader : DbDataReader
             : null;
 
     private IReadOnlyList<BlueTuskFieldDescription> CurrentFields =>
-        _portal?.Fields ?? CurrentResultSet?.Fields ?? [];
+        _streamingFields ?? CurrentResultSet?.Fields ?? [];
 
     private BlueTuskDataRow CurrentRow =>
         CurrentResultSet is { } resultSet && _rowIndex >= 0 && _rowIndex < resultSet.Rows.Count
@@ -431,11 +433,19 @@ public sealed class BlueTuskDataReader : DbDataReader
 
     public override int GetInt32(int ordinal)
     {
-        if (_portal is not null &&
-            GetField(ordinal) is { TypeOid: 23, FormatCode: 1 } &&
-            GetStreamingRow().TryReadInt32(ordinal, out var value))
+        if (_streamingFields is { } fields)
         {
-            return value;
+            if ((uint)ordinal >= (uint)fields.Length)
+            {
+                throw new IndexOutOfRangeException(
+                    $"Column ordinal {ordinal} is outside the current result.");
+            }
+
+            if (fields[ordinal] is { TypeOid: 23, FormatCode: 1 } &&
+                GetStreamingRow().TryReadInt32(ordinal, out var value))
+            {
+                return value;
+            }
         }
 
         Span<byte> buffer = stackalloc byte[sizeof(int)];

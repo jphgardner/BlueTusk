@@ -1283,7 +1283,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         _open = false;
         ReleaseCopyBothOperation();
         ReleaseSynchronousCopyOperation();
-        Interlocked.Exchange(ref _portalOperationActive, 0);
+        if (Interlocked.Exchange(ref _portalOperationActive, 0) != 0)
+        {
+            _connection.EndPortalReadLease();
+        }
         _operationLock.Dispose();
         await _connection.DisposeAsync().ConfigureAwait(false);
     }
@@ -1299,7 +1302,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         _open = false;
         ReleaseCopyBothOperation();
         ReleaseSynchronousCopyOperation();
-        Interlocked.Exchange(ref _portalOperationActive, 0);
+        if (Interlocked.Exchange(ref _portalOperationActive, 0) != 0)
+        {
+            _connection.EndPortalReadLease();
+        }
         _operationLock.Dispose();
         _connection.Dispose();
     }
@@ -1313,6 +1319,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         int fetchSize)
     {
         _operationLock.Wait();
+        try
+        {
+            _connection.BeginPortalReadLease();
+        }
+        catch
+        {
+            _operationLock.Release();
+            throw;
+        }
+
         Volatile.Write(ref _portalOperationActive, 1);
         var started = Stopwatch.GetTimestamp();
         var requestWritten = false;
@@ -1365,6 +1381,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken)
     {
         await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            _connection.BeginPortalReadLease();
+        }
+        catch
+        {
+            _operationLock.Release();
+            throw;
+        }
+
         Volatile.Write(ref _portalOperationActive, 1);
         var started = Stopwatch.GetTimestamp();
         var requestWritten = false;
@@ -1535,12 +1561,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             {
                 if (portal.CurrentRow is { } reusableRow)
                 {
-                    reusableRow.Reset(header.PayloadLength, portal.Fields.Count);
+                    reusableRow.Reset(header.PayloadLength, portal.FieldCount);
                     return reusableRow;
                 }
 
                 var row = RentPortalRow(portal);
-                row.Reset(header.PayloadLength, portal.Fields.Count);
+                row.Reset(header.PayloadLength, portal.FieldCount);
                 return row;
             }
 
@@ -1584,8 +1610,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         if (portal.CurrentRow is { } bufferedRow &&
             _connection.TryReadBufferedDataRow(out var bufferedPayload, out var bufferedHeader))
         {
-            BlueTuskDiagnostics.ProtocolMessageSize.Record(bufferedHeader.PayloadLength + 5);
-            bufferedRow.ResetBuffered(bufferedPayload, portal.Fields.Count);
+            if (BlueTuskDiagnostics.ProtocolMessageSize.Enabled)
+            {
+                BlueTuskDiagnostics.ProtocolMessageSize.Record(bufferedHeader.PayloadLength + 5);
+            }
+
+            bufferedRow.ResetBuffered(bufferedPayload, portal.FieldCount);
             row = bufferedRow;
             return true;
         }
@@ -1599,13 +1629,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
         if (portal.CurrentRow is { } reusableRow)
         {
-            reusableRow.Reset(header.PayloadLength, portal.Fields.Count);
+            reusableRow.Reset(header.PayloadLength, portal.FieldCount);
             row = reusableRow;
         }
         else
         {
             row = RentPortalRow(portal);
-            row.Reset(header.PayloadLength, portal.Fields.Count);
+            row.Reset(header.PayloadLength, portal.FieldCount);
         }
 
         return true;
@@ -1665,7 +1695,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         portal,
                         portal.CurrentRow ?? RentPortalRow(portal),
                         header.PayloadLength,
-                        portal.Fields.Count,
+                        portal.FieldCount,
                         cancellationToken).ConfigureAwait(false);
                     portal.SetAsyncReadResult(row);
                     return row;
@@ -2227,6 +2257,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             BlueTuskDiagnostics.CommandDuration.Record(
                 Stopwatch.GetElapsedTime(startedTimestamp).TotalSeconds);
+            _connection.EndPortalReadLease();
             _operationLock.Release();
         }
     }

@@ -133,7 +133,10 @@ timeouts rent warmed registrations instead of constructing native timers.
 Already buffered rows are read directly from the protocol window for the current
 reader iteration, avoiding one small copy per row. Repeated portal descriptions
 reuse immutable field metadata only after a byte-for-byte match against the new
-server frame.
+server frame. One portal-lifetime read lease protects the shared window instead of
+two atomic lifetime operations per buffered row; contiguous backend frames bypass
+the general segmented parser, while typed sequential reads cache their concrete
+field array and validated field count.
 The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
 it is not a memory-copy microbenchmark.
 

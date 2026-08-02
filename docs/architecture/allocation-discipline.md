@@ -72,7 +72,11 @@ Fully buffered DataRows remain a read-only view over the protocol window for the
 current reader iteration instead of being copied into row-local storage. Repeated
 portal metadata is reused only after the newly received `RowDescription` matches
 the cached wire payload byte for byte, so schema or format changes still replace
-the cache immediately.
+the cache immediately. The portal pins that protocol window for its complete
+lifetime, eliminating per-row buffer-lifetime atomics, and contiguous backend
+frames use a direct array decoder. The reader caches the concrete field array and
+field count for typed sequential access, avoiding repeated interface dispatch and
+duplicate field validation without weakening public ordinal checks.
 Portal frontend messages use struct-backed parameter views instead of copied
 type/value arrays and capturing writer delegates.
 The streaming reader holds its command and timeout directly instead of allocating

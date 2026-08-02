@@ -118,13 +118,8 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             EnsureNoActivePayload();
             while (true)
             {
-                var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
-                var originalLength = sequence.Length;
-                if (_parser.TryParse(ref sequence, out var message))
+                if (TryParseBufferedMessage(out var message))
                 {
-                    var consumed = checked((int)(originalLength - sequence.Length));
-                    _start += consumed;
-                    _count -= consumed;
                     return message;
                 }
 
@@ -157,13 +152,8 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         try
         {
             EnsureNoActivePayload();
-            var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
-            var originalLength = sequence.Length;
-            if (_parser.TryParse(ref sequence, out message))
+            if (TryParseBufferedMessage(out message))
             {
-                var consumed = checked((int)(originalLength - sequence.Length));
-                _start += consumed;
-                _count -= consumed;
                 destination = default;
                 EndRead();
                 return true;
@@ -207,6 +197,10 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     internal void AbortReadMessage() => EndRead();
 
+    internal void BeginPortalReadLease() => BeginRead();
+
+    internal void EndPortalReadLease() => EndRead();
+
     /// <remarks>The returned payload remains valid only until the next read from this connection.</remarks>
     public BlueTuskBackendMessage ReadMessage()
     {
@@ -216,13 +210,8 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             EnsureNoActivePayload();
             while (true)
             {
-                var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
-                var originalLength = sequence.Length;
-                if (_parser.TryParse(ref sequence, out var message))
+                if (TryParseBufferedMessage(out var message))
                 {
-                    var consumed = checked((int)(originalLength - sequence.Length));
-                    _start += consumed;
-                    _count -= consumed;
                     return message;
                 }
 
@@ -267,83 +256,71 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     internal bool TryReadBufferedDataRowHeader(out BlueTuskBackendMessageHeader header)
     {
-        BeginRead();
-        try
+        BeginNextMessage();
+        if (_count < HeaderSize || _buffer[_start] != (byte)'D')
         {
-            BeginNextMessage();
-            if (_count < HeaderSize || _buffer[_start] != (byte)'D')
-            {
-                header = default;
-                return false;
-            }
-
-            var length = BinaryPrimitives.ReadInt32BigEndian(
-                _buffer.AsSpan(_start + 1, sizeof(int)));
-            if (length < sizeof(int) + sizeof(short))
-            {
-                throw new BlueTuskProtocolException(
-                    $"Backend DataRow declared invalid length {length}.");
-            }
-
-            // The row object only needs the field count before returning control to
-            // the caller. Requiring those bytes keeps the async API non-blocking.
-            if (_count < HeaderSize + sizeof(short))
-            {
-                header = default;
-                return false;
-            }
-
-            header = ConsumeHeader();
-            return true;
+            header = default;
+            return false;
         }
-        finally
+
+        var length = BinaryPrimitives.ReadInt32BigEndian(
+            _buffer.AsSpan(_start + 1, sizeof(int)));
+        if (length < sizeof(int) + sizeof(short))
         {
-            EndRead();
+            throw new BlueTuskProtocolException(
+                $"Backend DataRow declared invalid length {length}.");
         }
+
+        // The row object only needs the field count before returning control to
+        // the caller. Requiring those bytes keeps the async API non-blocking.
+        if (_count < HeaderSize + sizeof(short))
+        {
+            header = default;
+            return false;
+        }
+
+        _start += HeaderSize;
+        _count -= HeaderSize;
+        _activePayloadRemaining = length - sizeof(int);
+        header = new BlueTuskBackendMessageHeader((byte)'D', _activePayloadRemaining);
+        return true;
     }
 
     internal bool TryReadBufferedDataRow(
         out ReadOnlyMemory<byte> payload,
         out BlueTuskBackendMessageHeader header)
     {
-        BeginRead();
-        try
+        BeginNextMessage();
+        if (_count < HeaderSize || _buffer[_start] != (byte)'D')
         {
-            BeginNextMessage();
-            if (_count < HeaderSize || _buffer[_start] != (byte)'D')
-            {
-                payload = default;
-                header = default;
-                return false;
-            }
-
-            var length = BinaryPrimitives.ReadInt32BigEndian(
-                _buffer.AsSpan(_start + 1, sizeof(int)));
-            if (length < sizeof(int) + sizeof(short))
-            {
-                throw new BlueTuskProtocolException(
-                    $"Backend DataRow declared invalid length {length}.");
-            }
-
-            var payloadLength = length - sizeof(int);
-            if (_count < HeaderSize + payloadLength)
-            {
-                payload = default;
-                header = default;
-                return false;
-            }
-
-            header = ConsumeHeader();
-            payload = _buffer.AsMemory(_start, payloadLength);
-            _start += payloadLength;
-            _count -= payloadLength;
-            _activePayloadRemaining = 0;
-            return true;
+            payload = default;
+            header = default;
+            return false;
         }
-        finally
+
+        var length = BinaryPrimitives.ReadInt32BigEndian(
+            _buffer.AsSpan(_start + 1, sizeof(int)));
+        if (length < sizeof(int) + sizeof(short))
         {
-            EndRead();
+            throw new BlueTuskProtocolException(
+                $"Backend DataRow declared invalid length {length}.");
         }
+
+        var payloadLength = length - sizeof(int);
+        if (_count < HeaderSize + payloadLength)
+        {
+            payload = default;
+            header = default;
+            return false;
+        }
+
+        header = new BlueTuskBackendMessageHeader((byte)'D', payloadLength);
+        payload = _buffer.AsMemory(_start + HeaderSize, payloadLength);
+        var frameLength = HeaderSize + payloadLength;
+        _start += frameLength;
+        _count -= frameLength;
+        _activePayloadRemaining = 0;
+        return true;
     }
 
     internal bool TryBeginReadMessageHeader(
@@ -986,6 +963,46 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         _activePayloadRemaining = -1;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool TryParseBufferedMessage(out BlueTuskBackendMessage message)
+    {
+        if (_count < HeaderSize)
+        {
+            message = default;
+            return false;
+        }
+
+        var code = _buffer[_start];
+        var length = BinaryPrimitives.ReadInt32BigEndian(
+            _buffer.AsSpan(_start + 1, sizeof(int)));
+        if (length < sizeof(int))
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend message '{(char)code}' declared invalid length {length}.");
+        }
+
+        if (length > _parser.MaximumMessageSize)
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend message '{(char)code}' declared length {length}, exceeding the configured maximum {_parser.MaximumMessageSize}.");
+        }
+
+        var frameLength = length + 1;
+        if (_count < frameLength)
+        {
+            message = default;
+            return false;
+        }
+
+        var payloadLength = length - sizeof(int);
+        message = new BlueTuskBackendMessage(
+            code,
+            new ReadOnlySequence<byte>(_buffer.AsMemory(_start + HeaderSize, payloadLength)));
+        _start += frameLength;
+        _count -= frameLength;
+        return true;
     }
 
     private void EnsureActivePayload()

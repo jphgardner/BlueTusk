@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Client;
@@ -22,6 +23,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         _session = session;
         Name = name;
         Fields = fields;
+        FieldCount = fields.Count;
         FetchSize = fetchSize;
         SyncSent = syncSent;
         StartedTimestamp = startedTimestamp;
@@ -30,6 +32,8 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
     public string Name { get; }
 
     public IReadOnlyList<BlueTuskFieldDescription> Fields { get; }
+
+    internal int FieldCount { get; }
 
     public int FetchSize { get; }
 
@@ -438,9 +442,9 @@ public sealed class BlueTuskPortalRow
         return true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryReadInt32(int ordinal, out int value)
     {
-        ValidateOrdinal(ordinal);
         EnsureNoActiveStream();
         if (!_payloadBuffered || ordinal != _activeOrdinal + 1 ||
             _payloadLength - _payloadConsumed < (sizeof(int) * 2))
