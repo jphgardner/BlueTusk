@@ -67,6 +67,15 @@ ShortRun measurements are environment-specific diagnostics with wide confidence
 intervals; they identify optimization work and are not a claim that one provider
 is universally faster.
 
+The sequential-reader baseline exposed a 32-row portal-fetch default that made a
+1,000-row scan pay 32 additional network exchanges. The optimized path sends
+Parse/Bind/Describe/Execute/Sync in one transport write (with a metadata Flush
+before Execute), streams without a row limit by default, reuses its forward-only
+row object, and decodes buffered binary integers without boxing. Positive
+`SequentialFetchSize` values still exercise bounded portal suspension. Keep both
+latency and allocation columns when evaluating this path; the checked-in report
+is refreshed only after the corresponding integration gates pass.
+
 Run the complete suite in Release mode:
 
 ```powershell

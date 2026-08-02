@@ -16,7 +16,7 @@ public sealed class BlueTuskCommand : DbCommand
     private BlueTuskTransaction? _transaction;
     private BlueTuskConnection? _executingConnection;
     private int _commandTimeout = 30;
-    private int _sequentialFetchSize = 32;
+    private int _sequentialFetchSize;
     private BlueTuskCommandExecutionMode _executionMode;
     private int _executing;
     private int _cancellationRequested;
@@ -62,13 +62,16 @@ public sealed class BlueTuskCommand : DbCommand
             : throw new ArgumentOutOfRangeException(nameof(value));
     }
 
-    /// <summary>Gets or sets the maximum rows requested per portal fetch for sequential readers.</summary>
+    /// <summary>
+    /// Gets or sets the maximum rows requested per portal fetch for sequential readers.
+    /// Zero streams the complete response without suspending the portal.
+    /// </summary>
     public int SequentialFetchSize
     {
         get => _sequentialFetchSize;
         set
         {
-            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
             _sequentialFetchSize = value;
         }
     }

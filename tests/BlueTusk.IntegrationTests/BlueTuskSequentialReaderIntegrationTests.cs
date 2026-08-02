@@ -8,6 +8,34 @@ namespace BlueTusk.IntegrationTests;
 public sealed class BlueTuskSequentialReaderIntegrationTests
 {
     [Fact]
+    public async Task Default_sequential_reader_streams_an_unlimited_execute_and_reuses_the_connection()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using (var command = (BlueTuskCommand)connection.CreateCommand())
+        {
+            Assert.Equal(0, command.SequentialFetchSize);
+            command.CommandText =
+                "SELECT value FROM generate_series(1, 1000) AS value ORDER BY value";
+
+            await using var reader = await command.ExecuteReaderAsync(
+                CommandBehavior.SequentialAccess,
+                CancellationToken.None);
+            long sum = 0;
+            while (await reader.ReadAsync(CancellationToken.None))
+            {
+                sum += reader.GetInt32(0);
+            }
+
+            Assert.Equal(500500, sum);
+        }
+
+        await using var reuse = connection.CreateCommand();
+        reuse.CommandText = "SELECT 41";
+        Assert.Equal(41, await reuse.ExecuteScalarAsync(CancellationToken.None));
+    }
+
+    [Fact]
     public void Sequential_reader_streams_binary_and_text_fields_and_reuses_the_connection()
     {
         using var connection = new BlueTuskConnection(GetConnectionString());

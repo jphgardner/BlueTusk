@@ -205,6 +205,86 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+    internal bool TryReadBufferedDataRowHeader(out BlueTuskBackendMessageHeader header)
+    {
+        BeginRead();
+        try
+        {
+            BeginNextMessage();
+            if (_count < HeaderSize || _buffer[_start] != (byte)'D')
+            {
+                header = default;
+                return false;
+            }
+
+            var length = BinaryPrimitives.ReadInt32BigEndian(
+                _buffer.AsSpan(_start + 1, sizeof(int)));
+            if (length < sizeof(int) + sizeof(short))
+            {
+                throw new BlueTuskProtocolException(
+                    $"Backend DataRow declared invalid length {length}.");
+            }
+
+            // The row object only needs the field count before returning control to
+            // the caller. Requiring those bytes keeps the async API non-blocking.
+            if (_count < HeaderSize + sizeof(short))
+            {
+                header = default;
+                return false;
+            }
+
+            header = ConsumeHeader();
+            return true;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    internal bool TryReadBufferedDataRow(
+        Span<byte> payloadDestination,
+        out BlueTuskBackendMessageHeader header)
+    {
+        BeginRead();
+        try
+        {
+            BeginNextMessage();
+            if (_count < HeaderSize || _buffer[_start] != (byte)'D')
+            {
+                header = default;
+                return false;
+            }
+
+            var length = BinaryPrimitives.ReadInt32BigEndian(
+                _buffer.AsSpan(_start + 1, sizeof(int)));
+            if (length < sizeof(int) + sizeof(short))
+            {
+                throw new BlueTuskProtocolException(
+                    $"Backend DataRow declared invalid length {length}.");
+            }
+
+            var payloadLength = length - sizeof(int);
+            if (payloadLength > payloadDestination.Length ||
+                _count < HeaderSize + payloadLength)
+            {
+                header = default;
+                return false;
+            }
+
+            header = ConsumeHeader();
+            _buffer.AsSpan(_start, payloadLength).CopyTo(payloadDestination);
+            _start += payloadLength;
+            _count -= payloadLength;
+            _activePayloadRemaining = 0;
+            return true;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
     /// <summary>Asynchronously reads a backend frame header while leaving its payload on the transport.</summary>
     public async ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderAsync(
         CancellationToken cancellationToken)
@@ -238,6 +318,36 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             var read = ReadPayloadBytes(destination[..requested]);
             _activePayloadRemaining -= read;
             return read;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    internal bool TryReadBufferedMessagePayloadExactly(Span<byte> destination)
+    {
+        BeginRead();
+        try
+        {
+            EnsureActivePayload();
+            if (destination.Length > _activePayloadRemaining)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(destination),
+                    "The destination exceeds the active backend message payload.");
+            }
+
+            if (_count < destination.Length)
+            {
+                return false;
+            }
+
+            _buffer.AsSpan(_start, destination.Length).CopyTo(destination);
+            _start += destination.Length;
+            _count -= destination.Length;
+            _activePayloadRemaining -= destination.Length;
+            return true;
         }
         finally
         {
