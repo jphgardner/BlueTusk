@@ -112,6 +112,8 @@ retain the large window. Fast synchronous `ValueTask` completion through the
 field-stream stack reduces socket completions, while asynchronous stream reads
 return legal partial results and let the protocol completion update row/stream
 positions in the same continuation that completes a pending socket read.
+Portal startup parses the small Parse/Bind/RowDescription response directly from
+the protocol buffer before switching to incremental DataRow payload handling.
 The 1 MiB comparison remains an end-to-end SQL, wire, and provider measurement;
 it is not a memory-copy microbenchmark.
 

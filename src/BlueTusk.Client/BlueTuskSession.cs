@@ -300,7 +300,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     }
 
     /// <summary>Begins an incremental extended-query operation over a named portal.</summary>
-    public async ValueTask<BlueTuskPortal> BeginPortalAsync(
+    public ValueTask<BlueTuskPortal> BeginPortalAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults = true,
@@ -311,14 +311,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
         var portalName = $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
-        return await BeginPortalCoreAsync(
+        return BeginPortalCoreAsync(
             portalName,
             string.Empty,
             sql,
             parameters,
             useBinaryResults,
             fetchSize,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>Begins an incremental execution of a named prepared statement.</summary>
@@ -342,7 +342,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     }
 
     /// <summary>Begins an incremental execution of a named prepared statement.</summary>
-    public async ValueTask<BlueTuskPortal> BeginPreparedPortalAsync(
+    public ValueTask<BlueTuskPortal> BeginPreparedPortalAsync(
         string statementName,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults = true,
@@ -359,14 +359,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
         var portalName = $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
-        return await BeginPortalCoreAsync(
+        return BeginPortalCoreAsync(
             portalName,
             statementName,
             null,
             parameters,
             useBinaryResults,
             fetchSize,
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
     }
 
     /// <summary>Creates a named PostgreSQL prepared statement.</summary>
@@ -1449,7 +1449,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         while (true)
         {
-            var message = ReadStreamedMessage();
+            var message = ReadMessage();
             switch (message.Identifier)
             {
                 case '1':
@@ -1482,7 +1482,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         while (true)
         {
-            var message = await ReadStreamedMessageAsync(cancellationToken).ConfigureAwait(false);
+            var message = await _connection.ReadMessageAsync(cancellationToken).ConfigureAwait(false);
+            BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
             switch (message.Identifier)
             {
                 case '1':
