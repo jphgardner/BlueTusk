@@ -587,12 +587,24 @@ public sealed class BlueTuskPortalRow
         return count;
     }
 
-    internal async ValueTask<int> ReadActiveFieldAsync(
+    internal ValueTask<int> ReadActiveFieldAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
         var count = Math.Min(destination.Length, _activeLength - _activePosition);
-        await ReadExactlyAsync(destination[..count], cancellationToken).ConfigureAwait(false);
+        var pendingRead = ReadExactlyAsync(destination[..count], cancellationToken);
+        if (pendingRead.IsCompletedSuccessfully)
+        {
+            _activePosition += count;
+            return ValueTask.FromResult(count);
+        }
+
+        return AwaitActiveFieldAsync(pendingRead, count);
+    }
+
+    private async ValueTask<int> AwaitActiveFieldAsync(ValueTask pendingRead, int count)
+    {
+        await pendingRead.ConfigureAwait(false);
         _activePosition += count;
         return count;
     }
@@ -754,12 +766,24 @@ public sealed class BlueTuskPortalRow
         return ReadExactlySlowAsync(destination, cancellationToken);
     }
 
-    private async ValueTask ReadExactlySlowAsync(
+    private ValueTask ReadExactlySlowAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
-        await _session.ReadPortalPayloadExactlyAsync(destination, cancellationToken).ConfigureAwait(false);
-        _payloadConsumed += destination.Length;
+        var pendingRead = _session.ReadPortalPayloadExactlyAsync(destination, cancellationToken);
+        if (pendingRead.IsCompletedSuccessfully)
+        {
+            _payloadConsumed += destination.Length;
+            return ValueTask.CompletedTask;
+        }
+
+        return AwaitReadExactlySlowAsync(pendingRead, destination.Length);
+    }
+
+    private async ValueTask AwaitReadExactlySlowAsync(ValueTask pendingRead, int length)
+    {
+        await pendingRead.ConfigureAwait(false);
+        _payloadConsumed += length;
     }
 
     private void EnsurePayloadAvailable(int count)
@@ -870,19 +894,32 @@ internal sealed class BlueTuskPortalFieldStream : Stream
         return read;
     }
 
-    public override async ValueTask<int> ReadAsync(
+    public override ValueTask<int> ReadAsync(
         Memory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (_remaining == 0 || buffer.IsEmpty)
         {
-            return 0;
+            return ValueTask.FromResult(0);
         }
 
-        var read = await _row.ReadActiveFieldAsync(
+        var pendingRead = _row.ReadActiveFieldAsync(
             buffer[..Math.Min(buffer.Length, _remaining)],
-            cancellationToken).ConfigureAwait(false);
+            cancellationToken);
+        if (pendingRead.IsCompletedSuccessfully)
+        {
+            var read = pendingRead.Result;
+            _remaining -= read;
+            return ValueTask.FromResult(read);
+        }
+
+        return AwaitReadAsync(pendingRead);
+    }
+
+    private async ValueTask<int> AwaitReadAsync(ValueTask<int> pendingRead)
+    {
+        var read = await pendingRead.ConfigureAwait(false);
         _remaining -= read;
         return read;
     }

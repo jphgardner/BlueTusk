@@ -134,6 +134,43 @@ public static class BlueTuskBackendMessageDecoder
         return new BlueTuskDataRow(values);
     }
 
+    internal static ReadOnlyMemory<byte>? DecodeFirstDataRowValue(
+        BlueTuskBackendMessage message,
+        int expectedFieldCount)
+    {
+        RequireCode(message, 'D');
+        var reader = CreateReader(message, out _);
+        var count = reader.ReadInt16();
+        if (count < 1 || count != expectedFieldCount)
+        {
+            throw new BlueTuskProtocolException(
+                "DataRow field count does not match its row description.");
+        }
+
+        ReadOnlyMemory<byte>? firstValue = null;
+        for (var index = 0; index < count; index++)
+        {
+            var length = reader.ReadInt32();
+            if (length < -1)
+            {
+                throw new BlueTuskProtocolException(
+                    "DataRow declared an invalid negative field length.");
+            }
+
+            if (length >= 0)
+            {
+                var bytes = reader.ReadBytes(length);
+                if (index == 0)
+                {
+                    firstValue = bytes.ToArray();
+                }
+            }
+        }
+
+        reader.EnsureConsumed();
+        return firstValue;
+    }
+
     public static string DecodeCommandComplete(BlueTuskBackendMessage message)
     {
         RequireCode(message, 'C');

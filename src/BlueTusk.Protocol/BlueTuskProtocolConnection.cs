@@ -9,7 +9,8 @@ namespace BlueTusk.Protocol;
 /// <summary>Owns transport buffering and PostgreSQL frame boundaries for one physical connection.</summary>
 public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 {
-    private const int InitialBufferSize = 16 * 1024;
+    private const int InitialBufferSize = 64 * 1024;
+    private const int MaximumPayloadReadAhead = 64 * 1024;
     private const int InitialWriteBufferSize = 4 * 1024;
     private const int MaximumRetainedWriteBufferSize = 64 * 1024;
     private readonly IBlueTuskTransport _transport;
@@ -356,7 +357,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     }
 
     /// <summary>Asynchronously reads the next portion of the active backend message payload.</summary>
-    public async ValueTask<int> ReadMessagePayloadAsync(
+    public ValueTask<int> ReadMessagePayloadAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
@@ -366,13 +367,34 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             EnsureActivePayload();
             if (destination.IsEmpty || _activePayloadRemaining == 0)
             {
-                return 0;
+                EndRead();
+                return ValueTask.FromResult(0);
             }
 
             var requested = Math.Min(destination.Length, _activePayloadRemaining);
-            var read = await ReadPayloadBytesAsync(
-                destination[..requested],
-                cancellationToken).ConfigureAwait(false);
+            var pendingRead = ReadPayloadBytesAsync(destination[..requested], cancellationToken);
+            if (!pendingRead.IsCompletedSuccessfully)
+            {
+                return AwaitMessagePayloadAsync(pendingRead);
+            }
+
+            var read = pendingRead.Result;
+            _activePayloadRemaining -= read;
+            EndRead();
+            return ValueTask.FromResult(read);
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
+    private async ValueTask<int> AwaitMessagePayloadAsync(ValueTask<int> pendingRead)
+    {
+        try
+        {
+            var read = await pendingRead.ConfigureAwait(false);
             _activePayloadRemaining -= read;
             return read;
         }
@@ -574,32 +596,80 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             return copied;
         }
 
-        var read = _transport.Read(destination);
-        return read != 0
-            ? read
-            : throw new EndOfStreamException(
-                "PostgreSQL disconnected in the middle of a protocol message payload.");
+        PrepareForRead();
+        var readAheadLength = Math.Min(
+            _buffer.Length - (_start + _count),
+            MaximumPayloadReadAhead);
+        if (destination.Length < readAheadLength)
+        {
+            _count += ValidatePayloadRead(
+                _transport.Read(_buffer.AsSpan(_start + _count, readAheadLength)));
+            return CopyBufferedPayload(destination);
+        }
+
+        return ValidatePayloadRead(_transport.Read(destination));
     }
 
-    private async ValueTask<int> ReadPayloadBytesAsync(
+    private ValueTask<int> ReadPayloadBytesAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
         if (_count != 0)
         {
-            var copied = Math.Min(destination.Length, _count);
-            _buffer.AsMemory(_start, copied).CopyTo(destination);
-            _start += copied;
-            _count -= copied;
-            return copied;
+            return ValueTask.FromResult(CopyBufferedPayload(destination.Span));
         }
 
-        var read = await _transport.ReadAsync(destination, cancellationToken).ConfigureAwait(false);
-        return read != 0
+        PrepareForRead();
+        var readAheadLength = Math.Min(
+            _buffer.Length - (_start + _count),
+            MaximumPayloadReadAhead);
+        if (destination.Length < readAheadLength)
+        {
+            var pendingReadAhead = _transport.ReadAsync(
+                _buffer.AsMemory(_start + _count, readAheadLength),
+                cancellationToken);
+            return pendingReadAhead.IsCompletedSuccessfully
+                ? ValueTask.FromResult(
+                    CompletePayloadReadAhead(pendingReadAhead.Result, destination.Span))
+                : AwaitPayloadReadAheadAsync(pendingReadAhead, destination);
+        }
+
+        var pendingRead = _transport.ReadAsync(destination, cancellationToken);
+        return pendingRead.IsCompletedSuccessfully
+            ? ValueTask.FromResult(ValidatePayloadRead(pendingRead.Result))
+            : AwaitPayloadBytesAsync(pendingRead);
+    }
+
+    private static async ValueTask<int> AwaitPayloadBytesAsync(ValueTask<int> pendingRead) =>
+        ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
+
+    private async ValueTask<int> AwaitPayloadReadAheadAsync(
+        ValueTask<int> pendingRead,
+        Memory<byte> destination) =>
+        CompletePayloadReadAhead(
+            await pendingRead.ConfigureAwait(false),
+            destination.Span);
+
+    private int CompletePayloadReadAhead(int read, Span<byte> destination)
+    {
+        _count += ValidatePayloadRead(read);
+        return CopyBufferedPayload(destination);
+    }
+
+    private int CopyBufferedPayload(Span<byte> destination)
+    {
+        var copied = Math.Min(destination.Length, _count);
+        _buffer.AsSpan(_start, copied).CopyTo(destination);
+        _start += copied;
+        _count -= copied;
+        return copied;
+    }
+
+    private static int ValidatePayloadRead(int read) =>
+        read != 0
             ? read
             : throw new EndOfStreamException(
                 "PostgreSQL disconnected in the middle of a protocol message payload.");
-    }
 
     private void EnsureNoActivePayload()
     {

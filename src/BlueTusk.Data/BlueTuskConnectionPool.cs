@@ -114,7 +114,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         {
             while (true)
             {
-                var (hasSlot, slot, creationReserved) = TryAcquireAvailableOrReserveCreation();
+                var (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
+                    TryAcquireAvailableOrReserveCreation();
                 if (!hasSlot && !creationReserved)
                 {
                     slot = ReadAvailable();
@@ -131,9 +132,18 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                     continue;
                 }
 
-                lock (_stateSync)
+                if (cleanLease)
                 {
-                    _idle--;
+                    RecordCleanReuse();
+                    return pooledSession;
+                }
+
+                if (!idleRemoved)
+                {
+                    lock (_stateSync)
+                    {
+                        _idle--;
+                    }
                 }
 
                 if (IsCurrent(pooledSession) &&
@@ -169,7 +179,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var (hasSlot, slot, creationReserved) = TryAcquireAvailableOrReserveCreation();
+                var (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
+                    TryAcquireAvailableOrReserveCreation();
                 if (!hasSlot && !creationReserved)
                 {
                     slot = await ReadAvailableAsync(cancellationToken).ConfigureAwait(false);
@@ -190,9 +201,18 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 }
 
                 var pooledSession = slot.Session;
-                lock (_stateSync)
+                if (cleanLease)
                 {
-                    _idle--;
+                    RecordCleanReuse();
+                    return pooledSession;
+                }
+
+                if (!idleRemoved)
+                {
+                    lock (_stateSync)
+                    {
+                        _idle--;
+                    }
                 }
 
                 try
@@ -233,7 +253,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             while (true)
             {
                 cancellationToken.ThrowIfCancellationRequested();
-                var (hasSlot, slot, creationReserved) = TryAcquireAvailableOrReserveCreation();
+                var (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
+                    TryAcquireAvailableOrReserveCreation();
                 if (!hasSlot && !creationReserved)
                 {
                     return null;
@@ -251,9 +272,18 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                     continue;
                 }
 
-                lock (_stateSync)
+                if (cleanLease)
                 {
-                    _idle--;
+                    RecordCleanReuse();
+                    return pooledSession;
+                }
+
+                if (!idleRemoved)
+                {
+                    lock (_stateSync)
+                    {
+                        _idle--;
+                    }
                 }
 
                 try
@@ -292,7 +322,8 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         {
             while (true)
             {
-                var (hasSlot, slot, creationReserved) = TryAcquireAvailableOrReserveCreation();
+                var (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
+                    TryAcquireAvailableOrReserveCreation();
                 if (!hasSlot && !creationReserved)
                 {
                     return null;
@@ -308,9 +339,18 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                     continue;
                 }
 
-                lock (_stateSync)
+                if (cleanLease)
                 {
-                    _idle--;
+                    RecordCleanReuse();
+                    return pooledSession;
+                }
+
+                if (!idleRemoved)
+                {
+                    lock (_stateSync)
+                    {
+                        _idle--;
+                    }
                 }
 
                 if (IsCurrent(pooledSession) &&
@@ -476,7 +516,12 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
     }
 
-    private (bool HasSlot, BlueTuskPoolSlot Slot, bool CreationReserved)
+    private (
+        bool HasSlot,
+        BlueTuskPoolSlot Slot,
+        bool CreationReserved,
+        bool CleanLease,
+        bool IdleRemoved)
         TryAcquireAvailableOrReserveCreation()
     {
         lock (_stateSync)
@@ -484,17 +529,41 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             ThrowIfDisposed();
             if (_available.Reader.TryRead(out var slot))
             {
-                return (true, slot, false);
+                var pooledSession = slot.Session;
+                if (pooledSession is null)
+                {
+                    return (true, slot, false, false, false);
+                }
+
+                _idle--;
+                if (pooledSession.Generation == _generation &&
+                    pooledSession.Session.IsOpen &&
+                    !IsExpired(pooledSession, includeIdleLifetime: true) &&
+                    !pooledSession.RequiresReset &&
+                    pooledSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
+                {
+                    _busy++;
+                    _reused++;
+                    return (true, slot, false, true, true);
+                }
+
+                return (true, slot, false, false, true);
             }
 
             if (_total + _creating < _maximumSize)
             {
                 _creating++;
-                return (false, default, true);
+                return (false, default, true, false, false);
             }
 
-            return (false, default, false);
+            return (false, default, false, false, false);
         }
+    }
+
+    private static void RecordCleanReuse()
+    {
+        BlueTuskDiagnostics.PoolLeases.Add(1);
+        BlueTuskDiagnostics.PoolReuses.Add(1);
     }
 
     private bool TryReserveWarmUpCreation()

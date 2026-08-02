@@ -45,6 +45,18 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
 
+    async ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskScalarQueryResult.FromQueryResult(
+            await ExecuteExtendedQueryAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false));
+
     BlueTuskPortal BeginPortal(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -83,6 +95,18 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
+
+    async ValueTask<BlueTuskScalarQueryResult> ExecutePreparedScalarAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskScalarQueryResult.FromQueryResult(
+            await ExecutePreparedStatementAsync(
+                statementName,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false));
 
     BlueTuskPortal BeginPreparedPortal(
         string statementName,
@@ -514,6 +538,29 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
     }
 
+    public async ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return await _session.ExecuteExtendedScalarAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        return BlueTuskScalarQueryResult.FromQueryResult(
+            await ExecuteExtendedQueryAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false));
+    }
+
     public BlueTuskPortal BeginPortal(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -580,6 +627,17 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         bool useBinaryResults,
         CancellationToken cancellationToken = default) =>
         _session.ExecutePreparedStatementAsync(
+            statementName,
+            parameters,
+            useBinaryResults,
+            cancellationToken);
+
+    public ValueTask<BlueTuskScalarQueryResult> ExecutePreparedScalarAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecutePreparedScalarAsync(
             statementName,
             parameters,
             useBinaryResults,

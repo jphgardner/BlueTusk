@@ -83,6 +83,21 @@ The hot path shares the data source's immutable parsed settings and leaves
 notification/large-object coordination unallocated until requested. The live
 pool isolation test remains the authority for the dirty-lease reset invariant.
 
+Scalar execution has a dedicated response path: it retains only the first field
+of the first row instead of building buffered result-set and row collections.
+Repeated commands cache named-parameter ordering until command text or the
+parameter collection changes, command timeouts use the existing CancelRequest
+timer rather than linked cancellation sources, and explicitly prepared scalar
+commands reuse the statement description returned by `Prepare`. The latter
+omits a redundant portal description while preserving binary/text format
+identity and server-error recovery.
+
+Large sequential fields use a 64 KiB per-session protocol read-ahead window and
+fast synchronous `ValueTask` completion through the field-stream stack. This
+keeps caller-visible streaming bounded while reducing socket completions and
+async state-machine allocation. The 1 MiB comparison remains an end-to-end SQL,
+wire, and provider measurement; it is not a memory-copy microbenchmark.
+
 Run the complete suite in Release mode:
 
 ```powershell
