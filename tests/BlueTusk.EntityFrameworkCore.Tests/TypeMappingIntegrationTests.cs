@@ -3,6 +3,7 @@ using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Xunit.Sdk;
 
 namespace BlueTusk.EntityFrameworkCore.Tests;
@@ -1042,6 +1043,7 @@ public sealed class TypeMappingIntegrationTests
     {
         var options = new DbContextOptionsBuilder<UserTypeValueContext>()
             .UseBlueTusk(dataSource)
+            .ReplaceService<IModelCacheKeyFactory, UserTypeModelCacheKeyFactory>()
             .Options;
         return new UserTypeValueContext(options, enumName, domainName, compositeName, recordName);
     }
@@ -1153,6 +1155,11 @@ public sealed class TypeMappingIntegrationTests
         string compositeName,
         string recordName) : DbContext(options)
     {
+        internal string EnumName => enumName;
+        internal string DomainName => domainName;
+        internal string CompositeName => compositeName;
+        internal string RecordName => recordName;
+
         public DbSet<UserTypeValue> Values => Set<UserTypeValue>();
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -1184,6 +1191,24 @@ public sealed class TypeMappingIntegrationTests
                 .HasColumnType($"public.{recordName}[]")
                 .ElementType(element => element.HasStoreType($"public.{recordName}"));
         }
+    }
+
+    private sealed class UserTypeModelCacheKeyFactory : IModelCacheKeyFactory
+    {
+        public object Create(DbContext context, bool designTime)
+        {
+            var userTypeContext = (UserTypeValueContext)context;
+            return (
+                context.GetType(),
+                userTypeContext.EnumName,
+                userTypeContext.DomainName,
+                userTypeContext.CompositeName,
+                userTypeContext.RecordName,
+                designTime);
+        }
+
+        public object Create(DbContext context)
+            => Create(context, designTime: false);
     }
 
     private sealed class TypeValue

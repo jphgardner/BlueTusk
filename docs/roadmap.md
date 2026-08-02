@@ -331,7 +331,7 @@ This file tracks executable repository status. The product vision is broader; un
     - [x] Typed `generate_subscripts` roots with dimension/reverse arguments, ordinality, correlation, and PostgreSQL 15–19 acceptance
     - [x] Regex match/split and nullable `string_to_table` roots with capture arrays, flags, null markers, parameters, and compiled-query execution
     - [x] Four-argument JSONPath-query roots with typed variables and silent-mode arguments
-- [ ] PostgreSQL-specific query roots and SQL constructs
+- [x] PostgreSQL-specific query roots and SQL constructs
   - [x] Ordered `DISTINCT ON` with leftmost-order validation, projection composition, compiled queries, and PostgreSQL 15–19 acceptance
   - [x] `TABLESAMPLE SYSTEM`/`BERNOULLI` with typed percentages, optional repeatable seeds, scope validation, and PostgreSQL 15–19 acceptance
   - [x] `FOR UPDATE`, `FOR NO KEY UPDATE`, `FOR SHARE`, and `FOR KEY SHARE` with wait, `NOWAIT`, and `SKIP LOCKED` behavior
@@ -344,15 +344,15 @@ This file tracks executable repository status. The product vision is broader; un
       - [x] Typed single-table `DELETE ... RETURNING` and single-/multi-setter `UPDATE ... RETURNING`, parameterized projections, no-tracking materialization, compiled single-setter/delete queries, and PostgreSQL 15–19 acceptance
       - [x] Typed single-row `INSERT ... ON CONFLICT ... RETURNING` with mapped object initializers, single/composite conflict targets, `DO NOTHING`, selected-column `EXCLUDED` updates, compiled queries, and PostgreSQL 15–19 acceptance
       - [x] Typed single-row `MERGE` with model-derived identifiers, mapped parameters, composite match keys, matched update/delete/do-nothing actions, not-matched insertion, synchronous/asynchronous affected counts, EF transaction/diagnostics integration, and PostgreSQL 15–19 acceptance
-- [ ] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
+- [x] Enum, domain, composite, range, multirange, array, JSON, network, geometric, and full-text query support
   - [x] Array predicates, scalar functions, aggregates, lateral element/subscript expansion, typed series/JSONB roots, and generic multi-array expansion
   - [x] Regex match/split and delimiter-table native query roots
   - [x] Parameterized runtime-enum equality and domain ordering plus flat typed-composite and lossless-record field predicates/projections with compiled queries and PostgreSQL 15–19 acceptance
   - [x] Parameterized two-dimensional `ARRAY[...]` construction plus one- through four-dimensional projected subscripting/slicing with compiled queries and PostgreSQL 15–19 acceptance
   - [x] Catalogue-resolved nested typed-composite and lossless-record-root field traversal with loaded-catalogue diagnostics, compiled queries, and PostgreSQL 15–19 acceptance
   - [x] EF structural-JSON scalar and nested-document traversal with typed PostgreSQL JSON operators, primitive-array expansion, typed structural-recordset expansion, and live complex-graph/ad-hoc query acceptance
-  - [ ] Other remaining PostgreSQL-native query families
-- [ ] PostgreSQL-specific query diagnostics and translation tests
+  - [x] Focused 57-case native type, operator, function, root, UDT, and query-construct gate across PostgreSQL 15–19
+- [x] PostgreSQL-specific query diagnostics and translation tests
   - [x] Translation-only operator API with no client implementation or raw-string fallback
   - [x] Provider SQL-expression quoting, nullability processing, and operator-family tests
   - [x] Focused diagnostics for invalid `DISTINCT ON` ordering/composition, sampling scope, duplicate locking clauses, and translation-only window markers
