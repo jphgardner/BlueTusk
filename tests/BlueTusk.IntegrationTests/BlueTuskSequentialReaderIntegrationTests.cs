@@ -21,12 +21,17 @@ public sealed class BlueTuskSequentialReaderIntegrationTests
             await using var reader = await command.ExecuteReaderAsync(
                 CommandBehavior.SequentialAccess,
                 CancellationToken.None);
+            Assert.True(reader.HasRows);
             long sum = 0;
+            var expected = 1;
             while (await reader.ReadAsync(CancellationToken.None))
             {
-                sum += reader.GetInt32(0);
+                var value = reader.GetInt32(0);
+                Assert.Equal(expected++, value);
+                sum += value;
             }
 
+            Assert.Equal(1001, expected);
             Assert.Equal(500500, sum);
         }
 

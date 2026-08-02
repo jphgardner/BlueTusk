@@ -29,17 +29,24 @@ The 0.3.0 allocation-discipline reports were added on 2026-08-01 with the same S
 
 The transport-pipeline decision reports were added on 2026-08-01. The bounded `System.IO.Pipelines` prototype improves the adversarial fragmented async batch and tiny cancellation-drain cases, but is approximately 2x slower for a 1 MiB field, 42% slower for synchronous COPY, effectively tied for asynchronous COPY and TLS, and 76% slower for asynchronous raw TCP. Both warm loopback readers report zero measured managed allocation; the prototype reports 96 B for the large-field batch. These short-run measurements support retaining the current transport, as recorded in ADR 0005.
 
-The live PostgreSQL 19 provider-comparison report was added on 2026-08-02
-against the local server on this machine. BlueTusk/Npgsql means were 474/343 µs
-for a parameterized scalar, 449/300 µs for an explicitly prepared scalar,
-14.6/0.52 ms for a sequential 1,000-row read, and 14.7/9.63 ms for a sequential
-1 MiB `bytea` stream. Warm pool checkout measured 460 µs/241 ns because the
-providers currently apply materially different reset work at the checkout
-boundary; that pair is retained deliberately as an end-to-end default-pool
-cost, not presented as an isolated pool-lock comparison. Managed allocation
-was also higher on every measured BlueTusk path. These three-iteration results
-are an optimization baseline, not a superiority claim or release performance
-guarantee.
+The live PostgreSQL 19 provider-comparison report was refreshed on 2026-08-02
+against the local server on this machine after the command, pool, and streaming
+hot-path work. BlueTusk/Npgsql means are 499/356 µs for a parameterized scalar,
+451/319 µs for an explicitly prepared scalar, 404/262 ns for an untouched warm
+pool checkout, 728/554 µs for a sequential 1,000-row read, and 14.94/10.22 ms
+for a sequential 1 MiB `bytea` stream. The measured BlueTusk/Npgsql latency
+ratios are therefore 1.40x, 1.41x, 1.54x, 1.31x, and 1.46x respectively; the
+current report does not establish a BlueTusk latency or allocation win over
+Npgsql on any of these five pairs.
+
+Relative to the pre-optimization measurements from the same work session, the
+untouched pool path is approximately 1,180x faster and allocates 22x less, while
+the 1,000-row reader is approximately 21x faster and allocates 45x less. The
+prepared scalar allocates 37% less, and the 1 MiB stream is approximately 6%
+faster with 21% less allocation. Parameterized-scalar latency remained within
+ShortRun noise while allocation fell approximately 11%. These three-iteration
+results are an optimization and regression baseline, not a superiority claim
+or release performance guarantee.
 
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first

@@ -67,6 +67,15 @@ ShortRun measurements are environment-specific diagnostics with wide confidence
 intervals; they identify optimization work and are not a claim that one provider
 is universally faster.
 
+The 2026-08-02 Windows/Ryzen 7 5800X reference run records BlueTusk at 1.31x to
+1.54x Npgsql latency and 1.61x to 3.35x Npgsql managed allocation across the
+five pairs. It also records the optimization progress from the original run:
+the untouched pool path moved from a network reset to a 404 ns local checkout,
+and the 1,000-row path moved from 15.3 ms and 235,704 B to 728 µs and 5,212 B.
+The exact current values and environment are checked in under
+`baselines/windows-ryzen7-5800x-dotnet10`; remaining gaps are tracked from data,
+not converted into an unmeasured provider-wide performance claim.
+
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
 1,000-row scan pay 32 additional network exchanges. The optimized path sends
 Parse/Bind/Describe/Execute/Sync in one transport write (with a metadata Flush
