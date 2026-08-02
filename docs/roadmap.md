@@ -232,7 +232,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Introduce safe per-session reuse, pooling, sizing passes, or direct `IBufferWriter` encoding where measurements justify them
   - [x] Track untouched pool leases, share immutable data-source settings, and lazily allocate notification/large-object state while retaining dirty-lease reset isolation
   - [x] Collapse clean pool checkout arbitration to one lock, cache warm command plans and prepared scalar metadata, and retain only the first scalar response value
-  - [x] Flatten sequential field `ValueTask` layers and add adaptive bounded protocol read-ahead (64 KiB steady state, up to 1 MiB while streaming a large field)
+  - [x] Flatten sequential field `ValueTask` layers, read large caller buffers directly, and retain adaptive bounded protocol read-ahead for small reads
 - [x] Check in end-to-end allocation baselines and explicit regression budgets
 - [x] Describe inherently allocating returned CLR values accurately; no blanket “allocation-free” claim
 

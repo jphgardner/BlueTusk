@@ -707,6 +707,45 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task Repeated_parameterized_scalars_reuse_the_unnamed_statement_safely()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+
+        Assert.Equal(42, await ExecuteInt32Async(41));
+        Assert.Equal(43, await ExecuteInt32Async(42));
+
+        await using (var simple = new BlueTuskCommand("SELECT 44", connection))
+        {
+            Assert.Equal(44, await simple.ExecuteScalarAsync<int>());
+        }
+
+        Assert.Equal(45, await ExecuteInt32Async(44));
+        Assert.Equal(46, await ExecuteInt64Async(45));
+        Assert.Equal(47, await ExecuteInt32Async(46));
+
+        async Task<int> ExecuteInt32Async(int value)
+        {
+            await using var command = new BlueTuskCommand(
+                "SELECT @value::int4 + 1",
+                connection);
+            command.Parameters.Add(
+                new BlueTuskParameter<int>(value) { ParameterName = "value" });
+            return await command.ExecuteScalarAsync<int>();
+        }
+
+        async Task<int> ExecuteInt64Async(long value)
+        {
+            await using var command = new BlueTuskCommand(
+                "SELECT @value::int4 + 1",
+                connection);
+            command.Parameters.Add(
+                new BlueTuskParameter<long>(value) { ParameterName = "value" });
+            return await command.ExecuteScalarAsync<int>();
+        }
+    }
+
+    [Fact]
     public async Task AdoNet_named_parameters_are_rewritten_and_can_be_prepared()
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());

@@ -42,7 +42,7 @@ size; the parameterized, prepared, and stream intervals overlap and are treated
 as parity. These longer paired results are regression evidence, not a
 provider-wide latency guarantee.
 
-`BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session and uses that same storage as bounded read-ahead for incremental large fields; the socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
+`BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session. Incremental field reads of at least 8 KiB pass the caller's buffer directly to the transport after consuming buffered bytes, avoiding both an intermediate copy and a transient large rental; smaller reads use adaptive bounded read-ahead. The socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 
 Warm command instances cache the structural named-parameter plan, but parameter
 values are encoded on every execution and prepared-statement type identity is
@@ -56,16 +56,17 @@ operation. Prepared commands amortize native timer scheduling across adjacent
 executions: successful operations only refresh the protected deadline until the
 outstanding wake-up fires. Other commands rent warmed timeout registrations
 instead of creating a native timer for every command object. Untouched logical connections avoid allocating rare transaction,
-notification, and large-object state. Large streamed payloads rent an adaptive
-read-ahead buffer, return legal partial reads without wrapping each transport
-wait at every abstraction layer, complete protocol/row/stream accounting in one
-pending-read continuation, and return to the 64 KiB steady-state window
-at the next frame.
+notification, and large-object state. Large streamed payloads either read
+directly into sufficiently large caller buffers or rent an adaptive read-ahead
+buffer for small reads. Both paths return legal partial reads without wrapping
+each transport wait at every abstraction layer and complete protocol/row/stream
+accounting in one pending-read continuation; rented read-ahead returns to the
+64 KiB steady-state window at the next frame.
 Sequential portal metadata is parsed directly from the shared protocol buffer;
 only DataRow payloads enter the incremental field-streaming path. Unlimited
 sequential commands avoid an intermediate metadata flush, use the unnamed portal,
-reuse the server's unnamed statement for repeated exact parameterless SQL, share
-parameterless rewrite/encoding state, create their parameter collection only when
+reuse the server's unnamed statement for repeated exact SQL and parameter type
+OIDs, share parameterless rewrite/encoding state, create their parameter collection only when
 it is requested, and return their row/header storage to the physical session at
 disposal. Single-segment
 backend frames decode in place. Portal startup and prepared scalar continuations

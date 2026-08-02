@@ -12,6 +12,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 {
     private const int InitialBufferSize = 64 * 1024;
     private const int MaximumPayloadReadAhead = 1024 * 1024;
+    private const int DirectPayloadReadThreshold = 8 * 1024;
     private const int InitialWriteBufferSize = 4 * 1024;
     private const int MaximumRetainedWriteBufferSize = 64 * 1024;
     private readonly IBlueTuskTransport _transport;
@@ -520,6 +521,21 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
                 return ValueTask.FromResult(completed);
             }
 
+            if (destination.Length >= DirectPayloadReadThreshold)
+            {
+                var pendingDirectRead = _transport.ReadAsync(destination, cancellationToken);
+                if (!pendingDirectRead.IsCompletedSuccessfully)
+                {
+                    return AwaitPayloadReadAndCompleteAsync(pendingDirectRead, state, complete);
+                }
+
+                var directRead = ValidatePayloadRead(pendingDirectRead.Result);
+                _activePayloadRemaining -= directRead;
+                var directResult = complete(state, directRead);
+                EndRead();
+                return ValueTask.FromResult(directResult);
+            }
+
             PrepareForRead();
             GrowReadBufferForPayload();
             var readAheadLength = Math.Min(
@@ -845,6 +861,11 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             return copied;
         }
 
+        if (destination.Length >= DirectPayloadReadThreshold)
+        {
+            return ValidatePayloadRead(_transport.Read(destination));
+        }
+
         PrepareForRead();
         GrowReadBufferForPayload();
         var readAheadLength = Math.Min(
@@ -867,6 +888,14 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         if (_count != 0)
         {
             return ValueTask.FromResult(CopyBufferedPayload(destination.Span));
+        }
+
+        if (destination.Length >= DirectPayloadReadThreshold)
+        {
+            var pendingDirectRead = _transport.ReadAsync(destination, cancellationToken);
+            return pendingDirectRead.IsCompletedSuccessfully
+                ? ValueTask.FromResult(ValidatePayloadRead(pendingDirectRead.Result))
+                : AwaitPayloadBytesAsync(pendingDirectRead);
         }
 
         PrepareForRead();

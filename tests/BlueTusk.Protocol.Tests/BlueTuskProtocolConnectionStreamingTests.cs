@@ -30,6 +30,9 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
         }
 
         Assert.Equal(payload, actual);
+        Assert.True(
+            transport.MaximumRequestedReadLength <= 64 * 1024,
+            $"Sequential reads requested {transport.MaximumRequestedReadLength} buffered bytes.");
         Assert.Equal('Z', connection.ReadMessage().Identifier);
     }
 
@@ -143,6 +146,8 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
 
         public List<byte[]> Writes { get; } = [];
 
+        public int MaximumRequestedReadLength { get; private set; }
+
         public EndPoint? RemoteEndPoint => null;
 
         public void Connect(BlueTuskEndpoint endpoint, BlueTuskTransportOptions options)
@@ -156,6 +161,7 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
 
         public int Read(Span<byte> buffer)
         {
+            MaximumRequestedReadLength = Math.Max(MaximumRequestedReadLength, buffer.Length);
             var count = Math.Min(Math.Min(buffer.Length, maximumRead), input.Length - _offset);
             input.AsSpan(_offset, count).CopyTo(buffer);
             _offset += count;

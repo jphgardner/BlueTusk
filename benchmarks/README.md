@@ -88,7 +88,8 @@ The sequential-reader baseline exposed a 32-row portal-fetch default that made a
 1,000-row scan pay 32 additional network exchanges. The optimized unlimited path
 sends Parse/Bind/Describe/Execute/Sync in one transport write without an
 intermediate metadata `Flush`, uses the unnamed portal without a row limit, and
-reuses the server's unnamed parameterless statement when the exact SQL repeats.
+reuses the server's unnamed statement when the exact SQL and parameter type OIDs
+repeat, including commands created afresh for each execution.
 It also reuses session-owned row/header storage after reader disposal, writes
 parameters from struct-backed views, and decodes buffered binary integers without
 boxing. Positive `SequentialFetchSize` values retain the metadata flush and
@@ -117,10 +118,12 @@ identity and server-error recovery. Repeated prepared executions refresh an
 in-memory deadline while one native timer wake-up remains outstanding, avoiding
 two operating-system timer reschedules on every successful command.
 
-Large sequential fields start with a 64 KiB per-session protocol buffer and can
-rent up to 1 MiB of read-ahead storage for the active large payload. The buffer
-shrinks back to 64 KiB at the next frame boundary, so ordinary sessions do not
-retain the large window. Fast synchronous `ValueTask` completion through the
+Large sequential fields start with a 64 KiB per-session protocol buffer. Caller
+buffers of 8 KiB or larger read directly from the transport after consuming any
+already-buffered bytes, avoiding a second copy and a transient 1 MiB rental.
+Smaller reads can rent up to 1 MiB of bounded read-ahead storage for the active
+payload, which shrinks back to 64 KiB at the next frame boundary. Fast
+synchronous `ValueTask` completion through the
 field-stream stack reduces socket completions, while asynchronous stream reads
 return legal partial results and let the protocol completion update row/stream
 positions in the same continuation that completes a pending socket read.
