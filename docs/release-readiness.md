@@ -113,8 +113,9 @@ gates.
 For change detection beyond the pinned PostgreSQL 19 Beta 2 image, a
 scheduled/manual job verifies the checksum of the official nightly PostgreSQL
 19 branch snapshot, compiles it in a repository-owned multi-stage image, and
-runs the full solution against it. The 2026-08-02 snapshot identified itself as
-PostgreSQL 19beta2 and passed 2,967 cases with 146 intentional environment or
+runs the full solution against it. The 2026-08-02 scheduled snapshot run
+identified itself as PostgreSQL 19beta2 and passed 2,967 cases with 146
+intentional environment or
 upstream skips and no failures across 28 test assemblies. No unofficial
 PostgreSQL binary image enters the release gate.
 
@@ -122,11 +123,11 @@ The complete serial solution matrix currently reports:
 
 | PostgreSQL | Passed | Intentional skips | Failed |
 | --- | ---: | ---: | ---: |
-| 15 | 2,952 | 147 | 0 |
-| 16 | 2,953 | 146 | 0 |
-| 17 | 2,955 | 146 | 0 |
-| 18 | 2,967 | 146 | 0 |
-| 19 | 2,967 | 146 | 0 |
+| 15 | 2,963 | 147 | 0 |
+| 16 | 2,964 | 146 | 0 |
+| 17 | 2,966 | 146 | 0 |
+| 18 | 2,978 | 146 | 0 |
+| 19 | 2,978 | 146 | 0 |
 
 Each total includes the native and official EF projects, all core and extension
 projects, source generation, compatibility, conformance, security, stress, and
@@ -164,8 +165,8 @@ provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
-in all tracked Markdown files; the 2026-08-02 review checked 56 local links
-across 78 files and separately resolved all 40 external Markdown references.
+in all tracked Markdown files; the 2026-08-02 review checked 159 local links
+across 79 files and separately resolved all 40 external Markdown references.
 The support matrix identifies .NET 10, EF Core 10.0.10,
 PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 preview, including the
 remaining beta-syntax risk.
@@ -187,6 +188,8 @@ checked-in workflow and
 [testing guide](contributing/testing.md) for the exact commands and environment
 contract.
 
+The [specification completion audit](completion-audit.md) maps every original
+product area and architecture-gap priority to its primary executable evidence.
 This evidence closes the repository's current product-spec engineering gates.
 It does not rename the packages to `1.0.0`, guarantee suitability for a
 particular production deployment, validate optional cloud credentials that were
