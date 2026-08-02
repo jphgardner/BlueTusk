@@ -8,6 +8,42 @@ public sealed class BlueTuskSocketTransportTests
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
+    public async Task Tcp_preserves_cross_family_resolver_order(bool asynchronous)
+    {
+        if (!Socket.OSSupportsIPv6)
+        {
+            return;
+        }
+
+        using var ipv6Listener = new TcpListener(IPAddress.IPv6Loopback, 0);
+        ipv6Listener.Server.DualMode = false;
+        ipv6Listener.Start();
+        var port = ((IPEndPoint)ipv6Listener.LocalEndpoint).Port;
+        using var ipv4Listener = new TcpListener(IPAddress.Loopback, port);
+        ipv4Listener.Start();
+        await using var transport = CreateTransport([IPAddress.IPv6Loopback, IPAddress.Loopback]);
+
+        if (asynchronous)
+        {
+            await transport.ConnectAsync(
+                new BlueTuskEndpoint.Tcp("ordered.test", port),
+                BlueTuskTransportOptions.Default,
+                CancellationToken.None);
+        }
+        else
+        {
+            transport.Connect(
+                new BlueTuskEndpoint.Tcp("ordered.test", port),
+                BlueTuskTransportOptions.Default);
+        }
+
+        var remoteEndpoint = Assert.IsType<IPEndPoint>(transport.RemoteEndPoint);
+        Assert.Equal(AddressFamily.InterNetworkV6, remoteEndpoint.AddressFamily);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
     public async Task Tcp_tries_every_resolved_address_in_order(bool asynchronous)
     {
         var addresses = new[] { IPAddress.Parse("127.0.0.2"), IPAddress.Loopback };

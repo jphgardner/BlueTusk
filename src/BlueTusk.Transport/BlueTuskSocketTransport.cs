@@ -270,7 +270,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
         IPAddress[] addresses;
         try
         {
-            addresses = OrderAddresses(_resolveAddresses(endpoint.Host));
+            addresses = PreserveAddressOrder(_resolveAddresses(endpoint.Host));
         }
         catch (Exception exception) when (
             exception is not OperationCanceledException and not OutOfMemoryException)
@@ -322,7 +322,7 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
         IPAddress[] addresses;
         try
         {
-            addresses = OrderAddresses(
+            addresses = PreserveAddressOrder(
                 await _resolveAddressesAsync(endpoint.Host, cancellationToken).ConfigureAwait(false));
         }
         catch (Exception exception) when (
@@ -390,10 +390,8 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
         }
     }
 
-    private static IPAddress[] OrderAddresses(IEnumerable<IPAddress> addresses) =>
-        addresses
-            .OrderBy(static address => address.AddressFamily == AddressFamily.InterNetwork ? 0 : 1)
-            .ToArray();
+    private static IPAddress[] PreserveAddressOrder(IEnumerable<IPAddress> addresses) =>
+        addresses.ToArray();
 
     private static Socket ConnectSocket(
         Socket socket,

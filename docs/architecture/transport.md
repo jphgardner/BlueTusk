@@ -6,7 +6,7 @@ authentication, SQL, type-system, pooling, or ADO.NET knowledge.
 ## Endpoints and address attempts
 
 TCP endpoints accept a DNS name or numeric address. Sync and async connections resolve the
-name once, prefer IPv4 before IPv6 for deterministic behavior, and try every returned address
+name once, preserve the platform resolver's IPv4/IPv6 preference, and try every returned address
 in order. The configured connect timeout is one deadline shared by all address attempts rather
 than a fresh timeout for every address. Asynchronous DNS resolution is included in that
 deadline and observes caller cancellation. The dedicated synchronous path uses the platform's
