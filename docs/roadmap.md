@@ -540,7 +540,7 @@ This file tracks executable repository status. The product vision is broader; un
   - [x] Official service-registration and migrations SQL-generator suites (55 offline tests, no skips)
   - [x] Official live data-annotation, composite-key, field-mapping, constructor-materialization, and property-values fixtures (506 passed, four upstream EF skips)
   - [x] Official live updates, store-generated fixup, and complex-types tracking fixtures (391 passed, 50 upstream EF skips)
-  - [x] Official live ad-hoc complex-type and structural-JSON query fixtures across PostgreSQL 15–19 (75 passed, one upstream EF skip per server)
+  - [x] Official live complex-type, ad-hoc complex-type, and structural-JSON query fixtures across PostgreSQL 15–19 (221 passed, two upstream EF skips per server)
   - [ ] Broader official query, model, migrations, and scaffolding suites
 - [ ] PostgreSQL-specific EF support
 - [x] Security review

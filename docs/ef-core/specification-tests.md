@@ -35,6 +35,11 @@ these official suites:
   declared by EF Core itself for open complex-struct collection scenarios, and
   one provider regression that recursively verifies every nested JSON scalar
   has an EF JSON reader/writer;
+- `ComplexTypeQueryRelationalTestBase`: 146 passing live filtering,
+  projection, ordering, grouping, equality, set-operation, optional-navigation,
+  constructor-binding, bulk update, and class/struct complex-type query
+  contracts, plus one skip declared by EF Core itself for its open duplicate
+  complex-projection pushdown issue;
 - `AdHocComplexTypeQueryRelationalTestBase`: all 14 discovered complex-type
   model and query regressions. Thirteen execute the portable relational
   contract; the remaining case is an upstream SQL Server-only mapping test
@@ -48,24 +53,25 @@ these official suites:
   or structurally incompatible members rather than bypassing those cases.
 
 Without live credentials, the executable gate is 55 passing tests. Discovery
-also reports the 50 static skip declarations owned by EF Core's complex-struct
-collection backlog; no BlueTusk test is skipped to hide a provider failure.
+also reports 51 static skip declarations owned by EF Core: 50 from its
+complex-struct collection backlog and one from its duplicate complex-projection
+pushdown backlog. No BlueTusk test is skipped to hide a provider failure.
 Every virtual migration test is overridden because EF Core's own compliance
 test fails when a provider inherits a generator case without asserting its
 generated SQL.
 
-The adopted live gate discovers 1,027 cases: 972 pass and 55 cases explicitly
+The adopted live gate discovers 1,174 cases: 1,118 pass and 56 cases explicitly
 skipped by EF Core are reported as skips. Combined with the offline gate, the
-assembly discovers 1,082 cases: 1,027 pass and 55 retain their upstream skip
+assembly discovers 1,229 cases: 1,173 pass and 56 retain their upstream skip
 declarations. The data-annotation fixture follows PostgreSQL provider semantics
 by overriding the three relational expectations that require a length exception
 or SQL Server-style rowversion behavior; these are provider-specific no-op
 assertions, matching the reference PostgreSQL provider's contract rather than
 hidden skips.
 
-The 76 ad-hoc complex/JSON cases also run as a focused PostgreSQL 15–19 matrix:
-each server reports 75 passes and the same single upstream EF skip. The complete
-1,082-case official assembly is additionally gated on PostgreSQL 19.
+The 223 complex-type/JSON query cases also run as a focused PostgreSQL 15–19
+matrix: each server reports 221 passes and the same two upstream EF skips. The
+complete 1,229-case official assembly is additionally gated on PostgreSQL 19.
 
 Run the gate directly with:
 
