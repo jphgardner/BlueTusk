@@ -172,6 +172,53 @@ jobs:
         if: always()
         run: docker rm --force bluetusk-nats
 
+  opensearch-sync-integration:
+    name: OpenSearch Sync recovery and rebuild
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start OpenSearch
+        run: |
+          docker run --detach --name bluetusk-opensearch \
+            --publish 9200:9200 \
+            --env discovery.type=single-node \
+            --env DISABLE_SECURITY_PLUGIN=true \
+            --env DISABLE_INSTALL_DEMO_CONFIG=true \
+            --env "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" \
+            opensearchproject/opensearch:3.7.0
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:9200 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          docker logs bluetusk-opensearch
+          exit 1
+
+      - name: Run OpenSearch transaction recovery and rebuild
+        env:
+          BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
+        run: >-
+          dotnet test tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/opensearch-sync
+
+      - name: Capture OpenSearch logs on failure
+        if: failure()
+        run: docker logs bluetusk-opensearch
+
+      - name: Stop OpenSearch
+        if: always()
+        run: docker rm --force bluetusk-opensearch
+
   extension-integration:
     name: ${{ matrix.name }} dedicated extension image
     runs-on: ubuntu-latest

@@ -34,6 +34,7 @@
       "packages": [
         "src/BlueTusk.Sync/BlueTusk.Sync.csproj",
         "src/BlueTusk.Sync.Nats/BlueTusk.Sync.Nats.csproj",
+        "src/BlueTusk.Sync.OpenSearch/BlueTusk.Sync.OpenSearch.csproj",
         "src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj",
         "src/BlueTusk.Sync.Redis/BlueTusk.Sync.Redis.csproj"
       ]

@@ -21,10 +21,11 @@ acknowledged until that sink confirms storage. Destination outages and rejected
 durability confirmations nack the delivery and fault the pipeline for safe
 redelivery.
 
-PostgreSQL, NATS JetStream, and Redis connector slices are implemented.
-OpenSearch, the cross-destination conformance kit, reconciliation, and rebuild
-orchestration remain gated work. The Sync release train remains non-publishable
-until all four destinations pass snapshot-plus-stream recovery.
+PostgreSQL, NATS JetStream, Redis, and OpenSearch connector slices are
+implemented. The cross-destination conformance kit, full key/content-hash
+reconciliation, repair, and product-level rebuild orchestration remain gated
+work. The Sync release train remains non-publishable until all four
+destinations pass the shared snapshot-plus-stream recovery contract.
 
 ## PostgreSQL destination
 
@@ -119,3 +120,54 @@ The live Redis suite deliberately introduces a wrong-type destination key and
 proves preflight rejection occurs before any mutation. It also covers retry,
 restart, collection-delete ordering, snapshot reset/completion, quarantine, and
 transform rebuild requirements.
+
+## OpenSearch destination
+
+`BlueTusk.Sync.OpenSearch` uses one bounded NDJSON bulk request as the source
+transaction delivery unit. It assigns SHA-256 document IDs and PostgreSQL
+commit-end LSNs as `external_gte` versions, so a partial request or ambiguous
+network failure can safely replay the entire transaction. The per-generation
+checkpoint is written only after every bulk item succeeds. A partially accepted
+bulk therefore never advances the checkpoint, and its successful items remain
+idempotent on retry.
+
+OpenSearch bulk operations are independently applied by the server, so this
+connector deliberately does not advertise `TransactionalBatches` or a
+co-located checkpoint. Transaction preservation comes from bounded whole-batch
+submission, item-by-item response validation, stable external versions, and
+checkpoint-after-bulk ordering. Collection resets complete before the
+subsequent folded mutations are sent. JSON objects are the only accepted
+materialisation content.
+
+Each transform generation writes to isolated concrete indexes. Stable aliases
+are attached to the initial generation, while a rebuild generation remains
+invisible. `BeginRebuildAsync` is restart-safe and copies the active collection
+registry, snapshot and catch-up writes target only the rebuild indexes,
+`VerifyRebuildAsync` checks every active/rebuild count, and
+`CompleteRebuildAsync` moves all aliases in one atomic OpenSearch aliases
+request. Previous generations are retained until an explicit
+`RetireGenerationAsync` call.
+
+The control index owns versioned pipeline, collection, snapshot, checkpoint,
+and quarantine documents. Source and transform fingerprints are validated on
+every restart; a changed transform returns `RebuildRequired`. Index names,
+aliases, and document IDs contain hashes instead of application keys, and
+document, mutation-count, and encoded bulk-byte limits are checked before
+submission.
+
+For local acceptance, run an OpenSearch node without the security plug-in and
+then execute:
+
+```powershell
+$env:BLUETUSK_OPENSEARCH_URL = 'http://localhost:9200'
+dotnet test tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj
+```
+
+The CI and local live suite use OpenSearch 3.7.0. It deliberately causes a
+mapping conflict after another item has succeeded, repairs and replays the same
+transaction, and then covers checkpoint deduplication, collection reset,
+snapshot lifecycle, quarantine, restart, transform isolation, count
+verification, atomic alias cutover, and old-generation retirement. The design
+follows the official [Bulk API](https://docs.opensearch.org/latest/api-reference/document-apis/bulk/)
+and [Manage Aliases API](https://docs.opensearch.org/latest/api-reference/alias/aliases-api/)
+contracts.

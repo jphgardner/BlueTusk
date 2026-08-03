@@ -1,0 +1,76 @@
+#nullable enable
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.<Clone>$() -> BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount!
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.ActiveDocuments.get -> long
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.ActiveDocuments.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.Collection.get -> string!
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.Collection.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.Deconstruct(out string! Collection, out long ActiveDocuments, out long RebuildDocuments) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.Equals(BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount? other) -> bool
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.IsMatch.get -> bool
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.OpenSearchCollectionCount(string! Collection, long ActiveDocuments, long RebuildDocuments) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.RebuildDocuments.get -> long
+BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.RebuildDocuments.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchRebuildVerification
+BlueTusk.Sync.OpenSearch.OpenSearchRebuildVerification.Collections.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount!>!
+BlueTusk.Sync.OpenSearch.OpenSearchRebuildVerification.IsMatch.get -> bool
+BlueTusk.Sync.OpenSearch.OpenSearchRebuildVerification.OpenSearchRebuildVerification(System.Collections.Generic.IEnumerable<BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount!>! collections) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncBulkException
+BlueTusk.Sync.OpenSearch.OpenSearchSyncBulkException.OpenSearchSyncBulkException(string! message) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.BeginRebuildAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.CompleteRebuildAsync(string! pipelineId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.CompleteSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotComplete! complete, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.Name.get -> string!
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.OpenSearchSyncDestination(BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions! options) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.ReadDocumentAsync(string! pipelineId, string! collection, string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>?>
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.RetireGenerationAsync(string! pipelineId, string! generation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.StoreAsync(BlueTusk.Sync.SyncQuarantineRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.VerifyRebuildAsync(string! pipelineId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.OpenSearch.OpenSearchRebuildVerification!>
+BlueTusk.Sync.OpenSearch.OpenSearchSyncException
+BlueTusk.Sync.OpenSearch.OpenSearchSyncException.OpenSearchSyncException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncException.OpenSearchSyncException(string! message) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.<Clone>$() -> BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions!
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.Client.get -> System.Net.Http.HttpClient!
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.Client.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.Equals(BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions? other) -> bool
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.IndexPrefix.get -> string!
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.IndexPrefix.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.MaxBulkBytes.get -> long
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.MaxBulkBytes.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.MaxDocumentBytes.get -> int
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.MaxDocumentBytes.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.MaxMutationsPerTransaction.get -> int
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.MaxMutationsPerTransaction.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.NumberOfReplicas.get -> int
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.NumberOfReplicas.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.NumberOfShards.get -> int
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.NumberOfShards.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.OpenSearchSyncOptions() -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.RefreshAfterWrite.get -> bool
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.RefreshAfterWrite.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.WaitForActiveShards.get -> string!
+BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.WaitForActiveShards.init -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncSnapshotException
+BlueTusk.Sync.OpenSearch.OpenSearchSyncSnapshotException.OpenSearchSyncSnapshotException(string! message) -> void
+BlueTusk.Sync.OpenSearch.OpenSearchSyncSourceMismatchException
+BlueTusk.Sync.OpenSearch.OpenSearchSyncSourceMismatchException.OpenSearchSyncSourceMismatchException(string! message) -> void
+const BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.CurrentFormatVersion = 1 -> int
+override BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.Equals(object? obj) -> bool
+override BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.GetHashCode() -> int
+override BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.ToString() -> string!
+override BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.GetHashCode() -> int
+override BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.ToString() -> string!
+static BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.operator !=(BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount? left, BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount? right) -> bool
+static BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.operator ==(BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount? left, BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount? right) -> bool
+static BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.operator !=(BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions? left, BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions? right) -> bool
+static BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions.operator ==(BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions? left, BlueTusk.Sync.OpenSearch.OpenSearchSyncOptions? right) -> bool
