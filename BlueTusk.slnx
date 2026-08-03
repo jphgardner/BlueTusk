@@ -42,6 +42,7 @@
     <Project Path="src/BlueTusk.Live.AspNetCore/BlueTusk.Live.AspNetCore.csproj" />
     <Project Path="src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj" />
     <Project Path="src/BlueTusk.Live.EntityFrameworkCore/BlueTusk.Live.EntityFrameworkCore.csproj" />
+    <Project Path="src/BlueTusk.Live.Grpc/BlueTusk.Live.Grpc.csproj" />
     <Project Path="src/BlueTusk.Live.ServerSentEvents/BlueTusk.Live.ServerSentEvents.csproj" />
     <Project Path="src/BlueTusk.Live.SignalR/BlueTusk.Live.SignalR.csproj" />
     <Project Path="src/BlueTusk.Protocol/BlueTusk.Protocol.csproj" />

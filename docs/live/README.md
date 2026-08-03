@@ -50,10 +50,12 @@ Reconnect is serialized with publication so replay and the newly attached bounde
 
 `BlueTusk.Live.SignalR` exposes a streaming hub, and `BlueTusk.Live.ServerSentEvents` exposes a fetch-streaming POST endpoint. Both send replay before new events and attach a fresh signed, expiring, subscription-bound resume token to every sequence. SSE disables proxy buffering and maps quota, invalid token, expired replay, and unavailable subscription states to explicit HTTP responses.
 
+`BlueTusk.Live.Grpc` exposes the same authenticated stream as a versioned protobuf service. Parameters remain JSON inside the trusted query-registration envelope and are size-bounded before parsing. gRPC status codes distinguish authentication, invalid input/token, expired replay, quota pressure, and temporary unavailability; event payloads remain the same versioned Live JSON used by replay and browser clients.
+
 ## Browser clients
 
 `@bluetusk/live` is the framework-neutral fetch-streaming client. It parses chunked UTF-8 SSE frames, applies every keyed Live event to a local result, rejects invalid sequence/key transitions, persists signed resume tokens through an application callback, and reconnects with bounded jittered backoff. A `409` only discards a resume token when one was actually supplied; tokenless conflicts and malformed payloads fail closed.
 
 `@bluetusk/live-angular` exposes the same query state through Angular read-only signals. `@bluetusk/live-react` uses `useSyncExternalStore`, preserving React concurrent-render consistency. Both adapters own only lifecycle integration; protocol, recovery, and result semantics remain in `@bluetusk/live`.
 
-The next Live slices add gRPC, Aspire/testing support, dashboard visibility, advanced vetted EF query shapes, and the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.
+The next Live slices add Aspire/testing support, dashboard visibility, advanced vetted EF query shapes, and the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.

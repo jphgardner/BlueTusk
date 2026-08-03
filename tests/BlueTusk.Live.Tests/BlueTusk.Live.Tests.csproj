@@ -24,6 +24,7 @@
     <ProjectReference Include="..\..\src\BlueTusk.Live.AspNetCore\BlueTusk.Live.AspNetCore.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.EntityFrameworkCore\BlueTusk.Live.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Grpc\BlueTusk.Live.Grpc.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.ServerSentEvents\BlueTusk.Live.ServerSentEvents.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.SignalR\BlueTusk.Live.SignalR.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />

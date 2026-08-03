@@ -55,6 +55,7 @@
         "src/BlueTusk.Live.AspNetCore/BlueTusk.Live.AspNetCore.csproj",
         "src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj",
         "src/BlueTusk.Live.EntityFrameworkCore/BlueTusk.Live.EntityFrameworkCore.csproj",
+        "src/BlueTusk.Live.Grpc/BlueTusk.Live.Grpc.csproj",
         "src/BlueTusk.Live.ServerSentEvents/BlueTusk.Live.ServerSentEvents.csproj",
         "src/BlueTusk.Live.SignalR/BlueTusk.Live.SignalR.csproj"
       ]
