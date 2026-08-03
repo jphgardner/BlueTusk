@@ -47,8 +47,9 @@ function Get-TestArtifactFingerprint
 
     $entries = foreach ($file in $files)
     {
-        $relativePath = [IO.Path]::GetRelativePath($Root, $file.FullName)
-            .Replace([IO.Path]::DirectorySeparatorChar, '/')
+        $relativePath = ([IO.Path]::GetRelativePath($Root, $file.FullName)).Replace(
+            [IO.Path]::DirectorySeparatorChar,
+            [char]'/')
         $hash = (Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash
         "$relativePath`t$($file.Length)`t$hash"
     }
@@ -268,6 +269,15 @@ try
     }
 
     $gateExecutionCompleted = $true
+}
+catch
+{
+    if ($null -eq $failedPhase)
+    {
+        $failedPhase = 'runner'
+    }
+
+    throw
 }
 finally
 {
