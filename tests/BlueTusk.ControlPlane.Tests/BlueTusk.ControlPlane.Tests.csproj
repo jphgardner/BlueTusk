@@ -21,5 +21,6 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Dashboard\BlueTusk.Dashboard.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
   </ItemGroup>
 </Project>

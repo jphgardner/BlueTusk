@@ -66,4 +66,10 @@ Each shared subscription now exposes an allocation-free operational snapshot: op
 
 `BlueTusk.Live.Testing` provides database-scoped deterministic invalidations, a sequence-fenced and retention-aware in-memory replay store, and a public replay-store conformance kit for custom providers. The in-memory components are for tests only and preserve the same replay identity, integrity, idempotency, and expiry rules as durable storage.
 
-The next Live slices add dashboard visibility, advanced vetted EF query shapes, and the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.
+The next Live slices add advanced vetted EF query shapes and the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.
+
+## Control-plane visibility
+
+`HostedLiveControlPlaneQueryService` projects registry and subscription telemetry without exposing rows or parameter values. Query, parameter, and subscription identities remain fingerprints. The default scope redactor preserves only a safe category such as `tenant` and a short one-way hash; applications can provide a stricter or operator-friendly redactor. Invalidation head/cursor lag is calculated per database and cursor regression is surfaced as a diagnostic instead of an unsigned value.
+
+The dashboard adds authorised JSON and HTML Live views for shared-query counts, active clients, fan-out, query fingerprints, redacted tenant/security scopes, invalidation lag, replay bytes/events, resume rejection history, quota pressure, and slow-client disconnect causes.

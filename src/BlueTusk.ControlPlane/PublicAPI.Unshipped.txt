@@ -389,3 +389,54 @@ static BlueTusk.ControlPlane.ControlPlaneSyncOverview.operator !=(BlueTusk.Contr
 static BlueTusk.ControlPlane.ControlPlaneSyncOverview.operator ==(BlueTusk.ControlPlane.ControlPlaneSyncOverview? left, BlueTusk.ControlPlane.ControlPlaneSyncOverview? right) -> bool
 static BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot? right) -> bool
 static BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot? right) -> bool
+BlueTusk.ControlPlane.ControlPlaneLiveOverview
+BlueTusk.ControlPlane.ControlPlaneLiveOverview.ControlPlaneLiveOverview(System.DateTimeOffset observedAt, BlueTusk.ControlPlane.ControlPlaneLiveRegistrySnapshot! registry, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot!>! subscriptions) -> void
+BlueTusk.ControlPlane.ControlPlaneLiveOverview.ObservedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneLiveOverview.Registry.get -> BlueTusk.ControlPlane.ControlPlaneLiveRegistrySnapshot!
+BlueTusk.ControlPlane.ControlPlaneLiveOverview.Subscriptions.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneLiveRegistrySnapshot
+BlueTusk.ControlPlane.ControlPlaneLiveRegistrySnapshot.ControlPlaneLiveRegistrySnapshot(int sharedSubscriptions, int maximumSharedSubscriptions, long quotaRejections) -> void
+BlueTusk.ControlPlane.ControlPlaneLiveRegistrySnapshot.MaximumSharedSubscriptions.get -> int
+BlueTusk.ControlPlane.ControlPlaneLiveRegistrySnapshot.QuotaRejections.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveRegistrySnapshot.SharedSubscriptions.get -> int
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.AuthoritativeQueryCount.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.AuthorizationPolicyVersion.get -> string!
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.CoalescedInvalidationCount.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ConnectedClients.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ConnectionOpenAttempts.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ControlPlaneLiveSubscriptionSnapshot(string! subscriptionFingerprint, string! queryPlanFingerprint, string! parameterFingerprint, string! securityScopeLabel, string! authorizationPolicyVersion, int resultLimit, bool isStarted, int subscriberCount, double fanOutRatio, long publishedEvents, long fanOutDeliveries, long persistedSequence, long replayBytesAppended, long replayedEvents, long connectionOpenAttempts, long connectedClients, long resumeAttempts, long resumeRejections, long replayRejections, long quotaRejections, long slowClientDisconnects, string? lastDisconnectCode, long invalidationCursor, long invalidationHead, long? invalidationLag, string? lagDiagnosticCode, long authoritativeQueryCount, long coalescedInvalidationCount, int resultCount) -> void
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.FanOutDeliveries.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.FanOutRatio.get -> double
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.InvalidationCursor.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.InvalidationHead.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.InvalidationLag.get -> long?
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.IsStarted.get -> bool
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.LagDiagnosticCode.get -> string?
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.LastDisconnectCode.get -> string?
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ParameterFingerprint.get -> string!
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.PersistedSequence.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.PublishedEvents.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.QueryPlanFingerprint.get -> string!
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.QuotaRejections.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ReplayBytesAppended.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ReplayedEvents.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ReplayRejections.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ResultCount.get -> int
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ResultLimit.get -> int
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ResumeAttempts.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.ResumeRejections.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.SecurityScopeLabel.get -> string!
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.SlowClientDisconnects.get -> long
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.SubscriberCount.get -> int
+BlueTusk.ControlPlane.ControlPlaneLiveSubscriptionSnapshot.SubscriptionFingerprint.get -> string!
+BlueTusk.ControlPlane.FingerprintControlPlaneLiveScopeRedactor
+BlueTusk.ControlPlane.FingerprintControlPlaneLiveScopeRedactor.FingerprintControlPlaneLiveScopeRedactor() -> void
+BlueTusk.ControlPlane.FingerprintControlPlaneLiveScopeRedactor.Redact(string! securityScope) -> string!
+BlueTusk.ControlPlane.HostedLiveControlPlaneQueryService
+BlueTusk.ControlPlane.HostedLiveControlPlaneQueryService.GetLiveOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneLiveOverview!>
+BlueTusk.ControlPlane.HostedLiveControlPlaneQueryService.HostedLiveControlPlaneQueryService(BlueTusk.Live.LiveSharedSubscriptionRegistry! registry, BlueTusk.Live.ILiveInvalidationLog! invalidationLog, BlueTusk.ControlPlane.IControlPlaneLiveScopeRedactor? scopeRedactor = null, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.IControlPlaneLiveQueryService
+BlueTusk.ControlPlane.IControlPlaneLiveQueryService.GetLiveOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneLiveOverview!>
+BlueTusk.ControlPlane.IControlPlaneLiveScopeRedactor
+BlueTusk.ControlPlane.IControlPlaneLiveScopeRedactor.Redact(string! securityScope) -> string!

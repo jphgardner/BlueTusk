@@ -1,6 +1,6 @@
 # BlueTusk Control Plane and Dashboard
 
-`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation and the Phase 5 Sync projection. They are independently versioned under the Control Plane release train and remain non-publishable until the later Live and Graph dashboards and upgrade gates are complete.
+`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync and Phase 6 Live projections. They are independently versioned under the Control Plane release train and remain non-publishable until the later Graph dashboard and upgrade gates are complete.
 
 ## Read-only inventory
 
@@ -24,6 +24,14 @@ a checkpoint ahead of its registered source is reported as a stable diagnostic
 code instead of guessed lag. Worker exception messages never enter the
 control-plane projection.
 
+`HostedLiveControlPlaneQueryService` projects shared-subscription counts,
+subscriber fan-out, invalidation lag, replay and resume activity, quota
+pressure, authoritative-query counts, and disconnect causes. It never returns
+query parameters or result rows. Subscription, plan, and parameter identities
+remain fingerprints, while the default security-scope redactor preserves only
+a safe category and a truncated one-way hash. Cursor regressions are reported
+as a stable diagnostic instead of being rendered as misleading lag.
+
 Configure source and control data sources separately in production. Connection strings, credentials, lease-owner identities, snapshot progress payloads, row values, and dead-letter payloads are never returned by the inventory contract. A source-server connection failure produces the stable `source-unavailable` diagnostic for slot state rather than exposing an exception message. A missing logical slot is reported separately as `slot-missing`.
 
 ```csharp
@@ -43,6 +51,8 @@ var queries = new PostgreSqlControlPlaneQueryService(
 builder.Services.AddSingleton<IControlPlaneQueryService>(queries);
 builder.Services.AddSingleton<IControlPlaneSyncQueryService,
     HostedSyncControlPlaneQueryService>();
+builder.Services.AddSingleton<IControlPlaneLiveQueryService,
+    HostedLiveControlPlaneQueryService>();
 builder.Services.AddAuthorization(options =>
 {
     options.AddPolicy("BlueTusk.ControlPlane.Read", policy =>
@@ -56,11 +66,16 @@ app.MapBlueTuskDashboard();
 
 Every route is assigned the configured authorization policy. The package does not install a permissive fallback policy; a host that omits authorization configuration fails closed at request time.
 
-The dashboard now includes the `/pipelines` page and `/api/sync` projection.
+The dashboard includes the `/pipelines` page and `/api/sync` projection.
 Throughput is calculated from successive control-plane observations, so the
 first observation deliberately reports no rate. Checkpoint lag is the byte
 difference between the durable relay head and the worker's last confirmed
 commit LSN for the same source fingerprint.
+
+The `/live` page and `/api/live` projection show shared-query counts, active
+clients, fan-out ratio, redacted scopes, invalidation lag, replay usage, resume
+rejections, quotas, and slow-client disconnect causes. Both routes use the same
+mandatory read policy as the rest of the dashboard.
 
 ## Mutating operations and audit
 
@@ -98,8 +113,9 @@ reconciliation, rebuild, pause/resume, checkpoint, and slot coordinators.
 
 The unit gate covers role escalation, exact confirmation, handler failure,
 non-sensitive audit details, Sync rate/lag/failure projection, authorization
-metadata on every dashboard endpoint, and hostile source and pipeline HTML
-values. Live PostgreSQL 15–19 acceptance creates a real logical slot, relay
+metadata on every dashboard endpoint, Live scope redaction and lag/fan-out
+projection, and hostile source, pipeline, and Live HTML values. Live PostgreSQL
+15–19 acceptance creates a real logical slot, relay
 group, snapshot run, and direct checkpoint, verifies their inventory
 projections, initializes the audit schema idempotently, and proves stored audit
 rows reject update and delete attempts.

@@ -21,6 +21,7 @@ public sealed class DashboardEndpointTests
         builder.Services.AddAuthorization();
         builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
         builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
+        builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
         builder.Services.AddSingleton(
             new ControlPlaneOperationExecutor(
                 new RoleControlPlaneAuthorizer(),
@@ -38,7 +39,7 @@ public sealed class DashboardEndpointTests
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(11, endpoints.Length);
+        Assert.Equal(13, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -79,6 +80,18 @@ public sealed class DashboardEndpointTests
         Assert.DoesNotContain("sensitive", pipelineHtml, StringComparison.Ordinal);
         Assert.Contains("data-operation-name=\"RebuildPipeline\"", pipelineHtml, StringComparison.Ordinal);
         Assert.Contains("data-operation-name=\"ReplayQuarantine\"", pipelineHtml, StringComparison.Ordinal);
+
+        var live = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/live");
+        context.Response.Body = new MemoryStream();
+        await live.RequestDelegate!(context);
+        context.Response.Body.Position = 0;
+        using var liveReader = new StreamReader(context.Response.Body, Encoding.UTF8);
+        var liveHtml = await liveReader.ReadToEndAsync();
+        Assert.Contains("&lt;tenant&gt;", liveHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<tenant>", liveHtml, StringComparison.Ordinal);
+        Assert.Contains("slow-client-reset", liveHtml, StringComparison.Ordinal);
 
         var operations = Assert.Single(
             endpoints,
@@ -212,6 +225,49 @@ public sealed class DashboardEndpointTests
                         null,
                         false,
                         "pipeline-fault")]));
+        }
+    }
+
+    private sealed class FakeLiveQueryService : IControlPlaneLiveQueryService
+    {
+        public ValueTask<ControlPlaneLiveOverview> GetLiveOverviewAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(
+                new ControlPlaneLiveOverview(
+                    new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
+                    new ControlPlaneLiveRegistrySnapshot(1, 100, 0),
+                    [new ControlPlaneLiveSubscriptionSnapshot(
+                        new string('c', 64),
+                        new string('a', 64),
+                        new string('b', 64),
+                        "<tenant>",
+                        "policy:v1",
+                        10,
+                        true,
+                        3,
+                        2.5,
+                        2,
+                        5,
+                        2,
+                        2048,
+                        2,
+                        4,
+                        4,
+                        1,
+                        0,
+                        0,
+                        0,
+                        1,
+                        "slow-client-reset",
+                        10,
+                        12,
+                        2,
+                        null,
+                        3,
+                        2,
+                        5)]));
         }
     }
 

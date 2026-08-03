@@ -9,6 +9,7 @@
   <Import Project="..\..\eng\versions\ControlPlane.props" />
 
   <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
     <ProjectReference Include="..\BlueTusk.Streams.Storage.PostgreSql\BlueTusk.Streams.Storage.PostgreSql.csproj" />
     <ProjectReference Include="..\BlueTusk.Sync.DependencyInjection\BlueTusk.Sync.DependencyInjection.csproj" />
   </ItemGroup>

@@ -71,6 +71,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
                 queries.GetSyncOverviewAsync(cancellationToken));
         group.MapGet(
+            "/api/live",
+            (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
+                queries.GetLiveOverviewAsync(cancellationToken));
+        group.MapGet(
             "/assets/dashboard.js",
             () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
         group.MapPost(
@@ -122,6 +126,12 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                     await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false),
                     options,
                     CanMutate(context.User, options))));
+        group.MapGet(
+            "/live",
+            async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
+                Html(RenderLive(
+                    await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    options)));
         return endpoints;
     }
 
@@ -394,6 +404,59 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         return Layout("Sync pipelines", overview.ObservedAt, body.ToString(), options);
     }
 
+    private static string RenderLive(
+        ControlPlaneLiveOverview overview,
+        BlueTuskDashboardOptions options)
+    {
+        var body = new StringBuilder("<h1>Live subscriptions</h1><div class=\"cards\">")
+            .Append(Card(
+                "Shared queries",
+                overview.Registry.SharedSubscriptions.ToString(CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Active clients",
+                overview.Subscriptions.Sum(static item => item.SubscriberCount)
+                    .ToString("N0", CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Fan-out deliveries",
+                overview.Subscriptions.Sum(static item => item.FanOutDeliveries)
+                    .ToString("N0", CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Quota rejections",
+                (overview.Registry.QuotaRejections +
+                 overview.Subscriptions.Sum(static item => item.QuotaRejections))
+                    .ToString("N0", CultureInfo.InvariantCulture)))
+            .Append("</div><table><thead><tr><th>Query</th><th>Scope</th><th>Clients</th>")
+            .Append("<th>Fan-out</th><th>Invalidation lag</th><th>Replay</th>")
+            .Append("<th>Resume rejected</th><th>Disconnect</th></tr></thead><tbody>");
+        foreach (var subscription in overview.Subscriptions)
+        {
+            body.Append("<tr><td><code>")
+                .Append(E(ShortFingerprint(subscription.QueryPlanFingerprint)))
+                .Append("</code></td><td>")
+                .Append(E(subscription.SecurityScopeLabel))
+                .Append("</td><td>")
+                .Append(subscription.SubscriberCount.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(subscription.FanOutRatio.ToString("N1", CultureInfo.InvariantCulture))
+                .Append("×</td><td>")
+                .Append(subscription.InvalidationLag is { } lag
+                    ? lag.ToString("N0", CultureInfo.InvariantCulture)
+                    : E(subscription.LagDiagnosticCode ?? "—"))
+                .Append("</td><td>")
+                .Append(Bytes(subscription.ReplayBytesAppended))
+                .Append(" / ")
+                .Append(subscription.ReplayedEvents.ToString("N0", CultureInfo.InvariantCulture))
+                .Append(" events</td><td>")
+                .Append(subscription.ResumeRejections.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(E(subscription.LastDisconnectCode ?? "—"))
+                .Append("</td></tr>");
+        }
+
+        body.Append("</tbody></table>");
+        return Layout("Live subscriptions", overview.ObservedAt, body.ToString(), options);
+    }
+
     private static string RenderGroupTable(ControlPlaneSourceSnapshot source)
     {
         var body = new StringBuilder("<h2>Relay groups — ")
@@ -473,7 +536,8 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         <a href="{{{E(options.RoutePrefix)}}}/snapshots">Snapshots</a>
         <a href="{{{E(options.RoutePrefix)}}}/consumer-groups">Consumer groups</a>
         <a href="{{{E(options.RoutePrefix)}}}/checkpoints">Checkpoints</a>
-        <a href="{{{E(options.RoutePrefix)}}}/pipelines">Sync pipelines</a></nav>
+        <a href="{{{E(options.RoutePrefix)}}}/pipelines">Sync pipelines</a>
+        <a href="{{{E(options.RoutePrefix)}}}/live">Live subscriptions</a></nav>
         <main>{{{body}}}<footer>Observed {{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}</footer></main>
         <script src="{{{E(options.RoutePrefix)}}}/assets/dashboard.js" defer></script>
         </body></html>
