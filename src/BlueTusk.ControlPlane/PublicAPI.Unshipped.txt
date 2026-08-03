@@ -1,0 +1,325 @@
+#nullable enable
+BlueTusk.ControlPlane.ControlPlaneActor
+BlueTusk.ControlPlane.ControlPlaneActor.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneActor!
+BlueTusk.ControlPlane.ControlPlaneActor.ActorId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneActor.ActorId.init -> void
+BlueTusk.ControlPlane.ControlPlaneActor.ControlPlaneActor(string! ActorId, System.Collections.Generic.IReadOnlySet<BlueTusk.ControlPlane.ControlPlaneRole>! Roles) -> void
+BlueTusk.ControlPlane.ControlPlaneActor.Deconstruct(out string! ActorId, out System.Collections.Generic.IReadOnlySet<BlueTusk.ControlPlane.ControlPlaneRole>! Roles) -> void
+BlueTusk.ControlPlane.ControlPlaneActor.Equals(BlueTusk.ControlPlane.ControlPlaneActor? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneActor.Roles.get -> System.Collections.Generic.IReadOnlySet<BlueTusk.ControlPlane.ControlPlaneRole>!
+BlueTusk.ControlPlane.ControlPlaneActor.Roles.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneAuditRecord!
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.ActorId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.ActorId.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.ControlPlaneAuditRecord(System.Guid OperationId, System.DateTimeOffset OccurredAt, string! ActorId, BlueTusk.ControlPlane.ControlPlaneOperationKind Kind, string! Target, BlueTusk.ControlPlane.ControlPlaneAuditStatus Status, string! Reason, string? DetailCode) -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Deconstruct(out System.Guid OperationId, out System.DateTimeOffset OccurredAt, out string! ActorId, out BlueTusk.ControlPlane.ControlPlaneOperationKind Kind, out string! Target, out BlueTusk.ControlPlane.ControlPlaneAuditStatus Status, out string! Reason, out string? DetailCode) -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.DetailCode.get -> string?
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.DetailCode.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Equals(BlueTusk.ControlPlane.ControlPlaneAuditRecord? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Kind.get -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Kind.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.OccurredAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.OccurredAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.OperationId.get -> System.Guid
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.OperationId.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Reason.get -> string!
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Reason.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Status.get -> BlueTusk.ControlPlane.ControlPlaneAuditStatus
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Status.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Target.get -> string!
+BlueTusk.ControlPlane.ControlPlaneAuditRecord.Target.init -> void
+BlueTusk.ControlPlane.ControlPlaneAuditStatus
+BlueTusk.ControlPlane.ControlPlaneAuditStatus.Denied = 0 -> BlueTusk.ControlPlane.ControlPlaneAuditStatus
+BlueTusk.ControlPlane.ControlPlaneAuditStatus.Failed = 4 -> BlueTusk.ControlPlane.ControlPlaneAuditStatus
+BlueTusk.ControlPlane.ControlPlaneAuditStatus.Rejected = 1 -> BlueTusk.ControlPlane.ControlPlaneAuditStatus
+BlueTusk.ControlPlane.ControlPlaneAuditStatus.Requested = 2 -> BlueTusk.ControlPlane.ControlPlaneAuditStatus
+BlueTusk.ControlPlane.ControlPlaneAuditStatus.Succeeded = 3 -> BlueTusk.ControlPlane.ControlPlaneAuditStatus
+BlueTusk.ControlPlane.ControlPlaneAuthorizationException
+BlueTusk.ControlPlane.ControlPlaneAuthorizationException.ControlPlaneAuthorizationException(string! message) -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot!
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.AcknowledgedPosition.get -> string!
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.AcknowledgedPosition.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.ConsumerGroup.get -> string!
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.ConsumerGroup.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.ControlPlaneCheckpointSnapshot(string! ConsumerGroup, int FormatVersion, string! SlotName, string! OutputPlugin, string! MappingFingerprint, string! AcknowledgedPosition, long StoreGeneration, bool IsLeased, System.DateTimeOffset? LeaseExpiresAt, long LastFencingToken) -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.Deconstruct(out string! ConsumerGroup, out int FormatVersion, out string! SlotName, out string! OutputPlugin, out string! MappingFingerprint, out string! AcknowledgedPosition, out long StoreGeneration, out bool IsLeased, out System.DateTimeOffset? LeaseExpiresAt, out long LastFencingToken) -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.Equals(BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.FormatVersion.get -> int
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.FormatVersion.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.IsLeased.get -> bool
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.IsLeased.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.LastFencingToken.get -> long
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.LastFencingToken.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.LeaseExpiresAt.get -> System.DateTimeOffset?
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.LeaseExpiresAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.MappingFingerprint.get -> string!
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.MappingFingerprint.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.OutputPlugin.get -> string!
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.OutputPlugin.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.SlotName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.SlotName.init -> void
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.StoreGeneration.get -> long
+BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.StoreGeneration.init -> void
+BlueTusk.ControlPlane.ControlPlaneConfirmationException
+BlueTusk.ControlPlane.ControlPlaneConfirmationException.ControlPlaneConfirmationException(string! message) -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot!
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.CheckpointSequence.get -> long
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.CheckpointSequence.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.ControlPlaneConsumerGroupSnapshot(string! Name, long StartSequence, long CheckpointSequence, long StoreGeneration, bool IsActive, bool IsLeased, System.DateTimeOffset? LeaseExpiresAt, long LastFencingToken, System.DateTimeOffset? RemovedAt, System.DateTimeOffset? RetentionProtectedUntil) -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.Deconstruct(out string! Name, out long StartSequence, out long CheckpointSequence, out long StoreGeneration, out bool IsActive, out bool IsLeased, out System.DateTimeOffset? LeaseExpiresAt, out long LastFencingToken, out System.DateTimeOffset? RemovedAt, out System.DateTimeOffset? RetentionProtectedUntil) -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.Equals(BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.IsActive.get -> bool
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.IsActive.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.IsLeased.get -> bool
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.IsLeased.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.LastFencingToken.get -> long
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.LastFencingToken.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.LeaseExpiresAt.get -> System.DateTimeOffset?
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.LeaseExpiresAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.Name.get -> string!
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.Name.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.RemovedAt.get -> System.DateTimeOffset?
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.RemovedAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.RetentionProtectedUntil.get -> System.DateTimeOffset?
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.RetentionProtectedUntil.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StartSequence.get -> long
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StartSequence.init -> void
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StoreGeneration.get -> long
+BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StoreGeneration.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationException
+BlueTusk.ControlPlane.ControlPlaneOperationException.ControlPlaneOperationException(string! message) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationException.ControlPlaneOperationException(string! message, System.Exception! innerException) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationExecutor
+BlueTusk.ControlPlane.ControlPlaneOperationExecutor.ControlPlaneOperationExecutor(BlueTusk.ControlPlane.IControlPlaneAuthorizer! authorizer, BlueTusk.ControlPlane.IControlPlaneAuditStore! auditStore, BlueTusk.ControlPlane.IControlPlaneOperationHandler! handler, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationExecutor.ExecuteAsync(BlueTusk.ControlPlane.ControlPlaneActor! actor, BlueTusk.ControlPlane.ControlPlaneOperationRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.DeleteSlot = 9 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.PauseConsumerGroup = 2 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.PauseSource = 0 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.RebuildPipeline = 6 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ReconcilePipeline = 5 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.RemoveConsumerGroup = 7 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ResumeConsumerGroup = 3 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ResumeSource = 1 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.RetryPipeline = 4 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.RewindCheckpoint = 8 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationPolicies
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneOperationPolicy!
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.ControlPlaneOperationPolicy(BlueTusk.ControlPlane.ControlPlaneRole RequiredRole, string! RequiredConfirmation, bool IsDestructive) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.Deconstruct(out BlueTusk.ControlPlane.ControlPlaneRole RequiredRole, out string! RequiredConfirmation, out bool IsDestructive) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.Equals(BlueTusk.ControlPlane.ControlPlaneOperationPolicy? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.IsDestructive.get -> bool
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.IsDestructive.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.RequiredConfirmation.get -> string!
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.RequiredConfirmation.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.RequiredRole.get -> BlueTusk.ControlPlane.ControlPlaneRole
+BlueTusk.ControlPlane.ControlPlaneOperationPolicy.RequiredRole.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationRequest
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneOperationRequest!
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Confirmation.get -> string!
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Confirmation.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.ControlPlaneOperationRequest(System.Guid OperationId, BlueTusk.ControlPlane.ControlPlaneOperationKind Kind, string! Target, string! Confirmation, string! Reason) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Deconstruct(out System.Guid OperationId, out BlueTusk.ControlPlane.ControlPlaneOperationKind Kind, out string! Target, out string! Confirmation, out string! Reason) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Equals(BlueTusk.ControlPlane.ControlPlaneOperationRequest? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Kind.get -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Kind.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.OperationId.get -> System.Guid
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.OperationId.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Reason.get -> string!
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Reason.init -> void
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Target.get -> string!
+BlueTusk.ControlPlane.ControlPlaneOperationRequest.Target.init -> void
+BlueTusk.ControlPlane.ControlPlaneOverview
+BlueTusk.ControlPlane.ControlPlaneOverview.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneOverview!
+BlueTusk.ControlPlane.ControlPlaneOverview.ControlPlaneOverview(System.DateTimeOffset ObservedAt, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneSourceSnapshot!>! Sources) -> void
+BlueTusk.ControlPlane.ControlPlaneOverview.Deconstruct(out System.DateTimeOffset ObservedAt, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneSourceSnapshot!>! Sources) -> void
+BlueTusk.ControlPlane.ControlPlaneOverview.Equals(BlueTusk.ControlPlane.ControlPlaneOverview? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneOverview.ObservedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneOverview.ObservedAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneOverview.Sources.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneSourceSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneOverview.Sources.init -> void
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.<Clone>$() -> BlueTusk.ControlPlane.ControlPlanePostgreSqlSource!
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.ControlDataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.ControlPlanePostgreSqlSource(string! instanceName, System.Data.Common.DbDataSource! sourceDataSource, System.Data.Common.DbDataSource! controlDataSource, string! controlSchema = "bluetusk_streams") -> void
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.ControlSchema.get -> string!
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.Equals(BlueTusk.ControlPlane.ControlPlanePostgreSqlSource? other) -> bool
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.InstanceName.get -> string!
+BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.SourceDataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneRelaySnapshot!
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.ControlPlaneRelaySnapshot(long TransactionCount, long StorageBytes, long FirstSequence, long LastSequence, long MinimumCheckpointSequence, System.TimeSpan OldestUnacknowledgedAge) -> void
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.Deconstruct(out long TransactionCount, out long StorageBytes, out long FirstSequence, out long LastSequence, out long MinimumCheckpointSequence, out System.TimeSpan OldestUnacknowledgedAge) -> void
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.Equals(BlueTusk.ControlPlane.ControlPlaneRelaySnapshot? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.FirstSequence.get -> long
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.FirstSequence.init -> void
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.LastSequence.get -> long
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.LastSequence.init -> void
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.MinimumCheckpointSequence.get -> long
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.MinimumCheckpointSequence.init -> void
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.OldestUnacknowledgedAge.get -> System.TimeSpan
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.OldestUnacknowledgedAge.init -> void
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.StorageBytes.get -> long
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.StorageBytes.init -> void
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.TransactionCount.get -> long
+BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.TransactionCount.init -> void
+BlueTusk.ControlPlane.ControlPlaneRole
+BlueTusk.ControlPlane.ControlPlaneRole.Administrator = 2 -> BlueTusk.ControlPlane.ControlPlaneRole
+BlueTusk.ControlPlane.ControlPlaneRole.Operator = 1 -> BlueTusk.ControlPlane.ControlPlaneRole
+BlueTusk.ControlPlane.ControlPlaneRole.Viewer = 0 -> BlueTusk.ControlPlane.ControlPlaneRole
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneSlotSnapshot!
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.Active.get -> bool
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.Active.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.ConfirmedFlushPosition.get -> string?
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.ConfirmedFlushPosition.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.ControlPlaneSlotSnapshot(bool SourceReachable, bool Exists, bool Active, string? OutputPlugin, string? RestartPosition, string? ConfirmedFlushPosition, string? WalStatus, long WalLagBytes, string? DiagnosticCode) -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.Deconstruct(out bool SourceReachable, out bool Exists, out bool Active, out string? OutputPlugin, out string? RestartPosition, out string? ConfirmedFlushPosition, out string? WalStatus, out long WalLagBytes, out string? DiagnosticCode) -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.DiagnosticCode.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.Equals(BlueTusk.ControlPlane.ControlPlaneSlotSnapshot? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.Exists.get -> bool
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.Exists.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.OutputPlugin.get -> string?
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.OutputPlugin.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.RestartPosition.get -> string?
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.RestartPosition.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.SourceReachable.get -> bool
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.SourceReachable.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.WalLagBytes.get -> long
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.WalLagBytes.init -> void
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.WalStatus.get -> string?
+BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.WalStatus.init -> void
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot!
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.ControlPlaneSnapshotRunSnapshot(string! SnapshotEpoch, string! State, int ProgressBytes, System.DateTimeOffset UpdatedAt) -> void
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.Deconstruct(out string! SnapshotEpoch, out string! State, out int ProgressBytes, out System.DateTimeOffset UpdatedAt) -> void
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.Equals(BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.ProgressBytes.get -> int
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.ProgressBytes.init -> void
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.SnapshotEpoch.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.SnapshotEpoch.init -> void
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.State.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.State.init -> void
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.UpdatedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.UpdatedAt.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneSourceSnapshot!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Checkpoints.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Checkpoints.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.ConsumerGroups.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.ConsumerGroups.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.ControlPlaneSourceSnapshot(string! SourceKey, string! InstanceName, string! SourceFingerprint, string! SystemIdentifier, string! DatabaseName, string! SlotName, string! PublicationFingerprint, long SourceEpoch, long LastSequence, string! LastCommitPosition, BlueTusk.ControlPlane.ControlPlaneSlotSnapshot! Slot, BlueTusk.ControlPlane.ControlPlaneRelaySnapshot! Relay, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot!>! ConsumerGroups, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot!>! SnapshotRuns, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot!>! Checkpoints) -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.DatabaseName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.DatabaseName.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Deconstruct(out string! SourceKey, out string! InstanceName, out string! SourceFingerprint, out string! SystemIdentifier, out string! DatabaseName, out string! SlotName, out string! PublicationFingerprint, out long SourceEpoch, out long LastSequence, out string! LastCommitPosition, out BlueTusk.ControlPlane.ControlPlaneSlotSnapshot! Slot, out BlueTusk.ControlPlane.ControlPlaneRelaySnapshot! Relay, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot!>! ConsumerGroups, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot!>! SnapshotRuns, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot!>! Checkpoints) -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Equals(BlueTusk.ControlPlane.ControlPlaneSourceSnapshot? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.InstanceName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.InstanceName.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.LastCommitPosition.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.LastCommitPosition.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.LastSequence.get -> long
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.LastSequence.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.PublicationFingerprint.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.PublicationFingerprint.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Relay.get -> BlueTusk.ControlPlane.ControlPlaneRelaySnapshot!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Relay.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Slot.get -> BlueTusk.ControlPlane.ControlPlaneSlotSnapshot!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Slot.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SlotName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SlotName.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SnapshotRuns.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SnapshotRuns.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SourceEpoch.get -> long
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SourceEpoch.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SourceFingerprint.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SourceFingerprint.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SourceKey.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SourceKey.init -> void
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SystemIdentifier.get -> string!
+BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.SystemIdentifier.init -> void
+BlueTusk.ControlPlane.ControlPlaneStorageVersionException
+BlueTusk.ControlPlane.ControlPlaneStorageVersionException.ControlPlaneStorageVersionException(string! message) -> void
+BlueTusk.ControlPlane.IControlPlaneAuditStore
+BlueTusk.ControlPlane.IControlPlaneAuditStore.AppendAsync(BlueTusk.ControlPlane.ControlPlaneAuditRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.IControlPlaneAuthorizer
+BlueTusk.ControlPlane.IControlPlaneAuthorizer.AuthorizeAsync(BlueTusk.ControlPlane.ControlPlaneActor! actor, BlueTusk.ControlPlane.ControlPlaneRole requiredRole, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.ControlPlane.IControlPlaneOperationHandler
+BlueTusk.ControlPlane.IControlPlaneOperationHandler.ExecuteAsync(BlueTusk.ControlPlane.ControlPlaneOperationRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.IControlPlaneQueryService
+BlueTusk.ControlPlane.IControlPlaneQueryService.GetOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneOverview!>
+BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore
+BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.AppendAsync(BlueTusk.ControlPlane.ControlPlaneAuditRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.PostgreSqlControlPlaneAuditStore(System.Data.Common.DbDataSource! dataSource, string! controlSchema = "bluetusk_control") -> void
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService.GetOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneOverview!>
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService.PostgreSqlControlPlaneQueryService(System.Collections.Generic.IEnumerable<BlueTusk.ControlPlane.ControlPlanePostgreSqlSource!>! instances, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.RoleControlPlaneAuthorizer
+BlueTusk.ControlPlane.RoleControlPlaneAuthorizer.AuthorizeAsync(BlueTusk.ControlPlane.ControlPlaneActor! actor, BlueTusk.ControlPlane.ControlPlaneRole requiredRole, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.ControlPlane.RoleControlPlaneAuthorizer.RoleControlPlaneAuthorizer() -> void
+override BlueTusk.ControlPlane.ControlPlaneActor.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneActor.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneActor.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneAuditRecord.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneAuditRecord.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneAuditRecord.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneOperationPolicy.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneOperationPolicy.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneOperationPolicy.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneOperationRequest.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneOperationRequest.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneOperationRequest.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneOverview.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneOverview.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneOverview.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.ToString() -> string!
+static BlueTusk.ControlPlane.ControlPlaneActor.operator !=(BlueTusk.ControlPlane.ControlPlaneActor? left, BlueTusk.ControlPlane.ControlPlaneActor? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneActor.operator ==(BlueTusk.ControlPlane.ControlPlaneActor? left, BlueTusk.ControlPlane.ControlPlaneActor? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneAuditRecord.operator !=(BlueTusk.ControlPlane.ControlPlaneAuditRecord? left, BlueTusk.ControlPlane.ControlPlaneAuditRecord? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneAuditRecord.operator ==(BlueTusk.ControlPlane.ControlPlaneAuditRecord? left, BlueTusk.ControlPlane.ControlPlaneAuditRecord? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot? left, BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot? left, BlueTusk.ControlPlane.ControlPlaneCheckpointSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot? left, BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot? left, BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneOperationPolicies.Get(BlueTusk.ControlPlane.ControlPlaneOperationKind kind, string! target) -> BlueTusk.ControlPlane.ControlPlaneOperationPolicy!
+static BlueTusk.ControlPlane.ControlPlaneOperationPolicy.operator !=(BlueTusk.ControlPlane.ControlPlaneOperationPolicy? left, BlueTusk.ControlPlane.ControlPlaneOperationPolicy? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneOperationPolicy.operator ==(BlueTusk.ControlPlane.ControlPlaneOperationPolicy? left, BlueTusk.ControlPlane.ControlPlaneOperationPolicy? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneOperationRequest.operator !=(BlueTusk.ControlPlane.ControlPlaneOperationRequest? left, BlueTusk.ControlPlane.ControlPlaneOperationRequest? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneOperationRequest.operator ==(BlueTusk.ControlPlane.ControlPlaneOperationRequest? left, BlueTusk.ControlPlane.ControlPlaneOperationRequest? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneOverview.operator !=(BlueTusk.ControlPlane.ControlPlaneOverview? left, BlueTusk.ControlPlane.ControlPlaneOverview? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneOverview.operator ==(BlueTusk.ControlPlane.ControlPlaneOverview? left, BlueTusk.ControlPlane.ControlPlaneOverview? right) -> bool
+static BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.operator !=(BlueTusk.ControlPlane.ControlPlanePostgreSqlSource? left, BlueTusk.ControlPlane.ControlPlanePostgreSqlSource? right) -> bool
+static BlueTusk.ControlPlane.ControlPlanePostgreSqlSource.operator ==(BlueTusk.ControlPlane.ControlPlanePostgreSqlSource? left, BlueTusk.ControlPlane.ControlPlanePostgreSqlSource? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneRelaySnapshot? left, BlueTusk.ControlPlane.ControlPlaneRelaySnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneRelaySnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneRelaySnapshot? left, BlueTusk.ControlPlane.ControlPlaneRelaySnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneSlotSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSlotSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneSlotSnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneSlotSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSlotSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSnapshotRunSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.operator !=(BlueTusk.ControlPlane.ControlPlaneSourceSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSourceSnapshot? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneSourceSnapshot.operator ==(BlueTusk.ControlPlane.ControlPlaneSourceSnapshot? left, BlueTusk.ControlPlane.ControlPlaneSourceSnapshot? right) -> bool

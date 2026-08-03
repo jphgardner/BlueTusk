@@ -41,7 +41,10 @@
     "ControlPlane": {
       "versionFile": "eng/versions/ControlPlane.props",
       "publishable": false,
-      "packages": []
+      "packages": [
+        "src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj",
+        "src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj"
+      ]
     },
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",

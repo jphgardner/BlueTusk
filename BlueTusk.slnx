@@ -30,7 +30,9 @@
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/BlueTusk.Client/BlueTusk.Client.csproj" />
+    <Project Path="src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj" />
     <Project Path="src/BlueTusk.Data/BlueTusk.Data.csproj" />
+    <Project Path="src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj" />
     <Project Path="src/BlueTusk.Diagnostics/BlueTusk.Diagnostics.csproj" />
     <Project Path="src/BlueTusk.EntityFrameworkCore.Design/BlueTusk.EntityFrameworkCore.Design.csproj" />
     <Project Path="src/BlueTusk.EntityFrameworkCore/BlueTusk.EntityFrameworkCore.csproj" />
@@ -55,6 +57,7 @@
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/BlueTusk.CompatibilityTests/BlueTusk.CompatibilityTests.csproj" />
+    <Project Path="tests/BlueTusk.ControlPlane.Tests/BlueTusk.ControlPlane.Tests.csproj" />
     <Project Path="tests/BlueTusk.ConformanceTests/BlueTusk.ConformanceTests.csproj" />
     <Project Path="tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj" />
     <Project Path="tests/BlueTusk.Diagnostics.Tests/BlueTusk.Diagnostics.Tests.csproj" />
