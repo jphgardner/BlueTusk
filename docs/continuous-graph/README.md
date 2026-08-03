@@ -110,7 +110,18 @@ inference from caller-authored raw SQL are outside this preview.
 ## Release state
 
 The package is independently versioned as `0.1.0-preview.1` and remains
-non-publishable while PostgreSQL 19 live capability, cancellation, dashboard,
-sample, and benchmark gates are completed. Offline compiler tests cover exact
-dependency extraction, stable fingerprints, Live session handoff,
-unsupported-server rejection, and fail-closed query shapes.
+non-publishable while dashboard, sample, and benchmark gates are completed.
+Offline compiler tests cover exact dependency extraction, stable fingerprints,
+Live session handoff, unsupported-server rejection, and fail-closed query
+shapes. The opt-in PostgreSQL 19 acceptance test creates a real property graph,
+materialises the initial result, mutates an affected vertex, observes the
+authoritative keyed update, and cancellation-aborts a graph query blocked on an
+exclusive table lock.
+
+Run that live gate against the repository's PostgreSQL 19 service:
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile preview up -d postgres19
+$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+dotnet test tests/BlueTusk.ContinuousGraph.Tests
+```
