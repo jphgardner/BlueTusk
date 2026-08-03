@@ -469,7 +469,7 @@ jobs:
         env:
           KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
           KRB5CCNAME: FILE:${{ runner.temp }}/bluetusk-krb5cc
-          KRB5_TRACE: /dev/stderr
+          KRB5_TRACE: ${{ runner.temp }}/bluetusk-krb5.trace
           BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=localhost;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
         run: >-
           dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
@@ -481,7 +481,11 @@ jobs:
 
       - name: Capture PostgreSQL/Kerberos logs on failure
         if: failure()
-        run: docker compose -f eng/compose/postgres.yml --profile security-tests logs gss18
+        run: |
+          if [[ -f "${{ runner.temp }}/bluetusk-krb5.trace" ]]; then
+            cat "${{ runner.temp }}/bluetusk-krb5.trace"
+          fi
+          docker compose -f eng/compose/postgres.yml --profile security-tests logs gss18
 
       - name: Stop PostgreSQL and MIT Kerberos KDC
         if: always()
