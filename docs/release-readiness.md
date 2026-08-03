@@ -208,8 +208,9 @@ provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
-in all tracked Markdown files; the 2026-08-02 review checked 159 local links
-across 79 files and separately resolved all 40 external Markdown references.
+in all tracked Markdown files; the current review checks 242 local links across
+124 tracked Markdown files. The 2026-08-02 provider review separately resolved
+all 40 external Markdown references.
 The support matrix identifies .NET 10, EF Core 10.0.10,
 PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 preview, including the
 remaining beta-syntax risk.
