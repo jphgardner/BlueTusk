@@ -261,7 +261,21 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 cancellationToken).ConfigureAwait(false);
             if (replay.Status is LiveReplayReadStatus.Expired or LiveReplayReadStatus.NotFound)
             {
-                return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayUnavailable, null);
+                if (afterSequence != 0)
+                {
+                    return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayUnavailable, null);
+                }
+
+                var reset = await _session.ResetAsync(
+                    LiveResetReason.ReplayExpired,
+                    cancellationToken).ConfigureAwait(false);
+                var resetEvents = await PersistAsync(reset.Events, cancellationToken).ConfigureAwait(false);
+                Publish(resetEvents);
+                replay = new LiveReplayReadResult(
+                    LiveReplayReadStatus.Available,
+                    resetEvents[0].Sequence,
+                    resetEvents[^1].Sequence,
+                    resetEvents);
             }
 
             if (replay.Events.Count > _options.MaximumReplayEventsPerConnect ||

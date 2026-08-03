@@ -119,6 +119,26 @@ public sealed class LiveSharedSubscriptionTests
         Assert.Equal(2, registry.Count);
     }
 
+    [Fact]
+    public async Task Fresh_connection_gets_authoritative_reset_when_initial_replay_expired()
+    {
+        var replay = new ReplayStore();
+        var invalidations = new InvalidationLog();
+        IReadOnlyList<Row> rows = [new Row(1, "one")];
+        await using var shared = Shared(invalidations, replay, () => rows);
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        replay.ExpireReads = true;
+        rows = [new Row(2, "current")];
+
+        var fresh = await shared.ConnectAsync(0, TestContext.Current.CancellationToken);
+
+        Assert.Equal(LiveSubscriptionConnectStatus.Connected, fresh.Status);
+        var reset = Assert.Single(fresh.Connection!.Replay);
+        Assert.Equal(LiveEventKind.ResultReset, reset.Kind);
+        Assert.Equal(2, reset.Sequence);
+        await fresh.Connection.DisposeAsync();
+    }
+
     private static async ValueTask<LiveSubscriberMessage> ReadOneAsync(
         LiveSubscriptionConnection connection,
         CancellationToken cancellationToken)
@@ -185,6 +205,8 @@ public sealed class LiveSharedSubscriptionTests
     {
         private readonly Dictionary<string, List<LiveReplayEvent>> _events = new(StringComparer.Ordinal);
 
+        public bool ExpireReads { get; set; }
+
         public ValueTask<LiveReplayAppendResult> AppendAsync(
             LiveReplayAppendRequest request,
             CancellationToken cancellationToken = default)
@@ -216,6 +238,15 @@ public sealed class LiveSharedSubscriptionTests
             CancellationToken cancellationToken = default)
         {
             cancellationToken.ThrowIfCancellationRequested();
+            if (ExpireReads)
+            {
+                ExpireReads = false;
+                return ValueTask.FromResult(new LiveReplayReadResult(
+                    LiveReplayReadStatus.Expired,
+                    2,
+                    _events.TryGetValue(identity.Fingerprint, out var expiredEvents) ? expiredEvents.Count : 0));
+            }
+
             if (!_events.TryGetValue(identity.Fingerprint, out var events))
             {
                 return ValueTask.FromResult(new LiveReplayReadResult(LiveReplayReadStatus.NotFound, 0, 0));

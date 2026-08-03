@@ -36,6 +36,8 @@ Tenant isolation must be declared as PostgreSQL RLS, an EF global query filter, 
 
 Live replay events use a versioned JSON media type and a SHA-256 integrity hash. The PostgreSQL store appends a contiguous sequence only when its expected prior sequence matches, treats a byte-identical crash retry as already stored, and rejects divergent forks. Reads distinguish current, available, expired, and unknown subscriptions. Retention pruning advances an explicit first-available watermark so an expired resume token produces a reset instead of a silent gap.
 
+A new client never depends on an initial event that may already have expired. When the retained beginning is unavailable, a tokenless connection makes the shared subscription run a new authoritative query, persists and broadcasts a `ReplayExpired` reset, and starts the client from that sequence. A resumed client still receives an explicit unavailable result and must reconnect without its stale token.
+
 ## Shared subscriptions and backpressure
 
 `LiveSharedSubscription<T, TKey>` owns one authoritative query session for one complete subscription identity. Matching clients share its query and replay append; different parameter, tenant, user, policy-version, database, plan, or limit fingerprints cannot enter the same registry entry.
