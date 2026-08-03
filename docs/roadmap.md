@@ -54,6 +54,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 6 slice: framework-neutral TypeScript client plus Angular signals and React concurrent-store adapters
 - [x] Phase 6 slice: authenticated gRPC server-streaming transport with versioned protocol and explicit failure status
 - [x] Phase 6 slice: Aspire topology configuration plus deterministic Live stores and custom replay-store conformance
+- [x] Phase 6 slice: allocation-free Live subscription, fan-out, replay, resume, quota, and disconnect telemetry
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [ ] Phase 7: Continuous Graph preview
 

@@ -30,6 +30,8 @@ public sealed class LiveSharedSubscriptionTests
         Assert.Equal(2, await shared.RefreshAsync(TestContext.Current.CancellationToken));
         Assert.Equal(2, queryCount);
         Assert.Equal(4, shared.Status.FanOutDeliveries);
+        Assert.Equal(2, shared.Status.ConnectedClients);
+        Assert.Equal(2, shared.Status.ConnectionOpenAttempts);
 
         var resumed = await shared.ConnectAsync(1, TestContext.Current.CancellationToken);
         Assert.Equal([2L, 3L], resumed.Connection!.Replay.Select(item => item.Sequence));
@@ -63,6 +65,7 @@ public sealed class LiveSharedSubscriptionTests
         var message = await ReadOneAsync(connected.Connection!, TestContext.Current.CancellationToken);
         Assert.Equal(LiveSubscriberMessageKind.ResetRequired, message.Kind);
         Assert.Equal(1, shared.Status.SlowClientDisconnects);
+        Assert.Equal("slow-client-reset", shared.Status.LastDisconnectCode);
         Assert.Equal(0, shared.Status.SubscriberCount);
     }
 
@@ -87,6 +90,7 @@ public sealed class LiveSharedSubscriptionTests
         Assert.Equal(
             LiveSubscriptionConnectStatus.QuotaExceeded,
             (await shared.ConnectAsync(1, TestContext.Current.CancellationToken)).Status);
+        Assert.Equal(1, shared.Status.QuotaRejections);
         await first.Connection!.DisposeAsync();
 
         rows = [new Row(1, "ONE"), new Row(2, "two")];
@@ -113,10 +117,13 @@ public sealed class LiveSharedSubscriptionTests
         Assert.Equal(
             LiveSubscriptionConnectStatus.InvalidResumeToken,
             (await tenantB.ConnectWithTokenAsync(token, protector, TestContext.Current.CancellationToken)).Status);
+        Assert.Equal(1, tenantB.Status.ResumeAttempts);
+        Assert.Equal(1, tenantB.Status.ResumeRejections);
         await using var registry = new LiveSharedSubscriptionRegistry();
         Assert.Same(tenantA, registry.GetOrAdd(tenantA));
         Assert.Same(tenantB, registry.GetOrAdd(tenantB));
         Assert.Equal(2, registry.Count);
+        Assert.Equal(2, registry.GetStatuses().Count);
     }
 
     [Fact]

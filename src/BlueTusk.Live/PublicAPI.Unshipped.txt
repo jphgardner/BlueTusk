@@ -12,6 +12,7 @@ BlueTusk.Live.ILiveSharedSubscription
 BlueTusk.Live.ILiveSharedSubscription.ConnectAsync(long afterSequence, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveSubscriptionConnectResult!>
 BlueTusk.Live.ILiveSharedSubscription.ConnectWithTokenAsync(string! resumeToken, BlueTusk.Live.LiveResumeTokenProtector! tokenProtector, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveSubscriptionConnectResult!>
 BlueTusk.Live.ILiveSharedSubscription.Identity.get -> BlueTusk.Live.LiveSubscriptionIdentity!
+BlueTusk.Live.ILiveSharedSubscription.Status.get -> BlueTusk.Live.LiveSharedSubscriptionStatus!
 BlueTusk.Live.LiveDiffBatch<T, TKey>
 BlueTusk.Live.LiveDiffBatch<T, TKey>.Events.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveResultEvent<T, TKey>!>!
 BlueTusk.Live.LiveDiffBatch<T, TKey>.LastSequence.get -> long
@@ -267,6 +268,10 @@ BlueTusk.Live.LiveSharedSubscriptionRegistryOptions.LiveSharedSubscriptionRegist
 BlueTusk.Live.LiveSharedSubscriptionRegistryOptions.MaximumSharedSubscriptions.get -> int
 BlueTusk.Live.LiveSharedSubscriptionRegistryOptions.MaximumSharedSubscriptions.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus
+BlueTusk.Live.LiveSharedSubscriptionStatus.ConnectionOpenAttempts.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.ConnectionOpenAttempts.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.ConnectedClients.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.ConnectedClients.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.<Clone>$() -> BlueTusk.Live.LiveSharedSubscriptionStatus!
 BlueTusk.Live.LiveSharedSubscriptionStatus.Deconstruct(out BlueTusk.Live.LiveSubscriptionIdentity! Identity, out bool IsStarted, out int SubscriberCount, out long PersistedSequence, out long PublishedEvents, out long FanOutDeliveries, out long SlowClientDisconnects, out BlueTusk.Live.LiveQuerySessionStatus! QuerySession) -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.Equals(BlueTusk.Live.LiveSharedSubscriptionStatus? other) -> bool
@@ -276,17 +281,44 @@ BlueTusk.Live.LiveSharedSubscriptionStatus.Identity.get -> BlueTusk.Live.LiveSub
 BlueTusk.Live.LiveSharedSubscriptionStatus.Identity.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.IsStarted.get -> bool
 BlueTusk.Live.LiveSharedSubscriptionStatus.IsStarted.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.LastDisconnectCode.get -> string?
+BlueTusk.Live.LiveSharedSubscriptionStatus.LastDisconnectCode.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.LiveSharedSubscriptionStatus(BlueTusk.Live.LiveSubscriptionIdentity! Identity, bool IsStarted, int SubscriberCount, long PersistedSequence, long PublishedEvents, long FanOutDeliveries, long SlowClientDisconnects, BlueTusk.Live.LiveQuerySessionStatus! QuerySession) -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.PersistedSequence.get -> long
 BlueTusk.Live.LiveSharedSubscriptionStatus.PersistedSequence.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.PublishedEvents.get -> long
 BlueTusk.Live.LiveSharedSubscriptionStatus.PublishedEvents.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.QuotaRejections.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.QuotaRejections.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.QuerySession.get -> BlueTusk.Live.LiveQuerySessionStatus!
 BlueTusk.Live.LiveSharedSubscriptionStatus.QuerySession.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.ReplayBytesAppended.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.ReplayBytesAppended.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.ReplayedEvents.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.ReplayedEvents.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.ReplayRejections.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.ReplayRejections.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.ResumeAttempts.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.ResumeAttempts.init -> void
+BlueTusk.Live.LiveSharedSubscriptionStatus.ResumeRejections.get -> long
+BlueTusk.Live.LiveSharedSubscriptionStatus.ResumeRejections.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.SlowClientDisconnects.get -> long
 BlueTusk.Live.LiveSharedSubscriptionStatus.SlowClientDisconnects.init -> void
 BlueTusk.Live.LiveSharedSubscriptionStatus.SubscriberCount.get -> int
 BlueTusk.Live.LiveSharedSubscriptionStatus.SubscriberCount.init -> void
+BlueTusk.Live.LiveSharedSubscriptionRegistry.GetStatuses() -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveSharedSubscriptionStatus!>!
+BlueTusk.Live.LiveSharedSubscriptionRegistry.Status.get -> BlueTusk.Live.LiveSharedSubscriptionRegistryStatus!
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.<Clone>$() -> BlueTusk.Live.LiveSharedSubscriptionRegistryStatus!
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.Count.get -> int
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.Count.init -> void
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.Deconstruct(out int Count, out int MaximumSharedSubscriptions, out long QuotaRejections) -> void
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.Equals(BlueTusk.Live.LiveSharedSubscriptionRegistryStatus? other) -> bool
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.LiveSharedSubscriptionRegistryStatus(int Count, int MaximumSharedSubscriptions, long QuotaRejections) -> void
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.MaximumSharedSubscriptions.get -> int
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.MaximumSharedSubscriptions.init -> void
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.QuotaRejections.get -> long
+BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.QuotaRejections.init -> void
 BlueTusk.Live.LiveSlowClientException
 BlueTusk.Live.LiveSlowClientException.LiveSlowClientException(string! message) -> void
 BlueTusk.Live.LiveSlowClientPolicy
@@ -381,6 +413,9 @@ override BlueTusk.Live.LiveSharedSubscriptionRegistryOptions.ToString() -> strin
 override BlueTusk.Live.LiveSharedSubscriptionStatus.Equals(object? obj) -> bool
 override BlueTusk.Live.LiveSharedSubscriptionStatus.GetHashCode() -> int
 override BlueTusk.Live.LiveSharedSubscriptionStatus.ToString() -> string!
+override BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.Equals(object? obj) -> bool
+override BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.GetHashCode() -> int
+override BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.ToString() -> string!
 override BlueTusk.Live.LiveSubscriberMessage.Equals(object? obj) -> bool
 override BlueTusk.Live.LiveSubscriberMessage.GetHashCode() -> int
 override BlueTusk.Live.LiveSubscriberMessage.ToString() -> string!
@@ -427,6 +462,8 @@ static BlueTusk.Live.LiveSharedSubscriptionRegistryOptions.operator !=(BlueTusk.
 static BlueTusk.Live.LiveSharedSubscriptionRegistryOptions.operator ==(BlueTusk.Live.LiveSharedSubscriptionRegistryOptions? left, BlueTusk.Live.LiveSharedSubscriptionRegistryOptions? right) -> bool
 static BlueTusk.Live.LiveSharedSubscriptionStatus.operator !=(BlueTusk.Live.LiveSharedSubscriptionStatus? left, BlueTusk.Live.LiveSharedSubscriptionStatus? right) -> bool
 static BlueTusk.Live.LiveSharedSubscriptionStatus.operator ==(BlueTusk.Live.LiveSharedSubscriptionStatus? left, BlueTusk.Live.LiveSharedSubscriptionStatus? right) -> bool
+static BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.operator !=(BlueTusk.Live.LiveSharedSubscriptionRegistryStatus? left, BlueTusk.Live.LiveSharedSubscriptionRegistryStatus? right) -> bool
+static BlueTusk.Live.LiveSharedSubscriptionRegistryStatus.operator ==(BlueTusk.Live.LiveSharedSubscriptionRegistryStatus? left, BlueTusk.Live.LiveSharedSubscriptionRegistryStatus? right) -> bool
 static BlueTusk.Live.LiveSubscriberMessage.operator !=(BlueTusk.Live.LiveSubscriberMessage? left, BlueTusk.Live.LiveSubscriberMessage? right) -> bool
 static BlueTusk.Live.LiveSubscriberMessage.operator ==(BlueTusk.Live.LiveSubscriberMessage? left, BlueTusk.Live.LiveSubscriberMessage? right) -> bool
 static BlueTusk.Live.LiveSubscriptionIdentity.Create<T, TKey>(BlueTusk.Live.LiveQueryPlan<T, TKey>! plan, BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, int? resultLimit = null) -> BlueTusk.Live.LiveSubscriptionIdentity!

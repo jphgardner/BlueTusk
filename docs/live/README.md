@@ -44,6 +44,8 @@ A new client never depends on an initial event that may already have expired. Wh
 
 Reconnect is serialized with publication so replay and the newly attached bounded channel have no race. Subscriber counts, replay batch size, shared subscription count, and per-client pending messages are bounded. A slow client is either disconnected with a specific error or sent a `ResetRequired` control message after its buffer is drained, according to explicit policy. No path silently drops a diff while allowing the client to continue.
 
+Each shared subscription now exposes an allocation-free operational snapshot: open/connected counts, active subscribers, fan-out deliveries, resume attempts/rejections, replay rejections/events/bytes appended, quota rejections, and the last bounded-buffer disconnect code. The registry exposes sorted snapshots plus its own shared-query quota pressure without revealing result rows or parameter values.
+
 ## ASP.NET transports
 
 `BlueTusk.Live.AspNetCore` defines the authenticated transport session and an application-supplied resolver. The resolver is trusted server code: it selects a registered plan, binds the request JSON to that plan's declared scalar parameters, derives the caller's security scope, and returns the matching shared subscription. Anonymous callers and non-object parameter payloads are rejected before connection.

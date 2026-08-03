@@ -68,7 +68,26 @@ public sealed record LiveSharedSubscriptionStatus(
     long PublishedEvents,
     long FanOutDeliveries,
     long SlowClientDisconnects,
-    LiveQuerySessionStatus QuerySession);
+    LiveQuerySessionStatus QuerySession)
+{
+    public long ConnectionOpenAttempts { get; init; }
+
+    public long ConnectedClients { get; init; }
+
+    public long QuotaRejections { get; init; }
+
+    public long ReplayRejections { get; init; }
+
+    public long ResumeAttempts { get; init; }
+
+    public long ResumeRejections { get; init; }
+
+    public long ReplayedEvents { get; init; }
+
+    public long ReplayBytesAppended { get; init; }
+
+    public string? LastDisconnectCode { get; init; }
+}
 
 public sealed class LiveSubscriptionConnectResult
 {
@@ -140,6 +159,8 @@ public interface ILiveSharedSubscription : IAsyncDisposable
 {
     LiveSubscriptionIdentity Identity { get; }
 
+    LiveSharedSubscriptionStatus Status { get; }
+
     ValueTask<LiveSubscriptionConnectResult> ConnectAsync(
         long afterSequence,
         CancellationToken cancellationToken = default);
@@ -162,6 +183,15 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     private long _publishedEvents;
     private long _fanOutDeliveries;
     private long _slowClientDisconnects;
+    private long _connectionOpenAttempts;
+    private long _connectedClients;
+    private long _quotaRejections;
+    private long _replayRejections;
+    private long _resumeAttempts;
+    private long _resumeRejections;
+    private long _replayedEvents;
+    private long _replayBytesAppended;
+    private string? _lastDisconnectCode;
     private int _started;
     private int _disposed;
 
@@ -189,7 +219,18 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         Interlocked.Read(ref _publishedEvents),
         Interlocked.Read(ref _fanOutDeliveries),
         Interlocked.Read(ref _slowClientDisconnects),
-        _session.Status);
+        _session.Status)
+    {
+        ConnectionOpenAttempts = Interlocked.Read(ref _connectionOpenAttempts),
+        ConnectedClients = Interlocked.Read(ref _connectedClients),
+        QuotaRejections = Interlocked.Read(ref _quotaRejections),
+        ReplayRejections = Interlocked.Read(ref _replayRejections),
+        ResumeAttempts = Interlocked.Read(ref _resumeAttempts),
+        ResumeRejections = Interlocked.Read(ref _resumeRejections),
+        ReplayedEvents = Interlocked.Read(ref _replayedEvents),
+        ReplayBytesAppended = Interlocked.Read(ref _replayBytesAppended),
+        LastDisconnectCode = Volatile.Read(ref _lastDisconnectCode),
+    };
 
     public async ValueTask StartAsync(CancellationToken cancellationToken = default)
     {
@@ -241,6 +282,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     {
         ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
         ThrowIfDisposed();
+        Interlocked.Increment(ref _connectionOpenAttempts);
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -251,6 +293,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
 
             if (_subscribers.Count >= _options.MaximumSubscribers)
             {
+                Interlocked.Increment(ref _quotaRejections);
                 return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.QuotaExceeded, null);
             }
 
@@ -263,6 +306,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
             {
                 if (afterSequence != 0)
                 {
+                    Interlocked.Increment(ref _replayRejections);
                     return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayUnavailable, null);
                 }
 
@@ -283,6 +327,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                  replay.Events.Count != 0 &&
                  replay.Events[^1].Sequence < replay.LastSequence))
             {
+                Interlocked.Increment(ref _replayRejections);
                 return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayLimitExceeded, null);
             }
 
@@ -306,6 +351,8 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 replay.Events,
                 channel.Reader,
                 RemoveSubscriber);
+            Interlocked.Increment(ref _connectedClients);
+            Interlocked.Add(ref _replayedEvents, replay.Events.Count);
             return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.Connected, connection);
         }
         finally
@@ -321,9 +368,11 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(resumeToken);
         ArgumentNullException.ThrowIfNull(tokenProtector);
+        Interlocked.Increment(ref _resumeAttempts);
         var validation = tokenProtector.Validate(resumeToken, Identity);
         if (validation.Status is LiveResumeTokenValidationStatus.Expired)
         {
+            Interlocked.Increment(ref _resumeRejections);
             return new LiveSubscriptionConnectResult(
                 LiveSubscriptionConnectStatus.ResumeTokenExpired,
                 null,
@@ -332,6 +381,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
 
         if (validation.Status is not LiveResumeTokenValidationStatus.Valid)
         {
+            Interlocked.Increment(ref _resumeRejections);
             return new LiveSubscriptionConnectResult(
                 LiveSubscriptionConnectStatus.InvalidResumeToken,
                 null,
@@ -392,6 +442,12 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
 
         Interlocked.Exchange(ref _persistedSequence, finalSequence);
         Interlocked.Add(ref _publishedEvents, replayEvents.Length);
+        Interlocked.Add(
+            ref _replayBytesAppended,
+            replayEvents.Sum(static item =>
+                (long)item.Payload.Length +
+                item.IntegrityHash.Length +
+                System.Text.Encoding.UTF8.GetByteCount(item.ContentType)));
         return replayEvents;
     }
 
@@ -413,6 +469,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 Interlocked.Increment(ref _slowClientDisconnects);
                 if (_options.SlowClientPolicy is LiveSlowClientPolicy.RequireReset)
                 {
+                    Volatile.Write(ref _lastDisconnectCode, "slow-client-reset");
                     while (subscriber.Channel.Reader.TryRead(out _))
                     {
                     }
@@ -423,6 +480,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 }
                 else
                 {
+                    Volatile.Write(ref _lastDisconnectCode, "slow-client-disconnect");
                     subscriber.Channel.Writer.TryComplete(
                         new LiveSlowClientException(
                             $"Live subscriber '{id}' exceeded its bounded delivery buffer."));
@@ -467,11 +525,17 @@ public sealed record LiveSharedSubscriptionRegistryOptions
     internal void Validate() => ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumSharedSubscriptions);
 }
 
+public sealed record LiveSharedSubscriptionRegistryStatus(
+    int Count,
+    int MaximumSharedSubscriptions,
+    long QuotaRejections);
+
 public sealed class LiveSharedSubscriptionRegistry : IAsyncDisposable
 {
-    private readonly ConcurrentDictionary<string, object> _subscriptions = new(StringComparer.Ordinal);
+    private readonly ConcurrentDictionary<string, ILiveSharedSubscription> _subscriptions = new(StringComparer.Ordinal);
     private readonly LiveSharedSubscriptionRegistryOptions _options;
     private readonly object _mutationLock = new();
+    private long _quotaRejections;
     private int _disposed;
 
     public LiveSharedSubscriptionRegistry(LiveSharedSubscriptionRegistryOptions? options = null)
@@ -482,6 +546,17 @@ public sealed class LiveSharedSubscriptionRegistry : IAsyncDisposable
     }
 
     public int Count => _subscriptions.Count;
+
+    public LiveSharedSubscriptionRegistryStatus Status => new(
+        _subscriptions.Count,
+        _options.MaximumSharedSubscriptions,
+        Interlocked.Read(ref _quotaRejections));
+
+    public IReadOnlyList<LiveSharedSubscriptionStatus> GetStatuses() =>
+        _subscriptions.Values
+            .Select(static subscription => subscription.Status)
+            .OrderBy(static status => status.Identity.Fingerprint, StringComparer.Ordinal)
+            .ToArray();
 
     public LiveSharedSubscription<T, TKey> GetOrAdd<T, TKey>(
         LiveSharedSubscription<T, TKey> subscription)
@@ -500,6 +575,7 @@ public sealed class LiveSharedSubscriptionRegistry : IAsyncDisposable
 
             if (_subscriptions.Count >= _options.MaximumSharedSubscriptions)
             {
+                Interlocked.Increment(ref _quotaRejections);
                 throw new LiveSubscriptionQuotaException(
                     $"The shared Live subscription limit of {_options.MaximumSharedSubscriptions} has been reached.");
             }
