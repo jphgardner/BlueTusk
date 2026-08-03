@@ -85,6 +85,10 @@ PostgreSQL relay fan-out, typed mappings, and snapshot bootstrap. [Sync](docs/sy
 is in Phase 5 with its kernel, four destinations, reconciliation/repair, safe
 rebuild orchestration, versioned transformation composition, and in-process
 hosting implemented behind a non-publishable release gate.
+[Continuous Graph](docs/continuous-graph/README.md) now has its first
+capability-guarded registration slice: exact graph-element dependencies,
+bounded deterministic `GRAPH_TABLE` plans, and authoritative Live
+requery/diff, also behind a non-publishable preview gate.
 
 ## Status
 

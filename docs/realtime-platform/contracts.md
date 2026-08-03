@@ -33,3 +33,12 @@ Subscription identity includes database, query fingerprint, parameters, security
 Control Plane and Dashboard expose source, slot, WAL, relay, group, checkpoint, snapshot, pipeline, retry, quarantine, reconciliation, subscription, quota, and replay health. Mutations require role-based authorisation, confirmation, and immutable audit records; slot deletion and checkpoint rewind are never one-click defaults.
 
 Continuous Graph initially registers capability-guarded SQL/PGQ plans, extracts table dependencies, and uses transaction invalidation followed by authoritative `GRAPH_TABLE` requery and diff. Incremental graph maintenance is deferred beyond the preview.
+
+The preview compiler accepts trusted typed EF graph factories only. A
+registration names the configured graph element-table aliases it uses; those
+aliases are validated against EF property-graph metadata and become the exact
+Live table dependency set. Plans require PostgreSQL 19 SQL/PGQ capability,
+deterministic ordering including a direct result key, and one bounded `Take`.
+The compiled plan delegates initial cursor reservation, security-scoped
+identity, invalidation coalescing, authoritative requery, and keyed diff/reset
+to Live.

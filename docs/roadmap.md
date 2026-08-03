@@ -60,6 +60,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 6 slice: model-proven projected one-to-many joins, grouping, and aggregate query plans
 - [x] Phase 6 slice: adversarial reconnect sequencing plus checked-in diff, replay, coalescing, and 64-subscriber fan-out budgets
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
+- [x] Phase 7 slice: PostgreSQL 19 capability-guarded typed SQL/PGQ registration, exact graph-element invalidation dependencies, bounded deterministic plans, and authoritative Live requery/diff
 - [ ] Phase 7: Continuous Graph preview
 
 The detailed contracts and release gates are maintained in the [real-time platform plan](realtime-platform/delivery-plan.md).

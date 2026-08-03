@@ -73,7 +73,9 @@
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",
       "publishable": false,
-      "packages": []
+      "packages": [
+        "src/BlueTusk.ContinuousGraph/BlueTusk.ContinuousGraph.csproj"
+      ]
     }
   }
 }

@@ -1,0 +1,37 @@
+#nullable enable
+BlueTusk.ContinuousGraph.ContinuousGraphCapabilityException
+BlueTusk.ContinuousGraph.ContinuousGraphCapabilityException.ContinuousGraphCapabilityException(string! message) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.ContinuousGraphQueryDefinition(string! name, string! databaseIdentity, string! version, string! graphName, string? graphSchema, System.Collections.Generic.IEnumerable<string!>! elementTableAliases, System.Collections.Generic.IEnumerable<BlueTusk.Live.LiveQueryParameter!>! parameters, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! validationArguments, int maximumResultCount, System.Func<TContext!, BlueTusk.Live.LiveQueryArguments!, System.Linq.IQueryable<TResult!>!>! queryFactory, System.Linq.Expressions.Expression<System.Func<TResult!, TKey>!>! keySelector, System.Collections.Generic.IEqualityComparer<TResult!>! rowComparer) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.DatabaseIdentity.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.ElementTableAliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.GraphName.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.GraphSchema.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.KeySelector.get -> System.Linq.Expressions.Expression<System.Func<TResult!, TKey>!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.MaximumResultCount.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.Name.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.Parameters.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveQueryParameter!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.QueryFactory.get -> System.Func<TContext!, BlueTusk.Live.LiveQueryArguments!, System.Linq.IQueryable<TResult!>!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.RowComparer.get -> System.Collections.Generic.IEqualityComparer<TResult!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.ValidationArguments.get -> BlueTusk.Live.LiveQueryArguments!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.Version.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Bind(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! values) -> BlueTusk.Live.LiveQueryArguments!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.CreateSession(BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, BlueTusk.Live.ILiveInvalidationLog! invalidationLog, int? resultLimit = null, BlueTusk.Live.LiveQuerySessionOptions? options = null) -> BlueTusk.Live.LiveQuerySession<TResult!, TKey>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Dependencies.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveTableDependency!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.ElementTableAliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Fingerprint.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.GraphName.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.GraphSchema.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.LivePlan.get -> BlueTusk.Live.LiveQueryPlan<TResult!, TKey>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Name.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException.ContinuousGraphQueryRegistrationException(string! message) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException.ContinuousGraphQueryRegistrationException(string! message, System.Exception! innerException) -> void
+BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe
+BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe.EnsureSupportedAsync(Microsoft.EntityFrameworkCore.DbContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.PostgreSql19ContinuousGraphCapabilityProbe
+BlueTusk.ContinuousGraph.PostgreSql19ContinuousGraphCapabilityProbe.EnsureSupportedAsync(Microsoft.EntityFrameworkCore.DbContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.PostgreSql19ContinuousGraphCapabilityProbe.PostgreSql19ContinuousGraphCapabilityProbe() -> void
+static BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler.CompileAsync<TContext, TResult, TKey>(Microsoft.EntityFrameworkCore.IDbContextFactory<TContext!>! contextFactory, BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext!, TResult!, TKey>! definition, BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe? capabilityProbe = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult!, TKey>!>
