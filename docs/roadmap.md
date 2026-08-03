@@ -26,6 +26,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams 0.1.0-preview.1 release train
 - [x] Phase 4 slice: opt-in prepared/commit-prepared/rollback-prepared lifecycle delivery, streamed spooling, live acceptance, and relay envelope format 1-to-2 compatibility
 - [x] Phase 4 slice: transactional relay schema v1-to-v2 migration, envelope-protection/key-rotation hooks, confirmed consumer tombstones, bounded retention policies, and compaction
+- [x] Phase 4 slice: consistent framed relay backup, empty-schema atomic restore, protected-envelope validation, tombstone/fencing preservation, and corruption rollback across PostgreSQL 15–19
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
 - [ ] Phase 6: authorised Live query platform and clients through 1.0

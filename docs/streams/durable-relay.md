@@ -24,6 +24,28 @@ Set `EnvelopeProtection` to an `IChangeRelayEnvelopeProtectionProvider` to prote
 
 BlueTusk intentionally does not ship a process-global encryption key. Production providers should use authenticated encryption, keep keys outside the control database, return a new immutable ID when rotating keys, and retain old decrypt-only keys through the relay retention and backup windows. Protection overhead counts against `MaxEnvelopeBytes` and `MaxRelayStorageBytes`.
 
+## Backup and restore
+
+`BackupAsync` writes one source epoch as a bounded, framed stream from a PostgreSQL `REPEATABLE READ` snapshot. The backup includes retained transaction envelopes, consumer-group checkpoints and tombstones, fencing-token history, the source high-watermark, and the retention watermark. Snapshot runs and dead letters are included by default and can be omitted explicitly. Each frame has a SHA-256 integrity hash and `MaxFrameBytes` rejects an oversized or malicious frame.
+
+Relay envelopes remain in their stored form. If envelope protection is configured, the backup therefore retains the protected bytes and protector ID instead of decrypting sensitive payloads into the backup stream. The restore process must have a provider capable of decrypting every retained protector ID so it can validate each envelope before storing it. Keep decrypt-only rotation keys until every backup that references them has expired.
+
+```csharp
+await using var backup = File.Create(backupPath);
+await relay.BackupAsync(sourceRegistration, backup);
+
+backup.Position = 0;
+var restored = await replacementRelay.RestoreAsync(
+    backup,
+    confirmation: sourceRegistration.Source.Fingerprint);
+```
+
+`RestoreAsync` is deliberately a replace/recovery operation, not a merge. It requires an initialized but otherwise empty control schema, a confirmation string exactly matching the backup source fingerprint, and a complete stream with no trailing bytes. Restore runs in one `SERIALIZABLE` database transaction; a truncated frame, invalid hash, malformed identity, envelope decode failure, duplicate record, or write failure rolls back the entire import.
+
+Source and consumer leases are never copied. Consumer checkpoints, inactive-group tombstones, retention protection, store generations, and last fencing tokens are copied, so a newly acquired lease advances beyond every pre-backup token. The source's last sequence is restored even when retention already removed its highest stored transaction, preventing identity reuse after recovery.
+
+Frame hashes detect accidental corruption; they are not a substitute for authenticated backup storage. Encrypt and authenticate the outer backup stream, restrict access to it, and test restore into a disposable schema regularly. This is especially important when relay envelope protection is disabled, because those backup frames contain integrity-checked plaintext transaction envelopes.
+
 ## Consumer groups
 
 Create groups at the earliest retained position or at the latest source position. Each group owns its own database-clock lease, monotonically increasing fencing token, checkpoint sequence, and compare-and-swap generation. Reading with a stale lease fails; acknowledgement rechecks the lease and known relay sequence inside a locked PostgreSQL transaction.
@@ -65,4 +87,4 @@ Each `ApplyRetentionAsync` call deletes at most `RetentionDeleteBatchSize` recor
 
 `GetMetricsAsync` reports count, bytes, sequence bounds, minimum group checkpoint, and oldest applicable unacknowledged age. `GetHealthAsync` adds WAL lag against the source's durably appended commit position and explicit danger flags for WAL lag, acknowledgement age, and relay capacity.
 
-The relay's control schema must not be part of the source publication. Use a separate control data source by default and run publication validation during provisioning. The live acceptance suite covers append/retry, two-group fan-out, replay, fencing, bounded retention, confirmed group removal, schema upgrade/future-version rejection, protected envelope round trips, compaction, capacity exhaustion, integrity decoding, and health signals on PostgreSQL 15–19.
+The relay's control schema must not be part of the source publication. Use a separate control data source by default and run publication validation during provisioning. The live acceptance suite covers append/retry, two-group fan-out, replay, fencing, bounded retention, confirmed group removal, schema upgrade/future-version rejection, protected envelope round trips, atomic backup/restore with corruption rollback, compaction, capacity exhaustion, integrity decoding, and health signals on PostgreSQL 15–19.

@@ -120,7 +120,7 @@ public sealed record ChangeRelayHealth(
     bool IsAcknowledgementOverdue,
     bool IsStorageExhausted);
 
-public sealed class PostgreSqlDurableChangeRelay
+public sealed partial class PostgreSqlDurableChangeRelay
 {
     public const int CurrentSchemaVersion = 2;
 

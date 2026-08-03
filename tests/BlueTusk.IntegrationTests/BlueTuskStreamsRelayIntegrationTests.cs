@@ -285,6 +285,129 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task PostgreSql_relay_backup_restores_atomically_and_preserves_fencing_history()
+    {
+        var connectionString = GetConnectionString();
+        var sourceSchema = "bluetusk_relay_backup_test_" + Guid.NewGuid().ToString("N");
+        var restoredSchema = "bluetusk_relay_restore_test_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        var protection = new XorEnvelopeProtectionProvider();
+        var sourceRelay = CreateProtectedRelay(dataSource, sourceSchema, protection);
+        var restoredRelay = CreateProtectedRelay(dataSource, restoredSchema, protection);
+        try
+        {
+            await sourceRelay.InitializeAsync();
+            var source = await sourceRelay.RegisterSourceAsync(SourceIdentity());
+            var sourceLease = Assert.IsType<ChangeStreamLease>(
+                (await sourceRelay.AcquireSourceLeaseAsync(
+                    source,
+                    "source-worker",
+                    TimeSpan.FromMinutes(1))).Lease);
+            var stream = CreateStream(source.Source);
+            await using (var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator())
+            {
+                Assert.True(await enumerator.MoveNextAsync());
+                _ = await sourceRelay.AppendAsync(source, enumerator.Current.Transaction, sourceLease);
+                await enumerator.Current.AcknowledgeAsync();
+            }
+
+            var activeGroup = await sourceRelay.CreateConsumerGroupAsync(source, "active-consumer");
+            var originalLease = Assert.IsType<ChangeRelayGroupLease>(
+                await sourceRelay.AcquireConsumerGroupAsync(
+                    activeGroup,
+                    "original-worker",
+                    TimeSpan.FromMinutes(1)));
+            Assert.True(await sourceRelay.ReleaseConsumerGroupAsync(originalLease));
+
+            var removedGroup = await sourceRelay.CreateConsumerGroupAsync(source, "removed-consumer");
+            var removed = await sourceRelay.RemoveConsumerGroupAsync(
+                removedGroup,
+                removedGroup.StoreGeneration,
+                removedGroup.Name);
+            Assert.Equal(ChangeRelayConsumerGroupRemovalStatus.Removed, removed.Status);
+            await SeedBackupStateAsync(dataSource, sourceSchema, source);
+
+            await using var backup = new MemoryStream();
+            var backupResult = await sourceRelay.BackupAsync(source, backup);
+            Assert.Equal(ChangeRelayBackupFormat.CurrentVersion, backupResult.FormatVersion);
+            Assert.Equal(source.Source.Fingerprint, backupResult.SourceFingerprint);
+            Assert.Equal(1, backupResult.Transactions);
+            Assert.Equal(2, backupResult.ConsumerGroups);
+            Assert.Equal(1, backupResult.SnapshotRuns);
+            Assert.Equal(1, backupResult.DeadLetters);
+            Assert.Equal(backup.Length, backupResult.BytesWritten);
+
+            backup.Position = 0;
+            await Assert.ThrowsAsync<ChangeRelayBackupException>(
+                () => restoredRelay.RestoreAsync(backup, "wrong-source").AsTask());
+
+            var corrupted = CorruptSecondBackupFrame(backup.ToArray());
+            await using (var corruptedBackup = new MemoryStream(corrupted, writable: false))
+            {
+                await Assert.ThrowsAsync<ChangeRelayBackupException>(
+                    () => restoredRelay.RestoreAsync(
+                        corruptedBackup,
+                        source.Source.Fingerprint).AsTask());
+            }
+
+            backup.Position = 0;
+            var restoreResult = await restoredRelay.RestoreAsync(
+                backup,
+                source.Source.Fingerprint);
+            Assert.Equal(ChangeRelayBackupFormat.CurrentVersion, restoreResult.FormatVersion);
+            Assert.Equal(source.Source, restoreResult.Source.Source);
+            Assert.Equal(source.SourceEpoch, restoreResult.Source.SourceEpoch);
+            Assert.Equal(1, restoreResult.Source.LastSequence);
+            Assert.Equal(Lsn(21), restoreResult.Source.LastCommitPosition);
+            Assert.Equal(1, restoreResult.Transactions);
+            Assert.Equal(2, restoreResult.ConsumerGroups);
+            Assert.Equal(1, restoreResult.SnapshotRuns);
+            Assert.Equal(1, restoreResult.DeadLetters);
+            Assert.Equal(backup.Length, restoreResult.BytesRead);
+
+            var restoredActiveGroup = await restoredRelay.CreateConsumerGroupAsync(
+                restoreResult.Source,
+                activeGroup.Name);
+            var restoredLease = Assert.IsType<ChangeRelayGroupLease>(
+                await restoredRelay.AcquireConsumerGroupAsync(
+                    restoredActiveGroup,
+                    "restored-worker",
+                    TimeSpan.FromMinutes(1)));
+            Assert.True(restoredLease.FencingToken > originalLease.FencingToken);
+            var restoredBatch = await restoredRelay.ReadConsumerGroupAsync(
+                restoredLease,
+                10,
+                1024 * 1024);
+            Assert.Equal(1U, Assert.Single(restoredBatch.Records).Transaction.TransactionId);
+
+            var restoredRemovedGroup = await restoredRelay.CreateConsumerGroupAsync(
+                restoreResult.Source,
+                removedGroup.Name);
+            Assert.False(restoredRemovedGroup.IsActive);
+            Assert.NotNull(restoredRemovedGroup.RemovedAt);
+            await Assert.ThrowsAsync<ChangeRelayConsumerGroupException>(
+                () => restoredRelay.AcquireConsumerGroupAsync(
+                    restoredRemovedGroup,
+                    "invalid-worker",
+                    TimeSpan.FromMinutes(1)).AsTask());
+            Assert.Equal(
+                (SnapshotRuns: 1L, DeadLetters: 1L, Watermarks: 1L),
+                await ReadBackupStateCountsAsync(dataSource, restoredSchema));
+
+            backup.Position = 0;
+            await Assert.ThrowsAsync<ChangeRelayBackupException>(
+                () => restoredRelay.RestoreAsync(
+                    backup,
+                    source.Source.Fingerprint).AsTask());
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, sourceSchema);
+            await DropSchemaAsync(dataSource, restoredSchema);
+        }
+    }
+
     private static PgOutputChangeStream CreateStream(
         ChangeSourceIdentity source,
         IChangeDeliveryObserver? observer = null) =>
@@ -351,6 +474,78 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
             ? throw SkipException.ForSkip(
                 "BLUETUSK_TEST_CONNECTION_STRING is not configured.")
             : connectionString;
+    }
+
+    private static PostgreSqlDurableChangeRelay CreateProtectedRelay(
+        BlueTuskDataSource dataSource,
+        string schema,
+        IChangeRelayEnvelopeProtectionProvider protection) =>
+        new(
+            new PostgreSqlStreamsStorageOptions
+            {
+                ControlDataSource = dataSource,
+                ControlSchema = schema,
+                MaxRelayStorageBytes = 1024 * 1024,
+                EnvelopeProtection = protection,
+            });
+
+    private static async Task SeedBackupStateAsync(
+        BlueTuskDataSource dataSource,
+        string schema,
+        ChangeRelaySourceRegistration source)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            $"""
+             INSERT INTO "{schema}".snapshot_runs (
+                 source_fingerprint, source_epoch, snapshot_epoch, state, progress)
+             VALUES ('{source.Source.Fingerprint}', {source.SourceEpoch}, 'snapshot-1', 'complete', '\x0102');
+             INSERT INTO "{schema}".dead_letters (
+                 source_fingerprint, source_epoch, consumer_group, sequence, reason, payload)
+             VALUES ('{source.Source.Fingerprint}', {source.SourceEpoch}, 'removed-consumer', 1, 'test', '\x0304');
+             INSERT INTO "{schema}".retention_watermarks (
+                 source_fingerprint, source_epoch, retained_after_sequence)
+             VALUES ('{source.Source.Fingerprint}', {source.SourceEpoch}, 0);
+             """;
+        _ = await command.ExecuteNonQueryAsync();
+    }
+
+    private static byte[] CorruptSecondBackupFrame(byte[] backup)
+    {
+        var firstPayloadLength = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(
+            backup.AsSpan(1, sizeof(int)));
+        var secondFrameOffset = 1 + sizeof(int) + firstPayloadLength + 32;
+        var secondPayloadLength = System.Buffers.Binary.BinaryPrimitives.ReadInt32LittleEndian(
+            backup.AsSpan(secondFrameOffset + 1, sizeof(int)));
+        Assert.True(secondPayloadLength > 0);
+        backup[secondFrameOffset + 1 + sizeof(int)] ^= 0x01;
+        return backup;
+    }
+
+    private static async Task<(long SnapshotRuns, long DeadLetters, long Watermarks)>
+        ReadBackupStateCountsAsync(BlueTuskDataSource dataSource, string schema)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            $"""
+             SELECT
+                 (SELECT COUNT(*) FROM "{schema}".snapshot_runs),
+                 (SELECT COUNT(*) FROM "{schema}".dead_letters),
+                 (SELECT COUNT(*) FROM "{schema}".retention_watermarks)
+             """;
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        return (reader.GetInt64(0), reader.GetInt64(1), reader.GetInt64(2));
+    }
+
+    private static async Task DropSchemaAsync(BlueTuskDataSource dataSource, string schema)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"DROP SCHEMA IF EXISTS \"{schema}\" CASCADE";
+        _ = await command.ExecuteNonQueryAsync();
     }
 
     private static async Task ExecuteControlAsync(BlueTuskDataSource dataSource, string sql)
