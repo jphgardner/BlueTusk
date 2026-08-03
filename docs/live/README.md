@@ -32,4 +32,8 @@ Refreshes coalesce every invalidation since the last cursor into at most one aut
 
 Tenant isolation must be declared as PostgreSQL RLS, an EF global query filter, or a registered entity-property/typed-parameter equality that the compiler verifies in the predicate. The query factory and key selector are server-owned delegates; no client SQL, LINQ, or expression tree crosses the transport boundary.
 
+## Replay window
+
+Live replay events use a versioned JSON media type and a SHA-256 integrity hash. The PostgreSQL store appends a contiguous sequence only when its expected prior sequence matches, treats a byte-identical crash retry as already stored, and rejects divergent forks. Reads distinguish current, available, expired, and unknown subscriptions. Retention pruning advances an explicit first-available watermark so an expired resume token produces a reset instead of a silent gap.
+
 The next Live slices connect the invalidation contract to the PostgreSQL relay, add EF query registration, replay retention, ASP.NET transports, and client SDKs. Package publication stays disabled until those vertical gates pass.

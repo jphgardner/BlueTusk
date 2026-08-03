@@ -1,12 +1,13 @@
 using System.Collections.Concurrent;
 using System.Data;
 using System.Data.Common;
+using System.Security.Cryptography;
 using System.Text;
 using BlueTusk.Streams;
 
 namespace BlueTusk.Live.DependencyInjection;
 
-public sealed record PostgreSqlLiveStoreOptions
+public sealed class PostgreSqlLiveStoreOptions
 {
     public required DbDataSource ControlDataSource { get; init; }
 
@@ -16,6 +17,12 @@ public sealed record PostgreSqlLiveStoreOptions
 
     public int MaximumDependenciesPerQuery { get; init; } = 128;
 
+    public TimeSpan ReplayRetentionWindow { get; init; } = TimeSpan.FromHours(1);
+
+    public int MaximumReplayEventBytes { get; init; } = 4 * 1024 * 1024;
+
+    public int ReplayPruneBatchSize { get; init; } = 1_000;
+
     internal string QuotedControlSchema => QuoteIdentifier(ControlSchema);
 
     internal void Validate()
@@ -24,6 +31,9 @@ public sealed record PostgreSqlLiveStoreOptions
         ArgumentException.ThrowIfNullOrWhiteSpace(ControlSchema);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumDependenciesPerTransaction);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumDependenciesPerQuery);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(ReplayRetentionWindow, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumReplayEventBytes);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(ReplayPruneBatchSize);
         if (ControlSchema.Contains('\0') || Encoding.UTF8.GetByteCount(ControlSchema) > 63)
         {
             throw new ArgumentException(
@@ -36,9 +46,12 @@ public sealed record PostgreSqlLiveStoreOptions
         '"' + value.Replace("\"", "\"\"", StringComparison.Ordinal) + '"';
 }
 
-public sealed class PostgreSqlLiveInvalidationStore : ILiveInvalidationLog, ILiveInvalidationSink
+public sealed class PostgreSqlLiveInvalidationStore :
+    ILiveInvalidationLog,
+    ILiveInvalidationSink,
+    ILiveReplayStore
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     private readonly PostgreSqlLiveStoreOptions _options;
     private readonly DbDataSource _dataSource;
@@ -46,6 +59,8 @@ public sealed class PostgreSqlLiveInvalidationStore : ILiveInvalidationLog, ILiv
     private readonly string _metadataTable;
     private readonly string _invalidationsTable;
     private readonly string _dependenciesTable;
+    private readonly string _replaySubscriptionsTable;
+    private readonly string _replayEventsTable;
     private readonly object _initializeLock = new();
     private Task? _initializationTask;
 
@@ -59,6 +74,8 @@ public sealed class PostgreSqlLiveInvalidationStore : ILiveInvalidationLog, ILiv
         _metadataTable = _schema + ".live_storage_metadata";
         _invalidationsTable = _schema + ".live_invalidations";
         _dependenciesTable = _schema + ".live_invalidation_dependencies";
+        _replaySubscriptionsTable = _schema + ".live_replay_subscriptions";
+        _replayEventsTable = _schema + ".live_replay_events";
     }
 
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
@@ -208,6 +225,239 @@ public sealed class PostgreSqlLiveInvalidationStore : ILiveInvalidationLog, ILiv
         return Convert.ToBoolean(value, System.Globalization.CultureInfo.InvariantCulture);
     }
 
+    public async ValueTask<LiveReplayAppendResult> AppendReplayAsync(
+        LiveReplayAppendRequest request,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        foreach (var replayEvent in request.Events)
+        {
+            if (replayEvent.Payload.Length > _options.MaximumReplayEventBytes)
+            {
+                throw new PostgreSqlLiveStoreException(
+                    $"Live replay event {replayEvent.Sequence} exceeds the configured {_options.MaximumReplayEventBytes}-byte limit.");
+            }
+
+            if (!LiveReplayJsonSerializer.VerifyIntegrity(replayEvent))
+            {
+                throw new PostgreSqlLiveStoreException(
+                    $"Live replay event {replayEvent.Sequence} failed its integrity check before persistence.");
+            }
+        }
+
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        await ExecuteAsync(
+            connection,
+            transaction,
+            $"""
+            INSERT INTO {_replaySubscriptionsTable} (
+                identity_fingerprint, first_available_sequence, last_sequence, retain_until)
+            VALUES (@identity, 1, 0, clock_timestamp() + (@retention_ms * interval '1 millisecond'))
+            ON CONFLICT (identity_fingerprint) DO NOTHING
+            """,
+            cancellationToken,
+            ("identity", request.Identity.Fingerprint),
+            ("retention_ms", _options.ReplayRetentionWindow.TotalMilliseconds)).ConfigureAwait(false);
+        var state = await ReadReplayStateAsync(
+            connection,
+            transaction,
+            request.Identity.Fingerprint,
+            forUpdate: true,
+            cancellationToken).ConfigureAwait(false) ??
+            throw new PostgreSqlLiveStoreException("Live replay subscription state disappeared during append.");
+        var finalSequence = request.Events[^1].Sequence;
+        if (state.LastSequence != request.ExpectedLastSequence)
+        {
+            if (state.LastSequence >= finalSequence &&
+                await EventsMatchAsync(connection, transaction, request, cancellationToken).ConfigureAwait(false))
+            {
+                await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+                return new LiveReplayAppendResult(LiveReplayAppendStatus.AlreadyStored, state.LastSequence);
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new LiveReplayAppendResult(LiveReplayAppendStatus.SequenceConflict, state.LastSequence);
+        }
+
+        foreach (var replayEvent in request.Events)
+        {
+            await ExecuteAsync(
+                connection,
+                transaction,
+                $"""
+                INSERT INTO {_replayEventsTable} (
+                    identity_fingerprint, sequence, event_kind, content_type, payload, integrity_hash)
+                VALUES (@identity, @sequence, @kind, @content_type, @payload, @integrity)
+                """,
+                cancellationToken,
+                ("identity", request.Identity.Fingerprint),
+                ("sequence", replayEvent.Sequence),
+                ("kind", (int)replayEvent.Kind),
+                ("content_type", replayEvent.ContentType),
+                ("payload", replayEvent.Payload.ToArray()),
+                ("integrity", replayEvent.IntegrityHash.ToArray())).ConfigureAwait(false);
+        }
+
+        await ExecuteAsync(
+            connection,
+            transaction,
+            $"""
+            UPDATE {_replaySubscriptionsTable}
+            SET last_sequence = @last,
+                retain_until = clock_timestamp() + (@retention_ms * interval '1 millisecond'),
+                updated_at = clock_timestamp()
+            WHERE identity_fingerprint = @identity
+            """,
+            cancellationToken,
+            ("last", finalSequence),
+            ("retention_ms", _options.ReplayRetentionWindow.TotalMilliseconds),
+            ("identity", request.Identity.Fingerprint)).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return new LiveReplayAppendResult(LiveReplayAppendStatus.Stored, finalSequence);
+    }
+
+    ValueTask<LiveReplayAppendResult> ILiveReplayStore.AppendAsync(
+        LiveReplayAppendRequest request,
+        CancellationToken cancellationToken) =>
+        AppendReplayAsync(request, cancellationToken);
+
+    public async ValueTask<LiveReplayReadResult> ReadAsync(
+        LiveSubscriptionIdentity identity,
+        long afterSequence,
+        int maximumEvents,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentOutOfRangeException.ThrowIfNegative(afterSequence);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(maximumEvents);
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        var state = await ReadReplayStateAsync(
+            connection,
+            transaction: null,
+            identity.Fingerprint,
+            forUpdate: false,
+            cancellationToken).ConfigureAwait(false);
+        if (state is null)
+        {
+            return new LiveReplayReadResult(LiveReplayReadStatus.NotFound, 0, 0);
+        }
+
+        if (afterSequence < state.FirstAvailableSequence - 1)
+        {
+            return new LiveReplayReadResult(
+                LiveReplayReadStatus.Expired,
+                state.FirstAvailableSequence,
+                state.LastSequence);
+        }
+
+        if (afterSequence >= state.LastSequence)
+        {
+            return new LiveReplayReadResult(
+                LiveReplayReadStatus.Current,
+                state.FirstAvailableSequence,
+                state.LastSequence);
+        }
+
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT sequence, event_kind, content_type, payload, integrity_hash
+            FROM {_replayEventsTable}
+            WHERE identity_fingerprint = @identity AND sequence > @after
+            ORDER BY sequence
+            LIMIT @limit
+            """;
+        AddParameter(command, "identity", identity.Fingerprint);
+        AddParameter(command, "after", afterSequence);
+        AddParameter(command, "limit", maximumEvents);
+        var events = new List<LiveReplayEvent>();
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            var sequence = reader.GetInt64(0);
+            var kindValue = reader.GetInt32(1);
+            if (!Enum.IsDefined(typeof(LiveEventKind), kindValue))
+            {
+                throw new PostgreSqlLiveStoreException(
+                    $"Stored Live replay event {sequence} has unknown kind {kindValue}.");
+            }
+
+            LiveReplayEvent replayEvent;
+            try
+            {
+                replayEvent = LiveReplayEvent.Restore(
+                sequence,
+                (LiveEventKind)kindValue,
+                reader.GetString(2),
+                (byte[])reader.GetValue(3),
+                (byte[])reader.GetValue(4));
+            }
+            catch (ArgumentException exception)
+            {
+                throw new PostgreSqlLiveStoreException(
+                    $"Stored Live replay event {sequence} failed its integrity check.",
+                    exception);
+            }
+
+            events.Add(replayEvent);
+        }
+
+        return new LiveReplayReadResult(
+            LiveReplayReadStatus.Available,
+            state.FirstAvailableSequence,
+            state.LastSequence,
+            events);
+    }
+
+    public async ValueTask<int> PruneAsync(CancellationToken cancellationToken = default)
+    {
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        var removed = await ExecuteAsync(
+            connection,
+            transaction,
+            $"""
+            WITH expired AS (
+                SELECT identity_fingerprint, sequence
+                FROM {_replayEventsTable}
+                WHERE recorded_at < clock_timestamp() - (@retention_ms * interval '1 millisecond')
+                ORDER BY recorded_at, identity_fingerprint, sequence
+                LIMIT @batch)
+            DELETE FROM {_replayEventsTable} e
+            USING expired x
+            WHERE e.identity_fingerprint = x.identity_fingerprint AND e.sequence = x.sequence
+            """,
+            cancellationToken,
+            ("retention_ms", _options.ReplayRetentionWindow.TotalMilliseconds),
+            ("batch", _options.ReplayPruneBatchSize)).ConfigureAwait(false);
+        await ExecuteAsync(
+            connection,
+            transaction,
+            $"""
+            UPDATE {_replaySubscriptionsTable} s
+            SET first_available_sequence = COALESCE(
+                    (SELECT min(e.sequence) FROM {_replayEventsTable} e
+                     WHERE e.identity_fingerprint = s.identity_fingerprint),
+                    s.last_sequence + 1),
+                updated_at = clock_timestamp()
+            WHERE s.retain_until < clock_timestamp()
+               OR NOT EXISTS (
+                    SELECT 1 FROM {_replayEventsTable} e
+                    WHERE e.identity_fingerprint = s.identity_fingerprint
+                      AND e.sequence < s.first_available_sequence)
+            """,
+            cancellationToken).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return removed;
+    }
+
     private async Task InitializeCoreAsync()
     {
         await using var connection = await _dataSource.OpenConnectionAsync(CancellationToken.None)
@@ -232,10 +482,19 @@ public sealed class PostgreSqlLiveInvalidationStore : ILiveInvalidationLog, ILiv
         var version = Convert.ToInt32(
             await versionCommand.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false),
             System.Globalization.CultureInfo.InvariantCulture);
-        if (version != CurrentSchemaVersion)
+        if (version < 1 || version > CurrentSchemaVersion)
         {
             throw new PostgreSqlLiveStoreException(
                 $"PostgreSQL Live schema version {version} is unsupported; this build requires {CurrentSchemaVersion}.");
+        }
+
+        if (version == 1)
+        {
+            await ExecuteAsync(
+                connection,
+                transaction,
+                $"UPDATE {_metadataTable} SET schema_version = 2, updated_at = clock_timestamp() WHERE singleton",
+                CancellationToken.None).ConfigureAwait(false);
         }
 
         await transaction.CommitAsync(CancellationToken.None).ConfigureAwait(false);
@@ -301,7 +560,87 @@ public sealed class PostgreSqlLiveInvalidationStore : ILiveInvalidationLog, ILiv
         """,
         $"CREATE INDEX IF NOT EXISTS live_invalidations_database_cursor_idx ON {_invalidationsTable} (database_identity, cursor)",
         $"CREATE INDEX IF NOT EXISTS live_invalidation_dependencies_table_idx ON {_dependenciesTable} (schema_name, table_name, invalidation_cursor)",
+        $"""
+        CREATE TABLE IF NOT EXISTS {_replaySubscriptionsTable} (
+            identity_fingerprint char(64) PRIMARY KEY,
+            first_available_sequence bigint NOT NULL DEFAULT 1 CHECK (first_available_sequence > 0),
+            last_sequence bigint NOT NULL DEFAULT 0 CHECK (last_sequence >= 0),
+            retain_until timestamptz NOT NULL,
+            updated_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+            CHECK (first_available_sequence <= last_sequence + 1))
+        """,
+        $"""
+        CREATE TABLE IF NOT EXISTS {_replayEventsTable} (
+            identity_fingerprint char(64) NOT NULL REFERENCES {_replaySubscriptionsTable}(identity_fingerprint) ON DELETE CASCADE,
+            sequence bigint NOT NULL CHECK (sequence > 0),
+            event_kind integer NOT NULL,
+            content_type text NOT NULL,
+            payload bytea NOT NULL,
+            integrity_hash bytea NOT NULL CHECK (octet_length(integrity_hash) = 32),
+            recorded_at timestamptz NOT NULL DEFAULT clock_timestamp(),
+            PRIMARY KEY (identity_fingerprint, sequence))
+        """,
+        $"CREATE INDEX IF NOT EXISTS live_replay_events_retention_idx ON {_replayEventsTable} (recorded_at, identity_fingerprint, sequence)",
     ];
+
+    private async ValueTask<ReplayState?> ReadReplayStateAsync(
+        DbConnection connection,
+        DbTransaction? transaction,
+        string identityFingerprint,
+        bool forUpdate,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"""
+            SELECT first_available_sequence, last_sequence
+            FROM {_replaySubscriptionsTable}
+            WHERE identity_fingerprint = @identity
+            {(forUpdate ? "FOR UPDATE" : string.Empty)}
+            """;
+        AddParameter(command, "identity", identityFingerprint);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? new ReplayState(reader.GetInt64(0), reader.GetInt64(1))
+            : null;
+    }
+
+    private async ValueTask<bool> EventsMatchAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        LiveReplayAppendRequest request,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"""
+            SELECT sequence, integrity_hash
+            FROM {_replayEventsTable}
+            WHERE identity_fingerprint = @identity
+              AND sequence >= @first AND sequence <= @last
+            ORDER BY sequence
+            """;
+        AddParameter(command, "identity", request.Identity.Fingerprint);
+        AddParameter(command, "first", request.Events[0].Sequence);
+        AddParameter(command, "last", request.Events[^1].Sequence);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
+        var index = 0;
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            if (index >= request.Events.Count ||
+                reader.GetInt64(0) != request.Events[index].Sequence ||
+                !CryptographicOperations.FixedTimeEquals(
+                    (byte[])reader.GetValue(1),
+                    request.Events[index].IntegrityHash.Span))
+            {
+                return false;
+            }
+
+            index++;
+        }
+
+        return index == request.Events.Count;
+    }
 
     private static async ValueTask<int> ExecuteAsync(
         DbConnection connection,
@@ -328,6 +667,8 @@ public sealed class PostgreSqlLiveInvalidationStore : ILiveInvalidationLog, ILiv
         parameter.Value = value;
         command.Parameters.Add(parameter);
     }
+
+    private sealed record ReplayState(long FirstAvailableSequence, long LastSequence);
 }
 
 public class PostgreSqlLiveStoreException : LiveQueryException

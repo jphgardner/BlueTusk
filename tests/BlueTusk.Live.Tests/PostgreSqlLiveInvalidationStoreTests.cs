@@ -74,6 +74,67 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
         Assert.True(observer.Nacked);
     }
 
+    [Fact]
+    public async Task Replay_store_is_sequence_fenced_idempotent_and_expiry_aware()
+    {
+        var schema = "bluetusk_live_replay_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        var store = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
+        {
+            ControlDataSource = dataSource,
+            ControlSchema = schema,
+            ReplayRetentionWindow = TimeSpan.FromMinutes(5),
+        });
+        var identity = Identity();
+        var events = new[]
+        {
+            new LiveReplayEvent(1, LiveEventKind.InitialResult, LiveReplayJsonSerializer.ContentType, "one"u8),
+            new LiveReplayEvent(2, LiveEventKind.RowUpdated, LiveReplayJsonSerializer.ContentType, "two"u8),
+        };
+        try
+        {
+            var request = new LiveReplayAppendRequest(identity, 0, events);
+            Assert.Equal(
+                LiveReplayAppendStatus.Stored,
+                (await store.AppendReplayAsync(request, TestContext.Current.CancellationToken)).Status);
+            Assert.Equal(
+                LiveReplayAppendStatus.AlreadyStored,
+                (await store.AppendReplayAsync(request, TestContext.Current.CancellationToken)).Status);
+            Assert.Equal(
+                LiveReplayAppendStatus.SequenceConflict,
+                (await store.AppendReplayAsync(
+                    new LiveReplayAppendRequest(
+                        identity,
+                        0,
+                        [new LiveReplayEvent(1, LiveEventKind.InitialResult, LiveReplayJsonSerializer.ContentType, "different"u8)]),
+                    TestContext.Current.CancellationToken)).Status);
+
+            var read = await store.ReadAsync(identity, 0, 10, TestContext.Current.CancellationToken);
+            Assert.Equal(LiveReplayReadStatus.Available, read.Status);
+            Assert.Equal([1L, 2L], read.Events.Select(item => item.Sequence));
+            Assert.All(read.Events, item => Assert.True(LiveReplayJsonSerializer.VerifyIntegrity(item)));
+
+            await using (var connection = await dataSource.OpenConnectionAsync())
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = $"""
+                    UPDATE "{schema}".live_replay_events
+                    SET recorded_at = clock_timestamp() - interval '10 minutes'
+                    """;
+                _ = await command.ExecuteNonQueryAsync();
+            }
+
+            Assert.Equal(2, await store.PruneAsync(TestContext.Current.CancellationToken));
+            var expired = await store.ReadAsync(identity, 0, 10, TestContext.Current.CancellationToken);
+            Assert.Equal(LiveReplayReadStatus.Expired, expired.Status);
+            Assert.Equal(3, expired.FirstAvailableSequence);
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
     private static ChangeTransactionDelivery Delivery(
         ChangeTable table,
         uint transactionId,
@@ -98,6 +159,15 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
             table,
             'd',
             [new ChangeColumn(0, "id", 23, -1, IsKey: true)]);
+
+    private static LiveSubscriptionIdentity Identity() =>
+        new(
+            "database",
+            new string('a', 64),
+            new string('b', 64),
+            "tenant:a",
+            "policy:v1",
+            50);
 
     private static string GetConnectionString()
     {
