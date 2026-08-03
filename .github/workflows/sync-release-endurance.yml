@@ -1,0 +1,94 @@
+name: Sync 24-hour release endurance
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-SYNC-24-HOUR-ENDURANCE to start the release gate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sync-24-hour-release-endurance
+  cancel-in-progress: false
+
+jobs:
+  connector-endurance:
+    name: Four-destination recovery endurance
+    if: inputs.confirmation == 'RUN-SYNC-24-HOUR-ENDURANCE'
+    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    timeout-minutes: 1530
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore and build endurance projects
+        run: |
+          dotnet restore BlueTusk.slnx
+          dotnet build BlueTusk.slnx --configuration Release --no-restore
+
+      - name: Start PostgreSQL 19
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Start Redis, NATS JetStream, and OpenSearch
+        run: |
+          docker run --detach --name bluetusk-sync-endurance-redis --publish 6379:6379 redis:8-alpine
+          docker run --detach --name bluetusk-sync-endurance-nats --publish 4222:4222 nats:2.14-alpine -js
+          docker run --detach --name bluetusk-sync-endurance-opensearch \
+            --publish 9200:9200 \
+            --env discovery.type=single-node \
+            --env DISABLE_SECURITY_PLUGIN=true \
+            --env DISABLE_INSTALL_DEMO_CONFIG=true \
+            --env "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g" \
+            opensearchproject/opensearch:3.7.0
+          for attempt in $(seq 1 120); do
+            if docker exec bluetusk-sync-endurance-redis redis-cli ping | grep -q PONG && \
+               nc -z 127.0.0.1 4222 && \
+               curl --fail --silent http://127.0.0.1:9200 >/dev/null; then exit 0; fi
+            sleep 2
+          done
+          docker logs bluetusk-sync-endurance-opensearch
+          exit 1
+
+      - name: Run 24-hour four-destination endurance
+        shell: pwsh
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_NATS_URL: nats://localhost:4222
+          BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
+          BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
+        run: >-
+          ./eng/run-sync-endurance.ps1
+          -Duration '1.00:00:00'
+          -MinimumCycles 100
+          -ReportPath 'artifacts/test-results/sync-endurance/report.json'
+          -Configuration Release
+
+      - name: Upload endurance evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sync-endurance-${{ github.run_id }}
+          path: artifacts/test-results/sync-endurance
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture service logs on failure
+        if: failure()
+        run: |
+          docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+          docker logs bluetusk-sync-endurance-redis
+          docker logs bluetusk-sync-endurance-nats
+          docker logs bluetusk-sync-endurance-opensearch
+
+      - name: Stop endurance services
+        if: always()
+        run: |
+          docker rm --force bluetusk-sync-endurance-redis bluetusk-sync-endurance-nats bluetusk-sync-endurance-opensearch || true
+          docker compose -f eng/compose/postgres.yml --profile preview down --volumes

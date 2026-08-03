@@ -34,6 +34,13 @@ This file tracks executable repository status. The product vision is broader; un
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
 - [x] Phase 5 slice: transaction-preserving Sync pipeline state machine, transform fingerprinting, durable-position acknowledgement gate, and explicit poison policy
 - [x] Phase 5 slice: PostgreSQL atomic document mutation/checkpoint destination, guarded snapshot epochs, custom transactional writer, and durable quarantine
+- [x] Phase 5 slice: PostgreSQL, NATS JetStream, Redis, and OpenSearch destinations passing one snapshot/restart/redelivery conformance contract
+- [x] Phase 5 slice: bounded count/key/content-hash reconciliation, idempotent repair, and PostgreSQL, Redis, and OpenSearch native readers/sinks
+- [x] Phase 5 slice: destination-neutral zero-downtime rebuild coordinator, authoritative verification, cutover barrier, worker handoff, and OpenSearch alias swap
+- [x] Phase 5 slice: in-process hosted workers, restart-aware durable-relay snapshot source, lease fencing, health, telemetry, Aspire, retry, rate limiting, and backpressure
+- [x] Phase 5 slice: redacted Sync control-plane read models plus separately authorized, confirmed, and audited retry/reconcile/rebuild dashboard controls
+- [x] Phase 5 slice: four-destination 24-hour endurance runner, versioned evidence report, local smoke path, and confirmed self-hosted workflow
+- [ ] Phase 5 release gate: complete and archive one successful 24-hour Sync endurance report (a short orchestration smoke is not equivalent)
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [ ] Phase 7: Continuous Graph preview

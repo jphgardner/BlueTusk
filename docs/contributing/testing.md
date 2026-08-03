@@ -223,6 +223,13 @@ path is skipped unless `BLUETUSK_RELAY_ENDURANCE_DURATION` is explicit. Local
 short runs validate the harness; only the confirmed self-hosted workflow's
 successful 72-hour JSON report satisfies the Streams 1.0 gate.
 
+The Sync release gate is documented in
+[Sync release endurance](../sync/release-endurance.md). Its runner refuses
+implicit service endpoints and repeatedly executes the core, hosting, shared
+conformance, PostgreSQL, NATS, Redis, and OpenSearch projects. A one-cycle local
+smoke validates orchestration and report output; only the confirmed self-hosted
+workflow's successful 24-hour report satisfies the Sync 1.0 endurance gate.
+
 ```powershell
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests"
 $env:BLUETUSK_REPLICATION_DURABILITY_EPOCHS = "250"

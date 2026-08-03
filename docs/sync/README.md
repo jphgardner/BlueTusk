@@ -39,6 +39,11 @@ controls now pass exact confirmations through the audit-before-mutation control
 plane executor. Endurance and final release gates remain. The Sync release train
 remains non-publishable until those remaining Phase 5 gates pass.
 
+The executable [Sync release endurance](release-endurance.md) gate repeatedly
+runs the core/hosting contracts and all four live connector suites for 24 hours,
+then emits a versioned evidence report. A local one-cycle smoke proves the
+orchestration only; it does not satisfy the release gate.
+
 ## Retry, rate limits, and backpressure
 
 Sync never starts another source transaction while the current delivery is in
