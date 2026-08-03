@@ -42,4 +42,10 @@ Live replay events use a versioned JSON media type and a SHA-256 integrity hash.
 
 Reconnect is serialized with publication so replay and the newly attached bounded channel have no race. Subscriber counts, replay batch size, shared subscription count, and per-client pending messages are bounded. A slow client is either disconnected with a specific error or sent a `ResetRequired` control message after its buffer is drained, according to explicit policy. No path silently drops a diff while allowing the client to continue.
 
+## ASP.NET transports
+
+`BlueTusk.Live.AspNetCore` defines the authenticated transport session and an application-supplied resolver. The resolver is trusted server code: it selects a registered plan, binds the request JSON to that plan's declared scalar parameters, derives the caller's security scope, and returns the matching shared subscription. Anonymous callers and non-object parameter payloads are rejected before connection.
+
+`BlueTusk.Live.SignalR` exposes a streaming hub, and `BlueTusk.Live.ServerSentEvents` exposes a fetch-streaming POST endpoint. Both send replay before new events and attach a fresh signed, expiring, subscription-bound resume token to every sequence. SSE disables proxy buffering and maps quota, invalid token, expired replay, and unavailable subscription states to explicit HTTP responses.
+
 The next Live slices connect the invalidation contract to the PostgreSQL relay, add EF query registration, replay retention, ASP.NET transports, and client SDKs. Package publication stays disabled until those vertical gates pass.

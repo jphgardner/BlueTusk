@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Live</BlueTuskProductFamily>
+    <Description>Server-sent events transport for BlueTusk Live.</Description>
+    <PackageTags>postgresql;live-query;sse;realtime</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Live.props" />
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\BlueTusk.Live.AspNetCore\BlueTusk.Live.AspNetCore.csproj" />
+  </ItemGroup>
+</Project>

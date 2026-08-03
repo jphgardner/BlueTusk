@@ -1,0 +1,6 @@
+#nullable enable
+BlueTusk.Live.SignalR.BlueTuskLiveHub
+BlueTusk.Live.SignalR.BlueTuskLiveHub.BlueTuskLiveHub(BlueTusk.Live.AspNetCore.ILiveTransportSubscriptionResolver! resolver, BlueTusk.Live.LiveResumeTokenProtector! tokenProtector, BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions! options) -> void
+BlueTusk.Live.SignalR.BlueTuskLiveHub.SubscribeAsync(BlueTusk.Live.AspNetCore.LiveSubscriptionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Live.AspNetCore.LiveTransportMessage!>!
+BlueTusk.Live.SignalR.BlueTuskLiveSignalREndpointRouteBuilderExtensions
+static BlueTusk.Live.SignalR.BlueTuskLiveSignalREndpointRouteBuilderExtensions.MapBlueTuskLiveHub(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! pattern = "/bluetusk/live") -> Microsoft.AspNetCore.Builder.HubEndpointConventionBuilder!

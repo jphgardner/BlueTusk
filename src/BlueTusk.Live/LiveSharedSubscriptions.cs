@@ -136,7 +136,21 @@ public sealed class LiveSubscriptionConnection : IAsyncDisposable
     }
 }
 
-public sealed class LiveSharedSubscription<T, TKey> : IAsyncDisposable
+public interface ILiveSharedSubscription : IAsyncDisposable
+{
+    LiveSubscriptionIdentity Identity { get; }
+
+    ValueTask<LiveSubscriptionConnectResult> ConnectAsync(
+        long afterSequence,
+        CancellationToken cancellationToken = default);
+
+    ValueTask<LiveSubscriptionConnectResult> ConnectWithTokenAsync(
+        string resumeToken,
+        LiveResumeTokenProtector tokenProtector,
+        CancellationToken cancellationToken = default);
+}
+
+public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     where TKey : notnull
 {
     private readonly LiveQuerySession<T, TKey> _session;

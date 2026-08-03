@@ -1,0 +1,55 @@
+#nullable enable
+BlueTusk.Live.AspNetCore.BlueTuskLiveAspNetCoreServiceCollectionExtensions
+BlueTusk.Live.AspNetCore.ILiveTransportSubscriptionResolver
+BlueTusk.Live.AspNetCore.ILiveTransportSubscriptionResolver.ResolveAsync(string! query, System.Text.Json.JsonElement parameters, System.Security.Claims.ClaimsPrincipal! principal, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.ILiveSharedSubscription!>
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.<Clone>$() -> BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions!
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.Equals(BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions? other) -> bool
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.LiveAspNetCoreOptions() -> void
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.MaximumRequestBytes.get -> long
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.MaximumRequestBytes.init -> void
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.ResumeTokenLifetime.get -> System.TimeSpan
+BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.ResumeTokenLifetime.init -> void
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.<Clone>$() -> BlueTusk.Live.AspNetCore.LiveSubscriptionRequest!
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.Equals(BlueTusk.Live.AspNetCore.LiveSubscriptionRequest? other) -> bool
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.LiveSubscriptionRequest() -> void
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.Parameters.get -> System.Text.Json.JsonElement
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.Parameters.init -> void
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.Query.get -> string!
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.Query.init -> void
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.ResumeToken.get -> string?
+BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.ResumeToken.init -> void
+BlueTusk.Live.AspNetCore.LiveTransportAuthorizationException
+BlueTusk.Live.AspNetCore.LiveTransportAuthorizationException.LiveTransportAuthorizationException(string! message) -> void
+BlueTusk.Live.AspNetCore.LiveTransportConnectException
+BlueTusk.Live.AspNetCore.LiveTransportConnectException.LiveTransportConnectException(BlueTusk.Live.LiveSubscriptionConnectStatus status, BlueTusk.Live.LiveResumeTokenValidationStatus? tokenStatus = null) -> void
+BlueTusk.Live.AspNetCore.LiveTransportConnectException.Status.get -> BlueTusk.Live.LiveSubscriptionConnectStatus
+BlueTusk.Live.AspNetCore.LiveTransportConnectException.TokenStatus.get -> BlueTusk.Live.LiveResumeTokenValidationStatus?
+BlueTusk.Live.AspNetCore.LiveTransportConnection
+BlueTusk.Live.AspNetCore.LiveTransportConnection.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.AspNetCore.LiveTransportConnection.ReadAllAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Live.AspNetCore.LiveTransportMessage!>!
+BlueTusk.Live.AspNetCore.LiveTransportConnection.Replay.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.AspNetCore.LiveTransportMessage!>!
+BlueTusk.Live.AspNetCore.LiveTransportException
+BlueTusk.Live.AspNetCore.LiveTransportException.LiveTransportException(string! message) -> void
+BlueTusk.Live.AspNetCore.LiveTransportException.LiveTransportException(string! message, System.Exception! innerException) -> void
+BlueTusk.Live.AspNetCore.LiveTransportMessage
+BlueTusk.Live.AspNetCore.LiveTransportMessage.Event.get -> System.Text.Json.JsonElement?
+BlueTusk.Live.AspNetCore.LiveTransportMessage.Kind.get -> BlueTusk.Live.LiveSubscriberMessageKind
+BlueTusk.Live.AspNetCore.LiveTransportMessage.ResumeToken.get -> string?
+BlueTusk.Live.AspNetCore.LiveTransportMessage.Sequence.get -> long?
+BlueTusk.Live.AspNetCore.LiveTransportRequestException
+BlueTusk.Live.AspNetCore.LiveTransportRequestException.LiveTransportRequestException(string! message) -> void
+BlueTusk.Live.AspNetCore.LiveTransportSession
+override BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.Equals(object? obj) -> bool
+override BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.GetHashCode() -> int
+override BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.ToString() -> string!
+override BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.Equals(object? obj) -> bool
+override BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.GetHashCode() -> int
+override BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.ToString() -> string!
+static BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.operator !=(BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions? left, BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions? right) -> bool
+static BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions.operator ==(BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions? left, BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions? right) -> bool
+static BlueTusk.Live.AspNetCore.BlueTuskLiveAspNetCoreServiceCollectionExtensions.AddBlueTuskLiveAspNetCore(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, BlueTusk.Live.LiveResumeTokenProtector! tokenProtector, BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions? options = null) -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+static BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.operator !=(BlueTusk.Live.AspNetCore.LiveSubscriptionRequest? left, BlueTusk.Live.AspNetCore.LiveSubscriptionRequest? right) -> bool
+static BlueTusk.Live.AspNetCore.LiveSubscriptionRequest.operator ==(BlueTusk.Live.AspNetCore.LiveSubscriptionRequest? left, BlueTusk.Live.AspNetCore.LiveSubscriptionRequest? right) -> bool
+static BlueTusk.Live.AspNetCore.LiveTransportSession.OpenAsync(BlueTusk.Live.AspNetCore.LiveSubscriptionRequest! request, System.Security.Claims.ClaimsPrincipal! principal, BlueTusk.Live.AspNetCore.ILiveTransportSubscriptionResolver! resolver, BlueTusk.Live.LiveResumeTokenProtector! tokenProtector, BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.AspNetCore.LiveTransportConnection!>

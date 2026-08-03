@@ -50,6 +50,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 6 slice: startup EF query compilation for one keyed table, simple predicates, tenant isolation, deterministic ordering, and bounded Take
 - [x] Phase 6 slice: integrity-checked PostgreSQL replay events, sequence fencing, idempotent crash retry, expiry watermarks, and bounded retention pruning
 - [x] Phase 6 slice: security-scoped shared subscriptions, race-free replay attach, fan-out metrics, quotas, bounded client buffers, and explicit slow-client policy
+- [x] Phase 6 slice: authenticated ASP.NET transport sessions, signed per-event resume, SignalR streaming, and fetch-compatible SSE with explicit failure status
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [ ] Phase 7: Continuous Graph preview
 

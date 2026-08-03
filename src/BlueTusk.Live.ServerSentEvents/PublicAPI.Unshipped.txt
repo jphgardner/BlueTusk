@@ -1,0 +1,5 @@
+#nullable enable
+BlueTusk.Live.ServerSentEvents.BlueTuskLiveServerSentEventsEndpointRouteBuilderExtensions
+BlueTusk.Live.ServerSentEvents.LiveSseWriter
+static BlueTusk.Live.ServerSentEvents.BlueTuskLiveServerSentEventsEndpointRouteBuilderExtensions.MapBlueTuskLiveServerSentEvents(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! pattern = "/bluetusk/live/sse") -> Microsoft.AspNetCore.Builder.RouteHandlerBuilder!
+static BlueTusk.Live.ServerSentEvents.LiveSseWriter.WriteAsync(Microsoft.AspNetCore.Http.HttpResponse! response, BlueTusk.Live.AspNetCore.LiveTransportMessage! message, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
