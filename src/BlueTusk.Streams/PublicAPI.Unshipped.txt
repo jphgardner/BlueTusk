@@ -1,4 +1,16 @@
 #nullable enable
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.ExistingSlotMode.get -> BlueTusk.Streams.PostgreSqlExistingSnapshotSlotMode
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.ExistingSlotMode.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.<Clone>$() -> BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions!
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Equals(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? other) -> bool
+BlueTusk.Streams.PostgreSqlExistingSnapshotSlotMode
+BlueTusk.Streams.PostgreSqlExistingSnapshotSlotMode.Fail = 0 -> BlueTusk.Streams.PostgreSqlExistingSnapshotSlotMode
+BlueTusk.Streams.PostgreSqlExistingSnapshotSlotMode.RestartSnapshot = 1 -> BlueTusk.Streams.PostgreSqlExistingSnapshotSlotMode
+override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Equals(object? obj) -> bool
+override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.GetHashCode() -> int
+override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.ToString() -> string!
+static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator !=(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? left, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? right) -> bool
+static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator ==(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? left, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? right) -> bool
 ~override BlueTusk.Streams.ChangeId.Equals(object obj) -> bool
 ~override BlueTusk.Streams.ChangeId.ToString() -> string
 ~override BlueTusk.Streams.ChangeStreamStateKey.Equals(object obj) -> bool
@@ -791,10 +803,8 @@ BlueTusk.Streams.IConsistentSnapshotAttempt.Tables.get -> System.Collections.Gen
 BlueTusk.Streams.IConsistentSnapshotSource
 BlueTusk.Streams.IConsistentSnapshotSource.BeginAttemptAsync(System.Guid? abandonedEpoch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.IConsistentSnapshotAttempt!>
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions
-BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.<Clone>$() -> BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions!
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.CopyPageRows.get -> int
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.CopyPageRows.init -> void
-BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Equals(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? other) -> bool
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumBatchBytes.get -> long
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumBatchBytes.init -> void
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumBatchRows.get -> int
@@ -836,14 +846,9 @@ BlueTusk.Streams.SnapshotThenStreamOptions.Equals(BlueTusk.Streams.SnapshotThenS
 BlueTusk.Streams.SnapshotThenStreamOptions.MaximumSnapshotAttempts.get -> int
 BlueTusk.Streams.SnapshotThenStreamOptions.MaximumSnapshotAttempts.init -> void
 BlueTusk.Streams.SnapshotThenStreamOptions.SnapshotThenStreamOptions() -> void
-override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Equals(object? obj) -> bool
-override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.GetHashCode() -> int
-override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.ToString() -> string!
 override BlueTusk.Streams.SnapshotThenStreamOptions.Equals(object? obj) -> bool
 override BlueTusk.Streams.SnapshotThenStreamOptions.GetHashCode() -> int
 override BlueTusk.Streams.SnapshotThenStreamOptions.ToString() -> string!
-static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator !=(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? left, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? right) -> bool
-static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator ==(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? left, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? right) -> bool
 static BlueTusk.Streams.SnapshotThenStreamOptions.operator !=(BlueTusk.Streams.SnapshotThenStreamOptions? left, BlueTusk.Streams.SnapshotThenStreamOptions? right) -> bool
 static BlueTusk.Streams.SnapshotThenStreamOptions.operator ==(BlueTusk.Streams.SnapshotThenStreamOptions? left, BlueTusk.Streams.SnapshotThenStreamOptions? right) -> bool
 BlueTusk.Streams.BlueTuskStreamsDiagnostics

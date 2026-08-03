@@ -22,6 +22,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 3 slice: CloudEvents 1.0 structured transaction events with stable IDs and versioned integrity-checked payloads
 - [x] Phase 3 slice: idempotent source/relay CLI provisioning, PostgreSQL compatibility validation, canonical publication fingerprints, control isolation, and secret-safe diagnostics
 - [x] Phase 3 slice: Aspire worker wiring with secret-preserving source/control references, relay-by-default configuration, and explicit direct-mode opt-out
+- [x] Phase 3 slice: fail-closed cross-process snapshot-slot recovery with explicit new epochs and PostgreSQL 15-19 acceptance
 - [ ] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams preview
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0

@@ -32,6 +32,16 @@ Every table requires one or more non-null, immutable ordering keys. The declared
 
 The number of complete attempts is bounded by `MaximumSnapshotAttempts`. Failure before PostgreSQL establishes an epoch can be retried without inventing an abandoned epoch identity. Consumer exceptions and permanent configuration failures are not relabelled as session loss.
 
+A new process cannot prove ownership through in-memory state. The default
+`ExistingSlotMode.Fail` therefore refuses to alter a pre-existing slot. A worker
+whose snapshot reset is durable and idempotent can explicitly select
+`ExistingSlotMode.RestartSnapshot`. On its first attempt, Streams will replace
+only an inactive logical `pgoutput` slot for the configured database and then
+emit a new snapshot epoch. Active slots, physical slots, other output plug-ins,
+and other databases always fail closed. PostgreSQL 15–19 acceptance recreates a
+source object around an abandoned slot and verifies that the replacement epoch
+is distinct.
+
 The snapshot consumer must apply reset and rows idempotently. Once `CompleteSnapshotAsync` succeeds, normal transaction-delivery acknowledgement rules apply. A replication failure after that boundary is a normal checkpoint-based reconnect concern and never causes an implicit full snapshot restart.
 
 ## Low-level composition
@@ -51,6 +61,7 @@ var source = new PostgreSqlConsistentSnapshotSource(
         MaximumBatchRows = 512,
         MaximumBatchBytes = 4 * 1024 * 1024,
         MaximumParallelTables = 4,
+        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,
     },
     replication => CreateCheckpointBeforeFeedbackObserver(replication));
 

@@ -34,6 +34,12 @@ acknowledges the delivery. Configure a checkpoint store and feedback observer as
 described in [state stores](state-stores.md); memory state is only suitable for
 tests and ephemeral development.
 
+The sample explicitly enables `RestartSnapshot` recovery. If the process stops
+after creating its slot, the next process verifies that the slot is inactive,
+logical, `pgoutput`, and bound to the configured database before replacing it.
+The consumer then receives `ResetSnapshotAsync` with a new epoch; an idempotent
+destination must discard or supersede the abandoned epoch.
+
 The sample's table shape is intentionally fixed so binary column ordinals and
 PostgreSQL type OIDs remain explicit. Production mappings should use the typed
 mapping builder or the [EF-derived mapping adapter](typed-mappings.md).

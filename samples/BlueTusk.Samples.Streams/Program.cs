@@ -49,6 +49,7 @@ await using (var replication = await BlueTuskLogicalReplicationConnection.OpenAs
         Source = sourceIdentity,
         PublicationNames = [publication],
         Tables = [new PostgreSqlSnapshotTable(table, [0])],
+        ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,
     };
 
     builder.Services.AddSingleton(dataSource);

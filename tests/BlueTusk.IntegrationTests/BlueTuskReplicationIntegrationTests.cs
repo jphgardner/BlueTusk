@@ -108,6 +108,97 @@ public sealed class BlueTuskReplicationIntegrationTests
     }
 
     [Fact]
+    public async Task New_process_can_explicitly_restart_an_inactive_snapshot_slot_with_a_new_epoch()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_snapshot_restart_{suffix}";
+        var publicationName = $"bluetusk_snapshot_restart_publication_{suffix}";
+        var slotName = $"bluetusk_snapshot_restart_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id integer PRIMARY KEY, value text NOT NULL)");
+        await ExecuteAsync(administration, $"INSERT INTO {quotedTable} VALUES (1, 'initial')");
+        await ExecuteAsync(
+            administration,
+            $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+
+        try
+        {
+            await using var dataSource = BlueTuskDataSource.Create(connectionString);
+            BlueTuskReplicationSystemIdentity system;
+            await using (var identityConnection =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+            {
+                system = await identityConnection.IdentifySystemAsync();
+            }
+
+            var table = new ChangeTable(
+                relationId: 0,
+                schema: "public",
+                name: tableName,
+                replicaIdentity: 'd',
+                [
+                    new ChangeColumn(0, "id", 23, -1, true),
+                    new ChangeColumn(1, "value", 25, -1, false),
+                ]);
+            var identity = new ChangeSourceIdentity(
+                system.SystemIdentifier,
+                system.DatabaseName!,
+                slotName,
+                publicationName);
+            var firstSource = new PostgreSqlConsistentSnapshotSource(
+                dataSource,
+                new PostgreSqlConsistentSnapshotOptions
+                {
+                    Source = identity,
+                    PublicationNames = [publicationName],
+                    Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                });
+            var firstAttempt = await firstSource.BeginAttemptAsync(abandonedEpoch: null);
+            var firstEpoch = firstAttempt.Epoch;
+            await foreach (var _ in firstAttempt.ReadSnapshotAsync())
+            {
+            }
+
+            _ = firstAttempt.CreateChangeStream();
+            await firstAttempt.DisposeAsync();
+
+            var restartedSource = new PostgreSqlConsistentSnapshotSource(
+                dataSource,
+                new PostgreSqlConsistentSnapshotOptions
+                {
+                    Source = identity,
+                    PublicationNames = [publicationName],
+                    Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                    ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,
+                });
+            await using var restartedAttempt =
+                await restartedSource.BeginAttemptAsync(abandonedEpoch: null);
+
+            Assert.NotEqual(firstEpoch.Value, restartedAttempt.Epoch.Value);
+            Assert.True(restartedAttempt.Epoch.ConsistentPosition >= firstEpoch.ConsistentPosition);
+        }
+        finally
+        {
+            await using var cleanup =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+            var slots = await cleanup.GetReplicationSlotsAsync();
+            if (slots.Any(slot => string.Equals(slot.SlotName, slotName, StringComparison.Ordinal)))
+            {
+                await cleanup.DropReplicationSlotAsync(slotName, wait: true);
+            }
+
+            await ExecuteAsync(administration, $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
     public async Task Data_source_derived_replication_session_is_dedicated_and_unpooled()
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())

@@ -49,6 +49,12 @@ public sealed class PostgreSqlSnapshotTable
     public IReadOnlyList<int> KeyOrdinals => _keyOrdinals;
 }
 
+public enum PostgreSqlExistingSnapshotSlotMode
+{
+    Fail,
+    RestartSnapshot,
+}
+
 public sealed record PostgreSqlConsistentSnapshotOptions
 {
     public required ChangeSourceIdentity Source { get; init; }
@@ -66,6 +72,9 @@ public sealed record PostgreSqlConsistentSnapshotOptions
     public long MaximumRowBytes { get; init; } = 4L * 1024 * 1024;
 
     public int MaximumParallelTables { get; init; } = 4;
+
+    public PostgreSqlExistingSnapshotSlotMode ExistingSlotMode { get; init; } =
+        PostgreSqlExistingSnapshotSlotMode.Fail;
 
     public TransactionAssemblyOptions TransactionAssembly { get; init; } = new();
 
@@ -94,6 +103,11 @@ public sealed record PostgreSqlConsistentSnapshotOptions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumBatchBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumRowBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaximumParallelTables);
+        if (!Enum.IsDefined(ExistingSlotMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(ExistingSlotMode));
+        }
+
         if (MaximumRowBytes > MaximumBatchBytes)
         {
             throw new ArgumentException(
@@ -117,6 +131,7 @@ public sealed class PostgreSqlConsistentSnapshotSource : IConsistentSnapshotSour
     private readonly Func<BlueTuskLogicalReplicationConnection, IChangeDeliveryObserver?>? _observerFactory;
     private readonly TimeProvider _timeProvider;
     private int _createdSlot;
+    private int _existingSlotChecked;
 
     public PostgreSqlConsistentSnapshotSource(
         BlueTuskDataSource dataSource,
@@ -136,6 +151,13 @@ public sealed class PostgreSqlConsistentSnapshotSource : IConsistentSnapshotSour
         CancellationToken cancellationToken = default)
     {
         var dedicatedOptions = _dataSource.CreateDedicatedSessionOptions();
+        if (abandonedEpoch is null &&
+            _options.ExistingSlotMode == PostgreSqlExistingSnapshotSlotMode.RestartSnapshot &&
+            Interlocked.Exchange(ref _existingSlotChecked, 1) == 0)
+        {
+            await RemoveRestartableSlotAsync(dedicatedOptions, cancellationToken).ConfigureAwait(false);
+        }
+
         if (abandonedEpoch is not null)
         {
             if (Volatile.Read(ref _createdSlot) == 0)
@@ -235,6 +257,37 @@ public sealed class PostgreSqlConsistentSnapshotSource : IConsistentSnapshotSour
         {
             throw new SnapshotAttemptException(
                 $"Abandoned slot {_options.Source.SlotName} is active and cannot be replaced safely.");
+        }
+
+        await cleanup.DropReplicationSlotAsync(
+            _options.Source.SlotName,
+            wait: true,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async Task RemoveRestartableSlotAsync(
+        BlueTuskClientOptions dedicatedOptions,
+        CancellationToken cancellationToken)
+    {
+        await using var cleanup = await BlueTuskLogicalReplicationConnection.OpenAsync(
+            dedicatedOptions,
+            cancellationToken).ConfigureAwait(false);
+        var slots = await cleanup.GetReplicationSlotsAsync(cancellationToken).ConfigureAwait(false);
+        var existing = slots.SingleOrDefault(slot =>
+            string.Equals(slot.SlotName, _options.Source.SlotName, StringComparison.Ordinal));
+        if (existing is null)
+        {
+            return;
+        }
+
+        if (existing.IsActive ||
+            !string.Equals(existing.SlotType, "logical", StringComparison.Ordinal) ||
+            !string.Equals(existing.OutputPlugin, "pgoutput", StringComparison.Ordinal) ||
+            !string.Equals(existing.DatabaseName, _options.Source.DatabaseName, StringComparison.Ordinal))
+        {
+            throw new SnapshotAttemptException(
+                $"Existing slot {_options.Source.SlotName} is active or does not belong to the configured " +
+                "pgoutput snapshot source; it cannot be replaced safely.");
         }
 
         await cleanup.DropReplicationSlotAsync(
