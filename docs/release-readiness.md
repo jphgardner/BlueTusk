@@ -9,6 +9,22 @@ documentation. The repository and packages remain `0.3.0-preview.1`: completing
 an engineering gate does not substitute for external production experience or
 the maintainer's explicit decision to publish a stable release.
 
+## Publication gate
+
+All six product-family publication policies are currently disabled. Manual
+release-workflow dispatches create candidate artifacts only; they cannot
+publish. Provider, Streams, Sync, Live, and Control Plane are locked to stable
+1.0.0-or-newer versions, while Continuous Graph is locked to a prerelease
+version.
+
+The final candidate commit must enable only the family whose dependencies are
+already enabled, then pass an explicit full `build.yml` dispatch at that exact
+SHA. Streams additionally requires its exact 72-hour workflow and Sync its
+exact 24-hour workflow. The release workflow verifies those successful GitHub
+Actions runs by `head_sha`, rejects a mismatched version tag or checkout, and
+publishes only through the protected production environment. See the
+[release process](release-process.md).
+
 ## Connection pooling
 
 `BlueTuskDataSource` owns bounded per-endpoint pools. The completed gate covers:
@@ -212,7 +228,7 @@ provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
-in all tracked Markdown files; the current review checks 242 local links across
+in all tracked Markdown files; the current review checks 254 local links across
 124 tracked Markdown files. The 2026-08-02 provider review separately resolved
 all 40 external Markdown references.
 The support matrix identifies .NET 10, EF Core 10.0.10,

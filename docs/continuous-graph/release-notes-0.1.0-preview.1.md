@@ -63,6 +63,7 @@ gate.
 - Package verification does not complete the separate Streams 72-hour, Sync
   24-hour, or Control Plane release gates.
 
-The independent release workflow publishes only after an explicit
-publish-enabled workflow dispatch or matching Continuous Graph version tag.
-Passing this repository gate does not silently publish the package.
+The independent release workflow creates candidate artifacts on manual
+dispatch but cannot publish them. The preview remains disabled until its
+Provider, Live, and Control Plane dependencies are publishable and the exact
+tagged commit has the required workflow evidence.

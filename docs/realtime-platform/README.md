@@ -35,12 +35,15 @@ The release manifest is `eng/product-families.json`; version properties live und
 
 An empty family is valid during architecture work but cannot be packaged. This prevents placeholder NuGet packages from implying implemented behavior.
 
-Each family declares its cross-family release dependencies. A family cannot be
-marked publishable while any dependency is still gated, and broad package roots
-are filtered by the project's declared family so one release train cannot
-silently absorb another. `-Candidate` can build a gated verification artifact
-without opening its publication gate. Families with npm artifacts always run a
-clean locked install, vulnerability audit, client build, and client tests
-before any tarball is created.
+Each family declares its cross-family release dependencies and an explicit
+schema-2 publication policy. A family cannot enable publication while any
+dependency is still gated. Stable and preview channels, exact tag prefixes, and
+required exact-commit workflow evidence are machine-enforced. Every package
+project is listed explicitly, so a new project cannot silently enter a release
+train. `-Candidate` can build a gated verification
+artifact without opening its publication gate. Families with npm artifacts
+always run a clean locked install, vulnerability audit, client build, and
+client tests before any tarball is created. See the
+[release process](../release-process.md).
 
-Implementation status: [Streams 0.1.0-preview.1](../streams/release-notes-0.1.0-preview.1.md) has passed the Phase 3 implementation and packaging gates. Its release manifest is publishable through the independently versioned Streams release workflow. The [Control Plane and Dashboard](../control-plane/README.md) provide source/relay, Sync, Live, and Continuous Graph inventory, versioned v1 agent APIs, authorised pages, confirmed/audited operation controls, and transactionally migrated immutable PostgreSQL audit. Their [0.1.0-preview.1 candidate](../control-plane/release-notes-0.1.0-preview.1.md) has passed its own implementation and upgrade gates but remains non-publishable until its Sync release dependency passes. [Sync](../sync/README.md) has its pipeline kernel, all four required destinations on one live conformance contract, bounded reconciliation/repair, cutover-safe rebuild, in-process hosting, restart-aware relay bootstrap, retry/rate-limit policy, dashboard integration, and an executable 24-hour endurance workflow. Sync remains non-publishable until successful long-run evidence is archived. [Live 0.1.0-preview.1](../live/release-notes-0.1.0-preview.1.md) has passed its implementation, PostgreSQL 15–19 store/transport, client, and package gates. [Continuous Graph 0.1.0-preview.1](../continuous-graph/release-notes-0.1.0-preview.1.md) has passed its Phase 7 implementation and packaging gates after Live. Both independently versioned manifests are enabled; actual NuGet/npm publication still requires an explicit publish-enabled workflow action or a correctly ordered version tag.
+Implementation status: [Streams 0.1.0-preview.1](../streams/release-notes-0.1.0-preview.1.md) has passed the Phase 3 implementation and packaging gates. The [Control Plane and Dashboard](../control-plane/README.md) provide source/relay, Sync, Live, and Continuous Graph inventory, versioned v1 agent APIs, authorised pages, confirmed/audited operation controls, and transactionally migrated immutable PostgreSQL audit. [Sync](../sync/README.md) has its pipeline kernel, all four required destinations on one live conformance contract, bounded reconciliation/repair, cutover-safe rebuild, in-process hosting, restart-aware relay bootstrap, retry/rate-limit policy, dashboard integration, and an executable 24-hour endurance workflow. [Live 0.1.0-preview.1](../live/release-notes-0.1.0-preview.1.md) has passed its implementation, PostgreSQL 15–19 store/transport, client, and package gates. [Continuous Graph 0.1.0-preview.1](../continuous-graph/release-notes-0.1.0-preview.1.md) has passed its Phase 7 implementation and packaging gates. All six publication policies are currently disabled while the exact V1 release evidence remains open; candidate artifacts do not grant publication permission.

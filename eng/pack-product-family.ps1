@@ -17,11 +17,90 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = (Split-Path $PSScriptRoot -Parent)
 $manifestPath = Join-Path $PSScriptRoot 'product-families.json'
 $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
+if ($manifest.schemaVersion -ne 2)
+{
+    throw "Expected product-family manifest schema 2; found '$($manifest.schemaVersion)'."
+}
+
 $definition = $manifest.families.$Family
 
 if ($null -eq $definition)
 {
     throw "Product family '$Family' is not registered."
+}
+
+$publication = $definition.publication
+if ($null -eq $publication)
+{
+    throw "Product family '$Family' has no publication policy."
+}
+
+$publicationEnabled = $publication.enabled -eq $true
+$publicationChannel = [string]$publication.channel
+if ($publicationChannel -notin @('stable', 'preview'))
+{
+    throw "Product family '$Family' has unsupported publication channel '$publicationChannel'."
+}
+
+$tagPrefix = [string]$publication.tagPrefix
+if ($tagPrefix -notmatch '^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$')
+{
+    throw "Product family '$Family' has invalid release tag prefix '$tagPrefix'."
+}
+
+$duplicateTagPrefixes = @(
+    $manifest.families.PSObject.Properties |
+        Group-Object { [string]$_.Value.publication.tagPrefix } |
+        Where-Object Count -gt 1
+)
+if ($duplicateTagPrefixes.Count -gt 0)
+{
+    throw "Product-family release tag prefixes must be unique."
+}
+
+$requiredWorkflowEvidence = @($publication.requiredWorkflowEvidence)
+if ($requiredWorkflowEvidence.Count -eq 0)
+{
+    throw "Product family '$Family' has no required exact-commit workflow evidence."
+}
+
+$workflowFiles = @(
+    $requiredWorkflowEvidence |
+        ForEach-Object { [string]$_.workflowFile }
+)
+if (@($workflowFiles | Sort-Object -Unique).Count -ne $workflowFiles.Count)
+{
+    throw "Product family '$Family' has duplicate workflow evidence requirements."
+}
+
+foreach ($workflowEvidence in $requiredWorkflowEvidence)
+{
+    $workflowFile = [string]$workflowEvidence.workflowFile
+    if ($workflowFile -notmatch '^[A-Za-z0-9][A-Za-z0-9._-]*\.(?:yml|yaml)$')
+    {
+        throw "Product family '$Family' has invalid workflow evidence '$workflowFile'."
+    }
+
+    $workflowPath = Join-Path $repositoryRoot ".github/workflows/$workflowFile"
+    if (-not (Test-Path -LiteralPath $workflowPath -PathType Leaf))
+    {
+        throw "Product family '$Family' references missing workflow '$workflowFile'."
+    }
+
+    $allowedEvents = @($workflowEvidence.allowedEvents)
+    if ($allowedEvents.Count -eq 0 -or
+        @($allowedEvents | Sort-Object -Unique).Count -ne $allowedEvents.Count)
+    {
+        throw "Product family '$Family' has missing or duplicate allowed events for '$workflowFile'."
+    }
+
+    foreach ($allowedEvent in $allowedEvents)
+    {
+        if ([string]$allowedEvent -ne 'workflow_dispatch')
+        {
+            throw "Product family '$Family' permits unsupported evidence event '$allowedEvent'."
+        }
+    }
 }
 
 $releaseDependencies = @()
@@ -50,13 +129,13 @@ if (@($releaseDependencies | Sort-Object -Unique).Count -ne $releaseDependencies
 
 $blockedReleaseDependencies = @(
     $releaseDependencies | Where-Object {
-        $manifest.families.$_.publishable -ne $true
+        $manifest.families.$_.publication.enabled -ne $true
     }
 )
 
-if ($definition.publishable -eq $true -and $blockedReleaseDependencies.Count -gt 0)
+if ($publicationEnabled -and $blockedReleaseDependencies.Count -gt 0)
 {
-    throw "Product family '$Family' is marked publishable while release dependencies remain gated: $($blockedReleaseDependencies -join ', ')."
+    throw "Product family '$Family' has publication enabled while release dependencies remain gated: $($blockedReleaseDependencies -join ', ')."
 }
 
 $versionPath = Join-Path $repositoryRoot $definition.versionFile
@@ -81,7 +160,33 @@ if ([string]::IsNullOrWhiteSpace($versionPrefix))
     throw "Product family '$Family' has no VersionPrefix in '$($definition.versionFile)'."
 }
 
-$projects = foreach ($entry in $definition.packages)
+if ($publicationEnabled)
+{
+    $parsedVersion = $null
+    if (-not [Version]::TryParse($versionPrefix, [ref]$parsedVersion))
+    {
+        throw "Product family '$Family' has invalid VersionPrefix '$versionPrefix'."
+    }
+
+    if ($publicationChannel -eq 'stable' -and
+        ($parsedVersion.Major -lt 1 -or -not [string]::IsNullOrWhiteSpace($versionSuffix)))
+    {
+        throw "Stable publication for '$Family' requires a 1.0.0-or-newer version without a suffix."
+    }
+
+    if ($publicationChannel -eq 'preview' -and [string]::IsNullOrWhiteSpace($versionSuffix))
+    {
+        throw "Preview publication for '$Family' requires a prerelease version suffix."
+    }
+}
+
+$packageEntries = @($definition.packages)
+if (@($packageEntries | Sort-Object -Unique).Count -ne $packageEntries.Count)
+{
+    throw "Product family '$Family' has duplicate package project entries."
+}
+
+$projects = foreach ($entry in $packageEntries)
 {
     $packageEntryPath = Join-Path $repositoryRoot $entry
     if (-not (Test-Path -LiteralPath $packageEntryPath))
@@ -91,12 +196,16 @@ $projects = foreach ($entry in $definition.packages)
 
     if ((Get-Item -LiteralPath $packageEntryPath) -is [System.IO.DirectoryInfo])
     {
-        Get-ChildItem -LiteralPath $packageEntryPath -Filter '*.csproj' -Recurse -File
+        throw "Product family '$Family' must list package projects explicitly; '$entry' is a directory."
     }
-    else
+
+    $project = Get-Item -LiteralPath $packageEntryPath
+    if ($project.Extension -ne '.csproj')
     {
-        Get-Item -LiteralPath $packageEntryPath
+        throw "Product family '$Family' package entry '$entry' is not a project file."
     }
+
+    $project
 }
 
 $projects = @($projects | Sort-Object FullName -Unique)
@@ -164,16 +273,16 @@ if ($ValidateOnly)
         $blockedReleaseDependencies -join ','
     }
 
-    Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); publishable=$($definition.publishable); releaseDependencies=$dependencySummary; blockedDependencies=$blockedSummary."
+    Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); publicationEnabled=$publicationEnabled; channel=$publicationChannel; releaseDependencies=$dependencySummary; blockedDependencies=$blockedSummary; exactCommitWorkflows=$($requiredWorkflowEvidence.Count)."
     return
 }
 
-if ($definition.publishable -ne $true -and -not $Candidate)
+if (-not $publicationEnabled -and -not $Candidate)
 {
     throw "Product family '$Family' has not passed its publication gate."
 }
 
-if ($Candidate -and $definition.publishable -ne $true)
+if ($Candidate -and -not $publicationEnabled)
 {
     Write-Warning "Packing gated $Family candidate artifacts for verification only. They must not be published."
 }
@@ -183,7 +292,14 @@ if ($projects.Count -eq 0)
     throw "Product family '$Family' has no packages. Placeholder packages are not published."
 }
 
-$outputPath = Join-Path $repositoryRoot $Output
+$outputPath = if ([System.IO.Path]::IsPathRooted($Output))
+{
+    [System.IO.Path]::GetFullPath($Output)
+}
+else
+{
+    [System.IO.Path]::GetFullPath((Join-Path $repositoryRoot $Output))
+}
 New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
 
 if ($npmPackages.Count -gt 0)

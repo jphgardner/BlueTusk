@@ -69,6 +69,7 @@ CDC insert as one acknowledged transaction.
   workflow are executable, but no short or queued run is represented as the
   completed 72-hour evidence.
 
-The release workflow packages this family independently. It publishes to NuGet
-only after an explicit publish-enabled workflow dispatch or a matching Streams
-version tag; completing this code gate does not silently publish packages.
+The release workflow packages this family independently in candidate mode.
+Manual dispatch cannot publish. Publication remains disabled until an exact V1
+candidate passes the required full build and 72-hour evidence; only its exact
+matching tag may then cross the protected production environment.

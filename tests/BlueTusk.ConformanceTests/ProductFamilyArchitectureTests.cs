@@ -22,6 +22,7 @@ public sealed class ProductFamilyArchitectureTests
         var repositoryRoot = FindRepositoryRoot();
         using var manifest = JsonDocument.Parse(
             File.ReadAllText(Path.Combine(repositoryRoot, "eng", "product-families.json")));
+        Assert.Equal(2, manifest.RootElement.GetProperty("schemaVersion").GetInt32());
 
         foreach (var family in new[] { "Provider", "Streams", "Sync", "Live", "ControlPlane", "ContinuousGraph" })
         {
@@ -56,6 +57,38 @@ public sealed class ProductFamilyArchitectureTests
             path => path.StartsWith(
                 "templates/BlueTusk.Extension/content/",
                 StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Product_family_package_manifests_list_projects_explicitly()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        using var manifest = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(repositoryRoot, "eng", "product-families.json")));
+
+        foreach (var family in manifest.RootElement
+                     .GetProperty("families")
+                     .EnumerateObject())
+        {
+            var packages = family.Value
+                .GetProperty("packages")
+                .EnumerateArray()
+                .Select(item => item.GetString()!)
+                .ToArray();
+            Assert.NotEmpty(packages);
+            Assert.Equal(
+                packages.Length,
+                packages.Distinct(StringComparer.Ordinal).Count());
+            foreach (var package in packages)
+            {
+                Assert.EndsWith(".csproj", package, StringComparison.Ordinal);
+                Assert.True(
+                    File.Exists(Path.Combine(
+                        repositoryRoot,
+                        package.Replace('/', Path.DirectorySeparatorChar))),
+                    $"{family.Name} references missing package project {package}.");
+            }
+        }
     }
 
     [Fact]
@@ -94,7 +127,7 @@ public sealed class ProductFamilyArchitectureTests
     }
 
     [Fact]
-    public void Publishable_product_families_have_publishable_release_dependencies()
+    public void Publication_enabled_product_families_have_enabled_release_dependencies()
     {
         var repositoryRoot = FindRepositoryRoot();
         using var manifest = JsonDocument.Parse(
@@ -117,14 +150,169 @@ public sealed class ProductFamilyArchitectureTests
                 Assert.True(
                     families.TryGetProperty(dependency, out var dependencyFamily),
                     $"{family.Name} declares unknown release dependency {dependency}.");
-                if (family.Value.GetProperty("publishable").GetBoolean())
+                if (family.Value.GetProperty("publication").GetProperty("enabled").GetBoolean())
                 {
                     Assert.True(
-                        dependencyFamily.GetProperty("publishable").GetBoolean(),
-                        $"{family.Name} cannot be publishable before {dependency}.");
+                        dependencyFamily
+                            .GetProperty("publication")
+                            .GetProperty("enabled")
+                            .GetBoolean(),
+                        $"{family.Name} cannot publish before {dependency}.");
                 }
             }
         }
+    }
+
+    [Fact]
+    public void Publication_policies_require_unique_tags_and_exact_commit_workflows()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        using var manifest = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(repositoryRoot, "eng", "product-families.json")));
+        var families = manifest.RootElement.GetProperty("families");
+        var tagPrefixes = new HashSet<string>(StringComparer.Ordinal);
+
+        foreach (var family in families.EnumerateObject())
+        {
+            var publication = family.Value.GetProperty("publication");
+            var channel = publication.GetProperty("channel").GetString();
+            Assert.True(
+                channel is "stable" or "preview",
+                $"{family.Name} has unsupported release channel '{channel}'.");
+            Assert.Equal(
+                family.Name == "ContinuousGraph" ? "preview" : "stable",
+                channel);
+
+            var tagPrefix = publication.GetProperty("tagPrefix").GetString()!;
+            Assert.Matches("^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", tagPrefix);
+            Assert.True(tagPrefixes.Add(tagPrefix), $"Duplicate release tag prefix: {tagPrefix}");
+
+            var workflowEvidence = publication
+                .GetProperty("requiredWorkflowEvidence")
+                .EnumerateArray()
+                .ToArray();
+            Assert.NotEmpty(workflowEvidence);
+            Assert.Equal(
+                workflowEvidence.Length,
+                workflowEvidence
+                    .Select(item => item.GetProperty("workflowFile").GetString())
+                    .Distinct(StringComparer.Ordinal)
+                    .Count());
+
+            foreach (var evidence in workflowEvidence)
+            {
+                var workflowFile = evidence.GetProperty("workflowFile").GetString()!;
+                Assert.True(
+                    File.Exists(Path.Combine(
+                        repositoryRoot,
+                        ".github",
+                        "workflows",
+                        workflowFile)),
+                    $"{family.Name} references missing workflow {workflowFile}.");
+                var allowedEvents = evidence
+                    .GetProperty("allowedEvents")
+                    .EnumerateArray()
+                    .Select(item => item.GetString())
+                    .ToArray();
+                Assert.Single(allowedEvents);
+                Assert.Equal("workflow_dispatch", allowedEvents[0]);
+            }
+        }
+    }
+
+    [Fact]
+    public void Release_workflow_is_tag_only_fail_closed_and_verifies_artifacts()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var workflow = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            ".github",
+            "workflows",
+            "release-product-family.yml"));
+
+        Assert.DoesNotContain("publish:\n        description:", workflow, StringComparison.Ordinal);
+        Assert.DoesNotContain("--skip-duplicate", workflow, StringComparison.Ordinal);
+        Assert.Contains(
+            "if: needs.verify-and-package.outputs.is_tag == 'true'",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "environment: package-production",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "./eng/verify-release-gates.ps1",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "./eng/verify-product-family-packages.ps1",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "actions/attest-build-provenance@v3",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "npm publish \"$package\" --access public --tag \"$tag\" --provenance",
+            workflow,
+            StringComparison.Ordinal);
+
+        var verifyIndex = workflow.IndexOf(
+            "./eng/verify-product-family-packages.ps1",
+            StringComparison.Ordinal);
+        var uploadIndex = workflow.IndexOf(
+            "actions/upload-artifact@v4",
+            StringComparison.Ordinal);
+        Assert.True(
+            verifyIndex >= 0 && uploadIndex > verifyIndex,
+            "Package contents must be verified before the release artifact is uploaded.");
+    }
+
+    [Fact]
+    public void Release_gate_verifier_binds_evidence_to_the_exact_commit()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        var verifier = File.ReadAllText(Path.Combine(
+            repositoryRoot,
+            "eng",
+            "verify-release-gates.ps1"));
+
+        Assert.Contains(
+            "[ValidatePattern('^[0-9a-fA-F]{40}$')]",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "head_sha=$Commit",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "[string]$_.headSha",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "[string]$_.conclusion",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "$allowedEvents -contains [string]$_.event",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "status --porcelain --untracked-files=no",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "https://api.nuget.org/v3-flatcontainer",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "https://registry.npmjs.org",
+            verifier,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "Assert-PublishedResource",
+            verifier,
+            StringComparison.Ordinal);
     }
 
     [Fact]

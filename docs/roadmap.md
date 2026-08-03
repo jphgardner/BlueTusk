@@ -8,6 +8,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 0: independent Provider, Streams, Sync, Live, Control Plane, and Continuous Graph version properties and release workflow
 - [x] Phase 0: machine-enforced application CDC boundary and family declarations
 - [x] Phase 0: public contracts, delivery gates, and operational defaults documented
+- [x] V1 release slice: fail-closed stable/preview channel policy, exact tag/version matching, exact-commit workflow evidence, candidate-only manual dispatch, protected publication environment, and build provenance
 - [x] Phase 1: Streams transaction kernel, explicit row states, streamed assembly, bounded spool, public API baseline, PostgreSQL 15–19 acceptance, and checked-in performance baseline
 - [x] Phase 2 slice: monotonic compare-and-swap checkpoint contract, exclusive leases, fencing tokens, and checkpoint-before-feedback crash boundaries
 - [x] Phase 2 slice: atomic checksummed single-node file state store and public custom-store conformance kit

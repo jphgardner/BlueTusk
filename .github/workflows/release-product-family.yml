@@ -22,18 +22,17 @@ on:
           - Live
           - ControlPlane
           - ContinuousGraph
-      publish:
-        description: Publish packages to NuGet after all gates pass
-        required: true
-        default: false
-        type: boolean
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
-  release:
+  verify-and-package:
     runs-on: ubuntu-latest
+    outputs:
+      family: ${{ steps.release.outputs.family }}
+      is_tag: ${{ steps.release.outputs.is_tag }}
 
     steps:
       - uses: actions/checkout@v6
@@ -61,10 +60,23 @@ jobs:
             }
           }
           "family=$family" >> $env:GITHUB_OUTPUT
+          $isTag = if ($env:GITHUB_REF_TYPE -eq 'tag') { 'true' } else { 'false' }
+          "is_tag=$isTag" >> $env:GITHUB_OUTPUT
 
       - name: Validate release manifest
         shell: pwsh
-        run: ./eng/pack-product-family.ps1 -Family '${{ steps.release.outputs.family }}' -ValidateOnly
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          ./eng/pack-product-family.ps1 `
+            -Family '${{ steps.release.outputs.family }}' `
+            -ValidateOnly
+          if ($env:GITHUB_REF_TYPE -eq 'tag') {
+            ./eng/verify-release-gates.ps1 `
+              -Family '${{ steps.release.outputs.family }}' `
+              -Commit '${{ github.sha }}' `
+              -Tag '${{ github.ref_name }}'
+          }
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -78,30 +90,68 @@ jobs:
       - name: Build and test
         run: |
           dotnet build BlueTusk.slnx --configuration Release --no-restore
-          dotnet test BlueTusk.slnx --configuration Release --no-build
+          dotnet test BlueTusk.slnx --configuration Release --no-build --no-restore
+
+      - name: Audit dependencies
+        run: dotnet list BlueTusk.slnx package --vulnerable --include-transitive --no-restore
 
       - name: Package selected release train
         shell: pwsh
-        run: ./eng/pack-product-family.ps1 -Family '${{ steps.release.outputs.family }}' -NoRestore
+        run: |
+          $arguments = @{
+            Family = '${{ steps.release.outputs.family }}'
+            NoRestore = $true
+          }
+          if ($env:GITHUB_REF_TYPE -ne 'tag') {
+            $arguments.Candidate = $true
+          }
+          ./eng/pack-product-family.ps1 @arguments
+
+      - name: Verify package contents and provenance
+        shell: pwsh
+        run: >-
+          ./eng/verify-product-family-packages.ps1
+          -Family '${{ steps.release.outputs.family }}'
+          -PackageDirectory 'artifacts/packages'
+          -ExpectedCommit '${{ github.sha }}'
 
       - uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.release.outputs.family }}-packages
           path: artifacts/packages/*
           if-no-files-found: error
+          retention-days: 14
+
+  publish:
+    needs: verify-and-package
+    if: needs.verify-and-package.outputs.is_tag == 'true'
+    runs-on: ubuntu-latest
+    environment: package-production
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.verify-and-package.outputs.family }}-packages
+          path: artifacts/packages
+
+      - name: Attest package provenance
+        uses: actions/attest-build-provenance@v3
+        with:
+          subject-path: artifacts/packages/*
 
       - name: Publish NuGet packages
-        if: startsWith(github.ref, 'refs/tags/') || inputs.publish == true
         env:
           NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: >-
           dotnet nuget push "artifacts/packages/*.nupkg"
           --api-key "$NUGET_API_KEY"
           --source https://api.nuget.org/v3/index.json
-          --skip-duplicate
 
       - name: Publish npm packages
-        if: startsWith(github.ref, 'refs/tags/') || inputs.publish == true
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: |
@@ -122,5 +172,5 @@ jobs:
               prerelease="${version#*-}"
               tag="${prerelease%%.*}"
             fi
-            npm publish "$package" --access public --tag "$tag"
+            npm publish "$package" --access public --tag "$tag" --provenance
           done

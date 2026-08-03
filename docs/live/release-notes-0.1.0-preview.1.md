@@ -70,6 +70,7 @@ nine NuGet and three npm package artifacts.
 - This preview gate does not represent Live 1.0 and does not complete the
   separate Streams 72-hour, Sync 24-hour, or Control Plane release gates.
 
-The independent workflow publishes NuGet and npm artifacts only after an
-explicit publish-enabled dispatch or matching Live version tag. Passing this
-repository gate does not silently publish packages.
+The independent workflow creates candidate NuGet and npm artifacts on manual
+dispatch but cannot publish them. Live publication remains disabled until its
+V1 dependencies and exact-commit release gates pass; only the exact matching
+tag may enter the protected production environment.

@@ -1,21 +1,76 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "families": {
     "Provider": {
       "versionFile": "eng/versions/Provider.props",
-      "publishable": true,
+      "publication": {
+        "enabled": false,
+        "channel": "stable",
+        "tagPrefix": "provider",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
       "releaseDependencies": [],
       "packages": [
-        "src",
-        "extensions",
-        "identity",
+        "extensions/BlueTusk.Extensions.Citext.EntityFrameworkCore/BlueTusk.Extensions.Citext.EntityFrameworkCore.csproj",
+        "extensions/BlueTusk.Extensions.Citext/BlueTusk.Extensions.Citext.csproj",
+        "extensions/BlueTusk.Extensions.HStore/BlueTusk.Extensions.HStore.csproj",
+        "extensions/BlueTusk.Extensions.LTree/BlueTusk.Extensions.LTree.csproj",
+        "extensions/BlueTusk.Extensions.PgTrgm/BlueTusk.Extensions.PgTrgm.csproj",
+        "extensions/BlueTusk.Extensions.PgVector.EntityFrameworkCore/BlueTusk.Extensions.PgVector.EntityFrameworkCore.csproj",
+        "extensions/BlueTusk.Extensions.PgVector/BlueTusk.Extensions.PgVector.csproj",
+        "extensions/BlueTusk.Extensions.PostGIS.EntityFrameworkCore/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.csproj",
+        "extensions/BlueTusk.Extensions.PostGIS/BlueTusk.Extensions.PostGIS.csproj",
+        "extensions/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.csproj",
+        "extensions/BlueTusk.Extensions.TimescaleDB/BlueTusk.Extensions.TimescaleDB.csproj",
+        "identity/BlueTusk.Identity.Aws/BlueTusk.Identity.Aws.csproj",
+        "identity/BlueTusk.Identity.Azure/BlueTusk.Identity.Azure.csproj",
+        "identity/BlueTusk.Identity.GoogleCloud/BlueTusk.Identity.GoogleCloud.csproj",
+        "src/BlueTusk.Client/BlueTusk.Client.csproj",
+        "src/BlueTusk.Data/BlueTusk.Data.csproj",
+        "src/BlueTusk.Diagnostics/BlueTusk.Diagnostics.csproj",
+        "src/BlueTusk.EntityFrameworkCore.Design/BlueTusk.EntityFrameworkCore.Design.csproj",
+        "src/BlueTusk.EntityFrameworkCore/BlueTusk.EntityFrameworkCore.csproj",
+        "src/BlueTusk.Extensions.Abstractions/BlueTusk.Extensions.Abstractions.csproj",
+        "src/BlueTusk.Extensions.Testing/BlueTusk.Extensions.Testing.csproj",
+        "src/BlueTusk.Protocol/BlueTusk.Protocol.csproj",
+        "src/BlueTusk.Replication.PgOutput/BlueTusk.Replication.PgOutput.csproj",
+        "src/BlueTusk.Replication/BlueTusk.Replication.csproj",
+        "src/BlueTusk.Security/BlueTusk.Security.csproj",
+        "src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj",
+        "src/BlueTusk.Transport/BlueTusk.Transport.csproj",
+        "src/BlueTusk.TypeSystem/BlueTusk.TypeSystem.csproj",
         "templates/BlueTusk.Extension/BlueTusk.Templates.csproj",
-        "tooling"
+        "tooling/BlueTusk.Tool/BlueTusk.Tool.csproj"
       ]
     },
     "Streams": {
       "versionFile": "eng/versions/Streams.props",
-      "publishable": true,
+      "publication": {
+        "enabled": false,
+        "channel": "stable",
+        "tagPrefix": "streams",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "streams-release-endurance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
       "releaseDependencies": [
         "Provider"
       ],
@@ -34,7 +89,25 @@
     },
     "Sync": {
       "versionFile": "eng/versions/Sync.props",
-      "publishable": false,
+      "publication": {
+        "enabled": false,
+        "channel": "stable",
+        "tagPrefix": "sync",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "sync-release-endurance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
       "releaseDependencies": [
         "Provider",
         "Streams"
@@ -52,7 +125,19 @@
     },
     "Live": {
       "versionFile": "eng/versions/Live.props",
-      "publishable": true,
+      "publication": {
+        "enabled": false,
+        "channel": "stable",
+        "tagPrefix": "live",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
       "releaseDependencies": [
         "Provider",
         "Streams"
@@ -76,7 +161,19 @@
     },
     "ControlPlane": {
       "versionFile": "eng/versions/ControlPlane.props",
-      "publishable": false,
+      "publication": {
+        "enabled": false,
+        "channel": "stable",
+        "tagPrefix": "control-plane",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
       "releaseDependencies": [
         "Provider",
         "Streams",
@@ -90,7 +187,19 @@
     },
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",
-      "publishable": false,
+      "publication": {
+        "enabled": false,
+        "channel": "preview",
+        "tagPrefix": "continuous-graph",
+        "requiredWorkflowEvidence": [
+          {
+            "workflowFile": "build.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          }
+        ]
+      },
       "releaseDependencies": [
         "Provider",
         "Live",

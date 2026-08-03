@@ -107,9 +107,9 @@ universal throughput claims.
 The `0.1.0-preview.1` release train has passed its final preview audit. The
 PostgreSQL 15–19 matrix persists initial and update replay in the production
 store and drives signed disconnect/resume delivery through real SSE,
-SignalR/WebSockets, and HTTP/2 gRPC endpoints. The Live manifest is enabled for
-the independent release workflow; no package is published without an explicit
-publish-enabled dispatch or matching Live version tag. See the
+SignalR/WebSockets, and HTTP/2 gRPC endpoints. Live candidate packages are
+reproducible, but publication is disabled until its V1 dependencies and
+exact-commit release gates pass. See the
 [preview release notes](release-notes-0.1.0-preview.1.md) for exact scope and
 boundaries.
 
