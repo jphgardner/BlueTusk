@@ -121,6 +121,47 @@ jobs:
           --logger trx
           --results-directory artifacts/test-results/redis-streams
 
+  nats-sync-integration:
+    name: NATS JetStream Sync recovery
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start NATS JetStream
+        run: |
+          docker run --detach --name bluetusk-nats --publish 4222:4222 nats:2.14-alpine -js
+          for attempt in $(seq 1 20); do
+            if nc -z 127.0.0.1 4222; then exit 0; fi
+            sleep 1
+          done
+          docker logs bluetusk-nats
+          exit 1
+
+      - name: Run NATS transaction and snapshot recovery
+        env:
+          BLUETUSK_NATS_URL: nats://localhost:4222
+        run: >-
+          dotnet test tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/nats-sync
+
+      - name: Capture NATS logs on failure
+        if: failure()
+        run: docker logs bluetusk-nats
+
+      - name: Stop NATS
+        if: always()
+        run: docker rm --force bluetusk-nats
+
   extension-integration:
     name: ${{ matrix.name }} dedicated extension image
     runs-on: ubuntu-latest

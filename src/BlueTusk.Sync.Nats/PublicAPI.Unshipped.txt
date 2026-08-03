@@ -1,0 +1,141 @@
+#nullable enable
+BlueTusk.Sync.Nats.NatsSyncDestination
+BlueTusk.Sync.Nats.NatsSyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Nats.NatsSyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
+BlueTusk.Sync.Nats.NatsSyncDestination.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.Nats.NatsSyncDestination.CompleteSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotComplete! complete, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Nats.NatsSyncDestination.Name.get -> string!
+BlueTusk.Sync.Nats.NatsSyncDestination.NatsSyncDestination(BlueTusk.Sync.Nats.NatsSyncOptions! options) -> void
+BlueTusk.Sync.Nats.NatsSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.Nats.NatsSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Nats.NatsSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Nats.NatsSyncEnvelope
+BlueTusk.Sync.Nats.NatsSyncEnvelope.FormatVersion.get -> int
+BlueTusk.Sync.Nats.NatsSyncEnvelope.Kind.get -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
+BlueTusk.Sync.Nats.NatsSyncEnvelope.Mutations.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.Nats.NatsSyncMutation!>!
+BlueTusk.Sync.Nats.NatsSyncEnvelope.PipelineId.get -> string!
+BlueTusk.Sync.Nats.NatsSyncEnvelope.Snapshot.get -> BlueTusk.Sync.Nats.NatsSyncSnapshot?
+BlueTusk.Sync.Nats.NatsSyncEnvelope.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
+BlueTusk.Sync.Nats.NatsSyncEnvelope.Transaction.get -> BlueTusk.Sync.Nats.NatsSyncTransaction?
+BlueTusk.Sync.Nats.NatsSyncEnvelope.Transform.get -> BlueTusk.Sync.SyncTransformVersion!
+BlueTusk.Sync.Nats.NatsSyncEnvelopeException
+BlueTusk.Sync.Nats.NatsSyncEnvelopeException.NatsSyncEnvelopeException(string! message) -> void
+BlueTusk.Sync.Nats.NatsSyncEnvelopeException.NatsSyncEnvelopeException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
+BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.SnapshotBatch = 4 -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
+BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.SnapshotComplete = 5 -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
+BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.SnapshotReset = 2 -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
+BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.SnapshotStart = 3 -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
+BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.Transaction = 1 -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
+BlueTusk.Sync.Nats.NatsSyncEnvelopeReader
+BlueTusk.Sync.Nats.NatsSyncException
+BlueTusk.Sync.Nats.NatsSyncException.NatsSyncException(string! message) -> void
+BlueTusk.Sync.Nats.NatsSyncException.NatsSyncException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Nats.NatsSyncMutation
+BlueTusk.Sync.Nats.NatsSyncMutation.<Clone>$() -> BlueTusk.Sync.Nats.NatsSyncMutation!
+BlueTusk.Sync.Nats.NatsSyncMutation.Collection.get -> string!
+BlueTusk.Sync.Nats.NatsSyncMutation.Collection.init -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.Content.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Sync.Nats.NatsSyncMutation.Content.init -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.ContentType.get -> string?
+BlueTusk.Sync.Nats.NatsSyncMutation.ContentType.init -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.Deconstruct(out string! StableId, out BlueTusk.Sync.SyncMutationKind Kind, out string! Collection, out string? Key, out System.ReadOnlyMemory<byte> Content, out string? ContentType, out string? PartitionKey) -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.Equals(BlueTusk.Sync.Nats.NatsSyncMutation? other) -> bool
+BlueTusk.Sync.Nats.NatsSyncMutation.Key.get -> string?
+BlueTusk.Sync.Nats.NatsSyncMutation.Key.init -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.Kind.get -> BlueTusk.Sync.SyncMutationKind
+BlueTusk.Sync.Nats.NatsSyncMutation.Kind.init -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.NatsSyncMutation(string! StableId, BlueTusk.Sync.SyncMutationKind Kind, string! Collection, string? Key, System.ReadOnlyMemory<byte> Content, string? ContentType, string? PartitionKey) -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.PartitionKey.get -> string?
+BlueTusk.Sync.Nats.NatsSyncMutation.PartitionKey.init -> void
+BlueTusk.Sync.Nats.NatsSyncMutation.StableId.get -> string!
+BlueTusk.Sync.Nats.NatsSyncMutation.StableId.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions
+BlueTusk.Sync.Nats.NatsSyncOptions.<Clone>$() -> BlueTusk.Sync.Nats.NatsSyncOptions!
+BlueTusk.Sync.Nats.NatsSyncOptions.CreateStream.get -> bool
+BlueTusk.Sync.Nats.NatsSyncOptions.CreateStream.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.DuplicateWindow.get -> System.TimeSpan
+BlueTusk.Sync.Nats.NatsSyncOptions.DuplicateWindow.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.Equals(BlueTusk.Sync.Nats.NatsSyncOptions? other) -> bool
+BlueTusk.Sync.Nats.NatsSyncOptions.JetStream.get -> NATS.Client.JetStream.INatsJSContext!
+BlueTusk.Sync.Nats.NatsSyncOptions.JetStream.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.MaxAge.get -> System.TimeSpan
+BlueTusk.Sync.Nats.NatsSyncOptions.MaxAge.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.MaxBytes.get -> long
+BlueTusk.Sync.Nats.NatsSyncOptions.MaxBytes.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.MaxMessageBytes.get -> int
+BlueTusk.Sync.Nats.NatsSyncOptions.MaxMessageBytes.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.NatsSyncOptions() -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.PublishRetryAttempts.get -> int
+BlueTusk.Sync.Nats.NatsSyncOptions.PublishRetryAttempts.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.PublishRetryDelay.get -> System.TimeSpan
+BlueTusk.Sync.Nats.NatsSyncOptions.PublishRetryDelay.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.Replicas.get -> int
+BlueTusk.Sync.Nats.NatsSyncOptions.Replicas.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.StreamName.get -> string!
+BlueTusk.Sync.Nats.NatsSyncOptions.StreamName.init -> void
+BlueTusk.Sync.Nats.NatsSyncOptions.SubjectPrefix.get -> string!
+BlueTusk.Sync.Nats.NatsSyncOptions.SubjectPrefix.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot
+BlueTusk.Sync.Nats.NatsSyncSnapshot.<Clone>$() -> BlueTusk.Sync.Nats.NatsSyncSnapshot!
+BlueTusk.Sync.Nats.NatsSyncSnapshot.AbandonedEpoch.get -> System.Guid?
+BlueTusk.Sync.Nats.NatsSyncSnapshot.AbandonedEpoch.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.BatchSequence.get -> long?
+BlueTusk.Sync.Nats.NatsSyncSnapshot.BatchSequence.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.ConsistentPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.Nats.NatsSyncSnapshot.ConsistentPosition.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.Deconstruct(out System.Guid Epoch, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ConsistentPosition, out System.DateTimeOffset StartedAt, out System.Guid? AbandonedEpoch, out string? Reason, out int? TableCount, out long? RowCount, out string? TableIdentity, out long? BatchSequence, out bool? IsLastForTable) -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.Epoch.get -> System.Guid
+BlueTusk.Sync.Nats.NatsSyncSnapshot.Epoch.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.Equals(BlueTusk.Sync.Nats.NatsSyncSnapshot? other) -> bool
+BlueTusk.Sync.Nats.NatsSyncSnapshot.IsLastForTable.get -> bool?
+BlueTusk.Sync.Nats.NatsSyncSnapshot.IsLastForTable.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.NatsSyncSnapshot(System.Guid Epoch, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ConsistentPosition, System.DateTimeOffset StartedAt, System.Guid? AbandonedEpoch, string? Reason, int? TableCount, long? RowCount, string? TableIdentity, long? BatchSequence, bool? IsLastForTable) -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.Reason.get -> string?
+BlueTusk.Sync.Nats.NatsSyncSnapshot.Reason.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.RowCount.get -> long?
+BlueTusk.Sync.Nats.NatsSyncSnapshot.RowCount.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.StartedAt.get -> System.DateTimeOffset
+BlueTusk.Sync.Nats.NatsSyncSnapshot.StartedAt.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.TableCount.get -> int?
+BlueTusk.Sync.Nats.NatsSyncSnapshot.TableCount.init -> void
+BlueTusk.Sync.Nats.NatsSyncSnapshot.TableIdentity.get -> string?
+BlueTusk.Sync.Nats.NatsSyncSnapshot.TableIdentity.init -> void
+BlueTusk.Sync.Nats.NatsSyncStreamConfigurationException
+BlueTusk.Sync.Nats.NatsSyncStreamConfigurationException.NatsSyncStreamConfigurationException(string! message) -> void
+BlueTusk.Sync.Nats.NatsSyncTransaction
+BlueTusk.Sync.Nats.NatsSyncTransaction.<Clone>$() -> BlueTusk.Sync.Nats.NatsSyncTransaction!
+BlueTusk.Sync.Nats.NatsSyncTransaction.CommitEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.Nats.NatsSyncTransaction.CommitEndPosition.init -> void
+BlueTusk.Sync.Nats.NatsSyncTransaction.CommitTimestamp.get -> System.DateTimeOffset
+BlueTusk.Sync.Nats.NatsSyncTransaction.CommitTimestamp.init -> void
+BlueTusk.Sync.Nats.NatsSyncTransaction.Deconstruct(out uint TransactionId, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitEndPosition, out System.DateTimeOffset CommitTimestamp, out BlueTusk.Streams.ChangeTransactionOutcome Outcome, out string? GlobalTransactionId) -> void
+BlueTusk.Sync.Nats.NatsSyncTransaction.Equals(BlueTusk.Sync.Nats.NatsSyncTransaction? other) -> bool
+BlueTusk.Sync.Nats.NatsSyncTransaction.GlobalTransactionId.get -> string?
+BlueTusk.Sync.Nats.NatsSyncTransaction.GlobalTransactionId.init -> void
+BlueTusk.Sync.Nats.NatsSyncTransaction.NatsSyncTransaction(uint TransactionId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitEndPosition, System.DateTimeOffset CommitTimestamp, BlueTusk.Streams.ChangeTransactionOutcome Outcome, string? GlobalTransactionId) -> void
+BlueTusk.Sync.Nats.NatsSyncTransaction.Outcome.get -> BlueTusk.Streams.ChangeTransactionOutcome
+BlueTusk.Sync.Nats.NatsSyncTransaction.Outcome.init -> void
+BlueTusk.Sync.Nats.NatsSyncTransaction.TransactionId.get -> uint
+BlueTusk.Sync.Nats.NatsSyncTransaction.TransactionId.init -> void
+override BlueTusk.Sync.Nats.NatsSyncMutation.Equals(object? obj) -> bool
+override BlueTusk.Sync.Nats.NatsSyncMutation.GetHashCode() -> int
+override BlueTusk.Sync.Nats.NatsSyncMutation.ToString() -> string!
+override BlueTusk.Sync.Nats.NatsSyncOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.Nats.NatsSyncOptions.GetHashCode() -> int
+override BlueTusk.Sync.Nats.NatsSyncOptions.ToString() -> string!
+override BlueTusk.Sync.Nats.NatsSyncSnapshot.Equals(object? obj) -> bool
+override BlueTusk.Sync.Nats.NatsSyncSnapshot.GetHashCode() -> int
+override BlueTusk.Sync.Nats.NatsSyncSnapshot.ToString() -> string!
+override BlueTusk.Sync.Nats.NatsSyncTransaction.Equals(object? obj) -> bool
+override BlueTusk.Sync.Nats.NatsSyncTransaction.GetHashCode() -> int
+override BlueTusk.Sync.Nats.NatsSyncTransaction.ToString() -> string!
+static BlueTusk.Sync.Nats.NatsSyncEnvelopeReader.Decode(System.ReadOnlySpan<byte> payload) -> BlueTusk.Sync.Nats.NatsSyncEnvelope!
+static BlueTusk.Sync.Nats.NatsSyncMutation.operator !=(BlueTusk.Sync.Nats.NatsSyncMutation? left, BlueTusk.Sync.Nats.NatsSyncMutation? right) -> bool
+static BlueTusk.Sync.Nats.NatsSyncMutation.operator ==(BlueTusk.Sync.Nats.NatsSyncMutation? left, BlueTusk.Sync.Nats.NatsSyncMutation? right) -> bool
+static BlueTusk.Sync.Nats.NatsSyncOptions.operator !=(BlueTusk.Sync.Nats.NatsSyncOptions? left, BlueTusk.Sync.Nats.NatsSyncOptions? right) -> bool
+static BlueTusk.Sync.Nats.NatsSyncOptions.operator ==(BlueTusk.Sync.Nats.NatsSyncOptions? left, BlueTusk.Sync.Nats.NatsSyncOptions? right) -> bool
+static BlueTusk.Sync.Nats.NatsSyncSnapshot.operator !=(BlueTusk.Sync.Nats.NatsSyncSnapshot? left, BlueTusk.Sync.Nats.NatsSyncSnapshot? right) -> bool
+static BlueTusk.Sync.Nats.NatsSyncSnapshot.operator ==(BlueTusk.Sync.Nats.NatsSyncSnapshot? left, BlueTusk.Sync.Nats.NatsSyncSnapshot? right) -> bool
+static BlueTusk.Sync.Nats.NatsSyncTransaction.operator !=(BlueTusk.Sync.Nats.NatsSyncTransaction? left, BlueTusk.Sync.Nats.NatsSyncTransaction? right) -> bool
+static BlueTusk.Sync.Nats.NatsSyncTransaction.operator ==(BlueTusk.Sync.Nats.NatsSyncTransaction? left, BlueTusk.Sync.Nats.NatsSyncTransaction? right) -> bool
