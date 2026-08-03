@@ -83,8 +83,8 @@ The [Streams release train](docs/streams/README.md) has passed its first-preview
 implementation gate with bounded disk spill, durable checkpoints, direct groups,
 PostgreSQL relay fan-out, typed mappings, and snapshot bootstrap. [Sync](docs/sync/README.md)
 is in Phase 5 with its kernel, four destinations, reconciliation/repair, safe
-rebuild orchestration, and in-process hosting implemented behind a non-publishable
-release gate.
+rebuild orchestration, versioned transformation composition, and in-process
+hosting implemented behind a non-publishable release gate.
 
 ## Status
 

@@ -38,6 +38,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 5 slice: bounded count/key/content-hash reconciliation, idempotent repair, and PostgreSQL, Redis, and OpenSearch native readers/sinks
 - [x] Phase 5 slice: destination-neutral zero-downtime rebuild coordinator, authoritative verification, cutover barrier, worker handoff, and OpenSearch alias swap
 - [x] Phase 5 slice: in-process hosted workers, restart-aware durable-relay snapshot source, lease fencing, health, telemetry, Aspire, retry, rate limiting, and backpressure
+- [x] Phase 5 slice: fingerprinted transform composition with filtering, bounded JSON redaction/enrichment/flattening, and tenant-safe routing
 - [x] Phase 5 slice: redacted Sync control-plane read models plus separately authorized, confirmed, and audited retry/reconcile/rebuild dashboard controls
 - [x] Phase 5 slice: four-destination 24-hour endurance runner, versioned evidence report, local smoke path, and confirmed self-hosted workflow
 - [ ] Phase 5 release gate: complete and archive one successful 24-hour Sync endurance report (a short orchestration smoke is not equivalent)

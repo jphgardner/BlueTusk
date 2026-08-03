@@ -15,6 +15,23 @@ Transform definitions carry a canonical SHA-256 fingerprint. A mismatch moves
 the pipeline to `Rebuilding` and requires an explicit rebuild or migration;
 BlueTusk does not silently reinterpret existing destination data.
 
+`CompositeSyncTransform` builds that fingerprint from the source mapper and
+every ordered transform stage. `SyncPredicateTransformStage` supplies explicit,
+versioned filtering. `JsonSyncTransformStage` supplies bounded JSON redaction,
+root enrichment, object flattening, and tenant routing. Its configuration is
+canonicalised into the pipeline fingerprint, so changing a predicate version,
+redaction path, enrichment value, flatten separator, tenant path, or size limit
+requires an explicit rebuild or migration.
+
+JSON materialisation accepts object-valued `application/json` payloads only and
+enforces input, output, and configuration bounds. Redaction paths always use
+dotted source paths even when flattened output uses another separator. Tenant
+routing is resolved before redaction, rejects missing or empty tenant values by
+default, requires deletes to retain their partition key, and rejects unscoped
+collection deletes. Stages may filter and rewrite mapped content but cannot
+invent a transaction change ID or snapshot row ID. Those rules keep replay and
+destination deduplication stable.
+
 Poison transformations pause by default. `QuarantineAndAdvance` is accepted only
 with an explicit durable quarantine sink, and the source delivery is not
 acknowledged until that sink confirms storage. Destination outages and rejected
