@@ -1,6 +1,6 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on Phase 3 typed mapping, safe snapshot bootstrap, and hosted integration.
+BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, typed core mappings, snapshot/transaction consumer lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on safe snapshot bootstrap and hosted integration.
 
 ## Implemented kernel
 
@@ -82,6 +82,8 @@ Only the active fenced lease may mutate a checkpoint. Backward positions, stale 
 See [checkpoint and lease stores](state-stores.md) for backend guarantees, file-store deployment constraints, and the custom-store conformance kit.
 
 See the [PostgreSQL durable relay](durable-relay.md) for source append ordering, group fan-out/replay, retention, storage bounds, and health signals.
+
+See [typed mappings](typed-mappings.md) for convention and explicit mappings, schema and mapping fingerprints, partial-row safety, decoding policy, and the snapshot consumer lifecycle.
 
 ## Performance baseline
 

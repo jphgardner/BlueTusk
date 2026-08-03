@@ -15,6 +15,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 2 slice: versioned binary relay envelopes, fenced source append, independent relay groups, replay, retention, capacity limits, and health signals across PostgreSQL 15–19
 - [x] Phase 2 slice: Redis server-clock checkpoint/lease store with atomic script conformance and a dedicated Redis 8 CI gate
 - [x] Phase 2: checkpoint stores, leases, direct groups, and durable PostgreSQL relay
+- [x] Phase 3 slice: typed core mappings, canonical schema/mapping fingerprints, explicit partial-row safety, decoding/drift policy, and snapshot/transaction consumer lifecycle
 - [ ] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams preview
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
