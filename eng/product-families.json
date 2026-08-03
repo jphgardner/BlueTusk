@@ -16,7 +16,9 @@
       "versionFile": "eng/versions/Streams.props",
       "publishable": false,
       "packages": [
-        "src/BlueTusk.Streams/BlueTusk.Streams.csproj"
+        "src/BlueTusk.Streams/BlueTusk.Streams.csproj",
+        "src/BlueTusk.Streams.Storage.File/BlueTusk.Streams.Storage.File.csproj",
+        "src/BlueTusk.Streams.Testing/BlueTusk.Streams.Testing.csproj"
       ]
     },
     "Sync": {

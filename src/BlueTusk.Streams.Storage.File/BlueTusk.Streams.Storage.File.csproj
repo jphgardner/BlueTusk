@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
+    <Description>Atomic single-node checkpoint and lease storage for BlueTusk Streams.</Description>
+    <PackageTags>postgresql;cdc;logical-replication;checkpoint;file</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Streams.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,0 +1,26 @@
+#nullable enable
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStore
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStore.AcquireAsync(BlueTusk.Streams.ChangeStreamStateKey key, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeLeaseAcquireResult!>
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStore.CompareExchangeAsync(BlueTusk.Streams.ChangeStreamStateKey key, long expectedGeneration, BlueTusk.Streams.ChangeStreamCheckpoint! replacement, BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeCheckpointWriteResult!>
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStore.FileChangeStreamStateStore(BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions! options, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStore.ReadAsync(BlueTusk.Streams.ChangeStreamStateKey key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamCheckpoint?>
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStore.ReleaseAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStore.RenewAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamLease?>
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreException
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreException.FileChangeStreamStateStoreException(string! message, System.Exception! innerException) -> void
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreException.FileChangeStreamStateStoreException(string! message) -> void
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.<Clone>$() -> BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions!
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.DirectoryPath.get -> string!
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.DirectoryPath.init -> void
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.Equals(BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? other) -> bool
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.FileChangeStreamStateStoreOptions() -> void
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.LockRetryDelay.get -> System.TimeSpan
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.LockRetryDelay.init -> void
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.LockTimeout.get -> System.TimeSpan
+BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.LockTimeout.init -> void
+override BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.Equals(object? obj) -> bool
+override BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.GetHashCode() -> int
+override BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.ToString() -> string!
+static BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.operator !=(BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? left, BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? right) -> bool
+static BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.operator ==(BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? left, BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? right) -> bool

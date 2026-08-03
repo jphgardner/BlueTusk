@@ -20,5 +20,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Storage.File\BlueTusk.Streams.Storage.File.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
   </ItemGroup>
 </Project>
