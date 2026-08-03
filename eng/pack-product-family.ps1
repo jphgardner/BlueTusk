@@ -7,6 +7,7 @@ param(
     [string] $Configuration = 'Release',
     [string] $Output = 'artifacts/packages',
     [switch] $ValidateOnly,
+    [switch] $Candidate,
     [switch] $NoRestore
 )
 
@@ -21,6 +22,41 @@ $definition = $manifest.families.$Family
 if ($null -eq $definition)
 {
     throw "Product family '$Family' is not registered."
+}
+
+$releaseDependencies = @()
+if ($null -ne $definition.PSObject.Properties['releaseDependencies'])
+{
+    $releaseDependencies = @($definition.releaseDependencies)
+}
+
+foreach ($releaseDependency in $releaseDependencies)
+{
+    if ($releaseDependency -eq $Family)
+    {
+        throw "Product family '$Family' cannot depend on itself for release."
+    }
+
+    if ($null -eq $manifest.families.PSObject.Properties[$releaseDependency])
+    {
+        throw "Product family '$Family' references unknown release dependency '$releaseDependency'."
+    }
+}
+
+if (@($releaseDependencies | Sort-Object -Unique).Count -ne $releaseDependencies.Count)
+{
+    throw "Product family '$Family' declares duplicate release dependencies."
+}
+
+$blockedReleaseDependencies = @(
+    $releaseDependencies | Where-Object {
+        $manifest.families.$_.publishable -ne $true
+    }
+)
+
+if ($definition.publishable -eq $true -and $blockedReleaseDependencies.Count -gt 0)
+{
+    throw "Product family '$Family' is marked publishable while release dependencies remain gated: $($blockedReleaseDependencies -join ', ')."
 }
 
 $versionPath = Join-Path $repositoryRoot $definition.versionFile
@@ -47,31 +83,52 @@ if ([string]::IsNullOrWhiteSpace($versionPrefix))
 
 $projects = foreach ($entry in $definition.packages)
 {
-    $candidate = Join-Path $repositoryRoot $entry
-    if (-not (Test-Path -LiteralPath $candidate))
+    $packageEntryPath = Join-Path $repositoryRoot $entry
+    if (-not (Test-Path -LiteralPath $packageEntryPath))
     {
         throw "Product family '$Family' references missing package root '$entry'."
     }
 
-    if ((Get-Item -LiteralPath $candidate) -is [System.IO.DirectoryInfo])
+    if ((Get-Item -LiteralPath $packageEntryPath) -is [System.IO.DirectoryInfo])
     {
-        Get-ChildItem -LiteralPath $candidate -Filter '*.csproj' -Recurse -File
+        Get-ChildItem -LiteralPath $packageEntryPath -Filter '*.csproj' -Recurse -File
     }
     else
     {
-        Get-Item -LiteralPath $candidate
+        Get-Item -LiteralPath $packageEntryPath
     }
 }
 
 $projects = @($projects | Sort-Object FullName -Unique)
+$projects = @(
+    $projects | Where-Object {
+        [xml] $projectDocument = Get-Content -LiteralPath $_.FullName -Raw
+        $declaredFamily = @(
+            $projectDocument.SelectNodes('//BlueTuskProductFamily') |
+                ForEach-Object { $_.InnerText } |
+                Where-Object { -not [string]::IsNullOrWhiteSpace($_) } |
+                Select-Object -First 1
+        )
+        $projectFamily = if ($declaredFamily.Count -eq 0)
+        {
+            'Provider'
+        }
+        else
+        {
+            [string] $declaredFamily[0]
+        }
+
+        $projectFamily -eq $Family
+    }
+)
 $npmPackages = @()
 if ($null -ne $definition.PSObject.Properties['npmPackages'])
 {
     $npmPackages = @(
         foreach ($entry in $definition.npmPackages)
         {
-            $candidate = Join-Path $repositoryRoot $entry
-            $manifestPath = Join-Path $candidate 'package.json'
+            $npmPackagePath = Join-Path $repositoryRoot $entry
+            $manifestPath = Join-Path $npmPackagePath 'package.json'
             if (-not (Test-Path -LiteralPath $manifestPath))
             {
                 throw "Product family '$Family' references missing npm package '$entry'."
@@ -83,20 +140,42 @@ if ($null -ne $definition.PSObject.Properties['npmPackages'])
                 throw "npm package '$($npmManifest.name)' has version '$($npmManifest.version)', expected '$familyVersion'."
             }
 
-            Get-Item -LiteralPath $candidate
+            Get-Item -LiteralPath $npmPackagePath
         }
     )
 }
 
 if ($ValidateOnly)
 {
-    Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); publishable=$($definition.publishable)."
+    $dependencySummary = if ($releaseDependencies.Count -eq 0)
+    {
+        'none'
+    }
+    else
+    {
+        $releaseDependencies -join ','
+    }
+    $blockedSummary = if ($blockedReleaseDependencies.Count -eq 0)
+    {
+        'none'
+    }
+    else
+    {
+        $blockedReleaseDependencies -join ','
+    }
+
+    Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); publishable=$($definition.publishable); releaseDependencies=$dependencySummary; blockedDependencies=$blockedSummary."
     return
 }
 
-if ($definition.publishable -ne $true)
+if ($definition.publishable -ne $true -and -not $Candidate)
 {
     throw "Product family '$Family' has not passed its publication gate."
+}
+
+if ($Candidate -and $definition.publishable -ne $true)
+{
+    Write-Warning "Packing gated $Family candidate artifacts for verification only. They must not be published."
 }
 
 if ($projects.Count -eq 0)

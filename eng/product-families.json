@@ -4,6 +4,7 @@
     "Provider": {
       "versionFile": "eng/versions/Provider.props",
       "publishable": true,
+      "releaseDependencies": [],
       "packages": [
         "src",
         "extensions",
@@ -15,6 +16,9 @@
     "Streams": {
       "versionFile": "eng/versions/Streams.props",
       "publishable": true,
+      "releaseDependencies": [
+        "Provider"
+      ],
       "packages": [
         "src/BlueTusk.Streams/BlueTusk.Streams.csproj",
         "src/BlueTusk.Streams.Aspire/BlueTusk.Streams.Aspire.csproj",
@@ -31,6 +35,10 @@
     "Sync": {
       "versionFile": "eng/versions/Sync.props",
       "publishable": false,
+      "releaseDependencies": [
+        "Provider",
+        "Streams"
+      ],
       "packages": [
         "src/BlueTusk.Sync/BlueTusk.Sync.csproj",
         "src/BlueTusk.Sync.Aspire/BlueTusk.Sync.Aspire.csproj",
@@ -45,6 +53,10 @@
     "Live": {
       "versionFile": "eng/versions/Live.props",
       "publishable": false,
+      "releaseDependencies": [
+        "Provider",
+        "Streams"
+      ],
       "npmPackages": [
         "clients/live",
         "clients/live-angular",
@@ -65,6 +77,13 @@
     "ControlPlane": {
       "versionFile": "eng/versions/ControlPlane.props",
       "publishable": false,
+      "releaseDependencies": [
+        "Provider",
+        "Streams",
+        "Sync",
+        "Live",
+        "ContinuousGraph"
+      ],
       "packages": [
         "src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj",
         "src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj"
@@ -73,6 +92,10 @@
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",
       "publishable": false,
+      "releaseDependencies": [
+        "Provider",
+        "Live"
+      ],
       "packages": [
         "src/BlueTusk.ContinuousGraph/BlueTusk.ContinuousGraph.csproj"
       ]

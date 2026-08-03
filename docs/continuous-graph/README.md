@@ -136,8 +136,13 @@ value is HTML encoded.
 
 ## Release state
 
-The package is independently versioned as `0.1.0-preview.1` and remains
-non-publishable until the final packaging and repository-wide audit complete.
+The package is independently versioned as `0.1.0-preview.1` and has passed its
+Phase 7 implementation and package-verification gates. Its inspected NuGet pack
+correctly depends on the Provider, EF, Live, and EF Core packages. The family
+remains non-publishable until the Live release dependency passes, and the
+release script machine-enforces that ordering.
+See the [preview release notes](release-notes-0.1.0-preview.1.md) for the exact
+scope and boundaries.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,
 Live session handoff, unsupported-server rejection, and fail-closed query
 shapes. The opt-in PostgreSQL 19 acceptance test creates a real property graph,
@@ -160,3 +165,9 @@ machine the ShortRun recorded 988 µs/103,446 B, 2.827 ms/666,055 B, and
 4.225 ms/888,159 B respectively. These three-iteration values are regression
 budgets, not service-level objectives; see the
 [benchmark guide](../../benchmarks/README.md).
+
+Reproduce the gated NuGet candidate without opening the publication gate:
+
+```powershell
+./eng/pack-product-family.ps1 -Family ContinuousGraph -Candidate -NoRestore
+```

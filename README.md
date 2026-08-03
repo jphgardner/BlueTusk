@@ -85,10 +85,15 @@ PostgreSQL relay fan-out, typed mappings, and snapshot bootstrap. [Sync](docs/sy
 is in Phase 5 with its kernel, four destinations, reconciliation/repair, safe
 rebuild orchestration, versioned transformation composition, and in-process
 hosting implemented behind a non-publishable release gate.
-[Continuous Graph](docs/continuous-graph/README.md) now has its first
-capability-guarded registration slice: exact graph-element dependencies,
-bounded deterministic `GRAPH_TABLE` plans, and authoritative Live
-requery/diff, also behind a non-publishable preview gate.
+[Live](docs/live/README.md) has its authorised query engine, transports,
+framework clients, expanded vetted query shapes, and adversarial/load gates,
+but remains non-publishable pending its final real-PostgreSQL release audit.
+[Continuous Graph 0.1.0-preview.1](docs/continuous-graph/release-notes-0.1.0-preview.1.md)
+has passed its Phase 7 implementation and package-verification gates with PostgreSQL
+19 capability guards, exact graph-element invalidation, authoritative
+`GRAPH_TABLE` requery/diff, operational visibility, samples, and live workload
+budgets. Its publication gate remains closed until its Live release dependency
+passes.
 
 ## Status
 

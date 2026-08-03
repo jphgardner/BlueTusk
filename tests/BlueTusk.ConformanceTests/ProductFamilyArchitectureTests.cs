@@ -36,6 +36,67 @@ public sealed class ProductFamilyArchitectureTests
     }
 
     [Fact]
+    public void Publishable_product_families_have_publishable_release_dependencies()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        using var manifest = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(repositoryRoot, "eng", "product-families.json")));
+        var families = manifest.RootElement.GetProperty("families");
+
+        foreach (var family in families.EnumerateObject())
+        {
+            var dependencies = family.Value.GetProperty("releaseDependencies")
+                .EnumerateArray()
+                .Select(dependency => dependency.GetString()!)
+                .ToArray();
+
+            Assert.Equal(
+                dependencies.Length,
+                dependencies.Distinct(StringComparer.Ordinal).Count());
+            Assert.DoesNotContain(family.Name, dependencies);
+            foreach (var dependency in dependencies)
+            {
+                Assert.True(
+                    families.TryGetProperty(dependency, out var dependencyFamily),
+                    $"{family.Name} declares unknown release dependency {dependency}.");
+                if (family.Value.GetProperty("publishable").GetBoolean())
+                {
+                    Assert.True(
+                        dependencyFamily.GetProperty("publishable").GetBoolean(),
+                        $"{family.Name} cannot be publishable before {dependency}.");
+                }
+            }
+        }
+    }
+
+    [Fact]
+    public void Cross_family_project_references_are_declared_release_dependencies()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        using var manifest = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(repositoryRoot, "eng", "product-families.json")));
+        var families = manifest.RootElement.GetProperty("families");
+
+        foreach (var project in FindProductProjects())
+        {
+            var dependencies = families.GetProperty(project.Family)
+                .GetProperty("releaseDependencies")
+                .EnumerateArray()
+                .Select(dependency => dependency.GetString()!)
+                .ToHashSet(StringComparer.Ordinal);
+
+            foreach (var reference in project.References)
+            {
+                var referencedFamily = GetProductFamily(reference) ?? "Provider";
+                if (!string.Equals(referencedFamily, project.Family, StringComparison.Ordinal))
+                {
+                    Assert.Contains(referencedFamily, dependencies);
+                }
+            }
+        }
+    }
+
+    [Fact]
     public void Application_products_cannot_reference_replication_internals()
     {
         foreach (var project in FindProductProjects())
@@ -93,11 +154,7 @@ public sealed class ProductFamilyArchitectureTests
         var document = XDocument.Load(path);
         var name = document.Descendants("AssemblyName").Select(element => element.Value).FirstOrDefault()
             ?? Path.GetFileNameWithoutExtension(path);
-        var family = ProductPrefixes
-            .Where(entry => name.Equals(entry.Key, StringComparison.Ordinal) ||
-                            name.StartsWith(entry.Key + ".", StringComparison.Ordinal))
-            .Select(entry => entry.Value)
-            .FirstOrDefault();
+        var family = GetProductFamily(name);
 
         if (family is null)
         {
@@ -120,6 +177,13 @@ public sealed class ProductFamilyArchitectureTests
 
         return new ProductProject(name, family, declaredFamily, references, imports);
     }
+
+    private static string? GetProductFamily(string projectName) =>
+        ProductPrefixes
+            .Where(entry => projectName.Equals(entry.Key, StringComparison.Ordinal) ||
+                            projectName.StartsWith(entry.Key + ".", StringComparison.Ordinal))
+            .Select(entry => entry.Value)
+            .FirstOrDefault();
 
     private static string FindRepositoryRoot()
     {

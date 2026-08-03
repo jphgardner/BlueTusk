@@ -65,6 +65,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 7 slice: executable PostgreSQL 19 fraud-transfer and network-health Continuous Graph applications
 - [x] Phase 7 slice: result-free Continuous Graph registry projection plus authorised, HTML-safe dashboard and API inventory
 - [x] Phase 7 slice: live PostgreSQL registration, 999-path authoritative requery, and affected-invalidation/diff benchmarks with checked-in allocation budgets
+- [x] Phase 7 slice: inspected 0.1.0-preview.1 NuGet pack plus machine-enforced cross-family publication ordering
+- [ ] Phase 7 release gate: publish Continuous Graph only after its Live release dependency passes
 - [ ] Phase 7: Continuous Graph preview
 
 The detailed contracts and release gates are maintained in the [real-time platform plan](realtime-platform/delivery-plan.md).
