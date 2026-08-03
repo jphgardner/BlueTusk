@@ -4,6 +4,7 @@
     <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
     <Description>Production PostgreSQL checkpoint, lease, and relay storage for BlueTusk Streams.</Description>
     <PackageTags>postgresql;cdc;logical-replication;checkpoint;relay</PackageTags>
+    <NoWarn>$(NoWarn);CA1711</NoWarn>
   </PropertyGroup>
 
   <Import Project="..\..\eng\versions\Streams.props" />

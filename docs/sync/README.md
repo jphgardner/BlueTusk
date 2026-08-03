@@ -27,9 +27,12 @@ contract. The shared count, key-set, and partitioned content-hash engine plus
 PostgreSQL, Redis, and OpenSearch repair paths are implemented and live-tested.
 The destination-neutral rebuild coordinator is implemented with an explicit
 cutover barrier, and the in-process hosting package provides named workers,
-health, telemetry, and one-way worker handoff. A production relay change-stream
-source adapter, dashboard integration, and endurance remain gated work. The Sync
-release train remains non-publishable until those remaining Phase 5 gates pass.
+health, telemetry, and one-way worker handoff. The production relay
+change-stream adapter provides bounded reads, continuous fenced lease renewal,
+and acknowledgement-after-destination ordering. Dashboard integration,
+restart-aware snapshot bootstrap, retry/rate-limit policy, and endurance remain
+gated work. The Sync release train remains non-publishable until those remaining
+Phase 5 gates pass.
 
 ## Shared destination conformance
 
@@ -119,6 +122,17 @@ runs the Streams snapshot-then-stream coordinator, and leaves a faulted worker
 isolated while the other registered pipelines continue. Source factories remain
 explicit so an application cannot accidentally share a replication session or
 consumer group between pipelines.
+
+For the running CDC leg, source factories can return attempts whose
+`CreateChangeStream()` constructs `PostgreSqlRelayChangeStream`. The stream owns
+one independently checkpointed relay group, keeps its fenced lease alive while
+a destination transaction is in flight, and advances the group sequence only
+when `SyncPipeline` acknowledges after the destination confirms the exact
+commit-end LSN. Nack, abandonment, or lease loss therefore causes safe
+at-least-once redelivery. Initial snapshot/restart orchestration must reserve a
+relay group before exporting the consistent snapshot; the dedicated
+restart-aware bootstrap source is the next gate and applications must not infer
+that setting a relay group to `Latest` proves a no-gap bootstrap.
 
 `BlueTuskSyncHealthRegistry` exposes immutable operational snapshots. The
 readiness check is unhealthy for faults, transform rebuild requirements, or

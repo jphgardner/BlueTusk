@@ -1,4 +1,5 @@
 #nullable enable
+BlueTusk.Streams.ChangeTransactionDelivery.ChangeTransactionDelivery(BlueTusk.Streams.ChangeTransaction! transaction, BlueTusk.Streams.IChangeDeliveryObserver! observer) -> void
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.ExistingSlotMode.get -> BlueTusk.Streams.PostgreSqlExistingSnapshotSlotMode
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.ExistingSlotMode.init -> void
 BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.<Clone>$() -> BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions!

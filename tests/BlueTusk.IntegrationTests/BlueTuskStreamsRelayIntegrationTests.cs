@@ -15,6 +15,80 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
         new(2026, 8, 3, 12, 0, 0, TimeSpan.Zero);
 
     [Fact]
+    public async Task PostgreSql_relay_change_stream_renews_fences_and_redelivers_until_acknowledged()
+    {
+        var connectionString = GetConnectionString();
+        var schema = "bluetusk_relay_stream_test_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        var relay = new PostgreSqlDurableChangeRelay(
+            new PostgreSqlStreamsStorageOptions
+            {
+                ControlDataSource = dataSource,
+                ControlSchema = schema,
+                MaxRelayStorageBytes = 1024 * 1024,
+            });
+        try
+        {
+            await relay.InitializeAsync();
+            var source = await relay.RegisterSourceAsync(SourceIdentity());
+            var sourceLease = Assert.IsType<ChangeStreamLease>(
+                (await relay.AcquireSourceLeaseAsync(
+                    source,
+                    "relay-source",
+                    TimeSpan.FromMinutes(1))).Lease);
+            var direct = CreateStream(source.Source);
+            await using (var directEnumerator = direct.ReadTransactionsAsync().GetAsyncEnumerator())
+            {
+                Assert.True(await directEnumerator.MoveNextAsync());
+                _ = await relay.AppendAsync(
+                    source,
+                    directEnumerator.Current.Transaction,
+                    sourceLease);
+            }
+
+            Assert.True(await relay.ReleaseSourceLeaseAsync(sourceLease));
+            var group = await relay.CreateConsumerGroupAsync(source, "sync-orders");
+            var firstStream = CreateRelayStream(relay, source, "sync-orders", "worker-a");
+            await using (var first = firstStream.ReadTransactionsAsync().GetAsyncEnumerator())
+            {
+                Assert.True(await first.MoveNextAsync());
+                Assert.Equal(1U, first.Current.Transaction.TransactionId);
+
+                var competing = CreateRelayStream(relay, source, "sync-orders", "worker-b");
+                await using var competingEnumerator =
+                    competing.ReadTransactionsAsync().GetAsyncEnumerator();
+                await Assert.ThrowsAsync<ChangeRelayLeaseUnavailableException>(
+                    () => competingEnumerator.MoveNextAsync().AsTask());
+
+                await Task.Delay(TimeSpan.FromMilliseconds(750));
+            }
+
+            var retryStream = CreateRelayStream(relay, source, "sync-orders", "worker-b");
+            await using (var retry = retryStream.ReadTransactionsAsync().GetAsyncEnumerator())
+            {
+                Assert.True(await retry.MoveNextAsync());
+                await retry.Current.AcknowledgeAsync();
+            }
+
+            var inspectionLease = Assert.IsType<ChangeRelayGroupLease>(
+                await relay.AcquireConsumerGroupAsync(
+                    group,
+                    "inspector",
+                    TimeSpan.FromMinutes(1)));
+            var empty = await relay.ReadConsumerGroupAsync(
+                inspectionLease,
+                maxTransactions: 1,
+                maxBytes: 1024 * 1024);
+            Assert.Empty(empty.Records);
+            Assert.Equal(1, empty.Group.CheckpointSequence);
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
+    [Fact]
     public async Task PostgreSql_relay_fans_out_replays_fences_and_retains_safely()
     {
         var connectionString = GetConnectionString();
@@ -435,6 +509,25 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
                 Envelope(new BlueTuskPgOutputCommit(Lsn(20), Lsn(21), Timestamp))),
             source,
             observer: observer);
+
+    private static PostgreSqlRelayChangeStream CreateRelayStream(
+        PostgreSqlDurableChangeRelay relay,
+        ChangeRelaySourceRegistration source,
+        string consumerGroup,
+        string ownerId) =>
+        new(
+            relay,
+            source,
+            new PostgreSqlRelayChangeStreamOptions
+            {
+                ConsumerGroup = consumerGroup,
+                OwnerId = ownerId,
+                EmptyReadDelay = TimeSpan.FromMilliseconds(10),
+                LeaseDuration = TimeSpan.FromMilliseconds(500),
+                LeaseRenewalInterval = TimeSpan.FromMilliseconds(100),
+                MaxTransactionsPerRead = 2,
+                MaxBytesPerRead = 1024 * 1024,
+            });
 
     private static ChangeSourceIdentity SourceIdentity() =>
         new("739463", "app", "orders_slot", "public:orders");

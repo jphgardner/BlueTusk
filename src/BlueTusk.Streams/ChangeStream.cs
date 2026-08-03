@@ -107,6 +107,19 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
     private readonly Func<Exception?, CancellationToken, ValueTask> _nack;
     private int _state;
 
+    public ChangeTransactionDelivery(
+        ChangeTransaction transaction,
+        IChangeDeliveryObserver observer)
+        : this(
+            transaction,
+            cancellationToken => observer.AcknowledgeAsync(transaction, cancellationToken),
+            (failure, cancellationToken) =>
+                observer.NackAsync(transaction, failure, cancellationToken))
+    {
+        ArgumentNullException.ThrowIfNull(transaction);
+        ArgumentNullException.ThrowIfNull(observer);
+    }
+
     internal ChangeTransactionDelivery(
         ChangeTransaction transaction,
         Func<CancellationToken, ValueTask> acknowledge,

@@ -50,32 +50,30 @@ Frame hashes detect accidental corruption; they are not a substitute for authent
 
 Create groups at the earliest retained position or at the latest source position. Each group owns its own database-clock lease, monotonically increasing fencing token, checkpoint sequence, and compare-and-swap generation. Reading with a stale lease fails; acknowledgement rechecks the lease and known relay sequence inside a locked PostgreSQL transaction.
 
+`PostgreSqlRelayChangeStream` is the normal application adapter. It exposes a relay group through `IChangeStream`, bounds every read by transaction count and encoded bytes, renews the database-clock lease while destination work is in flight, and acknowledges exactly one sequence only after the delivery is acknowledged. A nack, abandoned delivery, lease loss, or process failure leaves the sequence available for safe redelivery.
+
 ```csharp
-var group = await relay.CreateConsumerGroupAsync(
+IChangeStream stream = new PostgreSqlRelayChangeStream(
+    relay,
     sourceRegistration,
-    "search-index",
-    ChangeRelayConsumerGroupStart.EarliestAvailable);
-var lease = await relay.AcquireConsumerGroupAsync(
-    group,
-    uniqueWorkerId,
-    TimeSpan.FromSeconds(30));
+    new PostgreSqlRelayChangeStreamOptions
+    {
+        ConsumerGroup = "search-index",
+        OwnerId = uniqueWorkerId,
+        MaxTransactionsPerRead = 128,
+        MaxBytesPerRead = 8 * 1024 * 1024,
+        LeaseDuration = TimeSpan.FromSeconds(30),
+        LeaseRenewalInterval = TimeSpan.FromSeconds(10),
+    });
 
-var batch = await relay.ReadConsumerGroupAsync(
-    lease!,
-    maxTransactions: 128,
-    maxBytes: 8 * 1024 * 1024);
-
-foreach (var record in batch.Records)
+await foreach (var delivery in stream.ReadTransactionsAsync(stoppingToken))
 {
-    await ApplyTransactionIdempotentlyAsync(record.Transaction);
-    await relay.AcknowledgeConsumerGroupAsync(
-        lease!,
-        batch.Group.StoreGeneration,
-        record.Sequence);
+    await ApplyTransactionIdempotentlyAsync(delivery.Transaction, stoppingToken);
+    await delivery.AcknowledgeAsync(stoppingToken);
 }
 ```
 
-Applications should normally acknowledge and refresh the returned group generation after each record. Stable `ChangeId` values remain the destination deduplication key; the relay and Streams still promise at-least-once delivery, not exactly once.
+The stream is single-use and deliberately permits only one outstanding transaction. Its options require an explicit group and unique owner identity; a newly created group starts at the earliest retained position unless `Latest` is explicitly selected. Stable `ChangeId` values remain the destination deduplication key; the relay and Streams still promise at-least-once delivery, not exactly once.
 
 Consumer-group removal is a fenced state transition, not a row deletion. `RemoveConsumerGroupAsync` requires the expected store generation and an exact group-name confirmation. It clears the lease, increments the generation, records removal time, and leaves an inactive tombstone that cannot be silently recreated. The default `PreserveResumeWindow` mode continues to protect the removed group's unacknowledged records for `RemovedConsumerGroupRetentionWindow`. The explicitly destructive `ReleaseRetentionImmediately` mode can release that protection later, again with generation checking and confirmation.
 

@@ -5,7 +5,7 @@
   "files": [
     {
       "path": "src/BlueTusk.Streams/PublicAPI.Unshipped.txt",
-      "sha256": "71904c93f72d2625ab6e90118cf207adaef3e30d6473cf2eb8080ef059bfd556"
+      "sha256": "29f13c43fd165e7cc48b0750728e08974952b07555c0a7175d6c16f47d65170a"
     },
     {
       "path": "src/BlueTusk.Streams.Aspire/PublicAPI.Unshipped.txt",
@@ -29,7 +29,7 @@
     },
     {
       "path": "src/BlueTusk.Streams.Storage.PostgreSql/PublicAPI.Unshipped.txt",
-      "sha256": "4ec354c8b61c6ca5723684dd59b5138e340a6b6908028ce5aa1069fa2bee0131"
+      "sha256": "67db6ee518987bdaa844bd6aa26ba9cb9cbf7a206ea072bb9c2d3c082d60322e"
     },
     {
       "path": "src/BlueTusk.Streams.Storage.Redis/PublicAPI.Unshipped.txt",
