@@ -77,3 +77,13 @@ coalescing 100 relevant invalidations into one authoritative query, persisting
 the diff, and delivering it through bounded channels to 64 subscribers measured
 92.3 µs and 175,060 B. These ShortRun values are local regression evidence, not
 network end-to-end latency claims.
+
+The initial Continuous Graph report was added on 2026-08-03 against PostgreSQL
+19 Beta 2. Capability probing, graph metadata/dependency validation, EF
+translation, fingerprinting, and plan construction measured 988 µs and
+103,446 B. Authoritatively materialising 999 graph paths measured 2.827 ms and
+666,055 B. Processing one affected invalidation through the same PostgreSQL
+requery and a keyed immutable Live diff measured 4.225 ms and 888,159 B. The
+invalidation source is constant-time and in-memory, while the graph query and
+provider work are live. These are three-iteration ShortRun regression values,
+not production service-level objectives.

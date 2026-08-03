@@ -142,10 +142,11 @@ The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
 packages without warnings. Compiler-enforced public API/nullability baselines
 cover the stable core, replication, and extension-authoring seams. The final
 direct-and-transitive NuGet vulnerability audit covers the complete solution
-and reports zero vulnerable package entries. All 27 checked-in allocation
+and reports zero vulnerable package entries. All 30 checked-in allocation
 budgets pass, including command, typed reader, protocol writer,
 structured-codec, large-value streaming, replication, EF Core application,
-Live diff/replay/fan-out, and SQL/PGQ traversal paths.
+Live diff/replay/fan-out, SQL/PGQ traversal, and Continuous Graph registration,
+authoritative requery, and affected-invalidation paths.
 
 The live application benchmark gate adds fresh parameterized EF query
 compilation plus first execution, 100-entity materialization, normalized tracked
@@ -162,6 +163,14 @@ race suite separately proves exactly-once observation through either replay or
 the live channel across 64 concurrent reconnect/publication boundaries. These
 figures exclude database and network time and are used only as checked-in
 regression budgets.
+
+The live PostgreSQL 19 Continuous Graph gate records 988 µs/103,446 B for
+capability-guarded registration, 2.827 ms/666,055 B for authoritative
+materialisation of 999 graph paths, and 4.225 ms/888,159 B for an affected
+invalidation through authoritative requery plus keyed diff. The invalidation
+source is constant-time and in-memory, but the `GRAPH_TABLE` query and provider
+work are included. These ShortRun values are checked-in regression evidence,
+not production latency objectives.
 
 The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and
 managed allocation on parameterized and explicitly prepared scalar execution,

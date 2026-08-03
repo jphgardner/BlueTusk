@@ -136,6 +136,21 @@
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.CoalesceOneHundredInvalidationsAndFanOut64SubscribersAsync",
       "maximumBytesPerOperation": 185000,
       "reason": "Complete in-memory shared-subscription lifecycle, 100-invalidation coalescing, replay persistence, and bounded fan-out to 64 subscribers."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.CompileGraphRegistrationAsync",
+      "maximumBytesPerOperation": 115000,
+      "reason": "PostgreSQL capability handshake, EF graph metadata/dependency validation, translation, fingerprinting, and compiled Live plan ownership."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AuthoritativeGraphRequeryAsync",
+      "maximumBytesPerOperation": 720000,
+      "reason": "Authoritative PostgreSQL GRAPH_TABLE execution plus 999 caller-owned keyed path result objects."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AffectedGraphRefreshAndDiffAsync",
+      "maximumBytesPerOperation": 960000,
+      "reason": "Complete affected-invalidation path through PostgreSQL GRAPH_TABLE requery, 999 keyed comparisons, and immutable Live snapshot ownership."
     }
   ]
 }

@@ -21,8 +21,27 @@ runs a complete shared-subscription lifecycle that coalesces 100 relevant
 invalidations into one authoritative refresh and fans the update out through
 bounded channels to 64 subscribers.
 
+`ContinuousGraphBenchmarks` uses a 1,000-vertex/999-edge PostgreSQL 19 property
+graph to measure trusted plan compilation, authoritative `GRAPH_TABLE` requery,
+and the complete affected-invalidation path through authoritative requery plus
+keyed Live diff. Its constant-time synthetic invalidation log isolates the
+application path without accumulating benchmark-history entries; PostgreSQL
+query and provider costs remain included.
+
+The 2026-08-03 reference ShortRun records 988 µs/103,446 B for registration,
+2.827 ms/666,055 B for authoritative 999-row requery, and
+4.225 ms/888,159 B for affected requery plus keyed diff. These are local
+regression measurements with three iterations, not production latency claims.
+
 ```powershell
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*LiveQueryBenchmarks*' --exporters json
+```
+
+Run the Continuous Graph workload against PostgreSQL 19:
+
+```powershell
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*ContinuousGraphBenchmarks*' --exporters json
 ```
 
 `EntityFrameworkCoreBenchmarks` uses one long-lived `BlueTuskDataSource` and a
@@ -42,7 +61,7 @@ Run the six application workloads against an isolated PostgreSQL 19 database:
 
 ```powershell
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*EntityFrameworkCoreBenchmarks*' '*SqlPgqBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*EntityFrameworkCoreBenchmarks*' '*SqlPgqBenchmarks*' '*ContinuousGraphBenchmarks*'
 ```
 
 These live fixtures use fixed `bluetusk_benchmark_*` object names and recreate

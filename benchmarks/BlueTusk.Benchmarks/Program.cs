@@ -33,6 +33,7 @@ var competitiveConnectionString = Environment.GetEnvironmentVariable(
     ProviderComparisonBenchmarks.ConnectionStringEnvironmentVariable);
 var liveBenchmarkTypes = new HashSet<Type>
 {
+    typeof(ContinuousGraphBenchmarks),
     typeof(EntityFrameworkCoreBenchmarks),
     typeof(ProviderComparisonBenchmarks),
     typeof(SqlPgqBenchmarks),

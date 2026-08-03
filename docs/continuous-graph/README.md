@@ -137,7 +137,7 @@ value is HTML encoded.
 ## Release state
 
 The package is independently versioned as `0.1.0-preview.1` and remains
-non-publishable while the benchmark and final packaging gates are completed.
+non-publishable until the final packaging and repository-wide audit complete.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,
 Live session handoff, unsupported-server rejection, and fail-closed query
 shapes. The opt-in PostgreSQL 19 acceptance test creates a real property graph,
@@ -152,3 +152,11 @@ docker compose -f eng/compose/postgres.yml --profile preview up -d postgres19
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
 dotnet test tests/BlueTusk.ContinuousGraph.Tests
 ```
+
+The checked-in live workload measures capability-guarded registration,
+authoritative materialisation of 999 graph paths, and an affected invalidation
+through PostgreSQL requery plus keyed Live diff. On the repository's reference
+machine the ShortRun recorded 988 µs/103,446 B, 2.827 ms/666,055 B, and
+4.225 ms/888,159 B respectively. These three-iteration values are regression
+budgets, not service-level objectives; see the
+[benchmark guide](../../benchmarks/README.md).
