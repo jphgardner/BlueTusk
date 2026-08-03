@@ -11,6 +11,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 1: Streams transaction kernel, explicit row states, streamed assembly, bounded spool, public API baseline, PostgreSQL 15–19 acceptance, and checked-in performance baseline
 - [x] Phase 2 slice: monotonic compare-and-swap checkpoint contract, exclusive leases, fencing tokens, and checkpoint-before-feedback crash boundaries
 - [x] Phase 2 slice: atomic checksummed single-node file state store and public custom-store conformance kit
+- [x] Phase 2 slice: PostgreSQL production state store, server-clock leases, and control-schema publication rejection across PostgreSQL 15–19
 - [ ] Phase 2: checkpoint stores, leases, direct groups, and durable PostgreSQL relay
 - [ ] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams preview
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation

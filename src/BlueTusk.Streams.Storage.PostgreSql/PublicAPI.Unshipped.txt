@@ -1,0 +1,41 @@
+#nullable enable
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.AcquireAsync(BlueTusk.Streams.ChangeStreamStateKey key, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeLeaseAcquireResult!>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.CompareExchangeAsync(BlueTusk.Streams.ChangeStreamStateKey key, long expectedGeneration, BlueTusk.Streams.ChangeStreamCheckpoint! replacement, BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeCheckpointWriteResult!>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.PostgreSqlChangeStreamStateStore(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions! options) -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.ReadAsync(BlueTusk.Streams.ChangeStreamStateKey key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamCheckpoint?>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.ReleaseAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.RenewAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamLease?>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.<Clone>$() -> BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Deconstruct(out string! Schema, out string! Table) -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Equals(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable? other) -> bool
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.PostgreSqlPublishedTable(string! Schema, string! Table) -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Schema.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Schema.init -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Table.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Table.init -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Validate() -> BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationException
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationException.PostgreSqlRelayPublicationException(string! message) -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationValidator
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.<Clone>$() -> BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.ControlDataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.ControlDataSource.init -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.ControlSchema.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.ControlSchema.init -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.Equals(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? other) -> bool
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.PostgreSqlStreamsStorageOptions() -> void
+override BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.Equals(object? obj) -> bool
+override BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.GetHashCode() -> int
+override BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.ToString() -> string!
+override BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.Equals(object? obj) -> bool
+override BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.GetHashCode() -> int
+override BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.ToString() -> string!
+static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.operator !=(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable? right) -> bool
+static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.operator ==(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable? right) -> bool
+static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationValidator.Validate(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions! options, System.Collections.Generic.IEnumerable<BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable!>! publishedTables) -> void
+static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.operator !=(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? right) -> bool
+static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.operator ==(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? right) -> bool
