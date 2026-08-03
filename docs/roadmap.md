@@ -47,6 +47,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 6 slice: trusted typed query registrations, security-partitioned identities, bounded keyed diffs, and signed rotating resume tokens
 - [x] Phase 6 slice: gap-free cursor reservation, concurrent-invalidation catch-up, coalesced authoritative requery, and fail-closed session bounds
 - [x] Phase 6 slice: durable PostgreSQL invalidation cursors, transaction deduplication, table dependency indexing, and persist-before-ack Streams consumption
+- [x] Phase 6 slice: startup EF query compilation for one keyed table, simple predicates, tenant isolation, deterministic ordering, and bounded Take
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [ ] Phase 7: Continuous Graph preview
 

@@ -47,7 +47,8 @@
       "publishable": false,
       "packages": [
         "src/BlueTusk.Live/BlueTusk.Live.csproj",
-        "src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj"
+        "src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj",
+        "src/BlueTusk.Live.EntityFrameworkCore/BlueTusk.Live.EntityFrameworkCore.csproj"
       ]
     },
     "ControlPlane": {

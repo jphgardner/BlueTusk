@@ -1,0 +1,34 @@
+#nullable enable
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryCompiler
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.DatabaseIdentity.get -> string!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.KeySelector.get -> System.Linq.Expressions.Expression<System.Func<TEntity!, TKey>!>!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.LiveEfQueryDefinition(string! name, string! databaseIdentity, string! version, System.Collections.Generic.IEnumerable<BlueTusk.Live.LiveQueryParameter!>! parameters, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! validationArguments, int maximumResultCount, System.Func<TContext!, BlueTusk.Live.LiveQueryArguments!, System.Linq.IQueryable<TEntity!>!>! queryFactory, System.Linq.Expressions.Expression<System.Func<TEntity!, TKey>!>! keySelector, System.Collections.Generic.IEqualityComparer<TEntity!>! rowComparer, BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode tenantIsolationMode, BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding? tenantBinding = null) -> void
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.MaximumResultCount.get -> int
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.Name.get -> string!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.Parameters.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveQueryParameter!>!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.QueryFactory.get -> System.Func<TContext!, BlueTusk.Live.LiveQueryArguments!, System.Linq.IQueryable<TEntity!>!>!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.RowComparer.get -> System.Collections.Generic.IEqualityComparer<TEntity!>!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.TenantBinding.get -> BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding?
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.TenantIsolationMode.get -> BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.ValidationArguments.get -> BlueTusk.Live.LiveQueryArguments!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext, TEntity, TKey>.Version.get -> string!
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryRegistrationException
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryRegistrationException.LiveEfQueryRegistrationException(string! message) -> void
+BlueTusk.Live.EntityFrameworkCore.LiveEfQueryRegistrationException.LiveEfQueryRegistrationException(string! message, System.Exception! innerException) -> void
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.<Clone>$() -> BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding!
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.EntityProperty.get -> string!
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.Equals(BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding? other) -> bool
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.LiveEfTenantBinding(string! entityProperty, string! parameterName) -> void
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.ParameterName.get -> string!
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode.DatabaseRowLevelSecurity = 0 -> BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode.EfGlobalQueryFilter = 1 -> BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode
+BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode.RegisteredPredicate = 2 -> BlueTusk.Live.EntityFrameworkCore.LiveEfTenantIsolationMode
+override BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.Equals(object? obj) -> bool
+override BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.GetHashCode() -> int
+override BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.ToString() -> string!
+static BlueTusk.Live.EntityFrameworkCore.LiveEfQueryCompiler.CompileAsync<TContext, TEntity, TKey>(Microsoft.EntityFrameworkCore.IDbContextFactory<TContext!>! contextFactory, BlueTusk.Live.EntityFrameworkCore.LiveEfQueryDefinition<TContext!, TEntity!, TKey>! definition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveQueryPlan<TEntity!, TKey>!>
+static BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.operator !=(BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding? left, BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding? right) -> bool
+static BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding.operator ==(BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding? left, BlueTusk.Live.EntityFrameworkCore.LiveEfTenantBinding? right) -> bool
