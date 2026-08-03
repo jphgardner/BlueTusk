@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>bluetusk-streams</ToolCommandName>
+    <PackageId>BlueTusk.Streams.Tool</PackageId>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
+    <Description>Validation and provisioning CLI for BlueTusk Streams PostgreSQL sources and relay storage.</Description>
+    <PackageTags>postgresql;cdc;logical-replication;tool;provisioning</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Streams.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Storage.PostgreSql\BlueTusk.Streams.Storage.PostgreSql.csproj" />
+  </ItemGroup>
+</Project>

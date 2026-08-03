@@ -90,6 +90,7 @@
   <Folder Name="/tooling/">
     <Project Path="tooling/BlueTusk.ProtocolInspector/BlueTusk.ProtocolInspector.csproj" />
     <Project Path="tooling/BlueTusk.SchemaInspector/BlueTusk.SchemaInspector.csproj" />
+    <Project Path="tooling/BlueTusk.Streams.Tool/BlueTusk.Streams.Tool.csproj" />
     <Project Path="tooling/BlueTusk.Tool/BlueTusk.Tool.csproj" />
   </Folder>
 </Solution>
