@@ -21,7 +21,7 @@ acknowledged until that sink confirms storage. Destination outages and rejected
 durability confirmations nack the delivery and fault the pipeline for safe
 redelivery.
 
-PostgreSQL and NATS JetStream connector slices are implemented. Redis,
+PostgreSQL, NATS JetStream, and Redis connector slices are implemented.
 OpenSearch, the cross-destination conformance kit, reconciliation, and rebuild
 orchestration remain gated work. The Sync release train remains non-publishable
 until all four destinations pass snapshot-plus-stream recovery.
@@ -87,3 +87,35 @@ dotnet test tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj
 The live suite proves whole-transaction persistence, duplicate recovery after a
 destination restart, snapshot lifecycle deduplication, transform-generation
 rejection, and stable stream message counts.
+
+## Redis destination
+
+`BlueTusk.Sync.Redis` stores materialised documents and the source checkpoint in
+one Redis Lua operation. All keys for a pipeline use the same generated Redis
+Cluster hash tag, so an atomic batch never crosses slots. The script checks the
+source, transform, monotonic fixed-width commit position, key types, and every
+operation before writing; a predictable failure therefore cannot leave a
+partial transaction or advance its checkpoint.
+
+Repeated mutations are folded to their final per-key outcome before the script
+runs, while the last collection delete remains ordered before subsequent
+upserts. Configurable document, transaction-byte, and mutation-count ceilings
+bound Lua execution time and Redis argument memory. Transactions beyond those
+limits pause safely for operator action instead of blocking Redis indefinitely.
+
+Documents use a small versioned binary value with the stable source change or
+snapshot-row ID, content type, partition key, opaque content, and a SHA-256
+integrity footer. Applications can inspect a materialised value with
+`ReadDocumentAsync` or decode an exported value with
+`RedisSyncDocumentReader`.
+
+Snapshot reset atomically removes registered materialisations and clears the
+checkpoint before activating a new epoch. Snapshot batches are idempotent, and
+completion prevents late batches for the epoch. Quarantine records use a stable
+transaction field and `HSET NX`, so retrying quarantine-and-advance cannot add
+duplicates.
+
+The live Redis suite deliberately introduces a wrong-type destination key and
+proves preflight rejection occurs before any mutation. It also covers retry,
+restart, collection-delete ordering, snapshot reset/completion, quarantine, and
+transform rebuild requirements.

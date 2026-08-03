@@ -121,6 +121,16 @@ jobs:
           --logger trx
           --results-directory artifacts/test-results/redis-streams
 
+      - name: Run Redis Sync transaction and snapshot recovery
+        env:
+          BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
+        run: >-
+          dotnet test tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/redis-sync
+
   nats-sync-integration:
     name: NATS JetStream Sync recovery
     runs-on: ubuntu-latest

@@ -55,6 +55,7 @@
     <Project Path="src/BlueTusk.Sync/BlueTusk.Sync.csproj" />
     <Project Path="src/BlueTusk.Sync.Nats/BlueTusk.Sync.Nats.csproj" />
     <Project Path="src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj" />
+    <Project Path="src/BlueTusk.Sync.Redis/BlueTusk.Sync.Redis.csproj" />
     <Project Path="src/BlueTusk.Transport/BlueTusk.Transport.csproj" />
     <Project Path="src/BlueTusk.TypeSystem/BlueTusk.TypeSystem.csproj" />
   </Folder>
@@ -92,6 +93,7 @@
     <Project Path="tests/BlueTusk.Streams.EntityFrameworkCore.Tests/BlueTusk.Streams.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj" />
     <Project Path="tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj" />
     <Project Path="tests/BlueTusk.Transport.Tests/BlueTusk.Transport.Tests.csproj" />
     <Project Path="tests/BlueTusk.TypeSystem.Tests/BlueTusk.TypeSystem.Tests.csproj" />
   </Folder>
