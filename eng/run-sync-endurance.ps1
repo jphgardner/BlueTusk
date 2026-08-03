@@ -42,6 +42,29 @@ foreach ($name in $requiredEnvironment)
 }
 
 $RepositoryRoot = (Resolve-Path $RepositoryRoot).Path
+$sourceCommit = (& git -C $RepositoryRoot rev-parse HEAD).Trim()
+if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sourceCommit))
+{
+    throw 'Sync endurance could not resolve the source commit.'
+}
+
+$sourceBranch = (& git -C $RepositoryRoot branch --show-current).Trim()
+if ($LASTEXITCODE -ne 0)
+{
+    throw 'Sync endurance could not resolve the source branch.'
+}
+
+$trackedStatus = (& git -C $RepositoryRoot status --porcelain --untracked-files=no)
+if ($LASTEXITCODE -ne 0)
+{
+    throw 'Sync endurance could not inspect the repository status.'
+}
+
+if (-not [string]::IsNullOrWhiteSpace(($trackedStatus -join [Environment]::NewLine)))
+{
+    throw 'Sync endurance requires a clean tracked worktree so its report identifies the exact tested source.'
+}
+
 $fullReportPath = if ([IO.Path]::IsPathRooted($ReportPath))
 {
     [IO.Path]::GetFullPath($ReportPath)
@@ -117,7 +140,10 @@ finally
     $reportDirectory = Split-Path $fullReportPath -Parent
     [IO.Directory]::CreateDirectory($reportDirectory) | Out-Null
     $report = [ordered]@{
-        formatVersion = 1
+        formatVersion = 2
+        sourceCommit = $sourceCommit
+        sourceBranch = $sourceBranch
+        trackedWorktreeCleanAtStart = $true
         startedAt = $startedAt.ToString('O')
         completedAt = [DateTimeOffset]::UtcNow.ToString('O')
         requestedDuration = $Duration.ToString('c')
@@ -132,6 +158,9 @@ finally
         failureExitCode = $failureExitCode
         configuration = $Configuration
         dotnetVersion = (& dotnet --version)
+        operatingSystem = [Runtime.InteropServices.RuntimeInformation]::OSDescription
+        processArchitecture = [Runtime.InteropServices.RuntimeInformation]::ProcessArchitecture.ToString()
+        processorCount = [Environment]::ProcessorCount
         projects = $projects
     }
     [IO.File]::WriteAllText(

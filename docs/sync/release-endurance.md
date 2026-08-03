@@ -15,9 +15,11 @@ failure stops the run and writes a failed evidence report.
 
 The runner refuses to start unless all four service endpoints are explicit. Its
 versioned JSON report records requested and actual duration, completed cycles,
-project runs, the slowest cycle, the .NET SDK, and exact project list. A report
-is successful only when `completed` is true, the requested duration elapsed,
-and the configured minimum cycle count passed.
+project runs, the slowest cycle, the exact clean source commit and branch, the
+.NET SDK, host OS/architecture, processor count, and exact project list. The
+runner refuses a dirty tracked worktree so later builds cannot be mistaken for
+the tested source. A report is successful only when `completed` is true, the
+requested duration elapsed, and the configured minimum cycle count passed.
 
 ## Local smoke
 
