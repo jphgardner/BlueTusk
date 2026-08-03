@@ -1,0 +1,43 @@
+#nullable enable
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamHealthRegistry
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamHealthRegistry.BlueTuskStreamHealthRegistry(System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamHealthRegistry.GetStatuses() -> System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus!>!
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder.AddHostedConsumer<TConsumer>(string! name, System.Func<System.IServiceProvider!, BlueTusk.Streams.IConsistentSnapshotSource!>! sourceFactory, BlueTusk.Streams.SnapshotThenStreamOptions? options = null) -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder!
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsHealthCheck
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsHealthCheck.BlueTuskStreamsHealthCheck(BlueTusk.Streams.DependencyInjection.BlueTuskStreamHealthRegistry! registry) -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamsServiceCollectionExtensions
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState.CatchingUp = 2 -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState.Faulted = 5 -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState.Running = 3 -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState.Snapshotting = 1 -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState.Starting = 0 -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState.Stopped = 4 -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.<Clone>$() -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus!
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.BlueTuskStreamWorkerStatus(string! Name, BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState State, System.DateTimeOffset ChangedAt, System.Guid? SnapshotEpoch, long SnapshotRows, long Transactions, string? Error) -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.ChangedAt.get -> System.DateTimeOffset
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.ChangedAt.init -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Deconstruct(out string! Name, out BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState State, out System.DateTimeOffset ChangedAt, out System.Guid? SnapshotEpoch, out long SnapshotRows, out long Transactions, out string? Error) -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Equals(BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus? other) -> bool
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Error.get -> string?
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Error.init -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Name.get -> string!
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Name.init -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.SnapshotEpoch.get -> System.Guid?
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.SnapshotEpoch.init -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.SnapshotRows.get -> long
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.SnapshotRows.init -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.State.get -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerState
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.State.init -> void
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Transactions.get -> long
+BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Transactions.init -> void
+override BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.Equals(object? obj) -> bool
+override BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.GetHashCode() -> int
+override BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.ToString() -> string!
+static BlueTusk.Streams.DependencyInjection.BlueTuskStreamsServiceCollectionExtensions.AddBlueTuskStreams(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> BlueTusk.Streams.DependencyInjection.BlueTuskStreamsBuilder!
+static BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.operator !=(BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus? left, BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus? right) -> bool
+static BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus.operator ==(BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus? left, BlueTusk.Streams.DependencyInjection.BlueTuskStreamWorkerStatus? right) -> bool

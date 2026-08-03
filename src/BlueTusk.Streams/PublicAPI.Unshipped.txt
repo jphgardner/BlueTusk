@@ -846,3 +846,7 @@ static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator !=(BlueTusk
 static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator ==(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? left, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? right) -> bool
 static BlueTusk.Streams.SnapshotThenStreamOptions.operator !=(BlueTusk.Streams.SnapshotThenStreamOptions? left, BlueTusk.Streams.SnapshotThenStreamOptions? right) -> bool
 static BlueTusk.Streams.SnapshotThenStreamOptions.operator ==(BlueTusk.Streams.SnapshotThenStreamOptions? left, BlueTusk.Streams.SnapshotThenStreamOptions? right) -> bool
+BlueTusk.Streams.BlueTuskStreamsDiagnostics
+const BlueTusk.Streams.BlueTuskStreamsDiagnostics.InstrumentationName = "BlueTusk.Streams" -> string!
+static BlueTusk.Streams.BlueTuskStreamsDiagnostics.ActivitySource.get -> System.Diagnostics.ActivitySource!
+static BlueTusk.Streams.BlueTuskStreamsDiagnostics.Meter.get -> System.Diagnostics.Metrics.Meter!

@@ -233,6 +233,7 @@ public sealed class PgOutputChangeStream : IChangeStream
                 }
 
                 outstanding = CreateDelivery(assembled);
+                BlueTuskStreamsDiagnostics.RecordTransaction(assembled.Transaction);
                 yield return outstanding;
                 if (outstanding.State != ChangeDeliveryState.Acknowledged)
                 {

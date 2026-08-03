@@ -1,3 +1,4 @@
+using System.Diagnostics.Metrics;
 using System.Runtime.CompilerServices;
 using System.Text;
 using BlueTusk.TypeSystem;
@@ -83,6 +84,35 @@ public sealed class SnapshotThenStreamCoordinatorTests
         var error = Assert.Throws<ArgumentException>(() => new PostgreSqlSnapshotTable(table, [1]));
 
         Assert.Contains("not marked as a key", error.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public async Task Snapshot_delivery_emits_exporter_neutral_metrics()
+    {
+        long rows = -1;
+        using var listener = new MeterListener
+        {
+            InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (ReferenceEquals(instrument.Meter, BlueTuskStreamsDiagnostics.Meter))
+                {
+                    meterListener.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, measurement, tags, state) =>
+        {
+            if (instrument.Name == "bluetusk.streams.snapshot.rows")
+            {
+                rows = measurement;
+            }
+        });
+        listener.Start();
+
+        await new SnapshotThenStreamCoordinator(new FakeSnapshotSource(failAttempts: 0))
+            .RunAsync(new RecordingConsumer());
+
+        Assert.Equal(1, rows);
     }
 
     private sealed class FakeSnapshotSource : IConsistentSnapshotSource

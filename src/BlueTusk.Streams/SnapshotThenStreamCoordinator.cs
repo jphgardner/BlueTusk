@@ -94,6 +94,13 @@ public sealed class SnapshotThenStreamCoordinator
                     abandonedEpoch,
                     cancellationToken).ConfigureAwait(false);
                 await using var ownedAttempt = attempt;
+                using var activity = BlueTuskStreamsDiagnostics.ActivitySource.StartActivity(
+                    "bluetusk.streams.snapshot",
+                    System.Diagnostics.ActivityKind.Consumer);
+                activity?.SetTag("bluetusk.source", attempt.Epoch.Source.Fingerprint);
+                activity?.SetTag("bluetusk.slot", attempt.Epoch.Source.SlotName);
+                activity?.SetTag("bluetusk.snapshot.epoch", attempt.Epoch.Value);
+                activity?.SetTag("bluetusk.snapshot.attempt", attemptNumber);
                 await consumer.ResetSnapshotAsync(
                     new SnapshotReset(
                         attempt.Epoch,
@@ -116,6 +123,7 @@ public sealed class SnapshotThenStreamCoordinator
                     }
 
                     rowCount = checked(rowCount + batch.Rows.Count);
+                    BlueTuskStreamsDiagnostics.RecordSnapshotBatch(batch);
                     await consumer.ConsumeSnapshotBatchAsync(batch, cancellationToken).ConfigureAwait(false);
                 }
 
@@ -123,6 +131,8 @@ public sealed class SnapshotThenStreamCoordinator
                     new SnapshotComplete(attempt.Epoch, rowCount, attempt.Tables.Count),
                     cancellationToken).ConfigureAwait(false);
                 snapshotComplete = true;
+                activity?.SetTag("bluetusk.snapshot.rows", rowCount);
+                activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Ok);
 
                 await foreach (var delivery in attempt
                     .CreateChangeStream()

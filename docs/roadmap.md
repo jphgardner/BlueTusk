@@ -18,6 +18,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 3 slice: typed core mappings, canonical schema/mapping fingerprints, explicit partial-row safety, decoding/drift policy, and snapshot/transaction consumer lifecycle
 - [x] Phase 3 slice: exported consistent snapshot, bounded parallel keyset binary COPY, explicit restart epochs, and matching-position no-gap acceptance across PostgreSQL 15–19
 - [x] Phase 3 slice: EF model-derived typed mappings with startup validation for table, key, publication-column, setter, and duplicate-binding safety
+- [x] Phase 3 slice: in-process hosted consumers, standard health checks, worker status registry, and exporter-neutral activities/metrics
 - [ ] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams preview
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0

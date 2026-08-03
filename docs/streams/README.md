@@ -1,6 +1,6 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, typed core mappings, no-gap snapshot bootstrap, snapshot/transaction consumer lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on hosted integration, packaging, and preview operational tooling.
+BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, typed core mappings, no-gap snapshot bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on remaining packaging and preview operational tooling.
 
 ## Implemented kernel
 
@@ -86,6 +86,8 @@ See the [PostgreSQL durable relay](durable-relay.md) for source append ordering,
 See [typed mappings](typed-mappings.md) for convention and explicit mappings, schema and mapping fingerprints, partial-row safety, decoding policy, and the snapshot consumer lifecycle.
 
 See [consistent snapshot bootstrap](snapshot-bootstrap.md) for exported-snapshot lifetime, keyset binary COPY, bounded parallelism, restart epochs, and the PostgreSQL 15–19 no-gap proof.
+
+See [hosting and observability](hosting-observability.md) for hosted-worker registration, health states, readiness behavior, and exporter-neutral OpenTelemetry instruments.
 
 ## Performance baseline
 
