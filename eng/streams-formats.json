@@ -37,6 +37,13 @@
       "evidence": "tests/BlueTusk.IntegrationTests/BlueTuskStreamsRelayIntegrationTests.cs::PostgreSql_relay_backup_restores_atomically_and_preserves_fencing_history"
     },
     {
+      "id": "relay-snapshot-run",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.IntegrationTests/BlueTuskSyncRelaySourceIntegrationTests.cs::Relay_snapshot_run_progress_rejects_corruption"
+    },
+    {
       "id": "transaction-cloud-event",
       "currentVersion": 1,
       "minimumReadableVersion": 1,

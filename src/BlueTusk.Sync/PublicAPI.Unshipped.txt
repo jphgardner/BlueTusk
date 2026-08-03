@@ -1,4 +1,7 @@
 #nullable enable
+BlueTusk.Sync.ConsistentSnapshotSyncPipelineSource
+BlueTusk.Sync.ConsistentSnapshotSyncPipelineSource.ConsistentSnapshotSyncPipelineSource(BlueTusk.Streams.IConsistentSnapshotSource! source, BlueTusk.Streams.SnapshotThenStreamOptions? options = null) -> void
+BlueTusk.Sync.ConsistentSnapshotSyncPipelineSource.RunAsync(BlueTusk.Streams.IChangeStreamConsumer! consumer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 BlueTusk.Sync.ISyncDestination
 BlueTusk.Sync.ISyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
@@ -8,6 +11,8 @@ BlueTusk.Sync.ISyncDestination.Name.get -> string!
 BlueTusk.Sync.ISyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
 BlueTusk.Sync.ISyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.ISyncPipelineSource
+BlueTusk.Sync.ISyncPipelineSource.RunAsync(BlueTusk.Streams.IChangeStreamConsumer! consumer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 BlueTusk.Sync.ISyncRebuildCutoverLease.CompleteHandoffAsync(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber activatedPosition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncReconciliationReader
 BlueTusk.Sync.ISyncReconciliationReader.CountAsync(string! pipelineId, string! collection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>

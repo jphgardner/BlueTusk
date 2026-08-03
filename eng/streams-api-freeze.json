@@ -29,7 +29,7 @@
     },
     {
       "path": "src/BlueTusk.Streams.Storage.PostgreSql/PublicAPI.Unshipped.txt",
-      "sha256": "67db6ee518987bdaa844bd6aa26ba9cb9cbf7a206ea072bb9c2d3c082d60322e"
+      "sha256": "2b317b71d77a7490bcc6c5a4aae90f9fc2865e298d79a95165bced76a0a1584a"
     },
     {
       "path": "src/BlueTusk.Streams.Storage.Redis/PublicAPI.Unshipped.txt",

@@ -12,6 +12,7 @@ exists. A format version cannot be changed silently.
 | File state store | 1 | 1 | Current version only; unknown versions fail closed. |
 | PostgreSQL relay schema | 2 | 1 | Transactional in-place migration from v1 to v2. |
 | Relay backup | 1 | 1 | Current version only; restore validates format, schema, framing, and integrity before replacing data. |
+| Relay snapshot run | 1 | 1 | Current version only; SHA-256 integrity failure or incompatible bootstrap identity fails closed. |
 | Transaction CloudEvent | 1 | 1 | Current event contract containing the independently versioned transaction envelope. |
 | Transaction spool | 1 | 1 | Current process only; unknown versions and damaged records fail closed. |
 

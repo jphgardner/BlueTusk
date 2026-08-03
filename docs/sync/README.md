@@ -29,10 +29,11 @@ The destination-neutral rebuild coordinator is implemented with an explicit
 cutover barrier, and the in-process hosting package provides named workers,
 health, telemetry, and one-way worker handoff. The production relay
 change-stream adapter provides bounded reads, continuous fenced lease renewal,
-and acknowledgement-after-destination ordering. Dashboard integration,
-restart-aware snapshot bootstrap, retry/rate-limit policy, and endurance remain
-gated work. The Sync release train remains non-publishable until those remaining
-Phase 5 gates pass.
+and acknowledgement-after-destination ordering. Restart-aware relay snapshot
+bootstrap now reserves retention before export, restarts abandoned epochs, and
+resumes completed pipelines without resetting the destination. Dashboard
+integration, retry/rate-limit policy, and endurance remain gated work. The Sync
+release train remains non-publishable until those remaining Phase 5 gates pass.
 
 ## Shared destination conformance
 
@@ -123,16 +124,21 @@ isolated while the other registered pipelines continue. Source factories remain
 explicit so an application cannot accidentally share a replication session or
 consumer group between pipelines.
 
-For the running CDC leg, source factories can return attempts whose
-`CreateChangeStream()` constructs `PostgreSqlRelayChangeStream`. The stream owns
-one independently checkpointed relay group, keeps its fenced lease alive while
-a destination transaction is in flight, and advances the group sequence only
-when `SyncPipeline` acknowledges after the destination confirms the exact
-commit-end LSN. Nack, abandonment, or lease loss therefore causes safe
-at-least-once redelivery. Initial snapshot/restart orchestration must reserve a
-relay group before exporting the consistent snapshot; the dedicated
-restart-aware bootstrap source is the next gate and applications must not infer
-that setting a relay group to `Latest` proves a no-gap bootstrap.
+`AddHostedPipelineSource<TTransform, TDestination>()` accepts an
+`ISyncPipelineSource` when the source owns a restart-aware lifecycle.
+`PostgreSqlRelaySyncPipelineSource` acquires and renews its independently
+checkpointed group before asking PostgreSQL to export a snapshot. A versioned
+relay snapshot run records the transform fingerprint, epoch, and consistent
+LSN. Reserved state left by exporter/session loss causes a safe new epoch;
+completed state resumes the group without another destination reset.
+
+After snapshot completion, retained relay transactions through the snapshot's
+consistent LSN are acknowledged as already represented. Later transactions are
+passed to `SyncPipeline`, which advances the group only after the destination
+confirms the exact commit-end LSN. Nack, abandonment, lease loss, or a process
+crash therefore causes safe at-least-once redelivery. A `Latest` group still
+cannot prove a no-gap bootstrap and is not used by this source's default
+earliest-retained reservation protocol.
 
 `BlueTuskSyncHealthRegistry` exposes immutable operational snapshots. The
 readiness check is unhealthy for faults, transform rebuild requirements, or

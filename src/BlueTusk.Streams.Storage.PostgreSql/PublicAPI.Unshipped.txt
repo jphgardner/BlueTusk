@@ -244,6 +244,41 @@ BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult.DeletedTransactio
 BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult.Equals(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult? other) -> bool
 BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySchemaVersionException
 BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySchemaVersionException.ChangeRelaySchemaVersionException(string! message) -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotCompatibilityException
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotCompatibilityException.ChangeRelaySnapshotCompatibilityException(string! current, string! requested) -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotCompatibilityException.CurrentFingerprint.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotCompatibilityException.RequestedFingerprint.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.<Clone>$() -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun!
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.ChangeRelaySnapshotRun(string! SourceFingerprint, long SourceEpoch, string! ConsumerGroup, System.Guid SnapshotEpoch, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ConsistentPosition, string! CompatibilityFingerprint, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState State, long StoreGeneration, System.DateTimeOffset UpdatedAt) -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.CompatibilityFingerprint.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.CompatibilityFingerprint.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.ConsistentPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.ConsistentPosition.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.ConsumerGroup.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.ConsumerGroup.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.Deconstruct(out string! SourceFingerprint, out long SourceEpoch, out string! ConsumerGroup, out System.Guid SnapshotEpoch, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ConsistentPosition, out string! CompatibilityFingerprint, out BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState State, out long StoreGeneration, out System.DateTimeOffset UpdatedAt) -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.Equals(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun? other) -> bool
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.SnapshotEpoch.get -> System.Guid
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.SnapshotEpoch.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.SourceEpoch.get -> long
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.SourceEpoch.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.SourceFingerprint.get -> string!
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.SourceFingerprint.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.State.get -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.State.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.StoreGeneration.get -> long
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.StoreGeneration.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.UpdatedAt.get -> System.DateTimeOffset
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.UpdatedAt.init -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunException
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunException.ChangeRelaySnapshotRunException(string! message) -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunException.ChangeRelaySnapshotRunException(string! message, System.Exception! innerException) -> void
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunFormat
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState.Abandoned = 2 -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState.Completed = 1 -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState
+BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState.Reserved = 0 -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunState
 BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceMismatchException
 BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceMismatchException.ChangeRelaySourceMismatchException(string! message) -> void
 BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration
@@ -274,15 +309,19 @@ BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.ReadAsync(B
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.ReleaseAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlChangeStreamStateStore.RenewAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamLease?>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.AbandonSnapshotRunAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayGroupLease! lease, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun! run, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.AcknowledgeConsumerGroupAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayGroupLease! lease, long expectedGeneration, long sequence, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayAcknowledgeResult!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.AcquireConsumerGroupAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayConsumerGroup! group, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayGroupLease?>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.AcquireSourceLeaseAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeLeaseAcquireResult!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.AppendAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, BlueTusk.Streams.ChangeTransaction! transactionToAppend, BlueTusk.Streams.ChangeStreamLease! sourceLease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayAppendResult!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.ApplyRetentionAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.BackupAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, System.IO.Stream! destination, BlueTusk.Streams.Storage.PostgreSql.ChangeRelayBackupOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayBackupResult!>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.BeginSnapshotRunAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayGroupLease! lease, BlueTusk.Streams.SnapshotEpoch snapshot, string! compatibilityFingerprint, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.CompactAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, bool vacuum = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayCompactionResult!>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.CompleteSnapshotRunAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayGroupLease! lease, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun! run, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.CreateConsumerGroupAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, string! consumerGroup, BlueTusk.Streams.Storage.PostgreSql.ChangeRelayConsumerGroupStart start = BlueTusk.Streams.Storage.PostgreSql.ChangeRelayConsumerGroupStart.EarliestAvailable, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayConsumerGroup!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.GetHealthAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber serverWalEnd, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayHealth!>
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.GetLatestSnapshotRunAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayGroupLease! lease, string! compatibilityFingerprint, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun?>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.GetMetricsAsync(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.ChangeRelayMetrics!>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.GetSchemaVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
@@ -334,6 +373,15 @@ BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions.NewGroupS
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions.OwnerId.get -> string!
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions.OwnerId.init -> void
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions.PostgreSqlRelayChangeStreamOptions() -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.CreateChangeStream() -> BlueTusk.Streams.IChangeStream!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.EnsureLeaseActive() -> void
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.Group.get -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelayConsumerGroup!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.Lease.get -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelayGroupLease!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.LeaseLostToken.get -> System.Threading.CancellationToken
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.Relay.get -> BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay!
+BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.Source.get -> BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration!
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationException
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationException.PostgreSqlRelayPublicationException(string! message) -> void
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationValidator
@@ -366,6 +414,8 @@ BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.ResumeRetent
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.RetentionDeleteBatchSize.get -> int
 BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.RetentionDeleteBatchSize.init -> void
 const BlueTusk.Streams.Storage.PostgreSql.ChangeRelayBackupFormat.CurrentVersion = 1 -> int
+const BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunFormat.CurrentVersion = 1 -> int
+const BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRunFormat.MinimumSupportedVersion = 1 -> int
 const BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay.CurrentSchemaVersion = 2 -> int
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelayAcknowledgeResult.Equals(object? obj) -> bool
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelayAcknowledgeResult.GetHashCode() -> int
@@ -412,6 +462,9 @@ override BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRestoreResult.ToString()
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult.Equals(object? obj) -> bool
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult.GetHashCode() -> int
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult.ToString() -> string!
+override BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.Equals(object? obj) -> bool
+override BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.GetHashCode() -> int
+override BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.ToString() -> string!
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration.Equals(object? obj) -> bool
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration.GetHashCode() -> int
 override BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration.ToString() -> string!
@@ -454,6 +507,8 @@ static BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRestoreResult.operator !=(
 static BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRestoreResult.operator ==(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRestoreResult? left, BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRestoreResult? right) -> bool
 static BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult.operator !=(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult? left, BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult? right) -> bool
 static BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult.operator ==(BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult? left, BlueTusk.Streams.Storage.PostgreSql.ChangeRelayRetentionResult? right) -> bool
+static BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.operator !=(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun? left, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun? right) -> bool
+static BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun.operator ==(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun? left, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySnapshotRun? right) -> bool
 static BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration.operator !=(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration? left, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration? right) -> bool
 static BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration.operator ==(BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration? left, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration? right) -> bool
 static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.operator !=(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable? right) -> bool
@@ -461,6 +516,7 @@ static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable.operator ==(
 static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeDeliveryObserver.AcquireAsync(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay! relay, BlueTusk.Streams.ChangeSourceIdentity! source, string! ownerId, System.TimeSpan leaseDuration, BlueTusk.Streams.IReplicationFeedbackSender! feedback, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeDeliveryObserver!>
 static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions.operator !=(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions? right) -> bool
 static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions.operator ==(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions? right) -> bool
+static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession.AcquireAsync(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay! relay, BlueTusk.Streams.Storage.PostgreSql.ChangeRelaySourceRegistration! source, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions! options, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayConsumerGroupSession!>
 static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayPublicationValidator.Validate(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions! options, System.Collections.Generic.IEnumerable<BlueTusk.Streams.Storage.PostgreSql.PostgreSqlPublishedTable!>! publishedTables) -> void
 static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.operator !=(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? right) -> bool
 static BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions.operator ==(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? left, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlStreamsStorageOptions? right) -> bool

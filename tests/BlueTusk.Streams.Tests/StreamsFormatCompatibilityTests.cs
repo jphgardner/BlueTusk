@@ -46,6 +46,10 @@ public sealed class StreamsFormatCompatibilityTests
                 ChangeRelayBackupFormat.CurrentVersion,
                 ChangeRelayBackupFormat.CurrentVersion,
                 "current-only"),
+            ["relay-snapshot-run"] = (
+                ChangeRelaySnapshotRunFormat.CurrentVersion,
+                ChangeRelaySnapshotRunFormat.MinimumSupportedVersion,
+                "current-only"),
             ["transaction-cloud-event"] = (
                 ChangeTransactionCloudEventFormat.CurrentVersion,
                 ChangeTransactionCloudEventFormat.CurrentVersion,

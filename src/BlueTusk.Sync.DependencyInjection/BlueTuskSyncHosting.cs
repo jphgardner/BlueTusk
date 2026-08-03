@@ -195,14 +195,35 @@ public sealed class BlueTuskSyncBuilder
         ArgumentNullException.ThrowIfNull(options);
         ArgumentNullException.ThrowIfNull(source);
         ArgumentNullException.ThrowIfNull(sourceFactory);
-        if (Services.Any(descriptor =>
-                descriptor.ImplementationInstance is HostedSyncPipelineRegistration registration &&
-                string.Equals(registration.Options.PipelineId, options.PipelineId, StringComparison.Ordinal)))
-        {
-            throw new InvalidOperationException(
-                $"A BlueTusk Sync pipeline named '{options.PipelineId}' is already registered.");
-        }
+        EnsureUniquePipeline(options.PipelineId);
+        Services.TryAddSingleton<TTransform>();
+        Services.TryAddSingleton<TDestination>();
+        Services.AddSingleton(new HostedSyncPipelineRegistration(
+            options,
+            source,
+            typeof(TTransform),
+            typeof(TDestination),
+            services => new ConsistentSnapshotSyncPipelineSource(
+                sourceFactory(services) ?? throw new InvalidOperationException(
+                    $"Source factory for BlueTusk Sync pipeline '{options.PipelineId}' returned null."),
+                snapshotOptions),
+            quarantineFactory));
+        return this;
+    }
 
+    /// <summary>Registers one in-process worker with a restart-aware source lifecycle.</summary>
+    public BlueTuskSyncBuilder AddHostedPipelineSource<TTransform, TDestination>(
+        SyncPipelineOptions options,
+        ChangeSourceIdentity source,
+        Func<IServiceProvider, ISyncPipelineSource> sourceFactory,
+        Func<IServiceProvider, ISyncQuarantineSink?>? quarantineFactory = null)
+        where TTransform : class, ISyncTransform
+        where TDestination : class, ISyncDestination
+    {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentNullException.ThrowIfNull(sourceFactory);
+        EnsureUniquePipeline(options.PipelineId);
         Services.TryAddSingleton<TTransform>();
         Services.TryAddSingleton<TDestination>();
         Services.AddSingleton(new HostedSyncPipelineRegistration(
@@ -211,9 +232,19 @@ public sealed class BlueTuskSyncBuilder
             typeof(TTransform),
             typeof(TDestination),
             sourceFactory,
-            quarantineFactory,
-            snapshotOptions ?? new SnapshotThenStreamOptions()));
+            quarantineFactory));
         return this;
+    }
+
+    private void EnsureUniquePipeline(string pipelineId)
+    {
+        if (Services.Any(descriptor =>
+                descriptor.ImplementationInstance is HostedSyncPipelineRegistration registration &&
+                string.Equals(registration.Options.PipelineId, pipelineId, StringComparison.Ordinal)))
+        {
+            throw new InvalidOperationException(
+                $"A BlueTusk Sync pipeline named '{pipelineId}' is already registered.");
+        }
     }
 
     /// <summary>Registers the hosted-worker cutover barrier and its durable-head/handoff services.</summary>
@@ -263,9 +294,8 @@ internal sealed record HostedSyncPipelineRegistration(
     ChangeSourceIdentity Source,
     Type TransformType,
     Type DestinationType,
-    Func<IServiceProvider, IConsistentSnapshotSource> SourceFactory,
-    Func<IServiceProvider, ISyncQuarantineSink?>? QuarantineFactory,
-    SnapshotThenStreamOptions SnapshotOptions);
+    Func<IServiceProvider, ISyncPipelineSource> SourceFactory,
+    Func<IServiceProvider, ISyncQuarantineSink?>? QuarantineFactory);
 
 internal sealed class BlueTuskSyncHostedService : BackgroundService
 {
@@ -336,9 +366,7 @@ internal sealed class BlueTuskSyncHostedService : BackgroundService
             var source = registration.SourceFactory(services) ??
                 throw new InvalidOperationException(
                     $"Source factory for BlueTusk Sync pipeline '{registration.Options.PipelineId}' returned null.");
-            await new SnapshotThenStreamCoordinator(source, registration.SnapshotOptions)
-                .RunAsync(observed, workerCancellation.Token)
-                .ConfigureAwait(false);
+            await source.RunAsync(observed, workerCancellation.Token).ConfigureAwait(false);
             await pipeline.StopAsync(CancellationToken.None).ConfigureAwait(false);
             observed.UpdateHealth();
         }
