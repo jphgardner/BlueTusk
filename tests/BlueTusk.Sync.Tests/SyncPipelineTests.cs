@@ -40,6 +40,123 @@ public sealed class SyncPipelineTests
     }
 
     [Fact]
+    public async Task Explicit_transient_failures_retry_in_order_before_acknowledgement()
+    {
+        var events = new List<string>();
+        var destination = new RecordingDestination(events)
+        {
+            FailuresRemaining = 2,
+        };
+        await using var pipeline = new SyncPipeline(
+            new SyncPipelineOptions
+            {
+                PipelineId = "orders",
+                Retry = new SyncRetryOptions
+                {
+                    MaximumAttempts = 3,
+                    InitialDelay = TimeSpan.Zero,
+                    MaximumDelay = TimeSpan.Zero,
+                    JitterRatio = 0,
+                },
+            },
+            Source,
+            new RecordingTransform(),
+            destination,
+            retryClassifier: new InvalidOperationRetryClassifier());
+        await pipeline.ProvisionAsync();
+        await using var delivery = CreateDelivery(new RecordingObserver(events));
+
+        await pipeline.ConsumeTransactionAsync(delivery);
+
+        Assert.Equal(["destination", "destination", "destination", "ack"], events);
+        Assert.Equal(2, pipeline.Status.RetryAttempts);
+        Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
+    }
+
+    [Fact]
+    public async Task Unclassified_failure_is_not_retried_and_nacks_once()
+    {
+        var events = new List<string>();
+        var destination = new RecordingDestination(events)
+        {
+            FailuresRemaining = 1,
+        };
+        await using var pipeline = CreatePipeline(destination);
+        await pipeline.ProvisionAsync();
+        await using var delivery = CreateDelivery(new RecordingObserver(events));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => pipeline.ConsumeTransactionAsync(delivery).AsTask());
+
+        Assert.Equal(["destination", "nack"], events);
+        Assert.Equal(0, pipeline.Status.RetryAttempts);
+    }
+
+    [Fact]
+    public async Task Retry_exhaustion_nacks_without_acknowledging_past_destination_durability()
+    {
+        var events = new List<string>();
+        var destination = new RecordingDestination(events)
+        {
+            FailuresRemaining = 3,
+        };
+        await using var pipeline = new SyncPipeline(
+            new SyncPipelineOptions
+            {
+                PipelineId = "orders",
+                Retry = new SyncRetryOptions
+                {
+                    MaximumAttempts = 3,
+                    InitialDelay = TimeSpan.Zero,
+                    MaximumDelay = TimeSpan.Zero,
+                    JitterRatio = 0,
+                },
+            },
+            Source,
+            new RecordingTransform(),
+            destination,
+            retryClassifier: new InvalidOperationRetryClassifier());
+        await pipeline.ProvisionAsync();
+        await using var delivery = CreateDelivery(new RecordingObserver(events));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => pipeline.ConsumeTransactionAsync(delivery).AsTask());
+
+        Assert.Equal(["destination", "destination", "destination", "nack"], events);
+        Assert.Equal(2, pipeline.Status.RetryAttempts);
+        Assert.Equal(ChangeDeliveryState.Nacked, delivery.State);
+    }
+
+    [Fact]
+    public async Task Sequential_rate_limit_applies_source_backpressure_without_reordering()
+    {
+        var events = new List<string>();
+        await using var pipeline = new SyncPipeline(
+            new SyncPipelineOptions
+            {
+                PipelineId = "orders",
+                RateLimit = new SyncRateLimitOptions
+                {
+                    MaximumTransactionsPerSecond = 5,
+                },
+            },
+            Source,
+            new RecordingTransform(),
+            new RecordingDestination(events));
+        await pipeline.ProvisionAsync();
+        await using var first = CreateDelivery(new RecordingObserver(events), 105);
+        await using var second = CreateDelivery(new RecordingObserver(events), 106);
+
+        var started = System.Diagnostics.Stopwatch.StartNew();
+        await pipeline.ConsumeTransactionAsync(first);
+        await pipeline.ConsumeTransactionAsync(second);
+
+        Assert.True(started.Elapsed >= TimeSpan.FromMilliseconds(150));
+        Assert.Equal(["destination", "ack", "destination", "ack"], events);
+        Assert.True(pipeline.Status.ThrottleDelay >= TimeSpan.FromMilliseconds(150));
+    }
+
+    [Fact]
     public async Task Wrong_durable_position_nacks_and_faults_without_advancing()
     {
         var events = new List<string>();
@@ -128,11 +245,13 @@ public sealed class SyncPipelineTests
             transform ?? new RecordingTransform(),
             destination);
 
-    private static ChangeTransactionDelivery CreateDelivery(IChangeDeliveryObserver observer) =>
+    private static ChangeTransactionDelivery CreateDelivery(
+        IChangeDeliveryObserver observer,
+        ulong position = 105) =>
         ChangeDeliveryTestFactory.CreateCommitted(
             Source,
             transactionId: 42,
-            new BlueTuskLogSequenceNumber(105),
+            new BlueTuskLogSequenceNumber(position),
             observer: observer);
 
     private sealed class RecordingTransform : ISyncTransform
@@ -167,6 +286,8 @@ public sealed class SyncPipelineTests
 
         public SyncProvisionResult ProvisionResult { get; init; } =
             new(SyncProvisionStatus.Ready);
+
+        public int FailuresRemaining { get; set; }
 
         public string Name => "recording";
 
@@ -206,10 +327,22 @@ public sealed class SyncPipelineTests
             CancellationToken cancellationToken = default)
         {
             events.Add("destination");
+            if (FailuresRemaining > 0)
+            {
+                FailuresRemaining--;
+                throw new InvalidOperationException("Injected transient destination outage.");
+            }
+
             return ValueTask.FromResult(SyncApplyResult.Applied(
                 new BlueTuskLogSequenceNumber(
                     checked((ulong)((long)batch.Transaction.CommitEndPosition.Value + PositionOffset)))));
         }
+    }
+
+    private sealed class InvalidOperationRetryClassifier : ISyncRetryClassifier
+    {
+        public bool IsTransient(SyncRetryContext context) =>
+            context.Exception is InvalidOperationException;
     }
 
     private sealed class RecordingObserver(List<string> events) : IChangeDeliveryObserver

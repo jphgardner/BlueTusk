@@ -31,6 +31,8 @@ public sealed record BlueTuskSyncWorkerStatus(
     long AppliedSnapshotBatches,
     long SnapshotRows,
     long QuarantinedTransactions,
+    long RetryAttempts,
+    TimeSpan ThrottleDelay,
     BlueTuskLogSequenceNumber LastCommitPosition,
     Guid? SnapshotEpoch,
     bool HandoffCommitted,
@@ -69,6 +71,8 @@ public sealed class BlueTuskSyncHealthRegistry
             status.AppliedSnapshotBatches,
             snapshotRows,
             status.QuarantinedTransactions,
+            status.RetryAttempts,
+            status.ThrottleDelay,
             lastCommitPosition,
             snapshotEpoch,
             handoffCommitted,
@@ -338,12 +342,14 @@ internal sealed class BlueTuskSyncHostedService : BackgroundService
         var destination = (ISyncDestination)services.GetRequiredService(registration.DestinationType);
         var quarantine = registration.QuarantineFactory?.Invoke(services) ??
             destination as ISyncQuarantineSink;
+        var retryClassifier = services.GetService<ISyncRetryClassifier>();
         await using var pipeline = new SyncPipeline(
             registration.Options,
             registration.Source,
             transform,
             destination,
-            quarantine);
+            quarantine,
+            retryClassifier);
         using var workerCancellation = CancellationTokenSource.CreateLinkedTokenSource(stoppingToken);
         var runtime = new SyncWorkerRuntime(pipeline, workerCancellation);
         _runtimes.Add(registration.Options.PipelineId, runtime);
@@ -403,6 +409,8 @@ internal sealed class ObservedSyncConsumer : IChangeStreamConsumer
     private readonly SyncPipeline _pipeline;
     private readonly SyncWorkerRuntime _runtime;
     private readonly BlueTuskSyncHealthRegistry _health;
+    private long _reportedRetries;
+    private long _reportedThrottleTicks;
 
     public ObservedSyncConsumer(
         string pipelineId,
@@ -498,14 +506,36 @@ internal sealed class ObservedSyncConsumer : IChangeStreamConsumer
         }
     }
 
-    public void UpdateHealth() =>
+    public void UpdateHealth()
+    {
+        var status = _pipeline.Status;
+        var retries = status.RetryAttempts;
+        var retryDelta = retries - Interlocked.Exchange(ref _reportedRetries, retries);
+        if (retryDelta > 0)
+        {
+            SyncHostingDiagnostics.Retries.Add(
+                retryDelta,
+                SyncHostingDiagnostics.PipelineTag(_pipelineId));
+        }
+
+        var throttleTicks = status.ThrottleDelay.Ticks;
+        var throttleDelta = throttleTicks -
+                            Interlocked.Exchange(ref _reportedThrottleTicks, throttleTicks);
+        if (throttleDelta > 0)
+        {
+            SyncHostingDiagnostics.ThrottleDuration.Record(
+                TimeSpan.FromTicks(throttleDelta).TotalMilliseconds,
+                SyncHostingDiagnostics.PipelineTag(_pipelineId));
+        }
+
         _health.Update(
             _pipelineId,
-            _pipeline.Status,
+            status,
             SnapshotRows,
             LastCommitPosition,
             SnapshotEpoch,
             _runtime.HandoffCommitted);
+    }
 }
 
 internal static class SyncHostingDiagnostics
@@ -516,6 +546,12 @@ internal static class SyncHostingDiagnostics
 
     public static readonly Counter<long> Transactions =
         Meter.CreateCounter<long>("bluetusk.sync.transactions", "{transaction}");
+
+    public static readonly Counter<long> Retries =
+        Meter.CreateCounter<long>("bluetusk.sync.retries", "{attempt}");
+
+    public static readonly Histogram<double> ThrottleDuration =
+        Meter.CreateHistogram<double>("bluetusk.sync.throttle.duration", "ms");
     public static readonly Counter<long> SnapshotRows =
         Meter.CreateCounter<long>("bluetusk.sync.snapshot.rows", "{row}");
     public static readonly Counter<long> Errors =

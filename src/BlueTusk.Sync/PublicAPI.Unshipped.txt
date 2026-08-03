@@ -21,6 +21,8 @@ BlueTusk.Sync.ISyncQuarantineSink
 BlueTusk.Sync.ISyncQuarantineSink.StoreAsync(BlueTusk.Sync.SyncQuarantineRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
 BlueTusk.Sync.ISyncRepairSink
 BlueTusk.Sync.ISyncRepairSink.ApplyRepairBatchAsync(BlueTusk.Sync.SyncRepairBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.ISyncRetryClassifier
+BlueTusk.Sync.ISyncRetryClassifier.IsTransient(BlueTusk.Sync.SyncRetryContext! context) -> bool
 BlueTusk.Sync.ISyncTransform
 BlueTusk.Sync.ISyncTransform.TransformSnapshotBatchAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSnapshotMutation!>!>
 BlueTusk.Sync.ISyncTransform.TransformTransactionAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncMutation!>!>
@@ -79,7 +81,15 @@ BlueTusk.Sync.SyncPipeline.ResumeAsync(System.Threading.CancellationToken cancel
 BlueTusk.Sync.SyncPipeline.StartSnapshotAsync(BlueTusk.Streams.SnapshotStart! start, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.SyncPipeline.Status.get -> BlueTusk.Sync.SyncPipelineStatus!
 BlueTusk.Sync.SyncPipeline.StopAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
-BlueTusk.Sync.SyncPipeline.SyncPipeline(BlueTusk.Sync.SyncPipelineOptions! options, BlueTusk.Streams.ChangeSourceIdentity! source, BlueTusk.Sync.ISyncTransform! transform, BlueTusk.Sync.ISyncDestination! destination, BlueTusk.Sync.ISyncQuarantineSink? quarantine = null, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Sync.SyncPipeline.SyncPipeline(BlueTusk.Sync.SyncPipelineOptions! options, BlueTusk.Streams.ChangeSourceIdentity! source, BlueTusk.Sync.ISyncTransform! transform, BlueTusk.Sync.ISyncDestination! destination, BlueTusk.Sync.ISyncQuarantineSink? quarantine = null, BlueTusk.Sync.ISyncRetryClassifier? retryClassifier = null, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncPipelineOperation.ApplySnapshotBatch = 3 -> BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncPipelineOperation.ApplyTransaction = 5 -> BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncPipelineOperation.CompleteSnapshot = 4 -> BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncPipelineOperation.Provision = 0 -> BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncPipelineOperation.ResetSnapshot = 1 -> BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncPipelineOperation.StartSnapshot = 2 -> BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncPipelineOperation.StoreQuarantine = 6 -> BlueTusk.Sync.SyncPipelineOperation
 BlueTusk.Sync.SyncPipelineOptions
 BlueTusk.Sync.SyncPipelineOptions.<Clone>$() -> BlueTusk.Sync.SyncPipelineOptions!
 BlueTusk.Sync.SyncPipelineOptions.Equals(BlueTusk.Sync.SyncPipelineOptions? other) -> bool
@@ -87,6 +97,10 @@ BlueTusk.Sync.SyncPipelineOptions.PipelineId.get -> string!
 BlueTusk.Sync.SyncPipelineOptions.PipelineId.init -> void
 BlueTusk.Sync.SyncPipelineOptions.PoisonRecordPolicy.get -> BlueTusk.Sync.SyncPoisonRecordPolicy
 BlueTusk.Sync.SyncPipelineOptions.PoisonRecordPolicy.init -> void
+BlueTusk.Sync.SyncPipelineOptions.RateLimit.get -> BlueTusk.Sync.SyncRateLimitOptions!
+BlueTusk.Sync.SyncPipelineOptions.RateLimit.init -> void
+BlueTusk.Sync.SyncPipelineOptions.Retry.get -> BlueTusk.Sync.SyncRetryOptions!
+BlueTusk.Sync.SyncPipelineOptions.Retry.init -> void
 BlueTusk.Sync.SyncPipelineOptions.SyncPipelineOptions() -> void
 BlueTusk.Sync.SyncPipelineState
 BlueTusk.Sync.SyncPipelineState.CatchingUp = 2 -> BlueTusk.Sync.SyncPipelineState
@@ -99,12 +113,12 @@ BlueTusk.Sync.SyncPipelineState.Running = 3 -> BlueTusk.Sync.SyncPipelineState
 BlueTusk.Sync.SyncPipelineState.Snapshotting = 1 -> BlueTusk.Sync.SyncPipelineState
 BlueTusk.Sync.SyncPipelineState.Stopped = 8 -> BlueTusk.Sync.SyncPipelineState
 BlueTusk.Sync.SyncPipelineStatus
+BlueTusk.Sync.SyncPipelineStatus.Deconstruct(out string! PipelineId, out BlueTusk.Sync.SyncPipelineState State, out long AppliedTransactions, out long AppliedSnapshotBatches, out long QuarantinedTransactions, out long RetryAttempts, out System.TimeSpan ThrottleDelay, out System.DateTimeOffset? LastTransitionAt, out string? LastError) -> void
 BlueTusk.Sync.SyncPipelineStatus.<Clone>$() -> BlueTusk.Sync.SyncPipelineStatus!
 BlueTusk.Sync.SyncPipelineStatus.AppliedSnapshotBatches.get -> long
 BlueTusk.Sync.SyncPipelineStatus.AppliedSnapshotBatches.init -> void
 BlueTusk.Sync.SyncPipelineStatus.AppliedTransactions.get -> long
 BlueTusk.Sync.SyncPipelineStatus.AppliedTransactions.init -> void
-BlueTusk.Sync.SyncPipelineStatus.Deconstruct(out string! PipelineId, out BlueTusk.Sync.SyncPipelineState State, out long AppliedTransactions, out long AppliedSnapshotBatches, out long QuarantinedTransactions, out System.DateTimeOffset? LastTransitionAt, out string? LastError) -> void
 BlueTusk.Sync.SyncPipelineStatus.Equals(BlueTusk.Sync.SyncPipelineStatus? other) -> bool
 BlueTusk.Sync.SyncPipelineStatus.LastError.get -> string?
 BlueTusk.Sync.SyncPipelineStatus.LastError.init -> void
@@ -114,9 +128,13 @@ BlueTusk.Sync.SyncPipelineStatus.PipelineId.get -> string!
 BlueTusk.Sync.SyncPipelineStatus.PipelineId.init -> void
 BlueTusk.Sync.SyncPipelineStatus.QuarantinedTransactions.get -> long
 BlueTusk.Sync.SyncPipelineStatus.QuarantinedTransactions.init -> void
+BlueTusk.Sync.SyncPipelineStatus.RetryAttempts.get -> long
+BlueTusk.Sync.SyncPipelineStatus.RetryAttempts.init -> void
 BlueTusk.Sync.SyncPipelineStatus.State.get -> BlueTusk.Sync.SyncPipelineState
 BlueTusk.Sync.SyncPipelineStatus.State.init -> void
-BlueTusk.Sync.SyncPipelineStatus.SyncPipelineStatus(string! PipelineId, BlueTusk.Sync.SyncPipelineState State, long AppliedTransactions, long AppliedSnapshotBatches, long QuarantinedTransactions, System.DateTimeOffset? LastTransitionAt, string? LastError) -> void
+BlueTusk.Sync.SyncPipelineStatus.SyncPipelineStatus(string! PipelineId, BlueTusk.Sync.SyncPipelineState State, long AppliedTransactions, long AppliedSnapshotBatches, long QuarantinedTransactions, long RetryAttempts, System.TimeSpan ThrottleDelay, System.DateTimeOffset? LastTransitionAt, string? LastError) -> void
+BlueTusk.Sync.SyncPipelineStatus.ThrottleDelay.get -> System.TimeSpan
+BlueTusk.Sync.SyncPipelineStatus.ThrottleDelay.init -> void
 BlueTusk.Sync.SyncPoisonRecordException
 BlueTusk.Sync.SyncPoisonRecordException.SyncPoisonRecordException(string! message) -> void
 BlueTusk.Sync.SyncPoisonRecordException.SyncPoisonRecordException(string! message, System.Exception! innerException) -> void
@@ -146,6 +164,14 @@ BlueTusk.Sync.SyncProvisionResult.SyncProvisionResult(BlueTusk.Sync.SyncProvisio
 BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.Ready = 0 -> BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.RebuildRequired = 1 -> BlueTusk.Sync.SyncProvisionStatus
+BlueTusk.Sync.SyncRateLimitOptions
+BlueTusk.Sync.SyncRateLimitOptions.<Clone>$() -> BlueTusk.Sync.SyncRateLimitOptions!
+BlueTusk.Sync.SyncRateLimitOptions.Equals(BlueTusk.Sync.SyncRateLimitOptions? other) -> bool
+BlueTusk.Sync.SyncRateLimitOptions.MaximumTransactionsPerSecond.get -> double?
+BlueTusk.Sync.SyncRateLimitOptions.MaximumTransactionsPerSecond.init -> void
+BlueTusk.Sync.SyncRateLimitOptions.MaximumTransformedBytesPerSecond.get -> long?
+BlueTusk.Sync.SyncRateLimitOptions.MaximumTransformedBytesPerSecond.init -> void
+BlueTusk.Sync.SyncRateLimitOptions.SyncRateLimitOptions() -> void
 BlueTusk.Sync.SyncRebuildCutoverException
 BlueTusk.Sync.SyncRebuildCutoverException.ActivatedPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
 BlueTusk.Sync.SyncRebuildCutoverException.ActivationCompleted.get -> bool
@@ -251,6 +277,35 @@ BlueTusk.Sync.SyncQuarantineRecord.TransactionId.get -> uint
 BlueTusk.Sync.SyncQuarantineRecord.TransactionId.init -> void
 BlueTusk.Sync.SyncQuarantineRecord.Transform.get -> BlueTusk.Sync.SyncTransformVersion!
 BlueTusk.Sync.SyncQuarantineRecord.Transform.init -> void
+BlueTusk.Sync.SyncRetryContext
+BlueTusk.Sync.SyncRetryContext.<Clone>$() -> BlueTusk.Sync.SyncRetryContext!
+BlueTusk.Sync.SyncRetryContext.Attempt.get -> int
+BlueTusk.Sync.SyncRetryContext.Attempt.init -> void
+BlueTusk.Sync.SyncRetryContext.Deconstruct(out string! PipelineId, out string! Destination, out BlueTusk.Sync.SyncPipelineOperation Operation, out int Attempt, out System.Exception! Exception) -> void
+BlueTusk.Sync.SyncRetryContext.Destination.get -> string!
+BlueTusk.Sync.SyncRetryContext.Destination.init -> void
+BlueTusk.Sync.SyncRetryContext.Equals(BlueTusk.Sync.SyncRetryContext? other) -> bool
+BlueTusk.Sync.SyncRetryContext.Exception.get -> System.Exception!
+BlueTusk.Sync.SyncRetryContext.Exception.init -> void
+BlueTusk.Sync.SyncRetryContext.Operation.get -> BlueTusk.Sync.SyncPipelineOperation
+BlueTusk.Sync.SyncRetryContext.Operation.init -> void
+BlueTusk.Sync.SyncRetryContext.PipelineId.get -> string!
+BlueTusk.Sync.SyncRetryContext.PipelineId.init -> void
+BlueTusk.Sync.SyncRetryContext.SyncRetryContext(string! PipelineId, string! Destination, BlueTusk.Sync.SyncPipelineOperation Operation, int Attempt, System.Exception! Exception) -> void
+BlueTusk.Sync.SyncRetryOptions
+BlueTusk.Sync.SyncRetryOptions.<Clone>$() -> BlueTusk.Sync.SyncRetryOptions!
+BlueTusk.Sync.SyncRetryOptions.BackoffFactor.get -> double
+BlueTusk.Sync.SyncRetryOptions.BackoffFactor.init -> void
+BlueTusk.Sync.SyncRetryOptions.Equals(BlueTusk.Sync.SyncRetryOptions? other) -> bool
+BlueTusk.Sync.SyncRetryOptions.InitialDelay.get -> System.TimeSpan
+BlueTusk.Sync.SyncRetryOptions.InitialDelay.init -> void
+BlueTusk.Sync.SyncRetryOptions.JitterRatio.get -> double
+BlueTusk.Sync.SyncRetryOptions.JitterRatio.init -> void
+BlueTusk.Sync.SyncRetryOptions.MaximumAttempts.get -> int
+BlueTusk.Sync.SyncRetryOptions.MaximumAttempts.init -> void
+BlueTusk.Sync.SyncRetryOptions.MaximumDelay.get -> System.TimeSpan
+BlueTusk.Sync.SyncRetryOptions.MaximumDelay.init -> void
+BlueTusk.Sync.SyncRetryOptions.SyncRetryOptions() -> void
 BlueTusk.Sync.SyncSnapshotBatch
 BlueTusk.Sync.SyncSnapshotBatch.Mutations.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSnapshotMutation!>!
 BlueTusk.Sync.SyncSnapshotBatch.PipelineId.get -> string!
@@ -321,6 +376,15 @@ override BlueTusk.Sync.SyncProvisionResult.ToString() -> string!
 override BlueTusk.Sync.SyncQuarantineRecord.Equals(object? obj) -> bool
 override BlueTusk.Sync.SyncQuarantineRecord.GetHashCode() -> int
 override BlueTusk.Sync.SyncQuarantineRecord.ToString() -> string!
+override BlueTusk.Sync.SyncRateLimitOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRateLimitOptions.GetHashCode() -> int
+override BlueTusk.Sync.SyncRateLimitOptions.ToString() -> string!
+override BlueTusk.Sync.SyncRetryContext.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRetryContext.GetHashCode() -> int
+override BlueTusk.Sync.SyncRetryContext.ToString() -> string!
+override BlueTusk.Sync.SyncRetryOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRetryOptions.GetHashCode() -> int
+override BlueTusk.Sync.SyncRetryOptions.ToString() -> string!
 override BlueTusk.Sync.SyncSnapshotMutation.Equals(object? obj) -> bool
 override BlueTusk.Sync.SyncSnapshotMutation.GetHashCode() -> int
 override BlueTusk.Sync.SyncSnapshotMutation.ToString() -> string!
@@ -352,6 +416,8 @@ override BlueTusk.Sync.SyncReconciliationRequest.GetHashCode() -> int
 override BlueTusk.Sync.SyncReconciliationRequest.ToString() -> string!
 static BlueTusk.Sync.SyncQuarantineRecord.operator !=(BlueTusk.Sync.SyncQuarantineRecord? left, BlueTusk.Sync.SyncQuarantineRecord? right) -> bool
 static BlueTusk.Sync.SyncQuarantineRecord.operator ==(BlueTusk.Sync.SyncQuarantineRecord? left, BlueTusk.Sync.SyncQuarantineRecord? right) -> bool
+static BlueTusk.Sync.SyncRateLimitOptions.operator !=(BlueTusk.Sync.SyncRateLimitOptions? left, BlueTusk.Sync.SyncRateLimitOptions? right) -> bool
+static BlueTusk.Sync.SyncRateLimitOptions.operator ==(BlueTusk.Sync.SyncRateLimitOptions? left, BlueTusk.Sync.SyncRateLimitOptions? right) -> bool
 static BlueTusk.Sync.SyncReconciler.GetPartitionIndex(string! key, int partitionCount) -> int
 static BlueTusk.Sync.SyncReconciler.GetKeyHash(string! key) -> uint
 static BlueTusk.Sync.SyncReconciler.ReconcileAsync(BlueTusk.Sync.SyncReconciliationRequest! request, BlueTusk.Sync.ISyncReconciliationReader! source, BlueTusk.Sync.ISyncDestination! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncReconciliationResult!>
@@ -362,6 +428,10 @@ static BlueTusk.Sync.SyncReconciliationRequest.operator !=(BlueTusk.Sync.SyncRec
 static BlueTusk.Sync.SyncReconciliationRequest.operator ==(BlueTusk.Sync.SyncReconciliationRequest? left, BlueTusk.Sync.SyncReconciliationRequest? right) -> bool
 static BlueTusk.Sync.SyncRepairMutation.Delete(string! key) -> BlueTusk.Sync.SyncRepairMutation!
 static BlueTusk.Sync.SyncRepairMutation.Upsert(string! key, BlueTusk.Sync.SyncRepairDocument! document) -> BlueTusk.Sync.SyncRepairMutation!
+static BlueTusk.Sync.SyncRetryContext.operator !=(BlueTusk.Sync.SyncRetryContext? left, BlueTusk.Sync.SyncRetryContext? right) -> bool
+static BlueTusk.Sync.SyncRetryContext.operator ==(BlueTusk.Sync.SyncRetryContext? left, BlueTusk.Sync.SyncRetryContext? right) -> bool
+static BlueTusk.Sync.SyncRetryOptions.operator !=(BlueTusk.Sync.SyncRetryOptions? left, BlueTusk.Sync.SyncRetryOptions? right) -> bool
+static BlueTusk.Sync.SyncRetryOptions.operator ==(BlueTusk.Sync.SyncRetryOptions? left, BlueTusk.Sync.SyncRetryOptions? right) -> bool
 static BlueTusk.Sync.SyncSnapshotMutation.operator !=(BlueTusk.Sync.SyncSnapshotMutation? left, BlueTusk.Sync.SyncSnapshotMutation? right) -> bool
 static BlueTusk.Sync.SyncSnapshotMutation.operator ==(BlueTusk.Sync.SyncSnapshotMutation? left, BlueTusk.Sync.SyncSnapshotMutation? right) -> bool
 static BlueTusk.Sync.SyncSourceTransaction.operator !=(BlueTusk.Sync.SyncSourceTransaction? left, BlueTusk.Sync.SyncSourceTransaction? right) -> bool

@@ -32,8 +32,38 @@ change-stream adapter provides bounded reads, continuous fenced lease renewal,
 and acknowledgement-after-destination ordering. Restart-aware relay snapshot
 bootstrap now reserves retention before export, restarts abandoned epochs, and
 resumes completed pipelines without resetting the destination. Dashboard
-integration, retry/rate-limit policy, and endurance remain gated work. The Sync
-release train remains non-publishable until those remaining Phase 5 gates pass.
+integration and endurance remain gated work. The Sync release train remains
+non-publishable until those remaining Phase 5 gates pass.
+
+## Retry, rate limits, and backpressure
+
+Sync never starts another source transaction while the current delivery is in
+destination work, retry delay, or rate-limit delay. This sequential pull model
+propagates backpressure to Streams without an unbounded pipeline-owned queue and
+preserves the source transaction order.
+
+`SyncRetryOptions` applies a bounded exponential backoff with configurable
+jitter and a hard attempt ceiling. No exception is retried by default: an
+application must register `ISyncRetryClassifier`, or its destination must
+implement that interface, and explicitly classify each failure as transient.
+The transform runs once and every attempt receives the same immutable batch or
+quarantine record, including stable IDs and timestamps. Retry exhaustion faults
+the pipeline and nacks the active Streams delivery; the checkpoint cannot move
+past an unconfirmed destination position.
+
+`SyncRateLimitOptions` can independently cap source transactions per second and
+transformed bytes per second. Each destination attempt, including a retry,
+consumes capacity. Waiting occurs inline before the attempt, so rate limiting
+does not introduce reordering or a second buffering layer. Snapshot batches use
+the transformed-byte limit but do not count as CDC transactions.
+
+Runtime status exposes cumulative retry attempts and throttle duration.
+`BlueTusk.Sync.DependencyInjection` publishes them through
+`bluetusk.sync.retries` and `bluetusk.sync.throttle.duration`; the health
+registry includes the same values for control-plane consumers. Retry classifiers
+are resolved from dependency injection and remain operator policy rather than a
+connector silently guessing whether a database, broker, or HTTP failure is safe
+to retry.
 
 ## Shared destination conformance
 

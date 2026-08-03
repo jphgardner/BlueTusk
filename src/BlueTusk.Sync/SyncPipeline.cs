@@ -9,6 +9,10 @@ public sealed record SyncPipelineOptions
     public SyncPoisonRecordPolicy PoisonRecordPolicy { get; init; } =
         SyncPoisonRecordPolicy.Pause;
 
+    public SyncRetryOptions Retry { get; init; } = new();
+
+    public SyncRateLimitOptions RateLimit { get; init; } = new();
+
     internal void Validate()
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(PipelineId);
@@ -16,6 +20,11 @@ public sealed record SyncPipelineOptions
         {
             throw new ArgumentOutOfRangeException(nameof(PoisonRecordPolicy));
         }
+
+        ArgumentNullException.ThrowIfNull(Retry);
+        ArgumentNullException.ThrowIfNull(RateLimit);
+        Retry.Validate();
+        RateLimit.Validate();
     }
 }
 
@@ -25,6 +34,8 @@ public sealed record SyncPipelineStatus(
     long AppliedTransactions,
     long AppliedSnapshotBatches,
     long QuarantinedTransactions,
+    long RetryAttempts,
+    TimeSpan ThrottleDelay,
     DateTimeOffset? LastTransitionAt,
     string? LastError);
 
@@ -36,11 +47,15 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
     private readonly ISyncDestination _destination;
     private readonly ISyncQuarantineSink? _quarantine;
     private readonly TimeProvider _timeProvider;
+    private readonly ISyncRetryClassifier? _retryClassifier;
+    private readonly SyncDeliveryRateLimiter _rateLimiter;
     private readonly SemaphoreSlim _gate = new(1, 1);
     private int _state = (int)SyncPipelineState.Stopped;
     private long _appliedTransactions;
     private long _appliedSnapshotBatches;
     private long _quarantinedTransactions;
+    private long _retryAttempts;
+    private long _throttleTicks;
     private long _lastTransitionUtcTicks = long.MinValue;
     private string? _lastError;
     private int _disposed;
@@ -51,6 +66,7 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         ISyncTransform transform,
         ISyncDestination destination,
         ISyncQuarantineSink? quarantine = null,
+        ISyncRetryClassifier? retryClassifier = null,
         TimeProvider? timeProvider = null)
     {
         ArgumentNullException.ThrowIfNull(options);
@@ -71,6 +87,8 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         _destination = destination;
         _quarantine = quarantine;
         _timeProvider = timeProvider ?? TimeProvider.System;
+        _retryClassifier = retryClassifier ?? destination as ISyncRetryClassifier;
+        _rateLimiter = new SyncDeliveryRateLimiter(options.RateLimit, _timeProvider);
     }
 
     public SyncPipelineStatus Status
@@ -84,6 +102,8 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
                 Interlocked.Read(ref _appliedTransactions),
                 Interlocked.Read(ref _appliedSnapshotBatches),
                 Interlocked.Read(ref _quarantinedTransactions),
+                Interlocked.Read(ref _retryAttempts),
+                TimeSpan.FromTicks(Interlocked.Read(ref _throttleTicks)),
                 transitionTicks == long.MinValue
                     ? null
                     : new DateTimeOffset(transitionTicks, TimeSpan.Zero),
@@ -100,8 +120,13 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
             TransitionTo(SyncPipelineState.Provisioning);
             try
             {
-                var result = await _destination.ProvisionAsync(
-                    new SyncProvisionRequest(_options.PipelineId, _source, _transform.Version),
+                var result = await ExecuteDestinationAsync(
+                    SyncPipelineOperation.Provision,
+                    transformedBytes: 0,
+                    countTransaction: false,
+                    token => _destination.ProvisionAsync(
+                        new SyncProvisionRequest(_options.PipelineId, _source, _transform.Version),
+                        token),
                     cancellationToken).ConfigureAwait(false);
                 ArgumentNullException.ThrowIfNull(result);
                 if (!Enum.IsDefined(result.Status))
@@ -237,9 +262,9 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
                 SyncPipelineState.Paused,
                 SyncPipelineState.Faulted);
             TransitionTo(SyncPipelineState.Snapshotting);
-            await _destination.ResetSnapshotAsync(
-                _options.PipelineId,
-                reset,
+            await ExecuteDestinationAsync(
+                SyncPipelineOperation.ResetSnapshot,
+                token => _destination.ResetSnapshotAsync(_options.PipelineId, reset, token),
                 cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception)
@@ -261,10 +286,13 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         try
         {
             RequireState(SyncPipelineState.Snapshotting);
-            await _destination.StartSnapshotAsync(
-                _options.PipelineId,
-                start,
-                _transform.Version,
+            await ExecuteDestinationAsync(
+                SyncPipelineOperation.StartSnapshot,
+                token => _destination.StartSnapshotAsync(
+                    _options.PipelineId,
+                    start,
+                    _transform.Version,
+                    token),
                 cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception)
@@ -289,8 +317,16 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
             var mutations = await _transform.TransformSnapshotBatchAsync(
                 batch,
                 cancellationToken).ConfigureAwait(false);
-            await _destination.ApplySnapshotBatchAsync(
-                new SyncSnapshotBatch(_options.PipelineId, _transform.Version, batch, mutations),
+            var destinationBatch = new SyncSnapshotBatch(
+                _options.PipelineId,
+                _transform.Version,
+                batch,
+                mutations);
+            await ExecuteDestinationAsync(
+                SyncPipelineOperation.ApplySnapshotBatch,
+                SyncDeliveryRateLimiter.EstimateBytes(mutations),
+                countTransaction: false,
+                token => _destination.ApplySnapshotBatchAsync(destinationBatch, token),
                 cancellationToken).ConfigureAwait(false);
             Interlocked.Increment(ref _appliedSnapshotBatches);
         }
@@ -313,10 +349,13 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         try
         {
             RequireState(SyncPipelineState.Snapshotting);
-            await _destination.CompleteSnapshotAsync(
-                _options.PipelineId,
-                complete,
-                _transform.Version,
+            await ExecuteDestinationAsync(
+                SyncPipelineOperation.CompleteSnapshot,
+                token => _destination.CompleteSnapshotAsync(
+                    _options.PipelineId,
+                    complete,
+                    _transform.Version,
+                    token),
                 cancellationToken).ConfigureAwait(false);
             TransitionTo(SyncPipelineState.CatchingUp);
         }
@@ -353,17 +392,28 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
                 return;
             }
 
-            SyncApplyResult result;
             try
             {
-                result = await _destination.ApplyTransactionAsync(
-                    new SyncTransactionBatch(
-                        _options.PipelineId,
-                        _transform.Version,
-                        delivery.Transaction,
-                        mutations),
+                var destinationBatch = new SyncTransactionBatch(
+                    _options.PipelineId,
+                    _transform.Version,
+                    delivery.Transaction,
+                    mutations);
+                _ = await ExecuteDestinationAsync(
+                    SyncPipelineOperation.ApplyTransaction,
+                    SyncDeliveryRateLimiter.EstimateBytes(mutations),
+                    countTransaction: true,
+                    async token =>
+                    {
+                        var attempt = await _destination.ApplyTransactionAsync(
+                            destinationBatch,
+                            token).ConfigureAwait(false);
+                        ValidateDurableResult(
+                            attempt,
+                            delivery.Transaction.CommitEndPosition);
+                        return attempt;
+                    },
                     cancellationToken).ConfigureAwait(false);
-                ValidateDurableResult(result, delivery.Transaction.CommitEndPosition);
             }
             catch (Exception exception)
             {
@@ -418,8 +468,7 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
             bool stored;
             try
             {
-                stored = await _quarantine!.StoreAsync(
-                    new SyncQuarantineRecord(
+                var record = new SyncQuarantineRecord(
                         _options.PipelineId,
                         _transform.Version,
                         delivery.Transaction.Source,
@@ -427,7 +476,12 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
                         delivery.Transaction.CommitEndPosition,
                         exception.GetType().FullName ?? exception.GetType().Name,
                         exception.Message,
-                        _timeProvider.GetUtcNow()),
+                        _timeProvider.GetUtcNow());
+                stored = await ExecuteDestinationAsync(
+                    SyncPipelineOperation.StoreQuarantine,
+                    transformedBytes: 0,
+                    countTransaction: false,
+                    token => _quarantine!.StoreAsync(record, token),
                     cancellationToken).ConfigureAwait(false);
             }
             catch (Exception quarantineFailure)
@@ -517,6 +571,86 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         {
             throw new SyncDestinationDurabilityException(
                 $"The destination confirmed position '{result.DurablePosition}' instead of source position '{expectedPosition}'.");
+        }
+    }
+
+    private async ValueTask ExecuteDestinationAsync(
+        SyncPipelineOperation operation,
+        Func<CancellationToken, ValueTask> action,
+        CancellationToken cancellationToken)
+    {
+        await ExecuteDestinationAsync(
+            operation,
+            transformedBytes: 0,
+            countTransaction: false,
+            action,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask ExecuteDestinationAsync(
+        SyncPipelineOperation operation,
+        long transformedBytes,
+        bool countTransaction,
+        Func<CancellationToken, ValueTask> action,
+        CancellationToken cancellationToken)
+    {
+        _ = await ExecuteDestinationAsync(
+            operation,
+            transformedBytes,
+            countTransaction,
+            async token =>
+            {
+                await action(token).ConfigureAwait(false);
+                return true;
+            },
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask<TResult> ExecuteDestinationAsync<TResult>(
+        SyncPipelineOperation operation,
+        long transformedBytes,
+        bool countTransaction,
+        Func<CancellationToken, ValueTask<TResult>> action,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; ; attempt++)
+        {
+            var throttle = await _rateLimiter.WaitAsync(
+                transformedBytes,
+                countTransaction,
+                cancellationToken).ConfigureAwait(false);
+            if (throttle > TimeSpan.Zero)
+            {
+                Interlocked.Add(ref _throttleTicks, throttle.Ticks);
+            }
+
+            try
+            {
+                return await action(cancellationToken).ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                if (cancellationToken.IsCancellationRequested ||
+                    attempt >= _options.Retry.MaximumAttempts ||
+                    _retryClassifier is null ||
+                    !_retryClassifier.IsTransient(
+                        new SyncRetryContext(
+                            _options.PipelineId,
+                            _destination.Name,
+                            operation,
+                            attempt,
+                            exception)))
+                {
+                    throw;
+                }
+
+                Interlocked.Increment(ref _retryAttempts);
+                var delay = _options.Retry.DelayBeforeAttempt(attempt + 1);
+                if (delay > TimeSpan.Zero)
+                {
+                    await Task.Delay(delay, _timeProvider, cancellationToken).ConfigureAwait(false);
+                }
+            }
         }
     }
 
