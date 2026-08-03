@@ -1,0 +1,10 @@
+#nullable enable
+BlueTusk.EntityFrameworkCore.Design.BlueTuskDesignTimeInfo
+BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDatabaseModelFactory
+BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDatabaseModelFactory.BlueTuskDatabaseModelFactory() -> void
+BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDesignTimeServices
+BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDesignTimeServices.BlueTuskDesignTimeServices() -> void
+BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDesignTimeServices.ConfigureDesignTimeServices(Microsoft.Extensions.DependencyInjection.IServiceCollection! serviceCollection) -> void
+const BlueTusk.EntityFrameworkCore.Design.BlueTuskDesignTimeInfo.ToolCommand = "bluetusk" -> string!
+override BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDatabaseModelFactory.Create(string! connectionString, Microsoft.EntityFrameworkCore.Scaffolding.DatabaseModelFactoryOptions! options) -> Microsoft.EntityFrameworkCore.Scaffolding.Metadata.DatabaseModel!
+override BlueTusk.EntityFrameworkCore.Design.Internal.BlueTuskDatabaseModelFactory.Create(System.Data.Common.DbConnection! connection, Microsoft.EntityFrameworkCore.Scaffolding.DatabaseModelFactoryOptions! options) -> Microsoft.EntityFrameworkCore.Scaffolding.Metadata.DatabaseModel!

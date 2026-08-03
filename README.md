@@ -106,7 +106,7 @@ The current `0.3.0-preview.1` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
-- compiler-enforced shipped API/nullability baselines for the ADO.NET stack, replication packages, and extension-authoring seam;
+- a hash-locked V1 API/nullability baseline for every publishable Provider library, including EF Core, extensions, and identity adapters;
 - TCP and Unix-domain transports with deterministic DNS/address fallback, total connect
   deadlines, cancellation, TCP keepalive, bounded socket buffers, and classified connection
   failures;

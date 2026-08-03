@@ -626,3 +626,5 @@ static BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.operator !=(Bl
 static BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.operator ==(BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? right) -> bool
 static BlueTusk.Data.Schema.BlueTuskSchemaObjectName.operator !=(BlueTusk.Data.Schema.BlueTuskSchemaObjectName? left, BlueTusk.Data.Schema.BlueTuskSchemaObjectName? right) -> bool
 static BlueTusk.Data.Schema.BlueTuskSchemaObjectName.operator ==(BlueTusk.Data.Schema.BlueTuskSchemaObjectName? left, BlueTusk.Data.Schema.BlueTuskSchemaObjectName? right) -> bool
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.ReadRaw() -> System.ReadOnlyMemory<byte>?
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.ReadRawAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>?>

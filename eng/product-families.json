@@ -9,7 +9,7 @@
         "src",
         "extensions",
         "identity",
-        "templates",
+        "templates/BlueTusk.Extension/BlueTusk.Templates.csproj",
         "tooling"
       ]
     },

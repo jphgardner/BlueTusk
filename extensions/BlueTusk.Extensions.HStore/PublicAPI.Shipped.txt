@@ -1,0 +1,40 @@
+#nullable enable
+BlueTusk.Extensions.HStore.BlueTuskHStore
+BlueTusk.Extensions.HStore.BlueTuskHStore.BlueTuskHStore(params System.Collections.Generic.KeyValuePair<string!, string?>[]! pairs) -> void
+BlueTusk.Extensions.HStore.BlueTuskHStore.BlueTuskHStore(System.Collections.Generic.IEnumerable<System.Collections.Generic.KeyValuePair<string!, string?>>! pairs) -> void
+BlueTusk.Extensions.HStore.BlueTuskHStore.ContainsKey(string! key) -> bool
+BlueTusk.Extensions.HStore.BlueTuskHStore.Count.get -> int
+BlueTusk.Extensions.HStore.BlueTuskHStore.Equals(BlueTusk.Extensions.HStore.BlueTuskHStore? other) -> bool
+BlueTusk.Extensions.HStore.BlueTuskHStore.GetEnumerator() -> System.Collections.Generic.IEnumerator<System.Collections.Generic.KeyValuePair<string!, string?>>!
+BlueTusk.Extensions.HStore.BlueTuskHStore.Keys.get -> System.Collections.Generic.IEnumerable<string!>!
+BlueTusk.Extensions.HStore.BlueTuskHStore.this[string! key].get -> string?
+BlueTusk.Extensions.HStore.BlueTuskHStore.TryGetValue(string! key, out string? value) -> bool
+BlueTusk.Extensions.HStore.BlueTuskHStore.Values.get -> System.Collections.Generic.IEnumerable<string?>!
+BlueTusk.Extensions.HStore.BlueTuskHStoreCodec
+BlueTusk.Extensions.HStore.BlueTuskHStoreCodec.BlueTuskHStoreCodec() -> void
+BlueTusk.Extensions.HStore.BlueTuskHStoreDataSourceBuilderExtensions
+BlueTusk.Extensions.HStore.BlueTuskHStoreFeature
+BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.<Clone>$() -> BlueTusk.Extensions.HStore.BlueTuskHStoreFeature!
+BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.BlueTuskHStoreFeature(BlueTusk.TypeSystem.BlueTuskTypeName TypeName) -> void
+BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.Deconstruct(out BlueTusk.TypeSystem.BlueTuskTypeName TypeName) -> void
+BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.Equals(BlueTusk.Extensions.HStore.BlueTuskHStoreFeature? other) -> bool
+BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.TypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.TypeName.init -> void
+BlueTusk.Extensions.HStore.BlueTuskHStorePlugin
+BlueTusk.Extensions.HStore.BlueTuskHStorePlugin.BlueTuskHStorePlugin(string! schema = "public") -> void
+BlueTusk.Extensions.HStore.BlueTuskHStorePlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.HStore.BlueTuskHStorePlugin.TypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+const BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.RegistryName = "bluetusk.extensions.hstore" -> string!
+override BlueTusk.Extensions.HStore.BlueTuskHStore.Equals(object? obj) -> bool
+override BlueTusk.Extensions.HStore.BlueTuskHStore.GetHashCode() -> int
+override BlueTusk.Extensions.HStore.BlueTuskHStore.ToString() -> string!
+override BlueTusk.Extensions.HStore.BlueTuskHStoreCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.Extensions.HStore.BlueTuskHStore!
+override BlueTusk.Extensions.HStore.BlueTuskHStoreCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.Extensions.HStore.BlueTuskHStore! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.GetHashCode() -> int
+override BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.ToString() -> string!
+static BlueTusk.Extensions.HStore.BlueTuskHStore.Parse(string! value) -> BlueTusk.Extensions.HStore.BlueTuskHStore!
+static BlueTusk.Extensions.HStore.BlueTuskHStoreCodec.GetBinarySize(BlueTusk.Extensions.HStore.BlueTuskHStore! value) -> int
+static BlueTusk.Extensions.HStore.BlueTuskHStoreDataSourceBuilderExtensions.UseHStore(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, string! schema = "public") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.operator !=(BlueTusk.Extensions.HStore.BlueTuskHStoreFeature? left, BlueTusk.Extensions.HStore.BlueTuskHStoreFeature? right) -> bool
+static BlueTusk.Extensions.HStore.BlueTuskHStoreFeature.operator ==(BlueTusk.Extensions.HStore.BlueTuskHStoreFeature? left, BlueTusk.Extensions.HStore.BlueTuskHStoreFeature? right) -> bool

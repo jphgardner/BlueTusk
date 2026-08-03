@@ -1,0 +1,55 @@
+#nullable enable
+BlueTusk.Extensions.PostGIS.BlueTuskGeography
+BlueTusk.Extensions.PostGIS.BlueTuskGeography.Equals(BlueTusk.Extensions.PostGIS.BlueTuskGeography? other) -> bool
+BlueTusk.Extensions.PostGIS.BlueTuskGeography.GetText() -> string!
+BlueTusk.Extensions.PostGIS.BlueTuskGeography.GetWellKnownBinary() -> System.ReadOnlySpan<byte>
+BlueTusk.Extensions.PostGIS.BlueTuskGeography.HasText.get -> bool
+BlueTusk.Extensions.PostGIS.BlueTuskGeography.HasWellKnownBinary.get -> bool
+BlueTusk.Extensions.PostGIS.BlueTuskGeographyCodec
+BlueTusk.Extensions.PostGIS.BlueTuskGeographyCodec.BlueTuskGeographyCodec() -> void
+BlueTusk.Extensions.PostGIS.BlueTuskGeographyCodec.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.Extensions.PostGIS.BlueTuskGeometry
+BlueTusk.Extensions.PostGIS.BlueTuskGeometry.Equals(BlueTusk.Extensions.PostGIS.BlueTuskGeometry? other) -> bool
+BlueTusk.Extensions.PostGIS.BlueTuskGeometry.GetText() -> string!
+BlueTusk.Extensions.PostGIS.BlueTuskGeometry.GetWellKnownBinary() -> System.ReadOnlySpan<byte>
+BlueTusk.Extensions.PostGIS.BlueTuskGeometry.HasText.get -> bool
+BlueTusk.Extensions.PostGIS.BlueTuskGeometry.HasWellKnownBinary.get -> bool
+BlueTusk.Extensions.PostGIS.BlueTuskGeometryCodec
+BlueTusk.Extensions.PostGIS.BlueTuskGeometryCodec.BlueTuskGeometryCodec() -> void
+BlueTusk.Extensions.PostGIS.BlueTuskGeometryCodec.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisDataSourceBuilderExtensions
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.<Clone>$() -> BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature!
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.BlueTuskPostGisFeature(BlueTusk.TypeSystem.BlueTuskTypeName GeometryTypeName, BlueTusk.TypeSystem.BlueTuskTypeName GeographyTypeName) -> void
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.Deconstruct(out BlueTusk.TypeSystem.BlueTuskTypeName GeometryTypeName, out BlueTusk.TypeSystem.BlueTuskTypeName GeographyTypeName) -> void
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.Equals(BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature? other) -> bool
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.GeographyTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.GeographyTypeName.init -> void
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.GeometryTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.GeometryTypeName.init -> void
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisPlugin
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisPlugin.BlueTuskPostGisPlugin(string! schema = "public") -> void
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisPlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisPlugin.GeographyTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PostGIS.BlueTuskPostGisPlugin.GeometryTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+const BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.RegistryName = "bluetusk.extensions.postgis" -> string!
+override BlueTusk.Extensions.PostGIS.BlueTuskGeography.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PostGIS.BlueTuskGeography.GetHashCode() -> int
+override BlueTusk.Extensions.PostGIS.BlueTuskGeography.ToString() -> string!
+override BlueTusk.Extensions.PostGIS.BlueTuskGeographyCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.Extensions.PostGIS.BlueTuskGeography!
+override BlueTusk.Extensions.PostGIS.BlueTuskGeographyCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.Extensions.PostGIS.BlueTuskGeography! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.Extensions.PostGIS.BlueTuskGeometry.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PostGIS.BlueTuskGeometry.GetHashCode() -> int
+override BlueTusk.Extensions.PostGIS.BlueTuskGeometry.ToString() -> string!
+override BlueTusk.Extensions.PostGIS.BlueTuskGeometryCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.Extensions.PostGIS.BlueTuskGeometry!
+override BlueTusk.Extensions.PostGIS.BlueTuskGeometryCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.Extensions.PostGIS.BlueTuskGeometry! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.GetHashCode() -> int
+override BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.ToString() -> string!
+static BlueTusk.Extensions.PostGIS.BlueTuskGeography.FromText(string! value) -> BlueTusk.Extensions.PostGIS.BlueTuskGeography!
+static BlueTusk.Extensions.PostGIS.BlueTuskGeography.FromWellKnownBinary(System.ReadOnlySpan<byte> value) -> BlueTusk.Extensions.PostGIS.BlueTuskGeography!
+static BlueTusk.Extensions.PostGIS.BlueTuskGeometry.FromText(string! value) -> BlueTusk.Extensions.PostGIS.BlueTuskGeometry!
+static BlueTusk.Extensions.PostGIS.BlueTuskGeometry.FromWellKnownBinary(System.ReadOnlySpan<byte> value) -> BlueTusk.Extensions.PostGIS.BlueTuskGeometry!
+static BlueTusk.Extensions.PostGIS.BlueTuskPostGisDataSourceBuilderExtensions.UsePostGis(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, string! schema = "public") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.operator !=(BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature? left, BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature? right) -> bool
+static BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature.operator ==(BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature? left, BlueTusk.Extensions.PostGIS.BlueTuskPostGisFeature? right) -> bool

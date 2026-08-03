@@ -1,0 +1,46 @@
+#nullable enable
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.<Clone>$() -> BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison!
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.BlueTuskPgTrgmComparison(float Similarity, float WordSimilarity, float StrictWordSimilarity, bool IsSimilar, bool IsWordSimilar, bool IsStrictWordSimilar, string![]! Trigrams) -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.Deconstruct(out float Similarity, out float WordSimilarity, out float StrictWordSimilarity, out bool IsSimilar, out bool IsWordSimilar, out bool IsStrictWordSimilar, out string![]! Trigrams) -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.Equals(BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison? other) -> bool
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.IsSimilar.get -> bool
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.IsSimilar.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.IsStrictWordSimilar.get -> bool
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.IsStrictWordSimilar.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.IsWordSimilar.get -> bool
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.IsWordSimilar.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.Similarity.get -> float
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.Similarity.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.StrictWordSimilarity.get -> float
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.StrictWordSimilarity.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.Trigrams.get -> string![]!
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.Trigrams.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.WordSimilarity.get -> float
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.WordSimilarity.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmDataSourceBuilderExtensions
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmDataSourceExtensions
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.<Clone>$() -> BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature!
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.BlueTuskPgTrgmFeature(string! Schema) -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.Deconstruct(out string! Schema) -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.Equals(BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature? other) -> bool
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.Schema.get -> string!
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.Schema.init -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmPlugin
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmPlugin.BlueTuskPgTrgmPlugin(string! schema = "public") -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmPlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmPlugin.Schema.get -> string!
+const BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.RegistryName = "bluetusk.extensions.pg_trgm" -> string!
+override BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.GetHashCode() -> int
+override BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.ToString() -> string!
+override BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.GetHashCode() -> int
+override BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.ToString() -> string!
+static BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.operator !=(BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison? left, BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison? right) -> bool
+static BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison.operator ==(BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison? left, BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison? right) -> bool
+static BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmDataSourceBuilderExtensions.UsePgTrgm(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, string! schema = "public") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmDataSourceExtensions.ComparePgTrgmAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! query, string! target, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmComparison!>
+static BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.operator !=(BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature? left, BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature? right) -> bool
+static BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature.operator ==(BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature? left, BlueTusk.Extensions.PgTrgm.BlueTuskPgTrgmFeature? right) -> bool

@@ -326,3 +326,28 @@ static BlueTusk.Replication.BlueTuskXLogData.operator ==(BlueTusk.Replication.Bl
 virtual BlueTusk.Replication.BlueTuskReplicationMessage.EqualityContract.get -> System.Type!
 virtual BlueTusk.Replication.BlueTuskReplicationMessage.Equals(BlueTusk.Replication.BlueTuskReplicationMessage? other) -> bool
 virtual BlueTusk.Replication.BlueTuskReplicationMessage.PrintMembers(System.Text.StringBuilder! builder) -> bool
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.CreateReplicationSlotAsync(BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskReplicationSlotCreationResult!>
+BlueTusk.Replication.BlueTuskLogicalReplicationConnection.CreateReplicationSlotAsync(BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions! options) -> System.Threading.Tasks.ValueTask<BlueTusk.Replication.BlueTuskReplicationSlotCreationResult!>
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.<Clone>$() -> BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions!
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.BlueTuskLogicalReplicationSlotCreationOptions() -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.Equals(BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions? other) -> bool
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.OutputPlugin.get -> string!
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.OutputPlugin.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.SlotName.get -> string!
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.SlotName.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.SnapshotMode.get -> BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.SnapshotMode.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.Temporary.get -> bool
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.Temporary.init -> void
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.TwoPhase.get -> bool
+BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.TwoPhase.init -> void
+BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode
+BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode.Export = 1 -> BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode
+BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode.NoExport = 0 -> BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode
+BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode.Use = 2 -> BlueTusk.Replication.BlueTuskLogicalSlotSnapshotMode
+override BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.Equals(object? obj) -> bool
+override BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.GetHashCode() -> int
+override BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.ToString() -> string!
+static BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.operator !=(BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions? left, BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions? right) -> bool
+static BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions.operator ==(BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions? left, BlueTusk.Replication.BlueTuskLogicalReplicationSlotCreationOptions? right) -> bool

@@ -1,0 +1,78 @@
+#nullable enable
+abstract BlueTusk.Extensions.LTree.BlueTuskLTreeTextCodec<T>.Create(string! value) -> T!
+abstract BlueTusk.Extensions.LTree.BlueTuskLTreeTextCodec<T>.GetValue(T! value) -> string!
+BlueTusk.Extensions.LTree.BlueTuskLQuery
+BlueTusk.Extensions.LTree.BlueTuskLQuery.<Clone>$() -> BlueTusk.Extensions.LTree.BlueTuskLQuery!
+BlueTusk.Extensions.LTree.BlueTuskLQuery.BlueTuskLQuery(string! value) -> void
+BlueTusk.Extensions.LTree.BlueTuskLQuery.Equals(BlueTusk.Extensions.LTree.BlueTuskLQuery? other) -> bool
+BlueTusk.Extensions.LTree.BlueTuskLQuery.Value.get -> string!
+BlueTusk.Extensions.LTree.BlueTuskLQueryCodec
+BlueTusk.Extensions.LTree.BlueTuskLQueryCodec.BlueTuskLQueryCodec() -> void
+BlueTusk.Extensions.LTree.BlueTuskLTree
+BlueTusk.Extensions.LTree.BlueTuskLTree.<Clone>$() -> BlueTusk.Extensions.LTree.BlueTuskLTree!
+BlueTusk.Extensions.LTree.BlueTuskLTree.BlueTuskLTree(string! value) -> void
+BlueTusk.Extensions.LTree.BlueTuskLTree.Equals(BlueTusk.Extensions.LTree.BlueTuskLTree? other) -> bool
+BlueTusk.Extensions.LTree.BlueTuskLTree.Value.get -> string!
+BlueTusk.Extensions.LTree.BlueTuskLTreeCodec
+BlueTusk.Extensions.LTree.BlueTuskLTreeCodec.BlueTuskLTreeCodec() -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreeDataSourceBuilderExtensions
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.<Clone>$() -> BlueTusk.Extensions.LTree.BlueTuskLTreeFeature!
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.BlueTuskLTreeFeature(BlueTusk.TypeSystem.BlueTuskTypeName LTreeTypeName, BlueTusk.TypeSystem.BlueTuskTypeName LQueryTypeName, BlueTusk.TypeSystem.BlueTuskTypeName LTxtQueryTypeName) -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.Deconstruct(out BlueTusk.TypeSystem.BlueTuskTypeName LTreeTypeName, out BlueTusk.TypeSystem.BlueTuskTypeName LQueryTypeName, out BlueTusk.TypeSystem.BlueTuskTypeName LTxtQueryTypeName) -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.Equals(BlueTusk.Extensions.LTree.BlueTuskLTreeFeature? other) -> bool
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.LQueryTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.LQueryTypeName.init -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.LTreeTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.LTreeTypeName.init -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.LTxtQueryTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.LTxtQueryTypeName.init -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreePlugin
+BlueTusk.Extensions.LTree.BlueTuskLTreePlugin.BlueTuskLTreePlugin(string! schema = "public") -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreePlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.LTree.BlueTuskLTreePlugin.LQueryTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.LTree.BlueTuskLTreePlugin.LTreeTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.LTree.BlueTuskLTreePlugin.LTxtQueryTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.LTree.BlueTuskLTreeTextCodec<T>
+BlueTusk.Extensions.LTree.BlueTuskLTreeTextCodec<T>.BlueTuskLTreeTextCodec() -> void
+BlueTusk.Extensions.LTree.BlueTuskLTxtQuery
+BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.<Clone>$() -> BlueTusk.Extensions.LTree.BlueTuskLTxtQuery!
+BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.BlueTuskLTxtQuery(string! value) -> void
+BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.Equals(BlueTusk.Extensions.LTree.BlueTuskLTxtQuery? other) -> bool
+BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.Value.get -> string!
+BlueTusk.Extensions.LTree.BlueTuskLTxtQueryCodec
+BlueTusk.Extensions.LTree.BlueTuskLTxtQueryCodec.BlueTuskLTxtQueryCodec() -> void
+const BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.RegistryName = "bluetusk.extensions.ltree" -> string!
+override BlueTusk.Extensions.LTree.BlueTuskLQuery.Equals(object? obj) -> bool
+override BlueTusk.Extensions.LTree.BlueTuskLQuery.GetHashCode() -> int
+override BlueTusk.Extensions.LTree.BlueTuskLQuery.ToString() -> string!
+override BlueTusk.Extensions.LTree.BlueTuskLTree.Equals(object? obj) -> bool
+override BlueTusk.Extensions.LTree.BlueTuskLTree.GetHashCode() -> int
+override BlueTusk.Extensions.LTree.BlueTuskLTree.ToString() -> string!
+override BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.GetHashCode() -> int
+override BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.ToString() -> string!
+override BlueTusk.Extensions.LTree.BlueTuskLTreeTextCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> T!
+override BlueTusk.Extensions.LTree.BlueTuskLTreeTextCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, T! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.Equals(object? obj) -> bool
+override BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.GetHashCode() -> int
+override BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.ToString() -> string!
+static BlueTusk.Extensions.LTree.BlueTuskLQuery.explicit operator string!(BlueTusk.Extensions.LTree.BlueTuskLQuery! value) -> string!
+static BlueTusk.Extensions.LTree.BlueTuskLQuery.implicit operator BlueTusk.Extensions.LTree.BlueTuskLQuery!(string! value) -> BlueTusk.Extensions.LTree.BlueTuskLQuery!
+static BlueTusk.Extensions.LTree.BlueTuskLQuery.operator !=(BlueTusk.Extensions.LTree.BlueTuskLQuery? left, BlueTusk.Extensions.LTree.BlueTuskLQuery? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLQuery.operator ==(BlueTusk.Extensions.LTree.BlueTuskLQuery? left, BlueTusk.Extensions.LTree.BlueTuskLQuery? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLQueryCodec.GetBinarySize(BlueTusk.Extensions.LTree.BlueTuskLQuery! value) -> int
+static BlueTusk.Extensions.LTree.BlueTuskLTree.explicit operator string!(BlueTusk.Extensions.LTree.BlueTuskLTree! value) -> string!
+static BlueTusk.Extensions.LTree.BlueTuskLTree.implicit operator BlueTusk.Extensions.LTree.BlueTuskLTree!(string! value) -> BlueTusk.Extensions.LTree.BlueTuskLTree!
+static BlueTusk.Extensions.LTree.BlueTuskLTree.operator !=(BlueTusk.Extensions.LTree.BlueTuskLTree? left, BlueTusk.Extensions.LTree.BlueTuskLTree? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLTree.operator ==(BlueTusk.Extensions.LTree.BlueTuskLTree? left, BlueTusk.Extensions.LTree.BlueTuskLTree? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLTreeCodec.GetBinarySize(BlueTusk.Extensions.LTree.BlueTuskLTree! value) -> int
+static BlueTusk.Extensions.LTree.BlueTuskLTreeDataSourceBuilderExtensions.UseLTree(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, string! schema = "public") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.operator !=(BlueTusk.Extensions.LTree.BlueTuskLTreeFeature? left, BlueTusk.Extensions.LTree.BlueTuskLTreeFeature? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLTreeFeature.operator ==(BlueTusk.Extensions.LTree.BlueTuskLTreeFeature? left, BlueTusk.Extensions.LTree.BlueTuskLTreeFeature? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLTreeTextCodec<T>.GetBinarySize(string! value) -> int
+static BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.explicit operator string!(BlueTusk.Extensions.LTree.BlueTuskLTxtQuery! value) -> string!
+static BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.implicit operator BlueTusk.Extensions.LTree.BlueTuskLTxtQuery!(string! value) -> BlueTusk.Extensions.LTree.BlueTuskLTxtQuery!
+static BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.operator !=(BlueTusk.Extensions.LTree.BlueTuskLTxtQuery? left, BlueTusk.Extensions.LTree.BlueTuskLTxtQuery? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLTxtQuery.operator ==(BlueTusk.Extensions.LTree.BlueTuskLTxtQuery? left, BlueTusk.Extensions.LTree.BlueTuskLTxtQuery? right) -> bool
+static BlueTusk.Extensions.LTree.BlueTuskLTxtQueryCodec.GetBinarySize(BlueTusk.Extensions.LTree.BlueTuskLTxtQuery! value) -> int

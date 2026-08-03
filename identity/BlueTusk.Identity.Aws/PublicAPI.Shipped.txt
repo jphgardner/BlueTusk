@@ -1,0 +1,6 @@
+#nullable enable
+BlueTusk.Identity.Aws.BlueTuskAwsIdentityExtensions
+static BlueTusk.Identity.Aws.BlueTuskAwsIdentityExtensions.UseAwsRdsIamAuthentication(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Identity.Aws.BlueTuskAwsIdentityExtensions.UseAwsRdsIamAuthentication(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, Amazon.RegionEndpoint! region) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Identity.Aws.BlueTuskAwsIdentityExtensions.UseAwsRdsIamAuthentication(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, Amazon.Runtime.AWSCredentials! credentials) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Identity.Aws.BlueTuskAwsIdentityExtensions.UseAwsRdsIamAuthentication(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, Amazon.Runtime.AWSCredentials! credentials, Amazon.RegionEndpoint! region) -> BlueTusk.Data.BlueTuskDataSourceBuilder!

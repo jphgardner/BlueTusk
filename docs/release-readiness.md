@@ -140,7 +140,10 @@ server cannot implement their generated-column SQL.
 
 The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
 packages without warnings. Compiler-enforced public API/nullability baselines
-cover the stable core, replication, and extension-authoring seams. The final
+cover all 27 Provider-family library surfaces and are locked by the
+[V1 candidate hash manifest](../eng/provider-api-freeze.json). Package
+conformance also prevents embedded extension-template content projects from
+entering the release train. The final
 direct-and-transitive NuGet vulnerability audit covers the complete solution
 and reports zero vulnerable package entries. All 30 checked-in allocation
 budgets pass, including command, typed reader, protocol writer,

@@ -36,6 +36,64 @@ public sealed class ProductFamilyArchitectureTests
     }
 
     [Fact]
+    public void Provider_package_manifest_does_not_register_embedded_template_content()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        using var manifest = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(repositoryRoot, "eng", "product-families.json")));
+
+        var projects = FindRegisteredProjects(
+            repositoryRoot,
+            manifest.RootElement.GetProperty("families").GetProperty("Provider"))
+            .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
+            .ToArray();
+
+        Assert.Contains(
+            "templates/BlueTusk.Extension/BlueTusk.Templates.csproj",
+            projects);
+        Assert.DoesNotContain(
+            projects,
+            path => path.StartsWith(
+                "templates/BlueTusk.Extension/content/",
+                StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Provider_library_packages_have_compiler_enforced_api_baselines()
+    {
+        var repositoryRoot = FindRepositoryRoot();
+        using var manifest = JsonDocument.Parse(
+            File.ReadAllText(Path.Combine(repositoryRoot, "eng", "product-families.json")));
+
+        foreach (var projectPath in FindRegisteredProjects(
+                     repositoryRoot,
+                     manifest.RootElement.GetProperty("families").GetProperty("Provider")))
+        {
+            var document = XDocument.Load(projectPath);
+            var outputType = document.Descendants("OutputType")
+                .Select(element => element.Value)
+                .FirstOrDefault();
+            var includeBuildOutput = document.Descendants("IncludeBuildOutput")
+                .Select(element => element.Value)
+                .FirstOrDefault();
+
+            if (string.Equals(outputType, "Exe", StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(includeBuildOutput, "false", StringComparison.OrdinalIgnoreCase))
+            {
+                continue;
+            }
+
+            var projectDirectory = Path.GetDirectoryName(projectPath)!;
+            Assert.True(
+                File.Exists(Path.Combine(projectDirectory, "PublicAPI.Shipped.txt")),
+                $"{Path.GetRelativePath(repositoryRoot, projectPath)} has no shipped API baseline.");
+            Assert.True(
+                File.Exists(Path.Combine(projectDirectory, "PublicAPI.Unshipped.txt")),
+                $"{Path.GetRelativePath(repositoryRoot, projectPath)} has no unshipped API baseline.");
+        }
+    }
+
+    [Fact]
     public void Publishable_product_families_have_publishable_release_dependencies()
     {
         var repositoryRoot = FindRepositoryRoot();
@@ -146,6 +204,33 @@ public sealed class ProductFamilyArchitectureTests
             .Select(ReadProductProject)
             .Where(project => project is not null)
             .Cast<ProductProject>()
+            .ToArray();
+    }
+
+    private static string[] FindRegisteredProjects(
+        string repositoryRoot,
+        JsonElement family)
+    {
+        return family.GetProperty("packages")
+            .EnumerateArray()
+            .Select(entry => Path.Combine(
+                repositoryRoot,
+                entry.GetString()!.Replace('/', Path.DirectorySeparatorChar)))
+            .SelectMany(path => Directory.Exists(path)
+                ? Directory.EnumerateFiles(path, "*.csproj", SearchOption.AllDirectories)
+                : [path])
+            .Where(path =>
+            {
+                var document = XDocument.Load(path);
+                var declaredFamily = document.Descendants("BlueTuskProductFamily")
+                    .Select(element => element.Value)
+                    .FirstOrDefault();
+
+                return string.IsNullOrWhiteSpace(declaredFamily) ||
+                       string.Equals(declaredFamily, "Provider", StringComparison.Ordinal);
+            })
+            .Distinct(StringComparer.OrdinalIgnoreCase)
+            .Order(StringComparer.OrdinalIgnoreCase)
             .ToArray();
     }
 

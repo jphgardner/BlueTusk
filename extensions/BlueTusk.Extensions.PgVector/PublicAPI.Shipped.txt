@@ -1,0 +1,95 @@
+#nullable enable
+BlueTusk.Extensions.PgVector.BlueTuskHalfVector
+BlueTusk.Extensions.PgVector.BlueTuskHalfVector.AsSpan() -> System.ReadOnlySpan<System.Half>
+BlueTusk.Extensions.PgVector.BlueTuskHalfVector.BlueTuskHalfVector(params System.Half[]! values) -> void
+BlueTusk.Extensions.PgVector.BlueTuskHalfVector.Count.get -> int
+BlueTusk.Extensions.PgVector.BlueTuskHalfVector.Equals(BlueTusk.Extensions.PgVector.BlueTuskHalfVector? other) -> bool
+BlueTusk.Extensions.PgVector.BlueTuskHalfVector.GetEnumerator() -> System.Collections.Generic.IEnumerator<System.Half>!
+BlueTusk.Extensions.PgVector.BlueTuskHalfVector.this[int index].get -> System.Half
+BlueTusk.Extensions.PgVector.BlueTuskHalfVectorCodec
+BlueTusk.Extensions.PgVector.BlueTuskHalfVectorCodec.BlueTuskHalfVectorCodec() -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorDataSourceBuilderExtensions
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.<Clone>$() -> BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature!
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.BlueTuskPgVectorFeature(BlueTusk.TypeSystem.BlueTuskTypeName TypeName, BlueTusk.TypeSystem.BlueTuskTypeName HalfVectorTypeName, BlueTusk.TypeSystem.BlueTuskTypeName SparseVectorTypeName) -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.Deconstruct(out BlueTusk.TypeSystem.BlueTuskTypeName TypeName, out BlueTusk.TypeSystem.BlueTuskTypeName HalfVectorTypeName, out BlueTusk.TypeSystem.BlueTuskTypeName SparseVectorTypeName) -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.Equals(BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature? other) -> bool
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.HalfVectorTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.HalfVectorTypeName.init -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.SparseVectorTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.SparseVectorTypeName.init -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.TypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.TypeName.init -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorPlugin
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorPlugin.BlueTuskPgVectorPlugin(string! schema = "public") -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorPlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorPlugin.HalfVectorTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorPlugin.SparseVectorTypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PgVector.BlueTuskPgVectorPlugin.TypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector.AsSpan() -> System.ReadOnlySpan<BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement>
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector.BlueTuskSparseVector(int dimensions, params BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement[]! elements) -> void
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector.Count.get -> int
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector.Dimensions.get -> int
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector.Equals(BlueTusk.Extensions.PgVector.BlueTuskSparseVector? other) -> bool
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector.GetEnumerator() -> System.Collections.Generic.IEnumerator<BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement>!
+BlueTusk.Extensions.PgVector.BlueTuskSparseVector.this[int index].get -> BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorCodec
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorCodec.BlueTuskSparseVectorCodec() -> void
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.BlueTuskSparseVectorElement() -> void
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.BlueTuskSparseVectorElement(int Index, float Value) -> void
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.Deconstruct(out int Index, out float Value) -> void
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.Equals(BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement other) -> bool
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.Index.get -> int
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.Index.init -> void
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.Value.get -> float
+BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.Value.init -> void
+BlueTusk.Extensions.PgVector.BlueTuskVector
+BlueTusk.Extensions.PgVector.BlueTuskVector.AsSpan() -> System.ReadOnlySpan<float>
+BlueTusk.Extensions.PgVector.BlueTuskVector.BlueTuskVector(params float[]! values) -> void
+BlueTusk.Extensions.PgVector.BlueTuskVector.Count.get -> int
+BlueTusk.Extensions.PgVector.BlueTuskVector.Equals(BlueTusk.Extensions.PgVector.BlueTuskVector? other) -> bool
+BlueTusk.Extensions.PgVector.BlueTuskVector.GetEnumerator() -> System.Collections.Generic.IEnumerator<float>!
+BlueTusk.Extensions.PgVector.BlueTuskVector.this[int index].get -> float
+BlueTusk.Extensions.PgVector.BlueTuskVectorCodec
+BlueTusk.Extensions.PgVector.BlueTuskVectorCodec.BlueTuskVectorCodec() -> void
+const BlueTusk.Extensions.PgVector.BlueTuskHalfVector.MaxDimensions = 16000 -> int
+const BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.RegistryName = "bluetusk.extensions.pgvector" -> string!
+const BlueTusk.Extensions.PgVector.BlueTuskSparseVector.MaxDimensions = 1000000000 -> int
+const BlueTusk.Extensions.PgVector.BlueTuskSparseVector.MaxNonZeroElements = 16000 -> int
+const BlueTusk.Extensions.PgVector.BlueTuskVector.MaxDimensions = 16000 -> int
+override BlueTusk.Extensions.PgVector.BlueTuskHalfVector.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgVector.BlueTuskHalfVector.GetHashCode() -> int
+override BlueTusk.Extensions.PgVector.BlueTuskHalfVector.ToString() -> string!
+override BlueTusk.Extensions.PgVector.BlueTuskHalfVectorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.Extensions.PgVector.BlueTuskHalfVector!
+override BlueTusk.Extensions.PgVector.BlueTuskHalfVectorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.Extensions.PgVector.BlueTuskHalfVector! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.GetHashCode() -> int
+override BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.ToString() -> string!
+override BlueTusk.Extensions.PgVector.BlueTuskSparseVector.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgVector.BlueTuskSparseVector.GetHashCode() -> int
+override BlueTusk.Extensions.PgVector.BlueTuskSparseVector.ToString() -> string!
+override BlueTusk.Extensions.PgVector.BlueTuskSparseVectorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.Extensions.PgVector.BlueTuskSparseVector!
+override BlueTusk.Extensions.PgVector.BlueTuskSparseVectorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.Extensions.PgVector.BlueTuskSparseVector! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.GetHashCode() -> int
+override BlueTusk.Extensions.PgVector.BlueTuskVector.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgVector.BlueTuskVector.GetHashCode() -> int
+override BlueTusk.Extensions.PgVector.BlueTuskVector.ToString() -> string!
+override BlueTusk.Extensions.PgVector.BlueTuskVectorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.Extensions.PgVector.BlueTuskVector!
+override BlueTusk.Extensions.PgVector.BlueTuskVectorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.Extensions.PgVector.BlueTuskVector! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+static BlueTusk.Extensions.PgVector.BlueTuskHalfVector.FromSinglePrecision(params float[]! values) -> BlueTusk.Extensions.PgVector.BlueTuskHalfVector!
+static BlueTusk.Extensions.PgVector.BlueTuskHalfVector.Parse(string! value) -> BlueTusk.Extensions.PgVector.BlueTuskHalfVector!
+static BlueTusk.Extensions.PgVector.BlueTuskHalfVectorCodec.GetBinarySize(BlueTusk.Extensions.PgVector.BlueTuskHalfVector! value) -> int
+static BlueTusk.Extensions.PgVector.BlueTuskPgVectorDataSourceBuilderExtensions.UsePgVector(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, string! schema = "public") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.operator !=(BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature? left, BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature? right) -> bool
+static BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature.operator ==(BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature? left, BlueTusk.Extensions.PgVector.BlueTuskPgVectorFeature? right) -> bool
+static BlueTusk.Extensions.PgVector.BlueTuskSparseVector.Parse(string! value) -> BlueTusk.Extensions.PgVector.BlueTuskSparseVector!
+static BlueTusk.Extensions.PgVector.BlueTuskSparseVectorCodec.GetBinarySize(BlueTusk.Extensions.PgVector.BlueTuskSparseVector! value) -> int
+static BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.operator !=(BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement left, BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement right) -> bool
+static BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.operator ==(BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement left, BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement right) -> bool
+static BlueTusk.Extensions.PgVector.BlueTuskVector.Parse(string! value) -> BlueTusk.Extensions.PgVector.BlueTuskVector!
+static BlueTusk.Extensions.PgVector.BlueTuskVector.Parse(System.ReadOnlySpan<char> value) -> BlueTusk.Extensions.PgVector.BlueTuskVector!
+static BlueTusk.Extensions.PgVector.BlueTuskVectorCodec.GetBinarySize(BlueTusk.Extensions.PgVector.BlueTuskVector! value) -> int
+~override BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.Equals(object obj) -> bool
+~override BlueTusk.Extensions.PgVector.BlueTuskSparseVectorElement.ToString() -> string
