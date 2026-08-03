@@ -1,6 +1,8 @@
 #nullable enable
 ~override BlueTusk.Streams.ChangeId.Equals(object obj) -> bool
 ~override BlueTusk.Streams.ChangeId.ToString() -> string
+~override BlueTusk.Streams.ChangeStreamStateKey.Equals(object obj) -> bool
+~override BlueTusk.Streams.ChangeStreamStateKey.ToString() -> string
 ~override BlueTusk.Streams.TransactionSpoolKey.Equals(object obj) -> bool
 ~override BlueTusk.Streams.TransactionSpoolKey.ToString() -> string
 abstract BlueTusk.Streams.Change.<Clone>$() -> BlueTusk.Streams.Change!
@@ -12,6 +14,21 @@ BlueTusk.Streams.Change.Id.get -> BlueTusk.Streams.ChangeId
 BlueTusk.Streams.Change.Id.init -> void
 BlueTusk.Streams.Change.Kind.get -> BlueTusk.Streams.ChangeKind
 BlueTusk.Streams.Change.Kind.init -> void
+BlueTusk.Streams.ChangeCheckpointWriteResult
+BlueTusk.Streams.ChangeCheckpointWriteResult.<Clone>$() -> BlueTusk.Streams.ChangeCheckpointWriteResult!
+BlueTusk.Streams.ChangeCheckpointWriteResult.ChangeCheckpointWriteResult(BlueTusk.Streams.ChangeCheckpointWriteStatus Status, BlueTusk.Streams.ChangeStreamCheckpoint? Current) -> void
+BlueTusk.Streams.ChangeCheckpointWriteResult.Current.get -> BlueTusk.Streams.ChangeStreamCheckpoint?
+BlueTusk.Streams.ChangeCheckpointWriteResult.Current.init -> void
+BlueTusk.Streams.ChangeCheckpointWriteResult.Deconstruct(out BlueTusk.Streams.ChangeCheckpointWriteStatus Status, out BlueTusk.Streams.ChangeStreamCheckpoint? Current) -> void
+BlueTusk.Streams.ChangeCheckpointWriteResult.Equals(BlueTusk.Streams.ChangeCheckpointWriteResult? other) -> bool
+BlueTusk.Streams.ChangeCheckpointWriteResult.Status.get -> BlueTusk.Streams.ChangeCheckpointWriteStatus
+BlueTusk.Streams.ChangeCheckpointWriteResult.Status.init -> void
+BlueTusk.Streams.ChangeCheckpointWriteStatus
+BlueTusk.Streams.ChangeCheckpointWriteStatus.BackwardMovement = 2 -> BlueTusk.Streams.ChangeCheckpointWriteStatus
+BlueTusk.Streams.ChangeCheckpointWriteStatus.Conflict = 1 -> BlueTusk.Streams.ChangeCheckpointWriteStatus
+BlueTusk.Streams.ChangeCheckpointWriteStatus.Fenced = 3 -> BlueTusk.Streams.ChangeCheckpointWriteStatus
+BlueTusk.Streams.ChangeCheckpointWriteStatus.Incompatible = 4 -> BlueTusk.Streams.ChangeCheckpointWriteStatus
+BlueTusk.Streams.ChangeCheckpointWriteStatus.Stored = 0 -> BlueTusk.Streams.ChangeCheckpointWriteStatus
 BlueTusk.Streams.ChangeColumn
 BlueTusk.Streams.ChangeColumn.<Clone>$() -> BlueTusk.Streams.ChangeColumn!
 BlueTusk.Streams.ChangeColumn.ChangeColumn(int Ordinal, string! Name, uint TypeOid, int TypeModifier, bool IsKey, BlueTusk.Streams.ChangeTypeIdentity? Type = null) -> void
@@ -73,6 +90,18 @@ BlueTusk.Streams.ChangeKind.Insert = 0 -> BlueTusk.Streams.ChangeKind
 BlueTusk.Streams.ChangeKind.LogicalMessage = 4 -> BlueTusk.Streams.ChangeKind
 BlueTusk.Streams.ChangeKind.Truncate = 3 -> BlueTusk.Streams.ChangeKind
 BlueTusk.Streams.ChangeKind.Update = 1 -> BlueTusk.Streams.ChangeKind
+BlueTusk.Streams.ChangeLeaseAcquireResult
+BlueTusk.Streams.ChangeLeaseAcquireResult.<Clone>$() -> BlueTusk.Streams.ChangeLeaseAcquireResult!
+BlueTusk.Streams.ChangeLeaseAcquireResult.ChangeLeaseAcquireResult(BlueTusk.Streams.ChangeLeaseAcquireStatus Status, BlueTusk.Streams.ChangeStreamLease? Lease) -> void
+BlueTusk.Streams.ChangeLeaseAcquireResult.Deconstruct(out BlueTusk.Streams.ChangeLeaseAcquireStatus Status, out BlueTusk.Streams.ChangeStreamLease? Lease) -> void
+BlueTusk.Streams.ChangeLeaseAcquireResult.Equals(BlueTusk.Streams.ChangeLeaseAcquireResult? other) -> bool
+BlueTusk.Streams.ChangeLeaseAcquireResult.Lease.get -> BlueTusk.Streams.ChangeStreamLease?
+BlueTusk.Streams.ChangeLeaseAcquireResult.Lease.init -> void
+BlueTusk.Streams.ChangeLeaseAcquireResult.Status.get -> BlueTusk.Streams.ChangeLeaseAcquireStatus
+BlueTusk.Streams.ChangeLeaseAcquireResult.Status.init -> void
+BlueTusk.Streams.ChangeLeaseAcquireStatus
+BlueTusk.Streams.ChangeLeaseAcquireStatus.Acquired = 0 -> BlueTusk.Streams.ChangeLeaseAcquireStatus
+BlueTusk.Streams.ChangeLeaseAcquireStatus.HeldByAnotherOwner = 1 -> BlueTusk.Streams.ChangeLeaseAcquireStatus
 BlueTusk.Streams.ChangeRow
 BlueTusk.Streams.ChangeRow.ChangeRow(BlueTusk.Streams.ChangeTable! table, System.Collections.Generic.IEnumerable<BlueTusk.Streams.ChangeColumnValue!>! values) -> void
 BlueTusk.Streams.ChangeRow.Table.get -> BlueTusk.Streams.ChangeTable!
@@ -99,6 +128,54 @@ BlueTusk.Streams.ChangeSourceIdentity.Fingerprint.get -> string!
 BlueTusk.Streams.ChangeSourceIdentity.PublicationFingerprint.get -> string!
 BlueTusk.Streams.ChangeSourceIdentity.SlotName.get -> string!
 BlueTusk.Streams.ChangeSourceIdentity.SystemIdentifier.get -> string!
+BlueTusk.Streams.ChangeStreamCheckpoint
+BlueTusk.Streams.ChangeStreamCheckpoint.<Clone>$() -> BlueTusk.Streams.ChangeStreamCheckpoint!
+BlueTusk.Streams.ChangeStreamCheckpoint.AcknowledgedCommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Streams.ChangeStreamCheckpoint.ChangeStreamCheckpoint(int formatVersion, BlueTusk.Streams.ChangeSourceIdentity! source, string! databaseIdentity, string! outputPlugin, string! mappingFingerprint, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber acknowledgedCommitPosition, long storeGeneration) -> void
+BlueTusk.Streams.ChangeStreamCheckpoint.DatabaseIdentity.get -> string!
+BlueTusk.Streams.ChangeStreamCheckpoint.EnsureCompatibleWith(BlueTusk.Streams.ChangeStreamCheckpoint! expected) -> void
+BlueTusk.Streams.ChangeStreamCheckpoint.Equals(BlueTusk.Streams.ChangeStreamCheckpoint? other) -> bool
+BlueTusk.Streams.ChangeStreamCheckpoint.FormatVersion.get -> int
+BlueTusk.Streams.ChangeStreamCheckpoint.MappingFingerprint.get -> string!
+BlueTusk.Streams.ChangeStreamCheckpoint.MoveTo(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber position, long storeGeneration) -> BlueTusk.Streams.ChangeStreamCheckpoint!
+BlueTusk.Streams.ChangeStreamCheckpoint.OutputPlugin.get -> string!
+BlueTusk.Streams.ChangeStreamCheckpoint.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
+BlueTusk.Streams.ChangeStreamCheckpoint.StoreGeneration.get -> long
+BlueTusk.Streams.ChangeStreamCheckpointMismatchException
+BlueTusk.Streams.ChangeStreamCheckpointMismatchException.ChangeStreamCheckpointMismatchException(string! message) -> void
+BlueTusk.Streams.ChangeStreamCheckpointWriteException
+BlueTusk.Streams.ChangeStreamCheckpointWriteException.ChangeStreamCheckpointWriteException(BlueTusk.Streams.ChangeCheckpointWriteStatus status, BlueTusk.Streams.ChangeStreamCheckpoint? current) -> void
+BlueTusk.Streams.ChangeStreamCheckpointWriteException.Current.get -> BlueTusk.Streams.ChangeStreamCheckpoint?
+BlueTusk.Streams.ChangeStreamCheckpointWriteException.Status.get -> BlueTusk.Streams.ChangeCheckpointWriteStatus
+BlueTusk.Streams.ChangeStreamLease
+BlueTusk.Streams.ChangeStreamLease.<Clone>$() -> BlueTusk.Streams.ChangeStreamLease!
+BlueTusk.Streams.ChangeStreamLease.ChangeStreamLease(BlueTusk.Streams.ChangeStreamStateKey Key, string! OwnerId, long FencingToken, System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Streams.ChangeStreamLease.Deconstruct(out BlueTusk.Streams.ChangeStreamStateKey Key, out string! OwnerId, out long FencingToken, out System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.Streams.ChangeStreamLease.Equals(BlueTusk.Streams.ChangeStreamLease? other) -> bool
+BlueTusk.Streams.ChangeStreamLease.ExpiresAt.get -> System.DateTimeOffset
+BlueTusk.Streams.ChangeStreamLease.ExpiresAt.init -> void
+BlueTusk.Streams.ChangeStreamLease.FencingToken.get -> long
+BlueTusk.Streams.ChangeStreamLease.FencingToken.init -> void
+BlueTusk.Streams.ChangeStreamLease.Key.get -> BlueTusk.Streams.ChangeStreamStateKey
+BlueTusk.Streams.ChangeStreamLease.Key.init -> void
+BlueTusk.Streams.ChangeStreamLease.OwnerId.get -> string!
+BlueTusk.Streams.ChangeStreamLease.OwnerId.init -> void
+BlueTusk.Streams.ChangeStreamLeaseLostException
+BlueTusk.Streams.ChangeStreamLeaseLostException.ChangeStreamLeaseLostException(string! message) -> void
+BlueTusk.Streams.ChangeStreamLeaseUnavailableException
+BlueTusk.Streams.ChangeStreamLeaseUnavailableException.ChangeStreamLeaseUnavailableException(string! message) -> void
+BlueTusk.Streams.ChangeStreamSlotOwnershipMode
+BlueTusk.Streams.ChangeStreamSlotOwnershipMode.DirectDedicatedSlot = 0 -> BlueTusk.Streams.ChangeStreamSlotOwnershipMode
+BlueTusk.Streams.ChangeStreamSlotOwnershipMode.DurableRelay = 1 -> BlueTusk.Streams.ChangeStreamSlotOwnershipMode
+BlueTusk.Streams.ChangeStreamStateKey
+BlueTusk.Streams.ChangeStreamStateKey.ChangeStreamStateKey() -> void
+BlueTusk.Streams.ChangeStreamStateKey.ChangeStreamStateKey(string! SourceFingerprint, string! ConsumerGroup) -> void
+BlueTusk.Streams.ChangeStreamStateKey.ConsumerGroup.get -> string!
+BlueTusk.Streams.ChangeStreamStateKey.ConsumerGroup.init -> void
+BlueTusk.Streams.ChangeStreamStateKey.Deconstruct(out string! SourceFingerprint, out string! ConsumerGroup) -> void
+BlueTusk.Streams.ChangeStreamStateKey.Equals(BlueTusk.Streams.ChangeStreamStateKey other) -> bool
+BlueTusk.Streams.ChangeStreamStateKey.SourceFingerprint.get -> string!
+BlueTusk.Streams.ChangeStreamStateKey.SourceFingerprint.init -> void
 BlueTusk.Streams.ChangeTable
 BlueTusk.Streams.ChangeTable.ChangeTable(uint relationId, string! schema, string! name, char replicaIdentity, System.Collections.Generic.IEnumerable<BlueTusk.Streams.ChangeColumn!>! columns) -> void
 BlueTusk.Streams.ChangeTable.Columns.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.ChangeColumn!>!
@@ -137,6 +214,12 @@ BlueTusk.Streams.ChangeValueEncoding
 BlueTusk.Streams.ChangeValueEncoding.Binary = 2 -> BlueTusk.Streams.ChangeValueEncoding
 BlueTusk.Streams.ChangeValueEncoding.None = 0 -> BlueTusk.Streams.ChangeValueEncoding
 BlueTusk.Streams.ChangeValueEncoding.Text = 1 -> BlueTusk.Streams.ChangeValueEncoding
+BlueTusk.Streams.CheckpointingChangeDeliveryObserver
+BlueTusk.Streams.CheckpointingChangeDeliveryObserver.AcknowledgeAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Streams.CheckpointingChangeDeliveryObserver.Checkpoint.get -> BlueTusk.Streams.ChangeStreamCheckpoint?
+BlueTusk.Streams.CheckpointingChangeDeliveryObserver.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Streams.CheckpointingChangeDeliveryObserver.Lease.get -> BlueTusk.Streams.ChangeStreamLease!
+BlueTusk.Streams.CheckpointingChangeDeliveryObserver.NackAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Exception? failure, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Streams.DeleteChange
 BlueTusk.Streams.DeleteChange.Deconstruct(out BlueTusk.Streams.ChangeId Id, out BlueTusk.Streams.ChangeRow! OldRow) -> void
 BlueTusk.Streams.DeleteChange.DeleteChange(BlueTusk.Streams.ChangeId Id, BlueTusk.Streams.ChangeRow! OldRow) -> void
@@ -165,11 +248,19 @@ BlueTusk.Streams.FileTransactionSpoolOptions.MaxStorageBytes.get -> long
 BlueTusk.Streams.FileTransactionSpoolOptions.MaxStorageBytes.init -> void
 BlueTusk.Streams.FileTransactionSpoolOptions.Protector.get -> BlueTusk.Streams.ITransactionSpoolProtector?
 BlueTusk.Streams.FileTransactionSpoolOptions.Protector.init -> void
+BlueTusk.Streams.IChangeCheckpointStore
+BlueTusk.Streams.IChangeCheckpointStore.CompareExchangeAsync(BlueTusk.Streams.ChangeStreamStateKey key, long expectedGeneration, BlueTusk.Streams.ChangeStreamCheckpoint! replacement, BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeCheckpointWriteResult!>
+BlueTusk.Streams.IChangeCheckpointStore.ReadAsync(BlueTusk.Streams.ChangeStreamStateKey key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamCheckpoint?>
 BlueTusk.Streams.IChangeDeliveryObserver
 BlueTusk.Streams.IChangeDeliveryObserver.AcknowledgeAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Streams.IChangeDeliveryObserver.NackAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Exception? failure, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Streams.IChangeStream
 BlueTusk.Streams.IChangeStream.ReadTransactionsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Streams.ChangeTransactionDelivery!>!
+BlueTusk.Streams.IChangeStreamLeaseStore
+BlueTusk.Streams.IChangeStreamLeaseStore.AcquireAsync(BlueTusk.Streams.ChangeStreamStateKey key, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeLeaseAcquireResult!>
+BlueTusk.Streams.IChangeStreamLeaseStore.ReleaseAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Streams.IChangeStreamLeaseStore.RenewAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamLease?>
+BlueTusk.Streams.IChangeStreamStateStore
 BlueTusk.Streams.InsertChange
 BlueTusk.Streams.InsertChange.Deconstruct(out BlueTusk.Streams.ChangeId Id, out BlueTusk.Streams.ChangeRow! NewRow) -> void
 BlueTusk.Streams.InsertChange.Equals(BlueTusk.Streams.InsertChange? other) -> bool
@@ -182,6 +273,8 @@ BlueTusk.Streams.InsertChange<T>.Equals(BlueTusk.Streams.InsertChange<T>? other)
 BlueTusk.Streams.InsertChange<T>.InsertChange(BlueTusk.Streams.ChangeId Id, BlueTusk.Streams.ChangeRow<T>! NewRow) -> void
 BlueTusk.Streams.InsertChange<T>.NewRow.get -> BlueTusk.Streams.ChangeRow<T>!
 BlueTusk.Streams.InsertChange<T>.NewRow.init -> void
+BlueTusk.Streams.IReplicationFeedbackSender
+BlueTusk.Streams.IReplicationFeedbackSender.SendFeedbackAsync(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber position, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Streams.ITransactionSpool
 BlueTusk.Streams.ITransactionSpool.CreateAsync(BlueTusk.Streams.TransactionSpoolKey key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ITransactionSpoolWriter!>
 BlueTusk.Streams.ITransactionSpoolProtector
@@ -206,6 +299,16 @@ BlueTusk.Streams.LogicalMessageChange.Position.get -> BlueTusk.TypeSystem.BlueTu
 BlueTusk.Streams.LogicalMessageChange.Position.init -> void
 BlueTusk.Streams.LogicalMessageChange.Prefix.get -> string!
 BlueTusk.Streams.LogicalMessageChange.Prefix.init -> void
+BlueTusk.Streams.LogicalReplicationFeedbackSender
+BlueTusk.Streams.LogicalReplicationFeedbackSender.LogicalReplicationFeedbackSender(BlueTusk.Replication.BlueTuskReplicationConnection! connection) -> void
+BlueTusk.Streams.LogicalReplicationFeedbackSender.SendFeedbackAsync(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber position, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Streams.MemoryChangeStreamStateStore
+BlueTusk.Streams.MemoryChangeStreamStateStore.AcquireAsync(BlueTusk.Streams.ChangeStreamStateKey key, string! ownerId, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeLeaseAcquireResult!>
+BlueTusk.Streams.MemoryChangeStreamStateStore.CompareExchangeAsync(BlueTusk.Streams.ChangeStreamStateKey key, long expectedGeneration, BlueTusk.Streams.ChangeStreamCheckpoint! replacement, BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeCheckpointWriteResult!>
+BlueTusk.Streams.MemoryChangeStreamStateStore.MemoryChangeStreamStateStore(System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Streams.MemoryChangeStreamStateStore.ReadAsync(BlueTusk.Streams.ChangeStreamStateKey key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamCheckpoint?>
+BlueTusk.Streams.MemoryChangeStreamStateStore.ReleaseAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Streams.MemoryChangeStreamStateStore.RenewAsync(BlueTusk.Streams.ChangeStreamLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeStreamLease?>
 BlueTusk.Streams.PgOutputChangeStream
 BlueTusk.Streams.PgOutputChangeStream.PgOutputChangeStream(System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope!>! source, BlueTusk.Streams.ChangeSourceIdentity! sourceIdentity, BlueTusk.Streams.TransactionAssemblyOptions? options = null, BlueTusk.Streams.ITransactionSpool? spool = null, BlueTusk.Streams.IChangeDeliveryObserver? observer = null) -> void
 BlueTusk.Streams.PgOutputChangeStream.ReadTransactionsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Streams.ChangeTransactionDelivery!>!
@@ -285,18 +388,32 @@ BlueTusk.Streams.UpdateChange<T>.NewRow.init -> void
 BlueTusk.Streams.UpdateChange<T>.OldRow.get -> BlueTusk.Streams.ChangeRow<T>!
 BlueTusk.Streams.UpdateChange<T>.OldRow.init -> void
 BlueTusk.Streams.UpdateChange<T>.UpdateChange(BlueTusk.Streams.ChangeId Id, BlueTusk.Streams.ChangeRow<T>! OldRow, BlueTusk.Streams.ChangeRow<T>! NewRow, BlueTusk.Streams.ChangedColumnSet! ChangedColumns) -> void
+const BlueTusk.Streams.ChangeStreamCheckpoint.CurrentFormatVersion = 1 -> int
 override BlueTusk.Streams.Change.Equals(object? obj) -> bool
 override BlueTusk.Streams.Change.GetHashCode() -> int
 override BlueTusk.Streams.Change.ToString() -> string!
+override BlueTusk.Streams.ChangeCheckpointWriteResult.Equals(object? obj) -> bool
+override BlueTusk.Streams.ChangeCheckpointWriteResult.GetHashCode() -> int
+override BlueTusk.Streams.ChangeCheckpointWriteResult.ToString() -> string!
 override BlueTusk.Streams.ChangeColumn.Equals(object? obj) -> bool
 override BlueTusk.Streams.ChangeColumn.GetHashCode() -> int
 override BlueTusk.Streams.ChangeColumn.ToString() -> string!
 override BlueTusk.Streams.ChangeColumnValue.Equals(object? obj) -> bool
 override BlueTusk.Streams.ChangeColumnValue.GetHashCode() -> int
 override BlueTusk.Streams.ChangeId.GetHashCode() -> int
+override BlueTusk.Streams.ChangeLeaseAcquireResult.Equals(object? obj) -> bool
+override BlueTusk.Streams.ChangeLeaseAcquireResult.GetHashCode() -> int
+override BlueTusk.Streams.ChangeLeaseAcquireResult.ToString() -> string!
 override BlueTusk.Streams.ChangeSourceIdentity.Equals(object? obj) -> bool
 override BlueTusk.Streams.ChangeSourceIdentity.GetHashCode() -> int
 override BlueTusk.Streams.ChangeSourceIdentity.ToString() -> string!
+override BlueTusk.Streams.ChangeStreamCheckpoint.Equals(object? obj) -> bool
+override BlueTusk.Streams.ChangeStreamCheckpoint.GetHashCode() -> int
+override BlueTusk.Streams.ChangeStreamCheckpoint.ToString() -> string!
+override BlueTusk.Streams.ChangeStreamLease.Equals(object? obj) -> bool
+override BlueTusk.Streams.ChangeStreamLease.GetHashCode() -> int
+override BlueTusk.Streams.ChangeStreamLease.ToString() -> string!
+override BlueTusk.Streams.ChangeStreamStateKey.GetHashCode() -> int
 override BlueTusk.Streams.ChangeTable.ToString() -> string!
 override BlueTusk.Streams.ChangeTypeIdentity.Equals(object? obj) -> bool
 override BlueTusk.Streams.ChangeTypeIdentity.GetHashCode() -> int
@@ -355,6 +472,8 @@ override sealed BlueTusk.Streams.UpdateChange.Equals(BlueTusk.Streams.Change? ot
 override sealed BlueTusk.Streams.UpdateChange<T>.Equals(BlueTusk.Streams.Change? other) -> bool
 static BlueTusk.Streams.Change.operator !=(BlueTusk.Streams.Change? left, BlueTusk.Streams.Change? right) -> bool
 static BlueTusk.Streams.Change.operator ==(BlueTusk.Streams.Change? left, BlueTusk.Streams.Change? right) -> bool
+static BlueTusk.Streams.ChangeCheckpointWriteResult.operator !=(BlueTusk.Streams.ChangeCheckpointWriteResult? left, BlueTusk.Streams.ChangeCheckpointWriteResult? right) -> bool
+static BlueTusk.Streams.ChangeCheckpointWriteResult.operator ==(BlueTusk.Streams.ChangeCheckpointWriteResult? left, BlueTusk.Streams.ChangeCheckpointWriteResult? right) -> bool
 static BlueTusk.Streams.ChangeColumn.operator !=(BlueTusk.Streams.ChangeColumn? left, BlueTusk.Streams.ChangeColumn? right) -> bool
 static BlueTusk.Streams.ChangeColumn.operator ==(BlueTusk.Streams.ChangeColumn? left, BlueTusk.Streams.ChangeColumn? right) -> bool
 static BlueTusk.Streams.ChangeColumnValue.DatabaseNull.get -> BlueTusk.Streams.ChangeColumnValue!
@@ -365,10 +484,21 @@ static BlueTusk.Streams.ChangeColumnValue.OldValueUnavailable.get -> BlueTusk.St
 static BlueTusk.Streams.ChangeColumnValue.UnchangedToast.get -> BlueTusk.Streams.ChangeColumnValue!
 static BlueTusk.Streams.ChangeId.operator !=(BlueTusk.Streams.ChangeId left, BlueTusk.Streams.ChangeId right) -> bool
 static BlueTusk.Streams.ChangeId.operator ==(BlueTusk.Streams.ChangeId left, BlueTusk.Streams.ChangeId right) -> bool
+static BlueTusk.Streams.ChangeLeaseAcquireResult.operator !=(BlueTusk.Streams.ChangeLeaseAcquireResult? left, BlueTusk.Streams.ChangeLeaseAcquireResult? right) -> bool
+static BlueTusk.Streams.ChangeLeaseAcquireResult.operator ==(BlueTusk.Streams.ChangeLeaseAcquireResult? left, BlueTusk.Streams.ChangeLeaseAcquireResult? right) -> bool
 static BlueTusk.Streams.ChangeSourceIdentity.operator !=(BlueTusk.Streams.ChangeSourceIdentity? left, BlueTusk.Streams.ChangeSourceIdentity? right) -> bool
 static BlueTusk.Streams.ChangeSourceIdentity.operator ==(BlueTusk.Streams.ChangeSourceIdentity? left, BlueTusk.Streams.ChangeSourceIdentity? right) -> bool
+static BlueTusk.Streams.ChangeStreamCheckpoint.CreateInitial(BlueTusk.Streams.ChangeSourceIdentity! source, string! databaseIdentity, string! outputPlugin, string! mappingFingerprint) -> BlueTusk.Streams.ChangeStreamCheckpoint!
+static BlueTusk.Streams.ChangeStreamCheckpoint.operator !=(BlueTusk.Streams.ChangeStreamCheckpoint? left, BlueTusk.Streams.ChangeStreamCheckpoint? right) -> bool
+static BlueTusk.Streams.ChangeStreamCheckpoint.operator ==(BlueTusk.Streams.ChangeStreamCheckpoint? left, BlueTusk.Streams.ChangeStreamCheckpoint? right) -> bool
+static BlueTusk.Streams.ChangeStreamLease.operator !=(BlueTusk.Streams.ChangeStreamLease? left, BlueTusk.Streams.ChangeStreamLease? right) -> bool
+static BlueTusk.Streams.ChangeStreamLease.operator ==(BlueTusk.Streams.ChangeStreamLease? left, BlueTusk.Streams.ChangeStreamLease? right) -> bool
+static BlueTusk.Streams.ChangeStreamStateKey.Create(BlueTusk.Streams.ChangeSourceIdentity! source, string! consumerGroup) -> BlueTusk.Streams.ChangeStreamStateKey
+static BlueTusk.Streams.ChangeStreamStateKey.operator !=(BlueTusk.Streams.ChangeStreamStateKey left, BlueTusk.Streams.ChangeStreamStateKey right) -> bool
+static BlueTusk.Streams.ChangeStreamStateKey.operator ==(BlueTusk.Streams.ChangeStreamStateKey left, BlueTusk.Streams.ChangeStreamStateKey right) -> bool
 static BlueTusk.Streams.ChangeTypeIdentity.operator !=(BlueTusk.Streams.ChangeTypeIdentity? left, BlueTusk.Streams.ChangeTypeIdentity? right) -> bool
 static BlueTusk.Streams.ChangeTypeIdentity.operator ==(BlueTusk.Streams.ChangeTypeIdentity? left, BlueTusk.Streams.ChangeTypeIdentity? right) -> bool
+static BlueTusk.Streams.CheckpointingChangeDeliveryObserver.AcquireAsync(BlueTusk.Streams.IChangeStreamStateStore! store, BlueTusk.Streams.ChangeStreamStateKey key, string! ownerId, System.TimeSpan leaseDuration, BlueTusk.Streams.ChangeStreamCheckpoint! identity, BlueTusk.Streams.IReplicationFeedbackSender! feedback, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.CheckpointingChangeDeliveryObserver!>
 static BlueTusk.Streams.DeleteChange.operator !=(BlueTusk.Streams.DeleteChange? left, BlueTusk.Streams.DeleteChange? right) -> bool
 static BlueTusk.Streams.DeleteChange.operator ==(BlueTusk.Streams.DeleteChange? left, BlueTusk.Streams.DeleteChange? right) -> bool
 static BlueTusk.Streams.DeleteChange<T>.operator !=(BlueTusk.Streams.DeleteChange<T>? left, BlueTusk.Streams.DeleteChange<T>? right) -> bool

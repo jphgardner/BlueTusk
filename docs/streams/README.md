@@ -1,6 +1,6 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The current Phase 1 kernel is implemented and tested but is not yet published: the first preview remains gated on durable checkpoints, leases, direct consumer groups, and PostgreSQL relay fan-out.
+BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The Phase 1 transaction kernel and the first Phase 2 durability slice are implemented and tested but are not yet published: the first preview remains gated on persistent file/PostgreSQL/Redis stores, direct consumer groups, and PostgreSQL relay fan-out.
 
 ## Implemented kernel
 
@@ -57,7 +57,27 @@ The transaction change set is asynchronous so a large transaction can be read re
 
 Incomplete ordinary or streamed transactions are discarded when the source ends, allowing PostgreSQL to redeliver them from the last durable checkpoint. Stream abort removes its partial spool. Tampered, truncated, incompatible, or wrong-protector spool data fails closed. Limit exhaustion pauses the read with a diagnostic exception; it never drops a change or splits a source transaction.
 
-Acknowledgement observers are currently an integration seam. Phase 2 replaces ephemeral observation with the locked destination → compare-and-swap checkpoint → PostgreSQL feedback sequence.
+`CheckpointingChangeDeliveryObserver` implements the locked destination → compare-and-swap checkpoint → PostgreSQL feedback sequence. The checkpoint includes the source system/database/slot/publication identity, output plug-in, mapping fingerprint, acknowledged commit-end LSN, format version, and store generation. `MemoryChangeStreamStateStore` supplies the same monotonic compare-and-swap and fencing behavior as the durable stores for tests and ephemeral development only.
+
+```csharp
+var checkpointIdentity = ChangeStreamCheckpoint.CreateInitial(
+    identity,
+    databaseIdentity,
+    "pgoutput",
+    mappingFingerprint);
+var stateKey = ChangeStreamStateKey.Create(identity, consumerGroup);
+
+await using var acknowledgement =
+    await CheckpointingChangeDeliveryObserver.AcquireAsync(
+        memoryStateStore,
+        stateKey,
+        uniqueWorkerId,
+        TimeSpan.FromSeconds(30),
+        checkpointIdentity,
+        new LogicalReplicationFeedbackSender(replication));
+```
+
+Only the active fenced lease may mutate a checkpoint. Backward positions, stale generations, incompatible source/mapping identities, and expired owners fail closed. If feedback fails after the checkpoint is durable, retry sends feedback from the stored position without rewriting or advancing the checkpoint. A nack never advances either checkpoint or feedback.
 
 ## Performance baseline
 
