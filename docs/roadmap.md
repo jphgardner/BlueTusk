@@ -44,6 +44,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 5 slice: four-destination 24-hour endurance runner, versioned evidence report, local smoke path, and confirmed self-hosted workflow
 - [ ] Phase 5 release gate: complete and archive one successful 24-hour Sync endurance report (a short orchestration smoke is not equivalent)
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
+- [x] Phase 6 slice: trusted typed query registrations, security-partitioned identities, bounded keyed diffs, and signed rotating resume tokens
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [ ] Phase 7: Continuous Graph preview
 

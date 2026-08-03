@@ -38,6 +38,7 @@
     <Project Path="src/BlueTusk.EntityFrameworkCore/BlueTusk.EntityFrameworkCore.csproj" />
     <Project Path="src/BlueTusk.Extensions.Abstractions/BlueTusk.Extensions.Abstractions.csproj" />
     <Project Path="src/BlueTusk.Extensions.Testing/BlueTusk.Extensions.Testing.csproj" />
+    <Project Path="src/BlueTusk.Live/BlueTusk.Live.csproj" />
     <Project Path="src/BlueTusk.Protocol/BlueTusk.Protocol.csproj" />
     <Project Path="src/BlueTusk.Replication.PgOutput/BlueTusk.Replication.PgOutput.csproj" />
     <Project Path="src/BlueTusk.Replication/BlueTusk.Replication.csproj" />
@@ -85,6 +86,7 @@
     <Project Path="tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj" />
     <Project Path="tests/BlueTusk.Identity.Tests/BlueTusk.Identity.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj" />
     <Project Path="tests/BlueTusk.Protocol.Tests/BlueTusk.Protocol.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.PgOutput.Tests/BlueTusk.Replication.PgOutput.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.Tests/BlueTusk.Replication.Tests.csproj" />

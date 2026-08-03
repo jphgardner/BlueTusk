@@ -45,7 +45,9 @@
     "Live": {
       "versionFile": "eng/versions/Live.props",
       "publishable": false,
-      "packages": []
+      "packages": [
+        "src/BlueTusk.Live/BlueTusk.Live.csproj"
+      ]
     },
     "ControlPlane": {
       "versionFile": "eng/versions/ControlPlane.props",
