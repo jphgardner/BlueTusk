@@ -1,5 +1,4 @@
 using System.Text;
-using BlueTusk.Streams.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlueTusk.Streams.EntityFrameworkCore.Tests;
