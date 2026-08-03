@@ -7,7 +7,7 @@ using NATS.Client.JetStream.Models;
 
 namespace BlueTusk.Sync.Nats;
 
-public sealed class NatsSyncDestination : ISyncDestination
+public sealed class NatsSyncDestination : ISyncDestination, ISyncQuarantineReplayDestination
 {
     private const string ProductMetadataKey = "bluetusk.product";
     private const string FormatMetadataKey = "bluetusk.envelope-format";
@@ -174,19 +174,54 @@ public sealed class NatsSyncDestination : ISyncDestination
                 pipeline.Transform.Fingerprint);
         }
 
-        var payload = NatsSyncEnvelopeCodec.EncodeTransaction(batch);
-        var duplicate = await PublishAsync(
-            "transaction",
-            payload,
-            MessageId(
-                "transaction",
-                pipeline,
-                batch.Transaction.CommitEndPosition.Value.ToString("x16", CultureInfo.InvariantCulture),
-                batch.Transaction.TransactionId.ToString("x8", CultureInfo.InvariantCulture)),
-            cancellationToken).ConfigureAwait(false);
+        var duplicate = await PublishTransactionAsync(pipeline, batch, cancellationToken)
+            .ConfigureAwait(false);
         return duplicate
             ? SyncApplyResult.AlreadyApplied(batch.Transaction.CommitEndPosition)
             : SyncApplyResult.Applied(batch.Transaction.CommitEndPosition);
+    }
+
+    public async ValueTask<SyncQuarantineReplayApplyResult> ReplayTransactionAsync(
+        SyncTransactionBatch batch,
+        string operationId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(batch);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        var pipeline = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
+        var duplicate = await PublishTransactionAsync(pipeline, batch, cancellationToken)
+            .ConfigureAwait(false);
+        return new SyncQuarantineReplayApplyResult(
+            duplicate
+                ? SyncQuarantineReplayApplyStatus.AlreadyApplied
+                : SyncQuarantineReplayApplyStatus.Applied,
+            batch.Transaction.CommitEndPosition);
+    }
+
+    private async ValueTask<bool> PublishTransactionAsync(
+        ProvisionedPipeline pipeline,
+        SyncTransactionBatch batch,
+        CancellationToken cancellationToken)
+    {
+        await pipeline.Gate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var payload = NatsSyncEnvelopeCodec.EncodeTransaction(batch);
+            return await PublishAsync(
+                "transaction",
+                payload,
+                MessageId(
+                    "transaction",
+                    pipeline,
+                    batch.Transaction.CommitEndPosition.Value.ToString("x16", CultureInfo.InvariantCulture),
+                    batch.Transaction.TransactionId.ToString("x8", CultureInfo.InvariantCulture)),
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _ = pipeline.Gate.Release();
+        }
     }
 
     private StreamConfig BuildStreamConfig(SyncProvisionRequest request) =>
@@ -377,5 +412,8 @@ public sealed class NatsSyncDestination : ISyncDestination
     private sealed record ProvisionedPipeline(
         string PipelineId,
         ChangeSourceIdentity Source,
-        SyncTransformVersion Transform);
+        SyncTransformVersion Transform)
+    {
+        internal SemaphoreSlim Gate { get; } = new(1, 1);
+    }
 }

@@ -62,6 +62,48 @@ public sealed class BlueTuskSyncRelaySourceIntegrationTests
     }
 
     [Fact]
+    public async Task Relay_replay_source_reads_only_the_exact_retained_transaction()
+    {
+        var connectionString = GetConnectionString();
+        var schema = "bluetusk_sync_replay_source_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        var relay = new PostgreSqlDurableChangeRelay(
+            new PostgreSqlStreamsStorageOptions
+            {
+                ControlDataSource = dataSource,
+                ControlSchema = schema,
+                MaxRelayStorageBytes = 1024 * 1024,
+            });
+        try
+        {
+            await relay.InitializeAsync();
+            var registration = await relay.RegisterSourceAsync(Source);
+            var lease = Assert.IsType<ChangeStreamLease>(
+                (await relay.AcquireSourceLeaseAsync(
+                    registration,
+                    "replay-source",
+                    TimeSpan.FromMinutes(1))).Lease);
+            await AppendAsync(relay, registration, lease, 42, Lsn(105));
+            Assert.True(await relay.ReleaseSourceLeaseAsync(lease));
+            var source = new PostgreSqlRelaySyncQuarantineReplaySource(relay);
+
+            var transaction = await source.ReadTransactionAsync(
+                new SyncQuarantineIdentity("orders", Source, 42, Lsn(105)));
+            var missing = await source.ReadTransactionAsync(
+                new SyncQuarantineIdentity("orders", Source, 43, Lsn(105)));
+
+            Assert.NotNull(transaction);
+            Assert.Equal(42U, transaction.TransactionId);
+            Assert.Equal(Lsn(105), transaction.CommitEndPosition);
+            Assert.Null(missing);
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
+    [Fact]
     public async Task Relay_source_restarts_snapshot_epochs_skips_baseline_and_resumes_without_resnapshot()
     {
         var connectionString = GetConnectionString();

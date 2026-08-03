@@ -8,11 +8,12 @@ namespace BlueTusk.Sync.PostgreSql;
 
 public sealed class PostgreSqlSyncDestination :
     ISyncDestination,
-    ISyncQuarantineSink,
+    ISyncQuarantineStore,
+    ISyncQuarantineReplayDestination,
     ISyncReconciliationReader,
     ISyncRepairSink
 {
-    public const int CurrentSchemaVersion = 1;
+    public const int CurrentSchemaVersion = 2;
 
     private readonly PostgreSqlSyncOptions _options;
     private readonly DbDataSource _dataSource;
@@ -98,10 +99,29 @@ public sealed class PostgreSqlSyncDestination :
 
         var version = await ReadSchemaVersionAsync(connection, transaction, CancellationToken.None)
             .ConfigureAwait(false);
-        if (version != CurrentSchemaVersion)
+        if (version < 1 || version > CurrentSchemaVersion)
         {
             throw new PostgreSqlSyncException(
                 $"PostgreSQL Sync schema version {version} is unsupported; this build requires version {CurrentSchemaVersion}.");
+        }
+
+        if (version == 1)
+        {
+            await ExecuteAsync(
+                connection,
+                transaction,
+                $"ALTER TABLE {_quarantineTable} ADD COLUMN IF NOT EXISTS resolved_operation_id text NULL",
+                CancellationToken.None).ConfigureAwait(false);
+            await ExecuteAsync(
+                connection,
+                transaction,
+                $"ALTER TABLE {_quarantineTable} ADD COLUMN IF NOT EXISTS resolved_at timestamptz NULL",
+                CancellationToken.None).ConfigureAwait(false);
+            await ExecuteAsync(
+                connection,
+                transaction,
+                $"UPDATE {_metadataTable} SET schema_version = 2, updated_at = clock_timestamp() WHERE singleton",
+                CancellationToken.None).ConfigureAwait(false);
         }
 
         await transaction.CommitAsync(CancellationToken.None).ConfigureAwait(false);
@@ -359,6 +379,198 @@ public sealed class PostgreSqlSyncDestination :
         return rows is 0 or 1;
     }
 
+    public async ValueTask<SyncQuarantineEntry?> ReadAsync(
+        SyncQuarantineIdentity identity,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"""
+            SELECT transform_fingerprint, error_type, error_message, recorded_at,
+                   resolved_operation_id, resolved_at
+            FROM {_quarantineTable}
+            WHERE pipeline_id = @pipeline AND source_fingerprint = @source
+              AND commit_position = @position AND transaction_id = @transaction_id
+            """;
+        AddQuarantineIdentityParameters(command, identity);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
+            .ConfigureAwait(false);
+        return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+            ? ReadQuarantineEntry(reader, identity)
+            : null;
+    }
+
+    public async ValueTask<SyncQuarantineResolutionResult> ResolveAsync(
+        SyncQuarantineIdentity identity,
+        string expectedTransformFingerprint,
+        string operationId,
+        DateTimeOffset resolvedAt,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentException.ThrowIfNullOrWhiteSpace(expectedTransformFingerprint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        SyncQuarantineEntry? current;
+        await using (var read = connection.CreateCommand())
+        {
+            read.Transaction = transaction;
+            read.CommandText = $"""
+                SELECT transform_fingerprint, error_type, error_message, recorded_at,
+                       resolved_operation_id, resolved_at
+                FROM {_quarantineTable}
+                WHERE pipeline_id = @pipeline AND source_fingerprint = @source
+                  AND commit_position = @position AND transaction_id = @transaction_id
+                FOR UPDATE
+                """;
+            AddQuarantineIdentityParameters(read, identity);
+            await using var reader = await read.ExecuteReaderAsync(cancellationToken)
+                .ConfigureAwait(false);
+            current = await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
+                ? ReadQuarantineEntry(reader, identity)
+                : null;
+        }
+
+        if (current is null)
+        {
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new SyncQuarantineResolutionResult(
+                SyncQuarantineResolutionStatus.NotFound,
+                null);
+        }
+
+        if (!string.Equals(
+                current.TransformFingerprint,
+                expectedTransformFingerprint,
+                StringComparison.OrdinalIgnoreCase))
+        {
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new SyncQuarantineResolutionResult(
+                SyncQuarantineResolutionStatus.Conflict,
+                current);
+        }
+
+        if (current.ResolvedOperationId is not null)
+        {
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new SyncQuarantineResolutionResult(
+                SyncQuarantineResolutionStatus.AlreadyResolved,
+                current);
+        }
+
+        await ExecuteAsync(
+            connection,
+            transaction,
+            $"""
+            UPDATE {_quarantineTable}
+            SET resolved_operation_id = @operation, resolved_at = @resolved_at
+            WHERE pipeline_id = @pipeline AND source_fingerprint = @source
+              AND commit_position = @position AND transaction_id = @transaction_id
+            """,
+            cancellationToken,
+            ("operation", operationId),
+            ("resolved_at", resolvedAt),
+            ("pipeline", identity.PipelineId),
+            ("source", identity.Source.Fingerprint),
+            ("position", (decimal)identity.CommitEndPosition.Value),
+            ("transaction_id", (long)identity.TransactionId)).ConfigureAwait(false);
+        var resolved = current with
+        {
+            ResolvedOperationId = operationId,
+            ResolvedAt = resolvedAt,
+        };
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return new SyncQuarantineResolutionResult(
+            SyncQuarantineResolutionStatus.Resolved,
+            resolved);
+    }
+
+    public async ValueTask<SyncQuarantineReplayApplyResult> ReplayTransactionAsync(
+        SyncTransactionBatch batch,
+        string operationId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(batch);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        ValidateContentLimits(batch.Mutations.Select(static mutation => mutation.Content));
+        if (batch.Mutations.Any(static mutation =>
+                mutation.Kind is SyncMutationKind.DeleteCollection))
+        {
+            throw new SyncDestinationDurabilityException(
+                "PostgreSQL cannot safely replay an unscoped collection delete; use rebuild or reconciliation.");
+        }
+
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        var state = await RequirePipelineAsync(
+            connection,
+            transaction,
+            batch.PipelineId,
+            cancellationToken).ConfigureAwait(false);
+        EnsureSource(batch.Transaction.Source.Fingerprint, state.SourceFingerprint, batch.PipelineId);
+        EnsureTransform(batch.Transform, state);
+        if (state.CheckpointPosition > batch.Transaction.CommitEndPosition)
+        {
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new SyncQuarantineReplayApplyResult(
+                SyncQuarantineReplayApplyStatus.CheckpointAdvanced,
+                state.CheckpointPosition);
+        }
+
+        if (state.CheckpointPosition == batch.Transaction.CommitEndPosition)
+        {
+            if (state.CheckpointTransactionId != batch.Transaction.TransactionId)
+            {
+                throw new SyncDestinationDurabilityException(
+                    $"PostgreSQL destination checkpoint '{state.CheckpointPosition}' belongs to another transaction.");
+            }
+
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new SyncQuarantineReplayApplyResult(
+                SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                state.CheckpointPosition);
+        }
+
+        await _writer.ApplyTransactionAsync(
+            connection,
+            transaction,
+            batch,
+            cancellationToken).ConfigureAwait(false);
+        await ExecuteAsync(
+            connection,
+            transaction,
+            $"""
+            UPDATE {_pipelinesTable}
+            SET checkpoint_position = @position,
+                checkpoint_transaction_id = @transaction_id,
+                store_generation = store_generation + 1,
+                updated_at = clock_timestamp()
+            WHERE pipeline_id = @pipeline
+            """,
+            cancellationToken,
+            ("position", (decimal)batch.Transaction.CommitEndPosition.Value),
+            ("transaction_id", (long)batch.Transaction.TransactionId),
+            ("pipeline", batch.PipelineId)).ConfigureAwait(false);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return new SyncQuarantineReplayApplyResult(
+            SyncQuarantineReplayApplyStatus.Applied,
+            batch.Transaction.CommitEndPosition);
+    }
+
     public async ValueTask<long> CountAsync(
         string pipelineId,
         string collection,
@@ -614,7 +826,7 @@ public sealed class PostgreSqlSyncDestination :
         command.Transaction = transaction;
         command.CommandText = $"""
             SELECT source_fingerprint, transform_fingerprint, checkpoint_position,
-                   snapshot_epoch, snapshot_complete
+                   checkpoint_transaction_id, snapshot_epoch, snapshot_complete
             FROM {_pipelinesTable}
             WHERE pipeline_id = @pipeline
             {(forUpdate ? "FOR UPDATE" : string.Empty)}
@@ -632,8 +844,9 @@ public sealed class PostgreSqlSyncDestination :
             reader.IsDBNull(2)
                 ? null
                 : new BlueTuskLogSequenceNumber(checked((ulong)reader.GetDecimal(2))),
-            reader.IsDBNull(3) ? null : reader.GetGuid(3),
-            reader.GetBoolean(4));
+            reader.IsDBNull(3) ? null : checked((uint)reader.GetInt64(3)),
+            reader.IsDBNull(4) ? null : reader.GetGuid(4),
+            reader.GetBoolean(5));
     }
 
     private void ValidateContentLimits(IEnumerable<ReadOnlyMemory<byte>> contents)
@@ -739,6 +952,8 @@ public sealed class PostgreSqlSyncDestination :
             error_type text NOT NULL,
             error_message text NOT NULL,
             recorded_at timestamptz NOT NULL,
+            resolved_operation_id text NULL,
+            resolved_at timestamptz NULL,
             PRIMARY KEY (pipeline_id, source_fingerprint, commit_position, transaction_id)
         )
         """,
@@ -782,6 +997,28 @@ public sealed class PostgreSqlSyncDestination :
         command.Parameters.Add(parameter);
     }
 
+    private static void AddQuarantineIdentityParameters(
+        DbCommand command,
+        SyncQuarantineIdentity identity)
+    {
+        AddParameter(command, "pipeline", identity.PipelineId);
+        AddParameter(command, "source", identity.Source.Fingerprint);
+        AddParameter(command, "position", (decimal)identity.CommitEndPosition.Value);
+        AddParameter(command, "transaction_id", (long)identity.TransactionId);
+    }
+
+    private static SyncQuarantineEntry ReadQuarantineEntry(
+        DbDataReader reader,
+        SyncQuarantineIdentity identity) =>
+        new(
+            identity,
+            reader.GetString(0),
+            reader.GetString(1),
+            reader.GetString(2),
+            reader.GetFieldValue<DateTimeOffset>(3),
+            reader.IsDBNull(4) ? null : reader.GetString(4),
+            reader.IsDBNull(5) ? null : reader.GetFieldValue<DateTimeOffset>(5));
+
     private static void AddNullableParameter(
         DbCommand command,
         string name,
@@ -799,6 +1036,7 @@ public sealed class PostgreSqlSyncDestination :
         string SourceFingerprint,
         string TransformFingerprint,
         BlueTuskLogSequenceNumber? CheckpointPosition,
+        uint? CheckpointTransactionId,
         Guid? SnapshotEpoch,
         bool SnapshotComplete);
 }

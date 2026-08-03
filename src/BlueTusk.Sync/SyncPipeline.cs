@@ -73,11 +73,13 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         options.Validate();
         ArgumentNullException.ThrowIfNull(transform);
         ArgumentNullException.ThrowIfNull(destination);
-        if (options.PoisonRecordPolicy is SyncPoisonRecordPolicy.QuarantineAndAdvance &&
+        if (options.PoisonRecordPolicy is
+                SyncPoisonRecordPolicy.QuarantineAndAdvance or
+                SyncPoisonRecordPolicy.QuarantineAndPause &&
             quarantine is null)
         {
             throw new ArgumentException(
-                "Quarantine-and-advance requires a durable quarantine sink.",
+                "A quarantine poison policy requires a durable quarantine sink.",
                 nameof(quarantine));
         }
 
@@ -463,7 +465,9 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         SyncPoisonRecordException exception,
         CancellationToken cancellationToken)
     {
-        if (_options.PoisonRecordPolicy is SyncPoisonRecordPolicy.QuarantineAndAdvance)
+        if (_options.PoisonRecordPolicy is
+            SyncPoisonRecordPolicy.QuarantineAndAdvance or
+            SyncPoisonRecordPolicy.QuarantineAndPause)
         {
             bool stored;
             try
@@ -517,7 +521,11 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
             }
 
             Interlocked.Increment(ref _quarantinedTransactions);
-            if (Status.State is SyncPipelineState.CatchingUp)
+            if (_options.PoisonRecordPolicy is SyncPoisonRecordPolicy.QuarantineAndPause)
+            {
+                TransitionTo(SyncPipelineState.Paused);
+            }
+            else if (Status.State is SyncPipelineState.CatchingUp)
             {
                 TransitionTo(SyncPipelineState.Running);
             }

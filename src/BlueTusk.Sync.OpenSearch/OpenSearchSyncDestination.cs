@@ -17,7 +17,8 @@ namespace BlueTusk.Sync.OpenSearch;
 /// </summary>
 public sealed partial class OpenSearchSyncDestination :
     ISyncDestination,
-    ISyncQuarantineSink,
+    ISyncQuarantineStore,
+    ISyncQuarantineReplayDestination,
     ISyncReconciliationReader,
     ISyncRepairSink,
     ISyncRebuildDestination
@@ -291,9 +292,25 @@ public sealed partial class OpenSearchSyncDestination :
                 runtime.Transform.Fingerprint);
         }
 
+        var result = await ApplyTransactionCoreAsync(
+            runtime,
+            batch,
+            replay: false,
+            cancellationToken).ConfigureAwait(false);
+        return result.Status is SyncQuarantineReplayApplyStatus.Applied
+            ? SyncApplyResult.Applied(batch.Transaction.CommitEndPosition)
+            : SyncApplyResult.AlreadyApplied(batch.Transaction.CommitEndPosition);
+    }
+
+    private async ValueTask<SyncQuarantineReplayApplyResult> ApplyTransactionCoreAsync(
+        PipelineRuntime runtime,
+        SyncTransactionBatch batch,
+        bool replay,
+        CancellationToken cancellationToken)
+    {
         var position = batch.Transaction.CommitEndPosition;
         var externalVersion = ToExternalVersion(position);
-        ValidateLimits(batch.Mutations.Count, batch.Mutations.Select(mutation => mutation.Content));
+        ValidateLimits(batch.Mutations.Count, batch.Mutations.Select(static mutation => mutation.Content));
         await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
         var existingCheckpoint = await ReadCheckpointAsync(runtime, cancellationToken)
             .ConfigureAwait(false);
@@ -307,10 +324,20 @@ public sealed partial class OpenSearchSyncDestination :
 
         if (existingCheckpoint is not null && existingCheckpoint.Position >= position.Value)
         {
-            return SyncApplyResult.AlreadyApplied(position);
+            return new SyncQuarantineReplayApplyResult(
+                replay && existingCheckpoint.Position > position.Value
+                    ? SyncQuarantineReplayApplyStatus.CheckpointAdvanced
+                    : SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                new BlueTuskLogSequenceNumber(existingCheckpoint.Position));
         }
 
         var plan = PlanTransaction(batch.Mutations);
+        if (replay && plan.ResetCollections.Count != 0)
+        {
+            throw new SyncDestinationDurabilityException(
+                "OpenSearch cannot safely replay an unscoped collection delete; use rebuild or reconciliation.");
+        }
+
         foreach (var collectionName in plan.ResetCollections)
         {
             var collection = await EnsureCollectionAsync(
@@ -332,7 +359,6 @@ public sealed partial class OpenSearchSyncDestination :
             }
 
             ValidateReconciliationKey(mutation.Key!);
-
             var collection = await EnsureCollectionAsync(
                 runtime,
                 mutation.Collection,
@@ -375,10 +401,23 @@ public sealed partial class OpenSearchSyncDestination :
                     $"OpenSearch rejected checkpoint {position} for pipeline '{batch.PipelineId}' without exposing an equal or later durable checkpoint.");
             }
 
-            return SyncApplyResult.AlreadyApplied(position);
+            if (existingCheckpoint.Position == position.Value &&
+                existingCheckpoint.TransactionId != batch.Transaction.TransactionId)
+            {
+                throw new OpenSearchSyncException(
+                    $"OpenSearch checkpoint {position} for pipeline '{batch.PipelineId}' belongs to transaction {existingCheckpoint.TransactionId}, not {batch.Transaction.TransactionId}.");
+            }
+
+            return new SyncQuarantineReplayApplyResult(
+                replay && existingCheckpoint.Position > position.Value
+                    ? SyncQuarantineReplayApplyStatus.CheckpointAdvanced
+                    : SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                new BlueTuskLogSequenceNumber(existingCheckpoint.Position));
         }
 
-        return SyncApplyResult.Applied(position);
+        return new SyncQuarantineReplayApplyResult(
+            SyncQuarantineReplayApplyStatus.Applied,
+            position);
     }
 
     /// <summary>Reads one materialized JSON document from the provisioned target generation.</summary>
@@ -417,29 +456,132 @@ public sealed partial class OpenSearchSyncDestination :
     {
         ArgumentNullException.ThrowIfNull(record);
         var runtime = RequirePipeline(record.PipelineId, record.Source, record.Transform);
-        var documentId = "quarantine-" + Fingerprint(
-            $"{runtime.PipelineHash}\n{record.CommitEndPosition.Value:x16}\n{record.TransactionId:x8}",
-            48);
+        var documentId = QuarantineDocumentId(
+            runtime,
+            record.CommitEndPosition,
+            record.TransactionId);
         var response = await SendJsonAsync(
             HttpMethod.Put,
             $"{_controlIndex}/_create/{documentId}?refresh=wait_for",
-            new
-            {
-                recordType = "quarantine",
-                formatVersion = CurrentFormatVersion,
-                pipelineHash = runtime.PipelineHash,
-                sourceFingerprint = runtime.Source.Fingerprint,
-                transformFingerprint = runtime.Transform.Fingerprint,
-                position = record.CommitEndPosition.Value,
-                transactionId = record.TransactionId,
+            new QuarantineDocument(
+                "quarantine",
+                CurrentFormatVersion,
+                runtime.PipelineHash,
+                runtime.Source.Fingerprint,
+                runtime.Transform.Fingerprint,
+                record.CommitEndPosition.Value,
+                record.TransactionId,
                 record.ErrorType,
                 record.ErrorMessage,
-                recordedAt = record.RecordedAt,
-            },
+                record.RecordedAt,
+                null,
+                null),
             cancellationToken,
             HttpStatusCode.Created,
             HttpStatusCode.Conflict).ConfigureAwait(false);
         return response.StatusCode is HttpStatusCode.Created or HttpStatusCode.Conflict;
+    }
+
+    public async ValueTask<SyncQuarantineEntry?> ReadAsync(
+        SyncQuarantineIdentity identity,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        var runtime = RequirePipeline(identity.PipelineId, identity.Source);
+        var control = await ReadControlDocumentAsync<QuarantineDocument>(
+            QuarantineDocumentId(runtime, identity.CommitEndPosition, identity.TransactionId),
+            cancellationToken).ConfigureAwait(false);
+        return control is null ? null : ToQuarantineEntry(identity, control.Source);
+    }
+
+    public async ValueTask<SyncQuarantineResolutionResult> ResolveAsync(
+        SyncQuarantineIdentity identity,
+        string expectedTransformFingerprint,
+        string operationId,
+        DateTimeOffset resolvedAt,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentException.ThrowIfNullOrWhiteSpace(expectedTransformFingerprint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        var runtime = RequirePipeline(identity.PipelineId, identity.Source);
+        var documentId = QuarantineDocumentId(
+            runtime,
+            identity.CommitEndPosition,
+            identity.TransactionId);
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            var control = await ReadControlDocumentAsync<QuarantineDocument>(
+                documentId,
+                cancellationToken).ConfigureAwait(false);
+            if (control is null)
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.NotFound,
+                    null);
+            }
+
+            var current = ToQuarantineEntry(identity, control.Source);
+            if (!string.Equals(
+                    current.TransformFingerprint,
+                    expectedTransformFingerprint,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.Conflict,
+                    current);
+            }
+
+            if (current.ResolvedOperationId is not null)
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.AlreadyResolved,
+                    current);
+            }
+
+            var replacement = control.Source with
+            {
+                ResolvedOperationId = operationId,
+                ResolvedAt = resolvedAt,
+            };
+            var response = await SendJsonAsync(
+                HttpMethod.Put,
+                $"{_controlIndex}/_doc/{documentId}?if_seq_no={control.SequenceNumber.ToString(CultureInfo.InvariantCulture)}&if_primary_term={control.PrimaryTerm.ToString(CultureInfo.InvariantCulture)}&refresh=wait_for",
+                replacement,
+                cancellationToken,
+                HttpStatusCode.OK,
+                HttpStatusCode.Conflict).ConfigureAwait(false);
+            if (response.StatusCode is HttpStatusCode.OK)
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.Resolved,
+                    ToQuarantineEntry(identity, replacement));
+            }
+        }
+
+        var latest = await ReadAsync(identity, cancellationToken).ConfigureAwait(false);
+        return new SyncQuarantineResolutionResult(
+            latest?.ResolvedOperationId is null
+                ? SyncQuarantineResolutionStatus.Conflict
+                : SyncQuarantineResolutionStatus.AlreadyResolved,
+            latest);
+    }
+
+    public async ValueTask<SyncQuarantineReplayApplyResult> ReplayTransactionAsync(
+        SyncTransactionBatch batch,
+        string operationId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(batch);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        var runtime = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
+        return await ApplyTransactionCoreAsync(
+            runtime,
+            batch,
+            replay: true,
+            cancellationToken).ConfigureAwait(false);
     }
 
     private async Task InitializeCoreAsync()
@@ -654,6 +796,42 @@ public sealed partial class OpenSearchSyncDestination :
     private static string CheckpointDocumentId(PipelineRuntime runtime) =>
         $"checkpoint-{runtime.PipelineHash}-{runtime.Generation}";
 
+    private static string QuarantineDocumentId(
+        PipelineRuntime runtime,
+        BlueTuskLogSequenceNumber position,
+        uint transactionId) =>
+        "quarantine-" + Fingerprint(
+            $"{runtime.PipelineHash}\n{position.Value:x16}\n{transactionId:x8}",
+            48);
+
+    private static SyncQuarantineEntry ToQuarantineEntry(
+        SyncQuarantineIdentity identity,
+        QuarantineDocument document)
+    {
+        var pipelineHash = Fingerprint(identity.PipelineId, 24);
+        if (!string.Equals(document.RecordType, "quarantine", StringComparison.Ordinal) ||
+            !string.Equals(document.PipelineHash, pipelineHash, StringComparison.Ordinal) ||
+            !string.Equals(
+                document.SourceFingerprint,
+                identity.Source.Fingerprint,
+                StringComparison.Ordinal) ||
+            document.Position != identity.CommitEndPosition.Value ||
+            document.TransactionId != identity.TransactionId)
+        {
+            throw new OpenSearchSyncException(
+                "The OpenSearch quarantine document does not match its requested identity.");
+        }
+
+        return new SyncQuarantineEntry(
+            identity,
+            document.TransformFingerprint,
+            document.ErrorType,
+            document.ErrorMessage,
+            document.RecordedAt,
+            document.ResolvedOperationId,
+            document.ResolvedAt);
+    }
+
     private sealed record PipelineDocument(
         string RecordType,
         int FormatVersion,
@@ -685,6 +863,20 @@ public sealed partial class OpenSearchSyncDestination :
         string Generation,
         ulong Position,
         uint TransactionId);
+
+    private sealed record QuarantineDocument(
+        string RecordType,
+        int FormatVersion,
+        string PipelineHash,
+        string SourceFingerprint,
+        string TransformFingerprint,
+        ulong Position,
+        uint TransactionId,
+        string ErrorType,
+        string ErrorMessage,
+        DateTimeOffset RecordedAt,
+        string? ResolvedOperationId,
+        DateTimeOffset? ResolvedAt);
 
     private sealed record CollectionDocument(
         string RecordType,

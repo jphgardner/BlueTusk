@@ -3,6 +3,7 @@ using System.Globalization;
 using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
+using System.Text.Json;
 using System.Threading.Channels;
 using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
@@ -12,7 +13,8 @@ namespace BlueTusk.Sync.Redis;
 
 public sealed class RedisSyncDestination :
     ISyncDestination,
-    ISyncQuarantineSink,
+    ISyncQuarantineStore,
+    ISyncQuarantineReplayDestination,
     ISyncReconciliationReader,
     ISyncRepairSink
 {
@@ -76,6 +78,60 @@ public sealed class RedisSyncDestination :
         end
         redis.call('HSET', KEYS[1], 'checkpoint', ARGV[3], 'transaction_id', ARGV[4])
         redis.call('HINCRBY', KEYS[1], 'generation', 1)
+        return 0
+        """;
+
+    private const string ReplayTransactionScript = """
+        if redis.call('HGET', KEYS[1], 'source') ~= ARGV[1] then return 3 end
+        if redis.call('HGET', KEYS[1], 'transform') ~= ARGV[2] then return 2 end
+        local checkpoint = redis.call('HGET', KEYS[1], 'checkpoint')
+        if checkpoint and checkpoint > ARGV[3] then return 6 end
+        if checkpoint and checkpoint == ARGV[3] then
+            if redis.call('HGET', KEYS[1], 'transaction_id') == ARGV[4] then return 1 end
+            return 7
+        end
+        local registry_type = redis.call('TYPE', KEYS[2]).ok
+        if registry_type ~= 'none' and registry_type ~= 'set' then return 5 end
+        for index = 3, #KEYS, 2 do
+            local document_type = redis.call('TYPE', KEYS[index]).ok
+            local index_type = redis.call('TYPE', KEYS[index + 1]).ok
+            if document_type ~= 'none' and document_type ~= 'hash' then return 5 end
+            if index_type ~= 'none' and index_type ~= 'zset' then return 5 end
+        end
+        local count = tonumber(ARGV[5])
+        local offset = 6
+        for index = 1, count do
+            local document_index = tonumber(ARGV[offset])
+            local sorted_index = tonumber(ARGV[offset + 1])
+            local kind = ARGV[offset + 2]
+            local document_key = ARGV[offset + 3]
+            local key_hash = ARGV[offset + 4]
+            local value = ARGV[offset + 5]
+            if kind == '0' then
+                redis.call('HSET', KEYS[document_index], document_key, value)
+                redis.call('ZADD', KEYS[sorted_index], key_hash, document_key)
+                redis.call('SADD', KEYS[2], KEYS[document_index], KEYS[sorted_index])
+            elseif kind == '1' then
+                redis.call('HDEL', KEYS[document_index], document_key)
+                redis.call('ZREM', KEYS[sorted_index], document_key)
+            elseif kind == '2' then
+                redis.call('DEL', KEYS[document_index], KEYS[sorted_index])
+                redis.call('SREM', KEYS[2], KEYS[document_index], KEYS[sorted_index])
+            else
+                return redis.error_reply('unsupported BlueTusk Sync mutation')
+            end
+            offset = offset + 6
+        end
+        redis.call('HSET', KEYS[1], 'checkpoint', ARGV[3], 'transaction_id', ARGV[4])
+        redis.call('HINCRBY', KEYS[1], 'generation', 1)
+        return 0
+        """;
+
+    private const string ResolveQuarantineScript = """
+        local current = redis.call('HGET', KEYS[1], ARGV[1])
+        if not current then return 2 end
+        if current ~= ARGV[2] then return 3 end
+        redis.call('HSET', KEYS[1], ARGV[1], ARGV[3])
         return 0
         """;
 
@@ -381,14 +437,15 @@ public sealed class RedisSyncDestination :
     {
         ArgumentNullException.ThrowIfNull(record);
         var runtime = RequirePipeline(record.PipelineId, record.Source, record.Transform);
-        var field = Position(record.CommitEndPosition) + ":" +
-            record.TransactionId.ToString("x8", CultureInfo.InvariantCulture);
-        var value = Encoding.UTF8.GetBytes(string.Join(
-            '\n',
-            record.RecordedAt.ToString("O", CultureInfo.InvariantCulture),
+        var field = QuarantineField(record.CommitEndPosition, record.TransactionId);
+        var value = EncodeQuarantine(new QuarantineDocument(
+            1,
+            record.Transform.Fingerprint,
             record.ErrorType,
             record.ErrorMessage,
-            record.Transform.Fingerprint));
+            record.RecordedAt,
+            null,
+            null));
         _ = await _database.HashSetAsync(
                 runtime.Keys.Quarantine,
                 field,
@@ -396,6 +453,145 @@ public sealed class RedisSyncDestination :
                 When.NotExists)
             .WaitAsync(cancellationToken).ConfigureAwait(false);
         return true;
+    }
+
+    public async ValueTask<SyncQuarantineEntry?> ReadAsync(
+        SyncQuarantineIdentity identity,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        var runtime = RequirePipeline(identity.PipelineId, identity.Source);
+        var value = await _database.HashGetAsync(
+                runtime.Keys.Quarantine,
+                QuarantineField(identity.CommitEndPosition, identity.TransactionId))
+            .WaitAsync(cancellationToken).ConfigureAwait(false);
+        return value.IsNull ? null : ToEntry(identity, DecodeQuarantine((byte[])value!));
+    }
+
+    public async ValueTask<SyncQuarantineResolutionResult> ResolveAsync(
+        SyncQuarantineIdentity identity,
+        string expectedTransformFingerprint,
+        string operationId,
+        DateTimeOffset resolvedAt,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(identity);
+        ArgumentException.ThrowIfNullOrWhiteSpace(expectedTransformFingerprint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        var runtime = RequirePipeline(identity.PipelineId, identity.Source);
+        var field = QuarantineField(identity.CommitEndPosition, identity.TransactionId);
+        for (var attempt = 0; attempt < 4; attempt++)
+        {
+            var currentValue = await _database.HashGetAsync(runtime.Keys.Quarantine, field)
+                .WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (currentValue.IsNull)
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.NotFound,
+                    null);
+            }
+
+            var currentDocument = DecodeQuarantine((byte[])currentValue!);
+            var current = ToEntry(identity, currentDocument);
+            if (!string.Equals(
+                    current.TransformFingerprint,
+                    expectedTransformFingerprint,
+                    StringComparison.OrdinalIgnoreCase))
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.Conflict,
+                    current);
+            }
+
+            if (current.ResolvedOperationId is not null)
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.AlreadyResolved,
+                    current);
+            }
+
+            var replacementDocument = currentDocument with
+            {
+                ResolvedOperationId = operationId,
+                ResolvedAt = resolvedAt,
+            };
+            var replacement = EncodeQuarantine(replacementDocument);
+            var result = (int)await _database.ScriptEvaluateAsync(
+                    ResolveQuarantineScript,
+                    [runtime.Keys.Quarantine],
+                    [field, currentValue, replacement])
+                .WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (result == 0)
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.Resolved,
+                    ToEntry(identity, replacementDocument));
+            }
+
+            if (result == 2)
+            {
+                return new SyncQuarantineResolutionResult(
+                    SyncQuarantineResolutionStatus.NotFound,
+                    null);
+            }
+        }
+
+        var latest = await ReadAsync(identity, cancellationToken).ConfigureAwait(false);
+        return new SyncQuarantineResolutionResult(
+            latest?.ResolvedOperationId is null
+                ? SyncQuarantineResolutionStatus.Conflict
+                : SyncQuarantineResolutionStatus.AlreadyResolved,
+            latest);
+    }
+
+    public async ValueTask<SyncQuarantineReplayApplyResult> ReplayTransactionAsync(
+        SyncTransactionBatch batch,
+        string operationId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(batch);
+        ArgumentException.ThrowIfNullOrWhiteSpace(operationId);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(operationId.Length, 128);
+        var runtime = RequirePipeline(batch.PipelineId, batch.Transaction.Source, batch.Transform);
+        ValidateLimits(batch.Mutations.Count, batch.Mutations.Select(static mutation => mutation.Content));
+        if (batch.Mutations.Any(static mutation =>
+                mutation.Kind is SyncMutationKind.DeleteCollection))
+        {
+            throw new SyncDestinationDurabilityException(
+                "Redis cannot safely replay an unscoped collection delete; use rebuild or reconciliation.");
+        }
+
+        var operations = PlanTransaction(batch);
+        await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
+        var command = BuildTransactionCommand(runtime, batch, operations);
+        var result = (int)await _database.ScriptEvaluateAsync(
+                ReplayTransactionScript,
+                command.Keys,
+                command.Arguments)
+            .WaitAsync(cancellationToken).ConfigureAwait(false);
+        return result switch
+        {
+            0 => new SyncQuarantineReplayApplyResult(
+                SyncQuarantineReplayApplyStatus.Applied,
+                batch.Transaction.CommitEndPosition),
+            1 => new SyncQuarantineReplayApplyResult(
+                SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                batch.Transaction.CommitEndPosition),
+            6 => new SyncQuarantineReplayApplyResult(
+                SyncQuarantineReplayApplyStatus.CheckpointAdvanced,
+                await ReadCheckpointAsync(runtime, cancellationToken).ConfigureAwait(false)),
+            7 => throw new SyncDestinationDurabilityException(
+                $"Redis destination checkpoint '{batch.Transaction.CommitEndPosition}' belongs to another transaction."),
+            2 => throw new SyncTransformVersionMismatchException(
+                runtime.Transform.Fingerprint,
+                batch.Transform.Fingerprint),
+            3 => throw new RedisSyncSourceMismatchException(
+                $"Redis Sync pipeline '{batch.PipelineId}' belongs to a different source."),
+            5 => throw new RedisSyncException(
+                $"Redis Sync pipeline '{batch.PipelineId}' contains a key with an incompatible Redis type."),
+            _ => throw new RedisSyncException($"Redis replay script returned status {result}."),
+        };
     }
 
     public async ValueTask<long> CountAsync(
@@ -808,6 +1004,97 @@ public sealed class RedisSyncDestination :
     private static string Position(BlueTuskLogSequenceNumber value) =>
         value.Value.ToString("x16", CultureInfo.InvariantCulture);
 
+    private async ValueTask<BlueTuskLogSequenceNumber?> ReadCheckpointAsync(
+        PipelineRuntime runtime,
+        CancellationToken cancellationToken)
+    {
+        var value = await _database.HashGetAsync(runtime.Keys.State, "checkpoint")
+            .WaitAsync(cancellationToken).ConfigureAwait(false);
+        if (value.IsNull)
+        {
+            return null;
+        }
+
+        var text = value.ToString();
+        return ulong.TryParse(
+            text,
+            NumberStyles.AllowHexSpecifier,
+            CultureInfo.InvariantCulture,
+            out var position)
+            ? new BlueTuskLogSequenceNumber(position)
+            : throw new RedisSyncException(
+                $"Redis Sync pipeline '{runtime.PipelineId}' contains an invalid checkpoint.");
+    }
+
+    private static string QuarantineField(
+        BlueTuskLogSequenceNumber position,
+        uint transactionId) =>
+        Position(position) + ":" + transactionId.ToString("x8", CultureInfo.InvariantCulture);
+
+    private static byte[] EncodeQuarantine(QuarantineDocument document) =>
+        JsonSerializer.SerializeToUtf8Bytes(document);
+
+    private static QuarantineDocument DecodeQuarantine(byte[] value)
+    {
+        try
+        {
+            var document = JsonSerializer.Deserialize<QuarantineDocument>(value);
+            if (document is not null &&
+                document.FormatVersion == 1 &&
+                IsValidQuarantineDocument(document))
+            {
+                return document;
+            }
+        }
+        catch (JsonException)
+        {
+        }
+
+        var text = Encoding.UTF8.GetString(value);
+        var first = text.IndexOf('\n');
+        var second = first < 0 ? -1 : text.IndexOf('\n', first + 1);
+        var last = text.LastIndexOf('\n');
+        if (first <= 0 || second <= first || last <= second ||
+            !DateTimeOffset.TryParse(
+                text.AsSpan(0, first),
+                CultureInfo.InvariantCulture,
+                DateTimeStyles.RoundtripKind,
+                out var recordedAt))
+        {
+            throw new RedisSyncException("The Redis quarantine record format is invalid.");
+        }
+
+        var legacy = new QuarantineDocument(
+            1,
+            text[(last + 1)..],
+            text[(first + 1)..second],
+            text[(second + 1)..last],
+            recordedAt,
+            null,
+            null);
+        return IsValidQuarantineDocument(legacy)
+            ? legacy
+            : throw new RedisSyncException("The Redis quarantine record format is invalid.");
+    }
+
+    private static bool IsValidQuarantineDocument(QuarantineDocument document) =>
+        document.TransformFingerprint is { Length: 64 } &&
+        document.TransformFingerprint.All(Uri.IsHexDigit) &&
+        !string.IsNullOrWhiteSpace(document.ErrorType) &&
+        document.ErrorMessage is not null;
+
+    private static SyncQuarantineEntry ToEntry(
+        SyncQuarantineIdentity identity,
+        QuarantineDocument document) =>
+        new(
+            identity,
+            document.TransformFingerprint,
+            document.ErrorType,
+            document.ErrorMessage,
+            document.RecordedAt,
+            document.ResolvedOperationId,
+            document.ResolvedAt);
+
     private static string StableChangeId(ChangeId id) =>
         $"{id.Source.Fingerprint}:{id.CommitEndPosition.Value:x16}:{id.TransactionId:x8}:{id.Ordinal:x8}";
 
@@ -900,6 +1187,15 @@ public sealed class RedisSyncDestination :
         RedisKey State,
         RedisKey Collections,
         RedisKey Quarantine);
+
+    private sealed record QuarantineDocument(
+        int FormatVersion,
+        string TransformFingerprint,
+        string ErrorType,
+        string ErrorMessage,
+        DateTimeOffset RecordedAt,
+        string? ResolvedOperationId,
+        DateTimeOffset? ResolvedAt);
 
     private sealed record MaterializedOperation(
         int Ordinal,

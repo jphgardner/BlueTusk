@@ -38,6 +38,40 @@ acknowledged until that sink confirms storage. Destination outages and rejected
 durability confirmations nack the delivery and fault the pipeline for safe
 redelivery.
 
+## Quarantine replay
+
+`QuarantineAndPause` is the replay-oriented poison policy. It durably stores the
+quarantine record, acknowledges the source transaction, and leaves the pipeline
+paused at that exact boundary. `SyncQuarantineReplayCoordinator` then reads the
+original transaction from an `ISyncQuarantineReplaySource`, verifies the stored,
+requested, and running transform fingerprints, reruns the transform, applies the
+transaction, and compare-and-set resolves the quarantine record. Destination
+application always precedes resolution, so a crash between them safely retries
+an idempotent destination operation.
+
+`PostgreSqlRelaySyncQuarantineReplaySource` reads the exact retained transaction
+from the durable relay without moving any consumer-group checkpoint. If relay
+retention has expired, replay returns `SourceTransactionUnavailable` and leaves
+the record unresolved. PostgreSQL, Redis, OpenSearch, and NATS implement the
+replay destination contract. PostgreSQL, Redis, and OpenSearch also implement
+the durable read/resolve quarantine store; NATS can use any separately
+configured store.
+
+Materialising destinations atomically reject replay when their checkpoint is
+already beyond the quarantined commit position. This prevents an old upsert or
+delete from overwriting later state; the operator must use authoritative
+reconciliation or rebuild instead. Unscoped collection deletes are never
+replayed into a materialised destination. `QuarantineAndAdvance` remains an
+explicit continue-on-poison policy, but its record may therefore become
+non-replayable after later destination progress.
+
+The dashboard exposes the separately authorised and audited
+`ReplayQuarantine` operation when a pipeline reports quarantined transactions.
+The application operation handler selects the unresolved record and passes the
+request operation ID into the replay coordinator, preserving idempotency across
+HTTP retries. Resume the worker only after replay reports `Completed` or
+`AlreadyCompleted`.
+
 PostgreSQL, NATS JetStream, Redis, and OpenSearch connector slices are
 implemented and pass the same executable snapshot-plus-stream recovery
 contract. The shared count, key-set, and partitioned content-hash engine plus
@@ -322,6 +356,11 @@ completion prevents late batches for the epoch. Quarantine records use a stable
 transaction field and `HSET NX`, so retrying quarantine-and-advance cannot add
 duplicates.
 
+Quarantine values use a versioned JSON document and compare-and-set resolution;
+legacy newline records remain readable. Replay uses one Lua script to verify the
+source, transform, and exact checkpoint/transaction boundary, apply all
+mutations, and advance that checkpoint atomically.
+
 Redis format version 2 maintains a same-slot sorted reconciliation index beside
 each collection hash. Lua writes update the document, index, registry, and CDC
 checkpoint atomically. Partition reads use bounded score ranges instead of
@@ -388,6 +427,10 @@ every restart; a changed transform returns `RebuildRequired`. Index names,
 aliases, and document IDs contain hashes instead of application keys, and
 document, mutation-count, and encoded bulk-byte limits are checked before
 submission.
+
+Quarantine resolution uses OpenSearch sequence-number/primary-term compare and
+set. Replay shares the normal external-versioned bulk path and rejects an
+already-advanced checkpoint before applying an old transaction.
 
 For local acceptance, run an OpenSearch node without the security plug-in and
 then execute:

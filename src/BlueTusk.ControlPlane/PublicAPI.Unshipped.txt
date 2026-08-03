@@ -102,6 +102,7 @@ BlueTusk.ControlPlane.ControlPlaneOperationKind.PauseSource = 0 -> BlueTusk.Cont
 BlueTusk.ControlPlane.ControlPlaneOperationKind.RebuildPipeline = 6 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
 BlueTusk.ControlPlane.ControlPlaneOperationKind.ReconcilePipeline = 5 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
 BlueTusk.ControlPlane.ControlPlaneOperationKind.RemoveConsumerGroup = 7 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ReplayQuarantine = 10 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
 BlueTusk.ControlPlane.ControlPlaneOperationKind.ResumeConsumerGroup = 3 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
 BlueTusk.ControlPlane.ControlPlaneOperationKind.ResumeSource = 1 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
 BlueTusk.ControlPlane.ControlPlaneOperationKind.RetryPipeline = 4 -> BlueTusk.ControlPlane.ControlPlaneOperationKind

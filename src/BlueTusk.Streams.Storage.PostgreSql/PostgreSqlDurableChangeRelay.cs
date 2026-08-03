@@ -961,6 +961,67 @@ public sealed partial class PostgreSqlDurableChangeRelay
         return new ChangeRelayReadBatch(groupState.Group, records.AsReadOnly(), totalBytes);
     }
 
+    /// <summary>Reads an exact retained transaction without moving a consumer-group checkpoint.</summary>
+    internal async ValueTask<ChangeRelayRecord?> ReadRetainedTransactionAsync(
+        ChangeSourceIdentity source,
+        BlueTuskLogSequenceNumber commitEndPosition,
+        uint transactionId,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var registered = await ReadSourceAsync(
+            connection,
+            transaction: null,
+            source.Fingerprint,
+            forUpdate: false,
+            cancellationToken).ConfigureAwait(false) ??
+            throw new ChangeRelaySourceMismatchException("The relay source is not registered.");
+        EnsureSourceCompatible(source, registered.Source);
+
+        await using var command = CreateCommand(
+            connection,
+            transaction: null,
+            $"""
+            SELECT sequence, appended_at, protection_id, envelope
+            FROM {_transactionsTable}
+            WHERE source_fingerprint = @source AND commit_position = @position
+              AND transaction_id = @transaction_id
+            ORDER BY source_epoch DESC
+            LIMIT 1
+            """);
+        AddParameter(command, "source", source.Fingerprint);
+        AddParameter(command, "position", (decimal)commitEndPosition.Value);
+        AddParameter(command, "transaction_id", (long)transactionId);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
+            .ConfigureAwait(false);
+        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            return null;
+        }
+
+        var storedBytes = reader.GetFieldValue<byte[]>(3);
+        var bytes = UnprotectEnvelope(
+            reader.IsDBNull(2) ? null : reader.GetString(2),
+            storedBytes);
+        var envelope = ChangeTransactionEnvelopeCodec.FromData(bytes, _envelopeOptions);
+        var transaction = ChangeTransactionEnvelopeCodec.Decode(envelope, _envelopeOptions);
+        if (transaction.Source != source ||
+            transaction.CommitEndPosition != commitEndPosition ||
+            transaction.TransactionId != transactionId)
+        {
+            throw new ChangeRelayIntegrityException(
+                "The retained relay envelope does not match its indexed source transaction identity.");
+        }
+
+        return new ChangeRelayRecord(
+            reader.GetInt64(0),
+            reader.GetFieldValue<DateTimeOffset>(1),
+            envelope,
+            transaction);
+    }
+
     public async ValueTask<ChangeRelayAcknowledgeResult> AcknowledgeConsumerGroupAsync(
         ChangeRelayGroupLease lease,
         long expectedGeneration,

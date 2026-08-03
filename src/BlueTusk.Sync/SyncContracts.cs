@@ -35,6 +35,7 @@ public enum SyncPoisonRecordPolicy
 {
     Pause,
     QuarantineAndAdvance,
+    QuarantineAndPause,
 }
 
 public enum SyncMutationKind

@@ -15,6 +15,68 @@ public sealed class PostgreSqlSyncDestinationTests
         new("sync-pg-system", "sync-db", "sync-slot", "public:orders");
 
     [Fact]
+    public async Task PostgreSql_destination_migrates_version_one_quarantine_storage()
+    {
+        var connectionString = GetConnectionString();
+        var schema = "bluetusk_sync_migration_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        try
+        {
+            await using (var connection = await dataSource.OpenConnectionAsync())
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = $"""
+                    CREATE SCHEMA "{schema}";
+                    CREATE TABLE "{schema}".storage_metadata (
+                        singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
+                        schema_version integer NOT NULL CHECK (schema_version > 0),
+                        updated_at timestamptz NOT NULL DEFAULT clock_timestamp());
+                    INSERT INTO "{schema}".storage_metadata (singleton, schema_version)
+                    VALUES (true, 1);
+                    CREATE TABLE "{schema}".quarantine (
+                        pipeline_id text NOT NULL,
+                        source_fingerprint text NOT NULL,
+                        transaction_id bigint NOT NULL CHECK (transaction_id >= 0),
+                        commit_position numeric(20, 0) NOT NULL CHECK (commit_position >= 0),
+                        transform_fingerprint char(64) NOT NULL,
+                        error_type text NOT NULL,
+                        error_message text NOT NULL,
+                        recorded_at timestamptz NOT NULL,
+                        PRIMARY KEY (pipeline_id, source_fingerprint, commit_position, transaction_id));
+                    """;
+                _ = await command.ExecuteNonQueryAsync();
+            }
+
+            var destination = new PostgreSqlSyncDestination(Options(dataSource, schema));
+            await destination.InitializeAsync();
+
+            await using var inspection = await dataSource.OpenConnectionAsync();
+            await using var version = inspection.CreateCommand();
+            version.CommandText = $"SELECT schema_version FROM \"{schema}\".storage_metadata WHERE singleton";
+            Assert.Equal(
+                PostgreSqlSyncDestination.CurrentSchemaVersion,
+                Convert.ToInt32(await version.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
+            await using var columns = inspection.CreateCommand();
+            columns.CommandText = """
+                SELECT count(*) FROM information_schema.columns
+                WHERE table_schema = @schema AND table_name = 'quarantine'
+                  AND column_name IN ('resolved_operation_id', 'resolved_at')
+                """;
+            var parameter = columns.CreateParameter();
+            parameter.ParameterName = "schema";
+            parameter.Value = schema;
+            columns.Parameters.Add(parameter);
+            Assert.Equal(
+                2,
+                Convert.ToInt32(await columns.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
+    [Fact]
     public async Task PostgreSql_destination_atomically_applies_deduplicates_and_quarantines()
     {
         var connectionString = GetConnectionString();
@@ -114,14 +176,51 @@ public sealed class PostgreSqlSyncDestinationTests
                 "orders",
                 transform,
                 Source,
-                43,
-                Lsn(106),
+                44,
+                Lsn(107),
                 "test",
                 "poison",
                 DateTimeOffset.UtcNow);
             Assert.True(await destination.StoreAsync(quarantine));
             Assert.True(await destination.StoreAsync(quarantine));
             Assert.Equal(1L, await ReadCountAsync(dataSource, schema, "quarantine"));
+            var identity = SyncQuarantineIdentity.FromRecord(quarantine);
+            Assert.NotNull(await destination.ReadAsync(identity));
+            await using var replayDelivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                44,
+                Lsn(107));
+            var replayBatch = new SyncTransactionBatch(
+                "orders",
+                transform,
+                replayDelivery.Transaction,
+                [Mutation(44, 107, 0, SyncMutationKind.Upsert, "orders", "replay", "{\"replayed\":true}")]);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.Applied,
+                (await destination.ReplayTransactionAsync(replayBatch, "replay-107")).Status);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                (await destination.ReplayTransactionAsync(replayBatch, "replay-107")).Status);
+            Assert.Equal(
+                SyncQuarantineResolutionStatus.Resolved,
+                (await destination.ResolveAsync(
+                    identity,
+                    transform.Fingerprint,
+                    "replay-107",
+                    DateTimeOffset.UtcNow)).Status);
+
+            await using var laterDelivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                45,
+                Lsn(108));
+            _ = await destination.ApplyTransactionAsync(new SyncTransactionBatch(
+                "orders",
+                transform,
+                laterDelivery.Transaction,
+                [Mutation(45, 108, 0, SyncMutationKind.Upsert, "orders", "later", "{}")]));
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.CheckpointAdvanced,
+                (await destination.ReplayTransactionAsync(replayBatch, "replay-107")).Status);
         }
         finally
         {

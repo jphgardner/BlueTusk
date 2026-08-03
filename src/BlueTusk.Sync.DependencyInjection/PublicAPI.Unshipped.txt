@@ -60,6 +60,9 @@ BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncCutoverPositionProvider.Pos
 BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncPipelineSource
 BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncPipelineSource.PostgreSqlRelaySyncPipelineSource(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay! relay, BlueTusk.Streams.ChangeSourceIdentity! source, BlueTusk.Streams.IConsistentSnapshotSource! snapshotSource, BlueTusk.Sync.SyncTransformVersion! transform, BlueTusk.Streams.Storage.PostgreSql.PostgreSqlRelayChangeStreamOptions! relayOptions, BlueTusk.Streams.SnapshotThenStreamOptions? snapshotOptions = null) -> void
 BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncPipelineSource.RunAsync(BlueTusk.Streams.IChangeStreamConsumer! consumer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncQuarantineReplaySource
+BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncQuarantineReplaySource.PostgreSqlRelaySyncQuarantineReplaySource(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay! relay) -> void
+BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncQuarantineReplaySource.ReadTransactionAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeTransaction?>
 const BlueTusk.Sync.DependencyInjection.BlueTuskSyncTelemetry.ActivitySourceName = "BlueTusk.Sync" -> string!
 const BlueTusk.Sync.DependencyInjection.BlueTuskSyncTelemetry.MeterName = "BlueTusk.Sync" -> string!
 static BlueTusk.Sync.DependencyInjection.BlueTuskSyncServiceCollectionExtensions.AddBlueTuskSync(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder!

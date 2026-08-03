@@ -78,6 +78,7 @@ public sealed class DashboardEndpointTests
         Assert.DoesNotContain("<img src=x>", pipelineHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("sensitive", pipelineHtml, StringComparison.Ordinal);
         Assert.Contains("data-operation-name=\"RebuildPipeline\"", pipelineHtml, StringComparison.Ordinal);
+        Assert.Contains("data-operation-name=\"ReplayQuarantine\"", pipelineHtml, StringComparison.Ordinal);
 
         var operations = Assert.Single(
             endpoints,

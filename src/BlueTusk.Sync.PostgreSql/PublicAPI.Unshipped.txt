@@ -19,8 +19,11 @@ BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.InitializeAsync(System.Thread
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.Name.get -> string!
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.PostgreSqlSyncDestination(BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions! options) -> void
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ReadAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineEntry?>
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ReadPartitionAsync(string! pipelineId, string! collection, int partitionIndex, int partitionCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Sync.SyncReconciliationEntry!>!
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ReplayTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, string! operationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayApplyResult!>
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ResolveAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, string! expectedTransformFingerprint, string! operationId, System.DateTimeOffset resolvedAt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineResolutionResult!>
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.StoreAsync(BlueTusk.Sync.SyncQuarantineRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncException
@@ -44,7 +47,7 @@ BlueTusk.Sync.PostgreSql.PostgreSqlSyncSnapshotException
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncSnapshotException.PostgreSqlSyncSnapshotException(string! message) -> void
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncSourceMismatchException
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncSourceMismatchException.PostgreSqlSyncSourceMismatchException(string! message) -> void
-const BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.CurrentSchemaVersion = 1 -> int
+const BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.CurrentSchemaVersion = 2 -> int
 override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.Equals(object? obj) -> bool
 override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.GetHashCode() -> int
 override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.ToString() -> string!

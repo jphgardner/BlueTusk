@@ -384,7 +384,9 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 .Append("</td><td>")
                 .Append(E(pipeline.DiagnosticCode ?? pipeline.LagDiagnosticCode ?? "—"))
                 .Append("</td><td>")
-                .Append(canMutate ? PipelineControls(pipeline.PipelineId) : "—")
+                .Append(canMutate
+                    ? PipelineControls(pipeline.PipelineId, pipeline.QuarantinedTransactions)
+                    : "—")
                 .Append("</td></tr>");
         }
 
@@ -477,12 +479,16 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         </body></html>
         """;
 
-    private static string PipelineControls(string pipelineId)
+    private static string PipelineControls(string pipelineId, long quarantinedTransactions)
     {
         var target = E("pipeline:" + pipelineId);
+        var replay = quarantinedTransactions > 0
+            ? OperationButton(ControlPlaneOperationKind.ReplayQuarantine, target, "Replay next quarantine")
+            : string.Empty;
         return OperationButton(ControlPlaneOperationKind.RetryPipeline, target, "Retry") +
                OperationButton(ControlPlaneOperationKind.ReconcilePipeline, target, "Reconcile") +
-               OperationButton(ControlPlaneOperationKind.RebuildPipeline, target, "Rebuild");
+               OperationButton(ControlPlaneOperationKind.RebuildPipeline, target, "Rebuild") +
+               replay;
     }
 
     private static string OperationButton(

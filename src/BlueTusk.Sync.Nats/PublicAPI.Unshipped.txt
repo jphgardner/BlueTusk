@@ -7,6 +7,7 @@ BlueTusk.Sync.Nats.NatsSyncDestination.CompleteSnapshotAsync(string! pipelineId,
 BlueTusk.Sync.Nats.NatsSyncDestination.Name.get -> string!
 BlueTusk.Sync.Nats.NatsSyncDestination.NatsSyncDestination(BlueTusk.Sync.Nats.NatsSyncOptions! options) -> void
 BlueTusk.Sync.Nats.NatsSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.Nats.NatsSyncDestination.ReplayTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, string! operationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayApplyResult!>
 BlueTusk.Sync.Nats.NatsSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.Nats.NatsSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.Nats.NatsSyncEnvelope

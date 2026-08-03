@@ -19,6 +19,7 @@ public enum ControlPlaneOperationKind
     RemoveConsumerGroup,
     RewindCheckpoint,
     DeleteSlot,
+    ReplayQuarantine,
 }
 
 public enum ControlPlaneAuditStatus

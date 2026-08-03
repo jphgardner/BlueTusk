@@ -68,6 +68,28 @@ public sealed class NatsSyncDestinationTests
             var stream = await jetStream.GetStreamAsync(streamName);
             Assert.Equal(1L, stream.Info.State.Messages);
 
+            await using var replayDelivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                43,
+                new BlueTuskLogSequenceNumber(106));
+            var replayBatch = new SyncTransactionBatch(
+                "orders",
+                transform,
+                replayDelivery.Transaction,
+                [new SyncMutation(
+                    new ChangeId(Source, new BlueTuskLogSequenceNumber(106), 43, 0),
+                    SyncMutationKind.Upsert,
+                    "orders",
+                    "43",
+                    "{}"u8.ToArray(),
+                    "application/json")]);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.Applied,
+                (await destination.ReplayTransactionAsync(replayBatch, "replay-106")).Status);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                (await destination.ReplayTransactionAsync(replayBatch, "replay-106")).Status);
+
             var epoch = new SnapshotEpoch(
                 Guid.NewGuid(),
                 Source,
@@ -102,7 +124,7 @@ public sealed class NatsSyncDestinationTests
             await destination.CompleteSnapshotAsync("orders", complete, transform);
 
             stream = await jetStream.GetStreamAsync(streamName);
-            Assert.Equal(5L, stream.Info.State.Messages);
+            Assert.Equal(6L, stream.Info.State.Messages);
 
             var restarted = new NatsSyncDestination(options);
             var restartedProvision = await restarted.ProvisionAsync(
@@ -111,7 +133,7 @@ public sealed class NatsSyncDestinationTests
             Assert.Equal(SyncProvisionStatus.Ready, restartedProvision.Status);
             Assert.Equal(SyncApplyStatus.AlreadyApplied, replay.Status);
             stream = await jetStream.GetStreamAsync(streamName);
-            Assert.Equal(5L, stream.Info.State.Messages);
+            Assert.Equal(6L, stream.Info.State.Messages);
 
             var changedTransform = SyncTransformVersion.Create("orders", "v2");
             var replacement = new NatsSyncDestination(options);

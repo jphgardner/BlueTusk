@@ -18,6 +18,13 @@ BlueTusk.Sync.ISyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.S
 BlueTusk.Sync.ISyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncPipelineSource
 BlueTusk.Sync.ISyncPipelineSource.RunAsync(BlueTusk.Streams.IChangeStreamConsumer! consumer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.Sync.ISyncQuarantineReplayDestination
+BlueTusk.Sync.ISyncQuarantineReplayDestination.ReplayTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, string! operationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayApplyResult!>
+BlueTusk.Sync.ISyncQuarantineReplaySource
+BlueTusk.Sync.ISyncQuarantineReplaySource.ReadTransactionAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.ChangeTransaction?>
+BlueTusk.Sync.ISyncQuarantineStore
+BlueTusk.Sync.ISyncQuarantineStore.ReadAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineEntry?>
+BlueTusk.Sync.ISyncQuarantineStore.ResolveAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, string! expectedTransformFingerprint, string! operationId, System.DateTimeOffset resolvedAt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineResolutionResult!>
 BlueTusk.Sync.ISyncRebuildCutoverLease.CompleteHandoffAsync(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber activatedPosition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncReconciliationReader
 BlueTusk.Sync.ISyncReconciliationReader.CountAsync(string! pipelineId, string! collection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
@@ -177,6 +184,7 @@ BlueTusk.Sync.SyncPoisonRecordException.SyncPoisonRecordException(string! messag
 BlueTusk.Sync.SyncPoisonRecordPolicy
 BlueTusk.Sync.SyncPoisonRecordPolicy.Pause = 0 -> BlueTusk.Sync.SyncPoisonRecordPolicy
 BlueTusk.Sync.SyncPoisonRecordPolicy.QuarantineAndAdvance = 1 -> BlueTusk.Sync.SyncPoisonRecordPolicy
+BlueTusk.Sync.SyncPoisonRecordPolicy.QuarantineAndPause = 2 -> BlueTusk.Sync.SyncPoisonRecordPolicy
 BlueTusk.Sync.SyncPredicateTransformStage
 BlueTusk.Sync.SyncPredicateTransformStage.SyncPredicateTransformStage(BlueTusk.Sync.SyncTransformVersion! version, System.Func<BlueTusk.Sync.SyncMutation!, bool>! transactionPredicate, System.Func<BlueTusk.Sync.SyncSnapshotMutation!, bool>! snapshotPredicate) -> void
 BlueTusk.Sync.SyncPredicateTransformStage.TransformSnapshotBatchAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSnapshotMutation!>! mutations, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSnapshotMutation!>!>
@@ -205,6 +213,93 @@ BlueTusk.Sync.SyncProvisionResult.SyncProvisionResult(BlueTusk.Sync.SyncProvisio
 BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.Ready = 0 -> BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.RebuildRequired = 1 -> BlueTusk.Sync.SyncProvisionStatus
+BlueTusk.Sync.SyncQuarantineEntry
+BlueTusk.Sync.SyncQuarantineEntry.<Clone>$() -> BlueTusk.Sync.SyncQuarantineEntry!
+BlueTusk.Sync.SyncQuarantineEntry.Deconstruct(out BlueTusk.Sync.SyncQuarantineIdentity! Identity, out string! TransformFingerprint, out string! ErrorType, out string! ErrorMessage, out System.DateTimeOffset RecordedAt, out string? ResolvedOperationId, out System.DateTimeOffset? ResolvedAt) -> void
+BlueTusk.Sync.SyncQuarantineEntry.Equals(BlueTusk.Sync.SyncQuarantineEntry? other) -> bool
+BlueTusk.Sync.SyncQuarantineEntry.ErrorMessage.get -> string!
+BlueTusk.Sync.SyncQuarantineEntry.ErrorMessage.init -> void
+BlueTusk.Sync.SyncQuarantineEntry.ErrorType.get -> string!
+BlueTusk.Sync.SyncQuarantineEntry.ErrorType.init -> void
+BlueTusk.Sync.SyncQuarantineEntry.Identity.get -> BlueTusk.Sync.SyncQuarantineIdentity!
+BlueTusk.Sync.SyncQuarantineEntry.Identity.init -> void
+BlueTusk.Sync.SyncQuarantineEntry.RecordedAt.get -> System.DateTimeOffset
+BlueTusk.Sync.SyncQuarantineEntry.RecordedAt.init -> void
+BlueTusk.Sync.SyncQuarantineEntry.ResolvedAt.get -> System.DateTimeOffset?
+BlueTusk.Sync.SyncQuarantineEntry.ResolvedAt.init -> void
+BlueTusk.Sync.SyncQuarantineEntry.ResolvedOperationId.get -> string?
+BlueTusk.Sync.SyncQuarantineEntry.ResolvedOperationId.init -> void
+BlueTusk.Sync.SyncQuarantineEntry.SyncQuarantineEntry(BlueTusk.Sync.SyncQuarantineIdentity! Identity, string! TransformFingerprint, string! ErrorType, string! ErrorMessage, System.DateTimeOffset RecordedAt, string? ResolvedOperationId, System.DateTimeOffset? ResolvedAt) -> void
+BlueTusk.Sync.SyncQuarantineEntry.TransformFingerprint.get -> string!
+BlueTusk.Sync.SyncQuarantineEntry.TransformFingerprint.init -> void
+BlueTusk.Sync.SyncQuarantineIdentity
+BlueTusk.Sync.SyncQuarantineIdentity.<Clone>$() -> BlueTusk.Sync.SyncQuarantineIdentity!
+BlueTusk.Sync.SyncQuarantineIdentity.CommitEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.SyncQuarantineIdentity.CommitEndPosition.init -> void
+BlueTusk.Sync.SyncQuarantineIdentity.Deconstruct(out string! PipelineId, out BlueTusk.Streams.ChangeSourceIdentity! Source, out uint TransactionId, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitEndPosition) -> void
+BlueTusk.Sync.SyncQuarantineIdentity.Equals(BlueTusk.Sync.SyncQuarantineIdentity? other) -> bool
+BlueTusk.Sync.SyncQuarantineIdentity.PipelineId.get -> string!
+BlueTusk.Sync.SyncQuarantineIdentity.PipelineId.init -> void
+BlueTusk.Sync.SyncQuarantineIdentity.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
+BlueTusk.Sync.SyncQuarantineIdentity.Source.init -> void
+BlueTusk.Sync.SyncQuarantineIdentity.SyncQuarantineIdentity(string! PipelineId, BlueTusk.Streams.ChangeSourceIdentity! Source, uint TransactionId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitEndPosition) -> void
+BlueTusk.Sync.SyncQuarantineIdentity.TransactionId.get -> uint
+BlueTusk.Sync.SyncQuarantineIdentity.TransactionId.init -> void
+BlueTusk.Sync.SyncQuarantineReplayApplyResult
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.<Clone>$() -> BlueTusk.Sync.SyncQuarantineReplayApplyResult!
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.CurrentPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.CurrentPosition.init -> void
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.Deconstruct(out BlueTusk.Sync.SyncQuarantineReplayApplyStatus Status, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? CurrentPosition) -> void
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.Equals(BlueTusk.Sync.SyncQuarantineReplayApplyResult? other) -> bool
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.Status.get -> BlueTusk.Sync.SyncQuarantineReplayApplyStatus
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.Status.init -> void
+BlueTusk.Sync.SyncQuarantineReplayApplyResult.SyncQuarantineReplayApplyResult(BlueTusk.Sync.SyncQuarantineReplayApplyStatus Status, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? CurrentPosition = null) -> void
+BlueTusk.Sync.SyncQuarantineReplayApplyStatus
+BlueTusk.Sync.SyncQuarantineReplayApplyStatus.AlreadyApplied = 1 -> BlueTusk.Sync.SyncQuarantineReplayApplyStatus
+BlueTusk.Sync.SyncQuarantineReplayApplyStatus.Applied = 0 -> BlueTusk.Sync.SyncQuarantineReplayApplyStatus
+BlueTusk.Sync.SyncQuarantineReplayApplyStatus.CheckpointAdvanced = 2 -> BlueTusk.Sync.SyncQuarantineReplayApplyStatus
+BlueTusk.Sync.SyncQuarantineReplayCoordinator
+BlueTusk.Sync.SyncQuarantineReplayCoordinator.ReplayAsync(BlueTusk.Sync.SyncQuarantineReplayRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayResult!>
+BlueTusk.Sync.SyncQuarantineReplayCoordinator.SyncQuarantineReplayCoordinator(BlueTusk.Sync.ISyncTransform! transform, BlueTusk.Sync.ISyncQuarantineStore! store, BlueTusk.Sync.ISyncQuarantineReplaySource! source, BlueTusk.Sync.ISyncQuarantineReplayDestination! destination, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Sync.SyncQuarantineReplayRequest
+BlueTusk.Sync.SyncQuarantineReplayRequest.<Clone>$() -> BlueTusk.Sync.SyncQuarantineReplayRequest!
+BlueTusk.Sync.SyncQuarantineReplayRequest.Equals(BlueTusk.Sync.SyncQuarantineReplayRequest? other) -> bool
+BlueTusk.Sync.SyncQuarantineReplayRequest.ExpectedTransformFingerprint.get -> string!
+BlueTusk.Sync.SyncQuarantineReplayRequest.ExpectedTransformFingerprint.init -> void
+BlueTusk.Sync.SyncQuarantineReplayRequest.Identity.get -> BlueTusk.Sync.SyncQuarantineIdentity!
+BlueTusk.Sync.SyncQuarantineReplayRequest.Identity.init -> void
+BlueTusk.Sync.SyncQuarantineReplayRequest.OperationId.get -> string!
+BlueTusk.Sync.SyncQuarantineReplayRequest.OperationId.init -> void
+BlueTusk.Sync.SyncQuarantineReplayRequest.SyncQuarantineReplayRequest() -> void
+BlueTusk.Sync.SyncQuarantineReplayResult
+BlueTusk.Sync.SyncQuarantineReplayResult.<Clone>$() -> BlueTusk.Sync.SyncQuarantineReplayResult!
+BlueTusk.Sync.SyncQuarantineReplayResult.CurrentPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.Sync.SyncQuarantineReplayResult.CurrentPosition.init -> void
+BlueTusk.Sync.SyncQuarantineReplayResult.Deconstruct(out BlueTusk.Sync.SyncQuarantineReplayStatus Status, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? CurrentPosition) -> void
+BlueTusk.Sync.SyncQuarantineReplayResult.Equals(BlueTusk.Sync.SyncQuarantineReplayResult? other) -> bool
+BlueTusk.Sync.SyncQuarantineReplayResult.Status.get -> BlueTusk.Sync.SyncQuarantineReplayStatus
+BlueTusk.Sync.SyncQuarantineReplayResult.Status.init -> void
+BlueTusk.Sync.SyncQuarantineReplayResult.SyncQuarantineReplayResult(BlueTusk.Sync.SyncQuarantineReplayStatus Status, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? CurrentPosition = null) -> void
+BlueTusk.Sync.SyncQuarantineReplayStatus
+BlueTusk.Sync.SyncQuarantineReplayStatus.AlreadyCompleted = 1 -> BlueTusk.Sync.SyncQuarantineReplayStatus
+BlueTusk.Sync.SyncQuarantineReplayStatus.CheckpointAdvanced = 4 -> BlueTusk.Sync.SyncQuarantineReplayStatus
+BlueTusk.Sync.SyncQuarantineReplayStatus.Completed = 0 -> BlueTusk.Sync.SyncQuarantineReplayStatus
+BlueTusk.Sync.SyncQuarantineReplayStatus.NotFound = 2 -> BlueTusk.Sync.SyncQuarantineReplayStatus
+BlueTusk.Sync.SyncQuarantineReplayStatus.SourceTransactionUnavailable = 3 -> BlueTusk.Sync.SyncQuarantineReplayStatus
+BlueTusk.Sync.SyncQuarantineResolutionResult
+BlueTusk.Sync.SyncQuarantineResolutionResult.<Clone>$() -> BlueTusk.Sync.SyncQuarantineResolutionResult!
+BlueTusk.Sync.SyncQuarantineResolutionResult.Current.get -> BlueTusk.Sync.SyncQuarantineEntry?
+BlueTusk.Sync.SyncQuarantineResolutionResult.Current.init -> void
+BlueTusk.Sync.SyncQuarantineResolutionResult.Deconstruct(out BlueTusk.Sync.SyncQuarantineResolutionStatus Status, out BlueTusk.Sync.SyncQuarantineEntry? Current) -> void
+BlueTusk.Sync.SyncQuarantineResolutionResult.Equals(BlueTusk.Sync.SyncQuarantineResolutionResult? other) -> bool
+BlueTusk.Sync.SyncQuarantineResolutionResult.Status.get -> BlueTusk.Sync.SyncQuarantineResolutionStatus
+BlueTusk.Sync.SyncQuarantineResolutionResult.Status.init -> void
+BlueTusk.Sync.SyncQuarantineResolutionResult.SyncQuarantineResolutionResult(BlueTusk.Sync.SyncQuarantineResolutionStatus Status, BlueTusk.Sync.SyncQuarantineEntry? Current) -> void
+BlueTusk.Sync.SyncQuarantineResolutionStatus
+BlueTusk.Sync.SyncQuarantineResolutionStatus.AlreadyResolved = 1 -> BlueTusk.Sync.SyncQuarantineResolutionStatus
+BlueTusk.Sync.SyncQuarantineResolutionStatus.Conflict = 3 -> BlueTusk.Sync.SyncQuarantineResolutionStatus
+BlueTusk.Sync.SyncQuarantineResolutionStatus.NotFound = 2 -> BlueTusk.Sync.SyncQuarantineResolutionStatus
+BlueTusk.Sync.SyncQuarantineResolutionStatus.Resolved = 0 -> BlueTusk.Sync.SyncQuarantineResolutionStatus
 BlueTusk.Sync.SyncRateLimitOptions
 BlueTusk.Sync.SyncRateLimitOptions.<Clone>$() -> BlueTusk.Sync.SyncRateLimitOptions!
 BlueTusk.Sync.SyncRateLimitOptions.Equals(BlueTusk.Sync.SyncRateLimitOptions? other) -> bool
@@ -417,9 +512,27 @@ override BlueTusk.Sync.SyncProvisionRequest.ToString() -> string!
 override BlueTusk.Sync.SyncProvisionResult.Equals(object? obj) -> bool
 override BlueTusk.Sync.SyncProvisionResult.GetHashCode() -> int
 override BlueTusk.Sync.SyncProvisionResult.ToString() -> string!
+override BlueTusk.Sync.SyncQuarantineEntry.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncQuarantineEntry.GetHashCode() -> int
+override BlueTusk.Sync.SyncQuarantineEntry.ToString() -> string!
+override BlueTusk.Sync.SyncQuarantineIdentity.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncQuarantineIdentity.GetHashCode() -> int
+override BlueTusk.Sync.SyncQuarantineIdentity.ToString() -> string!
 override BlueTusk.Sync.SyncQuarantineRecord.Equals(object? obj) -> bool
 override BlueTusk.Sync.SyncQuarantineRecord.GetHashCode() -> int
 override BlueTusk.Sync.SyncQuarantineRecord.ToString() -> string!
+override BlueTusk.Sync.SyncQuarantineReplayApplyResult.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncQuarantineReplayApplyResult.GetHashCode() -> int
+override BlueTusk.Sync.SyncQuarantineReplayApplyResult.ToString() -> string!
+override BlueTusk.Sync.SyncQuarantineReplayRequest.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncQuarantineReplayRequest.GetHashCode() -> int
+override BlueTusk.Sync.SyncQuarantineReplayRequest.ToString() -> string!
+override BlueTusk.Sync.SyncQuarantineReplayResult.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncQuarantineReplayResult.GetHashCode() -> int
+override BlueTusk.Sync.SyncQuarantineReplayResult.ToString() -> string!
+override BlueTusk.Sync.SyncQuarantineResolutionResult.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncQuarantineResolutionResult.GetHashCode() -> int
+override BlueTusk.Sync.SyncQuarantineResolutionResult.ToString() -> string!
 override BlueTusk.Sync.SyncRateLimitOptions.Equals(object? obj) -> bool
 override BlueTusk.Sync.SyncRateLimitOptions.GetHashCode() -> int
 override BlueTusk.Sync.SyncRateLimitOptions.ToString() -> string!
@@ -460,8 +573,21 @@ override BlueTusk.Sync.SyncReconciliationDifference.ToString() -> string!
 override BlueTusk.Sync.SyncReconciliationRequest.Equals(object? obj) -> bool
 override BlueTusk.Sync.SyncReconciliationRequest.GetHashCode() -> int
 override BlueTusk.Sync.SyncReconciliationRequest.ToString() -> string!
+static BlueTusk.Sync.SyncQuarantineEntry.operator !=(BlueTusk.Sync.SyncQuarantineEntry? left, BlueTusk.Sync.SyncQuarantineEntry? right) -> bool
+static BlueTusk.Sync.SyncQuarantineEntry.operator ==(BlueTusk.Sync.SyncQuarantineEntry? left, BlueTusk.Sync.SyncQuarantineEntry? right) -> bool
+static BlueTusk.Sync.SyncQuarantineIdentity.FromRecord(BlueTusk.Sync.SyncQuarantineRecord! record) -> BlueTusk.Sync.SyncQuarantineIdentity!
+static BlueTusk.Sync.SyncQuarantineIdentity.operator !=(BlueTusk.Sync.SyncQuarantineIdentity? left, BlueTusk.Sync.SyncQuarantineIdentity? right) -> bool
+static BlueTusk.Sync.SyncQuarantineIdentity.operator ==(BlueTusk.Sync.SyncQuarantineIdentity? left, BlueTusk.Sync.SyncQuarantineIdentity? right) -> bool
 static BlueTusk.Sync.SyncQuarantineRecord.operator !=(BlueTusk.Sync.SyncQuarantineRecord? left, BlueTusk.Sync.SyncQuarantineRecord? right) -> bool
 static BlueTusk.Sync.SyncQuarantineRecord.operator ==(BlueTusk.Sync.SyncQuarantineRecord? left, BlueTusk.Sync.SyncQuarantineRecord? right) -> bool
+static BlueTusk.Sync.SyncQuarantineReplayApplyResult.operator !=(BlueTusk.Sync.SyncQuarantineReplayApplyResult? left, BlueTusk.Sync.SyncQuarantineReplayApplyResult? right) -> bool
+static BlueTusk.Sync.SyncQuarantineReplayApplyResult.operator ==(BlueTusk.Sync.SyncQuarantineReplayApplyResult? left, BlueTusk.Sync.SyncQuarantineReplayApplyResult? right) -> bool
+static BlueTusk.Sync.SyncQuarantineReplayRequest.operator !=(BlueTusk.Sync.SyncQuarantineReplayRequest? left, BlueTusk.Sync.SyncQuarantineReplayRequest? right) -> bool
+static BlueTusk.Sync.SyncQuarantineReplayRequest.operator ==(BlueTusk.Sync.SyncQuarantineReplayRequest? left, BlueTusk.Sync.SyncQuarantineReplayRequest? right) -> bool
+static BlueTusk.Sync.SyncQuarantineReplayResult.operator !=(BlueTusk.Sync.SyncQuarantineReplayResult? left, BlueTusk.Sync.SyncQuarantineReplayResult? right) -> bool
+static BlueTusk.Sync.SyncQuarantineReplayResult.operator ==(BlueTusk.Sync.SyncQuarantineReplayResult? left, BlueTusk.Sync.SyncQuarantineReplayResult? right) -> bool
+static BlueTusk.Sync.SyncQuarantineResolutionResult.operator !=(BlueTusk.Sync.SyncQuarantineResolutionResult? left, BlueTusk.Sync.SyncQuarantineResolutionResult? right) -> bool
+static BlueTusk.Sync.SyncQuarantineResolutionResult.operator ==(BlueTusk.Sync.SyncQuarantineResolutionResult? left, BlueTusk.Sync.SyncQuarantineResolutionResult? right) -> bool
 static BlueTusk.Sync.SyncRateLimitOptions.operator !=(BlueTusk.Sync.SyncRateLimitOptions? left, BlueTusk.Sync.SyncRateLimitOptions? right) -> bool
 static BlueTusk.Sync.SyncRateLimitOptions.operator ==(BlueTusk.Sync.SyncRateLimitOptions? left, BlueTusk.Sync.SyncRateLimitOptions? right) -> bool
 static BlueTusk.Sync.SyncReconciler.GetPartitionIndex(string! key, int partitionCount) -> int

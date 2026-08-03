@@ -236,6 +236,31 @@ public sealed class SyncPipelineTests
         Assert.Equal(SyncPipelineState.Running, pipeline.Status.State);
     }
 
+    [Fact]
+    public async Task Quarantine_and_pause_stops_at_the_acknowledged_replay_boundary()
+    {
+        var events = new List<string>();
+        var quarantine = new RecordingQuarantine(events);
+        await using var pipeline = new SyncPipeline(
+            new SyncPipelineOptions
+            {
+                PipelineId = "orders",
+                PoisonRecordPolicy = SyncPoisonRecordPolicy.QuarantineAndPause,
+            },
+            Source,
+            new RecordingTransform { Poison = true },
+            new RecordingDestination(events),
+            quarantine);
+        await pipeline.ProvisionAsync();
+        await using var delivery = CreateDelivery(new RecordingObserver(events));
+
+        await pipeline.ConsumeTransactionAsync(delivery);
+
+        Assert.Equal(["quarantine", "ack"], events);
+        Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
+        Assert.Equal(SyncPipelineState.Paused, pipeline.Status.State);
+    }
+
     private static SyncPipeline CreatePipeline(
         RecordingDestination destination,
         RecordingTransform? transform = null) =>

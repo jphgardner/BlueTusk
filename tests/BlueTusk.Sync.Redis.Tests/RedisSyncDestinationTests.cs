@@ -160,6 +160,43 @@ public sealed class RedisSyncDestinationTests
             Assert.True(await restarted.StoreAsync(quarantine));
             Assert.True(await restarted.StoreAsync(quarantine));
             Assert.Equal(1L, await database.HashLengthAsync(QuarantineKey(prefix, "orders")));
+            var identity = SyncQuarantineIdentity.FromRecord(quarantine);
+            Assert.NotNull(await restarted.ReadAsync(identity));
+            await using var replayDelivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                44,
+                Lsn(301));
+            var replayBatch = new SyncTransactionBatch(
+                "orders",
+                transform,
+                replayDelivery.Transaction,
+                [Mutation(44, 301, 0, "orders", "replay", "{\"replayed\":true}")]);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.Applied,
+                (await restarted.ReplayTransactionAsync(replayBatch, "replay-301")).Status);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                (await restarted.ReplayTransactionAsync(replayBatch, "replay-301")).Status);
+            Assert.Equal(
+                SyncQuarantineResolutionStatus.Resolved,
+                (await restarted.ResolveAsync(
+                    identity,
+                    transform.Fingerprint,
+                    "replay-301",
+                    DateTimeOffset.UtcNow)).Status);
+
+            await using var laterDelivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                45,
+                Lsn(302));
+            _ = await restarted.ApplyTransactionAsync(new SyncTransactionBatch(
+                "orders",
+                transform,
+                laterDelivery.Transaction,
+                [Mutation(45, 302, 0, "orders", "later", "{}")]));
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.CheckpointAdvanced,
+                (await restarted.ReplayTransactionAsync(replayBatch, "replay-301")).Status);
 
             var changedTransform = SyncTransformVersion.Create("orders", "v2");
             var replacement = new RedisSyncDestination(options);

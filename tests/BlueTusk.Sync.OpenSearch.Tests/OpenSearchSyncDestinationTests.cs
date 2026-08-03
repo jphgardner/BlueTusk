@@ -172,6 +172,41 @@ public sealed class OpenSearchSyncDestinationTests
                 DateTimeOffset.UtcNow);
             Assert.True(await restarted.StoreAsync(quarantine));
             Assert.True(await restarted.StoreAsync(quarantine));
+            var identity = SyncQuarantineIdentity.FromRecord(quarantine);
+            Assert.NotNull(await restarted.ReadAsync(identity));
+            await using var replayDelivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                44,
+                Lsn(301));
+            var replayBatch = Batch(
+                transform,
+                replayDelivery.Transaction,
+                [Mutation(44, 301, 0, "orders", "50", "{\"replayed\":true}")]);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.Applied,
+                (await restarted.ReplayTransactionAsync(replayBatch, "replay-301")).Status);
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.AlreadyApplied,
+                (await restarted.ReplayTransactionAsync(replayBatch, "replay-301")).Status);
+            Assert.Equal(
+                SyncQuarantineResolutionStatus.Resolved,
+                (await restarted.ResolveAsync(
+                    identity,
+                    transform.Fingerprint,
+                    "replay-301",
+                    DateTimeOffset.UtcNow)).Status);
+
+            await using var laterDelivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                45,
+                Lsn(302));
+            _ = await restarted.ApplyTransactionAsync(Batch(
+                transform,
+                laterDelivery.Transaction,
+                [Mutation(45, 302, 0, "orders", "50", "{}")]));
+            Assert.Equal(
+                SyncQuarantineReplayApplyStatus.CheckpointAdvanced,
+                (await restarted.ReplayTransactionAsync(replayBatch, "replay-301")).Status);
 
             var replacementTransform = SyncTransformVersion.Create("orders", "v2");
             var replacement = new OpenSearchSyncDestination(options);
