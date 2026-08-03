@@ -80,7 +80,7 @@ jobs:
 
       - name: Run live provider matrix
         env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable
         run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
 
       - name: Capture PostgreSQL logs on failure
@@ -598,11 +598,15 @@ jobs:
       - name: Acquire test Kerberos ticket
         env:
           KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
-        run: printf '%s\n' 'bluetusk-gss-password' | kinit bluetusk_gss_test@BLUETUSK.TEST
+        run: |
+          printf '%s\n' 'bluetusk-gss-password' | kinit bluetusk_gss_test@BLUETUSK.TEST
+          kvno postgres/localhost@BLUETUSK.TEST
+          klist
 
       - name: Run GSSAPI/Kerberos acceptance
         env:
           KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+          KRB5_TRACE: /dev/stderr
           BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=localhost;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
         run: >-
           dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
