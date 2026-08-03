@@ -18,4 +18,10 @@ The core package currently provides:
 - a bounded diff budget that falls back to an authoritative reset;
 - signed, expiring, versioned, subscription-bound resume tokens with signing-key rotation.
 
-The next Live slices connect these contracts to gap-free relay invalidation, EF query registration, PostgreSQL replay retention, ASP.NET transports, and client SDKs. Package publication stays disabled until those vertical gates pass.
+## Gap-free initial delivery
+
+`LiveQuerySession<T, TKey>` reserves the current durable invalidation cursor before executing the authorised query. It then checks the log through the cursor observed after that query. If an affected table changed, the result is discarded and queried again. Only a result that reaches a quiet cursor boundary is emitted as `InitialResult`; subsequent refreshes start strictly after that cursor.
+
+Refreshes coalesce every invalidation since the last cursor into at most one authoritative query. Unrelated-table activity advances the cursor without querying. A backward cursor, an over-limit result, duplicate keys, or perpetual initial churn fails closed with a specific diagnostic.
+
+The next Live slices connect the invalidation contract to the PostgreSQL relay, add EF query registration, replay retention, ASP.NET transports, and client SDKs. Package publication stays disabled until those vertical gates pass.

@@ -1,4 +1,7 @@
 #nullable enable
+BlueTusk.Live.ILiveInvalidationLog
+BlueTusk.Live.ILiveInvalidationLog.GetCurrentCursorAsync(string! databaseIdentity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveInvalidationCursor>
+BlueTusk.Live.ILiveInvalidationLog.HasChangesAsync(string! databaseIdentity, System.Collections.Generic.IReadOnlyCollection<BlueTusk.Live.LiveTableDependency!>! dependencies, BlueTusk.Live.LiveInvalidationCursor afterExclusive, BlueTusk.Live.LiveInvalidationCursor throughInclusive, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
 BlueTusk.Live.LiveDiffBatch<T, TKey>
 BlueTusk.Live.LiveDiffBatch<T, TKey>.Events.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveResultEvent<T, TKey>!>!
 BlueTusk.Live.LiveDiffBatch<T, TKey>.LastSequence.get -> long
@@ -16,6 +19,18 @@ BlueTusk.Live.LiveEventKind.ResultReset = 5 -> BlueTusk.Live.LiveEventKind
 BlueTusk.Live.LiveEventKind.RowAdded = 1 -> BlueTusk.Live.LiveEventKind
 BlueTusk.Live.LiveEventKind.RowRemoved = 3 -> BlueTusk.Live.LiveEventKind
 BlueTusk.Live.LiveEventKind.RowUpdated = 2 -> BlueTusk.Live.LiveEventKind
+BlueTusk.Live.LiveInitialCatchUpException
+BlueTusk.Live.LiveInitialCatchUpException.LiveInitialCatchUpException(string! message) -> void
+BlueTusk.Live.LiveInvalidationCursor
+BlueTusk.Live.LiveInvalidationCursor.CompareTo(BlueTusk.Live.LiveInvalidationCursor other) -> int
+BlueTusk.Live.LiveInvalidationCursor.Deconstruct(out long Value) -> void
+BlueTusk.Live.LiveInvalidationCursor.Equals(BlueTusk.Live.LiveInvalidationCursor other) -> bool
+BlueTusk.Live.LiveInvalidationCursor.LiveInvalidationCursor() -> void
+BlueTusk.Live.LiveInvalidationCursor.LiveInvalidationCursor(long Value) -> void
+BlueTusk.Live.LiveInvalidationCursor.Value.get -> long
+BlueTusk.Live.LiveInvalidationCursor.Value.init -> void
+BlueTusk.Live.LiveInvalidationCursorException
+BlueTusk.Live.LiveInvalidationCursorException.LiveInvalidationCursorException(string! message) -> void
 BlueTusk.Live.LiveQueryArguments
 BlueTusk.Live.LiveQueryArguments.Fingerprint.get -> string!
 BlueTusk.Live.LiveQueryArguments.Get<T>(string! name) -> T?
@@ -33,6 +48,9 @@ BlueTusk.Live.LiveQueryCapabilities.OneToManyJoin = 32 -> BlueTusk.Live.LiveQuer
 BlueTusk.Live.LiveQueryCapabilities.ParameterizedPredicate = 2 -> BlueTusk.Live.LiveQueryCapabilities
 BlueTusk.Live.LiveQueryCapabilities.SingleTable = 1 -> BlueTusk.Live.LiveQueryCapabilities
 BlueTusk.Live.LiveQueryCapabilities.TenantFilter = 4 -> BlueTusk.Live.LiveQueryCapabilities
+BlueTusk.Live.LiveQueryException
+BlueTusk.Live.LiveQueryException.LiveQueryException(string! message) -> void
+BlueTusk.Live.LiveQueryException.LiveQueryException(string! message, System.Exception! innerException) -> void
 BlueTusk.Live.LiveQueryExecutionContext
 BlueTusk.Live.LiveQueryExecutionContext.<Clone>$() -> BlueTusk.Live.LiveQueryExecutionContext!
 BlueTusk.Live.LiveQueryExecutionContext.Arguments.get -> BlueTusk.Live.LiveQueryArguments!
@@ -69,6 +87,43 @@ BlueTusk.Live.LiveQueryRegistry.Count.get -> int
 BlueTusk.Live.LiveQueryRegistry.Get<T, TKey>(string! name) -> BlueTusk.Live.LiveQueryPlan<T, TKey>!
 BlueTusk.Live.LiveQueryRegistry.LiveQueryRegistry() -> void
 BlueTusk.Live.LiveQueryRegistry.Register<T, TKey>(BlueTusk.Live.LiveQueryPlan<T, TKey>! plan) -> void
+BlueTusk.Live.LiveQueryResultLimitException
+BlueTusk.Live.LiveQueryResultLimitException.LiveQueryResultLimitException(string! message) -> void
+BlueTusk.Live.LiveQuerySession<T, TKey>
+BlueTusk.Live.LiveQuerySession<T, TKey>.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.LiveQuerySession<T, TKey>.Identity.get -> BlueTusk.Live.LiveSubscriptionIdentity!
+BlueTusk.Live.LiveQuerySession<T, TKey>.LiveQuerySession(BlueTusk.Live.LiveQueryPlan<T, TKey>! plan, BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, BlueTusk.Live.ILiveInvalidationLog! invalidationLog, int? resultLimit = null, BlueTusk.Live.LiveQuerySessionOptions? options = null) -> void
+BlueTusk.Live.LiveQuerySession<T, TKey>.RefreshToCurrentAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveDiffBatch<T, TKey>?>
+BlueTusk.Live.LiveQuerySession<T, TKey>.ResetAsync(BlueTusk.Live.LiveResetReason reason, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveDiffBatch<T, TKey>!>
+BlueTusk.Live.LiveQuerySession<T, TKey>.StartAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveDiffBatch<T, TKey>!>
+BlueTusk.Live.LiveQuerySession<T, TKey>.Status.get -> BlueTusk.Live.LiveQuerySessionStatus!
+BlueTusk.Live.LiveQuerySessionOptions
+BlueTusk.Live.LiveQuerySessionOptions.<Clone>$() -> BlueTusk.Live.LiveQuerySessionOptions!
+BlueTusk.Live.LiveQuerySessionOptions.Diff.get -> BlueTusk.Live.LiveDiffOptions!
+BlueTusk.Live.LiveQuerySessionOptions.Diff.init -> void
+BlueTusk.Live.LiveQuerySessionOptions.Equals(BlueTusk.Live.LiveQuerySessionOptions? other) -> bool
+BlueTusk.Live.LiveQuerySessionOptions.LiveQuerySessionOptions() -> void
+BlueTusk.Live.LiveQuerySessionOptions.MaximumInitialCatchUpPasses.get -> int
+BlueTusk.Live.LiveQuerySessionOptions.MaximumInitialCatchUpPasses.init -> void
+BlueTusk.Live.LiveQuerySessionStatus
+BlueTusk.Live.LiveQuerySessionStatus.<Clone>$() -> BlueTusk.Live.LiveQuerySessionStatus!
+BlueTusk.Live.LiveQuerySessionStatus.AuthoritativeQueryCount.get -> long
+BlueTusk.Live.LiveQuerySessionStatus.AuthoritativeQueryCount.init -> void
+BlueTusk.Live.LiveQuerySessionStatus.CoalescedInvalidationCount.get -> long
+BlueTusk.Live.LiveQuerySessionStatus.CoalescedInvalidationCount.init -> void
+BlueTusk.Live.LiveQuerySessionStatus.Cursor.get -> BlueTusk.Live.LiveInvalidationCursor
+BlueTusk.Live.LiveQuerySessionStatus.Cursor.init -> void
+BlueTusk.Live.LiveQuerySessionStatus.Deconstruct(out BlueTusk.Live.LiveSubscriptionIdentity! Identity, out BlueTusk.Live.LiveInvalidationCursor Cursor, out long LastSequence, out long AuthoritativeQueryCount, out long CoalescedInvalidationCount, out int ResultCount, out bool IsStarted) -> void
+BlueTusk.Live.LiveQuerySessionStatus.Equals(BlueTusk.Live.LiveQuerySessionStatus? other) -> bool
+BlueTusk.Live.LiveQuerySessionStatus.Identity.get -> BlueTusk.Live.LiveSubscriptionIdentity!
+BlueTusk.Live.LiveQuerySessionStatus.Identity.init -> void
+BlueTusk.Live.LiveQuerySessionStatus.IsStarted.get -> bool
+BlueTusk.Live.LiveQuerySessionStatus.IsStarted.init -> void
+BlueTusk.Live.LiveQuerySessionStatus.LastSequence.get -> long
+BlueTusk.Live.LiveQuerySessionStatus.LastSequence.init -> void
+BlueTusk.Live.LiveQuerySessionStatus.LiveQuerySessionStatus(BlueTusk.Live.LiveSubscriptionIdentity! Identity, BlueTusk.Live.LiveInvalidationCursor Cursor, long LastSequence, long AuthoritativeQueryCount, long CoalescedInvalidationCount, int ResultCount, bool IsStarted) -> void
+BlueTusk.Live.LiveQuerySessionStatus.ResultCount.get -> int
+BlueTusk.Live.LiveQuerySessionStatus.ResultCount.init -> void
 BlueTusk.Live.LiveResetReason
 BlueTusk.Live.LiveResetReason.DiffLimitExceeded = 1 -> BlueTusk.Live.LiveResetReason
 BlueTusk.Live.LiveResetReason.QueryShapeChanged = 2 -> BlueTusk.Live.LiveResetReason
@@ -149,12 +204,19 @@ BlueTusk.Live.LiveTableDependency.Table.get -> string!
 override BlueTusk.Live.LiveDiffOptions.Equals(object? obj) -> bool
 override BlueTusk.Live.LiveDiffOptions.GetHashCode() -> int
 override BlueTusk.Live.LiveDiffOptions.ToString() -> string!
+override BlueTusk.Live.LiveInvalidationCursor.GetHashCode() -> int
 override BlueTusk.Live.LiveQueryExecutionContext.Equals(object? obj) -> bool
 override BlueTusk.Live.LiveQueryExecutionContext.GetHashCode() -> int
 override BlueTusk.Live.LiveQueryExecutionContext.ToString() -> string!
 override BlueTusk.Live.LiveQueryParameter.Equals(object? obj) -> bool
 override BlueTusk.Live.LiveQueryParameter.GetHashCode() -> int
 override BlueTusk.Live.LiveQueryParameter.ToString() -> string!
+override BlueTusk.Live.LiveQuerySessionOptions.Equals(object? obj) -> bool
+override BlueTusk.Live.LiveQuerySessionOptions.GetHashCode() -> int
+override BlueTusk.Live.LiveQuerySessionOptions.ToString() -> string!
+override BlueTusk.Live.LiveQuerySessionStatus.Equals(object? obj) -> bool
+override BlueTusk.Live.LiveQuerySessionStatus.GetHashCode() -> int
+override BlueTusk.Live.LiveQuerySessionStatus.ToString() -> string!
 override BlueTusk.Live.LiveResumePosition.Equals(object? obj) -> bool
 override BlueTusk.Live.LiveResumePosition.GetHashCode() -> int
 override BlueTusk.Live.LiveResumePosition.ToString() -> string!
@@ -172,12 +234,22 @@ override BlueTusk.Live.LiveTableDependency.GetHashCode() -> int
 override BlueTusk.Live.LiveTableDependency.ToString() -> string!
 static BlueTusk.Live.LiveDiffOptions.operator !=(BlueTusk.Live.LiveDiffOptions? left, BlueTusk.Live.LiveDiffOptions? right) -> bool
 static BlueTusk.Live.LiveDiffOptions.operator ==(BlueTusk.Live.LiveDiffOptions? left, BlueTusk.Live.LiveDiffOptions? right) -> bool
+static BlueTusk.Live.LiveInvalidationCursor.operator !=(BlueTusk.Live.LiveInvalidationCursor left, BlueTusk.Live.LiveInvalidationCursor right) -> bool
+static BlueTusk.Live.LiveInvalidationCursor.operator <(BlueTusk.Live.LiveInvalidationCursor left, BlueTusk.Live.LiveInvalidationCursor right) -> bool
+static BlueTusk.Live.LiveInvalidationCursor.operator <=(BlueTusk.Live.LiveInvalidationCursor left, BlueTusk.Live.LiveInvalidationCursor right) -> bool
+static BlueTusk.Live.LiveInvalidationCursor.operator ==(BlueTusk.Live.LiveInvalidationCursor left, BlueTusk.Live.LiveInvalidationCursor right) -> bool
+static BlueTusk.Live.LiveInvalidationCursor.operator >(BlueTusk.Live.LiveInvalidationCursor left, BlueTusk.Live.LiveInvalidationCursor right) -> bool
+static BlueTusk.Live.LiveInvalidationCursor.operator >=(BlueTusk.Live.LiveInvalidationCursor left, BlueTusk.Live.LiveInvalidationCursor right) -> bool
 static BlueTusk.Live.LiveQueryArguments.Create(System.Collections.Generic.IEnumerable<BlueTusk.Live.LiveQueryParameter!>! parameters, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! values) -> BlueTusk.Live.LiveQueryArguments!
 static BlueTusk.Live.LiveQueryExecutionContext.operator !=(BlueTusk.Live.LiveQueryExecutionContext? left, BlueTusk.Live.LiveQueryExecutionContext? right) -> bool
 static BlueTusk.Live.LiveQueryExecutionContext.operator ==(BlueTusk.Live.LiveQueryExecutionContext? left, BlueTusk.Live.LiveQueryExecutionContext? right) -> bool
 static BlueTusk.Live.LiveQueryFingerprint.Create(string! name, string! version, System.ReadOnlySpan<byte> canonicalPlan = default(System.ReadOnlySpan<byte>)) -> string!
 static BlueTusk.Live.LiveQueryParameter.operator !=(BlueTusk.Live.LiveQueryParameter? left, BlueTusk.Live.LiveQueryParameter? right) -> bool
 static BlueTusk.Live.LiveQueryParameter.operator ==(BlueTusk.Live.LiveQueryParameter? left, BlueTusk.Live.LiveQueryParameter? right) -> bool
+static BlueTusk.Live.LiveQuerySessionOptions.operator !=(BlueTusk.Live.LiveQuerySessionOptions? left, BlueTusk.Live.LiveQuerySessionOptions? right) -> bool
+static BlueTusk.Live.LiveQuerySessionOptions.operator ==(BlueTusk.Live.LiveQuerySessionOptions? left, BlueTusk.Live.LiveQuerySessionOptions? right) -> bool
+static BlueTusk.Live.LiveQuerySessionStatus.operator !=(BlueTusk.Live.LiveQuerySessionStatus? left, BlueTusk.Live.LiveQuerySessionStatus? right) -> bool
+static BlueTusk.Live.LiveQuerySessionStatus.operator ==(BlueTusk.Live.LiveQuerySessionStatus? left, BlueTusk.Live.LiveQuerySessionStatus? right) -> bool
 static BlueTusk.Live.LiveResultDiffer.Diff<T, TKey>(BlueTusk.Live.LiveResultSnapshot<T, TKey>! previous, System.Collections.Generic.IReadOnlyList<T>! currentRows, System.Func<T, TKey>! keySelector, System.Collections.Generic.IEqualityComparer<T>? rowComparer = null, System.Collections.Generic.IEqualityComparer<TKey>? keyComparer = null, BlueTusk.Live.LiveDiffOptions? options = null, long nextSequence = 1) -> BlueTusk.Live.LiveDiffBatch<T, TKey>!
 static BlueTusk.Live.LiveResultDiffer.Initial<T, TKey>(System.Collections.Generic.IReadOnlyList<T>! rows, System.Func<T, TKey>! keySelector, System.Collections.Generic.IEqualityComparer<TKey>? keyComparer = null, long sequence = 1) -> BlueTusk.Live.LiveDiffBatch<T, TKey>!
 static BlueTusk.Live.LiveResumePosition.operator !=(BlueTusk.Live.LiveResumePosition? left, BlueTusk.Live.LiveResumePosition? right) -> bool
@@ -191,3 +263,5 @@ static BlueTusk.Live.LiveSubscriptionIdentity.operator !=(BlueTusk.Live.LiveSubs
 static BlueTusk.Live.LiveSubscriptionIdentity.operator ==(BlueTusk.Live.LiveSubscriptionIdentity? left, BlueTusk.Live.LiveSubscriptionIdentity? right) -> bool
 static BlueTusk.Live.LiveTableDependency.operator !=(BlueTusk.Live.LiveTableDependency? left, BlueTusk.Live.LiveTableDependency? right) -> bool
 static BlueTusk.Live.LiveTableDependency.operator ==(BlueTusk.Live.LiveTableDependency? left, BlueTusk.Live.LiveTableDependency? right) -> bool
+~override BlueTusk.Live.LiveInvalidationCursor.Equals(object obj) -> bool
+~override BlueTusk.Live.LiveInvalidationCursor.ToString() -> string
