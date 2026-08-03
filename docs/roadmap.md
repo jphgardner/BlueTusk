@@ -63,6 +63,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 7 slice: PostgreSQL 19 capability-guarded typed SQL/PGQ registration, exact graph-element invalidation dependencies, bounded deterministic plans, and authoritative Live requery/diff
 - [x] Phase 7 slice: PostgreSQL 19 graph materialisation, affected-vertex requery/diff correctness, and in-flight lock cancellation acceptance
 - [x] Phase 7 slice: executable PostgreSQL 19 fraud-transfer and network-health Continuous Graph applications
+- [x] Phase 7 slice: result-free Continuous Graph registry projection plus authorised, HTML-safe dashboard and API inventory
 - [ ] Phase 7: Continuous Graph preview
 
 The detailed contracts and release gates are maintained in the [real-time platform plan](realtime-platform/delivery-plan.md).

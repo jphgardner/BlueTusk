@@ -22,6 +22,8 @@ public sealed class DashboardEndpointTests
         builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
         builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
         builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
+        builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
+            new FakeContinuousGraphQueryService());
         builder.Services.AddSingleton(
             new ControlPlaneOperationExecutor(
                 new RoleControlPlaneAuthorizer(),
@@ -39,7 +41,7 @@ public sealed class DashboardEndpointTests
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(13, endpoints.Length);
+        Assert.Equal(15, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -92,6 +94,18 @@ public sealed class DashboardEndpointTests
         Assert.Contains("&lt;tenant&gt;", liveHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("<tenant>", liveHtml, StringComparison.Ordinal);
         Assert.Contains("slow-client-reset", liveHtml, StringComparison.Ordinal);
+
+        var graphs = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/graphs");
+        context.Response.Body = new MemoryStream();
+        await graphs.RequestDelegate!(context);
+        context.Response.Body.Position = 0;
+        using var graphReader = new StreamReader(context.Response.Body, Encoding.UTF8);
+        var graphHtml = await graphReader.ReadToEndAsync();
+        Assert.Contains("&lt;graph&gt;", graphHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<graph>", graphHtml, StringComparison.Ordinal);
+        Assert.Contains("risk.&lt;transfers&gt;", graphHtml, StringComparison.Ordinal);
 
         var operations = Assert.Single(
             endpoints,
@@ -268,6 +282,29 @@ public sealed class DashboardEndpointTests
                         3,
                         2,
                         5)]));
+        }
+    }
+
+    private sealed class FakeContinuousGraphQueryService :
+        IControlPlaneContinuousGraphQueryService
+    {
+        public ValueTask<ControlPlaneContinuousGraphOverview> GetContinuousGraphOverviewAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(
+                new ControlPlaneContinuousGraphOverview(
+                    new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
+                    [new ControlPlaneContinuousGraphQuerySnapshot(
+                        "<graph>",
+                        "risk-primary",
+                        new string('d', 64),
+                        "<transfers>",
+                        "risk",
+                        ["accounts", "<edges>"],
+                        ["risk.accounts", "risk.<transfers>"],
+                        100,
+                        "TenantFilter, DeterministicOrdering, BoundedTake")]));
         }
     }
 

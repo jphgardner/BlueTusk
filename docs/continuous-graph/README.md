@@ -124,10 +124,20 @@ dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Fraud
 dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network
 ```
 
+## Operations
+
+`ContinuousGraphQueryRegistry` stores non-generic registration descriptors
+without retaining bound parameter values or result rows. Register each compiled
+plan with the application registry. `HostedContinuousGraphControlPlaneQueryService`
+projects query fingerprints, graph names, databases, element aliases, exact
+table dependencies, result limits, and capabilities. The authorised dashboard
+exposes the same inventory at `/graphs` and `/api/graphs`; every application
+value is HTML encoded.
+
 ## Release state
 
 The package is independently versioned as `0.1.0-preview.1` and remains
-non-publishable while dashboard and benchmark gates are completed.
+non-publishable while the benchmark and final packaging gates are completed.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,
 Live session handoff, unsupported-server rejection, and fail-closed query
 shapes. The opt-in PostgreSQL 19 acceptance test creates a real property graph,

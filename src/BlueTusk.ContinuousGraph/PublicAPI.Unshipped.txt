@@ -16,6 +16,17 @@ BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>
 BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.RowComparer.get -> System.Collections.Generic.IEqualityComparer<TResult!>!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.ValidationArguments.get -> BlueTusk.Live.LiveQueryArguments!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.Version.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.Capabilities.get -> BlueTusk.Live.LiveQueryCapabilities
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.ContinuousGraphQueryDescriptor(string! name, string! databaseIdentity, string! fingerprint, string! graphName, string? graphSchema, System.Collections.Generic.IEnumerable<string!>! elementTableAliases, System.Collections.Generic.IEnumerable<BlueTusk.Live.LiveTableDependency!>! dependencies, int maximumResultCount, BlueTusk.Live.LiveQueryCapabilities capabilities) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.DatabaseIdentity.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.Dependencies.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveTableDependency!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.ElementTableAliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.Fingerprint.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.GraphName.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.GraphSchema.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.MaximumResultCount.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.Name.get -> string!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Bind(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! values) -> BlueTusk.Live.LiveQueryArguments!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.CreateSession(BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, BlueTusk.Live.ILiveInvalidationLog! invalidationLog, int? resultLimit = null, BlueTusk.Live.LiveQuerySessionOptions? options = null) -> BlueTusk.Live.LiveQuerySession<TResult!, TKey>!
@@ -29,6 +40,13 @@ BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Name.get -> str
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException.ContinuousGraphQueryRegistrationException(string! message) -> void
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException.ContinuousGraphQueryRegistrationException(string! message, System.Exception! innerException) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.ContinuousGraphQueryRegistry() -> void
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.Count.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.GetQueries() -> System.Collections.Generic.IReadOnlyList<BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor!>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.Register(BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor! descriptor) -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.Register<TResult, TKey>(BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult!, TKey>! plan) -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.Unregister(string! fingerprint) -> bool
 BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe
 BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe.EnsureSupportedAsync(Microsoft.EntityFrameworkCore.DbContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.ContinuousGraph.PostgreSql19ContinuousGraphCapabilityProbe

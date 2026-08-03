@@ -89,6 +89,21 @@ BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StartSequence.get -> lon
 BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StartSequence.init -> void
 BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StoreGeneration.get -> long
 BlueTusk.ControlPlane.ControlPlaneConsumerGroupSnapshot.StoreGeneration.init -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview.ControlPlaneContinuousGraphOverview(System.DateTimeOffset observedAt, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot!>! queries) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview.ObservedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview.Queries.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.Capabilities.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.ControlPlaneContinuousGraphQuerySnapshot(string! name, string! databaseIdentity, string! queryFingerprint, string! graphName, string? graphSchema, System.Collections.Generic.IReadOnlyList<string!>! elementTableAliases, System.Collections.Generic.IReadOnlyList<string!>! tableDependencies, int maximumResultCount, string! capabilities) -> void
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.DatabaseIdentity.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.ElementTableAliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.GraphName.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.GraphSchema.get -> string?
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.MaximumResultCount.get -> int
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.Name.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.QueryFingerprint.get -> string!
+BlueTusk.ControlPlane.ControlPlaneContinuousGraphQuerySnapshot.TableDependencies.get -> System.Collections.Generic.IReadOnlyList<string!>!
 BlueTusk.ControlPlane.ControlPlaneOperationException
 BlueTusk.ControlPlane.ControlPlaneOperationException.ControlPlaneOperationException(string! message) -> void
 BlueTusk.ControlPlane.ControlPlaneOperationException.ControlPlaneOperationException(string! message, System.Exception! innerException) -> void
@@ -295,6 +310,9 @@ BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot.ThrottleDelay.get -> Syst
 BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot.ThrottleDelay.init -> void
 BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot.TransactionsPerSecond.get -> double?
 BlueTusk.ControlPlane.ControlPlaneSyncPipelineSnapshot.TransactionsPerSecond.init -> void
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService.GetContinuousGraphOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview!>
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService.HostedContinuousGraphControlPlaneQueryService(BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry! registry, System.TimeProvider? timeProvider = null) -> void
 BlueTusk.ControlPlane.HostedSyncControlPlaneQueryService
 BlueTusk.ControlPlane.HostedSyncControlPlaneQueryService.GetSyncOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneSyncOverview!>
 BlueTusk.ControlPlane.HostedSyncControlPlaneQueryService.HostedSyncControlPlaneQueryService(BlueTusk.Sync.DependencyInjection.IBlueTuskSyncStatusSource! statuses, BlueTusk.ControlPlane.IControlPlaneQueryService! sources, System.TimeProvider? timeProvider = null) -> void
@@ -302,6 +320,8 @@ BlueTusk.ControlPlane.IControlPlaneAuditStore
 BlueTusk.ControlPlane.IControlPlaneAuditStore.AppendAsync(BlueTusk.ControlPlane.ControlPlaneAuditRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.ControlPlane.IControlPlaneAuthorizer
 BlueTusk.ControlPlane.IControlPlaneAuthorizer.AuthorizeAsync(BlueTusk.ControlPlane.ControlPlaneActor! actor, BlueTusk.ControlPlane.ControlPlaneRole requiredRole, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.ControlPlane.IControlPlaneContinuousGraphQueryService
+BlueTusk.ControlPlane.IControlPlaneContinuousGraphQueryService.GetContinuousGraphOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview!>
 BlueTusk.ControlPlane.IControlPlaneOperationHandler
 BlueTusk.ControlPlane.IControlPlaneOperationHandler.ExecuteAsync(BlueTusk.ControlPlane.ControlPlaneOperationRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.ControlPlane.IControlPlaneQueryService

@@ -75,6 +75,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
                 queries.GetLiveOverviewAsync(cancellationToken));
         group.MapGet(
+            "/api/graphs",
+            (IControlPlaneContinuousGraphQueryService queries, CancellationToken cancellationToken) =>
+                queries.GetContinuousGraphOverviewAsync(cancellationToken));
+        group.MapGet(
             "/assets/dashboard.js",
             () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
         group.MapPost(
@@ -131,6 +135,14 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
                 Html(RenderLive(
                     await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    options)));
+        group.MapGet(
+            "/graphs",
+            async (IControlPlaneContinuousGraphQueryService queries,
+                    CancellationToken cancellationToken) =>
+                Html(RenderContinuousGraphs(
+                    await queries.GetContinuousGraphOverviewAsync(cancellationToken)
+                        .ConfigureAwait(false),
                     options)));
         return endpoints;
     }
@@ -457,6 +469,53 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         return Layout("Live subscriptions", overview.ObservedAt, body.ToString(), options);
     }
 
+    private static string RenderContinuousGraphs(
+        ControlPlaneContinuousGraphOverview overview,
+        BlueTuskDashboardOptions options)
+    {
+        var databaseCount = overview.Queries
+            .Select(static query => query.DatabaseIdentity)
+            .Distinct(StringComparer.Ordinal)
+            .Count();
+        var dependencyCount = overview.Queries
+            .SelectMany(static query => query.TableDependencies)
+            .Distinct(StringComparer.Ordinal)
+            .Count();
+        var body = new StringBuilder("<h1>Continuous Graph queries</h1><div class=\"cards\">")
+            .Append(Card("Registered queries", overview.Queries.Count.ToString(CultureInfo.InvariantCulture)))
+            .Append(Card("Databases", databaseCount.ToString(CultureInfo.InvariantCulture)))
+            .Append(Card("Affected tables", dependencyCount.ToString(CultureInfo.InvariantCulture)))
+            .Append("</div><table><thead><tr><th>Query</th><th>Graph</th><th>Database</th>")
+            .Append("<th>Elements</th><th>Dependencies</th><th>Limit</th><th>Capabilities</th>")
+            .Append("</tr></thead><tbody>");
+        foreach (var query in overview.Queries)
+        {
+            var qualifiedGraph = string.IsNullOrWhiteSpace(query.GraphSchema)
+                ? query.GraphName
+                : query.GraphSchema + "." + query.GraphName;
+            body.Append("<tr><td>")
+                .Append(E(query.Name))
+                .Append("<br><code>")
+                .Append(E(ShortFingerprint(query.QueryFingerprint)))
+                .Append("</code></td><td>")
+                .Append(E(qualifiedGraph))
+                .Append("</td><td>")
+                .Append(E(query.DatabaseIdentity))
+                .Append("</td><td>")
+                .Append(E(string.Join(", ", query.ElementTableAliases)))
+                .Append("</td><td>")
+                .Append(E(string.Join(", ", query.TableDependencies)))
+                .Append("</td><td>")
+                .Append(query.MaximumResultCount.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(E(query.Capabilities))
+                .Append("</td></tr>");
+        }
+
+        body.Append("</tbody></table>");
+        return Layout("Continuous Graph queries", overview.ObservedAt, body.ToString(), options);
+    }
+
     private static string RenderGroupTable(ControlPlaneSourceSnapshot source)
     {
         var body = new StringBuilder("<h2>Relay groups — ")
@@ -537,7 +596,8 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         <a href="{{{E(options.RoutePrefix)}}}/consumer-groups">Consumer groups</a>
         <a href="{{{E(options.RoutePrefix)}}}/checkpoints">Checkpoints</a>
         <a href="{{{E(options.RoutePrefix)}}}/pipelines">Sync pipelines</a>
-        <a href="{{{E(options.RoutePrefix)}}}/live">Live subscriptions</a></nav>
+        <a href="{{{E(options.RoutePrefix)}}}/live">Live subscriptions</a>
+        <a href="{{{E(options.RoutePrefix)}}}/graphs">Continuous Graph</a></nav>
         <main>{{{body}}}<footer>Observed {{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}</footer></main>
         <script src="{{{E(options.RoutePrefix)}}}/assets/dashboard.js" defer></script>
         </body></html>

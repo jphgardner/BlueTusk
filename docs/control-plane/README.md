@@ -1,6 +1,6 @@
 # BlueTusk Control Plane and Dashboard
 
-`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync and Phase 6 Live projections. They are independently versioned under the Control Plane release train and remain non-publishable until the later Graph dashboard and upgrade gates are complete.
+`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph projections. They are independently versioned under the Control Plane release train and remain non-publishable until the remaining upgrade gates are complete.
 
 ## Read-only inventory
 
@@ -77,6 +77,12 @@ clients, fan-out ratio, redacted scopes, invalidation lag, replay usage, resume
 rejections, quotas, and slow-client disconnect causes. Both routes use the same
 mandatory read policy as the rest of the dashboard.
 
+`HostedContinuousGraphControlPlaneQueryService` projects registered graph query
+fingerprints, graph/database identities, explicit element aliases, exact
+relational dependencies, result bounds, and capabilities. It does not expose
+bound parameters or graph result rows. The authorised `/graphs` and
+`/api/graphs` endpoints HTML-encode every application-provided value.
+
 ## Mutating operations and audit
 
 `ControlPlaneOperationExecutor` is the only provided command path. Every request has a client-generated operation ID, target, reason, and exact confirmation. `ControlPlaneOperationPolicies` requires an Operator for normal mutations and an Administrator for consumer-group removal, checkpoint rewind, and slot deletion. The required confirmation is the ordinal string `<OperationKind>:<Target>` and must be presented explicitly by the operator.
@@ -114,8 +120,9 @@ reconciliation, rebuild, pause/resume, checkpoint, and slot coordinators.
 The unit gate covers role escalation, exact confirmation, handler failure,
 non-sensitive audit details, Sync rate/lag/failure projection, authorization
 metadata on every dashboard endpoint, Live scope redaction and lag/fan-out
-projection, and hostile source, pipeline, and Live HTML values. Live PostgreSQL
-15–19 acceptance creates a real logical slot, relay
+projection, Continuous Graph descriptor projection, and hostile source,
+pipeline, Live, and graph HTML values. Live PostgreSQL 15–19 acceptance creates
+a real logical slot, relay
 group, snapshot run, and direct checkpoint, verifies their inventory
 projections, initializes the audit schema idempotently, and proves stored audit
 rows reject update and delete attempts.
