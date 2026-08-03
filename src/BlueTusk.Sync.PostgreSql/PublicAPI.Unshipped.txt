@@ -1,0 +1,49 @@
+#nullable enable
+BlueTusk.Sync.PostgreSql.IPostgreSqlSyncMutationWriter
+BlueTusk.Sync.PostgreSql.IPostgreSqlSyncMutationWriter.ApplySnapshotBatchAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.IPostgreSqlSyncMutationWriter.ApplyTransactionAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.IPostgreSqlSyncMutationWriter.ResetSnapshotAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlDocumentMutationWriter
+BlueTusk.Sync.PostgreSql.PostgreSqlDocumentMutationWriter.ApplySnapshotBatchAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlDocumentMutationWriter.ApplyTransactionAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlDocumentMutationWriter.PostgreSqlDocumentMutationWriter(string! controlSchema) -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlDocumentMutationWriter.ResetSnapshotAsync(System.Data.Common.DbConnection! connection, System.Data.Common.DbTransaction! transaction, string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.CompleteSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotComplete! complete, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.Name.get -> string!
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.PostgreSqlSyncDestination(BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions! options) -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.StoreAsync(BlueTusk.Sync.SyncQuarantineRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncException
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncException.PostgreSqlSyncException(string! message) -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncException.PostgreSqlSyncException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.<Clone>$() -> BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions!
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.ControlSchema.get -> string!
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.ControlSchema.init -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.DestinationDataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.DestinationDataSource.init -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.Equals(BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions? other) -> bool
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.MaxDocumentBytes.get -> int
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.MaxDocumentBytes.init -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.MaxTransactionBytes.get -> long
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.MaxTransactionBytes.init -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.MutationWriter.get -> BlueTusk.Sync.PostgreSql.IPostgreSqlSyncMutationWriter?
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.MutationWriter.init -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.PostgreSqlSyncOptions() -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncSnapshotException
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncSnapshotException.PostgreSqlSyncSnapshotException(string! message) -> void
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncSourceMismatchException
+BlueTusk.Sync.PostgreSql.PostgreSqlSyncSourceMismatchException.PostgreSqlSyncSourceMismatchException(string! message) -> void
+const BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.CurrentSchemaVersion = 1 -> int
+override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.GetHashCode() -> int
+override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.ToString() -> string!
+static BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.operator !=(BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions? left, BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions? right) -> bool
+static BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.operator ==(BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions? left, BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions? right) -> bool

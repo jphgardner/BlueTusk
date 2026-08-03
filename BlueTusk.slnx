@@ -53,6 +53,7 @@
     <Project Path="src/BlueTusk.Streams.Storage.Redis/BlueTusk.Streams.Storage.Redis.csproj" />
     <Project Path="src/BlueTusk.Streams.Testing/BlueTusk.Streams.Testing.csproj" />
     <Project Path="src/BlueTusk.Sync/BlueTusk.Sync.csproj" />
+    <Project Path="src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj" />
     <Project Path="src/BlueTusk.Transport/BlueTusk.Transport.csproj" />
     <Project Path="src/BlueTusk.TypeSystem/BlueTusk.TypeSystem.csproj" />
   </Folder>

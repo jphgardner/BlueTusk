@@ -32,7 +32,8 @@
       "versionFile": "eng/versions/Sync.props",
       "publishable": false,
       "packages": [
-        "src/BlueTusk.Sync/BlueTusk.Sync.csproj"
+        "src/BlueTusk.Sync/BlueTusk.Sync.csproj",
+        "src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj"
       ]
     },
     "Live": {
