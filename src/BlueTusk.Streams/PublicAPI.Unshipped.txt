@@ -783,3 +783,66 @@ static BlueTusk.Streams.SnapshotStart.operator ==(BlueTusk.Streams.SnapshotStart
 static BlueTusk.Streams.TypedChangeDecodingFailure.operator !=(BlueTusk.Streams.TypedChangeDecodingFailure? left, BlueTusk.Streams.TypedChangeDecodingFailure? right) -> bool
 static BlueTusk.Streams.TypedChangeDecodingFailure.operator ==(BlueTusk.Streams.TypedChangeDecodingFailure? left, BlueTusk.Streams.TypedChangeDecodingFailure? right) -> bool
 virtual BlueTusk.Streams.ChangeColumnDecoder<TProperty>.Invoke(BlueTusk.Streams.ChangeColumn! column, BlueTusk.Streams.ChangeColumnValue! value) -> TProperty
+BlueTusk.Streams.IConsistentSnapshotAttempt
+BlueTusk.Streams.IConsistentSnapshotAttempt.CreateChangeStream() -> BlueTusk.Streams.IChangeStream!
+BlueTusk.Streams.IConsistentSnapshotAttempt.Epoch.get -> BlueTusk.Streams.SnapshotEpoch
+BlueTusk.Streams.IConsistentSnapshotAttempt.ReadSnapshotAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Streams.ChangeSnapshotBatch!>!
+BlueTusk.Streams.IConsistentSnapshotAttempt.Tables.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.ChangeTable!>!
+BlueTusk.Streams.IConsistentSnapshotSource
+BlueTusk.Streams.IConsistentSnapshotSource.BeginAttemptAsync(System.Guid? abandonedEpoch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.IConsistentSnapshotAttempt!>
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.<Clone>$() -> BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions!
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.CopyPageRows.get -> int
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.CopyPageRows.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Equals(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? other) -> bool
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumBatchBytes.get -> long
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumBatchBytes.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumBatchRows.get -> int
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumBatchRows.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumParallelTables.get -> int
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumParallelTables.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumRowBytes.get -> long
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.MaximumRowBytes.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.PostgreSqlConsistentSnapshotOptions() -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.PublicationNames.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.PublicationNames.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Source.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Tables.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.PostgreSqlSnapshotTable!>!
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Tables.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.TransactionAssembly.get -> BlueTusk.Streams.TransactionAssemblyOptions!
+BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.TransactionAssembly.init -> void
+BlueTusk.Streams.PostgreSqlConsistentSnapshotSource
+BlueTusk.Streams.PostgreSqlConsistentSnapshotSource.BeginAttemptAsync(System.Guid? abandonedEpoch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.IConsistentSnapshotAttempt!>
+BlueTusk.Streams.PostgreSqlConsistentSnapshotSource.PostgreSqlConsistentSnapshotSource(BlueTusk.Data.BlueTuskDataSource! dataSource, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions! options, System.Func<BlueTusk.Replication.BlueTuskLogicalReplicationConnection!, BlueTusk.Streams.IChangeDeliveryObserver?>? observerFactory = null, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Streams.PostgreSqlSnapshotTable
+BlueTusk.Streams.PostgreSqlSnapshotTable.KeyOrdinals.get -> System.Collections.Generic.IReadOnlyList<int>!
+BlueTusk.Streams.PostgreSqlSnapshotTable.PostgreSqlSnapshotTable(BlueTusk.Streams.ChangeTable! table, System.Collections.Generic.IEnumerable<int>! keyOrdinals) -> void
+BlueTusk.Streams.PostgreSqlSnapshotTable.Table.get -> BlueTusk.Streams.ChangeTable!
+BlueTusk.Streams.SnapshotAttemptException
+BlueTusk.Streams.SnapshotAttemptException.SnapshotAttemptException(string! message, System.Exception? innerException = null) -> void
+BlueTusk.Streams.SnapshotRestartLimitExceededException
+BlueTusk.Streams.SnapshotRestartLimitExceededException.AbandonedEpoch.get -> System.Guid?
+BlueTusk.Streams.SnapshotRestartLimitExceededException.Attempts.get -> int
+BlueTusk.Streams.SnapshotRestartLimitExceededException.SnapshotRestartLimitExceededException(int attempts, System.Guid? abandonedEpoch, System.Exception! innerException) -> void
+BlueTusk.Streams.SnapshotSessionLostException
+BlueTusk.Streams.SnapshotSessionLostException.SnapshotSessionLostException(string! message, System.Exception? innerException = null) -> void
+BlueTusk.Streams.SnapshotThenStreamCoordinator
+BlueTusk.Streams.SnapshotThenStreamCoordinator.RunAsync(BlueTusk.Streams.IChangeStreamConsumer! consumer, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+BlueTusk.Streams.SnapshotThenStreamCoordinator.SnapshotThenStreamCoordinator(BlueTusk.Streams.IConsistentSnapshotSource! source, BlueTusk.Streams.SnapshotThenStreamOptions? options = null) -> void
+BlueTusk.Streams.SnapshotThenStreamOptions
+BlueTusk.Streams.SnapshotThenStreamOptions.<Clone>$() -> BlueTusk.Streams.SnapshotThenStreamOptions!
+BlueTusk.Streams.SnapshotThenStreamOptions.Equals(BlueTusk.Streams.SnapshotThenStreamOptions? other) -> bool
+BlueTusk.Streams.SnapshotThenStreamOptions.MaximumSnapshotAttempts.get -> int
+BlueTusk.Streams.SnapshotThenStreamOptions.MaximumSnapshotAttempts.init -> void
+BlueTusk.Streams.SnapshotThenStreamOptions.SnapshotThenStreamOptions() -> void
+override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.Equals(object? obj) -> bool
+override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.GetHashCode() -> int
+override BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.ToString() -> string!
+override BlueTusk.Streams.SnapshotThenStreamOptions.Equals(object? obj) -> bool
+override BlueTusk.Streams.SnapshotThenStreamOptions.GetHashCode() -> int
+override BlueTusk.Streams.SnapshotThenStreamOptions.ToString() -> string!
+static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator !=(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? left, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? right) -> bool
+static BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions.operator ==(BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? left, BlueTusk.Streams.PostgreSqlConsistentSnapshotOptions? right) -> bool
+static BlueTusk.Streams.SnapshotThenStreamOptions.operator !=(BlueTusk.Streams.SnapshotThenStreamOptions? left, BlueTusk.Streams.SnapshotThenStreamOptions? right) -> bool
+static BlueTusk.Streams.SnapshotThenStreamOptions.operator ==(BlueTusk.Streams.SnapshotThenStreamOptions? left, BlueTusk.Streams.SnapshotThenStreamOptions? right) -> bool

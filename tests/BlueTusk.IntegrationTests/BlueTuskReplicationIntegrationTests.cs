@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Replication;
@@ -10,6 +11,102 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskReplicationIntegrationTests
 {
+    [Fact]
+    public async Task Exported_snapshot_and_matching_stream_have_no_concurrent_write_gap()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_snapshot_{suffix}";
+        var publicationName = $"bluetusk_snapshot_publication_{suffix}";
+        var slotName = $"bluetusk_snapshot_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id integer PRIMARY KEY, value text NOT NULL)");
+        await ExecuteAsync(
+            administration,
+            $"INSERT INTO {quotedTable} SELECT value, 'initial-' || value FROM generate_series(1, 5) value");
+        await ExecuteAsync(
+            administration,
+            $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+
+        try
+        {
+            await using var dataSource = BlueTuskDataSource.Create(connectionString);
+            BlueTuskReplicationSystemIdentity identity;
+            await using (var identityConnection =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+            {
+                identity = await identityConnection.IdentifySystemAsync();
+            }
+
+            var table = new ChangeTable(
+                relationId: 0,
+                schema: "public",
+                name: tableName,
+                replicaIdentity: 'd',
+                [
+                    new ChangeColumn(0, "id", 23, -1, true),
+                    new ChangeColumn(1, "value", 25, -1, false),
+                ]);
+            var source = new PostgreSqlConsistentSnapshotSource(
+                dataSource,
+                new PostgreSqlConsistentSnapshotOptions
+                {
+                    Source = new ChangeSourceIdentity(
+                        identity.SystemIdentifier,
+                        identity.DatabaseName!,
+                        slotName,
+                        publicationName),
+                    PublicationNames = [publicationName],
+                    Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                    CopyPageRows = 2,
+                    MaximumBatchRows = 1,
+                });
+
+            await using (var attempt = await source.BeginAttemptAsync(abandonedEpoch: null))
+            {
+                await ExecuteAsync(
+                    administration,
+                    $"INSERT INTO {quotedTable} VALUES (6, 'during-snapshot')");
+
+                var snapshotIds = new List<int>();
+                await foreach (var batch in attempt.ReadSnapshotAsync())
+                {
+                    snapshotIds.AddRange(batch.Rows.Select(row =>
+                        BinaryPrimitives.ReadInt32BigEndian(row.Row["id"].Data.Span)));
+                }
+
+                Assert.Equal([1, 2, 3, 4, 5], snapshotIds);
+
+                await using var changes = attempt
+                    .CreateChangeStream()
+                    .ReadTransactionsAsync()
+                    .GetAsyncEnumerator();
+                Assert.True(await changes.MoveNextAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+                var delivery = changes.Current;
+                var transactionChanges = await delivery.Transaction.Changes.MaterializeAsync();
+                var insert = Assert.IsType<InsertChange>(Assert.Single(transactionChanges));
+                Assert.Equal(
+                    "6",
+                    System.Text.Encoding.UTF8.GetString(insert.NewRow["id"].Data.Span));
+                await delivery.AcknowledgeAsync();
+            }
+
+            await using var cleanup =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+            await cleanup.DropReplicationSlotAsync(slotName, wait: true);
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
     [Fact]
     public async Task Data_source_derived_replication_session_is_dedicated_and_unpooled()
     {
