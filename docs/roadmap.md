@@ -42,7 +42,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 5 slice: fingerprinted transform composition with filtering, bounded JSON redaction/enrichment/flattening, and tenant-safe routing
 - [x] Phase 5 slice: crash-safe quarantine-and-pause replay from retained relay transactions across PostgreSQL, NATS, Redis, and OpenSearch
 - [x] Phase 5 slice: redacted Sync control-plane read models plus separately authorized, confirmed, and audited retry/reconcile/rebuild dashboard controls
-- [x] Phase 5 slice: four-destination 24-hour endurance runner, versioned evidence report, local smoke path, and confirmed self-hosted workflow
+- [x] Phase 5 slice: isolated-source four-destination 24-hour endurance runner, source/binary integrity report and fail-closed verifier, local smoke path, and confirmed self-hosted workflow
 - [ ] Phase 5 release gate: complete and archive one successful 24-hour Sync endurance report (a short orchestration smoke is not equivalent)
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
 - [x] Phase 6 slice: trusted typed query registrations, security-partitioned identities, bounded keyed diffs, and signed rotating resume tokens

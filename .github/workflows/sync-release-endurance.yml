@@ -28,11 +28,6 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Restore and build endurance projects
-        run: |
-          dotnet restore BlueTusk.slnx
-          dotnet build BlueTusk.slnx --configuration Release --no-restore
-
       - name: Start PostgreSQL 19
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
 
@@ -69,6 +64,15 @@ jobs:
           -MinimumCycles 100
           -ReportPath 'artifacts/test-results/sync-endurance/report.json'
           -Configuration Release
+
+      - name: Verify endurance evidence
+        shell: pwsh
+        run: >-
+          ./eng/verify-sync-endurance-report.ps1
+          -ReportPath 'artifacts/test-results/sync-endurance/report.json'
+          -RequiredDuration '1.00:00:00'
+          -MinimumCycles 100
+          -ExpectedCommit '${{ github.sha }}'
 
       - name: Upload endurance evidence
         if: always()
