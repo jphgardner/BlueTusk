@@ -68,7 +68,12 @@ public sealed class BlueTuskSyncHostingTests
         var status = Assert.Single(registry.GetStatuses());
         Assert.Equal(1, status.AppliedTransactions);
         Assert.Equal(Lsn(105), status.LastCommitPosition);
+        Assert.Equal(Source.Fingerprint, status.SourceFingerprint);
+        Assert.Equal(0, status.FailureCount);
         Assert.False(status.HandoffCommitted);
+        Assert.Same(
+            registry,
+            provider.GetRequiredService<IBlueTuskSyncStatusSource>());
         var health = await provider.GetRequiredService<BlueTuskSyncHealthCheck>()
             .CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         Assert.Equal(HealthStatus.Degraded, health.Status);
@@ -168,17 +173,15 @@ public sealed class BlueTuskSyncHostingTests
 
         await hosted.StartAsync(TestContext.Current.CancellationToken);
         await WaitUntilAsync(
-            () => registry.GetStatuses().SingleOrDefault()?.Error is not null,
+            () => registry.GetStatuses().SingleOrDefault()?.DiagnosticCode is not null,
             TestContext.Current.CancellationToken);
         var health = await provider.GetRequiredService<BlueTuskSyncHealthCheck>()
             .CheckHealthAsync(new HealthCheckContext(), TestContext.Current.CancellationToken);
         await hosted.StopAsync(TestContext.Current.CancellationToken);
 
         Assert.Equal(HealthStatus.Unhealthy, health.Status);
-        Assert.Contains(
-            "source unavailable",
-            Assert.Single(registry.GetStatuses()).Error,
-            StringComparison.Ordinal);
+        Assert.Equal(1, Assert.Single(registry.GetStatuses()).FailureCount);
+        Assert.Equal("worker-fault", Assert.Single(registry.GetStatuses()).DiagnosticCode);
     }
 
     private static async Task WaitUntilAsync(Func<bool> predicate, CancellationToken cancellationToken)

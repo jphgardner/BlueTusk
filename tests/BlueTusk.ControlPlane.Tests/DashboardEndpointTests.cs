@@ -16,6 +16,7 @@ public sealed class DashboardEndpointTests
         var builder = WebApplication.CreateSlimBuilder();
         builder.Services.AddAuthorization();
         builder.Services.AddSingleton<IControlPlaneQueryService>(new FakeQueryService());
+        builder.Services.AddSingleton<IControlPlaneSyncQueryService>(new FakeSyncQueryService());
         await using var application = builder.Build();
         application.MapBlueTuskDashboard(options =>
         {
@@ -27,7 +28,7 @@ public sealed class DashboardEndpointTests
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(7, endpoints.Length);
+        Assert.Equal(9, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -50,6 +51,18 @@ public sealed class DashboardEndpointTests
         Assert.Contains("&lt;script&gt;", html, StringComparison.Ordinal);
         Assert.DoesNotContain("<script>", html, StringComparison.Ordinal);
         Assert.Contains(">missing<", html, StringComparison.Ordinal);
+
+        var pipelines = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/pipelines");
+        context.Response.Body = new MemoryStream();
+        await pipelines.RequestDelegate!(context);
+        context.Response.Body.Position = 0;
+        using var pipelineReader = new StreamReader(context.Response.Body, Encoding.UTF8);
+        var pipelineHtml = await pipelineReader.ReadToEndAsync();
+        Assert.Contains("&lt;img src=x&gt;", pipelineHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<img src=x>", pipelineHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("sensitive", pipelineHtml, StringComparison.Ordinal);
     }
 
     private sealed class FakeQueryService : IControlPlaneQueryService
@@ -86,6 +99,37 @@ public sealed class DashboardEndpointTests
                         [],
                         [],
                         [])]));
+        }
+    }
+
+    private sealed class FakeSyncQueryService : IControlPlaneSyncQueryService
+    {
+        public ValueTask<ControlPlaneSyncOverview> GetSyncOverviewAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(
+                new ControlPlaneSyncOverview(
+                    new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
+                    [new ControlPlaneSyncPipelineSnapshot(
+                        "<img src=x>",
+                        "fingerprint",
+                        "Faulted",
+                        new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
+                        10,
+                        2.5,
+                        1,
+                        100,
+                        1,
+                        1,
+                        2,
+                        TimeSpan.FromSeconds(1),
+                        "0/80",
+                        128,
+                        null,
+                        null,
+                        false,
+                        "pipeline-fault")]));
         }
     }
 }

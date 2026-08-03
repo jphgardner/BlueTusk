@@ -10,5 +10,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Streams.Storage.PostgreSql\BlueTusk.Streams.Storage.PostgreSql.csproj" />
+    <ProjectReference Include="..\BlueTusk.Sync.DependencyInjection\BlueTusk.Sync.DependencyInjection.csproj" />
   </ItemGroup>
 </Project>

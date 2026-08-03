@@ -19,13 +19,15 @@ BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedSnapshotBatche
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedSnapshotBatches.init -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedTransactions.get -> long
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedTransactions.init -> void
-BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.BlueTuskSyncWorkerStatus(string! PipelineId, BlueTusk.Sync.SyncPipelineState State, System.DateTimeOffset ChangedAt, long AppliedTransactions, long AppliedSnapshotBatches, long SnapshotRows, long QuarantinedTransactions, long RetryAttempts, System.TimeSpan ThrottleDelay, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber LastCommitPosition, System.Guid? SnapshotEpoch, bool HandoffCommitted, string? Error) -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.BlueTuskSyncWorkerStatus(string! PipelineId, string! SourceFingerprint, BlueTusk.Sync.SyncPipelineState State, System.DateTimeOffset ChangedAt, long AppliedTransactions, long AppliedSnapshotBatches, long SnapshotRows, long QuarantinedTransactions, long FailureCount, long RetryAttempts, System.TimeSpan ThrottleDelay, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber LastCommitPosition, System.Guid? SnapshotEpoch, bool HandoffCommitted, string? DiagnosticCode) -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.ChangedAt.get -> System.DateTimeOffset
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.ChangedAt.init -> void
-BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Deconstruct(out string! PipelineId, out BlueTusk.Sync.SyncPipelineState State, out System.DateTimeOffset ChangedAt, out long AppliedTransactions, out long AppliedSnapshotBatches, out long SnapshotRows, out long QuarantinedTransactions, out long RetryAttempts, out System.TimeSpan ThrottleDelay, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber LastCommitPosition, out System.Guid? SnapshotEpoch, out bool HandoffCommitted, out string? Error) -> void
-BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Error.get -> string?
-BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Error.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Deconstruct(out string! PipelineId, out string! SourceFingerprint, out BlueTusk.Sync.SyncPipelineState State, out System.DateTimeOffset ChangedAt, out long AppliedTransactions, out long AppliedSnapshotBatches, out long SnapshotRows, out long QuarantinedTransactions, out long FailureCount, out long RetryAttempts, out System.TimeSpan ThrottleDelay, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber LastCommitPosition, out System.Guid? SnapshotEpoch, out bool HandoffCommitted, out string? DiagnosticCode) -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.DiagnosticCode.get -> string?
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.DiagnosticCode.init -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Equals(BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus? other) -> bool
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.FailureCount.get -> long
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.FailureCount.init -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.HandoffCommitted.get -> bool
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.HandoffCommitted.init -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.LastCommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
@@ -40,10 +42,14 @@ BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotEpoch.get -> 
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotEpoch.init -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotRows.get -> long
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotRows.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SourceFingerprint.get -> string!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SourceFingerprint.init -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.State.get -> BlueTusk.Sync.SyncPipelineState
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.State.init -> void
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.ThrottleDelay.get -> System.TimeSpan
 BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.ThrottleDelay.init -> void
+BlueTusk.Sync.DependencyInjection.IBlueTuskSyncStatusSource
+BlueTusk.Sync.DependencyInjection.IBlueTuskSyncStatusSource.GetStatuses() -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus!>!
 BlueTusk.Sync.DependencyInjection.ISyncCutoverPositionProvider
 BlueTusk.Sync.DependencyInjection.ISyncCutoverPositionProvider.GetDurableHeadAsync(string! pipelineId, BlueTusk.Streams.SnapshotEpoch snapshotEpoch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.TypeSystem.BlueTuskLogSequenceNumber>
 BlueTusk.Sync.DependencyInjection.ISyncWorkerHandoffHandler

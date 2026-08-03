@@ -27,6 +27,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
                 queries.GetOverviewAsync(cancellationToken));
         group.MapGet(
+            "/api/sync",
+            (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
+                queries.GetSyncOverviewAsync(cancellationToken));
+        group.MapGet(
             "/sources",
             async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
                 Html(RenderSources(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
@@ -53,6 +57,12 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             "/checkpoints",
             async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
                 Html(RenderCheckpoints(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
+        group.MapGet(
+            "/pipelines",
+            async (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
+                Html(RenderPipelines(
+                    await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    options)));
         return endpoints;
     }
 
@@ -161,6 +171,55 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         return Layout("Checkpoints", overview.ObservedAt, body.ToString(), options);
     }
 
+    private static string RenderPipelines(
+        ControlPlaneSyncOverview overview,
+        BlueTuskDashboardOptions options)
+    {
+        var totalRate = overview.Pipelines
+            .Where(static pipeline => pipeline.TransactionsPerSecond.HasValue)
+            .Sum(static pipeline => pipeline.TransactionsPerSecond!.Value);
+        var body = new StringBuilder("<h1>Sync pipelines</h1><div class=\"cards\">")
+            .Append(Card("Pipelines", overview.Pipelines.Count.ToString(CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Running",
+                overview.Pipelines.Count(static pipeline => pipeline.State == "Running")
+                    .ToString(CultureInfo.InvariantCulture)))
+            .Append(Card("Throughput", totalRate.ToString("N1", CultureInfo.InvariantCulture) + " tx/s"))
+            .Append(Card(
+                "Quarantined",
+                overview.Pipelines.Sum(static pipeline => pipeline.QuarantinedTransactions)
+                    .ToString("N0", CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Failures",
+                overview.Pipelines.Sum(static pipeline => pipeline.FailureCount)
+                    .ToString("N0", CultureInfo.InvariantCulture)))
+            .Append("</div><table><thead><tr><th>Pipeline</th><th>State</th><th>Throughput</th>")
+            .Append("<th>Checkpoint lag</th><th>Applied</th><th>Snapshot rows</th>")
+            .Append("<th>Retries</th><th>Quarantine</th><th>Diagnostic</th></tr></thead><tbody>");
+        foreach (var pipeline in overview.Pipelines)
+        {
+            body.Append("<tr><td>").Append(E(pipeline.PipelineId)).Append("</td><td>")
+                .Append(E(pipeline.State)).Append("</td><td>")
+                .Append(pipeline.TransactionsPerSecond?.ToString("N1", CultureInfo.InvariantCulture) ?? "—")
+                .Append("</td><td>")
+                .Append(pipeline.CheckpointLagBytes is { } lag ? Bytes(lag) : "—")
+                .Append("</td><td>")
+                .Append(pipeline.AppliedTransactions.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(pipeline.SnapshotRows.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(pipeline.RetryAttempts.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(pipeline.QuarantinedTransactions.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(E(pipeline.DiagnosticCode ?? pipeline.LagDiagnosticCode ?? "—"))
+                .Append("</td></tr>");
+        }
+
+        body.Append("</tbody></table>");
+        return Layout("Sync pipelines", overview.ObservedAt, body.ToString(), options);
+    }
+
     private static string RenderGroupTable(ControlPlaneSourceSnapshot source)
     {
         var body = new StringBuilder("<h2>Relay groups — ")
@@ -238,7 +297,8 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         <a href="{{E(options.RoutePrefix)}}/sources">Sources</a>
         <a href="{{E(options.RoutePrefix)}}/snapshots">Snapshots</a>
         <a href="{{E(options.RoutePrefix)}}/consumer-groups">Consumer groups</a>
-        <a href="{{E(options.RoutePrefix)}}/checkpoints">Checkpoints</a></nav>
+        <a href="{{E(options.RoutePrefix)}}/checkpoints">Checkpoints</a>
+        <a href="{{E(options.RoutePrefix)}}/pipelines">Sync pipelines</a></nav>
         <main>{{body}}<footer>Observed {{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}</footer></main></body></html>
         """;
 

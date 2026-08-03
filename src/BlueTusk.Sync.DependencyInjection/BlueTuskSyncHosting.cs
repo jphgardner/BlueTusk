@@ -25,21 +25,30 @@ public static class BlueTuskSyncTelemetry
 /// <summary>Contains the latest observable state of one hosted Sync pipeline.</summary>
 public sealed record BlueTuskSyncWorkerStatus(
     string PipelineId,
+    string SourceFingerprint,
     SyncPipelineState State,
     DateTimeOffset ChangedAt,
     long AppliedTransactions,
     long AppliedSnapshotBatches,
     long SnapshotRows,
     long QuarantinedTransactions,
+    long FailureCount,
     long RetryAttempts,
     TimeSpan ThrottleDelay,
     BlueTuskLogSequenceNumber LastCommitPosition,
     Guid? SnapshotEpoch,
     bool HandoffCommitted,
-    string? Error);
+    string? DiagnosticCode);
+
+/// <summary>Supplies immutable snapshots of hosted Sync worker state.</summary>
+public interface IBlueTuskSyncStatusSource
+{
+    /// <summary>Gets stable pipeline-ordered worker snapshots.</summary>
+    IReadOnlyList<BlueTuskSyncWorkerStatus> GetStatuses();
+}
 
 /// <summary>Stores lock-free health snapshots for all hosted Sync pipelines.</summary>
-public sealed class BlueTuskSyncHealthRegistry
+public sealed class BlueTuskSyncHealthRegistry : IBlueTuskSyncStatusSource
 {
     private readonly ConcurrentDictionary<string, BlueTuskSyncWorkerStatus> _workers =
         new(StringComparer.Ordinal);
@@ -57,26 +66,51 @@ public sealed class BlueTuskSyncHealthRegistry
 
     internal void Update(
         string pipelineId,
+        string sourceFingerprint,
         SyncPipelineStatus status,
         long snapshotRows,
         BlueTuskLogSequenceNumber lastCommitPosition,
         Guid? snapshotEpoch,
         bool handoffCommitted,
-        Exception? error = null) =>
+        Exception? error = null)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(sourceFingerprint);
+        var failureCount = _workers.TryGetValue(pipelineId, out var previous)
+            ? previous.FailureCount
+            : 0;
+        if (error is not null)
+        {
+            failureCount = checked(failureCount + 1);
+        }
+
         _workers[pipelineId] = new BlueTuskSyncWorkerStatus(
             pipelineId,
+            sourceFingerprint,
             status.State,
             _timeProvider.GetUtcNow(),
             status.AppliedTransactions,
             status.AppliedSnapshotBatches,
             snapshotRows,
             status.QuarantinedTransactions,
+            failureCount,
             status.RetryAttempts,
             status.ThrottleDelay,
             lastCommitPosition,
             snapshotEpoch,
             handoffCommitted,
-            error?.Message ?? status.LastError);
+            GetDiagnosticCode(status, error));
+    }
+
+    private static string? GetDiagnosticCode(SyncPipelineStatus status, Exception? error) =>
+        error switch
+        {
+            SyncTransformVersionMismatchException => "transform-version-mismatch",
+            SyncDestinationDurabilityException => "destination-durability-failure",
+            OperationCanceledException => "worker-cancelled",
+            not null => "worker-fault",
+            _ when status.LastError is not null => "pipeline-fault",
+            _ => null,
+        };
 }
 
 /// <summary>Reports hosted Sync pipeline readiness.</summary>
@@ -101,7 +135,7 @@ public sealed class BlueTuskSyncHealthCheck : IHealthCheck
             static worker => (object)worker,
             StringComparer.Ordinal);
         if (statuses.Any(static worker =>
-                worker.Error is not null ||
+            worker.DiagnosticCode is not null ||
                 worker.State is SyncPipelineState.Faulted or SyncPipelineState.Rebuilding))
         {
             return Task.FromResult(HealthCheckResult.Unhealthy(
@@ -280,6 +314,8 @@ public static class BlueTuskSyncServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
         services.TryAddSingleton<BlueTuskSyncHealthRegistry>();
+        services.TryAddSingleton<IBlueTuskSyncStatusSource>(static services =>
+            services.GetRequiredService<BlueTuskSyncHealthRegistry>());
         services.TryAddSingleton<SyncWorkerRuntimeRegistry>();
         services.TryAddSingleton<BlueTuskSyncHealthCheck>();
         services.TryAddEnumerable(
@@ -355,6 +391,7 @@ internal sealed class BlueTuskSyncHostedService : BackgroundService
         _runtimes.Add(registration.Options.PipelineId, runtime);
         var observed = new ObservedSyncConsumer(
             registration.Options.PipelineId,
+            registration.Source.Fingerprint,
             pipeline,
             runtime,
             _health);
@@ -362,6 +399,7 @@ internal sealed class BlueTuskSyncHostedService : BackgroundService
         {
             _health.Update(
                 registration.Options.PipelineId,
+                registration.Source.Fingerprint,
                 pipeline.Status,
                 0,
                 BlueTuskLogSequenceNumber.Zero,
@@ -387,6 +425,7 @@ internal sealed class BlueTuskSyncHostedService : BackgroundService
                 registration.Options.PipelineId));
             _health.Update(
                 registration.Options.PipelineId,
+                registration.Source.Fingerprint,
                 pipeline.Status,
                 observed.SnapshotRows,
                 observed.LastCommitPosition,
@@ -406,6 +445,7 @@ internal sealed class BlueTuskSyncHostedService : BackgroundService
 internal sealed class ObservedSyncConsumer : IChangeStreamConsumer
 {
     private readonly string _pipelineId;
+    private readonly string _sourceFingerprint;
     private readonly SyncPipeline _pipeline;
     private readonly SyncWorkerRuntime _runtime;
     private readonly BlueTuskSyncHealthRegistry _health;
@@ -414,11 +454,13 @@ internal sealed class ObservedSyncConsumer : IChangeStreamConsumer
 
     public ObservedSyncConsumer(
         string pipelineId,
+        string sourceFingerprint,
         SyncPipeline pipeline,
         SyncWorkerRuntime runtime,
         BlueTuskSyncHealthRegistry health)
     {
         _pipelineId = pipelineId;
+        _sourceFingerprint = sourceFingerprint;
         _pipeline = pipeline;
         _runtime = runtime;
         _health = health;
@@ -530,6 +572,7 @@ internal sealed class ObservedSyncConsumer : IChangeStreamConsumer
 
         _health.Update(
             _pipelineId,
+            _sourceFingerprint,
             status,
             SnapshotRows,
             LastCommitPosition,

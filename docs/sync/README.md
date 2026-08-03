@@ -32,8 +32,11 @@ change-stream adapter provides bounded reads, continuous fenced lease renewal,
 and acknowledgement-after-destination ordering. Restart-aware relay snapshot
 bootstrap now reserves retention before export, restarts abandoned epochs, and
 resumes completed pipelines without resetting the destination. Dashboard
-integration and endurance remain gated work. The Sync release train remains
-non-publishable until those remaining Phase 5 gates pass.
+read models now expose pipeline state, sampled throughput, checkpoint lag,
+failures, quarantine, retries, and rebuild/reconciliation state without leaking
+worker exception messages. Dashboard mutation controls and endurance remain
+gated work. The Sync release train remains non-publishable until those remaining
+Phase 5 gates pass.
 
 ## Retry, rate limits, and backpressure
 
