@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskRoutineModelBuilderExtensions
 {
     /// <summary>Adds or replaces a model-authored PostgreSQL function.</summary>
-    public static ModelBuilder HasBlueTuskFunction(
+    public static ModelBuilder HasFunction(
         this ModelBuilder modelBuilder,
         string name,
         string returnStoreType,
@@ -20,11 +20,11 @@ public static class BlueTuskRoutineModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(modelBuilder);
         var builder = new BlueTuskFunctionBuilder(name, schema, returnStoreType, bodySql);
         buildAction?.Invoke(builder);
-        return HasBlueTuskRoutine(modelBuilder, builder.Build());
+        return HasRoutine(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a model-authored PostgreSQL procedure.</summary>
-    public static ModelBuilder HasBlueTuskProcedure(
+    public static ModelBuilder HasProcedure(
         this ModelBuilder modelBuilder,
         string name,
         string bodySql,
@@ -34,11 +34,11 @@ public static class BlueTuskRoutineModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(modelBuilder);
         var builder = new BlueTuskProcedureBuilder(name, schema, bodySql);
         buildAction?.Invoke(builder);
-        return HasBlueTuskRoutine(modelBuilder, builder.Build());
+        return HasRoutine(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a canonical provider-owned PostgreSQL routine definition.</summary>
-    public static ModelBuilder HasBlueTuskRoutine(
+    public static ModelBuilder HasRoutine(
         this ModelBuilder modelBuilder,
         BlueTuskRoutineDefinition definition)
     {
@@ -55,7 +55,7 @@ public static class BlueTuskRoutineModelBuilderExtensions
     }
 
     /// <summary>Removes one PostgreSQL routine overload from the model.</summary>
-    public static ModelBuilder HasNoBlueTuskRoutine(
+    public static ModelBuilder HasNoRoutine(
         this ModelBuilder modelBuilder,
         BlueTuskRoutineKind kind,
         string name,
@@ -74,14 +74,14 @@ public static class BlueTuskRoutineModelBuilderExtensions
     }
 
     /// <summary>Reads all provider-owned PostgreSQL routine definitions from an EF model.</summary>
-    public static BlueTuskRoutineDefinitionSet GetBlueTuskRoutines(this IReadOnlyModel model)
+    public static BlueTuskRoutineDefinitionSet GetRoutines(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskRoutineMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskRoutines(
+    public static ModelBuilder HasRoutines(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

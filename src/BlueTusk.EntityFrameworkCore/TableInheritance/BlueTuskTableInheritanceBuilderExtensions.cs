@@ -10,7 +10,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskTableInheritanceBuilderExtensions
 {
     /// <summary>Adds a named direct parent to a PostgreSQL table-inheritance hierarchy.</summary>
-    public static EntityTypeBuilder InheritsFromBlueTuskTable(
+    public static EntityTypeBuilder InheritsFromTable(
         this EntityTypeBuilder entityBuilder,
         string parentTable,
         string? parentSchema = null)
@@ -30,7 +30,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
     }
 
     /// <summary>Adds the table mapped by <typeparamref name="TParent"/> as a direct inheritance parent.</summary>
-    public static EntityTypeBuilder InheritsFromBlueTuskTable<TParent>(
+    public static EntityTypeBuilder InheritsFromTable<TParent>(
         this EntityTypeBuilder entityBuilder)
         where TParent : class
     {
@@ -41,12 +41,12 @@ public static class BlueTuskTableInheritanceBuilderExtensions
         var parentTable = parent.GetTableName()
             ?? throw new InvalidOperationException(
                 $"Entity type '{parent.DisplayName()}' is not mapped to a table.");
-        InheritsFromBlueTuskTable(entityBuilder, parentTable, parent.GetSchema());
+        InheritsFromTable(entityBuilder, parentTable, parent.GetSchema());
         return entityBuilder;
     }
 
     /// <summary>Replaces all direct parents for a PostgreSQL table-inheritance hierarchy.</summary>
-    public static EntityTypeBuilder HasBlueTuskTableInheritance(
+    public static EntityTypeBuilder HasTableInheritance(
         this EntityTypeBuilder entityBuilder,
         params BlueTuskInheritedTableDefinition[] parents)
     {
@@ -57,7 +57,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
     }
 
     /// <summary>Removes PostgreSQL table-inheritance metadata from an entity table.</summary>
-    public static EntityTypeBuilder HasNoBlueTuskTableInheritance(this EntityTypeBuilder entityBuilder)
+    public static EntityTypeBuilder HasNoTableInheritance(this EntityTypeBuilder entityBuilder)
     {
         ArgumentNullException.ThrowIfNull(entityBuilder);
         entityBuilder.Metadata.RemoveAnnotation(BlueTuskTableInheritanceMetadata.AnnotationName);
@@ -65,7 +65,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
     }
 
     /// <summary>Reads PostgreSQL table-inheritance metadata from an EF entity type.</summary>
-    public static BlueTuskTableInheritanceDefinition? GetBlueTuskTableInheritance(
+    public static BlueTuskTableInheritanceDefinition? GetTableInheritance(
         this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
@@ -73,7 +73,7 @@ public static class BlueTuskTableInheritanceBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskTableInheritance(
+    public static EntityTypeBuilder HasTableInheritance(
         this EntityTypeBuilder entityBuilder,
         string serializedDefinition)
     {

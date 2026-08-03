@@ -97,8 +97,9 @@ store/transport and package gates.
 has passed its Phase 7 implementation and package-verification gates with PostgreSQL
 19 capability guards, exact graph-element invalidation, authoritative
 `GRAPH_TABLE` requery/diff, operational visibility, samples, and live workload
-budgets. Its Live release dependency has passed, so the independently versioned
-Graph preview train is also enabled.
+budgets. Its Live release dependency has passed, but the independently
+versioned Graph preview remains gated until the Control Plane dependency is
+publishable.
 
 ## Status
 

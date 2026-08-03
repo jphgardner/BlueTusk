@@ -40,7 +40,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedCollations)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskCollationModelBuilderExtensions.HasBlueTuskCollations),
+                nameof(BlueTuskCollationModelBuilderExtensions.HasCollations),
                 serializedCollations);
         }
 
@@ -48,7 +48,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedExtensions)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskExtensionModelBuilderExtensions.HasBlueTuskExtensions),
+                nameof(BlueTuskExtensionModelBuilderExtensions.HasExtensions),
                 serializedExtensions);
         }
 
@@ -56,7 +56,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedForeignData)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskForeignDataModelBuilderExtensions.HasBlueTuskForeignData),
+                nameof(BlueTuskForeignDataModelBuilderExtensions.HasForeignData),
                 serializedForeignData);
         }
 
@@ -64,7 +64,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedEventTriggers)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskEventTriggerModelBuilderExtensions.HasBlueTuskEventTriggers),
+                nameof(BlueTuskEventTriggerModelBuilderExtensions.HasEventTriggers),
                 serializedEventTriggers);
         }
 
@@ -72,7 +72,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedTablespaces)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskTablespaceModelBuilderExtensions.HasBlueTuskTablespaces),
+                nameof(BlueTuskTablespaceModelBuilderExtensions.HasTablespaces),
                 serializedTablespaces);
         }
 
@@ -80,7 +80,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedDefinitions)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskPropertyGraphModelBuilderExtensions.HasBlueTuskPropertyGraphs),
+                nameof(BlueTuskPropertyGraphModelBuilderExtensions.HasPropertyGraphs),
                 serializedDefinitions);
         }
 
@@ -88,7 +88,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedTypes)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskUserDefinedTypeModelBuilderExtensions.HasBlueTuskUserDefinedTypes),
+                nameof(BlueTuskUserDefinedTypeModelBuilderExtensions.HasUserDefinedTypes),
                 serializedTypes);
         }
 
@@ -96,7 +96,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedRoutines)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskRoutineModelBuilderExtensions.HasBlueTuskRoutines),
+                nameof(BlueTuskRoutineModelBuilderExtensions.HasRoutines),
                 serializedRoutines);
         }
 
@@ -104,7 +104,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedViews)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskViewModelBuilderExtensions.HasBlueTuskViews),
+                nameof(BlueTuskViewModelBuilderExtensions.HasViews),
                 serializedViews);
         }
 
@@ -112,7 +112,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedPublications)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskPublicationModelBuilderExtensions.HasBlueTuskPublications),
+                nameof(BlueTuskPublicationModelBuilderExtensions.HasPublications),
                 serializedPublications);
         }
 
@@ -120,7 +120,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedSubscriptions)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskSubscriptionModelBuilderExtensions.HasBlueTuskSubscriptions),
+                nameof(BlueTuskSubscriptionModelBuilderExtensions.HasSubscriptions),
                 serializedSubscriptions);
         }
 
@@ -128,7 +128,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedSchemaPrograms)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskSchemaProgramModelBuilderExtensions.HasBlueTuskSchemaPrograms),
+                nameof(BlueTuskSchemaProgramModelBuilderExtensions.HasSchemaPrograms),
                 serializedSchemaPrograms);
         }
 
@@ -145,26 +145,26 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         return annotation.Name switch
         {
             BlueTuskIndexAnnotations.Method when annotation.Value is string value =>
-                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.UseBlueTuskIndexMethod), value),
+                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.UseIndexMethod), value),
             BlueTuskIndexAnnotations.OperatorClasses when annotation.Value is string[] values =>
-                Fragment(nameof(BlueTuskIndexBuilderExtensions.UseBlueTuskOperatorClass), values),
+                Fragment(nameof(BlueTuskIndexBuilderExtensions.UseOperatorClass), values),
             BlueTuskIndexAnnotations.Collations when annotation.Value is string[] values =>
-                Fragment(nameof(BlueTuskIndexBuilderExtensions.UseBlueTuskCollation), values),
+                Fragment(nameof(BlueTuskIndexBuilderExtensions.UseCollation), values),
             BlueTuskIndexAnnotations.NullSortOrders when annotation.Value is int[] values =>
                 new MethodCallCodeFragment(
-                    nameof(BlueTuskIndexBuilderExtensions.HasBlueTuskNullSortOrder),
+                    nameof(BlueTuskIndexBuilderExtensions.HasNullSortOrder),
                     values.Select(value => (object)(BlueTuskIndexNullSortOrder)value).ToArray()),
             BlueTuskIndexAnnotations.IncludeProperties when annotation.Value is string[] values =>
                 Fragment(
                     nameof(BlueTuskIndexBuilderExtensions.IncludeProperties),
                     MapIncludedPropertyNames(index, values)),
             BlueTuskIndexAnnotations.IsConcurrent when annotation.Value is bool value =>
-                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.IsBlueTuskConcurrent), value),
+                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.IsConcurrent), value),
             BlueTuskIndexAnnotations.NullsDistinct when annotation.Value is bool value =>
-                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.HasBlueTuskNullsDistinct), value),
+                new MethodCallCodeFragment(nameof(BlueTuskIndexBuilderExtensions.HasNullsDistinct), value),
             BlueTuskIndexAnnotations.Expressions when annotation.Value is string[] values =>
                 Fragment(
-                    nameof(BlueTuskIndexBuilderExtensions.HasBlueTuskIndexExpressions),
+                    nameof(BlueTuskIndexBuilderExtensions.HasIndexExpressions),
                     values.Select(value => string.IsNullOrEmpty(value) ? null : value).ToArray()),
             _ => base.GenerateFluentApi(index, annotation),
         };
@@ -181,7 +181,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedDefinition)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskPartitioningBuilderExtensions.HasBlueTuskPartitioning),
+                nameof(BlueTuskPartitioningBuilderExtensions.HasPartitioning),
                 serializedDefinition);
         }
 
@@ -189,7 +189,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedForeignTable)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskForeignDataModelBuilderExtensions.HasBlueTuskForeignTableDefinition),
+                nameof(BlueTuskForeignDataModelBuilderExtensions.HasForeignTableDefinition),
                 serializedForeignTable);
         }
 
@@ -197,7 +197,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedRowLevelSecurity)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskRowLevelSecurityBuilderExtensions.HasBlueTuskRowLevelSecurity),
+                nameof(BlueTuskRowLevelSecurityBuilderExtensions.HasRowLevelSecurity),
                 serializedRowLevelSecurity);
         }
 
@@ -205,7 +205,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedExclusionConstraints)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskExclusionConstraintBuilderExtensions.HasBlueTuskExclusionConstraints),
+                nameof(BlueTuskExclusionConstraintBuilderExtensions.HasExclusionConstraints),
                 serializedExclusionConstraints);
         }
 
@@ -213,7 +213,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedExpressionIndexes)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskExpressionIndexBuilderExtensions.HasBlueTuskExpressionIndexes),
+                nameof(BlueTuskExpressionIndexBuilderExtensions.HasExpressionIndexes),
                 serializedExpressionIndexes);
         }
 
@@ -221,7 +221,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedCheckConstraints)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskCheckConstraintBuilderExtensions.HasBlueTuskCheckConstraints),
+                nameof(BlueTuskCheckConstraintBuilderExtensions.HasCheckConstraints),
                 serializedCheckConstraints);
         }
 
@@ -229,7 +229,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedTriggers)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskTriggerBuilderExtensions.HasBlueTuskTriggers),
+                nameof(BlueTuskTriggerBuilderExtensions.HasTriggers),
                 serializedTriggers);
         }
 
@@ -237,7 +237,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedRules)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskRuleBuilderExtensions.HasBlueTuskRules),
+                nameof(BlueTuskRuleBuilderExtensions.HasRules),
                 serializedRules);
         }
 
@@ -245,7 +245,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
             annotation.Value is string serializedInheritance)
         {
             return new MethodCallCodeFragment(
-                nameof(BlueTuskTableInheritanceBuilderExtensions.HasBlueTuskTableInheritance),
+                nameof(BlueTuskTableInheritanceBuilderExtensions.HasTableInheritance),
                 serializedInheritance);
         }
 
@@ -263,15 +263,15 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
         {
             BlueTuskCheckConstraintMetadata.NotValidAnnotationName when annotation.Value is bool value =>
                 new MethodCallCodeFragment(
-                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsBlueTuskNotValid),
+                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsNotValid),
                     value),
             BlueTuskCheckConstraintMetadata.NoInheritAnnotationName when annotation.Value is bool value =>
                 new MethodCallCodeFragment(
-                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsBlueTuskNoInherit),
+                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsNoInherit),
                     value),
             BlueTuskCheckConstraintMetadata.NotEnforcedAnnotationName when annotation.Value is bool value =>
                 new MethodCallCodeFragment(
-                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsBlueTuskNotEnforced),
+                    nameof(BlueTuskCheckConstraintBuilderExtensions.IsNotEnforced),
                     value),
             _ => base.GenerateFluentApi(checkConstraint, annotation),
         };
@@ -291,7 +291,7 @@ internal sealed class BlueTuskAnnotationCodeGenerator(
                 annotation.Value,
                 System.Globalization.CultureInfo.InvariantCulture);
             return new MethodCallCodeFragment(
-                nameof(BlueTuskPropertyBuilderExtensions.UseBlueTuskIdentityColumn),
+                nameof(BlueTuskPropertyBuilderExtensions.UseIdentityColumn),
                 generation);
         }
 

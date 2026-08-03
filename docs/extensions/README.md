@@ -88,14 +88,14 @@ generic typed PostgreSQL-extension lifecycle without taking a dependency on
 ```csharp
 protected override void Up(MigrationBuilder migrationBuilder)
 {
-    migrationBuilder.EnsureBlueTuskCitext();
+    migrationBuilder.EnsureCitext();
     // Create citext-backed tables after this operation.
 }
 
 protected override void Down(MigrationBuilder migrationBuilder)
 {
     // Drop dependent tables before removing the extension.
-    migrationBuilder.DropBlueTuskCitext();
+    migrationBuilder.DropCitext();
 }
 ```
 
@@ -103,7 +103,7 @@ For model-owned installation and database-first round-tripping, configure the
 generic lifecycle in `OnModelCreating`:
 
 ```csharp
-modelBuilder.HasBlueTuskExtension(
+modelBuilder.HasExtension(
     "citext",
     extension => extension.UseSchema("extensions"));
 ```

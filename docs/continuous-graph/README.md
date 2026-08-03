@@ -128,19 +128,23 @@ dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network
 
 `ContinuousGraphQueryRegistry` stores non-generic registration descriptors
 without retaining bound parameter values or result rows. Register each compiled
-plan with the application registry. `HostedContinuousGraphControlPlaneQueryService`
-projects query fingerprints, graph names, databases, element aliases, exact
-table dependencies, result limits, and capabilities. The authorised dashboard
+plan with the application registry. Install the optional
+`BlueTusk.ContinuousGraph.ControlPlane` package to add
+`HostedContinuousGraphControlPlaneQueryService`. It projects query
+fingerprints, graph names, databases, element aliases, exact table
+dependencies, result limits, and capabilities. The authorised dashboard
 exposes the same inventory at `/graphs` and `/api/graphs`; every application
-value is HTML encoded.
+value is HTML encoded. This adapter owns the preview-to-stable dependency; the
+Control Plane core does not reference Continuous Graph.
 
 ## Release state
 
-The package is independently versioned as `0.1.0-preview.1` and has passed its
-Phase 7 implementation and package-verification gates. Its inspected NuGet pack
-correctly depends on the Provider, EF, Live, and EF Core packages. The family
-manifest is enabled after the Live preview passed its release gate, and the
-release script machine-enforces that dependency readiness.
+The two packages are independently versioned as `0.1.0-preview.1` and have
+passed their Phase 7 implementation gates. `BlueTusk.ContinuousGraph` contains
+the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
+operations adapter. The family remains non-publishable until Provider, Live,
+and Control Plane release dependencies are enabled in order. The release
+script machine-enforces that dependency readiness.
 See the [preview release notes](release-notes-0.1.0-preview.1.md) for the exact
 scope and boundaries.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,

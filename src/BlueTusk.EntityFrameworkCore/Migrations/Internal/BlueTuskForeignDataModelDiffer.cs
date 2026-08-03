@@ -56,7 +56,7 @@ internal static class BlueTuskForeignDataModelDiffer
                 unmatched.Remove(definition.Name);
                 if (!WrapperEquals(oldDefinition, definition))
                 {
-                    before.Add(new AlterBlueTuskForeignDataWrapperOperation
+                    before.Add(new AlterForeignDataWrapperOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -70,7 +70,7 @@ internal static class BlueTuskForeignDataModelDiffer
             if (candidates.Length == 1)
             {
                 var renamed = candidates[0];
-                before.Add(new RenameBlueTuskForeignDataWrapperOperation
+                before.Add(new RenameForeignDataWrapperOperation
                 {
                     Name = oldDefinition.Name,
                     NewName = renamed.Name,
@@ -80,7 +80,7 @@ internal static class BlueTuskForeignDataModelDiffer
             }
             else
             {
-                after.Add(new DropBlueTuskForeignDataWrapperOperation
+                after.Add(new DropForeignDataWrapperOperation
                 {
                     Name = oldDefinition.Name,
                     IsDestructiveChange = true,
@@ -90,7 +90,7 @@ internal static class BlueTuskForeignDataModelDiffer
 
         foreach (var definition in unmatched.Values.OrderBy(item => item.Name, StringComparer.Ordinal))
         {
-            before.Add(new CreateBlueTuskForeignDataWrapperOperation { Definition = definition });
+            before.Add(new CreateForeignDataWrapperOperation { Definition = definition });
         }
 
         return renames;
@@ -114,7 +114,7 @@ internal static class BlueTuskForeignDataModelDiffer
                 unmatched.Remove(definition.Name);
                 if (!ServerEquals(oldDefinition, definition))
                 {
-                    before.Add(new AlterBlueTuskForeignServerOperation
+                    before.Add(new AlterForeignServerOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -128,7 +128,7 @@ internal static class BlueTuskForeignDataModelDiffer
             if (candidates.Length == 1)
             {
                 var renamed = candidates[0];
-                before.Add(new RenameBlueTuskForeignServerOperation
+                before.Add(new RenameForeignServerOperation
                 {
                     Name = original.Name,
                     NewName = renamed.Name,
@@ -138,7 +138,7 @@ internal static class BlueTuskForeignDataModelDiffer
             }
             else
             {
-                after.Add(new DropBlueTuskForeignServerOperation
+                after.Add(new DropForeignServerOperation
                 {
                     Name = original.Name,
                     IsDestructiveChange = true,
@@ -148,7 +148,7 @@ internal static class BlueTuskForeignDataModelDiffer
 
         foreach (var definition in unmatched.Values.OrderBy(item => item.Name, StringComparer.Ordinal))
         {
-            before.Add(new CreateBlueTuskForeignServerOperation { Definition = definition });
+            before.Add(new CreateForeignServerOperation { Definition = definition });
         }
 
         return renames;
@@ -172,7 +172,7 @@ internal static class BlueTuskForeignDataModelDiffer
                 unmatched.Remove(key);
                 if (!MappingEquals(oldDefinition, definition))
                 {
-                    before.Add(new AlterBlueTuskUserMappingOperation
+                    before.Add(new AlterUserMappingOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -182,7 +182,7 @@ internal static class BlueTuskForeignDataModelDiffer
                 continue;
             }
 
-            after.Add(new DropBlueTuskUserMappingOperation
+            after.Add(new DropUserMappingOperation
             {
                 ServerName = oldDefinition.ServerName,
                 UserName = oldDefinition.UserName,
@@ -194,7 +194,7 @@ internal static class BlueTuskForeignDataModelDiffer
                      .OrderBy(item => item.ServerName, StringComparer.Ordinal)
                      .ThenBy(item => item.UserName, StringComparer.Ordinal))
         {
-            before.Add(new CreateBlueTuskUserMappingOperation { Definition = definition });
+            before.Add(new CreateUserMappingOperation { Definition = definition });
         }
     }
 

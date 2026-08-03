@@ -11,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskPartitioningBuilderExtensions
 {
     /// <summary>Configures a partitioned table with explicit column or trusted SQL-expression keys.</summary>
-    public static BlueTuskPartitioningBuilder HasBlueTuskPartitioning(
+    public static BlueTuskPartitioningBuilder HasPartitioning(
         this EntityTypeBuilder entityBuilder,
         BlueTuskPartitionStrategy strategy,
         params BlueTuskPartitionKeyDefinition[] keys)
@@ -27,28 +27,28 @@ public static class BlueTuskPartitioningBuilderExtensions
     }
 
     /// <summary>Configures RANGE partitioning over one or more mapped properties.</summary>
-    public static BlueTuskPartitioningBuilder HasBlueTuskRangePartitioning<TEntity>(
+    public static BlueTuskPartitioningBuilder HasRangePartitioning<TEntity>(
         this EntityTypeBuilder<TEntity> entityBuilder,
         Expression<Func<TEntity, object?>> keys)
         where TEntity : class =>
         HasPropertyPartitioning(entityBuilder, BlueTuskPartitionStrategy.Range, keys);
 
     /// <summary>Configures LIST partitioning over one or more mapped properties.</summary>
-    public static BlueTuskPartitioningBuilder HasBlueTuskListPartitioning<TEntity>(
+    public static BlueTuskPartitioningBuilder HasListPartitioning<TEntity>(
         this EntityTypeBuilder<TEntity> entityBuilder,
         Expression<Func<TEntity, object?>> keys)
         where TEntity : class =>
         HasPropertyPartitioning(entityBuilder, BlueTuskPartitionStrategy.List, keys);
 
     /// <summary>Configures HASH partitioning over one or more mapped properties.</summary>
-    public static BlueTuskPartitioningBuilder HasBlueTuskHashPartitioning<TEntity>(
+    public static BlueTuskPartitioningBuilder HasHashPartitioning<TEntity>(
         this EntityTypeBuilder<TEntity> entityBuilder,
         Expression<Func<TEntity, object?>> keys)
         where TEntity : class =>
         HasPropertyPartitioning(entityBuilder, BlueTuskPartitionStrategy.Hash, keys);
 
     /// <summary>Removes PostgreSQL partitioning metadata from an entity table.</summary>
-    public static EntityTypeBuilder HasNoBlueTuskPartitioning(this EntityTypeBuilder entityBuilder)
+    public static EntityTypeBuilder HasNoPartitioning(this EntityTypeBuilder entityBuilder)
     {
         ArgumentNullException.ThrowIfNull(entityBuilder);
         entityBuilder.Metadata.RemoveAnnotation(BlueTuskPartitionMetadata.AnnotationName);
@@ -56,7 +56,7 @@ public static class BlueTuskPartitioningBuilderExtensions
     }
 
     /// <summary>Reads PostgreSQL partitioning metadata from an EF entity type.</summary>
-    public static BlueTuskPartitioningDefinition? GetBlueTuskPartitioning(
+    public static BlueTuskPartitioningDefinition? GetPartitioning(
         this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
@@ -64,7 +64,7 @@ public static class BlueTuskPartitioningBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskPartitioning(
+    public static EntityTypeBuilder HasPartitioning(
         this EntityTypeBuilder entityBuilder,
         string serializedDefinition)
     {
@@ -96,7 +96,7 @@ public static class BlueTuskPartitioningBuilderExtensions
                     return BlueTuskPartitionKeyDefinition.Column(propertyName);
                 })
             .ToArray();
-        return HasBlueTuskPartitioning(entityBuilder, strategy, definitions);
+        return HasPartitioning(entityBuilder, strategy, definitions);
     }
 
     private static string[] GetPropertyNames<TEntity>(Expression<Func<TEntity, object?>> expression)

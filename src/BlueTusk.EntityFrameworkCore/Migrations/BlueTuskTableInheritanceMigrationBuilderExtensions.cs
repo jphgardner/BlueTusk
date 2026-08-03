@@ -7,7 +7,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 public static class BlueTuskTableInheritanceMigrationBuilderExtensions
 {
     /// <summary>Adds a direct table-inheritance parent.</summary>
-    public static OperationBuilder<AddBlueTuskTableInheritanceOperation> AddBlueTuskTableInheritance(
+    public static OperationBuilder<AddTableInheritanceOperation> AddTableInheritance(
         this MigrationBuilder migrationBuilder,
         string table,
         string parentTable,
@@ -17,7 +17,7 @@ public static class BlueTuskTableInheritanceMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(parentTable);
-        var operation = new AddBlueTuskTableInheritanceOperation
+        var operation = new AddTableInheritanceOperation
         {
             Table = table,
             Schema = schema,
@@ -25,11 +25,11 @@ public static class BlueTuskTableInheritanceMigrationBuilderExtensions
             ParentSchema = parentSchema,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AddBlueTuskTableInheritanceOperation>(operation);
+        return new OperationBuilder<AddTableInheritanceOperation>(operation);
     }
 
     /// <summary>Removes a direct table-inheritance parent without dropping either table.</summary>
-    public static OperationBuilder<RemoveBlueTuskTableInheritanceOperation> RemoveBlueTuskTableInheritance(
+    public static OperationBuilder<RemoveTableInheritanceOperation> RemoveTableInheritance(
         this MigrationBuilder migrationBuilder,
         string table,
         string parentTable,
@@ -39,7 +39,7 @@ public static class BlueTuskTableInheritanceMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(parentTable);
-        var operation = new RemoveBlueTuskTableInheritanceOperation
+        var operation = new RemoveTableInheritanceOperation
         {
             Table = table,
             Schema = schema,
@@ -47,6 +47,6 @@ public static class BlueTuskTableInheritanceMigrationBuilderExtensions
             ParentSchema = parentSchema,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RemoveBlueTuskTableInheritanceOperation>(operation);
+        return new OperationBuilder<RemoveTableInheritanceOperation>(operation);
     }
 }

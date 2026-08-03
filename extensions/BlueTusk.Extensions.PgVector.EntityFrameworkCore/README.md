@@ -20,6 +20,6 @@ store types such as `vector(768)` are preserved. `EF.Functions.L2Distance`,
 index-compatible `<->`, `<#>`, `<=>`, and `<+>` operators. `HammingDistance` and
 `JaccardDistance` translate `BlueTuskBitString` operands to `<~>` and `<%>`.
 
-Use `EnsureBlueTuskPgVector()` and `DropBlueTuskPgVector()` in migrations when
+Use `EnsurePgVector()` and `DropPgVector()` in migrations when
 the application owns the extension lifecycle. These APIs and the BlueTusk EF
 provider remain experimental `0.3.0-preview.1` previews.

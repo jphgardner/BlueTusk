@@ -194,7 +194,7 @@ internal sealed class NetworkContext(DbContextOptions<NetworkContext> options) :
             entity.Property(link => link.DestinationId).HasColumnName("destination_id");
             entity.Property(link => link.LatencyMilliseconds).HasColumnName("latency_ms");
         });
-        modelBuilder.HasBlueTuskPropertyGraph(
+        modelBuilder.HasPropertyGraph(
             "network_graph",
             graph =>
             {

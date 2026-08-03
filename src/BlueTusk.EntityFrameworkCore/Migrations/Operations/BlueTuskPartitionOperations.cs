@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
 /// <summary>Creates a PostgreSQL table as a partition of another table.</summary>
-public sealed class CreateBlueTuskPartitionOperation : MigrationOperation
+public sealed class CreatePartitionOperation : MigrationOperation
 {
     public string ParentName { get; set; } = string.Empty;
 
@@ -14,7 +14,7 @@ public sealed class CreateBlueTuskPartitionOperation : MigrationOperation
 }
 
 /// <summary>Drops a PostgreSQL partition table.</summary>
-public sealed class DropBlueTuskPartitionOperation : MigrationOperation
+public sealed class DropPartitionOperation : MigrationOperation
 {
     public string Name { get; set; } = string.Empty;
 
@@ -22,7 +22,7 @@ public sealed class DropBlueTuskPartitionOperation : MigrationOperation
 }
 
 /// <summary>Renames or moves a PostgreSQL partition table.</summary>
-public sealed class AlterBlueTuskPartitionOperation : MigrationOperation
+public sealed class AlterPartitionOperation : MigrationOperation
 {
     public string Name { get; set; } = string.Empty;
 
@@ -34,7 +34,7 @@ public sealed class AlterBlueTuskPartitionOperation : MigrationOperation
 }
 
 /// <summary>Attaches an existing table to a PostgreSQL partitioned table.</summary>
-public sealed class AttachBlueTuskPartitionOperation : MigrationOperation
+public sealed class AttachPartitionOperation : MigrationOperation
 {
     public string ParentName { get; set; } = string.Empty;
 
@@ -61,7 +61,7 @@ public enum BlueTuskPartitionDetachMode
 }
 
 /// <summary>Detaches a PostgreSQL partition into a standalone table.</summary>
-public sealed class DetachBlueTuskPartitionOperation : MigrationOperation
+public sealed class DetachPartitionOperation : MigrationOperation
 {
     public string ParentName { get; set; } = string.Empty;
 

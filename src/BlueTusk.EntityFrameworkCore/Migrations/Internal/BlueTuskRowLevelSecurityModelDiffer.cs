@@ -77,7 +77,7 @@ internal static class BlueTuskRowLevelSecurityModelDiffer
             var definition = targetTable.RowLevelSecurity;
             if (definition.Enabled || definition.Forced)
             {
-                after.Add(new AlterBlueTuskRowLevelSecurityOperation
+                after.Add(new AlterRowLevelSecurityOperation
                 {
                     Table = targetKey.Name,
                     Schema = targetKey.Schema,
@@ -109,7 +109,7 @@ internal static class BlueTuskRowLevelSecurityModelDiffer
                 {
                     if (CanAlter(sourcePolicy, targetPolicy))
                     {
-                        operations.Add(new AlterBlueTuskRowSecurityPolicyOperation
+                        operations.Add(new AlterRowSecurityPolicyOperation
                         {
                             Table = table.Name,
                             Schema = table.Schema,
@@ -132,7 +132,7 @@ internal static class BlueTuskRowLevelSecurityModelDiffer
             if (renameCandidates.Length == 1)
             {
                 var renamed = renameCandidates[0];
-                operations.Add(new RenameBlueTuskRowSecurityPolicyOperation
+                operations.Add(new RenameRowSecurityPolicyOperation
                 {
                     Table = table.Name,
                     Schema = table.Schema,
@@ -164,7 +164,7 @@ internal static class BlueTuskRowLevelSecurityModelDiffer
             return;
         }
 
-        operations.Add(new AlterBlueTuskRowLevelSecurityOperation
+        operations.Add(new AlterRowLevelSecurityOperation
         {
             Table = table.Name,
             Schema = table.Schema,
@@ -186,7 +186,7 @@ internal static class BlueTuskRowLevelSecurityModelDiffer
             : new TableKey(rename.NewSchema ?? rename.Schema, rename.NewName ?? rename.Name);
     }
 
-    private static CreateBlueTuskRowSecurityPolicyOperation CreatePolicy(
+    private static CreateRowSecurityPolicyOperation CreatePolicy(
         TableKey table,
         BlueTuskRowSecurityPolicyDefinition policy) =>
         new()
@@ -196,7 +196,7 @@ internal static class BlueTuskRowLevelSecurityModelDiffer
             Definition = policy,
         };
 
-    private static DropBlueTuskRowSecurityPolicyOperation DropPolicy(TableKey table, string name) =>
+    private static DropRowSecurityPolicyOperation DropPolicy(TableKey table, string name) =>
         new()
         {
             Table = table.Name,

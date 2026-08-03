@@ -14,6 +14,6 @@ options.UseBlueTusk(dataSource, provider => provider.UseCitext());
 
 `BlueTuskCitext` properties then map to `"public"."citext"`, including arrays,
 and normal equality operators retain PostgreSQL's server-side case-insensitive
-semantics. Use `migrationBuilder.EnsureBlueTuskCitext()` in `Up` before creating
-objects that use the type, and `migrationBuilder.DropBlueTuskCitext()` in `Down`
+semantics. Use `migrationBuilder.EnsureCitext()` in `Up` before creating
+objects that use the type, and `migrationBuilder.DropCitext()` in `Down`
 when the application owns the extension installation.

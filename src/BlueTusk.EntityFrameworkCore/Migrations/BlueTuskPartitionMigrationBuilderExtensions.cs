@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for PostgreSQL declarative partitioning.</summary>
 public static class BlueTuskPartitionMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskPartitionOperation> CreateBlueTuskPartition(
+    public static OperationBuilder<CreatePartitionOperation> CreatePartition(
         this MigrationBuilder migrationBuilder,
         string parentName,
         BlueTuskPartitionDefinition definition,
@@ -18,41 +18,41 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(parentName);
         ArgumentNullException.ThrowIfNull(definition);
-        var operation = new CreateBlueTuskPartitionOperation
+        var operation = new CreatePartitionOperation
         {
             ParentName = parentName,
             ParentSchema = parentSchema,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskPartitionOperation>(operation);
+        return new OperationBuilder<CreatePartitionOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskPartitionOperation> CreateBlueTuskPartition(
+    public static OperationBuilder<CreatePartitionOperation> CreatePartition(
         this MigrationBuilder migrationBuilder,
         string parentName,
         string serializedDefinition,
         string? parentSchema = null) =>
-        CreateBlueTuskPartition(
+        CreatePartition(
             migrationBuilder,
             parentName,
             BlueTuskPartitionMetadata.DeserializePartition(serializedDefinition),
             parentSchema);
 
-    public static OperationBuilder<DropBlueTuskPartitionOperation> DropBlueTuskPartition(
+    public static OperationBuilder<DropPartitionOperation> DropPartition(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskPartitionOperation { Name = name, Schema = schema };
+        var operation = new DropPartitionOperation { Name = name, Schema = schema };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskPartitionOperation>(operation);
+        return new OperationBuilder<DropPartitionOperation>(operation);
     }
 
-    public static OperationBuilder<AlterBlueTuskPartitionOperation> AlterBlueTuskPartition(
+    public static OperationBuilder<AlterPartitionOperation> AlterPartition(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName,
@@ -62,7 +62,7 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new AlterBlueTuskPartitionOperation
+        var operation = new AlterPartitionOperation
         {
             Name = name,
             Schema = schema,
@@ -70,10 +70,10 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
             NewSchema = newSchema,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskPartitionOperation>(operation);
+        return new OperationBuilder<AlterPartitionOperation>(operation);
     }
 
-    public static OperationBuilder<AttachBlueTuskPartitionOperation> AttachBlueTuskPartition(
+    public static OperationBuilder<AttachPartitionOperation> AttachPartition(
         this MigrationBuilder migrationBuilder,
         string parentName,
         string partitionName,
@@ -85,7 +85,7 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(parentName);
         ArgumentException.ThrowIfNullOrWhiteSpace(partitionName);
         ArgumentNullException.ThrowIfNull(bound);
-        var operation = new AttachBlueTuskPartitionOperation
+        var operation = new AttachPartitionOperation
         {
             ParentName = parentName,
             ParentSchema = parentSchema,
@@ -94,18 +94,18 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
             Bound = bound,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AttachBlueTuskPartitionOperation>(operation);
+        return new OperationBuilder<AttachPartitionOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AttachBlueTuskPartitionOperation> AttachBlueTuskPartition(
+    public static OperationBuilder<AttachPartitionOperation> AttachPartition(
         this MigrationBuilder migrationBuilder,
         string parentName,
         string partitionName,
         string serializedBound,
         string? parentSchema = null,
         string? partitionSchema = null) =>
-        AttachBlueTuskPartition(
+        AttachPartition(
             migrationBuilder,
             parentName,
             partitionName,
@@ -113,7 +113,7 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
             parentSchema,
             partitionSchema);
 
-    public static OperationBuilder<DetachBlueTuskPartitionOperation> DetachBlueTuskPartition(
+    public static OperationBuilder<DetachPartitionOperation> DetachPartition(
         this MigrationBuilder migrationBuilder,
         string parentName,
         string partitionName,
@@ -129,7 +129,7 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
             throw new ArgumentOutOfRangeException(nameof(mode), mode, "Unknown partition detach mode.");
         }
 
-        var operation = new DetachBlueTuskPartitionOperation
+        var operation = new DetachPartitionOperation
         {
             ParentName = parentName,
             ParentSchema = parentSchema,
@@ -138,6 +138,6 @@ public static class BlueTuskPartitionMigrationBuilderExtensions
             Mode = mode,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DetachBlueTuskPartitionOperation>(operation);
+        return new OperationBuilder<DetachPartitionOperation>(operation);
     }
 }

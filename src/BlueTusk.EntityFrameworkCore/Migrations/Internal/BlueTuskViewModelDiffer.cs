@@ -62,7 +62,7 @@ internal static class BlueTuskViewModelDiffer
             {
                 var renamed = renameCandidates[0];
                 processedTargets.Add(renamed.Key);
-                after.Add((renamed, new RenameBlueTuskViewOperation
+                after.Add((renamed, new RenameViewOperation
                 {
                     Kind = oldEntry.Kind,
                     Name = oldEntry.Name,
@@ -84,7 +84,7 @@ internal static class BlueTuskViewModelDiffer
 
         foreach (var entry in OrderByDependencies(drops.Values, source).AsEnumerable().Reverse())
         {
-            beforeRelational.Add(new DropBlueTuskViewOperation
+            beforeRelational.Add(new DropViewOperation
             {
                 Kind = entry.Kind,
                 Name = entry.Name,
@@ -139,7 +139,7 @@ internal static class BlueTuskViewModelDiffer
             var oldDefinition = (BlueTuskViewDefinition)oldEntry.Definition;
             var definition = (BlueTuskViewDefinition)entry.Definition;
             BlueTuskViewAlterationPlanner.ValidateReplacement(oldDefinition, definition);
-            after.Add((entry, new ReplaceBlueTuskViewOperation
+            after.Add((entry, new ReplaceViewOperation
             {
                 OldDefinition = oldDefinition,
                 Definition = definition,
@@ -150,7 +150,7 @@ internal static class BlueTuskViewModelDiffer
         var oldMaterialized = (BlueTuskMaterializedViewDefinition)oldEntry.Definition;
         var materialized = (BlueTuskMaterializedViewDefinition)entry.Definition;
         BlueTuskViewAlterationPlanner.ValidateMaterializedAlteration(oldMaterialized, materialized);
-        after.Add((entry, new AlterBlueTuskMaterializedViewOperation
+        after.Add((entry, new AlterMaterializedViewOperation
         {
             OldDefinition = oldMaterialized,
             Definition = materialized,
@@ -317,8 +317,8 @@ internal static class BlueTuskViewModelDiffer
                 .ToArray());
 
         public MigrationOperation CreateOperation() => Kind == BlueTuskViewKind.View
-            ? new CreateBlueTuskViewOperation { Definition = (BlueTuskViewDefinition)Definition }
-            : new CreateBlueTuskMaterializedViewOperation
+            ? new CreateViewOperation { Definition = (BlueTuskViewDefinition)Definition }
+            : new CreateMaterializedViewOperation
             {
                 Definition = (BlueTuskMaterializedViewDefinition)Definition,
             };

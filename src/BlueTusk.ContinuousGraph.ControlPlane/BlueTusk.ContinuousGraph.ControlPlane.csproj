@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>ContinuousGraph</BlueTuskProductFamily>
+    <Description>Continuous Graph operational projections for the BlueTusk Control Plane.</Description>
+    <PackageTags>postgresql;graph;sql-pgq;control-plane;operations</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\ContinuousGraph.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.ContinuousGraph\BlueTusk.ContinuousGraph.csproj" />
+    <ProjectReference Include="..\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
+  </ItemGroup>
+</Project>

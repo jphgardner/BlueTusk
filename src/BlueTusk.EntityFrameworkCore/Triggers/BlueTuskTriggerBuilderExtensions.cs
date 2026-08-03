@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class BlueTuskTriggerBuilderExtensions
 {
-    public static EntityTypeBuilder HasBlueTuskTrigger(
+    public static EntityTypeBuilder HasTrigger(
         this EntityTypeBuilder entityBuilder,
         string name,
         Action<BlueTuskTriggerBuilder> configure)
@@ -22,7 +22,7 @@ public static class BlueTuskTriggerBuilderExtensions
         return entityBuilder;
     }
 
-    public static EntityTypeBuilder<TEntity> HasBlueTuskTrigger<TEntity>(
+    public static EntityTypeBuilder<TEntity> HasTrigger<TEntity>(
         this EntityTypeBuilder<TEntity> entityBuilder,
         string name,
         Action<BlueTuskTriggerBuilder<TEntity>> configure)
@@ -37,7 +37,7 @@ public static class BlueTuskTriggerBuilderExtensions
         return entityBuilder;
     }
 
-    public static EntityTypeBuilder HasNoBlueTuskTrigger(this EntityTypeBuilder entityBuilder, string name)
+    public static EntityTypeBuilder HasNoTrigger(this EntityTypeBuilder entityBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(entityBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -49,14 +49,15 @@ public static class BlueTuskTriggerBuilderExtensions
         return entityBuilder;
     }
 
-    public static IReadOnlyList<BlueTuskTriggerDefinition> GetBlueTuskTriggers(this IReadOnlyEntityType entityType)
+    public static IReadOnlyList<BlueTuskTriggerDefinition> GetTriggerDefinitions(
+        this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
         return BlueTuskTriggerMetadata.Get(entityType);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskTriggers(
+    public static EntityTypeBuilder HasTriggers(
         this EntityTypeBuilder entityBuilder,
         string serializedDefinitions)
     {

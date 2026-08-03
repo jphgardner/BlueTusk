@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "formats": [
+    {
+      "id": "agent-api-contract",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "version-negotiated",
+      "evidence": "tests/BlueTusk.ControlPlane.Tests/DashboardEndpointTests.cs::Dashboard_maps_authorized_pages_and_HTML_encodes_inventory_values"
+    },
+    {
+      "id": "postgresql-audit-record",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.IntegrationTests/BlueTuskControlPlaneIntegrationTests.cs::Control_plane_reads_operational_state_and_audit_rows_are_immutable"
+    },
+    {
+      "id": "postgresql-audit-schema",
+      "currentVersion": 2,
+      "minimumReadableVersion": 1,
+      "compatibility": "migrated-in-place",
+      "evidence": "tests/BlueTusk.IntegrationTests/BlueTuskControlPlaneIntegrationTests.cs::Control_plane_reads_operational_state_and_audit_rows_are_immutable"
+    }
+  ]
+}

@@ -5,7 +5,7 @@
   "files": [
     {
       "path": "extensions/BlueTusk.Extensions.Citext.EntityFrameworkCore/PublicAPI.Shipped.txt",
-      "sha256": "c537e08cf6ec37d7b4d28fe785a77626775010a19a3d2d837b3665cc532abb19"
+      "sha256": "b81562ca11696d3fe190b77d63ec5ee16c330a96b680d8c9e4006b1cf0c1a0e6"
     },
     {
       "path": "extensions/BlueTusk.Extensions.Citext/PublicAPI.Shipped.txt",
@@ -25,7 +25,7 @@
     },
     {
       "path": "extensions/BlueTusk.Extensions.PgVector.EntityFrameworkCore/PublicAPI.Shipped.txt",
-      "sha256": "9e0acad93337b939e7c50d302e1514546a2033edccb0b559e849e3905dc340cd"
+      "sha256": "42d1a164c7f54dbee48a9ad91912c04ab13368756ed09710a61ea2ff74e2ae4d"
     },
     {
       "path": "extensions/BlueTusk.Extensions.PgVector/PublicAPI.Shipped.txt",
@@ -33,7 +33,7 @@
     },
     {
       "path": "extensions/BlueTusk.Extensions.PostGIS.EntityFrameworkCore/PublicAPI.Shipped.txt",
-      "sha256": "00e1663093335317b6800cd09607786e6dad56bcd44789c64416e93ffe547ccc"
+      "sha256": "c0fef257cb10d869f0b516f90cefb74fb1d775f0b3e0df5e249514fa21c500cc"
     },
     {
       "path": "extensions/BlueTusk.Extensions.PostGIS/PublicAPI.Shipped.txt",
@@ -41,7 +41,7 @@
     },
     {
       "path": "extensions/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore/PublicAPI.Shipped.txt",
-      "sha256": "a1b1b02fb26fbe3a2d5163ff4137c6cb5514180f316802c758ad38a084e10a16"
+      "sha256": "a979a28bdbe55a6af6d0616c3e050a8f659598697880574a6fa29786b57ea1a4"
     },
     {
       "path": "extensions/BlueTusk.Extensions.TimescaleDB/PublicAPI.Shipped.txt",
@@ -77,7 +77,7 @@
     },
     {
       "path": "src/BlueTusk.EntityFrameworkCore/PublicAPI.Shipped.txt",
-      "sha256": "f1656ca6f180bcb2ca0d69c40c2159aa7fd3fbf2d72fca211bbc3e58ff4c25c9"
+      "sha256": "c720215f8b061d3c352efbe5280116a2d8d6f832bcf480a103887408a59b7af0"
     },
     {
       "path": "src/BlueTusk.Extensions.Abstractions/PublicAPI.Shipped.txt",

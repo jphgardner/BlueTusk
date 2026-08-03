@@ -33,9 +33,9 @@ public sealed class ForeignDataMigrationsTests
         var model = initial.GetService<IDesignTimeModel>().Model;
         var differ = initial.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, model.GetRelationalModel()).ToArray();
-        var wrapper = Assert.Single(creates.OfType<CreateBlueTuskForeignDataWrapperOperation>());
-        var server = Assert.Single(creates.OfType<CreateBlueTuskForeignServerOperation>());
-        var mappings = creates.OfType<CreateBlueTuskUserMappingOperation>().ToArray();
+        var wrapper = Assert.Single(creates.OfType<CreateForeignDataWrapperOperation>());
+        var server = Assert.Single(creates.OfType<CreateForeignServerOperation>());
+        var mappings = creates.OfType<CreateUserMappingOperation>().ToArray();
         Assert.Equal(2, mappings.Length);
         var mapping = Assert.Single(mappings, operation => operation.Definition.UserName is null);
         var table = Assert.Single(creates.OfType<CreateTableOperation>());
@@ -73,9 +73,9 @@ public sealed class ForeignDataMigrationsTests
 
         var changedModel = changed.GetService<IDesignTimeModel>().Model;
         var alters = differ.GetDifferences(model.GetRelationalModel(), changedModel.GetRelationalModel()).ToArray();
-        Assert.Single(alters.OfType<AlterBlueTuskForeignDataWrapperOperation>());
-        Assert.Single(alters.OfType<AlterBlueTuskForeignServerOperation>());
-        Assert.Equal(2, alters.OfType<AlterBlueTuskUserMappingOperation>().Count());
+        Assert.Single(alters.OfType<AlterForeignDataWrapperOperation>());
+        Assert.Single(alters.OfType<AlterForeignServerOperation>());
+        Assert.Equal(2, alters.OfType<AlterUserMappingOperation>().Count());
         Assert.Single(alters.OfType<AlterTableOperation>());
         var alterSql = string.Concat(generator.Generate(alters, changedModel)
             .Select(command => command.CommandText));
@@ -100,22 +100,22 @@ public sealed class ForeignDataMigrationsTests
         var renamedModel = renamed.GetService<IDesignTimeModel>().Model;
         var renames = differ.GetDifferences(
             changedModel.GetRelationalModel(), renamedModel.GetRelationalModel()).ToArray();
-        Assert.Single(renames.OfType<RenameBlueTuskForeignDataWrapperOperation>());
-        Assert.Single(renames.OfType<RenameBlueTuskForeignServerOperation>());
+        Assert.Single(renames.OfType<RenameForeignDataWrapperOperation>());
+        Assert.Single(renames.OfType<RenameForeignServerOperation>());
         Assert.Single(renames.OfType<RenameTableOperation>());
-        Assert.Empty(renames.OfType<CreateBlueTuskUserMappingOperation>());
-        Assert.Empty(renames.OfType<DropBlueTuskUserMappingOperation>());
+        Assert.Empty(renames.OfType<CreateUserMappingOperation>());
+        Assert.Empty(renames.OfType<DropUserMappingOperation>());
         _ = generator.Generate(renames, renamedModel);
 
         var removals = differ.GetDifferences(
             renamedModel.GetRelationalModel(),
             removed.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
         var dropTableIndex = Array.FindIndex(removals, operation => operation is DropTableOperation);
-        var dropMappingIndex = Array.FindIndex(removals, operation => operation is DropBlueTuskUserMappingOperation);
-        var dropServerIndex = Array.FindIndex(removals, operation => operation is DropBlueTuskForeignServerOperation);
+        var dropMappingIndex = Array.FindIndex(removals, operation => operation is DropUserMappingOperation);
+        var dropServerIndex = Array.FindIndex(removals, operation => operation is DropForeignServerOperation);
         var dropWrapperIndex = Array.FindIndex(
             removals,
-            operation => operation is DropBlueTuskForeignDataWrapperOperation);
+            operation => operation is DropForeignDataWrapperOperation);
         Assert.True(dropTableIndex < dropMappingIndex);
         Assert.True(dropMappingIndex < dropServerIndex);
         Assert.True(dropServerIndex < dropWrapperIndex);
@@ -124,33 +124,33 @@ public sealed class ForeignDataMigrationsTests
             StringComparison.Ordinal);
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskForeignDataWrapper(wrapper.Definition);
-        migration.AlterBlueTuskForeignDataWrapper(wrapper.Definition, wrapper.Definition with { Options = [] });
-        migration.RenameBlueTuskForeignDataWrapper("test_fdw", "test_fdw_v2");
-        migration.CreateBlueTuskForeignServer(server.Definition);
-        migration.AlterBlueTuskForeignServer(server.Definition, server.Definition with { Version = "2" });
-        migration.RenameBlueTuskForeignServer("test_server", "test_server_v2");
-        migration.CreateBlueTuskUserMapping(mapping.Definition);
-        migration.AlterBlueTuskUserMapping(
+        migration.CreateForeignDataWrapper(wrapper.Definition);
+        migration.AlterForeignDataWrapper(wrapper.Definition, wrapper.Definition with { Options = [] });
+        migration.RenameForeignDataWrapper("test_fdw", "test_fdw_v2");
+        migration.CreateForeignServer(server.Definition);
+        migration.AlterForeignServer(server.Definition, server.Definition with { Version = "2" });
+        migration.RenameForeignServer("test_server", "test_server_v2");
+        migration.CreateUserMapping(mapping.Definition);
+        migration.AlterUserMapping(
             mapping.Definition,
             mapping.Definition with { Options = [new BlueTuskForeignOptionDefinition("user", "next")] });
-        migration.DropBlueTuskUserMapping("test_server");
-        migration.DropBlueTuskForeignServer("test_server_v2");
-        migration.DropBlueTuskForeignDataWrapper("test_fdw_v2");
+        migration.DropUserMapping("test_server");
+        migration.DropForeignServer("test_server_v2");
+        migration.DropForeignDataWrapper("test_fdw_v2");
         using var provider = DesignServices();
         var codeBuilder = new IndentedStringBuilder();
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, codeBuilder);
         var code = codeBuilder.ToString();
-        Assert.Contains("CreateBlueTuskForeignDataWrapper", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskForeignDataWrapper", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskForeignDataWrapper", code, StringComparison.Ordinal);
-        Assert.Contains("CreateBlueTuskForeignServer", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskForeignServer", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskForeignServer", code, StringComparison.Ordinal);
-        Assert.Contains("CreateBlueTuskUserMapping", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskUserMapping", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskUserMapping", code, StringComparison.Ordinal);
+        Assert.Contains("CreateForeignDataWrapper", code, StringComparison.Ordinal);
+        Assert.Contains("AlterForeignDataWrapper", code, StringComparison.Ordinal);
+        Assert.Contains("RenameForeignDataWrapper", code, StringComparison.Ordinal);
+        Assert.Contains("CreateForeignServer", code, StringComparison.Ordinal);
+        Assert.Contains("AlterForeignServer", code, StringComparison.Ordinal);
+        Assert.Contains("RenameForeignServer", code, StringComparison.Ordinal);
+        Assert.Contains("CreateUserMapping", code, StringComparison.Ordinal);
+        Assert.Contains("AlterUserMapping", code, StringComparison.Ordinal);
+        Assert.Contains("DropUserMapping", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -164,25 +164,25 @@ public sealed class ForeignDataMigrationsTests
             "public.connect_source",
             []);
         var commands = context.GetService<IMigrationsSqlGenerator>().Generate(
-            [new CreateBlueTuskForeignDataWrapperOperation { Definition = definition }]);
+            [new CreateForeignDataWrapperOperation { Definition = definition }]);
         Assert.Contains("server_version_num')::integer < 190000", commands[0].CommandText,
             StringComparison.Ordinal);
         Assert.Contains("CONNECTION \"public\".\"connect_source\"", commands[1].CommandText,
             StringComparison.Ordinal);
 
         var model = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => model.HasBlueTuskPublicUserMapping(
+        Assert.Throws<ArgumentException>(() => model.HasPublicUserMapping(
             "test_server",
             mapping => mapping.HasOption("password", "do-not-store")));
 
         Assert.Throws<InvalidOperationException>(() => context.GetService<IMigrationsSqlGenerator>().Generate(
-            [new CreateBlueTuskUserMappingOperation
+            [new CreateUserMappingOperation
             {
                 Definition = new BlueTuskUserMappingDefinition("test_server", null, [], OptionsRedacted: true),
             }]));
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskUserMapping(new BlueTuskUserMappingDefinition(
+        migration.CreateUserMapping(new BlueTuskUserMappingDefinition(
             "test_server",
             null,
             [new BlueTuskForeignOptionDefinition("password", "runtime-secret")]));
@@ -252,8 +252,8 @@ public sealed class ForeignDataMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskForeignData(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
-                Assert.Contains("HasBlueTuskForeignTableDefinition(", scaffolded.ContextFile.Code,
+                Assert.Contains("HasForeignData(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasForeignTableDefinition(", scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
                 Assert.Contains("HasNoKey()", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.DoesNotContain("remote_user", scaffolded.ContextFile.Code, StringComparison.Ordinal);
@@ -302,20 +302,20 @@ public sealed class ForeignDataMigrationsTests
     {
         var wrapperName = renamed ? "test_fdw_v2" : "test_fdw";
         var serverName = renamed ? "test_server_v2" : "test_server";
-        modelBuilder.HasBlueTuskForeignDataWrapper(
+        modelBuilder.HasForeignDataWrapper(
             wrapperName,
             wrapper => wrapper.HasOption("wrapper_option", changed ? "two" : "one"));
-        modelBuilder.HasBlueTuskForeignServer(
+        modelBuilder.HasForeignServer(
             serverName,
             wrapperName,
             server => server
                 .HasType("remote")
                 .HasVersion(changed ? "2" : "1")
                 .HasOption("endpoint", changed ? "two" : "one"));
-        modelBuilder.HasBlueTuskPublicUserMapping(
+        modelBuilder.HasPublicUserMapping(
             serverName,
             mapping => mapping.HasOption("user", changed ? "remote_user_v2" : "remote_user"));
-        modelBuilder.HasBlueTuskUserMapping(
+        modelBuilder.HasUserMapping(
             serverName,
             "postgres",
             mapping => mapping.HasOption("user", changed ? "mapped_postgres_v2" : "mapped_postgres"));
@@ -325,7 +325,7 @@ public sealed class ForeignDataMigrationsTests
             entity.ToTable(renamed ? "foreign_records_v2" : "foreign_records", "foreign_tests");
             entity.Property(record => record.Id).HasColumnName("id").ValueGeneratedNever();
             entity.Property(record => record.Note).HasColumnName("note").IsRequired();
-            entity.HasBlueTuskForeignTable(serverName, table => table
+            entity.HasForeignTable(serverName, table => table
                 .HasOption("table_name", changed ? "remote_records_v2" : "remote_records")
                 .HasColumnOption("id", "column_name", changed ? "remote_id_v2" : "remote_id"));
         });
@@ -387,7 +387,7 @@ public sealed class ForeignDataMigrationsTests
                 "public.postgres_fdw_connection",
                 []);
             foreach (var command in context.GetService<IMigrationsSqlGenerator>().Generate(
-                         [new CreateBlueTuskForeignDataWrapperOperation { Definition = definition }]))
+                         [new CreateForeignDataWrapperOperation { Definition = definition }]))
             {
                 await Execute(cs, command.CommandText);
             }

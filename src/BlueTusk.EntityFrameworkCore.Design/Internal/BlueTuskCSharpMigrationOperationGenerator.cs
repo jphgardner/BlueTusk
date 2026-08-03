@@ -38,9 +38,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
 
         switch (operation)
         {
-            case CreateBlueTuskExpressionIndexOperation createExpressionIndex:
+            case CreateExpressionIndexOperation createExpressionIndex:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskExpressionIndex(")
+                    .Append("migrationBuilder.CreateExpressionIndex(")
                     .Append(Dependencies.CSharpHelper.Literal(createExpressionIndex.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(
@@ -49,9 +49,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(createExpressionIndex.Schema))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskExpressionIndexOperation dropExpressionIndex:
+            case DropExpressionIndexOperation dropExpressionIndex:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskExpressionIndex(")
+                    .Append("migrationBuilder.DropExpressionIndex(")
                     .Append(Dependencies.CSharpHelper.Literal(dropExpressionIndex.Name))
                     .Append(", ")
                     .Append(Literal(dropExpressionIndex.Schema))
@@ -59,9 +59,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(dropExpressionIndex.Concurrently ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskExpressionIndexOperation renameExpressionIndex:
+            case RenameExpressionIndexOperation renameExpressionIndex:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskExpressionIndex(")
+                    .Append("migrationBuilder.RenameExpressionIndex(")
                     .Append(Dependencies.CSharpHelper.Literal(renameExpressionIndex.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameExpressionIndex.NewName))
@@ -69,9 +69,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameExpressionIndex.Schema))
                     .AppendLine(");");
                 break;
-            case ValidateBlueTuskCheckConstraintOperation validateCheckConstraint:
+            case ValidateCheckConstraintOperation validateCheckConstraint:
                 builder
-                    .Append("migrationBuilder.ValidateBlueTuskCheckConstraint(")
+                    .Append("migrationBuilder.ValidateCheckConstraint(")
                     .Append(Dependencies.CSharpHelper.Literal(validateCheckConstraint.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(validateCheckConstraint.Table))
@@ -79,16 +79,16 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(validateCheckConstraint.Schema))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskTablespaceOperation createTablespace:
+            case CreateTablespaceOperation createTablespace:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskTablespace(")
+                    .Append("migrationBuilder.CreateTablespace(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskTablespaceMetadata.Serialize(createTablespace.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskTablespaceOperation alterTablespace:
+            case AlterTablespaceOperation alterTablespace:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskTablespace(")
+                    .Append("migrationBuilder.AlterTablespace(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskTablespaceMetadata.Serialize(alterTablespace.Definition)))
                     .Append(", ")
@@ -96,34 +96,34 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskTablespaceMetadata.Serialize(alterTablespace.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskTablespaceOperation renameTablespace:
+            case RenameTablespaceOperation renameTablespace:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskTablespace(")
+                    .Append("migrationBuilder.RenameTablespace(")
                     .Append(Dependencies.CSharpHelper.Literal(renameTablespace.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameTablespace.NewName))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskTablespaceOperation dropTablespace:
+            case DropTablespaceOperation dropTablespace:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskTablespace(")
+                    .Append("migrationBuilder.DropTablespace(")
                     .Append(Dependencies.CSharpHelper.Literal(dropTablespace.Name))
                     .Append(", ")
                     .Append(dropTablespace.IfExists ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskCollationOperation createCollation:
+            case CreateCollationOperation createCollation:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskCollation(")
+                    .Append("migrationBuilder.CreateCollation(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskCollationMetadata.Serialize(createCollation.Definition)))
                     .Append(", ")
                     .Append(createCollation.IfNotExists ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskCollationFromOperation createCollationFrom:
+            case CreateCollationFromOperation createCollationFrom:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskCollationFrom(")
+                    .Append("migrationBuilder.CreateCollationFrom(")
                     .Append(Dependencies.CSharpHelper.Literal(createCollationFrom.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(createCollationFrom.SourceName))
@@ -135,9 +135,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(createCollationFrom.IfNotExists ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskCollationOperation renameCollation:
+            case RenameCollationOperation renameCollation:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskCollation(")
+                    .Append("migrationBuilder.RenameCollation(")
                     .Append(Dependencies.CSharpHelper.Literal(renameCollation.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameCollation.NewName))
@@ -147,17 +147,17 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameCollation.NewSchema))
                     .AppendLine(");");
                 break;
-            case RefreshBlueTuskCollationVersionOperation refreshCollation:
+            case RefreshCollationVersionOperation refreshCollation:
                 builder
-                    .Append("migrationBuilder.RefreshBlueTuskCollationVersion(")
+                    .Append("migrationBuilder.RefreshCollationVersion(")
                     .Append(Dependencies.CSharpHelper.Literal(refreshCollation.Name))
                     .Append(", ")
                     .Append(Literal(refreshCollation.Schema))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskCollationOperation dropCollation:
+            case DropCollationOperation dropCollation:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskCollation(")
+                    .Append("migrationBuilder.DropCollation(")
                     .Append(Dependencies.CSharpHelper.Literal(dropCollation.Name))
                     .Append(", ")
                     .Append(Literal(dropCollation.Schema))
@@ -167,18 +167,18 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(dropCollation.Cascade ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskExtensionOperation createExtension:
+            case CreateExtensionOperation createExtension:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskExtension(")
+                    .Append("migrationBuilder.CreateExtension(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskExtensionMetadata.Serialize(createExtension.Definition)))
                     .Append(", ")
                     .Append(createExtension.IfNotExists ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskExtensionOperation alterExtension:
+            case AlterExtensionOperation alterExtension:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskExtension(")
+                    .Append("migrationBuilder.AlterExtension(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskExtensionMetadata.Serialize(alterExtension.Definition)))
                     .Append(", ")
@@ -186,9 +186,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskExtensionMetadata.Serialize(alterExtension.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskExtensionOperation dropExtension:
+            case DropExtensionOperation dropExtension:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskExtension(")
+                    .Append("migrationBuilder.DropExtension(")
                     .Append(Dependencies.CSharpHelper.Literal(dropExtension.Name))
                     .Append(", ")
                     .Append(dropExtension.IfExists ? "true" : "false")
@@ -196,16 +196,16 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(dropExtension.Cascade ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskViewOperation createView:
+            case CreateViewOperation createView:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskView(")
+                    .Append("migrationBuilder.CreateView(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskViewMetadata.Serialize(createView.Definition)))
                     .AppendLine(");");
                 break;
-            case ReplaceBlueTuskViewOperation replaceView:
+            case ReplaceViewOperation replaceView:
                 builder
-                    .Append("migrationBuilder.ReplaceBlueTuskView(")
+                    .Append("migrationBuilder.ReplaceView(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskViewMetadata.Serialize(replaceView.Definition)))
                     .Append(", ")
@@ -213,16 +213,16 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskViewMetadata.Serialize(replaceView.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskMaterializedViewOperation createMaterializedView:
+            case CreateMaterializedViewOperation createMaterializedView:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskMaterializedView(")
+                    .Append("migrationBuilder.CreateMaterializedView(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskViewMetadata.Serialize(createMaterializedView.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskMaterializedViewOperation alterMaterializedView:
+            case AlterMaterializedViewOperation alterMaterializedView:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskMaterializedView(")
+                    .Append("migrationBuilder.AlterMaterializedView(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskViewMetadata.Serialize(alterMaterializedView.Definition)))
                     .Append(", ")
@@ -230,9 +230,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskViewMetadata.Serialize(alterMaterializedView.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskViewOperation dropView:
+            case DropViewOperation dropView:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskView(")
+                    .Append("migrationBuilder.DropView(")
                     .Append("global::BlueTusk.EntityFrameworkCore.Views.BlueTuskViewKind.")
                     .Append(dropView.Kind.ToString())
                     .Append(", ")
@@ -241,9 +241,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(dropView.Schema))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskViewOperation renameView:
+            case RenameViewOperation renameView:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskView(")
+                    .Append("migrationBuilder.RenameView(")
                     .Append("global::BlueTusk.EntityFrameworkCore.Views.BlueTuskViewKind.")
                     .Append(renameView.Kind.ToString())
                     .Append(", ")
@@ -256,9 +256,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameView.NewSchema))
                     .AppendLine(");");
                 break;
-            case RefreshBlueTuskMaterializedViewOperation refreshMaterializedView:
+            case RefreshMaterializedViewOperation refreshMaterializedView:
                 builder
-                    .Append("migrationBuilder.RefreshBlueTuskMaterializedView(")
+                    .Append("migrationBuilder.RefreshMaterializedView(")
                     .Append(Dependencies.CSharpHelper.Literal(refreshMaterializedView.Name))
                     .Append(", ")
                     .Append(Literal(refreshMaterializedView.Schema))
@@ -268,16 +268,16 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(refreshMaterializedView.WithData ? "true" : "false")
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskRoutineOperation createRoutine:
+            case CreateRoutineOperation createRoutine:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskRoutine(")
+                    .Append("migrationBuilder.CreateRoutine(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskRoutineMetadata.Serialize(createRoutine.Definition)))
                     .AppendLine(");");
                 break;
-            case ReplaceBlueTuskRoutineOperation replaceRoutine:
+            case ReplaceRoutineOperation replaceRoutine:
                 builder
-                    .Append("migrationBuilder.ReplaceBlueTuskRoutine(")
+                    .Append("migrationBuilder.ReplaceRoutine(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskRoutineMetadata.Serialize(replaceRoutine.Definition)))
                     .Append(", ")
@@ -285,9 +285,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskRoutineMetadata.Serialize(replaceRoutine.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskRoutineOperation dropRoutine:
+            case DropRoutineOperation dropRoutine:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskRoutine(")
+                    .Append("migrationBuilder.DropRoutine(")
                     .Append("global::BlueTusk.EntityFrameworkCore.Routines.BlueTuskRoutineKind.")
                     .Append(dropRoutine.Kind.ToString())
                     .Append(", ")
@@ -298,9 +298,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(dropRoutine.Schema))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskRoutineOperation renameRoutine:
+            case RenameRoutineOperation renameRoutine:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskRoutine(")
+                    .Append("migrationBuilder.RenameRoutine(")
                     .Append("global::BlueTusk.EntityFrameworkCore.Routines.BlueTuskRoutineKind.")
                     .Append(renameRoutine.Kind.ToString())
                     .Append(", ")
@@ -315,16 +315,16 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameRoutine.NewSchema))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskEnumTypeOperation createEnum:
+            case CreateEnumTypeOperation createEnum:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskEnumType(")
+                    .Append("migrationBuilder.CreateEnumType(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskUserDefinedTypeMetadata.Serialize(createEnum.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskEnumTypeOperation alterEnum:
+            case AlterEnumTypeOperation alterEnum:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskEnumType(")
+                    .Append("migrationBuilder.AlterEnumType(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskUserDefinedTypeMetadata.Serialize(alterEnum.Definition)))
                     .Append(", ")
@@ -332,19 +332,19 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskUserDefinedTypeMetadata.Serialize(alterEnum.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskEnumTypeOperation dropEnum:
-                GenerateDropType("DropBlueTuskEnumType", dropEnum.Name, dropEnum.Schema, builder);
+            case DropEnumTypeOperation dropEnum:
+                GenerateDropType("DropEnumType", dropEnum.Name, dropEnum.Schema, builder);
                 break;
-            case CreateBlueTuskDomainTypeOperation createDomain:
+            case CreateDomainTypeOperation createDomain:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskDomainType(")
+                    .Append("migrationBuilder.CreateDomainType(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskUserDefinedTypeMetadata.Serialize(createDomain.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskDomainTypeOperation alterDomain:
+            case AlterDomainTypeOperation alterDomain:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskDomainType(")
+                    .Append("migrationBuilder.AlterDomainType(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskUserDefinedTypeMetadata.Serialize(alterDomain.Definition)))
                     .Append(", ")
@@ -352,19 +352,19 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskUserDefinedTypeMetadata.Serialize(alterDomain.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskDomainTypeOperation dropDomain:
-                GenerateDropType("DropBlueTuskDomainType", dropDomain.Name, dropDomain.Schema, builder);
+            case DropDomainTypeOperation dropDomain:
+                GenerateDropType("DropDomainType", dropDomain.Name, dropDomain.Schema, builder);
                 break;
-            case CreateBlueTuskCompositeTypeOperation createComposite:
+            case CreateCompositeTypeOperation createComposite:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskCompositeType(")
+                    .Append("migrationBuilder.CreateCompositeType(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskUserDefinedTypeMetadata.Serialize(createComposite.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskCompositeTypeOperation alterComposite:
+            case AlterCompositeTypeOperation alterComposite:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskCompositeType(")
+                    .Append("migrationBuilder.AlterCompositeType(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskUserDefinedTypeMetadata.Serialize(alterComposite.Definition)))
                     .Append(", ")
@@ -372,22 +372,22 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskUserDefinedTypeMetadata.Serialize(alterComposite.OldDefinition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskCompositeTypeOperation dropComposite:
-                GenerateDropType("DropBlueTuskCompositeType", dropComposite.Name, dropComposite.Schema, builder);
+            case DropCompositeTypeOperation dropComposite:
+                GenerateDropType("DropCompositeType", dropComposite.Name, dropComposite.Schema, builder);
                 break;
-            case CreateBlueTuskRangeTypeOperation createRange:
+            case CreateRangeTypeOperation createRange:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskRangeType(")
+                    .Append("migrationBuilder.CreateRangeType(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskUserDefinedTypeMetadata.Serialize(createRange.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskRangeTypeOperation dropRange:
-                GenerateDropType("DropBlueTuskRangeType", dropRange.Name, dropRange.Schema, builder);
+            case DropRangeTypeOperation dropRange:
+                GenerateDropType("DropRangeType", dropRange.Name, dropRange.Schema, builder);
                 break;
-            case RenameBlueTuskRangeTypeOperation renameRange:
+            case RenameRangeTypeOperation renameRange:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskRangeType(")
+                    .Append("migrationBuilder.RenameRangeType(")
                     .Append(Dependencies.CSharpHelper.Literal(renameRange.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameRange.NewName))
@@ -405,9 +405,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameRange.NewMultirangeSchema))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskUserDefinedTypeOperation renameType:
+            case RenameUserDefinedTypeOperation renameType:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskUserDefinedType(")
+                    .Append("migrationBuilder.RenameUserDefinedType(")
                     .Append("global::BlueTusk.EntityFrameworkCore.UserDefinedTypes.BlueTuskUserDefinedTypeKind.")
                     .Append(renameType.Kind.ToString())
                     .Append(", ")
@@ -420,9 +420,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameType.NewSchema))
                     .AppendLine(");");
                 break;
-            case AddBlueTuskTableInheritanceOperation addInheritance:
+            case AddTableInheritanceOperation addInheritance:
                 builder
-                    .Append("migrationBuilder.AddBlueTuskTableInheritance(")
+                    .Append("migrationBuilder.AddTableInheritance(")
                     .Append(Dependencies.CSharpHelper.Literal(addInheritance.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(addInheritance.ParentTable))
@@ -432,9 +432,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(addInheritance.ParentSchema))
                     .AppendLine(");");
                 break;
-            case RemoveBlueTuskTableInheritanceOperation removeInheritance:
+            case RemoveTableInheritanceOperation removeInheritance:
                 builder
-                    .Append("migrationBuilder.RemoveBlueTuskTableInheritance(")
+                    .Append("migrationBuilder.RemoveTableInheritance(")
                     .Append(Dependencies.CSharpHelper.Literal(removeInheritance.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(removeInheritance.ParentTable))
@@ -444,9 +444,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(removeInheritance.ParentSchema))
                     .AppendLine(");");
                 break;
-            case AddBlueTuskExclusionConstraintOperation addExclusionConstraint:
+            case AddExclusionConstraintOperation addExclusionConstraint:
                 builder
-                    .Append("migrationBuilder.AddBlueTuskExclusionConstraint(")
+                    .Append("migrationBuilder.AddExclusionConstraint(")
                     .Append(Dependencies.CSharpHelper.Literal(addExclusionConstraint.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(
@@ -455,9 +455,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(addExclusionConstraint.Schema))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskExclusionConstraintOperation dropExclusionConstraint:
+            case DropExclusionConstraintOperation dropExclusionConstraint:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskExclusionConstraint(")
+                    .Append("migrationBuilder.DropExclusionConstraint(")
                     .Append(Dependencies.CSharpHelper.Literal(dropExclusionConstraint.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(dropExclusionConstraint.Name))
@@ -465,9 +465,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(dropExclusionConstraint.Schema))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskExclusionConstraintOperation renameExclusionConstraint:
+            case RenameExclusionConstraintOperation renameExclusionConstraint:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskExclusionConstraint(")
+                    .Append("migrationBuilder.RenameExclusionConstraint(")
                     .Append(Dependencies.CSharpHelper.Literal(renameExclusionConstraint.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameExclusionConstraint.Name))
@@ -477,9 +477,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameExclusionConstraint.Schema))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskTriggerOperation createTrigger:
+            case CreateTriggerOperation createTrigger:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskTrigger(")
+                    .Append("migrationBuilder.CreateTrigger(")
                     .Append(Dependencies.CSharpHelper.Literal(createTrigger.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(
@@ -490,9 +490,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Dependencies.CSharpHelper.Literal(createTrigger.OrReplace))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskTriggerOperation dropTrigger:
+            case DropTriggerOperation dropTrigger:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskTrigger(")
+                    .Append("migrationBuilder.DropTrigger(")
                     .Append(Dependencies.CSharpHelper.Literal(dropTrigger.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(dropTrigger.Name))
@@ -500,9 +500,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(dropTrigger.Schema))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskTriggerOperation renameTrigger:
+            case RenameTriggerOperation renameTrigger:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskTrigger(")
+                    .Append("migrationBuilder.RenameTrigger(")
                     .Append(Dependencies.CSharpHelper.Literal(renameTrigger.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameTrigger.Name))
@@ -512,9 +512,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renameTrigger.Schema))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskTriggerEnabledModeOperation alterTriggerMode:
+            case AlterTriggerEnabledModeOperation alterTriggerMode:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskTriggerEnabledMode(")
+                    .Append("migrationBuilder.AlterTriggerEnabledMode(")
                     .Append(Dependencies.CSharpHelper.Literal(alterTriggerMode.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(alterTriggerMode.Name))
@@ -524,73 +524,73 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(alterTriggerMode.Schema))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskEventTriggerOperation createEventTrigger:
-                builder.Append("migrationBuilder.CreateBlueTuskEventTrigger(")
+            case CreateEventTriggerOperation createEventTrigger:
+                builder.Append("migrationBuilder.CreateEventTrigger(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskEventTriggerMetadata.Serialize(createEventTrigger.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskEventTriggerOperation dropEventTrigger:
-                builder.Append("migrationBuilder.DropBlueTuskEventTrigger(")
+            case DropEventTriggerOperation dropEventTrigger:
+                builder.Append("migrationBuilder.DropEventTrigger(")
                     .Append(Dependencies.CSharpHelper.Literal(dropEventTrigger.Name))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskEventTriggerOperation renameEventTrigger:
-                builder.Append("migrationBuilder.RenameBlueTuskEventTrigger(")
+            case RenameEventTriggerOperation renameEventTrigger:
+                builder.Append("migrationBuilder.RenameEventTrigger(")
                     .Append(Dependencies.CSharpHelper.Literal(renameEventTrigger.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameEventTrigger.NewName))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskEventTriggerEnabledModeOperation alterEventTriggerMode:
-                builder.Append("migrationBuilder.AlterBlueTuskEventTriggerEnabledMode(")
+            case AlterEventTriggerEnabledModeOperation alterEventTriggerMode:
+                builder.Append("migrationBuilder.AlterEventTriggerEnabledMode(")
                     .Append(Dependencies.CSharpHelper.Literal(alterEventTriggerMode.Name))
                     .Append(", global::BlueTusk.EntityFrameworkCore.EventTriggers.BlueTuskEventTriggerEnabledMode.")
                     .Append(alterEventTriggerMode.EnabledMode.ToString())
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskRuleOperation createRule:
-                builder.Append("migrationBuilder.CreateBlueTuskRule(")
+            case CreateRuleOperation createRule:
+                builder.Append("migrationBuilder.CreateRule(")
                     .Append(Dependencies.CSharpHelper.Literal(createRule.Table)).Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(BlueTuskRuleMetadata.Serialize(createRule.Definition)))
                     .Append(", ").Append(Literal(createRule.Schema)).Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(createRule.OrReplace)).AppendLine(");");
                 break;
-            case DropBlueTuskRuleOperation dropRule:
-                builder.Append("migrationBuilder.DropBlueTuskRule(")
+            case DropRuleOperation dropRule:
+                builder.Append("migrationBuilder.DropRule(")
                     .Append(Dependencies.CSharpHelper.Literal(dropRule.Table)).Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(dropRule.Name)).Append(", ")
                     .Append(Literal(dropRule.Schema)).AppendLine(");");
                 break;
-            case RenameBlueTuskRuleOperation renameRule:
-                builder.Append("migrationBuilder.RenameBlueTuskRule(")
+            case RenameRuleOperation renameRule:
+                builder.Append("migrationBuilder.RenameRule(")
                     .Append(Dependencies.CSharpHelper.Literal(renameRule.Table)).Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameRule.Name)).Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameRule.NewName)).Append(", ")
                     .Append(Literal(renameRule.Schema)).AppendLine(");");
                 break;
-            case AlterBlueTuskRuleEnabledModeOperation alterRuleMode:
-                builder.Append("migrationBuilder.AlterBlueTuskRuleEnabledMode(")
+            case AlterRuleEnabledModeOperation alterRuleMode:
+                builder.Append("migrationBuilder.AlterRuleEnabledMode(")
                     .Append(Dependencies.CSharpHelper.Literal(alterRuleMode.Table)).Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(alterRuleMode.Name))
                     .Append(", BlueTusk.EntityFrameworkCore.Rules.BlueTuskRuleEnabledMode.")
                     .Append(alterRuleMode.EnabledMode.ToString()).Append(", ")
                     .Append(Literal(alterRuleMode.Schema)).AppendLine(");");
                 break;
-            case CreateBlueTuskPublicationOperation createPublication:
-                builder.Append("migrationBuilder.CreateBlueTuskPublication(")
+            case CreatePublicationOperation createPublication:
+                builder.Append("migrationBuilder.CreatePublication(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskPublicationMetadata.Serialize(createPublication.Definition)))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskForeignDataWrapperOperation createWrapper:
-                builder.Append("migrationBuilder.CreateBlueTuskForeignDataWrapper(")
+            case CreateForeignDataWrapperOperation createWrapper:
+                builder.Append("migrationBuilder.CreateForeignDataWrapper(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskForeignDataMetadata.Serialize(createWrapper.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskForeignDataWrapperOperation alterWrapper:
-                builder.Append("migrationBuilder.AlterBlueTuskForeignDataWrapper(")
+            case AlterForeignDataWrapperOperation alterWrapper:
+                builder.Append("migrationBuilder.AlterForeignDataWrapper(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskForeignDataMetadata.Serialize(alterWrapper.OldDefinition)))
                     .Append(", ")
@@ -598,26 +598,26 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskForeignDataMetadata.Serialize(alterWrapper.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskForeignDataWrapperOperation dropWrapper:
-                builder.Append("migrationBuilder.DropBlueTuskForeignDataWrapper(")
+            case DropForeignDataWrapperOperation dropWrapper:
+                builder.Append("migrationBuilder.DropForeignDataWrapper(")
                     .Append(Dependencies.CSharpHelper.Literal(dropWrapper.Name))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskForeignDataWrapperOperation renameWrapper:
-                builder.Append("migrationBuilder.RenameBlueTuskForeignDataWrapper(")
+            case RenameForeignDataWrapperOperation renameWrapper:
+                builder.Append("migrationBuilder.RenameForeignDataWrapper(")
                     .Append(Dependencies.CSharpHelper.Literal(renameWrapper.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameWrapper.NewName))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskForeignServerOperation createServer:
-                builder.Append("migrationBuilder.CreateBlueTuskForeignServer(")
+            case CreateForeignServerOperation createServer:
+                builder.Append("migrationBuilder.CreateForeignServer(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskForeignDataMetadata.Serialize(createServer.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskForeignServerOperation alterServer:
-                builder.Append("migrationBuilder.AlterBlueTuskForeignServer(")
+            case AlterForeignServerOperation alterServer:
+                builder.Append("migrationBuilder.AlterForeignServer(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskForeignDataMetadata.Serialize(alterServer.OldDefinition)))
                     .Append(", ")
@@ -625,26 +625,26 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskForeignDataMetadata.Serialize(alterServer.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskForeignServerOperation dropServer:
-                builder.Append("migrationBuilder.DropBlueTuskForeignServer(")
+            case DropForeignServerOperation dropServer:
+                builder.Append("migrationBuilder.DropForeignServer(")
                     .Append(Dependencies.CSharpHelper.Literal(dropServer.Name))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskForeignServerOperation renameServer:
-                builder.Append("migrationBuilder.RenameBlueTuskForeignServer(")
+            case RenameForeignServerOperation renameServer:
+                builder.Append("migrationBuilder.RenameForeignServer(")
                     .Append(Dependencies.CSharpHelper.Literal(renameServer.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameServer.NewName))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskUserMappingOperation createMapping:
-                builder.Append("migrationBuilder.CreateBlueTuskUserMapping(")
+            case CreateUserMappingOperation createMapping:
+                builder.Append("migrationBuilder.CreateUserMapping(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskForeignDataMetadata.Serialize(createMapping.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskUserMappingOperation alterMapping:
-                builder.Append("migrationBuilder.AlterBlueTuskUserMapping(")
+            case AlterUserMappingOperation alterMapping:
+                builder.Append("migrationBuilder.AlterUserMapping(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskForeignDataMetadata.Serialize(alterMapping.OldDefinition)))
                     .Append(", ")
@@ -652,80 +652,80 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskForeignDataMetadata.Serialize(alterMapping.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskUserMappingOperation dropMapping:
-                builder.Append("migrationBuilder.DropBlueTuskUserMapping(")
+            case DropUserMappingOperation dropMapping:
+                builder.Append("migrationBuilder.DropUserMapping(")
                     .Append(Dependencies.CSharpHelper.Literal(dropMapping.ServerName))
                     .Append(", ")
                     .Append(Literal(dropMapping.UserName))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskOperatorOperation createOperator:
-                GenerateSchemaProgram("CreateBlueTuskOperator",
+            case CreateOperatorOperation createOperator:
+                GenerateSchemaProgram("CreateOperator",
                     BlueTuskSchemaProgramMetadata.Serialize(createOperator.Definition), builder);
                 break;
-            case ReplaceBlueTuskOperatorOperation replaceOperator:
-                GenerateSchemaProgram("ReplaceBlueTuskOperator",
+            case ReplaceOperatorOperation replaceOperator:
+                GenerateSchemaProgram("ReplaceOperator",
                     BlueTuskSchemaProgramMetadata.Serialize(replaceOperator.OldDefinition),
                     BlueTuskSchemaProgramMetadata.Serialize(replaceOperator.Definition), builder);
                 break;
-            case DropBlueTuskOperatorOperation dropOperator:
-                GenerateSchemaProgram("DropBlueTuskOperator",
+            case DropOperatorOperation dropOperator:
+                GenerateSchemaProgram("DropOperator",
                     BlueTuskSchemaProgramMetadata.Serialize(dropOperator.Definition), builder);
                 break;
-            case CreateBlueTuskOperatorFamilyOperation createFamily:
-                GenerateSchemaProgram("CreateBlueTuskOperatorFamily",
+            case CreateOperatorFamilyOperation createFamily:
+                GenerateSchemaProgram("CreateOperatorFamily",
                     BlueTuskSchemaProgramMetadata.Serialize(createFamily.Definition), builder);
                 break;
-            case AlterBlueTuskOperatorFamilyOperation alterFamily:
-                GenerateSchemaProgram("AlterBlueTuskOperatorFamily",
+            case AlterOperatorFamilyOperation alterFamily:
+                GenerateSchemaProgram("AlterOperatorFamily",
                     BlueTuskSchemaProgramMetadata.Serialize(alterFamily.OldDefinition),
                     BlueTuskSchemaProgramMetadata.Serialize(alterFamily.Definition), builder);
                 break;
-            case DropBlueTuskOperatorFamilyOperation dropFamily:
-                GenerateSchemaProgram("DropBlueTuskOperatorFamily",
+            case DropOperatorFamilyOperation dropFamily:
+                GenerateSchemaProgram("DropOperatorFamily",
                     BlueTuskSchemaProgramMetadata.Serialize(dropFamily.Definition), builder);
                 break;
-            case CreateBlueTuskOperatorClassOperation createClass:
-                GenerateSchemaProgram("CreateBlueTuskOperatorClass",
+            case CreateOperatorClassOperation createClass:
+                GenerateSchemaProgram("CreateOperatorClass",
                     BlueTuskSchemaProgramMetadata.Serialize(createClass.Definition), builder);
                 break;
-            case ReplaceBlueTuskOperatorClassOperation replaceClass:
-                GenerateSchemaProgram("ReplaceBlueTuskOperatorClass",
+            case ReplaceOperatorClassOperation replaceClass:
+                GenerateSchemaProgram("ReplaceOperatorClass",
                     BlueTuskSchemaProgramMetadata.Serialize(replaceClass.OldDefinition),
                     BlueTuskSchemaProgramMetadata.Serialize(replaceClass.Definition), builder);
                 break;
-            case DropBlueTuskOperatorClassOperation dropClass:
-                GenerateSchemaProgram("DropBlueTuskOperatorClass",
+            case DropOperatorClassOperation dropClass:
+                GenerateSchemaProgram("DropOperatorClass",
                     BlueTuskSchemaProgramMetadata.Serialize(dropClass.Definition), builder);
                 break;
-            case CreateBlueTuskCastOperation createCast:
-                GenerateSchemaProgram("CreateBlueTuskCast",
+            case CreateCastOperation createCast:
+                GenerateSchemaProgram("CreateCast",
                     BlueTuskSchemaProgramMetadata.Serialize(createCast.Definition), builder);
                 break;
-            case ReplaceBlueTuskCastOperation replaceCast:
-                GenerateSchemaProgram("ReplaceBlueTuskCast",
+            case ReplaceCastOperation replaceCast:
+                GenerateSchemaProgram("ReplaceCast",
                     BlueTuskSchemaProgramMetadata.Serialize(replaceCast.OldDefinition),
                     BlueTuskSchemaProgramMetadata.Serialize(replaceCast.Definition), builder);
                 break;
-            case DropBlueTuskCastOperation dropCast:
-                GenerateSchemaProgram("DropBlueTuskCast",
+            case DropCastOperation dropCast:
+                GenerateSchemaProgram("DropCast",
                     BlueTuskSchemaProgramMetadata.Serialize(dropCast.Definition), builder);
                 break;
-            case CreateBlueTuskAggregateOperation createAggregate:
-                GenerateSchemaProgram("CreateBlueTuskAggregate",
+            case CreateAggregateOperation createAggregate:
+                GenerateSchemaProgram("CreateAggregate",
                     BlueTuskSchemaProgramMetadata.Serialize(createAggregate.Definition), builder);
                 break;
-            case ReplaceBlueTuskAggregateOperation replaceAggregate:
-                GenerateSchemaProgram("ReplaceBlueTuskAggregate",
+            case ReplaceAggregateOperation replaceAggregate:
+                GenerateSchemaProgram("ReplaceAggregate",
                     BlueTuskSchemaProgramMetadata.Serialize(replaceAggregate.OldDefinition),
                     BlueTuskSchemaProgramMetadata.Serialize(replaceAggregate.Definition), builder);
                 break;
-            case DropBlueTuskAggregateOperation dropAggregate:
-                GenerateSchemaProgram("DropBlueTuskAggregate",
+            case DropAggregateOperation dropAggregate:
+                GenerateSchemaProgram("DropAggregate",
                     BlueTuskSchemaProgramMetadata.Serialize(dropAggregate.Definition), builder);
                 break;
-            case AlterBlueTuskPublicationOperation alterPublication:
-                builder.Append("migrationBuilder.AlterBlueTuskPublication(")
+            case AlterPublicationOperation alterPublication:
+                builder.Append("migrationBuilder.AlterPublication(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskPublicationMetadata.Serialize(alterPublication.OldDefinition)))
                     .Append(", ")
@@ -733,26 +733,26 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskPublicationMetadata.Serialize(alterPublication.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskPublicationOperation dropPublication:
-                builder.Append("migrationBuilder.DropBlueTuskPublication(")
+            case DropPublicationOperation dropPublication:
+                builder.Append("migrationBuilder.DropPublication(")
                     .Append(Dependencies.CSharpHelper.Literal(dropPublication.Name))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskPublicationOperation renamePublication:
-                builder.Append("migrationBuilder.RenameBlueTuskPublication(")
+            case RenamePublicationOperation renamePublication:
+                builder.Append("migrationBuilder.RenamePublication(")
                     .Append(Dependencies.CSharpHelper.Literal(renamePublication.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renamePublication.NewName))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskSubscriptionOperation createSubscription:
-                builder.Append("migrationBuilder.CreateBlueTuskSubscription(")
+            case CreateSubscriptionOperation createSubscription:
+                builder.Append("migrationBuilder.CreateSubscription(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskSubscriptionMetadata.Serialize(createSubscription.Definition)))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskSubscriptionOperation alterSubscription:
-                builder.Append("migrationBuilder.AlterBlueTuskSubscription(")
+            case AlterSubscriptionOperation alterSubscription:
+                builder.Append("migrationBuilder.AlterSubscription(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskSubscriptionMetadata.Serialize(alterSubscription.OldDefinition)))
                     .Append(", ")
@@ -760,42 +760,42 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                         BlueTuskSubscriptionMetadata.Serialize(alterSubscription.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskSubscriptionOperation dropSubscription:
-                builder.Append("migrationBuilder.DropBlueTuskSubscription(")
+            case DropSubscriptionOperation dropSubscription:
+                builder.Append("migrationBuilder.DropSubscription(")
                     .Append(Dependencies.CSharpHelper.Literal(dropSubscription.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(dropSubscription.HasSlot))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskSubscriptionOperation renameSubscription:
-                builder.Append("migrationBuilder.RenameBlueTuskSubscription(")
+            case RenameSubscriptionOperation renameSubscription:
+                builder.Append("migrationBuilder.RenameSubscription(")
                     .Append(Dependencies.CSharpHelper.Literal(renameSubscription.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renameSubscription.NewName))
                     .AppendLine(");");
                 break;
-            case RefreshBlueTuskSubscriptionOperation refreshSubscription:
-                builder.Append("migrationBuilder.RefreshBlueTuskSubscription(")
+            case RefreshSubscriptionOperation refreshSubscription:
+                builder.Append("migrationBuilder.RefreshSubscription(")
                     .Append(Dependencies.CSharpHelper.Literal(refreshSubscription.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(refreshSubscription.CopyData))
                     .AppendLine(");");
                 break;
-            case RefreshBlueTuskSubscriptionSequencesOperation refreshSubscriptionSequences:
-                builder.Append("migrationBuilder.RefreshBlueTuskSubscriptionSequences(")
+            case RefreshSubscriptionSequencesOperation refreshSubscriptionSequences:
+                builder.Append("migrationBuilder.RefreshSubscriptionSequences(")
                     .Append(Dependencies.CSharpHelper.Literal(refreshSubscriptionSequences.Name))
                     .AppendLine(");");
                 break;
-            case SkipBlueTuskSubscriptionTransactionOperation skipSubscriptionTransaction:
-                builder.Append("migrationBuilder.SkipBlueTuskSubscriptionTransaction(")
+            case SkipSubscriptionTransactionOperation skipSubscriptionTransaction:
+                builder.Append("migrationBuilder.SkipSubscriptionTransaction(")
                     .Append(Dependencies.CSharpHelper.Literal(skipSubscriptionTransaction.Name))
                     .Append(", ")
                     .Append(Literal(skipSubscriptionTransaction.FinishLsn))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
+            case CreateRowSecurityPolicyOperation createPolicy:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskRowSecurityPolicy(")
+                    .Append("migrationBuilder.CreateRowSecurityPolicy(")
                     .Append(Dependencies.CSharpHelper.Literal(createPolicy.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(
@@ -804,9 +804,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(createPolicy.Schema))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskRowSecurityPolicyOperation alterPolicy:
+            case AlterRowSecurityPolicyOperation alterPolicy:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskRowSecurityPolicy(")
+                    .Append("migrationBuilder.AlterRowSecurityPolicy(")
                     .Append(Dependencies.CSharpHelper.Literal(alterPolicy.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(
@@ -815,9 +815,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(alterPolicy.Schema))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskRowSecurityPolicyOperation dropPolicy:
+            case DropRowSecurityPolicyOperation dropPolicy:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskRowSecurityPolicy(")
+                    .Append("migrationBuilder.DropRowSecurityPolicy(")
                     .Append(Dependencies.CSharpHelper.Literal(dropPolicy.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(dropPolicy.Name))
@@ -825,9 +825,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(dropPolicy.Schema))
                     .AppendLine(");");
                 break;
-            case RenameBlueTuskRowSecurityPolicyOperation renamePolicy:
+            case RenameRowSecurityPolicyOperation renamePolicy:
                 builder
-                    .Append("migrationBuilder.RenameBlueTuskRowSecurityPolicy(")
+                    .Append("migrationBuilder.RenameRowSecurityPolicy(")
                     .Append(Dependencies.CSharpHelper.Literal(renamePolicy.Table))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(renamePolicy.Name))
@@ -837,9 +837,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(renamePolicy.Schema))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskRowLevelSecurityOperation alterRowLevelSecurity:
+            case AlterRowLevelSecurityOperation alterRowLevelSecurity:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskRowLevelSecurity(")
+                    .Append("migrationBuilder.AlterRowLevelSecurity(")
                     .Append(Dependencies.CSharpHelper.Literal(alterRowLevelSecurity.Table))
                     .Append(", ")
                     .Append(Literal(alterRowLevelSecurity.Enabled))
@@ -849,9 +849,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(alterRowLevelSecurity.Schema))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskPartitionOperation createPartition:
+            case CreatePartitionOperation createPartition:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskPartition(")
+                    .Append("migrationBuilder.CreatePartition(")
                     .Append(Dependencies.CSharpHelper.Literal(createPartition.ParentName))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(
@@ -860,17 +860,17 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(createPartition.ParentSchema))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskPartitionOperation dropPartition:
+            case DropPartitionOperation dropPartition:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskPartition(")
+                    .Append("migrationBuilder.DropPartition(")
                     .Append(Dependencies.CSharpHelper.Literal(dropPartition.Name))
                     .Append(", ")
                     .Append(Literal(dropPartition.Schema))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskPartitionOperation alterPartition:
+            case AlterPartitionOperation alterPartition:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskPartition(")
+                    .Append("migrationBuilder.AlterPartition(")
                     .Append(Dependencies.CSharpHelper.Literal(alterPartition.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(alterPartition.NewName))
@@ -880,9 +880,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(alterPartition.NewSchema))
                     .AppendLine(");");
                 break;
-            case AttachBlueTuskPartitionOperation attachPartition:
+            case AttachPartitionOperation attachPartition:
                 builder
-                    .Append("migrationBuilder.AttachBlueTuskPartition(")
+                    .Append("migrationBuilder.AttachPartition(")
                     .Append(Dependencies.CSharpHelper.Literal(attachPartition.ParentName))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(attachPartition.PartitionName))
@@ -895,9 +895,9 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(attachPartition.PartitionSchema))
                     .AppendLine(");");
                 break;
-            case DetachBlueTuskPartitionOperation detachPartition:
+            case DetachPartitionOperation detachPartition:
                 builder
-                    .Append("migrationBuilder.DetachBlueTuskPartition(")
+                    .Append("migrationBuilder.DetachPartition(")
                     .Append(Dependencies.CSharpHelper.Literal(detachPartition.ParentName))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(detachPartition.PartitionName))
@@ -909,24 +909,24 @@ internal sealed class BlueTuskCSharpMigrationOperationGenerator(
                     .Append(Literal(detachPartition.PartitionSchema))
                     .AppendLine(");");
                 break;
-            case CreateBlueTuskPropertyGraphOperation create:
+            case CreatePropertyGraphOperation create:
                 builder
-                    .Append("migrationBuilder.CreateBlueTuskPropertyGraph(")
+                    .Append("migrationBuilder.CreatePropertyGraph(")
                     .Append(Dependencies.CSharpHelper.Literal(
                         BlueTuskPropertyGraphMetadata.Serialize(create.Definition)))
                     .AppendLine(");");
                 break;
-            case DropBlueTuskPropertyGraphOperation drop:
+            case DropPropertyGraphOperation drop:
                 builder
-                    .Append("migrationBuilder.DropBlueTuskPropertyGraph(")
+                    .Append("migrationBuilder.DropPropertyGraph(")
                     .Append(Dependencies.CSharpHelper.Literal(drop.Name))
                     .Append(", ")
                     .Append(Literal(drop.Schema))
                     .AppendLine(");");
                 break;
-            case AlterBlueTuskPropertyGraphOperation alter:
+            case AlterPropertyGraphOperation alter:
                 builder
-                    .Append("migrationBuilder.AlterBlueTuskPropertyGraph(")
+                    .Append("migrationBuilder.AlterPropertyGraph(")
                     .Append(Dependencies.CSharpHelper.Literal(alter.Name))
                     .Append(", ")
                     .Append(Dependencies.CSharpHelper.Literal(alter.NewName))

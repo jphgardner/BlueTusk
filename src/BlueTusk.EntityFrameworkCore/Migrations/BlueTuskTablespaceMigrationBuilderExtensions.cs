@@ -9,27 +9,27 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for PostgreSQL cluster-wide tablespaces.</summary>
 public static class BlueTuskTablespaceMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskTablespaceOperation> CreateBlueTuskTablespace(
+    public static OperationBuilder<CreateTablespaceOperation> CreateTablespace(
         this MigrationBuilder builder,
         BlueTuskTablespaceDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(builder);
         BlueTuskTablespaceMetadata.Validate(definition);
-        var operation = new CreateBlueTuskTablespaceOperation
+        var operation = new CreateTablespaceOperation
         {
             Definition = BlueTuskTablespaceMetadata.Normalize(definition),
         };
         builder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskTablespaceOperation>(operation);
+        return new OperationBuilder<CreateTablespaceOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskTablespaceOperation> CreateBlueTuskTablespace(
+    public static OperationBuilder<CreateTablespaceOperation> CreateTablespace(
         this MigrationBuilder builder,
         string serializedDefinition) =>
-        CreateBlueTuskTablespace(builder, BlueTuskTablespaceMetadata.DeserializeDefinition(serializedDefinition));
+        CreateTablespace(builder, BlueTuskTablespaceMetadata.DeserializeDefinition(serializedDefinition));
 
-    public static OperationBuilder<AlterBlueTuskTablespaceOperation> AlterBlueTuskTablespace(
+    public static OperationBuilder<AlterTablespaceOperation> AlterTablespace(
         this MigrationBuilder builder,
         BlueTuskTablespaceDefinition definition,
         BlueTuskTablespaceDefinition oldDefinition)
@@ -43,26 +43,26 @@ public static class BlueTuskTablespaceMigrationBuilderExtensions
                 nameof(definition));
         }
 
-        var operation = new AlterBlueTuskTablespaceOperation
+        var operation = new AlterTablespaceOperation
         {
             Definition = BlueTuskTablespaceMetadata.Normalize(definition),
             OldDefinition = BlueTuskTablespaceMetadata.Normalize(oldDefinition),
         };
         builder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskTablespaceOperation>(operation);
+        return new OperationBuilder<AlterTablespaceOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskTablespaceOperation> AlterBlueTuskTablespace(
+    public static OperationBuilder<AlterTablespaceOperation> AlterTablespace(
         this MigrationBuilder builder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        AlterBlueTuskTablespace(
+        AlterTablespace(
             builder,
             BlueTuskTablespaceMetadata.DeserializeDefinition(serializedDefinition),
             BlueTuskTablespaceMetadata.DeserializeDefinition(serializedOldDefinition));
 
-    public static OperationBuilder<RenameBlueTuskTablespaceOperation> RenameBlueTuskTablespace(
+    public static OperationBuilder<RenameTablespaceOperation> RenameTablespace(
         this MigrationBuilder builder,
         string name,
         string newName)
@@ -70,25 +70,25 @@ public static class BlueTuskTablespaceMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskTablespaceOperation { Name = name, NewName = newName };
+        var operation = new RenameTablespaceOperation { Name = name, NewName = newName };
         builder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskTablespaceOperation>(operation);
+        return new OperationBuilder<RenameTablespaceOperation>(operation);
     }
 
-    public static OperationBuilder<DropBlueTuskTablespaceOperation> DropBlueTuskTablespace(
+    public static OperationBuilder<DropTablespaceOperation> DropTablespace(
         this MigrationBuilder builder,
         string name,
         bool ifExists = false)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskTablespaceOperation
+        var operation = new DropTablespaceOperation
         {
             Name = name,
             IfExists = ifExists,
             IsDestructiveChange = true,
         };
         builder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskTablespaceOperation>(operation);
+        return new OperationBuilder<DropTablespaceOperation>(operation);
     }
 }

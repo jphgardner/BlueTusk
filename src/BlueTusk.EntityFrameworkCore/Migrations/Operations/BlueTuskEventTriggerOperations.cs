@@ -3,24 +3,24 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskEventTriggerOperation : MigrationOperation
+public sealed class CreateEventTriggerOperation : MigrationOperation
 {
     public required BlueTuskEventTriggerDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskEventTriggerOperation : MigrationOperation
+public sealed class DropEventTriggerOperation : MigrationOperation
 {
     public required string Name { get; init; }
 }
 
-public sealed class RenameBlueTuskEventTriggerOperation : MigrationOperation
+public sealed class RenameEventTriggerOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
     public required string NewName { get; init; }
 }
 
-public sealed class AlterBlueTuskEventTriggerEnabledModeOperation : MigrationOperation
+public sealed class AlterEventTriggerEnabledModeOperation : MigrationOperation
 {
     public required string Name { get; init; }
 

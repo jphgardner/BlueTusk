@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskTablespaceModelBuilderExtensions
 {
     /// <summary>Adds or replaces a cluster-wide PostgreSQL tablespace.</summary>
-    public static ModelBuilder HasBlueTuskTablespace(
+    public static ModelBuilder HasTablespace(
         this ModelBuilder modelBuilder,
         string name,
         string location,
@@ -18,11 +18,11 @@ public static class BlueTuskTablespaceModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(modelBuilder);
         var builder = new BlueTuskTablespaceBuilder(name, location);
         configure?.Invoke(builder);
-        return HasBlueTuskTablespace(modelBuilder, builder.Build());
+        return HasTablespace(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a canonical tablespace definition.</summary>
-    public static ModelBuilder HasBlueTuskTablespace(
+    public static ModelBuilder HasTablespace(
         this ModelBuilder modelBuilder,
         BlueTuskTablespaceDefinition definition)
     {
@@ -37,7 +37,7 @@ public static class BlueTuskTablespaceModelBuilderExtensions
     }
 
     /// <summary>Removes a provider-owned tablespace from the model.</summary>
-    public static ModelBuilder HasNoBlueTuskTablespace(this ModelBuilder modelBuilder, string name)
+    public static ModelBuilder HasNoTablespace(this ModelBuilder modelBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -47,14 +47,14 @@ public static class BlueTuskTablespaceModelBuilderExtensions
     }
 
     /// <summary>Reads all provider-owned tablespaces from the model.</summary>
-    public static BlueTuskTablespaceDefinitionSet GetBlueTuskTablespaces(this IReadOnlyModel model)
+    public static BlueTuskTablespaceDefinitionSet GetTablespaces(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskTablespaceMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskTablespaces(
+    public static ModelBuilder HasTablespaces(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

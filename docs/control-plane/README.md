@@ -77,11 +77,13 @@ clients, fan-out ratio, redacted scopes, invalidation lag, replay usage, resume
 rejections, quotas, and slow-client disconnect causes. Both routes use the same
 mandatory read policy as the rest of the dashboard.
 
-`HostedContinuousGraphControlPlaneQueryService` projects registered graph query
+The optional `BlueTusk.ContinuousGraph.ControlPlane` adapter supplies
+`HostedContinuousGraphControlPlaneQueryService`, which projects registered graph query
 fingerprints, graph/database identities, explicit element aliases, exact
 relational dependencies, result bounds, and capabilities. It does not expose
 bound parameters or graph result rows. The authorised `/graphs` and
 `/api/graphs` endpoints HTML-encode every application-provided value.
+The stable Control Plane core does not reference the Continuous Graph preview.
 
 ## Versioned agent API
 
@@ -146,8 +148,8 @@ Run `InitializeAsync` with a migration owner before starting operation workers, 
 The unit gate covers role escalation, exact confirmation, handler failure,
 non-sensitive audit details, Sync rate/lag/failure projection, authorization
 metadata on every dashboard endpoint, Live scope redaction and lag/fan-out
-projection, Continuous Graph descriptor projection, hostile source, pipeline,
-Live, and graph HTML values, capability discovery, v1 envelopes, legacy route
+projection, hostile source, pipeline, Live, and graph HTML values, capability
+discovery, v1 envelopes, legacy route
 preservation, and versioned operation responses. Live PostgreSQL 15–19
 acceptance creates a real logical slot, relay
 group, snapshot run, and direct checkpoint, verifies their inventory
@@ -155,5 +157,6 @@ projections, upgrades a legacy audit table to schema version 2 without losing
 rows, initializes a fresh schema idempotently, proves stored audit rows reject
 update and delete attempts, and rejects a future schema version.
 
-See the [0.1.0-preview.1 release notes](release-notes-0.1.0-preview.1.md) for
-the exact candidate gate and remaining publication dependency.
+See the [API and format compatibility policy](api-compatibility.md) and
+[0.1.0-preview.1 release notes](release-notes-0.1.0-preview.1.md) for the exact
+candidate gate and remaining publication dependency.

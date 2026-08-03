@@ -135,7 +135,7 @@ public sealed class GeneratedColumnMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("UseBlueTuskIdentityColumn(BlueTuskIdentityGeneration.Always)",
+                Assert.Contains("UseIdentityColumn(BlueTuskIdentityGeneration.Always)",
                     scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.Contains("HasComputedColumnSql(\"(base_value * 2)\"",
                     scaffolded.ContextFile.Code, StringComparison.Ordinal);
@@ -233,7 +233,7 @@ public sealed class GeneratedColumnMigrationsTests
             table => table.HasComment(initialComments ? "Initial table" : "Updated table"));
         entity.HasKey(item => item.Id);
         var id = entity.Property(item => item.Id).HasColumnName("id")
-            .UseBlueTuskIdentityColumn(identity);
+            .UseIdentityColumn(identity);
         if (initialComments)
         {
             id.HasComment("Always identity");

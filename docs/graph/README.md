@@ -94,7 +94,7 @@ builder accepts only direct mapped-property selectors, so identifiers are
 resolved from EF metadata rather than caller-authored SQL:
 
 ```csharp
-modelBuilder.HasBlueTuskPropertyGraph(
+modelBuilder.HasPropertyGraph(
     "social",
     graph =>
     {
@@ -133,7 +133,7 @@ and embedded double quotes in every relevant identifier category.
 
 Database-first scaffolding reuses the same documented information-schema
 reader and retains discovered graphs in generated context code through
-`HasBlueTuskPropertyGraphs`. The retained metadata participates in subsequent
+`HasPropertyGraphs`. The retained metadata participates in subsequent
 migration diffs and typed query translation.
 
 ## Typed EF graph queries

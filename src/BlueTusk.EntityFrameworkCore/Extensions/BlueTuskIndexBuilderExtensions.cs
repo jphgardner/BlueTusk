@@ -25,7 +25,7 @@ public static partial class BlueTuskIndexBuilderExtensions
     private static readonly Regex StorageParameterValuePattern = StorageParameterValueRegex();
 
     /// <summary>Configures the PostgreSQL index access method, including extension-provided methods.</summary>
-    public static IndexBuilder UseBlueTuskIndexMethod(this IndexBuilder indexBuilder, string method)
+    public static IndexBuilder UseIndexMethod(this IndexBuilder indexBuilder, string method)
     {
         ArgumentNullException.ThrowIfNull(indexBuilder);
         ValidateQualifiedIdentifier(method, nameof(method), allowQualified: false);
@@ -33,18 +33,18 @@ public static partial class BlueTuskIndexBuilderExtensions
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="UseBlueTuskIndexMethod(IndexBuilder,string)" />
-    public static IndexBuilder<TEntity> UseBlueTuskIndexMethod<TEntity>(
+    /// <inheritdoc cref="UseIndexMethod(IndexBuilder,string)" />
+    public static IndexBuilder<TEntity> UseIndexMethod<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         string method)
         where TEntity : class
     {
-        UseBlueTuskIndexMethod((IndexBuilder)indexBuilder, method);
+        UseIndexMethod((IndexBuilder)indexBuilder, method);
         return indexBuilder;
     }
 
     /// <summary>Configures one operator class per leading index key. Use <see langword="null" /> for the default.</summary>
-    public static IndexBuilder UseBlueTuskOperatorClass(
+    public static IndexBuilder UseOperatorClass(
         this IndexBuilder indexBuilder,
         params string?[] operatorClasses)
     {
@@ -56,18 +56,18 @@ public static partial class BlueTuskIndexBuilderExtensions
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="UseBlueTuskOperatorClass(IndexBuilder,string?[])" />
-    public static IndexBuilder<TEntity> UseBlueTuskOperatorClass<TEntity>(
+    /// <inheritdoc cref="UseOperatorClass(IndexBuilder,string?[])" />
+    public static IndexBuilder<TEntity> UseOperatorClass<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         params string?[] operatorClasses)
         where TEntity : class
     {
-        UseBlueTuskOperatorClass((IndexBuilder)indexBuilder, operatorClasses);
+        UseOperatorClass((IndexBuilder)indexBuilder, operatorClasses);
         return indexBuilder;
     }
 
     /// <summary>Configures one collation per leading index key. Use <see langword="null" /> for the default.</summary>
-    public static IndexBuilder UseBlueTuskCollation(
+    public static IndexBuilder UseCollation(
         this IndexBuilder indexBuilder,
         params string?[] collations)
     {
@@ -79,18 +79,18 @@ public static partial class BlueTuskIndexBuilderExtensions
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="UseBlueTuskCollation(IndexBuilder,string?[])" />
-    public static IndexBuilder<TEntity> UseBlueTuskCollation<TEntity>(
+    /// <inheritdoc cref="UseCollation(IndexBuilder,string?[])" />
+    public static IndexBuilder<TEntity> UseCollation<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         params string?[] collations)
         where TEntity : class
     {
-        UseBlueTuskCollation((IndexBuilder)indexBuilder, collations);
+        UseCollation((IndexBuilder)indexBuilder, collations);
         return indexBuilder;
     }
 
     /// <summary>Configures PostgreSQL null ordering for each leading index key.</summary>
-    public static IndexBuilder HasBlueTuskNullSortOrder(
+    public static IndexBuilder HasNullSortOrder(
         this IndexBuilder indexBuilder,
         params BlueTuskIndexNullSortOrder[] sortOrders)
     {
@@ -116,13 +116,13 @@ public static partial class BlueTuskIndexBuilderExtensions
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="HasBlueTuskNullSortOrder(IndexBuilder,BlueTuskIndexNullSortOrder[])" />
-    public static IndexBuilder<TEntity> HasBlueTuskNullSortOrder<TEntity>(
+    /// <inheritdoc cref="HasNullSortOrder(IndexBuilder,BlueTuskIndexNullSortOrder[])" />
+    public static IndexBuilder<TEntity> HasNullSortOrder<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         params BlueTuskIndexNullSortOrder[] sortOrders)
         where TEntity : class
     {
-        HasBlueTuskNullSortOrder((IndexBuilder)indexBuilder, sortOrders);
+        HasNullSortOrder((IndexBuilder)indexBuilder, sortOrders);
         return indexBuilder;
     }
 
@@ -166,7 +166,7 @@ public static partial class BlueTuskIndexBuilderExtensions
     }
 
     /// <summary>Adds or replaces one PostgreSQL index storage parameter.</summary>
-    public static IndexBuilder HasBlueTuskStorageParameter(
+    public static IndexBuilder HasStorageParameter(
         this IndexBuilder indexBuilder,
         string name,
         string value)
@@ -197,19 +197,19 @@ public static partial class BlueTuskIndexBuilderExtensions
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="HasBlueTuskStorageParameter(IndexBuilder,string,string)" />
-    public static IndexBuilder<TEntity> HasBlueTuskStorageParameter<TEntity>(
+    /// <inheritdoc cref="HasStorageParameter(IndexBuilder,string,string)" />
+    public static IndexBuilder<TEntity> HasStorageParameter<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         string name,
         string value)
         where TEntity : class
     {
-        HasBlueTuskStorageParameter((IndexBuilder)indexBuilder, name, value);
+        HasStorageParameter((IndexBuilder)indexBuilder, name, value);
         return indexBuilder;
     }
 
     /// <summary>Configures the B-tree, GiST, SP-GiST, or BRIN index fill factor.</summary>
-    public static IndexBuilder HasBlueTuskFillFactor(this IndexBuilder indexBuilder, int fillFactor)
+    public static IndexBuilder HasFillFactor(this IndexBuilder indexBuilder, int fillFactor)
     {
         ArgumentNullException.ThrowIfNull(indexBuilder);
         if (fillFactor is < 10 or > 100)
@@ -217,52 +217,52 @@ public static partial class BlueTuskIndexBuilderExtensions
             throw new ArgumentOutOfRangeException(nameof(fillFactor), fillFactor, "Fill factor must be between 10 and 100.");
         }
 
-        return HasBlueTuskStorageParameter(indexBuilder, "fillfactor", fillFactor.ToString(System.Globalization.CultureInfo.InvariantCulture));
+        return HasStorageParameter(indexBuilder, "fillfactor", fillFactor.ToString(System.Globalization.CultureInfo.InvariantCulture));
     }
 
-    /// <inheritdoc cref="HasBlueTuskFillFactor(IndexBuilder,int)" />
-    public static IndexBuilder<TEntity> HasBlueTuskFillFactor<TEntity>(
+    /// <inheritdoc cref="HasFillFactor(IndexBuilder,int)" />
+    public static IndexBuilder<TEntity> HasFillFactor<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         int fillFactor)
         where TEntity : class
     {
-        HasBlueTuskFillFactor((IndexBuilder)indexBuilder, fillFactor);
+        HasFillFactor((IndexBuilder)indexBuilder, fillFactor);
         return indexBuilder;
     }
 
     /// <summary>Creates and drops the index with PostgreSQL's <c>CONCURRENTLY</c> option.</summary>
-    public static IndexBuilder IsBlueTuskConcurrent(this IndexBuilder indexBuilder, bool concurrent = true)
+    public static IndexBuilder IsConcurrent(this IndexBuilder indexBuilder, bool concurrent = true)
     {
         ArgumentNullException.ThrowIfNull(indexBuilder);
         indexBuilder.Metadata.SetAnnotation(BlueTuskIndexAnnotations.IsConcurrent, concurrent);
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="IsBlueTuskConcurrent(IndexBuilder,bool)" />
-    public static IndexBuilder<TEntity> IsBlueTuskConcurrent<TEntity>(
+    /// <inheritdoc cref="IsConcurrent(IndexBuilder,bool)" />
+    public static IndexBuilder<TEntity> IsConcurrent<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         bool concurrent = true)
         where TEntity : class
     {
-        IsBlueTuskConcurrent((IndexBuilder)indexBuilder, concurrent);
+        IsConcurrent((IndexBuilder)indexBuilder, concurrent);
         return indexBuilder;
     }
 
     /// <summary>Controls whether a unique index treats null values as distinct. PostgreSQL 15 or newer is required.</summary>
-    public static IndexBuilder HasBlueTuskNullsDistinct(this IndexBuilder indexBuilder, bool distinct = true)
+    public static IndexBuilder HasNullsDistinct(this IndexBuilder indexBuilder, bool distinct = true)
     {
         ArgumentNullException.ThrowIfNull(indexBuilder);
         indexBuilder.Metadata.SetAnnotation(BlueTuskIndexAnnotations.NullsDistinct, distinct);
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="HasBlueTuskNullsDistinct(IndexBuilder,bool)" />
-    public static IndexBuilder<TEntity> HasBlueTuskNullsDistinct<TEntity>(
+    /// <inheritdoc cref="HasNullsDistinct(IndexBuilder,bool)" />
+    public static IndexBuilder<TEntity> HasNullsDistinct<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         bool distinct = true)
         where TEntity : class
     {
-        HasBlueTuskNullsDistinct((IndexBuilder)indexBuilder, distinct);
+        HasNullsDistinct((IndexBuilder)indexBuilder, distinct);
         return indexBuilder;
     }
 
@@ -270,7 +270,7 @@ public static partial class BlueTuskIndexBuilderExtensions
     /// Replaces selected index keys with trusted PostgreSQL expressions. Empty entries retain the mapped column.
     /// Expressions are migration metadata and must never be formed from user input.
     /// </summary>
-    public static IndexBuilder HasBlueTuskIndexExpressions(
+    public static IndexBuilder HasIndexExpressions(
         this IndexBuilder indexBuilder,
         params string?[] expressions)
     {
@@ -296,13 +296,13 @@ public static partial class BlueTuskIndexBuilderExtensions
         return indexBuilder;
     }
 
-    /// <inheritdoc cref="HasBlueTuskIndexExpressions(IndexBuilder,string?[])" />
-    public static IndexBuilder<TEntity> HasBlueTuskIndexExpressions<TEntity>(
+    /// <inheritdoc cref="HasIndexExpressions(IndexBuilder,string?[])" />
+    public static IndexBuilder<TEntity> HasIndexExpressions<TEntity>(
         this IndexBuilder<TEntity> indexBuilder,
         params string?[] expressions)
         where TEntity : class
     {
-        HasBlueTuskIndexExpressions((IndexBuilder)indexBuilder, expressions);
+        HasIndexExpressions((IndexBuilder)indexBuilder, expressions);
         return indexBuilder;
     }
 

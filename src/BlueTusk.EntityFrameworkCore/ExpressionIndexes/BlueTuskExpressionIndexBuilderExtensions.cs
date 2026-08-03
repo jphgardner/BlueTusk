@@ -11,7 +11,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskExpressionIndexBuilderExtensions
 {
     /// <summary>Adds or replaces a provider-owned PostgreSQL expression or mixed-key index.</summary>
-    public static EntityTypeBuilder HasBlueTuskExpressionIndex(
+    public static EntityTypeBuilder HasExpressionIndex(
         this EntityTypeBuilder entityBuilder,
         string name,
         Action<BlueTuskExpressionIndexBuilder> configure)
@@ -26,18 +26,18 @@ public static class BlueTuskExpressionIndexBuilderExtensions
     }
 
     /// <summary>Adds or replaces a provider-owned PostgreSQL expression or mixed-key index.</summary>
-    public static EntityTypeBuilder<TEntity> HasBlueTuskExpressionIndex<TEntity>(
+    public static EntityTypeBuilder<TEntity> HasExpressionIndex<TEntity>(
         this EntityTypeBuilder<TEntity> entityBuilder,
         string name,
         Action<BlueTuskExpressionIndexBuilder> configure)
         where TEntity : class
     {
-        HasBlueTuskExpressionIndex((EntityTypeBuilder)entityBuilder, name, configure);
+        HasExpressionIndex((EntityTypeBuilder)entityBuilder, name, configure);
         return entityBuilder;
     }
 
     /// <summary>Removes a provider-owned expression index by name.</summary>
-    public static EntityTypeBuilder HasNoBlueTuskExpressionIndex(
+    public static EntityTypeBuilder HasNoExpressionIndex(
         this EntityTypeBuilder entityBuilder,
         string name)
     {
@@ -52,7 +52,7 @@ public static class BlueTuskExpressionIndexBuilderExtensions
     }
 
     /// <summary>Reads provider-owned expression indexes from an EF entity type.</summary>
-    public static IReadOnlyList<BlueTuskExpressionIndexDefinition> GetBlueTuskExpressionIndexes(
+    public static IReadOnlyList<BlueTuskExpressionIndexDefinition> GetExpressionIndexes(
         this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
@@ -60,7 +60,7 @@ public static class BlueTuskExpressionIndexBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskExpressionIndexes(
+    public static EntityTypeBuilder HasExpressionIndexes(
         this EntityTypeBuilder entityBuilder,
         string serializedDefinitions)
     {

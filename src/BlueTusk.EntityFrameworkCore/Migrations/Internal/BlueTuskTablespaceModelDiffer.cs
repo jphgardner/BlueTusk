@@ -45,12 +45,12 @@ internal static class BlueTuskTablespaceModelDiffer
             {
                 var renamed = renameCandidates[0];
                 processedTargets.Add(renamed.Name);
-                before.Add(new RenameBlueTuskTablespaceOperation { Name = name, NewName = renamed.Name });
+                before.Add(new RenameTablespaceOperation { Name = name, NewName = renamed.Name });
                 AddAlterIfNeeded(oldDefinition with { Name = renamed.Name }, renamed, before);
             }
             else
             {
-                after.Add(new DropBlueTuskTablespaceOperation
+                after.Add(new DropTablespaceOperation
                 {
                     Name = name,
                     IsDestructiveChange = true,
@@ -62,7 +62,7 @@ internal static class BlueTuskTablespaceModelDiffer
         {
             if (!source.ContainsKey(name) && !processedTargets.Contains(name))
             {
-                before.Add(new CreateBlueTuskTablespaceOperation { Definition = definition });
+                before.Add(new CreateTablespaceOperation { Definition = definition });
             }
         }
     }
@@ -75,7 +75,7 @@ internal static class BlueTuskTablespaceModelDiffer
         if (BlueTuskTablespaceMetadata.Serialize(oldDefinition) !=
             BlueTuskTablespaceMetadata.Serialize(definition))
         {
-            operations.Add(new AlterBlueTuskTablespaceOperation
+            operations.Add(new AlterTablespaceOperation
             {
                 OldDefinition = oldDefinition,
                 Definition = definition,

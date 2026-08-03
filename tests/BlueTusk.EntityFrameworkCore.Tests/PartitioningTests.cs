@@ -39,7 +39,7 @@ public sealed class PartitioningTests
         Assert.Equal("occurred_on", Assert.Single(tableDefinition.Keys).Expression);
         Assert.Empty(tableDefinition.Partitions);
 
-        var partitions = operations.OfType<CreateBlueTuskPartitionOperation>().ToArray();
+        var partitions = operations.OfType<CreatePartitionOperation>().ToArray();
         Assert.Equal(5, partitions.Length);
         var year2026 = Assert.Single(partitions, operation => operation.Definition.Name == "events_2026");
         Assert.Equal("partition_tests", year2026.Definition.Schema);
@@ -84,7 +84,7 @@ public sealed class PartitioningTests
             differ.GetDifferences(
                     source,
                     renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-                .OfType<AlterBlueTuskPartitionOperation>());
+                .OfType<AlterPartitionOperation>());
         Assert.Equal("events_2025", rename.Name);
         Assert.Equal("events_archive", rename.NewName);
 
@@ -92,15 +92,15 @@ public sealed class PartitioningTests
             source,
             renamedRootContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
         Assert.Equal("renamed_events", Assert.Single(rootRename.OfType<RenameTableOperation>()).NewName);
-        Assert.Empty(rootRename.OfType<CreateBlueTuskPartitionOperation>());
-        Assert.Empty(rootRename.OfType<DropBlueTuskPartitionOperation>());
+        Assert.Empty(rootRename.OfType<CreatePartitionOperation>());
+        Assert.Empty(rootRename.OfType<DropPartitionOperation>());
 
         var replacement = differ.GetDifferences(
             source,
             changedBoundContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.True(Assert.Single(replacement.OfType<DropBlueTuskPartitionOperation>()).IsDestructiveChange);
+        Assert.True(Assert.Single(replacement.OfType<DropPartitionOperation>()).IsDestructiveChange);
         Assert.Equal("events_2025", Assert.Single(
-            replacement.OfType<CreateBlueTuskPartitionOperation>()).Definition.Name);
+            replacement.OfType<CreatePartitionOperation>()).Definition.Name);
 
         var exception = Assert.Throws<InvalidOperationException>(() => differ.GetDifferences(
             source,
@@ -114,7 +114,7 @@ public sealed class PartitioningTests
     {
         using var context = CreateContext<SinglePartitionContext>(OfflineConnectionString);
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.AttachBlueTuskPartition(
+        migration.AttachPartition(
             "events",
             "events_2027",
             BlueTuskPartitionBound.Range(
@@ -122,13 +122,13 @@ public sealed class PartitioningTests
                 BlueTuskPartitionValue.Literal(new DateOnly(2028, 1, 1))),
             "partition_tests",
             "archive");
-        migration.DetachBlueTuskPartition(
+        migration.DetachPartition(
             "events",
             "events_2027",
             BlueTuskPartitionDetachMode.Concurrently,
             "partition_tests",
             "archive");
-        migration.DetachBlueTuskPartition(
+        migration.DetachPartition(
             "events",
             "events_2027",
             BlueTuskPartitionDetachMode.Finalize,
@@ -158,7 +158,7 @@ public sealed class PartitioningTests
         ConfigureEntity(modelBuilder);
 
         Assert.Throws<ArgumentException>(() => modelBuilder.Entity<PartitionEvent>()
-            .HasBlueTuskPartitioning(
+            .HasPartitioning(
                 BlueTuskPartitionStrategy.List,
                 BlueTuskPartitionKeyDefinition.Column(nameof(PartitionEvent.TenantId)),
                 BlueTuskPartitionKeyDefinition.Column(nameof(PartitionEvent.OccurredOn))));
@@ -166,7 +166,7 @@ public sealed class PartitioningTests
             default,
             BlueTuskPartitionValue.Literal(10)));
         Assert.Throws<ArgumentException>(() => modelBuilder.Entity<PartitionEvent>()
-            .HasBlueTuskPartitioning(
+            .HasPartitioning(
                 BlueTuskPartitionStrategy.Range,
                 BlueTuskPartitionKeyDefinition.Column(
                     nameof(PartitionEvent.TenantId),
@@ -217,7 +217,7 @@ public sealed class PartitioningTests
             operation => operation is EnsureSchemaOperation { Name: "partition_archive" });
         var createIndex = Array.FindIndex(
             operations,
-            operation => operation is CreateBlueTuskPartitionOperation
+            operation => operation is CreatePartitionOperation
             {
                 Definition.Name: "archived_events",
             });
@@ -245,20 +245,20 @@ public sealed class PartitioningTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskPartitionOperation
+                new CreatePartitionOperation
                 {
                     ParentName = "events",
                     ParentSchema = "partition_tests",
                     Definition = definition,
                 },
-                new AlterBlueTuskPartitionOperation
+                new AlterPartitionOperation
                 {
                     Name = "events_2027",
                     Schema = "partition_tests",
                     NewName = "events_archive",
                     NewSchema = "archive",
                 },
-                new AttachBlueTuskPartitionOperation
+                new AttachPartitionOperation
                 {
                     ParentName = "events",
                     ParentSchema = "partition_tests",
@@ -266,7 +266,7 @@ public sealed class PartitioningTests
                     PartitionSchema = "archive",
                     Bound = definition.Bound,
                 },
-                new DetachBlueTuskPartitionOperation
+                new DetachPartitionOperation
                 {
                     ParentName = "events",
                     ParentSchema = "partition_tests",
@@ -274,16 +274,16 @@ public sealed class PartitioningTests
                     PartitionSchema = "archive",
                     Mode = BlueTuskPartitionDetachMode.Concurrently,
                 },
-                new DropBlueTuskPartitionOperation { Name = "events_archive", Schema = "archive" },
+                new DropPartitionOperation { Name = "events_archive", Schema = "archive" },
             ],
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("migrationBuilder.CreateBlueTuskPartition(\"events\"", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.AlterBlueTuskPartition(\"events_2027\"", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.AttachBlueTuskPartition(\"events\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.CreatePartition(\"events\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.AlterPartition(\"events_2027\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.AttachPartition(\"events\"", code, StringComparison.Ordinal);
         Assert.Contains("BlueTuskPartitionDetachMode.Concurrently", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.DropBlueTuskPartition(\"events_archive\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.DropPartition(\"events_archive\"", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -372,7 +372,7 @@ public sealed class PartitioningTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains(
-                    "HasBlueTuskPartitioning(",
+                    "HasPartitioning(",
                     scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
                 Assert.Single(scaffolded.AdditionalFiles);
@@ -382,7 +382,7 @@ public sealed class PartitioningTests
                 connectionString,
                 "CREATE TABLE partition_tests.events_2027 (LIKE partition_tests.partitioned_events INCLUDING ALL)");
             var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            migration.AttachBlueTuskPartition(
+            migration.AttachPartition(
                 "partitioned_events",
                 "events_2027",
                 BlueTuskPartitionBound.Range(
@@ -390,7 +390,7 @@ public sealed class PartitioningTests
                     BlueTuskPartitionValue.Literal(new DateOnly(2028, 1, 1))),
                 "partition_tests",
                 "partition_tests");
-            migration.DetachBlueTuskPartition(
+            migration.DetachPartition(
                 "partitioned_events",
                 "events_2027",
                 BlueTuskPartitionDetachMode.Normal,
@@ -493,7 +493,7 @@ public sealed class PartitioningTests
     {
         ConfigureEntity(modelBuilder, tableName);
         return modelBuilder.Entity<PartitionEvent>()
-            .HasBlueTuskRangePartitioning(item => item.OccurredOn);
+            .HasRangePartitioning(item => item.OccurredOn);
     }
 
     private sealed class PartitionContext(DbContextOptions<PartitionContext> options) : DbContext(options)
@@ -564,7 +564,7 @@ public sealed class PartitioningTests
         {
             ConfigureEntity(modelBuilder);
             modelBuilder.Entity<PartitionEvent>()
-                .HasBlueTuskListPartitioning(item => item.OccurredOn)
+                .HasListPartitioning(item => item.OccurredOn)
                 .HasListPartition(
                     "events_2025",
                     [BlueTuskPartitionValue.Literal(new DateOnly(2025, 1, 1))]);
@@ -577,7 +577,7 @@ public sealed class PartitioningTests
         {
             ConfigureEntity(modelBuilder);
             modelBuilder.Entity<PartitionEvent>()
-                .HasBlueTuskHashPartitioning(item => new { item.TenantId, item.Id })
+                .HasHashPartitioning(item => new { item.TenantId, item.Id })
                 .HasHashPartition("events_hash_0", 2, 0)
                 .HasHashPartition("events_hash_1", 2, 1);
         }
@@ -589,7 +589,7 @@ public sealed class PartitioningTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureEntity(modelBuilder);
-            modelBuilder.Entity<PartitionEvent>().HasBlueTuskPartitioning(
+            modelBuilder.Entity<PartitionEvent>().HasPartitioning(
                 BlueTuskPartitionStrategy.Range,
                 BlueTuskPartitionKeyDefinition.SqlExpression(
                     "lower(payload)",

@@ -3,62 +3,62 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskForeignDataWrapperOperation : MigrationOperation
+public sealed class CreateForeignDataWrapperOperation : MigrationOperation
 {
     public required BlueTuskForeignDataWrapperDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskForeignDataWrapperOperation : MigrationOperation
+public sealed class AlterForeignDataWrapperOperation : MigrationOperation
 {
     public required BlueTuskForeignDataWrapperDefinition OldDefinition { get; init; }
     public required BlueTuskForeignDataWrapperDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskForeignDataWrapperOperation : MigrationOperation
+public sealed class DropForeignDataWrapperOperation : MigrationOperation
 {
     public required string Name { get; init; }
 }
 
-public sealed class RenameBlueTuskForeignDataWrapperOperation : MigrationOperation
+public sealed class RenameForeignDataWrapperOperation : MigrationOperation
 {
     public required string Name { get; init; }
     public required string NewName { get; init; }
 }
 
-public sealed class CreateBlueTuskForeignServerOperation : MigrationOperation
+public sealed class CreateForeignServerOperation : MigrationOperation
 {
     public required BlueTuskForeignServerDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskForeignServerOperation : MigrationOperation
+public sealed class AlterForeignServerOperation : MigrationOperation
 {
     public required BlueTuskForeignServerDefinition OldDefinition { get; init; }
     public required BlueTuskForeignServerDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskForeignServerOperation : MigrationOperation
+public sealed class DropForeignServerOperation : MigrationOperation
 {
     public required string Name { get; init; }
 }
 
-public sealed class RenameBlueTuskForeignServerOperation : MigrationOperation
+public sealed class RenameForeignServerOperation : MigrationOperation
 {
     public required string Name { get; init; }
     public required string NewName { get; init; }
 }
 
-public sealed class CreateBlueTuskUserMappingOperation : MigrationOperation
+public sealed class CreateUserMappingOperation : MigrationOperation
 {
     public required BlueTuskUserMappingDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskUserMappingOperation : MigrationOperation
+public sealed class AlterUserMappingOperation : MigrationOperation
 {
     public required BlueTuskUserMappingDefinition OldDefinition { get; init; }
     public required BlueTuskUserMappingDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskUserMappingOperation : MigrationOperation
+public sealed class DropUserMappingOperation : MigrationOperation
 {
     public required string ServerName { get; init; }
     public string? UserName { get; init; }

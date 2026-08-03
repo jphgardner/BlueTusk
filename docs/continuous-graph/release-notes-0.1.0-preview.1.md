@@ -5,11 +5,12 @@ builds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk
 property-graph, Live, and Control Plane foundations without exposing
 replication internals to applications.
 
-## Package
+## Packages
 
 - `BlueTusk.ContinuousGraph`
+- `BlueTusk.ContinuousGraph.ControlPlane`
 
-The package uses the repository's MIT licence and the independent Continuous
+Both packages use the repository's MIT licence and the independent Continuous
 Graph `0.1.0-preview.1` version property.
 
 ## Capabilities in this preview
@@ -31,8 +32,8 @@ Graph `0.1.0-preview.1` version property.
   allocation budgets.
 
 The candidate verification gate includes a zero-warning repository Release
-build, the complete offline solution suite, all seven Continuous Graph tests
-against the pinned PostgreSQL 19 Beta 2 service, public API and dependency
+build, the complete offline solution suite, all eight Continuous Graph tests
+including the pinned PostgreSQL 19 Beta 2 acceptance test, public API and dependency
 conformance, documentation validation, allocation budgets, and an inspected
 NuGet pack.
 The gated pack is reproducible with
@@ -56,9 +57,9 @@ gate.
   compatibility can change before PostgreSQL 19 is final.
 - The reference ShortRun figures are regression evidence, not latency service
   levels or universal production performance claims.
-- Live must be released before this package so its declared dependency is
-  available. The Live preview gate has passed and the release script
-  machine-enforces dependency readiness.
+- Provider, Live, and Control Plane must be released before these packages.
+  The family remains gated until that dependency chain is publishable, and the
+  release script machine-enforces dependency readiness.
 - Package verification does not complete the separate Streams 72-hour, Sync
   24-hour, or Control Plane release gates.
 

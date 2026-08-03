@@ -46,8 +46,8 @@ var buckets = await context.Metrics
     .ToListAsync();
 ```
 
-Migrations can call `EnsureBlueTuskTimescaleDb`,
-`ConvertToBlueTuskHypertable`, and `DropBlueTuskTimescaleDb`. Identifiers and
+Migrations can call `EnsureTimescaleDb`,
+`ConvertToHypertable`, and `DropTimescaleDb`. Identifiers and
 relation literals are quoted centrally; hypertable conversion is idempotent and
 does not migrate existing rows unless explicitly requested.
 

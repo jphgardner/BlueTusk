@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public static class BlueTuskTriggerMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskTriggerOperation> CreateBlueTuskTrigger(
+    public static OperationBuilder<CreateTriggerOperation> CreateTrigger(
         this MigrationBuilder migrationBuilder,
         string table,
         BlueTuskTriggerDefinition definition,
@@ -23,7 +23,7 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
             throw new ArgumentException("PostgreSQL cannot replace a constraint trigger in place.", nameof(orReplace));
         }
 
-        var operation = new CreateBlueTuskTriggerOperation
+        var operation = new CreateTriggerOperation
         {
             Table = table,
             Schema = schema,
@@ -31,24 +31,24 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
             OrReplace = orReplace,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskTriggerOperation>(operation);
+        return new OperationBuilder<CreateTriggerOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskTriggerOperation> CreateBlueTuskTrigger(
+    public static OperationBuilder<CreateTriggerOperation> CreateTrigger(
         this MigrationBuilder migrationBuilder,
         string table,
         string serializedDefinition,
         string? schema = null,
         bool orReplace = false) =>
-        CreateBlueTuskTrigger(
+        CreateTrigger(
             migrationBuilder,
             table,
             BlueTuskTriggerMetadata.DeserializeDefinition(serializedDefinition),
             schema,
             orReplace);
 
-    public static OperationBuilder<DropBlueTuskTriggerOperation> DropBlueTuskTrigger(
+    public static OperationBuilder<DropTriggerOperation> DropTrigger(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -57,7 +57,7 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskTriggerOperation
+        var operation = new DropTriggerOperation
         {
             Table = table,
             Schema = schema,
@@ -65,10 +65,10 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskTriggerOperation>(operation);
+        return new OperationBuilder<DropTriggerOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskTriggerOperation> RenameBlueTuskTrigger(
+    public static OperationBuilder<RenameTriggerOperation> RenameTrigger(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -79,7 +79,7 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskTriggerOperation
+        var operation = new RenameTriggerOperation
         {
             Table = table,
             Schema = schema,
@@ -87,10 +87,10 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
             NewName = newName,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskTriggerOperation>(operation);
+        return new OperationBuilder<RenameTriggerOperation>(operation);
     }
 
-    public static OperationBuilder<AlterBlueTuskTriggerEnabledModeOperation> AlterBlueTuskTriggerEnabledMode(
+    public static OperationBuilder<AlterTriggerEnabledModeOperation> AlterTriggerEnabledMode(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -105,7 +105,7 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
             throw new ArgumentOutOfRangeException(nameof(enabledMode));
         }
 
-        var operation = new AlterBlueTuskTriggerEnabledModeOperation
+        var operation = new AlterTriggerEnabledModeOperation
         {
             Table = table,
             Schema = schema,
@@ -113,6 +113,6 @@ public static class BlueTuskTriggerMigrationBuilderExtensions
             EnabledMode = enabledMode,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskTriggerEnabledModeOperation>(operation);
+        return new OperationBuilder<AlterTriggerEnabledModeOperation>(operation);
     }
 }

@@ -35,7 +35,7 @@ public static class BlueTuskSystemColumns
 /// <summary>Explicit model configuration for PostgreSQL-owned system columns.</summary>
 public static class BlueTuskSystemColumnExtensions
 {
-    public static EntityTypeBuilder UseBlueTuskSystemColumn(
+    public static EntityTypeBuilder UseSystemColumn(
         this EntityTypeBuilder entityTypeBuilder,
         BlueTuskSystemColumn column)
     {
@@ -74,50 +74,50 @@ public static class BlueTuskSystemColumnExtensions
         return entityTypeBuilder;
     }
 
-    public static EntityTypeBuilder<TEntity> UseBlueTuskSystemColumn<TEntity>(
+    public static EntityTypeBuilder<TEntity> UseSystemColumn<TEntity>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         BlueTuskSystemColumn column)
         where TEntity : class
     {
-        UseBlueTuskSystemColumn((EntityTypeBuilder)entityTypeBuilder, column);
+        UseSystemColumn((EntityTypeBuilder)entityTypeBuilder, column);
         return entityTypeBuilder;
     }
 
-    public static EntityTypeBuilder UseBlueTuskSystemColumns(
+    public static EntityTypeBuilder UseSystemColumns(
         this EntityTypeBuilder entityTypeBuilder)
     {
         ArgumentNullException.ThrowIfNull(entityTypeBuilder);
         foreach (var column in Enum.GetValues<BlueTuskSystemColumn>())
         {
-            entityTypeBuilder.UseBlueTuskSystemColumn(column);
+            entityTypeBuilder.UseSystemColumn(column);
         }
 
         return entityTypeBuilder;
     }
 
-    public static EntityTypeBuilder<TEntity> UseBlueTuskSystemColumns<TEntity>(
+    public static EntityTypeBuilder<TEntity> UseSystemColumns<TEntity>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder)
         where TEntity : class
     {
-        UseBlueTuskSystemColumns((EntityTypeBuilder)entityTypeBuilder);
+        UseSystemColumns((EntityTypeBuilder)entityTypeBuilder);
         return entityTypeBuilder;
     }
 
-    public static EntityTypeBuilder UseBlueTuskXminConcurrencyToken(
+    public static EntityTypeBuilder UseXminConcurrencyToken(
         this EntityTypeBuilder entityTypeBuilder)
     {
         ArgumentNullException.ThrowIfNull(entityTypeBuilder);
-        entityTypeBuilder.UseBlueTuskSystemColumn(BlueTuskSystemColumn.Xmin);
+        entityTypeBuilder.UseSystemColumn(BlueTuskSystemColumn.Xmin);
         entityTypeBuilder.Property<BlueTuskTransactionId>(BlueTuskSystemColumns.Xmin)
             .IsConcurrencyToken();
         return entityTypeBuilder;
     }
 
-    public static EntityTypeBuilder<TEntity> UseBlueTuskXminConcurrencyToken<TEntity>(
+    public static EntityTypeBuilder<TEntity> UseXminConcurrencyToken<TEntity>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder)
         where TEntity : class
     {
-        UseBlueTuskXminConcurrencyToken((EntityTypeBuilder)entityTypeBuilder);
+        UseXminConcurrencyToken((EntityTypeBuilder)entityTypeBuilder);
         return entityTypeBuilder;
     }
 }

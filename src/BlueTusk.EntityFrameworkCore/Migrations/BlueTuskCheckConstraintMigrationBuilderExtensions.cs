@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 public static class BlueTuskCheckConstraintMigrationBuilderExtensions
 {
     /// <summary>Adds a PostgreSQL CHECK constraint with optional NOT VALID and NO INHERIT clauses.</summary>
-    public static OperationBuilder<AddCheckConstraintOperation> AddBlueTuskCheckConstraint(
+    public static OperationBuilder<AddCheckConstraintOperation> AddCheckConstraint(
         this MigrationBuilder migrationBuilder,
         string name,
         string table,
@@ -50,7 +50,7 @@ public static class BlueTuskCheckConstraintMigrationBuilderExtensions
     }
 
     /// <summary>Validates an existing PostgreSQL CHECK constraint against all table rows.</summary>
-    public static OperationBuilder<ValidateBlueTuskCheckConstraintOperation> ValidateBlueTuskCheckConstraint(
+    public static OperationBuilder<ValidateCheckConstraintOperation> ValidateCheckConstraint(
         this MigrationBuilder migrationBuilder,
         string name,
         string table,
@@ -59,13 +59,13 @@ public static class BlueTuskCheckConstraintMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
-        var operation = new ValidateBlueTuskCheckConstraintOperation
+        var operation = new ValidateCheckConstraintOperation
         {
             Name = name,
             Table = table,
             Schema = schema,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<ValidateBlueTuskCheckConstraintOperation>(operation);
+        return new OperationBuilder<ValidateCheckConstraintOperation>(operation);
     }
 }

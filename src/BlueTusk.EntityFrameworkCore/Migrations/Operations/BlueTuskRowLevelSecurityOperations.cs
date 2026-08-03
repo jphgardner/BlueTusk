@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
 /// <summary>Creates a PostgreSQL row-level security policy.</summary>
-public sealed class CreateBlueTuskRowSecurityPolicyOperation : MigrationOperation
+public sealed class CreateRowSecurityPolicyOperation : MigrationOperation
 {
     public string Table { get; set; } = string.Empty;
 
@@ -14,7 +14,7 @@ public sealed class CreateBlueTuskRowSecurityPolicyOperation : MigrationOperatio
 }
 
 /// <summary>Changes the roles or expressions of a PostgreSQL row-level security policy.</summary>
-public sealed class AlterBlueTuskRowSecurityPolicyOperation : MigrationOperation
+public sealed class AlterRowSecurityPolicyOperation : MigrationOperation
 {
     public string Table { get; set; } = string.Empty;
 
@@ -24,7 +24,7 @@ public sealed class AlterBlueTuskRowSecurityPolicyOperation : MigrationOperation
 }
 
 /// <summary>Drops a PostgreSQL row-level security policy.</summary>
-public sealed class DropBlueTuskRowSecurityPolicyOperation : MigrationOperation
+public sealed class DropRowSecurityPolicyOperation : MigrationOperation
 {
     public string Table { get; set; } = string.Empty;
 
@@ -34,7 +34,7 @@ public sealed class DropBlueTuskRowSecurityPolicyOperation : MigrationOperation
 }
 
 /// <summary>Renames a PostgreSQL row-level security policy.</summary>
-public sealed class RenameBlueTuskRowSecurityPolicyOperation : MigrationOperation
+public sealed class RenameRowSecurityPolicyOperation : MigrationOperation
 {
     public string Table { get; set; } = string.Empty;
 
@@ -46,7 +46,7 @@ public sealed class RenameBlueTuskRowSecurityPolicyOperation : MigrationOperatio
 }
 
 /// <summary>Changes row-level security enablement or owner enforcement for a PostgreSQL table.</summary>
-public sealed class AlterBlueTuskRowLevelSecurityOperation : MigrationOperation
+public sealed class AlterRowLevelSecurityOperation : MigrationOperation
 {
     public string Table { get; set; } = string.Empty;
 

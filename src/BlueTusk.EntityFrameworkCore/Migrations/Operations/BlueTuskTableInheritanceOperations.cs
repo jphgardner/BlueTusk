@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
 /// <summary>Adds a direct PostgreSQL table-inheritance relationship.</summary>
-public sealed class AddBlueTuskTableInheritanceOperation : MigrationOperation
+public sealed class AddTableInheritanceOperation : MigrationOperation
 {
     public required string Table { get; init; }
 
@@ -15,7 +15,7 @@ public sealed class AddBlueTuskTableInheritanceOperation : MigrationOperation
 }
 
 /// <summary>Removes a direct PostgreSQL table-inheritance relationship.</summary>
-public sealed class RemoveBlueTuskTableInheritanceOperation : MigrationOperation
+public sealed class RemoveTableInheritanceOperation : MigrationOperation
 {
     public required string Table { get; init; }
 

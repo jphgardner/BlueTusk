@@ -119,7 +119,7 @@ internal static class BlueTuskTableInheritanceModelDiffer
     private static TableKey Rename(TableKey key, IReadOnlyDictionary<TableKey, TableKey> renames) =>
         renames.GetValueOrDefault(key, key);
 
-    private static AddBlueTuskTableInheritanceOperation CreateAdd(TableKey table, TableKey parent) =>
+    private static AddTableInheritanceOperation CreateAdd(TableKey table, TableKey parent) =>
         new()
         {
             Table = table.Name,
@@ -128,7 +128,7 @@ internal static class BlueTuskTableInheritanceModelDiffer
             ParentSchema = parent.Schema,
         };
 
-    private static RemoveBlueTuskTableInheritanceOperation CreateRemove(TableKey table, TableKey parent) =>
+    private static RemoveTableInheritanceOperation CreateRemove(TableKey table, TableKey parent) =>
         new()
         {
             Table = table.Name,

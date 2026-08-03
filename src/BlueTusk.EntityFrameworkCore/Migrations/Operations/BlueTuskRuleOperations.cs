@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskRuleOperation : MigrationOperation
+public sealed class CreateRuleOperation : MigrationOperation
 {
     public required string Table { get; init; }
     public string? Schema { get; init; }
@@ -11,14 +11,14 @@ public sealed class CreateBlueTuskRuleOperation : MigrationOperation
     public bool OrReplace { get; init; }
 }
 
-public sealed class DropBlueTuskRuleOperation : MigrationOperation
+public sealed class DropRuleOperation : MigrationOperation
 {
     public required string Table { get; init; }
     public string? Schema { get; init; }
     public required string Name { get; init; }
 }
 
-public sealed class RenameBlueTuskRuleOperation : MigrationOperation
+public sealed class RenameRuleOperation : MigrationOperation
 {
     public required string Table { get; init; }
     public string? Schema { get; init; }
@@ -26,7 +26,7 @@ public sealed class RenameBlueTuskRuleOperation : MigrationOperation
     public required string NewName { get; init; }
 }
 
-public sealed class AlterBlueTuskRuleEnabledModeOperation : MigrationOperation
+public sealed class AlterRuleEnabledModeOperation : MigrationOperation
 {
     public required string Table { get; init; }
     public string? Schema { get; init; }

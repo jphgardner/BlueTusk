@@ -175,15 +175,15 @@ source is constant-time and in-memory, but the `GRAPH_TABLE` query and provider
 work are included. These ShortRun values are checked-in regression evidence,
 not production latency objectives.
 
-The independently versioned `BlueTusk.ContinuousGraph 0.1.0-preview.1` package
+The independently versioned `BlueTusk.ContinuousGraph 0.1.0-preview.1` runtime
+and `BlueTusk.ContinuousGraph.ControlPlane` adapter
 passes a zero-warning repository Release build, the complete offline solution
-suite, all seven graph tests against PostgreSQL 19 Beta 2, public API and
+suite, all eight graph tests including PostgreSQL 19 acceptance, public API and
 dependency-direction conformance, documentation-link and allocation-budget
-gates, and an inspected NuGet pack. This enables the artifact for release only
-after Live passes its own gate. The Live gate now covers signed
+gates, and inspected NuGet packs. The Graph family remains non-publishable
+until Provider, Live, and Control Plane are publishable. The Live gate covers signed
 disconnect/resume replay from the PostgreSQL production store through SSE,
-SignalR/WebSockets, and HTTP/2 gRPC on PostgreSQL 15–19; the Live and Continuous
-Graph preview manifests are enabled in dependency order. The release script
+SignalR/WebSockets, and HTTP/2 gRPC on PostgreSQL 15–19. The release script
 rejects any publishable family with a gated dependency. This does not mark the
 still-open Streams 72-hour, Sync 24-hour, Live 1.0, or Control Plane release
 gates complete.
@@ -193,7 +193,8 @@ v1 agent routes with versioned envelopes while retaining the original preview
 routes as compatibility aliases. Its audit store transactionally upgrades the
 legacy pre-metadata table to schema version 2, preserves and format-marks
 existing rows, rejects future schemas, and fences appends to the exact running
-schema version. Ten unit tests and the live PostgreSQL 15–19 matrix cover route
+schema version. Eleven unit tests, a hash-locked compiler API baseline, an
+executable format registry, and the live PostgreSQL 15–19 matrix cover route
 authorization, version negotiation, immutable audit, fresh initialization, and
 legacy upgrade. The `BlueTusk.ControlPlane` and `BlueTusk.Dashboard
 0.1.0-preview.1` candidates remain non-publishable because the declared Sync

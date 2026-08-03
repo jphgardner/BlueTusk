@@ -6,7 +6,7 @@ namespace BlueTusk.EntityFrameworkCore.Graphs;
 /// <summary>Reads BlueTusk property-graph definitions from EF model metadata.</summary>
 public static class BlueTuskPropertyGraphMetadataExtensions
 {
-    public static IReadOnlyList<BlueTuskPropertyGraphDefinition> GetBlueTuskPropertyGraphs(
+    public static IReadOnlyList<BlueTuskPropertyGraphDefinition> GetPropertyGraphs(
         this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);

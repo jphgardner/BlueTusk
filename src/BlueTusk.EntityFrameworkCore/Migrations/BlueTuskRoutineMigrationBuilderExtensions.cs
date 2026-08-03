@@ -11,37 +11,37 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Signature-aware migration-builder extensions for PostgreSQL routines.</summary>
 public static class BlueTuskRoutineMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskRoutineOperation> CreateBlueTuskRoutine(
+    public static OperationBuilder<CreateRoutineOperation> CreateRoutine(
         this MigrationBuilder migrationBuilder,
         BlueTuskRoutineDefinition definition)
     {
         BlueTuskRoutineMetadata.Validate(definition);
-        return Add(migrationBuilder, new CreateBlueTuskRoutineOperation
+        return Add(migrationBuilder, new CreateRoutineOperation
         {
             Definition = BlueTuskRoutineMetadata.Normalize(definition),
         });
     }
 
-    public static OperationBuilder<ReplaceBlueTuskRoutineOperation> ReplaceBlueTuskRoutine(
+    public static OperationBuilder<ReplaceRoutineOperation> ReplaceRoutine(
         this MigrationBuilder migrationBuilder,
         BlueTuskRoutineDefinition definition,
         BlueTuskRoutineDefinition oldDefinition)
     {
         BlueTuskRoutineAlterationPlanner.ValidateReplacement(oldDefinition, definition);
-        return Add(migrationBuilder, new ReplaceBlueTuskRoutineOperation
+        return Add(migrationBuilder, new ReplaceRoutineOperation
         {
             Definition = BlueTuskRoutineMetadata.Normalize(definition),
             OldDefinition = BlueTuskRoutineMetadata.Normalize(oldDefinition),
         });
     }
 
-    public static OperationBuilder<DropBlueTuskRoutineOperation> DropBlueTuskRoutine(
+    public static OperationBuilder<DropRoutineOperation> DropRoutine(
         this MigrationBuilder migrationBuilder,
         BlueTuskRoutineKind kind,
         string name,
         string identityArgumentsSql = "",
         string? schema = null) =>
-        Add(migrationBuilder, new DropBlueTuskRoutineOperation
+        Add(migrationBuilder, new DropRoutineOperation
         {
             Kind = kind,
             Name = name,
@@ -50,7 +50,7 @@ public static class BlueTuskRoutineMigrationBuilderExtensions
             IsDestructiveChange = true,
         });
 
-    public static OperationBuilder<RenameBlueTuskRoutineOperation> RenameBlueTuskRoutine(
+    public static OperationBuilder<RenameRoutineOperation> RenameRoutine(
         this MigrationBuilder migrationBuilder,
         BlueTuskRoutineKind kind,
         string name,
@@ -58,7 +58,7 @@ public static class BlueTuskRoutineMigrationBuilderExtensions
         string newName,
         string? schema = null,
         string? newSchema = null) =>
-        Add(migrationBuilder, new RenameBlueTuskRoutineOperation
+        Add(migrationBuilder, new RenameRoutineOperation
         {
             Kind = kind,
             Name = name,
@@ -69,17 +69,17 @@ public static class BlueTuskRoutineMigrationBuilderExtensions
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskRoutineOperation> CreateBlueTuskRoutine(
+    public static OperationBuilder<CreateRoutineOperation> CreateRoutine(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskRoutine(migrationBuilder, BlueTuskRoutineMetadata.DeserializeDefinition(serializedDefinition));
+        CreateRoutine(migrationBuilder, BlueTuskRoutineMetadata.DeserializeDefinition(serializedDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<ReplaceBlueTuskRoutineOperation> ReplaceBlueTuskRoutine(
+    public static OperationBuilder<ReplaceRoutineOperation> ReplaceRoutine(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        ReplaceBlueTuskRoutine(
+        ReplaceRoutine(
             migrationBuilder,
             BlueTuskRoutineMetadata.DeserializeDefinition(serializedDefinition),
             BlueTuskRoutineMetadata.DeserializeDefinition(serializedOldDefinition));

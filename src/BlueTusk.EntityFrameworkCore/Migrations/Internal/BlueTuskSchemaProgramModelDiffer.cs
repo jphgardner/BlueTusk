@@ -50,7 +50,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             {
                 if (!Equal(oldDefinition, definition))
                 {
-                    before.Add(new ReplaceBlueTuskOperatorOperation
+                    before.Add(new ReplaceOperatorOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -60,7 +60,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             }
             else
             {
-                after.Add(new DropBlueTuskOperatorOperation
+                after.Add(new DropOperatorOperation
                 {
                     Definition = oldDefinition,
                     IsDestructiveChange = true,
@@ -70,7 +70,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
 
         foreach (var (key, definition) in newItems)
         {
-            if (!oldItems.ContainsKey(key)) before.Add(new CreateBlueTuskOperatorOperation { Definition = definition });
+            if (!oldItems.ContainsKey(key)) before.Add(new CreateOperatorOperation { Definition = definition });
         }
     }
 
@@ -88,7 +88,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             {
                 if (!Equal(oldDefinition, definition))
                 {
-                    before.Add(new AlterBlueTuskOperatorFamilyOperation
+                    before.Add(new AlterOperatorFamilyOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -98,7 +98,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             }
             else
             {
-                after.Add(new DropBlueTuskOperatorFamilyOperation
+                after.Add(new DropOperatorFamilyOperation
                 {
                     Definition = oldDefinition,
                     IsDestructiveChange = true,
@@ -110,7 +110,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
         {
             if (!oldItems.ContainsKey(key))
             {
-                before.Add(new CreateBlueTuskOperatorFamilyOperation { Definition = definition });
+                before.Add(new CreateOperatorFamilyOperation { Definition = definition });
             }
         }
     }
@@ -129,7 +129,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             {
                 if (!Equal(oldDefinition, definition))
                 {
-                    before.Add(new ReplaceBlueTuskOperatorClassOperation
+                    before.Add(new ReplaceOperatorClassOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -139,7 +139,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             }
             else
             {
-                after.Add(new DropBlueTuskOperatorClassOperation
+                after.Add(new DropOperatorClassOperation
                 {
                     Definition = oldDefinition,
                     IsDestructiveChange = true,
@@ -151,7 +151,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
         {
             if (!oldItems.ContainsKey(key))
             {
-                before.Add(new CreateBlueTuskOperatorClassOperation { Definition = definition });
+                before.Add(new CreateOperatorClassOperation { Definition = definition });
             }
         }
     }
@@ -170,7 +170,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             {
                 if (!Equal(oldDefinition, definition))
                 {
-                    before.Add(new ReplaceBlueTuskCastOperation
+                    before.Add(new ReplaceCastOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -180,7 +180,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             }
             else
             {
-                after.Add(new DropBlueTuskCastOperation
+                after.Add(new DropCastOperation
                 {
                     Definition = oldDefinition,
                     IsDestructiveChange = true,
@@ -190,7 +190,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
 
         foreach (var (key, definition) in newItems)
         {
-            if (!oldItems.ContainsKey(key)) before.Add(new CreateBlueTuskCastOperation { Definition = definition });
+            if (!oldItems.ContainsKey(key)) before.Add(new CreateCastOperation { Definition = definition });
         }
     }
 
@@ -208,7 +208,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             {
                 if (!Equal(oldDefinition, definition))
                 {
-                    before.Add(new ReplaceBlueTuskAggregateOperation
+                    before.Add(new ReplaceAggregateOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -218,7 +218,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
             }
             else
             {
-                after.Add(new DropBlueTuskAggregateOperation
+                after.Add(new DropAggregateOperation
                 {
                     Definition = oldDefinition,
                     IsDestructiveChange = true,
@@ -230,7 +230,7 @@ internal static class BlueTuskSchemaProgramModelDiffer
         {
             if (!oldItems.ContainsKey(key))
             {
-                before.Add(new CreateBlueTuskAggregateOperation { Definition = definition });
+                before.Add(new CreateAggregateOperation { Definition = definition });
             }
         }
     }

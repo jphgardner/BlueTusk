@@ -3,14 +3,14 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskCollationOperation : MigrationOperation
+public sealed class CreateCollationOperation : MigrationOperation
 {
     public required BlueTuskCollationDefinition Definition { get; init; }
 
     public bool IfNotExists { get; init; }
 }
 
-public sealed class CreateBlueTuskCollationFromOperation : MigrationOperation
+public sealed class CreateCollationFromOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
@@ -23,7 +23,7 @@ public sealed class CreateBlueTuskCollationFromOperation : MigrationOperation
     public bool IfNotExists { get; init; }
 }
 
-public sealed class RenameBlueTuskCollationOperation : MigrationOperation
+public sealed class RenameCollationOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
@@ -34,14 +34,14 @@ public sealed class RenameBlueTuskCollationOperation : MigrationOperation
     public string? NewSchema { get; init; }
 }
 
-public sealed class RefreshBlueTuskCollationVersionOperation : MigrationOperation
+public sealed class RefreshCollationVersionOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
     public string? Schema { get; init; }
 }
 
-public sealed class DropBlueTuskCollationOperation : MigrationOperation
+public sealed class DropCollationOperation : MigrationOperation
 {
     public required string Name { get; init; }
 

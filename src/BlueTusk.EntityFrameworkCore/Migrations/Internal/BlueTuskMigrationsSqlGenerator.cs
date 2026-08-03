@@ -74,325 +74,325 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
 
         switch (operation)
         {
-            case CreateBlueTuskExpressionIndexOperation createExpressionIndex:
+            case CreateExpressionIndexOperation createExpressionIndex:
                 Generate(createExpressionIndex, builder);
                 break;
-            case DropBlueTuskExpressionIndexOperation dropExpressionIndex:
+            case DropExpressionIndexOperation dropExpressionIndex:
                 Generate(dropExpressionIndex, builder);
                 break;
-            case RenameBlueTuskExpressionIndexOperation renameExpressionIndex:
+            case RenameExpressionIndexOperation renameExpressionIndex:
                 Generate(renameExpressionIndex, builder);
                 break;
-            case ValidateBlueTuskCheckConstraintOperation validateCheckConstraint:
+            case ValidateCheckConstraintOperation validateCheckConstraint:
                 Generate(validateCheckConstraint, builder);
                 break;
-            case CreateBlueTuskTablespaceOperation createTablespace:
+            case CreateTablespaceOperation createTablespace:
                 Generate(createTablespace, builder);
                 break;
-            case AlterBlueTuskTablespaceOperation alterTablespace:
+            case AlterTablespaceOperation alterTablespace:
                 Generate(alterTablespace, builder);
                 break;
-            case RenameBlueTuskTablespaceOperation renameTablespace:
+            case RenameTablespaceOperation renameTablespace:
                 Generate(renameTablespace, builder);
                 break;
-            case DropBlueTuskTablespaceOperation dropTablespace:
+            case DropTablespaceOperation dropTablespace:
                 Generate(dropTablespace, builder);
                 break;
-            case CreateBlueTuskExtensionOperation createExtension:
+            case CreateExtensionOperation createExtension:
                 Generate(createExtension, builder);
                 break;
-            case AlterBlueTuskExtensionOperation alterExtension:
+            case AlterExtensionOperation alterExtension:
                 Generate(alterExtension, builder);
                 break;
-            case DropBlueTuskExtensionOperation dropExtension:
+            case DropExtensionOperation dropExtension:
                 Generate(dropExtension, builder);
                 break;
-            case CreateBlueTuskCollationOperation createCollation:
+            case CreateCollationOperation createCollation:
                 Generate(createCollation, builder);
                 break;
-            case CreateBlueTuskCollationFromOperation createCollationFrom:
+            case CreateCollationFromOperation createCollationFrom:
                 Generate(createCollationFrom, builder);
                 break;
-            case RenameBlueTuskCollationOperation renameCollation:
+            case RenameCollationOperation renameCollation:
                 Generate(renameCollation, builder);
                 break;
-            case RefreshBlueTuskCollationVersionOperation refreshCollation:
+            case RefreshCollationVersionOperation refreshCollation:
                 Generate(refreshCollation, builder);
                 break;
-            case DropBlueTuskCollationOperation dropCollation:
+            case DropCollationOperation dropCollation:
                 Generate(dropCollation, builder);
                 break;
-            case CreateBlueTuskViewOperation createView:
+            case CreateViewOperation createView:
                 Generate(createView, builder);
                 break;
-            case ReplaceBlueTuskViewOperation replaceView:
+            case ReplaceViewOperation replaceView:
                 Generate(replaceView, builder);
                 break;
-            case CreateBlueTuskMaterializedViewOperation createMaterializedView:
+            case CreateMaterializedViewOperation createMaterializedView:
                 Generate(createMaterializedView, builder);
                 break;
-            case AlterBlueTuskMaterializedViewOperation alterMaterializedView:
+            case AlterMaterializedViewOperation alterMaterializedView:
                 Generate(alterMaterializedView, builder);
                 break;
-            case DropBlueTuskViewOperation dropView:
+            case DropViewOperation dropView:
                 Generate(dropView, builder);
                 break;
-            case RenameBlueTuskViewOperation renameView:
+            case RenameViewOperation renameView:
                 Generate(renameView, builder);
                 break;
-            case RefreshBlueTuskMaterializedViewOperation refreshMaterializedView:
+            case RefreshMaterializedViewOperation refreshMaterializedView:
                 Generate(refreshMaterializedView, builder);
                 break;
-            case CreateBlueTuskRoutineOperation createRoutine:
+            case CreateRoutineOperation createRoutine:
                 Generate(createRoutine, builder);
                 break;
-            case ReplaceBlueTuskRoutineOperation replaceRoutine:
+            case ReplaceRoutineOperation replaceRoutine:
                 Generate(replaceRoutine, builder);
                 break;
-            case DropBlueTuskRoutineOperation dropRoutine:
+            case DropRoutineOperation dropRoutine:
                 Generate(dropRoutine, builder);
                 break;
-            case RenameBlueTuskRoutineOperation renameRoutine:
+            case RenameRoutineOperation renameRoutine:
                 Generate(renameRoutine, builder);
                 break;
-            case CreateBlueTuskEnumTypeOperation createEnum:
+            case CreateEnumTypeOperation createEnum:
                 Generate(createEnum, builder);
                 break;
-            case AlterBlueTuskEnumTypeOperation alterEnum:
+            case AlterEnumTypeOperation alterEnum:
                 Generate(alterEnum, builder);
                 break;
-            case DropBlueTuskEnumTypeOperation dropEnum:
+            case DropEnumTypeOperation dropEnum:
                 Generate(dropEnum, builder);
                 break;
-            case CreateBlueTuskDomainTypeOperation createDomain:
+            case CreateDomainTypeOperation createDomain:
                 Generate(createDomain, builder);
                 break;
-            case AlterBlueTuskDomainTypeOperation alterDomain:
+            case AlterDomainTypeOperation alterDomain:
                 Generate(alterDomain, builder);
                 break;
-            case DropBlueTuskDomainTypeOperation dropDomain:
+            case DropDomainTypeOperation dropDomain:
                 Generate(dropDomain, builder);
                 break;
-            case CreateBlueTuskCompositeTypeOperation createComposite:
+            case CreateCompositeTypeOperation createComposite:
                 Generate(createComposite, builder);
                 break;
-            case AlterBlueTuskCompositeTypeOperation alterComposite:
+            case AlterCompositeTypeOperation alterComposite:
                 Generate(alterComposite, builder);
                 break;
-            case DropBlueTuskCompositeTypeOperation dropComposite:
+            case DropCompositeTypeOperation dropComposite:
                 Generate(dropComposite, builder);
                 break;
-            case CreateBlueTuskRangeTypeOperation createRange:
+            case CreateRangeTypeOperation createRange:
                 Generate(createRange, builder);
                 break;
-            case DropBlueTuskRangeTypeOperation dropRange:
+            case DropRangeTypeOperation dropRange:
                 Generate(dropRange, builder);
                 break;
-            case RenameBlueTuskRangeTypeOperation renameRange:
+            case RenameRangeTypeOperation renameRange:
                 Generate(renameRange, builder);
                 break;
-            case RenameBlueTuskUserDefinedTypeOperation renameType:
+            case RenameUserDefinedTypeOperation renameType:
                 Generate(renameType, builder);
                 break;
-            case AddBlueTuskTableInheritanceOperation addInheritance:
+            case AddTableInheritanceOperation addInheritance:
                 Generate(addInheritance, builder);
                 break;
-            case RemoveBlueTuskTableInheritanceOperation removeInheritance:
+            case RemoveTableInheritanceOperation removeInheritance:
                 Generate(removeInheritance, builder);
                 break;
-            case CreateBlueTuskRowSecurityPolicyOperation createPolicy:
+            case CreateRowSecurityPolicyOperation createPolicy:
                 Generate(createPolicy, builder);
                 break;
-            case AlterBlueTuskRowSecurityPolicyOperation alterPolicy:
+            case AlterRowSecurityPolicyOperation alterPolicy:
                 Generate(alterPolicy, builder);
                 break;
-            case DropBlueTuskRowSecurityPolicyOperation dropPolicy:
+            case DropRowSecurityPolicyOperation dropPolicy:
                 Generate(dropPolicy, builder);
                 break;
-            case RenameBlueTuskRowSecurityPolicyOperation renamePolicy:
+            case RenameRowSecurityPolicyOperation renamePolicy:
                 Generate(renamePolicy, builder);
                 break;
-            case AlterBlueTuskRowLevelSecurityOperation alterRowLevelSecurity:
+            case AlterRowLevelSecurityOperation alterRowLevelSecurity:
                 Generate(alterRowLevelSecurity, builder);
                 break;
-            case AddBlueTuskExclusionConstraintOperation addExclusionConstraint:
+            case AddExclusionConstraintOperation addExclusionConstraint:
                 Generate(addExclusionConstraint, builder);
                 break;
-            case DropBlueTuskExclusionConstraintOperation dropExclusionConstraint:
+            case DropExclusionConstraintOperation dropExclusionConstraint:
                 Generate(dropExclusionConstraint, builder);
                 break;
-            case RenameBlueTuskExclusionConstraintOperation renameExclusionConstraint:
+            case RenameExclusionConstraintOperation renameExclusionConstraint:
                 Generate(renameExclusionConstraint, builder);
                 break;
-            case CreateBlueTuskTriggerOperation createTrigger:
+            case CreateTriggerOperation createTrigger:
                 Generate(createTrigger, builder);
                 break;
-            case DropBlueTuskTriggerOperation dropTrigger:
+            case DropTriggerOperation dropTrigger:
                 Generate(dropTrigger, builder);
                 break;
-            case RenameBlueTuskTriggerOperation renameTrigger:
+            case RenameTriggerOperation renameTrigger:
                 Generate(renameTrigger, builder);
                 break;
-            case AlterBlueTuskTriggerEnabledModeOperation alterTriggerMode:
+            case AlterTriggerEnabledModeOperation alterTriggerMode:
                 Generate(alterTriggerMode, builder);
                 break;
-            case CreateBlueTuskEventTriggerOperation createEventTrigger:
+            case CreateEventTriggerOperation createEventTrigger:
                 Generate(createEventTrigger, builder);
                 break;
-            case DropBlueTuskEventTriggerOperation dropEventTrigger:
+            case DropEventTriggerOperation dropEventTrigger:
                 Generate(dropEventTrigger, builder);
                 break;
-            case RenameBlueTuskEventTriggerOperation renameEventTrigger:
+            case RenameEventTriggerOperation renameEventTrigger:
                 Generate(renameEventTrigger, builder);
                 break;
-            case AlterBlueTuskEventTriggerEnabledModeOperation alterEventTriggerMode:
+            case AlterEventTriggerEnabledModeOperation alterEventTriggerMode:
                 Generate(alterEventTriggerMode, builder);
                 break;
-            case CreateBlueTuskRuleOperation createRule:
+            case CreateRuleOperation createRule:
                 Generate(createRule, builder);
                 break;
-            case DropBlueTuskRuleOperation dropRule:
+            case DropRuleOperation dropRule:
                 Generate(dropRule, builder);
                 break;
-            case RenameBlueTuskRuleOperation renameRule:
+            case RenameRuleOperation renameRule:
                 Generate(renameRule, builder);
                 break;
-            case AlterBlueTuskRuleEnabledModeOperation alterRuleMode:
+            case AlterRuleEnabledModeOperation alterRuleMode:
                 Generate(alterRuleMode, builder);
                 break;
-            case CreateBlueTuskPublicationOperation createPublication:
+            case CreatePublicationOperation createPublication:
                 Generate(createPublication, builder);
                 break;
-            case AlterBlueTuskPublicationOperation alterPublication:
+            case AlterPublicationOperation alterPublication:
                 Generate(alterPublication, builder);
                 break;
-            case DropBlueTuskPublicationOperation dropPublication:
+            case DropPublicationOperation dropPublication:
                 Generate(dropPublication, builder);
                 break;
-            case RenameBlueTuskPublicationOperation renamePublication:
+            case RenamePublicationOperation renamePublication:
                 Generate(renamePublication, builder);
                 break;
-            case CreateBlueTuskSubscriptionOperation createSubscription:
+            case CreateSubscriptionOperation createSubscription:
                 Generate(createSubscription, builder);
                 break;
-            case AlterBlueTuskSubscriptionOperation alterSubscription:
+            case AlterSubscriptionOperation alterSubscription:
                 Generate(alterSubscription, builder);
                 break;
-            case DropBlueTuskSubscriptionOperation dropSubscription:
+            case DropSubscriptionOperation dropSubscription:
                 Generate(dropSubscription, builder);
                 break;
-            case RenameBlueTuskSubscriptionOperation renameSubscription:
+            case RenameSubscriptionOperation renameSubscription:
                 Generate(renameSubscription, builder);
                 break;
-            case RefreshBlueTuskSubscriptionOperation refreshSubscription:
+            case RefreshSubscriptionOperation refreshSubscription:
                 Generate(refreshSubscription, builder);
                 break;
-            case RefreshBlueTuskSubscriptionSequencesOperation refreshSubscriptionSequences:
+            case RefreshSubscriptionSequencesOperation refreshSubscriptionSequences:
                 Generate(refreshSubscriptionSequences, builder);
                 break;
-            case SkipBlueTuskSubscriptionTransactionOperation skipSubscriptionTransaction:
+            case SkipSubscriptionTransactionOperation skipSubscriptionTransaction:
                 Generate(skipSubscriptionTransaction, builder);
                 break;
-            case CreateBlueTuskForeignDataWrapperOperation createWrapper:
+            case CreateForeignDataWrapperOperation createWrapper:
                 Generate(createWrapper, builder);
                 break;
-            case AlterBlueTuskForeignDataWrapperOperation alterWrapper:
+            case AlterForeignDataWrapperOperation alterWrapper:
                 Generate(alterWrapper, builder);
                 break;
-            case DropBlueTuskForeignDataWrapperOperation dropWrapper:
+            case DropForeignDataWrapperOperation dropWrapper:
                 Generate(dropWrapper, builder);
                 break;
-            case RenameBlueTuskForeignDataWrapperOperation renameWrapper:
+            case RenameForeignDataWrapperOperation renameWrapper:
                 Generate(renameWrapper, builder);
                 break;
-            case CreateBlueTuskForeignServerOperation createServer:
+            case CreateForeignServerOperation createServer:
                 Generate(createServer, builder);
                 break;
-            case AlterBlueTuskForeignServerOperation alterServer:
+            case AlterForeignServerOperation alterServer:
                 Generate(alterServer, builder);
                 break;
-            case DropBlueTuskForeignServerOperation dropServer:
+            case DropForeignServerOperation dropServer:
                 Generate(dropServer, builder);
                 break;
-            case RenameBlueTuskForeignServerOperation renameServer:
+            case RenameForeignServerOperation renameServer:
                 Generate(renameServer, builder);
                 break;
-            case CreateBlueTuskUserMappingOperation createMapping:
+            case CreateUserMappingOperation createMapping:
                 Generate(createMapping, builder);
                 break;
-            case AlterBlueTuskUserMappingOperation alterMapping:
+            case AlterUserMappingOperation alterMapping:
                 Generate(alterMapping, builder);
                 break;
-            case DropBlueTuskUserMappingOperation dropMapping:
+            case DropUserMappingOperation dropMapping:
                 Generate(dropMapping, builder);
                 break;
-            case CreateBlueTuskOperatorOperation createOperator:
+            case CreateOperatorOperation createOperator:
                 Generate(createOperator, builder);
                 break;
-            case ReplaceBlueTuskOperatorOperation replaceOperator:
+            case ReplaceOperatorOperation replaceOperator:
                 Generate(replaceOperator, builder);
                 break;
-            case DropBlueTuskOperatorOperation dropOperator:
+            case DropOperatorOperation dropOperator:
                 Generate(dropOperator, builder);
                 break;
-            case CreateBlueTuskOperatorFamilyOperation createOperatorFamily:
+            case CreateOperatorFamilyOperation createOperatorFamily:
                 Generate(createOperatorFamily, builder);
                 break;
-            case AlterBlueTuskOperatorFamilyOperation alterOperatorFamily:
+            case AlterOperatorFamilyOperation alterOperatorFamily:
                 Generate(alterOperatorFamily, builder);
                 break;
-            case DropBlueTuskOperatorFamilyOperation dropOperatorFamily:
+            case DropOperatorFamilyOperation dropOperatorFamily:
                 Generate(dropOperatorFamily, builder);
                 break;
-            case CreateBlueTuskOperatorClassOperation createOperatorClass:
+            case CreateOperatorClassOperation createOperatorClass:
                 Generate(createOperatorClass, builder);
                 break;
-            case ReplaceBlueTuskOperatorClassOperation replaceOperatorClass:
+            case ReplaceOperatorClassOperation replaceOperatorClass:
                 Generate(replaceOperatorClass, builder);
                 break;
-            case DropBlueTuskOperatorClassOperation dropOperatorClass:
+            case DropOperatorClassOperation dropOperatorClass:
                 Generate(dropOperatorClass, builder);
                 break;
-            case CreateBlueTuskCastOperation createCast:
+            case CreateCastOperation createCast:
                 Generate(createCast, builder);
                 break;
-            case ReplaceBlueTuskCastOperation replaceCast:
+            case ReplaceCastOperation replaceCast:
                 Generate(replaceCast, builder);
                 break;
-            case DropBlueTuskCastOperation dropCast:
+            case DropCastOperation dropCast:
                 Generate(dropCast, builder);
                 break;
-            case CreateBlueTuskAggregateOperation createAggregate:
+            case CreateAggregateOperation createAggregate:
                 Generate(createAggregate, builder);
                 break;
-            case ReplaceBlueTuskAggregateOperation replaceAggregate:
+            case ReplaceAggregateOperation replaceAggregate:
                 Generate(replaceAggregate, builder);
                 break;
-            case DropBlueTuskAggregateOperation dropAggregate:
+            case DropAggregateOperation dropAggregate:
                 Generate(dropAggregate, builder);
                 break;
-            case CreateBlueTuskPartitionOperation createPartition:
+            case CreatePartitionOperation createPartition:
                 Generate(createPartition, builder);
                 break;
-            case DropBlueTuskPartitionOperation dropPartition:
+            case DropPartitionOperation dropPartition:
                 Generate(dropPartition, builder);
                 break;
-            case AlterBlueTuskPartitionOperation alterPartition:
+            case AlterPartitionOperation alterPartition:
                 Generate(alterPartition, builder);
                 break;
-            case AttachBlueTuskPartitionOperation attachPartition:
+            case AttachPartitionOperation attachPartition:
                 Generate(attachPartition, builder);
                 break;
-            case DetachBlueTuskPartitionOperation detachPartition:
+            case DetachPartitionOperation detachPartition:
                 Generate(detachPartition, builder);
                 break;
-            case CreateBlueTuskPropertyGraphOperation create:
+            case CreatePropertyGraphOperation create:
                 Generate(create, builder);
                 break;
-            case DropBlueTuskPropertyGraphOperation drop:
+            case DropPropertyGraphOperation drop:
                 Generate(drop, builder);
                 break;
-            case AlterBlueTuskPropertyGraphOperation alter:
+            case AlterPropertyGraphOperation alter:
                 Generate(alter, builder);
                 break;
             default:
@@ -402,7 +402,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskExtensionOperation operation,
+        CreateExtensionOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskExtensionMetadata.Normalize(operation.Definition);
@@ -435,7 +435,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskExtensionOperation operation,
+        AlterExtensionOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = BlueTuskExtensionMetadata.Normalize(operation.OldDefinition);
@@ -477,7 +477,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskExtensionOperation operation,
+        DropExtensionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -493,7 +493,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskCollationOperation operation,
+        CreateCollationOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskCollationMetadata.Validate(operation.Definition);
@@ -589,7 +589,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     };
 
     private void Generate(
-        CreateBlueTuskCollationFromOperation operation,
+        CreateCollationFromOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -608,7 +608,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskCollationOperation operation,
+        RenameCollationOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -642,7 +642,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RefreshBlueTuskCollationVersionOperation operation,
+        RefreshCollationVersionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -653,7 +653,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskCollationOperation operation,
+        DropCollationOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -669,7 +669,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskTablespaceOperation operation,
+        CreateTablespaceOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskTablespaceMetadata.Validate(operation.Definition);
@@ -692,7 +692,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskTablespaceOperation operation,
+        AlterTablespaceOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskTablespaceMetadata.Validate(operation.Definition);
@@ -751,7 +751,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskTablespaceOperation operation,
+        RenameTablespaceOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -763,7 +763,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskTablespaceOperation operation,
+        DropTablespaceOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -817,7 +817,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskViewOperation operation,
+        CreateViewOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskViewMetadata.Validate(operation.Definition);
@@ -826,7 +826,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        ReplaceBlueTuskViewOperation operation,
+        ReplaceViewOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskViewAlterationPlanner.ValidateReplacement(operation.OldDefinition, operation.Definition);
@@ -856,7 +856,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskMaterializedViewOperation operation,
+        CreateMaterializedViewOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskViewMetadata.Normalize(operation.Definition);
@@ -878,7 +878,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskMaterializedViewOperation operation,
+        AlterMaterializedViewOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskViewAlterationPlanner.ValidateMaterializedAlteration(
@@ -948,7 +948,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskViewOperation operation,
+        DropViewOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -958,7 +958,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskViewOperation operation,
+        RenameViewOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -990,7 +990,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RefreshBlueTuskMaterializedViewOperation operation,
+        RefreshMaterializedViewOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -1136,7 +1136,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskRoutineOperation operation,
+        CreateRoutineOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskRoutineMetadata.Validate(operation.Definition);
@@ -1145,7 +1145,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        ReplaceBlueTuskRoutineOperation operation,
+        ReplaceRoutineOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskRoutineAlterationPlanner.ValidateReplacement(operation.OldDefinition, operation.Definition);
@@ -1154,7 +1154,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskRoutineOperation operation,
+        DropRoutineOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -1166,7 +1166,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskRoutineOperation operation,
+        RenameRoutineOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -1216,7 +1216,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskEnumTypeOperation operation,
+        CreateEnumTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = operation.Definition;
@@ -1240,7 +1240,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskEnumTypeOperation operation,
+        AlterEnumTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = operation.Definition;
@@ -1274,7 +1274,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskEnumTypeOperation operation,
+        DropEnumTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         builder.Append("DROP TYPE ")
@@ -1283,7 +1283,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskDomainTypeOperation operation,
+        CreateDomainTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = operation.Definition;
@@ -1326,7 +1326,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskDomainTypeOperation operation,
+        AlterDomainTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = operation.OldDefinition;
@@ -1414,7 +1414,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskDomainTypeOperation operation,
+        DropDomainTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         builder.Append("DROP DOMAIN ")
@@ -1423,7 +1423,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskCompositeTypeOperation operation,
+        CreateCompositeTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = operation.Definition;
@@ -1446,7 +1446,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskCompositeTypeOperation operation,
+        AlterCompositeTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = operation.Definition;
@@ -1489,7 +1489,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskCompositeTypeOperation operation,
+        DropCompositeTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         builder.Append("DROP TYPE ")
@@ -1498,7 +1498,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskRangeTypeOperation operation,
+        CreateRangeTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = operation.Definition;
@@ -1517,7 +1517,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskRangeTypeOperation operation,
+        DropRangeTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         builder.Append("DROP TYPE ")
@@ -1527,7 +1527,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskRangeTypeOperation operation,
+        RenameRangeTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         GenerateTypeRename(
@@ -1545,7 +1545,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskUserDefinedTypeOperation operation,
+        RenameUserDefinedTypeOperation operation,
         MigrationCommandListBuilder builder)
     {
         var helper = Dependencies.SqlGenerationHelper;
@@ -1678,7 +1678,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         builder.Append("'").Append(EscapeLiteral(value)).Append("'");
 
     private void Generate(
-        AddBlueTuskTableInheritanceOperation operation,
+        AddTableInheritanceOperation operation,
         MigrationCommandListBuilder builder)
     {
         var helper = Dependencies.SqlGenerationHelper;
@@ -1691,7 +1691,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RemoveBlueTuskTableInheritanceOperation operation,
+        RemoveTableInheritanceOperation operation,
         MigrationCommandListBuilder builder)
     {
         var helper = Dependencies.SqlGenerationHelper;
@@ -1768,7 +1768,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        ValidateBlueTuskCheckConstraintOperation operation,
+        ValidateCheckConstraintOperation operation,
         MigrationCommandListBuilder builder)
     {
         builder.Append("ALTER TABLE ")
@@ -2122,7 +2122,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskExpressionIndexOperation operation,
+        CreateExpressionIndexOperation operation,
         MigrationCommandListBuilder builder)
     {
         BlueTuskExpressionIndexMetadata.Validate(operation.Definition);
@@ -2189,7 +2189,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskExpressionIndexOperation operation,
+        DropExpressionIndexOperation operation,
         MigrationCommandListBuilder builder)
     {
         builder.Append("DROP INDEX ");
@@ -2204,7 +2204,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskExpressionIndexOperation operation,
+        RenameExpressionIndexOperation operation,
         MigrationCommandListBuilder builder)
     {
         builder.Append("ALTER INDEX ")
@@ -2862,7 +2862,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskPartitionOperation operation,
+        CreatePartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
@@ -2888,7 +2888,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskPartitionOperation operation,
+        DropPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -2899,7 +2899,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskPartitionOperation operation,
+        AlterPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -2931,7 +2931,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AttachBlueTuskPartitionOperation operation,
+        AttachPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
@@ -2952,7 +2952,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DetachBlueTuskPartitionOperation operation,
+        DetachPartitionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.ParentName);
@@ -3083,7 +3083,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskRowSecurityPolicyOperation operation,
+        CreateRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3138,7 +3138,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskRowSecurityPolicyOperation operation,
+        DropRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3153,7 +3153,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskRowSecurityPolicyOperation operation,
+        AlterRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3191,7 +3191,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskRowSecurityPolicyOperation operation,
+        RenameRowSecurityPolicyOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3209,7 +3209,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskRowLevelSecurityOperation operation,
+        AlterRowLevelSecurityOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3241,7 +3241,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AddBlueTuskExclusionConstraintOperation operation,
+        AddExclusionConstraintOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3311,7 +3311,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskExclusionConstraintOperation operation,
+        DropExclusionConstraintOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3326,7 +3326,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskExclusionConstraintOperation operation,
+        RenameExclusionConstraintOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3421,7 +3421,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         }
     }
 
-    private void Generate(CreateBlueTuskEventTriggerOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(CreateEventTriggerOperation operation, MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskEventTriggerMetadata.Normalize(operation.Definition);
         BlueTuskEventTriggerMetadata.Validate(definition);
@@ -3460,7 +3460,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         EndStatement(builder);
         if (definition.EnabledMode != BlueTuskEventTriggerEnabledMode.Origin)
         {
-            Generate(new AlterBlueTuskEventTriggerEnabledModeOperation
+            Generate(new AlterEventTriggerEnabledModeOperation
             {
                 Name = definition.Name,
                 EnabledMode = definition.EnabledMode,
@@ -3468,7 +3468,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         }
     }
 
-    private void Generate(DropBlueTuskEventTriggerOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(DropEventTriggerOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
         builder.Append("DROP EVENT TRIGGER ")
@@ -3477,7 +3477,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         EndStatement(builder);
     }
 
-    private void Generate(RenameBlueTuskEventTriggerOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(RenameEventTriggerOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.NewName);
@@ -3489,7 +3489,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskEventTriggerEnabledModeOperation operation,
+        AlterEventTriggerEnabledModeOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -3516,7 +3516,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         _ => throw new InvalidOperationException("Unknown PostgreSQL event-trigger event."),
     };
 
-    private void Generate(CreateBlueTuskTriggerOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(CreateTriggerOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
         var definition = operation.Definition;
@@ -3574,7 +3574,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void AppendStructuredTrigger(
-        CreateBlueTuskTriggerOperation operation,
+        CreateTriggerOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = operation.Definition;
@@ -3690,7 +3690,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         EndStatement(builder);
     }
 
-    private void Generate(DropBlueTuskTriggerOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(DropTriggerOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -3703,7 +3703,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         EndStatement(builder);
     }
 
-    private void Generate(RenameBlueTuskTriggerOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(RenameTriggerOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -3719,7 +3719,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskTriggerEnabledModeOperation operation,
+        AlterTriggerEnabledModeOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3755,7 +3755,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
             .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(name));
     }
 
-    private void Generate(CreateBlueTuskRuleOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(CreateRuleOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
         var definition = operation.Definition;
@@ -3803,7 +3803,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         }
     }
 
-    private void Generate(DropBlueTuskRuleOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(DropRuleOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -3816,7 +3816,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         EndStatement(builder);
     }
 
-    private void Generate(RenameBlueTuskRuleOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(RenameRuleOperation operation, MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -3832,7 +3832,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskRuleEnabledModeOperation operation,
+        AlterRuleEnabledModeOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Table);
@@ -3864,7 +3864,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskPublicationOperation operation,
+        CreatePublicationOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskPublicationMetadata.Normalize(operation.Definition);
@@ -3887,7 +3887,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskPublicationOperation operation,
+        AlterPublicationOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = BlueTuskPublicationMetadata.Normalize(operation.OldDefinition);
@@ -3929,7 +3929,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskPublicationOperation operation,
+        DropPublicationOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -3940,7 +3940,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskPublicationOperation operation,
+        RenamePublicationOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -4183,10 +4183,10 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         return string.Join(", ", values);
     }
 
-    private void Generate(CreateBlueTuskOperatorOperation operation, MigrationCommandListBuilder builder) =>
+    private void Generate(CreateOperatorOperation operation, MigrationCommandListBuilder builder) =>
         GenerateCreateOperator(operation.Definition, builder);
 
-    private void Generate(ReplaceBlueTuskOperatorOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(ReplaceOperatorOperation operation, MigrationCommandListBuilder builder)
     {
         if (BlueTuskSchemaProgramMetadata.OperatorKey.Create(operation.OldDefinition) !=
             BlueTuskSchemaProgramMetadata.OperatorKey.Create(operation.Definition))
@@ -4198,7 +4198,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         GenerateCreateOperator(operation.Definition, builder);
     }
 
-    private void Generate(DropBlueTuskOperatorOperation operation, MigrationCommandListBuilder builder) =>
+    private void Generate(DropOperatorOperation operation, MigrationCommandListBuilder builder) =>
         GenerateDropOperator(operation.Definition, builder);
 
     private void GenerateCreateOperator(
@@ -4249,7 +4249,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskOperatorFamilyOperation operation,
+        CreateOperatorFamilyOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskSchemaProgramMetadata.Normalize(operation.Definition);
@@ -4262,7 +4262,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskOperatorFamilyOperation operation,
+        AlterOperatorFamilyOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = BlueTuskSchemaProgramMetadata.Normalize(operation.OldDefinition);
@@ -4304,7 +4304,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskOperatorFamilyOperation operation,
+        DropOperatorFamilyOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskSchemaProgramMetadata.Normalize(operation.Definition);
@@ -4365,11 +4365,11 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskOperatorClassOperation operation,
+        CreateOperatorClassOperation operation,
         MigrationCommandListBuilder builder) => GenerateCreateOperatorClass(operation.Definition, builder);
 
     private void Generate(
-        ReplaceBlueTuskOperatorClassOperation operation,
+        ReplaceOperatorClassOperation operation,
         MigrationCommandListBuilder builder)
     {
         if (BlueTuskSchemaProgramMetadata.OperatorClassKey.Create(operation.OldDefinition) !=
@@ -4383,7 +4383,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskOperatorClassOperation operation,
+        DropOperatorClassOperation operation,
         MigrationCommandListBuilder builder) => GenerateDropOperatorClass(operation.Definition, builder);
 
     private void GenerateCreateOperatorClass(
@@ -4443,10 +4443,10 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         EndStatement(builder);
     }
 
-    private void Generate(CreateBlueTuskCastOperation operation, MigrationCommandListBuilder builder) =>
+    private void Generate(CreateCastOperation operation, MigrationCommandListBuilder builder) =>
         GenerateCreateCast(operation.Definition, builder);
 
-    private void Generate(ReplaceBlueTuskCastOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(ReplaceCastOperation operation, MigrationCommandListBuilder builder)
     {
         if (BlueTuskSchemaProgramMetadata.CastKey.Create(operation.OldDefinition) !=
             BlueTuskSchemaProgramMetadata.CastKey.Create(operation.Definition))
@@ -4458,7 +4458,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         GenerateCreateCast(operation.Definition, builder);
     }
 
-    private void Generate(DropBlueTuskCastOperation operation, MigrationCommandListBuilder builder) =>
+    private void Generate(DropCastOperation operation, MigrationCommandListBuilder builder) =>
         GenerateDropCast(operation.Definition, builder);
 
     private void GenerateCreateCast(BlueTuskCastDefinition value, MigrationCommandListBuilder builder)
@@ -4505,10 +4505,10 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         EndStatement(builder);
     }
 
-    private void Generate(CreateBlueTuskAggregateOperation operation, MigrationCommandListBuilder builder) =>
+    private void Generate(CreateAggregateOperation operation, MigrationCommandListBuilder builder) =>
         GenerateCreateAggregate(operation.Definition, false, builder);
 
-    private void Generate(ReplaceBlueTuskAggregateOperation operation, MigrationCommandListBuilder builder)
+    private void Generate(ReplaceAggregateOperation operation, MigrationCommandListBuilder builder)
     {
         if (BlueTuskSchemaProgramMetadata.AggregateKey.Create(operation.OldDefinition) !=
             BlueTuskSchemaProgramMetadata.AggregateKey.Create(operation.Definition))
@@ -4519,7 +4519,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
         GenerateCreateAggregate(operation.Definition, true, builder);
     }
 
-    private void Generate(DropBlueTuskAggregateOperation operation, MigrationCommandListBuilder builder) =>
+    private void Generate(DropAggregateOperation operation, MigrationCommandListBuilder builder) =>
         GenerateDropAggregate(operation.Definition, builder);
 
     private void GenerateCreateAggregate(
@@ -4811,7 +4811,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskForeignDataWrapperOperation operation,
+        CreateForeignDataWrapperOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
@@ -4832,7 +4832,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskForeignDataWrapperOperation operation,
+        AlterForeignDataWrapperOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = BlueTuskForeignDataMetadata.Normalize(operation.OldDefinition);
@@ -4869,7 +4869,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskForeignDataWrapperOperation operation,
+        DropForeignDataWrapperOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -4880,7 +4880,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskForeignDataWrapperOperation operation,
+        RenameForeignDataWrapperOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -4893,7 +4893,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskForeignServerOperation operation,
+        CreateForeignServerOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
@@ -4919,7 +4919,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskForeignServerOperation operation,
+        AlterForeignServerOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = BlueTuskForeignDataMetadata.Normalize(operation.OldDefinition);
@@ -4959,7 +4959,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskForeignServerOperation operation,
+        DropForeignServerOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -4970,7 +4970,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskForeignServerOperation operation,
+        RenameForeignServerOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -4983,7 +4983,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskUserMappingOperation operation,
+        CreateUserMappingOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskForeignDataMetadata.Normalize(operation.Definition);
@@ -5004,7 +5004,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskUserMappingOperation operation,
+        AlterUserMappingOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = BlueTuskForeignDataMetadata.Normalize(operation.OldDefinition);
@@ -5032,7 +5032,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskUserMappingOperation operation,
+        DropUserMappingOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.ServerName);
@@ -5171,7 +5171,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     private readonly record struct ForeignOptionChange(string Action, string Name, string? Value);
 
     private void Generate(
-        CreateBlueTuskSubscriptionOperation operation,
+        CreateSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
         var definition = BlueTuskSubscriptionMetadata.Normalize(operation.Definition);
@@ -5191,7 +5191,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskSubscriptionOperation operation,
+        AlterSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
         var oldDefinition = BlueTuskSubscriptionMetadata.Normalize(operation.OldDefinition);
@@ -5212,7 +5212,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskSubscriptionOperation operation,
+        DropSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -5223,7 +5223,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RenameBlueTuskSubscriptionOperation operation,
+        RenameSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -5236,7 +5236,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RefreshBlueTuskSubscriptionOperation operation,
+        RefreshSubscriptionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -5249,7 +5249,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        RefreshBlueTuskSubscriptionSequencesOperation operation,
+        RefreshSubscriptionSequencesOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -5266,7 +5266,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        SkipBlueTuskSubscriptionTransactionOperation operation,
+        SkipSubscriptionTransactionOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -5622,7 +5622,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        CreateBlueTuskPropertyGraphOperation operation,
+        CreatePropertyGraphOperation operation,
         MigrationCommandListBuilder builder)
     {
         if (operation.Definition is null)
@@ -5634,7 +5634,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        DropBlueTuskPropertyGraphOperation operation,
+        DropPropertyGraphOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);
@@ -5644,7 +5644,7 @@ internal sealed class BlueTuskMigrationsSqlGenerator(
     }
 
     private void Generate(
-        AlterBlueTuskPropertyGraphOperation operation,
+        AlterPropertyGraphOperation operation,
         MigrationCommandListBuilder builder)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(operation.Name);

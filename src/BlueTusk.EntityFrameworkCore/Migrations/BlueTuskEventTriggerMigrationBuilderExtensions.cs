@@ -9,42 +9,42 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for PostgreSQL database-level event triggers.</summary>
 public static class BlueTuskEventTriggerMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskEventTriggerOperation> CreateBlueTuskEventTrigger(
+    public static OperationBuilder<CreateEventTriggerOperation> CreateEventTrigger(
         this MigrationBuilder builder,
         BlueTuskEventTriggerDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(builder);
         BlueTuskEventTriggerMetadata.Validate(definition);
-        var operation = new CreateBlueTuskEventTriggerOperation
+        var operation = new CreateEventTriggerOperation
         {
             Definition = BlueTuskEventTriggerMetadata.Normalize(definition),
         };
         builder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskEventTriggerOperation>(operation);
+        return new OperationBuilder<CreateEventTriggerOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskEventTriggerOperation> CreateBlueTuskEventTrigger(
+    public static OperationBuilder<CreateEventTriggerOperation> CreateEventTrigger(
         this MigrationBuilder builder,
         string serializedDefinition) =>
-        CreateBlueTuskEventTrigger(builder, BlueTuskEventTriggerMetadata.DeserializeDefinition(serializedDefinition));
+        CreateEventTrigger(builder, BlueTuskEventTriggerMetadata.DeserializeDefinition(serializedDefinition));
 
-    public static OperationBuilder<DropBlueTuskEventTriggerOperation> DropBlueTuskEventTrigger(
+    public static OperationBuilder<DropEventTriggerOperation> DropEventTrigger(
         this MigrationBuilder builder,
         string name)
     {
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskEventTriggerOperation
+        var operation = new DropEventTriggerOperation
         {
             Name = name,
             IsDestructiveChange = true,
         };
         builder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskEventTriggerOperation>(operation);
+        return new OperationBuilder<DropEventTriggerOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskEventTriggerOperation> RenameBlueTuskEventTrigger(
+    public static OperationBuilder<RenameEventTriggerOperation> RenameEventTrigger(
         this MigrationBuilder builder,
         string name,
         string newName)
@@ -52,13 +52,13 @@ public static class BlueTuskEventTriggerMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(builder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskEventTriggerOperation { Name = name, NewName = newName };
+        var operation = new RenameEventTriggerOperation { Name = name, NewName = newName };
         builder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskEventTriggerOperation>(operation);
+        return new OperationBuilder<RenameEventTriggerOperation>(operation);
     }
 
-    public static OperationBuilder<AlterBlueTuskEventTriggerEnabledModeOperation>
-        AlterBlueTuskEventTriggerEnabledMode(
+    public static OperationBuilder<AlterEventTriggerEnabledModeOperation>
+        AlterEventTriggerEnabledMode(
             this MigrationBuilder builder,
             string name,
             BlueTuskEventTriggerEnabledMode enabledMode)
@@ -70,12 +70,12 @@ public static class BlueTuskEventTriggerMigrationBuilderExtensions
             throw new ArgumentOutOfRangeException(nameof(enabledMode));
         }
 
-        var operation = new AlterBlueTuskEventTriggerEnabledModeOperation
+        var operation = new AlterEventTriggerEnabledModeOperation
         {
             Name = name,
             EnabledMode = enabledMode,
         };
         builder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskEventTriggerEnabledModeOperation>(operation);
+        return new OperationBuilder<AlterEventTriggerEnabledModeOperation>(operation);
     }
 }

@@ -10,7 +10,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskRowLevelSecurityBuilderExtensions
 {
     /// <summary>Configures row-level security for an entity table.</summary>
-    public static BlueTuskRowLevelSecurityBuilder UseBlueTuskRowLevelSecurity(
+    public static BlueTuskRowLevelSecurityBuilder UseRowLevelSecurity(
         this EntityTypeBuilder entityBuilder,
         bool enabled = true,
         bool forced = false)
@@ -24,7 +24,7 @@ public static class BlueTuskRowLevelSecurityBuilderExtensions
     }
 
     /// <summary>Removes row-level security metadata from an entity table.</summary>
-    public static EntityTypeBuilder HasNoBlueTuskRowLevelSecurity(this EntityTypeBuilder entityBuilder)
+    public static EntityTypeBuilder HasNoRowLevelSecurity(this EntityTypeBuilder entityBuilder)
     {
         ArgumentNullException.ThrowIfNull(entityBuilder);
         entityBuilder.Metadata.RemoveAnnotation(BlueTuskRowLevelSecurityMetadata.AnnotationName);
@@ -32,7 +32,7 @@ public static class BlueTuskRowLevelSecurityBuilderExtensions
     }
 
     /// <summary>Reads row-level security metadata from an EF entity type.</summary>
-    public static BlueTuskRowLevelSecurityDefinition? GetBlueTuskRowLevelSecurity(
+    public static BlueTuskRowLevelSecurityDefinition? GetRowLevelSecurity(
         this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
@@ -40,7 +40,7 @@ public static class BlueTuskRowLevelSecurityBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskRowLevelSecurity(
+    public static EntityTypeBuilder HasRowLevelSecurity(
         this EntityTypeBuilder entityBuilder,
         string serializedDefinition)
     {

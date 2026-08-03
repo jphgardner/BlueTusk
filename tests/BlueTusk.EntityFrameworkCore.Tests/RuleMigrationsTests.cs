@@ -32,9 +32,9 @@ public sealed class RuleMigrationsTests
         var model = source.GetService<IDesignTimeModel>().Model;
         var differ = source.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, model.GetRelationalModel()).ToArray();
-        var create = Assert.Single(creates.OfType<CreateBlueTuskRuleOperation>());
+        var create = Assert.Single(creates.OfType<CreateRuleOperation>());
         Assert.True(Array.FindIndex(creates, item => item is Microsoft.EntityFrameworkCore.Migrations.Operations.CreateTableOperation) <
-                    Array.FindIndex(creates, item => item is CreateBlueTuskRuleOperation));
+                    Array.FindIndex(creates, item => item is CreateRuleOperation));
         var sql = string.Concat(source.GetService<IMigrationsSqlGenerator>().Generate([create], model)
             .Select(command => command.CommandText));
         Assert.Contains(
@@ -48,17 +48,17 @@ public sealed class RuleMigrationsTests
         Assert.True(Assert.Single(differ.GetDifferences(
                 model.GetRelationalModel(),
                 changed.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .OfType<CreateBlueTuskRuleOperation>()).OrReplace);
+            .OfType<CreateRuleOperation>()).OrReplace);
         var renameOperations = differ.GetDifferences(
             model.GetRelationalModel(),
             renamed.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(renameOperations.OfType<RenameBlueTuskRuleOperation>());
+        Assert.Single(renameOperations.OfType<RenameRuleOperation>());
         Assert.Equal(BlueTuskRuleEnabledMode.Disabled, Assert.Single(
-            renameOperations.OfType<AlterBlueTuskRuleEnabledModeOperation>()).EnabledMode);
+            renameOperations.OfType<AlterRuleEnabledModeOperation>()).EnabledMode);
         var drop = Assert.Single(differ.GetDifferences(
                 model.GetRelationalModel(),
                 empty.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .OfType<DropBlueTuskRuleOperation>());
+            .OfType<DropRuleOperation>());
         Assert.True(drop.IsDestructiveChange);
         Assert.Contains(" RESTRICT", Assert.Single(source.GetService<IMigrationsSqlGenerator>()
             .Generate([drop], model)).CommandText, StringComparison.Ordinal);
@@ -68,9 +68,9 @@ public sealed class RuleMigrationsTests
         var canonicalOperations = canonical.GetService<IMigrationsModelDiffer>().GetDifferences(
             canonical.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             renamedCanonical.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(canonicalOperations.OfType<RenameBlueTuskRuleOperation>());
-        Assert.Empty(canonicalOperations.OfType<CreateBlueTuskRuleOperation>());
-        Assert.Empty(canonicalOperations.OfType<DropBlueTuskRuleOperation>());
+        Assert.Single(canonicalOperations.OfType<RenameRuleOperation>());
+        Assert.Empty(canonicalOperations.OfType<CreateRuleOperation>());
+        Assert.Empty(canonicalOperations.OfType<DropRuleOperation>());
     }
 
     [Fact]
@@ -78,7 +78,7 @@ public sealed class RuleMigrationsTests
     {
         var model = new ModelBuilder();
         ConfigureEntities(model);
-        Assert.Throws<ArgumentException>(() => model.Entity<Document>().HasBlueTuskRule(
+        Assert.Throws<ArgumentException>(() => model.Entity<Document>().HasRule(
             "select_rule",
             BlueTuskRuleEvent.Select,
             "SELECT id, note FROM rule_tests.documents",
@@ -90,16 +90,16 @@ public sealed class RuleMigrationsTests
     {
         using var context = Create<RuleContext>(Offline);
         var model = context.GetService<IDesignTimeModel>().Model;
-        var definition = Assert.Single(model.FindEntityType(typeof(Document))!.GetBlueTuskRules());
+        var definition = Assert.Single(model.FindEntityType(typeof(Document))!.GetRules());
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskRule("documents", definition, "rule_tests", orReplace: true);
-        migration.RenameBlueTuskRule("documents", "audit_insert", "audit_insert_v2", "rule_tests");
-        migration.AlterBlueTuskRuleEnabledMode(
+        migration.CreateRule("documents", definition, "rule_tests", orReplace: true);
+        migration.RenameRule("documents", "audit_insert", "audit_insert_v2", "rule_tests");
+        migration.AlterRuleEnabledMode(
             "documents",
             "audit_insert_v2",
             BlueTuskRuleEnabledMode.Replica,
             "rule_tests");
-        migration.DropBlueTuskRule("documents", "audit_insert_v2", "rule_tests");
+        migration.DropRule("documents", "audit_insert_v2", "rule_tests");
 
         var services = new ServiceCollection();
         services.AddEntityFrameworkDesignTimeServices();
@@ -110,10 +110,10 @@ public sealed class RuleMigrationsTests
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, builder);
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskRule", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskRule", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskRuleEnabledMode", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskRule", code, StringComparison.Ordinal);
+        Assert.Contains("CreateRule", code, StringComparison.Ordinal);
+        Assert.Contains("RenameRule", code, StringComparison.Ordinal);
+        Assert.Contains("AlterRuleEnabledMode", code, StringComparison.Ordinal);
+        Assert.Contains("DropRule", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -159,7 +159,7 @@ public sealed class RuleMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskRules(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasRules(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
             }
 
             using var disabled = Create<RenamedDisabledRuleContext>(cs);
@@ -206,7 +206,7 @@ public sealed class RuleMigrationsTests
         string condition = "NEW.note IS NOT NULL")
     {
         ConfigureEntities(modelBuilder);
-        modelBuilder.Entity<Document>().HasBlueTuskRule(
+        modelBuilder.Entity<Document>().HasRule(
             name,
             BlueTuskRuleEvent.Insert,
             "INSERT INTO rule_tests.audit(document_id, note) VALUES (NEW.id, NEW.note)",
@@ -308,7 +308,7 @@ public sealed class RuleMigrationsTests
             ActionSql: null,
             BlueTuskRuleEnabledMode.Origin,
             $"CREATE RULE \"{name}\" AS ON INSERT TO rule_tests.documents DO ALSO NOTHING");
-        modelBuilder.Entity<Document>().HasBlueTuskRules(BlueTuskRuleMetadata.Serialize([definition]));
+        modelBuilder.Entity<Document>().HasRules(BlueTuskRuleMetadata.Serialize([definition]));
     }
 
     private sealed class Document { public int Id { get; set; } public string? Note { get; set; } }

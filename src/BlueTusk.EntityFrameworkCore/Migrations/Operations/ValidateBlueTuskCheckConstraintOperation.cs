@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
 /// <summary>Validates an existing PostgreSQL CHECK constraint against all rows.</summary>
-public sealed class ValidateBlueTuskCheckConstraintOperation : MigrationOperation
+public sealed class ValidateCheckConstraintOperation : MigrationOperation
 {
     public required string Table { get; init; }
 

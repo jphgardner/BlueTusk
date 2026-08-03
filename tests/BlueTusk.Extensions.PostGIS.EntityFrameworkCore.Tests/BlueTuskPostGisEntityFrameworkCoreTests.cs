@@ -143,8 +143,8 @@ public sealed class BlueTuskPostGisEntityFrameworkCoreTests
     {
         var migrationBuilder = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
 
-        migrationBuilder.EnsureBlueTuskPostGis("Spatial \"Types");
-        migrationBuilder.DropBlueTuskPostGis(cascade: true);
+        migrationBuilder.EnsurePostGis("Spatial \"Types");
+        migrationBuilder.DropPostGis(cascade: true);
 
         var operations = migrationBuilder.Operations.Cast<SqlOperation>().ToArray();
         Assert.Equal(

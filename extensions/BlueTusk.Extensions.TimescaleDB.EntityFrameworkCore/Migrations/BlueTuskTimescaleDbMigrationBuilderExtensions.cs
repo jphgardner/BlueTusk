@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 public static class BlueTuskTimescaleDbMigrationBuilderExtensions
 {
     /// <summary>Creates the TimescaleDB extension if it is not installed.</summary>
-    public static OperationBuilder<SqlOperation> EnsureBlueTuskTimescaleDb(
+    public static OperationBuilder<SqlOperation> EnsureTimescaleDb(
         this MigrationBuilder migrationBuilder,
         string schema = "public")
     {
@@ -20,7 +20,7 @@ public static class BlueTuskTimescaleDbMigrationBuilderExtensions
     }
 
     /// <summary>Drops the TimescaleDB extension if it is installed.</summary>
-    public static OperationBuilder<SqlOperation> DropBlueTuskTimescaleDb(
+    public static OperationBuilder<SqlOperation> DropTimescaleDb(
         this MigrationBuilder migrationBuilder,
         bool cascade = false)
     {
@@ -31,7 +31,7 @@ public static class BlueTuskTimescaleDbMigrationBuilderExtensions
     }
 
     /// <summary>Converts an existing table into an idempotent range hypertable.</summary>
-    public static OperationBuilder<SqlOperation> ConvertToBlueTuskHypertable(
+    public static OperationBuilder<SqlOperation> ConvertToHypertable(
         this MigrationBuilder migrationBuilder,
         string table,
         string timeColumn,

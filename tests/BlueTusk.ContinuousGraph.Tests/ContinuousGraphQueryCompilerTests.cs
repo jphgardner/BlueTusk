@@ -195,7 +195,7 @@ public sealed class ContinuousGraphQueryCompilerTests
                 entity.Property(friendship => friendship.FromPersonId).HasColumnName("from_id");
                 entity.Property(friendship => friendship.ToPersonId).HasColumnName("to_id");
             });
-            modelBuilder.HasBlueTuskPropertyGraph(
+            modelBuilder.HasPropertyGraph(
                 "social",
                 graph =>
                 {

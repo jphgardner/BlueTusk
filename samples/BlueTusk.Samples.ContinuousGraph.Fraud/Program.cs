@@ -202,7 +202,7 @@ internal sealed class FraudContext(DbContextOptions<FraudContext> options) :
             entity.Property(transfer => transfer.DestinationId).HasColumnName("destination_id");
             entity.Property(transfer => transfer.Amount).HasColumnName("amount");
         });
-        modelBuilder.HasBlueTuskPropertyGraph(
+        modelBuilder.HasPropertyGraph(
             "fraud_graph",
             graph =>
             {

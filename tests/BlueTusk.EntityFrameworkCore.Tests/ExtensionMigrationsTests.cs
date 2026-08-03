@@ -35,16 +35,16 @@ public sealed class ExtensionMigrationsTests
             model.GetRelationalModel(),
             emptyContext.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
 
-        var definition = Assert.Single(model.GetBlueTuskExtensions().Extensions);
+        var definition = Assert.Single(model.GetExtensions().Extensions);
         Assert.Equal("hstore", definition.Name);
         Assert.Equal("extension_tests", definition.Schema);
         Assert.True(definition.InstallDependencies);
         Assert.True(
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskExtensionOperation) <
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskDomainTypeOperation));
+            Array.FindIndex(creates, operation => operation is CreateExtensionOperation) <
+            Array.FindIndex(creates, operation => operation is CreateDomainTypeOperation));
         Assert.True(
-            Array.FindIndex(drops, operation => operation is DropBlueTuskDomainTypeOperation) <
-            Array.FindIndex(drops, operation => operation is DropBlueTuskExtensionOperation));
+            Array.FindIndex(drops, operation => operation is DropDomainTypeOperation) <
+            Array.FindIndex(drops, operation => operation is DropExtensionOperation));
 
         var sql = string.Concat(context.GetService<IMigrationsSqlGenerator>()
             .Generate(creates, model)
@@ -63,23 +63,23 @@ public sealed class ExtensionMigrationsTests
         using var emptyContext = CreateContext<EmptyContext>(OfflineConnectionString);
         var differ = context.GetService<IMigrationsModelDiffer>();
         var model = context.GetService<IDesignTimeModel>().Model.GetRelationalModel();
-        var creates = differ.GetDifferences(null, model).OfType<CreateBlueTuskExtensionOperation>().ToArray();
+        var creates = differ.GetDifferences(null, model).OfType<CreateExtensionOperation>().ToArray();
         var drops = differ.GetDifferences(
                 model,
                 emptyContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .OfType<DropBlueTuskExtensionOperation>()
+            .OfType<DropExtensionOperation>()
             .ToArray();
 
         Assert.Equal(["alpha", "zeta"], creates.Select(operation => operation.Definition.Name));
         Assert.Equal(["zeta", "alpha"], drops.Select(operation => operation.Name));
 
         var modelBuilder = new ModelBuilder();
-        modelBuilder.HasBlueTuskExtension(
+        modelBuilder.HasExtension(
             "alpha",
             extension => extension.DependsOnExtension("zeta"));
         Assert.Contains(
             "contains a cycle",
-            Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskExtension(
+            Assert.Throws<ArgumentException>(() => modelBuilder.HasExtension(
                 "zeta",
                 extension => extension.DependsOnExtension("alpha"))).Message,
             StringComparison.Ordinal);
@@ -95,7 +95,7 @@ public sealed class ExtensionMigrationsTests
             initialContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             model.GetRelationalModel()).ToArray();
 
-        var alter = Assert.Single(operations.OfType<AlterBlueTuskExtensionOperation>());
+        var alter = Assert.Single(operations.OfType<AlterExtensionOperation>());
         Assert.Equal("2.0-beta.1", alter.Definition.Version);
         Assert.Equal("extension_tests_v2", alter.Definition.Schema);
         var sql = string.Concat(alteredContext.GetService<IMigrationsSqlGenerator>()
@@ -118,8 +118,8 @@ public sealed class ExtensionMigrationsTests
             source,
             renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
 
-        Assert.Single(renamed.OfType<CreateBlueTuskExtensionOperation>());
-        Assert.True(Assert.Single(renamed.OfType<DropBlueTuskExtensionOperation>()).IsDestructiveChange);
+        Assert.Single(renamed.OfType<CreateExtensionOperation>());
+        Assert.True(Assert.Single(renamed.OfType<DropExtensionOperation>()).IsDestructiveChange);
         Assert.Contains(
             "cannot be moved to an unspecified schema",
             Assert.Throws<InvalidOperationException>(() => differ.GetDifferences(
@@ -133,15 +133,15 @@ public sealed class ExtensionMigrationsTests
     {
         using var context = CreateContext<InitialExtensionContext>(OfflineConnectionString);
         var model = context.GetService<IDesignTimeModel>().Model;
-        var definition = Assert.Single(model.GetBlueTuskExtensions().Extensions);
+        var definition = Assert.Single(model.GetExtensions().Extensions);
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskExtension(definition, ifNotExists: true);
-        migration.CreateBlueTuskExtension(new BlueTuskExtensionDefinition(
+        migration.CreateExtension(definition, ifNotExists: true);
+        migration.CreateExtension(new BlueTuskExtensionDefinition(
             "quoted\"extension",
             "quoted\"schema",
             "version'one",
             []));
-        migration.DropBlueTuskExtension("hstore", ifExists: true, cascade: true);
+        migration.DropExtension("hstore", ifExists: true, cascade: true);
         var sql = string.Concat(context.GetService<IMigrationsSqlGenerator>()
             .Generate(migration.Operations, model)
             .Select(command => command.CommandText));
@@ -162,13 +162,13 @@ public sealed class ExtensionMigrationsTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskExtensionOperation { Definition = definition, IfNotExists = true },
-                new AlterBlueTuskExtensionOperation
+                new CreateExtensionOperation { Definition = definition, IfNotExists = true },
+                new AlterExtensionOperation
                 {
                     OldDefinition = definition,
                     Definition = definition with { Version = "2.0" },
                 },
-                new DropBlueTuskExtensionOperation
+                new DropExtensionOperation
                 {
                     Name = definition.Name,
                     IfExists = true,
@@ -177,9 +177,9 @@ public sealed class ExtensionMigrationsTests
             ],
             builder);
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskExtension", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskExtension", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskExtension", code, StringComparison.Ordinal);
+        Assert.Contains("CreateExtension", code, StringComparison.Ordinal);
+        Assert.Contains("AlterExtension", code, StringComparison.Ordinal);
+        Assert.Contains("DropExtension", code, StringComparison.Ordinal);
         Assert.Contains(", true, true);", code, StringComparison.Ordinal);
     }
 
@@ -241,7 +241,7 @@ public sealed class ExtensionMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskExtensions(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasExtensions(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
             }
 
             using var movedContext = CreateContext<MovedExtensionContext>(connectionString);
@@ -330,7 +330,7 @@ public sealed class ExtensionMigrationsTests
     private sealed class InitialExtensionContext(DbContextOptions<InitialExtensionContext> options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "hstore",
                 extension => extension.UseSchema("extension_tests").InstallDependencies());
     }
@@ -338,7 +338,7 @@ public sealed class ExtensionMigrationsTests
     private sealed class MovedExtensionContext(DbContextOptions<MovedExtensionContext> options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "hstore",
                 extension => extension.UseSchema("extension_tests_moved").InstallDependencies());
     }
@@ -348,10 +348,10 @@ public sealed class ExtensionMigrationsTests
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "hstore",
                 extension => extension.UseSchema("extension_tests").InstallDependencies());
-            modelBuilder.HasBlueTuskDomain(
+            modelBuilder.HasDomain(
                 "application_hstore",
                 "extension_tests.hstore",
                 schema: "extension_tests");
@@ -363,10 +363,10 @@ public sealed class ExtensionMigrationsTests
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "zeta",
                 extension => extension.DependsOnExtension("alpha"));
-            modelBuilder.HasBlueTuskExtension("alpha");
+            modelBuilder.HasExtension("alpha");
         }
     }
 
@@ -374,7 +374,7 @@ public sealed class ExtensionMigrationsTests
         : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "versioned_extension",
                 extension => extension.UseSchema("extension_tests").HasVersion("1.0"));
     }
@@ -383,7 +383,7 @@ public sealed class ExtensionMigrationsTests
         : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "versioned_extension",
                 extension => extension.UseSchema("extension_tests_v2").HasVersion("2.0-beta.1"));
     }
@@ -392,7 +392,7 @@ public sealed class ExtensionMigrationsTests
         : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "renamed_extension",
                 extension => extension.UseSchema("extension_tests").HasVersion("1.0"));
     }
@@ -401,7 +401,7 @@ public sealed class ExtensionMigrationsTests
         DbContextOptions<UnspecifiedSchemaExtensionContext> options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskExtension(
+            modelBuilder.HasExtension(
                 "versioned_extension",
                 extension => extension.HasVersion("1.0"));
     }

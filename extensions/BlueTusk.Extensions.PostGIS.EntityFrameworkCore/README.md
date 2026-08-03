@@ -43,7 +43,7 @@ The public conversion helpers preserve SRID and XY/Z/M ordinates while bridging
 between NetTopologySuite objects and BlueTusk's immutable EWKB transport values.
 EF change tracking snapshots mutable geometry instances and geometry arrays.
 
-Use `EnsureBlueTuskPostGis()` and `DropBlueTuskPostGis()` in migrations when the
+Use `EnsurePostGis()` and `DropPostGis()` in migrations when the
 application owns the extension lifecycle. The live PostgreSQL 18/PostGIS 3.6
 gate covers geometry, geography, typmods, arrays, parameters, spatial filters,
 projections, and compiled queries. These APIs remain experimental

@@ -33,7 +33,7 @@ public sealed class ViewMigrationsTests
             .GetDifferences(null, model.GetRelationalModel())
             .ToArray();
 
-        var definitions = model.GetBlueTuskViews();
+        var definitions = model.GetViews();
         Assert.Equal(3, definitions.Views.Count);
         var materialized = Assert.Single(definitions.MaterializedViews);
         Assert.Equal("heap", materialized.AccessMethod);
@@ -43,18 +43,18 @@ public sealed class ViewMigrationsTests
         var createTable = Array.FindIndex(operations, operation => operation is CreateTableOperation);
         var active = Array.FindIndex(
             operations,
-            operation => operation is CreateBlueTuskViewOperation create &&
+            operation => operation is CreateViewOperation create &&
                          create.Definition.Name == "active_sales");
         var highValue = Array.FindIndex(
             operations,
-            operation => operation is CreateBlueTuskViewOperation create &&
+            operation => operation is CreateViewOperation create &&
                          create.Definition.Name == "high_value_sales");
         var summary = Array.FindIndex(
             operations,
-            operation => operation is CreateBlueTuskMaterializedViewOperation);
+            operation => operation is CreateMaterializedViewOperation);
         var summaryView = Array.FindIndex(
             operations,
-            operation => operation is CreateBlueTuskViewOperation create &&
+            operation => operation is CreateViewOperation create &&
                          create.Definition.Name == "sales_summary_view");
         Assert.True(createTable >= 0 && createTable < active);
         Assert.True(active < highValue);
@@ -88,10 +88,10 @@ public sealed class ViewMigrationsTests
             initialContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             alteredModel.GetRelationalModel()).ToArray();
 
-        Assert.Single(operations.OfType<ReplaceBlueTuskViewOperation>());
-        var alter = Assert.Single(operations.OfType<AlterBlueTuskMaterializedViewOperation>());
+        Assert.Single(operations.OfType<ReplaceViewOperation>());
+        var alter = Assert.Single(operations.OfType<AlterMaterializedViewOperation>());
         Assert.Equal("70", Assert.Single(alter.Definition.StorageParameters).ValueSql);
-        Assert.Empty(operations.OfType<DropBlueTuskViewOperation>());
+        Assert.Empty(operations.OfType<DropViewOperation>());
 
         var sql = string.Concat(alteredContext.GetService<IMigrationsSqlGenerator>()
             .Generate(operations, alteredModel)
@@ -115,10 +115,10 @@ public sealed class ViewMigrationsTests
             initialContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             model.GetRelationalModel()).ToArray();
 
-        var alter = Assert.Single(operations.OfType<AlterBlueTuskMaterializedViewOperation>());
+        var alter = Assert.Single(operations.OfType<AlterMaterializedViewOperation>());
         Assert.True(alter.IsDestructiveChange);
-        Assert.Empty(operations.OfType<DropBlueTuskViewOperation>());
-        Assert.Empty(operations.OfType<CreateBlueTuskMaterializedViewOperation>());
+        Assert.Empty(operations.OfType<DropViewOperation>());
+        Assert.Empty(operations.OfType<CreateMaterializedViewOperation>());
         var sql = string.Concat(auxiliaryContext.GetService<IMigrationsSqlGenerator>()
             .Generate(operations, model)
             .Select(command => command.CommandText));
@@ -140,15 +140,15 @@ public sealed class ViewMigrationsTests
             initialContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             changedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
 
-        var drops = operations.OfType<DropBlueTuskViewOperation>().ToArray();
+        var drops = operations.OfType<DropViewOperation>().ToArray();
         Assert.Equal(2, drops.Length);
         Assert.Equal("sales_summary_view", drops[0].Name);
         Assert.Equal("sales_summary", drops[1].Name);
         Assert.All(drops, operation => Assert.True(operation.IsDestructiveChange));
 
-        var materializedCreate = Assert.Single(operations.OfType<CreateBlueTuskMaterializedViewOperation>());
+        var materializedCreate = Assert.Single(operations.OfType<CreateMaterializedViewOperation>());
         var dependentCreate = Assert.Single(
-            operations.OfType<CreateBlueTuskViewOperation>(),
+            operations.OfType<CreateViewOperation>(),
             operation => operation.Definition.Name == "sales_summary_view");
         Assert.True(Array.IndexOf(operations, materializedCreate) < Array.IndexOf(operations, dependentCreate));
     }
@@ -167,11 +167,11 @@ public sealed class ViewMigrationsTests
 
         Assert.Single(creates.OfType<EnsureSchemaOperation>());
         Assert.True(
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskRoutineOperation) <
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskViewOperation));
+            Array.FindIndex(creates, operation => operation is CreateRoutineOperation) <
+            Array.FindIndex(creates, operation => operation is CreateViewOperation));
         Assert.True(
-            Array.FindIndex(drops, operation => operation is DropBlueTuskViewOperation) <
-            Array.FindIndex(drops, operation => operation is DropBlueTuskRoutineOperation));
+            Array.FindIndex(drops, operation => operation is DropViewOperation) <
+            Array.FindIndex(drops, operation => operation is DropRoutineOperation));
     }
 
     [Fact]
@@ -187,7 +187,7 @@ public sealed class ViewMigrationsTests
         var rename = Assert.Single(differ.GetDifferences(
                 source,
                 renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .OfType<RenameBlueTuskViewOperation>());
+            .OfType<RenameViewOperation>());
         Assert.Equal("high_value_sales", rename.Name);
         Assert.Equal("premium_sales", rename.NewName);
 
@@ -211,7 +211,7 @@ public sealed class ViewMigrationsTests
         var modelBuilder = new ModelBuilder();
         Assert.Contains(
             "cannot use CHECK OPTION",
-            Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskView(
+            Assert.Throws<ArgumentException>(() => modelBuilder.HasView(
                 "numbers",
                 "VALUES (1) UNION ALL SELECT number + 1 FROM numbers WHERE number < 10",
                 view => view
@@ -221,12 +221,12 @@ public sealed class ViewMigrationsTests
             StringComparison.Ordinal);
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        Assert.Throws<ArgumentException>(() => migration.RefreshBlueTuskMaterializedView(
+        Assert.Throws<ArgumentException>(() => migration.RefreshMaterializedView(
             "sales_summary",
             "view_tests",
             concurrently: true,
             withData: false));
-        migration.RefreshBlueTuskMaterializedView(
+        migration.RefreshMaterializedView(
             "sales_summary",
             "view_tests",
             concurrently: true);
@@ -239,10 +239,10 @@ public sealed class ViewMigrationsTests
             command.CommandText,
             StringComparison.Ordinal);
 
-        var recursive = modelBuilder.Model.GetBlueTuskViews().Views.SingleOrDefault();
+        var recursive = modelBuilder.Model.GetViews().Views.SingleOrDefault();
         Assert.Null(recursive);
         var recursiveMigration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        recursiveMigration.CreateBlueTuskView(new BlueTuskViewDefinition(
+        recursiveMigration.CreateView(new BlueTuskViewDefinition(
             "numbers",
             "view_tests",
             "VALUES (1) UNION ALL SELECT number + 1 FROM numbers WHERE number < 10",
@@ -274,21 +274,21 @@ public sealed class ViewMigrationsTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskViewOperation { Definition = oldView },
-                new ReplaceBlueTuskViewOperation { OldDefinition = oldView, Definition = view },
-                new CreateBlueTuskMaterializedViewOperation { Definition = oldMaterialized },
-                new AlterBlueTuskMaterializedViewOperation
+                new CreateViewOperation { Definition = oldView },
+                new ReplaceViewOperation { OldDefinition = oldView, Definition = view },
+                new CreateMaterializedViewOperation { Definition = oldMaterialized },
+                new AlterMaterializedViewOperation
                 {
                     OldDefinition = oldMaterialized,
                     Definition = materialized,
                 },
-                new DropBlueTuskViewOperation
+                new DropViewOperation
                 {
                     Kind = BlueTuskViewKind.View,
                     Name = oldView.Name,
                     Schema = oldView.Schema,
                 },
-                new RenameBlueTuskViewOperation
+                new RenameViewOperation
                 {
                     Kind = BlueTuskViewKind.MaterializedView,
                     Name = oldMaterialized.Name,
@@ -296,7 +296,7 @@ public sealed class ViewMigrationsTests
                     NewName = "summary_v2",
                     NewSchema = oldMaterialized.Schema,
                 },
-                new RefreshBlueTuskMaterializedViewOperation
+                new RefreshMaterializedViewOperation
                 {
                     Name = oldMaterialized.Name,
                     Schema = oldMaterialized.Schema,
@@ -306,13 +306,13 @@ public sealed class ViewMigrationsTests
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskView", code, StringComparison.Ordinal);
-        Assert.Contains("ReplaceBlueTuskView", code, StringComparison.Ordinal);
-        Assert.Contains("CreateBlueTuskMaterializedView", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskMaterializedView", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskView", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskView", code, StringComparison.Ordinal);
-        Assert.Contains("RefreshBlueTuskMaterializedView", code, StringComparison.Ordinal);
+        Assert.Contains("CreateView", code, StringComparison.Ordinal);
+        Assert.Contains("ReplaceView", code, StringComparison.Ordinal);
+        Assert.Contains("CreateMaterializedView", code, StringComparison.Ordinal);
+        Assert.Contains("AlterMaterializedView", code, StringComparison.Ordinal);
+        Assert.Contains("DropView", code, StringComparison.Ordinal);
+        Assert.Contains("RenameView", code, StringComparison.Ordinal);
+        Assert.Contains("RefreshMaterializedView", code, StringComparison.Ordinal);
         Assert.Contains("BlueTuskViewKind.MaterializedView", code, StringComparison.Ordinal);
     }
 
@@ -350,7 +350,7 @@ public sealed class ViewMigrationsTests
                 "INSERT INTO view_tests.active_sales (tenant_id, amount) VALUES (3, -5)"));
 
             var refresh = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            refresh.RefreshBlueTuskMaterializedView(
+            refresh.RefreshMaterializedView(
                 "sales_summary",
                 "view_tests",
                 concurrently: true);
@@ -402,7 +402,7 @@ public sealed class ViewMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskViews(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasViews(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
             }
 
             using var alteredContext = CreateContext<AlteredViewsContext>(connectionString);
@@ -427,7 +427,7 @@ public sealed class ViewMigrationsTests
                 "SELECT option_value FROM pg_options_to_table((SELECT reloptions FROM pg_class WHERE oid = 'view_tests.sales_summary'::regclass)) WHERE option_name = 'fillfactor'"));
 
             var rename = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            rename.RenameBlueTuskView(
+            rename.RenameView(
                 BlueTuskViewKind.View,
                 "high_value_sales",
                 "premium_sales",
@@ -449,7 +449,7 @@ public sealed class ViewMigrationsTests
         where TContext : DbContext
     {
         using var context = CreateContext<TContext>(OfflineConnectionString);
-        return context.GetService<IDesignTimeModel>().Model.GetBlueTuskViews();
+        return context.GetService<IDesignTimeModel>().Model.GetViews();
     }
 
     private static void ConfigureViews(
@@ -465,7 +465,7 @@ public sealed class ViewMigrationsTests
             entity.Property(sale => sale.TenantId).HasColumnName("tenant_id");
             entity.Property(sale => sale.Amount).HasColumnName("amount").HasColumnType("numeric");
         });
-        modelBuilder.HasBlueTuskView(
+        modelBuilder.HasView(
             "active_sales",
             altered
                 ? "SELECT id, tenant_id, amount FROM view_tests.sales WHERE amount >= 10"
@@ -481,14 +481,14 @@ public sealed class ViewMigrationsTests
                 }
             },
             "view_tests");
-        modelBuilder.HasBlueTuskView(
+        modelBuilder.HasView(
             "high_value_sales",
             "SELECT id, tenant_id, amount FROM view_tests.active_sales WHERE amount >= 50",
             view => view
                 .HasColumns("id", "tenant_id", "amount")
                 .DependsOnView("active_sales", "view_tests"),
             "view_tests");
-        modelBuilder.HasBlueTuskMaterializedView(
+        modelBuilder.HasMaterializedView(
             "sales_summary",
             changedMaterializedQuery
                 ? "SELECT tenant_id, count(*)::bigint AS sale_count, (sum(amount) + 1)::numeric AS total FROM view_tests.sales GROUP BY tenant_id"
@@ -499,7 +499,7 @@ public sealed class ViewMigrationsTests
                 .HasStorageParameter("fillfactor", altered ? "70" : "80")
                 .IsPopulated(),
             "view_tests");
-        modelBuilder.HasBlueTuskView(
+        modelBuilder.HasView(
             "sales_summary_view",
             "SELECT tenant_id, sale_count, total FROM view_tests.sales_summary",
             view => view
@@ -575,7 +575,7 @@ public sealed class ViewMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureViews(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskMaterializedView(
+            modelBuilder.HasMaterializedView(
                 "sales_summary",
                 "SELECT tenant_id, count(*)::bigint AS sale_count, sum(amount)::numeric AS total FROM view_tests.sales GROUP BY tenant_id",
                 view => view
@@ -593,8 +593,8 @@ public sealed class ViewMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureViews(modelBuilder, altered: false);
-            modelBuilder.HasNoBlueTuskView("high_value_sales", "view_tests")
-                .HasBlueTuskView(
+            modelBuilder.HasNoView("high_value_sales", "view_tests")
+                .HasView(
                     "premium_sales",
                     "SELECT id, tenant_id, amount FROM view_tests.active_sales WHERE amount >= 50",
                     view => view
@@ -608,13 +608,13 @@ public sealed class ViewMigrationsTests
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasBlueTuskFunction(
+            modelBuilder.HasFunction(
                 "increment_value",
                 "integer",
                 "SELECT value + 1",
                 function => function.HasParameter("integer", "value"),
                 "view_tests");
-            modelBuilder.HasBlueTuskView(
+            modelBuilder.HasView(
                 "incremented_value",
                 "SELECT view_tests.increment_value(1) AS value",
                 view => view.HasColumn("value"),
@@ -627,7 +627,7 @@ public sealed class ViewMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureViews(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskView(
+            modelBuilder.HasView(
                 "active_sales",
                 "SELECT id, amount FROM view_tests.sales WHERE amount >= 0",
                 view => view.HasColumns("id", "amount"),
@@ -640,7 +640,7 @@ public sealed class ViewMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureViews(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskMaterializedView(
+            modelBuilder.HasMaterializedView(
                 "active_sales",
                 "SELECT id, tenant_id, amount FROM view_tests.sales WHERE amount >= 0",
                 view => view.HasColumns("id", "tenant_id", "amount"),

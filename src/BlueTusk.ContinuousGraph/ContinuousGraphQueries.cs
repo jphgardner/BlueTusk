@@ -323,7 +323,7 @@ public static class ContinuousGraphQueryCompiler
         where TResult : class
         where TKey : notnull
     {
-        var matches = context.Model.GetBlueTuskPropertyGraphs()
+        var matches = context.Model.GetPropertyGraphs()
             .Where(graph =>
                 string.Equals(graph.Name, definition.GraphName, StringComparison.Ordinal) &&
                 (definition.GraphSchema is null ||

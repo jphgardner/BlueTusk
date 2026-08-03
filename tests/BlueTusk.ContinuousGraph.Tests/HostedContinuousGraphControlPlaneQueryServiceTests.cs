@@ -1,7 +1,7 @@
-using BlueTusk.ContinuousGraph;
+using BlueTusk.ControlPlane;
 using BlueTusk.Live;
 
-namespace BlueTusk.ControlPlane.Tests;
+namespace BlueTusk.ContinuousGraph.Tests;
 
 public sealed class HostedContinuousGraphControlPlaneQueryServiceTests
 {

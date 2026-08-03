@@ -81,8 +81,7 @@
         "Provider",
         "Streams",
         "Sync",
-        "Live",
-        "ContinuousGraph"
+        "Live"
       ],
       "packages": [
         "src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj",
@@ -91,12 +90,14 @@
     },
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",
-      "publishable": true,
+      "publishable": false,
       "releaseDependencies": [
         "Provider",
-        "Live"
+        "Live",
+        "ControlPlane"
       ],
       "packages": [
+        "src/BlueTusk.ContinuousGraph.ControlPlane/BlueTusk.ContinuousGraph.ControlPlane.csproj",
         "src/BlueTusk.ContinuousGraph/BlueTusk.ContinuousGraph.csproj"
       ]
     }

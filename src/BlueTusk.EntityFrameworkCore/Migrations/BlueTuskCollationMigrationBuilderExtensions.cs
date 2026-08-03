@@ -10,20 +10,20 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration-builder extensions for PostgreSQL collations.</summary>
 public static class BlueTuskCollationMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskCollationOperation> CreateBlueTuskCollation(
+    public static OperationBuilder<CreateCollationOperation> CreateCollation(
         this MigrationBuilder migrationBuilder,
         BlueTuskCollationDefinition definition,
         bool ifNotExists = false)
     {
         BlueTuskCollationMetadata.Validate(definition);
-        return Add(migrationBuilder, new CreateBlueTuskCollationOperation
+        return Add(migrationBuilder, new CreateCollationOperation
         {
             Definition = definition,
             IfNotExists = ifNotExists,
         });
     }
 
-    public static OperationBuilder<CreateBlueTuskCollationFromOperation> CreateBlueTuskCollationFrom(
+    public static OperationBuilder<CreateCollationFromOperation> CreateCollationFrom(
         this MigrationBuilder migrationBuilder,
         string name,
         string sourceName,
@@ -35,7 +35,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(sourceName);
         ValidateOptional(schema, nameof(schema));
         ValidateOptional(sourceSchema, nameof(sourceSchema));
-        return Add(migrationBuilder, new CreateBlueTuskCollationFromOperation
+        return Add(migrationBuilder, new CreateCollationFromOperation
         {
             Name = name,
             Schema = schema,
@@ -45,7 +45,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         });
     }
 
-    public static OperationBuilder<RenameBlueTuskCollationOperation> RenameBlueTuskCollation(
+    public static OperationBuilder<RenameCollationOperation> RenameCollation(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName,
@@ -56,7 +56,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
         ValidateOptional(schema, nameof(schema));
         ValidateOptional(newSchema, nameof(newSchema));
-        return Add(migrationBuilder, new RenameBlueTuskCollationOperation
+        return Add(migrationBuilder, new RenameCollationOperation
         {
             Name = name,
             Schema = schema,
@@ -65,21 +65,21 @@ public static class BlueTuskCollationMigrationBuilderExtensions
         });
     }
 
-    public static OperationBuilder<RefreshBlueTuskCollationVersionOperation> RefreshBlueTuskCollationVersion(
+    public static OperationBuilder<RefreshCollationVersionOperation> RefreshCollationVersion(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ValidateOptional(schema, nameof(schema));
-        return Add(migrationBuilder, new RefreshBlueTuskCollationVersionOperation
+        return Add(migrationBuilder, new RefreshCollationVersionOperation
         {
             Name = name,
             Schema = schema,
         });
     }
 
-    public static OperationBuilder<DropBlueTuskCollationOperation> DropBlueTuskCollation(
+    public static OperationBuilder<DropCollationOperation> DropCollation(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null,
@@ -88,7 +88,7 @@ public static class BlueTuskCollationMigrationBuilderExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ValidateOptional(schema, nameof(schema));
-        return Add(migrationBuilder, new DropBlueTuskCollationOperation
+        return Add(migrationBuilder, new DropCollationOperation
         {
             Name = name,
             Schema = schema,
@@ -99,11 +99,11 @@ public static class BlueTuskCollationMigrationBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskCollationOperation> CreateBlueTuskCollation(
+    public static OperationBuilder<CreateCollationOperation> CreateCollation(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         bool ifNotExists = false) =>
-        CreateBlueTuskCollation(
+        CreateCollation(
             migrationBuilder,
             BlueTuskCollationMetadata.DeserializeDefinition(serializedDefinition),
             ifNotExists);

@@ -5,6 +5,9 @@
   <Folder Name="/ContinuousGraph/Core/">
     <Project Path="src/BlueTusk.ContinuousGraph/BlueTusk.ContinuousGraph.csproj" />
   </Folder>
+  <Folder Name="/ContinuousGraph/Integrations/">
+    <Project Path="src/BlueTusk.ContinuousGraph.ControlPlane/BlueTusk.ContinuousGraph.ControlPlane.csproj" />
+  </Folder>
   <Folder Name="/ContinuousGraph/Samples/">
     <Project Path="samples/BlueTusk.Samples.ContinuousGraph.Fraud/BlueTusk.Samples.ContinuousGraph.Fraud.csproj" />
     <Project Path="samples/BlueTusk.Samples.ContinuousGraph.Network/BlueTusk.Samples.ContinuousGraph.Network.csproj" />

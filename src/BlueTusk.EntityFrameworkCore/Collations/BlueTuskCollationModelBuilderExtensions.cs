@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskCollationModelBuilderExtensions
 {
     /// <summary>Adds or replaces a PostgreSQL collation in the model.</summary>
-    public static ModelBuilder HasBlueTuskCollation(
+    public static ModelBuilder HasCollation(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskCollationBuilder> buildAction,
@@ -19,11 +19,11 @@ public static class BlueTuskCollationModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(buildAction);
         var builder = new BlueTuskCollationBuilder(name, schema);
         buildAction(builder);
-        return HasBlueTuskCollation(modelBuilder, builder.Build());
+        return HasCollation(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a canonical PostgreSQL collation definition.</summary>
-    public static ModelBuilder HasBlueTuskCollation(
+    public static ModelBuilder HasCollation(
         this ModelBuilder modelBuilder,
         BlueTuskCollationDefinition definition)
     {
@@ -39,7 +39,7 @@ public static class BlueTuskCollationModelBuilderExtensions
     }
 
     /// <summary>Removes a PostgreSQL collation from the model.</summary>
-    public static ModelBuilder HasNoBlueTuskCollation(
+    public static ModelBuilder HasNoCollation(
         this ModelBuilder modelBuilder,
         string name,
         string? schema = null)
@@ -55,14 +55,14 @@ public static class BlueTuskCollationModelBuilderExtensions
     }
 
     /// <summary>Reads provider-owned PostgreSQL collation definitions from an EF model.</summary>
-    public static BlueTuskCollationDefinitionSet GetBlueTuskCollations(this IReadOnlyModel model)
+    public static BlueTuskCollationDefinitionSet GetCollations(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskCollationMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskCollations(
+    public static ModelBuilder HasCollations(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

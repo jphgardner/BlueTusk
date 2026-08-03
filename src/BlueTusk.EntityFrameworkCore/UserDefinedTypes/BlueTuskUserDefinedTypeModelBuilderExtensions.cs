@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskUserDefinedTypeModelBuilderExtensions
 {
     /// <summary>Adds or replaces a PostgreSQL enum type with ordered labels.</summary>
-    public static ModelBuilder HasBlueTuskEnum(
+    public static ModelBuilder HasEnum(
         this ModelBuilder modelBuilder,
         string name,
         IReadOnlyList<string> labels,
@@ -24,7 +24,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
     }
 
     /// <summary>Adds or replaces a PostgreSQL domain definition.</summary>
-    public static ModelBuilder HasBlueTuskDomain(
+    public static ModelBuilder HasDomain(
         this ModelBuilder modelBuilder,
         string name,
         string baseStoreType,
@@ -42,7 +42,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
     }
 
     /// <summary>Adds or replaces a standalone PostgreSQL composite type.</summary>
-    public static ModelBuilder HasBlueTuskComposite(
+    public static ModelBuilder HasComposite(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskCompositeTypeBuilder> buildAction,
@@ -60,7 +60,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
     }
 
     /// <summary>Adds or replaces a PostgreSQL range and its paired multirange type.</summary>
-    public static ModelBuilder HasBlueTuskRange(
+    public static ModelBuilder HasRange(
         this ModelBuilder modelBuilder,
         string name,
         string subtypeName,
@@ -79,7 +79,7 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
     }
 
     /// <summary>Removes a provider-owned PostgreSQL type from the model.</summary>
-    public static ModelBuilder HasNoBlueTuskUserDefinedType(
+    public static ModelBuilder HasNoUserDefinedType(
         this ModelBuilder modelBuilder,
         string name,
         string? schema = null)
@@ -100,14 +100,14 @@ public static class BlueTuskUserDefinedTypeModelBuilderExtensions
     }
 
     /// <summary>Reads all provider-owned PostgreSQL type definitions from an EF model.</summary>
-    public static BlueTuskUserDefinedTypeDefinitionSet GetBlueTuskUserDefinedTypes(this IReadOnlyModel model)
+    public static BlueTuskUserDefinedTypeDefinitionSet GetUserDefinedTypes(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskUserDefinedTypeMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskUserDefinedTypes(
+    public static ModelBuilder HasUserDefinedTypes(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

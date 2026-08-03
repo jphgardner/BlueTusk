@@ -274,7 +274,7 @@ public sealed class PostgreSqlQueryConstructTests
         Assert.DoesNotContain("\"ctid\" tid", createScript, StringComparison.Ordinal);
         Assert.Throws<ArgumentOutOfRangeException>(() =>
             new ModelBuilder().Entity<QueryConstructDocument>()
-                .UseBlueTuskSystemColumn((BlueTuskSystemColumn)99));
+                .UseSystemColumn((BlueTuskSystemColumn)99));
     }
 
     [Fact]
@@ -565,8 +565,8 @@ public sealed class PostgreSqlQueryConstructTests
         {
             var document = modelBuilder.Entity<QueryConstructDocument>();
             document.ToTable("ef_query_construct_documents");
-            document.UseBlueTuskSystemColumns();
-            document.UseBlueTuskXminConcurrencyToken();
+            document.UseSystemColumns();
+            document.UseXminConcurrencyToken();
         }
     }
 

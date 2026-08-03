@@ -40,10 +40,10 @@ public sealed class ExclusionConstraintTests
             operation => operation is CreateTableOperation { Name: "reservations" });
         var addIndex = Array.FindIndex(
             operations,
-            operation => operation is AddBlueTuskExclusionConstraintOperation);
+            operation => operation is AddExclusionConstraintOperation);
         Assert.True(createTableIndex >= 0 && createTableIndex < addIndex);
 
-        var add = Assert.Single(operations.OfType<AddBlueTuskExclusionConstraintOperation>());
+        var add = Assert.Single(operations.OfType<AddExclusionConstraintOperation>());
         Assert.Equal("exclusion_tests", add.Schema);
         Assert.Equal("reservations_no_overlap", add.Definition.Name);
         Assert.Collection(
@@ -91,18 +91,18 @@ public sealed class ExclusionConstraintTests
             .ToArray();
         var dropIndex = Array.FindIndex(
             removals,
-            operation => operation is DropBlueTuskExclusionConstraintOperation);
+            operation => operation is DropExclusionConstraintOperation);
         var dropColumnIndex = Array.FindIndex(
             removals,
             operation => operation is DropColumnOperation { Name: "note" });
         Assert.True(dropIndex >= 0 && dropIndex < dropColumnIndex);
-        Assert.True(Assert.Single(removals.OfType<DropBlueTuskExclusionConstraintOperation>())
+        Assert.True(Assert.Single(removals.OfType<DropExclusionConstraintOperation>())
             .IsDestructiveChange);
 
         var rename = Assert.Single(differ.GetDifferences(
                 source,
                 renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .OfType<RenameBlueTuskExclusionConstraintOperation>());
+            .OfType<RenameExclusionConstraintOperation>());
         Assert.Equal("reservations_no_overlap", rename.Name);
         Assert.Equal("reservations_no_collision", rename.NewName);
 
@@ -111,11 +111,11 @@ public sealed class ExclusionConstraintTests
                 movedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
             .ToArray();
         Assert.Equal("bookings", Assert.Single(movedOperations.OfType<RenameTableOperation>()).NewName);
-        var movedRename = Assert.Single(movedOperations.OfType<RenameBlueTuskExclusionConstraintOperation>());
+        var movedRename = Assert.Single(movedOperations.OfType<RenameExclusionConstraintOperation>());
         Assert.Equal("bookings", movedRename.Table);
         Assert.Equal("reservations_no_collision", movedRename.NewName);
-        Assert.Empty(movedOperations.OfType<AddBlueTuskExclusionConstraintOperation>());
-        Assert.Empty(movedOperations.OfType<DropBlueTuskExclusionConstraintOperation>());
+        Assert.Empty(movedOperations.OfType<AddExclusionConstraintOperation>());
+        Assert.Empty(movedOperations.OfType<DropExclusionConstraintOperation>());
     }
 
     [Fact]
@@ -127,8 +127,8 @@ public sealed class ExclusionConstraintTests
             sourceContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             targetContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
 
-        Assert.Single(operations.OfType<DropBlueTuskExclusionConstraintOperation>());
-        var add = Assert.Single(operations.OfType<AddBlueTuskExclusionConstraintOperation>());
+        Assert.Single(operations.OfType<DropExclusionConstraintOperation>());
+        var add = Assert.Single(operations.OfType<AddExclusionConstraintOperation>());
         Assert.Equal("NOT active", add.Definition.PredicateSql);
     }
 
@@ -138,12 +138,12 @@ public sealed class ExclusionConstraintTests
         var noElements = new ModelBuilder();
         ConfigureEntity(noElements, includeNote: true);
         Assert.Throws<ArgumentException>(() => noElements.Entity<Reservation>()
-            .HasBlueTuskExclusionConstraint("empty", _ => { }));
+            .HasExclusionConstraint("empty", _ => { }));
 
         var unsafeOperator = new ModelBuilder();
         ConfigureEntity(unsafeOperator, includeNote: true);
         Assert.Throws<ArgumentException>(() => unsafeOperator.Entity<Reservation>()
-            .HasBlueTuskExclusionConstraint(
+            .HasExclusionConstraint(
                 "unsafe",
                 constraint => constraint.HasProperty(item => item.During, "&&; DROP TABLE reservations")));
 
@@ -161,15 +161,15 @@ public sealed class ExclusionConstraintTests
         using var context = CreateContext<LiveExclusionContext>(OfflineConnectionString);
         var model = context.GetService<IDesignTimeModel>().Model;
         var definition = Assert.Single(
-            model.FindEntityType(typeof(Reservation))!.GetBlueTuskExclusionConstraints());
+            model.FindEntityType(typeof(Reservation))!.GetExclusionConstraints());
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.AddBlueTuskExclusionConstraint("reservations", definition, "exclusion_tests");
-        migration.RenameBlueTuskExclusionConstraint(
+        migration.AddExclusionConstraint("reservations", definition, "exclusion_tests");
+        migration.RenameExclusionConstraint(
             "reservations",
             "reservations_no_overlap",
             "reservations_no_collision",
             "exclusion_tests");
-        migration.DropBlueTuskExclusionConstraint(
+        migration.DropExclusionConstraint(
             "reservations",
             "reservations_no_collision",
             "exclusion_tests");
@@ -194,9 +194,9 @@ public sealed class ExclusionConstraintTests
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, builder);
         var code = builder.ToString();
-        Assert.Contains("AddBlueTuskExclusionConstraint", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskExclusionConstraint", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskExclusionConstraint", code, StringComparison.Ordinal);
+        Assert.Contains("AddExclusionConstraint", code, StringComparison.Ordinal);
+        Assert.Contains("RenameExclusionConstraint", code, StringComparison.Ordinal);
+        Assert.Contains("DropExclusionConstraint", code, StringComparison.Ordinal);
         Assert.Contains("reservations_no_collision", code, StringComparison.Ordinal);
     }
 
@@ -271,7 +271,7 @@ public sealed class ExclusionConstraintTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains(
-                    "HasBlueTuskExclusionConstraints(",
+                    "HasExclusionConstraints(",
                     scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
             }
@@ -330,7 +330,7 @@ public sealed class ExclusionConstraintTests
         string tableName = "reservations")
     {
         ConfigureEntity(modelBuilder, includeNote: true, tableName);
-        modelBuilder.Entity<Reservation>().HasBlueTuskExclusionConstraint(
+        modelBuilder.Entity<Reservation>().HasExclusionConstraint(
             name,
             constraint => constraint
                 .HasProperty(item => item.During, "&&", operatorSchema: "pg_catalog")
@@ -407,7 +407,7 @@ public sealed class ExclusionConstraintTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureEntity(modelBuilder, includeNote: true);
-            modelBuilder.Entity<Reservation>().HasBlueTuskExclusionConstraint(
+            modelBuilder.Entity<Reservation>().HasExclusionConstraint(
                 "reservations_no_overlap",
                 constraint => constraint
                     .UseIndexMethod("gist")
@@ -475,7 +475,7 @@ public sealed class ExclusionConstraintTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureLiveConstraint(modelBuilder, "reservations_no_overlap");
-            modelBuilder.Entity<Reservation>().HasBlueTuskPartitioning(
+            modelBuilder.Entity<Reservation>().HasPartitioning(
                 BlueTuskPartitionStrategy.Range,
                 BlueTuskPartitionKeyDefinition.Column(nameof(Reservation.Id)));
         }

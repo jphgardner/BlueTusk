@@ -97,7 +97,7 @@ internal static class BlueTuskTriggerModelDiffer
             if (candidates.Length == 1)
             {
                 var renamed = candidates[0];
-                after.Add(new RenameBlueTuskTriggerOperation
+                after.Add(new RenameTriggerOperation
                 {
                     Table = targetTable.Name,
                     Schema = targetTable.Schema,
@@ -152,13 +152,13 @@ internal static class BlueTuskTriggerModelDiffer
             : new TableKey(rename.NewSchema ?? rename.Schema, rename.NewName ?? rename.Name);
     }
 
-    private static CreateBlueTuskTriggerOperation Create(TableKey table, BlueTuskTriggerDefinition definition) =>
+    private static CreateTriggerOperation Create(TableKey table, BlueTuskTriggerDefinition definition) =>
         new() { Table = table.Name, Schema = table.Schema, Definition = definition };
 
-    private static DropBlueTuskTriggerOperation Drop(TableKey table, string name) =>
+    private static DropTriggerOperation Drop(TableKey table, string name) =>
         new() { Table = table.Name, Schema = table.Schema, Name = name, IsDestructiveChange = true };
 
-    private static AlterBlueTuskTriggerEnabledModeOperation AlterMode(
+    private static AlterTriggerEnabledModeOperation AlterMode(
         TableKey table,
         BlueTuskTriggerDefinition definition) =>
         new()

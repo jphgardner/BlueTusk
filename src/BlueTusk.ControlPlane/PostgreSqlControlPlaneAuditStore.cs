@@ -8,7 +8,11 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
 {
     public const int CurrentSchemaVersion = 2;
 
-    private const int CurrentRecordFormat = 1;
+    public const int MinimumSupportedSchemaVersion = 1;
+
+    public const int CurrentRecordFormatVersion = 1;
+
+    public const int MinimumSupportedRecordFormatVersion = 1;
 
     private static readonly Regex SchemaPattern = new(
         "^[A-Za-z_][A-Za-z0-9_$]*$",
@@ -262,7 +266,7 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
         AddParameter(command, "status", record.Status.ToString());
         AddParameter(command, "reason", record.Reason);
         AddParameter(command, "detail_code", record.DetailCode);
-        AddParameter(command, "record_format", CurrentRecordFormat);
+        AddParameter(command, "record_format", CurrentRecordFormatVersion);
         AddParameter(command, "schema_version", CurrentSchemaVersion);
         var rows = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
         if (rows != 1)

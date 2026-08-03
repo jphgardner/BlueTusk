@@ -32,11 +32,11 @@ public sealed class TriggerMigrationsTests
         var model = context.GetService<IDesignTimeModel>().Model;
         var differ = context.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, model.GetRelationalModel()).ToArray();
-        var triggerIndex = Array.FindIndex(creates, item => item is CreateBlueTuskTriggerOperation);
-        Assert.True(Array.FindIndex(creates, item => item is CreateBlueTuskRoutineOperation) < triggerIndex);
+        var triggerIndex = Array.FindIndex(creates, item => item is CreateTriggerOperation);
+        Assert.True(Array.FindIndex(creates, item => item is CreateRoutineOperation) < triggerIndex);
         Assert.True(Array.FindIndex(creates, item => item is CreateTableOperation) < triggerIndex);
 
-        var create = Assert.Single(creates.OfType<CreateBlueTuskTriggerOperation>());
+        var create = Assert.Single(creates.OfType<CreateTriggerOperation>());
         var sql = string.Concat(context.GetService<IMigrationsSqlGenerator>()
             .Generate([create], model)
             .Select(command => command.CommandText));
@@ -54,9 +54,9 @@ public sealed class TriggerMigrationsTests
                 noTriggerContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
             .ToArray();
         Assert.True(
-            Array.FindIndex(drops, item => item is DropBlueTuskTriggerOperation) <
-            Array.FindIndex(drops, item => item is DropBlueTuskRoutineOperation));
-        Assert.True(Assert.Single(drops.OfType<DropBlueTuskTriggerOperation>()).IsDestructiveChange);
+            Array.FindIndex(drops, item => item is DropTriggerOperation) <
+            Array.FindIndex(drops, item => item is DropRoutineOperation));
+        Assert.True(Assert.Single(drops.OfType<DropTriggerOperation>()).IsDestructiveChange);
     }
 
     [Fact]
@@ -100,8 +100,8 @@ public sealed class TriggerMigrationsTests
             true,
             BlueTuskTriggerEnabledMode.Replica);
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskTrigger("documents", transition, "trigger_tests", orReplace: true);
-        migration.CreateBlueTuskTrigger("documents", constraint, "trigger_tests");
+        migration.CreateTrigger("documents", transition, "trigger_tests", orReplace: true);
+        migration.CreateTrigger("documents", constraint, "trigger_tests");
         var sql = string.Concat(context.GetService<IMigrationsSqlGenerator>()
             .Generate(migration.Operations, model)
             .Select(command => command.CommandText));
@@ -135,14 +135,14 @@ public sealed class TriggerMigrationsTests
             sourceContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             targetContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
 
-        var rename = Assert.Single(operations.OfType<RenameBlueTuskTriggerOperation>());
+        var rename = Assert.Single(operations.OfType<RenameTriggerOperation>());
         Assert.Equal("normalize_note", rename.Name);
         Assert.Equal("normalize_note_v2", rename.NewName);
-        var mode = Assert.Single(operations.OfType<AlterBlueTuskTriggerEnabledModeOperation>());
+        var mode = Assert.Single(operations.OfType<AlterTriggerEnabledModeOperation>());
         Assert.Equal("normalize_note_v2", mode.Name);
         Assert.Equal(BlueTuskTriggerEnabledMode.Disabled, mode.EnabledMode);
-        Assert.Empty(operations.OfType<CreateBlueTuskTriggerOperation>());
-        Assert.Empty(operations.OfType<DropBlueTuskTriggerOperation>());
+        Assert.Empty(operations.OfType<CreateTriggerOperation>());
+        Assert.Empty(operations.OfType<DropTriggerOperation>());
     }
 
     [Fact]
@@ -150,20 +150,20 @@ public sealed class TriggerMigrationsTests
     {
         var modelBuilder = new ModelBuilder();
         ConfigureEntity(modelBuilder);
-        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasBlueTuskTrigger(
+        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasTrigger(
             "empty",
             trigger => trigger.ExecuteFunction("noop")));
-        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasBlueTuskTrigger(
+        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasTrigger(
             "truncate_row",
             trigger => trigger.OnTruncate().ForEachRow().ExecuteFunction("noop")));
-        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasBlueTuskTrigger(
+        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasTrigger(
             "transition_columns",
             trigger => trigger
                 .UseTiming(BlueTuskTriggerTiming.After)
                 .OnUpdate(item => item.Note)
                 .Referencing(newTable: "new_rows")
                 .ExecuteFunction("noop")));
-        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasBlueTuskTrigger(
+        Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>().HasTrigger(
             "invalid_constraint",
             trigger => trigger
                 .OnInsert()
@@ -177,16 +177,17 @@ public sealed class TriggerMigrationsTests
     {
         using var context = CreateContext<TriggerContext>(OfflineConnectionString);
         var model = context.GetService<IDesignTimeModel>().Model;
-        var definition = Assert.Single(model.FindEntityType(typeof(Document))!.GetBlueTuskTriggers());
+        var definition = Assert.Single(
+            model.FindEntityType(typeof(Document))!.GetTriggerDefinitions());
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskTrigger("documents", definition, "trigger_tests", orReplace: true);
-        migration.RenameBlueTuskTrigger("documents", "normalize_note", "normalize_note_v2", "trigger_tests");
-        migration.AlterBlueTuskTriggerEnabledMode(
+        migration.CreateTrigger("documents", definition, "trigger_tests", orReplace: true);
+        migration.RenameTrigger("documents", "normalize_note", "normalize_note_v2", "trigger_tests");
+        migration.AlterTriggerEnabledMode(
             "documents",
             "normalize_note_v2",
             BlueTuskTriggerEnabledMode.Replica,
             "trigger_tests");
-        migration.DropBlueTuskTrigger("documents", "normalize_note_v2", "trigger_tests");
+        migration.DropTrigger("documents", "normalize_note_v2", "trigger_tests");
         var commands = context.GetService<IMigrationsSqlGenerator>().Generate(migration.Operations, model);
         Assert.Equal(
             "DROP TRIGGER \"normalize_note_v2\" ON \"trigger_tests\".\"documents\" RESTRICT;" +
@@ -202,10 +203,10 @@ public sealed class TriggerMigrationsTests
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, builder);
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskTrigger", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskTrigger", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskTriggerEnabledMode", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskTrigger", code, StringComparison.Ordinal);
+        Assert.Contains("CreateTrigger", code, StringComparison.Ordinal);
+        Assert.Contains("RenameTrigger", code, StringComparison.Ordinal);
+        Assert.Contains("AlterTriggerEnabledMode", code, StringComparison.Ordinal);
+        Assert.Contains("DropTrigger", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -260,7 +261,7 @@ public sealed class TriggerMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskTriggers(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasTriggers(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
             }
 
             using var disabledContext = CreateContext<RenamedDisabledTriggerContext>(connectionString);
@@ -298,7 +299,7 @@ public sealed class TriggerMigrationsTests
         entity.Property(item => item.Note).HasColumnName("note");
     }
 
-    private static void ConfigureFunction(ModelBuilder modelBuilder) => modelBuilder.HasBlueTuskFunction(
+    private static void ConfigureFunction(ModelBuilder modelBuilder) => modelBuilder.HasFunction(
         "normalize_document_note",
         "trigger",
         "BEGIN NEW.note := upper(NEW.note) || ':' || TG_ARGV[0]; RETURN NEW; END",
@@ -312,7 +313,7 @@ public sealed class TriggerMigrationsTests
     {
         ConfigureEntity(modelBuilder);
         ConfigureFunction(modelBuilder);
-        modelBuilder.Entity<Document>().HasBlueTuskTrigger(
+        modelBuilder.Entity<Document>().HasTrigger(
             name,
             trigger => trigger
                 .UseTiming(BlueTuskTriggerTiming.Before)

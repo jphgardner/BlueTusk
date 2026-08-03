@@ -41,7 +41,7 @@ internal static class BlueTuskRoutineModelDiffer
 
             BlueTuskRoutineAlterationPlanner.ValidateReplacement(oldDefinition, definition);
             AddByPhase(
-                new ReplaceBlueTuskRoutineOperation
+                new ReplaceRoutineOperation
                 {
                     OldDefinition = oldDefinition,
                     Definition = definition,
@@ -68,7 +68,7 @@ internal static class BlueTuskRoutineModelDiffer
         foreach (var definition in Order(creates))
         {
             AddByPhase(
-                new CreateBlueTuskRoutineOperation { Definition = definition },
+                new CreateRoutineOperation { Definition = definition },
                 before: !definition.HasTrackedBodyDependencies,
                 beforeRelational,
                 afterRelational);
@@ -76,7 +76,7 @@ internal static class BlueTuskRoutineModelDiffer
 
         foreach (var definition in Order(drops).Reverse())
         {
-            var operation = new DropBlueTuskRoutineOperation
+            var operation = new DropRoutineOperation
             {
                 Kind = definition.Kind,
                 Name = definition.Name,

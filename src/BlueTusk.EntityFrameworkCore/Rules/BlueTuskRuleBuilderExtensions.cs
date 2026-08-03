@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class BlueTuskRuleBuilderExtensions
 {
-    public static EntityTypeBuilder HasBlueTuskRule(
+    public static EntityTypeBuilder HasRule(
         this EntityTypeBuilder entityBuilder,
         string name,
         BlueTuskRuleEvent @event,
@@ -34,7 +34,7 @@ public static class BlueTuskRuleBuilderExtensions
         return entityBuilder;
     }
 
-    public static EntityTypeBuilder<TEntity> HasBlueTuskRule<TEntity>(
+    public static EntityTypeBuilder<TEntity> HasRule<TEntity>(
         this EntityTypeBuilder<TEntity> entityBuilder,
         string name,
         BlueTuskRuleEvent @event,
@@ -45,7 +45,7 @@ public static class BlueTuskRuleBuilderExtensions
         where TEntity : class
     {
         ArgumentNullException.ThrowIfNull(entityBuilder);
-        HasBlueTuskRule(
+        HasRule(
             (EntityTypeBuilder)entityBuilder,
             name,
             @event,
@@ -56,7 +56,7 @@ public static class BlueTuskRuleBuilderExtensions
         return entityBuilder;
     }
 
-    public static EntityTypeBuilder HasNoBlueTuskRule(this EntityTypeBuilder entityBuilder, string name)
+    public static EntityTypeBuilder HasNoRule(this EntityTypeBuilder entityBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(entityBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -68,14 +68,14 @@ public static class BlueTuskRuleBuilderExtensions
         return entityBuilder;
     }
 
-    public static IReadOnlyList<BlueTuskRuleDefinition> GetBlueTuskRules(this IReadOnlyEntityType entityType)
+    public static IReadOnlyList<BlueTuskRuleDefinition> GetRules(this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
         return BlueTuskRuleMetadata.Get(entityType);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskRules(this EntityTypeBuilder entityBuilder, string serializedDefinitions)
+    public static EntityTypeBuilder HasRules(this EntityTypeBuilder entityBuilder, string serializedDefinitions)
     {
         ArgumentNullException.ThrowIfNull(entityBuilder);
         Set(entityBuilder.Metadata, BlueTuskRuleMetadata.Deserialize(serializedDefinitions));

@@ -9,38 +9,38 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for PostgreSQL 19 property graphs.</summary>
 public static class BlueTuskPropertyGraphMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskPropertyGraphOperation> CreateBlueTuskPropertyGraph(
+    public static OperationBuilder<CreatePropertyGraphOperation> CreatePropertyGraph(
         this MigrationBuilder migrationBuilder,
         BlueTuskPropertyGraphDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentNullException.ThrowIfNull(definition);
-        var operation = new CreateBlueTuskPropertyGraphOperation { Definition = definition };
+        var operation = new CreatePropertyGraphOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskPropertyGraphOperation>(operation);
+        return new OperationBuilder<CreatePropertyGraphOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskPropertyGraphOperation> CreateBlueTuskPropertyGraph(
+    public static OperationBuilder<CreatePropertyGraphOperation> CreatePropertyGraph(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskPropertyGraph(
+        CreatePropertyGraph(
             migrationBuilder,
             BlueTuskPropertyGraphMetadata.Deserialize(serializedDefinition));
 
-    public static OperationBuilder<DropBlueTuskPropertyGraphOperation> DropBlueTuskPropertyGraph(
+    public static OperationBuilder<DropPropertyGraphOperation> DropPropertyGraph(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskPropertyGraphOperation { Name = name, Schema = schema };
+        var operation = new DropPropertyGraphOperation { Name = name, Schema = schema };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskPropertyGraphOperation>(operation);
+        return new OperationBuilder<DropPropertyGraphOperation>(operation);
     }
 
-    public static OperationBuilder<AlterBlueTuskPropertyGraphOperation> AlterBlueTuskPropertyGraph(
+    public static OperationBuilder<AlterPropertyGraphOperation> AlterPropertyGraph(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName,
@@ -50,7 +50,7 @@ public static class BlueTuskPropertyGraphMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new AlterBlueTuskPropertyGraphOperation
+        var operation = new AlterPropertyGraphOperation
         {
             Name = name,
             Schema = schema,
@@ -58,6 +58,6 @@ public static class BlueTuskPropertyGraphMigrationBuilderExtensions
             NewSchema = newSchema,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskPropertyGraphOperation>(operation);
+        return new OperationBuilder<AlterPropertyGraphOperation>(operation);
     }
 }

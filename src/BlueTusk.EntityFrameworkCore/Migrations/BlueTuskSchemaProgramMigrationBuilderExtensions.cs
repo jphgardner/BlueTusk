@@ -9,18 +9,18 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public static class BlueTuskSchemaProgramMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskOperatorOperation> CreateBlueTuskOperator(
+    public static OperationBuilder<CreateOperatorOperation> CreateOperator(
         this MigrationBuilder builder, BlueTuskOperatorDefinition definition) =>
-        Add(builder, new CreateBlueTuskOperatorOperation { Definition = Validate(definition) });
+        Add(builder, new CreateOperatorOperation { Definition = Validate(definition) });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskOperatorOperation> CreateBlueTuskOperator(
+    public static OperationBuilder<CreateOperatorOperation> CreateOperator(
         this MigrationBuilder builder, string definition) =>
-        CreateBlueTuskOperator(builder, Deserialize<BlueTuskOperatorDefinition>(definition));
+        CreateOperator(builder, Deserialize<BlueTuskOperatorDefinition>(definition));
 
-    public static OperationBuilder<ReplaceBlueTuskOperatorOperation> ReplaceBlueTuskOperator(
+    public static OperationBuilder<ReplaceOperatorOperation> ReplaceOperator(
         this MigrationBuilder builder, BlueTuskOperatorDefinition oldDefinition, BlueTuskOperatorDefinition definition) =>
-        Add(builder, new ReplaceBlueTuskOperatorOperation
+        Add(builder, new ReplaceOperatorOperation
         {
             OldDefinition = Validate(oldDefinition),
             Definition = Validate(definition),
@@ -28,33 +28,33 @@ public static class BlueTuskSchemaProgramMigrationBuilderExtensions
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<ReplaceBlueTuskOperatorOperation> ReplaceBlueTuskOperator(
+    public static OperationBuilder<ReplaceOperatorOperation> ReplaceOperator(
         this MigrationBuilder builder, string oldDefinition, string definition) =>
-        ReplaceBlueTuskOperator(builder, Deserialize<BlueTuskOperatorDefinition>(oldDefinition),
+        ReplaceOperator(builder, Deserialize<BlueTuskOperatorDefinition>(oldDefinition),
             Deserialize<BlueTuskOperatorDefinition>(definition));
 
-    public static OperationBuilder<DropBlueTuskOperatorOperation> DropBlueTuskOperator(
+    public static OperationBuilder<DropOperatorOperation> DropOperator(
         this MigrationBuilder builder, BlueTuskOperatorDefinition definition) =>
-        Add(builder, new DropBlueTuskOperatorOperation { Definition = Validate(definition), IsDestructiveChange = true });
+        Add(builder, new DropOperatorOperation { Definition = Validate(definition), IsDestructiveChange = true });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<DropBlueTuskOperatorOperation> DropBlueTuskOperator(
+    public static OperationBuilder<DropOperatorOperation> DropOperator(
         this MigrationBuilder builder, string definition) =>
-        DropBlueTuskOperator(builder, Deserialize<BlueTuskOperatorDefinition>(definition));
+        DropOperator(builder, Deserialize<BlueTuskOperatorDefinition>(definition));
 
-    public static OperationBuilder<CreateBlueTuskOperatorFamilyOperation> CreateBlueTuskOperatorFamily(
+    public static OperationBuilder<CreateOperatorFamilyOperation> CreateOperatorFamily(
         this MigrationBuilder builder, BlueTuskOperatorFamilyDefinition definition) =>
-        Add(builder, new CreateBlueTuskOperatorFamilyOperation { Definition = Validate(definition) });
+        Add(builder, new CreateOperatorFamilyOperation { Definition = Validate(definition) });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskOperatorFamilyOperation> CreateBlueTuskOperatorFamily(
+    public static OperationBuilder<CreateOperatorFamilyOperation> CreateOperatorFamily(
         this MigrationBuilder builder, string definition) =>
-        CreateBlueTuskOperatorFamily(builder, Deserialize<BlueTuskOperatorFamilyDefinition>(definition));
+        CreateOperatorFamily(builder, Deserialize<BlueTuskOperatorFamilyDefinition>(definition));
 
-    public static OperationBuilder<AlterBlueTuskOperatorFamilyOperation> AlterBlueTuskOperatorFamily(
+    public static OperationBuilder<AlterOperatorFamilyOperation> AlterOperatorFamily(
         this MigrationBuilder builder, BlueTuskOperatorFamilyDefinition oldDefinition,
         BlueTuskOperatorFamilyDefinition definition) =>
-        Add(builder, new AlterBlueTuskOperatorFamilyOperation
+        Add(builder, new AlterOperatorFamilyOperation
         {
             OldDefinition = Validate(oldDefinition),
             Definition = Validate(definition),
@@ -62,37 +62,37 @@ public static class BlueTuskSchemaProgramMigrationBuilderExtensions
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskOperatorFamilyOperation> AlterBlueTuskOperatorFamily(
+    public static OperationBuilder<AlterOperatorFamilyOperation> AlterOperatorFamily(
         this MigrationBuilder builder, string oldDefinition, string definition) =>
-        AlterBlueTuskOperatorFamily(builder, Deserialize<BlueTuskOperatorFamilyDefinition>(oldDefinition),
+        AlterOperatorFamily(builder, Deserialize<BlueTuskOperatorFamilyDefinition>(oldDefinition),
             Deserialize<BlueTuskOperatorFamilyDefinition>(definition));
 
-    public static OperationBuilder<DropBlueTuskOperatorFamilyOperation> DropBlueTuskOperatorFamily(
+    public static OperationBuilder<DropOperatorFamilyOperation> DropOperatorFamily(
         this MigrationBuilder builder, BlueTuskOperatorFamilyDefinition definition) =>
-        Add(builder, new DropBlueTuskOperatorFamilyOperation
+        Add(builder, new DropOperatorFamilyOperation
         {
             Definition = Validate(definition),
             IsDestructiveChange = true,
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<DropBlueTuskOperatorFamilyOperation> DropBlueTuskOperatorFamily(
+    public static OperationBuilder<DropOperatorFamilyOperation> DropOperatorFamily(
         this MigrationBuilder builder, string definition) =>
-        DropBlueTuskOperatorFamily(builder, Deserialize<BlueTuskOperatorFamilyDefinition>(definition));
+        DropOperatorFamily(builder, Deserialize<BlueTuskOperatorFamilyDefinition>(definition));
 
-    public static OperationBuilder<CreateBlueTuskOperatorClassOperation> CreateBlueTuskOperatorClass(
+    public static OperationBuilder<CreateOperatorClassOperation> CreateOperatorClass(
         this MigrationBuilder builder, BlueTuskOperatorClassDefinition definition) =>
-        Add(builder, new CreateBlueTuskOperatorClassOperation { Definition = Validate(definition) });
+        Add(builder, new CreateOperatorClassOperation { Definition = Validate(definition) });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskOperatorClassOperation> CreateBlueTuskOperatorClass(
+    public static OperationBuilder<CreateOperatorClassOperation> CreateOperatorClass(
         this MigrationBuilder builder, string definition) =>
-        CreateBlueTuskOperatorClass(builder, Deserialize<BlueTuskOperatorClassDefinition>(definition));
+        CreateOperatorClass(builder, Deserialize<BlueTuskOperatorClassDefinition>(definition));
 
-    public static OperationBuilder<ReplaceBlueTuskOperatorClassOperation> ReplaceBlueTuskOperatorClass(
+    public static OperationBuilder<ReplaceOperatorClassOperation> ReplaceOperatorClass(
         this MigrationBuilder builder, BlueTuskOperatorClassDefinition oldDefinition,
         BlueTuskOperatorClassDefinition definition) =>
-        Add(builder, new ReplaceBlueTuskOperatorClassOperation
+        Add(builder, new ReplaceOperatorClassOperation
         {
             OldDefinition = Validate(oldDefinition),
             Definition = Validate(definition),
@@ -100,36 +100,36 @@ public static class BlueTuskSchemaProgramMigrationBuilderExtensions
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<ReplaceBlueTuskOperatorClassOperation> ReplaceBlueTuskOperatorClass(
+    public static OperationBuilder<ReplaceOperatorClassOperation> ReplaceOperatorClass(
         this MigrationBuilder builder, string oldDefinition, string definition) =>
-        ReplaceBlueTuskOperatorClass(builder, Deserialize<BlueTuskOperatorClassDefinition>(oldDefinition),
+        ReplaceOperatorClass(builder, Deserialize<BlueTuskOperatorClassDefinition>(oldDefinition),
             Deserialize<BlueTuskOperatorClassDefinition>(definition));
 
-    public static OperationBuilder<DropBlueTuskOperatorClassOperation> DropBlueTuskOperatorClass(
+    public static OperationBuilder<DropOperatorClassOperation> DropOperatorClass(
         this MigrationBuilder builder, BlueTuskOperatorClassDefinition definition) =>
-        Add(builder, new DropBlueTuskOperatorClassOperation
+        Add(builder, new DropOperatorClassOperation
         {
             Definition = Validate(definition),
             IsDestructiveChange = true,
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<DropBlueTuskOperatorClassOperation> DropBlueTuskOperatorClass(
+    public static OperationBuilder<DropOperatorClassOperation> DropOperatorClass(
         this MigrationBuilder builder, string definition) =>
-        DropBlueTuskOperatorClass(builder, Deserialize<BlueTuskOperatorClassDefinition>(definition));
+        DropOperatorClass(builder, Deserialize<BlueTuskOperatorClassDefinition>(definition));
 
-    public static OperationBuilder<CreateBlueTuskCastOperation> CreateBlueTuskCast(
+    public static OperationBuilder<CreateCastOperation> CreateCast(
         this MigrationBuilder builder, BlueTuskCastDefinition definition) =>
-        Add(builder, new CreateBlueTuskCastOperation { Definition = Validate(definition) });
+        Add(builder, new CreateCastOperation { Definition = Validate(definition) });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskCastOperation> CreateBlueTuskCast(
+    public static OperationBuilder<CreateCastOperation> CreateCast(
         this MigrationBuilder builder, string definition) =>
-        CreateBlueTuskCast(builder, Deserialize<BlueTuskCastDefinition>(definition));
+        CreateCast(builder, Deserialize<BlueTuskCastDefinition>(definition));
 
-    public static OperationBuilder<ReplaceBlueTuskCastOperation> ReplaceBlueTuskCast(
+    public static OperationBuilder<ReplaceCastOperation> ReplaceCast(
         this MigrationBuilder builder, BlueTuskCastDefinition oldDefinition, BlueTuskCastDefinition definition) =>
-        Add(builder, new ReplaceBlueTuskCastOperation
+        Add(builder, new ReplaceCastOperation
         {
             OldDefinition = Validate(oldDefinition),
             Definition = Validate(definition),
@@ -137,33 +137,33 @@ public static class BlueTuskSchemaProgramMigrationBuilderExtensions
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<ReplaceBlueTuskCastOperation> ReplaceBlueTuskCast(
+    public static OperationBuilder<ReplaceCastOperation> ReplaceCast(
         this MigrationBuilder builder, string oldDefinition, string definition) =>
-        ReplaceBlueTuskCast(builder, Deserialize<BlueTuskCastDefinition>(oldDefinition),
+        ReplaceCast(builder, Deserialize<BlueTuskCastDefinition>(oldDefinition),
             Deserialize<BlueTuskCastDefinition>(definition));
 
-    public static OperationBuilder<DropBlueTuskCastOperation> DropBlueTuskCast(
+    public static OperationBuilder<DropCastOperation> DropCast(
         this MigrationBuilder builder, BlueTuskCastDefinition definition) =>
-        Add(builder, new DropBlueTuskCastOperation { Definition = Validate(definition), IsDestructiveChange = true });
+        Add(builder, new DropCastOperation { Definition = Validate(definition), IsDestructiveChange = true });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<DropBlueTuskCastOperation> DropBlueTuskCast(
+    public static OperationBuilder<DropCastOperation> DropCast(
         this MigrationBuilder builder, string definition) =>
-        DropBlueTuskCast(builder, Deserialize<BlueTuskCastDefinition>(definition));
+        DropCast(builder, Deserialize<BlueTuskCastDefinition>(definition));
 
-    public static OperationBuilder<CreateBlueTuskAggregateOperation> CreateBlueTuskAggregate(
+    public static OperationBuilder<CreateAggregateOperation> CreateAggregate(
         this MigrationBuilder builder, BlueTuskAggregateDefinition definition) =>
-        Add(builder, new CreateBlueTuskAggregateOperation { Definition = Validate(definition) });
+        Add(builder, new CreateAggregateOperation { Definition = Validate(definition) });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskAggregateOperation> CreateBlueTuskAggregate(
+    public static OperationBuilder<CreateAggregateOperation> CreateAggregate(
         this MigrationBuilder builder, string definition) =>
-        CreateBlueTuskAggregate(builder, Deserialize<BlueTuskAggregateDefinition>(definition));
+        CreateAggregate(builder, Deserialize<BlueTuskAggregateDefinition>(definition));
 
-    public static OperationBuilder<ReplaceBlueTuskAggregateOperation> ReplaceBlueTuskAggregate(
+    public static OperationBuilder<ReplaceAggregateOperation> ReplaceAggregate(
         this MigrationBuilder builder, BlueTuskAggregateDefinition oldDefinition,
         BlueTuskAggregateDefinition definition) =>
-        Add(builder, new ReplaceBlueTuskAggregateOperation
+        Add(builder, new ReplaceAggregateOperation
         {
             OldDefinition = Validate(oldDefinition),
             Definition = Validate(definition),
@@ -171,23 +171,23 @@ public static class BlueTuskSchemaProgramMigrationBuilderExtensions
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<ReplaceBlueTuskAggregateOperation> ReplaceBlueTuskAggregate(
+    public static OperationBuilder<ReplaceAggregateOperation> ReplaceAggregate(
         this MigrationBuilder builder, string oldDefinition, string definition) =>
-        ReplaceBlueTuskAggregate(builder, Deserialize<BlueTuskAggregateDefinition>(oldDefinition),
+        ReplaceAggregate(builder, Deserialize<BlueTuskAggregateDefinition>(oldDefinition),
             Deserialize<BlueTuskAggregateDefinition>(definition));
 
-    public static OperationBuilder<DropBlueTuskAggregateOperation> DropBlueTuskAggregate(
+    public static OperationBuilder<DropAggregateOperation> DropAggregate(
         this MigrationBuilder builder, BlueTuskAggregateDefinition definition) =>
-        Add(builder, new DropBlueTuskAggregateOperation
+        Add(builder, new DropAggregateOperation
         {
             Definition = Validate(definition),
             IsDestructiveChange = true,
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<DropBlueTuskAggregateOperation> DropBlueTuskAggregate(
+    public static OperationBuilder<DropAggregateOperation> DropAggregate(
         this MigrationBuilder builder, string definition) =>
-        DropBlueTuskAggregate(builder, Deserialize<BlueTuskAggregateDefinition>(definition));
+        DropAggregate(builder, Deserialize<BlueTuskAggregateDefinition>(definition));
 
     private static T Validate<T>(T definition)
     {

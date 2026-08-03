@@ -9,7 +9,9 @@ package publication is implied by these notes.
 ## Included
 
 - coherent source, slot, WAL, relay, snapshot, consumer-group, checkpoint,
-  Sync, Live, and Continuous Graph operational projections;
+  Sync, and Live operational projections;
+- a separately packaged optional Continuous Graph projection adapter, keeping
+  preview graph dependencies out of the stable Control Plane core;
 - authorised and HTML-safe dashboard pages;
 - separately authorised, explicitly confirmed operation requests with immutable
   audit-before-mutation records;
@@ -39,8 +41,10 @@ matches its own.
 
 ## Completed candidate checks
 
-- zero-warning Control Plane .NET 10 Release build and public API baseline;
-- 10/10 Control Plane unit tests;
+- zero-warning Control Plane .NET 10 Release build and hash-locked public API
+  baseline;
+- a machine-checked HTTP/audit format registry and upgrade contract;
+- 11/11 Control Plane unit tests;
 - PostgreSQL 15, 16, 17, 18, and 19 live acceptance of fresh initialization,
   legacy upgrade, row preservation, append immutability, and future-version
   rejection;

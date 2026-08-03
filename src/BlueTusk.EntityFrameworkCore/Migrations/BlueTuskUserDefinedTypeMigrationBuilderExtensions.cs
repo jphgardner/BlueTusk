@@ -11,68 +11,68 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration-builder extensions for PostgreSQL enum, domain, composite, and range types.</summary>
 public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskEnumTypeOperation> CreateBlueTuskEnumType(
+    public static OperationBuilder<CreateEnumTypeOperation> CreateEnumType(
         this MigrationBuilder migrationBuilder,
         BlueTuskEnumTypeDefinition definition) =>
-        Add(migrationBuilder, new CreateBlueTuskEnumTypeOperation { Definition = definition });
+        Add(migrationBuilder, new CreateEnumTypeOperation { Definition = definition });
 
-    public static OperationBuilder<AlterBlueTuskEnumTypeOperation> AlterBlueTuskEnumType(
+    public static OperationBuilder<AlterEnumTypeOperation> AlterEnumType(
         this MigrationBuilder migrationBuilder,
         BlueTuskEnumTypeDefinition definition,
         BlueTuskEnumTypeDefinition oldDefinition) =>
-        Add(migrationBuilder, new AlterBlueTuskEnumTypeOperation
+        Add(migrationBuilder, new AlterEnumTypeOperation
         {
             Definition = definition,
             OldDefinition = oldDefinition,
         });
 
-    public static OperationBuilder<DropBlueTuskEnumTypeOperation> DropBlueTuskEnumType(
+    public static OperationBuilder<DropEnumTypeOperation> DropEnumType(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null) =>
-        Add(migrationBuilder, new DropBlueTuskEnumTypeOperation
+        Add(migrationBuilder, new DropEnumTypeOperation
         {
             Name = name,
             Schema = schema,
             IsDestructiveChange = true,
         });
 
-    public static OperationBuilder<CreateBlueTuskDomainTypeOperation> CreateBlueTuskDomainType(
+    public static OperationBuilder<CreateDomainTypeOperation> CreateDomainType(
         this MigrationBuilder migrationBuilder,
         BlueTuskDomainTypeDefinition definition) =>
-        Add(migrationBuilder, new CreateBlueTuskDomainTypeOperation { Definition = definition });
+        Add(migrationBuilder, new CreateDomainTypeOperation { Definition = definition });
 
-    public static OperationBuilder<AlterBlueTuskDomainTypeOperation> AlterBlueTuskDomainType(
+    public static OperationBuilder<AlterDomainTypeOperation> AlterDomainType(
         this MigrationBuilder migrationBuilder,
         BlueTuskDomainTypeDefinition definition,
         BlueTuskDomainTypeDefinition oldDefinition) =>
-        Add(migrationBuilder, new AlterBlueTuskDomainTypeOperation
+        Add(migrationBuilder, new AlterDomainTypeOperation
         {
             Definition = definition,
             OldDefinition = oldDefinition,
         });
 
-    public static OperationBuilder<DropBlueTuskDomainTypeOperation> DropBlueTuskDomainType(
+    public static OperationBuilder<DropDomainTypeOperation> DropDomainType(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null) =>
-        Add(migrationBuilder, new DropBlueTuskDomainTypeOperation
+        Add(migrationBuilder, new DropDomainTypeOperation
         {
             Name = name,
             Schema = schema,
             IsDestructiveChange = true,
         });
 
-    public static OperationBuilder<CreateBlueTuskCompositeTypeOperation> CreateBlueTuskCompositeType(
+    public static OperationBuilder<CreateCompositeTypeOperation> CreateCompositeType(
         this MigrationBuilder migrationBuilder,
         BlueTuskCompositeTypeDefinition definition) =>
-        Add(migrationBuilder, new CreateBlueTuskCompositeTypeOperation { Definition = definition });
+        Add(migrationBuilder, new CreateCompositeTypeOperation { Definition = definition });
 
-    public static OperationBuilder<AlterBlueTuskCompositeTypeOperation> AlterBlueTuskCompositeType(
+    public static OperationBuilder<AlterCompositeTypeOperation> AlterCompositeType(
         this MigrationBuilder migrationBuilder,
         BlueTuskCompositeTypeDefinition definition,
         BlueTuskCompositeTypeDefinition oldDefinition) =>
-        Add(migrationBuilder, new AlterBlueTuskCompositeTypeOperation
+        Add(migrationBuilder, new AlterCompositeTypeOperation
         {
             Definition = definition,
             OldDefinition = oldDefinition,
@@ -81,34 +81,34 @@ public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
                 .Any(change => change.Kind == CompositeAttributeChangeKind.Drop),
         });
 
-    public static OperationBuilder<DropBlueTuskCompositeTypeOperation> DropBlueTuskCompositeType(
+    public static OperationBuilder<DropCompositeTypeOperation> DropCompositeType(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null) =>
-        Add(migrationBuilder, new DropBlueTuskCompositeTypeOperation
+        Add(migrationBuilder, new DropCompositeTypeOperation
         {
             Name = name,
             Schema = schema,
             IsDestructiveChange = true,
         });
 
-    public static OperationBuilder<CreateBlueTuskRangeTypeOperation> CreateBlueTuskRangeType(
+    public static OperationBuilder<CreateRangeTypeOperation> CreateRangeType(
         this MigrationBuilder migrationBuilder,
         BlueTuskRangeTypeDefinition definition) =>
-        Add(migrationBuilder, new CreateBlueTuskRangeTypeOperation { Definition = definition });
+        Add(migrationBuilder, new CreateRangeTypeOperation { Definition = definition });
 
-    public static OperationBuilder<DropBlueTuskRangeTypeOperation> DropBlueTuskRangeType(
+    public static OperationBuilder<DropRangeTypeOperation> DropRangeType(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null) =>
-        Add(migrationBuilder, new DropBlueTuskRangeTypeOperation
+        Add(migrationBuilder, new DropRangeTypeOperation
         {
             Name = name,
             Schema = schema,
             IsDestructiveChange = true,
         });
 
-    public static OperationBuilder<RenameBlueTuskRangeTypeOperation> RenameBlueTuskRangeType(
+    public static OperationBuilder<RenameRangeTypeOperation> RenameRangeType(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName,
@@ -118,7 +118,7 @@ public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
         string? newSchema = null,
         string? multirangeSchema = null,
         string? newMultirangeSchema = null) =>
-        Add(migrationBuilder, new RenameBlueTuskRangeTypeOperation
+        Add(migrationBuilder, new RenameRangeTypeOperation
         {
             Name = name,
             Schema = schema,
@@ -130,14 +130,14 @@ public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
             NewMultirangeSchema = newMultirangeSchema,
         });
 
-    public static OperationBuilder<RenameBlueTuskUserDefinedTypeOperation> RenameBlueTuskUserDefinedType(
+    public static OperationBuilder<RenameUserDefinedTypeOperation> RenameUserDefinedType(
         this MigrationBuilder migrationBuilder,
         BlueTuskUserDefinedTypeKind kind,
         string name,
         string newName,
         string? schema = null,
         string? newSchema = null) =>
-        Add(migrationBuilder, new RenameBlueTuskUserDefinedTypeOperation
+        Add(migrationBuilder, new RenameUserDefinedTypeOperation
         {
             Kind = kind,
             Name = name,
@@ -147,60 +147,60 @@ public static class BlueTuskUserDefinedTypeMigrationBuilderExtensions
         });
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskEnumTypeOperation> CreateBlueTuskEnumType(
+    public static OperationBuilder<CreateEnumTypeOperation> CreateEnumType(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskEnumType(migrationBuilder, BlueTuskUserDefinedTypeMetadata.DeserializeEnum(serializedDefinition));
+        CreateEnumType(migrationBuilder, BlueTuskUserDefinedTypeMetadata.DeserializeEnum(serializedDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskEnumTypeOperation> AlterBlueTuskEnumType(
+    public static OperationBuilder<AlterEnumTypeOperation> AlterEnumType(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        AlterBlueTuskEnumType(
+        AlterEnumType(
             migrationBuilder,
             BlueTuskUserDefinedTypeMetadata.DeserializeEnum(serializedDefinition),
             BlueTuskUserDefinedTypeMetadata.DeserializeEnum(serializedOldDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskDomainTypeOperation> CreateBlueTuskDomainType(
+    public static OperationBuilder<CreateDomainTypeOperation> CreateDomainType(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskDomainType(migrationBuilder, BlueTuskUserDefinedTypeMetadata.DeserializeDomain(serializedDefinition));
+        CreateDomainType(migrationBuilder, BlueTuskUserDefinedTypeMetadata.DeserializeDomain(serializedDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskDomainTypeOperation> AlterBlueTuskDomainType(
+    public static OperationBuilder<AlterDomainTypeOperation> AlterDomainType(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        AlterBlueTuskDomainType(
+        AlterDomainType(
             migrationBuilder,
             BlueTuskUserDefinedTypeMetadata.DeserializeDomain(serializedDefinition),
             BlueTuskUserDefinedTypeMetadata.DeserializeDomain(serializedOldDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskCompositeTypeOperation> CreateBlueTuskCompositeType(
+    public static OperationBuilder<CreateCompositeTypeOperation> CreateCompositeType(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskCompositeType(
+        CreateCompositeType(
             migrationBuilder,
             BlueTuskUserDefinedTypeMetadata.DeserializeComposite(serializedDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskCompositeTypeOperation> AlterBlueTuskCompositeType(
+    public static OperationBuilder<AlterCompositeTypeOperation> AlterCompositeType(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        AlterBlueTuskCompositeType(
+        AlterCompositeType(
             migrationBuilder,
             BlueTuskUserDefinedTypeMetadata.DeserializeComposite(serializedDefinition),
             BlueTuskUserDefinedTypeMetadata.DeserializeComposite(serializedOldDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskRangeTypeOperation> CreateBlueTuskRangeType(
+    public static OperationBuilder<CreateRangeTypeOperation> CreateRangeType(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskRangeType(
+        CreateRangeType(
             migrationBuilder,
             BlueTuskUserDefinedTypeMetadata.DeserializeRange(serializedDefinition));
 

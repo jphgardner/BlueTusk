@@ -109,7 +109,9 @@ public sealed class BlueTuskControlPlaneIntegrationTests
                 2L,
                 await ExecuteInt64Async(
                     dataSource,
-                    $"SELECT COUNT(*) FROM \"{auditSchema}\".audit_log WHERE record_format = 1"));
+                    $"SELECT COUNT(*) FROM \"{auditSchema}\".audit_log " +
+                    "WHERE record_format = " +
+                    PostgreSqlControlPlaneAuditStore.CurrentRecordFormatVersion));
 
             var freshAuditStore = new PostgreSqlControlPlaneAuditStore(
                 dataSource,

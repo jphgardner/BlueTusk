@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 /// <summary>Configures PostgreSQL foreign-data objects in an EF model.</summary>
 public static class BlueTuskForeignDataModelBuilderExtensions
 {
-    public static ModelBuilder HasBlueTuskForeignDataWrapper(
+    public static ModelBuilder HasForeignDataWrapper(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskForeignDataWrapperBuilder> configure)
@@ -28,7 +28,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         });
     }
 
-    public static ModelBuilder HasBlueTuskForeignServer(
+    public static ModelBuilder HasForeignServer(
         this ModelBuilder modelBuilder,
         string name,
         string foreignDataWrapper,
@@ -48,20 +48,20 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         });
     }
 
-    public static ModelBuilder HasBlueTuskUserMapping(
+    public static ModelBuilder HasUserMapping(
         this ModelBuilder modelBuilder,
         string serverName,
         string userName,
         Action<BlueTuskUserMappingBuilder>? configure = null) =>
-        HasUserMapping(modelBuilder, serverName, userName, configure);
+        AddOrReplaceUserMapping(modelBuilder, serverName, userName, configure);
 
-    public static ModelBuilder HasBlueTuskPublicUserMapping(
+    public static ModelBuilder HasPublicUserMapping(
         this ModelBuilder modelBuilder,
         string serverName,
         Action<BlueTuskUserMappingBuilder>? configure = null) =>
-        HasUserMapping(modelBuilder, serverName, null, configure);
+        AddOrReplaceUserMapping(modelBuilder, serverName, null, configure);
 
-    public static ModelBuilder HasNoBlueTuskForeignDataWrapper(this ModelBuilder modelBuilder, string name)
+    public static ModelBuilder HasNoForeignDataWrapper(this ModelBuilder modelBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -72,7 +72,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         });
     }
 
-    public static ModelBuilder HasNoBlueTuskForeignServer(this ModelBuilder modelBuilder, string name)
+    public static ModelBuilder HasNoForeignServer(this ModelBuilder modelBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -83,7 +83,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         });
     }
 
-    public static ModelBuilder HasNoBlueTuskUserMapping(
+    public static ModelBuilder HasNoUserMapping(
         this ModelBuilder modelBuilder,
         string serverName,
         string? userName)
@@ -99,13 +99,13 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         });
     }
 
-    public static BlueTuskForeignDataDefinitionSet GetBlueTuskForeignData(this IReadOnlyModel model)
+    public static BlueTuskForeignDataDefinitionSet GetForeignData(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskForeignDataMetadata.Get(model);
     }
 
-    public static EntityTypeBuilder HasBlueTuskForeignTable(
+    public static EntityTypeBuilder HasForeignTable(
         this EntityTypeBuilder entityTypeBuilder,
         string serverName,
         Action<BlueTuskForeignTableBuilder>? configure = null)
@@ -122,31 +122,31 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         return entityTypeBuilder;
     }
 
-    public static EntityTypeBuilder<TEntity> HasBlueTuskForeignTable<TEntity>(
+    public static EntityTypeBuilder<TEntity> HasForeignTable<TEntity>(
         this EntityTypeBuilder<TEntity> entityTypeBuilder,
         string serverName,
         Action<BlueTuskForeignTableBuilder>? configure = null)
         where TEntity : class
     {
-        HasBlueTuskForeignTable((EntityTypeBuilder)entityTypeBuilder, serverName, configure);
+        HasForeignTable((EntityTypeBuilder)entityTypeBuilder, serverName, configure);
         return entityTypeBuilder;
     }
 
-    public static EntityTypeBuilder HasNoBlueTuskForeignTable(this EntityTypeBuilder entityTypeBuilder)
+    public static EntityTypeBuilder HasNoForeignTable(this EntityTypeBuilder entityTypeBuilder)
     {
         ArgumentNullException.ThrowIfNull(entityTypeBuilder);
         entityTypeBuilder.Metadata.RemoveAnnotation(BlueTuskForeignDataMetadata.ForeignTableAnnotationName);
         return entityTypeBuilder;
     }
 
-    public static BlueTuskForeignTableDefinition? GetBlueTuskForeignTable(this IReadOnlyEntityType entityType)
+    public static BlueTuskForeignTableDefinition? GetForeignTable(this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
         return BlueTuskForeignDataMetadata.GetForeignTable(entityType);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskForeignData(
+    public static ModelBuilder HasForeignData(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
@@ -155,7 +155,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskForeignTableDefinition(
+    public static EntityTypeBuilder HasForeignTableDefinition(
         this EntityTypeBuilder entityTypeBuilder,
         string serializedDefinition)
     {
@@ -167,7 +167,7 @@ public static class BlueTuskForeignDataModelBuilderExtensions
         return entityTypeBuilder;
     }
 
-    private static ModelBuilder HasUserMapping(
+    private static ModelBuilder AddOrReplaceUserMapping(
         ModelBuilder modelBuilder,
         string serverName,
         string? userName,

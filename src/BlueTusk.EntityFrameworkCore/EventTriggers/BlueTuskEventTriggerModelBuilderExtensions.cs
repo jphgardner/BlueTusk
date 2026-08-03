@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskEventTriggerModelBuilderExtensions
 {
     /// <summary>Adds or replaces a database-level PostgreSQL event trigger.</summary>
-    public static ModelBuilder HasBlueTuskEventTrigger(
+    public static ModelBuilder HasEventTrigger(
         this ModelBuilder modelBuilder,
         string name,
         BlueTuskEventTriggerEvent @event,
@@ -20,11 +20,11 @@ public static class BlueTuskEventTriggerModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(modelBuilder);
         var builder = new BlueTuskEventTriggerBuilder(name, @event, functionName, functionSchema);
         configure?.Invoke(builder);
-        return HasBlueTuskEventTrigger(modelBuilder, builder.Build());
+        return HasEventTrigger(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a canonical event-trigger definition.</summary>
-    public static ModelBuilder HasBlueTuskEventTrigger(
+    public static ModelBuilder HasEventTrigger(
         this ModelBuilder modelBuilder,
         BlueTuskEventTriggerDefinition definition)
     {
@@ -39,14 +39,14 @@ public static class BlueTuskEventTriggerModelBuilderExtensions
     }
 
     /// <summary>Reads all provider-owned event triggers from the model.</summary>
-    public static BlueTuskEventTriggerDefinitionSet GetBlueTuskEventTriggers(this IReadOnlyModel model)
+    public static BlueTuskEventTriggerDefinitionSet GetEventTriggers(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskEventTriggerMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskEventTriggers(
+    public static ModelBuilder HasEventTriggers(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

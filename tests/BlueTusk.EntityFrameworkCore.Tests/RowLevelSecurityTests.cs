@@ -42,13 +42,13 @@ public sealed class RowLevelSecurityTests
         Assert.True(tableMetadata.Forced);
         Assert.Empty(tableMetadata.Policies);
 
-        var policies = operations.OfType<CreateBlueTuskRowSecurityPolicyOperation>().ToArray();
+        var policies = operations.OfType<CreateRowSecurityPolicyOperation>().ToArray();
         Assert.Equal(3, policies.Length);
         var select = Assert.Single(policies, operation => operation.Definition.Name == "tenant_select");
         Assert.Equal(BlueTuskRowSecurityPolicyCommand.Select, select.Definition.Command);
         Assert.Equal(BlueTuskRowSecurityPolicyBehavior.Permissive, select.Definition.Behavior);
         Assert.Equal("bluetusk_rls_user", Assert.Single(select.Definition.Roles).Name);
-        var settings = Assert.Single(operations.OfType<AlterBlueTuskRowLevelSecurityOperation>());
+        var settings = Assert.Single(operations.OfType<AlterRowLevelSecurityOperation>());
         Assert.True(settings.Enabled);
         Assert.True(settings.Forced);
 
@@ -83,7 +83,7 @@ public sealed class RowLevelSecurityTests
     {
         var modelBuilder = new ModelBuilder();
         ConfigureEntity(modelBuilder);
-        var builder = modelBuilder.Entity<SecureDocument>().UseBlueTuskRowLevelSecurity();
+        var builder = modelBuilder.Entity<SecureDocument>().UseRowLevelSecurity();
 
         Assert.Throws<ArgumentException>(() => builder.HasPolicy(
             "bad_insert",
@@ -116,36 +116,36 @@ public sealed class RowLevelSecurityTests
             differ.GetDifferences(
                     source,
                     renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-                .OfType<RenameBlueTuskRowSecurityPolicyOperation>());
+                .OfType<RenameRowSecurityPolicyOperation>());
         Assert.Equal("tenant_policy", rename.Name);
         Assert.Equal("renamed_policy", rename.NewName);
 
         var replacement = differ.GetDifferences(
             source,
             changedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(replacement.OfType<AlterBlueTuskRowSecurityPolicyOperation>());
-        Assert.Empty(replacement.OfType<DropBlueTuskRowSecurityPolicyOperation>());
-        Assert.Empty(replacement.OfType<CreateBlueTuskRowSecurityPolicyOperation>());
+        Assert.Single(replacement.OfType<AlterRowSecurityPolicyOperation>());
+        Assert.Empty(replacement.OfType<DropRowSecurityPolicyOperation>());
+        Assert.Empty(replacement.OfType<CreateRowSecurityPolicyOperation>());
 
         var behaviorReplacement = differ.GetDifferences(
             source,
             changedBehaviorContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(behaviorReplacement.OfType<DropBlueTuskRowSecurityPolicyOperation>());
-        Assert.Single(behaviorReplacement.OfType<CreateBlueTuskRowSecurityPolicyOperation>());
+        Assert.Single(behaviorReplacement.OfType<DropRowSecurityPolicyOperation>());
+        Assert.Single(behaviorReplacement.OfType<CreateRowSecurityPolicyOperation>());
 
         var disabled = Assert.Single(
             differ.GetDifferences(
                     source,
                     disabledContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-                .OfType<AlterBlueTuskRowLevelSecurityOperation>());
+                .OfType<AlterRowLevelSecurityOperation>());
         Assert.False(disabled.Enabled);
         Assert.False(disabled.Forced);
 
         var removed = differ.GetDifferences(
             source,
             unsecuredContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(removed.OfType<DropBlueTuskRowSecurityPolicyOperation>());
-        var removedSettings = Assert.Single(removed.OfType<AlterBlueTuskRowLevelSecurityOperation>());
+        Assert.Single(removed.OfType<DropRowSecurityPolicyOperation>());
+        var removedSettings = Assert.Single(removed.OfType<AlterRowLevelSecurityOperation>());
         Assert.False(removedSettings.Enabled);
         Assert.False(removedSettings.Forced);
 
@@ -153,8 +153,8 @@ public sealed class RowLevelSecurityTests
             source,
             renamedTableContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
         Assert.Equal("secured_documents", Assert.Single(tableRename.OfType<RenameTableOperation>()).NewName);
-        Assert.Empty(tableRename.OfType<CreateBlueTuskRowSecurityPolicyOperation>());
-        Assert.Empty(tableRename.OfType<DropBlueTuskRowSecurityPolicyOperation>());
+        Assert.Empty(tableRename.OfType<CreateRowSecurityPolicyOperation>());
+        Assert.Empty(tableRename.OfType<DropRowSecurityPolicyOperation>());
     }
 
     [Fact]
@@ -162,7 +162,7 @@ public sealed class RowLevelSecurityTests
     {
         using var context = CreateContext<UnsecuredContext>(OfflineConnectionString);
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskRowSecurityPolicy(
+        migration.CreateRowSecurityPolicy(
             "documents",
             new BlueTuskRowSecurityPolicyDefinition(
                 "Mixed Policy",
@@ -176,12 +176,12 @@ public sealed class RowLevelSecurityTests
                 "true",
                 "true"),
             "rls_tests");
-        migration.RenameBlueTuskRowSecurityPolicy(
+        migration.RenameRowSecurityPolicy(
             "documents",
             "Mixed Policy",
             "Renamed Policy",
             "rls_tests");
-        migration.AlterBlueTuskRowSecurityPolicy(
+        migration.AlterRowSecurityPolicy(
             "documents",
             new BlueTuskRowSecurityPolicyDefinition(
                 "Renamed Policy",
@@ -191,12 +191,12 @@ public sealed class RowLevelSecurityTests
                 "id > 0",
                 "id > 0"),
             "rls_tests");
-        migration.AlterBlueTuskRowLevelSecurity(
+        migration.AlterRowLevelSecurity(
             "documents",
             enabled: false,
             forced: false,
             schema: "rls_tests");
-        migration.DropBlueTuskRowSecurityPolicy(
+        migration.DropRowSecurityPolicy(
             "documents",
             "Renamed Policy",
             "rls_tests");
@@ -240,33 +240,33 @@ public sealed class RowLevelSecurityTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskRowSecurityPolicyOperation
+                new CreateRowSecurityPolicyOperation
                 {
                     Table = "documents",
                     Schema = "rls_tests",
                     Definition = policy,
                 },
-                new RenameBlueTuskRowSecurityPolicyOperation
+                new RenameRowSecurityPolicyOperation
                 {
                     Table = "documents",
                     Schema = "rls_tests",
                     Name = "tenant_policy",
                     NewName = "renamed_policy",
                 },
-                new AlterBlueTuskRowSecurityPolicyOperation
+                new AlterRowSecurityPolicyOperation
                 {
                     Table = "documents",
                     Schema = "rls_tests",
                     Definition = policy with { Name = "renamed_policy" },
                 },
-                new AlterBlueTuskRowLevelSecurityOperation
+                new AlterRowLevelSecurityOperation
                 {
                     Table = "documents",
                     Schema = "rls_tests",
                     Enabled = true,
                     Forced = false,
                 },
-                new DropBlueTuskRowSecurityPolicyOperation
+                new DropRowSecurityPolicyOperation
                 {
                     Table = "documents",
                     Schema = "rls_tests",
@@ -276,11 +276,11 @@ public sealed class RowLevelSecurityTests
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("migrationBuilder.CreateBlueTuskRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.RenameBlueTuskRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.AlterBlueTuskRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.AlterBlueTuskRowLevelSecurity(\"documents\", true, false", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.DropBlueTuskRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.CreateRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.RenameRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.AlterRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.AlterRowLevelSecurity(\"documents\", true, false", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.DropRowSecurityPolicy(\"documents\"", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -372,13 +372,13 @@ public sealed class RowLevelSecurityTests
                     UseNullableReferenceTypes = true,
                 });
             Assert.Contains(
-                "HasBlueTuskRowLevelSecurity(",
+                "HasRowLevelSecurity(",
                 scaffolded.ContextFile.Code,
                 StringComparison.Ordinal);
             Assert.Single(scaffolded.AdditionalFiles);
 
             var lifecycle = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            lifecycle.AlterBlueTuskRowSecurityPolicy(
+            lifecycle.AlterRowSecurityPolicy(
                 "documents",
                 new BlueTuskRowSecurityPolicyDefinition(
                     "tenant_select",
@@ -387,12 +387,12 @@ public sealed class RowLevelSecurityTests
                     [BlueTuskRowSecurityRoleDefinition.Named("bluetusk_rls_user")],
                     "tenant_id > 0"),
                 "rls_tests");
-            lifecycle.RenameBlueTuskRowSecurityPolicy(
+            lifecycle.RenameRowSecurityPolicy(
                 "documents",
                 "tenant_select",
                 "tenant_select_renamed",
                 "rls_tests");
-            lifecycle.DropBlueTuskRowSecurityPolicy(
+            lifecycle.DropRowSecurityPolicy(
                 "documents",
                 "tenant_select_renamed",
                 "rls_tests");
@@ -440,7 +440,7 @@ public sealed class RowLevelSecurityTests
     {
         ConfigureEntity(modelBuilder, table);
         return modelBuilder.Entity<SecureDocument>()
-            .UseBlueTuskRowLevelSecurity(enabled, forced)
+            .UseRowLevelSecurity(enabled, forced)
             .HasPolicy(
                 policyName,
                 BlueTuskRowSecurityPolicyCommand.Select,
@@ -513,7 +513,7 @@ public sealed class RowLevelSecurityTests
         {
             ConfigureEntity(modelBuilder);
             modelBuilder.Entity<SecureDocument>()
-                .UseBlueTuskRowLevelSecurity(enabled: true, forced: true)
+                .UseRowLevelSecurity(enabled: true, forced: true)
                 .HasPolicy(
                     "tenant_select",
                     BlueTuskRowSecurityPolicyCommand.Select,
@@ -558,7 +558,7 @@ public sealed class RowLevelSecurityTests
         {
             ConfigureEntity(modelBuilder);
             modelBuilder.Entity<SecureDocument>()
-                .UseBlueTuskRowLevelSecurity(enabled: true, forced: true)
+                .UseRowLevelSecurity(enabled: true, forced: true)
                 .HasPolicy(
                     "tenant_policy",
                     BlueTuskRowSecurityPolicyCommand.Select,

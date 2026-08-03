@@ -6,6 +6,10 @@ replication, EF Core and design tooling, optional PostgreSQL extensions, and
 cloud identity adapters. The analyzer is a private build dependency; it does
 not become a runtime or package dependency of BlueTusk.
 
+The [public API naming policy](api-naming.md) keeps the product brand at
+framework/product boundaries while requiring natural domain and fluent member
+names inside the provider.
+
 ## Baseline scope
 
 The 2026-08-03 V1 candidate baseline records 8,225 public and protected

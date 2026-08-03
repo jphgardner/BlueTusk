@@ -29,6 +29,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 4 slice: consistent framed relay backup, empty-schema atomic restore, protected-envelope validation, tombstone/fencing preservation, and corruption rollback across PostgreSQL 15–19
 - [x] Phase 4 slice: Control Plane source/slot/WAL/relay/snapshot/group/checkpoint inventory, authorised dashboard pages, confirmed command policies, and immutable PostgreSQL audit across PostgreSQL 15–19
 - [x] Phase 4 slice: Control Plane v1 agent APIs, legacy compatibility aliases, transactionally versioned audit migrations, legacy upgrade, and future-version rejection across PostgreSQL 15–19
+- [x] Phase 4 slice: Control Plane compiler API freeze, executable HTTP/audit format registry, and isolation of the optional Continuous Graph adapter from the stable core
 - [x] Phase 4 slice: version-bound format registry, upgrade evidence, Streams 1.0 candidate API freeze, and restart-safe spool storage accounting
 - [x] Phase 4 slice: isolated-source fault-injected relay endurance runner, immutable binary fingerprinting, fail-closed evidence verifier, local smoke gate, and confirmed self-hosted 72-hour release workflow
 - [ ] Phase 4 release gate: complete and archive one successful 72-hour relay endurance report (the harness is implemented; a short run is not equivalent)

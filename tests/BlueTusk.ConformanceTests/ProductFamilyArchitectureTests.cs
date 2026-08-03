@@ -200,7 +200,13 @@ public sealed class ProductFamilyArchitectureTests
     private static ProductProject[] FindProductProjects()
     {
         var repositoryRoot = FindRepositoryRoot();
-        return Directory.EnumerateFiles(repositoryRoot, "*.csproj", SearchOption.AllDirectories)
+        var solution = XDocument.Load(Path.Combine(repositoryRoot, "BlueTusk.slnx"));
+        return solution.Descendants("Project")
+            .Select(element => element.Attribute("Path")?.Value)
+            .Where(path => !string.IsNullOrWhiteSpace(path))
+            .Select(path => Path.Combine(
+                repositoryRoot,
+                path!.Replace('/', Path.DirectorySeparatorChar)))
             .Select(ReadProductProject)
             .Where(project => project is not null)
             .Cast<ProductProject>()

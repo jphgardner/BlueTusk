@@ -200,7 +200,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             if (renameCandidates.Length == 1)
             {
                 var renamed = renameCandidates[0];
-                before.Add(new AlterBlueTuskPropertyGraphOperation
+                before.Add(new AlterPropertyGraphOperation
                 {
                     Name = sourceGraph.Name,
                     Schema = sourceGraph.Schema,
@@ -443,7 +443,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             if (renameCandidates.Length == 1)
             {
                 var renamed = renameCandidates[0];
-                before.Add(new AlterBlueTuskPartitionOperation
+                before.Add(new AlterPartitionOperation
                 {
                     Name = sourcePartition.Name,
                     Schema = sourcePartition.Schema,
@@ -489,7 +489,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             operations.Add(new EnsureSchemaOperation { Name = schema });
         }
 
-        operations.Add(new CreateBlueTuskPartitionOperation
+        operations.Add(new CreatePartitionOperation
         {
             ParentName = parentName,
             ParentSchema = parentSchema,
@@ -506,7 +506,7 @@ internal sealed class BlueTuskMigrationsModelDiffer(
         }
     }
 
-    private static DropBlueTuskPartitionOperation CreateDrop(BlueTuskPartitionDefinition partition) =>
+    private static DropPartitionOperation CreateDrop(BlueTuskPartitionDefinition partition) =>
         new()
         {
             Name = partition.Name,
@@ -567,11 +567,11 @@ internal sealed class BlueTuskMigrationsModelDiffer(
             left with { Name = string.Empty, Schema = null },
             right with { Name = string.Empty, Schema = null });
 
-    private static DropBlueTuskPropertyGraphOperation CreateDrop(
+    private static DropPropertyGraphOperation CreateDrop(
         BlueTuskPropertyGraphDefinition definition) =>
         new() { Name = definition.Name, Schema = definition.Schema };
 
-    private static CreateBlueTuskPropertyGraphOperation CreateCreate(
+    private static CreatePropertyGraphOperation CreateCreate(
         BlueTuskPropertyGraphDefinition definition) =>
         new() { Definition = definition };
 

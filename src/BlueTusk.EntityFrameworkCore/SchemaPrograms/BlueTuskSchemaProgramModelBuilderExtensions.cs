@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore;
 /// <summary>Configures PostgreSQL operators, index semantics, casts, and aggregates.</summary>
 public static class BlueTuskSchemaProgramModelBuilderExtensions
 {
-    public static ModelBuilder HasBlueTuskOperator(
+    public static ModelBuilder HasOperator(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskOperatorBuilder> configure,
@@ -17,10 +17,10 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(configure);
         var builder = new BlueTuskOperatorBuilder(name, schema);
         configure(builder);
-        return HasBlueTuskOperator(modelBuilder, builder.Build());
+        return HasOperator(modelBuilder, builder.Build());
     }
 
-    public static ModelBuilder HasBlueTuskOperator(
+    public static ModelBuilder HasOperator(
         this ModelBuilder modelBuilder,
         BlueTuskOperatorDefinition definition) => SetItem(
         modelBuilder,
@@ -29,7 +29,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         (set, values) => set with { Operators = values },
         BlueTuskSchemaProgramMetadata.OperatorKey.Create);
 
-    public static ModelBuilder HasBlueTuskOperatorFamily(
+    public static ModelBuilder HasOperatorFamily(
         this ModelBuilder modelBuilder,
         string name,
         string indexMethod,
@@ -38,10 +38,10 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
     {
         var builder = new BlueTuskOperatorFamilyBuilder(name, schema, indexMethod);
         configure?.Invoke(builder);
-        return HasBlueTuskOperatorFamily(modelBuilder, builder.Build());
+        return HasOperatorFamily(modelBuilder, builder.Build());
     }
 
-    public static ModelBuilder HasBlueTuskOperatorFamily(
+    public static ModelBuilder HasOperatorFamily(
         this ModelBuilder modelBuilder,
         BlueTuskOperatorFamilyDefinition definition) => SetItem(
         modelBuilder,
@@ -50,7 +50,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         (set, values) => set with { OperatorFamilies = values },
         BlueTuskSchemaProgramMetadata.OperatorFamilyKey.Create);
 
-    public static ModelBuilder HasBlueTuskOperatorClass(
+    public static ModelBuilder HasOperatorClass(
         this ModelBuilder modelBuilder,
         string name,
         string dataType,
@@ -61,10 +61,10 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(configure);
         var builder = new BlueTuskOperatorClassBuilder(name, schema, dataType, indexMethod);
         configure(builder);
-        return HasBlueTuskOperatorClass(modelBuilder, builder.Build());
+        return HasOperatorClass(modelBuilder, builder.Build());
     }
 
-    public static ModelBuilder HasBlueTuskOperatorClass(
+    public static ModelBuilder HasOperatorClass(
         this ModelBuilder modelBuilder,
         BlueTuskOperatorClassDefinition definition) => SetItem(
         modelBuilder,
@@ -73,7 +73,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         (set, values) => set with { OperatorClasses = values },
         BlueTuskSchemaProgramMetadata.OperatorClassKey.Create);
 
-    public static ModelBuilder HasBlueTuskCast(
+    public static ModelBuilder HasCast(
         this ModelBuilder modelBuilder,
         string sourceType,
         string targetType,
@@ -81,10 +81,10 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
     {
         var builder = new BlueTuskCastBuilder(sourceType, targetType);
         configure?.Invoke(builder);
-        return HasBlueTuskCast(modelBuilder, builder.Build());
+        return HasCast(modelBuilder, builder.Build());
     }
 
-    public static ModelBuilder HasBlueTuskCast(
+    public static ModelBuilder HasCast(
         this ModelBuilder modelBuilder,
         BlueTuskCastDefinition definition) => SetItem(
         modelBuilder,
@@ -93,7 +93,7 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         (set, values) => set with { Casts = values },
         BlueTuskSchemaProgramMetadata.CastKey.Create);
 
-    public static ModelBuilder HasBlueTuskAggregate(
+    public static ModelBuilder HasAggregate(
         this ModelBuilder modelBuilder,
         string name,
         string identityArgumentsSql,
@@ -103,10 +103,10 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(configure);
         var builder = new BlueTuskAggregateBuilder(name, schema, identityArgumentsSql);
         configure(builder);
-        return HasBlueTuskAggregate(modelBuilder, builder.Build());
+        return HasAggregate(modelBuilder, builder.Build());
     }
 
-    public static ModelBuilder HasBlueTuskAggregate(
+    public static ModelBuilder HasAggregate(
         this ModelBuilder modelBuilder,
         BlueTuskAggregateDefinition definition) => SetItem(
         modelBuilder,
@@ -115,14 +115,14 @@ public static class BlueTuskSchemaProgramModelBuilderExtensions
         (set, values) => set with { Aggregates = values },
         BlueTuskSchemaProgramMetadata.AggregateKey.Create);
 
-    public static BlueTuskSchemaProgramDefinitionSet GetBlueTuskSchemaPrograms(this IReadOnlyModel model)
+    public static BlueTuskSchemaProgramDefinitionSet GetSchemaPrograms(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskSchemaProgramMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskSchemaPrograms(
+    public static ModelBuilder HasSchemaPrograms(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
