@@ -59,3 +59,12 @@ edges measured 1.09 ms and 187,936 B through a prepared raw `GRAPH_TABLE`
 command, and 2.98 ms and 685,864 B through the typed EF graph root. These
 ShortRun values include caller-owned materialized results and retain the same
 three-iteration limitations as the provider comparison.
+
+The initial Streams kernel report was added on 2026-08-03. Assembling and
+materialising a 1,000-insert transaction measured 422 ns and 852 B per change.
+Integrity-checking, durably flushing, streaming, and deleting a 4 MiB spooled
+transaction measured 38.3 ms and 12.1 MiB allocated. Replacing bit-at-a-time
+CRC and redundant protection/deserialization copies reduced the spool workload
+from the profiling baseline of 110.2 ms and 32.1 MiB by 65% and 62%,
+respectively. These are local ShortRun figures; release budgets will use longer
+runs and representative storage devices.

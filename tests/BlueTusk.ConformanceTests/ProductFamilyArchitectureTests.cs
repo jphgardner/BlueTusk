@@ -57,6 +57,11 @@ public sealed class ProductFamilyArchitectureTests
         foreach (var project in FindProductProjects())
         {
             Assert.Equal(project.Family, project.DeclaredFamily);
+            Assert.Contains(
+                project.Imports,
+                import => import.Replace('\\', '/').EndsWith(
+                    $"eng/versions/{project.Family}.props",
+                    StringComparison.Ordinal));
         }
     }
 
@@ -107,8 +112,13 @@ public sealed class ProductFamilyArchitectureTests
             .Where(value => value is not null)
             .Select(value => Path.GetFileNameWithoutExtension(value!))
             .ToArray();
+        var imports = document.Descendants("Import")
+            .Select(element => element.Attribute("Project")?.Value)
+            .Where(value => value is not null)
+            .Cast<string>()
+            .ToArray();
 
-        return new ProductProject(name, family, declaredFamily, references);
+        return new ProductProject(name, family, declaredFamily, references, imports);
     }
 
     private static string FindRepositoryRoot()
@@ -128,5 +138,6 @@ public sealed class ProductFamilyArchitectureTests
         string Name,
         string Family,
         string? DeclaredFamily,
-        IReadOnlyList<string> References);
+        IReadOnlyList<string> References,
+        IReadOnlyList<string> Imports);
 }

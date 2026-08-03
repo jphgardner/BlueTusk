@@ -8,7 +8,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 0: independent Provider, Streams, Sync, Live, Control Plane, and Continuous Graph version properties and release workflow
 - [x] Phase 0: machine-enforced application CDC boundary and family declarations
 - [x] Phase 0: public contracts, delivery gates, and operational defaults documented
-- [ ] Phase 1: Streams transaction kernel and bounded spool
+- [x] Phase 1: Streams transaction kernel, explicit row states, streamed assembly, bounded spool, public API baseline, PostgreSQL 15–19 acceptance, and checked-in performance baseline
 - [ ] Phase 2: checkpoint stores, leases, direct groups, and durable PostgreSQL relay
 - [ ] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams preview
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation

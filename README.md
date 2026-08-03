@@ -79,6 +79,8 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 
 The real-time platform is delivered in independently gated Streams, Sync, Live, Control Plane, and Continuous Graph release trains. Package names in its [phased plan](docs/realtime-platform/delivery-plan.md) are commitments, not claims of already-published functionality.
 
+The [Streams transaction kernel](docs/streams/README.md) is implemented with bounded disk spill and PostgreSQL 15–19 acceptance. It is not yet published; durable checkpoints and relay fan-out remain release blockers.
+
 ## Status
 
 The current `0.3.0-preview.1` implementation provides:

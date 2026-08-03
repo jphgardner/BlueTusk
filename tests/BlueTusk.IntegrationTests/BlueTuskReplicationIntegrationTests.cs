@@ -2,6 +2,7 @@ using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
+using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
 using Xunit.Sdk;
 
@@ -168,6 +169,94 @@ public sealed class BlueTuskReplicationIntegrationTests
                         xLogData.WalEnd,
                         xLogData.WalEnd,
                         xLogData.WalEnd));
+            }
+            finally
+            {
+                await ExecuteAsync(
+                    administration,
+                    $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            }
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task Streams_assembles_live_pgoutput_DML_as_one_ordered_transaction()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_streams_{suffix}";
+        var publicationName = $"bluetusk_streams_publication_{suffix}";
+        var slotName = $"bluetusk_streams_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text, payload text)");
+        try
+        {
+            await ExecuteAsync(
+                administration,
+                $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+            try
+            {
+                await using var replication =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                var identity = await replication.IdentifySystemAsync();
+                _ = await replication.CreateReplicationSlotAsync(slotName, temporary: true);
+                var stream = new PgOutputChangeStream(
+                    replication.StartReplicationAsync(slotName, publicationName).DecodePgOutputAsync(),
+                    new ChangeSourceIdentity(
+                        identity.SystemIdentifier,
+                        identity.DatabaseName!,
+                        slotName,
+                        publicationName));
+                await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+                var deliveryTask = enumerator.MoveNextAsync().AsTask();
+
+                await using (var transaction = await administration.BeginTransactionAsync(CancellationToken.None))
+                {
+                    await ExecuteAsync(
+                        administration,
+                        $"INSERT INTO {quotedTable} VALUES (1, 'before', repeat('x', 4096))",
+                        transaction);
+                    await ExecuteAsync(
+                        administration,
+                        $"UPDATE {quotedTable} SET value = 'after' WHERE id = 1",
+                        transaction);
+                    await ExecuteAsync(
+                        administration,
+                        $"DELETE FROM {quotedTable} WHERE id = 1",
+                        transaction);
+                    await transaction.CommitAsync(CancellationToken.None);
+                }
+
+                Assert.True(await deliveryTask.WaitAsync(TimeSpan.FromSeconds(15)));
+                var delivery = enumerator.Current;
+                var changes = await delivery.Transaction.Changes.MaterializeAsync();
+                Assert.Collection(
+                    changes,
+                    change => Assert.IsType<InsertChange>(change),
+                    change => Assert.IsType<UpdateChange>(change),
+                    change => Assert.IsType<DeleteChange>(change));
+                Assert.Equal([0, 1, 2], changes.Select(change => change.Id.Ordinal));
+                Assert.Equal(delivery.Transaction.CommitEndPosition, changes[2].Id.CommitEndPosition);
+                await delivery.AcknowledgeAsync();
+
+                var truncateDeliveryTask = enumerator.MoveNextAsync().AsTask();
+                await ExecuteAsync(administration, $"TRUNCATE TABLE {quotedTable}");
+                Assert.True(await truncateDeliveryTask.WaitAsync(TimeSpan.FromSeconds(15)));
+                var truncateDelivery = enumerator.Current;
+                var truncate = Assert.IsType<TruncateChange>(
+                    Assert.Single(await truncateDelivery.Transaction.Changes.MaterializeAsync()));
+                Assert.Equal(tableName, Assert.Single(truncate.Tables).Name);
+                await truncateDelivery.AcknowledgeAsync();
             }
             finally
             {
@@ -706,9 +795,15 @@ public sealed class BlueTuskReplicationIntegrationTests
         await ExecuteAsync(connection, "SELECT pg_switch_wal()");
     }
 
-    private static async Task ExecuteAsync(BlueTuskConnection connection, string sql)
+    private static async Task ExecuteAsync(
+        BlueTuskConnection connection,
+        string sql,
+        BlueTuskTransaction? transaction = null)
     {
-        await using var command = new BlueTuskCommand(sql, connection);
+        await using var command = new BlueTuskCommand(sql, connection)
+        {
+            Transaction = transaction,
+        };
         _ = await command.ExecuteNonQueryAsync(CancellationToken.None);
     }
 

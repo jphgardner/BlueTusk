@@ -4,6 +4,8 @@ The BenchmarkDotNet suite covers complete synchronous/asynchronous command param
 
 `TransportPipelineBenchmarks` compares the production ArrayPool/Span/Memory reader with a benchmark-only, bounded `System.IO.Pipelines` prototype across fragmented rows, a 1 MiB field, COPY frames, and cancellation recovery, using genuine sync and async entry points. `TransportPipelineSocketBenchmarks` repeats the comparison over raw TCP and authenticated loopback TLS. The production packages do not reference `System.IO.Pipelines`; the resulting decision and limitations are in [ADR 0005](../docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md).
 
+`StreamsTransactionBenchmarks` measures the application CDC boundary separately from wire decoding. It reports per-change cost for assembling and materialising a 1,000-insert transaction, and the end-to-end cost/allocation of spilling and streaming a 4 MiB transaction through the integrity-checked disk spool. The latter includes durable file flush and cleanup by design.
+
 `PullOneThousandBoundedXLogFrames` consumes one already-owned frame at a time
 without a prefetch queue. This mirrors the replication async iterator's
 backpressure boundary: the connection reads the next `CopyData` payload only

@@ -3,6 +3,7 @@
   "families": {
     "Provider": {
       "versionFile": "eng/versions/Provider.props",
+      "publishable": true,
       "packages": [
         "src",
         "extensions",
@@ -13,22 +14,29 @@
     },
     "Streams": {
       "versionFile": "eng/versions/Streams.props",
-      "packages": []
+      "publishable": false,
+      "packages": [
+        "src/BlueTusk.Streams/BlueTusk.Streams.csproj"
+      ]
     },
     "Sync": {
       "versionFile": "eng/versions/Sync.props",
+      "publishable": false,
       "packages": []
     },
     "Live": {
       "versionFile": "eng/versions/Live.props",
+      "publishable": false,
       "packages": []
     },
     "ControlPlane": {
       "versionFile": "eng/versions/ControlPlane.props",
+      "publishable": false,
       "packages": []
     },
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",
+      "publishable": false,
       "packages": []
     }
   }

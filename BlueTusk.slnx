@@ -40,6 +40,7 @@
     <Project Path="src/BlueTusk.Replication/BlueTusk.Replication.csproj" />
     <Project Path="src/BlueTusk.Security/BlueTusk.Security.csproj" />
     <Project Path="src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj" />
+    <Project Path="src/BlueTusk.Streams/BlueTusk.Streams.csproj" />
     <Project Path="src/BlueTusk.Transport/BlueTusk.Transport.csproj" />
     <Project Path="src/BlueTusk.TypeSystem/BlueTusk.TypeSystem.csproj" />
   </Folder>
@@ -70,6 +71,7 @@
     <Project Path="tests/BlueTusk.Security.Tests/BlueTusk.Security.Tests.csproj" />
     <Project Path="tests/BlueTusk.SourceGeneration.Tests/BlueTusk.SourceGeneration.Tests.csproj" />
     <Project Path="tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj" />
+    <Project Path="tests/BlueTusk.Streams.Tests/BlueTusk.Streams.Tests.csproj" />
     <Project Path="tests/BlueTusk.Transport.Tests/BlueTusk.Transport.Tests.csproj" />
     <Project Path="tests/BlueTusk.TypeSystem.Tests/BlueTusk.TypeSystem.Tests.csproj" />
   </Folder>

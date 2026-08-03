@@ -22,6 +22,9 @@
     <NoWarn>$(NoWarn);CS1591</NoWarn>
   </PropertyGroup>
 
+  <Import Project="$(MSBuildThisFileDirectory)eng\versions\Provider.props"
+          Condition="'$(BlueTuskProductFamily)' == 'Provider'" />
+
   <PropertyGroup Condition="$([System.String]::Copy('$(MSBuildProjectDirectory)').Contains('$([System.IO.Path]::DirectorySeparatorChar)tests$([System.IO.Path]::DirectorySeparatorChar)'))">
     <IsPackable>false</IsPackable>
     <NoWarn>$(NoWarn);xUnit1051</NoWarn>

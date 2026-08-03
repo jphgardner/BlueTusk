@@ -34,3 +34,5 @@ See the [public contracts](contracts.md), [delivery phases](delivery-plan.md), a
 The release manifest is `eng/product-families.json`; version properties live under `eng/versions`. A product project declares its train with `BlueTuskProductFamily`. Release tags are independently named `provider-v*`, `streams-v*`, `sync-v*`, `live-v*`, `control-plane-v*`, and `continuous-graph-v*`.
 
 An empty family is valid during architecture work but cannot be packaged. This prevents placeholder NuGet packages from implying implemented behavior.
+
+Implementation status: the [Streams transaction kernel](../streams/README.md) is complete through Phase 1. Its release manifest remains non-publishable until the Phase 2 durability work and Phase 3 preview gate are complete.

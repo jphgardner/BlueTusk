@@ -8,6 +8,8 @@
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Protocol\BlueTusk.Protocol.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication\BlueTusk.Replication.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams\BlueTusk.Streams.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

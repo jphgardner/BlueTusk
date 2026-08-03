@@ -50,8 +50,13 @@ $projects = foreach ($entry in $definition.packages)
 $projects = @($projects | Sort-Object FullName -Unique)
 if ($ValidateOnly)
 {
-    Write-Output "Validated $Family release train with $($projects.Count) registered project(s)."
+    Write-Output "Validated $Family release train with $($projects.Count) registered project(s); publishable=$($definition.publishable)."
     return
+}
+
+if ($definition.publishable -ne $true)
+{
+    throw "Product family '$Family' has not passed its publication gate."
 }
 
 if ($projects.Count -eq 0)
