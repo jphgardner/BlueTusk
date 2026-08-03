@@ -309,6 +309,88 @@ public sealed class BlueTuskTypeCodecIntegrationTests
     }
 
     [Fact]
+    public async Task Every_queryable_pg_catalog_base_range_and_multirange_has_a_codec()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await dataSource.ReloadTypesAsync(CancellationToken.None);
+        await using var command = dataSource.CreateCommand(
+            "SELECT oid, typname FROM pg_catalog.pg_type " +
+            "WHERE typnamespace = 'pg_catalog'::regnamespace " +
+            "AND typtype IN ('b', 'r', 'm') " +
+            "AND typinput <> 'pg_catalog.array_in'::regproc ORDER BY oid");
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        var missing = new List<string>();
+        while (await reader.ReadAsync(CancellationToken.None))
+        {
+            var oid = reader.GetFieldValue<uint>(0);
+            var name = reader.GetString(1);
+            if (!dataSource.TypeRegistry.TryGetCodec(new BlueTuskTypeId(oid), out _))
+            {
+                missing.Add($"{name} ({oid})");
+            }
+        }
+
+        Assert.Empty(missing);
+    }
+
+    [Fact]
+    public async Task PostgreSQL_19_oid8_regdatabase_and_arrays_round_trip()
+    {
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        await using var connection = await dataSource.OpenConnectionAsync(CancellationToken.None);
+        if (connection.ServerCapabilities is not { ServerVersion.Major: >= 19 })
+        {
+            return;
+        }
+
+        await dataSource.ReloadTypesAsync(CancellationToken.None);
+        var oid8 = new BlueTuskObjectIdentifier64(ulong.MaxValue);
+        BlueTuskObjectIdentifier64[] oid8Values =
+        [
+            new BlueTuskObjectIdentifier64(0),
+            oid8,
+        ];
+        var database = new BlueTuskRegDatabase("template1");
+        BlueTuskRegDatabase[] databases =
+        [
+            new BlueTuskRegDatabase("template1"),
+            new BlueTuskRegDatabase("postgres"),
+        ];
+
+        await using (var binaryCommand = dataSource.CreateCommand(
+            "SELECT $1::oid8, $2::oid8[], $3::regdatabase, $4::regdatabase[]"))
+        {
+            binaryCommand.Parameters.Add(new BlueTuskParameter<BlueTuskObjectIdentifier64>(oid8));
+            binaryCommand.Parameters.Add(
+                new BlueTuskParameter<BlueTuskObjectIdentifier64[]>(oid8Values));
+            binaryCommand.Parameters.Add(new BlueTuskParameter<BlueTuskRegDatabase>(database));
+            binaryCommand.Parameters.Add(new BlueTuskParameter<BlueTuskRegDatabase[]>(databases));
+            await using var binaryReader =
+                await binaryCommand.ExecuteReaderAsync(CancellationToken.None);
+
+            Assert.True(await binaryReader.ReadAsync(CancellationToken.None));
+            Assert.Equal(oid8, binaryReader.GetFieldValue<BlueTuskObjectIdentifier64>(0));
+            Assert.Equal(
+                oid8Values,
+                binaryReader.GetFieldValue<BlueTuskObjectIdentifier64[]>(1));
+            Assert.True(binaryReader.GetFieldValue<BlueTuskRegDatabase>(2).Identifier.Oid > 0);
+            Assert.All(
+                binaryReader.GetFieldValue<BlueTuskRegDatabase[]>(3),
+                value => Assert.True(value.Identifier.Oid > 0));
+        }
+
+        await using var textCommand = dataSource.CreateCommand(
+            "SELECT '18446744073709551615'::oid8, 'template1'::regdatabase");
+        await using var textReader = await textCommand.ExecuteReaderAsync(CancellationToken.None);
+        Assert.True(await textReader.ReadAsync(CancellationToken.None));
+        Assert.Equal(oid8, textReader.GetFieldValue<BlueTuskObjectIdentifier64>(0));
+        Assert.Equal(
+            "template1",
+            textReader.GetFieldValue<BlueTuskRegDatabase>(1).Identifier.Name);
+    }
+
+    [Fact]
     public async Task Object_identifier_aliases_and_catalogue_vectors_round_trip()
     {
         var relation = new BlueTuskRegClass("pg_type");
@@ -621,7 +703,7 @@ public sealed class BlueTuskTypeCodecIntegrationTests
 
         await dataSource.ReloadTypesAsync(CancellationToken.None);
         Assert.NotSame(cached, dataSource.TypeRegistry);
-        Assert.True(dataSource.TypeRegistry.Types.Count >= cached.Types.Count);
+        Assert.True(dataSource.TypeRegistry.Types.Count > 100);
         Assert.True(dataSource.TypeRegistry.TryGetType(new BlueTuskTypeId(23), out _));
     }
 

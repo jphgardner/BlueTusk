@@ -13,6 +13,15 @@ public sealed class BlueTuskParameterEncoderTests
     private static readonly int[] GeometricPayloadLengths = [16, 32, 37, 32, 36, 24, 24];
 
     [Fact]
+    public void Reuses_the_empty_parameter_vector()
+    {
+        var first = BlueTuskParameterEncoder.Encode(new BlueTuskParameterCollection());
+        var second = BlueTuskParameterEncoder.Encode(new BlueTuskParameterCollection());
+
+        Assert.Same(first, second);
+    }
+
+    [Fact]
     public void Encodes_int32_as_binary_int4()
     {
         var encoded = BlueTuskParameterEncoder.Encode(new BlueTuskParameter<int>(42));
@@ -50,7 +59,57 @@ public sealed class BlueTuskParameterEncoderTests
         var exception = Assert.Throws<InvalidOperationException>(
             () => BlueTuskParameterEncoder.Encode(new BlueTuskParameter(null)));
 
-        Assert.Contains("requires DbType or PostgreSqlTypeOid", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("requires DbType, PostgreSqlTypeOid, or PostgreSqlTypeName", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Resolves_schema_qualified_scalar_and_array_type_names_for_null_parameters()
+    {
+        var scalar = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(91_200),
+            Schema = "app",
+            Name = "order_status",
+            Kind = BlueTuskTypeKind.Enum,
+            ArrayType = new BlueTuskTypeId(91_201),
+        };
+        var array = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(91_201),
+            Schema = "app",
+            Name = "_order_status",
+            Kind = BlueTuskTypeKind.Array,
+            ElementType = scalar.Id,
+        };
+        var types = new BlueTuskTypeRegistryBuilder()
+            .Register(scalar, new BlueTuskStringCodec())
+            .Register(array, new BlueTuskArrayCodec(scalar, new BlueTuskStringCodec()))
+            .Build();
+
+        var scalarValue = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter(null) { PostgreSqlTypeName = "app.order_status" },
+            types);
+        var arrayValue = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter(null) { PostgreSqlTypeName = "app.order_status[]" },
+            types);
+
+        Assert.Equal(91_200U, scalarValue.TypeOid);
+        Assert.Equal(91_201U, arrayValue.TypeOid);
+        Assert.Null(scalarValue.Value);
+        Assert.Null(arrayValue.Value);
+    }
+
+    [Fact]
+    public void Rejects_a_named_parameter_type_missing_from_the_loaded_catalogue()
+    {
+        var types = new BlueTuskTypeRegistryBuilder().Build();
+        var exception = Assert.Throws<InvalidOperationException>(() =>
+            BlueTuskParameterEncoder.Encode(
+                new BlueTuskParameter("pending") { PostgreSqlTypeName = "app.order_status" },
+                types));
+
+        Assert.Contains("app.order_status", exception.Message, StringComparison.Ordinal);
+        Assert.Contains("not present", exception.Message, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -265,6 +324,76 @@ public sealed class BlueTuskParameterEncoderTests
             "{pg_type,pg_proc}",
             Encoding.UTF8.GetString(symbolicArray.Value!.Value.Span));
         Assert.Equal(1, numericArray.FormatCode);
+    }
+
+    [Fact]
+    public void Encodes_PostgreSQL_19_oid8_and_regdatabase_values_and_arrays()
+    {
+        var types = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.Oid8.Id,
+                Schema = "pg_catalog",
+                Name = "oid8",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = new BlueTuskTypeId(6442),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(6442),
+                Schema = "pg_catalog",
+                Name = "_oid8",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.Oid8.Id,
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.RegDatabase.Id,
+                Schema = "pg_catalog",
+                Name = "regdatabase",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = new BlueTuskTypeId(6491),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(6491),
+                Schema = "pg_catalog",
+                Name = "_regdatabase",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.RegDatabase.Id,
+            },
+        ]);
+
+        var oid8 = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskObjectIdentifier64>(
+                new BlueTuskObjectIdentifier64(ulong.MaxValue)),
+            types);
+        var symbolicDatabase = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegDatabase>(new BlueTuskRegDatabase("template1")),
+            types);
+        var numericDatabase = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskRegDatabase>(new BlueTuskRegDatabase(1)),
+            types);
+        var oid8Array = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<BlueTuskObjectIdentifier64[]>(
+                [new BlueTuskObjectIdentifier64(0), new BlueTuskObjectIdentifier64(ulong.MaxValue)]),
+            types);
+
+        Assert.Equal(6437U, oid8.TypeOid);
+        Assert.Equal(1, oid8.FormatCode);
+        Assert.Equal(ulong.MaxValue, BinaryPrimitives.ReadUInt64BigEndian(oid8.Value!.Value.Span));
+        Assert.Equal(6490U, symbolicDatabase.TypeOid);
+        Assert.Equal(0, symbolicDatabase.FormatCode);
+        Assert.Equal("template1", Encoding.UTF8.GetString(symbolicDatabase.Value!.Value.Span));
+        Assert.Equal(1, numericDatabase.FormatCode);
+        Assert.Equal(1U, BinaryPrimitives.ReadUInt32BigEndian(numericDatabase.Value!.Value.Span));
+        Assert.Equal(6442U, oid8Array.TypeOid);
+        Assert.Equal(1, oid8Array.FormatCode);
     }
 
     [Fact]

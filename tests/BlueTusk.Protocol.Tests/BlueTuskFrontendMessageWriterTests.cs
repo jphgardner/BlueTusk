@@ -82,6 +82,49 @@ public sealed class BlueTuskFrontendMessageWriterTests
     }
 
     [Fact]
+    public void Writes_binary_sasl_responses_without_text_transcoding()
+    {
+        var initial = new ArrayBufferWriter<byte>();
+        var continuation = new ArrayBufferWriter<byte>();
+        var response = new byte[] { (byte)'n', (byte)',', (byte)',', 1, 0xff };
+
+        BlueTuskFrontendMessageWriter.WriteSaslInitialResponse(initial, "OAUTHBEARER", response);
+        BlueTuskFrontendMessageWriter.WriteSaslResponse(continuation, new byte[] { 1 });
+
+        Assert.Equal(response, initial.WrittenSpan[^response.Length..].ToArray());
+        Assert.Equal("700000000501", Convert.ToHexString(continuation.WrittenSpan));
+    }
+
+    [Fact]
+    public void Writes_an_opaque_gssapi_response_without_text_transcoding()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteGssResponse(output, new byte[] { 0, 1, 255 });
+
+        Assert.Equal("70000000070001FF", Convert.ToHexString(output.WrittenSpan));
+    }
+
+    [Fact]
+    public void Writes_a_password_message_from_caller_owned_bytes()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WritePasswordMessage(output, "secret"u8);
+
+        Assert.Equal("700000000B73656372657400", Convert.ToHexString(output.WrittenSpan));
+    }
+
+    [Fact]
+    public void Rejects_an_embedded_null_in_a_password_response()
+    {
+        Assert.Throws<ArgumentException>(
+            () => BlueTuskFrontendMessageWriter.WritePasswordMessage(
+                new ArrayBufferWriter<byte>(),
+                new byte[] { 1, 0, 2 }));
+    }
+
+    [Fact]
     public void Writes_an_extended_query_message_sequence()
     {
         var output = new ArrayBufferWriter<byte>();

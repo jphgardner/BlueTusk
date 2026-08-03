@@ -264,3 +264,23 @@ public readonly record struct BlueTuskRegCollation(BlueTuskObjectIdentifier Iden
 
     public override string ToString() => Identifier.ToString();
 }
+
+/// <summary>A PostgreSQL database identifier (<c>regdatabase</c>).</summary>
+public readonly record struct BlueTuskRegDatabase(BlueTuskObjectIdentifier Identifier) :
+    IBlueTuskObjectIdentifierValue<BlueTuskRegDatabase>
+{
+    public BlueTuskRegDatabase(uint oid)
+        : this(new BlueTuskObjectIdentifier(oid))
+    {
+    }
+
+    public BlueTuskRegDatabase(string name)
+        : this(new BlueTuskObjectIdentifier(name))
+    {
+    }
+
+    public static BlueTuskRegDatabase FromIdentifier(BlueTuskObjectIdentifier identifier) =>
+        new(identifier);
+
+    public override string ToString() => Identifier.ToString();
+}

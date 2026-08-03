@@ -9,6 +9,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>BlueTusk.Extensions.PgTrgm</PackageId>
+    <Description>Optional PostgreSQL pg_trgm feature and parameterized comparison integration for BlueTusk.</Description>
+    <PackageTags>postgresql;database;dotnet;bluetusk;pg_trgm;trigram</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="$(MSBuildThisFileDirectory)..\..\README.md" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

@@ -1,0 +1,136 @@
+#nullable enable
+abstract BlueTusk.Transport.BlueTuskEndpoint.<Clone>$() -> BlueTusk.Transport.BlueTuskEndpoint!
+BlueTusk.Transport.BlueTuskAddressFailure
+BlueTusk.Transport.BlueTuskAddressFailure.<Clone>$() -> BlueTusk.Transport.BlueTuskAddressFailure!
+BlueTusk.Transport.BlueTuskAddressFailure.Address.get -> System.Net.IPAddress!
+BlueTusk.Transport.BlueTuskAddressFailure.Address.init -> void
+BlueTusk.Transport.BlueTuskAddressFailure.BlueTuskAddressFailure(System.Net.IPAddress! Address, System.Net.Sockets.SocketError SocketErrorCode) -> void
+BlueTusk.Transport.BlueTuskAddressFailure.Deconstruct(out System.Net.IPAddress! Address, out System.Net.Sockets.SocketError SocketErrorCode) -> void
+BlueTusk.Transport.BlueTuskAddressFailure.Equals(BlueTusk.Transport.BlueTuskAddressFailure? other) -> bool
+BlueTusk.Transport.BlueTuskAddressFailure.SocketErrorCode.get -> System.Net.Sockets.SocketError
+BlueTusk.Transport.BlueTuskAddressFailure.SocketErrorCode.init -> void
+BlueTusk.Transport.BlueTuskEndpoint
+BlueTusk.Transport.BlueTuskEndpoint.BlueTuskEndpoint(BlueTusk.Transport.BlueTuskEndpoint! original) -> void
+BlueTusk.Transport.BlueTuskEndpoint.Tcp
+BlueTusk.Transport.BlueTuskEndpoint.Tcp.Deconstruct(out string! Host, out int Port) -> void
+BlueTusk.Transport.BlueTuskEndpoint.Tcp.Equals(BlueTusk.Transport.BlueTuskEndpoint.Tcp? other) -> bool
+BlueTusk.Transport.BlueTuskEndpoint.Tcp.Host.get -> string!
+BlueTusk.Transport.BlueTuskEndpoint.Tcp.Port.get -> int
+BlueTusk.Transport.BlueTuskEndpoint.Tcp.Tcp(string! Host, int Port = 5432) -> void
+BlueTusk.Transport.BlueTuskEndpoint.UnixSocket
+BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.Deconstruct(out string! Path) -> void
+BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.Equals(BlueTusk.Transport.BlueTuskEndpoint.UnixSocket? other) -> bool
+BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.Path.get -> string!
+BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.UnixSocket(string! Path) -> void
+BlueTusk.Transport.BlueTuskSocketTransport
+BlueTusk.Transport.BlueTuskSocketTransport.BlueTuskSocketTransport() -> void
+BlueTusk.Transport.BlueTuskSocketTransport.Connect(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! options) -> void
+BlueTusk.Transport.BlueTuskSocketTransport.ConnectAsync(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.BlueTuskSocketTransport.Dispose() -> void
+BlueTusk.Transport.BlueTuskSocketTransport.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.BlueTuskSocketTransport.Flush() -> void
+BlueTusk.Transport.BlueTuskSocketTransport.FlushAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.BlueTuskSocketTransport.IsEncrypted.get -> bool
+BlueTusk.Transport.BlueTuskSocketTransport.Read(System.Span<byte> buffer) -> int
+BlueTusk.Transport.BlueTuskSocketTransport.ReadAsync(System.Memory<byte> buffer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Transport.BlueTuskSocketTransport.RemoteCertificate.get -> System.Security.Cryptography.X509Certificates.X509Certificate2?
+BlueTusk.Transport.BlueTuskSocketTransport.RemoteEndPoint.get -> System.Net.EndPoint?
+BlueTusk.Transport.BlueTuskSocketTransport.UpgradeToTls(BlueTusk.Transport.BlueTuskTlsOptions! options) -> void
+BlueTusk.Transport.BlueTuskSocketTransport.UpgradeToTlsAsync(BlueTusk.Transport.BlueTuskTlsOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.BlueTuskSocketTransport.Write(System.ReadOnlySpan<byte> buffer) -> void
+BlueTusk.Transport.BlueTuskSocketTransport.WriteAsync(System.ReadOnlyMemory<byte> buffer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.BlueTuskTlsOptions
+BlueTusk.Transport.BlueTuskTlsOptions.<Clone>$() -> BlueTusk.Transport.BlueTuskTlsOptions!
+BlueTusk.Transport.BlueTuskTlsOptions.BlueTuskTlsOptions() -> void
+BlueTusk.Transport.BlueTuskTlsOptions.CertificateRevocationCheckMode.get -> System.Security.Cryptography.X509Certificates.X509RevocationMode
+BlueTusk.Transport.BlueTuskTlsOptions.CertificateRevocationCheckMode.init -> void
+BlueTusk.Transport.BlueTuskTlsOptions.ClientCertificates.get -> System.Collections.Generic.IReadOnlyCollection<System.Security.Cryptography.X509Certificates.X509Certificate2!>!
+BlueTusk.Transport.BlueTuskTlsOptions.ClientCertificates.init -> void
+BlueTusk.Transport.BlueTuskTlsOptions.EnabledProtocols.get -> System.Security.Authentication.SslProtocols
+BlueTusk.Transport.BlueTuskTlsOptions.EnabledProtocols.init -> void
+BlueTusk.Transport.BlueTuskTlsOptions.Equals(BlueTusk.Transport.BlueTuskTlsOptions? other) -> bool
+BlueTusk.Transport.BlueTuskTlsOptions.LocalCertificateSelectionCallback.get -> System.Net.Security.LocalCertificateSelectionCallback?
+BlueTusk.Transport.BlueTuskTlsOptions.LocalCertificateSelectionCallback.init -> void
+BlueTusk.Transport.BlueTuskTlsOptions.RemoteCertificateValidationCallback.get -> System.Net.Security.RemoteCertificateValidationCallback?
+BlueTusk.Transport.BlueTuskTlsOptions.RemoteCertificateValidationCallback.init -> void
+BlueTusk.Transport.BlueTuskTlsOptions.TargetHost.get -> string!
+BlueTusk.Transport.BlueTuskTlsOptions.TargetHost.init -> void
+BlueTusk.Transport.BlueTuskTransportException
+BlueTusk.Transport.BlueTuskTransportException.AddressFailures.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Transport.BlueTuskAddressFailure!>!
+BlueTusk.Transport.BlueTuskTransportException.Endpoint.get -> BlueTusk.Transport.BlueTuskEndpoint!
+BlueTusk.Transport.BlueTuskTransportException.FailureKind.get -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind.AddressUnavailable = 5 -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind.ConnectionRefused = 2 -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind.HostUnreachable = 4 -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind.NameResolution = 0 -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind.NetworkUnreachable = 3 -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind.SocketFailure = 6 -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportFailureKind.Timeout = 1 -> BlueTusk.Transport.BlueTuskTransportFailureKind
+BlueTusk.Transport.BlueTuskTransportOptions
+BlueTusk.Transport.BlueTuskTransportOptions.<Clone>$() -> BlueTusk.Transport.BlueTuskTransportOptions!
+BlueTusk.Transport.BlueTuskTransportOptions.BlueTuskTransportOptions() -> void
+BlueTusk.Transport.BlueTuskTransportOptions.ConnectTimeout.get -> System.TimeSpan
+BlueTusk.Transport.BlueTuskTransportOptions.ConnectTimeout.init -> void
+BlueTusk.Transport.BlueTuskTransportOptions.Equals(BlueTusk.Transport.BlueTuskTransportOptions? other) -> bool
+BlueTusk.Transport.BlueTuskTransportOptions.KeepAlive.get -> bool
+BlueTusk.Transport.BlueTuskTransportOptions.KeepAlive.init -> void
+BlueTusk.Transport.BlueTuskTransportOptions.NoDelay.get -> bool
+BlueTusk.Transport.BlueTuskTransportOptions.NoDelay.init -> void
+BlueTusk.Transport.BlueTuskTransportOptions.ReceiveBufferSize.get -> int
+BlueTusk.Transport.BlueTuskTransportOptions.ReceiveBufferSize.init -> void
+BlueTusk.Transport.BlueTuskTransportOptions.SendBufferSize.get -> int
+BlueTusk.Transport.BlueTuskTransportOptions.SendBufferSize.init -> void
+BlueTusk.Transport.IBlueTuskTlsTransport
+BlueTusk.Transport.IBlueTuskTlsTransport.IsEncrypted.get -> bool
+BlueTusk.Transport.IBlueTuskTlsTransport.RemoteCertificate.get -> System.Security.Cryptography.X509Certificates.X509Certificate2?
+BlueTusk.Transport.IBlueTuskTlsTransport.UpgradeToTls(BlueTusk.Transport.BlueTuskTlsOptions! options) -> void
+BlueTusk.Transport.IBlueTuskTlsTransport.UpgradeToTlsAsync(BlueTusk.Transport.BlueTuskTlsOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.IBlueTuskTransport
+BlueTusk.Transport.IBlueTuskTransport.Connect(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! options) -> void
+BlueTusk.Transport.IBlueTuskTransport.ConnectAsync(BlueTusk.Transport.BlueTuskEndpoint! endpoint, BlueTusk.Transport.BlueTuskTransportOptions! options, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.IBlueTuskTransport.Flush() -> void
+BlueTusk.Transport.IBlueTuskTransport.FlushAsync(System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+BlueTusk.Transport.IBlueTuskTransport.Read(System.Span<byte> buffer) -> int
+BlueTusk.Transport.IBlueTuskTransport.ReadAsync(System.Memory<byte> buffer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Transport.IBlueTuskTransport.RemoteEndPoint.get -> System.Net.EndPoint?
+BlueTusk.Transport.IBlueTuskTransport.Write(System.ReadOnlySpan<byte> buffer) -> void
+BlueTusk.Transport.IBlueTuskTransport.WriteAsync(System.ReadOnlyMemory<byte> buffer, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.ValueTask
+override BlueTusk.Transport.BlueTuskAddressFailure.Equals(object? obj) -> bool
+override BlueTusk.Transport.BlueTuskAddressFailure.GetHashCode() -> int
+override BlueTusk.Transport.BlueTuskAddressFailure.ToString() -> string!
+override BlueTusk.Transport.BlueTuskEndpoint.Equals(object? obj) -> bool
+override BlueTusk.Transport.BlueTuskEndpoint.GetHashCode() -> int
+override BlueTusk.Transport.BlueTuskEndpoint.Tcp.<Clone>$() -> BlueTusk.Transport.BlueTuskEndpoint.Tcp!
+override BlueTusk.Transport.BlueTuskEndpoint.Tcp.Equals(object? obj) -> bool
+override BlueTusk.Transport.BlueTuskEndpoint.Tcp.GetHashCode() -> int
+override BlueTusk.Transport.BlueTuskEndpoint.Tcp.ToString() -> string!
+override BlueTusk.Transport.BlueTuskEndpoint.ToString() -> string!
+override BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.<Clone>$() -> BlueTusk.Transport.BlueTuskEndpoint.UnixSocket!
+override BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.Equals(object? obj) -> bool
+override BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.GetHashCode() -> int
+override BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.ToString() -> string!
+override BlueTusk.Transport.BlueTuskTlsOptions.Equals(object? obj) -> bool
+override BlueTusk.Transport.BlueTuskTlsOptions.GetHashCode() -> int
+override BlueTusk.Transport.BlueTuskTlsOptions.ToString() -> string!
+override BlueTusk.Transport.BlueTuskTransportOptions.Equals(object? obj) -> bool
+override BlueTusk.Transport.BlueTuskTransportOptions.GetHashCode() -> int
+override BlueTusk.Transport.BlueTuskTransportOptions.ToString() -> string!
+override sealed BlueTusk.Transport.BlueTuskEndpoint.Tcp.Equals(BlueTusk.Transport.BlueTuskEndpoint? other) -> bool
+override sealed BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.Equals(BlueTusk.Transport.BlueTuskEndpoint? other) -> bool
+static BlueTusk.Transport.BlueTuskAddressFailure.operator !=(BlueTusk.Transport.BlueTuskAddressFailure? left, BlueTusk.Transport.BlueTuskAddressFailure? right) -> bool
+static BlueTusk.Transport.BlueTuskAddressFailure.operator ==(BlueTusk.Transport.BlueTuskAddressFailure? left, BlueTusk.Transport.BlueTuskAddressFailure? right) -> bool
+static BlueTusk.Transport.BlueTuskEndpoint.operator !=(BlueTusk.Transport.BlueTuskEndpoint? left, BlueTusk.Transport.BlueTuskEndpoint? right) -> bool
+static BlueTusk.Transport.BlueTuskEndpoint.operator ==(BlueTusk.Transport.BlueTuskEndpoint? left, BlueTusk.Transport.BlueTuskEndpoint? right) -> bool
+static BlueTusk.Transport.BlueTuskEndpoint.Tcp.operator !=(BlueTusk.Transport.BlueTuskEndpoint.Tcp? left, BlueTusk.Transport.BlueTuskEndpoint.Tcp? right) -> bool
+static BlueTusk.Transport.BlueTuskEndpoint.Tcp.operator ==(BlueTusk.Transport.BlueTuskEndpoint.Tcp? left, BlueTusk.Transport.BlueTuskEndpoint.Tcp? right) -> bool
+static BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.operator !=(BlueTusk.Transport.BlueTuskEndpoint.UnixSocket? left, BlueTusk.Transport.BlueTuskEndpoint.UnixSocket? right) -> bool
+static BlueTusk.Transport.BlueTuskEndpoint.UnixSocket.operator ==(BlueTusk.Transport.BlueTuskEndpoint.UnixSocket? left, BlueTusk.Transport.BlueTuskEndpoint.UnixSocket? right) -> bool
+static BlueTusk.Transport.BlueTuskTlsOptions.operator !=(BlueTusk.Transport.BlueTuskTlsOptions? left, BlueTusk.Transport.BlueTuskTlsOptions? right) -> bool
+static BlueTusk.Transport.BlueTuskTlsOptions.operator ==(BlueTusk.Transport.BlueTuskTlsOptions? left, BlueTusk.Transport.BlueTuskTlsOptions? right) -> bool
+static BlueTusk.Transport.BlueTuskTransportOptions.Default.get -> BlueTusk.Transport.BlueTuskTransportOptions!
+static BlueTusk.Transport.BlueTuskTransportOptions.operator !=(BlueTusk.Transport.BlueTuskTransportOptions? left, BlueTusk.Transport.BlueTuskTransportOptions? right) -> bool
+static BlueTusk.Transport.BlueTuskTransportOptions.operator ==(BlueTusk.Transport.BlueTuskTransportOptions? left, BlueTusk.Transport.BlueTuskTransportOptions? right) -> bool
+virtual BlueTusk.Transport.BlueTuskEndpoint.EqualityContract.get -> System.Type!
+virtual BlueTusk.Transport.BlueTuskEndpoint.Equals(BlueTusk.Transport.BlueTuskEndpoint? other) -> bool
+virtual BlueTusk.Transport.BlueTuskEndpoint.PrintMembers(System.Text.StringBuilder! builder) -> bool

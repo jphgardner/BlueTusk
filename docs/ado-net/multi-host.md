@@ -7,7 +7,7 @@ Host=db-a,db-b,db-c;Port=5432;Target Session Attributes=read-write
 Host=db-a,db-b;Port=5432,6432;Target Session Attributes=prefer-standby
 ```
 
-Hosts are attempted in configuration order by default. Set `Load Balance Hosts=random` to shuffle the host order for each new physical connection. DNS expansion within one host remains the transport layer's responsibility.
+Hosts are attempted in configuration order by default. Set `Load Balance Hosts=random` to shuffle the host order for each new physical connection. Within one host, the transport resolves the name once, preserves the platform resolver's address order, and attempts every returned address under one shared connect deadline. This respects the operating system's IPv4/IPv6 routing preference while retaining deterministic fallback and ordered per-address socket diagnostics in the failed host's inner `BlueTuskTransportException`.
 
 `Target Session Attributes` accepts:
 

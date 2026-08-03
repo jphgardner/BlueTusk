@@ -8,6 +8,39 @@ namespace BlueTusk.IntegrationTests;
 public sealed class BlueTuskSequentialReaderIntegrationTests
 {
     [Fact]
+    public async Task Default_sequential_reader_streams_an_unlimited_execute_and_reuses_the_connection()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using (var command = (BlueTuskCommand)connection.CreateCommand())
+        {
+            Assert.Equal(0, command.SequentialFetchSize);
+            command.CommandText =
+                "SELECT value FROM generate_series(1, 1000) AS value ORDER BY value";
+
+            await using var reader = await command.ExecuteReaderAsync(
+                CommandBehavior.SequentialAccess,
+                CancellationToken.None);
+            Assert.True(reader.HasRows);
+            long sum = 0;
+            var expected = 1;
+            while (await reader.ReadAsync(CancellationToken.None))
+            {
+                var value = reader.GetInt32(0);
+                Assert.Equal(expected++, value);
+                sum += value;
+            }
+
+            Assert.Equal(1001, expected);
+            Assert.Equal(500500, sum);
+        }
+
+        await using var reuse = connection.CreateCommand();
+        reuse.CommandText = "SELECT 41";
+        Assert.Equal(41, await reuse.ExecuteScalarAsync(CancellationToken.None));
+    }
+
+    [Fact]
     public void Sequential_reader_streams_binary_and_text_fields_and_reuses_the_connection()
     {
         using var connection = new BlueTuskConnection(GetConnectionString());
@@ -83,7 +116,7 @@ public sealed class BlueTuskSequentialReaderIntegrationTests
             Assert.Equal(1, reader.GetInt32(0));
             await using var textBytes = reader.GetStream(1);
             var buffer = new byte[8192];
-            Assert.Equal(buffer.Length, await textBytes.ReadAsync(buffer, CancellationToken.None));
+            await textBytes.ReadExactlyAsync(buffer, CancellationToken.None);
             Assert.All(buffer, value => Assert.Equal((byte)'z', value));
         }
 
@@ -97,9 +130,10 @@ public sealed class BlueTuskSequentialReaderIntegrationTests
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());
         await connection.OpenAsync(CancellationToken.None);
-        await using (var command = connection.CreateCommand())
+        await using (var command = (BlueTuskCommand)connection.CreateCommand())
         {
             command.CommandText = "SELECT pg_sleep(10), 1";
+            command.SequentialFetchSize = 1;
             await using var reader = await command.ExecuteReaderAsync(
                 CommandBehavior.SequentialAccess,
                 CancellationToken.None);
@@ -119,10 +153,11 @@ public sealed class BlueTuskSequentialReaderIntegrationTests
     {
         using var connection = new BlueTuskConnection(GetConnectionString());
         connection.Open();
-        using (var command = connection.CreateCommand())
+        using (var command = (BlueTuskCommand)connection.CreateCommand())
         {
             command.CommandText = "SELECT pg_sleep(10), 1";
             command.CommandTimeout = 1;
+            command.SequentialFetchSize = 1;
             using var reader = command.ExecuteReader(CommandBehavior.SequentialAccess);
 
             Assert.Throws<TimeoutException>(() => reader.Read());

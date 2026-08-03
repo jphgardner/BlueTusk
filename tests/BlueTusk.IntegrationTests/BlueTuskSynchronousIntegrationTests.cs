@@ -18,6 +18,15 @@ public sealed class BlueTuskSynchronousIntegrationTests
         Assert.Equal(1, dataSource.GetPoolStatistics().Idle);
         using (var connection = dataSource.OpenConnection())
         {
+            var capabilities = Assert.IsType<BlueTuskServerCapabilities>(connection.ServerCapabilities);
+            Assert.True(capabilities.ServerVersion.Major >= 14);
+            Assert.Equal(capabilities.ServerVersion.Major >= 14, capabilities.SupportsPipelineMode);
+            Assert.Equal(capabilities.ServerVersion.Major >= 15, capabilities.SupportsMerge);
+            Assert.Equal(capabilities.ServerVersion.Major >= 14, capabilities.SupportsMultiranges);
+            Assert.Equal(capabilities.ServerVersion.Major >= 18, capabilities.SupportsVirtualGeneratedColumns);
+            Assert.Equal(capabilities.ServerVersion.Major >= 19, capabilities.SupportsSqlPgq);
+            Assert.False(capabilities.SupportsOAuthBearer);
+
             using var prepared = new BlueTuskCommand(
                 "SELECT @value::int4 + 1",
                 connection);
@@ -126,13 +135,14 @@ public sealed class BlueTuskSynchronousIntegrationTests
         }
 
         var failoverSettings = CreateSettings();
-        failoverSettings.Host = "localhost,localhost";
-        failoverSettings.Ports = "1,5418";
+        var configured = failoverSettings.HostEndpoints[0];
+        failoverSettings.Host = $"{configured.Host},{configured.Host}";
+        failoverSettings.Ports = $"1,{configured.Port}";
         failoverSettings.Pooling = false;
         failoverSettings.TargetSessionAttributes = BlueTuskTargetSessionAttributes.Primary;
         using var failover = new BlueTuskConnection(failoverSettings.ConnectionString);
         failover.Open();
-        Assert.Equal(new BlueTuskHostEndpoint("localhost", 5418), failover.ConnectedEndpoint);
+        Assert.Equal(configured, failover.ConnectedEndpoint);
     }
 
     private static BlueTuskConnectionStringBuilder CreateSettings()

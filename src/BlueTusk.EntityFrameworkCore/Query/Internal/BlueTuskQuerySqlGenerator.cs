@@ -1,0 +1,881 @@
+using System.Linq.Expressions;
+using BlueTusk.EntityFrameworkCore.Storage.Internal;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.EntityFrameworkCore.Query.SqlExpressions;
+using Microsoft.EntityFrameworkCore.Storage;
+
+namespace BlueTusk.EntityFrameworkCore.Query.Internal;
+
+internal sealed class BlueTuskQuerySqlGenerator(QuerySqlGeneratorDependencies dependencies)
+    : QuerySqlGenerator(dependencies)
+{
+    private bool _renderingCteBody;
+
+    private BlueTuskRecursiveCteClause? _recursiveCteSource;
+
+    protected override Expression VisitExtension(Expression extensionExpression)
+    {
+        if (extensionExpression is BlueTuskUnnestExpression unnest)
+        {
+            Sql.Append("unnest(");
+            Visit(unnest.Array);
+            Sql.Append(") WITH ORDINALITY AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(unnest.Alias))
+                .Append("(")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("value"))
+                .Append(", ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("ordinality"))
+                .Append(")");
+            return unnest;
+        }
+
+        if (extensionExpression is BlueTuskSetReturningFunctionTableExpression function)
+        {
+            if (function.WithOrdinality
+                && function.ColumnStoreTypes.Any(storeType => storeType is not null))
+            {
+                Sql.Append("ROWS FROM (").Append(function.Name).Append("(");
+                for (var index = 0; index < function.Arguments.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(", ");
+                    }
+
+                    Visit(function.Arguments[index]);
+                }
+
+                Sql.Append(") AS (");
+                AppendSetReturningFunctionColumns(function);
+                Sql.Append(")) WITH ORDINALITY AS ")
+                    .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(function.Alias));
+                return function;
+            }
+
+            Sql.Append(function.Name).Append("(");
+            for (var index = 0; index < function.Arguments.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(function.Arguments[index]);
+            }
+
+            Sql.Append(")");
+            if (function.WithOrdinality)
+            {
+                Sql.Append(" WITH ORDINALITY");
+            }
+
+            Sql.Append(" AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(function.Alias))
+                .Append("(");
+            for (var index = 0; index < function.ColumnNames.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                AppendSetReturningFunctionColumn(function, index);
+            }
+
+            if (function.WithOrdinality)
+            {
+                if (function.ColumnNames.Count > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Sql.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier("ordinality"));
+            }
+
+            Sql.Append(")");
+            return function;
+        }
+
+        if (extensionExpression is BlueTuskAggregateExpression aggregate)
+        {
+            if (aggregate.Schema is null)
+            {
+                Sql.Append(aggregate.Name);
+            }
+            else
+            {
+                Sql.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                    aggregate.Name,
+                    aggregate.Schema));
+            }
+
+            Sql.Append("(");
+            if (aggregate.IsDistinct)
+            {
+                Sql.Append("DISTINCT ");
+            }
+
+            for (var index = 0; index < aggregate.Arguments.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(aggregate.Arguments[index]);
+            }
+
+            if (aggregate.Orderings.Count > 0)
+            {
+                Sql.Append(" ORDER BY ");
+                for (var index = 0; index < aggregate.Orderings.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(", ");
+                    }
+
+                    var ordering = aggregate.Orderings[index];
+                    Visit(ordering.Expression);
+                    Sql.Append(ordering.IsAscending ? " ASC" : " DESC");
+                }
+            }
+
+            Sql.Append(")");
+            if (aggregate.WithinGroupOrderings.Count > 0)
+            {
+                Sql.Append(" WITHIN GROUP (ORDER BY ");
+                for (var index = 0; index < aggregate.WithinGroupOrderings.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(", ");
+                    }
+
+                    var ordering = aggregate.WithinGroupOrderings[index];
+                    Visit(ordering.Expression);
+                    Sql.Append(ordering.IsAscending ? " ASC" : " DESC");
+                }
+
+                Sql.Append(")");
+            }
+
+            if (aggregate.Predicate is not null)
+            {
+                Sql.Append(" FILTER (WHERE ");
+                Visit(aggregate.Predicate);
+                Sql.Append(")");
+            }
+
+            return aggregate;
+        }
+
+        if (extensionExpression is BlueTuskWindowFunctionExpression window)
+        {
+            Sql.Append(window.Name).Append("(");
+            for (var index = 0; index < window.Arguments.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(window.Arguments[index]);
+            }
+
+            Sql.Append(") OVER (");
+            if (window.Partitions.Count > 0)
+            {
+                Sql.Append("PARTITION BY ");
+                for (var index = 0; index < window.Partitions.Count; index++)
+                {
+                    if (index > 0)
+                    {
+                        Sql.Append(", ");
+                    }
+
+                    Visit(window.Partitions[index]);
+                }
+
+                Sql.Append(" ");
+            }
+
+            Sql.Append("ORDER BY ");
+            for (var index = 0; index < window.Orderings.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(window.Orderings[index].Expression);
+                if (!window.Orderings[index].IsAscending)
+                {
+                    Sql.Append(" DESC");
+                }
+            }
+
+            Sql.Append(")");
+            return window;
+        }
+
+        if (extensionExpression is BlueTuskWindowOrderingExpression windowOrdering)
+        {
+            Visit(windowOrdering.Operand);
+            return windowOrdering;
+        }
+
+        if (extensionExpression is BlueTuskQuantifiedComparisonExpression quantifiedComparison)
+        {
+            Sql.Append("(");
+            Visit(quantifiedComparison.Item);
+            Sql.Append(" ").Append(quantifiedComparison.OperatorToken).Append(" ");
+            Sql.Append(
+                quantifiedComparison.Quantifier == BlueTuskArrayQuantifier.Any
+                    ? "ANY("
+                    : "ALL(");
+            Visit(quantifiedComparison.Array);
+            Sql.Append("))");
+            return quantifiedComparison;
+        }
+
+        if (extensionExpression is BlueTuskRowValueExpression rowValue)
+        {
+            Sql.Append("(");
+            for (var index = 0; index < rowValue.Values.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(rowValue.Values[index]);
+            }
+
+            Sql.Append(")");
+            return rowValue;
+        }
+
+        if (extensionExpression is BlueTuskBinaryExpression binary)
+        {
+            Sql.Append("(");
+            Visit(binary.Left);
+            Sql.Append(" ").Append(binary.OperatorToken).Append(" ");
+            Visit(binary.Right);
+            Sql.Append(")");
+            return binary;
+        }
+
+        if (extensionExpression is BlueTuskUnaryExpression unary)
+        {
+            Sql.Append("(").Append(unary.OperatorToken).Append(" ");
+            Visit(unary.Operand);
+            Sql.Append(")");
+            return unary;
+        }
+
+        if (extensionExpression is BlueTuskCompositeFieldExpression compositeField)
+        {
+            Sql.Append("(");
+            Visit(compositeField.Instance);
+            Sql.Append(").")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(compositeField.FieldName));
+            return compositeField;
+        }
+
+        if (extensionExpression is BlueTuskArrayConstructorExpression arrayConstructor)
+        {
+            Sql.Append("ARRAY[");
+            for (var index = 0; index < arrayConstructor.Rows.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                Visit(arrayConstructor.Rows[index]);
+            }
+
+            Sql.Append("]");
+            return arrayConstructor;
+        }
+
+        if (extensionExpression is BlueTuskArraySubscriptExpression arraySubscript)
+        {
+            Sql.Append("(");
+            Visit(arraySubscript.Array);
+            Sql.Append(")");
+            foreach (var subscript in arraySubscript.Subscripts)
+            {
+                Sql.Append("[");
+                Visit(subscript);
+                Sql.Append("]");
+            }
+
+            return arraySubscript;
+        }
+
+        if (extensionExpression is BlueTuskArraySliceExpression arraySlice)
+        {
+            Sql.Append("(");
+            Visit(arraySlice.Array);
+            Sql.Append(")");
+            for (var index = 0; index < arraySlice.LowerBounds.Count; index++)
+            {
+                Sql.Append("[");
+                Visit(arraySlice.LowerBounds[index]);
+                Sql.Append(":");
+                Visit(arraySlice.UpperBounds[index]);
+                Sql.Append("]");
+            }
+
+            return arraySlice;
+        }
+
+        return base.VisitExtension(extensionExpression);
+    }
+
+    private void AppendSetReturningFunctionColumns(
+        BlueTuskSetReturningFunctionTableExpression function)
+    {
+        for (var index = 0; index < function.ColumnNames.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            AppendSetReturningFunctionColumn(function, index);
+        }
+    }
+
+    private void AppendSetReturningFunctionColumn(
+        BlueTuskSetReturningFunctionTableExpression function,
+        int index)
+    {
+        Sql.Append(
+            Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                function.ColumnNames[index]));
+        if (function.ColumnStoreTypes[index] is { } storeType)
+        {
+            Sql.Append(" ").Append(storeType);
+        }
+    }
+
+    protected override Expression VisitJsonScalar(JsonScalarExpression jsonScalarExpression)
+    {
+        if (jsonScalarExpression.Path.Count == 0)
+        {
+            Visit(jsonScalarExpression.Json);
+            return jsonScalarExpression;
+        }
+
+        var typeMapping = jsonScalarExpression.TypeMapping;
+        if (typeMapping is BlueTuskStructuralJsonTypeMapping
+            || typeMapping is { StoreType: "json" or "jsonb", ElementTypeMapping: not null })
+        {
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: false, jsonScalarExpression.Path);
+        }
+        else if (typeMapping is StringTypeMapping)
+        {
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+        }
+        else if (typeMapping is ByteArrayTypeMapping)
+        {
+            Sql.Append("decode(");
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+            Sql.Append(", 'base64')");
+        }
+        else
+        {
+            Sql.Append("CAST(");
+            GenerateJsonPath(jsonScalarExpression.Json, returnsText: true, jsonScalarExpression.Path);
+            Sql.Append(" AS ").Append(typeMapping!.StoreType).Append(")");
+        }
+
+        return jsonScalarExpression;
+    }
+
+    private void GenerateJsonPath(
+        SqlExpression json,
+        bool returnsText,
+        IReadOnlyList<PathSegment> path)
+    {
+        Visit(json);
+        if (path.Count == 1)
+        {
+            Sql.Append(returnsText ? " ->> " : " -> ");
+            GenerateJsonPathSegment(path[0], inArray: false);
+            return;
+        }
+
+        Sql.Append(returnsText ? " #>> ARRAY[" : " #> ARRAY[");
+        for (var index = 0; index < path.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            GenerateJsonPathSegment(path[index], inArray: true);
+        }
+
+        Sql.Append("]::text[]");
+    }
+
+    private void GenerateJsonPathSegment(PathSegment segment, bool inArray)
+    {
+        if (segment.PropertyName is { } propertyName)
+        {
+            Sql.Append("'")
+                .Append(propertyName.Replace("'", "''", StringComparison.Ordinal))
+                .Append("'");
+            return;
+        }
+
+        if (segment.ArrayIndex is not { } arrayIndex)
+        {
+            throw new InvalidOperationException("A JSON path segment must contain a property name or an array index.");
+        }
+
+        if (inArray)
+        {
+            Sql.Append("CAST(");
+        }
+
+        Visit(arrayIndex);
+        if (inArray)
+        {
+            Sql.Append(" AS text)");
+        }
+    }
+
+    protected override Expression VisitSelect(SelectExpression selectExpression)
+    {
+        if (!_renderingCteBody
+            && GetQueryAnnotation(
+                    selectExpression,
+                    BlueTuskQueryAnnotationNames.InsertOnConflictReturning)?.Value
+                is BlueTuskInsertOnConflictClause insertOnConflict)
+        {
+            return GenerateInsertOnConflict(selectExpression, insertOnConflict);
+        }
+
+        if (!_renderingCteBody
+            && GetQueryAnnotation(
+                    selectExpression,
+                    BlueTuskQueryAnnotationNames.DataModificationReturning)?.Value
+                is BlueTuskReturningModificationClause modification)
+        {
+            return GenerateReturningModification(selectExpression, modification);
+        }
+
+        if (!_renderingCteBody
+            && _recursiveCteSource is null
+            && GetQueryAnnotation(
+                    selectExpression,
+                    BlueTuskQueryAnnotationNames.RecursiveCommonTableExpression)?.Value
+                is BlueTuskRecursiveCteClause recursiveCte)
+        {
+            GenerateRecursiveCte(recursiveCte);
+            _recursiveCteSource = recursiveCte;
+            try
+            {
+                return base.VisitSelect(selectExpression);
+            }
+            finally
+            {
+                _recursiveCteSource = null;
+            }
+        }
+
+        if (_renderingCteBody
+            || GetQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.CommonTableExpression)?.Value
+                is not BlueTuskCteClause cte)
+        {
+            return base.VisitSelect(selectExpression);
+        }
+
+        Sql.Append("WITH ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(cte.Name))
+            .Append(" AS");
+        if (cte.Materialization != BlueTuskCteMaterialization.Default)
+        {
+            Sql.Append(cte.Materialization == BlueTuskCteMaterialization.Materialized
+                ? " MATERIALIZED"
+                : " NOT MATERIALIZED");
+        }
+
+        Sql.Append(" (").AppendLine();
+        _renderingCteBody = true;
+        try
+        {
+            base.VisitSelect(selectExpression);
+        }
+        finally
+        {
+            _renderingCteBody = false;
+        }
+
+        Sql.AppendLine()
+            .Append(")")
+            .AppendLine()
+            .Append("SELECT * FROM ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(cte.Name));
+        AppendCteResultOrdering(selectExpression);
+        return selectExpression;
+    }
+
+    protected override Expression VisitCrossApply(CrossApplyExpression crossApplyExpression)
+    {
+        Sql.Append("JOIN LATERAL ");
+        VisitLateralTable(crossApplyExpression.Table);
+        Sql.Append(" ON TRUE");
+        return crossApplyExpression;
+    }
+
+    protected override Expression VisitOuterApply(OuterApplyExpression outerApplyExpression)
+    {
+        Sql.Append("LEFT JOIN LATERAL ");
+        VisitLateralTable(outerApplyExpression.Table);
+        Sql.Append(" ON TRUE");
+        return outerApplyExpression;
+    }
+
+    protected override Expression VisitTable(TableExpression tableExpression)
+    {
+        if (_recursiveCteSource is { } recursiveCte
+            && tableExpression.FindAnnotation(
+                    BlueTuskQueryAnnotationNames.RecursiveCommonTableExpression)?.Value
+                is BlueTuskRecursiveCteClause tableCte
+            && tableCte == recursiveCte)
+        {
+            Sql.Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(recursiveCte.Name))
+                .Append(" AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(tableExpression.Alias));
+            return tableExpression;
+        }
+
+        if (tableExpression.FindAnnotation(BlueTuskQueryAnnotationNames.TableSample)?.Value
+            is not BlueTuskTableSampleClause sample)
+        {
+            return base.VisitTable(tableExpression);
+        }
+
+        Sql.Append(
+                Dependencies.SqlGenerationHelper.DelimitIdentifier(
+                    tableExpression.Name,
+                    tableExpression.Schema))
+            .Append(" AS ")
+            .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(tableExpression.Alias))
+            .Append(" TABLESAMPLE ")
+            .Append(sample.Method == BlueTuskTableSampleMethod.System ? "SYSTEM" : "BERNOULLI")
+            .Append(" (");
+        Visit(sample.Percentage);
+        Sql.Append(")");
+        if (sample.Repeatable is not null)
+        {
+            Sql.Append(" REPEATABLE (");
+            Visit(sample.Repeatable);
+            Sql.Append(")");
+        }
+
+        return tableExpression;
+    }
+
+    private void VisitLateralTable(TableExpressionBase tableExpression)
+    {
+        if (tableExpression is TableExpression table)
+        {
+            Sql.Append("(SELECT * FROM ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table.Name, table.Schema))
+                .Append(") AS ")
+                .Append(Dependencies.SqlGenerationHelper.DelimitIdentifier(table.Alias));
+            return;
+        }
+
+        Visit(tableExpression);
+    }
+
+    protected override void GenerateLimitOffset(SelectExpression selectExpression)
+    {
+        if (selectExpression.Limit is not null)
+        {
+            Sql.AppendLine().Append("LIMIT ");
+            Visit(selectExpression.Limit);
+        }
+
+        if (selectExpression.Offset is not null)
+        {
+            if (selectExpression.Limit is null)
+            {
+                Sql.AppendLine();
+            }
+
+            Sql.Append(" OFFSET ");
+            Visit(selectExpression.Offset);
+        }
+
+        if (GetQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.RowLocking)?.Value
+            is BlueTuskRowLockingClause locking)
+        {
+            Sql.AppendLine().Append(locking.Strength switch
+            {
+                BlueTuskRowLockingStrength.Update => "FOR UPDATE",
+                BlueTuskRowLockingStrength.NoKeyUpdate => "FOR NO KEY UPDATE",
+                BlueTuskRowLockingStrength.Share => "FOR SHARE",
+                BlueTuskRowLockingStrength.KeyShare => "FOR KEY SHARE",
+                _ => throw new InvalidOperationException("Unknown PostgreSQL row-locking strength."),
+            });
+            if (locking.Behavior != BlueTuskRowLockingBehavior.Wait)
+            {
+                Sql.Append(locking.Behavior == BlueTuskRowLockingBehavior.NoWait
+                    ? " NOWAIT"
+                    : " SKIP LOCKED");
+            }
+        }
+    }
+
+    protected override void GenerateTop(SelectExpression selectExpression)
+    {
+        base.GenerateTop(selectExpression);
+        if (GetQueryAnnotation(selectExpression, BlueTuskQueryAnnotationNames.DistinctOn)?.Value
+            is SqlExpression key)
+        {
+            Sql.Append("DISTINCT ON (");
+            Visit(key);
+            Sql.Append(") ");
+        }
+    }
+
+    private static Microsoft.EntityFrameworkCore.Infrastructure.IAnnotation? GetQueryAnnotation(
+        SelectExpression selectExpression,
+        string name)
+        => selectExpression.Tables.Count == 0
+            ? null
+            : selectExpression.Tables[0].FindAnnotation(name);
+
+    private void AppendCteResultOrdering(SelectExpression selectExpression)
+    {
+        if (selectExpression.Orderings.Count == 0)
+        {
+            return;
+        }
+
+        var positions = new int[selectExpression.Orderings.Count];
+        for (var orderingIndex = 0; orderingIndex < selectExpression.Orderings.Count; orderingIndex++)
+        {
+            var ordering = selectExpression.Orderings[orderingIndex];
+            var projectionIndex = selectExpression.Projection
+                .Select((projection, index) => (projection, index))
+                .FirstOrDefault(item => item.projection.Expression.Equals(ordering.Expression))
+                .index;
+            if (projectionIndex < 0
+                || projectionIndex >= selectExpression.Projection.Count
+                || !selectExpression.Projection[projectionIndex].Expression.Equals(ordering.Expression))
+            {
+                throw new InvalidOperationException(
+                    "An ordered PostgreSQL CTE must project every ORDER BY expression so the result order can be preserved.");
+            }
+
+            positions[orderingIndex] = projectionIndex + 1;
+        }
+
+        Sql.AppendLine().Append("ORDER BY ");
+        for (var index = 0; index < positions.Length; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Sql.Append(positions[index].ToString(System.Globalization.CultureInfo.InvariantCulture));
+            if (!selectExpression.Orderings[index].IsAscending)
+            {
+                Sql.Append(" DESC");
+            }
+        }
+    }
+
+    private void GenerateRecursiveCte(BlueTuskRecursiveCteClause cte)
+    {
+        var helper = Dependencies.SqlGenerationHelper;
+        const string seedAlias = "seed";
+        const string childAlias = "child";
+        const string parentAlias = "parent";
+        Sql.Append("WITH RECURSIVE ")
+            .Append(helper.DelimitIdentifier(cte.Name))
+            .Append(" AS (")
+            .AppendLine()
+            .Append("SELECT ")
+            .Append(helper.DelimitIdentifier(seedAlias))
+            .Append(".*")
+            .AppendLine()
+            .Append("FROM ")
+            .Append(helper.DelimitIdentifier(cte.TableName, cte.TableSchema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(seedAlias))
+            .AppendLine()
+            .Append("WHERE ")
+            .Append(helper.DelimitIdentifier(seedAlias))
+            .Append(".")
+            .Append(helper.DelimitIdentifier(cte.KeyColumn))
+            .Append(" = ANY (");
+        Visit(cte.Roots);
+        Sql.Append(")")
+            .AppendLine()
+            .Append(cte.UnionBehavior == BlueTuskRecursiveUnionBehavior.All
+                ? "UNION ALL"
+                : "UNION")
+            .AppendLine()
+            .Append("SELECT ")
+            .Append(helper.DelimitIdentifier(childAlias))
+            .Append(".*")
+            .AppendLine()
+            .Append("FROM ")
+            .Append(helper.DelimitIdentifier(cte.TableName, cte.TableSchema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(childAlias))
+            .AppendLine()
+            .Append("INNER JOIN ")
+            .Append(helper.DelimitIdentifier(cte.Name))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(parentAlias))
+            .Append(" ON ")
+            .Append(helper.DelimitIdentifier(childAlias))
+            .Append(".")
+            .Append(helper.DelimitIdentifier(cte.ParentKeyColumn))
+            .Append(" = ")
+            .Append(helper.DelimitIdentifier(parentAlias))
+            .Append(".")
+            .Append(helper.DelimitIdentifier(cte.KeyColumn))
+            .AppendLine()
+            .Append(")")
+            .AppendLine();
+    }
+
+    private SelectExpression GenerateReturningModification(
+        SelectExpression selectExpression,
+        BlueTuskReturningModificationClause modification)
+    {
+        if (selectExpression.Tables is not [TableExpression table])
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL data-modification RETURNING requires one mapped table.");
+        }
+
+        var helper = Dependencies.SqlGenerationHelper;
+        Sql.Append(modification.Kind == BlueTuskReturningModificationKind.Delete
+                ? "DELETE FROM "
+                : "UPDATE ")
+            .Append(helper.DelimitIdentifier(table.Name, table.Schema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(table.Alias));
+
+        if (modification.Kind == BlueTuskReturningModificationKind.Update)
+        {
+            Sql.AppendLine().Append("SET ");
+            for (var setterIndex = 0; setterIndex < modification.Setters.Count; setterIndex++)
+            {
+                if (setterIndex > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                var setter = modification.Setters[setterIndex];
+                Sql.Append(helper.DelimitIdentifier(setter.Column.Name)).Append(" = ");
+                Visit(setter.Value);
+            }
+        }
+
+        if (selectExpression.Predicate is not null)
+        {
+            Sql.AppendLine().Append("WHERE ");
+            Visit(selectExpression.Predicate);
+        }
+
+        Sql.AppendLine().Append("RETURNING ");
+        GenerateProjection(selectExpression);
+        return selectExpression;
+    }
+
+    private SelectExpression GenerateInsertOnConflict(
+        SelectExpression selectExpression,
+        BlueTuskInsertOnConflictClause insertOnConflict)
+    {
+        if (selectExpression.Tables is not [TableExpression table]
+            || insertOnConflict.Values.Count == 0
+            || insertOnConflict.ConflictColumns.Count == 0)
+        {
+            throw new InvalidOperationException(
+                "PostgreSQL INSERT ON CONFLICT RETURNING requires one mapped table, inserted values, and a conflict target.");
+        }
+
+        var helper = Dependencies.SqlGenerationHelper;
+        Sql.Append("INSERT INTO ")
+            .Append(helper.DelimitIdentifier(table.Name, table.Schema))
+            .Append(" AS ")
+            .Append(helper.DelimitIdentifier(table.Alias))
+            .Append(" (");
+        for (var index = 0; index < insertOnConflict.Values.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Sql.Append(helper.DelimitIdentifier(insertOnConflict.Values[index].ColumnName));
+        }
+
+        Sql.Append(")")
+            .AppendLine()
+            .Append("VALUES (");
+        for (var index = 0; index < insertOnConflict.Values.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Visit(insertOnConflict.Values[index].Value);
+        }
+
+        Sql.Append(")")
+            .AppendLine()
+            .Append("ON CONFLICT (");
+        for (var index = 0; index < insertOnConflict.ConflictColumns.Count; index++)
+        {
+            if (index > 0)
+            {
+                Sql.Append(", ");
+            }
+
+            Sql.Append(helper.DelimitIdentifier(insertOnConflict.ConflictColumns[index]));
+        }
+
+        Sql.Append(") ");
+        if (insertOnConflict.UpdateColumns.Count == 0)
+        {
+            Sql.Append("DO NOTHING");
+        }
+        else
+        {
+            Sql.Append("DO UPDATE SET ");
+            for (var index = 0; index < insertOnConflict.UpdateColumns.Count; index++)
+            {
+                if (index > 0)
+                {
+                    Sql.Append(", ");
+                }
+
+                var column = helper.DelimitIdentifier(insertOnConflict.UpdateColumns[index]);
+                Sql.Append(column).Append(" = EXCLUDED.").Append(column);
+            }
+        }
+
+        Sql.AppendLine().Append("RETURNING ");
+        GenerateProjection(selectExpression);
+        return selectExpression;
+    }
+}

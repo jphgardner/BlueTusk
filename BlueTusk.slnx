@@ -3,13 +3,22 @@
     <Project Path="benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj" />
   </Folder>
   <Folder Name="/extensions/">
+    <Project Path="extensions/BlueTusk.Extensions.Citext.EntityFrameworkCore/BlueTusk.Extensions.Citext.EntityFrameworkCore.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.Citext/BlueTusk.Extensions.Citext.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.HStore/BlueTusk.Extensions.HStore.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.LTree/BlueTusk.Extensions.LTree.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.PgTrgm/BlueTusk.Extensions.PgTrgm.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.PgVector/BlueTusk.Extensions.PgVector.csproj" />
+    <Project Path="extensions/BlueTusk.Extensions.PgVector.EntityFrameworkCore/BlueTusk.Extensions.PgVector.EntityFrameworkCore.csproj" />
+    <Project Path="extensions/BlueTusk.Extensions.PostGIS.EntityFrameworkCore/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.PostGIS/BlueTusk.Extensions.PostGIS.csproj" />
     <Project Path="extensions/BlueTusk.Extensions.TimescaleDB/BlueTusk.Extensions.TimescaleDB.csproj" />
+    <Project Path="extensions/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.csproj" />
+  </Folder>
+  <Folder Name="/identity/">
+    <Project Path="identity/BlueTusk.Identity.Aws/BlueTusk.Identity.Aws.csproj" />
+    <Project Path="identity/BlueTusk.Identity.Azure/BlueTusk.Identity.Azure.csproj" />
+    <Project Path="identity/BlueTusk.Identity.GoogleCloud/BlueTusk.Identity.GoogleCloud.csproj" />
   </Folder>
   <Folder Name="/samples/">
     <Project Path="samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj" />
@@ -25,6 +34,7 @@
     <Project Path="src/BlueTusk.EntityFrameworkCore.Design/BlueTusk.EntityFrameworkCore.Design.csproj" />
     <Project Path="src/BlueTusk.EntityFrameworkCore/BlueTusk.EntityFrameworkCore.csproj" />
     <Project Path="src/BlueTusk.Extensions.Abstractions/BlueTusk.Extensions.Abstractions.csproj" />
+    <Project Path="src/BlueTusk.Extensions.Testing/BlueTusk.Extensions.Testing.csproj" />
     <Project Path="src/BlueTusk.Protocol/BlueTusk.Protocol.csproj" />
     <Project Path="src/BlueTusk.Replication.PgOutput/BlueTusk.Replication.PgOutput.csproj" />
     <Project Path="src/BlueTusk.Replication/BlueTusk.Replication.csproj" />
@@ -37,15 +47,34 @@
     <Project Path="tests/BlueTusk.CompatibilityTests/BlueTusk.CompatibilityTests.csproj" />
     <Project Path="tests/BlueTusk.ConformanceTests/BlueTusk.ConformanceTests.csproj" />
     <Project Path="tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Diagnostics.Tests/BlueTusk.Diagnostics.Tests.csproj" />
     <Project Path="tests/BlueTusk.EntityFrameworkCore.Tests/BlueTusk.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/BlueTusk.EntityFrameworkCore.SpecificationTests/BlueTusk.EntityFrameworkCore.SpecificationTests.csproj" />
+    <Project Path="tests/BlueTusk.ExtensionTemplate.Tests/BlueTusk.ExtensionTemplate.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.Citext.EntityFrameworkCore.Tests/BlueTusk.Extensions.Citext.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.Citext.Tests/BlueTusk.Extensions.Citext.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.HStore.Tests/BlueTusk.Extensions.HStore.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.LTree.Tests/BlueTusk.Extensions.LTree.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.PgTrgm.Tests/BlueTusk.Extensions.PgTrgm.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj" />
+    <Project Path="tests/BlueTusk.Identity.Tests/BlueTusk.Identity.Tests.csproj" />
     <Project Path="tests/BlueTusk.Protocol.Tests/BlueTusk.Protocol.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.PgOutput.Tests/BlueTusk.Replication.PgOutput.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.Tests/BlueTusk.Replication.Tests.csproj" />
     <Project Path="tests/BlueTusk.Security.Tests/BlueTusk.Security.Tests.csproj" />
+    <Project Path="tests/BlueTusk.SourceGeneration.Tests/BlueTusk.SourceGeneration.Tests.csproj" />
     <Project Path="tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj" />
     <Project Path="tests/BlueTusk.Transport.Tests/BlueTusk.Transport.Tests.csproj" />
     <Project Path="tests/BlueTusk.TypeSystem.Tests/BlueTusk.TypeSystem.Tests.csproj" />
+  </Folder>
+  <Folder Name="/templates/">
+    <Project Path="templates/BlueTusk.Extension/BlueTusk.Templates.csproj" />
   </Folder>
   <Folder Name="/tooling/">
     <Project Path="tooling/BlueTusk.ProtocolInspector/BlueTusk.ProtocolInspector.csproj" />

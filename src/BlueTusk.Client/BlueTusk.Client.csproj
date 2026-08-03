@@ -4,7 +4,8 @@
     <ProjectReference Include="..\BlueTusk.Protocol\BlueTusk.Protocol.csproj" />
     <ProjectReference Include="..\BlueTusk.TypeSystem\BlueTusk.TypeSystem.csproj" />
     <ProjectReference Include="..\BlueTusk.Diagnostics\BlueTusk.Diagnostics.csproj" />
-    <ProjectReference Include="..\BlueTusk.Extensions.Abstractions\BlueTusk.Extensions.Abstractions.csproj" />
+    <ProjectReference Include="..\BlueTusk.Security\BlueTusk.Security.csproj" />
+    <ProjectReference Include="..\BlueTusk.Transport\BlueTusk.Transport.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

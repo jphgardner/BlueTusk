@@ -1,0 +1,1328 @@
+#nullable enable
+~override BlueTusk.TypeSystem.BlueTuskAccessControlItem.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskBitString.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskBox.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskCircle.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskCommandId.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskCommandId.ToString() -> string
+~override BlueTusk.TypeSystem.BlueTuskEnumValue.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskFullTransactionId.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskFullTransactionId.ToString() -> string
+~override BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskInternalChar.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskInternalChar.ToString() -> string
+~override BlueTusk.TypeSystem.BlueTuskInterval.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskJsonPath.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskLine.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskLineSegment.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskMacAddress.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskMacAddress8.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskMoney.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskNetworkAddress.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskNodeTree.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskNumeric.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskObjectIdentifier.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.ToString() -> string
+~override BlueTusk.TypeSystem.BlueTuskPoint.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRange<T>.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRange<T>.ToString() -> string
+~override BlueTusk.TypeSystem.BlueTuskRangeBound<T>.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRangeBound<T>.ToString() -> string
+~override BlueTusk.TypeSystem.BlueTuskRefCursor.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegClass.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegCollation.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegConfig.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegDatabase.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegDictionary.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegNamespace.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegOper.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegOperator.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegProc.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegProcedure.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegRole.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskRegType.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskTextSearchPosition.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskTransactionId.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskTransactionId.ToString() -> string
+~override BlueTusk.TypeSystem.BlueTuskTupleId.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskTypeId.Equals(object obj) -> bool
+~override BlueTusk.TypeSystem.BlueTuskTypeName.Equals(object obj) -> bool
+abstract BlueTusk.TypeSystem.BlueTuskCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> T
+abstract BlueTusk.TypeSystem.BlueTuskCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, T value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+abstract BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueCodec<T>.Create(BlueTusk.TypeSystem.BlueTuskDataFormat format, System.ReadOnlyMemory<byte> data) -> T!
+abstract BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode!
+BlueTusk.TypeSystem.BlueTuskAccessControlItem
+BlueTusk.TypeSystem.BlueTuskAccessControlItem.BlueTuskAccessControlItem() -> void
+BlueTusk.TypeSystem.BlueTuskAccessControlItem.BlueTuskAccessControlItem(string! value) -> void
+BlueTusk.TypeSystem.BlueTuskAccessControlItem.Equals(BlueTusk.TypeSystem.BlueTuskAccessControlItem other) -> bool
+BlueTusk.TypeSystem.BlueTuskAccessControlItem.Value.get -> string!
+BlueTusk.TypeSystem.BlueTuskAccessControlItemCodec
+BlueTusk.TypeSystem.BlueTuskAccessControlItemCodec.BlueTuskAccessControlItemCodec() -> void
+BlueTusk.TypeSystem.BlueTuskAccessControlItemCodec.DefaultWriteFormat.get -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskAccessControlItemCodec.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskArrayCodec
+BlueTusk.TypeSystem.BlueTuskArrayCodec.BlueTuskArrayCodec(BlueTusk.TypeSystem.BlueTuskTypeDescriptor! elementType, BlueTusk.TypeSystem.IBlueTuskCodec! elementCodec) -> void
+BlueTusk.TypeSystem.BlueTuskArrayCodec.ClrType.get -> System.Type!
+BlueTusk.TypeSystem.BlueTuskArrayCodec.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskArrayCodec.Read(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> object!
+BlueTusk.TypeSystem.BlueTuskArrayCodec.Write(ref BlueTusk.TypeSystem.BlueTuskWriter writer, object? value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+BlueTusk.TypeSystem.BlueTuskBitString
+BlueTusk.TypeSystem.BlueTuskBitString.BlueTuskBitString() -> void
+BlueTusk.TypeSystem.BlueTuskBitString.BlueTuskBitString(string! bits) -> void
+BlueTusk.TypeSystem.BlueTuskBitString.Equals(BlueTusk.TypeSystem.BlueTuskBitString other) -> bool
+BlueTusk.TypeSystem.BlueTuskBitString.Length.get -> int
+BlueTusk.TypeSystem.BlueTuskBitString.this[int index].get -> char
+BlueTusk.TypeSystem.BlueTuskBitStringCodec
+BlueTusk.TypeSystem.BlueTuskBitStringCodec.BlueTuskBitStringCodec() -> void
+BlueTusk.TypeSystem.BlueTuskBooleanCodec
+BlueTusk.TypeSystem.BlueTuskBooleanCodec.BlueTuskBooleanCodec() -> void
+BlueTusk.TypeSystem.BlueTuskBox
+BlueTusk.TypeSystem.BlueTuskBox.BlueTuskBox() -> void
+BlueTusk.TypeSystem.BlueTuskBox.BlueTuskBox(BlueTusk.TypeSystem.BlueTuskPoint first, BlueTusk.TypeSystem.BlueTuskPoint second) -> void
+BlueTusk.TypeSystem.BlueTuskBox.Equals(BlueTusk.TypeSystem.BlueTuskBox other) -> bool
+BlueTusk.TypeSystem.BlueTuskBox.High.get -> BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskBox.Low.get -> BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskBoxCodec
+BlueTusk.TypeSystem.BlueTuskBoxCodec.BlueTuskBoxCodec() -> void
+BlueTusk.TypeSystem.BlueTuskBrinBloomSummary
+BlueTusk.TypeSystem.BlueTuskBrinBloomSummary.BlueTuskBrinBloomSummary(BlueTusk.TypeSystem.BlueTuskDataFormat format, System.ReadOnlyMemory<byte> data) -> void
+BlueTusk.TypeSystem.BlueTuskBrinBloomSummaryCodec
+BlueTusk.TypeSystem.BlueTuskBrinBloomSummaryCodec.BlueTuskBrinBloomSummaryCodec() -> void
+BlueTusk.TypeSystem.BlueTuskBrinMinMaxMultiSummary
+BlueTusk.TypeSystem.BlueTuskBrinMinMaxMultiSummary.BlueTuskBrinMinMaxMultiSummary(BlueTusk.TypeSystem.BlueTuskDataFormat format, System.ReadOnlyMemory<byte> data) -> void
+BlueTusk.TypeSystem.BlueTuskBrinMinMaxMultiSummaryCodec
+BlueTusk.TypeSystem.BlueTuskBrinMinMaxMultiSummaryCodec.BlueTuskBrinMinMaxMultiSummaryCodec() -> void
+BlueTusk.TypeSystem.BlueTuskBuiltInTypes
+BlueTusk.TypeSystem.BlueTuskByteArrayCodec
+BlueTusk.TypeSystem.BlueTuskByteArrayCodec.BlueTuskByteArrayCodec() -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType
+BlueTusk.TypeSystem.BlueTuskCatalogueType.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskCatalogueType!
+BlueTusk.TypeSystem.BlueTuskCatalogueType.ArrayType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskCatalogueType.ArrayType.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.BaseType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskCatalogueType.BaseType.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.BlueTuskCatalogueType() -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.CompositeFields.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.TypeSystem.BlueTuskCompositeField!>!
+BlueTusk.TypeSystem.BlueTuskCatalogueType.CompositeFields.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Delimiter.get -> char
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Delimiter.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.ElementType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskCatalogueType.ElementType.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.EnumLabels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.TypeSystem.BlueTuskCatalogueType.EnumLabels.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Equals(BlueTusk.TypeSystem.BlueTuskCatalogueType? other) -> bool
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Id.get -> BlueTusk.TypeSystem.BlueTuskTypeId
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Id.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.MultirangeType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskCatalogueType.MultirangeType.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Name.get -> string!
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Name.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.PostgreSqlCategory.get -> char
+BlueTusk.TypeSystem.BlueTuskCatalogueType.PostgreSqlCategory.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.PostgreSqlKind.get -> char
+BlueTusk.TypeSystem.BlueTuskCatalogueType.PostgreSqlKind.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.RangeSubtype.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskCatalogueType.RangeSubtype.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.RangeType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskCatalogueType.RangeType.init -> void
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Schema.get -> string!
+BlueTusk.TypeSystem.BlueTuskCatalogueType.Schema.init -> void
+BlueTusk.TypeSystem.BlueTuskCidrCodec
+BlueTusk.TypeSystem.BlueTuskCidrCodec.BlueTuskCidrCodec() -> void
+BlueTusk.TypeSystem.BlueTuskCircle
+BlueTusk.TypeSystem.BlueTuskCircle.BlueTuskCircle() -> void
+BlueTusk.TypeSystem.BlueTuskCircle.BlueTuskCircle(BlueTusk.TypeSystem.BlueTuskPoint center, double radius) -> void
+BlueTusk.TypeSystem.BlueTuskCircle.Center.get -> BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskCircle.Equals(BlueTusk.TypeSystem.BlueTuskCircle other) -> bool
+BlueTusk.TypeSystem.BlueTuskCircle.Radius.get -> double
+BlueTusk.TypeSystem.BlueTuskCircleCodec
+BlueTusk.TypeSystem.BlueTuskCircleCodec.BlueTuskCircleCodec() -> void
+BlueTusk.TypeSystem.BlueTuskCodec<T>
+BlueTusk.TypeSystem.BlueTuskCodec<T>.BlueTuskCodec() -> void
+BlueTusk.TypeSystem.BlueTuskCodec<T>.ClrType.get -> System.Type!
+BlueTusk.TypeSystem.BlueTuskCommandId
+BlueTusk.TypeSystem.BlueTuskCommandId.BlueTuskCommandId() -> void
+BlueTusk.TypeSystem.BlueTuskCommandId.BlueTuskCommandId(uint Value) -> void
+BlueTusk.TypeSystem.BlueTuskCommandId.Deconstruct(out uint Value) -> void
+BlueTusk.TypeSystem.BlueTuskCommandId.Equals(BlueTusk.TypeSystem.BlueTuskCommandId other) -> bool
+BlueTusk.TypeSystem.BlueTuskCommandId.Value.get -> uint
+BlueTusk.TypeSystem.BlueTuskCommandId.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskCommandIdCodec
+BlueTusk.TypeSystem.BlueTuskCommandIdCodec.BlueTuskCommandIdCodec() -> void
+BlueTusk.TypeSystem.BlueTuskCompositeCodec<T>
+BlueTusk.TypeSystem.BlueTuskCompositeCodec<T>.BlueTuskCompositeCodec() -> void
+BlueTusk.TypeSystem.BlueTuskCompositeField
+BlueTusk.TypeSystem.BlueTuskCompositeField.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskCompositeField!
+BlueTusk.TypeSystem.BlueTuskCompositeField.BlueTuskCompositeField() -> void
+BlueTusk.TypeSystem.BlueTuskCompositeField.Equals(BlueTusk.TypeSystem.BlueTuskCompositeField? other) -> bool
+BlueTusk.TypeSystem.BlueTuskCompositeField.Name.get -> string!
+BlueTusk.TypeSystem.BlueTuskCompositeField.Name.init -> void
+BlueTusk.TypeSystem.BlueTuskCompositeField.Position.get -> int
+BlueTusk.TypeSystem.BlueTuskCompositeField.Position.init -> void
+BlueTusk.TypeSystem.BlueTuskCompositeField.Type.get -> BlueTusk.TypeSystem.BlueTuskTypeId
+BlueTusk.TypeSystem.BlueTuskCompositeField.Type.init -> void
+BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskDataFormat.Binary = 1 -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskDataFormat.Text = 0 -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskDateCodec
+BlueTusk.TypeSystem.BlueTuskDateCodec.BlueTuskDateCodec() -> void
+BlueTusk.TypeSystem.BlueTuskDependencyStatistics
+BlueTusk.TypeSystem.BlueTuskDependencyStatistics.BlueTuskDependencyStatistics(BlueTusk.TypeSystem.BlueTuskDataFormat format, System.ReadOnlyMemory<byte> data) -> void
+BlueTusk.TypeSystem.BlueTuskDependencyStatisticsCodec
+BlueTusk.TypeSystem.BlueTuskDependencyStatisticsCodec.BlueTuskDependencyStatisticsCodec() -> void
+BlueTusk.TypeSystem.BlueTuskDomainCodec
+BlueTusk.TypeSystem.BlueTuskDomainCodec.BlueTuskDomainCodec(BlueTusk.TypeSystem.BlueTuskTypeDescriptor! baseType, BlueTusk.TypeSystem.IBlueTuskCodec! baseCodec) -> void
+BlueTusk.TypeSystem.BlueTuskDomainCodec.ClrType.get -> System.Type!
+BlueTusk.TypeSystem.BlueTuskDomainCodec.Read(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> object?
+BlueTusk.TypeSystem.BlueTuskDomainCodec.Write(ref BlueTusk.TypeSystem.BlueTuskWriter writer, object? value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+BlueTusk.TypeSystem.BlueTuskDoubleCodec
+BlueTusk.TypeSystem.BlueTuskDoubleCodec.BlueTuskDoubleCodec() -> void
+BlueTusk.TypeSystem.BlueTuskEnumCodec<TEnum>
+BlueTusk.TypeSystem.BlueTuskEnumCodec<TEnum>.BlueTuskEnumCodec(System.Collections.Generic.IReadOnlyDictionary<TEnum, string!>? labels = null) -> void
+BlueTusk.TypeSystem.BlueTuskEnumValue
+BlueTusk.TypeSystem.BlueTuskEnumValue.BlueTuskEnumValue() -> void
+BlueTusk.TypeSystem.BlueTuskEnumValue.BlueTuskEnumValue(string! Label) -> void
+BlueTusk.TypeSystem.BlueTuskEnumValue.Deconstruct(out string! Label) -> void
+BlueTusk.TypeSystem.BlueTuskEnumValue.Equals(BlueTusk.TypeSystem.BlueTuskEnumValue other) -> bool
+BlueTusk.TypeSystem.BlueTuskEnumValue.Label.get -> string!
+BlueTusk.TypeSystem.BlueTuskEnumValue.Label.init -> void
+BlueTusk.TypeSystem.BlueTuskEnumValueCodec
+BlueTusk.TypeSystem.BlueTuskEnumValueCodec.BlueTuskEnumValueCodec() -> void
+BlueTusk.TypeSystem.BlueTuskFullTransactionId
+BlueTusk.TypeSystem.BlueTuskFullTransactionId.BlueTuskFullTransactionId() -> void
+BlueTusk.TypeSystem.BlueTuskFullTransactionId.BlueTuskFullTransactionId(ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskFullTransactionId.Deconstruct(out ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskFullTransactionId.Equals(BlueTusk.TypeSystem.BlueTuskFullTransactionId other) -> bool
+BlueTusk.TypeSystem.BlueTuskFullTransactionId.Value.get -> ulong
+BlueTusk.TypeSystem.BlueTuskFullTransactionId.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskFullTransactionIdCodec
+BlueTusk.TypeSystem.BlueTuskFullTransactionIdCodec.BlueTuskFullTransactionIdCodec() -> void
+BlueTusk.TypeSystem.BlueTuskGistTextSearchVector
+BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.BlueTuskGistTextSearchVector() -> void
+BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.BlueTuskGistTextSearchVector(string! value) -> void
+BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.Equals(BlueTusk.TypeSystem.BlueTuskGistTextSearchVector other) -> bool
+BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.Value.get -> string!
+BlueTusk.TypeSystem.BlueTuskGistTextSearchVectorCodec
+BlueTusk.TypeSystem.BlueTuskGistTextSearchVectorCodec.BlueTuskGistTextSearchVectorCodec() -> void
+BlueTusk.TypeSystem.BlueTuskGuidCodec
+BlueTusk.TypeSystem.BlueTuskGuidCodec.BlueTuskGuidCodec() -> void
+BlueTusk.TypeSystem.BlueTuskInetCodec
+BlueTusk.TypeSystem.BlueTuskInetCodec.BlueTuskInetCodec() -> void
+BlueTusk.TypeSystem.BlueTuskInt16Codec
+BlueTusk.TypeSystem.BlueTuskInt16Codec.BlueTuskInt16Codec() -> void
+BlueTusk.TypeSystem.BlueTuskInt16Vector
+BlueTusk.TypeSystem.BlueTuskInt16Vector.BlueTuskInt16Vector(System.Collections.Generic.IEnumerable<short>! values) -> void
+BlueTusk.TypeSystem.BlueTuskInt16Vector.Count.get -> int
+BlueTusk.TypeSystem.BlueTuskInt16Vector.Equals(BlueTusk.TypeSystem.BlueTuskInt16Vector? other) -> bool
+BlueTusk.TypeSystem.BlueTuskInt16Vector.GetEnumerator() -> System.Collections.Generic.IEnumerator<short>!
+BlueTusk.TypeSystem.BlueTuskInt16Vector.this[int index].get -> short
+BlueTusk.TypeSystem.BlueTuskInt16VectorCodec
+BlueTusk.TypeSystem.BlueTuskInt16VectorCodec.BlueTuskInt16VectorCodec() -> void
+BlueTusk.TypeSystem.BlueTuskInt16VectorCodec.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskInt32Codec
+BlueTusk.TypeSystem.BlueTuskInt32Codec.BlueTuskInt32Codec() -> void
+BlueTusk.TypeSystem.BlueTuskInt64Codec
+BlueTusk.TypeSystem.BlueTuskInt64Codec.BlueTuskInt64Codec() -> void
+BlueTusk.TypeSystem.BlueTuskInternalChar
+BlueTusk.TypeSystem.BlueTuskInternalChar.BlueTuskInternalChar() -> void
+BlueTusk.TypeSystem.BlueTuskInternalChar.BlueTuskInternalChar(byte Value) -> void
+BlueTusk.TypeSystem.BlueTuskInternalChar.Deconstruct(out byte Value) -> void
+BlueTusk.TypeSystem.BlueTuskInternalChar.Equals(BlueTusk.TypeSystem.BlueTuskInternalChar other) -> bool
+BlueTusk.TypeSystem.BlueTuskInternalChar.Value.get -> byte
+BlueTusk.TypeSystem.BlueTuskInternalChar.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskInternalCharCodec
+BlueTusk.TypeSystem.BlueTuskInternalCharCodec.BlueTuskInternalCharCodec() -> void
+BlueTusk.TypeSystem.BlueTuskInterval
+BlueTusk.TypeSystem.BlueTuskInterval.BlueTuskInterval() -> void
+BlueTusk.TypeSystem.BlueTuskInterval.BlueTuskInterval(int months, int days, long microseconds) -> void
+BlueTusk.TypeSystem.BlueTuskInterval.Days.get -> int
+BlueTusk.TypeSystem.BlueTuskInterval.Equals(BlueTusk.TypeSystem.BlueTuskInterval other) -> bool
+BlueTusk.TypeSystem.BlueTuskInterval.IsFinite.get -> bool
+BlueTusk.TypeSystem.BlueTuskInterval.Kind.get -> BlueTusk.TypeSystem.BlueTuskIntervalKind
+BlueTusk.TypeSystem.BlueTuskInterval.Microseconds.get -> long
+BlueTusk.TypeSystem.BlueTuskInterval.Months.get -> int
+BlueTusk.TypeSystem.BlueTuskIntervalCodec
+BlueTusk.TypeSystem.BlueTuskIntervalCodec.BlueTuskIntervalCodec() -> void
+BlueTusk.TypeSystem.BlueTuskIntervalKind
+BlueTusk.TypeSystem.BlueTuskIntervalKind.Finite = 0 -> BlueTusk.TypeSystem.BlueTuskIntervalKind
+BlueTusk.TypeSystem.BlueTuskIntervalKind.NegativeInfinity = 2 -> BlueTusk.TypeSystem.BlueTuskIntervalKind
+BlueTusk.TypeSystem.BlueTuskIntervalKind.PositiveInfinity = 1 -> BlueTusk.TypeSystem.BlueTuskIntervalKind
+BlueTusk.TypeSystem.BlueTuskJsonbCodec
+BlueTusk.TypeSystem.BlueTuskJsonbCodec.BlueTuskJsonbCodec() -> void
+BlueTusk.TypeSystem.BlueTuskJsonPath
+BlueTusk.TypeSystem.BlueTuskJsonPath.BlueTuskJsonPath() -> void
+BlueTusk.TypeSystem.BlueTuskJsonPath.BlueTuskJsonPath(string! value) -> void
+BlueTusk.TypeSystem.BlueTuskJsonPath.Equals(BlueTusk.TypeSystem.BlueTuskJsonPath other) -> bool
+BlueTusk.TypeSystem.BlueTuskJsonPath.Value.get -> string!
+BlueTusk.TypeSystem.BlueTuskJsonPathCodec
+BlueTusk.TypeSystem.BlueTuskJsonPathCodec.BlueTuskJsonPathCodec() -> void
+BlueTusk.TypeSystem.BlueTuskLine
+BlueTusk.TypeSystem.BlueTuskLine.A.get -> double
+BlueTusk.TypeSystem.BlueTuskLine.B.get -> double
+BlueTusk.TypeSystem.BlueTuskLine.BlueTuskLine() -> void
+BlueTusk.TypeSystem.BlueTuskLine.BlueTuskLine(double a, double b, double c) -> void
+BlueTusk.TypeSystem.BlueTuskLine.C.get -> double
+BlueTusk.TypeSystem.BlueTuskLine.Equals(BlueTusk.TypeSystem.BlueTuskLine other) -> bool
+BlueTusk.TypeSystem.BlueTuskLineCodec
+BlueTusk.TypeSystem.BlueTuskLineCodec.BlueTuskLineCodec() -> void
+BlueTusk.TypeSystem.BlueTuskLineSegment
+BlueTusk.TypeSystem.BlueTuskLineSegment.BlueTuskLineSegment() -> void
+BlueTusk.TypeSystem.BlueTuskLineSegment.BlueTuskLineSegment(BlueTusk.TypeSystem.BlueTuskPoint Start, BlueTusk.TypeSystem.BlueTuskPoint End) -> void
+BlueTusk.TypeSystem.BlueTuskLineSegment.Deconstruct(out BlueTusk.TypeSystem.BlueTuskPoint Start, out BlueTusk.TypeSystem.BlueTuskPoint End) -> void
+BlueTusk.TypeSystem.BlueTuskLineSegment.End.get -> BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskLineSegment.End.init -> void
+BlueTusk.TypeSystem.BlueTuskLineSegment.Equals(BlueTusk.TypeSystem.BlueTuskLineSegment other) -> bool
+BlueTusk.TypeSystem.BlueTuskLineSegment.Start.get -> BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskLineSegment.Start.init -> void
+BlueTusk.TypeSystem.BlueTuskLineSegmentCodec
+BlueTusk.TypeSystem.BlueTuskLineSegmentCodec.BlueTuskLineSegmentCodec() -> void
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.BlueTuskLogSequenceNumber() -> void
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.BlueTuskLogSequenceNumber(ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.CompareTo(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber other) -> int
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.Deconstruct(out ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.Equals(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber other) -> bool
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.ToString(string? format, System.IFormatProvider? formatProvider) -> string!
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.TryFormat(System.Span<char> destination, out int charsWritten, System.ReadOnlySpan<char> format, System.IFormatProvider? provider) -> bool
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.Value.get -> ulong
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumberCodec
+BlueTusk.TypeSystem.BlueTuskLogSequenceNumberCodec.BlueTuskLogSequenceNumberCodec() -> void
+BlueTusk.TypeSystem.BlueTuskMacAddress
+BlueTusk.TypeSystem.BlueTuskMacAddress.BlueTuskMacAddress() -> void
+BlueTusk.TypeSystem.BlueTuskMacAddress.BlueTuskMacAddress(ulong value) -> void
+BlueTusk.TypeSystem.BlueTuskMacAddress.Equals(BlueTusk.TypeSystem.BlueTuskMacAddress other) -> bool
+BlueTusk.TypeSystem.BlueTuskMacAddress.Value.get -> ulong
+BlueTusk.TypeSystem.BlueTuskMacAddress8
+BlueTusk.TypeSystem.BlueTuskMacAddress8.BlueTuskMacAddress8() -> void
+BlueTusk.TypeSystem.BlueTuskMacAddress8.BlueTuskMacAddress8(ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskMacAddress8.Deconstruct(out ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskMacAddress8.Equals(BlueTusk.TypeSystem.BlueTuskMacAddress8 other) -> bool
+BlueTusk.TypeSystem.BlueTuskMacAddress8.Value.get -> ulong
+BlueTusk.TypeSystem.BlueTuskMacAddress8.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskMacAddress8Codec
+BlueTusk.TypeSystem.BlueTuskMacAddress8Codec.BlueTuskMacAddress8Codec() -> void
+BlueTusk.TypeSystem.BlueTuskMacAddressCodec
+BlueTusk.TypeSystem.BlueTuskMacAddressCodec.BlueTuskMacAddressCodec() -> void
+BlueTusk.TypeSystem.BlueTuskMoney
+BlueTusk.TypeSystem.BlueTuskMoney.BlueTuskMoney() -> void
+BlueTusk.TypeSystem.BlueTuskMoney.BlueTuskMoney(long unscaledValue, int fractionalDigits) -> void
+BlueTusk.TypeSystem.BlueTuskMoney.Equals(BlueTusk.TypeSystem.BlueTuskMoney other) -> bool
+BlueTusk.TypeSystem.BlueTuskMoney.FractionalDigits.get -> int
+BlueTusk.TypeSystem.BlueTuskMoney.ToNumeric() -> BlueTusk.TypeSystem.BlueTuskNumeric
+BlueTusk.TypeSystem.BlueTuskMoney.UnscaledValue.get -> long
+BlueTusk.TypeSystem.BlueTuskMoneyCodec
+BlueTusk.TypeSystem.BlueTuskMoneyCodec.BlueTuskMoneyCodec(BlueTusk.TypeSystem.BlueTuskMoneyFormat! format) -> void
+BlueTusk.TypeSystem.BlueTuskMoneyCodec.FractionalDigits.get -> int
+BlueTusk.TypeSystem.BlueTuskMoneyCodec.Locale.get -> string!
+BlueTusk.TypeSystem.BlueTuskMoneyFormat
+BlueTusk.TypeSystem.BlueTuskMoneyFormat.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskMoneyFormat!
+BlueTusk.TypeSystem.BlueTuskMoneyFormat.BlueTuskMoneyFormat(string! locale, int fractionalDigits) -> void
+BlueTusk.TypeSystem.BlueTuskMoneyFormat.Equals(BlueTusk.TypeSystem.BlueTuskMoneyFormat? other) -> bool
+BlueTusk.TypeSystem.BlueTuskMoneyFormat.FractionalDigits.get -> int
+BlueTusk.TypeSystem.BlueTuskMoneyFormat.Locale.get -> string!
+BlueTusk.TypeSystem.BlueTuskMostCommonValueStatistics
+BlueTusk.TypeSystem.BlueTuskMostCommonValueStatistics.BlueTuskMostCommonValueStatistics(BlueTusk.TypeSystem.BlueTuskDataFormat format, System.ReadOnlyMemory<byte> data) -> void
+BlueTusk.TypeSystem.BlueTuskMostCommonValueStatisticsCodec
+BlueTusk.TypeSystem.BlueTuskMostCommonValueStatisticsCodec.BlueTuskMostCommonValueStatisticsCodec() -> void
+BlueTusk.TypeSystem.BlueTuskMultirange
+BlueTusk.TypeSystem.BlueTuskMultirange<T>
+BlueTusk.TypeSystem.BlueTuskMultirange<T>.BlueTuskMultirange(System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskRange<T>>! ranges) -> void
+BlueTusk.TypeSystem.BlueTuskMultirange<T>.Count.get -> int
+BlueTusk.TypeSystem.BlueTuskMultirange<T>.Equals(BlueTusk.TypeSystem.BlueTuskMultirange<T>? other) -> bool
+BlueTusk.TypeSystem.BlueTuskMultirange<T>.GetEnumerator() -> System.Collections.Generic.IEnumerator<BlueTusk.TypeSystem.BlueTuskRange<T>>!
+BlueTusk.TypeSystem.BlueTuskMultirange<T>.this[int index].get -> BlueTusk.TypeSystem.BlueTuskRange<T>
+BlueTusk.TypeSystem.BlueTuskMultirangeCodec<T>
+BlueTusk.TypeSystem.BlueTuskNameAttribute
+BlueTusk.TypeSystem.BlueTuskNameAttribute.BlueTuskNameAttribute(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskNameAttribute.Name.get -> string!
+BlueTusk.TypeSystem.BlueTuskNDistinctStatistics
+BlueTusk.TypeSystem.BlueTuskNDistinctStatistics.BlueTuskNDistinctStatistics(BlueTusk.TypeSystem.BlueTuskDataFormat format, System.ReadOnlyMemory<byte> data) -> void
+BlueTusk.TypeSystem.BlueTuskNDistinctStatisticsCodec
+BlueTusk.TypeSystem.BlueTuskNDistinctStatisticsCodec.BlueTuskNDistinctStatisticsCodec() -> void
+BlueTusk.TypeSystem.BlueTuskNetworkAddress
+BlueTusk.TypeSystem.BlueTuskNetworkAddress.Address.get -> System.Net.IPAddress!
+BlueTusk.TypeSystem.BlueTuskNetworkAddress.BlueTuskNetworkAddress() -> void
+BlueTusk.TypeSystem.BlueTuskNetworkAddress.BlueTuskNetworkAddress(System.Net.IPAddress! address, int prefixLength, bool isCidr = false) -> void
+BlueTusk.TypeSystem.BlueTuskNetworkAddress.Equals(BlueTusk.TypeSystem.BlueTuskNetworkAddress other) -> bool
+BlueTusk.TypeSystem.BlueTuskNetworkAddress.IsCidr.get -> bool
+BlueTusk.TypeSystem.BlueTuskNetworkAddress.PrefixLength.get -> int
+BlueTusk.TypeSystem.BlueTuskNetworkAddressCodec
+BlueTusk.TypeSystem.BlueTuskNetworkAddressCodec.BlueTuskNetworkAddressCodec(bool isCidr) -> void
+BlueTusk.TypeSystem.BlueTuskNodeTree
+BlueTusk.TypeSystem.BlueTuskNodeTree.BlueTuskNodeTree() -> void
+BlueTusk.TypeSystem.BlueTuskNodeTree.BlueTuskNodeTree(string! value) -> void
+BlueTusk.TypeSystem.BlueTuskNodeTree.Equals(BlueTusk.TypeSystem.BlueTuskNodeTree other) -> bool
+BlueTusk.TypeSystem.BlueTuskNodeTree.Value.get -> string!
+BlueTusk.TypeSystem.BlueTuskNodeTreeCodec
+BlueTusk.TypeSystem.BlueTuskNodeTreeCodec.BlueTuskNodeTreeCodec() -> void
+BlueTusk.TypeSystem.BlueTuskNumeric
+BlueTusk.TypeSystem.BlueTuskNumeric.BlueTuskNumeric() -> void
+BlueTusk.TypeSystem.BlueTuskNumeric.BlueTuskNumeric(System.Numerics.BigInteger unscaledValue, int scale) -> void
+BlueTusk.TypeSystem.BlueTuskNumeric.Equals(BlueTusk.TypeSystem.BlueTuskNumeric other) -> bool
+BlueTusk.TypeSystem.BlueTuskNumeric.IsFinite.get -> bool
+BlueTusk.TypeSystem.BlueTuskNumeric.Kind.get -> BlueTusk.TypeSystem.BlueTuskNumericKind
+BlueTusk.TypeSystem.BlueTuskNumeric.Scale.get -> int
+BlueTusk.TypeSystem.BlueTuskNumeric.ToDecimal() -> decimal
+BlueTusk.TypeSystem.BlueTuskNumeric.UnscaledValue.get -> System.Numerics.BigInteger
+BlueTusk.TypeSystem.BlueTuskNumericCodec
+BlueTusk.TypeSystem.BlueTuskNumericCodec.BlueTuskNumericCodec() -> void
+BlueTusk.TypeSystem.BlueTuskNumericKind
+BlueTusk.TypeSystem.BlueTuskNumericKind.Finite = 0 -> BlueTusk.TypeSystem.BlueTuskNumericKind
+BlueTusk.TypeSystem.BlueTuskNumericKind.NaN = 1 -> BlueTusk.TypeSystem.BlueTuskNumericKind
+BlueTusk.TypeSystem.BlueTuskNumericKind.NegativeInfinity = 3 -> BlueTusk.TypeSystem.BlueTuskNumericKind
+BlueTusk.TypeSystem.BlueTuskNumericKind.PositiveInfinity = 2 -> BlueTusk.TypeSystem.BlueTuskNumericKind
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier.BlueTuskObjectIdentifier() -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier.BlueTuskObjectIdentifier(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier.BlueTuskObjectIdentifier(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier.Equals(BlueTusk.TypeSystem.BlueTuskObjectIdentifier other) -> bool
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier.IsNumeric.get -> bool
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier.Name.get -> string?
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier.Oid.get -> uint?
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.BlueTuskObjectIdentifier64() -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.BlueTuskObjectIdentifier64(ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.Deconstruct(out ulong Value) -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.Equals(BlueTusk.TypeSystem.BlueTuskObjectIdentifier64 other) -> bool
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.Value.get -> ulong
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64Codec
+BlueTusk.TypeSystem.BlueTuskObjectIdentifier64Codec.BlueTuskObjectIdentifier64Codec() -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierCodec<T>
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierCodec<T>.BlueTuskObjectIdentifierCodec() -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierCodec<T>.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector.BlueTuskObjectIdentifierVector(System.Collections.Generic.IEnumerable<uint>! values) -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector.Count.get -> int
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector.Equals(BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector? other) -> bool
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector.GetEnumerator() -> System.Collections.Generic.IEnumerator<uint>!
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector.this[int index].get -> uint
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVectorCodec
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVectorCodec.BlueTuskObjectIdentifierVectorCodec() -> void
+BlueTusk.TypeSystem.BlueTuskObjectIdentifierVectorCodec.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueCodec<T>
+BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueCodec<T>.BlueTuskOpaqueCatalogueCodec() -> void
+BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue
+BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue.BlueTuskOpaqueCatalogueValue(BlueTusk.TypeSystem.BlueTuskDataFormat format, System.ReadOnlyMemory<byte> data) -> void
+BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue.Data.get -> System.ReadOnlyMemory<byte>
+BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue.Equals(BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue? other) -> bool
+BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue.Format.get -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskPath
+BlueTusk.TypeSystem.BlueTuskPath.BlueTuskPath(System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskPoint>! points, bool isClosed) -> void
+BlueTusk.TypeSystem.BlueTuskPath.Count.get -> int
+BlueTusk.TypeSystem.BlueTuskPath.Equals(BlueTusk.TypeSystem.BlueTuskPath? other) -> bool
+BlueTusk.TypeSystem.BlueTuskPath.GetEnumerator() -> System.Collections.Generic.IEnumerator<BlueTusk.TypeSystem.BlueTuskPoint>!
+BlueTusk.TypeSystem.BlueTuskPath.IsClosed.get -> bool
+BlueTusk.TypeSystem.BlueTuskPath.this[int index].get -> BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskPathCodec
+BlueTusk.TypeSystem.BlueTuskPathCodec.BlueTuskPathCodec() -> void
+BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskPoint.BlueTuskPoint() -> void
+BlueTusk.TypeSystem.BlueTuskPoint.BlueTuskPoint(double X, double Y) -> void
+BlueTusk.TypeSystem.BlueTuskPoint.Deconstruct(out double X, out double Y) -> void
+BlueTusk.TypeSystem.BlueTuskPoint.Equals(BlueTusk.TypeSystem.BlueTuskPoint other) -> bool
+BlueTusk.TypeSystem.BlueTuskPoint.X.get -> double
+BlueTusk.TypeSystem.BlueTuskPoint.X.init -> void
+BlueTusk.TypeSystem.BlueTuskPoint.Y.get -> double
+BlueTusk.TypeSystem.BlueTuskPoint.Y.init -> void
+BlueTusk.TypeSystem.BlueTuskPointCodec
+BlueTusk.TypeSystem.BlueTuskPointCodec.BlueTuskPointCodec() -> void
+BlueTusk.TypeSystem.BlueTuskPolygon
+BlueTusk.TypeSystem.BlueTuskPolygon.BlueTuskPolygon(System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskPoint>! points) -> void
+BlueTusk.TypeSystem.BlueTuskPolygon.Count.get -> int
+BlueTusk.TypeSystem.BlueTuskPolygon.Equals(BlueTusk.TypeSystem.BlueTuskPolygon? other) -> bool
+BlueTusk.TypeSystem.BlueTuskPolygon.GetEnumerator() -> System.Collections.Generic.IEnumerator<BlueTusk.TypeSystem.BlueTuskPoint>!
+BlueTusk.TypeSystem.BlueTuskPolygon.this[int index].get -> BlueTusk.TypeSystem.BlueTuskPoint
+BlueTusk.TypeSystem.BlueTuskPolygonCodec
+BlueTusk.TypeSystem.BlueTuskPolygonCodec.BlueTuskPolygonCodec() -> void
+BlueTusk.TypeSystem.BlueTuskRange
+BlueTusk.TypeSystem.BlueTuskRange<T>
+BlueTusk.TypeSystem.BlueTuskRange<T>.BlueTuskRange() -> void
+BlueTusk.TypeSystem.BlueTuskRange<T>.BlueTuskRange(BlueTusk.TypeSystem.BlueTuskRangeBound<T> lowerBound, BlueTusk.TypeSystem.BlueTuskRangeBound<T> upperBound) -> void
+BlueTusk.TypeSystem.BlueTuskRange<T>.BlueTuskRange(T lowerBound, bool lowerBoundInclusive, T upperBound, bool upperBoundInclusive) -> void
+BlueTusk.TypeSystem.BlueTuskRange<T>.BlueTuskRange(T lowerBound, T upperBound) -> void
+BlueTusk.TypeSystem.BlueTuskRange<T>.Equals(BlueTusk.TypeSystem.BlueTuskRange<T> other) -> bool
+BlueTusk.TypeSystem.BlueTuskRange<T>.IsEmpty.get -> bool
+BlueTusk.TypeSystem.BlueTuskRange<T>.LowerBound.get -> BlueTusk.TypeSystem.BlueTuskRangeBound<T>
+BlueTusk.TypeSystem.BlueTuskRange<T>.UpperBound.get -> BlueTusk.TypeSystem.BlueTuskRangeBound<T>
+BlueTusk.TypeSystem.BlueTuskRangeBound
+BlueTusk.TypeSystem.BlueTuskRangeBound<T>
+BlueTusk.TypeSystem.BlueTuskRangeBound<T>.BlueTuskRangeBound() -> void
+BlueTusk.TypeSystem.BlueTuskRangeBound<T>.Equals(BlueTusk.TypeSystem.BlueTuskRangeBound<T> other) -> bool
+BlueTusk.TypeSystem.BlueTuskRangeBound<T>.HasValue.get -> bool
+BlueTusk.TypeSystem.BlueTuskRangeBound<T>.IsInclusive.get -> bool
+BlueTusk.TypeSystem.BlueTuskRangeBound<T>.IsInfinite.get -> bool
+BlueTusk.TypeSystem.BlueTuskRangeBound<T>.Value.get -> T
+BlueTusk.TypeSystem.BlueTuskRangeCodec<T>
+BlueTusk.TypeSystem.BlueTuskReader
+BlueTusk.TypeSystem.BlueTuskReader.BlueTuskReader() -> void
+BlueTusk.TypeSystem.BlueTuskReader.BlueTuskReader(System.ReadOnlySpan<byte> buffer) -> void
+BlueTusk.TypeSystem.BlueTuskReader.ReadByte() -> byte
+BlueTusk.TypeSystem.BlueTuskReader.ReadBytes(int count) -> System.ReadOnlySpan<byte>
+BlueTusk.TypeSystem.BlueTuskReader.ReadDoubleBigEndian() -> double
+BlueTusk.TypeSystem.BlueTuskReader.ReadInt16BigEndian() -> short
+BlueTusk.TypeSystem.BlueTuskReader.ReadInt32BigEndian() -> int
+BlueTusk.TypeSystem.BlueTuskReader.ReadInt64BigEndian() -> long
+BlueTusk.TypeSystem.BlueTuskReader.ReadNullTerminatedUtf8() -> string!
+BlueTusk.TypeSystem.BlueTuskReader.ReadRemainingBytes() -> System.ReadOnlySpan<byte>
+BlueTusk.TypeSystem.BlueTuskReader.ReadRemainingUtf8() -> string!
+BlueTusk.TypeSystem.BlueTuskReader.ReadSingleBigEndian() -> float
+BlueTusk.TypeSystem.BlueTuskReader.ReadUInt16BigEndian() -> ushort
+BlueTusk.TypeSystem.BlueTuskReader.ReadUInt32BigEndian() -> uint
+BlueTusk.TypeSystem.BlueTuskReader.ReadUInt64BigEndian() -> ulong
+BlueTusk.TypeSystem.BlueTuskReader.Remaining.get -> int
+BlueTusk.TypeSystem.BlueTuskRecord
+BlueTusk.TypeSystem.BlueTuskRecord.BlueTuskRecord(System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskRecordField!>! fields) -> void
+BlueTusk.TypeSystem.BlueTuskRecord.Count.get -> int
+BlueTusk.TypeSystem.BlueTuskRecord.GetEnumerator() -> System.Collections.Generic.IEnumerator<BlueTusk.TypeSystem.BlueTuskRecordField!>!
+BlueTusk.TypeSystem.BlueTuskRecord.this[int index].get -> BlueTusk.TypeSystem.BlueTuskRecordField!
+BlueTusk.TypeSystem.BlueTuskRecord.this[string! name].get -> BlueTusk.TypeSystem.BlueTuskRecordField!
+BlueTusk.TypeSystem.BlueTuskRecordCodec
+BlueTusk.TypeSystem.BlueTuskRecordField
+BlueTusk.TypeSystem.BlueTuskRecordField.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskRecordField!
+BlueTusk.TypeSystem.BlueTuskRecordField.BlueTuskRecordField(string? Name, BlueTusk.TypeSystem.BlueTuskTypeDescriptor? Type, object? Value) -> void
+BlueTusk.TypeSystem.BlueTuskRecordField.Deconstruct(out string? Name, out BlueTusk.TypeSystem.BlueTuskTypeDescriptor? Type, out object? Value) -> void
+BlueTusk.TypeSystem.BlueTuskRecordField.Equals(BlueTusk.TypeSystem.BlueTuskRecordField? other) -> bool
+BlueTusk.TypeSystem.BlueTuskRecordField.Name.get -> string?
+BlueTusk.TypeSystem.BlueTuskRecordField.Name.init -> void
+BlueTusk.TypeSystem.BlueTuskRecordField.Type.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor?
+BlueTusk.TypeSystem.BlueTuskRecordField.Type.init -> void
+BlueTusk.TypeSystem.BlueTuskRecordField.Value.get -> object?
+BlueTusk.TypeSystem.BlueTuskRecordField.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskRefCursor
+BlueTusk.TypeSystem.BlueTuskRefCursor.BlueTuskRefCursor() -> void
+BlueTusk.TypeSystem.BlueTuskRefCursor.BlueTuskRefCursor(string! value) -> void
+BlueTusk.TypeSystem.BlueTuskRefCursor.Equals(BlueTusk.TypeSystem.BlueTuskRefCursor other) -> bool
+BlueTusk.TypeSystem.BlueTuskRefCursor.Value.get -> string!
+BlueTusk.TypeSystem.BlueTuskRefCursorCodec
+BlueTusk.TypeSystem.BlueTuskRefCursorCodec.BlueTuskRefCursorCodec() -> void
+BlueTusk.TypeSystem.BlueTuskRegClass
+BlueTusk.TypeSystem.BlueTuskRegClass.BlueTuskRegClass() -> void
+BlueTusk.TypeSystem.BlueTuskRegClass.BlueTuskRegClass(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegClass.BlueTuskRegClass(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegClass.BlueTuskRegClass(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegClass.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegClass.Equals(BlueTusk.TypeSystem.BlueTuskRegClass other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegClass.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegClass.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegCollation
+BlueTusk.TypeSystem.BlueTuskRegCollation.BlueTuskRegCollation() -> void
+BlueTusk.TypeSystem.BlueTuskRegCollation.BlueTuskRegCollation(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegCollation.BlueTuskRegCollation(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegCollation.BlueTuskRegCollation(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegCollation.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegCollation.Equals(BlueTusk.TypeSystem.BlueTuskRegCollation other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegCollation.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegCollation.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegConfig
+BlueTusk.TypeSystem.BlueTuskRegConfig.BlueTuskRegConfig() -> void
+BlueTusk.TypeSystem.BlueTuskRegConfig.BlueTuskRegConfig(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegConfig.BlueTuskRegConfig(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegConfig.BlueTuskRegConfig(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegConfig.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegConfig.Equals(BlueTusk.TypeSystem.BlueTuskRegConfig other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegConfig.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegConfig.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegDatabase
+BlueTusk.TypeSystem.BlueTuskRegDatabase.BlueTuskRegDatabase() -> void
+BlueTusk.TypeSystem.BlueTuskRegDatabase.BlueTuskRegDatabase(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegDatabase.BlueTuskRegDatabase(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegDatabase.BlueTuskRegDatabase(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegDatabase.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegDatabase.Equals(BlueTusk.TypeSystem.BlueTuskRegDatabase other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegDatabase.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegDatabase.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegDictionary
+BlueTusk.TypeSystem.BlueTuskRegDictionary.BlueTuskRegDictionary() -> void
+BlueTusk.TypeSystem.BlueTuskRegDictionary.BlueTuskRegDictionary(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegDictionary.BlueTuskRegDictionary(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegDictionary.BlueTuskRegDictionary(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegDictionary.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegDictionary.Equals(BlueTusk.TypeSystem.BlueTuskRegDictionary other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegDictionary.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegDictionary.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegNamespace
+BlueTusk.TypeSystem.BlueTuskRegNamespace.BlueTuskRegNamespace() -> void
+BlueTusk.TypeSystem.BlueTuskRegNamespace.BlueTuskRegNamespace(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegNamespace.BlueTuskRegNamespace(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegNamespace.BlueTuskRegNamespace(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegNamespace.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegNamespace.Equals(BlueTusk.TypeSystem.BlueTuskRegNamespace other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegNamespace.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegNamespace.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegOper
+BlueTusk.TypeSystem.BlueTuskRegOper.BlueTuskRegOper() -> void
+BlueTusk.TypeSystem.BlueTuskRegOper.BlueTuskRegOper(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegOper.BlueTuskRegOper(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegOper.BlueTuskRegOper(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegOper.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegOper.Equals(BlueTusk.TypeSystem.BlueTuskRegOper other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegOper.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegOper.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegOperator
+BlueTusk.TypeSystem.BlueTuskRegOperator.BlueTuskRegOperator() -> void
+BlueTusk.TypeSystem.BlueTuskRegOperator.BlueTuskRegOperator(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegOperator.BlueTuskRegOperator(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegOperator.BlueTuskRegOperator(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegOperator.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegOperator.Equals(BlueTusk.TypeSystem.BlueTuskRegOperator other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegOperator.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegOperator.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegProc
+BlueTusk.TypeSystem.BlueTuskRegProc.BlueTuskRegProc() -> void
+BlueTusk.TypeSystem.BlueTuskRegProc.BlueTuskRegProc(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegProc.BlueTuskRegProc(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegProc.BlueTuskRegProc(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegProc.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegProc.Equals(BlueTusk.TypeSystem.BlueTuskRegProc other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegProc.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegProc.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegProcedure
+BlueTusk.TypeSystem.BlueTuskRegProcedure.BlueTuskRegProcedure() -> void
+BlueTusk.TypeSystem.BlueTuskRegProcedure.BlueTuskRegProcedure(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegProcedure.BlueTuskRegProcedure(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegProcedure.BlueTuskRegProcedure(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegProcedure.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegProcedure.Equals(BlueTusk.TypeSystem.BlueTuskRegProcedure other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegProcedure.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegProcedure.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegRole
+BlueTusk.TypeSystem.BlueTuskRegRole.BlueTuskRegRole() -> void
+BlueTusk.TypeSystem.BlueTuskRegRole.BlueTuskRegRole(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegRole.BlueTuskRegRole(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegRole.BlueTuskRegRole(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegRole.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegRole.Equals(BlueTusk.TypeSystem.BlueTuskRegRole other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegRole.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegRole.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskRegType
+BlueTusk.TypeSystem.BlueTuskRegType.BlueTuskRegType() -> void
+BlueTusk.TypeSystem.BlueTuskRegType.BlueTuskRegType(BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegType.BlueTuskRegType(string! name) -> void
+BlueTusk.TypeSystem.BlueTuskRegType.BlueTuskRegType(uint oid) -> void
+BlueTusk.TypeSystem.BlueTuskRegType.Deconstruct(out BlueTusk.TypeSystem.BlueTuskObjectIdentifier Identifier) -> void
+BlueTusk.TypeSystem.BlueTuskRegType.Equals(BlueTusk.TypeSystem.BlueTuskRegType other) -> bool
+BlueTusk.TypeSystem.BlueTuskRegType.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.BlueTuskRegType.Identifier.init -> void
+BlueTusk.TypeSystem.BlueTuskSingleCodec
+BlueTusk.TypeSystem.BlueTuskSingleCodec.BlueTuskSingleCodec() -> void
+BlueTusk.TypeSystem.BlueTuskSplitCodec<T>
+BlueTusk.TypeSystem.BlueTuskSplitCodec<T>.BlueTuskSplitCodec(BlueTusk.TypeSystem.IBlueTuskCodec<T>! binaryCodec, BlueTusk.TypeSystem.IBlueTuskCodec<T>! textCodec) -> void
+BlueTusk.TypeSystem.BlueTuskStringCodec
+BlueTusk.TypeSystem.BlueTuskStringCodec.BlueTuskStringCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchPosition
+BlueTusk.TypeSystem.BlueTuskTextSearchPosition.BlueTuskTextSearchPosition() -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchPosition.BlueTuskTextSearchPosition(int position, BlueTusk.TypeSystem.BlueTuskTextSearchWeight weight = BlueTusk.TypeSystem.BlueTuskTextSearchWeight.D) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchPosition.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchPosition other) -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchPosition.Position.get -> int
+BlueTusk.TypeSystem.BlueTuskTextSearchPosition.Weight.get -> BlueTusk.TypeSystem.BlueTuskTextSearchWeight
+BlueTusk.TypeSystem.BlueTuskTextSearchQuery
+BlueTusk.TypeSystem.BlueTuskTextSearchQuery.BlueTuskTextSearchQuery(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? root) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchQuery.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQuery? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchQuery.Root.get -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode?
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.BlueTuskTextSearchQueryBinary(BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator operator, BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode! left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode! right, int phraseDistance = 1) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.Left.get -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode!
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.Operator.get -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.PhraseDistance.get -> int
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.Right.get -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode!
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryCodec
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryCodec.BlueTuskTextSearchQueryCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.BlueTuskTextSearchQueryLexeme(string! lexeme, BlueTusk.TypeSystem.BlueTuskTextSearchWeights weights = BlueTusk.TypeSystem.BlueTuskTextSearchWeights.None, bool isPrefix = false) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.IsPrefix.get -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.Lexeme.get -> string!
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.Weights.get -> BlueTusk.TypeSystem.BlueTuskTextSearchWeights
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.BlueTuskTextSearchQueryNode() -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.BlueTuskTextSearchQueryNode(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode! original) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.BlueTuskTextSearchQueryNot(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode! operand) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.Operand.get -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode!
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator.And = 2 -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator.Or = 3 -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator
+BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator.Phrase = 4 -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryOperator
+BlueTusk.TypeSystem.BlueTuskTextSearchVector
+BlueTusk.TypeSystem.BlueTuskTextSearchVector.BlueTuskTextSearchVector(System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry!>! entries) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchVector.Count.get -> int
+BlueTusk.TypeSystem.BlueTuskTextSearchVector.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchVector? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchVector.GetEnumerator() -> System.Collections.Generic.IEnumerator<BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry!>!
+BlueTusk.TypeSystem.BlueTuskTextSearchVector.this[int index].get -> BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry!
+BlueTusk.TypeSystem.BlueTuskTextSearchVectorCodec
+BlueTusk.TypeSystem.BlueTuskTextSearchVectorCodec.BlueTuskTextSearchVectorCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry
+BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry.BlueTuskTextSearchVectorEntry(string! lexeme, System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskTextSearchPosition>? positions = null) -> void
+BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry.Lexeme.get -> string!
+BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry.Positions.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.TypeSystem.BlueTuskTextSearchPosition>!
+BlueTusk.TypeSystem.BlueTuskTextSearchWeight
+BlueTusk.TypeSystem.BlueTuskTextSearchWeight.A = 3 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeight
+BlueTusk.TypeSystem.BlueTuskTextSearchWeight.B = 2 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeight
+BlueTusk.TypeSystem.BlueTuskTextSearchWeight.C = 1 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeight
+BlueTusk.TypeSystem.BlueTuskTextSearchWeight.D = 0 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeight
+BlueTusk.TypeSystem.BlueTuskTextSearchWeights
+BlueTusk.TypeSystem.BlueTuskTextSearchWeights.A = 8 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeights
+BlueTusk.TypeSystem.BlueTuskTextSearchWeights.B = 4 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeights
+BlueTusk.TypeSystem.BlueTuskTextSearchWeights.C = 2 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeights
+BlueTusk.TypeSystem.BlueTuskTextSearchWeights.D = 1 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeights
+BlueTusk.TypeSystem.BlueTuskTextSearchWeights.None = 0 -> BlueTusk.TypeSystem.BlueTuskTextSearchWeights
+BlueTusk.TypeSystem.BlueTuskTimeCodec
+BlueTusk.TypeSystem.BlueTuskTimeCodec.BlueTuskTimeCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTimestampCodec
+BlueTusk.TypeSystem.BlueTuskTimestampCodec.BlueTuskTimestampCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTimestampWithTimeZoneCodec
+BlueTusk.TypeSystem.BlueTuskTimestampWithTimeZoneCodec.BlueTuskTimestampWithTimeZoneCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.BlueTuskTimeWithTimeZone() -> void
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.BlueTuskTimeWithTimeZone(System.TimeSpan timeOfDay, System.TimeSpan utcOffset) -> void
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.Equals(BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone other) -> bool
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.TimeOfDay.get -> System.TimeSpan
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.UtcOffset.get -> System.TimeSpan
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZoneCodec
+BlueTusk.TypeSystem.BlueTuskTimeWithTimeZoneCodec.BlueTuskTimeWithTimeZoneCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTransactionId
+BlueTusk.TypeSystem.BlueTuskTransactionId.BlueTuskTransactionId() -> void
+BlueTusk.TypeSystem.BlueTuskTransactionId.BlueTuskTransactionId(uint Value) -> void
+BlueTusk.TypeSystem.BlueTuskTransactionId.Deconstruct(out uint Value) -> void
+BlueTusk.TypeSystem.BlueTuskTransactionId.Equals(BlueTusk.TypeSystem.BlueTuskTransactionId other) -> bool
+BlueTusk.TypeSystem.BlueTuskTransactionId.Value.get -> uint
+BlueTusk.TypeSystem.BlueTuskTransactionId.Value.init -> void
+BlueTusk.TypeSystem.BlueTuskTransactionIdCodec
+BlueTusk.TypeSystem.BlueTuskTransactionIdCodec.BlueTuskTransactionIdCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshot
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshot.BlueTuskTransactionSnapshot(ulong minimumTransactionId, ulong maximumTransactionId, System.Collections.Generic.IEnumerable<ulong>! inProgressTransactionIds) -> void
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshot.Equals(BlueTusk.TypeSystem.BlueTuskTransactionSnapshot? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshot.InProgressTransactionIds.get -> System.Collections.Generic.IReadOnlyList<ulong>!
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshot.MaximumTransactionId.get -> ulong
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshot.MinimumTransactionId.get -> ulong
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshotCodec
+BlueTusk.TypeSystem.BlueTuskTransactionSnapshotCodec.BlueTuskTransactionSnapshotCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTupleId
+BlueTusk.TypeSystem.BlueTuskTupleId.BlockNumber.get -> uint
+BlueTusk.TypeSystem.BlueTuskTupleId.BlockNumber.init -> void
+BlueTusk.TypeSystem.BlueTuskTupleId.BlueTuskTupleId() -> void
+BlueTusk.TypeSystem.BlueTuskTupleId.BlueTuskTupleId(uint BlockNumber, ushort OffsetNumber) -> void
+BlueTusk.TypeSystem.BlueTuskTupleId.Deconstruct(out uint BlockNumber, out ushort OffsetNumber) -> void
+BlueTusk.TypeSystem.BlueTuskTupleId.Equals(BlueTusk.TypeSystem.BlueTuskTupleId other) -> bool
+BlueTusk.TypeSystem.BlueTuskTupleId.OffsetNumber.get -> ushort
+BlueTusk.TypeSystem.BlueTuskTupleId.OffsetNumber.init -> void
+BlueTusk.TypeSystem.BlueTuskTupleIdCodec
+BlueTusk.TypeSystem.BlueTuskTupleIdCodec.BlueTuskTupleIdCodec() -> void
+BlueTusk.TypeSystem.BlueTuskTypeCatalogue
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.ArrayType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.ArrayType.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.BaseType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.BaseType.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.BlueTuskTypeDescriptor() -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.CompositeFields.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.TypeSystem.BlueTuskCompositeField!>!
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.CompositeFields.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Delimiter.get -> char
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Delimiter.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.ElementType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.ElementType.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.EnumLabels.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.EnumLabels.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Equals(BlueTusk.TypeSystem.BlueTuskTypeDescriptor? other) -> bool
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Id.get -> BlueTusk.TypeSystem.BlueTuskTypeId
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Id.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Kind.get -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Kind.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.MultirangeType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.MultirangeType.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Name.get -> string!
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Name.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.QualifiedName.get -> string!
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.RangeSubtype.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.RangeSubtype.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.RangeType.get -> BlueTusk.TypeSystem.BlueTuskTypeId?
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.RangeType.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Schema.get -> string!
+BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Schema.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeId
+BlueTusk.TypeSystem.BlueTuskTypeId.BlueTuskTypeId() -> void
+BlueTusk.TypeSystem.BlueTuskTypeId.BlueTuskTypeId(uint Oid) -> void
+BlueTusk.TypeSystem.BlueTuskTypeId.Deconstruct(out uint Oid) -> void
+BlueTusk.TypeSystem.BlueTuskTypeId.Equals(BlueTusk.TypeSystem.BlueTuskTypeId other) -> bool
+BlueTusk.TypeSystem.BlueTuskTypeId.Oid.get -> uint
+BlueTusk.TypeSystem.BlueTuskTypeId.Oid.init -> void
+BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Array = 1 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Base = 0 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Composite = 2 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Domain = 3 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Enum = 4 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Multirange = 7 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Pseudo = 5 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Range = 6 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeKind.Unknown = 8 -> BlueTusk.TypeSystem.BlueTuskTypeKind
+BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.TypeSystem.BlueTuskTypeName.BlueTuskTypeName() -> void
+BlueTusk.TypeSystem.BlueTuskTypeName.BlueTuskTypeName(string! schema, string! name) -> void
+BlueTusk.TypeSystem.BlueTuskTypeName.Equals(BlueTusk.TypeSystem.BlueTuskTypeName other) -> bool
+BlueTusk.TypeSystem.BlueTuskTypeName.Name.get -> string!
+BlueTusk.TypeSystem.BlueTuskTypeName.Schema.get -> string!
+BlueTusk.TypeSystem.BlueTuskTypeRegistry
+BlueTusk.TypeSystem.BlueTuskTypeRegistry.TryGetCodec(BlueTusk.TypeSystem.BlueTuskTypeId id, out BlueTusk.TypeSystem.IBlueTuskCodec? codec) -> bool
+BlueTusk.TypeSystem.BlueTuskTypeRegistry.TryGetType(BlueTusk.TypeSystem.BlueTuskTypeId id, out BlueTusk.TypeSystem.BlueTuskTypeDescriptor? type) -> bool
+BlueTusk.TypeSystem.BlueTuskTypeRegistry.TryGetType(BlueTusk.TypeSystem.BlueTuskTypeName name, out BlueTusk.TypeSystem.BlueTuskTypeDescriptor? type, out BlueTusk.TypeSystem.IBlueTuskCodec? codec) -> bool
+BlueTusk.TypeSystem.BlueTuskTypeRegistry.TryGetType(System.Type! clrType, out BlueTusk.TypeSystem.BlueTuskTypeDescriptor? type, out BlueTusk.TypeSystem.IBlueTuskCodec? codec) -> bool
+BlueTusk.TypeSystem.BlueTuskTypeRegistry.Types.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.TypeSystem.BlueTuskTypeDescriptor!>!
+BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder
+BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder.BlueTuskTypeRegistryBuilder() -> void
+BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder.Build() -> BlueTusk.TypeSystem.BlueTuskTypeRegistry!
+BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder.Register(BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type, BlueTusk.TypeSystem.IBlueTuskCodec? codec = null) -> BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder!
+BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder.Register<T>(string! schema, string! name, BlueTusk.TypeSystem.IBlueTuskCodec<T>! binaryCodec, BlueTusk.TypeSystem.IBlueTuskCodec<T>! textCodec) -> BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder!
+BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder.Register<T>(string! schema, string! name, BlueTusk.TypeSystem.IBlueTuskCodec<T>! codec) -> BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder!
+BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder.RegisterCodec(BlueTusk.TypeSystem.BlueTuskTypeId type, BlueTusk.TypeSystem.IBlueTuskCodec! codec) -> BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder!
+BlueTusk.TypeSystem.BlueTuskUInt32Codec
+BlueTusk.TypeSystem.BlueTuskUInt32Codec.BlueTuskUInt32Codec() -> void
+BlueTusk.TypeSystem.BlueTuskUnknownValue
+BlueTusk.TypeSystem.BlueTuskUnknownValue.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskUnknownValue!
+BlueTusk.TypeSystem.BlueTuskUnknownValue.BlueTuskUnknownValue(BlueTusk.TypeSystem.BlueTuskTypeDescriptor! Type, BlueTusk.TypeSystem.BlueTuskDataFormat Format, System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Data.get -> System.ReadOnlyMemory<byte>
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Data.init -> void
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Deconstruct(out BlueTusk.TypeSystem.BlueTuskTypeDescriptor! Type, out BlueTusk.TypeSystem.BlueTuskDataFormat Format, out System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Equals(BlueTusk.TypeSystem.BlueTuskUnknownValue? other) -> bool
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Format.get -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Format.init -> void
+BlueTusk.TypeSystem.BlueTuskUnknownValue.GetText() -> string!
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Type.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+BlueTusk.TypeSystem.BlueTuskUnknownValue.Type.init -> void
+BlueTusk.TypeSystem.BlueTuskWriteBufferTooSmallException
+BlueTusk.TypeSystem.BlueTuskWriteBufferTooSmallException.BlueTuskWriteBufferTooSmallException(string! message) -> void
+BlueTusk.TypeSystem.BlueTuskWriter
+BlueTusk.TypeSystem.BlueTuskWriter.BlueTuskWriter() -> void
+BlueTusk.TypeSystem.BlueTuskWriter.BlueTuskWriter(System.Span<byte> buffer) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteByte(byte value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteBytes(scoped System.ReadOnlySpan<byte> value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteDoubleBigEndian(double value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteInt16BigEndian(short value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteInt32BigEndian(int value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteInt32BigEndianAt(int offset, int value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteInt64BigEndian(long value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteSingleBigEndian(float value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteUInt16BigEndian(ushort value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteUInt32BigEndian(uint value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteUInt64BigEndian(ulong value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WriteUtf8(string! value) -> void
+BlueTusk.TypeSystem.BlueTuskWriter.WrittenCount.get -> int
+BlueTusk.TypeSystem.IBlueTuskCodec
+BlueTusk.TypeSystem.IBlueTuskCodec.ClrType.get -> System.Type!
+BlueTusk.TypeSystem.IBlueTuskCodec.Read(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> object?
+BlueTusk.TypeSystem.IBlueTuskCodec.Write(ref BlueTusk.TypeSystem.BlueTuskWriter writer, object? value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+BlueTusk.TypeSystem.IBlueTuskCodec<T>
+BlueTusk.TypeSystem.IBlueTuskCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> T
+BlueTusk.TypeSystem.IBlueTuskCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, T value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+BlueTusk.TypeSystem.IBlueTuskObjectIdentifierValue<TSelf>
+BlueTusk.TypeSystem.IBlueTuskObjectIdentifierValue<TSelf>.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> TSelf
+BlueTusk.TypeSystem.IBlueTuskObjectIdentifierValue<TSelf>.Identifier.get -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier
+BlueTusk.TypeSystem.IBlueTuskWriteFormatSelector
+BlueTusk.TypeSystem.IBlueTuskWriteFormatSelector.DefaultWriteFormat.get -> BlueTusk.TypeSystem.BlueTuskDataFormat
+BlueTusk.TypeSystem.IBlueTuskWriteFormatSelector.GetPreferredWriteFormat(object! value, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskDataFormat
+const BlueTusk.TypeSystem.BlueTuskNumeric.MaximumScale = 16383 -> int
+override BlueTusk.TypeSystem.BlueTuskAccessControlItem.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskAccessControlItem.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskAccessControlItemCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskAccessControlItem
+override BlueTusk.TypeSystem.BlueTuskAccessControlItemCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskAccessControlItem value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskBitString.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskBitString.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskBitStringCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskBitString
+override BlueTusk.TypeSystem.BlueTuskBitStringCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskBitString value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskBooleanCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> bool
+override BlueTusk.TypeSystem.BlueTuskBooleanCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, bool value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskBox.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskBox.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskBoxCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskBox
+override BlueTusk.TypeSystem.BlueTuskBoxCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskBox value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskByteArrayCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> byte[]!
+override BlueTusk.TypeSystem.BlueTuskByteArrayCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, byte[]! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskCatalogueType.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskCatalogueType.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskCatalogueType.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskCircle.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskCircle.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskCircleCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskCircle
+override BlueTusk.TypeSystem.BlueTuskCircleCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskCircle value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskCommandId.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskCommandIdCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskCommandId
+override BlueTusk.TypeSystem.BlueTuskCommandIdCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskCommandId value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskCompositeCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> T
+override BlueTusk.TypeSystem.BlueTuskCompositeCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, T value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskCompositeField.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskCompositeField.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskCompositeField.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskDateCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> System.DateOnly
+override BlueTusk.TypeSystem.BlueTuskDateCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, System.DateOnly value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskDoubleCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> double
+override BlueTusk.TypeSystem.BlueTuskDoubleCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, double value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskEnumCodec<TEnum>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> TEnum
+override BlueTusk.TypeSystem.BlueTuskEnumCodec<TEnum>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, TEnum value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskEnumValue.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskEnumValue.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskEnumValueCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskEnumValue
+override BlueTusk.TypeSystem.BlueTuskEnumValueCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskEnumValue value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskFullTransactionId.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskFullTransactionIdCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskFullTransactionId
+override BlueTusk.TypeSystem.BlueTuskFullTransactionIdCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskFullTransactionId value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskGistTextSearchVectorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskGistTextSearchVector
+override BlueTusk.TypeSystem.BlueTuskGistTextSearchVectorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskGistTextSearchVector value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskGuidCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> System.Guid
+override BlueTusk.TypeSystem.BlueTuskGuidCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, System.Guid value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskInt16Codec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> short
+override BlueTusk.TypeSystem.BlueTuskInt16Codec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, short value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskInt16Vector.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskInt16Vector.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskInt16VectorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskInt16Vector!
+override BlueTusk.TypeSystem.BlueTuskInt16VectorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskInt16Vector! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskInt32Codec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> int
+override BlueTusk.TypeSystem.BlueTuskInt32Codec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, int value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskInt64Codec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> long
+override BlueTusk.TypeSystem.BlueTuskInt64Codec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, long value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskInternalChar.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskInternalCharCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskInternalChar
+override BlueTusk.TypeSystem.BlueTuskInternalCharCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskInternalChar value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskInterval.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskInterval.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskIntervalCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskInterval
+override BlueTusk.TypeSystem.BlueTuskIntervalCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskInterval value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskJsonbCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> string!
+override BlueTusk.TypeSystem.BlueTuskJsonbCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, string! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskJsonPath.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskJsonPath.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskJsonPathCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskJsonPath
+override BlueTusk.TypeSystem.BlueTuskJsonPathCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskJsonPath value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskLine.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskLine.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskLineCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskLine
+override BlueTusk.TypeSystem.BlueTuskLineCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskLine value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskLineSegment.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskLineSegment.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskLineSegmentCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskLineSegment
+override BlueTusk.TypeSystem.BlueTuskLineSegmentCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskLineSegment value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskLogSequenceNumberCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+override BlueTusk.TypeSystem.BlueTuskLogSequenceNumberCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskMacAddress.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskMacAddress.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskMacAddress8.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskMacAddress8.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskMacAddress8Codec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskMacAddress8
+override BlueTusk.TypeSystem.BlueTuskMacAddress8Codec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskMacAddress8 value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskMacAddressCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskMacAddress
+override BlueTusk.TypeSystem.BlueTuskMacAddressCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskMacAddress value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskMoney.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskMoney.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskMoneyCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskMoney
+override BlueTusk.TypeSystem.BlueTuskMoneyCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskMoney value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskMoneyFormat.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskMoneyFormat.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskMoneyFormat.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskMultirange<T>.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskMultirange<T>.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskMultirangeCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskMultirange<T>!
+override BlueTusk.TypeSystem.BlueTuskMultirangeCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskMultirange<T>! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskNetworkAddress.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskNetworkAddress.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskNetworkAddressCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskNetworkAddress
+override BlueTusk.TypeSystem.BlueTuskNetworkAddressCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskNetworkAddress value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskNodeTree.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskNodeTree.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskNodeTreeCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskNodeTree
+override BlueTusk.TypeSystem.BlueTuskNodeTreeCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskNodeTree value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskNumeric.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskNumeric.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskNumericCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskNumeric
+override BlueTusk.TypeSystem.BlueTuskNumericCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskNumeric value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifier.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifier.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifier64Codec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskObjectIdentifier64
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifier64Codec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskObjectIdentifier64 value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifierCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> T
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifierCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, T value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifierVectorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector!
+override BlueTusk.TypeSystem.BlueTuskObjectIdentifierVectorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskObjectIdentifierVector! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> T!
+override BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, T! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskOpaqueCatalogueValue.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskPath.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskPath.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskPath.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskPathCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskPath!
+override BlueTusk.TypeSystem.BlueTuskPathCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskPath! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskPoint.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskPoint.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskPointCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskPoint
+override BlueTusk.TypeSystem.BlueTuskPointCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskPoint value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskPolygon.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskPolygon.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskPolygon.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskPolygonCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskPolygon!
+override BlueTusk.TypeSystem.BlueTuskPolygonCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskPolygon! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskRange<T>.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRangeBound<T>.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRangeCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskRange<T>
+override BlueTusk.TypeSystem.BlueTuskRangeCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskRange<T> value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskRecordCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskRecord!
+override BlueTusk.TypeSystem.BlueTuskRecordCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskRecord! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskRecordField.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskRecordField.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRecordField.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRefCursor.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRefCursor.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRefCursorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskRefCursor
+override BlueTusk.TypeSystem.BlueTuskRefCursorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskRefCursor value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskRegClass.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegClass.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegCollation.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegCollation.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegConfig.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegConfig.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegDatabase.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegDatabase.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegDictionary.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegDictionary.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegNamespace.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegNamespace.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegOper.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegOper.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegOperator.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegOperator.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegProc.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegProc.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegProcedure.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegProcedure.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegRole.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegRole.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskRegType.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskRegType.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskSingleCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> float
+override BlueTusk.TypeSystem.BlueTuskSingleCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, float value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskSplitCodec<T>.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> T
+override BlueTusk.TypeSystem.BlueTuskSplitCodec<T>.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, T value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskStringCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> string!
+override BlueTusk.TypeSystem.BlueTuskStringCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, string! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTextSearchPosition.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchPosition.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQuery.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTextSearchQuery.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchQuery.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskTextSearchQuery!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskTextSearchQuery! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.<Clone>$() -> BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot!
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTextSearchVector.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTextSearchVector.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchVector.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTextSearchVectorCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskTextSearchVector!
+override BlueTusk.TypeSystem.BlueTuskTextSearchVectorCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskTextSearchVector! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTextSearchVectorEntry.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTimeCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> System.TimeSpan
+override BlueTusk.TypeSystem.BlueTuskTimeCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, System.TimeSpan value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTimestampCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> System.DateTime
+override BlueTusk.TypeSystem.BlueTuskTimestampCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, System.DateTime value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTimestampWithTimeZoneCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> System.DateTimeOffset
+override BlueTusk.TypeSystem.BlueTuskTimestampWithTimeZoneCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, System.DateTimeOffset value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTimeWithTimeZoneCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone
+override BlueTusk.TypeSystem.BlueTuskTimeWithTimeZoneCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTransactionId.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTransactionIdCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskTransactionId
+override BlueTusk.TypeSystem.BlueTuskTransactionIdCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskTransactionId value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTransactionSnapshot.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTransactionSnapshot.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTransactionSnapshotCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskTransactionSnapshot!
+override BlueTusk.TypeSystem.BlueTuskTransactionSnapshotCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskTransactionSnapshot! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTupleId.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTupleId.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTupleIdCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.TypeSystem.BlueTuskTupleId
+override BlueTusk.TypeSystem.BlueTuskTupleIdCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.TypeSystem.BlueTuskTupleId value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskTypeDescriptor.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskTypeDescriptor.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTypeDescriptor.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTypeId.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTypeId.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskTypeName.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskTypeName.ToString() -> string!
+override BlueTusk.TypeSystem.BlueTuskUInt32Codec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> uint
+override BlueTusk.TypeSystem.BlueTuskUInt32Codec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, uint value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.TypeSystem.BlueTuskUnknownValue.Equals(object? obj) -> bool
+override BlueTusk.TypeSystem.BlueTuskUnknownValue.GetHashCode() -> int
+override BlueTusk.TypeSystem.BlueTuskUnknownValue.ToString() -> string!
+override sealed BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? other) -> bool
+override sealed BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? other) -> bool
+override sealed BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? other) -> bool
+static BlueTusk.TypeSystem.BlueTuskAccessControlItem.operator !=(BlueTusk.TypeSystem.BlueTuskAccessControlItem left, BlueTusk.TypeSystem.BlueTuskAccessControlItem right) -> bool
+static BlueTusk.TypeSystem.BlueTuskAccessControlItem.operator ==(BlueTusk.TypeSystem.BlueTuskAccessControlItem left, BlueTusk.TypeSystem.BlueTuskAccessControlItem right) -> bool
+static BlueTusk.TypeSystem.BlueTuskBitString.operator !=(BlueTusk.TypeSystem.BlueTuskBitString left, BlueTusk.TypeSystem.BlueTuskBitString right) -> bool
+static BlueTusk.TypeSystem.BlueTuskBitString.operator ==(BlueTusk.TypeSystem.BlueTuskBitString left, BlueTusk.TypeSystem.BlueTuskBitString right) -> bool
+static BlueTusk.TypeSystem.BlueTuskBox.operator !=(BlueTusk.TypeSystem.BlueTuskBox left, BlueTusk.TypeSystem.BlueTuskBox right) -> bool
+static BlueTusk.TypeSystem.BlueTuskBox.operator ==(BlueTusk.TypeSystem.BlueTuskBox left, BlueTusk.TypeSystem.BlueTuskBox right) -> bool
+static BlueTusk.TypeSystem.BlueTuskBox.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskBox
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.AclItem.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Bit.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Boolean.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Box.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Bpchar.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Bytea.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Char.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Cid.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Cidr.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Circle.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.CreateInitialRegistry() -> BlueTusk.TypeSystem.BlueTuskTypeRegistry!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.CreateRegistry() -> BlueTusk.TypeSystem.BlueTuskTypeRegistry!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Date.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Float4.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Float8.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.GistTextSearchVector.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Inet.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Int2.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Int2Vector.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Int4.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Int8.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Interval.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Json.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Jsonb.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.JsonPath.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Line.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.LineSegment.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Macaddr.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Macaddr8.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Money.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Name.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.NodeTree.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Numeric.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Oid.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Oid8.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.OidVector.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Path.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.PgBrinBloomSummary.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.PgBrinMinMaxMultiSummary.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.PgDependencies.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.PgLsn.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.PgMcvList.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.PgNDistinct.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.PgSnapshot.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Point.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Polygon.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RefCursor.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegClass.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegCollation.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegConfig.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegDatabase.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegDictionary.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegNamespace.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegOper.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegOperator.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegProc.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegProcedure.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegRole.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.RegType.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Text.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.TextSearchQuery.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.TextSearchVector.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Tid.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Time.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Timestamp.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.TimestampWithTimeZone.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.TimeWithTimeZone.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.TxidSnapshot.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Uuid.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Varbit.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Varchar.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Xid.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Xid8.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskBuiltInTypes.Xml.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskCatalogueType.operator !=(BlueTusk.TypeSystem.BlueTuskCatalogueType? left, BlueTusk.TypeSystem.BlueTuskCatalogueType? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskCatalogueType.operator ==(BlueTusk.TypeSystem.BlueTuskCatalogueType? left, BlueTusk.TypeSystem.BlueTuskCatalogueType? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskCircle.operator !=(BlueTusk.TypeSystem.BlueTuskCircle left, BlueTusk.TypeSystem.BlueTuskCircle right) -> bool
+static BlueTusk.TypeSystem.BlueTuskCircle.operator ==(BlueTusk.TypeSystem.BlueTuskCircle left, BlueTusk.TypeSystem.BlueTuskCircle right) -> bool
+static BlueTusk.TypeSystem.BlueTuskCircle.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskCircle
+static BlueTusk.TypeSystem.BlueTuskCommandId.operator !=(BlueTusk.TypeSystem.BlueTuskCommandId left, BlueTusk.TypeSystem.BlueTuskCommandId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskCommandId.operator ==(BlueTusk.TypeSystem.BlueTuskCommandId left, BlueTusk.TypeSystem.BlueTuskCommandId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskCompositeField.operator !=(BlueTusk.TypeSystem.BlueTuskCompositeField? left, BlueTusk.TypeSystem.BlueTuskCompositeField? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskCompositeField.operator ==(BlueTusk.TypeSystem.BlueTuskCompositeField? left, BlueTusk.TypeSystem.BlueTuskCompositeField? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskEnumValue.operator !=(BlueTusk.TypeSystem.BlueTuskEnumValue left, BlueTusk.TypeSystem.BlueTuskEnumValue right) -> bool
+static BlueTusk.TypeSystem.BlueTuskEnumValue.operator ==(BlueTusk.TypeSystem.BlueTuskEnumValue left, BlueTusk.TypeSystem.BlueTuskEnumValue right) -> bool
+static BlueTusk.TypeSystem.BlueTuskFullTransactionId.operator !=(BlueTusk.TypeSystem.BlueTuskFullTransactionId left, BlueTusk.TypeSystem.BlueTuskFullTransactionId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskFullTransactionId.operator ==(BlueTusk.TypeSystem.BlueTuskFullTransactionId left, BlueTusk.TypeSystem.BlueTuskFullTransactionId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.operator !=(BlueTusk.TypeSystem.BlueTuskGistTextSearchVector left, BlueTusk.TypeSystem.BlueTuskGistTextSearchVector right) -> bool
+static BlueTusk.TypeSystem.BlueTuskGistTextSearchVector.operator ==(BlueTusk.TypeSystem.BlueTuskGistTextSearchVector left, BlueTusk.TypeSystem.BlueTuskGistTextSearchVector right) -> bool
+static BlueTusk.TypeSystem.BlueTuskInternalChar.operator !=(BlueTusk.TypeSystem.BlueTuskInternalChar left, BlueTusk.TypeSystem.BlueTuskInternalChar right) -> bool
+static BlueTusk.TypeSystem.BlueTuskInternalChar.operator ==(BlueTusk.TypeSystem.BlueTuskInternalChar left, BlueTusk.TypeSystem.BlueTuskInternalChar right) -> bool
+static BlueTusk.TypeSystem.BlueTuskInterval.NegativeInfinity.get -> BlueTusk.TypeSystem.BlueTuskInterval
+static BlueTusk.TypeSystem.BlueTuskInterval.operator !=(BlueTusk.TypeSystem.BlueTuskInterval left, BlueTusk.TypeSystem.BlueTuskInterval right) -> bool
+static BlueTusk.TypeSystem.BlueTuskInterval.operator ==(BlueTusk.TypeSystem.BlueTuskInterval left, BlueTusk.TypeSystem.BlueTuskInterval right) -> bool
+static BlueTusk.TypeSystem.BlueTuskInterval.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskInterval
+static BlueTusk.TypeSystem.BlueTuskInterval.PositiveInfinity.get -> BlueTusk.TypeSystem.BlueTuskInterval
+static BlueTusk.TypeSystem.BlueTuskJsonPath.operator !=(BlueTusk.TypeSystem.BlueTuskJsonPath left, BlueTusk.TypeSystem.BlueTuskJsonPath right) -> bool
+static BlueTusk.TypeSystem.BlueTuskJsonPath.operator ==(BlueTusk.TypeSystem.BlueTuskJsonPath left, BlueTusk.TypeSystem.BlueTuskJsonPath right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLine.operator !=(BlueTusk.TypeSystem.BlueTuskLine left, BlueTusk.TypeSystem.BlueTuskLine right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLine.operator ==(BlueTusk.TypeSystem.BlueTuskLine left, BlueTusk.TypeSystem.BlueTuskLine right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLine.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskLine
+static BlueTusk.TypeSystem.BlueTuskLineSegment.operator !=(BlueTusk.TypeSystem.BlueTuskLineSegment left, BlueTusk.TypeSystem.BlueTuskLineSegment right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLineSegment.operator ==(BlueTusk.TypeSystem.BlueTuskLineSegment left, BlueTusk.TypeSystem.BlueTuskLineSegment right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLineSegment.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskLineSegment
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.operator !=(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber left, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.operator +(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber position, ulong byteCount) -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.operator <(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber left, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.operator <=(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber left, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.operator ==(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber left, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.operator >(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber left, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.operator >=(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber left, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber right) -> bool
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.TryParse(string? value, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber result) -> bool
+static BlueTusk.TypeSystem.BlueTuskLogSequenceNumber.Zero.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+static BlueTusk.TypeSystem.BlueTuskMacAddress.operator !=(BlueTusk.TypeSystem.BlueTuskMacAddress left, BlueTusk.TypeSystem.BlueTuskMacAddress right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMacAddress.operator ==(BlueTusk.TypeSystem.BlueTuskMacAddress left, BlueTusk.TypeSystem.BlueTuskMacAddress right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMacAddress.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskMacAddress
+static BlueTusk.TypeSystem.BlueTuskMacAddress8.operator !=(BlueTusk.TypeSystem.BlueTuskMacAddress8 left, BlueTusk.TypeSystem.BlueTuskMacAddress8 right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMacAddress8.operator ==(BlueTusk.TypeSystem.BlueTuskMacAddress8 left, BlueTusk.TypeSystem.BlueTuskMacAddress8 right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMacAddress8.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskMacAddress8
+static BlueTusk.TypeSystem.BlueTuskMoney.operator !=(BlueTusk.TypeSystem.BlueTuskMoney left, BlueTusk.TypeSystem.BlueTuskMoney right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMoney.operator ==(BlueTusk.TypeSystem.BlueTuskMoney left, BlueTusk.TypeSystem.BlueTuskMoney right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMoneyFormat.operator !=(BlueTusk.TypeSystem.BlueTuskMoneyFormat? left, BlueTusk.TypeSystem.BlueTuskMoneyFormat? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMoneyFormat.operator ==(BlueTusk.TypeSystem.BlueTuskMoneyFormat? left, BlueTusk.TypeSystem.BlueTuskMoneyFormat? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskMultirange.Empty<T>() -> BlueTusk.TypeSystem.BlueTuskMultirange<T>!
+static BlueTusk.TypeSystem.BlueTuskNetworkAddress.operator !=(BlueTusk.TypeSystem.BlueTuskNetworkAddress left, BlueTusk.TypeSystem.BlueTuskNetworkAddress right) -> bool
+static BlueTusk.TypeSystem.BlueTuskNetworkAddress.operator ==(BlueTusk.TypeSystem.BlueTuskNetworkAddress left, BlueTusk.TypeSystem.BlueTuskNetworkAddress right) -> bool
+static BlueTusk.TypeSystem.BlueTuskNetworkAddress.Parse(string! value, bool isCidr = false) -> BlueTusk.TypeSystem.BlueTuskNetworkAddress
+static BlueTusk.TypeSystem.BlueTuskNodeTree.operator !=(BlueTusk.TypeSystem.BlueTuskNodeTree left, BlueTusk.TypeSystem.BlueTuskNodeTree right) -> bool
+static BlueTusk.TypeSystem.BlueTuskNodeTree.operator ==(BlueTusk.TypeSystem.BlueTuskNodeTree left, BlueTusk.TypeSystem.BlueTuskNodeTree right) -> bool
+static BlueTusk.TypeSystem.BlueTuskNumeric.explicit operator decimal(BlueTusk.TypeSystem.BlueTuskNumeric value) -> decimal
+static BlueTusk.TypeSystem.BlueTuskNumeric.implicit operator BlueTusk.TypeSystem.BlueTuskNumeric(decimal value) -> BlueTusk.TypeSystem.BlueTuskNumeric
+static BlueTusk.TypeSystem.BlueTuskNumeric.NaN.get -> BlueTusk.TypeSystem.BlueTuskNumeric
+static BlueTusk.TypeSystem.BlueTuskNumeric.NegativeInfinity.get -> BlueTusk.TypeSystem.BlueTuskNumeric
+static BlueTusk.TypeSystem.BlueTuskNumeric.operator !=(BlueTusk.TypeSystem.BlueTuskNumeric left, BlueTusk.TypeSystem.BlueTuskNumeric right) -> bool
+static BlueTusk.TypeSystem.BlueTuskNumeric.operator ==(BlueTusk.TypeSystem.BlueTuskNumeric left, BlueTusk.TypeSystem.BlueTuskNumeric right) -> bool
+static BlueTusk.TypeSystem.BlueTuskNumeric.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskNumeric
+static BlueTusk.TypeSystem.BlueTuskNumeric.PositiveInfinity.get -> BlueTusk.TypeSystem.BlueTuskNumeric
+static BlueTusk.TypeSystem.BlueTuskNumeric.TryParse(string? value, out BlueTusk.TypeSystem.BlueTuskNumeric result) -> bool
+static BlueTusk.TypeSystem.BlueTuskNumericCodec.GetMaximumBinarySize(BlueTusk.TypeSystem.BlueTuskNumeric value) -> int
+static BlueTusk.TypeSystem.BlueTuskObjectIdentifier.operator !=(BlueTusk.TypeSystem.BlueTuskObjectIdentifier left, BlueTusk.TypeSystem.BlueTuskObjectIdentifier right) -> bool
+static BlueTusk.TypeSystem.BlueTuskObjectIdentifier.operator ==(BlueTusk.TypeSystem.BlueTuskObjectIdentifier left, BlueTusk.TypeSystem.BlueTuskObjectIdentifier right) -> bool
+static BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.operator !=(BlueTusk.TypeSystem.BlueTuskObjectIdentifier64 left, BlueTusk.TypeSystem.BlueTuskObjectIdentifier64 right) -> bool
+static BlueTusk.TypeSystem.BlueTuskObjectIdentifier64.operator ==(BlueTusk.TypeSystem.BlueTuskObjectIdentifier64 left, BlueTusk.TypeSystem.BlueTuskObjectIdentifier64 right) -> bool
+static BlueTusk.TypeSystem.BlueTuskPath.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskPath!
+static BlueTusk.TypeSystem.BlueTuskPoint.operator !=(BlueTusk.TypeSystem.BlueTuskPoint left, BlueTusk.TypeSystem.BlueTuskPoint right) -> bool
+static BlueTusk.TypeSystem.BlueTuskPoint.operator ==(BlueTusk.TypeSystem.BlueTuskPoint left, BlueTusk.TypeSystem.BlueTuskPoint right) -> bool
+static BlueTusk.TypeSystem.BlueTuskPoint.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskPoint
+static BlueTusk.TypeSystem.BlueTuskPolygon.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskPolygon!
+static BlueTusk.TypeSystem.BlueTuskRange.Empty<T>() -> BlueTusk.TypeSystem.BlueTuskRange<T>
+static BlueTusk.TypeSystem.BlueTuskRange.Unbounded<T>() -> BlueTusk.TypeSystem.BlueTuskRange<T>
+static BlueTusk.TypeSystem.BlueTuskRange<T>.operator !=(BlueTusk.TypeSystem.BlueTuskRange<T> left, BlueTusk.TypeSystem.BlueTuskRange<T> right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRange<T>.operator ==(BlueTusk.TypeSystem.BlueTuskRange<T> left, BlueTusk.TypeSystem.BlueTuskRange<T> right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRangeBound.Exclusive<T>(T value) -> BlueTusk.TypeSystem.BlueTuskRangeBound<T>
+static BlueTusk.TypeSystem.BlueTuskRangeBound.Inclusive<T>(T value) -> BlueTusk.TypeSystem.BlueTuskRangeBound<T>
+static BlueTusk.TypeSystem.BlueTuskRangeBound.Unbounded<T>() -> BlueTusk.TypeSystem.BlueTuskRangeBound<T>
+static BlueTusk.TypeSystem.BlueTuskRangeBound<T>.operator !=(BlueTusk.TypeSystem.BlueTuskRangeBound<T> left, BlueTusk.TypeSystem.BlueTuskRangeBound<T> right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRangeBound<T>.operator ==(BlueTusk.TypeSystem.BlueTuskRangeBound<T> left, BlueTusk.TypeSystem.BlueTuskRangeBound<T> right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRecordField.operator !=(BlueTusk.TypeSystem.BlueTuskRecordField? left, BlueTusk.TypeSystem.BlueTuskRecordField? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRecordField.operator ==(BlueTusk.TypeSystem.BlueTuskRecordField? left, BlueTusk.TypeSystem.BlueTuskRecordField? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRefCursor.operator !=(BlueTusk.TypeSystem.BlueTuskRefCursor left, BlueTusk.TypeSystem.BlueTuskRefCursor right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRefCursor.operator ==(BlueTusk.TypeSystem.BlueTuskRefCursor left, BlueTusk.TypeSystem.BlueTuskRefCursor right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegClass.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegClass
+static BlueTusk.TypeSystem.BlueTuskRegClass.operator !=(BlueTusk.TypeSystem.BlueTuskRegClass left, BlueTusk.TypeSystem.BlueTuskRegClass right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegClass.operator ==(BlueTusk.TypeSystem.BlueTuskRegClass left, BlueTusk.TypeSystem.BlueTuskRegClass right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegCollation.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegCollation
+static BlueTusk.TypeSystem.BlueTuskRegCollation.operator !=(BlueTusk.TypeSystem.BlueTuskRegCollation left, BlueTusk.TypeSystem.BlueTuskRegCollation right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegCollation.operator ==(BlueTusk.TypeSystem.BlueTuskRegCollation left, BlueTusk.TypeSystem.BlueTuskRegCollation right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegConfig.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegConfig
+static BlueTusk.TypeSystem.BlueTuskRegConfig.operator !=(BlueTusk.TypeSystem.BlueTuskRegConfig left, BlueTusk.TypeSystem.BlueTuskRegConfig right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegConfig.operator ==(BlueTusk.TypeSystem.BlueTuskRegConfig left, BlueTusk.TypeSystem.BlueTuskRegConfig right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegDatabase.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegDatabase
+static BlueTusk.TypeSystem.BlueTuskRegDatabase.operator !=(BlueTusk.TypeSystem.BlueTuskRegDatabase left, BlueTusk.TypeSystem.BlueTuskRegDatabase right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegDatabase.operator ==(BlueTusk.TypeSystem.BlueTuskRegDatabase left, BlueTusk.TypeSystem.BlueTuskRegDatabase right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegDictionary.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegDictionary
+static BlueTusk.TypeSystem.BlueTuskRegDictionary.operator !=(BlueTusk.TypeSystem.BlueTuskRegDictionary left, BlueTusk.TypeSystem.BlueTuskRegDictionary right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegDictionary.operator ==(BlueTusk.TypeSystem.BlueTuskRegDictionary left, BlueTusk.TypeSystem.BlueTuskRegDictionary right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegNamespace.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegNamespace
+static BlueTusk.TypeSystem.BlueTuskRegNamespace.operator !=(BlueTusk.TypeSystem.BlueTuskRegNamespace left, BlueTusk.TypeSystem.BlueTuskRegNamespace right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegNamespace.operator ==(BlueTusk.TypeSystem.BlueTuskRegNamespace left, BlueTusk.TypeSystem.BlueTuskRegNamespace right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegOper.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegOper
+static BlueTusk.TypeSystem.BlueTuskRegOper.operator !=(BlueTusk.TypeSystem.BlueTuskRegOper left, BlueTusk.TypeSystem.BlueTuskRegOper right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegOper.operator ==(BlueTusk.TypeSystem.BlueTuskRegOper left, BlueTusk.TypeSystem.BlueTuskRegOper right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegOperator.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegOperator
+static BlueTusk.TypeSystem.BlueTuskRegOperator.operator !=(BlueTusk.TypeSystem.BlueTuskRegOperator left, BlueTusk.TypeSystem.BlueTuskRegOperator right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegOperator.operator ==(BlueTusk.TypeSystem.BlueTuskRegOperator left, BlueTusk.TypeSystem.BlueTuskRegOperator right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegProc.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegProc
+static BlueTusk.TypeSystem.BlueTuskRegProc.operator !=(BlueTusk.TypeSystem.BlueTuskRegProc left, BlueTusk.TypeSystem.BlueTuskRegProc right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegProc.operator ==(BlueTusk.TypeSystem.BlueTuskRegProc left, BlueTusk.TypeSystem.BlueTuskRegProc right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegProcedure.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegProcedure
+static BlueTusk.TypeSystem.BlueTuskRegProcedure.operator !=(BlueTusk.TypeSystem.BlueTuskRegProcedure left, BlueTusk.TypeSystem.BlueTuskRegProcedure right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegProcedure.operator ==(BlueTusk.TypeSystem.BlueTuskRegProcedure left, BlueTusk.TypeSystem.BlueTuskRegProcedure right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegRole.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegRole
+static BlueTusk.TypeSystem.BlueTuskRegRole.operator !=(BlueTusk.TypeSystem.BlueTuskRegRole left, BlueTusk.TypeSystem.BlueTuskRegRole right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegRole.operator ==(BlueTusk.TypeSystem.BlueTuskRegRole left, BlueTusk.TypeSystem.BlueTuskRegRole right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegType.FromIdentifier(BlueTusk.TypeSystem.BlueTuskObjectIdentifier identifier) -> BlueTusk.TypeSystem.BlueTuskRegType
+static BlueTusk.TypeSystem.BlueTuskRegType.operator !=(BlueTusk.TypeSystem.BlueTuskRegType left, BlueTusk.TypeSystem.BlueTuskRegType right) -> bool
+static BlueTusk.TypeSystem.BlueTuskRegType.operator ==(BlueTusk.TypeSystem.BlueTuskRegType left, BlueTusk.TypeSystem.BlueTuskRegType right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchPosition.operator !=(BlueTusk.TypeSystem.BlueTuskTextSearchPosition left, BlueTusk.TypeSystem.BlueTuskTextSearchPosition right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchPosition.operator ==(BlueTusk.TypeSystem.BlueTuskTextSearchPosition left, BlueTusk.TypeSystem.BlueTuskTextSearchPosition right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQuery.Empty.get -> BlueTusk.TypeSystem.BlueTuskTextSearchQuery!
+static BlueTusk.TypeSystem.BlueTuskTextSearchQuery.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskTextSearchQuery!
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.operator !=(BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary.operator ==(BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryBinary? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryCodec.GetBinarySize(BlueTusk.TypeSystem.BlueTuskTextSearchQuery! value) -> int
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.operator !=(BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme.operator ==(BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryLexeme? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.operator !=(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.operator ==(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.operator !=(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot.operator ==(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot? left, BlueTusk.TypeSystem.BlueTuskTextSearchQueryNot? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTextSearchVector.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskTextSearchVector!
+static BlueTusk.TypeSystem.BlueTuskTextSearchVectorCodec.GetBinarySize(BlueTusk.TypeSystem.BlueTuskTextSearchVector! value) -> int
+static BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.operator !=(BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone left, BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.operator ==(BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone left, BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskTimeWithTimeZone
+static BlueTusk.TypeSystem.BlueTuskTransactionId.operator !=(BlueTusk.TypeSystem.BlueTuskTransactionId left, BlueTusk.TypeSystem.BlueTuskTransactionId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTransactionId.operator ==(BlueTusk.TypeSystem.BlueTuskTransactionId left, BlueTusk.TypeSystem.BlueTuskTransactionId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTupleId.operator !=(BlueTusk.TypeSystem.BlueTuskTupleId left, BlueTusk.TypeSystem.BlueTuskTupleId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTupleId.operator ==(BlueTusk.TypeSystem.BlueTuskTupleId left, BlueTusk.TypeSystem.BlueTuskTupleId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTupleId.Parse(string! value) -> BlueTusk.TypeSystem.BlueTuskTupleId
+static BlueTusk.TypeSystem.BlueTuskTypeCatalogue.BuildRegistry(System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskCatalogueType!>! catalogueTypes, BlueTusk.TypeSystem.BlueTuskTypeRegistry? configuredTypes = null, BlueTusk.TypeSystem.BlueTuskMoneyFormat? moneyFormat = null) -> BlueTusk.TypeSystem.BlueTuskTypeRegistry!
+static BlueTusk.TypeSystem.BlueTuskTypeCatalogue.CreateDescriptor(BlueTusk.TypeSystem.BlueTuskCatalogueType! type) -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+static BlueTusk.TypeSystem.BlueTuskTypeDescriptor.operator !=(BlueTusk.TypeSystem.BlueTuskTypeDescriptor? left, BlueTusk.TypeSystem.BlueTuskTypeDescriptor? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTypeDescriptor.operator ==(BlueTusk.TypeSystem.BlueTuskTypeDescriptor? left, BlueTusk.TypeSystem.BlueTuskTypeDescriptor? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTypeId.operator !=(BlueTusk.TypeSystem.BlueTuskTypeId left, BlueTusk.TypeSystem.BlueTuskTypeId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTypeId.operator ==(BlueTusk.TypeSystem.BlueTuskTypeId left, BlueTusk.TypeSystem.BlueTuskTypeId right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTypeName.operator !=(BlueTusk.TypeSystem.BlueTuskTypeName left, BlueTusk.TypeSystem.BlueTuskTypeName right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTypeName.operator ==(BlueTusk.TypeSystem.BlueTuskTypeName left, BlueTusk.TypeSystem.BlueTuskTypeName right) -> bool
+static BlueTusk.TypeSystem.BlueTuskTypeName.Parse(string! qualifiedName) -> BlueTusk.TypeSystem.BlueTuskTypeName
+static BlueTusk.TypeSystem.BlueTuskUnknownValue.operator !=(BlueTusk.TypeSystem.BlueTuskUnknownValue? left, BlueTusk.TypeSystem.BlueTuskUnknownValue? right) -> bool
+static BlueTusk.TypeSystem.BlueTuskUnknownValue.operator ==(BlueTusk.TypeSystem.BlueTuskUnknownValue? left, BlueTusk.TypeSystem.BlueTuskUnknownValue? right) -> bool
+virtual BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.EqualityContract.get -> System.Type!
+virtual BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? other) -> bool
+virtual BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.PrintMembers(System.Text.StringBuilder! builder) -> bool

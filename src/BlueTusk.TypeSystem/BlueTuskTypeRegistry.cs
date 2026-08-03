@@ -6,6 +6,7 @@ public sealed class BlueTuskTypeRegistry
     private readonly IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> _types;
     private readonly IReadOnlyDictionary<BlueTuskTypeId, IBlueTuskCodec> _codecs;
     private readonly IReadOnlyDictionary<BlueTuskTypeName, IBlueTuskCodec> _namedCodecs;
+    private readonly Dictionary<BlueTuskTypeName, BlueTuskTypeDescriptor> _namedTypes;
     private readonly IReadOnlyList<BlueTuskTypeDescriptor> _typeList;
     private readonly Dictionary<Type, BlueTuskTypeId> _uniqueClrTypes;
 
@@ -17,6 +18,8 @@ public sealed class BlueTuskTypeRegistry
         _types = types;
         _codecs = codecs;
         _namedCodecs = namedCodecs;
+        _namedTypes = types.Values.ToDictionary(
+            type => new BlueTuskTypeName(type.Schema, type.Name));
         _typeList = types.Values.ToArray();
         _uniqueClrTypes = codecs
             .Where(registration => IsInferenceCandidate(types, registration.Key))
@@ -60,6 +63,21 @@ public sealed class BlueTuskTypeRegistry
 
     public bool TryGetCodec(BlueTuskTypeId id, out IBlueTuskCodec? codec) =>
         _codecs.TryGetValue(id, out codec);
+
+    public bool TryGetType(
+        BlueTuskTypeName name,
+        out BlueTuskTypeDescriptor? type,
+        out IBlueTuskCodec? codec)
+    {
+        if (_namedTypes.TryGetValue(name, out type))
+        {
+            _codecs.TryGetValue(type.Id, out codec);
+            return true;
+        }
+
+        codec = null;
+        return false;
+    }
 
     public IReadOnlyList<BlueTuskTypeDescriptor> Types => _typeList;
 
@@ -110,16 +128,69 @@ public readonly record struct BlueTuskTypeName
     public static BlueTuskTypeName Parse(string qualifiedName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(qualifiedName);
-        var separator = qualifiedName.LastIndexOf('.');
-        if (separator <= 0 || separator == qualifiedName.Length - 1)
+        var text = qualifiedName.AsSpan().Trim();
+        var separator = -1;
+        var quoted = false;
+        for (var index = 0; index < text.Length; index++)
+        {
+            if (text[index] == '"')
+            {
+                if (quoted && index + 1 < text.Length && text[index + 1] == '"')
+                {
+                    index++;
+                    continue;
+                }
+
+                quoted = !quoted;
+            }
+            else if (text[index] == '.' && !quoted)
+            {
+                separator = index;
+            }
+        }
+
+        if (quoted || separator <= 0 || separator == text.Length - 1)
         {
             throw new FormatException(
                 $"PostgreSQL type name '{qualifiedName}' must be qualified as schema.name.");
         }
 
         return new BlueTuskTypeName(
-            qualifiedName[..separator],
-            qualifiedName[(separator + 1)..]);
+            ParseIdentifier(text[..separator], qualifiedName),
+            ParseIdentifier(text[(separator + 1)..], qualifiedName));
+    }
+
+    private static string ParseIdentifier(ReadOnlySpan<char> value, string qualifiedName)
+    {
+        var identifier = value.Trim();
+        if (identifier.IsEmpty)
+        {
+            throw new FormatException(
+                $"PostgreSQL type name '{qualifiedName}' must be qualified as schema.name.");
+        }
+
+        if (identifier[0] != '"')
+        {
+            if (identifier.Contains('"'))
+            {
+                throw new FormatException($"PostgreSQL type name '{qualifiedName}' contains invalid quoting.");
+            }
+
+            return identifier.ToString().ToLowerInvariant();
+        }
+
+        if (identifier.Length < 2 || identifier[^1] != '"')
+        {
+            throw new FormatException($"PostgreSQL type name '{qualifiedName}' contains invalid quoting.");
+        }
+
+        var result = identifier[1..^1].ToString().Replace("\"\"", "\"", StringComparison.Ordinal);
+        if (result.Length == 0)
+        {
+            throw new FormatException($"PostgreSQL type name '{qualifiedName}' contains an empty identifier.");
+        }
+
+        return result;
     }
 
     public override string ToString() => $"{Schema}.{Name}";

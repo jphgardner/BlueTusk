@@ -54,6 +54,36 @@ public sealed class BlueTuskValueDecoderTests
     }
 
     [Fact]
+    public void Data_reader_converts_lossless_numeric_arrays_to_decimal_arrays()
+    {
+        var arrayType = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(1231),
+            Schema = "pg_catalog",
+            Name = "_numeric",
+            Kind = BlueTuskTypeKind.Array,
+            ElementType = BlueTuskBuiltInTypes.Numeric.Id,
+        };
+        var codec = new BlueTuskArrayCodec(
+            BlueTuskBuiltInTypes.Numeric,
+            new BlueTuskNumericCodec());
+        var types = new BlueTuskTypeRegistryBuilder()
+            .Register(BlueTuskBuiltInTypes.Numeric, new BlueTuskNumericCodec())
+            .Register(arrayType, codec)
+            .Build();
+        BlueTuskNumeric[] canonical =
+        [
+            (BlueTuskNumeric)12.3400m,
+            (BlueTuskNumeric)(-0.1250m),
+        ];
+        var bytes = Write(codec, arrayType, canonical);
+        using var reader = CreateReader(Field(1231, formatCode: 1), bytes, types);
+
+        Assert.True(reader.Read());
+        Assert.Equal([12.3400m, -0.1250m], reader.GetFieldValue<decimal[]>(0));
+    }
+
+    [Fact]
     public void Data_reader_stream_accessors_cover_bytea_text_and_json()
     {
         byte[] bytes = [0, 1, 2, 255];
@@ -79,7 +109,10 @@ public sealed class BlueTuskValueDecoderTests
             encoded.Value)!;
     }
 
-    private static BlueTuskDataReader CreateReader(BlueTuskFieldDescription field, ReadOnlyMemory<byte> value) =>
+    private static BlueTuskDataReader CreateReader(
+        BlueTuskFieldDescription field,
+        ReadOnlyMemory<byte> value,
+        BlueTuskTypeRegistry? types = null) =>
         new(
             new BlueTuskQueryResult(
             [
@@ -89,7 +122,7 @@ public sealed class BlueTuskValueDecoderTests
                     "SELECT 1"),
             ]),
             connectionToClose: null,
-            BlueTuskBuiltInTypes.CreateRegistry());
+            types ?? BlueTuskBuiltInTypes.CreateRegistry());
 
     private static BlueTuskFieldDescription Field(uint oid, short formatCode) =>
         new("value", 0, 0, oid, -1, -1, formatCode);
@@ -102,6 +135,17 @@ public sealed class BlueTuskValueDecoderTests
         Span<byte> destination = stackalloc byte[128];
         var writer = new BlueTuskWriter(destination);
         codec.WriteTyped(ref writer, value, BlueTuskDataFormat.Binary, type);
+        return destination[..writer.WrittenCount].ToArray();
+    }
+
+    private static byte[] Write(
+        BlueTuskArrayCodec codec,
+        BlueTuskTypeDescriptor type,
+        object value)
+    {
+        Span<byte> destination = stackalloc byte[256];
+        var writer = new BlueTuskWriter(destination);
+        codec.Write(ref writer, value, BlueTuskDataFormat.Binary, type);
         return destination[..writer.WrittenCount].ToArray();
     }
 }

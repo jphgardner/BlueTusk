@@ -30,8 +30,8 @@ public sealed class BlueTuskParameterCollectionTests
     {
         using var command = new BlueTuskCommand();
 
-        Assert.Equal(32, command.SequentialFetchSize);
-        Assert.Throws<ArgumentOutOfRangeException>(() => command.SequentialFetchSize = 0);
+        Assert.Equal(0, command.SequentialFetchSize);
+        Assert.Throws<ArgumentOutOfRangeException>(() => command.SequentialFetchSize = -1);
         command.SequentialFetchSize = 128;
         Assert.Equal(128, command.SequentialFetchSize);
     }

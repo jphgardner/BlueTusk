@@ -15,6 +15,7 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskParameterCollection : DbParameterCollection
 {
     private readonly List<BlueTuskParameter> _items = [];
+    private int _version;
 
     public override int Count => _items.Count;
 
@@ -22,10 +23,13 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
 
     internal IReadOnlyList<BlueTuskParameter> Items => _items;
 
+    internal int Version => _version;
+
     public BlueTuskParameter Add(BlueTuskParameter parameter)
     {
         ArgumentNullException.ThrowIfNull(parameter);
         _items.Add(parameter);
+        _version++;
         return parameter;
     }
 
@@ -33,6 +37,7 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
     {
         var parameter = RequireParameter(value);
         _items.Add(parameter);
+        _version++;
         return _items.Count - 1;
     }
 
@@ -45,7 +50,14 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
         }
     }
 
-    public override void Clear() => _items.Clear();
+    public override void Clear()
+    {
+        if (_items.Count != 0)
+        {
+            _items.Clear();
+            _version++;
+        }
+    }
 
     public override bool Contains(object value) => value is BlueTuskParameter parameter && _items.Contains(parameter);
 
@@ -60,17 +72,28 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
     public override int IndexOf(string parameterName) =>
         _items.FindIndex(parameter => string.Equals(parameter.ParameterName, parameterName, StringComparison.OrdinalIgnoreCase));
 
-    public override void Insert(int index, object value) => _items.Insert(index, RequireParameter(value));
+    public override void Insert(int index, object value)
+    {
+        _items.Insert(index, RequireParameter(value));
+        _version++;
+    }
 
     public override void Remove(object value)
     {
         if (value is BlueTuskParameter parameter)
         {
-            _items.Remove(parameter);
+            if (_items.Remove(parameter))
+            {
+                _version++;
+            }
         }
     }
 
-    public override void RemoveAt(int index) => _items.RemoveAt(index);
+    public override void RemoveAt(int index)
+    {
+        _items.RemoveAt(index);
+        _version++;
+    }
 
     public override void RemoveAt(string parameterName)
     {
@@ -78,6 +101,7 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
         if (index >= 0)
         {
             _items.RemoveAt(index);
+            _version++;
         }
     }
 
@@ -91,7 +115,11 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
             : throw new IndexOutOfRangeException($"Parameter '{parameterName}' was not found.");
     }
 
-    protected override void SetParameter(int index, DbParameter value) => _items[index] = RequireParameter(value);
+    protected override void SetParameter(int index, DbParameter value)
+    {
+        _items[index] = RequireParameter(value);
+        _version++;
+    }
 
     protected override void SetParameter(string parameterName, DbParameter value)
     {
@@ -102,6 +130,7 @@ public sealed class BlueTuskParameterCollection : DbParameterCollection
         }
 
         _items[index] = RequireParameter(value);
+        _version++;
     }
 
     private static BlueTuskParameter RequireParameter(object value) =>

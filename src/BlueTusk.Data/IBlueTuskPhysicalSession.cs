@@ -1,4 +1,5 @@
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 using BlueTusk.Security;
 
@@ -15,6 +16,8 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
     bool? IsReadOnly { get; }
 
     IReadOnlyDictionary<string, string> Parameters { get; }
+
+    BlueTuskServerCapabilities Capabilities => BlueTuskServerCapabilities.Unknown;
 
     BlueTuskTransactionStatus TransactionStatus { get; }
 
@@ -41,6 +44,18 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
+
+    async ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskScalarQueryResult.FromQueryResult(
+            await ExecuteExtendedQueryAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false));
 
     BlueTuskPortal BeginPortal(
         string sql,
@@ -80,6 +95,18 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
+
+    async ValueTask<BlueTuskScalarQueryResult> ExecutePreparedScalarAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskScalarQueryResult.FromQueryResult(
+            await ExecutePreparedStatementAsync(
+                statementName,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false));
 
     BlueTuskPortal BeginPreparedPortal(
         string statementName,
@@ -194,9 +221,13 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
     public IReadOnlyDictionary<string, string> Parameters => _session.Parameters;
 
+    public BlueTuskServerCapabilities Capabilities => _session.Capabilities;
+
     public BlueTuskTransactionStatus TransactionStatus => _session.TransactionStatus;
 
-    public static IBlueTuskPhysicalSession Open(BlueTuskConnectionStringBuilder settings)
+    public static IBlueTuskPhysicalSession Open(
+        BlueTuskConnectionStringBuilder settings,
+        BlueTuskClientConfiguration? clientConfiguration = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Validate();
@@ -225,7 +256,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             BlueTuskPhysicalSession? candidate = null;
             try
             {
-                candidate = OpenEndpoint(settings, endpoint);
+                candidate = OpenEndpoint(settings, endpoint, clientConfiguration);
                 if (requiredTarget == BlueTuskTargetSessionAttributes.Any)
                 {
                     fallback?.Dispose();
@@ -282,6 +313,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
     public static async ValueTask<IBlueTuskPhysicalSession> OpenAsync(
         BlueTuskConnectionStringBuilder settings,
+        CancellationToken cancellationToken) =>
+        await OpenAsync(settings, BlueTuskClientConfiguration.Empty, cancellationToken).ConfigureAwait(false);
+
+    public static async ValueTask<IBlueTuskPhysicalSession> OpenAsync(
+        BlueTuskConnectionStringBuilder settings,
+        BlueTuskClientConfiguration? clientConfiguration,
         CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(settings);
@@ -315,6 +352,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 candidate = await OpenEndpointAsync(
                     settings,
                     endpoint,
+                    clientConfiguration,
                     cancellationToken).ConfigureAwait(false);
                 if (requiredTarget == BlueTuskTargetSessionAttributes.Any)
                 {
@@ -431,6 +469,10 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         try
         {
             var result = _session.ExecuteSimpleQuery(sql);
+            BlueTuskDiagnostics.RecordPreparedStatements(
+                _autoPrepareEntries.Count(static pair => pair.Value.PreparedStatementName is not null),
+                "automatic",
+                "invalidate");
             _autoPrepareEntries.Clear();
             return result;
         }
@@ -453,6 +495,10 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         try
         {
             var result = await _session.ExecuteSimpleQueryAsync(sql, cancellationToken).ConfigureAwait(false);
+            BlueTuskDiagnostics.RecordPreparedStatements(
+                _autoPrepareEntries.Count(static pair => pair.Value.PreparedStatementName is not null),
+                "automatic",
+                "invalidate");
             _autoPrepareEntries.Clear();
             return result;
         }
@@ -490,6 +536,42 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         {
             _autoPrepareGate.Release();
         }
+    }
+
+    public ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return _session.ExecuteExtendedScalarAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken);
+        }
+
+        return ExecuteAutoPreparedScalarAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            cancellationToken);
+    }
+
+    private async ValueTask<BlueTuskScalarQueryResult> ExecuteAutoPreparedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken)
+    {
+        return BlueTuskScalarQueryResult.FromQueryResult(
+            await ExecuteExtendedQueryAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false));
     }
 
     public BlueTuskPortal BeginPortal(
@@ -558,6 +640,17 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         bool useBinaryResults,
         CancellationToken cancellationToken = default) =>
         _session.ExecutePreparedStatementAsync(
+            statementName,
+            parameters,
+            useBinaryResults,
+            cancellationToken);
+
+    public ValueTask<BlueTuskScalarQueryResult> ExecutePreparedScalarAsync(
+        string statementName,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecutePreparedScalarAsync(
             statementName,
             parameters,
             useBinaryResults,
@@ -682,6 +775,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         {
             try
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "reuse");
                 return await _session.ExecutePreparedStatementAsync(
                     preparedStatementName,
                     parameters,
@@ -690,6 +784,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             }
             catch (BlueTuskServerException exception) when (exception.SqlState == "26000")
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "invalidate");
                 _autoPrepareEntries.Remove(key);
                 return await _session.ExecuteExtendedQueryAsync(
                     sql,
@@ -719,6 +814,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             sql,
             parameters.Select(static parameter => parameter.TypeOid).ToArray(),
             cancellationToken).ConfigureAwait(false);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "prepare");
         entry.PreparedStatementName = preparedStatementName;
         return await _session.ExecutePreparedStatementAsync(
             preparedStatementName,
@@ -745,6 +841,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         {
             try
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "reuse");
                 return _session.ExecutePreparedStatement(
                     preparedStatementName,
                     parameters,
@@ -752,6 +849,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             }
             catch (BlueTuskServerException exception) when (exception.SqlState == "26000")
             {
+                BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "invalidate");
                 _autoPrepareEntries.Remove(key);
                 return _session.ExecuteExtendedQuery(sql, parameters, useBinaryResults);
             }
@@ -771,6 +869,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             preparedStatementName,
             sql,
             parameters.Select(static parameter => parameter.TypeOid).ToArray());
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "prepare");
         entry.PreparedStatementName = preparedStatementName;
         return _session.ExecutePreparedStatement(
             preparedStatementName,
@@ -802,6 +901,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
 
         _autoPrepareEntries.Remove(oldest.Key);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "evict");
     }
 
     private void EvictAutoPreparedStatementIfRequired()
@@ -825,6 +925,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
 
         _autoPrepareEntries.Remove(oldest.Key);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "automatic", "evict");
     }
 
     private void PruneAutoPrepareCandidates(string protectedKey)
@@ -874,22 +975,28 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
     private static async ValueTask<BlueTuskPhysicalSession> OpenEndpointAsync(
         BlueTuskConnectionStringBuilder settings,
         BlueTuskHostEndpoint endpoint,
+        BlueTuskClientConfiguration? clientConfiguration,
         CancellationToken cancellationToken)
     {
+        var options = new BlueTuskClientOptions
+        {
+            Host = endpoint.Host,
+            Port = endpoint.Port,
+            Database = settings.Database,
+            Username = settings.Username,
+            Password = settings.Password,
+            Passfile = settings.Passfile,
+            KerberosServiceName = settings.KerberosServiceName,
+            ApplicationName = settings.ApplicationName,
+            ConnectTimeout = settings.Timeout,
+            SslMode = settings.SslMode,
+            ChannelBinding = settings.ChannelBinding,
+            AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
+        };
         var session = await BlueTuskSession.OpenAsync(
-            new BlueTuskClientOptions
-            {
-                Host = endpoint.Host,
-                Port = endpoint.Port,
-                Database = settings.Database,
-                Username = settings.Username,
-                Password = settings.Password,
-                ApplicationName = settings.ApplicationName,
-                ConnectTimeout = settings.Timeout,
-                SslMode = settings.SslMode,
-                ChannelBinding = settings.ChannelBinding,
-            },
+            (clientConfiguration ?? BlueTuskClientConfiguration.Empty).Apply(options),
             cancellationToken).ConfigureAwait(false);
+        await session.ProbeOptionalCapabilitiesAsync(cancellationToken).ConfigureAwait(false);
         return new BlueTuskPhysicalSession(
             session,
             endpoint,
@@ -899,21 +1006,27 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
 
     private static BlueTuskPhysicalSession OpenEndpoint(
         BlueTuskConnectionStringBuilder settings,
-        BlueTuskHostEndpoint endpoint)
+        BlueTuskHostEndpoint endpoint,
+        BlueTuskClientConfiguration? clientConfiguration)
     {
+        var options = new BlueTuskClientOptions
+        {
+            Host = endpoint.Host,
+            Port = endpoint.Port,
+            Database = settings.Database,
+            Username = settings.Username,
+            Password = settings.Password,
+            Passfile = settings.Passfile,
+            KerberosServiceName = settings.KerberosServiceName,
+            ApplicationName = settings.ApplicationName,
+            ConnectTimeout = settings.Timeout,
+            SslMode = settings.SslMode,
+            ChannelBinding = settings.ChannelBinding,
+            AllowUnencryptedPassword = settings.AllowUnencryptedPassword,
+        };
         var session = BlueTuskSession.Open(
-            new BlueTuskClientOptions
-            {
-                Host = endpoint.Host,
-                Port = endpoint.Port,
-                Database = settings.Database,
-                Username = settings.Username,
-                Password = settings.Password,
-                ApplicationName = settings.ApplicationName,
-                ConnectTimeout = settings.Timeout,
-                SslMode = settings.SslMode,
-                ChannelBinding = settings.ChannelBinding,
-            });
+            (clientConfiguration ?? BlueTuskClientConfiguration.Empty).Apply(options));
+        session.ProbeOptionalCapabilities();
         return new BlueTuskPhysicalSession(
             session,
             endpoint,

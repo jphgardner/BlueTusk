@@ -1,3 +1,4 @@
+using BlueTusk.Data;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
 
@@ -23,10 +24,10 @@ Console.CancelKeyPress += (_, eventArgs) =>
     shutdown.Cancel();
 };
 
-await using var replication =
-    await BlueTuskLogicalReplicationConnection.OpenAsync(
-        connectionString,
-        shutdown.Token);
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
+await using var replication = await BlueTuskLogicalReplicationConnection.OpenAsync(
+    dataSource.CreateDedicatedSessionOptions(),
+    shutdown.Token);
 var identity = await replication.IdentifySystemAsync(shutdown.Token);
 Console.WriteLine(
     $"System {identity.SystemIdentifier}, timeline {identity.Timeline}, WAL {identity.WalPosition}");
@@ -43,11 +44,15 @@ try
         Console.WriteLine(
             $"{envelope.XLogData.WalStart}: {envelope.Message.Code}");
 
-        // Acknowledge only after the application has durably processed the change.
-        var applied = envelope.XLogData.WalEnd;
-        await replication.SendStandbyStatusUpdateAsync(
-            new BlueTuskStandbyStatus(applied, applied, applied),
-            shutdown.Token);
+        // pgoutput transaction-end LSNs, not CopyData payload lengths, are safe
+        // logical checkpoints. A real consumer must first persist all work for
+        // the transaction and the checkpoint atomically.
+        if (envelope.TryGetTransactionEndPosition(out var applied))
+        {
+            await replication.SendStandbyStatusUpdateAsync(
+                new BlueTuskStandbyStatus(applied, applied, applied),
+                shutdown.Token);
+        }
     }
 }
 catch (OperationCanceledException) when (shutdown.IsCancellationRequested)

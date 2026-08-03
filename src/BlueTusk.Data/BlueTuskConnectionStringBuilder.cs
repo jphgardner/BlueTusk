@@ -75,10 +75,46 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     }
 
     [PasswordPropertyText(true)]
-    public string Password
+    [AllowNull]
+    public string? Password
     {
-        get => GetString(nameof(Password), string.Empty);
-        set => this[nameof(Password)] = value ?? throw new ArgumentNullException(nameof(value));
+        get => TryGetValue(nameof(Password), out var value)
+            ? Convert.ToString(value, CultureInfo.InvariantCulture)
+            : null;
+        set
+        {
+            if (value is null)
+            {
+                Remove(nameof(Password));
+            }
+            else
+            {
+                this[nameof(Password)] = value;
+            }
+        }
+    }
+
+    /// <summary>
+    /// Gets or sets an explicit PostgreSQL password-file path. Null uses the platform default;
+    /// an empty value disables password-file lookup.
+    /// </summary>
+    [AllowNull]
+    public string? Passfile
+    {
+        get => TryGetValue(nameof(Passfile), out var value)
+            ? Convert.ToString(value, CultureInfo.InvariantCulture)
+            : null;
+        set
+        {
+            if (value is null)
+            {
+                Remove(nameof(Passfile));
+            }
+            else
+            {
+                this[nameof(Passfile)] = value;
+            }
+        }
     }
 
     public TimeSpan Timeout
@@ -101,6 +137,16 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         set => this[nameof(Pooling)] = value;
     }
 
+    /// <summary>
+    /// Gets or sets whether security-sensitive connection information remains publicly visible
+    /// after a connection has opened. The secure default is <see langword="false"/>.
+    /// </summary>
+    public bool PersistSecurityInfo
+    {
+        get => GetBoolean("Persist Security Info", false);
+        set => this["Persist Security Info"] = value;
+    }
+
     public string ApplicationName
     {
         get => GetString("Application Name", "BlueTusk");
@@ -117,6 +163,24 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     {
         get => GetEnum("Channel Binding", BlueTuskChannelBindingMode.Prefer);
         set => this["Channel Binding"] = value.ToString();
+    }
+
+    /// <summary>Gets or sets the Kerberos service name used for PostgreSQL GSSAPI authentication.</summary>
+    public string KerberosServiceName
+    {
+        get => GetString("Kerberos Service Name", "postgres");
+        set => this["Kerberos Service Name"] = string.IsNullOrWhiteSpace(value)
+            ? throw new ArgumentException("A Kerberos service name is required.", nameof(value))
+            : value;
+    }
+
+    /// <summary>
+    /// Gets or sets whether cleartext password authentication may be used without TLS.
+    /// </summary>
+    public bool AllowUnencryptedPassword
+    {
+        get => GetBoolean("Allow Unencrypted Password", false);
+        set => this["Allow Unencrypted Password"] = value;
     }
 
     public BlueTuskTargetSessionAttributes TargetSessionAttributes
@@ -210,19 +274,45 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = Host;
         _ = HostEndpoints;
         _ = Timeout;
+        _ = Passfile;
         _ = SslMode;
         _ = ChannelBinding;
+        _ = KerberosServiceName;
+        _ = AllowUnencryptedPassword;
         _ = TargetSessionAttributes;
         _ = LoadBalanceHosts;
+        _ = PersistSecurityInfo;
         _ = ConnectionIdleLifetime;
         _ = ConnectionLifetime;
         _ = MaxAutoPrepare;
         _ = AutoPrepareMinUsages;
 
+        if (KerberosServiceName.IndexOfAny(['/', '@', '\0']) >= 0)
+        {
+            throw new ArgumentException(
+                "A Kerberos service name cannot contain '/', '@', or a null character.",
+                nameof(KerberosServiceName));
+        }
+
         if (MinimumPoolSize > MaximumPoolSize)
         {
             throw new ArgumentException("Minimum Pool Size cannot exceed Maximum Pool Size.");
         }
+    }
+
+    internal string GetPublicConnectionString()
+    {
+        if (PersistSecurityInfo)
+        {
+            return ConnectionString;
+        }
+
+        var publicSettings = new BlueTuskConnectionStringBuilder(ConnectionString)
+        {
+            Password = null,
+            Passfile = null,
+        };
+        return publicSettings.ConnectionString;
     }
 
     private string GetString(string keyword, string defaultValue) =>

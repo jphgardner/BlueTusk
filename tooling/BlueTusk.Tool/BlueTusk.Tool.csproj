@@ -1,13 +1,19 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
+      <PrivateAssets>all</PrivateAssets>
+      <Publish>true</Publish>
+    </PackageReference>
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore.Design\BlueTusk.EntityFrameworkCore.Design.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <IsPackable>false</IsPackable>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>bluetusk</ToolCommandName>
+    <PackageId>BlueTusk.Tool</PackageId>
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>

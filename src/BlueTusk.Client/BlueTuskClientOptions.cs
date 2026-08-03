@@ -1,7 +1,9 @@
-using System.Data.Common;
 using System.Globalization;
+using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
+using System.Text;
+using BlueTusk.Security;
 
 namespace BlueTusk.Client;
 
@@ -38,7 +40,39 @@ public sealed record BlueTuskClientOptions
 
     public required string Username { get; init; }
 
-    public required string Password { get; init; }
+    /// <summary>Gets the explicit password, or <see langword="null"/> to use another source.</summary>
+    public string? Password { get; init; }
+
+    /// <summary>
+    /// Gets an explicit PostgreSQL password-file path. A null value uses the platform default;
+    /// an empty value disables password-file lookup.
+    /// </summary>
+    public string? Passfile { get; init; }
+
+    public BlueTuskPasswordProvider? PasswordProvider { get; init; }
+
+    public BlueTuskPasswordProviderAsync? PasswordProviderAsync { get; init; }
+
+    public BlueTuskAccessTokenProvider? AccessTokenProvider { get; init; }
+
+    public BlueTuskAccessTokenProviderAsync? AccessTokenProviderAsync { get; init; }
+
+    /// <summary>Gets whether access-token callbacks may be invoked only after TLS is established.</summary>
+    public bool AccessTokenRequiresTls { get; init; }
+
+    internal bool HasAccessTokenProvider =>
+        AccessTokenProvider is not null || AccessTokenProviderAsync is not null;
+
+    /// <summary>
+    /// Gets an explicit Kerberos/SSPI credential, or null to use the process identity or platform
+    /// credential cache.
+    /// </summary>
+    public NetworkCredential? GssCredential { get; init; }
+
+    /// <summary>Gets the Kerberos service name used to form the PostgreSQL service principal.</summary>
+    public string KerberosServiceName { get; init; } = "postgres";
+
+    internal Func<bool, BlueTuskGssApiClient>? GssApiClientFactory { get; init; }
 
     public string ApplicationName { get; init; } = "BlueTusk";
 
@@ -48,35 +82,50 @@ public sealed record BlueTuskClientOptions
 
     public BlueTuskChannelBindingMode ChannelBinding { get; init; } = BlueTuskChannelBindingMode.Prefer;
 
+    /// <summary>
+    /// Gets whether a server may request the cleartext PostgreSQL password method without TLS.
+    /// </summary>
+    /// <remarks>Defaults to <see langword="false"/>. This does not disable TLS validation.</remarks>
+    public bool AllowUnencryptedPassword { get; init; }
+
     public BlueTuskReplicationMode ReplicationMode { get; init; }
 
     public X509RevocationMode CertificateRevocationCheckMode { get; init; } = X509RevocationMode.Online;
 
+    public IReadOnlyCollection<X509Certificate2> ClientCertificates { get; init; } = [];
+
+    public LocalCertificateSelectionCallback? LocalCertificateSelectionCallback { get; init; }
+
     public RemoteCertificateValidationCallback? RemoteCertificateValidationCallback { get; init; }
+
+    public override string ToString() =>
+        $"{nameof(BlueTuskClientOptions)} {{ Host = {Host}, Port = {Port}, Database = {Database}, " +
+        $"Username = {Username}, Password = <redacted>, Passfile = <redacted>, " +
+        $"GSS Credential = <redacted>, SSL Mode = {SslMode}, Channel Binding = {ChannelBinding} }}";
 
     /// <summary>Creates client options from a BlueTusk connection string.</summary>
     public static BlueTuskClientOptions FromConnectionString(string connectionString)
     {
         ArgumentNullException.ThrowIfNull(connectionString);
-        var builder = new DbConnectionStringBuilder
-        {
-            ConnectionString = connectionString,
-        };
+        var settings = ParseConnectionString(connectionString);
 
         return new BlueTuskClientOptions
         {
-            Host = GetString(builder, "Host", "localhost"),
-            Port = GetInt32(builder, "Port", 5432),
-            Database = GetString(builder, "Database", string.Empty),
-            Username = GetString(builder, "Username", string.Empty),
-            Password = GetString(builder, "Password", string.Empty),
-            ApplicationName = GetString(builder, "Application Name", "BlueTusk"),
-            ConnectTimeout = TimeSpan.FromSeconds(GetInt32(builder, "Timeout", 15)),
-            SslMode = GetEnum(builder, "SSL Mode", BlueTuskSslMode.VerifyFull),
+            Host = GetString(settings, "Host", "localhost"),
+            Port = GetInt32(settings, "Port", 5432),
+            Database = GetString(settings, "Database", string.Empty),
+            Username = GetString(settings, "Username", string.Empty),
+            Password = GetOptionalString(settings, "Password"),
+            Passfile = GetOptionalString(settings, "Passfile"),
+            KerberosServiceName = GetString(settings, "Kerberos Service Name", "postgres"),
+            ApplicationName = GetString(settings, "Application Name", "BlueTusk"),
+            ConnectTimeout = TimeSpan.FromSeconds(GetInt32(settings, "Timeout", 15)),
+            SslMode = GetEnum(settings, "SSL Mode", BlueTuskSslMode.VerifyFull),
             ChannelBinding = GetEnum(
-                builder,
+                settings,
                 "Channel Binding",
                 BlueTuskChannelBindingMode.Prefer),
+            AllowUnencryptedPassword = GetBoolean(settings, "Allow Unencrypted Password", defaultValue: false),
         };
     }
 
@@ -87,8 +136,16 @@ public sealed record BlueTuskClientOptions
         ArgumentOutOfRangeException.ThrowIfGreaterThan(Port, 65_535);
         ArgumentException.ThrowIfNullOrWhiteSpace(Database);
         ArgumentException.ThrowIfNullOrWhiteSpace(Username);
-        ArgumentNullException.ThrowIfNull(Password);
         ArgumentNullException.ThrowIfNull(ApplicationName);
+        ArgumentNullException.ThrowIfNull(ClientCertificates);
+        ArgumentException.ThrowIfNullOrWhiteSpace(KerberosServiceName);
+
+        if (KerberosServiceName.IndexOfAny(['/', '@', '\0']) >= 0)
+        {
+            throw new ArgumentException(
+                "A Kerberos service name cannot contain '/', '@', or a null character.",
+                nameof(KerberosServiceName));
+        }
 
         if (ConnectTimeout <= TimeSpan.Zero && ConnectTimeout != Timeout.InfiniteTimeSpan)
         {
@@ -104,32 +161,168 @@ public sealed record BlueTuskClientOptions
         {
             throw new ArgumentOutOfRangeException(nameof(ReplicationMode));
         }
+
+        var hasPasswordProvider = PasswordProvider is not null || PasswordProviderAsync is not null;
+        var hasAccessTokenProvider = AccessTokenProvider is not null || AccessTokenProviderAsync is not null;
+        if (hasPasswordProvider && hasAccessTokenProvider)
+        {
+            throw new ArgumentException(
+                "Password and access-token providers are mutually exclusive credential sources.");
+        }
     }
 
     private static string GetString(
-        DbConnectionStringBuilder builder,
+        Dictionary<string, string> settings,
         string keyword,
         string defaultValue) =>
-        builder.TryGetValue(keyword, out var value)
-            ? Convert.ToString(value, CultureInfo.InvariantCulture) ?? defaultValue
+        settings.TryGetValue(keyword, out var value)
+            ? value
             : defaultValue;
 
     private static int GetInt32(
-        DbConnectionStringBuilder builder,
+        Dictionary<string, string> settings,
         string keyword,
         int defaultValue) =>
-        builder.TryGetValue(keyword, out var value)
-            ? Convert.ToInt32(value, CultureInfo.InvariantCulture)
+        settings.TryGetValue(keyword, out var value)
+            ? int.Parse(value, NumberStyles.Integer, CultureInfo.InvariantCulture)
             : defaultValue;
 
+    private static string? GetOptionalString(
+        Dictionary<string, string> settings,
+        string keyword) =>
+        settings.TryGetValue(keyword, out var value) ? value : null;
+
     private static TEnum GetEnum<TEnum>(
-        DbConnectionStringBuilder builder,
+        Dictionary<string, string> settings,
         string keyword,
         TEnum defaultValue)
         where TEnum : struct, Enum =>
-        builder.TryGetValue(keyword, out var value)
-            ? Enum.Parse<TEnum>(
-                Convert.ToString(value, CultureInfo.InvariantCulture)!,
-                ignoreCase: true)
+        settings.TryGetValue(keyword, out var value)
+            ? Enum.Parse<TEnum>(value, ignoreCase: true)
             : defaultValue;
+
+    private static bool GetBoolean(
+        Dictionary<string, string> settings,
+        string keyword,
+        bool defaultValue) =>
+        settings.TryGetValue(keyword, out var value)
+            ? bool.Parse(value)
+            : defaultValue;
+
+    private static Dictionary<string, string> ParseConnectionString(string connectionString)
+    {
+        var settings = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        var index = 0;
+        while (index < connectionString.Length)
+        {
+            SkipSeparatorsAndWhitespace(connectionString, ref index);
+            if (index == connectionString.Length)
+            {
+                break;
+            }
+
+            var keyStart = index;
+            while (index < connectionString.Length && connectionString[index] is not ('=' or ';'))
+            {
+                index++;
+            }
+
+            if (index == connectionString.Length || connectionString[index] != '=')
+            {
+                throw new ArgumentException("The connection string contains a keyword without a value.", nameof(connectionString));
+            }
+
+            var key = connectionString[keyStart..index].Trim();
+            if (key.Length == 0)
+            {
+                throw new ArgumentException("The connection string contains an empty keyword.", nameof(connectionString));
+            }
+
+            index++;
+            while (index < connectionString.Length && char.IsWhiteSpace(connectionString[index]))
+            {
+                index++;
+            }
+
+            settings[key] = index < connectionString.Length && connectionString[index] is ('\'' or '"')
+                ? ReadQuotedValue(connectionString, ref index)
+                : ReadUnquotedValue(connectionString, ref index);
+        }
+
+        return settings;
+    }
+
+    private static string ReadQuotedValue(string connectionString, ref int index)
+    {
+        var quote = connectionString[index++];
+        var value = new StringBuilder();
+        var closed = false;
+        while (index < connectionString.Length)
+        {
+            var character = connectionString[index++];
+            if (character != quote)
+            {
+                value.Append(character);
+                continue;
+            }
+
+            if (index < connectionString.Length && connectionString[index] == quote)
+            {
+                value.Append(quote);
+                index++;
+                continue;
+            }
+
+            closed = true;
+            break;
+        }
+
+        if (!closed)
+        {
+            throw new ArgumentException("The connection string contains an unterminated quoted value.", nameof(connectionString));
+        }
+
+        while (index < connectionString.Length && char.IsWhiteSpace(connectionString[index]))
+        {
+            index++;
+        }
+
+        if (index < connectionString.Length && connectionString[index] != ';')
+        {
+            throw new ArgumentException("The connection string contains characters after a quoted value.", nameof(connectionString));
+        }
+
+        if (index < connectionString.Length)
+        {
+            index++;
+        }
+
+        return value.ToString();
+    }
+
+    private static string ReadUnquotedValue(string connectionString, ref int index)
+    {
+        var valueStart = index;
+        while (index < connectionString.Length && connectionString[index] != ';')
+        {
+            index++;
+        }
+
+        var value = connectionString[valueStart..index].Trim();
+        if (index < connectionString.Length)
+        {
+            index++;
+        }
+
+        return value;
+    }
+
+    private static void SkipSeparatorsAndWhitespace(string connectionString, ref int index)
+    {
+        while (index < connectionString.Length
+               && (connectionString[index] == ';' || char.IsWhiteSpace(connectionString[index])))
+        {
+            index++;
+        }
+    }
 }

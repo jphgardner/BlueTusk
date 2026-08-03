@@ -21,6 +21,7 @@ public sealed class BlueTuskConnectionPoolTests
         var firstLease = await pool.RentAsync(CancellationToken.None);
         var firstSession = Assert.IsType<FakePhysicalSession>(firstLease.Session);
         firstSession.TransactionStatus = BlueTuskTransactionStatus.InTransaction;
+        firstLease.MarkDirty();
         pool.Return(firstLease);
 
         var secondLease = await pool.RentAsync(CancellationToken.None);
@@ -131,6 +132,7 @@ public sealed class BlueTuskConnectionPoolTests
         var firstLease = await pool.RentAsync(CancellationToken.None);
         var firstSession = Assert.IsType<FakePhysicalSession>(firstLease.Session);
         firstSession.FailReset = true;
+        firstLease.MarkDirty();
         pool.Return(firstLease);
 
         var secondLease = await pool.RentAsync(CancellationToken.None);
@@ -140,6 +142,24 @@ public sealed class BlueTuskConnectionPoolTests
         Assert.Equal(2, sessions.Count);
         Assert.Equal(1, pool.Statistics.Discarded);
         pool.Return(secondLease);
+    }
+
+    [Fact]
+    public async Task Untouched_lease_skips_server_reset_but_touched_lease_resets_before_reuse()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var firstLease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(firstLease.Session);
+        pool.Return(firstLease);
+
+        var untouchedReuse = await pool.RentAsync(CancellationToken.None);
+        Assert.Empty(session.Commands);
+        untouchedReuse.MarkDirty();
+        pool.Return(untouchedReuse);
+
+        var touchedReuse = await pool.RentAsync(CancellationToken.None);
+        Assert.Equal(["DISCARD ALL"], session.Commands);
+        pool.Return(touchedReuse);
     }
 
     [Fact]

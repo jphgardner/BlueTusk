@@ -9,6 +9,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>BlueTusk.Extensions.TimescaleDB</PackageId>
+    <Description>Optional PostgreSQL TimescaleDB hypertable and retention integration for BlueTusk.</Description>
+    <PackageTags>postgresql;database;dotnet;bluetusk;timescaledb;hypertable;time-series</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="$(MSBuildThisFileDirectory)..\..\README.md" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

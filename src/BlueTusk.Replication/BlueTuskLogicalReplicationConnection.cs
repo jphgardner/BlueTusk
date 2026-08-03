@@ -17,15 +17,23 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
     }
 
     public static ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
+        string connectionString) =>
+        OpenAsync(connectionString, CancellationToken.None);
+
+    public static ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
         string connectionString,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken) =>
         OpenAsync(
             BlueTuskClientOptions.FromConnectionString(connectionString),
             cancellationToken);
 
+    public static ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
+        BlueTuskClientOptions options) =>
+        OpenAsync(options, CancellationToken.None);
+
     public static async ValueTask<BlueTuskLogicalReplicationConnection> OpenAsync(
         BlueTuskClientOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
         var session = await BlueTuskSession.OpenAsync(
@@ -117,11 +125,106 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         return tables;
     }
 
+    /// <summary>
+    /// Validates that a persisted logical checkpoint still belongs to this server,
+    /// database, output plug-in, and resumable inactive slot.
+    /// </summary>
+    public async ValueTask<BlueTuskReplicationSlotInfo> ValidateResumeCheckpointAsync(
+        BlueTuskLogicalReplicationCheckpoint checkpoint,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(checkpoint);
+        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.SystemIdentifier);
+        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.DatabaseName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.SlotName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(checkpoint.OutputPlugin);
+        if (checkpoint.AppliedPosition == BlueTuskLogSequenceNumber.Zero)
+        {
+            throw new ArgumentException(
+                "A logical replication checkpoint must contain a non-zero applied position.",
+                nameof(checkpoint));
+        }
+
+        var identity = await IdentifySystemAsync(cancellationToken).ConfigureAwait(false);
+        if (!string.Equals(
+                checkpoint.SystemIdentifier,
+                identity.SystemIdentifier,
+                StringComparison.Ordinal))
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                "The checkpoint belongs to a different PostgreSQL system identifier.");
+        }
+
+        if (!string.Equals(checkpoint.DatabaseName, identity.DatabaseName, StringComparison.Ordinal))
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                "The checkpoint belongs to a different PostgreSQL database.");
+        }
+
+        var slots = await GetReplicationSlotsAsync(cancellationToken).ConfigureAwait(false);
+        var slot = slots.SingleOrDefault(candidate =>
+            string.Equals(candidate.SlotName, checkpoint.SlotName, StringComparison.Ordinal))
+            ?? throw new BlueTuskReplicationCheckpointException(
+                $"Logical replication slot '{checkpoint.SlotName}' no longer exists.");
+        if (!string.Equals(slot.SlotType, "logical", StringComparison.Ordinal) ||
+            !string.Equals(slot.OutputPlugin, checkpoint.OutputPlugin, StringComparison.Ordinal) ||
+            !string.Equals(slot.DatabaseName, checkpoint.DatabaseName, StringComparison.Ordinal))
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                $"Replication slot '{checkpoint.SlotName}' no longer matches the checkpoint identity.");
+        }
+
+        if (slot.IsTemporary)
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                $"Temporary replication slot '{checkpoint.SlotName}' cannot survive a reconnect.");
+        }
+
+        if (slot.IsActive)
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                $"Replication slot '{checkpoint.SlotName}' is already active on another session.");
+        }
+
+        if (slot.WalStatus is "lost" or "unreserved" || slot.RestartPosition is null)
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                $"Replication slot '{checkpoint.SlotName}' no longer retains WAL safely.");
+        }
+
+        if (checkpoint.AppliedPosition < slot.RestartPosition.Value)
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                "The checkpoint is older than the slot's retained WAL position.");
+        }
+
+        if (slot.ConfirmedFlushPosition is { } confirmedFlush &&
+            checkpoint.AppliedPosition < confirmedFlush)
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                "The slot's confirmed flush position is ahead of the durable application checkpoint.");
+        }
+
+        if (checkpoint.AppliedPosition > identity.WalPosition)
+        {
+            throw new BlueTuskReplicationCheckpointException(
+                "The checkpoint is ahead of the server's current WAL position.");
+        }
+
+        return slot;
+    }
+
+    /// <summary>Streams pgoutput changes for one publication.</summary>
+    public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
+        string slotName,
+        string publicationName) =>
+        StartReplicationAsync(slotName, publicationName, CancellationToken.None);
+
     /// <summary>Streams pgoutput changes for one publication.</summary>
     public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
         string slotName,
         string publicationName,
-        CancellationToken cancellationToken = default) =>
+        CancellationToken cancellationToken) =>
         StartReplicationAsync(
             new BlueTuskPgOutputReplicationOptions
             {
@@ -132,8 +235,13 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
 
     /// <summary>Streams changes using typed pgoutput plugin options.</summary>
     public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
+        BlueTuskPgOutputReplicationOptions options) =>
+        StartReplicationAsync(options, CancellationToken.None);
+
+    /// <summary>Streams changes using typed pgoutput plugin options.</summary>
+    public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
         BlueTuskPgOutputReplicationOptions options,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(options);
         options.Validate();
@@ -187,8 +295,13 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
 
     /// <summary>Streams output from a logical decoding plugin.</summary>
     public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
+        BlueTuskLogicalReplicationRequest request) =>
+        StartReplicationAsync(request, CancellationToken.None);
+
+    /// <summary>Streams output from a logical decoding plugin.</summary>
+    public IAsyncEnumerable<BlueTuskReplicationMessage> StartReplicationAsync(
         BlueTuskLogicalReplicationRequest request,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken)
     {
         ArgumentNullException.ThrowIfNull(request);
         ArgumentException.ThrowIfNullOrWhiteSpace(request.SlotName);

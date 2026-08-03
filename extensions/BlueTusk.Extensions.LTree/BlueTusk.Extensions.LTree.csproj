@@ -9,6 +9,14 @@
     <TargetFramework>net10.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
+    <PackageId>BlueTusk.Extensions.LTree</PackageId>
+    <Description>Optional PostgreSQL ltree, lquery, and ltxtquery integration for BlueTusk.</Description>
+    <PackageTags>postgresql;database;dotnet;bluetusk;ltree;lquery</PackageTags>
   </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="$(MSBuildThisFileDirectory)..\..\README.md" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
 
 </Project>

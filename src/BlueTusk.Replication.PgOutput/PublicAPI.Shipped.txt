@@ -1,0 +1,498 @@
+#nullable enable
+
+~override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.Equals(object obj) -> bool
+~override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.ToString() -> string
+abstract BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.BlueTuskPgOutputBegin(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber FinalPosition, System.DateTimeOffset CommitTimestamp, uint TransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.CommitTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.CommitTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber FinalPosition, out System.DateTimeOffset CommitTimestamp, out uint TransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.FinalPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.FinalPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.BlueTuskPgOutputBeginPrepare(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparePosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, System.DateTimeOffset PrepareTimestamp, uint TransactionId, string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparePosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, out System.DateTimeOffset PrepareTimestamp, out uint TransactionId, out string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.GlobalTransactionId.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.GlobalTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.PreparePosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.PreparePosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.PrepareTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.PrepareTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.TransactionEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.TransactionEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.BlueTuskPgOutputCommit(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, System.DateTimeOffset CommitTimestamp) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.CommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.CommitPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.CommitTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.CommitTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, out System.DateTimeOffset CommitTimestamp) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.TransactionEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.TransactionEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.BlueTuskPgOutputCommitPrepared(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, System.DateTimeOffset CommitTimestamp, uint TransactionId, string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.CommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.CommitPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.CommitTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.CommitTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, out System.DateTimeOffset CommitTimestamp, out uint TransactionId, out string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.GlobalTransactionId.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.GlobalTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.TransactionEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.TransactionEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoder
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoder.BlueTuskPgOutputDecoder() -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoder.BlueTuskPgOutputDecoder(BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions! options) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoder.Decode(BlueTusk.Replication.BlueTuskXLogData! xLogData) -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoder.Decode(System.ReadOnlyMemory<byte> payload) -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoder.IsInsideStreamSegment.get -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoder.Options.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.BlueTuskPgOutputDecoderOptions() -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.ProtocolVersion.get -> int
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.ProtocolVersion.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.StreamingMode.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.StreamingMode.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.TwoPhase.get -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.TwoPhase.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.BlueTuskPgOutputDelete(uint? StreamingTransactionId, uint RelationId, BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind OldRowKind, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple! OldRow) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.Deconstruct(out uint? StreamingTransactionId, out uint RelationId, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind OldRowKind, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple! OldRow) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.OldRow.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.OldRow.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.OldRowKind.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.OldRowKind.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.RelationId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.RelationId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.StreamingTransactionId.get -> uint?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.StreamingTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.BlueTuskPgOutputEnvelope(BlueTusk.Replication.BlueTuskXLogData! XLogData, BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage! Message) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.Deconstruct(out BlueTusk.Replication.BlueTuskXLogData! XLogData, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage! Message) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.Message.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.Message.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.XLogData.get -> BlueTusk.Replication.BlueTuskXLogData!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.XLogData.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputExtensions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.BlueTuskPgOutputInsert(uint? StreamingTransactionId, uint RelationId, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple! NewRow) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.Deconstruct(out uint? StreamingTransactionId, out uint RelationId, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple! NewRow) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.NewRow.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.NewRow.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.RelationId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.RelationId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.StreamingTransactionId.get -> uint?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.StreamingTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.BlueTuskPgOutputLogicalMessage(uint? StreamingTransactionId, bool IsTransactional, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Position, string! Prefix, System.ReadOnlyMemory<byte> Content) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Content.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Content.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Deconstruct(out uint? StreamingTransactionId, out bool IsTransactional, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber Position, out string! Prefix, out System.ReadOnlyMemory<byte> Content) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.IsTransactional.get -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.IsTransactional.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Position.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Position.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Prefix.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Prefix.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.StreamingTransactionId.get -> uint?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.StreamingTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.BlueTuskPgOutputMessage(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage! original) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.BlueTuskPgOutputMessage(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode Code) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.Code.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.Code.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.Deconstruct(out BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode Code) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Begin = 66 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.BeginPrepare = 98 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Commit = 67 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.CommitPrepared = 75 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Delete = 68 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Insert = 73 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Message = 77 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Origin = 79 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Prepare = 80 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Relation = 82 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.RollbackPrepared = 114 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.StreamAbort = 65 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.StreamCommit = 99 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.StreamPrepare = 112 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.StreamStart = 83 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.StreamStop = 69 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Truncate = 84 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Type = 89 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode.Update = 85 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessageCode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind.Full = 1 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind.Key = 0 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.BlueTuskPgOutputOrigin(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, string! Name) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.CommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.CommitPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, out string! Name) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.Name.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.Name.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.BlueTuskPgOutputPrepare(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparePosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, System.DateTimeOffset PrepareTimestamp, uint TransactionId, string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparePosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, out System.DateTimeOffset PrepareTimestamp, out uint TransactionId, out string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.GlobalTransactionId.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.GlobalTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.PreparePosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.PreparePosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.PrepareTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.PrepareTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.TransactionEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.TransactionEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputProtocolException
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputProtocolException.BlueTuskPgOutputProtocolException(string! message, System.Exception! innerException) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputProtocolException.BlueTuskPgOutputProtocolException(string! message) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.BlueTuskPgOutputRelation(uint? StreamingTransactionId, uint RelationId, string! Namespace, string! Name, char ReplicaIdentity, System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn!>! Columns) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Columns.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn!>!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Columns.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Deconstruct(out uint? StreamingTransactionId, out uint RelationId, out string! Namespace, out string! Name, out char ReplicaIdentity, out System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn!>! Columns) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Name.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Name.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Namespace.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Namespace.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.RelationId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.RelationId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.ReplicaIdentity.get -> char
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.ReplicaIdentity.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.StreamingTransactionId.get -> uint?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.StreamingTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.BlueTuskPgOutputRelationColumn(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions Options, string! Name, uint TypeOid, int TypeModifier) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.Deconstruct(out BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions Options, out string! Name, out uint TypeOid, out int TypeModifier) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.Name.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.Name.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.Options.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.Options.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.TypeModifier.get -> int
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.TypeModifier.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.TypeOid.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.TypeOid.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions.Key = 1 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions.None = 0 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumnOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.BlueTuskPgOutputRollbackPrepared(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparedTransactionEndPosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber RollbackEndPosition, System.DateTimeOffset PrepareTimestamp, System.DateTimeOffset RollbackTimestamp, uint TransactionId, string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparedTransactionEndPosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber RollbackEndPosition, out System.DateTimeOffset PrepareTimestamp, out System.DateTimeOffset RollbackTimestamp, out uint TransactionId, out string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.GlobalTransactionId.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.GlobalTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.PreparedTransactionEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.PreparedTransactionEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.PrepareTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.PrepareTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.RollbackEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.RollbackEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.RollbackTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.RollbackTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.AbortPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.AbortPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.AbortTimestamp.get -> System.DateTimeOffset?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.AbortTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.BlueTuskPgOutputStreamAbort(uint TransactionId, uint SubtransactionId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? AbortPosition, System.DateTimeOffset? AbortTimestamp) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.Deconstruct(out uint TransactionId, out uint SubtransactionId, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber? AbortPosition, out System.DateTimeOffset? AbortTimestamp) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.SubtransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.SubtransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.BlueTuskPgOutputStreamCommit(uint TransactionId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, System.DateTimeOffset CommitTimestamp) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.CommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.CommitPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.CommitTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.CommitTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.Deconstruct(out uint TransactionId, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber CommitPosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, out System.DateTimeOffset CommitTimestamp) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.TransactionEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.TransactionEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode.Off = 0 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode.On = 1 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode.Parallel = 2 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamingMode
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.BlueTuskPgOutputStreamPrepare(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparePosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, System.DateTimeOffset PrepareTimestamp, uint TransactionId, string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.Deconstruct(out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber PreparePosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber TransactionEndPosition, out System.DateTimeOffset PrepareTimestamp, out uint TransactionId, out string! GlobalTransactionId) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.GlobalTransactionId.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.GlobalTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.PreparePosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.PreparePosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.PrepareTimestamp.get -> System.DateTimeOffset
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.PrepareTimestamp.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.TransactionEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.TransactionEndPosition.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.BlueTuskPgOutputStreamStart(uint TransactionId, bool IsFirstSegment) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.Deconstruct(out uint TransactionId, out bool IsFirstSegment) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.IsFirstSegment.get -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.IsFirstSegment.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.TransactionId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.TransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.BlueTuskPgOutputStreamStop() -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.BlueTuskPgOutputTruncate(uint? StreamingTransactionId, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions Options, System.Collections.Generic.IReadOnlyList<uint>! RelationIds) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.Deconstruct(out uint? StreamingTransactionId, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions Options, out System.Collections.Generic.IReadOnlyList<uint>! RelationIds) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.Options.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.Options.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.RelationIds.get -> System.Collections.Generic.IReadOnlyList<uint>!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.RelationIds.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.StreamingTransactionId.get -> uint?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.StreamingTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions.Cascade = 1 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions.None = 0 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions.RestartIdentity = 2 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncateOptions
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.BlueTuskPgOutputTuple(System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue>! Values) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.Deconstruct(out System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue>! Values) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.Values.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue>!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.Values.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.BlueTuskPgOutputTupleValue() -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.BlueTuskPgOutputTupleValue(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind Kind, System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.Data.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.Data.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.Deconstruct(out BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind Kind, out System.ReadOnlyMemory<byte> Data) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.Kind.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.Kind.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind.Binary = 98 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind.Null = 110 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind.Text = 116 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind.UnchangedToast = 117 -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValueKind
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.BlueTuskPgOutputType(uint? StreamingTransactionId, uint TypeId, string! Namespace, string! Name) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Deconstruct(out uint? StreamingTransactionId, out uint TypeId, out string! Namespace, out string! Name) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputType? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Name.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Name.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Namespace.get -> string!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Namespace.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.StreamingTransactionId.get -> uint?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.StreamingTransactionId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.TypeId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.TypeId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.BlueTuskPgOutputUpdate(uint? StreamingTransactionId, uint RelationId, BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind? OldRowKind, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple? OldRow, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple! NewRow) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.Deconstruct(out uint? StreamingTransactionId, out uint RelationId, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind? OldRowKind, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple? OldRow, out BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple! NewRow) -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate? other) -> bool
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.NewRow.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple!
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.NewRow.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.OldRow.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.OldRow.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.OldRowKind.get -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputOldRowKind?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.OldRowKind.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.RelationId.get -> uint
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.RelationId.init -> void
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.StreamingTransactionId.get -> uint?
+BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.StreamingTransactionId.init -> void
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputType!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.ToString() -> string!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.<Clone>$() -> BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate!
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.Equals(object? obj) -> bool
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.GetHashCode() -> int
+override BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.ToString() -> string!
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+override sealed BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputBegin? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputBeginPrepare? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommit? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputCommitPrepared? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputDelete? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputExtensions.DecodePgOutputAsync(this System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.BlueTuskReplicationMessage!>! source, BlueTusk.Replication.PgOutput.BlueTuskPgOutputDecoderOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope!>!
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputExtensions.TryGetTransactionEndPosition(this BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope! envelope, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber position) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputInsert? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputLogicalMessage? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputOrigin? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputPrepare? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelation? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputRelationColumn? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputRollbackPrepared? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamAbort? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamCommit? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamPrepare? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStart? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputStreamStop? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTruncate? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTuple? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputTupleValue right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputType? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputType? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputType.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputType? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputType? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.operator !=(BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate? right) -> bool
+static BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate.operator ==(BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate? left, BlueTusk.Replication.PgOutput.BlueTuskPgOutputUpdate? right) -> bool
+virtual BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.EqualityContract.get -> System.Type!
+virtual BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.Equals(BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage? other) -> bool
+virtual BlueTusk.Replication.PgOutput.BlueTuskPgOutputMessage.PrintMembers(System.Text.StringBuilder! builder) -> bool

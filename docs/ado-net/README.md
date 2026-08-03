@@ -1,11 +1,48 @@
 # ADO.NET
 
-The 0.1.0 development line provides native synchronous and asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, `BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use blocking socket, TLS, protocol, authentication, pool, and query implementations rather than blocking asynchronous I/O.
+The current preview provides native synchronous and asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, `BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use blocking socket, TLS, protocol, authentication, pool, and query implementations rather than blocking asynchronous I/O.
+
+Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
+
+Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers
+SCRAM channel binding when PostgreSQL offers it. PostgreSQL GSSAPI/Kerberos and SSPI
+requests use the operating system security context with mutual authentication. Legacy PostgreSQL MD5 challenges are
+supported for compatibility, but MD5 is deprecated by PostgreSQL and should not be selected
+for new deployments. A server request for cleartext password authentication is accepted over
+an established TLS connection. It is rejected on an unencrypted connection unless the caller
+deliberately sets `Allow Unencrypted Password=true`, which is intended only for trusted
+compatibility environments:
+
+```text
+SSL Mode=VerifyFull;Channel Binding=Prefer
+```
+
+```text
+SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true
+```
+
+Password and SCRAM frames use protocol storage that is overwritten immediately after the
+transport flushes it, and temporary MD5/password byte arrays are cleared. A .NET connection
+string and its immutable password `string` cannot be zeroed by the provider, so applications
+should keep their lifetime narrow and avoid logging them. See PostgreSQL's current
+[password authentication](https://www.postgresql.org/docs/current/auth-password.html) and
+[encryption options](https://www.postgresql.org/docs/current/encryption-options.html) for the
+server-side configuration and MD5 migration guidance. The compatibility gate creates isolated
+test roles and executes both authentication paths against PostgreSQL 15–19; the normal matrix
+user remains configured for SCRAM-SHA-256.
+
+The [authentication guide](authentication.md) documents password-file lookup,
+password and access-token callbacks, refresh timing, credential precedence,
+GSSAPI/Kerberos service principals and credentials, TLS client certificates,
+and callback-based certificate selection. Optional [cloud identity
+adapters](cloud-identity.md) integrate AWS RDS/Aurora, Azure Database for
+PostgreSQL, and Google Cloud SQL while keeping their SDKs out of the core
+provider.
 
 Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
 
 ```csharp
-await using var dataSource = BlueTuskDataSource.Create(connectionString);
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
 await using var command = dataSource.CreateCommand("SELECT $1::int4 + $2::int4");
 command.Parameters.Add(new BlueTuskParameter<int>(20));
 command.Parameters.Add(new BlueTuskParameter<int>(22));
@@ -21,7 +58,25 @@ Automatic preparation is opt-in per physical connection. `Max Auto Prepare` boun
 Max Auto Prepare=100;Auto Prepare Min Usages=5
 ```
 
-BlueTusk infers built-in PostgreSQL type OIDs from `DbType` or the CLR value. A null parameter must set `DbType` or `PostgreSqlTypeOid`; this avoids relying on ambiguous server inference.
+BlueTusk infers built-in PostgreSQL type OIDs from `DbType` or the CLR value. A null parameter must set `DbType`, `PostgreSqlTypeOid`, or `PostgreSqlTypeName`; this avoids relying on ambiguous server inference. `PostgreSqlTypeName` resolves schema-qualified catalogue types through the connection's runtime registry and supports scalar and array names, including quoted identifiers:
+
+```csharp
+command.Parameters.Add(new BlueTuskParameter(null)
+{
+    PostgreSqlTypeName = "app.order_status",
+});
+command.Parameters.Add(new BlueTuskParameter(null)
+{
+    PostgreSqlTypeName = "app.order_status[]",
+});
+```
+
+The current immutable catalogue snapshot is available from either
+`dataSource.TypeRegistry` or an open `connection.TypeRegistry`. After creating,
+altering, or dropping a user-defined type at runtime, call
+`ReloadTypes()`/`ReloadTypesAsync()` on the long-lived data source. The same
+methods are available on an open directly constructed connection for its local,
+unpooled catalogue.
 
 Explicit preparation is available synchronously and asynchronously on an open, connection-owned command. BlueTusk creates a named server statement and reuses it across executions; changing the command text or parameter type identity closes and prepares the statement again.
 
@@ -64,7 +119,9 @@ await command.ExecuteNonQueryAsync();
 await transaction.CommitAsync();
 ```
 
-Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a separate connection. BlueTusk drains the original connection through `ReadyForQuery` before returning, so a cancelled connection remains reusable. `Cancel()` and `CancelAsync()` provide explicit cancellation. Cancellation inside a transaction leaves PostgreSQL's transaction in the failed state and requires rollback.
+Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a separate connection. BlueTusk waits for PostgreSQL to close that one-shot cancellation channel, then drains the original connection through `ReadyForQuery` before returning, so a late cancellation cannot escape into the next command and a cancelled connection remains reusable. `Cancel()` and `CancelAsync()` provide explicit cancellation. Cancellation inside a transaction leaves PostgreSQL's transaction in the failed state and requires rollback.
+
+Low-level clients can use [PostgreSQL pipeline mode](../pipeline-mode.md) to send multiple extended-query synchronization groups in one flush. This is a Client-layer API rather than an ADO.NET batching alias; `BlueTuskBatch` remains the provider-neutral `DbBatch` surface.
 
 `BlueTuskDataSource` owns a bounded physical connection pool by default. Logical connections return their physical session when closed or disposed; reuse rolls back an unfinished transaction when necessary and issues `DISCARD ALL` before handing the session to another caller. See [Connection pooling](pooling.md) for sizing, lifetime, warm-up, statistics, and drain controls.
 
@@ -78,4 +135,8 @@ Transactional [large-object streams](large-objects.md) support asynchronous crea
 
 [`BlueTuskBatch`](batches.md) implements `DbBatch`/`DbBatchCommand` with parameters, ordered multiple results, preparation, transactions, timeouts, cancellation, and data-source-owned execution.
 
-[Sequential readers](sequential-readers.md) use bounded named portals and incremental backend-frame reads. Their `GetStream` and `GetTextReader` paths consume binary `bytea`, text, JSON, and JSONB directly from the active network payload. Buffered readers retain the existing random-access behavior. Raw/text/typed-binary COPY, notification subscription and waiting, and large-object streams have separate native synchronous and asynchronous paths.
+[Diagnostics and observability](../observability.md) documents redaction-safe
+connection/command activities, OpenTelemetry metrics, query tags, and opt-in
+slow-command events.
+
+[Sequential readers](sequential-readers.md) use incremental portals and backend-frame reads. Unlimited reads use the unnamed portal; positive fetch sizes use bounded named portals. Their `GetStream` and `GetTextReader` paths consume binary `bytea`, text, JSON, and JSONB directly from the active network payload. Buffered readers retain the existing random-access behavior. Raw/text/typed-binary COPY, notification subscription and waiting, and large-object streams have separate native synchronous and asynchronous paths.

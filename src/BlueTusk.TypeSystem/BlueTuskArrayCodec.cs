@@ -84,7 +84,9 @@ public sealed class BlueTuskArrayCodec :
         foreach (var item in array)
         {
             if (item is not null &&
-                selector.GetPreferredWriteFormat(item, _elementType) == BlueTuskDataFormat.Text)
+                selector.GetPreferredWriteFormat(
+                    ConvertElementForWrite(item),
+                    _elementType) == BlueTuskDataFormat.Text)
             {
                 return BlueTuskDataFormat.Text;
             }
@@ -247,7 +249,11 @@ public sealed class BlueTuskArrayCodec :
             var lengthOffset = writer.WrittenCount;
             writer.WriteInt32BigEndian(0);
             var valueOffset = writer.WrittenCount;
-            _elementCodec.Write(ref writer, item, BlueTuskDataFormat.Binary, _elementType);
+            _elementCodec.Write(
+                ref writer,
+                ConvertElementForWrite(item),
+                BlueTuskDataFormat.Binary,
+                _elementType);
             writer.WriteInt32BigEndianAt(lengthOffset, writer.WrittenCount - valueOffset);
         }
     }
@@ -353,6 +359,7 @@ public sealed class BlueTuskArrayCodec :
 
     private string EncodeTextElement(object value)
     {
+        value = ConvertElementForWrite(value);
         var length = 64;
         while (true)
         {
@@ -368,6 +375,23 @@ public sealed class BlueTuskArrayCodec :
                 length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
             }
         }
+    }
+
+    private object ConvertElementForWrite(object value)
+    {
+        if (_elementCodec.ClrType.IsInstanceOfType(value))
+        {
+            return value;
+        }
+
+        if (_elementCodec.ClrType == typeof(BlueTuskNumeric) && value is decimal decimalValue)
+        {
+            return (BlueTuskNumeric)decimalValue;
+        }
+
+        throw new InvalidCastException(
+            $"The {_elementType.QualifiedName} array element codec requires a " +
+            $"{_elementCodec.ClrType.FullName} value, but received {value.GetType().FullName}.");
     }
 
     private void EnsureElementCanBeNull(BlueTuskTypeDescriptor arrayType)

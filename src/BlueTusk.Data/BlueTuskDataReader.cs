@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Collections;
 using System.Data;
 using System.Data.Common;
@@ -24,10 +25,10 @@ public sealed class BlueTuskDataReader : DbDataReader
     private readonly BlueTuskQueryResult? _result;
     private readonly BlueTuskTypeRegistry _types;
     private readonly bool _singleRow;
-    private readonly Action? _readerClosed;
-    private readonly Func<ValueTask>? _readerClosedAsync;
-    private readonly Func<BlueTuskServerException, Exception>? _readerExceptionFactory;
+    private readonly BlueTuskCommand? _streamingCommand;
+    private readonly BlueTuskCommandTimeout? _streamingTimeoutTimer;
     private readonly BlueTuskConnection? _executionConnection;
+    private readonly BlueTuskFieldDescription[]? _streamingFields;
     private BlueTuskConnection? _connectionToClose;
     private BlueTuskPortal? _portal;
     private BlueTuskPortalRow? _streamingRow;
@@ -54,21 +55,20 @@ public sealed class BlueTuskDataReader : DbDataReader
         BlueTuskConnection? connectionToClose,
         BlueTuskTypeRegistry types,
         bool singleRow,
-        Action readerClosed,
-        Func<ValueTask> readerClosedAsync,
-        Func<BlueTuskServerException, Exception> readerExceptionFactory)
+        BlueTuskCommand streamingCommand,
+        BlueTuskCommandTimeout? streamingTimeoutTimer)
     {
         _portal = portal ?? throw new ArgumentNullException(nameof(portal));
         _executionConnection = executionConnection ?? throw new ArgumentNullException(nameof(executionConnection));
         _connectionToClose = connectionToClose;
         _types = types ?? throw new ArgumentNullException(nameof(types));
+        _streamingFields = portal.Fields as BlueTuskFieldDescription[] ?? [.. portal.Fields];
         _singleRow = singleRow;
-        _readerClosed = readerClosed ?? throw new ArgumentNullException(nameof(readerClosed));
-        _readerClosedAsync = readerClosedAsync ?? throw new ArgumentNullException(nameof(readerClosedAsync));
-        _readerExceptionFactory = readerExceptionFactory ?? throw new ArgumentNullException(nameof(readerExceptionFactory));
+        _streamingCommand = streamingCommand ?? throw new ArgumentNullException(nameof(streamingCommand));
+        _streamingTimeoutTimer = streamingTimeoutTimer;
     }
 
-    public override int FieldCount => CurrentFields.Count;
+    public override int FieldCount => _streamingFields?.Length ?? CurrentFields.Count;
 
     public override bool HasRows => _portal is not null
         ? _streamingRowsReturned != 0 || PrefetchStreamingRow() is not null
@@ -90,7 +90,7 @@ public sealed class BlueTuskDataReader : DbDataReader
             : null;
 
     private IReadOnlyList<BlueTuskFieldDescription> CurrentFields =>
-        _portal?.Fields ?? CurrentResultSet?.Fields ?? [];
+        _streamingFields ?? CurrentResultSet?.Fields ?? [];
 
     private BlueTuskDataRow CurrentRow =>
         CurrentResultSet is { } resultSet && _rowIndex >= 0 && _rowIndex < resultSet.Rows.Count
@@ -115,20 +115,18 @@ public sealed class BlueTuskDataReader : DbDataReader
         return true;
     }
 
-    public override async Task<bool> ReadAsync(CancellationToken cancellationToken)
+    public override Task<bool> ReadAsync(CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         EnsureOpen();
         if (_portal is null)
         {
-            return Read();
+            return Task.FromResult(Read());
         }
 
         if (_singleRow && _streamingRowsReturned != 0)
         {
-            await _portal.DisposeAsync().ConfigureAwait(false);
-            _streamingRow = null;
-            return false;
+            return DisposeSingleRowAsync();
         }
 
         if (_prefetchedStreamingRow is not null)
@@ -138,16 +136,78 @@ public sealed class BlueTuskDataReader : DbDataReader
         }
         else
         {
-            _streamingRow = await ReadPortalRowAsync(cancellationToken).ConfigureAwait(false);
+            if (_portal.TryReadBuffered(out var bufferedRow))
+            {
+                _streamingRow = bufferedRow;
+                if (_streamingRow is null)
+                {
+                    return Task.FromResult(false);
+                }
+
+                _streamingRowsReturned++;
+                return Task.FromResult(true);
+            }
+
+            ValueTask<BlueTuskPortalRow?> pendingRow;
+            try
+            {
+                pendingRow = _portal.ReadAsync(cancellationToken);
+                if (!pendingRow.IsCompletedSuccessfully)
+                {
+                    return AwaitRowAsync(pendingRow);
+                }
+
+                _streamingRow = pendingRow.Result;
+            }
+            catch (BlueTuskServerException exception)
+            {
+                throw TranslateServerException(exception);
+            }
+            catch (Exception) when (_executionConnection is { HasOpenSession: false })
+            {
+                _executionConnection.Close();
+                throw;
+            }
         }
 
         if (_streamingRow is null)
         {
-            return false;
+            return Task.FromResult(false);
         }
 
         _streamingRowsReturned++;
-        return true;
+        return Task.FromResult(true);
+    }
+
+    private async Task<bool> DisposeSingleRowAsync()
+    {
+        await _portal!.DisposeAsync().ConfigureAwait(false);
+        _streamingRow = null;
+        return false;
+    }
+
+    private async Task<bool> AwaitRowAsync(ValueTask<BlueTuskPortalRow?> pendingRow)
+    {
+        try
+        {
+            _streamingRow = await pendingRow.ConfigureAwait(false);
+            if (_streamingRow is null)
+            {
+                return false;
+            }
+
+            _streamingRowsReturned++;
+            return true;
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw TranslateServerException(exception);
+        }
+        catch (Exception) when (_executionConnection is { HasOpenSession: false })
+        {
+            await _executionConnection.CloseAsync().ConfigureAwait(false);
+            throw;
+        }
     }
 
     public override bool NextResult()
@@ -260,19 +320,87 @@ public sealed class BlueTuskDataReader : DbDataReader
             throw new InvalidCastException("A database NULL cannot be read as a non-null value.");
         }
 
-        if (value is BlueTuskNumeric numeric && typeof(T) == typeof(decimal))
+        if (value is T typed)
         {
-            return (T)(object)numeric.ToDecimal();
+            return typed;
         }
 
-        if (value is TimeSpan time && typeof(T) == typeof(TimeOnly) && time < TimeSpan.FromDays(1))
+        if (value is Array array && typeof(T).IsArray)
         {
-            return (T)(object)TimeOnly.FromTimeSpan(time);
+            return (T)(object)ConvertArray(array, typeof(T));
         }
 
-        return value is T typed
-            ? typed
-            : (T)Convert.ChangeType(value, typeof(T), CultureInfo.InvariantCulture);
+        return (T)ConvertFieldValue(value, typeof(T));
+    }
+
+    private static Array ConvertArray(Array value, Type targetType)
+    {
+        if (targetType.GetArrayRank() != value.Rank)
+        {
+            throw new InvalidCastException(
+                $"A rank-{value.Rank} array cannot be read as {targetType.FullName}.");
+        }
+
+        var elementType = targetType.GetElementType()!;
+        var lengths = Enumerable.Range(0, value.Rank).Select(value.GetLength).ToArray();
+        var lowerBounds = Enumerable.Range(0, value.Rank).Select(value.GetLowerBound).ToArray();
+        var result = Array.CreateInstance(elementType, lengths, lowerBounds);
+        var indexes = (int[])lowerBounds.Clone();
+        foreach (var item in value)
+        {
+            result.SetValue(
+                item is null ? null : ConvertFieldValue(item, elementType),
+                indexes);
+            MoveNext(value, indexes);
+        }
+
+        return result;
+    }
+
+    private static object ConvertFieldValue(object value, Type targetType)
+    {
+        var nonNullableTargetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        if (nonNullableTargetType.IsInstanceOfType(value))
+        {
+            return value;
+        }
+
+        if (value is BlueTuskNumeric numeric && nonNullableTargetType == typeof(decimal))
+        {
+            return numeric.ToDecimal();
+        }
+
+        if (value is TimeSpan time
+            && nonNullableTargetType == typeof(TimeOnly)
+            && time < TimeSpan.FromDays(1))
+        {
+            return TimeOnly.FromTimeSpan(time);
+        }
+
+        if (value is BlueTuskInterval { IsFinite: true, Months: 0 } interval
+            && nonNullableTargetType == typeof(TimeSpan))
+        {
+            var ticks = checked(
+                (interval.Days * TimeSpan.TicksPerDay)
+                + (interval.Microseconds * 10));
+            return TimeSpan.FromTicks(ticks);
+        }
+
+        return Convert.ChangeType(value, nonNullableTargetType, CultureInfo.InvariantCulture);
+    }
+
+    private static void MoveNext(Array value, int[] indexes)
+    {
+        for (var dimension = value.Rank - 1; dimension >= 0; dimension--)
+        {
+            if (indexes[dimension] < value.GetUpperBound(dimension))
+            {
+                indexes[dimension]++;
+                return;
+            }
+
+            indexes[dimension] = value.GetLowerBound(dimension);
+        }
     }
 
     public override async Task<T> GetFieldValueAsync<T>(int ordinal, CancellationToken cancellationToken)
@@ -295,11 +423,44 @@ public sealed class BlueTuskDataReader : DbDataReader
 
     public override byte GetByte(int ordinal) => GetFieldValue<byte>(ordinal);
 
-    public override short GetInt16(int ordinal) => GetFieldValue<short>(ordinal);
+    public override short GetInt16(int ordinal)
+    {
+        Span<byte> buffer = stackalloc byte[sizeof(short)];
+        return TryReadStreamingBinaryScalar(ordinal, 21, buffer)
+            ? BinaryPrimitives.ReadInt16BigEndian(buffer)
+            : GetFieldValue<short>(ordinal);
+    }
 
-    public override int GetInt32(int ordinal) => GetFieldValue<int>(ordinal);
+    public override int GetInt32(int ordinal)
+    {
+        if (_streamingFields is { } fields)
+        {
+            if ((uint)ordinal >= (uint)fields.Length)
+            {
+                throw new IndexOutOfRangeException(
+                    $"Column ordinal {ordinal} is outside the current result.");
+            }
 
-    public override long GetInt64(int ordinal) => GetFieldValue<long>(ordinal);
+            if (fields[ordinal] is { TypeOid: 23, FormatCode: 1 } &&
+                GetStreamingRow().TryReadInt32(ordinal, out var value))
+            {
+                return value;
+            }
+        }
+
+        Span<byte> buffer = stackalloc byte[sizeof(int)];
+        return TryReadStreamingBinaryScalar(ordinal, 23, buffer)
+            ? BinaryPrimitives.ReadInt32BigEndian(buffer)
+            : GetFieldValue<int>(ordinal);
+    }
+
+    public override long GetInt64(int ordinal)
+    {
+        Span<byte> buffer = stackalloc byte[sizeof(long)];
+        return TryReadStreamingBinaryScalar(ordinal, 20, buffer)
+            ? BinaryPrimitives.ReadInt64BigEndian(buffer)
+            : GetFieldValue<long>(ordinal);
+    }
 
     public override float GetFloat(int ordinal) => GetFieldValue<float>(ordinal);
 
@@ -604,50 +765,37 @@ public sealed class BlueTuskDataReader : DbDataReader
         }
     }
 
-    private async ValueTask<BlueTuskPortalRow?> ReadPortalRowAsync(CancellationToken cancellationToken)
-    {
-        try
-        {
-            return await _portal!.ReadAsync(cancellationToken).ConfigureAwait(false);
-        }
-        catch (BlueTuskServerException exception)
-        {
-            throw TranslateServerException(exception);
-        }
-        catch (Exception) when (_executionConnection is { HasOpenSession: false })
-        {
-            await _executionConnection.CloseAsync().ConfigureAwait(false);
-            throw;
-        }
-    }
-
     private BlueTuskPortalRow GetStreamingRow() =>
         _streamingRow ?? throw new InvalidOperationException("The reader is not positioned on a row.");
 
+    private bool TryReadStreamingBinaryScalar(
+        int ordinal,
+        uint expectedTypeOid,
+        Span<byte> destination) =>
+        _portal is not null &&
+        GetField(ordinal) is { FormatCode: 1 } field &&
+        field.TypeOid == expectedTypeOid &&
+        GetStreamingRow().ReadFieldExactly(ordinal, destination);
+
     private Exception TranslateServerException(BlueTuskServerException exception) =>
-        _readerExceptionFactory?.Invoke(exception) ?? new BlueTuskException(exception);
+        _streamingCommand?.TranslateReaderServerException(exception) ?? new BlueTuskException(exception);
 
     private void CompleteReaderLifetime()
     {
         if (Interlocked.Exchange(ref _lifetimeCompleted, 1) == 0)
         {
-            _readerClosed?.Invoke();
+            _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
         }
     }
 
-    private async ValueTask CompleteReaderLifetimeAsync()
+    private ValueTask CompleteReaderLifetimeAsync()
     {
         if (Interlocked.Exchange(ref _lifetimeCompleted, 1) == 0)
         {
-            if (_readerClosedAsync is not null)
-            {
-                await _readerClosedAsync().ConfigureAwait(false);
-            }
-            else
-            {
-                _readerClosed?.Invoke();
-            }
+            _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
         }
+
+        return ValueTask.CompletedTask;
     }
 
     private static bool IsStreamingTextType(uint oid) =>

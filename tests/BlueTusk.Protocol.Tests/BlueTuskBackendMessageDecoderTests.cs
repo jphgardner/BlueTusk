@@ -22,6 +22,26 @@ public sealed class BlueTuskBackendMessageDecoderTests
     }
 
     [Fact]
+    public void Decodes_gssapi_and_sspi_authentication_requests()
+    {
+        var gss = new ArrayBufferWriter<byte>();
+        WriteInt32(gss, 7);
+        var continuation = new ArrayBufferWriter<byte>();
+        WriteInt32(continuation, 8);
+        WriteBytes(continuation, new byte[] { 0, 1, 255 });
+        var sspi = new ArrayBufferWriter<byte>();
+        WriteInt32(sspi, 9);
+
+        Assert.IsType<BlueTuskAuthenticationRequest.Gss>(
+            BlueTuskBackendMessageDecoder.DecodeAuthentication(Message('R', gss)));
+        var decodedContinuation = Assert.IsType<BlueTuskAuthenticationRequest.GssContinue>(
+            BlueTuskBackendMessageDecoder.DecodeAuthentication(Message('R', continuation)));
+        Assert.Equal(new byte[] { 0, 1, 255 }, decodedContinuation.Data.ToArray());
+        Assert.IsType<BlueTuskAuthenticationRequest.Sspi>(
+            BlueTuskBackendMessageDecoder.DecodeAuthentication(Message('R', sspi)));
+    }
+
+    [Fact]
     public void Decodes_startup_metadata()
     {
         var parameter = new ArrayBufferWriter<byte>();

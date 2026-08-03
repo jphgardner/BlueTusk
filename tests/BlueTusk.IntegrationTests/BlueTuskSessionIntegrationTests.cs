@@ -60,6 +60,111 @@ public sealed class BlueTuskSessionIntegrationTests
                 new BlueTuskBatchQuery("SELECT 2", [], UseBinaryResults: false),
             ]);
         Assert.Equal(2, batch.ResultSets.Count);
+
+        var pipeline = session.ExecutePipeline(
+        [
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT 1", [], UseBinaryResults: false),
+                new BlueTuskBatchQuery("SELECT 2", [], UseBinaryResults: false),
+            ]),
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT 1::int4 / 0::int4", [], UseBinaryResults: false),
+            ]),
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT 3", [], UseBinaryResults: false),
+            ]),
+        ]);
+
+        Assert.True(pipeline.Groups[0].Succeeded);
+        Assert.Equal(2, pipeline.Groups[0].Result.ResultSets.Count);
+        Assert.Equal("22012", pipeline.Groups[1].Error!.SqlState);
+        Assert.True(pipeline.Groups[2].Succeeded);
+        Assert.Equal(
+            "3",
+            Encoding.UTF8.GetString(
+                Assert.Single(Assert.Single(pipeline.Groups[2].Result.ResultSets).Rows).Values[0]!.Value.Span));
+        Assert.True(session.Capabilities.SupportsPipelineMode);
+    }
+
+    [Fact]
+    public async Task Pipeline_groups_preserve_order_and_continue_after_a_group_error()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            });
+
+        var pipeline = await session.ExecutePipelineAsync(
+        [
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT 10::int4", [], UseBinaryResults: false),
+                new BlueTuskBatchQuery("SELECT 20::int4", [], UseBinaryResults: false),
+            ]),
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT missing_pipeline_column", [], UseBinaryResults: false),
+                new BlueTuskBatchQuery("SELECT 99::int4", [], UseBinaryResults: false),
+            ]),
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT 30::int4", [], UseBinaryResults: false),
+            ]),
+        ]);
+
+        Assert.Equal(3, pipeline.Groups.Count);
+        Assert.Equal(["10", "20"], pipeline.Groups[0].Result.ResultSets.Select(ReadSingleText));
+        Assert.Equal("42703", pipeline.Groups[1].Error!.SqlState);
+        Assert.Empty(pipeline.Groups[1].Result.ResultSets);
+        Assert.Equal("30", ReadSingleText(Assert.Single(pipeline.Groups[2].Result.ResultSets)));
+        Assert.False(pipeline.Succeeded);
+
+        var reused = await session.ExecuteSimpleQueryAsync("SELECT 42::int4");
+        Assert.Equal("42", ReadSingleText(Assert.Single(reused.ResultSets)));
+    }
+
+    [Fact]
+    public async Task Cancelling_a_pipeline_drains_already_sent_groups_before_session_reuse()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString());
+        await using var session = await BlueTuskSession.OpenAsync(
+            new BlueTuskClientOptions
+            {
+                Host = settings.Host,
+                Port = settings.Port,
+                Database = settings.Database,
+                Username = settings.Username,
+                Password = settings.Password,
+                SslMode = BlueTuskSslMode.Disable,
+                ChannelBinding = BlueTuskChannelBindingMode.Disable,
+            });
+        using var cancellationSource = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => session.ExecutePipelineAsync(
+        [
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT pg_sleep(10)", [], UseBinaryResults: false),
+            ]),
+            new BlueTuskPipelineGroup(
+            [
+                new BlueTuskBatchQuery("SELECT 41::int4", [], UseBinaryResults: false),
+            ]),
+        ], cancellationSource.Token).AsTask());
+
+        var reused = await session.ExecuteSimpleQueryAsync("SELECT 42::int4");
+        Assert.Equal("42", ReadSingleText(Assert.Single(reused.ResultSets)));
     }
 
     [Fact]
@@ -203,6 +308,8 @@ public sealed class BlueTuskSessionIntegrationTests
 
         left.TypedValue = 6;
         right.TypedValue = 7;
+        Assert.Equal(13, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+
         command.CommandText = "SELECT $1::int4 * $2::int4";
         Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
 
@@ -460,6 +567,35 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
     }
 
+    [Fact]
+    public async Task Prepared_command_timeout_reuses_the_outstanding_deadline_wakeup()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand(
+            "SELECT CASE WHEN @delay THEN pg_sleep(10) END",
+            connection)
+        {
+            CommandTimeout = 1,
+        };
+        var delay = new BlueTuskParameter<bool>(false) { ParameterName = "delay" };
+        command.Parameters.Add(delay);
+        await command.PrepareAsync(CancellationToken.None);
+
+        for (var execution = 0; execution < 3; execution++)
+        {
+            _ = await command.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        delay.Value = true;
+        _ = await Assert.ThrowsAsync<TimeoutException>(
+            () => command.ExecuteNonQueryAsync(CancellationToken.None));
+
+        Assert.Equal(ConnectionState.Open, connection.State);
+        await using var valid = new BlueTuskCommand("SELECT 42::int4", connection);
+        Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -549,6 +685,17 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task AdoNet_async_object_scalar_preserves_database_null()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand("SELECT NULL::int4", connection);
+
+        Assert.Same(DBNull.Value, await command.ExecuteScalarAsync(CancellationToken.None));
+        Assert.Null(await command.ExecuteScalarAsync<int?>(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task AdoNet_parameters_execute_through_the_extended_protocol()
     {
         await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
@@ -557,6 +704,45 @@ public sealed class BlueTuskSessionIntegrationTests
         command.Parameters.Add(new BlueTuskParameter<int>(22));
 
         Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Repeated_parameterized_scalars_reuse_the_unnamed_statement_safely()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+
+        Assert.Equal(42, await ExecuteInt32Async(41));
+        Assert.Equal(43, await ExecuteInt32Async(42));
+
+        await using (var simple = new BlueTuskCommand("SELECT 44", connection))
+        {
+            Assert.Equal(44, await simple.ExecuteScalarAsync<int>());
+        }
+
+        Assert.Equal(45, await ExecuteInt32Async(44));
+        Assert.Equal(46, await ExecuteInt64Async(45));
+        Assert.Equal(47, await ExecuteInt32Async(46));
+
+        async Task<int> ExecuteInt32Async(int value)
+        {
+            await using var command = new BlueTuskCommand(
+                "SELECT @value::int4 + 1",
+                connection);
+            command.Parameters.Add(
+                new BlueTuskParameter<int>(value) { ParameterName = "value" });
+            return await command.ExecuteScalarAsync<int>();
+        }
+
+        async Task<int> ExecuteInt64Async(long value)
+        {
+            await using var command = new BlueTuskCommand(
+                "SELECT @value::int4 + 1",
+                connection);
+            command.Parameters.Add(
+                new BlueTuskParameter<long>(value) { ParameterName = "value" });
+            return await command.ExecuteScalarAsync<int>();
+        }
     }
 
     [Fact]
@@ -786,6 +972,47 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal(42, await command.ExecuteScalarAsync(CancellationToken.None));
         await transaction.CommitAsync(CancellationToken.None);
     }
+
+    [Fact]
+    public async Task Connection_string_security_information_is_not_persisted_by_default()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        {
+            Pooling = false,
+        };
+        var password = settings.Password ?? throw SkipException.ForSkip(
+            "The configured integration connection does not contain a password.");
+
+        await using var connection = new BlueTuskConnection(settings.ConnectionString);
+        Assert.Equal(
+            password,
+            new BlueTuskConnectionStringBuilder(connection.ConnectionString).Password);
+
+        await connection.OpenAsync(CancellationToken.None);
+        Assert.Null(new BlueTuskConnectionStringBuilder(connection.ConnectionString).Password);
+        await connection.CloseAsync();
+        Assert.Null(new BlueTuskConnectionStringBuilder(connection.ConnectionString).Password);
+
+        await connection.OpenAsync(CancellationToken.None);
+        await connection.CloseAsync();
+
+        using (var synchronousConnection = new BlueTuskConnection(settings.ConnectionString))
+        {
+            synchronousConnection.Open();
+            Assert.Null(
+                new BlueTuskConnectionStringBuilder(synchronousConnection.ConnectionString).Password);
+        }
+
+        settings.PersistSecurityInfo = true;
+        await using var persistentConnection = new BlueTuskConnection(settings.ConnectionString);
+        await persistentConnection.OpenAsync(CancellationToken.None);
+        Assert.Equal(
+            password,
+            new BlueTuskConnectionStringBuilder(persistentConnection.ConnectionString).Password);
+    }
+
+    private static string ReadSingleText(BlueTuskResultSet resultSet) =>
+        Encoding.UTF8.GetString(Assert.Single(resultSet.Rows).Values[0]!.Value.Span);
 
     private static string GetConnectionString()
     {

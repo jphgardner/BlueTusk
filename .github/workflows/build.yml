@@ -4,6 +4,9 @@ on:
   push:
     branches: [main]
   pull_request:
+  schedule:
+    - cron: "17 3 * * 1"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -28,11 +31,463 @@ jobs:
       - name: Verify formatting
         run: dotnet format BlueTusk.slnx --no-restore --verify-no-changes
 
+      - name: Verify documentation
+        shell: pwsh
+        run: ./eng/verify-documentation.ps1
+
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
 
       - name: Test
         run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
+      - name: Verify checked-in allocation budgets
+        shell: pwsh
+        run: ./eng/verify-allocation-budgets.ps1
+
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
+
+  postgresql-integration:
+    name: PostgreSQL ${{ matrix.major }} live matrix
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        major: [15, 16, 17, 18, 19]
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres${{ matrix.major }}
+
+      - name: Run live provider matrix
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=54${{ matrix.major }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: dotnet test BlueTusk.slnx --configuration Release --no-restore --maxcpucount:1 --logger trx --results-directory artifacts/test-results/postgres${{ matrix.major }}
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres${{ matrix.major }}
+
+      - name: Stop PostgreSQL
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  extension-integration:
+    name: ${{ matrix.name }} dedicated extension image
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: pgvector
+            service: pgvector18
+            port: 5518
+            ado_project: tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj
+          - name: PostGIS
+            service: postgis18
+            port: 5519
+            ado_project: tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj
+          - name: TimescaleDB
+            service: timescaledb17
+            port: 5520
+            ado_project: tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj
+            ef_project: tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start dedicated extension image
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests up -d --wait ${{ matrix.service }}
+
+      - name: Run ADO.NET extension acceptance
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test ${{ matrix.ado_project }}
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/extensions/${{ matrix.service }}/ado
+
+      - name: Run EF Core extension acceptance
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test ${{ matrix.ef_project }}
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/extensions/${{ matrix.service }}/ef
+
+      - name: Capture extension logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests logs ${{ matrix.service }}
+
+      - name: Stop dedicated extension image
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile extension-tests down --volumes
+
+  pgbouncer-integration:
+    name: PgBouncer session and transaction pooling
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL and PgBouncer modes
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          up -d --build --wait
+          pgbouncer-session18 pgbouncer-transaction18
+
+      - name: Run PgBouncer acceptance
+        env:
+          BLUETUSK_PGBOUNCER_SESSION_CONNECTION_STRING: Host=localhost;Port=5818;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false
+          BLUETUSK_PGBOUNCER_TRANSACTION_CONNECTION_STRING: Host=localhost;Port=5819;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;Pooling=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~PgBouncer
+          --logger trx
+          --results-directory artifacts/test-results/pgbouncer
+
+      - name: Capture PgBouncer logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          logs postgres18 pgbouncer-session18 pgbouncer-transaction18
+
+      - name: Stop PostgreSQL and PgBouncer
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile compatibility-tests down --volumes
+
+  locale-timezone-integration:
+    name: PostgreSQL 18 ${{ matrix.locale }} / ${{ matrix.timezone }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - service: locale-en18
+            port: 5820
+            locale: en_GB.UTF-8
+            timezone: Europe/London
+          - service: locale-de18
+            port: 5821
+            locale: de_DE.UTF-8
+            timezone: America/New_York
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start locale/time-zone image
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          up -d --build --wait ${{ matrix.service }}
+
+      - name: Run locale/time-zone acceptance
+        env:
+          BLUETUSK_LOCALE_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Pooling=false
+          BLUETUSK_EXPECTED_LOCALE: ${{ matrix.locale }}
+          BLUETUSK_EXPECTED_TIME_ZONE: ${{ matrix.timezone }}
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Locale_and_time_zone
+          --logger trx
+          --results-directory artifacts/test-results/${{ matrix.service }}
+
+      - name: Capture locale/time-zone logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile compatibility-tests
+          logs ${{ matrix.service }}
+
+      - name: Stop locale/time-zone image
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile compatibility-tests down --volumes
+
+  primary-standby-integration:
+    name: PostgreSQL 18 primary/standby topology
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start streaming-replication topology
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile topology-tests
+          up -d --build --wait topology-standby18
+
+      - name: Run topology and target-session acceptance
+        env:
+          BLUETUSK_TOPOLOGY_CONNECTION_STRING: Host=localhost,localhost;Port=5830,5831;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Pooling=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Topology
+          --logger trx
+          --results-directory artifacts/test-results/topology
+
+      - name: Capture topology logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile topology-tests
+          logs topology-primary18 topology-standby18
+
+      - name: Stop streaming-replication topology
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile topology-tests down --volumes
+
+  postgresql19-nightly:
+    name: PostgreSQL 19 official branch snapshot
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Build and start official PostgreSQL 19 snapshot
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile nightly-tests
+          up -d --build --wait postgres19-nightly
+
+      - name: Run full provider matrix against the branch snapshot
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5899;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          dotnet test BlueTusk.slnx
+          --configuration Release
+          --no-restore
+          --maxcpucount:1
+          --logger trx
+          --results-directory artifacts/test-results/postgres19-nightly
+
+      - name: Capture PostgreSQL snapshot logs on failure
+        if: failure()
+        run: >-
+          docker compose -f eng/compose/postgres.yml
+          --profile nightly-tests
+          logs postgres19-nightly
+
+      - name: Stop PostgreSQL snapshot
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile nightly-tests down --volumes
+
+  replication-endurance:
+    name: PostgreSQL 19 replication endurance
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL 19
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Run persistent-slot reconnect endurance
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_REPLICATION_DURABILITY_EPOCHS: 1000
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Logical_replication_validates_and_resumes
+          --logger trx
+          --results-directory artifacts/test-results/replication-endurance
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  provider-stress:
+    name: PostgreSQL 19 provider stress
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL 19
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Run elevated-concurrency provider stress
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_STRESS_SCALE: 8
+        run: >-
+          dotnet test tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj
+          --configuration Release
+          --no-restore
+          --filter 'FullyQualifiedName!~ReplicationStressTests'
+          --logger trx
+          --results-directory artifacts/test-results/provider-stress
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  oauth-authentication:
+    name: PostgreSQL 18 native OAUTHBEARER
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start PostgreSQL OAuth validator
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait oauth18
+
+      - name: Run native OAUTHBEARER acceptance
+        env:
+          BLUETUSK_OAUTH_TEST_CONNECTION_STRING: Host=localhost;Port=5618;Username=bluetusk_oauth_test;Database=bluetusk_tests;SSL Mode=Require;Channel Binding=Disable
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~Native_OAUTHBEARER
+          --logger trx
+          --results-directory artifacts/test-results/oauth18
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests logs oauth18
+
+      - name: Stop PostgreSQL OAuth validator
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests down --volumes
+
+  gssapi-authentication:
+    name: PostgreSQL 18 GSSAPI/Kerberos
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Install Kerberos client
+        run: sudo apt-get update && sudo DEBIAN_FRONTEND=noninteractive apt-get install --yes krb5-user
+
+      - name: Start PostgreSQL and MIT Kerberos KDC
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait gss18
+
+      - name: Acquire test Kerberos ticket
+        env:
+          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+          KRB5CCNAME: FILE:${{ runner.temp }}/bluetusk-krb5cc
+        run: |
+          printf '%s\n' '127.0.0.1 gss18.bluetusk.test' | sudo tee -a /etc/hosts
+          printf '%s\n' 'bluetusk-gss-password' | kinit bluetusk_gss_test@BLUETUSK.TEST
+          for attempt in $(seq 1 10); do
+            if kvno postgres/gss18.bluetusk.test@BLUETUSK.TEST; then exit 0; fi
+            sleep 1
+          done
+          exit 1
+
+      - name: Run GSSAPI/Kerberos acceptance
+        env:
+          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+          KRB5CCNAME: FILE:${{ runner.temp }}/bluetusk-krb5cc
+          KRB5_TRACE: ${{ runner.temp }}/bluetusk-krb5.trace
+          BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=gss18.bluetusk.test;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~GSSAPI_Kerberos
+          --logger trx
+          --results-directory artifacts/test-results/gss18
+
+      - name: Capture PostgreSQL/Kerberos logs on failure
+        if: failure()
+        run: |
+          if [[ -f "${{ runner.temp }}/bluetusk-krb5.trace" ]]; then
+            cat "${{ runner.temp }}/bluetusk-krb5.trace"
+          fi
+          docker compose -f eng/compose/postgres.yml --profile security-tests logs gss18
+
+      - name: Stop PostgreSQL and MIT Kerberos KDC
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile security-tests down --volumes

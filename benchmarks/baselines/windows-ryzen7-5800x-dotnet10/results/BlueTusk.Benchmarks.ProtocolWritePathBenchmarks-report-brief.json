@@ -1,0 +1,155 @@
+{
+   "Title":"BlueTusk.Benchmarks.ProtocolWritePathBenchmarks-20260801-002217",
+   "HostEnvironmentInfo":{
+      "BenchmarkDotNetCaption":"BenchmarkDotNet",
+      "BenchmarkDotNetVersion":"0.15.8",
+      "OsVersion":"Windows 11 (10.0.26200.8973/25H2/2025Update/HudsonValley2)",
+      "ProcessorName":"AMD Ryzen 7 5800X",
+      "PhysicalProcessorCount":1,
+      "PhysicalCoreCount":8,
+      "LogicalCoreCount":16,
+      "RuntimeVersion":".NET 10.0.10 (10.0.10, 10.0.1026.32716)",
+      "Architecture":"X64",
+      "HasAttachedDebugger":false,
+      "HasRyuJit":true,
+      "Configuration":"RELEASE",
+      "DotNetCliVersion":"10.0.302",
+      "ChronometerFrequency":{
+         "Hertz":10000000
+      },
+      "HardwareTimerKind":"Unknown"
+   },
+   "Benchmarks":[
+      {
+         "DisplayInfo":"ProtocolWritePathBenchmarks.WriteSimpleQuery: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"ProtocolWritePathBenchmarks",
+         "Method":"WriteSimpleQuery",
+         "MethodTitle":"WriteSimpleQuery",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.ProtocolWritePathBenchmarks.WriteSimpleQuery",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               20.24465501308441,18.91826093196869,18.64815354347229
+            ],
+            "N":3,
+            "Min":18.64815354347229,
+            "LowerFence":17.5858311355114,
+            "Q1":18.78320723772049,
+            "Median":18.91826093196869,
+            "Mean":19.27035649617513,
+            "Q3":19.58145797252655,
+            "UpperFence":20.77883407473564,
+            "Max":20.24465501308441,
+            "InterquartileRange":0.7982507348060608,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":0.4933500111039508,
+            "Variance":0.7301827003688052,
+            "StandardDeviation":0.8545072851467126,
+            "Skewness":0.3420876171603461,
+            "Kurtosis":0.6666666666666685,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":19.27035649617513,
+               "StandardError":0.4933500111039508,
+               "Level":12,
+               "Margin":15.5893938630772,
+               "Lower":3.680962633097929,
+               "Upper":34.85975035925233
+            },
+            "Percentiles":{
+               "P0":18.64815354347229,
+               "P25":18.78320723772049,
+               "P50":18.91826093196869,
+               "P67":19.369234919548035,
+               "P80":19.714097380638123,
+               "P85":19.846736788749695,
+               "P90":19.979376196861267,
+               "P95":20.11201560497284,
+               "P100":20.24465501308441
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":33554432,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"ProtocolWritePathBenchmarks.WriteExtendedQuery: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"ProtocolWritePathBenchmarks",
+         "Method":"WriteExtendedQuery",
+         "MethodTitle":"WriteExtendedQuery",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.ProtocolWritePathBenchmarks.WriteExtendedQuery",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               187.7246379852295,189.870285987854,204.14512157440186
+            ],
+            "N":3,
+            "Min":187.7246379852295,
+            "LowerFence":176.48209929466248,
+            "Q1":188.79746198654175,
+            "Median":189.870285987854,
+            "Mean":193.91334851582846,
+            "Q3":197.00770378112793,
+            "UpperFence":209.3230664730072,
+            "Max":204.14512157440186,
+            "InterquartileRange":8.210241794586182,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":5.153246105753896,
+            "Variance":79.66783627940306,
+            "StandardDeviation":8.925684079072207,
+            "Skewness":0.3600285929114079,
+            "Kurtosis":0.6666666666666652,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":193.91334851582846,
+               "StandardError":5.153246105753896,
+               "Level":12,
+               "Margin":162.8377042826075,
+               "Lower":31.07564423322097,
+               "Upper":356.7510527984359
+            },
+            "Percentiles":{
+               "P0":187.7246379852295,
+               "P25":188.79746198654175,
+               "P50":189.870285987854,
+               "P67":194.72373008728027,
+               "P80":198.43518733978271,
+               "P85":199.8626708984375,
+               "P90":201.29015445709229,
+               "P95":202.71763801574707,
+               "P100":204.14512157440186
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":4194304,
+            "BytesAllocatedPerOperation":0
+         }
+      }
+   ]
+}

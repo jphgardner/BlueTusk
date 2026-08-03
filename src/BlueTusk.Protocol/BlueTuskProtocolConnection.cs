@@ -1,5 +1,8 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using BlueTusk.Transport;
 
 namespace BlueTusk.Protocol;
@@ -7,14 +10,22 @@ namespace BlueTusk.Protocol;
 /// <summary>Owns transport buffering and PostgreSQL frame boundaries for one physical connection.</summary>
 public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 {
-    private const int InitialBufferSize = 16 * 1024;
+    private const int InitialBufferSize = 64 * 1024;
+    private const int MaximumPayloadReadAhead = 1024 * 1024;
+    private const int DirectPayloadReadThreshold = 8 * 1024;
+    private const int InitialWriteBufferSize = 4 * 1024;
+    private const int MaximumRetainedWriteBufferSize = 64 * 1024;
     private readonly IBlueTuskTransport _transport;
     private readonly BlueTuskBackendMessageParser _parser;
+    private ArrayBufferWriter<byte> _writeBuffer = new(InitialWriteBufferSize);
     private byte[] _buffer;
     private int _start;
     private int _count;
     private int _activePayloadRemaining = -1;
-    private bool _disposed;
+    private int _activeReads;
+    private int _bufferReturned;
+    private int _writeInProgress;
+    private volatile bool _disposed;
 
     public BlueTuskProtocolConnection(
         IBlueTuskTransport transport,
@@ -53,59 +64,122 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     public async ValueTask<byte> ReadUnframedByteAsync(CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_count != 0)
+        BeginRead();
+        try
         {
-            throw new InvalidOperationException("Unframed bytes cannot be read after protocol buffering has started.");
-        }
+            if (_count != 0)
+            {
+                throw new InvalidOperationException("Unframed bytes cannot be read after protocol buffering has started.");
+            }
 
-        var read = await _transport.ReadAsync(_buffer.AsMemory(0, 1), cancellationToken).ConfigureAwait(false);
-        if (read == 0)
+            var read = await _transport.ReadAsync(_buffer.AsMemory(0, 1), cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+            {
+                throw new EndOfStreamException("PostgreSQL disconnected while an unframed response byte was expected.");
+            }
+
+            return _buffer[0];
+        }
+        finally
         {
-            throw new EndOfStreamException("PostgreSQL disconnected while an unframed response byte was expected.");
+            EndRead();
         }
-
-        return _buffer[0];
     }
 
     public byte ReadUnframedByte()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        if (_count != 0)
+        BeginRead();
+        try
         {
-            throw new InvalidOperationException("Unframed bytes cannot be read after protocol buffering has started.");
-        }
+            if (_count != 0)
+            {
+                throw new InvalidOperationException("Unframed bytes cannot be read after protocol buffering has started.");
+            }
 
-        var read = _transport.Read(_buffer.AsSpan(0, 1));
-        if (read == 0)
+            var read = _transport.Read(_buffer.AsSpan(0, 1));
+            if (read == 0)
+            {
+                throw new EndOfStreamException("PostgreSQL disconnected while an unframed response byte was expected.");
+            }
+
+            return _buffer[0];
+        }
+        finally
         {
-            throw new EndOfStreamException("PostgreSQL disconnected while an unframed response byte was expected.");
+            EndRead();
         }
-
-        return _buffer[0];
     }
 
     /// <remarks>The returned payload remains valid only until the next read from this connection.</remarks>
     public async ValueTask<BlueTuskBackendMessage> ReadMessageAsync(CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        EnsureNoActivePayload();
-        while (true)
+        BeginRead();
+        try
         {
-            var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
-            var originalLength = sequence.Length;
-            if (_parser.TryParse(ref sequence, out var message))
+            EnsureNoActivePayload();
+            while (true)
             {
-                var consumed = checked((int)(originalLength - sequence.Length));
-                _start += consumed;
-                _count -= consumed;
-                return message;
+                if (TryParseBufferedMessage(out var message))
+                {
+                    return message;
+                }
+
+                PrepareForRead();
+                var read = await _transport.ReadAsync(
+                    _buffer.AsMemory(_start + _count),
+                    cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    throw new EndOfStreamException(
+                        _count == 0
+                            ? "PostgreSQL closed the connection."
+                            : "PostgreSQL disconnected in the middle of a protocol message.");
+                }
+
+                _count += read;
+            }
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    internal bool TryBeginReadMessage(
+        out BlueTuskBackendMessage message,
+        out Memory<byte> destination)
+    {
+        BeginRead();
+        try
+        {
+            EnsureNoActivePayload();
+            if (TryParseBufferedMessage(out message))
+            {
+                destination = default;
+                EndRead();
+                return true;
             }
 
             PrepareForRead();
-            var read = await _transport.ReadAsync(
-                _buffer.AsMemory(_start + _count),
-                cancellationToken).ConfigureAwait(false);
+            destination = _buffer.AsMemory(_start + _count);
+            return false;
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
+    internal ValueTask<int> ReadTransportAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken) =>
+        _transport.ReadAsync(destination, cancellationToken);
+
+    internal void CompleteReadMessage(int read)
+    {
+        try
+        {
             if (read == 0)
             {
                 throw new EndOfStreamException(
@@ -116,36 +190,48 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
             _count += read;
         }
+        finally
+        {
+            EndRead();
+        }
     }
+
+    internal void AbortReadMessage() => EndRead();
+
+    internal void BeginPortalReadLease() => BeginRead();
+
+    internal void EndPortalReadLease() => EndRead();
 
     /// <remarks>The returned payload remains valid only until the next read from this connection.</remarks>
     public BlueTuskBackendMessage ReadMessage()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        EnsureNoActivePayload();
-        while (true)
+        BeginRead();
+        try
         {
-            var sequence = new ReadOnlySequence<byte>(_buffer.AsMemory(_start, _count));
-            var originalLength = sequence.Length;
-            if (_parser.TryParse(ref sequence, out var message))
+            EnsureNoActivePayload();
+            while (true)
             {
-                var consumed = checked((int)(originalLength - sequence.Length));
-                _start += consumed;
-                _count -= consumed;
-                return message;
-            }
+                if (TryParseBufferedMessage(out var message))
+                {
+                    return message;
+                }
 
-            PrepareForRead();
-            var read = _transport.Read(_buffer.AsSpan(_start + _count));
-            if (read == 0)
-            {
-                throw new EndOfStreamException(
-                    _count == 0
-                        ? "PostgreSQL closed the connection."
-                        : "PostgreSQL disconnected in the middle of a protocol message.");
-            }
+                PrepareForRead();
+                var read = _transport.Read(_buffer.AsSpan(_start + _count));
+                if (read == 0)
+                {
+                    throw new EndOfStreamException(
+                        _count == 0
+                            ? "PostgreSQL closed the connection."
+                            : "PostgreSQL disconnected in the middle of a protocol message.");
+                }
 
-            _count += read;
+                _count += read;
+            }
+        }
+        finally
+        {
+            EndRead();
         }
     }
 
@@ -156,80 +242,507 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     /// </remarks>
     public BlueTuskBackendMessageHeader ReadMessageHeader()
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
+        BeginRead();
+        try
+        {
+            BeginNextMessage();
+            EnsureBuffered(HeaderSize);
+            return ConsumeHeader();
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    internal bool TryReadBufferedDataRowHeader(out BlueTuskBackendMessageHeader header)
+    {
         BeginNextMessage();
-        EnsureBuffered(HeaderSize);
-        return ConsumeHeader();
+        if (_count < HeaderSize || _buffer[_start] != (byte)'D')
+        {
+            header = default;
+            return false;
+        }
+
+        var length = BinaryPrimitives.ReadInt32BigEndian(
+            _buffer.AsSpan(_start + 1, sizeof(int)));
+        if (length < sizeof(int) + sizeof(short))
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend DataRow declared invalid length {length}.");
+        }
+
+        // The row object only needs the field count before returning control to
+        // the caller. Requiring those bytes keeps the async API non-blocking.
+        if (_count < HeaderSize + sizeof(short))
+        {
+            header = default;
+            return false;
+        }
+
+        _start += HeaderSize;
+        _count -= HeaderSize;
+        _activePayloadRemaining = length - sizeof(int);
+        header = new BlueTuskBackendMessageHeader((byte)'D', _activePayloadRemaining);
+        return true;
+    }
+
+    internal bool TryReadBufferedDataRow(
+        out ReadOnlyMemory<byte> payload,
+        out BlueTuskBackendMessageHeader header)
+    {
+        BeginNextMessage();
+        if (_count < HeaderSize || _buffer[_start] != (byte)'D')
+        {
+            payload = default;
+            header = default;
+            return false;
+        }
+
+        var length = BinaryPrimitives.ReadInt32BigEndian(
+            _buffer.AsSpan(_start + 1, sizeof(int)));
+        if (length < sizeof(int) + sizeof(short))
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend DataRow declared invalid length {length}.");
+        }
+
+        var payloadLength = length - sizeof(int);
+        if (_count < HeaderSize + payloadLength)
+        {
+            payload = default;
+            header = default;
+            return false;
+        }
+
+        header = new BlueTuskBackendMessageHeader((byte)'D', payloadLength);
+        payload = _buffer.AsMemory(_start + HeaderSize, payloadLength);
+        var frameLength = HeaderSize + payloadLength;
+        _start += frameLength;
+        _count -= frameLength;
+        _activePayloadRemaining = 0;
+        return true;
+    }
+
+    internal bool TryBeginReadMessageHeader(
+        out BlueTuskBackendMessageHeader header,
+        out Memory<byte> destination)
+    {
+        BeginRead();
+        try
+        {
+            BeginNextMessage();
+            if (_count >= HeaderSize)
+            {
+                header = ConsumeHeader();
+                destination = default;
+                EndRead();
+                return true;
+            }
+
+            PrepareForRead();
+            header = default;
+            destination = _buffer.AsMemory(_start + _count);
+            return false;
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
     }
 
     /// <summary>Asynchronously reads a backend frame header while leaving its payload on the transport.</summary>
-    public async ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderAsync(
+    public ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderAsync(
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        BeginNextMessage();
-        await EnsureBufferedAsync(HeaderSize, cancellationToken).ConfigureAwait(false);
-        return ConsumeHeader();
+        BeginRead();
+        try
+        {
+            BeginNextMessage();
+            if (_count >= HeaderSize)
+            {
+                var header = ConsumeHeader();
+                EndRead();
+                return ValueTask.FromResult(header);
+            }
+
+            return ReadMessageHeaderSlowAsync(cancellationToken);
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
+    private async ValueTask<BlueTuskBackendMessageHeader> ReadMessageHeaderSlowAsync(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            while (_count < HeaderSize)
+            {
+                PrepareForRead();
+                var read = await _transport.ReadAsync(
+                    _buffer.AsMemory(_start + _count),
+                    cancellationToken).ConfigureAwait(false);
+                if (read == 0)
+                {
+                    throw new EndOfStreamException(
+                        _count == 0
+                            ? "PostgreSQL closed the connection."
+                            : "PostgreSQL disconnected in the middle of a protocol message header.");
+                }
+
+                _count += read;
+            }
+
+            return ConsumeHeader();
+        }
+        finally
+        {
+            EndRead();
+        }
     }
 
     /// <summary>Reads the next portion of the active backend message payload.</summary>
     public int ReadMessagePayload(Span<byte> destination)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        EnsureActivePayload();
-        if (destination.IsEmpty || _activePayloadRemaining == 0)
+        BeginRead();
+        try
         {
-            return 0;
-        }
+            EnsureActivePayload();
+            if (destination.IsEmpty || _activePayloadRemaining == 0)
+            {
+                return 0;
+            }
 
-        var requested = Math.Min(destination.Length, _activePayloadRemaining);
-        var read = ReadPayloadBytes(destination[..requested]);
-        _activePayloadRemaining -= read;
-        return read;
+            var requested = Math.Min(destination.Length, _activePayloadRemaining);
+            var read = ReadPayloadBytes(destination[..requested]);
+            _activePayloadRemaining -= read;
+            return read;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    internal bool TryReadBufferedMessagePayloadExactly(Span<byte> destination)
+    {
+        BeginRead();
+        try
+        {
+            EnsureActivePayload();
+            if (destination.Length > _activePayloadRemaining)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(destination),
+                    "The destination exceeds the active backend message payload.");
+            }
+
+            if (_count < destination.Length)
+            {
+                return false;
+            }
+
+            _buffer.AsSpan(_start, destination.Length).CopyTo(destination);
+            _start += destination.Length;
+            _count -= destination.Length;
+            _activePayloadRemaining -= destination.Length;
+            return true;
+        }
+        finally
+        {
+            EndRead();
+        }
     }
 
     /// <summary>Asynchronously reads the next portion of the active backend message payload.</summary>
-    public async ValueTask<int> ReadMessagePayloadAsync(
+    public ValueTask<int> ReadMessagePayloadAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(_disposed, this);
-        EnsureActivePayload();
-        if (destination.IsEmpty || _activePayloadRemaining == 0)
+        BeginRead();
+        try
         {
-            return 0;
-        }
+            EnsureActivePayload();
+            if (destination.IsEmpty || _activePayloadRemaining == 0)
+            {
+                EndRead();
+                return ValueTask.FromResult(0);
+            }
 
-        var requested = Math.Min(destination.Length, _activePayloadRemaining);
-        var read = await ReadPayloadBytesAsync(
-            destination[..requested],
-            cancellationToken).ConfigureAwait(false);
-        _activePayloadRemaining -= read;
-        return read;
+            var requested = Math.Min(destination.Length, _activePayloadRemaining);
+            var pendingRead = ReadPayloadBytesAsync(destination[..requested], cancellationToken);
+            if (!pendingRead.IsCompletedSuccessfully)
+            {
+                return AwaitMessagePayloadAsync(pendingRead);
+            }
+
+            var read = pendingRead.Result;
+            _activePayloadRemaining -= read;
+            EndRead();
+            return ValueTask.FromResult(read);
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
     }
 
-    public async ValueTask WriteAsync(
+    internal ValueTask<int> ReadMessagePayloadAsync<TState>(
+        Memory<byte> destination,
+        TState state,
+        Func<TState, int, int> complete,
+        CancellationToken cancellationToken)
+    {
+        BeginRead();
+        try
+        {
+            EnsureActivePayload();
+            if (destination.IsEmpty || _activePayloadRemaining == 0)
+            {
+                var completed = complete(state, 0);
+                EndRead();
+                return ValueTask.FromResult(completed);
+            }
+
+            var requested = Math.Min(destination.Length, _activePayloadRemaining);
+            destination = destination[..requested];
+            if (_count != 0)
+            {
+                var copied = CopyBufferedPayload(destination.Span);
+                _activePayloadRemaining -= copied;
+                var completed = complete(state, copied);
+                EndRead();
+                return ValueTask.FromResult(completed);
+            }
+
+            if (destination.Length >= DirectPayloadReadThreshold)
+            {
+                var pendingDirectRead = _transport.ReadAsync(destination, cancellationToken);
+                if (!pendingDirectRead.IsCompletedSuccessfully)
+                {
+                    return AwaitPayloadReadAndCompleteAsync(pendingDirectRead, state, complete);
+                }
+
+                var directRead = ValidatePayloadRead(pendingDirectRead.Result);
+                _activePayloadRemaining -= directRead;
+                var directResult = complete(state, directRead);
+                EndRead();
+                return ValueTask.FromResult(directResult);
+            }
+
+            PrepareForRead();
+            GrowReadBufferForPayload();
+            var readAheadLength = Math.Min(
+                _buffer.Length - (_start + _count),
+                MaximumPayloadReadAhead);
+            if (destination.Length < readAheadLength)
+            {
+                var pendingReadAhead = _transport.ReadAsync(
+                    _buffer.AsMemory(_start + _count, readAheadLength),
+                    cancellationToken);
+                if (!pendingReadAhead.IsCompletedSuccessfully)
+                {
+                    return AwaitPayloadReadAheadAndCompleteAsync(
+                        pendingReadAhead,
+                        destination,
+                        state,
+                        complete);
+                }
+
+                var copied = CompletePayloadReadAhead(
+                    pendingReadAhead.Result,
+                    destination.Span);
+                _activePayloadRemaining -= copied;
+                var completed = complete(state, copied);
+                EndRead();
+                return ValueTask.FromResult(completed);
+            }
+
+            var pendingRead = _transport.ReadAsync(destination, cancellationToken);
+            if (!pendingRead.IsCompletedSuccessfully)
+            {
+                return AwaitPayloadReadAndCompleteAsync(pendingRead, state, complete);
+            }
+
+            var read = ValidatePayloadRead(pendingRead.Result);
+            _activePayloadRemaining -= read;
+            var result = complete(state, read);
+            EndRead();
+            return ValueTask.FromResult(result);
+        }
+        catch
+        {
+            EndRead();
+            throw;
+        }
+    }
+
+    private async ValueTask<int> AwaitMessagePayloadAsync(ValueTask<int> pendingRead)
+    {
+        try
+        {
+            var read = await pendingRead.ConfigureAwait(false);
+            _activePayloadRemaining -= read;
+            return read;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    private async ValueTask<int> AwaitPayloadReadAndCompleteAsync<TState>(
+        ValueTask<int> pendingRead,
+        TState state,
+        Func<TState, int, int> complete)
+    {
+        try
+        {
+            var read = ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
+            _activePayloadRemaining -= read;
+            return complete(state, read);
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    private async ValueTask<int> AwaitPayloadReadAheadAndCompleteAsync<TState>(
+        ValueTask<int> pendingRead,
+        Memory<byte> destination,
+        TState state,
+        Func<TState, int, int> complete)
+    {
+        try
+        {
+            var copied = CompletePayloadReadAhead(
+                await pendingRead.ConfigureAwait(false),
+                destination.Span);
+            _activePayloadRemaining -= copied;
+            return complete(state, copied);
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    public ValueTask WriteAsync(
         Action<IBufferWriter<byte>> writeMessage,
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(writeMessage, clearBuffer: false, cancellationToken);
+
+    internal ValueTask WriteAsync<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage,
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(state, writeMessage, cancellationToken);
+
+    /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
+    public ValueTask WriteSensitiveAsync(
+        Action<IBufferWriter<byte>> writeMessage,
+        CancellationToken cancellationToken) =>
+        WriteCoreAsync(writeMessage, clearBuffer: true, cancellationToken);
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private async ValueTask WriteCoreAsync(
+        Action<IBufferWriter<byte>> writeMessage,
+        bool clearBuffer,
         CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(writeMessage);
 
-        var output = new ArrayBufferWriter<byte>();
-        writeMessage(output);
-        await _transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
-        await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output);
+            await _transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            EndWrite(clearBuffer);
+        }
     }
 
-    public void Write(Action<IBufferWriter<byte>> writeMessage)
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private async ValueTask WriteCoreAsync<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage,
+        CancellationToken cancellationToken)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         ArgumentNullException.ThrowIfNull(writeMessage);
 
-        var output = new ArrayBufferWriter<byte>();
-        writeMessage(output);
-        _transport.Write(output.WrittenSpan);
-        _transport.Flush();
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output, state);
+            await _transport.WriteAsync(output.WrittenMemory, cancellationToken).ConfigureAwait(false);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            EndWrite(clearBuffer: false);
+        }
+    }
+
+    public void Write(Action<IBufferWriter<byte>> writeMessage)
+        => WriteCore(writeMessage, clearBuffer: false);
+
+    internal void Write<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage) =>
+        WriteCore(state, writeMessage);
+
+    /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
+    public void WriteSensitive(Action<IBufferWriter<byte>> writeMessage)
+        => WriteCore(writeMessage, clearBuffer: true);
+
+    private void WriteCore(Action<IBufferWriter<byte>> writeMessage, bool clearBuffer)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(writeMessage);
+
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output);
+            _transport.Write(output.WrittenSpan);
+            _transport.Flush();
+        }
+        finally
+        {
+            EndWrite(clearBuffer);
+        }
+    }
+
+    private void WriteCore<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessage)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        ArgumentNullException.ThrowIfNull(writeMessage);
+
+        var output = BeginWrite();
+        try
+        {
+            writeMessage(output, state);
+            _transport.Write(output.WrittenSpan);
+            _transport.Flush();
+        }
+        finally
+        {
+            EndWrite(clearBuffer: false);
+        }
     }
 
     public void Dispose()
@@ -240,8 +753,8 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         _disposed = true;
-        ReturnBuffer();
         _transport.Dispose();
+        ReturnBufferWhenIdle();
     }
 
     public async ValueTask DisposeAsync()
@@ -252,8 +765,8 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         _disposed = true;
-        ReturnBuffer();
         await _transport.DisposeAsync().ConfigureAwait(false);
+        ReturnBufferWhenIdle();
     }
 
     private void PrepareForRead()
@@ -294,6 +807,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
 
         _activePayloadRemaining = -1;
+        ShrinkReadBufferIfPossible();
     }
 
     private BlueTuskBackendMessageHeader ConsumeHeader()
@@ -336,26 +850,6 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
-    private async ValueTask EnsureBufferedAsync(int minimumCount, CancellationToken cancellationToken)
-    {
-        while (_count < minimumCount)
-        {
-            PrepareForRead();
-            var read = await _transport.ReadAsync(
-                _buffer.AsMemory(_start + _count),
-                cancellationToken).ConfigureAwait(false);
-            if (read == 0)
-            {
-                throw new EndOfStreamException(
-                    _count == 0
-                        ? "PostgreSQL closed the connection."
-                        : "PostgreSQL disconnected in the middle of a protocol message header.");
-            }
-
-            _count += read;
-        }
-    }
-
     private int ReadPayloadBytes(Span<byte> destination)
     {
         if (_count != 0)
@@ -367,31 +861,126 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             return copied;
         }
 
-        var read = _transport.Read(destination);
-        return read != 0
-            ? read
-            : throw new EndOfStreamException(
-                "PostgreSQL disconnected in the middle of a protocol message payload.");
+        if (destination.Length >= DirectPayloadReadThreshold)
+        {
+            return ValidatePayloadRead(_transport.Read(destination));
+        }
+
+        PrepareForRead();
+        GrowReadBufferForPayload();
+        var readAheadLength = Math.Min(
+            _buffer.Length - (_start + _count),
+            MaximumPayloadReadAhead);
+        if (destination.Length < readAheadLength)
+        {
+            _count += ValidatePayloadRead(
+                _transport.Read(_buffer.AsSpan(_start + _count, readAheadLength)));
+            return CopyBufferedPayload(destination);
+        }
+
+        return ValidatePayloadRead(_transport.Read(destination));
     }
 
-    private async ValueTask<int> ReadPayloadBytesAsync(
+    private ValueTask<int> ReadPayloadBytesAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
         if (_count != 0)
         {
-            var copied = Math.Min(destination.Length, _count);
-            _buffer.AsMemory(_start, copied).CopyTo(destination);
-            _start += copied;
-            _count -= copied;
-            return copied;
+            return ValueTask.FromResult(CopyBufferedPayload(destination.Span));
         }
 
-        var read = await _transport.ReadAsync(destination, cancellationToken).ConfigureAwait(false);
-        return read != 0
+        if (destination.Length >= DirectPayloadReadThreshold)
+        {
+            var pendingDirectRead = _transport.ReadAsync(destination, cancellationToken);
+            return pendingDirectRead.IsCompletedSuccessfully
+                ? ValueTask.FromResult(ValidatePayloadRead(pendingDirectRead.Result))
+                : AwaitPayloadBytesAsync(pendingDirectRead);
+        }
+
+        PrepareForRead();
+        GrowReadBufferForPayload();
+        var readAheadLength = Math.Min(
+            _buffer.Length - (_start + _count),
+            MaximumPayloadReadAhead);
+        if (destination.Length < readAheadLength)
+        {
+            var pendingReadAhead = _transport.ReadAsync(
+                _buffer.AsMemory(_start + _count, readAheadLength),
+                cancellationToken);
+            return pendingReadAhead.IsCompletedSuccessfully
+                ? ValueTask.FromResult(
+                    CompletePayloadReadAhead(pendingReadAhead.Result, destination.Span))
+                : AwaitPayloadReadAheadAsync(pendingReadAhead, destination);
+        }
+
+        var pendingRead = _transport.ReadAsync(destination, cancellationToken);
+        return pendingRead.IsCompletedSuccessfully
+            ? ValueTask.FromResult(ValidatePayloadRead(pendingRead.Result))
+            : AwaitPayloadBytesAsync(pendingRead);
+    }
+
+    private static async ValueTask<int> AwaitPayloadBytesAsync(ValueTask<int> pendingRead) =>
+        ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
+
+    private async ValueTask<int> AwaitPayloadReadAheadAsync(
+        ValueTask<int> pendingRead,
+        Memory<byte> destination) =>
+        CompletePayloadReadAhead(
+            await pendingRead.ConfigureAwait(false),
+            destination.Span);
+
+    private int CompletePayloadReadAhead(int read, Span<byte> destination)
+    {
+        _count += ValidatePayloadRead(read);
+        return CopyBufferedPayload(destination);
+    }
+
+    private int CopyBufferedPayload(Span<byte> destination)
+    {
+        var copied = Math.Min(destination.Length, _count);
+        _buffer.AsSpan(_start, copied).CopyTo(destination);
+        _start += copied;
+        _count -= copied;
+        return copied;
+    }
+
+    private static int ValidatePayloadRead(int read) =>
+        read != 0
             ? read
             : throw new EndOfStreamException(
                 "PostgreSQL disconnected in the middle of a protocol message payload.");
+
+    private void GrowReadBufferForPayload()
+    {
+        var desiredReadAhead = Math.Min(_activePayloadRemaining, MaximumPayloadReadAhead);
+        if (desiredReadAhead <= _buffer.Length - (_start + _count))
+        {
+            return;
+        }
+
+        var replacement = ArrayPool<byte>.Shared.Rent(
+            Math.Max(
+                Math.Min(checked(_count + desiredReadAhead), MaximumPayloadReadAhead),
+                InitialBufferSize));
+        _buffer.AsSpan(_start, _count).CopyTo(replacement);
+        ArrayPool<byte>.Shared.Return(_buffer);
+        _buffer = replacement;
+        _start = 0;
+    }
+
+    private void ShrinkReadBufferIfPossible()
+    {
+        if (_buffer.Length <= InitialBufferSize || _count > InitialBufferSize)
+        {
+            return;
+        }
+
+        var replacement = ArrayPool<byte>.Shared.Rent(InitialBufferSize);
+        _buffer.AsSpan(_start, _count).CopyTo(replacement);
+        ArrayPool<byte>.Shared.Return(_buffer);
+        _buffer = replacement;
+        _start = 0;
     }
 
     private void EnsureNoActivePayload()
@@ -405,6 +994,46 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         _activePayloadRemaining = -1;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private bool TryParseBufferedMessage(out BlueTuskBackendMessage message)
+    {
+        if (_count < HeaderSize)
+        {
+            message = default;
+            return false;
+        }
+
+        var code = _buffer[_start];
+        var length = BinaryPrimitives.ReadInt32BigEndian(
+            _buffer.AsSpan(_start + 1, sizeof(int)));
+        if (length < sizeof(int))
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend message '{(char)code}' declared invalid length {length}.");
+        }
+
+        if (length > _parser.MaximumMessageSize)
+        {
+            throw new BlueTuskProtocolException(
+                $"Backend message '{(char)code}' declared length {length}, exceeding the configured maximum {_parser.MaximumMessageSize}.");
+        }
+
+        var frameLength = length + 1;
+        if (_count < frameLength)
+        {
+            message = default;
+            return false;
+        }
+
+        var payloadLength = length - sizeof(int);
+        message = new BlueTuskBackendMessage(
+            code,
+            new ReadOnlySequence<byte>(_buffer.AsMemory(_start + HeaderSize, payloadLength)));
+        _start += frameLength;
+        _count -= frameLength;
+        return true;
+    }
+
     private void EnsureActivePayload()
     {
         if (_activePayloadRemaining < 0)
@@ -413,13 +1042,72 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
-    private void ReturnBuffer()
+    private void BeginRead()
     {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        _ = Interlocked.Increment(ref _activeReads);
+        if (_disposed)
+        {
+            EndRead();
+            throw new ObjectDisposedException(GetType().FullName);
+        }
+    }
+
+    private void EndRead()
+    {
+        if (Interlocked.Decrement(ref _activeReads) == 0 && _disposed)
+        {
+            ReturnBufferWhenIdle();
+        }
+    }
+
+    private void ReturnBufferWhenIdle()
+    {
+        if (Volatile.Read(ref _activeReads) != 0 ||
+            Interlocked.Exchange(ref _bufferReturned, 1) != 0)
+        {
+            return;
+        }
+
         var buffer = _buffer;
         _buffer = [];
         _start = 0;
         _count = 0;
         _activePayloadRemaining = -1;
-        ArrayPool<byte>.Shared.Return(buffer);
+        if (buffer.Length != 0)
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+    }
+
+    private ArrayBufferWriter<byte> BeginWrite()
+    {
+        if (Interlocked.CompareExchange(ref _writeInProgress, 1, 0) != 0)
+        {
+            throw new InvalidOperationException(
+                "A protocol write is already active on this physical connection.");
+        }
+
+        return _writeBuffer;
+    }
+
+    private void EndWrite(bool clearBuffer)
+    {
+        if (clearBuffer
+            && MemoryMarshal.TryGetArray(_writeBuffer.WrittenMemory, out var segment))
+        {
+            CryptographicOperations.ZeroMemory(segment.AsSpan());
+        }
+
+        if (_writeBuffer.Capacity > MaximumRetainedWriteBufferSize)
+        {
+            _writeBuffer = new ArrayBufferWriter<byte>(InitialWriteBufferSize);
+        }
+        else
+        {
+            _writeBuffer.Clear();
+        }
+
+        Volatile.Write(ref _writeInProgress, 0);
     }
 }

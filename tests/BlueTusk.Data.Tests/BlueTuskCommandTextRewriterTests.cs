@@ -3,6 +3,18 @@ namespace BlueTusk.Data.Tests;
 public sealed class BlueTuskCommandTextRewriterTests
 {
     [Fact]
+    public void Reuses_parameterless_plans_for_the_same_command_text()
+    {
+        const string sql = "SELECT 42";
+
+        var first = BlueTuskCommandTextRewriter.Rewrite(sql, new BlueTuskParameterCollection());
+        var second = BlueTuskCommandTextRewriter.Rewrite(sql, new BlueTuskParameterCollection());
+
+        Assert.Same(first, second);
+        Assert.Empty(first.Parameters);
+    }
+
+    [Fact]
     public void Rewrites_named_parameters_in_first_use_order_and_reuses_ordinals()
     {
         var parameters = new BlueTuskParameterCollection();

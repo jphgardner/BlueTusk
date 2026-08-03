@@ -1,8 +1,7 @@
 namespace BlueTusk.EntityFrameworkCore;
 
-/// <summary>Identifies the BlueTusk EF Core package during its pre-provider foundation phase.</summary>
+/// <summary>Identifies the BlueTusk Entity Framework Core database provider.</summary>
 public static class BlueTuskEntityFrameworkCoreInfo
 {
     public const string ProviderName = "BlueTusk.EntityFrameworkCore";
 }
-

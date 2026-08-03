@@ -18,6 +18,9 @@ public static class BlueTuskBackendMessageDecoder
             0 => new BlueTuskAuthenticationRequest.Ok(),
             3 => new BlueTuskAuthenticationRequest.CleartextPassword(),
             5 => new BlueTuskAuthenticationRequest.Md5Password(reader.ReadBytes(4).ToArray()),
+            7 => new BlueTuskAuthenticationRequest.Gss(),
+            8 => new BlueTuskAuthenticationRequest.GssContinue(reader.ReadRemainingBytes().ToArray()),
+            9 => new BlueTuskAuthenticationRequest.Sspi(),
             10 => DecodeSaslMechanisms(ref reader),
             11 => new BlueTuskAuthenticationRequest.SaslContinue(DecodeUtf8(reader.ReadRemainingBytes())),
             12 => new BlueTuskAuthenticationRequest.SaslFinal(DecodeUtf8(reader.ReadRemainingBytes())),
@@ -131,6 +134,43 @@ public static class BlueTuskBackendMessageDecoder
         return new BlueTuskDataRow(values);
     }
 
+    internal static ReadOnlyMemory<byte>? DecodeFirstDataRowValue(
+        BlueTuskBackendMessage message,
+        int expectedFieldCount)
+    {
+        RequireCode(message, 'D');
+        var reader = CreateReader(message, out _);
+        var count = reader.ReadInt16();
+        if (count < 1 || count != expectedFieldCount)
+        {
+            throw new BlueTuskProtocolException(
+                "DataRow field count does not match its row description.");
+        }
+
+        ReadOnlyMemory<byte>? firstValue = null;
+        for (var index = 0; index < count; index++)
+        {
+            var length = reader.ReadInt32();
+            if (length < -1)
+            {
+                throw new BlueTuskProtocolException(
+                    "DataRow declared an invalid negative field length.");
+            }
+
+            if (length >= 0)
+            {
+                var bytes = reader.ReadBytes(length);
+                if (index == 0)
+                {
+                    firstValue = bytes.ToArray();
+                }
+            }
+        }
+
+        reader.EnsureConsumed();
+        return firstValue;
+    }
+
     public static string DecodeCommandComplete(BlueTuskBackendMessage message)
     {
         RequireCode(message, 'C');
@@ -229,8 +269,16 @@ public static class BlueTuskBackendMessageDecoder
         _ => throw new BlueTuskProtocolException($"COPY response contained unknown format code {value}."),
     };
 
-    private static BlueTuskBackendPayloadReader CreateReader(BlueTuskBackendMessage message, out byte[] bytes)
+    private static BlueTuskBackendPayloadReader CreateReader(
+        BlueTuskBackendMessage message,
+        out byte[]? bytes)
     {
+        if (message.Payload.IsSingleSegment)
+        {
+            bytes = null;
+            return new BlueTuskBackendPayloadReader(message.Payload.FirstSpan);
+        }
+
         bytes = message.ToPayloadArray();
         return new BlueTuskBackendPayloadReader(bytes);
     }

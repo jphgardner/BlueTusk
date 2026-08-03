@@ -86,6 +86,43 @@ public sealed class BlueTuskReplicationWireProtocolTests
     }
 
     [Fact]
+    public void Standby_status_requires_ordered_monotonic_durable_positions()
+    {
+        var current = new BlueTuskStandbyStatus(
+            new BlueTuskLogSequenceNumber(30),
+            new BlueTuskLogSequenceNumber(20),
+            new BlueTuskLogSequenceNumber(10));
+
+        BlueTuskReplicationConnection.ValidateStandbyStatus(
+            current,
+            new BlueTuskStandbyStatus(
+                new BlueTuskLogSequenceNumber(40),
+                new BlueTuskLogSequenceNumber(30),
+                new BlueTuskLogSequenceNumber(20)));
+        Assert.Throws<ArgumentException>(() =>
+            BlueTuskReplicationConnection.ValidateStandbyStatus(
+                current,
+                new BlueTuskStandbyStatus(
+                    new BlueTuskLogSequenceNumber(20),
+                    new BlueTuskLogSequenceNumber(30),
+                    new BlueTuskLogSequenceNumber(10))));
+        Assert.Throws<ArgumentException>(() =>
+            BlueTuskReplicationConnection.ValidateStandbyStatus(
+                current,
+                new BlueTuskStandbyStatus(
+                    new BlueTuskLogSequenceNumber(30),
+                    new BlueTuskLogSequenceNumber(20),
+                    new BlueTuskLogSequenceNumber(21))));
+        Assert.Throws<ArgumentException>(() =>
+            BlueTuskReplicationConnection.ValidateStandbyStatus(
+                current,
+                new BlueTuskStandbyStatus(
+                    new BlueTuskLogSequenceNumber(30),
+                    new BlueTuskLogSequenceNumber(19),
+                    new BlueTuskLogSequenceNumber(10))));
+    }
+
+    [Fact]
     public void Rejects_malformed_replication_messages()
     {
         Assert.Throws<BlueTuskReplicationProtocolException>(

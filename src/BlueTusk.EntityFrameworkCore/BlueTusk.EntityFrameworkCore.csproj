@@ -1,7 +1,9 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\BlueTusk.TypeSystem\BlueTusk.TypeSystem.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

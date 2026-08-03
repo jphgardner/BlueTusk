@@ -1,7 +1,9 @@
 using System.Data;
 using System.Data.Common;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Data;
@@ -9,19 +11,26 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskCommand : DbCommand
 {
     private static long s_preparedStatementSequence;
-    private readonly BlueTuskParameterCollection _parameters = new();
+    private static readonly BlueTuskParameterCollection EmptyParameters = new();
+    private BlueTuskParameterCollection? _parameters;
     private BlueTuskConnection? _connection;
     private readonly BlueTuskDataSource? _dataSource;
     private BlueTuskTransaction? _transaction;
     private BlueTuskConnection? _executingConnection;
     private int _commandTimeout = 30;
-    private int _sequentialFetchSize = 32;
+    private int _sequentialFetchSize;
     private BlueTuskCommandExecutionMode _executionMode;
     private int _executing;
     private int _cancellationRequested;
     private int _timeoutRequested;
     private bool _prepareRequested;
     private PreparedStatementState? _preparedStatement;
+    private BlueTuskCommandPlan? _commandPlan;
+    private string? _commandPlanText;
+    private int _commandPlanParameterVersion = -1;
+    private BlueTuskExtendedQueryParameter[]? _preparedEncodedParameters;
+    private byte[]?[]? _preparedParameterBuffers;
+    private ReusableCommandTimeout? _preparedCommandTimeout;
 
     public BlueTuskCommand()
     {
@@ -61,13 +70,16 @@ public sealed class BlueTuskCommand : DbCommand
             : throw new ArgumentOutOfRangeException(nameof(value));
     }
 
-    /// <summary>Gets or sets the maximum rows requested per portal fetch for sequential readers.</summary>
+    /// <summary>
+    /// Gets or sets the maximum rows requested per portal fetch for sequential readers.
+    /// Zero streams the complete response without suspending the portal.
+    /// </summary>
     public int SequentialFetchSize
     {
         get => _sequentialFetchSize;
         set
         {
-            ArgumentOutOfRangeException.ThrowIfLessThan(value, 1);
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
             _sequentialFetchSize = value;
         }
     }
@@ -113,9 +125,9 @@ public sealed class BlueTuskCommand : DbCommand
         }
     }
 
-    protected override DbParameterCollection DbParameterCollection => _parameters;
+    protected override DbParameterCollection DbParameterCollection => Parameters;
 
-    public new BlueTuskParameterCollection Parameters => _parameters;
+    public new BlueTuskParameterCollection Parameters => _parameters ??= new BlueTuskParameterCollection();
 
     protected override DbTransaction? DbTransaction
     {
@@ -215,6 +227,16 @@ public sealed class BlueTuskCommand : DbCommand
 
     protected override DbParameter CreateDbParameter() => new BlueTuskParameter();
 
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _preparedCommandTimeout?.Dispose();
+        }
+
+        base.Dispose(disposing);
+    }
+
     protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) =>
         behavior.HasFlag(CommandBehavior.SequentialAccess)
             ? ExecuteStreamingDataReader(behavior)
@@ -223,15 +245,22 @@ public sealed class BlueTuskCommand : DbCommand
                 behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
                 GetTypeRegistry());
 
-    protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(
+    protected override Task<DbDataReader> ExecuteDbDataReaderAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))
         {
-            return await ExecuteStreamingDataReaderAsync(behavior, cancellationToken).ConfigureAwait(false);
+            return ExecuteStreamingDataReaderAsync(behavior, cancellationToken);
         }
 
+        return ExecuteBufferedDataReaderAsync(behavior, cancellationToken);
+    }
+
+    private async Task<DbDataReader> ExecuteBufferedDataReaderAsync(
+        CommandBehavior behavior,
+        CancellationToken cancellationToken)
+    {
         var result = await ExecuteCoreAsync(cancellationToken).ConfigureAwait(false);
         return new BlueTuskDataReader(
             result,
@@ -249,12 +278,15 @@ public sealed class BlueTuskCommand : DbCommand
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
         BlueTuskConnection? ownedConnection = null;
-        Timer? timeoutTimer = null;
+        BlueTuskCommandTimeout? timeoutTimer = null;
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
             var connection = GetStreamingConnection(ref ownedConnection);
             connection.ValidateCommandTransaction(_transaction);
             ValidateStreamingCommand();
+            telemetry = StartTelemetry(connection);
             Volatile.Write(ref _executingConnection, connection);
             timeoutTimer = CreateTimeoutTimer();
             var portal = BeginStreamingPortal(connection);
@@ -270,18 +302,25 @@ public sealed class BlueTuskCommand : DbCommand
             timeoutTimer?.Dispose();
             ownedConnection?.Dispose();
             CompleteStreamingExecution();
-            throw TranslateReaderServerException(exception);
+            var translated = TranslateReaderServerException(exception);
+            failure = translated;
+            throw translated;
         }
-        catch
+        catch (Exception exception)
         {
+            failure = exception;
             timeoutTimer?.Dispose();
             ownedConnection?.Dispose();
             CompleteStreamingExecution();
             throw;
         }
+        finally
+        {
+            telemetry.Complete(failure);
+        }
     }
 
-    private async ValueTask<BlueTuskDataReader> ExecuteStreamingDataReaderAsync(
+    private async Task<DbDataReader> ExecuteStreamingDataReaderAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
@@ -293,19 +332,88 @@ public sealed class BlueTuskCommand : DbCommand
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
         BlueTuskConnection? ownedConnection = null;
-        Timer? timeoutTimer = null;
+        BlueTuskCommandTimeout? timeoutTimer = null;
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
-            var connection = await GetStreamingConnectionAsync(
-                opened => ownedConnection = opened,
-                cancellationToken).ConfigureAwait(false);
+            var connection = _connection;
+            if (connection is null)
+            {
+                if (_dataSource is null)
+                {
+                    throw new InvalidOperationException("The command has no connection or data source.");
+                }
+
+                ownedConnection = await _dataSource.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                connection = ownedConnection;
+            }
+            else if (connection.State != ConnectionState.Open)
+            {
+                throw new InvalidOperationException("The command connection is not open.");
+            }
+
             connection.ValidateCommandTransaction(_transaction);
             ValidateStreamingCommand();
+            telemetry = StartTelemetry(connection);
             Volatile.Write(ref _executingConnection, connection);
             timeoutTimer = CreateTimeoutTimer();
-            var portal = await BeginStreamingPortalAsync(
-                connection,
-                cancellationToken).ConfigureAwait(false);
+            var plan = GetCommandPlan();
+            var parameters = EncodeParameters(plan, connection.TypeRegistry);
+            var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
+            BlueTuskPortal portal;
+            try
+            {
+                if (_prepareRequested)
+                {
+                    var prepared = await EnsurePreparedAsync(
+                        cancellationToken,
+                        plan,
+                        parameters).ConfigureAwait(false);
+                    portal = await connection.Session.BeginPreparedPortalAsync(
+                        prepared.Name,
+                        parameters,
+                        useBinaryResults,
+                        SequentialFetchSize,
+                        cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    portal = await connection.Session.BeginPortalAsync(
+                        plan.Sql,
+                        parameters,
+                        useBinaryResults,
+                        SequentialFetchSize,
+                        cancellationToken).ConfigureAwait(false);
+                }
+            }
+            catch (BlueTuskServerException exception) when (
+                useBinaryResults && IsMissingBinaryOutputFunction(exception))
+            {
+                if (_prepareRequested)
+                {
+                    var prepared = await EnsurePreparedAsync(
+                        cancellationToken,
+                        plan,
+                        parameters).ConfigureAwait(false);
+                    portal = await connection.Session.BeginPreparedPortalAsync(
+                        prepared.Name,
+                        parameters,
+                        useBinaryResults: false,
+                        SequentialFetchSize,
+                        cancellationToken).ConfigureAwait(false);
+                }
+                else
+                {
+                    portal = await connection.Session.BeginPortalAsync(
+                        plan.Sql,
+                        parameters,
+                        useBinaryResults: false,
+                        SequentialFetchSize,
+                        cancellationToken).ConfigureAwait(false);
+                }
+            }
+
             return CreateStreamingReader(
                 portal,
                 connection,
@@ -322,10 +430,13 @@ public sealed class BlueTuskCommand : DbCommand
             }
 
             CompleteStreamingExecution();
-            throw TranslateReaderServerException(exception);
+            var translated = TranslateReaderServerException(exception);
+            failure = translated;
+            throw translated;
         }
-        catch
+        catch (Exception exception)
         {
+            failure = exception;
             timeoutTimer?.Dispose();
             if (ownedConnection is not null)
             {
@@ -334,6 +445,10 @@ public sealed class BlueTuskCommand : DbCommand
 
             CompleteStreamingExecution();
             throw;
+        }
+        finally
+        {
+            telemetry.Complete(failure);
         }
     }
 
@@ -355,27 +470,6 @@ public sealed class BlueTuskCommand : DbCommand
         return ownedConnection;
     }
 
-    private async ValueTask<BlueTuskConnection> GetStreamingConnectionAsync(
-        Action<BlueTuskConnection> setOwnedConnection,
-        CancellationToken cancellationToken)
-    {
-        if (_connection is null && _dataSource is null)
-        {
-            throw new InvalidOperationException("The command has no connection or data source.");
-        }
-
-        if (_connection is not null)
-        {
-            return _connection.State == ConnectionState.Open
-                ? _connection
-                : throw new InvalidOperationException("The command connection is not open.");
-        }
-
-        var ownedConnection = await _dataSource!.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
-        setOwnedConnection(ownedConnection);
-        return ownedConnection;
-    }
-
     private void ValidateStreamingCommand()
     {
         if (string.IsNullOrWhiteSpace(CommandText))
@@ -392,8 +486,8 @@ public sealed class BlueTuskCommand : DbCommand
 
     private BlueTuskPortal BeginStreamingPortal(BlueTuskConnection connection)
     {
-        var plan = BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
-        var parameters = BlueTuskParameterEncoder.Encode(plan.Parameters, connection.TypeRegistry);
+        var plan = GetCommandPlan();
+        var parameters = EncodeParameters(plan, connection.TypeRegistry);
         var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
         try
         {
@@ -431,62 +525,6 @@ public sealed class BlueTuskCommand : DbCommand
                 parameters,
                 useBinaryResults: false,
                 SequentialFetchSize);
-        }
-    }
-
-    private async ValueTask<BlueTuskPortal> BeginStreamingPortalAsync(
-        BlueTuskConnection connection,
-        CancellationToken cancellationToken)
-    {
-        var plan = BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
-        var parameters = BlueTuskParameterEncoder.Encode(plan.Parameters, connection.TypeRegistry);
-        var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
-        try
-        {
-            if (_prepareRequested)
-            {
-                var prepared = await EnsurePreparedAsync(
-                    cancellationToken,
-                    plan,
-                    parameters).ConfigureAwait(false);
-                return await connection.Session.BeginPreparedPortalAsync(
-                    prepared.Name,
-                    parameters,
-                    useBinaryResults,
-                    SequentialFetchSize,
-                    cancellationToken).ConfigureAwait(false);
-            }
-
-            return await connection.Session.BeginPortalAsync(
-                plan.Sql,
-                parameters,
-                useBinaryResults,
-                SequentialFetchSize,
-                cancellationToken).ConfigureAwait(false);
-        }
-        catch (BlueTuskServerException exception) when (
-            useBinaryResults && IsMissingBinaryOutputFunction(exception))
-        {
-            if (_prepareRequested)
-            {
-                var prepared = await EnsurePreparedAsync(
-                    cancellationToken,
-                    plan,
-                    parameters).ConfigureAwait(false);
-                return await connection.Session.BeginPreparedPortalAsync(
-                    prepared.Name,
-                    parameters,
-                    useBinaryResults: false,
-                    SequentialFetchSize,
-                    cancellationToken).ConfigureAwait(false);
-            }
-
-            return await connection.Session.BeginPortalAsync(
-                plan.Sql,
-                parameters,
-                useBinaryResults: false,
-                SequentialFetchSize,
-                cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -495,7 +533,7 @@ public sealed class BlueTuskCommand : DbCommand
         BlueTuskConnection connection,
         BlueTuskConnection? ownedConnection,
         CommandBehavior behavior,
-        Timer? timeoutTimer)
+        BlueTuskCommandTimeout? timeoutTimer)
     {
         var connectionToClose = ownedConnection ??
             (behavior.HasFlag(CommandBehavior.CloseConnection) ? connection : null);
@@ -505,35 +543,28 @@ public sealed class BlueTuskCommand : DbCommand
             connectionToClose,
             connection.TypeRegistry,
             behavior.HasFlag(CommandBehavior.SingleRow),
-            () =>
-            {
-                timeoutTimer?.Dispose();
-                CompleteStreamingExecution();
-            },
-            () =>
-            {
-                timeoutTimer?.Dispose();
-                CompleteStreamingExecution();
-                return ValueTask.CompletedTask;
-            },
-            TranslateReaderServerException);
+            this,
+            timeoutTimer);
     }
 
-    private Timer? CreateTimeoutTimer() => CommandTimeout > 0
-        ? new Timer(
-            static state => ((BlueTuskCommand)state!).CancelForTimeout(),
-            this,
-            TimeSpan.FromSeconds(CommandTimeout),
-            Timeout.InfiniteTimeSpan)
+    private BlueTuskCommandTimeout? CreateTimeoutTimer() => CommandTimeout > 0
+        ? BlueTuskCommandTimeout.Rent(this, TimeSpan.FromSeconds(CommandTimeout))
         : null;
 
-    private void CompleteStreamingExecution()
+    private PreparedCommandTimeoutLease CreatePreparedCommandTimeout() => CommandTimeout > 0
+        ? new PreparedCommandTimeoutLease(
+            _preparedCommandTimeout ??= new ReusableCommandTimeout(this),
+            TimeSpan.FromSeconds(CommandTimeout))
+        : default;
+
+    internal void CompleteStreamingExecution(BlueTuskCommandTimeout? timeoutTimer = null)
     {
+        timeoutTimer?.Dispose();
         Volatile.Write(ref _executingConnection, null);
         Volatile.Write(ref _executing, 0);
     }
 
-    private Exception TranslateReaderServerException(BlueTuskServerException exception)
+    internal Exception TranslateReaderServerException(BlueTuskServerException exception)
     {
         if (exception.SqlState == "57014" && Volatile.Read(ref _timeoutRequested) != 0)
         {
@@ -556,27 +587,11 @@ public sealed class BlueTuskCommand : DbCommand
         return GetRecordsAffected(result);
     }
 
-    public override async Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken)
-    {
-        var result = await ExecuteCoreAsync(cancellationToken).ConfigureAwait(false);
-        var resultSet = result.FirstOrDefault;
-        return resultSet is { Fields.Count: > 0, Rows.Count: > 0 }
-            ? BlueTuskValueDecoder.Decode(GetTypeRegistry(), resultSet.Fields[0], resultSet.Rows[0].Values[0])
-            : null;
-    }
+    public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) =>
+        ExecuteScalarCoreAsync<object?>(cancellationToken).AsTask();
 
-    public async Task<T?> ExecuteScalarAsync<T>(CancellationToken cancellationToken = default)
-    {
-        var value = await ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
-        if (value is null or DBNull)
-        {
-            return default;
-        }
-
-        return value is T typed
-            ? typed
-            : (T)Convert.ChangeType(value, typeof(T), System.Globalization.CultureInfo.InvariantCulture);
-    }
+    public Task<T?> ExecuteScalarAsync<T>(CancellationToken cancellationToken = default) =>
+        ExecuteScalarCoreAsync<T>(cancellationToken).AsTask();
 
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreAsync(CancellationToken cancellationToken)
     {
@@ -586,12 +601,23 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
+        Interlocked.Exchange(ref _timeoutRequested, 0);
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
-            return await ExecuteCoreOnceAsync(cancellationToken).ConfigureAwait(false);
+            return await ExecuteCoreOnceAsync(
+                connection => telemetry = StartTelemetry(connection),
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
         }
         finally
         {
+            telemetry.Complete(failure);
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
@@ -606,18 +632,26 @@ public sealed class BlueTuskCommand : DbCommand
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
         try
         {
-            return ExecuteCoreOnce();
+            return ExecuteCoreOnce(connection => telemetry = StartTelemetry(connection));
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
         }
         finally
         {
+            telemetry.Complete(failure);
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
     }
 
-    private BlueTuskQueryResult ExecuteCoreOnce()
+    private BlueTuskQueryResult ExecuteCoreOnce(Action<BlueTuskConnection> startTelemetry)
     {
         if (_connection is null && _dataSource is null)
         {
@@ -642,17 +676,13 @@ public sealed class BlueTuskCommand : DbCommand
             throw new InvalidOperationException("CommandText is required.");
         }
 
+        startTelemetry(connection);
+
         Volatile.Write(ref _executingConnection, connection);
-        using var timeoutTimer = CommandTimeout > 0
-            ? new Timer(
-                static state => ((BlueTuskCommand)state!).CancelForTimeout(),
-                this,
-                TimeSpan.FromSeconds(CommandTimeout),
-                Timeout.InfiniteTimeSpan)
-            : null;
+        using var timeoutTimer = CreateTimeoutTimer();
         try
         {
-            var plan = BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
+            var plan = GetCommandPlan();
             if (ExecutionMode == BlueTuskCommandExecutionMode.Simple)
             {
                 if (plan.Parameters.Count != 0 || _prepareRequested)
@@ -671,7 +701,7 @@ public sealed class BlueTuskCommand : DbCommand
                 return connection.Session.ExecuteSimpleQuery(plan.Sql);
             }
 
-            var parameters = BlueTuskParameterEncoder.Encode(plan.Parameters, connection.TypeRegistry);
+            var parameters = EncodeParameters(plan, connection.TypeRegistry);
             var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
             try
             {
@@ -732,7 +762,9 @@ public sealed class BlueTuskCommand : DbCommand
         }
     }
 
-    private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(CancellationToken cancellationToken)
+    private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(
+        Action<BlueTuskConnection> startTelemetry,
+        CancellationToken cancellationToken)
     {
         if (_connection is null && _dataSource is null)
         {
@@ -758,15 +790,14 @@ public sealed class BlueTuskCommand : DbCommand
             throw new InvalidOperationException("CommandText is required.");
         }
 
-        using var timeoutSource = CommandTimeout > 0 ? new CancellationTokenSource(TimeSpan.FromSeconds(CommandTimeout)) : null;
-        using var linkedSource = timeoutSource is null
-            ? null
-            : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutSource.Token);
+        startTelemetry(connection);
+
+        using var timeoutTimer = CreateTimeoutTimer();
         Volatile.Write(ref _executingConnection, connection);
         try
         {
-            var effectiveToken = linkedSource?.Token ?? cancellationToken;
-            var plan = BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
+            var effectiveToken = cancellationToken;
+            var plan = GetCommandPlan();
             if (ExecutionMode == BlueTuskCommandExecutionMode.Simple)
             {
                 if (plan.Parameters.Count != 0 || _prepareRequested)
@@ -787,7 +818,7 @@ public sealed class BlueTuskCommand : DbCommand
                     .ConfigureAwait(false);
             }
 
-            var parameters = BlueTuskParameterEncoder.Encode(plan.Parameters, connection.TypeRegistry);
+            var parameters = EncodeParameters(plan, connection.TypeRegistry);
             var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
             try
             {
@@ -835,17 +866,19 @@ public sealed class BlueTuskCommand : DbCommand
         }
         catch (BlueTuskServerException exception)
         {
+            if (exception.SqlState == "57014" && Volatile.Read(ref _timeoutRequested) != 0)
+            {
+                throw new TimeoutException(
+                    $"The command exceeded its {CommandTimeout}-second timeout.",
+                    exception);
+            }
+
             if (exception.SqlState == "57014" && Volatile.Read(ref _cancellationRequested) != 0)
             {
                 throw new OperationCanceledException("The PostgreSQL command was cancelled.", exception);
             }
 
             throw new BlueTuskException(exception);
-        }
-        catch (OperationCanceledException exception) when (
-            timeoutSource?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
-        {
-            throw new TimeoutException($"The command exceeded its {CommandTimeout}-second timeout.", exception);
         }
         catch (OperationCanceledException)
         {
@@ -863,6 +896,218 @@ public sealed class BlueTuskCommand : DbCommand
                 await ownedConnection.DisposeAsync().ConfigureAwait(false);
             }
         }
+    }
+
+    private async ValueTask<T?> ExecuteScalarCoreAsync<T>(CancellationToken cancellationToken)
+    {
+        if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
+        {
+            throw new InvalidOperationException("The command is already executing.");
+        }
+
+        Interlocked.Exchange(ref _cancellationRequested, 0);
+        Interlocked.Exchange(ref _timeoutRequested, 0);
+        try
+        {
+            if (_connection is null && _dataSource is null)
+            {
+                throw new InvalidOperationException("The command has no connection or data source.");
+            }
+
+            BlueTuskConnection? ownedConnection = null;
+            var connection = _connection;
+            if (connection is null)
+            {
+                ownedConnection = await _dataSource!.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
+                connection = ownedConnection;
+            }
+            else if (connection.State != ConnectionState.Open)
+            {
+                throw new InvalidOperationException("The command connection is not open.");
+            }
+
+            connection.ValidateCommandTransaction(_transaction);
+            if (string.IsNullOrWhiteSpace(CommandText))
+            {
+                throw new InvalidOperationException("CommandText is required.");
+            }
+
+            var telemetry = StartTelemetry(connection);
+            Exception? failure = null;
+            Volatile.Write(ref _executingConnection, connection);
+            try
+            {
+                using var timeoutTimer = _prepareRequested ? null : CreateTimeoutTimer();
+                using var preparedTimeout = _prepareRequested
+                    ? CreatePreparedCommandTimeout()
+                    : default;
+                var plan = GetCommandPlan();
+                if (ExecutionMode == BlueTuskCommandExecutionMode.Simple)
+                {
+                    if (plan.Parameters.Count != 0 || _prepareRequested)
+                    {
+                        throw new InvalidOperationException(
+                            "Simple execution mode cannot be used with parameters or a prepared command.");
+                    }
+
+                    return DecodeScalar<T>(
+                        connection,
+                        BlueTuskScalarQueryResult.FromQueryResult(
+                            await connection.Session.ExecuteSimpleQueryAsync(
+                                plan.Sql,
+                                cancellationToken).ConfigureAwait(false)));
+                }
+
+                if (ExecutionMode == BlueTuskCommandExecutionMode.Auto &&
+                    plan.Parameters.Count == 0 &&
+                    !_prepareRequested)
+                {
+                    return DecodeScalar<T>(
+                        connection,
+                        BlueTuskScalarQueryResult.FromQueryResult(
+                            await connection.Session.ExecuteSimpleQueryAsync(
+                                plan.Sql,
+                                cancellationToken).ConfigureAwait(false)));
+                }
+
+                var parameters = EncodeParameters(plan, connection.TypeRegistry);
+                var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
+                try
+                {
+                    BlueTuskScalarQueryResult result;
+                    if (_prepareRequested)
+                    {
+                        var prepared = await EnsurePreparedAsync(
+                            cancellationToken,
+                            plan,
+                            parameters).ConfigureAwait(false);
+                        result = await connection.Session.ExecutePreparedScalarAsync(
+                            prepared.Name,
+                            parameters,
+                            useBinaryResults,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        result = await connection.Session.ExecuteExtendedScalarAsync(
+                            plan.Sql,
+                            parameters,
+                            useBinaryResults,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+
+                    return DecodeScalar<T>(connection, result);
+                }
+                catch (BlueTuskServerException exception) when (
+                    useBinaryResults && IsMissingBinaryOutputFunction(exception))
+                {
+                    BlueTuskScalarQueryResult result;
+                    if (_prepareRequested)
+                    {
+                        var prepared = await EnsurePreparedAsync(
+                            cancellationToken,
+                            plan,
+                            parameters).ConfigureAwait(false);
+                        result = await connection.Session.ExecutePreparedScalarAsync(
+                            prepared.Name,
+                            parameters,
+                            useBinaryResults: false,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        result = await connection.Session.ExecuteExtendedScalarAsync(
+                            plan.Sql,
+                            parameters,
+                            useBinaryResults: false,
+                            cancellationToken).ConfigureAwait(false);
+                    }
+
+                    return DecodeScalar<T>(connection, result);
+                }
+            }
+            catch (BlueTuskServerException exception)
+            {
+                if (exception.SqlState == "57014" && Volatile.Read(ref _timeoutRequested) != 0)
+                {
+                    var translated = new TimeoutException(
+                        $"The command exceeded its {CommandTimeout}-second timeout.",
+                        exception);
+                    failure = translated;
+                    throw translated;
+                }
+
+                if (exception.SqlState == "57014" && Volatile.Read(ref _cancellationRequested) != 0)
+                {
+                    var translated = new OperationCanceledException(
+                        "The PostgreSQL command was cancelled.",
+                        exception);
+                    failure = translated;
+                    throw translated;
+                }
+
+                var providerException = new BlueTuskException(exception);
+                failure = providerException;
+                throw providerException;
+            }
+            catch (OperationCanceledException exception)
+            {
+                failure = exception;
+                throw;
+            }
+            catch (Exception exception) when (!connection.HasOpenSession)
+            {
+                failure = exception;
+                connection.Close();
+                throw;
+            }
+            catch (Exception exception)
+            {
+                failure = exception;
+                throw;
+            }
+            finally
+            {
+                telemetry.Complete(failure);
+                if (ownedConnection is not null)
+                {
+                    await ownedConnection.DisposeAsync().ConfigureAwait(false);
+                }
+            }
+        }
+        finally
+        {
+            Volatile.Write(ref _executingConnection, null);
+            Volatile.Write(ref _executing, 0);
+        }
+    }
+
+    private static T? DecodeScalar<T>(
+        BlueTuskConnection connection,
+        BlueTuskScalarQueryResult result)
+    {
+        if (result is not { HasValue: true, Field: not null })
+        {
+            return default;
+        }
+
+        var value = BlueTuskValueDecoder.Decode(
+            connection.TypeRegistry,
+            result.Field,
+            result.Value);
+        if (value is null or DBNull)
+        {
+            return typeof(T) == typeof(object)
+                ? (T)(object)DBNull.Value
+                : default;
+        }
+
+        return value is T typed
+            ? typed
+            : (T)Convert.ChangeType(
+                value,
+                typeof(T),
+                System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static int GetRecordsAffected(BlueTuskQueryResult result)
@@ -915,19 +1160,19 @@ public sealed class BlueTuskCommand : DbCommand
                 "A command in simple execution mode cannot be prepared.");
         }
 
-        plan ??= BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
-        encodedParameters ??= BlueTuskParameterEncoder.Encode(
-            plan.Parameters,
-            connection.TypeRegistry);
-        var typeOids = encodedParameters.Select(static parameter => parameter.TypeOid).ToArray();
+        plan ??= GetCommandPlan();
+        encodedParameters ??= EncodeParameters(plan, connection.TypeRegistry);
         var session = connection.Session;
         if (_preparedStatement is { } current &&
             ReferenceEquals(current.Session, session) &&
             string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) &&
-            current.ParameterTypeOids.AsSpan().SequenceEqual(typeOids))
+            ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters))
         {
+            BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "reuse");
             return current;
         }
+
+        var typeOids = encodedParameters.Select(static parameter => parameter.TypeOid).ToArray();
 
         var statementName = _preparedStatement?.Name ??
             $"bluetusk_{Interlocked.Increment(ref s_preparedStatementSequence):x}";
@@ -943,6 +1188,7 @@ public sealed class BlueTuskCommand : DbCommand
             plan.Sql,
             typeOids,
             cancellationToken).ConfigureAwait(false);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "prepare");
         var prepared = new PreparedStatementState(
             statementName,
             plan.Sql,
@@ -977,19 +1223,19 @@ public sealed class BlueTuskCommand : DbCommand
                 "A command in simple execution mode cannot be prepared.");
         }
 
-        plan ??= BlueTuskCommandTextRewriter.Rewrite(CommandText, _parameters);
-        encodedParameters ??= BlueTuskParameterEncoder.Encode(
-            plan.Parameters,
-            connection.TypeRegistry);
-        var typeOids = encodedParameters.Select(static parameter => parameter.TypeOid).ToArray();
+        plan ??= GetCommandPlan();
+        encodedParameters ??= EncodeParameters(plan, connection.TypeRegistry);
         var session = connection.Session;
         if (_preparedStatement is { } current &&
             ReferenceEquals(current.Session, session) &&
             string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) &&
-            current.ParameterTypeOids.AsSpan().SequenceEqual(typeOids))
+            ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters))
         {
+            BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "reuse");
             return current;
         }
+
+        var typeOids = encodedParameters.Select(static parameter => parameter.TypeOid).ToArray();
 
         var statementName = _preparedStatement?.Name ??
             $"bluetusk_{Interlocked.Increment(ref s_preparedStatementSequence):x}";
@@ -999,15 +1245,33 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         session.PrepareStatement(statementName, plan.Sql, typeOids);
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "prepare");
         var prepared = new PreparedStatementState(statementName, plan.Sql, typeOids, session);
         _preparedStatement = prepared;
         return prepared;
     }
 
-    private void CancelForTimeout()
+    internal void CancelForTimeout()
     {
         Interlocked.Exchange(ref _timeoutRequested, 1);
         Cancel();
+    }
+
+    private BlueTuskCommandPlan GetCommandPlan()
+    {
+        var parameters = _parameters ?? EmptyParameters;
+        if (_commandPlan is { } cached &&
+            _commandPlanParameterVersion == parameters.Version &&
+            string.Equals(_commandPlanText, CommandText, StringComparison.Ordinal))
+        {
+            return cached;
+        }
+
+        var plan = BlueTuskCommandTextRewriter.Rewrite(CommandText, parameters);
+        _commandPlan = plan;
+        _commandPlanText = CommandText;
+        _commandPlanParameterVersion = parameters.Version;
+        return plan;
     }
 
     private BlueTusk.TypeSystem.BlueTuskTypeRegistry GetTypeRegistry() =>
@@ -1015,9 +1279,246 @@ public sealed class BlueTuskCommand : DbCommand
         _dataSource?.TypeRegistry ??
         throw new InvalidOperationException("The command has no connection or data source.");
 
+    private BlueTuskCommandInstrumentation StartTelemetry(BlueTuskConnection connection)
+    {
+        var endpoint = connection.DiagnosticEndpoint;
+        return BlueTuskDiagnostics.StartCommand(
+            CommandText,
+            connection.Database,
+            endpoint.Host,
+            endpoint.Port,
+            connection.DiagnosticsOptions);
+    }
+
+    private IReadOnlyList<BlueTuskExtendedQueryParameter> EncodeParameters(
+        BlueTuskCommandPlan plan,
+        BlueTusk.TypeSystem.BlueTuskTypeRegistry types)
+    {
+        if (!_prepareRequested)
+        {
+            return BlueTuskParameterEncoder.Encode(plan.Parameters, types);
+        }
+
+        var count = plan.Parameters.Count;
+        if (_preparedEncodedParameters is null || _preparedEncodedParameters.Length != count)
+        {
+            _preparedEncodedParameters = new BlueTuskExtendedQueryParameter[count];
+            _preparedParameterBuffers = new byte[]?[count];
+        }
+
+        BlueTuskParameterEncoder.Encode(
+            plan.Parameters,
+            types,
+            _preparedEncodedParameters,
+            _preparedParameterBuffers!);
+        return _preparedEncodedParameters;
+    }
+
+    private static bool ParameterTypeOidsMatch(
+        ReadOnlySpan<uint> expected,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> actual)
+    {
+        if (expected.Length != actual.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < expected.Length; index++)
+        {
+            if (expected[index] != actual[index].TypeOid)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private readonly struct PreparedCommandTimeoutLease : IDisposable
+    {
+        private readonly ReusableCommandTimeout? _timeout;
+
+        public PreparedCommandTimeoutLease(ReusableCommandTimeout timeout, TimeSpan dueTime)
+        {
+            _timeout = timeout;
+            timeout.Start(dueTime);
+        }
+
+        public void Dispose() => _timeout?.Stop();
+    }
+
+    private sealed class ReusableCommandTimeout : IDisposable
+    {
+        private readonly BlueTuskCommand _command;
+        private readonly Timer _timer;
+        private long _dueTimestamp;
+        private bool _active;
+        private bool _scheduled;
+        private bool _disposed;
+
+        public ReusableCommandTimeout(BlueTuskCommand command)
+        {
+            _command = command;
+            _timer = new Timer(
+                static state =>
+                {
+                    var weakTimeout = (WeakReference<ReusableCommandTimeout>)state!;
+                    if (weakTimeout.TryGetTarget(out var timeout))
+                    {
+                        timeout.OnTimeout();
+                    }
+                },
+                new WeakReference<ReusableCommandTimeout>(this),
+                Timeout.InfiniteTimeSpan,
+                Timeout.InfiniteTimeSpan);
+        }
+
+        public void Start(TimeSpan dueTime)
+        {
+            lock (this)
+            {
+                ObjectDisposedException.ThrowIf(_disposed, this);
+                _dueTimestamp = checked(
+                    Stopwatch.GetTimestamp() +
+                    (long)(dueTime.TotalSeconds * Stopwatch.Frequency));
+                _active = true;
+                if (!_scheduled)
+                {
+                    _scheduled = true;
+                    _timer.Change(dueTime, Timeout.InfiniteTimeSpan);
+                }
+            }
+        }
+
+        public void Stop()
+        {
+            lock (this)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _active = false;
+            }
+        }
+
+        public void Dispose()
+        {
+            lock (this)
+            {
+                if (_disposed)
+                {
+                    return;
+                }
+
+                _disposed = true;
+                _active = false;
+                _scheduled = false;
+                _timer.Dispose();
+            }
+        }
+
+        private void OnTimeout()
+        {
+            lock (this)
+            {
+                if (_disposed || !_active)
+                {
+                    _scheduled = false;
+                    return;
+                }
+
+                var remainingTicks = _dueTimestamp - Stopwatch.GetTimestamp();
+                if (remainingTicks > 0)
+                {
+                    _timer.Change(
+                        TimeSpan.FromSeconds((double)remainingTicks / Stopwatch.Frequency),
+                        Timeout.InfiniteTimeSpan);
+                    return;
+                }
+
+                _active = false;
+                _scheduled = false;
+                _command.CancelForTimeout();
+            }
+        }
+    }
+
     private sealed record PreparedStatementState(
         string Name,
         string Sql,
         uint[] ParameterTypeOids,
         IBlueTuskPhysicalSession Session);
+}
+
+internal sealed class BlueTuskCommandTimeout : IDisposable
+{
+    private static readonly System.Collections.Concurrent.ConcurrentBag<BlueTuskCommandTimeout> Pool = [];
+    private readonly Timer _timer;
+    private BlueTuskCommand? _command;
+    private bool _leased;
+
+    private BlueTuskCommandTimeout()
+    {
+        _timer = new Timer(
+            static state => ((BlueTuskCommandTimeout)state!).OnTimeout(),
+            this,
+            Timeout.InfiniteTimeSpan,
+            Timeout.InfiniteTimeSpan);
+    }
+
+    public static BlueTuskCommandTimeout Rent(BlueTuskCommand command, TimeSpan dueTime)
+    {
+        if (!Pool.TryTake(out var timeout))
+        {
+            timeout = new BlueTuskCommandTimeout();
+        }
+
+        timeout.Start(command, dueTime);
+        return timeout;
+    }
+
+    public void Dispose()
+    {
+        lock (this)
+        {
+            if (!_leased)
+            {
+                return;
+            }
+
+            _timer.Change(Timeout.InfiniteTimeSpan, Timeout.InfiniteTimeSpan);
+            _command = null;
+            _leased = false;
+        }
+
+        Pool.Add(this);
+    }
+
+    private void Start(BlueTuskCommand command, TimeSpan dueTime)
+    {
+        lock (this)
+        {
+            if (_leased)
+            {
+                throw new InvalidOperationException("A command timeout registration is already in use.");
+            }
+
+            _command = command;
+            _leased = true;
+            _timer.Change(dueTime, Timeout.InfiniteTimeSpan);
+        }
+    }
+
+    private void OnTimeout()
+    {
+        lock (this)
+        {
+            if (_leased)
+            {
+                _command!.CancelForTimeout();
+            }
+        }
+    }
 }

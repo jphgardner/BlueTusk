@@ -50,13 +50,43 @@ PostgreSQL `time` can represent `24:00:00`, so its default CLR type is `TimeSpan
 
 UUID binary values use PostgreSQL network byte order, JSONB validates its version byte, and `bytea` accepts binary, hexadecimal text, and legacy escape text. UTF-8 decoding is strict so malformed server text is rejected rather than silently replaced.
 
-The default data reader buffers complete result sets for random field access. A reader created with `CommandBehavior.SequentialAccess` instead uses a bounded named portal: rows remain on the PostgreSQL connection until requested, fields must be visited in ordinal order, binary `bytea` is exposed directly through `GetStream`, and text, JSON, and JSONB are decoded incrementally through `GetTextReader`. Materializing a scalar value buffers only that field.
+The default data reader buffers complete result sets for random field access. A reader created with `CommandBehavior.SequentialAccess` instead uses an incremental portal and consumes fields directly from the transport: fields must be visited in ordinal order, binary `bytea` is exposed through `GetStream`, and text, JSON, and JSONB are decoded incrementally through `GetTextReader`. The default unlimited execution uses PostgreSQL's unnamed portal and avoids suspension round trips; set `BlueTuskCommand.SequentialFetchSize` to a positive row count to use a generated named portal when server-side bounded fetches are preferable. Materializing a scalar value buffers only that field.
 
 An unregistered OID is returned as `BlueTuskUnknownValue`, preserving its format and raw bytes.
 
 ## Catalogue-discovered structured types
 
 Each data source loads PostgreSQL type relationships from the system catalogues. Arrays, domains, enums, composites, records, ranges, and multiranges are composed from the codecs of their contained types in both text and binary formats. Runtime codecs can be registered by schema-qualified catalogue name, while `MapEnum<TEnum>` and `MapComposite<T>` provide typed mappings for user-defined enums and composites.
+
+Applications that want compile-time composite member discovery can reference
+`BlueTusk.SourceGeneration` as an analyzer and annotate a top-level partial CLR type:
+
+```xml
+<PackageReference Include="BlueTusk.SourceGeneration"
+                  PrivateAssets="all"
+                  OutputItemType="Analyzer"
+                  ReferenceOutputAssembly="false" />
+```
+
+```csharp
+using BlueTusk.TypeSystem;
+
+[BlueTuskComposite("app", "address")]
+public sealed partial record Address(int HouseNumber, string Street);
+
+Address.RegisterBlueTuskCodec(dataSourceBuilder.Types);
+```
+
+The generator follows the runtime mapper's snake-case and `[BlueTuskName]`
+conventions. It emits typed member getters and CLR construction, while data-source
+initialization still resolves the PostgreSQL fields, OIDs, nested codecs, and array
+codec from the live catalogue. The generated CLR members must exactly cover the
+catalogue composite. `MapComposite<T>` remains the reflection-based fallback for
+types that do not opt in. See the
+[source-generator package guide](../../src/BlueTusk.SourceGeneration/README.md)
+for supported CLR shapes and registration details.
+
+Set `BlueTuskParameter.PostgreSqlTypeName` when a parameter—especially a null value—must select one of those catalogue-discovered types. Names are parsed using PostgreSQL identifier rules: unquoted identifiers fold to lowercase, quoted identifiers preserve case and may contain dots, and a trailing `[]` selects the discovered array type.
 
 `BlueTuskRange<T>` keeps empty ranges distinct from ranges with one or two unbounded sides. Construct finite bounds with `BlueTuskRangeBound.Inclusive(value)` or `BlueTuskRangeBound.Exclusive(value)`, and use `BlueTuskRangeBound.Unbounded<T>()` for an infinite side:
 
@@ -86,6 +116,12 @@ PostgreSQL's unsigned transaction identifiers have dedicated CLR values so their
 
 ## Object identifiers and catalogue vectors
 
+PostgreSQL 19's unsigned 64-bit `oid8` maps to
+`BlueTuskObjectIdentifier64`, preserving the complete `0` through
+`UInt64.MaxValue` range in text and big-endian binary formats. Its array type
+is catalogue-composed like other built-ins. Earlier PostgreSQL releases do not
+advertise this type, so the runtime catalogue does not register it there.
+
 The PostgreSQL `reg*` aliases use symbolic names in text and unsigned four-byte OIDs in binary. BlueTusk provides a distinct CLR wrapper for each alias so parameter inference remains unambiguous:
 
 | PostgreSQL type | CLR value |
@@ -101,6 +137,7 @@ The PostgreSQL `reg*` aliases use symbolic names in text and unsigned four-byte 
 | `regnamespace` | `BlueTuskRegNamespace` |
 | `regrole` | `BlueTuskRegRole` |
 | `regcollation` | `BlueTuskRegCollation` |
+| `regdatabase` (PostgreSQL 19+) | `BlueTuskRegDatabase` |
 
 Construct an alias from either form. The returned `Identifier` preserves whether a text result was symbolic or numeric:
 
@@ -110,6 +147,14 @@ var relationByOid = new BlueTuskRegClass(16_384);
 ```
 
 Symbolic values are sent as text so PostgreSQL resolves them using its normal namespace and search-path rules. Numeric values use binary. The same value-sensitive choice applies to catalogue-composed arrays.
+
+The built-in type coverage acceptance test queries `pg_catalog.pg_type` on
+every supported server and requires a codec for every queryable base, range,
+and multirange type. This keeps new PostgreSQL built-ins visible as an
+executable compatibility failure rather than silently treating them as an
+unknown type. See PostgreSQL 19's
+[object identifier type documentation](https://www.postgresql.org/docs/19/datatype-oid.html)
+for `oid8` and `regdatabase` semantics.
 
 `int2vector` maps to the immutable `BlueTuskInt16Vector`; `oidvector` maps to `BlueTuskObjectIdentifierVector`. Their codecs enforce PostgreSQL's one-dimensional, zero-based, null-free binary shape, including full unsigned OID values. PostgreSQL does not accept an empty vector through its binary receive function, so BlueTusk automatically uses text for an empty vector or an array containing one.
 

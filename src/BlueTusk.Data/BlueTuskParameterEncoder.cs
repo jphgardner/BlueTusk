@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Buffers.Binary;
 using System.Data;
 using System.Globalization;
@@ -58,6 +59,11 @@ internal static class BlueTuskParameterEncoder
         BlueTuskTypeRegistry? types = null)
     {
         ArgumentNullException.ThrowIfNull(parameters);
+        if (parameters.Count == 0)
+        {
+            return Array.Empty<BlueTuskExtendedQueryParameter>();
+        }
+
         var encoded = new BlueTuskExtendedQueryParameter[parameters.Count];
         for (var index = 0; index < parameters.Count; index++)
         {
@@ -67,13 +73,43 @@ internal static class BlueTuskParameterEncoder
         return encoded;
     }
 
+    internal static void Encode(
+        IReadOnlyList<BlueTuskParameter> parameters,
+        BlueTuskTypeRegistry? types,
+        BlueTuskExtendedQueryParameter[] destination,
+        byte[]?[] reusableBuffers)
+    {
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(destination);
+        ArgumentNullException.ThrowIfNull(reusableBuffers);
+        if (destination.Length != parameters.Count || reusableBuffers.Length != parameters.Count)
+        {
+            throw new ArgumentException("Reusable parameter storage must match the parameter count.");
+        }
+
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            destination[index] = Encode(parameters[index], types, ref reusableBuffers[index]);
+        }
+    }
+
     public static BlueTuskExtendedQueryParameter Encode(
         BlueTuskParameter parameter,
         BlueTuskTypeRegistry? types = null)
     {
+        byte[]? reusableBuffer = null;
+        return Encode(parameter, types, ref reusableBuffer);
+    }
+
+    private static BlueTuskExtendedQueryParameter Encode(
+        BlueTuskParameter parameter,
+        BlueTuskTypeRegistry? types,
+        ref byte[]? reusableBuffer)
+    {
         ArgumentNullException.ThrowIfNull(parameter);
         var value = parameter.Value is DBNull ? null : parameter.Value;
-        var typeOid = parameter.PostgreSqlTypeOid ?? ResolveTypeOid(parameter.DbType, value, types);
+        var typeOid = parameter.PostgreSqlTypeOid
+            ?? ResolveTypeOid(parameter.PostgreSqlTypeName, parameter.DbType, value, types);
         if (typeOid == 0)
         {
             throw new ArgumentOutOfRangeException(
@@ -83,14 +119,20 @@ internal static class BlueTuskParameterEncoder
 
         return value is null
             ? new BlueTuskExtendedQueryParameter(typeOid, 0, null)
-            : EncodeValue(typeOid, value, types);
+            : EncodeValue(typeOid, value, types, ref reusableBuffer);
     }
 
     private static uint ResolveTypeOid(
+        string? postgreSqlTypeName,
         DbType dbType,
         object? value,
         BlueTuskTypeRegistry? types)
     {
+        if (!string.IsNullOrWhiteSpace(postgreSqlTypeName))
+        {
+            return ResolveTypeName(postgreSqlTypeName, types);
+        }
+
         if (dbType != DbType.Object)
         {
             return dbType switch
@@ -118,7 +160,7 @@ internal static class BlueTuskParameterEncoder
         return value switch
         {
             null => throw new InvalidOperationException(
-                "A null parameter requires DbType or PostgreSqlTypeOid so PostgreSQL can determine its type."),
+                "A null parameter requires DbType, PostgreSqlTypeOid, or PostgreSqlTypeName so PostgreSQL can determine its type."),
             bool => BooleanOid,
             sbyte or byte or short or ushort => Int2Oid,
             int => Int4Oid,
@@ -160,20 +202,58 @@ internal static class BlueTuskParameterEncoder
         };
     }
 
+    private static uint ResolveTypeName(string postgreSqlTypeName, BlueTuskTypeRegistry? types)
+    {
+        if (types is null)
+        {
+            throw new InvalidOperationException(
+                "PostgreSqlTypeName requires an open BlueTusk connection with a loaded PostgreSQL type catalogue.");
+        }
+
+        var typeName = postgreSqlTypeName.AsSpan().Trim().ToString();
+        var isArray = false;
+        while (typeName.EndsWith("[]", StringComparison.Ordinal))
+        {
+            isArray = true;
+            typeName = typeName[..^2].TrimEnd();
+        }
+
+        var parsedName = BlueTuskTypeName.Parse(typeName);
+        if (!types.TryGetType(parsedName, out var type, out _))
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL type {parsedName} is not present in the loaded type catalogue.");
+        }
+
+        if (!isArray)
+        {
+            return type!.Id.Oid;
+        }
+
+        if (type!.ArrayType is not { } arrayType)
+        {
+            throw new InvalidOperationException($"PostgreSQL type {parsedName} does not have an array type.");
+        }
+
+        return arrayType.Oid;
+    }
+
     private static BlueTuskExtendedQueryParameter EncodeValue(
         uint typeOid,
         object value,
-        BlueTuskTypeRegistry? types) => typeOid switch
+        BlueTuskTypeRegistry? types,
+        ref byte[]? reusableBuffer) => typeOid switch
         {
-            BooleanOid => Binary(
+            BooleanOid => BinaryBoolean(
                 typeOid,
-                new byte[] { (byte)(Convert.ToBoolean(value, CultureInfo.InvariantCulture) ? 1 : 0) }),
-            Int2Oid => BinaryInt16(typeOid, Convert.ToInt16(value, CultureInfo.InvariantCulture)),
-            Int4Oid => BinaryInt32(typeOid, Convert.ToInt32(value, CultureInfo.InvariantCulture)),
-            OidOid => BinaryUInt32(typeOid, Convert.ToUInt32(value, CultureInfo.InvariantCulture)),
-            Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture)),
-            Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture)),
-            Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture)),
+                Convert.ToBoolean(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
+            Int2Oid => BinaryInt16(typeOid, Convert.ToInt16(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Int4Oid => BinaryInt32(typeOid, Convert.ToInt32(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            OidOid => BinaryUInt32(typeOid, Convert.ToUInt32(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture), ref reusableBuffer),
             PointOid => EncodeBinary(
                 typeOid,
                 new BlueTuskPointCodec(),
@@ -283,39 +363,83 @@ internal static class BlueTuskParameterEncoder
             _ => EncodeFallback(typeOid, value, types),
         };
 
-    private static BlueTuskExtendedQueryParameter BinaryInt16(uint typeOid, short value)
+    private static BlueTuskExtendedQueryParameter BinaryBoolean(
+        uint typeOid,
+        bool value,
+        ref byte[]? reusableBuffer)
     {
-        var bytes = new byte[sizeof(short)];
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(byte));
+        bytes[0] = value ? (byte)1 : (byte)0;
+        return Binary(typeOid, bytes);
+    }
+
+    private static BlueTuskExtendedQueryParameter BinaryInt16(
+        uint typeOid,
+        short value,
+        ref byte[]? reusableBuffer)
+    {
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(short));
         BinaryPrimitives.WriteInt16BigEndian(bytes, value);
         return Binary(typeOid, bytes);
     }
 
-    private static BlueTuskExtendedQueryParameter BinaryInt32(uint typeOid, int value)
+    private static BlueTuskExtendedQueryParameter BinaryInt32(
+        uint typeOid,
+        int value,
+        ref byte[]? reusableBuffer)
     {
-        var bytes = new byte[sizeof(int)];
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(int));
         BinaryPrimitives.WriteInt32BigEndian(bytes, value);
         return Binary(typeOid, bytes);
     }
 
-    private static BlueTuskExtendedQueryParameter BinaryUInt32(uint typeOid, uint value)
+    private static BlueTuskExtendedQueryParameter BinaryUInt32(
+        uint typeOid,
+        uint value,
+        ref byte[]? reusableBuffer)
     {
-        var bytes = new byte[sizeof(uint)];
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(uint));
         BinaryPrimitives.WriteUInt32BigEndian(bytes, value);
+        return Binary(typeOid, bytes);
+    }
+
+    private static BlueTuskExtendedQueryParameter BinaryInt64(
+        uint typeOid,
+        long value,
+        ref byte[]? reusableBuffer)
+    {
+        var bytes = GetReusableBuffer(ref reusableBuffer, sizeof(long));
+        BinaryPrimitives.WriteInt64BigEndian(bytes, value);
         return Binary(typeOid, bytes);
     }
 
     private static BlueTuskExtendedQueryParameter BinaryInt64(uint typeOid, long value)
     {
-        var bytes = new byte[sizeof(long)];
-        BinaryPrimitives.WriteInt64BigEndian(bytes, value);
-        return Binary(typeOid, bytes);
+        byte[]? reusableBuffer = null;
+        return BinaryInt64(typeOid, value, ref reusableBuffer);
     }
 
-    private static BlueTuskExtendedQueryParameter BinarySingle(uint typeOid, float value) =>
-        BinaryInt32(typeOid, BitConverter.SingleToInt32Bits(value));
+    private static BlueTuskExtendedQueryParameter BinarySingle(
+        uint typeOid,
+        float value,
+        ref byte[]? reusableBuffer) =>
+        BinaryInt32(typeOid, BitConverter.SingleToInt32Bits(value), ref reusableBuffer);
 
-    private static BlueTuskExtendedQueryParameter BinaryDouble(uint typeOid, double value) =>
-        BinaryInt64(typeOid, BitConverter.DoubleToInt64Bits(value));
+    private static BlueTuskExtendedQueryParameter BinaryDouble(
+        uint typeOid,
+        double value,
+        ref byte[]? reusableBuffer) =>
+        BinaryInt64(typeOid, BitConverter.DoubleToInt64Bits(value), ref reusableBuffer);
+
+    private static byte[] GetReusableBuffer(ref byte[]? reusableBuffer, int length)
+    {
+        if (reusableBuffer is null || reusableBuffer.Length != length)
+        {
+            reusableBuffer = new byte[length];
+        }
+
+        return reusableBuffer;
+    }
 
     private static BlueTuskExtendedQueryParameter Binary(uint typeOid, ReadOnlyMemory<byte> value) =>
         new(typeOid, 1, value);
@@ -367,21 +491,21 @@ internal static class BlueTuskParameterEncoder
         var length = 256;
         while (true)
         {
-            var bytes = new byte[length];
-            var writer = new BlueTuskWriter(bytes);
+            var buffer = ArrayPool<byte>.Shared.Rent(length);
             try
             {
+                var writer = new BlueTuskWriter(buffer.AsSpan(0, length));
                 codec.Write(ref writer, value, format, type);
-                if (writer.WrittenCount != bytes.Length)
-                {
-                    Array.Resize(ref bytes, writer.WrittenCount);
-                }
-
+                var bytes = buffer.AsSpan(0, writer.WrittenCount).ToArray();
                 return new BlueTuskExtendedQueryParameter(typeOid, (short)format, bytes);
             }
             catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
             {
                 length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
+            }
+            finally
+            {
+                ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
             }
         }
     }
@@ -411,19 +535,22 @@ internal static class BlueTuskParameterEncoder
             ? typed
             : (BlueTuskNumeric)Convert.ToDecimal(value, CultureInfo.InvariantCulture);
         var codec = new BlueTuskNumericCodec();
-        var bytes = new byte[BlueTuskNumericCodec.GetMaximumBinarySize(numeric)];
-        var writer = new BlueTuskWriter(bytes);
-        codec.WriteTyped(
-            ref writer,
-            numeric,
-            BlueTuskDataFormat.Binary,
-            BlueTuskBuiltInTypes.Numeric);
-        if (writer.WrittenCount != bytes.Length)
+        var maximumLength = BlueTuskNumericCodec.GetMaximumBinarySize(numeric);
+        var buffer = ArrayPool<byte>.Shared.Rent(maximumLength);
+        try
         {
-            Array.Resize(ref bytes, writer.WrittenCount);
+            var writer = new BlueTuskWriter(buffer.AsSpan(0, maximumLength));
+            codec.WriteTyped(
+                ref writer,
+                numeric,
+                BlueTuskDataFormat.Binary,
+                BlueTuskBuiltInTypes.Numeric);
+            return Binary(typeOid, buffer.AsSpan(0, writer.WrittenCount).ToArray());
         }
-
-        return Binary(typeOid, bytes);
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(buffer, clearArray: true);
+        }
     }
 
     private static BlueTuskExtendedQueryParameter EncodeBitString(uint typeOid, BlueTuskBitString value)

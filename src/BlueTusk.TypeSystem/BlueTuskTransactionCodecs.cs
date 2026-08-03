@@ -118,6 +118,43 @@ public sealed class BlueTuskFullTransactionIdCodec : BlueTuskCodec<BlueTuskFullT
                 $"The {type.QualifiedName} text value '{text}' is not a valid UInt64.");
 }
 
+/// <summary>Encodes PostgreSQL 19's unsigned 64-bit <c>oid8</c> values.</summary>
+public sealed class BlueTuskObjectIdentifier64Codec : BlueTuskCodec<BlueTuskObjectIdentifier64>
+{
+    public override BlueTuskObjectIdentifier64 ReadTyped(
+        ref BlueTuskReader reader,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type) =>
+        new(format switch
+        {
+            BlueTuskDataFormat.Binary => reader.ReadUInt64BigEndian(),
+            BlueTuskDataFormat.Text => BlueTuskFullTransactionIdCodec.ParseUInt64(
+                reader.ReadRemainingUtf8(),
+                type),
+            _ => throw new ArgumentOutOfRangeException(nameof(format)),
+        });
+
+    public override void WriteTyped(
+        ref BlueTuskWriter writer,
+        BlueTuskObjectIdentifier64 value,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        if (format == BlueTuskDataFormat.Binary)
+        {
+            writer.WriteUInt64BigEndian(value.Value);
+        }
+        else if (format == BlueTuskDataFormat.Text)
+        {
+            writer.WriteUtf8(value.Value.ToString(CultureInfo.InvariantCulture));
+        }
+        else
+        {
+            throw new ArgumentOutOfRangeException(nameof(format));
+        }
+    }
+}
+
 public sealed class BlueTuskTransactionSnapshotCodec :
     BlueTuskCodec<BlueTuskTransactionSnapshot>
 {

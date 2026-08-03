@@ -16,13 +16,22 @@ internal interface IBlueTuskDeferredCodec : IBlueTuskCodec
 public sealed class BlueTuskCompositeCodec<T> : BlueTuskCodec<T>, IBlueTuskDeferredCodec
 {
     private readonly BlueTuskRecordCodec? _recordCodec;
-    private readonly CompositeMapping? _mapping;
+    private readonly IBlueTuskBoundCompositeMapping<T>? _mapping;
+    private readonly BlueTuskCompositeMapping<T>? _generatedMapping;
 
     public BlueTuskCompositeCodec()
     {
     }
 
-    private BlueTuskCompositeCodec(BlueTuskRecordCodec recordCodec, CompositeMapping mapping)
+    public BlueTuskCompositeCodec(BlueTuskCompositeMapping<T> mapping)
+    {
+        ArgumentNullException.ThrowIfNull(mapping);
+        _generatedMapping = mapping;
+    }
+
+    private BlueTuskCompositeCodec(
+        BlueTuskRecordCodec recordCodec,
+        IBlueTuskBoundCompositeMapping<T> mapping)
     {
         _recordCodec = recordCodec;
         _mapping = mapping;
@@ -63,6 +72,7 @@ public sealed class BlueTuskCompositeCodec<T> : BlueTuskCodec<T>, IBlueTuskDefer
 
         codec = new BlueTuskCompositeCodec<T>(
             recordCodec,
+            _generatedMapping?.Bind(type, types, registry) ??
             CompositeMapping.Create(type, types, registry));
         return true;
     }
@@ -77,7 +87,7 @@ public sealed class BlueTuskCompositeCodec<T> : BlueTuskCodec<T>, IBlueTuskDefer
         }
     }
 
-    private sealed class CompositeMapping
+    private sealed class CompositeMapping : IBlueTuskBoundCompositeMapping<T>
     {
         private readonly ConstructorInfo? _constructor;
         private readonly int[]? _constructorFields;

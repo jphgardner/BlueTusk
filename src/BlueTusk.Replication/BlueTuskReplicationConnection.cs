@@ -1,6 +1,7 @@
 using System.Runtime.CompilerServices;
 using System.Text;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Replication;
@@ -9,6 +10,7 @@ namespace BlueTusk.Replication;
 public abstract class BlueTuskReplicationConnection : IAsyncDisposable
 {
     private readonly CancellationTokenSource _disposeCancellation = new();
+    private readonly SemaphoreSlim _feedbackGate = new(1, 1);
     private readonly object _statusSync = new();
     private readonly BlueTuskClientOptions _catalogOptions;
     private BlueTuskCopyBothChannel? _activeChannel;
@@ -131,19 +133,31 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
         BlueTuskStandbyStatus status,
         CancellationToken cancellationToken = default)
     {
-        var channel = Volatile.Read(ref _activeChannel) ??
-            throw new InvalidOperationException(
-                "Standby status can only be sent while replication is streaming.");
-        lock (_statusSync)
+        await _feedbackGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            _standbyStatus = status;
-        }
+            var channel = Volatile.Read(ref _activeChannel) ??
+                throw new InvalidOperationException(
+                    "Standby status can only be sent while replication is streaming.");
+            lock (_statusSync)
+            {
+                ValidateStandbyStatus(_standbyStatus, status);
+            }
 
-        await channel.WriteAsync(
-            BlueTuskReplicationWireProtocol.EncodeStandbyStatus(
-                status,
-                DateTimeOffset.UtcNow),
-            cancellationToken).ConfigureAwait(false);
+            await channel.WriteAsync(
+                BlueTuskReplicationWireProtocol.EncodeStandbyStatus(
+                    status,
+                    DateTimeOffset.UtcNow),
+                cancellationToken).ConfigureAwait(false);
+            lock (_statusSync)
+            {
+                _standbyStatus = status;
+            }
+        }
+        finally
+        {
+            _feedbackGate.Release();
+        }
     }
 
     /// <summary>Sends transaction visibility feedback to a physical WAL sender.</summary>
@@ -229,11 +243,22 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
                 if (message is BlueTuskXLogData xLogData)
                 {
                     RecordReceivedPosition(xLogData.WalEnd);
+                    RecordReplicationLag(
+                        xLogData.ServerClock,
+                        xLogData.ServerWalEnd,
+                        xLogData.WalEnd);
                 }
-                else if (message is BlueTuskPrimaryKeepalive { ReplyRequested: true })
+                else if (message is BlueTuskPrimaryKeepalive keepalive)
                 {
-                    await ReplyToKeepaliveAsync(channel, linkedCancellation.Token)
-                        .ConfigureAwait(false);
+                    RecordReplicationLag(
+                        keepalive.ServerClock,
+                        keepalive.ServerWalEnd,
+                        LastReceivedWalPosition);
+                    if (keepalive.ReplyRequested)
+                    {
+                        await ReplyToKeepaliveAsync(channel, linkedCancellation.Token)
+                            .ConfigureAwait(false);
+                    }
                 }
 
                 yield return message;
@@ -255,17 +280,53 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
         BlueTuskCopyBothChannel channel,
         CancellationToken cancellationToken)
     {
-        BlueTuskStandbyStatus status;
-        lock (_statusSync)
+        await _feedbackGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
         {
-            status = _standbyStatus with { ReplyRequested = false };
+            BlueTuskStandbyStatus status;
+            lock (_statusSync)
+            {
+                status = _standbyStatus with { ReplyRequested = false };
+            }
+
+            await channel.WriteAsync(
+                BlueTuskReplicationWireProtocol.EncodeStandbyStatus(
+                    status,
+                    DateTimeOffset.UtcNow),
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _feedbackGate.Release();
+        }
+    }
+
+    internal static void ValidateStandbyStatus(
+        BlueTuskStandbyStatus current,
+        BlueTuskStandbyStatus next)
+    {
+        if (next.Flushed > next.Written)
+        {
+            throw new ArgumentException(
+                "A standby flush position cannot be ahead of its write position.",
+                nameof(next));
         }
 
-        await channel.WriteAsync(
-            BlueTuskReplicationWireProtocol.EncodeStandbyStatus(
-                status,
-                DateTimeOffset.UtcNow),
-            cancellationToken).ConfigureAwait(false);
+        if (next.Applied > next.Flushed)
+        {
+            throw new ArgumentException(
+                "A standby apply position cannot be ahead of its flush position.",
+                nameof(next));
+        }
+
+        if (next.Written < current.Written ||
+            next.Flushed < current.Flushed ||
+            next.Applied < current.Applied)
+        {
+            throw new ArgumentException(
+                "Standby write, flush, and apply positions cannot move backwards.",
+                nameof(next));
+        }
     }
 
     private void RecordReceivedPosition(BlueTuskLogSequenceNumber position)
@@ -278,6 +339,18 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
             }
         }
     }
+
+    private void RecordReplicationLag(
+        DateTimeOffset serverClock,
+        BlueTuskLogSequenceNumber serverWalEnd,
+        BlueTuskLogSequenceNumber receivedWalEnd) =>
+        BlueTuskDiagnostics.RecordReplicationLag(
+            serverClock,
+            serverWalEnd.Value,
+            receivedWalEnd.Value,
+            _catalogOptions.Database,
+            _catalogOptions.Host,
+            _catalogOptions.Port);
 
     private protected static BlueTuskDataRow GetSingleRow(
         BlueTuskQueryResult result,

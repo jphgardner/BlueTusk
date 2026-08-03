@@ -10,6 +10,7 @@ public sealed class BlueTuskTransactionCodecTests
         var transactionId = new BlueTuskTransactionId(uint.MaxValue);
         var commandId = new BlueTuskCommandId(uint.MaxValue);
         var fullTransactionId = new BlueTuskFullTransactionId(ulong.MaxValue);
+        var objectIdentifier = new BlueTuskObjectIdentifier64(ulong.MaxValue);
 
         Assert.Equal(
             transactionId,
@@ -32,6 +33,13 @@ public sealed class BlueTuskTransactionCodecTests
                 BlueTuskBuiltInTypes.Xid8,
                 fullTransactionId,
                 BlueTuskDataFormat.Binary));
+        Assert.Equal(
+            objectIdentifier,
+            RoundTrip(
+                new BlueTuskObjectIdentifier64Codec(),
+                BlueTuskBuiltInTypes.Oid8,
+                objectIdentifier,
+                BlueTuskDataFormat.Text));
 
         Assert.Equal(
             "FFFFFFFF",
@@ -48,6 +56,14 @@ public sealed class BlueTuskTransactionCodecTests
                     new BlueTuskFullTransactionIdCodec(),
                     BlueTuskBuiltInTypes.Xid8,
                     fullTransactionId,
+                    BlueTuskDataFormat.Binary)));
+        Assert.Equal(
+            "FFFFFFFFFFFFFFFF",
+            Convert.ToHexString(
+                Write(
+                    new BlueTuskObjectIdentifier64Codec(),
+                    BlueTuskBuiltInTypes.Oid8,
+                    objectIdentifier,
                     BlueTuskDataFormat.Binary)));
     }
 
@@ -123,6 +139,7 @@ public sealed class BlueTuskTransactionCodecTests
             CreateArrayType(1011, "_xid", BlueTuskBuiltInTypes.Xid.Id),
             CreateArrayType(1012, "_cid", BlueTuskBuiltInTypes.Cid.Id),
             CreateArrayType(271, "_xid8", BlueTuskBuiltInTypes.Xid8.Id),
+            CreateArrayType(6442, "_oid8", BlueTuskBuiltInTypes.Oid8.Id),
             CreateArrayType(2949, "_txid_snapshot", BlueTuskBuiltInTypes.TxidSnapshot.Id),
             CreateArrayType(5039, "_pg_snapshot", BlueTuskBuiltInTypes.PgSnapshot.Id),
         ]);
@@ -130,6 +147,7 @@ public sealed class BlueTuskTransactionCodecTests
         AssertCodecClrType(registry, new BlueTuskTypeId(1011), typeof(BlueTuskTransactionId[]));
         AssertCodecClrType(registry, new BlueTuskTypeId(1012), typeof(BlueTuskCommandId[]));
         AssertCodecClrType(registry, new BlueTuskTypeId(271), typeof(BlueTuskFullTransactionId[]));
+        AssertCodecClrType(registry, new BlueTuskTypeId(6442), typeof(BlueTuskObjectIdentifier64[]));
         AssertCodecClrType(registry, new BlueTuskTypeId(2949), typeof(BlueTuskTransactionSnapshot[]));
         AssertCodecClrType(registry, new BlueTuskTypeId(5039), typeof(BlueTuskTransactionSnapshot[]));
 

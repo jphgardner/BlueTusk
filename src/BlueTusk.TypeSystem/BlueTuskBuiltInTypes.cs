@@ -159,6 +159,11 @@ public static class BlueTuskBuiltInTypes
 
     public static BlueTuskTypeDescriptor Xid8 { get; } = Create(5069, "xid8", 271);
 
+    public static BlueTuskTypeDescriptor Oid8 { get; } = Create(6437, "oid8", 6442);
+
+    public static BlueTuskTypeDescriptor RegDatabase { get; } =
+        Create(6490, "regdatabase", 6491);
+
     public static BlueTuskTypeRegistry CreateInitialRegistry() => CreateRegistry();
 
     public static BlueTuskTypeRegistry CreateRegistry()
@@ -235,6 +240,8 @@ public static class BlueTuskBuiltInTypes
             .Register(PgMcvList, new BlueTuskMostCommonValueStatisticsCodec())
             .Register(PgSnapshot, new BlueTuskTransactionSnapshotCodec())
             .Register(Xid8, new BlueTuskFullTransactionIdCodec())
+            .Register(Oid8, new BlueTuskObjectIdentifier64Codec())
+            .Register(RegDatabase, new BlueTuskObjectIdentifierCodec<BlueTuskRegDatabase>())
             .Build();
     }
 

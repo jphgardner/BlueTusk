@@ -1,0 +1,36 @@
+#nullable enable
+BlueTusk.Security.BlueTuskAuthenticationException
+BlueTusk.Security.BlueTuskAuthenticationException.BlueTuskAuthenticationException(string! message, System.Exception! innerException) -> void
+BlueTusk.Security.BlueTuskAuthenticationException.BlueTuskAuthenticationException(string! message) -> void
+BlueTusk.Security.BlueTuskConnectionStringRedactor
+BlueTusk.Security.BlueTuskGssApiClient
+BlueTusk.Security.BlueTuskGssApiClient.BlueTuskGssApiClient(string! host, string! kerberosServiceName = "postgres", System.Net.NetworkCredential? credential = null, bool useSspi = false) -> void
+BlueTusk.Security.BlueTuskGssApiClient.Dispose() -> void
+BlueTusk.Security.BlueTuskGssApiClient.EnsureComplete() -> void
+BlueTusk.Security.BlueTuskGssApiClient.GetOutgoingBlob(System.ReadOnlySpan<byte> incomingBlob) -> byte[]?
+BlueTusk.Security.BlueTuskOAuthBearerClient
+BlueTusk.Security.BlueTuskPasswordFile
+BlueTusk.Security.BlueTuskPostgreSqlMd5Password
+BlueTusk.Security.BlueTuskScramSha256Client
+BlueTusk.Security.BlueTuskScramSha256Client.BlueTuskScramSha256Client(string! username, string! password, string? clientNonce = null, System.ReadOnlyMemory<byte>? channelBindingData = null) -> void
+BlueTusk.Security.BlueTuskScramSha256Client.ClientFirstMessage.get -> string!
+BlueTusk.Security.BlueTuskScramSha256Client.ClientNonce.get -> string!
+BlueTusk.Security.BlueTuskScramSha256Client.CreateClientFinalMessage(string! serverFirstMessage) -> string!
+BlueTusk.Security.BlueTuskScramSha256Client.Dispose() -> void
+BlueTusk.Security.BlueTuskScramSha256Client.EnsureVerified() -> void
+BlueTusk.Security.BlueTuskScramSha256Client.Mechanism.get -> string!
+BlueTusk.Security.BlueTuskScramSha256Client.VerifyServerFinalMessage(string! serverFinalMessage) -> void
+BlueTusk.Security.BlueTuskSensitiveBuffer
+BlueTusk.Security.BlueTuskTlsServerEndPoint
+const BlueTusk.Security.BlueTuskOAuthBearerClient.MechanismName = "OAUTHBEARER" -> string!
+const BlueTusk.Security.BlueTuskScramSha256Client.MechanismName = "SCRAM-SHA-256" -> string!
+const BlueTusk.Security.BlueTuskScramSha256Client.PlusMechanismName = "SCRAM-SHA-256-PLUS" -> string!
+static BlueTusk.Security.BlueTuskConnectionStringRedactor.Redact(string? connectionString) -> string!
+static BlueTusk.Security.BlueTuskOAuthBearerClient.CreateInitialResponse(string! accessToken) -> byte[]!
+static BlueTusk.Security.BlueTuskPasswordFile.GetDefaultPath() -> string?
+static BlueTusk.Security.BlueTuskPasswordFile.Resolve(string! path, string! host, int port, string! database, string! username) -> string?
+static BlueTusk.Security.BlueTuskPasswordFile.ResolveAsync(string! path, string! host, int port, string! database, string! username, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string?>
+static BlueTusk.Security.BlueTuskPostgreSqlMd5Password.CreateResponse(string! username, string! password, System.ReadOnlySpan<byte> salt) -> byte[]!
+static BlueTusk.Security.BlueTuskSensitiveBuffer.Clear(byte[]? buffer) -> void
+static BlueTusk.Security.BlueTuskSensitiveBuffer.Clear(System.Span<byte> buffer) -> void
+static BlueTusk.Security.BlueTuskTlsServerEndPoint.Create(System.Security.Cryptography.X509Certificates.X509Certificate2! certificate) -> byte[]!

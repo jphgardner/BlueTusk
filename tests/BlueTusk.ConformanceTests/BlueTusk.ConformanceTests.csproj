@@ -19,8 +19,21 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\extensions\BlueTusk.Extensions.Citext.EntityFrameworkCore\BlueTusk.Extensions.Citext.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\extensions\BlueTusk.Extensions.Citext\BlueTusk.Extensions.Citext.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Client\BlueTusk.Client.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Diagnostics\BlueTusk.Diagnostics.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore.Design\BlueTusk.EntityFrameworkCore.Design.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Extensions.Abstractions\BlueTusk.Extensions.Abstractions.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Extensions.Testing\BlueTusk.Extensions.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Protocol\BlueTusk.Protocol.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Replication\BlueTusk.Replication.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Security\BlueTusk.Security.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Transport\BlueTusk.Transport.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.TypeSystem\BlueTusk.TypeSystem.csproj" />
   </ItemGroup>
 
 </Project>

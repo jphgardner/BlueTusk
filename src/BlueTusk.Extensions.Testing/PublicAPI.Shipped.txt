@@ -1,0 +1,42 @@
+#nullable enable
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibility
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.<Clone>$() -> BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport!
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.BlueTuskExtensionCompatibilityReport(string! FeatureName, System.Type! FeatureType, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! PostgreSqlType, System.Type! ClrType, System.Type! CodecType) -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.ClrType.get -> System.Type!
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.ClrType.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.CodecType.get -> System.Type!
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.CodecType.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.Deconstruct(out string! FeatureName, out System.Type! FeatureType, out BlueTusk.TypeSystem.BlueTuskTypeDescriptor! PostgreSqlType, out System.Type! ClrType, out System.Type! CodecType) -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.Equals(BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport? other) -> bool
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.FeatureName.get -> string!
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.FeatureName.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.FeatureType.get -> System.Type!
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.FeatureType.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.PostgreSqlType.get -> BlueTusk.TypeSystem.BlueTuskTypeDescriptor!
+BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.PostgreSqlType.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.<Clone>$() -> BlueTusk.Extensions.Testing.BlueTuskExtensionContract!
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.BlueTuskExtensionContract() -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.ClrType.get -> System.Type!
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.ClrType.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.CodecType.get -> System.Type!
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.CodecType.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.Equals(BlueTusk.Extensions.Testing.BlueTuskExtensionContract? other) -> bool
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.FeatureName.get -> string!
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.FeatureName.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.FeatureType.get -> System.Type!
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.FeatureType.init -> void
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.PostgreSqlType.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.Testing.BlueTuskExtensionContract.PostgreSqlType.init -> void
+override BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.Equals(object? obj) -> bool
+override BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.GetHashCode() -> int
+override BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.ToString() -> string!
+override BlueTusk.Extensions.Testing.BlueTuskExtensionContract.Equals(object? obj) -> bool
+override BlueTusk.Extensions.Testing.BlueTuskExtensionContract.GetHashCode() -> int
+override BlueTusk.Extensions.Testing.BlueTuskExtensionContract.ToString() -> string!
+static BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibility.VerifyAsync(BlueTusk.Data.BlueTuskDataSource! dataSource, BlueTusk.Extensions.Testing.BlueTuskExtensionContract! contract, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport!>
+static BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.operator !=(BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport? left, BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport? right) -> bool
+static BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport.operator ==(BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport? left, BlueTusk.Extensions.Testing.BlueTuskExtensionCompatibilityReport? right) -> bool
+static BlueTusk.Extensions.Testing.BlueTuskExtensionContract.operator !=(BlueTusk.Extensions.Testing.BlueTuskExtensionContract? left, BlueTusk.Extensions.Testing.BlueTuskExtensionContract? right) -> bool
+static BlueTusk.Extensions.Testing.BlueTuskExtensionContract.operator ==(BlueTusk.Extensions.Testing.BlueTuskExtensionContract? left, BlueTusk.Extensions.Testing.BlueTuskExtensionContract? right) -> bool

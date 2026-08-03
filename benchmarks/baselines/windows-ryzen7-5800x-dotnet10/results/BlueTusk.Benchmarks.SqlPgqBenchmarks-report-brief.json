@@ -1,0 +1,155 @@
+{
+   "Title":"BlueTusk.Benchmarks.SqlPgqBenchmarks-20260802-063749",
+   "HostEnvironmentInfo":{
+      "BenchmarkDotNetCaption":"BenchmarkDotNet",
+      "BenchmarkDotNetVersion":"0.15.8",
+      "OsVersion":"Windows 11 (10.0.26200.8973/25H2/2025Update/HudsonValley2)",
+      "ProcessorName":"AMD Ryzen 7 5800X",
+      "PhysicalProcessorCount":1,
+      "PhysicalCoreCount":8,
+      "LogicalCoreCount":16,
+      "RuntimeVersion":".NET 10.0.10 (10.0.10, 10.0.1026.32716)",
+      "Architecture":"X64",
+      "HasAttachedDebugger":false,
+      "HasRyuJit":true,
+      "Configuration":"RELEASE",
+      "DotNetCliVersion":"10.0.302",
+      "ChronometerFrequency":{
+         "Hertz":10000000
+      },
+      "HardwareTimerKind":"Unknown"
+   },
+   "Benchmarks":[
+      {
+         "DisplayInfo":"SqlPgqBenchmarks.RawPreparedGraphTraversalAsync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"SqlPgqBenchmarks",
+         "Method":"RawPreparedGraphTraversalAsync",
+         "MethodTitle":"RawPreparedGraphTraversalAsync",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.SqlPgqBenchmarks.RawPreparedGraphTraversalAsync",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               1096478.90625,1102903.90625,1065899.8046875
+            ],
+            "N":3,
+            "Min":1065899.8046875,
+            "LowerFence":1053436.279296875,
+            "Q1":1081189.35546875,
+            "Median":1096478.90625,
+            "Mean":1088427.5390625,
+            "Q3":1099691.40625,
+            "UpperFence":1127444.482421875,
+            "Max":1102903.90625,
+            "InterquartileRange":18502.05078125,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":11415.548874275493,
+            "Variance":390944268.3029175,
+            "StandardDeviation":19772.310646530856,
+            "Skewness":-0.33968351040104605,
+            "Kurtosis":0.6666666666666666,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":1088427.5390625,
+               "StandardError":11415.548874275493,
+               "Level":12,
+               "Margin":360720.5504385628,
+               "Lower":727706.9886239371,
+               "Upper":1449148.0895010629
+            },
+            "Percentiles":{
+               "P0":1065899.8046875,
+               "P25":1081189.35546875,
+               "P50":1096478.90625,
+               "P67":1098663.40625,
+               "P80":1100333.90625,
+               "P85":1100976.40625,
+               "P90":1101618.90625,
+               "P95":1102261.40625,
+               "P100":1102903.90625
+            }
+         },
+         "Memory":{
+            "Gen0Collections":5,
+            "Gen1Collections":1,
+            "Gen2Collections":0,
+            "TotalOperations":512,
+            "BytesAllocatedPerOperation":187936
+         }
+      },{
+         "DisplayInfo":"SqlPgqBenchmarks.TypedEfGraphTraversalAsync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"SqlPgqBenchmarks",
+         "Method":"TypedEfGraphTraversalAsync",
+         "MethodTitle":"TypedEfGraphTraversalAsync",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.SqlPgqBenchmarks.TypedEfGraphTraversalAsync",
+         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "Statistics":{
+            "OriginalValues":[
+               4179928.125,2411253.90625,2359527.34375
+            ],
+            "N":3,
+            "Min":2359527.34375,
+            "LowerFence":1020090.0390625,
+            "Q1":2385390.625,
+            "Median":2411253.90625,
+            "Mean":2983569.7916666665,
+            "Q3":3295591.015625,
+            "UpperFence":4660891.6015625,
+            "Max":4179928.125,
+            "InterquartileRange":910200.390625,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":598365.5113777587,
+            "Variance":1074123855619.1,
+            "StandardDeviation":1036399.4672032112,
+            "Skewness":0.38382182686110666,
+            "Kurtosis":0.6666666666666669,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":2983569.7916666665,
+               "StandardError":598365.5113777587,
+               "Level":12,
+               "Margin":18907784.374173254,
+               "Lower":-15924214.582506588,
+               "Upper":21891354.16583992
+            },
+            "Percentiles":{
+               "P0":2359527.34375,
+               "P25":2385390.625,
+               "P50":2411253.90625,
+               "P67":3012603.1406249995,
+               "P80":3472458.4375,
+               "P85":3649325.8593750005,
+               "P90":3826193.2812499995,
+               "P95":4003060.7031249995,
+               "P100":4179928.125
+            }
+         },
+         "Memory":{
+            "Gen0Collections":5,
+            "Gen1Collections":1,
+            "Gen2Collections":0,
+            "TotalOperations":128,
+            "BytesAllocatedPerOperation":685864
+         }
+      }
+   ]
+}

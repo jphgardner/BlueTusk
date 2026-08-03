@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using BlueTusk.Protocol;
 
 namespace BlueTusk.Client;
@@ -16,12 +17,15 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         string name,
         IReadOnlyList<BlueTuskFieldDescription> fields,
         int fetchSize,
+        bool syncSent,
         long startedTimestamp)
     {
         _session = session;
         Name = name;
         Fields = fields;
+        FieldCount = fields.Count;
         FetchSize = fetchSize;
+        SyncSent = syncSent;
         StartedTimestamp = startedTimestamp;
     }
 
@@ -29,7 +33,11 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     public IReadOnlyList<BlueTuskFieldDescription> Fields { get; }
 
+    internal int FieldCount { get; }
+
     public int FetchSize { get; }
+
+    internal bool SyncSent { get; }
 
     public string? CommandTag { get; private set; }
 
@@ -38,6 +46,32 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
     public bool IsCompleted => _completed;
 
     internal long StartedTimestamp { get; }
+
+    internal BlueTuskPortalRow? CurrentRow => _currentRow;
+
+    internal bool TryReadBuffered(out BlueTuskPortalRow? row)
+    {
+        if (_completed)
+        {
+            row = null;
+            return true;
+        }
+
+        if (_currentRow is not null && !_currentRow.TryFinishSynchronously())
+        {
+            row = null;
+            return false;
+        }
+
+        if (!_session!.TryReadBufferedPortalRow(this, out row))
+        {
+            return false;
+        }
+
+        _currentRow = row;
+        RowsRead++;
+        return true;
+    }
 
     public BlueTuskPortalRow? Read()
     {
@@ -65,48 +99,89 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         }
     }
 
-    public async ValueTask<BlueTuskPortalRow?> ReadAsync(
+    public ValueTask<BlueTuskPortalRow?> ReadAsync(
         CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_session is null, this);
+        cancellationToken.ThrowIfCancellationRequested();
         if (_completed)
         {
-            return null;
+            return ValueTask.FromResult<BlueTuskPortalRow?>(null);
         }
 
         try
         {
             if (_currentRow is not null)
             {
-                await _currentRow.FinishAsync(cancellationToken).ConfigureAwait(false);
+                var finish = _currentRow.FinishAsync(cancellationToken);
+                if (!finish.IsCompletedSuccessfully)
+                {
+                    return FinishAndReadAsync(finish, cancellationToken);
+                }
             }
 
-            _currentRow = await _session.ReadPortalRowAsync(this, cancellationToken).ConfigureAwait(false);
-            if (_currentRow is not null)
+            if (_session.TryReadBufferedPortalRow(this, out var bufferedRow))
             {
+                _currentRow = bufferedRow;
                 RowsRead++;
+                return ValueTask.FromResult(_currentRow);
             }
 
-            return _currentRow;
+            return _session.ReadPortalRowAsync(this, cancellationToken);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
-            try
-            {
-                await _session.CancelAsync(CancellationToken.None).ConfigureAwait(false);
-            }
-            finally
-            {
-                await _session.AbortPortalAsync(this).ConfigureAwait(false);
-            }
-
-            throw;
+            return CancelAndAbortAsync(cancellationToken);
         }
         catch
         {
-            await _session.AbortPortalAsync(this).ConfigureAwait(false);
+            _session.AbortPortal(this);
             throw;
         }
+    }
+
+    private async ValueTask<BlueTuskPortalRow?> FinishAndReadAsync(
+        ValueTask finish,
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await finish.ConfigureAwait(false);
+            return await _session!.ReadPortalRowAsync(this, cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            return await CancelAndAbortAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch
+        {
+            await _session!.AbortPortalAsync(this).ConfigureAwait(false);
+            throw;
+        }
+    }
+
+    internal void SetAsyncReadResult(BlueTuskPortalRow? row)
+    {
+        _currentRow = row;
+        if (row is not null)
+        {
+            RowsRead++;
+        }
+    }
+
+    private async ValueTask<BlueTuskPortalRow?> CancelAndAbortAsync(
+        CancellationToken cancellationToken)
+    {
+        try
+        {
+            await _session!.CancelAsync(CancellationToken.None).ConfigureAwait(false);
+        }
+        finally
+        {
+            await _session!.AbortPortalAsync(this).ConfigureAwait(false);
+        }
+
+        throw new OperationCanceledException(cancellationToken);
     }
 
     internal void SetCommandTag(string commandTag) => CommandTag = commandTag;
@@ -121,9 +196,11 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             return;
         }
 
+        var row = _currentRow;
+        _currentRow = null;
         try
         {
-            _currentRow?.Finish();
+            row?.Finish();
         }
         finally
         {
@@ -131,6 +208,11 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             {
                 session.AbortPortal(this);
             }
+        }
+
+        if (row is not null)
+        {
+            session.ReturnPortalRow(row);
         }
     }
 
@@ -142,11 +224,13 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             return;
         }
 
+        var row = _currentRow;
+        _currentRow = null;
         try
         {
-            if (_currentRow is not null)
+            if (row is not null)
             {
-                await _currentRow.FinishAsync(CancellationToken.None).ConfigureAwait(false);
+                await row.FinishAsync(CancellationToken.None).ConfigureAwait(false);
             }
         }
         finally
@@ -155,6 +239,11 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
             {
                 await session.AbortPortalAsync(this).ConfigureAwait(false);
             }
+        }
+
+        if (row is not null)
+        {
+            session.ReturnPortalRow(row);
         }
     }
 }
@@ -170,9 +259,13 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
     Justification = "Forward-only data readers conventionally use IndexOutOfRangeException for invalid ordinals.")]
 public sealed class BlueTuskPortalRow
 {
+    private const int InlinePayloadCapacity = 64;
     private readonly BlueTuskSession _session;
-    private readonly BlueTuskPortal _portal;
-    private readonly int _payloadLength;
+    private BlueTuskPortal _portal;
+    private readonly byte[] _inlinePayload = new byte[InlinePayloadCapacity];
+    private int _payloadLength;
+    private bool _payloadBuffered;
+    private ReadOnlyMemory<byte> _bufferedPayload;
     private int _payloadConsumed;
     private int _activeOrdinal = -1;
     private int _activeLength = -2;
@@ -189,21 +282,19 @@ public sealed class BlueTuskPortalRow
     {
         _session = session;
         _portal = portal;
-        _payloadLength = payloadLength;
+        Reset(payloadLength);
         Span<byte> countBytes = stackalloc byte[sizeof(short)];
         ReadExactly(countBytes);
         FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
         ValidateFieldCount(expectedFieldCount);
     }
 
-    private BlueTuskPortalRow(
+    internal BlueTuskPortalRow(
         BlueTuskSession session,
-        BlueTuskPortal portal,
-        int payloadLength)
+        BlueTuskPortal portal)
     {
         _session = session;
         _portal = portal;
-        _payloadLength = payloadLength;
     }
 
     public int FieldCount { get; private set; }
@@ -211,16 +302,42 @@ public sealed class BlueTuskPortalRow
     internal static async ValueTask<BlueTuskPortalRow> CreateAsync(
         BlueTuskSession session,
         BlueTuskPortal portal,
+        BlueTuskPortalRow? reusableRow,
         int payloadLength,
         int expectedFieldCount,
         CancellationToken cancellationToken)
     {
-        var row = new BlueTuskPortalRow(session, portal, payloadLength);
-        var countBytes = new byte[sizeof(short)];
-        await row.ReadExactlyAsync(countBytes, cancellationToken).ConfigureAwait(false);
-        row.FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
+        var row = reusableRow ?? new BlueTuskPortalRow(session, portal);
+        row.Reset(payloadLength);
+        await row.ReadExactlyAsync(
+            row._inlinePayload.AsMemory(0, sizeof(short)),
+            cancellationToken).ConfigureAwait(false);
+        row.FieldCount = BinaryPrimitives.ReadInt16BigEndian(row._inlinePayload);
         row.ValidateFieldCount(expectedFieldCount);
         return row;
+    }
+
+    internal void Reset(int payloadLength, int expectedFieldCount)
+    {
+        Reset(payloadLength);
+        Span<byte> countBytes = stackalloc byte[sizeof(short)];
+        ReadExactly(countBytes);
+        FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
+        ValidateFieldCount(expectedFieldCount);
+    }
+
+    internal void Rebind(BlueTuskPortal portal) => _portal = portal;
+
+    internal void ResetBuffered(
+        ReadOnlyMemory<byte> payload,
+        int expectedFieldCount)
+    {
+        ResetState(payload.Length, payloadBuffered: true);
+        _bufferedPayload = payload;
+        Span<byte> countBytes = stackalloc byte[sizeof(short)];
+        ReadExactly(countBytes);
+        FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
+        ValidateFieldCount(expectedFieldCount);
     }
 
     public bool IsDBNull(int ordinal)
@@ -307,6 +424,53 @@ public sealed class BlueTuskPortalRow
         return _cachedValue;
     }
 
+    internal bool ReadFieldExactly(int ordinal, Span<byte> destination)
+    {
+        MoveToField(ordinal);
+        if (_activeLength == -1)
+        {
+            return false;
+        }
+
+        if (_cachedValue is not null || _activePosition != 0 || _activeLength != destination.Length)
+        {
+            return false;
+        }
+
+        ReadExactly(destination);
+        _activePosition = _activeLength;
+        return true;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    internal bool TryReadInt32(int ordinal, out int value)
+    {
+        EnsureNoActiveStream();
+        if (!_payloadBuffered || ordinal != _activeOrdinal + 1 ||
+            _payloadLength - _payloadConsumed < (sizeof(int) * 2))
+        {
+            value = default;
+            return false;
+        }
+
+        var length = BinaryPrimitives.ReadInt32BigEndian(
+            _bufferedPayload.Span.Slice(_payloadConsumed, sizeof(int)));
+        if (length != sizeof(int))
+        {
+            value = default;
+            return false;
+        }
+
+        value = BinaryPrimitives.ReadInt32BigEndian(
+            _bufferedPayload.Span.Slice(_payloadConsumed + sizeof(int), sizeof(int)));
+        _payloadConsumed += sizeof(int) * 2;
+        _activeOrdinal++;
+        _activeLength = sizeof(int);
+        _activePosition = sizeof(int);
+        _cachedValue = null;
+        return true;
+    }
+
     public long ReadBytes(
         int ordinal,
         long dataOffset,
@@ -370,12 +534,40 @@ public sealed class BlueTuskPortalRow
         _finished = true;
     }
 
-    internal async ValueTask FinishAsync(CancellationToken cancellationToken)
+    internal ValueTask FinishAsync(CancellationToken cancellationToken)
     {
         if (_finished)
         {
-            return;
+            return ValueTask.CompletedTask;
         }
+
+        if (_activeStream is null && _payloadConsumed == _payloadLength)
+        {
+            _finished = true;
+            return ValueTask.CompletedTask;
+        }
+
+        return FinishSlowAsync(cancellationToken);
+    }
+
+    internal bool TryFinishSynchronously()
+    {
+        if (_finished)
+        {
+            return true;
+        }
+
+        if (_activeStream is not null || _payloadConsumed != _payloadLength)
+        {
+            return false;
+        }
+
+        _finished = true;
+        return true;
+    }
+
+    private async ValueTask FinishSlowAsync(CancellationToken cancellationToken)
+    {
 
         if (_activeStream is not null)
         {
@@ -401,15 +593,35 @@ public sealed class BlueTuskPortalRow
         return count;
     }
 
-    internal async ValueTask<int> ReadActiveFieldAsync(
+    internal ValueTask<int> ReadActiveFieldAsync(
         Memory<byte> destination,
+        BlueTuskPortalFieldStream stream,
         CancellationToken cancellationToken)
     {
         var count = Math.Min(destination.Length, _activeLength - _activePosition);
-        await ReadExactlyAsync(destination[..count], cancellationToken).ConfigureAwait(false);
-        _activePosition += count;
-        return count;
+        return _session.ReadPortalPayloadAsync(
+            destination[..count],
+            new ActiveFieldReadState(this, stream),
+            static (state, read) => state.Row.CompleteActiveFieldRead(read, state.Stream),
+            cancellationToken);
     }
+
+    private int CompleteActiveFieldRead(int read, BlueTuskPortalFieldStream stream)
+    {
+        if (read == 0)
+        {
+            throw new BlueTuskProtocolException("A backend message payload ended unexpectedly.");
+        }
+
+        _payloadConsumed += read;
+        _activePosition += read;
+        stream.Advance(read);
+        return read;
+    }
+
+    private readonly record struct ActiveFieldReadState(
+        BlueTuskPortalRow Row,
+        BlueTuskPortalFieldStream Stream);
 
     internal void CompleteActiveStream(BlueTuskPortalFieldStream stream)
     {
@@ -476,9 +688,10 @@ public sealed class BlueTuskPortalRow
 
     private async ValueTask ReadFieldHeaderAsync(CancellationToken cancellationToken)
     {
-        var lengthBytes = new byte[sizeof(int)];
-        await ReadExactlyAsync(lengthBytes, cancellationToken).ConfigureAwait(false);
-        SetActiveField(BinaryPrimitives.ReadInt32BigEndian(lengthBytes));
+        await ReadExactlyAsync(
+            _inlinePayload.AsMemory(0, sizeof(int)),
+            cancellationToken).ConfigureAwait(false);
+        SetActiveField(BinaryPrimitives.ReadInt32BigEndian(_inlinePayload));
     }
 
     private void SetActiveField(int length)
@@ -525,6 +738,11 @@ public sealed class BlueTuskPortalRow
 
     private async ValueTask SkipAsync(int count, CancellationToken cancellationToken)
     {
+        if (count == 0)
+        {
+            return;
+        }
+
         var scratch = new byte[Math.Min(count, 4096)];
         while (count > 0)
         {
@@ -537,17 +755,51 @@ public sealed class BlueTuskPortalRow
     private void ReadExactly(Span<byte> destination)
     {
         EnsurePayloadAvailable(destination.Length);
-        _session.ReadPortalPayloadExactly(destination);
+        if (_payloadBuffered)
+        {
+            _bufferedPayload.Span.Slice(_payloadConsumed, destination.Length).CopyTo(destination);
+        }
+        else
+        {
+            _session.ReadPortalPayloadExactly(destination);
+        }
+
         _payloadConsumed += destination.Length;
     }
 
-    private async ValueTask ReadExactlyAsync(
+    private ValueTask ReadExactlyAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
         EnsurePayloadAvailable(destination.Length);
-        await _session.ReadPortalPayloadExactlyAsync(destination, cancellationToken).ConfigureAwait(false);
-        _payloadConsumed += destination.Length;
+        if (_payloadBuffered)
+        {
+            _bufferedPayload.Slice(_payloadConsumed, destination.Length).CopyTo(destination);
+            _payloadConsumed += destination.Length;
+            return ValueTask.CompletedTask;
+        }
+
+        return ReadExactlySlowAsync(destination, cancellationToken);
+    }
+
+    private ValueTask ReadExactlySlowAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken)
+    {
+        var pendingRead = _session.ReadPortalPayloadExactlyAsync(destination, cancellationToken);
+        if (pendingRead.IsCompletedSuccessfully)
+        {
+            _payloadConsumed += destination.Length;
+            return ValueTask.CompletedTask;
+        }
+
+        return AwaitReadExactlySlowAsync(pendingRead, destination.Length);
+    }
+
+    private async ValueTask AwaitReadExactlySlowAsync(ValueTask pendingRead, int length)
+    {
+        await pendingRead.ConfigureAwait(false);
+        _payloadConsumed += length;
     }
 
     private void EnsurePayloadAvailable(int count)
@@ -593,6 +845,32 @@ public sealed class BlueTuskPortalRow
                 "The active field stream must be consumed or disposed before accessing another field.");
         }
     }
+
+    private void Reset(int payloadLength)
+    {
+        ResetState(payloadLength, payloadBuffered: false);
+        _payloadBuffered = payloadLength <= _inlinePayload.Length &&
+            _session.TryReadBufferedPortalPayloadExactly(_inlinePayload.AsSpan(0, payloadLength));
+        if (_payloadBuffered)
+        {
+            _bufferedPayload = _inlinePayload.AsMemory(0, payloadLength);
+        }
+    }
+
+    private void ResetState(int payloadLength, bool payloadBuffered)
+    {
+        _payloadLength = payloadLength;
+        _payloadConsumed = 0;
+        _payloadBuffered = payloadBuffered;
+        _bufferedPayload = default;
+        _activeOrdinal = -1;
+        _activeLength = -2;
+        _activePosition = 0;
+        _cachedValue = null;
+        _activeStream = null;
+        _finished = false;
+        FieldCount = 0;
+    }
 }
 
 internal sealed class BlueTuskPortalFieldStream : Stream
@@ -637,21 +915,26 @@ internal sealed class BlueTuskPortalFieldStream : Stream
         return read;
     }
 
-    public override async ValueTask<int> ReadAsync(
+    public override ValueTask<int> ReadAsync(
         Memory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (_remaining == 0 || buffer.IsEmpty)
         {
-            return 0;
+            return ValueTask.FromResult(0);
         }
 
-        var read = await _row.ReadActiveFieldAsync(
+        var pendingRead = _row.ReadActiveFieldAsync(
             buffer[..Math.Min(buffer.Length, _remaining)],
-            cancellationToken).ConfigureAwait(false);
-        _remaining -= read;
-        return read;
+            this,
+            cancellationToken);
+        return pendingRead;
+    }
+
+    internal void Advance(int count)
+    {
+        _remaining -= count;
     }
 
     internal void CompleteFromOwner()

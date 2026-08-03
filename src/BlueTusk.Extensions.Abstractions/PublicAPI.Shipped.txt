@@ -1,0 +1,22 @@
+#nullable enable
+BlueTusk.Extensions.BlueTuskFeatureRegistry
+BlueTusk.Extensions.BlueTuskFeatureRegistry.Contains(string! name) -> bool
+BlueTusk.Extensions.BlueTuskFeatureRegistry.Count.get -> int
+BlueTusk.Extensions.BlueTuskFeatureRegistry.GetRequired<TFeature>(string! name) -> TFeature
+BlueTusk.Extensions.BlueTuskFeatureRegistry.Names.get -> System.Collections.Generic.IEnumerable<string!>!
+BlueTusk.Extensions.BlueTuskFeatureRegistry.TryGet(string! name, out object? feature) -> bool
+BlueTusk.Extensions.BlueTuskFeatureRegistry.TryGet<TFeature>(string! name, out TFeature feature) -> bool
+BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder
+BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder.BlueTuskFeatureRegistryBuilder() -> void
+BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder.Build() -> BlueTusk.Extensions.BlueTuskFeatureRegistry!
+BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder.Register<TFeature>(string! name, TFeature feature) -> BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder!
+BlueTusk.Extensions.IBlueTuskFeaturePlugin
+BlueTusk.Extensions.IBlueTuskFeaturePlugin.RegisterFeatures(BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder! features) -> void
+BlueTusk.Extensions.IBlueTuskPlugin
+BlueTusk.Extensions.IBlueTuskPlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.IBlueTuskPluginContext
+BlueTusk.Extensions.IBlueTuskPluginContext.Features.get -> BlueTusk.Extensions.BlueTuskFeatureRegistryBuilder!
+BlueTusk.Extensions.IBlueTuskPluginContext.Types.get -> BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder!
+BlueTusk.Extensions.IBlueTuskTypePlugin
+BlueTusk.Extensions.IBlueTuskTypePlugin.RegisterTypes(BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder! types) -> void
+static BlueTusk.Extensions.BlueTuskFeatureRegistry.Empty.get -> BlueTusk.Extensions.BlueTuskFeatureRegistry!

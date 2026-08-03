@@ -21,6 +21,11 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal(5, builder.AutoPrepareMinUsages);
         Assert.Equal(BlueTuskTargetSessionAttributes.Any, builder.TargetSessionAttributes);
         Assert.Equal(BlueTuskLoadBalanceHosts.Disable, builder.LoadBalanceHosts);
+        Assert.False(builder.AllowUnencryptedPassword);
+        Assert.False(builder.PersistSecurityInfo);
+        Assert.Equal("postgres", builder.KerberosServiceName);
+        Assert.Null(builder.Password);
+        Assert.Null(builder.Passfile);
         Assert.Equal([new BlueTuskHostEndpoint("localhost", 5432)], builder.HostEndpoints);
     }
 
@@ -36,6 +41,32 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.DoesNotContain("also-secret", redacted, StringComparison.Ordinal);
         Assert.Contains("db.example", redacted, StringComparison.Ordinal);
         Assert.Equal(2, redacted.Split("<redacted>", StringSplitOptions.None).Length - 1);
+    }
+
+    [Fact]
+    public void Parses_and_removes_an_explicit_password_file()
+    {
+        var builder = new BlueTuskConnectionStringBuilder("Passfile=C:\\credentials\\pgpass.conf");
+
+        Assert.Equal("C:\\credentials\\pgpass.conf", builder.Passfile);
+
+        builder.Passfile = null;
+
+        Assert.Null(builder.Passfile);
+        Assert.DoesNotContain("Passfile", builder.ConnectionString, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void Redactor_handles_quoted_values_without_exposing_secrets()
+    {
+        const string connectionString =
+            "Host=db.example;Password='top;secret';Application Name=\"worker;one\"";
+
+        var redacted = BlueTuskConnectionStringRedactor.Redact(connectionString);
+
+        Assert.DoesNotContain("top;secret", redacted, StringComparison.Ordinal);
+        Assert.Contains("Password=<redacted>", redacted, StringComparison.Ordinal);
+        Assert.Contains("worker;one", redacted, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -70,13 +101,18 @@ public sealed class BlueTuskConnectionStringBuilderTests
     {
         var defaults = new BlueTuskConnectionStringBuilder();
         var explicitSettings = new BlueTuskConnectionStringBuilder(
-            "SSL Mode=Disable;Channel Binding=Disable;Application Name=test-suite");
+            "SSL Mode=Disable;Channel Binding=Disable;Allow Unencrypted Password=true;" +
+            "Application Name=test-suite;Kerberos Service Name=postgresql");
 
         Assert.Equal(BlueTuskSslMode.VerifyFull, defaults.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Prefer, defaults.ChannelBinding);
         Assert.Equal(BlueTuskSslMode.Disable, explicitSettings.SslMode);
         Assert.Equal(BlueTuskChannelBindingMode.Disable, explicitSettings.ChannelBinding);
+        Assert.True(explicitSettings.AllowUnencryptedPassword);
         Assert.Equal("test-suite", explicitSettings.ApplicationName);
+        Assert.Equal("postgresql", explicitSettings.KerberosServiceName);
+        Assert.Throws<ArgumentException>(
+            () => new BlueTuskConnectionStringBuilder("Kerberos Service Name=bad/name").Validate());
     }
 
     [Fact]

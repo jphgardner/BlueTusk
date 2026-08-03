@@ -16,15 +16,16 @@ public sealed class BlueTuskMultiHostIntegrationTests
         BlueTuskTargetSessionAttributes target)
     {
         var settings = CreateSettings();
-        settings.Host = "localhost,localhost";
-        settings.Ports = "1,5418";
+        var configured = settings.HostEndpoints[0];
+        settings.Host = $"{configured.Host},{configured.Host}";
+        settings.Ports = $"1,{configured.Port}";
         settings.Pooling = false;
         settings.TargetSessionAttributes = target;
         await using var connection = new BlueTuskConnection(settings.ConnectionString);
 
         await connection.OpenAsync(CancellationToken.None);
 
-        Assert.Equal(new BlueTuskHostEndpoint("localhost", 5418), connection.ConnectedEndpoint);
+        Assert.Equal(configured, connection.ConnectedEndpoint);
         await using var command = new BlueTuskCommand("SELECT 42::int4", connection);
         Assert.Equal(42, await command.ExecuteScalarAsync<int>(CancellationToken.None));
     }
@@ -36,8 +37,9 @@ public sealed class BlueTuskMultiHostIntegrationTests
         BlueTuskTargetSessionAttributes target)
     {
         var settings = CreateSettings();
-        settings.Host = "localhost";
-        settings.Port = 5418;
+        var configured = settings.HostEndpoints[0];
+        settings.Host = configured.Host;
+        settings.Port = configured.Port;
         settings.Pooling = false;
         settings.TargetSessionAttributes = target;
         await using var connection = new BlueTuskConnection(settings.ConnectionString);
@@ -62,15 +64,16 @@ public sealed class BlueTuskMultiHostIntegrationTests
             () => connection.OpenAsync(CancellationToken.None));
 
         Assert.Contains("2 configured host(s)", exception.Message, StringComparison.Ordinal);
-        Assert.DoesNotContain(settings.Password, exception.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(settings.Password!, exception.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
     public async Task Multi_host_data_source_partitions_capacity_and_statistics_per_endpoint()
     {
         var settings = CreateSettings();
-        settings.Host = "localhost,localhost";
-        settings.Ports = "5415,5418";
+        var configured = settings.HostEndpoints[0];
+        settings.Host = "localhost,127.0.0.1";
+        settings.Ports = $"{configured.Port},{configured.Port}";
         settings.Pooling = true;
         settings.MinimumPoolSize = 1;
         settings.MaximumPoolSize = 1;
@@ -92,12 +95,12 @@ public sealed class BlueTuskMultiHostIntegrationTests
         await using (var second = await dataSource.OpenConnectionAsync(CancellationToken.None))
         {
             Assert.Equal(
-                [5415, 5418],
+                ["127.0.0.1", "localhost"],
                 new[]
                 {
-                    first.ConnectedEndpoint!.Value.Port,
-                    second.ConnectedEndpoint!.Value.Port,
-                }.Order());
+                    first.ConnectedEndpoint!.Value.Host,
+                    second.ConnectedEndpoint!.Value.Host,
+                }.Order(StringComparer.Ordinal));
             Assert.All(
                 dataSource.GetHostPoolStatistics().Values,
                 statistics => Assert.Equal(1, statistics.Busy));
