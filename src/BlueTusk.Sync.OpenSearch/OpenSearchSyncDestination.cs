@@ -26,6 +26,9 @@ public sealed partial class OpenSearchSyncDestination :
     /// <summary>Gets the control-document and index metadata format written by this build.</summary>
     public const int CurrentFormatVersion = 2;
 
+    /// <summary>Gets the oldest control-document and index metadata format readable by this build.</summary>
+    public const int MinimumSupportedFormatVersion = 2;
+
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
     private static readonly string[] RoutingSourceFields = ["partitionKey"];
     private readonly OpenSearchSyncOptions _options;

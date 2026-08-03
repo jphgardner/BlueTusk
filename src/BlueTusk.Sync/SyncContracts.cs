@@ -61,6 +61,10 @@ public enum SyncApplyStatus
 
 public sealed record SyncTransformVersion
 {
+    public const int CurrentFingerprintFormatVersion = 1;
+
+    public const int MinimumSupportedFingerprintFormatVersion = 1;
+
     public SyncTransformVersion(string name, string fingerprint)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);

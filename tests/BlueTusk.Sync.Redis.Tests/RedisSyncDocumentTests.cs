@@ -1,3 +1,5 @@
+using System.Security.Cryptography;
+
 namespace BlueTusk.Sync.Redis.Tests;
 
 public sealed class RedisSyncDocumentTests
@@ -21,5 +23,23 @@ public sealed class RedisSyncDocumentTests
         value[value.Length / 2] ^= 0x20;
         _ = Assert.Throws<RedisSyncDocumentException>(
             () => RedisSyncDocumentReader.Decode(value));
+    }
+
+    [Fact]
+    public void Reader_rejects_an_integrity_valid_future_format()
+    {
+        var value = RedisSyncDocumentCodec.Encode(
+            "stable-change-id",
+            "{}"u8.ToArray(),
+            "application/json",
+            null);
+
+        value[4] = checked((byte)(RedisSyncDocumentReader.CurrentFormatVersion + 1));
+        SHA256.HashData(value.AsSpan(0, value.Length - 32))
+            .CopyTo(value.AsSpan(value.Length - 32));
+
+        var exception = Assert.Throws<RedisSyncDocumentException>(
+            () => RedisSyncDocumentReader.Decode(value));
+        Assert.Contains("unsupported", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 }

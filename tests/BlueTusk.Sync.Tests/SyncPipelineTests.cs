@@ -19,6 +19,9 @@ public sealed class SyncPipelineTests
         Assert.Equal(first, same);
         Assert.NotEqual(first, changed);
         Assert.Equal(64, first.Fingerprint.Length);
+        Assert.Equal(
+            "b50232fa0a892240b3c9f246728508f486a0ce08bda135fa8e10becf4369e1e0",
+            first.Fingerprint);
     }
 
     [Fact]

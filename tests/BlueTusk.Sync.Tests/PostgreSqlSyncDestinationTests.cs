@@ -69,6 +69,24 @@ public sealed class PostgreSqlSyncDestinationTests
             Assert.Equal(
                 2,
                 Convert.ToInt32(await columns.ExecuteScalarAsync(), System.Globalization.CultureInfo.InvariantCulture));
+
+            await using var future = inspection.CreateCommand();
+            future.CommandText = $"""
+                UPDATE "{schema}".storage_metadata
+                SET schema_version = {PostgreSqlSyncDestination.CurrentSchemaVersion + 1}
+                WHERE singleton
+                """;
+            _ = await future.ExecuteNonQueryAsync();
+
+            var futureDestination = new PostgreSqlSyncDestination(Options(dataSource, schema));
+            var exception = await Assert.ThrowsAsync<PostgreSqlSyncException>(
+                () => futureDestination.InitializeAsync().AsTask());
+            Assert.Contains("unsupported", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(
+                PostgreSqlSyncDestination.CurrentSchemaVersion + 1,
+                Convert.ToInt32(
+                    await version.ExecuteScalarAsync(),
+                    System.Globalization.CultureInfo.InvariantCulture));
         }
         finally
         {

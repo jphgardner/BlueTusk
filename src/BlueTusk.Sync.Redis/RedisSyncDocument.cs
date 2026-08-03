@@ -13,13 +13,17 @@ public sealed record RedisSyncDocument(
 
 public static class RedisSyncDocumentReader
 {
+    public const int CurrentFormatVersion = 1;
+
+    public const int MinimumSupportedFormatVersion = 1;
+
     public static RedisSyncDocument Decode(ReadOnlySpan<byte> value) =>
         RedisSyncDocumentCodec.Decode(value);
 }
 
 internal static class RedisSyncDocumentCodec
 {
-    internal const int CurrentFormatVersion = 1;
+    internal const int CurrentFormatVersion = RedisSyncDocumentReader.CurrentFormatVersion;
 
     private const int IntegrityLength = 32;
     private static ReadOnlySpan<byte> Magic => "BTSD"u8;

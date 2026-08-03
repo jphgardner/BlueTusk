@@ -84,6 +84,10 @@ public sealed record NatsSyncMutation(
 
 public static class NatsSyncEnvelopeReader
 {
+    public const int CurrentFormatVersion = 1;
+
+    public const int MinimumSupportedFormatVersion = 1;
+
     public static NatsSyncEnvelope Decode(ReadOnlySpan<byte> payload) =>
         NatsSyncEnvelopeCodec.Decode(payload);
 }

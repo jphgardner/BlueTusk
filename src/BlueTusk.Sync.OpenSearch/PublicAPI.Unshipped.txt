@@ -74,6 +74,7 @@ BlueTusk.Sync.OpenSearch.OpenSearchSyncSnapshotException.OpenSearchSyncSnapshotE
 BlueTusk.Sync.OpenSearch.OpenSearchSyncSourceMismatchException
 BlueTusk.Sync.OpenSearch.OpenSearchSyncSourceMismatchException.OpenSearchSyncSourceMismatchException(string! message) -> void
 const BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.CurrentFormatVersion = 2 -> int
+const BlueTusk.Sync.OpenSearch.OpenSearchSyncDestination.MinimumSupportedFormatVersion = 2 -> int
 override BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.Equals(object? obj) -> bool
 override BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.GetHashCode() -> int
 override BlueTusk.Sync.OpenSearch.OpenSearchCollectionCount.ToString() -> string!

@@ -9,7 +9,7 @@ namespace BlueTusk.Sync.Nats;
 
 internal static class NatsSyncEnvelopeCodec
 {
-    internal const int CurrentFormatVersion = 1;
+    internal const int CurrentFormatVersion = NatsSyncEnvelopeReader.CurrentFormatVersion;
 
     private const int IntegrityLength = 32;
     private const int MaximumMutationCount = 1_000_000;

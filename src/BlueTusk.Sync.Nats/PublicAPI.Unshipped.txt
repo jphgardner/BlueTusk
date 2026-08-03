@@ -29,6 +29,8 @@ BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.SnapshotReset = 2 -> BlueTusk.Sync.Nats.
 BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.SnapshotStart = 3 -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
 BlueTusk.Sync.Nats.NatsSyncEnvelopeKind.Transaction = 1 -> BlueTusk.Sync.Nats.NatsSyncEnvelopeKind
 BlueTusk.Sync.Nats.NatsSyncEnvelopeReader
+const BlueTusk.Sync.Nats.NatsSyncEnvelopeReader.CurrentFormatVersion = 1 -> int
+const BlueTusk.Sync.Nats.NatsSyncEnvelopeReader.MinimumSupportedFormatVersion = 1 -> int
 BlueTusk.Sync.Nats.NatsSyncException
 BlueTusk.Sync.Nats.NatsSyncException.NatsSyncException(string! message) -> void
 BlueTusk.Sync.Nats.NatsSyncException.NatsSyncException(string! message, System.Exception! innerException) -> void

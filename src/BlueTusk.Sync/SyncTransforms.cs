@@ -120,7 +120,7 @@ public sealed class CompositeSyncTransform : ISyncTransform
         using (var writer = new Utf8JsonWriter(buffer))
         {
             writer.WriteStartObject();
-            writer.WriteNumber("format", 1);
+            writer.WriteNumber("format", SyncTransformVersion.CurrentFingerprintFormatVersion);
             writer.WriteString("sourceName", source.Name);
             writer.WriteString("sourceFingerprint", source.Fingerprint);
             writer.WriteStartArray("stages");

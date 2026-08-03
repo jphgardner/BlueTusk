@@ -1,5 +1,7 @@
 #nullable enable
 BlueTusk.Sync.Redis.RedisSyncDestination
+const BlueTusk.Sync.Redis.RedisSyncDestination.CurrentStorageFormatVersion = 2 -> int
+const BlueTusk.Sync.Redis.RedisSyncDestination.MinimumSupportedStorageFormatVersion = 2 -> int
 BlueTusk.Sync.Redis.RedisSyncDestination.ApplyRepairBatchAsync(BlueTusk.Sync.SyncRepairBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.Redis.RedisSyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.Redis.RedisSyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
@@ -34,6 +36,8 @@ BlueTusk.Sync.Redis.RedisSyncDocumentException
 BlueTusk.Sync.Redis.RedisSyncDocumentException.RedisSyncDocumentException(string! message) -> void
 BlueTusk.Sync.Redis.RedisSyncDocumentException.RedisSyncDocumentException(string! message, System.Exception! innerException) -> void
 BlueTusk.Sync.Redis.RedisSyncDocumentReader
+const BlueTusk.Sync.Redis.RedisSyncDocumentReader.CurrentFormatVersion = 1 -> int
+const BlueTusk.Sync.Redis.RedisSyncDocumentReader.MinimumSupportedFormatVersion = 1 -> int
 BlueTusk.Sync.Redis.RedisSyncException
 BlueTusk.Sync.Redis.RedisSyncException.RedisSyncException(string! message) -> void
 BlueTusk.Sync.Redis.RedisSyncException.RedisSyncException(string! message, System.Exception! innerException) -> void

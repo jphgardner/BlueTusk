@@ -4,6 +4,12 @@ BlueTusk Sync materialises transaction-preserving Streams deliveries into
 external destinations. It consumes `BlueTusk.Streams` only; it never reaches
 logical-replication wire messages.
 
+Release compatibility is specified in the
+[public API compatibility](api-compatibility.md) and
+[durable format compatibility](format-compatibility.md) contracts. The
+[release-endurance guide](release-endurance.md) defines the mandatory 24-hour
+four-connector gate.
+
 The core pipeline owns the provisioning, snapshotting, catching-up, running,
 paused, rebuilding, reconciling, faulted, and stopped states. A source
 transaction is transformed and offered to a destination as one immutable batch.

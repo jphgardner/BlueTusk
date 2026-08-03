@@ -48,6 +48,7 @@ BlueTusk.Sync.PostgreSql.PostgreSqlSyncSnapshotException.PostgreSqlSyncSnapshotE
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncSourceMismatchException
 BlueTusk.Sync.PostgreSql.PostgreSqlSyncSourceMismatchException.PostgreSqlSyncSourceMismatchException(string! message) -> void
 const BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.CurrentSchemaVersion = 2 -> int
+const BlueTusk.Sync.PostgreSql.PostgreSqlSyncDestination.MinimumSupportedSchemaVersion = 1 -> int
 override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.Equals(object? obj) -> bool
 override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.GetHashCode() -> int
 override BlueTusk.Sync.PostgreSql.PostgreSqlSyncOptions.ToString() -> string!

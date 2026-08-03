@@ -1,3 +1,5 @@
+using System.Buffers.Binary;
+using System.Security.Cryptography;
 using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
 using BlueTusk.TypeSystem;
@@ -41,7 +43,7 @@ public sealed class NatsSyncEnvelopeTests
         var payload = NatsSyncEnvelopeCodec.EncodeTransaction(batch);
         var decoded = NatsSyncEnvelopeReader.Decode(payload);
 
-        Assert.Equal(NatsSyncEnvelopeCodec.CurrentFormatVersion, decoded.FormatVersion);
+        Assert.Equal(NatsSyncEnvelopeReader.CurrentFormatVersion, decoded.FormatVersion);
         Assert.Equal(NatsSyncEnvelopeKind.Transaction, decoded.Kind);
         Assert.Equal("orders", decoded.PipelineId);
         Assert.Equal(transform, decoded.Transform);
@@ -59,6 +61,31 @@ public sealed class NatsSyncEnvelopeTests
         payload[payload.Length / 2] ^= 0x40;
         _ = Assert.Throws<NatsSyncEnvelopeException>(
             () => NatsSyncEnvelopeReader.Decode(payload));
+    }
+
+    [Fact]
+    public async Task Reader_rejects_an_integrity_valid_future_format()
+    {
+        await using var delivery = ChangeDeliveryTestFactory.CreateCommitted(
+            Source,
+            42,
+            new BlueTuskLogSequenceNumber(105));
+        var payload = NatsSyncEnvelopeCodec.EncodeTransaction(
+            new SyncTransactionBatch(
+                "orders",
+                SyncTransformVersion.Create("orders", "v1"),
+                delivery.Transaction,
+                []));
+
+        BinaryPrimitives.WriteUInt16LittleEndian(
+            payload.AsSpan(4, sizeof(ushort)),
+            checked((ushort)(NatsSyncEnvelopeReader.CurrentFormatVersion + 1)));
+        SHA256.HashData(payload.AsSpan(0, payload.Length - 32))
+            .CopyTo(payload.AsSpan(payload.Length - 32));
+
+        var exception = Assert.Throws<NatsSyncEnvelopeException>(
+            () => NatsSyncEnvelopeReader.Decode(payload));
+        Assert.Contains("unsupported", exception.Message, StringComparison.OrdinalIgnoreCase);
     }
 
     [Fact]

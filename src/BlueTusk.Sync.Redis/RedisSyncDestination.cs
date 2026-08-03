@@ -214,7 +214,11 @@ public sealed class RedisSyncDestination :
         return 0
         """;
 
-    private const int CurrentFormatVersion = 2;
+    public const int CurrentStorageFormatVersion = 2;
+
+    public const int MinimumSupportedStorageFormatVersion = 2;
+
+    private const int CurrentFormatVersion = CurrentStorageFormatVersion;
 
     private readonly RedisSyncOptions _options;
     private readonly IDatabase _database;

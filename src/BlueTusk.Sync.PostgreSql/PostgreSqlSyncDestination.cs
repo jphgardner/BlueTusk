@@ -15,6 +15,8 @@ public sealed class PostgreSqlSyncDestination :
 {
     public const int CurrentSchemaVersion = 2;
 
+    public const int MinimumSupportedSchemaVersion = 1;
+
     private readonly PostgreSqlSyncOptions _options;
     private readonly DbDataSource _dataSource;
     private readonly string _schema;
@@ -99,7 +101,7 @@ public sealed class PostgreSqlSyncDestination :
 
         var version = await ReadSchemaVersionAsync(connection, transaction, CancellationToken.None)
             .ConfigureAwait(false);
-        if (version < 1 || version > CurrentSchemaVersion)
+        if (version < MinimumSupportedSchemaVersion || version > CurrentSchemaVersion)
         {
             throw new PostgreSqlSyncException(
                 $"PostgreSQL Sync schema version {version} is unsupported; this build requires version {CurrentSchemaVersion}.");

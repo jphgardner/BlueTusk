@@ -483,8 +483,10 @@ BlueTusk.Sync.SyncTransactionBatch.Transaction.get -> BlueTusk.Sync.SyncSourceTr
 BlueTusk.Sync.SyncTransactionBatch.Transform.get -> BlueTusk.Sync.SyncTransformVersion!
 BlueTusk.Sync.SyncTransformVersion
 BlueTusk.Sync.SyncTransformVersion.<Clone>$() -> BlueTusk.Sync.SyncTransformVersion!
+const BlueTusk.Sync.SyncTransformVersion.CurrentFingerprintFormatVersion = 1 -> int
 BlueTusk.Sync.SyncTransformVersion.Equals(BlueTusk.Sync.SyncTransformVersion? other) -> bool
 BlueTusk.Sync.SyncTransformVersion.Fingerprint.get -> string!
+const BlueTusk.Sync.SyncTransformVersion.MinimumSupportedFingerprintFormatVersion = 1 -> int
 BlueTusk.Sync.SyncTransformVersion.Name.get -> string!
 BlueTusk.Sync.SyncTransformVersion.SyncTransformVersion(string! name, string! fingerprint) -> void
 BlueTusk.Sync.SyncTransformVersionMismatchException

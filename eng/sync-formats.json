@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "formats": [
+    {
+      "id": "nats-envelope",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Sync.Nats.Tests/NatsSyncEnvelopeTests.cs::Reader_rejects_an_integrity_valid_future_format"
+    },
+    {
+      "id": "opensearch-storage",
+      "currentVersion": 2,
+      "minimumReadableVersion": 2,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Sync.OpenSearch.Tests/OpenSearchSyncDestinationTests.cs::OpenSearch_recovers_partial_bulk_work_and_atomically_swaps_rebuild_aliases"
+    },
+    {
+      "id": "postgresql-sync-schema",
+      "currentVersion": 2,
+      "minimumReadableVersion": 1,
+      "compatibility": "migrated-in-place",
+      "evidence": "tests/BlueTusk.Sync.Tests/PostgreSqlSyncDestinationTests.cs::PostgreSql_destination_migrates_version_one_quarantine_storage"
+    },
+    {
+      "id": "redis-document",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Sync.Redis.Tests/RedisSyncDocumentTests.cs::Reader_rejects_an_integrity_valid_future_format"
+    },
+    {
+      "id": "redis-storage",
+      "currentVersion": 2,
+      "minimumReadableVersion": 2,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Sync.Redis.Tests/RedisSyncDestinationTests.cs::Redis_atomically_materialises_checkpoints_snapshots_and_quarantine"
+    },
+    {
+      "id": "transform-fingerprint",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "stable-fingerprint",
+      "evidence": "tests/BlueTusk.Sync.Tests/SyncPipelineTests.cs::Transform_fingerprint_is_stable_and_configuration_sensitive"
+    }
+  ]
+}
