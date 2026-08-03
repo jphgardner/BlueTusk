@@ -121,7 +121,7 @@ jobs:
           --logger trx
           --results-directory artifacts/test-results/redis-streams
 
-      - name: Run Redis Sync transaction and snapshot recovery
+      - name: Run Redis Sync recovery and shared conformance
         env:
           BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
         run: >-
@@ -154,7 +154,7 @@ jobs:
           docker logs bluetusk-nats
           exit 1
 
-      - name: Run NATS transaction and snapshot recovery
+      - name: Run NATS recovery and shared conformance
         env:
           BLUETUSK_NATS_URL: nats://localhost:4222
         run: >-
@@ -201,7 +201,7 @@ jobs:
           docker logs bluetusk-opensearch
           exit 1
 
-      - name: Run OpenSearch transaction recovery and rebuild
+      - name: Run OpenSearch recovery, rebuild, and shared conformance
         env:
           BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
         run: >-

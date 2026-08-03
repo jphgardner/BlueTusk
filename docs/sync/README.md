@@ -22,10 +22,29 @@ durability confirmations nack the delivery and fault the pipeline for safe
 redelivery.
 
 PostgreSQL, NATS JetStream, Redis, and OpenSearch connector slices are
-implemented. The cross-destination conformance kit, full key/content-hash
-reconciliation, repair, and product-level rebuild orchestration remain gated
-work. The Sync release train remains non-publishable until all four
-destinations pass the shared snapshot-plus-stream recovery contract.
+implemented and pass the same executable snapshot-plus-stream recovery
+contract. Full key/content-hash reconciliation, repair, and product-level
+rebuild orchestration remain gated work. The Sync release train remains
+non-publishable until those remaining Phase 5 recovery and endurance gates pass.
+
+## Shared destination conformance
+
+`BlueTusk.Sync.Testing` contains `SyncDestinationConformanceSuite`, the single
+connector acceptance scenario used by the PostgreSQL, NATS JetStream, Redis,
+and OpenSearch live test projects. It verifies:
+
+- provisioning and transform-fingerprint ownership;
+- idempotent snapshot batches and completed snapshot state after a new
+  destination instance starts;
+- exact durable commit positions, same-instance duplicate delivery, and
+  process-restart redelivery without replacing accepted content;
+- explicit `RebuildRequired` results for transform-version drift; and
+- durable, idempotent quarantine for connectors that expose
+  `ISyncQuarantineSink`.
+
+An in-memory reference harness also proves the kit rejects a destination that
+reports a checkpoint beyond the applied source transaction. The live variants
+run in their existing connector CI jobs; PostgreSQL runs across versions 15–19.
 
 ## PostgreSQL destination
 

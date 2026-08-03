@@ -18,8 +18,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
-    <ProjectReference Include="..\..\src\BlueTusk.Sync.OpenSearch\BlueTusk.Sync.OpenSearch.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Sync.Testing\BlueTusk.Sync.Testing.csproj" />
   </ItemGroup>
 </Project>
