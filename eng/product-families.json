@@ -17,6 +17,7 @@
       "publishable": false,
       "packages": [
         "src/BlueTusk.Streams/BlueTusk.Streams.csproj",
+        "src/BlueTusk.Streams.Aspire/BlueTusk.Streams.Aspire.csproj",
         "src/BlueTusk.Streams.CloudEvents/BlueTusk.Streams.CloudEvents.csproj",
         "src/BlueTusk.Streams.DependencyInjection/BlueTusk.Streams.DependencyInjection.csproj",
         "src/BlueTusk.Streams.EntityFrameworkCore/BlueTusk.Streams.EntityFrameworkCore.csproj",

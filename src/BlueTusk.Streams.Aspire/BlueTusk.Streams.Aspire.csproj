@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
+    <Description>Aspire application-model integration for BlueTusk Streams workers.</Description>
+    <PackageTags>postgresql;cdc;logical-replication;aspire;hosting</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Streams.props" />
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting" />
+  </ItemGroup>
+</Project>

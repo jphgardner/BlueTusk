@@ -41,6 +41,7 @@
     <Project Path="src/BlueTusk.Security/BlueTusk.Security.csproj" />
     <Project Path="src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj" />
     <Project Path="src/BlueTusk.Streams/BlueTusk.Streams.csproj" />
+    <Project Path="src/BlueTusk.Streams.Aspire/BlueTusk.Streams.Aspire.csproj" />
     <Project Path="src/BlueTusk.Streams.CloudEvents/BlueTusk.Streams.CloudEvents.csproj" />
     <Project Path="src/BlueTusk.Streams.DependencyInjection/BlueTusk.Streams.DependencyInjection.csproj" />
     <Project Path="src/BlueTusk.Streams.EntityFrameworkCore/BlueTusk.Streams.EntityFrameworkCore.csproj" />
@@ -79,6 +80,7 @@
     <Project Path="tests/BlueTusk.SourceGeneration.Tests/BlueTusk.SourceGeneration.Tests.csproj" />
     <Project Path="tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj" />
     <Project Path="tests/BlueTusk.Streams.Tests/BlueTusk.Streams.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Streams.Aspire.Tests/BlueTusk.Streams.Aspire.Tests.csproj" />
     <Project Path="tests/BlueTusk.Streams.DependencyInjection.Tests/BlueTusk.Streams.DependencyInjection.Tests.csproj" />
     <Project Path="tests/BlueTusk.Streams.EntityFrameworkCore.Tests/BlueTusk.Streams.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Transport.Tests/BlueTusk.Transport.Tests.csproj" />
