@@ -579,6 +579,9 @@ jobs:
   gssapi-authentication:
     name: PostgreSQL 18 GSSAPI/Kerberos
     runs-on: ubuntu-latest
+    env:
+      KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
+      KRB5CCNAME: FILE:/tmp/bluetusk-krb5cc-${{ github.run_id }}-${{ github.run_attempt }}
 
     steps:
       - uses: actions/checkout@v6
@@ -595,19 +598,19 @@ jobs:
       - name: Start PostgreSQL and MIT Kerberos KDC
         run: docker compose -f eng/compose/postgres.yml --profile security-tests up -d --build --wait gss18
 
+      - name: Register Kerberos test service hostname
+        run: echo '127.0.0.1 gss18' | sudo tee -a /etc/hosts
+
       - name: Acquire test Kerberos ticket
-        env:
-          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
         run: |
           printf '%s\n' 'bluetusk-gss-password' | kinit bluetusk_gss_test@BLUETUSK.TEST
-          kvno postgres/localhost@BLUETUSK.TEST
+          kvno postgres/gss18@BLUETUSK.TEST
           klist
 
       - name: Run GSSAPI/Kerberos acceptance
         env:
-          KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
           KRB5_TRACE: /dev/stderr
-          BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=localhost;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
+          BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=gss18;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
         run: >-
           dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
           --configuration Release
@@ -619,6 +622,10 @@ jobs:
       - name: Capture PostgreSQL/Kerberos logs on failure
         if: failure()
         run: docker compose -f eng/compose/postgres.yml --profile security-tests logs gss18
+
+      - name: Destroy Kerberos credential cache
+        if: always()
+        run: command -v kdestroy >/dev/null && kdestroy || true
 
       - name: Stop PostgreSQL and MIT Kerberos KDC
         if: always()
