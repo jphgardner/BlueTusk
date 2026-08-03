@@ -70,6 +70,8 @@ Each shared subscription now exposes an allocation-free operational snapshot: op
 `BlueTusk.Live.SignalR` exposes a streaming hub, and `BlueTusk.Live.ServerSentEvents` exposes a fetch-streaming POST endpoint. Both send replay before new events and attach a fresh signed, expiring, subscription-bound resume token to every sequence. SSE disables proxy buffering and maps quota, invalid token, expired replay, and unavailable subscription states to explicit HTTP responses.
 
 `BlueTusk.Live.Grpc` exposes the same authenticated stream as a versioned protobuf service. Parameters remain JSON inside the trusted query-registration envelope and are size-bounded before parsing. gRPC status codes distinguish authentication, invalid input/token, expired replay, quota pressure, and temporary unavailability; event payloads remain the same versioned Live JSON used by replay and browser clients.
+The package includes both the ASP.NET service base and the generated .NET
+streaming client for the versioned contract.
 
 ## Browser clients
 
@@ -102,8 +104,22 @@ B. Machine-checked budgets cap those paths at 235,000 B, 900 B, and 185,000 B
 respectively. These are local regression baselines, not network latency or
 universal throughput claims.
 
-Live package publication remains disabled until the final release audit records
-the real-PostgreSQL store/transport matrix in addition to these offline gates.
+The `0.1.0-preview.1` release train has passed its final preview audit. The
+PostgreSQL 15–19 matrix persists initial and update replay in the production
+store and drives signed disconnect/resume delivery through real SSE,
+SignalR/WebSockets, and HTTP/2 gRPC endpoints. The Live manifest is enabled for
+the independent release workflow; no package is published without an explicit
+publish-enabled dispatch or matching Live version tag. See the
+[preview release notes](release-notes-0.1.0-preview.1.md) for exact scope and
+boundaries.
+
+Run the production-store transport gate against any supported PostgreSQL
+service:
+
+```powershell
+$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+dotnet test tests/BlueTusk.Live.Tests --filter FullyQualifiedName~LivePostgreSqlTransportMatrixTests
+```
 
 ## Control-plane visibility
 

@@ -99,3 +99,28 @@ jobs:
           --api-key "$NUGET_API_KEY"
           --source https://api.nuget.org/v3/index.json
           --skip-duplicate
+
+      - name: Publish npm packages
+        if: startsWith(github.ref, 'refs/tags/') || inputs.publish == true
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          shopt -s nullglob
+          packages=(artifacts/packages/*.tgz)
+          if (( ${#packages[@]} == 0 )); then
+            exit 0
+          fi
+          printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$RUNNER_TEMP/bluetusk-npmrc"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/bluetusk-npmrc"
+          for package in "${packages[@]}"; do
+            version="$(
+              tar -xOf "$package" package/package.json |
+                node -e "let value=''; process.stdin.on('data', chunk => value += chunk).on('end', () => process.stdout.write(JSON.parse(value).version));"
+            )"
+            tag=latest
+            if [[ "$version" == *-* ]]; then
+              prerelease="${version#*-}"
+              tag="${prerelease%%.*}"
+            fi
+            npm publish "$package" --access public --tag "$tag"
+          done

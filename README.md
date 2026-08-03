@@ -87,13 +87,14 @@ rebuild orchestration, versioned transformation composition, and in-process
 hosting implemented behind a non-publishable release gate.
 [Live](docs/live/README.md) has its authorised query engine, transports,
 framework clients, expanded vetted query shapes, and adversarial/load gates,
-but remains non-publishable pending its final real-PostgreSQL release audit.
+and its `0.1.0-preview.1` release train has passed the real-PostgreSQL
+store/transport and package gates.
 [Continuous Graph 0.1.0-preview.1](docs/continuous-graph/release-notes-0.1.0-preview.1.md)
 has passed its Phase 7 implementation and package-verification gates with PostgreSQL
 19 capability guards, exact graph-element invalidation, authoritative
 `GRAPH_TABLE` requery/diff, operational visibility, samples, and live workload
-budgets. Its publication gate remains closed until its Live release dependency
-passes.
+budgets. Its Live release dependency has passed, so the independently versioned
+Graph preview train is also enabled.
 
 ## Status
 

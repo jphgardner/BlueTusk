@@ -59,6 +59,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 6 slice: model-derived one-to-many Include invalidation and PostgreSQL full-text Live queries
 - [x] Phase 6 slice: model-proven projected one-to-many joins, grouping, and aggregate query plans
 - [x] Phase 6 slice: adversarial reconnect sequencing plus checked-in diff, replay, coalescing, and 64-subscriber fan-out budgets
+- [x] Phase 6 release gate: PostgreSQL 15–19 production-store replay through SSE, SignalR, and gRPC plus verified NuGet/npm clients
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [x] Phase 7 slice: PostgreSQL 19 capability-guarded typed SQL/PGQ registration, exact graph-element invalidation dependencies, bounded deterministic plans, and authoritative Live requery/diff
 - [x] Phase 7 slice: PostgreSQL 19 graph materialisation, affected-vertex requery/diff correctness, and in-flight lock cancellation acceptance
@@ -66,8 +67,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 7 slice: result-free Continuous Graph registry projection plus authorised, HTML-safe dashboard and API inventory
 - [x] Phase 7 slice: live PostgreSQL registration, 999-path authoritative requery, and affected-invalidation/diff benchmarks with checked-in allocation budgets
 - [x] Phase 7 slice: inspected 0.1.0-preview.1 NuGet pack plus machine-enforced cross-family publication ordering
-- [ ] Phase 7 release gate: publish Continuous Graph only after its Live release dependency passes
-- [ ] Phase 7: Continuous Graph preview
+- [x] Phase 7 release gate: enable Continuous Graph only after its Live release dependency passes
+- [x] Phase 7: Continuous Graph 0.1.0-preview.1 implementation and packaging gate
 
 The detailed contracts and release gates are maintained in the [real-time platform plan](realtime-platform/delivery-plan.md).
 

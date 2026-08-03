@@ -177,10 +177,13 @@ passes a zero-warning repository Release build, the complete offline solution
 suite, all seven graph tests against PostgreSQL 19 Beta 2, public API and
 dependency-direction conformance, documentation-link and allocation-budget
 gates, and an inspected NuGet pack. This enables the artifact for release only
-after Live passes its own gate. The Continuous Graph family manifest remains
-non-publishable, and the release script rejects any publishable family with a
-gated dependency. This does not mark the still-open Streams 72-hour, Sync
-24-hour, Live production-audit, or Control Plane release gates complete.
+after Live passes its own gate. The Live gate now covers signed
+disconnect/resume replay from the PostgreSQL production store through SSE,
+SignalR/WebSockets, and HTTP/2 gRPC on PostgreSQL 15–19; the Live and Continuous
+Graph preview manifests are enabled in dependency order. The release script
+rejects any publishable family with a gated dependency. This does not mark the
+still-open Streams 72-hour, Sync 24-hour, Live 1.0, or Control Plane release
+gates complete.
 
 The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and
 managed allocation on parameterized and explicitly prepared scalar execution,

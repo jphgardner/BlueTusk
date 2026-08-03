@@ -52,7 +52,7 @@
     },
     "Live": {
       "versionFile": "eng/versions/Live.props",
-      "publishable": false,
+      "publishable": true,
       "releaseDependencies": [
         "Provider",
         "Streams"
@@ -91,7 +91,7 @@
     },
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",
-      "publishable": false,
+      "publishable": true,
       "releaseDependencies": [
         "Provider",
         "Live"

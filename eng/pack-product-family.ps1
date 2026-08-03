@@ -186,6 +186,35 @@ if ($projects.Count -eq 0)
 $outputPath = Join-Path $repositoryRoot $Output
 New-Item -ItemType Directory -Path $outputPath -Force | Out-Null
 
+if ($npmPackages.Count -gt 0)
+{
+    Push-Location $repositoryRoot
+    try
+    {
+        & npm ci --ignore-scripts
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw "npm ci failed with exit code $LASTEXITCODE."
+        }
+
+        & npm audit --audit-level=high
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw "npm audit failed with exit code $LASTEXITCODE."
+        }
+
+        & npm run check:clients
+        if ($LASTEXITCODE -ne 0)
+        {
+            throw "npm client build/test failed with exit code $LASTEXITCODE."
+        }
+    }
+    finally
+    {
+        Pop-Location
+    }
+}
+
 foreach ($project in $projects)
 {
     $arguments = @(

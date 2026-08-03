@@ -56,12 +56,12 @@ gate.
   compatibility can change before PostgreSQL 19 is final.
 - The reference ShortRun figures are regression evidence, not latency service
   levels or universal production performance claims.
-- The family remains non-publishable until the Live production-audit and
-  release dependency pass. The release script machine-enforces that ordering.
+- Live must be released before this package so its declared dependency is
+  available. The Live preview gate has passed and the release script
+  machine-enforces dependency readiness.
 - Package verification does not complete the separate Streams 72-hour, Sync
   24-hour, or Control Plane release gates.
 
-After every declared release dependency passes, the independent release
-workflow still publishes only after an explicit publish-enabled workflow
-dispatch or matching Continuous Graph version tag. Passing this repository gate
-does not silently publish the package.
+The independent release workflow publishes only after an explicit
+publish-enabled workflow dispatch or matching Continuous Graph version tag.
+Passing this repository gate does not silently publish the package.

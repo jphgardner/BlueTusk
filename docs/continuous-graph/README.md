@@ -139,8 +139,8 @@ value is HTML encoded.
 The package is independently versioned as `0.1.0-preview.1` and has passed its
 Phase 7 implementation and package-verification gates. Its inspected NuGet pack
 correctly depends on the Provider, EF, Live, and EF Core packages. The family
-remains non-publishable until the Live release dependency passes, and the
-release script machine-enforces that ordering.
+manifest is enabled after the Live preview passed its release gate, and the
+release script machine-enforces that dependency readiness.
 See the [preview release notes](release-notes-0.1.0-preview.1.md) for the exact
 scope and boundaries.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,
