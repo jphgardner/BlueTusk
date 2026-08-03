@@ -32,6 +32,23 @@ Refreshes coalesce every invalidation since the last cursor into at most one aut
 
 Tenant isolation must be declared as PostgreSQL RLS, an EF global query filter, or a registered entity-property/typed-parameter equality that the compiler verifies in the predicate. The query factory and key selector are server-owned delegates; no client SQL, LINQ, or expression tree crosses the transport boundary.
 
+`CompileProjectionAsync` accepts a separate mapped root and immutable result
+type for bounded projections. Its current allowlist covers:
+
+- model-proven one-to-many joins expressed as `SelectMany` over a direct
+  collection navigation;
+- `GroupBy` projections with `Count`, `LongCount`, `Sum`, `Min`, `Max`, and
+  `Average`; and
+- PostgreSQL full-text expressions inside otherwise supported predicates.
+
+The registered result key must be a direct result property and deterministic
+ordering must include the same property. The compiler requires one bounded
+`Take`, verifies registered-predicate tenant isolation on the mapped root
+before projection, derives every invalidation table from the EF model and
+expression, and asks EF to translate the complete query at startup. Raw
+`Join`/`GroupJoin`, unproven `SelectMany`, client evaluation, unbounded output,
+and arbitrary method calls fail registration with an actionable diagnostic.
+
 ## Replay window
 
 Live replay events use a versioned JSON media type and a SHA-256 integrity hash. The PostgreSQL store appends a contiguous sequence only when its expected prior sequence matches, treats a byte-identical crash retry as already stored, and rejects divergent forks. Reads distinguish current, available, expired, and unknown subscriptions. Retention pruning advances an explicit first-available watermark so an expired resume token produces a reset instead of a silent gap.
@@ -66,7 +83,7 @@ Each shared subscription now exposes an allocation-free operational snapshot: op
 
 `BlueTusk.Live.Testing` provides database-scoped deterministic invalidations, a sequence-fenced and retention-aware in-memory replay store, and a public replay-store conformance kit for custom providers. The in-memory components are for tests only and preserve the same replay identity, integrity, idempotency, and expiry rules as durable storage.
 
-The next Live slices add vetted projected joins, grouping and aggregates plus the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.
+The remaining Live hardening work is the adversarial security, reconnect-race, and checked-in load/performance gates. Package publication stays disabled until those vertical gates pass.
 
 ## Control-plane visibility
 

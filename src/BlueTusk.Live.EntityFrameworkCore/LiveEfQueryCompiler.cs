@@ -113,7 +113,7 @@ public sealed class LiveEfQueryDefinition<TContext, TEntity, TKey>
     public LiveEfTenantBinding? TenantBinding { get; }
 }
 
-public static class LiveEfQueryCompiler
+public static partial class LiveEfQueryCompiler
 {
     public static async ValueTask<LiveQueryPlan<TEntity, TKey>> CompileAsync<TContext, TEntity, TKey>(
         IDbContextFactory<TContext> contextFactory,

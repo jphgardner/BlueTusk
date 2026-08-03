@@ -185,6 +185,144 @@ public sealed class LiveEfQueryCompilerTests
         Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.SingleTable));
     }
 
+    [Fact]
+    public async Task Projection_compiler_accepts_model_proven_one_to_many_join()
+    {
+        var definition =
+            new LiveEfProjectionQueryDefinition<OrdersContext, Order, OrderLineProjection, int>(
+                "order-lines",
+                "database",
+                "v1",
+                Parameters,
+                ValidationArguments,
+                50,
+                (context, arguments) =>
+                {
+                    var tenant = arguments.Get<string>("tenant")!;
+                    return context.Orders
+                        .Where(order => order.TenantId == tenant)
+                        .SelectMany(order => order.Lines)
+                        .OrderBy(line => line.Id)
+                        .Take(25)
+                        .Select(line => new OrderLineProjection(line.Id, line.Total));
+                },
+                line => line.Id,
+                EqualityComparer<OrderLineProjection>.Default,
+                LiveEfTenantIsolationMode.RegisteredPredicate,
+                new LiveEfTenantBinding(nameof(Order.TenantId), "tenant"));
+
+        var plan = await LiveEfQueryCompiler.CompileProjectionAsync(
+            Factory(),
+            definition,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.OneToManyJoin));
+        Assert.False(plan.Capabilities.HasFlag(LiveQueryCapabilities.SingleTable));
+        Assert.Equal(
+            ["sales.order_lines", "sales.orders"],
+            plan.Dependencies.Select(static dependency => dependency.ToString()));
+    }
+
+    [Fact]
+    public async Task Projection_compiler_accepts_bounded_grouped_aggregates()
+    {
+        var definition =
+            new LiveEfProjectionQueryDefinition<OrdersContext, Order, TenantSummary, string>(
+                "tenant-order-summary",
+                "database",
+                "v1",
+                Parameters,
+                ValidationArguments,
+                50,
+                (context, arguments) =>
+                {
+                    var tenant = arguments.Get<string>("tenant")!;
+                    return context.Orders
+                        .Where(order => order.TenantId == tenant)
+                        .GroupBy(order => order.TenantId)
+                        .OrderBy(group => group.Key)
+                        .Take(25)
+                        .Select(group => new TenantSummary(
+                            group.Key,
+                            group.Count(),
+                            group.Sum(order => order.Total)));
+                },
+                summary => summary.Key,
+                EqualityComparer<TenantSummary>.Default,
+                LiveEfTenantIsolationMode.RegisteredPredicate,
+                new LiveEfTenantBinding(nameof(Order.TenantId), "tenant"));
+
+        var plan = await LiveEfQueryCompiler.CompileProjectionAsync(
+            Factory(),
+            definition,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.Grouping));
+        Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.Aggregate));
+        Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.SingleTable));
+    }
+
+    [Fact]
+    public async Task Projection_compiler_rejects_unproven_join_and_missing_root_tenant_predicate()
+    {
+        var unprovenJoin =
+            new LiveEfProjectionQueryDefinition<OrdersContext, Order, OrderLineProjection, int>(
+                "unproven-join",
+                "database",
+                "v1",
+                Parameters,
+                ValidationArguments,
+                50,
+                (context, arguments) =>
+                {
+                    var tenant = arguments.Get<string>("tenant")!;
+                    return context.Orders
+                        .Where(order => order.TenantId == tenant)
+                        .Join(
+                            context.OrderLines,
+                            order => order.Id,
+                            line => line.OrderId,
+                            (_, line) => new OrderLineProjection(line.Id, line.Total))
+                        .OrderBy(line => line.Id)
+                        .Take(25);
+                },
+                line => line.Id,
+                EqualityComparer<OrderLineProjection>.Default,
+                LiveEfTenantIsolationMode.RegisteredPredicate,
+                new LiveEfTenantBinding(nameof(Order.TenantId), "tenant"));
+        await Assert.ThrowsAsync<LiveEfQueryRegistrationException>(async () =>
+            await LiveEfQueryCompiler.CompileProjectionAsync(
+                Factory(),
+                unprovenJoin,
+                TestContext.Current.CancellationToken));
+
+        var missingTenant =
+            new LiveEfProjectionQueryDefinition<OrdersContext, Order, TenantSummary, string>(
+                "missing-tenant",
+                "database",
+                "v1",
+                Parameters,
+                ValidationArguments,
+                50,
+                (context, _) => context.Orders
+                    .GroupBy(order => order.TenantId)
+                    .OrderBy(group => group.Key)
+                    .Take(25)
+                    .Select(group => new TenantSummary(
+                        group.Key,
+                        group.Count(),
+                        group.Sum(order => order.Total))),
+                summary => summary.Key,
+                EqualityComparer<TenantSummary>.Default,
+                LiveEfTenantIsolationMode.RegisteredPredicate,
+                new LiveEfTenantBinding(nameof(Order.TenantId), "tenant"));
+        await Assert.ThrowsAsync<LiveEfQueryRegistrationException>(async () =>
+            await LiveEfQueryCompiler.CompileProjectionAsync(
+                Factory(),
+                missingTenant,
+                TestContext.Current.CancellationToken));
+    }
+
     private static readonly LiveQueryParameter[] Parameters =
     [
         new("tenant", typeof(string)),
@@ -232,6 +370,8 @@ public sealed class LiveEfQueryCompilerTests
     {
         public DbSet<Order> Orders => Set<Order>();
 
+        public DbSet<OrderLine> OrderLines => Set<OrderLine>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.Entity<Order>(entity =>
@@ -272,6 +412,12 @@ public sealed class LiveEfQueryCompilerTests
 
         public int OrderId { get; set; }
 
+        public decimal Total { get; set; }
+
         public Order Order { get; set; } = null!;
     }
+
+    private sealed record OrderLineProjection(int Id, decimal Total);
+
+    private sealed record TenantSummary(string Key, int Count, decimal Total);
 }
