@@ -322,6 +322,14 @@ public sealed partial class OpenSearchSyncDestination
                 HttpStatusCode.NotFound).ConfigureAwait(false);
             _ = await SendAsync(
                 HttpMethod.Delete,
+                ReconciliationIndex(collection),
+                null,
+                null,
+                cancellationToken,
+                HttpStatusCode.OK,
+                HttpStatusCode.NotFound).ConfigureAwait(false);
+            _ = await SendAsync(
+                HttpMethod.Delete,
                 $"{_controlIndex}/_doc/{CollectionDocumentId(retired, collection.Collection)}?refresh=wait_for",
                 null,
                 null,

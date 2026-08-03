@@ -24,10 +24,10 @@ redelivery.
 PostgreSQL, NATS JetStream, Redis, and OpenSearch connector slices are
 implemented and pass the same executable snapshot-plus-stream recovery
 contract. The shared count, key-set, and partitioned content-hash engine plus
-PostgreSQL and Redis repair paths are implemented. OpenSearch reconciliation,
-product-level rebuild orchestration, source adapters, and endurance remain
-gated work. The Sync release train remains non-publishable until those remaining
-Phase 5 gates pass.
+PostgreSQL, Redis, and OpenSearch repair paths are implemented and live-tested.
+Product-level rebuild orchestration, source adapters, hosting, and endurance
+remain gated work. The Sync release train remains non-publishable until those
+remaining Phase 5 gates pass.
 
 ## Shared destination conformance
 
@@ -187,14 +187,29 @@ idempotent on retry.
 
 OpenSearch bulk operations are independently applied by the server, so this
 connector deliberately does not advertise `TransactionalBatches` or a
-co-located checkpoint. It also does not yet advertise reconciliation: the
-hashed document IDs are intentionally not reversible, so the remaining work is
-a generation-owned key/hash sidecar rather than an unsafe inference from user
-JSON. Transaction preservation comes from bounded whole-batch submission,
-item-by-item response validation, stable external versions, and
+co-located checkpoint. Transaction preservation comes from bounded whole-batch
+submission, item-by-item response validation, stable external versions, and
 checkpoint-after-bulk ordering. Collection resets complete before the
 subsequent folded mutations are sent. JSON objects are the only accepted
 materialisation content.
+
+Format version 2 creates a generation-owned reconciliation sidecar beside every
+materialised index. Each sidecar record contains the original logical key, its
+shared unsigned SHA-256 partition hash, the exact content hash, content type,
+and routing value; application JSON remains untouched and hashed document IDs
+never need to be reversed. A source mutation and its sidecar operation share
+the same replay-safe external version in one bulk request. Partial bulk failure
+cannot advance the checkpoint, and replay heals either half before progress is
+claimed. Count reads reject materialised/sidecar cardinality drift instead of
+silently comparing an incomplete view.
+
+Partitioned sidecar scans use bounded `search_after` pages ordered by key hash
+and logical key. Repair looks up prior routing, removes an old routed copy when
+the routing value changes, and writes the application document plus sidecar
+without changing the CDC checkpoint. A subsequent reconciliation run is still
+required to prove convergence. Logical keys and page sizes have explicit
+operator-configured ceilings so reconciliation cannot create unbounded terms or
+responses.
 
 Each transform generation writes to isolated concrete indexes. Stable aliases
 are attached to the initial generation, while a rebuild generation remains
@@ -224,7 +239,8 @@ The CI and local live suite use OpenSearch 3.7.0. It deliberately causes a
 mapping conflict after another item has succeeded, repairs and replays the same
 transaction, and then covers checkpoint deduplication, collection reset,
 snapshot lifecycle, quarantine, restart, transform isolation, count
-verification, atomic alias cutover, and old-generation retirement. The design
+verification, atomic alias cutover, old-generation retirement, paged
+content-hash reconciliation, bounded repair, and checkpoint non-advancement. The design
 follows the official [Bulk API](https://docs.opensearch.org/latest/api-reference/document-apis/bulk/)
 and [Manage Aliases API](https://docs.opensearch.org/latest/api-reference/alias/aliases-api/)
 contracts.

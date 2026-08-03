@@ -15,12 +15,17 @@ namespace BlueTusk.Sync.OpenSearch;
 /// Materializes source transactions into versioned OpenSearch indexes and advances a durable
 /// checkpoint only after every bulk item succeeds.
 /// </summary>
-public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQuarantineSink
+public sealed partial class OpenSearchSyncDestination :
+    ISyncDestination,
+    ISyncQuarantineSink,
+    ISyncReconciliationReader,
+    ISyncRepairSink
 {
     /// <summary>Gets the control-document and index metadata format written by this build.</summary>
-    public const int CurrentFormatVersion = 1;
+    public const int CurrentFormatVersion = 2;
 
     private static readonly JsonSerializerOptions JsonOptions = new(JsonSerializerDefaults.Web);
+    private static readonly string[] RoutingSourceFields = ["partitionKey"];
     private readonly OpenSearchSyncOptions _options;
     private readonly string _controlIndex;
     private readonly ConcurrentDictionary<string, PipelineRuntime> _pipelines =
@@ -44,6 +49,7 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
     public SyncDestinationCapabilities Capabilities =>
         SyncDestinationCapabilities.IdempotentUpserts |
         SyncDestinationCapabilities.Deletes |
+        SyncDestinationCapabilities.Reconciliation |
         SyncDestinationCapabilities.AliasSwap;
 
     /// <summary>Creates or validates the BlueTusk-owned OpenSearch control index.</summary>
@@ -153,6 +159,9 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
         foreach (var collection in collections)
         {
             await DeleteAllDocumentsAsync(collection.Index, cancellationToken).ConfigureAwait(false);
+            await DeleteAllDocumentsAsync(
+                ReconciliationIndex(collection),
+                cancellationToken).ConfigureAwait(false);
         }
 
         _ = await SendAsync(
@@ -220,6 +229,7 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
         foreach (var mutation in batch.Mutations)
         {
             ValidateJsonDocument(mutation.Content, mutation.ContentType);
+            ValidateReconciliationKey(mutation.Key);
             var collection = await EnsureCollectionAsync(
                 runtime,
                 mutation.Collection,
@@ -227,8 +237,10 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
             operations.Add(new MaterializedOperation(
                 SyncMutationKind.Upsert,
                 collection,
+                mutation.Key,
                 StableDocumentId(mutation.Collection, mutation.Key),
                 mutation.Content,
+                mutation.ContentType,
                 mutation.PartitionKey));
         }
 
@@ -305,6 +317,9 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
                 collectionName,
                 cancellationToken).ConfigureAwait(false);
             await DeleteAllDocumentsAsync(collection.Index, cancellationToken).ConfigureAwait(false);
+            await DeleteAllDocumentsAsync(
+                ReconciliationIndex(collection),
+                cancellationToken).ConfigureAwait(false);
         }
 
         var operations = new List<MaterializedOperation>(plan.Mutations.Count);
@@ -315,6 +330,8 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
                 ValidateJsonDocument(mutation.Content, mutation.ContentType!);
             }
 
+            ValidateReconciliationKey(mutation.Key!);
+
             var collection = await EnsureCollectionAsync(
                 runtime,
                 mutation.Collection,
@@ -322,8 +339,10 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
             operations.Add(new MaterializedOperation(
                 mutation.Kind,
                 collection,
+                mutation.Key!,
                 StableDocumentId(mutation.Collection, mutation.Key!),
                 mutation.Content,
+                mutation.ContentType,
                 mutation.PartitionKey));
         }
 
@@ -616,6 +635,16 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
     private static string StableDocumentId(string collection, string key) =>
         Fingerprint(collection + "\n" + key);
 
+    private void ValidateReconciliationKey(string key)
+    {
+        var byteCount = Encoding.UTF8.GetByteCount(key);
+        if (byteCount > _options.MaxReconciliationKeyBytes)
+        {
+            throw new OpenSearchSyncBulkException(
+                $"A Sync logical key contains {byteCount} UTF-8 bytes; the configured reconciliation maximum is {_options.MaxReconciliationKeyBytes}.");
+        }
+    }
+
     private static string PipelineDocumentId(string pipelineHash) => "pipeline-" + pipelineHash;
 
     private static string SnapshotDocumentId(PipelineRuntime runtime) =>
@@ -675,9 +704,31 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
     private sealed record MaterializedOperation(
         SyncMutationKind Kind,
         CollectionDocument Collection,
+        string Key,
         string DocumentId,
         ReadOnlyMemory<byte> Content,
+        string? ContentType,
         string? Routing);
+
+    private sealed record BulkOperation(
+        SyncMutationKind Kind,
+        string Index,
+        string DocumentId,
+        ReadOnlyMemory<byte> Content,
+        string? Routing,
+        string Description);
+
+    private sealed record ReconciliationDocument(
+        string RecordType,
+        int FormatVersion,
+        string PipelineHash,
+        string Generation,
+        string Collection,
+        string Key,
+        uint KeyHash,
+        string ContentHash,
+        string? ContentType,
+        string? PartitionKey);
 
     private sealed record TransactionPlan(
         IReadOnlyList<string> ResetCollections,

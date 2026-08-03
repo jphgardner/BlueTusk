@@ -3,6 +3,7 @@ using System.Text;
 using System.Text.Json;
 using BlueTusk.Streams;
 using BlueTusk.Streams.Testing;
+using BlueTusk.Sync.Testing;
 using BlueTusk.TypeSystem;
 using Xunit.Sdk;
 
@@ -47,7 +48,7 @@ public sealed class OpenSearchSyncDestinationTests
             Assert.Equal(SyncProvisionStatus.Ready, provisioned.Status);
             Assert.True(destination.Capabilities.HasFlag(SyncDestinationCapabilities.AliasSwap));
             Assert.False(destination.Capabilities.HasFlag(SyncDestinationCapabilities.TransactionalBatches));
-            Assert.False(destination.Capabilities.HasFlag(SyncDestinationCapabilities.Reconciliation));
+            Assert.True(destination.Capabilities.HasFlag(SyncDestinationCapabilities.Reconciliation));
 
             await using var seedDelivery = ChangeDeliveryTestFactory.CreateCommitted(
                 Source,
@@ -228,6 +229,86 @@ public sealed class OpenSearchSyncDestinationTests
         }
     }
 
+    [Fact]
+    public async Task OpenSearch_sidecar_reconciliation_repairs_without_advancing_checkpoint()
+    {
+        var endpoint = GetEndpoint();
+        using var client = new HttpClient { BaseAddress = endpoint };
+        var prefix = "bt-sync-reconcile-" + Guid.NewGuid().ToString("N");
+        var options = new OpenSearchSyncOptions
+        {
+            Client = client,
+            IndexPrefix = prefix,
+            NumberOfReplicas = 0,
+            RefreshAfterWrite = true,
+            ReconciliationPageSize = 1,
+        };
+        var transform = SyncTransformVersion.Create("orders", "reconciliation-v1");
+        var destination = new OpenSearchSyncDestination(options);
+        try
+        {
+            _ = await destination.ProvisionAsync(
+                new SyncProvisionRequest("orders", Source, transform));
+            await using var delivery = ChangeDeliveryTestFactory.CreateCommitted(
+                Source,
+                71,
+                Lsn(105));
+            var transaction = Batch(
+                transform,
+                delivery.Transaction,
+                [
+                    Mutation(71, 105, 0, "orders", "same", "{\"value\":1}"),
+                    Mutation(71, 105, 1, "orders", "stale", "{\"value\":1}"),
+                    Mutation(71, 105, 2, "orders", "extra", "{\"value\":3}"),
+                ]);
+            Assert.Equal(
+                SyncApplyStatus.Applied,
+                (await destination.ApplyTransactionAsync(transaction)).Status);
+
+            var source = new SyncReconciliationTestReader(
+                [
+                    Document("same", "{\"value\":1}"),
+                    Document("stale", "{\"value\":2}"),
+                    Document("missing", "{\"value\":4}"),
+                ]);
+            var request = new SyncReconciliationRequest
+            {
+                PipelineId = "orders",
+                Collection = "orders",
+                PartitionCount = 4,
+                Repair = true,
+                RepairBatchSize = 2,
+            };
+            var repaired = await SyncReconciler.ReconcileAsync(request, source, destination);
+            Assert.Equal(1, repaired.MissingFromDestination);
+            Assert.Equal(1, repaired.ExtraInDestination);
+            Assert.Equal(1, repaired.ContentMismatches);
+            Assert.Equal(3, repaired.RepairedDifferences);
+            Assert.True(repaired.RequiresVerification);
+
+            var verified = await SyncReconciler.ReconcileAsync(
+                request with { Repair = false },
+                source,
+                destination);
+            Assert.True(verified.IsMatch);
+            Assert.Equal(3, verified.MatchedKeys);
+            Assert.Null(await destination.ReadDocumentAsync("orders", "orders", "extra"));
+            AssertJson(
+                "{\"value\":2}",
+                await destination.ReadDocumentAsync("orders", "orders", "stale"));
+            AssertJson(
+                "{\"value\":4}",
+                await destination.ReadDocumentAsync("orders", "orders", "missing"));
+            Assert.Equal(
+                SyncApplyStatus.AlreadyApplied,
+                (await destination.ApplyTransactionAsync(transaction)).Status);
+        }
+        finally
+        {
+            await DeleteTestIndexesAsync(client, prefix);
+        }
+    }
+
     private static SyncTransactionBatch Batch(
         SyncTransformVersion transform,
         ChangeTransaction transaction,
@@ -272,6 +353,9 @@ public sealed class OpenSearchSyncDestinationTests
                 Encoding.UTF8.GetBytes(content),
                 "application/json")]);
     }
+
+    private static SyncReconciliationTestDocument Document(string key, string content) =>
+        new(key, Encoding.UTF8.GetBytes(content));
 
     private static void AssertJson(string expected, ReadOnlyMemory<byte>? actual)
     {

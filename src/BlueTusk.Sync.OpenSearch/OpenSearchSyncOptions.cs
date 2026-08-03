@@ -29,6 +29,12 @@ public sealed partial record OpenSearchSyncOptions
     /// <summary>Gets the maximum source mutations accepted in one transaction.</summary>
     public int MaxMutationsPerTransaction { get; init; } = 10_000;
 
+    /// <summary>Gets the maximum UTF-8 byte length of a reconciled logical key.</summary>
+    public int MaxReconciliationKeyBytes { get; init; } = 8 * 1024;
+
+    /// <summary>Gets the maximum sidecar entries returned by one reconciliation search.</summary>
+    public int ReconciliationPageSize { get; init; } = 512;
+
     /// <summary>Gets whether writes wait until their changes become searchable.</summary>
     public bool RefreshAfterWrite { get; init; }
 
@@ -69,6 +75,10 @@ public sealed partial record OpenSearchSyncOptions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxBulkBytes);
         ArgumentOutOfRangeException.ThrowIfGreaterThan((long)MaxDocumentBytes, MaxBulkBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxMutationsPerTransaction);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxReconciliationKeyBytes);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(MaxReconciliationKeyBytes, 32_000);
+        ArgumentOutOfRangeException.ThrowIfLessThan(ReconciliationPageSize, 1);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(ReconciliationPageSize, 10_000);
     }
 
     [GeneratedRegex("^[a-z0-9][a-z0-9_-]*$", RegexOptions.CultureInvariant)]

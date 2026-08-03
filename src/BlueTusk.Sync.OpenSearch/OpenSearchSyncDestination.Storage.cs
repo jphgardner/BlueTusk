@@ -74,6 +74,9 @@ public sealed partial class OpenSearchSyncDestination
                 .ConfigureAwait(false);
         }
 
+        await EnsureReconciliationIndexAsync(runtime, definition, cancellationToken)
+            .ConfigureAwait(false);
+
         _ = await SendJsonAsync(
             HttpMethod.Put,
             $"{_controlIndex}/_doc/{CollectionDocumentId(runtime, collection)}?refresh=wait_for",
@@ -209,6 +212,133 @@ public sealed partial class OpenSearchSyncDestination
         return buffer.WrittenSpan.ToArray();
     }
 
+    private async ValueTask EnsureReconciliationIndexAsync(
+        PipelineRuntime runtime,
+        CollectionDocument collection,
+        CancellationToken cancellationToken)
+    {
+        var index = ReconciliationIndex(collection);
+        var response = await SendAsync(
+            HttpMethod.Put,
+            index,
+            BuildReconciliationIndexDefinition(runtime, collection),
+            "application/json",
+            cancellationToken,
+            HttpStatusCode.OK,
+            HttpStatusCode.BadRequest).ConfigureAwait(false);
+        if (response.StatusCode is HttpStatusCode.BadRequest &&
+            !response.Text.Contains("resource_already_exists_exception", StringComparison.Ordinal))
+        {
+            throw CreateResponseException(HttpMethod.Put, index, response);
+        }
+
+        if (response.StatusCode is HttpStatusCode.BadRequest)
+        {
+            await ValidateReconciliationIndexAsync(runtime, collection, cancellationToken)
+                .ConfigureAwait(false);
+        }
+    }
+
+    private byte[] BuildReconciliationIndexDefinition(
+        PipelineRuntime runtime,
+        CollectionDocument collection)
+    {
+        var buffer = new ArrayBufferWriter<byte>();
+        using var writer = new Utf8JsonWriter(buffer);
+        writer.WriteStartObject();
+        writer.WritePropertyName("settings");
+        writer.WriteStartObject();
+        writer.WriteNumber("number_of_shards", _options.NumberOfShards);
+        writer.WriteNumber("number_of_replicas", _options.NumberOfReplicas);
+        writer.WriteEndObject();
+        writer.WritePropertyName("mappings");
+        writer.WriteStartObject();
+        writer.WriteString("dynamic", "strict");
+        writer.WritePropertyName("properties");
+        writer.WriteStartObject();
+        WriteKeywordMapping(writer, "recordType");
+        writer.WritePropertyName("formatVersion");
+        writer.WriteStartObject();
+        writer.WriteString("type", "integer");
+        writer.WriteEndObject();
+        WriteKeywordMapping(writer, "pipelineHash");
+        WriteKeywordMapping(writer, "generation");
+        WriteKeywordMapping(writer, "collection");
+        writer.WritePropertyName("key");
+        writer.WriteStartObject();
+        writer.WriteString("type", "keyword");
+        writer.WriteNumber("ignore_above", _options.MaxReconciliationKeyBytes);
+        writer.WriteEndObject();
+        writer.WritePropertyName("keyHash");
+        writer.WriteStartObject();
+        writer.WriteString("type", "unsigned_long");
+        writer.WriteEndObject();
+        WriteKeywordMapping(writer, "contentHash");
+        WriteKeywordMapping(writer, "contentType");
+        WriteKeywordMapping(writer, "partitionKey");
+        writer.WriteEndObject();
+        writer.WritePropertyName("_meta");
+        writer.WriteStartObject();
+        writer.WriteString("product", "BlueTusk Sync Reconciliation");
+        writer.WriteNumber("formatVersion", CurrentFormatVersion);
+        writer.WriteString("pipelineHash", runtime.PipelineHash);
+        writer.WriteString("transformFingerprint", runtime.Transform.Fingerprint);
+        writer.WriteString("generation", runtime.Generation);
+        writer.WriteString("collection", collection.Collection);
+        writer.WriteEndObject();
+        writer.WriteEndObject();
+        writer.WriteEndObject();
+        writer.Flush();
+        return buffer.WrittenSpan.ToArray();
+    }
+
+    private async ValueTask ValidateReconciliationIndexAsync(
+        PipelineRuntime runtime,
+        CollectionDocument collection,
+        CancellationToken cancellationToken)
+    {
+        var index = ReconciliationIndex(collection);
+        var response = await SendAsync(
+            HttpMethod.Get,
+            $"{index}/_mapping",
+            null,
+            null,
+            cancellationToken,
+            HttpStatusCode.OK).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(response.Content);
+        var metadata = document.RootElement
+            .GetProperty(index)
+            .GetProperty("mappings")
+            .GetProperty("_meta");
+        if (!metadata.TryGetProperty("product", out var product) ||
+            !string.Equals(
+                product.GetString(),
+                "BlueTusk Sync Reconciliation",
+                StringComparison.Ordinal) ||
+            !metadata.TryGetProperty("formatVersion", out var format) ||
+            format.GetInt32() != CurrentFormatVersion ||
+            !metadata.TryGetProperty("pipelineHash", out var pipelineHash) ||
+            !string.Equals(pipelineHash.GetString(), runtime.PipelineHash, StringComparison.Ordinal) ||
+            !metadata.TryGetProperty("transformFingerprint", out var transform) ||
+            !string.Equals(transform.GetString(), runtime.Transform.Fingerprint, StringComparison.Ordinal) ||
+            !metadata.TryGetProperty("generation", out var generation) ||
+            !string.Equals(generation.GetString(), runtime.Generation, StringComparison.Ordinal) ||
+            !metadata.TryGetProperty("collection", out var collectionName) ||
+            !string.Equals(collectionName.GetString(), collection.Collection, StringComparison.Ordinal))
+        {
+            throw new OpenSearchSyncException(
+                $"OpenSearch reconciliation index '{index}' is not owned by the expected pipeline, transform generation, and collection.");
+        }
+    }
+
+    private static void WriteKeywordMapping(Utf8JsonWriter writer, string property)
+    {
+        writer.WritePropertyName(property);
+        writer.WriteStartObject();
+        writer.WriteString("type", "keyword");
+        writer.WriteEndObject();
+    }
+
     private async ValueTask<IReadOnlyList<CollectionDocument>> ReadCollectionsAsync(
         PipelineRuntime runtime,
         CancellationToken cancellationToken)
@@ -285,7 +415,9 @@ public sealed partial class OpenSearchSyncDestination
             return;
         }
 
-        var payload = BuildBulkPayload(operations, externalVersion);
+        var bulkOperations = await BuildBulkOperationsAsync(operations, cancellationToken)
+            .ConfigureAwait(false);
+        var payload = BuildBulkPayload(bulkOperations, externalVersion);
         if (payload.Length > _options.MaxBulkBytes)
         {
             throw new OpenSearchSyncBulkException(
@@ -302,17 +434,17 @@ public sealed partial class OpenSearchSyncDestination
             HttpStatusCode.OK).ConfigureAwait(false);
         using var document = JsonDocument.Parse(response.Content);
         var items = document.RootElement.GetProperty("items");
-        if (items.GetArrayLength() != operations.Count)
+        if (items.GetArrayLength() != bulkOperations.Count)
         {
             throw new OpenSearchSyncBulkException(
-                $"OpenSearch returned {items.GetArrayLength()} bulk results for {operations.Count} operations.");
+                $"OpenSearch returned {items.GetArrayLength()} bulk results for {bulkOperations.Count} physical operations.");
         }
 
         var failures = new List<string>();
         var ordinal = 0;
         foreach (var item in items.EnumerateArray())
         {
-            var operation = operations[ordinal++];
+            var operation = bulkOperations[ordinal++];
             var result = item.EnumerateObject().Single().Value;
             var status = result.GetProperty("status").GetInt32();
             var versionConflict = externalVersion is not null &&
@@ -332,7 +464,7 @@ public sealed partial class OpenSearchSyncDestination
                     ? errorElement.GetRawText()
                     : "no error detail";
                 failures.Add(
-                    $"{operation.Kind} {operation.Collection.Collection}/{operation.DocumentId}: HTTP {status} {error}");
+                    $"{operation.Kind} {operation.Description}/{operation.DocumentId}: HTTP {status} {error}");
             }
         }
 
@@ -345,7 +477,7 @@ public sealed partial class OpenSearchSyncDestination
     }
 
     private static byte[] BuildBulkPayload(
-        IReadOnlyList<MaterializedOperation> operations,
+        IReadOnlyList<BulkOperation> operations,
         long? externalVersion)
     {
         var buffer = new ArrayBufferWriter<byte>();
@@ -357,7 +489,7 @@ public sealed partial class OpenSearchSyncDestination
                 writer.WritePropertyName(
                     operation.Kind is SyncMutationKind.Upsert ? "index" : "delete");
                 writer.WriteStartObject();
-                writer.WriteString("_index", operation.Collection.Index);
+                writer.WriteString("_index", operation.Index);
                 writer.WriteString("_id", operation.DocumentId);
                 if (!string.IsNullOrWhiteSpace(operation.Routing))
                 {
@@ -384,6 +516,155 @@ public sealed partial class OpenSearchSyncDestination
         }
 
         return buffer.WrittenSpan.ToArray();
+    }
+
+    private async ValueTask<IReadOnlyList<BulkOperation>> BuildBulkOperationsAsync(
+        IReadOnlyList<MaterializedOperation> operations,
+        CancellationToken cancellationToken)
+    {
+        var existing = await ReadExistingReconciliationDocumentsAsync(
+            operations,
+            cancellationToken).ConfigureAwait(false);
+        var result = new List<BulkOperation>(operations.Count * 3);
+        foreach (var operation in operations)
+        {
+            var reconciliationIndex = ReconciliationIndex(operation.Collection);
+            existing.TryGetValue(
+                (reconciliationIndex, operation.DocumentId),
+                out var previous);
+            if (operation.Kind is SyncMutationKind.Upsert)
+            {
+                if (previous is not null &&
+                    !string.Equals(previous.PartitionKey, operation.Routing, StringComparison.Ordinal))
+                {
+                    result.Add(new BulkOperation(
+                        SyncMutationKind.Delete,
+                        operation.Collection.Index,
+                        operation.DocumentId,
+                        ReadOnlyMemory<byte>.Empty,
+                        previous.PartitionKey,
+                        operation.Collection.Collection + " route migration"));
+                }
+
+                result.Add(new BulkOperation(
+                    SyncMutationKind.Upsert,
+                    operation.Collection.Index,
+                    operation.DocumentId,
+                    operation.Content,
+                    operation.Routing,
+                    operation.Collection.Collection));
+                var sidecar = new ReconciliationDocument(
+                    "document",
+                    CurrentFormatVersion,
+                    operation.Collection.PipelineHash,
+                    operation.Collection.Generation,
+                    operation.Collection.Collection,
+                    operation.Key,
+                    SyncReconciler.GetKeyHash(operation.Key),
+                    Convert.ToHexStringLower(
+                        System.Security.Cryptography.SHA256.HashData(operation.Content.Span)),
+                    operation.ContentType,
+                    operation.Routing);
+                result.Add(new BulkOperation(
+                    SyncMutationKind.Upsert,
+                    reconciliationIndex,
+                    operation.DocumentId,
+                    JsonSerializer.SerializeToUtf8Bytes(sidecar, JsonOptions),
+                    null,
+                    operation.Collection.Collection + " reconciliation sidecar"));
+            }
+            else
+            {
+                result.Add(new BulkOperation(
+                    SyncMutationKind.Delete,
+                    operation.Collection.Index,
+                    operation.DocumentId,
+                    ReadOnlyMemory<byte>.Empty,
+                    previous?.PartitionKey ?? operation.Routing,
+                    operation.Collection.Collection));
+                result.Add(new BulkOperation(
+                    SyncMutationKind.Delete,
+                    reconciliationIndex,
+                    operation.DocumentId,
+                    ReadOnlyMemory<byte>.Empty,
+                    null,
+                    operation.Collection.Collection + " reconciliation sidecar"));
+            }
+        }
+
+        return result;
+    }
+
+    private async ValueTask<IReadOnlyDictionary<(string Index, string Id), ReconciliationDocument>>
+        ReadExistingReconciliationDocumentsAsync(
+            IReadOnlyList<MaterializedOperation> operations,
+            CancellationToken cancellationToken)
+    {
+        if (operations.Count == 0)
+        {
+            return new Dictionary<(string, string), ReconciliationDocument>();
+        }
+
+        var documents = operations
+            .Select(operation => new
+            {
+                _index = ReconciliationIndex(operation.Collection),
+                _id = operation.DocumentId,
+                _source = RoutingSourceFields,
+            })
+            .ToArray();
+        var payload = JsonSerializer.SerializeToUtf8Bytes(new { docs = documents }, JsonOptions);
+        if (payload.Length > _options.MaxBulkBytes)
+        {
+            throw new OpenSearchSyncBulkException(
+                $"The reconciliation routing lookup contains {payload.Length} bytes; the configured request maximum is {_options.MaxBulkBytes}.");
+        }
+
+        var response = await SendAsync(
+            HttpMethod.Post,
+            "_mget",
+            payload,
+            "application/json",
+            cancellationToken,
+            HttpStatusCode.OK).ConfigureAwait(false);
+        using var document = JsonDocument.Parse(response.Content);
+        var returned = document.RootElement.GetProperty("docs");
+        if (returned.GetArrayLength() != operations.Count)
+        {
+            throw new OpenSearchSyncBulkException(
+                $"OpenSearch returned {returned.GetArrayLength()} routing records for {operations.Count} mutations.");
+        }
+
+        var result = new Dictionary<(string, string), ReconciliationDocument>();
+        var ordinal = 0;
+        foreach (var item in returned.EnumerateArray())
+        {
+            var operation = operations[ordinal++];
+            if (!item.TryGetProperty("found", out var found) || !found.GetBoolean())
+            {
+                continue;
+            }
+
+            var source = item.GetProperty("_source");
+            var partitionKey = source.TryGetProperty("partitionKey", out var routing) &&
+                routing.ValueKind is JsonValueKind.String
+                    ? routing.GetString()
+                    : null;
+            result[(ReconciliationIndex(operation.Collection), operation.DocumentId)] =
+                new ReconciliationDocument(
+                    "document",
+                    CurrentFormatVersion,
+                    operation.Collection.PipelineHash,
+                    operation.Collection.Generation,
+                    operation.Collection.Collection,
+                    operation.Key,
+                    SyncReconciler.GetKeyHash(operation.Key),
+                    new string('0', 64),
+                    operation.ContentType,
+                    partitionKey);
+        }
+
+        return result;
     }
 
     private async ValueTask<SnapshotDocument> ValidateSnapshotStateAsync(
@@ -529,6 +810,9 @@ public sealed partial class OpenSearchSyncDestination
 
     private string CollectionAlias(PipelineRuntime runtime, string collection) =>
         $"{_options.IndexPrefix}-p{runtime.PipelineHash}-c{Fingerprint(collection, 24)}";
+
+    private static string ReconciliationIndex(CollectionDocument collection) =>
+        collection.Index + "-reconcile";
 
     private static string CollectionDocumentId(PipelineRuntime runtime, string collection) =>
         $"collection-{runtime.PipelineHash}-{runtime.Generation}-{Fingerprint(collection, 24)}";
