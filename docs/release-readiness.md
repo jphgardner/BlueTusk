@@ -185,6 +185,18 @@ rejects any publishable family with a gated dependency. This does not mark the
 still-open Streams 72-hour, Sync 24-hour, Live 1.0, or Control Plane release
 gates complete.
 
+The independently versioned Control Plane candidate now exposes discoverable
+v1 agent routes with versioned envelopes while retaining the original preview
+routes as compatibility aliases. Its audit store transactionally upgrades the
+legacy pre-metadata table to schema version 2, preserves and format-marks
+existing rows, rejects future schemas, and fences appends to the exact running
+schema version. Ten unit tests and the live PostgreSQL 15–19 matrix cover route
+authorization, version negotiation, immutable audit, fresh initialization, and
+legacy upgrade. The `BlueTusk.ControlPlane` and `BlueTusk.Dashboard
+0.1.0-preview.1` candidates remain non-publishable because the declared Sync
+release dependency has not yet archived its required 24-hour endurance
+evidence.
+
 The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and
 managed allocation on parameterized and explicitly prepared scalar execution,
 untouched warm checkout, sequential 1,000-row reads, and isolated 1 MiB

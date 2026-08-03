@@ -12,6 +12,9 @@ namespace BlueTusk.ControlPlane.Tests;
 
 public sealed class DashboardEndpointTests
 {
+    private static readonly JsonSerializerOptions WebJson =
+        new(JsonSerializerDefaults.Web);
+
     [Fact]
     public async Task Dashboard_maps_authorized_pages_and_HTML_encodes_inventory_values()
     {
@@ -41,7 +44,7 @@ public sealed class DashboardEndpointTests
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(15, endpoints.Length);
+        Assert.Equal(21, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -107,12 +110,49 @@ public sealed class DashboardEndpointTests
         Assert.DoesNotContain("<graph>", graphHtml, StringComparison.Ordinal);
         Assert.Contains("risk.&lt;transfers&gt;", graphHtml, StringComparison.Ordinal);
 
-        var operations = Assert.Single(
+        var legacyOperations = Assert.Single(
             endpoints,
             endpoint => endpoint.RoutePattern.RawText == "/operations/api/operations");
+        var operations = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/api/v1/operations");
+        Assert.Contains(
+            legacyOperations.Metadata.GetOrderedMetadata<IAuthorizeData>(),
+            metadata => metadata.Policy == "ops-mutate");
         Assert.Contains(
             operations.Metadata.GetOrderedMetadata<IAuthorizeData>(),
             metadata => metadata.Policy == "ops-mutate");
+
+        var capabilities = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/api/capabilities");
+        context.Response.Body = new MemoryStream();
+        await capabilities.RequestDelegate!(context);
+        context.Response.Body.Position = 0;
+        var capabilityResponse =
+            await JsonSerializer.DeserializeAsync<ControlPlaneApiCapabilities>(
+                context.Response.Body,
+                WebJson);
+        Assert.NotNull(capabilityResponse);
+        Assert.Equal(ControlPlaneApiContract.CurrentVersion, capabilityResponse.CurrentVersion);
+        Assert.Equal(
+            [ControlPlaneApiContract.CurrentVersion],
+            capabilityResponse.SupportedVersions);
+
+        var versionedOverview = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/api/v1/overview");
+        context.Response.Body = new MemoryStream();
+        await versionedOverview.RequestDelegate!(context);
+        context.Response.Body.Position = 0;
+        var overviewResponse =
+            await JsonSerializer.DeserializeAsync<ControlPlaneApiResponse<ControlPlaneOverview>>(
+                context.Response.Body,
+                WebJson);
+        Assert.NotNull(overviewResponse);
+        Assert.Equal(ControlPlaneApiContract.CurrentVersion, overviewResponse.ContractVersion);
+        Assert.Single(overviewResponse.Data.Sources);
+
         var request = new ControlPlaneOperationRequest(
             Guid.NewGuid(),
             ControlPlaneOperationKind.ReconcilePipeline,
@@ -145,6 +185,15 @@ public sealed class DashboardEndpointTests
         Assert.True(
             context.Response.StatusCode == StatusCodes.Status200OK,
             $"Expected operation success but received {context.Response.StatusCode}: {operationResponse}");
+        using (var responseJson = JsonDocument.Parse(operationResponse))
+        {
+            Assert.Equal(
+                ControlPlaneApiContract.CurrentVersion,
+                responseJson.RootElement.GetProperty("contractVersion").GetInt32());
+            Assert.Equal(
+                request.OperationId,
+                responseJson.RootElement.GetProperty("data").GetProperty("operationId").GetGuid());
+        }
         Assert.Equal(1, handler.ExecutionCount);
         Assert.Equal(
             [ControlPlaneAuditStatus.Requested, ControlPlaneAuditStatus.Succeeded],

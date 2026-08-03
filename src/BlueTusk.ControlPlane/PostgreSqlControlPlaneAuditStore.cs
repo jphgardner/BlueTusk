@@ -6,6 +6,10 @@ namespace BlueTusk.ControlPlane;
 
 public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
 {
+    public const int CurrentSchemaVersion = 2;
+
+    private const int CurrentRecordFormat = 1;
+
     private static readonly Regex SchemaPattern = new(
         "^[A-Za-z_][A-Za-z0-9_$]*$",
         RegexOptions.CultureInvariant | RegexOptions.NonBacktracking);
@@ -48,9 +52,131 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
             _ = await migrationLock.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
         }
 
+        await ExecuteNonQueryAsync(
+            connection,
+            transaction,
+            $"CREATE SCHEMA IF NOT EXISTS {_schema}",
+            cancellationToken).ConfigureAwait(false);
+        await ExecuteNonQueryAsync(
+            connection,
+            transaction,
+            $"""
+             CREATE TABLE IF NOT EXISTS {_schema}.storage_metadata (
+                 singleton boolean PRIMARY KEY DEFAULT TRUE CHECK (singleton),
+                 schema_version integer NOT NULL CHECK (schema_version >= 0)
+             )
+             """,
+            cancellationToken).ConfigureAwait(false);
+
+        var schemaVersion = await ReadOrCreateSchemaVersionAsync(
+            connection,
+            transaction,
+            cancellationToken).ConfigureAwait(false);
+        if (schemaVersion > CurrentSchemaVersion)
+        {
+            throw new InvalidOperationException(
+                $"Control-plane audit schema version {schemaVersion} is newer than " +
+                $"the supported version {CurrentSchemaVersion}.");
+        }
+
+        if (schemaVersion < 0)
+        {
+            throw new InvalidOperationException(
+                $"Control-plane audit schema version {schemaVersion} is invalid.");
+        }
+
+        if (schemaVersion <= 1)
+        {
+            await ApplyVersionOneAsync(
+                connection,
+                transaction,
+                cancellationToken).ConfigureAwait(false);
+            await SetSchemaVersionAsync(
+                connection,
+                transaction,
+                1,
+                cancellationToken).ConfigureAwait(false);
+            schemaVersion = 1;
+        }
+
+        if (schemaVersion == 1)
+        {
+            await ExecuteNonQueryAsync(
+                connection,
+                transaction,
+                $"""
+                 ALTER TABLE {_schema}.audit_log
+                 ADD COLUMN IF NOT EXISTS record_format integer NOT NULL DEFAULT 1
+                 """,
+                cancellationToken).ConfigureAwait(false);
+            await SetSchemaVersionAsync(
+                connection,
+                transaction,
+                CurrentSchemaVersion,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<int> GetSchemaVersionAsync(
+        CancellationToken cancellationToken = default)
+    {
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            $"SELECT schema_version FROM {_schema}.storage_metadata WHERE singleton";
+        var value = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        return value is null or DBNull
+            ? throw new InvalidOperationException(
+                "The control-plane audit schema is not initialized.")
+            : Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private async ValueTask<int> ReadOrCreateSchemaVersionAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken)
+    {
+        await using var read = connection.CreateCommand();
+        read.Transaction = transaction;
+        read.CommandText =
+            $"SELECT schema_version FROM {_schema}.storage_metadata WHERE singleton";
+        var value = await read.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false);
+        if (value is not null and not DBNull)
+        {
+            return Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        await using var detectLegacy = connection.CreateCommand();
+        detectLegacy.Transaction = transaction;
+        detectLegacy.CommandText = "SELECT pg_catalog.to_regclass(@audit_table)";
+        AddParameter(detectLegacy, "audit_table", $"{_controlSchema}.audit_log");
+        var legacyTable = await detectLegacy.ExecuteScalarAsync(cancellationToken)
+            .ConfigureAwait(false);
+        var inferredVersion = legacyTable is null or DBNull ? 0 : 1;
+
+        await using var insert = connection.CreateCommand();
+        insert.Transaction = transaction;
+        insert.CommandText =
+            $"""
+             INSERT INTO {_schema}.storage_metadata (singleton, schema_version)
+             VALUES (TRUE, @schema_version)
+             ON CONFLICT (singleton) DO NOTHING
+             """;
+        AddParameter(insert, "schema_version", inferredVersion);
+        _ = await insert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        return inferredVersion;
+    }
+
+    private async ValueTask ApplyVersionOneAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        CancellationToken cancellationToken)
+    {
         string[] statements =
         [
-            $"CREATE SCHEMA IF NOT EXISTS {_schema}",
             $"""
              CREATE TABLE IF NOT EXISTS {_schema}.audit_log (
                  audit_sequence bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
@@ -100,13 +226,12 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
         ];
         foreach (var statement in statements)
         {
-            await using var command = connection.CreateCommand();
-            command.Transaction = transaction;
-            command.CommandText = statement;
-            _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            await ExecuteNonQueryAsync(
+                connection,
+                transaction,
+                statement,
+                cancellationToken).ConfigureAwait(false);
         }
-
-        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask AppendAsync(
@@ -122,10 +247,12 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
             $"""
              INSERT INTO {_schema}.audit_log (
                  operation_id, occurred_at, actor_id, operation_kind, target,
-                 status, reason, detail_code)
-             VALUES (
+                 status, reason, detail_code, record_format)
+             SELECT
                  @operation_id, @occurred_at, @actor_id, @operation_kind,
-                 @target, @status, @reason, @detail_code)
+                 @target, @status, @reason, @detail_code, @record_format
+             FROM {_schema}.storage_metadata
+             WHERE singleton AND schema_version = @schema_version
              """;
         AddParameter(command, "operation_id", record.OperationId);
         AddParameter(command, "occurred_at", record.OccurredAt);
@@ -135,6 +262,47 @@ public sealed class PostgreSqlControlPlaneAuditStore : IControlPlaneAuditStore
         AddParameter(command, "status", record.Status.ToString());
         AddParameter(command, "reason", record.Reason);
         AddParameter(command, "detail_code", record.DetailCode);
+        AddParameter(command, "record_format", CurrentRecordFormat);
+        AddParameter(command, "schema_version", CurrentSchemaVersion);
+        var rows = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        if (rows != 1)
+        {
+            throw new InvalidOperationException(
+                $"Control-plane audit writes require schema version {CurrentSchemaVersion}.");
+        }
+    }
+
+    private async ValueTask SetSchemaVersionAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        int schemaVersion,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText =
+            $"""
+             UPDATE {_schema}.storage_metadata
+             SET schema_version = @schema_version
+             WHERE singleton
+             """;
+        AddParameter(command, "schema_version", schemaVersion);
+        if (await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) != 1)
+        {
+            throw new InvalidOperationException(
+                "The control-plane audit schema metadata row is missing.");
+        }
+    }
+
+    private static async ValueTask ExecuteNonQueryAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        string commandText,
+        CancellationToken cancellationToken)
+    {
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = commandText;
         _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 

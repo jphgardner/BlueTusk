@@ -16,6 +16,7 @@ public sealed class BlueTuskControlPlaneIntegrationTests
         var connectionString = GetConnectionString();
         var relaySchema = "bluetusk_control_inventory_" + Guid.NewGuid().ToString("N");
         var auditSchema = "bluetusk_control_audit_" + Guid.NewGuid().ToString("N");
+        var freshAuditSchema = "bluetusk_control_fresh_" + Guid.NewGuid().ToString("N");
         var slotName = "control_" + Guid.NewGuid().ToString("N")[..20];
         await using var dataSource = BlueTuskDataSource.Create(connectionString);
         try
@@ -74,9 +75,13 @@ public sealed class BlueTuskControlPlaneIntegrationTests
             Assert.Equal("0/5", direct.AcknowledgedPosition);
             Assert.True(direct.IsLeased);
 
+            await CreateLegacyAuditSchemaAsync(dataSource, auditSchema);
             var auditStore = new PostgreSqlControlPlaneAuditStore(dataSource, auditSchema);
             await auditStore.InitializeAsync();
             await auditStore.InitializeAsync();
+            Assert.Equal(
+                PostgreSqlControlPlaneAuditStore.CurrentSchemaVersion,
+                await auditStore.GetSchemaVersionAsync());
             await auditStore.AppendAsync(
                 new ControlPlaneAuditRecord(
                     Guid.NewGuid(),
@@ -96,16 +101,41 @@ public sealed class BlueTuskControlPlaneIntegrationTests
                     dataSource,
                     $"DELETE FROM \"{auditSchema}\".audit_log").AsTask());
             Assert.Equal(
-                1L,
+                2L,
                 await ExecuteInt64Async(
                     dataSource,
                     $"SELECT COUNT(*) FROM \"{auditSchema}\".audit_log"));
+            Assert.Equal(
+                2L,
+                await ExecuteInt64Async(
+                    dataSource,
+                    $"SELECT COUNT(*) FROM \"{auditSchema}\".audit_log WHERE record_format = 1"));
+
+            var freshAuditStore = new PostgreSqlControlPlaneAuditStore(
+                dataSource,
+                freshAuditSchema);
+            await freshAuditStore.InitializeAsync();
+            Assert.Equal(
+                PostgreSqlControlPlaneAuditStore.CurrentSchemaVersion,
+                await freshAuditStore.GetSchemaVersionAsync());
+
+            await ExecuteAsync(
+                dataSource,
+                $"""
+                 UPDATE "{auditSchema}".storage_metadata
+                 SET schema_version = {PostgreSqlControlPlaneAuditStore.CurrentSchemaVersion + 1}
+                 WHERE singleton
+                 """);
+            var futureVersion = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => auditStore.InitializeAsync().AsTask());
+            Assert.Contains("newer", futureVersion.Message, StringComparison.Ordinal);
         }
         finally
         {
             await DropLogicalSlotAsync(dataSource, slotName);
             await DropSchemaAsync(dataSource, relaySchema);
             await DropSchemaAsync(dataSource, auditSchema);
+            await DropSchemaAsync(dataSource, freshAuditSchema);
         }
     }
 
@@ -170,6 +200,40 @@ public sealed class BlueTuskControlPlaneIntegrationTests
         await using var command = connection.CreateCommand();
         command.CommandText = sql;
         _ = await command.ExecuteNonQueryAsync();
+    }
+
+    private static async ValueTask CreateLegacyAuditSchemaAsync(
+        BlueTuskDataSource dataSource,
+        string schema)
+    {
+        await ExecuteAsync(
+            dataSource,
+            $"""
+             CREATE SCHEMA "{schema}";
+             CREATE TABLE "{schema}".audit_log (
+                 audit_sequence bigint GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+                 operation_id uuid NOT NULL,
+                 occurred_at timestamptz NOT NULL,
+                 actor_id text NOT NULL,
+                 operation_kind text NOT NULL,
+                 target text NOT NULL,
+                 status text NOT NULL,
+                 reason text NOT NULL,
+                 detail_code text NULL
+             );
+             INSERT INTO "{schema}".audit_log (
+                 operation_id, occurred_at, actor_id, operation_kind, target,
+                 status, reason, detail_code)
+             VALUES (
+                 '00000000-0000-0000-0000-000000000001',
+                 '2026-08-03T16:00:00Z',
+                 'legacy-operator',
+                 'PauseSource',
+                 'source:legacy',
+                 'Succeeded',
+                 'Legacy acceptance record',
+                 NULL)
+             """);
     }
 
     private static async Task<long> ExecuteInt64Async(

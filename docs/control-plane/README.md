@@ -1,6 +1,6 @@
 # BlueTusk Control Plane and Dashboard
 
-`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph projections. They are independently versioned under the Control Plane release train and remain non-publishable until the remaining upgrade gates are complete.
+`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph projections. They are independently versioned under the Control Plane release train. The Control Plane implementation and upgrade gates are complete, but the release manifest remains non-publishable until the Sync release dependency has archived its required 24-hour endurance evidence.
 
 ## Read-only inventory
 
@@ -83,6 +83,30 @@ relational dependencies, result bounds, and capabilities. It does not expose
 bound parameters or graph result rows. The authorised `/graphs` and
 `/api/graphs` endpoints HTML-encode every application-provided value.
 
+## Versioned agent API
+
+Automation and operational agents should use the explicitly versioned routes:
+
+- `GET /api/capabilities`
+- `GET /api/v1/overview`
+- `GET /api/v1/sync`
+- `GET /api/v1/live`
+- `GET /api/v1/graphs`
+- `POST /api/v1/operations`
+
+The capability response declares the current, minimum, and complete supported
+contract-version set. Every successful v1 response is a
+`ControlPlaneApiResponse<T>` containing `contractVersion` and `data`; agents
+must reject a version they do not understand instead of interpreting a future
+payload as v1. The version is part of the route as well as the envelope so
+proxies cannot silently rewrite content negotiation.
+
+The original unversioned `/api/overview`, `/api/sync`, `/api/live`,
+`/api/graphs`, and `/api/operations` routes remain compatibility aliases for
+the `0.1.0-preview.1` release. New fields may be added compatibly within v1;
+removing or changing the meaning or JSON type of an existing v1 field requires
+a new API version. The dashboard itself uses the v1 mutation endpoint.
+
 ## Mutating operations and audit
 
 `ControlPlaneOperationExecutor` is the only provided command path. Every request has a client-generated operation ID, target, reason, and exact confirmation. `ControlPlaneOperationPolicies` requires an Operator for normal mutations and an Administrator for consumer-group removal, checkpoint rewind, and slot deletion. The required confirmation is the ordinal string `<OperationKind>:<Target>` and must be presented explicitly by the operator.
@@ -113,16 +137,23 @@ destructive-operation confirmation cannot be bypassed by the UI. The host still
 owns `IControlPlaneOperationHandler`, including its durable retry,
 reconciliation, rebuild, pause/resume, checkpoint, and slot coordinators.
 
-`PostgreSqlControlPlaneAuditStore` creates an append-only `audit_log` plus a database trigger that rejects `UPDATE` and `DELETE`. Run `InitializeAsync` with a migration owner, then give the application identity only schema usage, sequence usage, and insert privileges. Database owners can still drop database objects, so production audit retention also requires restricted ownership, PostgreSQL backups, and external log export appropriate to the organisation's compliance boundary.
+`PostgreSqlControlPlaneAuditStore` creates an append-only `audit_log` plus a database trigger that rejects `UPDATE` and `DELETE`. `InitializeAsync` serializes migrations with a transaction-scoped advisory lock and records `CurrentSchemaVersion` in `storage_metadata`. Version 2 adds an explicit record format, preserving and backfilling rows created by the legacy pre-metadata schema. Initialization is idempotent, rejects future schema versions, and commits a migration atomically. `AppendAsync` writes only when the stored schema is exactly the version supported by the running package, preventing an older process from writing through an incompatible migration. `GetSchemaVersionAsync` exposes the persisted version for readiness checks.
+
+Run `InitializeAsync` with a migration owner before starting operation workers, then give the application identity only schema usage, sequence usage, and insert privileges. Take a database backup before package upgrades. Database owners can still drop database objects, so production audit retention also requires restricted ownership, PostgreSQL backups, and external log export appropriate to the organisation's compliance boundary.
 
 ## Verification status
 
 The unit gate covers role escalation, exact confirmation, handler failure,
 non-sensitive audit details, Sync rate/lag/failure projection, authorization
 metadata on every dashboard endpoint, Live scope redaction and lag/fan-out
-projection, Continuous Graph descriptor projection, and hostile source,
-pipeline, Live, and graph HTML values. Live PostgreSQL 15–19 acceptance creates
-a real logical slot, relay
+projection, Continuous Graph descriptor projection, hostile source, pipeline,
+Live, and graph HTML values, capability discovery, v1 envelopes, legacy route
+preservation, and versioned operation responses. Live PostgreSQL 15–19
+acceptance creates a real logical slot, relay
 group, snapshot run, and direct checkpoint, verifies their inventory
-projections, initializes the audit schema idempotently, and proves stored audit
-rows reject update and delete attempts.
+projections, upgrades a legacy audit table to schema version 2 without losing
+rows, initializes a fresh schema idempotently, proves stored audit rows reject
+update and delete attempts, and rejects a future schema version.
+
+See the [0.1.0-preview.1 release notes](release-notes-0.1.0-preview.1.md) for
+the exact candidate gate and remaining publication dependency.

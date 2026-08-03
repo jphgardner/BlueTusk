@@ -21,7 +21,7 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             "BlueTusk control-plane operation {OperationId} failed.");
     private const string DashboardScript = """
         (() => {
-          const operationUrl = new URL('../api/operations', document.currentScript.src);
+          const operationUrl = new URL('../api/v1/operations', document.currentScript.src);
           document.querySelectorAll('button[data-operation-kind]').forEach(button =>
             button.addEventListener('click', async () => {
               const expected = button.dataset.operationName + ':' + button.dataset.operationTarget;
@@ -79,6 +79,28 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             (IControlPlaneContinuousGraphQueryService queries, CancellationToken cancellationToken) =>
                 queries.GetContinuousGraphOverviewAsync(cancellationToken));
         group.MapGet(
+            "/api/capabilities",
+            () => ControlPlaneApiContract.Capabilities);
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/overview",
+            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
+                Versioned(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false)));
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/sync",
+            async (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
+                Versioned(await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false)));
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/live",
+            async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
+                Versioned(await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false)));
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/graphs",
+            async (IControlPlaneContinuousGraphQueryService queries,
+                    CancellationToken cancellationToken) =>
+                Versioned(
+                    await queries.GetContinuousGraphOverviewAsync(cancellationToken)
+                        .ConfigureAwait(false)));
+        group.MapGet(
             "/assets/dashboard.js",
             () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
         group.MapPost(
@@ -92,6 +114,21 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                         executor,
                         loggerFactory.CreateLogger("BlueTusk.Dashboard.Operations"),
                         options,
+                        versionedResponse: false,
+                        cancellationToken))
+            .RequireAuthorization(options.MutationAuthorizationPolicy);
+        group.MapPost(
+                ControlPlaneApiContract.VersionedRoutePrefix + "/operations",
+                (HttpContext context,
+                        ControlPlaneOperationExecutor executor,
+                        ILoggerFactory loggerFactory,
+                        CancellationToken cancellationToken) =>
+                    ExecuteOperationAsync(
+                        context,
+                        executor,
+                        loggerFactory.CreateLogger("BlueTusk.Dashboard.Operations"),
+                        options,
+                        versionedResponse: true,
                         cancellationToken))
             .RequireAuthorization(options.MutationAuthorizationPolicy);
         group.MapGet(
@@ -152,6 +189,7 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneOperationExecutor executor,
         ILogger logger,
         BlueTuskDashboardOptions options,
+        bool versionedResponse,
         CancellationToken cancellationToken)
     {
         if (context.User.Identity?.IsAuthenticated is not true)
@@ -220,7 +258,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 new ControlPlaneActor(actorId, roles),
                 request,
                 cancellationToken).ConfigureAwait(false);
-            return Results.Ok(new { request.OperationId, Status = "succeeded" });
+            var response = new { request.OperationId, Status = "succeeded" };
+            return versionedResponse
+                ? Results.Ok(Versioned(response))
+                : Results.Ok(response);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -262,6 +303,9 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         "text/html; charset=utf-8",
         Encoding.UTF8,
         StatusCodes.Status200OK);
+
+    private static ControlPlaneApiResponse<T> Versioned<T>(T data) =>
+        new(ControlPlaneApiContract.CurrentVersion, data);
 
     private static string RenderSources(
         ControlPlaneOverview overview,

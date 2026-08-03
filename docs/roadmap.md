@@ -28,6 +28,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 4 slice: transactional relay schema v1-to-v2 migration, envelope-protection/key-rotation hooks, confirmed consumer tombstones, bounded retention policies, and compaction
 - [x] Phase 4 slice: consistent framed relay backup, empty-schema atomic restore, protected-envelope validation, tombstone/fencing preservation, and corruption rollback across PostgreSQL 15–19
 - [x] Phase 4 slice: Control Plane source/slot/WAL/relay/snapshot/group/checkpoint inventory, authorised dashboard pages, confirmed command policies, and immutable PostgreSQL audit across PostgreSQL 15–19
+- [x] Phase 4 slice: Control Plane v1 agent APIs, legacy compatibility aliases, transactionally versioned audit migrations, legacy upgrade, and future-version rejection across PostgreSQL 15–19
 - [x] Phase 4 slice: version-bound format registry, upgrade evidence, Streams 1.0 candidate API freeze, and restart-safe spool storage accounting
 - [x] Phase 4 slice: executable fault-injected relay endurance harness, machine-readable evidence report, local smoke gate, and confirmed self-hosted 72-hour release workflow
 - [ ] Phase 4 release gate: complete and archive one successful 72-hour relay endurance report (the harness is implemented; a short run is not equivalent)
@@ -69,6 +70,8 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 7 slice: inspected 0.1.0-preview.1 NuGet pack plus machine-enforced cross-family publication ordering
 - [x] Phase 7 release gate: enable Continuous Graph only after its Live release dependency passes
 - [x] Phase 7: Continuous Graph 0.1.0-preview.1 implementation and packaging gate
+- [x] Control Plane implementation gate: versioned agent contract, PostgreSQL 15–19 upgrade acceptance, and inspected 0.1.0-preview.1 candidate packages
+- [ ] Control Plane publication gate: enable only after the Sync release dependency archives its successful 24-hour endurance report
 
 The detailed contracts and release gates are maintained in the [real-time platform plan](realtime-platform/delivery-plan.md).
 

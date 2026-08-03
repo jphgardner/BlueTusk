@@ -1,4 +1,39 @@
 #nullable enable
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneApiCapabilities!
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.ControlPlaneApiCapabilities(int CurrentVersion, int MinimumSupportedVersion, System.Collections.Generic.IReadOnlyList<int>! SupportedVersions) -> void
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.CurrentVersion.get -> int
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.CurrentVersion.init -> void
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.Deconstruct(out int CurrentVersion, out int MinimumSupportedVersion, out System.Collections.Generic.IReadOnlyList<int>! SupportedVersions) -> void
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.Equals(BlueTusk.ControlPlane.ControlPlaneApiCapabilities? other) -> bool
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.MinimumSupportedVersion.get -> int
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.MinimumSupportedVersion.init -> void
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.SupportedVersions.get -> System.Collections.Generic.IReadOnlyList<int>!
+BlueTusk.ControlPlane.ControlPlaneApiCapabilities.SupportedVersions.init -> void
+BlueTusk.ControlPlane.ControlPlaneApiContract
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneApiResponse<T>!
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.ContractVersion.get -> int
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.ContractVersion.init -> void
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.ControlPlaneApiResponse(int ContractVersion, T Data) -> void
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.Data.get -> T
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.Data.init -> void
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.Deconstruct(out int ContractVersion, out T Data) -> void
+BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.Equals(BlueTusk.ControlPlane.ControlPlaneApiResponse<T>? other) -> bool
+const BlueTusk.ControlPlane.ControlPlaneApiContract.CurrentVersion = 1 -> int
+const BlueTusk.ControlPlane.ControlPlaneApiContract.MinimumSupportedVersion = 1 -> int
+const BlueTusk.ControlPlane.ControlPlaneApiContract.VersionedRoutePrefix = "/api/v1" -> string!
+static BlueTusk.ControlPlane.ControlPlaneApiCapabilities.operator !=(BlueTusk.ControlPlane.ControlPlaneApiCapabilities? left, BlueTusk.ControlPlane.ControlPlaneApiCapabilities? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneApiCapabilities.operator ==(BlueTusk.ControlPlane.ControlPlaneApiCapabilities? left, BlueTusk.ControlPlane.ControlPlaneApiCapabilities? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneApiContract.Capabilities.get -> BlueTusk.ControlPlane.ControlPlaneApiCapabilities!
+static BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.operator !=(BlueTusk.ControlPlane.ControlPlaneApiResponse<T>? left, BlueTusk.ControlPlane.ControlPlaneApiResponse<T>? right) -> bool
+static BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.operator ==(BlueTusk.ControlPlane.ControlPlaneApiResponse<T>? left, BlueTusk.ControlPlane.ControlPlaneApiResponse<T>? right) -> bool
+override BlueTusk.ControlPlane.ControlPlaneApiCapabilities.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneApiCapabilities.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneApiCapabilities.ToString() -> string!
+override BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.GetHashCode() -> int
+override BlueTusk.ControlPlane.ControlPlaneApiResponse<T>.ToString() -> string!
 BlueTusk.ControlPlane.ControlPlaneActor
 BlueTusk.ControlPlane.ControlPlaneActor.<Clone>$() -> BlueTusk.ControlPlane.ControlPlaneActor!
 BlueTusk.ControlPlane.ControlPlaneActor.ActorId.get -> string!
@@ -330,8 +365,10 @@ BlueTusk.ControlPlane.IControlPlaneSyncQueryService
 BlueTusk.ControlPlane.IControlPlaneSyncQueryService.GetSyncOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneSyncOverview!>
 BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore
 BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.AppendAsync(BlueTusk.ControlPlane.ControlPlaneAuditRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.GetSchemaVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
 BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.PostgreSqlControlPlaneAuditStore(System.Data.Common.DbDataSource! dataSource, string! controlSchema = "bluetusk_control") -> void
+const BlueTusk.ControlPlane.PostgreSqlControlPlaneAuditStore.CurrentSchemaVersion = 2 -> int
 BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService
 BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService.GetOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneOverview!>
 BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService.PostgreSqlControlPlaneQueryService(System.Collections.Generic.IEnumerable<BlueTusk.ControlPlane.ControlPlanePostgreSqlSource!>! instances, System.TimeProvider? timeProvider = null) -> void
