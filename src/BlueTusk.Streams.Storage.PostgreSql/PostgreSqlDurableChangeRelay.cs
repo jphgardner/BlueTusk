@@ -34,7 +34,30 @@ public sealed record ChangeRelayConsumerGroup(
     long StartSequence,
     long CheckpointSequence,
     long StoreGeneration,
-    bool IsActive);
+    bool IsActive)
+{
+    public DateTimeOffset? RemovedAt { get; init; }
+
+    public DateTimeOffset? RetentionProtectedUntil { get; init; }
+}
+
+public enum ChangeRelayConsumerGroupRemovalMode
+{
+    PreserveResumeWindow,
+    ReleaseRetentionImmediately,
+}
+
+public enum ChangeRelayConsumerGroupRemovalStatus
+{
+    Removed,
+    RetentionReleased,
+    AlreadyRemoved,
+    Conflict,
+}
+
+public sealed record ChangeRelayConsumerGroupRemovalResult(
+    ChangeRelayConsumerGroupRemovalStatus Status,
+    ChangeRelayConsumerGroup Current);
 
 public sealed record ChangeRelayGroupLease(
     string SourceFingerprint,
@@ -70,7 +93,17 @@ public sealed record ChangeRelayAcknowledgeResult(
 
 public sealed record ChangeRelayRetentionResult(
     long DeletedTransactions,
-    long DeletedBytes);
+    long DeletedBytes)
+{
+    public bool DeleteBatchLimitReached { get; init; }
+}
+
+public sealed record ChangeRelayCompactionResult(
+    long DeletedTransactions,
+    long DeletedBytes,
+    int Batches,
+    bool FullyApplied,
+    bool Vacuumed);
 
 public sealed record ChangeRelayMetrics(
     long TransactionCount,
@@ -89,6 +122,8 @@ public sealed record ChangeRelayHealth(
 
 public sealed class PostgreSqlDurableChangeRelay
 {
+    public const int CurrentSchemaVersion = 2;
+
     private const string SourceLeaseConsumerGroup = "__relay_source__";
     private readonly PostgreSqlStreamsStorageOptions _options;
     private readonly DbDataSource _dataSource;
@@ -100,6 +135,7 @@ public sealed class PostgreSqlDurableChangeRelay
     private readonly string _groupsTable;
     private readonly string _stateTable;
     private readonly ChangeTransactionEnvelopeOptions _envelopeOptions;
+    private readonly IChangeRelayEnvelopeProtectionProvider? _envelopeProtection;
 
     public PostgreSqlDurableChangeRelay(PostgreSqlStreamsStorageOptions options)
     {
@@ -114,6 +150,7 @@ public sealed class PostgreSqlDurableChangeRelay
         _transactionsTable = _schema + ".relay_transactions";
         _groupsTable = _schema + ".relay_consumer_groups";
         _stateTable = _schema + ".stream_state";
+        _envelopeProtection = options.EnvelopeProtection;
         _envelopeOptions = new ChangeTransactionEnvelopeOptions
         {
             MaxEnvelopeBytes = options.MaxEnvelopeBytes,
@@ -228,6 +265,87 @@ public sealed class PostgreSqlDurableChangeRelay
             await ExecuteAsync(connection, transaction: null, statement, cancellationToken)
                 .ConfigureAwait(false);
         }
+
+        await ApplySchemaMigrationsAsync(connection, cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask<int> GetSchemaVersionAsync(CancellationToken cancellationToken = default)
+    {
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var command = CreateCommand(
+            connection,
+            transaction: null,
+            $"SELECT schema_version FROM {_metadataTable} WHERE singleton");
+        var value = await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ??
+            throw new ChangeRelaySchemaVersionException("The relay storage metadata row is missing.");
+        return Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private async ValueTask ApplySchemaMigrationsAsync(
+        DbConnection connection,
+        CancellationToken cancellationToken)
+    {
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        await using var read = CreateCommand(
+            connection,
+            transaction,
+            $"SELECT schema_version FROM {_metadataTable} WHERE singleton FOR UPDATE");
+        var value = await read.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false) ??
+            throw new ChangeRelaySchemaVersionException("The relay storage metadata row is missing.");
+        var version = Convert.ToInt32(value, System.Globalization.CultureInfo.InvariantCulture);
+        if (version < 1 || version > CurrentSchemaVersion)
+        {
+            throw new ChangeRelaySchemaVersionException(
+                $"Relay schema version {version} is not supported by this build; " +
+                $"the current version is {CurrentSchemaVersion}.");
+        }
+
+        while (version < CurrentSchemaVersion)
+        {
+            switch (version)
+            {
+                case 1:
+                    string[] migration =
+                    [
+                        $"ALTER TABLE {_transactionsTable} ADD COLUMN IF NOT EXISTS protection_id text NULL",
+                        $"ALTER TABLE {_groupsTable} ADD COLUMN IF NOT EXISTS removed_at timestamptz NULL",
+                        $"ALTER TABLE {_groupsTable} ADD COLUMN IF NOT EXISTS retention_protected_until timestamptz NULL",
+                        $"""
+                         CREATE INDEX IF NOT EXISTS relay_consumer_groups_retention_idx
+                         ON {_groupsTable} (
+                             source_fingerprint, source_epoch, checkpoint_sequence)
+                         WHERE active OR retention_protected_until IS NOT NULL
+                         """,
+                    ];
+                    foreach (var statement in migration)
+                    {
+                        await ExecuteAsync(connection, transaction, statement, cancellationToken)
+                            .ConfigureAwait(false);
+                    }
+
+                    version = 2;
+                    break;
+                default:
+                    throw new ChangeRelaySchemaVersionException(
+                        $"No relay storage migration is registered from schema version {version}.");
+            }
+
+            await using var update = CreateCommand(
+                connection,
+                transaction,
+                $"""
+                 UPDATE {_metadataTable}
+                 SET schema_version = @version, updated_at = clock_timestamp()
+                 WHERE singleton
+                 """);
+            AddParameter(update, "version", version);
+            _ = await update.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
     }
 
     public async ValueTask<ChangeRelaySourceRegistration> RegisterSourceAsync(
@@ -339,7 +457,8 @@ public sealed class PostgreSqlDurableChangeRelay
             transactionToAppend,
             _envelopeOptions,
             cancellationToken).ConfigureAwait(false);
-        var envelopeBytes = envelope.Data.Length;
+        var protectedEnvelope = ProtectEnvelope(envelope.Data.Span);
+        var envelopeBytes = protectedEnvelope.Payload.Length;
         if (envelopeBytes > _options.MaxEnvelopeBytes)
         {
             throw new ChangeRelayStorageExhaustedException(
@@ -378,7 +497,10 @@ public sealed class PostgreSqlDurableChangeRelay
             cancellationToken).ConfigureAwait(false);
         if (duplicate is not null)
         {
-            if (!duplicate.Value.Envelope.AsSpan().SequenceEqual(envelope.Data.Span))
+            var duplicatePlaintext = UnprotectEnvelope(
+                duplicate.Value.ProtectionId,
+                duplicate.Value.Envelope);
+            if (!duplicatePlaintext.AsSpan().SequenceEqual(envelope.Data.Span))
             {
                 throw new ChangeRelayIntegrityException(
                     "A relay transaction identity already exists with a different envelope.");
@@ -403,8 +525,10 @@ public sealed class PostgreSqlDurableChangeRelay
                          $"""
                          INSERT INTO {_transactionsTable} (
                              source_fingerprint, source_epoch, commit_position,
-                             transaction_id, envelope_format, envelope)
-                         VALUES (@source, @epoch, @position, @transaction_id, @format, @envelope)
+                             transaction_id, envelope_format, protection_id, envelope)
+                         VALUES (
+                             @source, @epoch, @position, @transaction_id, @format,
+                             @protection_id, @envelope)
                          RETURNING sequence
                          """))
         {
@@ -413,7 +537,8 @@ public sealed class PostgreSqlDurableChangeRelay
             AddParameter(insert, "position", (decimal)transactionToAppend.CommitEndPosition.Value);
             AddParameter(insert, "transaction_id", (long)transactionToAppend.TransactionId);
             AddParameter(insert, "format", envelope.FormatVersion);
-            AddParameter(insert, "envelope", envelope.Data.ToArray());
+            AddNullableStringParameter(insert, "protection_id", protectedEnvelope.ProtectionId);
+            AddParameter(insert, "envelope", protectedEnvelope.Payload);
             sequence = Convert.ToInt64(
                 await insert.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false),
                 System.Globalization.CultureInfo.InvariantCulture);
@@ -648,6 +773,118 @@ public sealed class PostgreSqlDurableChangeRelay
         return await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false) == 1;
     }
 
+    public async ValueTask<ChangeRelayConsumerGroupRemovalResult> RemoveConsumerGroupAsync(
+        ChangeRelayConsumerGroup group,
+        long expectedGeneration,
+        string confirmation,
+        ChangeRelayConsumerGroupRemovalMode mode = ChangeRelayConsumerGroupRemovalMode.PreserveResumeWindow,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(group);
+        ArgumentOutOfRangeException.ThrowIfNegative(expectedGeneration);
+        ArgumentException.ThrowIfNullOrWhiteSpace(confirmation);
+        if (!Enum.IsDefined(mode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(mode));
+        }
+
+        if (!string.Equals(confirmation, group.Name, StringComparison.Ordinal))
+        {
+            throw new ChangeRelayConsumerGroupException(
+                "Consumer-group removal confirmation must exactly match the group name.");
+        }
+
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        var state = await ReadGroupAsync(
+            connection,
+            transaction,
+            group.SourceFingerprint,
+            group.SourceEpoch,
+            group.Name,
+            forUpdate: true,
+            cancellationToken).ConfigureAwait(false) ??
+            throw new ChangeRelayConsumerGroupException("The relay consumer group does not exist.");
+        if (state.Group.StoreGeneration != expectedGeneration)
+        {
+            await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+            return new ChangeRelayConsumerGroupRemovalResult(
+                ChangeRelayConsumerGroupRemovalStatus.Conflict,
+                state.Group);
+        }
+
+        ChangeRelayConsumerGroupRemovalStatus status;
+        int changed;
+        if (state.Group.IsActive)
+        {
+            await using var remove = CreateCommand(
+                connection,
+                transaction,
+                $"""
+                 UPDATE {_groupsTable}
+                 SET active = false,
+                     store_generation = store_generation + 1,
+                     lease_owner = NULL, lease_token = NULL, lease_expires = NULL,
+                     removed_at = clock_timestamp(),
+                     retention_protected_until = clock_timestamp() +
+                         (@retention_ms * interval '1 millisecond'),
+                     updated_at = clock_timestamp()
+                 WHERE source_fingerprint = @source AND source_epoch = @epoch
+                   AND consumer_group = @consumer
+                 """);
+            AddGroupParameters(remove, group.SourceFingerprint, group.SourceEpoch, group.Name);
+            AddParameter(
+                remove,
+                "retention_ms",
+                mode == ChangeRelayConsumerGroupRemovalMode.PreserveResumeWindow
+                    ? _options.RemovedConsumerGroupRetentionWindow.TotalMilliseconds
+                    : 0D);
+            changed = await remove.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            status = ChangeRelayConsumerGroupRemovalStatus.Removed;
+        }
+        else if (mode == ChangeRelayConsumerGroupRemovalMode.ReleaseRetentionImmediately)
+        {
+            await using var release = CreateCommand(
+                connection,
+                transaction,
+                $"""
+                 UPDATE {_groupsTable}
+                 SET store_generation = store_generation + 1,
+                     retention_protected_until = clock_timestamp(),
+                     updated_at = clock_timestamp()
+                 WHERE source_fingerprint = @source AND source_epoch = @epoch
+                   AND consumer_group = @consumer
+                   AND retention_protected_until > clock_timestamp()
+                 """);
+            AddGroupParameters(release, group.SourceFingerprint, group.SourceEpoch, group.Name);
+            changed = await release.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+            status = changed == 1
+                ? ChangeRelayConsumerGroupRemovalStatus.RetentionReleased
+                : ChangeRelayConsumerGroupRemovalStatus.AlreadyRemoved;
+        }
+        else
+        {
+            changed = 0;
+            status = ChangeRelayConsumerGroupRemovalStatus.AlreadyRemoved;
+        }
+
+        var current = changed == 0
+            ? state.Group
+            : (await ReadGroupAsync(
+                connection,
+                transaction,
+                group.SourceFingerprint,
+                group.SourceEpoch,
+                group.Name,
+                forUpdate: false,
+                cancellationToken).ConfigureAwait(false))!.Group;
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return new ChangeRelayConsumerGroupRemovalResult(status, current);
+    }
+
     public async ValueTask<ChangeRelayReadBatch> ReadConsumerGroupAsync(
         ChangeRelayGroupLease lease,
         int maxTransactions,
@@ -680,11 +917,11 @@ public sealed class PostgreSqlDurableChangeRelay
             transaction: null,
             $"""
             WITH candidates AS (
-                SELECT sequence, appended_at, envelope,
+                SELECT sequence, appended_at, protection_id, envelope,
                        row_number() OVER (ORDER BY sequence) AS row_number,
                        sum(octet_length(envelope)) OVER (ORDER BY sequence) AS running_bytes
                 FROM (
-                    SELECT sequence, appended_at, envelope
+                    SELECT sequence, appended_at, protection_id, envelope
                     FROM {_transactionsTable}
                     WHERE source_fingerprint = @source AND source_epoch = @epoch
                       AND sequence > @checkpoint
@@ -692,7 +929,7 @@ public sealed class PostgreSqlDurableChangeRelay
                     LIMIT @maximum_transactions
                 ) AS limited
             )
-            SELECT sequence, appended_at, envelope
+            SELECT sequence, appended_at, protection_id, envelope
             FROM candidates
             WHERE running_bytes <= @maximum_bytes OR row_number = 1
             ORDER BY sequence
@@ -707,7 +944,10 @@ public sealed class PostgreSqlDurableChangeRelay
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
         {
-            var bytes = reader.GetFieldValue<byte[]>(2);
+            var storedBytes = reader.GetFieldValue<byte[]>(3);
+            var bytes = UnprotectEnvelope(
+                reader.IsDBNull(2) ? null : reader.GetString(2),
+                storedBytes);
             var envelope = ChangeTransactionEnvelopeCodec.FromData(bytes, _envelopeOptions);
             var transaction = ChangeTransactionEnvelopeCodec.Decode(envelope, _envelopeOptions);
             records.Add(new ChangeRelayRecord(
@@ -715,7 +955,7 @@ public sealed class PostgreSqlDurableChangeRelay
                 reader.GetFieldValue<DateTimeOffset>(1),
                 envelope,
                 transaction));
-            totalBytes = checked(totalBytes + bytes.Length);
+            totalBytes = checked(totalBytes + storedBytes.Length);
         }
 
         return new ChangeRelayReadBatch(groupState.Group, records.AsReadOnly(), totalBytes);
@@ -814,23 +1054,42 @@ public sealed class PostgreSqlDurableChangeRelay
             connection,
             transaction,
             $"""
+            WITH deletable AS (
+                SELECT candidate.sequence
+                FROM {_transactionsTable} AS candidate
+                WHERE candidate.source_fingerprint = @source
+                  AND candidate.source_epoch = @epoch
+                  AND candidate.appended_at <=
+                      clock_timestamp() - (@retention_ms * interval '1 millisecond')
+                  AND NOT EXISTS (
+                      SELECT 1 FROM {_groupsTable} AS consumer
+                      WHERE consumer.source_fingerprint = candidate.source_fingerprint
+                        AND consumer.source_epoch = candidate.source_epoch
+                        AND (consumer.active OR
+                             consumer.retention_protected_until > clock_timestamp())
+                        AND consumer.start_sequence < candidate.sequence
+                        AND consumer.checkpoint_sequence < candidate.sequence)
+                  AND candidate.sequence NOT IN (
+                      SELECT retained.sequence
+                      FROM {_transactionsTable} AS retained
+                      WHERE retained.source_fingerprint = @source
+                        AND retained.source_epoch = @epoch
+                      ORDER BY retained.sequence DESC
+                      LIMIT @minimum_retained)
+                ORDER BY candidate.sequence
+                LIMIT @delete_batch
+                FOR UPDATE SKIP LOCKED
+            )
             DELETE FROM {_transactionsTable} AS candidate
-            WHERE candidate.source_fingerprint = @source
-              AND candidate.source_epoch = @epoch
-              AND candidate.appended_at <=
-                  clock_timestamp() - (@retention_ms * interval '1 millisecond')
-              AND NOT EXISTS (
-                  SELECT 1 FROM {_groupsTable} AS consumer
-                  WHERE consumer.source_fingerprint = candidate.source_fingerprint
-                    AND consumer.source_epoch = candidate.source_epoch
-                    AND consumer.active
-                    AND consumer.start_sequence < candidate.sequence
-                    AND consumer.checkpoint_sequence < candidate.sequence)
-            RETURNING sequence, octet_length(envelope)
+            USING deletable
+            WHERE candidate.sequence = deletable.sequence
+            RETURNING candidate.sequence, octet_length(candidate.envelope)
             """);
         AddParameter(command, "source", source.Source.Fingerprint);
         AddParameter(command, "epoch", source.SourceEpoch);
         AddParameter(command, "retention_ms", _options.ResumeRetentionWindow.TotalMilliseconds);
+        AddParameter(command, "minimum_retained", _options.MinimumRetainedTransactions);
+        AddParameter(command, "delete_batch", _options.RetentionDeleteBatchSize);
         long deletedCount = 0;
         long deletedBytes = 0;
         long watermark = 0;
@@ -878,7 +1137,52 @@ public sealed class PostgreSqlDurableChangeRelay
         }
 
         await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
-        return new ChangeRelayRetentionResult(deletedCount, deletedBytes);
+        return new ChangeRelayRetentionResult(deletedCount, deletedBytes)
+        {
+            DeleteBatchLimitReached = deletedCount == _options.RetentionDeleteBatchSize,
+        };
+    }
+
+    public async ValueTask<ChangeRelayCompactionResult> CompactAsync(
+        ChangeRelaySourceRegistration source,
+        bool vacuum = true,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        long deletedTransactions = 0;
+        long deletedBytes = 0;
+        var batches = 0;
+        var fullyApplied = false;
+        while (batches < _options.MaxCompactionBatches)
+        {
+            var retained = await ApplyRetentionAsync(source, cancellationToken).ConfigureAwait(false);
+            batches++;
+            deletedTransactions = checked(deletedTransactions + retained.DeletedTransactions);
+            deletedBytes = checked(deletedBytes + retained.DeletedBytes);
+            if (!retained.DeleteBatchLimitReached)
+            {
+                fullyApplied = true;
+                break;
+            }
+        }
+
+        if (vacuum)
+        {
+            await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+                .ConfigureAwait(false);
+            await ExecuteAsync(
+                connection,
+                transaction: null,
+                $"VACUUM (ANALYZE) {_transactionsTable}",
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        return new ChangeRelayCompactionResult(
+            deletedTransactions,
+            deletedBytes,
+            batches,
+            fullyApplied,
+            vacuum);
     }
 
     public async ValueTask<ChangeRelayMetrics> GetMetricsAsync(
@@ -898,16 +1202,19 @@ public sealed class PostgreSqlDurableChangeRelay
                    COALESCE(MAX(candidate.sequence), 0),
                    COALESCE((
                        SELECT MIN(consumer.checkpoint_sequence)
-                       FROM {_groupsTable} AS consumer
-                       WHERE consumer.source_fingerprint = @source
-                         AND consumer.source_epoch = @epoch AND consumer.active), 0),
+                        FROM {_groupsTable} AS consumer
+                        WHERE consumer.source_fingerprint = @source
+                          AND consumer.source_epoch = @epoch
+                          AND (consumer.active OR
+                               consumer.retention_protected_until > clock_timestamp())), 0),
                    COALESCE(EXTRACT(EPOCH FROM (
                        clock_timestamp() - MIN(candidate.appended_at) FILTER (
                            WHERE EXISTS (
                                SELECT 1 FROM {_groupsTable} AS pending_consumer
-                               WHERE pending_consumer.source_fingerprint = candidate.source_fingerprint
-                                 AND pending_consumer.source_epoch = candidate.source_epoch
-                                 AND pending_consumer.active
+                                WHERE pending_consumer.source_fingerprint = candidate.source_fingerprint
+                                  AND pending_consumer.source_epoch = candidate.source_epoch
+                                  AND (pending_consumer.active OR
+                                       pending_consumer.retention_protected_until > clock_timestamp())
                                  AND pending_consumer.start_sequence < candidate.sequence
                                  AND pending_consumer.checkpoint_sequence < candidate.sequence))))::double precision, 0)
             FROM {_transactionsTable} AS candidate
@@ -1003,6 +1310,7 @@ public sealed class PostgreSqlDurableChangeRelay
             transaction,
             $"""
             SELECT start_sequence, checkpoint_sequence, store_generation, active,
+                   removed_at, retention_protected_until,
                    lease_owner, lease_token, lease_expires,
                    COALESCE(lease_expires > clock_timestamp(), false),
                    last_fencing_token
@@ -1025,20 +1333,24 @@ public sealed class PostgreSqlDurableChangeRelay
             reader.GetInt64(0),
             reader.GetInt64(1),
             reader.GetInt64(2),
-            reader.GetBoolean(3));
+            reader.GetBoolean(3))
+        {
+            RemovedAt = reader.IsDBNull(4) ? null : reader.GetFieldValue<DateTimeOffset>(4),
+            RetentionProtectedUntil = reader.IsDBNull(5) ? null : reader.GetFieldValue<DateTimeOffset>(5),
+        };
         ChangeRelayGroupLease? lease = null;
-        if (!reader.IsDBNull(4))
+        if (!reader.IsDBNull(6))
         {
             lease = new ChangeRelayGroupLease(
                 sourceFingerprint,
                 sourceEpoch,
                 consumerGroup,
-                reader.GetString(4),
-                reader.GetInt64(5),
-                reader.GetFieldValue<DateTimeOffset>(6));
+                reader.GetString(6),
+                reader.GetInt64(7),
+                reader.GetFieldValue<DateTimeOffset>(8));
         }
 
-        return new GroupState(group, lease, reader.GetBoolean(7), reader.GetInt64(8));
+        return new GroupState(group, lease, reader.GetBoolean(9), reader.GetInt64(10));
     }
 
     private async ValueTask EnsureSourceLeaseAsync(
@@ -1077,7 +1389,7 @@ public sealed class PostgreSqlDurableChangeRelay
         }
     }
 
-    private async ValueTask<(long Sequence, byte[] Envelope)?> ReadDuplicateAsync(
+    private async ValueTask<(long Sequence, string? ProtectionId, byte[] Envelope)?> ReadDuplicateAsync(
         DbConnection connection,
         DbTransaction transaction,
         ChangeRelaySourceRegistration source,
@@ -1088,7 +1400,7 @@ public sealed class PostgreSqlDurableChangeRelay
             connection,
             transaction,
             $"""
-            SELECT sequence, envelope
+            SELECT sequence, protection_id, envelope
             FROM {_transactionsTable}
             WHERE source_fingerprint = @source AND source_epoch = @epoch
               AND commit_position = @position AND transaction_id = @transaction_id
@@ -1099,7 +1411,7 @@ public sealed class PostgreSqlDurableChangeRelay
         AddParameter(command, "transaction_id", (long)changeTransaction.TransactionId);
         await using var reader = await command.ExecuteReaderAsync(cancellationToken).ConfigureAwait(false);
         return await reader.ReadAsync(cancellationToken).ConfigureAwait(false)
-            ? (reader.GetInt64(0), reader.GetFieldValue<byte[]>(1))
+            ? (reader.GetInt64(0), reader.IsDBNull(1) ? null : reader.GetString(1), reader.GetFieldValue<byte[]>(2))
             : null;
     }
 
@@ -1178,6 +1490,50 @@ public sealed class PostgreSqlDurableChangeRelay
         }
     }
 
+    private (string? ProtectionId, byte[] Payload) ProtectEnvelope(ReadOnlySpan<byte> plaintext)
+    {
+        if (_envelopeProtection is null)
+        {
+            return (null, plaintext.ToArray());
+        }
+
+        try
+        {
+            return (
+                _envelopeProtection.CurrentProtectorId,
+                _envelopeProtection.Protect(plaintext));
+        }
+        catch (Exception exception) when (exception is not ChangeRelayException)
+        {
+            throw new ChangeRelayProtectionException("The relay envelope could not be protected.", exception);
+        }
+    }
+
+    private byte[] UnprotectEnvelope(string? protectionId, ReadOnlySpan<byte> protectedData)
+    {
+        if (protectionId is null)
+        {
+            return protectedData.ToArray();
+        }
+
+        if (_envelopeProtection is null)
+        {
+            throw new ChangeRelayProtectionException(
+                $"Relay envelope protector '{protectionId}' is required but no protection provider is configured.");
+        }
+
+        try
+        {
+            return _envelopeProtection.Unprotect(protectionId, protectedData);
+        }
+        catch (Exception exception) when (exception is not ChangeRelayException)
+        {
+            throw new ChangeRelayProtectionException(
+                $"Relay envelope protector '{protectionId}' could not unprotect the stored payload.",
+                exception);
+        }
+    }
+
     private static DateTimeOffset ReadTimestamp(object value) => value switch
     {
         DateTimeOffset timestamp => timestamp,
@@ -1213,6 +1569,15 @@ public sealed class PostgreSqlDurableChangeRelay
         var parameter = command.CreateParameter();
         parameter.ParameterName = name;
         parameter.Value = value;
+        _ = command.Parameters.Add(parameter);
+    }
+
+    private static void AddNullableStringParameter(DbCommand command, string name, string? value)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.DbType = DbType.String;
+        parameter.Value = (object?)value ?? DBNull.Value;
         _ = command.Parameters.Add(parameter);
     }
 
@@ -1358,6 +1723,32 @@ public class ChangeRelayException : Exception
 {
     public ChangeRelayException(string message)
         : base(message)
+    {
+    }
+
+    public ChangeRelayException(string message, Exception innerException)
+        : base(message, innerException)
+    {
+    }
+}
+
+public sealed class ChangeRelaySchemaVersionException : ChangeRelayException
+{
+    public ChangeRelaySchemaVersionException(string message)
+        : base(message)
+    {
+    }
+}
+
+public sealed class ChangeRelayProtectionException : ChangeRelayException
+{
+    public ChangeRelayProtectionException(string message)
+        : base(message)
+    {
+    }
+
+    public ChangeRelayProtectionException(string message, Exception innerException)
+        : base(message, innerException)
     {
     }
 }

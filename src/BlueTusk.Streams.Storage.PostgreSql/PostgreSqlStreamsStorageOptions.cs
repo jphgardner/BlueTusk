@@ -3,6 +3,15 @@ using System.Text;
 
 namespace BlueTusk.Streams.Storage.PostgreSql;
 
+public interface IChangeRelayEnvelopeProtectionProvider
+{
+    string CurrentProtectorId { get; }
+
+    byte[] Protect(ReadOnlySpan<byte> plaintext);
+
+    byte[] Unprotect(string protectorId, ReadOnlySpan<byte> protectedData);
+}
+
 public sealed record PostgreSqlStreamsStorageOptions
 {
     public required DbDataSource ControlDataSource { get; init; }
@@ -15,9 +24,19 @@ public sealed record PostgreSqlStreamsStorageOptions
 
     public TimeSpan ResumeRetentionWindow { get; init; } = TimeSpan.FromHours(1);
 
+    public TimeSpan RemovedConsumerGroupRetentionWindow { get; init; } = TimeSpan.FromHours(1);
+
+    public int MinimumRetainedTransactions { get; init; }
+
+    public int RetentionDeleteBatchSize { get; init; } = 1_000;
+
+    public int MaxCompactionBatches { get; init; } = 100;
+
     public TimeSpan MaxAcknowledgementAge { get; init; } = TimeSpan.FromMinutes(5);
 
     public long MaxWalLagBytes { get; init; } = 10L * 1024 * 1024 * 1024;
+
+    public IChangeRelayEnvelopeProtectionProvider? EnvelopeProtection { get; init; }
 
     internal string QuotedControlSchema => QuoteIdentifier(ControlSchema);
 
@@ -28,6 +47,10 @@ public sealed record PostgreSqlStreamsStorageOptions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRelayStorageBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxEnvelopeBytes);
         ArgumentOutOfRangeException.ThrowIfLessThan(ResumeRetentionWindow, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfLessThan(RemovedConsumerGroupRetentionWindow, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfNegative(MinimumRetainedTransactions);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(RetentionDeleteBatchSize);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxCompactionBatches);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(MaxAcknowledgementAge, TimeSpan.Zero);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxWalLagBytes);
         if (ControlSchema.Contains('\0') || Encoding.UTF8.GetByteCount(ControlSchema) > 63)
@@ -35,6 +58,17 @@ public sealed record PostgreSqlStreamsStorageOptions
             throw new ArgumentException(
                 "The control schema must be a valid PostgreSQL identifier of at most 63 UTF-8 bytes.",
                 nameof(ControlSchema));
+        }
+
+        if (EnvelopeProtection is not null)
+        {
+            ArgumentException.ThrowIfNullOrWhiteSpace(EnvelopeProtection.CurrentProtectorId);
+            if (Encoding.UTF8.GetByteCount(EnvelopeProtection.CurrentProtectorId) > 200)
+            {
+                throw new ArgumentException(
+                    "The current relay envelope protector ID cannot exceed 200 UTF-8 bytes.",
+                    nameof(EnvelopeProtection));
+            }
         }
     }
 

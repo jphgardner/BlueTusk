@@ -164,6 +164,127 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task PostgreSql_relay_migrates_protects_removes_and_compacts_safely()
+    {
+        var connectionString = GetConnectionString();
+        var schema = "bluetusk_relay_hardening_test_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(connectionString);
+        var relay = new PostgreSqlDurableChangeRelay(
+            new PostgreSqlStreamsStorageOptions
+            {
+                ControlDataSource = dataSource,
+                ControlSchema = schema,
+                ResumeRetentionWindow = TimeSpan.Zero,
+                RemovedConsumerGroupRetentionWindow = TimeSpan.FromHours(1),
+                RetentionDeleteBatchSize = 1,
+                MaxCompactionBatches = 10,
+                MaxRelayStorageBytes = 1024 * 1024,
+                EnvelopeProtection = new XorEnvelopeProtectionProvider(),
+            });
+        try
+        {
+            await relay.InitializeAsync();
+            Assert.Equal(PostgreSqlDurableChangeRelay.CurrentSchemaVersion, await relay.GetSchemaVersionAsync());
+
+            await ExecuteControlAsync(
+                dataSource,
+                $"ALTER TABLE \"{schema}\".relay_transactions DROP COLUMN protection_id");
+            await ExecuteControlAsync(
+                dataSource,
+                $"ALTER TABLE \"{schema}\".relay_consumer_groups DROP COLUMN removed_at");
+            await ExecuteControlAsync(
+                dataSource,
+                $"ALTER TABLE \"{schema}\".relay_consumer_groups " +
+                "DROP COLUMN retention_protected_until CASCADE");
+            await ExecuteControlAsync(
+                dataSource,
+                $"UPDATE \"{schema}\".storage_metadata SET schema_version = 1 WHERE singleton");
+
+            await relay.InitializeAsync();
+            Assert.Equal(PostgreSqlDurableChangeRelay.CurrentSchemaVersion, await relay.GetSchemaVersionAsync());
+
+            var source = await relay.RegisterSourceAsync(SourceIdentity());
+            var sourceLease = Assert.IsType<ChangeStreamLease>(
+                (await relay.AcquireSourceLeaseAsync(
+                    source,
+                    "source-worker",
+                    TimeSpan.FromMinutes(1))).Lease);
+            var stream = CreateStream(source.Source);
+            await using (var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator())
+            {
+                Assert.True(await enumerator.MoveNextAsync());
+                _ = await relay.AppendAsync(source, enumerator.Current.Transaction, sourceLease);
+                await enumerator.Current.AcknowledgeAsync();
+            }
+
+            var stored = await ReadProtectedEnvelopeAsync(dataSource, schema);
+            Assert.Equal("test-xor-v1", stored.ProtectionId);
+            Assert.NotEmpty(stored.Payload);
+            Assert.NotEqual((byte)'B', stored.Payload[0]);
+
+            var group = await relay.CreateConsumerGroupAsync(source, "slow-consumer");
+            var lease = Assert.IsType<ChangeRelayGroupLease>(
+                await relay.AcquireConsumerGroupAsync(
+                    group,
+                    "consumer-worker",
+                    TimeSpan.FromMinutes(1)));
+            var batch = await relay.ReadConsumerGroupAsync(lease, 10, 1024 * 1024);
+            Assert.Single(batch.Records);
+
+            var removed = await relay.RemoveConsumerGroupAsync(
+                group,
+                group.StoreGeneration,
+                confirmation: group.Name);
+            Assert.Equal(ChangeRelayConsumerGroupRemovalStatus.Removed, removed.Status);
+            Assert.False(removed.Current.IsActive);
+            Assert.NotNull(removed.Current.RemovedAt);
+            Assert.NotNull(removed.Current.RetentionProtectedUntil);
+            await Assert.ThrowsAsync<ChangeRelayConsumerGroupException>(
+                () => relay.AcquireConsumerGroupAsync(
+                    removed.Current,
+                    "replacement",
+                    TimeSpan.FromMinutes(1)).AsTask());
+
+            var protectedRetention = await relay.ApplyRetentionAsync(source);
+            Assert.Equal(0, protectedRetention.DeletedTransactions);
+
+            var conflict = await relay.RemoveConsumerGroupAsync(
+                removed.Current,
+                expectedGeneration: 0,
+                confirmation: group.Name,
+                ChangeRelayConsumerGroupRemovalMode.ReleaseRetentionImmediately);
+            Assert.Equal(ChangeRelayConsumerGroupRemovalStatus.Conflict, conflict.Status);
+
+            var released = await relay.RemoveConsumerGroupAsync(
+                removed.Current,
+                removed.Current.StoreGeneration,
+                confirmation: group.Name,
+                ChangeRelayConsumerGroupRemovalMode.ReleaseRetentionImmediately);
+            Assert.Equal(ChangeRelayConsumerGroupRemovalStatus.RetentionReleased, released.Status);
+
+            var compacted = await relay.CompactAsync(source);
+            Assert.Equal(1, compacted.DeletedTransactions);
+            Assert.True(compacted.DeletedBytes > 0);
+            Assert.Equal(2, compacted.Batches);
+            Assert.True(compacted.FullyApplied);
+            Assert.True(compacted.Vacuumed);
+
+            await ExecuteControlAsync(
+                dataSource,
+                $"UPDATE \"{schema}\".storage_metadata SET schema_version = 999 WHERE singleton");
+            await Assert.ThrowsAsync<ChangeRelaySchemaVersionException>(
+                () => relay.InitializeAsync().AsTask());
+        }
+        finally
+        {
+            await using var connection = await dataSource.OpenConnectionAsync();
+            await using var command = connection.CreateCommand();
+            command.CommandText = $"DROP SCHEMA IF EXISTS \"{schema}\" CASCADE";
+            _ = await command.ExecuteNonQueryAsync();
+        }
+    }
+
     private static PgOutputChangeStream CreateStream(
         ChangeSourceIdentity source,
         IChangeDeliveryObserver? observer = null) =>
@@ -230,6 +351,50 @@ public sealed class BlueTuskStreamsRelayIntegrationTests
             ? throw SkipException.ForSkip(
                 "BLUETUSK_TEST_CONNECTION_STRING is not configured.")
             : connectionString;
+    }
+
+    private static async Task ExecuteControlAsync(BlueTuskDataSource dataSource, string sql)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = sql;
+        _ = await command.ExecuteNonQueryAsync();
+    }
+
+    private static async Task<(string ProtectionId, byte[] Payload)> ReadProtectedEnvelopeAsync(
+        BlueTuskDataSource dataSource,
+        string schema)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText = $"SELECT protection_id, envelope FROM \"{schema}\".relay_transactions";
+        await using var reader = await command.ExecuteReaderAsync();
+        Assert.True(await reader.ReadAsync());
+        return (reader.GetString(0), reader.GetFieldValue<byte[]>(1));
+    }
+
+    private sealed class XorEnvelopeProtectionProvider : IChangeRelayEnvelopeProtectionProvider
+    {
+        public string CurrentProtectorId => "test-xor-v1";
+
+        public byte[] Protect(ReadOnlySpan<byte> plaintext) => Xor(plaintext);
+
+        public byte[] Unprotect(string protectorId, ReadOnlySpan<byte> protectedData)
+        {
+            Assert.Equal(CurrentProtectorId, protectorId);
+            return Xor(protectedData);
+        }
+
+        private static byte[] Xor(ReadOnlySpan<byte> data)
+        {
+            var transformed = data.ToArray();
+            for (var index = 0; index < transformed.Length; index++)
+            {
+                transformed[index] ^= 0xA5;
+            }
+
+            return transformed;
+        }
     }
 
     private sealed class RecordingFeedbackSender : IReplicationFeedbackSender
