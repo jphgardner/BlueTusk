@@ -107,10 +107,27 @@ Cancellation flows through context creation and EF execution. Incremental graph
 maintenance, arbitrary client SQL/LINQ, unbounded paths, and dependency
 inference from caller-authored raw SQL are outside this preview.
 
+## Samples
+
+The executable [fraud sample](../../samples/BlueTusk.Samples.ContinuousGraph.Fraud)
+registers a high-value transfer traversal and shows a newly suspicious transfer
+entering the authorised result after an affected edge changes. The executable
+[network sample](../../samples/BlueTusk.Samples.ContinuousGraph.Network)
+registers gateway dependencies and shows a vertex health update becoming a
+keyed Live graph event. Both use connection-scoped temporary property graphs,
+require PostgreSQL 19, and use the deterministic in-memory invalidation log
+only to keep the sample self-contained:
+
+```powershell
+$env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
+dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Fraud
+dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network
+```
+
 ## Release state
 
 The package is independently versioned as `0.1.0-preview.1` and remains
-non-publishable while dashboard, sample, and benchmark gates are completed.
+non-publishable while dashboard and benchmark gates are completed.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,
 Live session handoff, unsupported-server rejection, and fail-closed query
 shapes. The opt-in PostgreSQL 19 acceptance test creates a real property graph,

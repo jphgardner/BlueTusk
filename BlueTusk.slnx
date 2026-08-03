@@ -23,6 +23,8 @@
   <Folder Name="/samples/">
     <Project Path="samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj" />
     <Project Path="samples/BlueTusk.Samples.Copy/BlueTusk.Samples.Copy.csproj" />
+    <Project Path="samples/BlueTusk.Samples.ContinuousGraph.Fraud/BlueTusk.Samples.ContinuousGraph.Fraud.csproj" />
+    <Project Path="samples/BlueTusk.Samples.ContinuousGraph.Network/BlueTusk.Samples.ContinuousGraph.Network.csproj" />
     <Project Path="samples/BlueTusk.Samples.EntityFrameworkCore/BlueTusk.Samples.EntityFrameworkCore.csproj" />
     <Project Path="samples/BlueTusk.Samples.Graph/BlueTusk.Samples.Graph.csproj" />
     <Project Path="samples/BlueTusk.Samples.Replication/BlueTusk.Samples.Replication.csproj" />
