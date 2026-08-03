@@ -19,6 +19,14 @@ Change mapped = mapping.Map(dynamicChange);
 
 Property setters and default decoders are compiled once while the mapping is built. The default decoder handles the common pgoutput text forms and fixed-width binary scalar forms without reflection per row. A custom decoder can be supplied for application types. The EF adapter will build the same core mapping contract from EF metadata; it does not create a second mapping system.
 
+`BlueTusk.Streams.EntityFrameworkCore` derives the table/schema, primary-key order, CLR properties, and column overrides from an EF `IModel`:
+
+```csharp
+var mapping = BlueTuskEfChangeMappingFactory.Create<Order>(dbContext.Model, relation);
+```
+
+Validation runs at startup. A table mismatch, keyless entity, unpublished mapped property, shadow/field-only property without a public CLR setter, duplicate column binding, or unpublished primary-key column fails with a stable `BTSEF...` diagnostic. The adapter deliberately rejects a partial EF entity instead of filling missing properties with CLR defaults and claiming a complete value.
+
 `SchemaFingerprint` describes the complete source relation shape: schema, table, replica identity, ordered columns, PostgreSQL type identity, modifiers, and key flags. It deliberately excludes the transient relation OID. `MappingFingerprint` additionally describes the CLR type, property/column bindings, expected OIDs, and configured keys. Both are SHA-256 fingerprints over canonical data and are suitable for checkpoint compatibility checks.
 
 ## Partial rows remain partial

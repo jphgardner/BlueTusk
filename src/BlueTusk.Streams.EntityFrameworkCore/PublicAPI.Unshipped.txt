@@ -1,0 +1,20 @@
+#nullable enable
+BlueTusk.Streams.EntityFrameworkCore.BlueTuskEfChangeMappingFactory
+static BlueTusk.Streams.EntityFrameworkCore.BlueTuskEfChangeMappingFactory.Create<TEntity>(Microsoft.EntityFrameworkCore.Metadata.IModel! model, BlueTusk.Streams.ChangeTable! relation, BlueTusk.Streams.ChangeMappingPolicy? policy = null) -> BlueTusk.Streams.ChangeEntityMapping<TEntity!>!
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.<Clone>$() -> BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic!
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.Code.get -> string!
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.Code.init -> void
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.Deconstruct(out string! Code, out string! Message) -> void
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.EfChangeMappingDiagnostic(string! Code, string! Message) -> void
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.Equals(BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic? other) -> bool
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.Message.get -> string!
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.Message.init -> void
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingValidationException
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingValidationException.Diagnostics.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic!>!
+BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingValidationException.EfChangeMappingValidationException(System.Collections.Generic.IReadOnlyList<BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic!>! diagnostics) -> void
+override BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.Equals(object? obj) -> bool
+override BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.GetHashCode() -> int
+override BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.ToString() -> string!
+static BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.operator !=(BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic? left, BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic? right) -> bool
+static BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic.operator ==(BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic? left, BlueTusk.Streams.EntityFrameworkCore.EfChangeMappingDiagnostic? right) -> bool
