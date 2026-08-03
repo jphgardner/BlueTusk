@@ -131,6 +131,14 @@ public interface ISyncRebuildCutoverLease : IAsyncDisposable
 {
     /// <summary>Gets the exact durable relay commit-end position required before activation.</summary>
     BlueTuskLogSequenceNumber TargetPosition { get; }
+
+    /// <summary>
+    /// Commits the worker handoff after destination activation. Once invoked, disposal must never
+    /// resume the previous transform worker, even if the handoff reports a failure.
+    /// </summary>
+    ValueTask CompleteHandoffAsync(
+        BlueTuskLogSequenceNumber activatedPosition,
+        CancellationToken cancellationToken = default);
 }
 
 /// <summary>Performs authoritative application-level verification before rebuild activation.</summary>
@@ -470,6 +478,16 @@ public sealed class SyncRebuildCoordinator
         await _rebuildDestination.ActivateRebuildAsync(
             _options.PipelineId,
             cancellationToken).ConfigureAwait(false);
+        try
+        {
+            await ownedCutoverLease.CompleteHandoffAsync(
+                completed.Position,
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception)
+        {
+            throw new SyncRebuildCutoverException(completed.Position, exception);
+        }
 
         var retired = false;
         if (_options.RetirePreviousGeneration)
@@ -728,5 +746,27 @@ public sealed class SyncRebuildRetirementException : SyncRebuildException
     public string Generation { get; }
 
     /// <summary>Gets whether activation completed before the failure.</summary>
+    public bool ActivationCompleted { get; }
+}
+
+/// <summary>Indicates that activation succeeded but the worker handoff needs operator recovery.</summary>
+public sealed class SyncRebuildCutoverException : SyncRebuildException
+{
+    /// <summary>Initializes a post-activation worker-handoff failure.</summary>
+    public SyncRebuildCutoverException(
+        BlueTuskLogSequenceNumber activatedPosition,
+        Exception innerException)
+        : base(
+            $"The rebuilding generation was activated at '{activatedPosition}', but the worker handoff did not complete. The previous transform worker must remain quiesced and activation must not be rolled back.",
+            innerException)
+    {
+        ActivatedPosition = activatedPosition;
+        ActivationCompleted = true;
+    }
+
+    /// <summary>Gets the activated durable position requiring handoff recovery.</summary>
+    public BlueTuskLogSequenceNumber ActivatedPosition { get; }
+
+    /// <summary>Gets whether destination activation completed before the failure.</summary>
     public bool ActivationCompleted { get; }
 }

@@ -8,6 +8,7 @@ BlueTusk.Sync.ISyncDestination.Name.get -> string!
 BlueTusk.Sync.ISyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
 BlueTusk.Sync.ISyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.ISyncRebuildCutoverLease.CompleteHandoffAsync(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber activatedPosition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncReconciliationReader
 BlueTusk.Sync.ISyncReconciliationReader.CountAsync(string! pipelineId, string! collection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
 BlueTusk.Sync.ISyncReconciliationReader.ReadPartitionAsync(string! pipelineId, string! collection, int partitionIndex, int partitionCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Sync.SyncReconciliationEntry!>!
@@ -140,6 +141,10 @@ BlueTusk.Sync.SyncProvisionResult.SyncProvisionResult(BlueTusk.Sync.SyncProvisio
 BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.Ready = 0 -> BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.RebuildRequired = 1 -> BlueTusk.Sync.SyncProvisionStatus
+BlueTusk.Sync.SyncRebuildCutoverException
+BlueTusk.Sync.SyncRebuildCutoverException.ActivatedPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.SyncRebuildCutoverException.ActivationCompleted.get -> bool
+BlueTusk.Sync.SyncRebuildCutoverException.SyncRebuildCutoverException(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber activatedPosition, System.Exception! innerException) -> void
 BlueTusk.Sync.SyncReconciler
 BlueTusk.Sync.SyncReconciliationDifference
 BlueTusk.Sync.SyncReconciliationDifference.<Clone>$() -> BlueTusk.Sync.SyncReconciliationDifference!

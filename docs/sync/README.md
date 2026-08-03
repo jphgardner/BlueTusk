@@ -95,6 +95,13 @@ release the barrier, and leave the rebuilding generation inactive. Verification
 failure also releases the barrier without activation. Progress reports are
 observational and cannot alter durability semantics.
 
+After the routing swap, the coordinator explicitly commits the worker handoff
+while the barrier is still held. Disposing an uncommitted lease resumes the
+previous worker; once handoff begins, disposal must keep that worker quiesced so
+it cannot process the old transform against the activated generation. A handoff
+failure reports completed activation and requires forward operator recovery,
+never rollback.
+
 Previous-generation retirement is optional and occurs only after activation.
 If retirement fails, `SyncRebuildRetirementException` explicitly reports that
 activation completed and must not be rolled back. Running the coordinator again

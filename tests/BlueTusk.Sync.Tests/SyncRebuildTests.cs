@@ -49,8 +49,9 @@ public sealed class SyncRebuildTests
                 "verify",
                 "authoritative-verify",
                 "activate",
+                "handoff:105",
                 "retire:active-v1",
-                "release:105",
+                "release-committed:105",
             ],
             events);
         Assert.Equal(SyncRebuildStage.Preparing, progress.Values[0].Stage);
@@ -200,13 +201,39 @@ public sealed class SyncRebuildTests
         Assert.Contains("atomic routing swaps", exception.Message, StringComparison.Ordinal);
     }
 
+    [Fact]
+    public async Task Handoff_failure_reports_completed_activation_and_never_retires()
+    {
+        var events = new List<string>();
+        var epoch = SnapshotEpoch.Create(Source, Lsn(105));
+        var source = new RecordingSnapshotSource(
+            [new RecordingSnapshotAttempt(epoch, [], [])]);
+        var destination = new RecordingRebuildDestination(events);
+        var coordinator = CreateCoordinator(
+            source,
+            destination,
+            retire: true,
+            failHandoff: true);
+
+        var exception = await Assert.ThrowsAsync<SyncRebuildCutoverException>(
+            () => coordinator.RunAsync());
+
+        Assert.True(exception.ActivationCompleted);
+        Assert.Equal(Lsn(105), exception.ActivatedPosition);
+        Assert.Contains("activate", events);
+        Assert.Contains("handoff:105", events);
+        Assert.DoesNotContain("retire:active-v1", events);
+        Assert.Contains("release-committed:105", events);
+    }
+
     private static SyncRebuildCoordinator CreateCoordinator(
         IConsistentSnapshotSource source,
         ISyncDestination destination,
         IProgress<SyncRebuildProgress>? progress = null,
         bool retire = false,
         SyncRebuildVerification? authoritativeVerification = null,
-        BlueTuskLogSequenceNumber? cutoverTarget = null) =>
+        BlueTuskLogSequenceNumber? cutoverTarget = null,
+        bool failHandoff = false) =>
         new(
             new SyncRebuildOptions
             {
@@ -221,7 +248,8 @@ public sealed class SyncRebuildTests
                 destination is RecordingRebuildDestination recording
                     ? recording.Events
                     : [],
-                cutoverTarget ?? Lsn(105)),
+                cutoverTarget ?? Lsn(105),
+                failHandoff),
             new RecordingVerifier(
                 destination is RecordingRebuildDestination verifierRecording
                     ? verifierRecording.Events
@@ -442,7 +470,8 @@ public sealed class SyncRebuildTests
 
     private sealed class RecordingCutoverBarrier(
         List<string> events,
-        BlueTuskLogSequenceNumber targetPosition) : ISyncRebuildCutoverBarrier
+        BlueTuskLogSequenceNumber targetPosition,
+        bool failHandoff) : ISyncRebuildCutoverBarrier
     {
         public ValueTask<ISyncRebuildCutoverLease> AcquireAsync(
             string pipelineId,
@@ -451,19 +480,35 @@ public sealed class SyncRebuildTests
         {
             events.Add("barrier:" + snapshotEpoch.ConsistentPosition.Value);
             return ValueTask.FromResult<ISyncRebuildCutoverLease>(
-                new RecordingCutoverLease(events, targetPosition));
+                new RecordingCutoverLease(events, targetPosition, failHandoff));
         }
     }
 
     private sealed class RecordingCutoverLease(
         List<string> events,
-        BlueTuskLogSequenceNumber targetPosition) : ISyncRebuildCutoverLease
+        BlueTuskLogSequenceNumber targetPosition,
+        bool failHandoff) : ISyncRebuildCutoverLease
     {
+        private bool _handoffInvoked;
+
         public BlueTuskLogSequenceNumber TargetPosition => targetPosition;
+
+        public ValueTask CompleteHandoffAsync(
+            BlueTuskLogSequenceNumber activatedPosition,
+            CancellationToken cancellationToken = default)
+        {
+            _handoffInvoked = true;
+            events.Add("handoff:" + activatedPosition.Value);
+            return failHandoff
+                ? ValueTask.FromException(new InvalidOperationException("handoff failed"))
+                : ValueTask.CompletedTask;
+        }
 
         public ValueTask DisposeAsync()
         {
-            events.Add("release:" + targetPosition.Value);
+            events.Add(
+                (_handoffInvoked ? "release-committed:" : "release:") +
+                targetPosition.Value);
             return ValueTask.CompletedTask;
         }
     }
