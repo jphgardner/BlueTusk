@@ -79,7 +79,12 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 
 The real-time platform is delivered in independently gated Streams, Sync, Live, Control Plane, and Continuous Graph release trains. Package names in its [phased plan](docs/realtime-platform/delivery-plan.md) are commitments, not claims of already-published functionality.
 
-The [Streams transaction kernel](docs/streams/README.md) is implemented with bounded disk spill and PostgreSQL 15–19 acceptance. It is not yet published; durable checkpoints and relay fan-out remain release blockers.
+The [Streams release train](docs/streams/README.md) has passed its first-preview
+implementation gate with bounded disk spill, durable checkpoints, direct groups,
+PostgreSQL relay fan-out, typed mappings, and snapshot bootstrap. [Sync](docs/sync/README.md)
+is in Phase 5 with its kernel, four destinations, reconciliation/repair, safe
+rebuild orchestration, and in-process hosting implemented behind a non-publishable
+release gate.
 
 ## Status
 

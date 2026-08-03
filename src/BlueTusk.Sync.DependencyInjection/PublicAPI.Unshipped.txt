@@ -1,0 +1,56 @@
+#nullable enable
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder.AddHostedPipeline<TTransform, TDestination>(BlueTusk.Sync.SyncPipelineOptions! options, BlueTusk.Streams.ChangeSourceIdentity! source, System.Func<System.IServiceProvider!, BlueTusk.Streams.IConsistentSnapshotSource!>! sourceFactory, BlueTusk.Streams.SnapshotThenStreamOptions? snapshotOptions = null, System.Func<System.IServiceProvider!, BlueTusk.Sync.ISyncQuarantineSink?>? quarantineFactory = null) -> BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder.AddPostgreSqlRelayRebuildCutover<THandoffHandler>() -> BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder.AddRebuildCutover<TPositionProvider, THandoffHandler>() -> BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder.Services.get -> Microsoft.Extensions.DependencyInjection.IServiceCollection!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncHealthCheck
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncHealthCheck.BlueTuskSyncHealthCheck(BlueTusk.Sync.DependencyInjection.BlueTuskSyncHealthRegistry! registry) -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncHealthRegistry
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncHealthRegistry.BlueTuskSyncHealthRegistry(System.TimeProvider? timeProvider = null) -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncHealthRegistry.GetStatuses() -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus!>!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncServiceCollectionExtensions
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncTelemetry
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.<Clone>$() -> BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedSnapshotBatches.get -> long
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedSnapshotBatches.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedTransactions.get -> long
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.AppliedTransactions.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.BlueTuskSyncWorkerStatus(string! PipelineId, BlueTusk.Sync.SyncPipelineState State, System.DateTimeOffset ChangedAt, long AppliedTransactions, long AppliedSnapshotBatches, long SnapshotRows, long QuarantinedTransactions, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber LastCommitPosition, System.Guid? SnapshotEpoch, bool HandoffCommitted, string? Error) -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.ChangedAt.get -> System.DateTimeOffset
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.ChangedAt.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Deconstruct(out string! PipelineId, out BlueTusk.Sync.SyncPipelineState State, out System.DateTimeOffset ChangedAt, out long AppliedTransactions, out long AppliedSnapshotBatches, out long SnapshotRows, out long QuarantinedTransactions, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber LastCommitPosition, out System.Guid? SnapshotEpoch, out bool HandoffCommitted, out string? Error) -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Equals(BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus? other) -> bool
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Error.get -> string?
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Error.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.HandoffCommitted.get -> bool
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.HandoffCommitted.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.LastCommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.LastCommitPosition.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.PipelineId.get -> string!
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.PipelineId.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.QuarantinedTransactions.get -> long
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.QuarantinedTransactions.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotEpoch.get -> System.Guid?
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotEpoch.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotRows.get -> long
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.SnapshotRows.init -> void
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.State.get -> BlueTusk.Sync.SyncPipelineState
+BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.State.init -> void
+BlueTusk.Sync.DependencyInjection.ISyncCutoverPositionProvider
+BlueTusk.Sync.DependencyInjection.ISyncCutoverPositionProvider.GetDurableHeadAsync(string! pipelineId, BlueTusk.Streams.SnapshotEpoch snapshotEpoch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.TypeSystem.BlueTuskLogSequenceNumber>
+BlueTusk.Sync.DependencyInjection.ISyncWorkerHandoffHandler
+BlueTusk.Sync.DependencyInjection.ISyncWorkerHandoffHandler.CompleteHandoffAsync(string! pipelineId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber activatedPosition, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncCutoverPositionProvider
+BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncCutoverPositionProvider.GetDurableHeadAsync(string! pipelineId, BlueTusk.Streams.SnapshotEpoch snapshotEpoch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.TypeSystem.BlueTuskLogSequenceNumber>
+BlueTusk.Sync.DependencyInjection.PostgreSqlRelaySyncCutoverPositionProvider.PostgreSqlRelaySyncCutoverPositionProvider(BlueTusk.Streams.Storage.PostgreSql.PostgreSqlDurableChangeRelay! relay) -> void
+const BlueTusk.Sync.DependencyInjection.BlueTuskSyncTelemetry.ActivitySourceName = "BlueTusk.Sync" -> string!
+const BlueTusk.Sync.DependencyInjection.BlueTuskSyncTelemetry.MeterName = "BlueTusk.Sync" -> string!
+override BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.Equals(object? obj) -> bool
+override BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.GetHashCode() -> int
+override BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.ToString() -> string!
+static BlueTusk.Sync.DependencyInjection.BlueTuskSyncServiceCollectionExtensions.AddBlueTuskSync(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services) -> BlueTusk.Sync.DependencyInjection.BlueTuskSyncBuilder!
+static BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.operator !=(BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus? left, BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus? right) -> bool
+static BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus.operator ==(BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus? left, BlueTusk.Sync.DependencyInjection.BlueTuskSyncWorkerStatus? right) -> bool

@@ -26,9 +26,10 @@ implemented and pass the same executable snapshot-plus-stream recovery
 contract. The shared count, key-set, and partitioned content-hash engine plus
 PostgreSQL, Redis, and OpenSearch repair paths are implemented and live-tested.
 The destination-neutral rebuild coordinator is implemented with an explicit
-cutover barrier. Source adapters, hosting, dashboard integration, and endurance
-remain gated work. The Sync release train remains non-publishable until those
-remaining Phase 5 gates pass.
+cutover barrier, and the in-process hosting package provides named workers,
+health, telemetry, and one-way worker handoff. A production relay change-stream
+source adapter, dashboard integration, and endurance remain gated work. The Sync
+release train remains non-publishable until those remaining Phase 5 gates pass.
 
 ## Shared destination conformance
 
@@ -108,6 +109,39 @@ activation completed and must not be rolled back. Running the coordinator again
 is safe: destination preparation resumes its durable build metadata, while an
 interrupted snapshot starts a new epoch and clears the isolated generation
 before replay.
+
+## In-process hosting and cutover
+
+`BlueTusk.Sync.DependencyInjection` registers named pipelines with
+`AddBlueTuskSync().AddHostedPipeline<TTransform, TDestination>()`. Each worker
+owns one long-lived dependency-injection scope, provisions its destination,
+runs the Streams snapshot-then-stream coordinator, and leaves a faulted worker
+isolated while the other registered pipelines continue. Source factories remain
+explicit so an application cannot accidentally share a replication session or
+consumer group between pipelines.
+
+`BlueTuskSyncHealthRegistry` exposes immutable operational snapshots. The
+readiness check is unhealthy for faults, transform rebuild requirements, or
+hosting errors; paused/stopped-only deployments are degraded. Activities and
+metrics use the stable `BlueTusk.Sync` instrumentation name and report bounded
+pipeline identifiers, acknowledged transaction counts, snapshot rows, failures,
+and transaction duration.
+
+`AddRebuildCutover<TPositionProvider, THandoffHandler>()` connects the shared
+rebuild coordinator to a hosted active worker. The barrier waits for the current
+delivery boundary, verifies the worker is running, captures a durable target,
+and holds all further consumption through verification and activation. A failed
+or cancelled pre-activation rebuild releases the worker. Once
+`CompleteHandoffAsync` begins, the old worker is permanently cancelled before
+the restart-safe handoff handler is invoked and can never resume against the new
+generation.
+
+`AddPostgreSqlRelayRebuildCutover<THandoffHandler>()` uses the production relay's
+separate control data source through
+`PostgreSqlRelaySyncCutoverPositionProvider`. The target is the latest durable
+relay commit position, or the snapshot's consistent baseline when no later
+transaction exists. The rebuild source and handoff handler must use an
+independent relay group whose checkpoint is bound to that same snapshot epoch.
 
 ## PostgreSQL destination
 
