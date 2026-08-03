@@ -58,4 +58,10 @@ Reconnect is serialized with publication so replay and the newly attached bounde
 
 `@bluetusk/live-angular` exposes the same query state through Angular read-only signals. `@bluetusk/live-react` uses `useSyncExternalStore`, preserving React concurrent-render consistency. Both adapters own only lifecycle integration; protocol, recovery, and result semantics remain in `@bluetusk/live`.
 
-The next Live slices add Aspire/testing support, dashboard visibility, advanced vetted EF query shapes, and the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.
+## Hosting and testing
+
+`BlueTusk.Live.Aspire` wires distinct application-query and relay-control resources plus explicit quota, buffer, replay-retention, and transport settings into a Live host. It rejects a topology that aliases the application and control database.
+
+`BlueTusk.Live.Testing` provides database-scoped deterministic invalidations, a sequence-fenced and retention-aware in-memory replay store, and a public replay-store conformance kit for custom providers. The in-memory components are for tests only and preserve the same replay identity, integrity, idempotency, and expiry rules as durable storage.
+
+The next Live slices add dashboard visibility, advanced vetted EF query shapes, and the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.

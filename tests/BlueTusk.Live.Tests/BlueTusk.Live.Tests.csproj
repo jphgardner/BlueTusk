@@ -27,6 +27,7 @@
     <ProjectReference Include="..\..\src\BlueTusk.Live.Grpc\BlueTusk.Live.Grpc.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.ServerSentEvents\BlueTusk.Live.ServerSentEvents.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live.SignalR\BlueTusk.Live.SignalR.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
   </ItemGroup>
 </Project>
