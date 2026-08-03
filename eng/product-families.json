@@ -14,7 +14,7 @@
     },
     "Streams": {
       "versionFile": "eng/versions/Streams.props",
-      "publishable": false,
+      "publishable": true,
       "packages": [
         "src/BlueTusk.Streams/BlueTusk.Streams.csproj",
         "src/BlueTusk.Streams.Aspire/BlueTusk.Streams.Aspire.csproj",

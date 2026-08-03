@@ -1,6 +1,6 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, typed core mappings, no-gap snapshot bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on remaining packaging and preview operational tooling.
+BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The `0.1.0-preview.1` release train contains the transaction kernel, typed core mappings, no-gap snapshot bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out. Its package manifest is publishable after the Phase 3 gates passed; an actual NuGet publication still requires the explicit release workflow or a `streams-v0.1.0-preview.1` tag.
 
 ## Implemented kernel
 
@@ -96,6 +96,8 @@ See the [validation and provisioning CLI](cli.md) for idempotent source/relay se
 See [Aspire integration](aspire.md) for secret-preserving source/control resource wiring and explicit relay versus direct delivery configuration.
 
 See the [snapshot-then-stream sample](sample.md) for a runnable hosted consumer using exported-snapshot binary COPY followed by transaction-preserving CDC.
+
+See the [0.1.0-preview.1 release notes](release-notes-0.1.0-preview.1.md) for the package list, guarantees, validation evidence, and preview limitations.
 
 ## Performance baseline
 

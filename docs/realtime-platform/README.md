@@ -35,4 +35,4 @@ The release manifest is `eng/product-families.json`; version properties live und
 
 An empty family is valid during architecture work but cannot be packaged. This prevents placeholder NuGet packages from implying implemented behavior.
 
-Implementation status: the [Streams transaction kernel](../streams/README.md) is complete through Phase 1. Its release manifest remains non-publishable until the Phase 2 durability work and Phase 3 preview gate are complete.
+Implementation status: [Streams 0.1.0-preview.1](../streams/release-notes-0.1.0-preview.1.md) has passed the Phase 3 implementation and packaging gates. Its release manifest is publishable through the independently versioned Streams release workflow. Sync, Live, the Control Plane, and Continuous Graph remain on their later phase gates.
