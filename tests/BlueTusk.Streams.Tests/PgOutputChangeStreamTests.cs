@@ -1,7 +1,9 @@
 using System.Runtime.CompilerServices;
 using System.Text;
+using System.Text.Json;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
+using BlueTusk.Streams.CloudEvents;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Streams.Tests;
@@ -420,6 +422,45 @@ public sealed class PgOutputChangeStreamTests
         Assert.Throws<ChangeTransactionEnvelopeException>(
             () => ChangeTransactionEnvelopeCodec.FromData(bytes));
 
+        await delivery.AcknowledgeAsync();
+    }
+
+    [Fact]
+    public async Task CloudEvent_preserves_one_integrity_checked_source_transaction()
+    {
+        var stream = new PgOutputChangeStream(
+            Messages(
+                Envelope(Relation(
+                    new BlueTuskPgOutputRelationColumn(
+                        BlueTuskPgOutputRelationColumnOptions.Key,
+                        "id",
+                        23,
+                        -1))),
+                Envelope(new BlueTuskPgOutputBegin(Lsn(400), Timestamp, 99)),
+                Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Text("42")))),
+                Envelope(new BlueTuskPgOutputCommit(Lsn(450), Lsn(460), Timestamp.AddSeconds(1)))),
+            SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var formatter = new ChangeTransactionCloudEventFormatter();
+
+        var firstMetadata = formatter.Describe(delivery.Transaction);
+        var secondMetadata = formatter.Describe(delivery.Transaction);
+        var json = await formatter.ToStructuredJsonAsync(delivery.Transaction);
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        var encoded = Convert.FromBase64String(root.GetProperty("data_base64").GetString()!);
+        var decoded = ChangeTransactionEnvelopeCodec.Decode(
+            ChangeTransactionEnvelopeCodec.FromData(encoded));
+
+        Assert.Equal(firstMetadata.Id, secondMetadata.Id);
+        Assert.Equal("1.0", root.GetProperty("specversion").GetString());
+        Assert.Equal("io.bluetusk.streams.transaction.v1", root.GetProperty("type").GetString());
+        Assert.Equal(1, root.GetProperty("bluetuskchanges").GetInt32());
+        Assert.Equal(delivery.Transaction.TransactionId, decoded.TransactionId);
+        Assert.Equal(delivery.Transaction.CommitEndPosition, decoded.CommitEndPosition);
+        Assert.Single(await decoded.Changes.MaterializeAsync());
         await delivery.AcknowledgeAsync();
     }
 
