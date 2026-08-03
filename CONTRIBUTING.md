@@ -6,9 +6,11 @@ BlueTusk treats PostgreSQL documentation, protocol specifications, catalogues, a
 
 1. Create or reference an issue that states the PostgreSQL behaviour being implemented.
 2. Keep dependencies flowing in the direction documented in `docs/architecture/overview.md`.
-3. Add unit or protocol-conformance tests. Network fragmentation cases should include every meaningful frame boundary.
-4. Run `dotnet format --verify-no-changes`, `dotnet build`, and `dotnet test`.
-5. Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions.
+3. Keep every project in the product-oriented solution hierarchy documented in
+   [repository and solution layout](docs/contributing/repository-layout.md).
+4. Add unit or protocol-conformance tests. Network fragmentation cases should include every meaningful frame boundary.
+5. Run the solution-layout, formatting, build, and test gates.
+6. Never include passwords, tokens, authentication payloads, or unredacted connection strings in tests, logs, or exceptions.
 
 EF provider changes must also preserve the official relational specification
 gate in `tests/BlueTusk.EntityFrameworkCore.SpecificationTests`. New inherited

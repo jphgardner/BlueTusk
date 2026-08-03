@@ -22,6 +22,7 @@ The normal local release gate mirrors CI:
 
 ```powershell
 dotnet restore BlueTusk.slnx
+./eng/verify-solution-layout.ps1
 dotnet format BlueTusk.slnx --verify-no-changes --no-restore
 ./eng/verify-documentation.ps1
 dotnet build BlueTusk.slnx -c Release --no-restore

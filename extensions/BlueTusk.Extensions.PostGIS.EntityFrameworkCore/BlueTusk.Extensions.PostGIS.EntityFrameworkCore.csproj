@@ -10,8 +10,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <PackageId>BlueTusk.Extensions.PostGIS.EntityFrameworkCore</PackageId>
     <Description>Optional NetTopologySuite type mappings, spatial translations, and migration integration for BlueTusk Entity Framework Core.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;postgis;spatial;nettopologysuite;entity-framework-core</PackageTags>

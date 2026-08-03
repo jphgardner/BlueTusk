@@ -20,6 +20,10 @@ dotnet build BlueTusk.slnx --no-restore
 dotnet test BlueTusk.slnx --no-build
 ```
 
+The root solution is grouped by product and role rather than physical folder.
+See [repository and solution layout](docs/contributing/repository-layout.md) for
+navigation, project-registration rules, and safe generated-output cleanup.
+
 The solution includes BlueTusk's native xUnit v3 tests and a separate xUnit v2
 assembly that consumes Microsoft's official EF Core relational specification
 package. See the [EF specification-test coverage](docs/ef-core/specification-tests.md)

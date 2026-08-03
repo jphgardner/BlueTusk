@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design">
@@ -15,8 +15,7 @@
     <ToolCommandName>bluetusk</ToolCommandName>
     <PackageId>BlueTusk.Tool</PackageId>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Description>Command-line tooling for BlueTusk database and EF Core development workflows.</Description>
   </PropertyGroup>
 
 </Project>

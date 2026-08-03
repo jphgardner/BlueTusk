@@ -7,8 +7,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <PackageId>BlueTusk.Identity.Aws</PackageId>
     <Description>Optional AWS RDS and Aurora PostgreSQL IAM authentication for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;aws;rds;aurora;iam</PackageTags>

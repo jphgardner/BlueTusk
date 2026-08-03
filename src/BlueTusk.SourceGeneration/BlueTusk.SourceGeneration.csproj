@@ -1,9 +1,8 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>netstandard2.0</TargetFramework>
     <ImplicitUsings>disable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <PackageId>BlueTusk.SourceGeneration</PackageId>
     <Description>Compile-time PostgreSQL composite-codec generation for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;source-generator;codec</PackageTags>

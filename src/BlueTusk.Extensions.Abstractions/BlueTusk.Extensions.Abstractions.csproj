@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.TypeSystem\BlueTusk.TypeSystem.csproj" />
@@ -6,8 +6,7 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
+    <Description>Public codec and type-mapping contracts for BlueTusk PostgreSQL extension packages.</Description>
   </PropertyGroup>
 
 </Project>

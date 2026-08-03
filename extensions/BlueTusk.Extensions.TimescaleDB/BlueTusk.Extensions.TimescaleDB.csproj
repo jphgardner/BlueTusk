@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
@@ -7,8 +7,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <PackageId>BlueTusk.Extensions.TimescaleDB</PackageId>
     <Description>Optional PostgreSQL TimescaleDB hypertable and retention integration for BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;timescaledb;hypertable;time-series</PackageTags>

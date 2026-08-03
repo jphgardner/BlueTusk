@@ -25,6 +25,10 @@ jobs:
         with:
           global-json-file: global.json
 
+      - name: Verify solution layout
+        shell: pwsh
+        run: ./eng/verify-solution-layout.ps1
+
       - name: Restore
         run: dotnet restore BlueTusk.slnx
 
