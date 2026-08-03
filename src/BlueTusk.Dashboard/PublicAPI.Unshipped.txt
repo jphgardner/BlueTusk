@@ -2,15 +2,23 @@
 BlueTusk.Dashboard.BlueTuskDashboardEndpointRouteBuilderExtensions
 BlueTusk.Dashboard.BlueTuskDashboardOptions
 BlueTusk.Dashboard.BlueTuskDashboardOptions.<Clone>$() -> BlueTusk.Dashboard.BlueTuskDashboardOptions!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.AdministratorRole.get -> string!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.AdministratorRole.set -> void
 BlueTusk.Dashboard.BlueTuskDashboardOptions.BlueTuskDashboardOptions() -> void
 BlueTusk.Dashboard.BlueTuskDashboardOptions.Equals(BlueTusk.Dashboard.BlueTuskDashboardOptions? other) -> bool
+BlueTusk.Dashboard.BlueTuskDashboardOptions.MutationAuthorizationPolicy.get -> string!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.MutationAuthorizationPolicy.set -> void
+BlueTusk.Dashboard.BlueTuskDashboardOptions.OperatorRole.get -> string!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.OperatorRole.set -> void
 BlueTusk.Dashboard.BlueTuskDashboardOptions.ReadAuthorizationPolicy.get -> string!
 BlueTusk.Dashboard.BlueTuskDashboardOptions.ReadAuthorizationPolicy.set -> void
 BlueTusk.Dashboard.BlueTuskDashboardOptions.RoutePrefix.get -> string!
 BlueTusk.Dashboard.BlueTuskDashboardOptions.RoutePrefix.set -> void
+BlueTusk.Dashboard.BlueTuskDashboardOptions.ViewerRole.get -> string!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.ViewerRole.set -> void
+static BlueTusk.Dashboard.BlueTuskDashboardEndpointRouteBuilderExtensions.MapBlueTuskDashboard(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, System.Action<BlueTusk.Dashboard.BlueTuskDashboardOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 override BlueTusk.Dashboard.BlueTuskDashboardOptions.Equals(object? obj) -> bool
 override BlueTusk.Dashboard.BlueTuskDashboardOptions.GetHashCode() -> int
 override BlueTusk.Dashboard.BlueTuskDashboardOptions.ToString() -> string!
-static BlueTusk.Dashboard.BlueTuskDashboardEndpointRouteBuilderExtensions.MapBlueTuskDashboard(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, System.Action<BlueTusk.Dashboard.BlueTuskDashboardOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 static BlueTusk.Dashboard.BlueTuskDashboardOptions.operator !=(BlueTusk.Dashboard.BlueTuskDashboardOptions? left, BlueTusk.Dashboard.BlueTuskDashboardOptions? right) -> bool
 static BlueTusk.Dashboard.BlueTuskDashboardOptions.operator ==(BlueTusk.Dashboard.BlueTuskDashboardOptions? left, BlueTusk.Dashboard.BlueTuskDashboardOptions? right) -> bool

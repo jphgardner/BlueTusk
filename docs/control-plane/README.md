@@ -44,8 +44,12 @@ builder.Services.AddSingleton<IControlPlaneQueryService>(queries);
 builder.Services.AddSingleton<IControlPlaneSyncQueryService,
     HostedSyncControlPlaneQueryService>();
 builder.Services.AddAuthorization(options =>
+{
     options.AddPolicy("BlueTusk.ControlPlane.Read", policy =>
-        policy.RequireRole("BlueTuskViewer", "BlueTuskOperator", "BlueTuskAdministrator")));
+        policy.RequireRole("BlueTuskViewer", "BlueTuskOperator", "BlueTuskAdministrator"));
+    options.AddPolicy("BlueTusk.ControlPlane.Mutate", policy =>
+        policy.RequireRole("BlueTuskOperator", "BlueTuskAdministrator"));
+});
 
 app.MapBlueTuskDashboard();
 ```
@@ -65,6 +69,28 @@ commit LSN for the same source fingerprint.
 The executor records denied and confirmation-rejected attempts. An accepted request writes `Requested` before calling the host's `IControlPlaneOperationHandler`, followed by `Succeeded` or `Failed`. If the initial audit append fails, the handler is never invoked. Exception messages are not copied into audit records; failures use a non-sensitive type/detail code. If the handler completes but the success audit fails, the executor reports a reconciliation-required error containing no false `Failed` record; operators reconcile by the stable operation ID.
 
 BlueTusk deliberately does not provide default slot-deletion or checkpoint-rewind handlers. A host must bind commands to its own coordinator and database permissions, keeping those destructive actions out of one-click read-only dashboard paths.
+
+The Sync pipelines page renders retry, reconcile, and rebuild controls only for
+principals in the configured Operator or Administrator role. Its mutation API
+has a separate authorization policy in addition to the dashboard read policy.
+The server derives the actor ID and roles from the authenticated principal;
+clients cannot submit an actor identity.
+
+Every operation request is bounded to 16 KiB of JSON, requires a non-empty
+reason, the exact `<OperationKind>:<Target>` confirmation, and an
+`X-BlueTusk-Operation-Id` header matching its client-generated body ID. The
+non-simple header prevents cross-origin HTML form submission; hosts must not
+enable credentialed cross-origin access to the dashboard API. The dashboard
+script is served as a same-origin external asset so a Content Security Policy
+can use `script-src 'self'` without permitting inline script. Handler failures
+return only a stable code and operation ID guidance, while the full exception
+is available to host logging and never copied to the browser or audit detail.
+
+The endpoint delegates every accepted request to
+`ControlPlaneOperationExecutor`, so audit-before-mutation, role escalation, and
+destructive-operation confirmation cannot be bypassed by the UI. The host still
+owns `IControlPlaneOperationHandler`, including its durable retry,
+reconciliation, rebuild, pause/resume, checkpoint, and slot coordinators.
 
 `PostgreSqlControlPlaneAuditStore` creates an append-only `audit_log` plus a database trigger that rejects `UPDATE` and `DELETE`. Run `InitializeAsync` with a migration owner, then give the application identity only schema usage, sequence usage, and insert privileges. Database owners can still drop database objects, so production audit retention also requires restricted ownership, PostgreSQL backups, and external log export appropriate to the organisation's compliance boundary.
 

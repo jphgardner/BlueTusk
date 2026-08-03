@@ -1,15 +1,55 @@
 using System.Globalization;
+using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
 using BlueTusk.ControlPlane;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.Extensions.Logging;
 
 namespace BlueTusk.Dashboard;
 
 public static class BlueTuskDashboardEndpointRouteBuilderExtensions
 {
+    private const string OperationIdHeader = "X-BlueTusk-Operation-Id";
+    private const long MaximumOperationRequestBytes = 16 * 1024;
+    private static readonly Action<ILogger, Guid, Exception?> OperationFailed =
+        LoggerMessage.Define<Guid>(
+            LogLevel.Error,
+            new EventId(1, "ControlPlaneOperationFailed"),
+            "BlueTusk control-plane operation {OperationId} failed.");
+    private const string DashboardScript = """
+        (() => {
+          const operationUrl = new URL('../api/operations', document.currentScript.src);
+          document.querySelectorAll('button[data-operation-kind]').forEach(button =>
+            button.addEventListener('click', async () => {
+              const expected = button.dataset.operationName + ':' + button.dataset.operationTarget;
+              const confirmation = window.prompt('Type exactly to confirm:\n' + expected);
+              if (confirmation === null) return;
+              const reason = window.prompt('Reason for this operation:');
+              if (!reason || !reason.trim()) return;
+              const operationId = crypto.randomUUID();
+              const response = await fetch(operationUrl, {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                  'X-BlueTusk-Operation-Id': operationId
+                },
+                body: JSON.stringify({
+                  operationId,
+                  kind: Number(button.dataset.operationKind),
+                  target: button.dataset.operationTarget,
+                  confirmation,
+                  reason
+                })
+              });
+              if (response.ok) window.location.reload();
+              else window.alert('Operation rejected. Reference ' + operationId);
+            }));
+        })();
+        """;
+
     public static IEndpointRouteBuilder MapBlueTuskDashboard(
         this IEndpointRouteBuilder endpoints,
         Action<BlueTuskDashboardOptions>? configure = null)
@@ -30,6 +70,22 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             "/api/sync",
             (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
                 queries.GetSyncOverviewAsync(cancellationToken));
+        group.MapGet(
+            "/assets/dashboard.js",
+            () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
+        group.MapPost(
+                "/api/operations",
+                (HttpContext context,
+                        ControlPlaneOperationExecutor executor,
+                        ILoggerFactory loggerFactory,
+                        CancellationToken cancellationToken) =>
+                    ExecuteOperationAsync(
+                        context,
+                        executor,
+                        loggerFactory.CreateLogger("BlueTusk.Dashboard.Operations"),
+                        options,
+                        cancellationToken))
+            .RequireAuthorization(options.MutationAuthorizationPolicy);
         group.MapGet(
             "/sources",
             async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
@@ -59,11 +115,124 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 Html(RenderCheckpoints(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
         group.MapGet(
             "/pipelines",
-            async (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
+            async (HttpContext context,
+                    IControlPlaneSyncQueryService queries,
+                    CancellationToken cancellationToken) =>
                 Html(RenderPipelines(
                     await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false),
-                    options)));
+                    options,
+                    CanMutate(context.User, options))));
         return endpoints;
+    }
+
+    private static async Task<IResult> ExecuteOperationAsync(
+        HttpContext context,
+        ControlPlaneOperationExecutor executor,
+        ILogger logger,
+        BlueTuskDashboardOptions options,
+        CancellationToken cancellationToken)
+    {
+        if (context.User.Identity?.IsAuthenticated is not true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (!context.Request.HasJsonContentType() ||
+            context.Request.ContentLength is not (> 0 and <= MaximumOperationRequestBytes))
+        {
+            return Results.BadRequest(new { Code = "invalid-operation-body" });
+        }
+
+        ControlPlaneOperationRequest? request;
+        try
+        {
+            request = await context.Request.ReadFromJsonAsync<ControlPlaneOperationRequest>(
+                cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is System.Text.Json.JsonException or
+                                          NotSupportedException or
+                                          BadHttpRequestException)
+        {
+            return Results.BadRequest(new { Code = "invalid-operation-body" });
+        }
+
+        if (request is null)
+        {
+            return Results.BadRequest(new { Code = "invalid-operation-body" });
+        }
+
+        if (!context.Request.Headers.TryGetValue(OperationIdHeader, out var values) ||
+            values.Count != 1 ||
+            !Guid.TryParseExact(values[0], "D", out var headerOperationId) ||
+            headerOperationId != request.OperationId)
+        {
+            return Results.BadRequest(new { Code = "operation-id-header-mismatch" });
+        }
+
+        var actorId = context.User.FindFirst(ClaimTypes.NameIdentifier)?.Value ??
+                      context.User.Identity.Name;
+        if (string.IsNullOrWhiteSpace(actorId))
+        {
+            return Results.Forbid();
+        }
+
+        var roles = new HashSet<ControlPlaneRole>();
+        if (context.User.IsInRole(options.ViewerRole))
+        {
+            roles.Add(ControlPlaneRole.Viewer);
+        }
+
+        if (context.User.IsInRole(options.OperatorRole))
+        {
+            roles.Add(ControlPlaneRole.Operator);
+        }
+
+        if (context.User.IsInRole(options.AdministratorRole))
+        {
+            roles.Add(ControlPlaneRole.Administrator);
+        }
+
+        try
+        {
+            await executor.ExecuteAsync(
+                new ControlPlaneActor(actorId, roles),
+                request,
+                cancellationToken).ConfigureAwait(false);
+            return Results.Ok(new { request.OperationId, Status = "succeeded" });
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (ControlPlaneAuthorizationException)
+        {
+            return Results.Problem(
+                title: "The operation is not authorized.",
+                statusCode: StatusCodes.Status403Forbidden,
+                extensions: new Dictionary<string, object?> { ["code"] = "operation-denied" });
+        }
+        catch (ControlPlaneConfirmationException)
+        {
+            return Results.Problem(
+                title: "The operation confirmation is invalid.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?> { ["code"] = "confirmation-mismatch" });
+        }
+        catch (ArgumentException)
+        {
+            return Results.Problem(
+                title: "The operation request is invalid.",
+                statusCode: StatusCodes.Status400BadRequest,
+                extensions: new Dictionary<string, object?> { ["code"] = "invalid-operation-request" });
+        }
+        catch (Exception exception)
+        {
+            OperationFailed(logger, request.OperationId, exception);
+            return Results.Problem(
+                title: "The operation failed. Use its operation ID to inspect the audit trail.",
+                statusCode: StatusCodes.Status500InternalServerError,
+                extensions: new Dictionary<string, object?> { ["code"] = "operation-failed" });
+        }
     }
 
     private static IResult Html(string content) => Results.Content(
@@ -173,7 +342,8 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
 
     private static string RenderPipelines(
         ControlPlaneSyncOverview overview,
-        BlueTuskDashboardOptions options)
+        BlueTuskDashboardOptions options,
+        bool canMutate)
     {
         var totalRate = overview.Pipelines
             .Where(static pipeline => pipeline.TransactionsPerSecond.HasValue)
@@ -195,7 +365,7 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                     .ToString("N0", CultureInfo.InvariantCulture)))
             .Append("</div><table><thead><tr><th>Pipeline</th><th>State</th><th>Throughput</th>")
             .Append("<th>Checkpoint lag</th><th>Applied</th><th>Snapshot rows</th>")
-            .Append("<th>Retries</th><th>Quarantine</th><th>Diagnostic</th></tr></thead><tbody>");
+            .Append("<th>Retries</th><th>Quarantine</th><th>Diagnostic</th><th>Controls</th></tr></thead><tbody>");
         foreach (var pipeline in overview.Pipelines)
         {
             body.Append("<tr><td>").Append(E(pipeline.PipelineId)).Append("</td><td>")
@@ -213,6 +383,8 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 .Append(pipeline.QuarantinedTransactions.ToString("N0", CultureInfo.InvariantCulture))
                 .Append("</td><td>")
                 .Append(E(pipeline.DiagnosticCode ?? pipeline.LagDiagnosticCode ?? "—"))
+                .Append("</td><td>")
+                .Append(canMutate ? PipelineControls(pipeline.PipelineId) : "—")
                 .Append("</td></tr>");
         }
 
@@ -282,10 +454,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         DateTimeOffset observedAt,
         string body,
         BlueTuskDashboardOptions options) =>
-        $$"""
+        $$$"""
         <!doctype html><html lang="en"><head><meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>{{E(title)}} · BlueTusk</title><style>
+        <title>{{{E(title)}}} · BlueTusk</title><style>
         :root{color-scheme:light dark;font:15px system-ui,sans-serif}body{margin:0;background:#10151b;color:#e9f1f7}
         nav{padding:1rem 2rem;background:#17212b;display:flex;gap:1rem}nav a{color:#8dd8ff;text-decoration:none}
         main{max-width:1200px;margin:auto;padding:2rem}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem}
@@ -293,14 +465,31 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         table{width:100%;border-collapse:collapse;margin:1rem 0 2rem}th,td{padding:.65rem;text-align:left;border-bottom:1px solid #2b3c4b}
         th,dt{color:#9fb2c2}a{color:#8dd8ff}dl{display:grid;grid-template-columns:max-content 1fr;gap:.5rem 1rem}
         footer{color:#9fb2c2;margin-top:2rem}code{font-size:.85em}
+        button{margin:.15rem;padding:.35rem .55rem;border:1px solid #4b687d;border-radius:5px;background:#21313e;color:#e9f1f7;cursor:pointer}
         </style></head><body><nav><strong>BlueTusk</strong>
-        <a href="{{E(options.RoutePrefix)}}/sources">Sources</a>
-        <a href="{{E(options.RoutePrefix)}}/snapshots">Snapshots</a>
-        <a href="{{E(options.RoutePrefix)}}/consumer-groups">Consumer groups</a>
-        <a href="{{E(options.RoutePrefix)}}/checkpoints">Checkpoints</a>
-        <a href="{{E(options.RoutePrefix)}}/pipelines">Sync pipelines</a></nav>
-        <main>{{body}}<footer>Observed {{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}</footer></main></body></html>
+        <a href="{{{E(options.RoutePrefix)}}}/sources">Sources</a>
+        <a href="{{{E(options.RoutePrefix)}}}/snapshots">Snapshots</a>
+        <a href="{{{E(options.RoutePrefix)}}}/consumer-groups">Consumer groups</a>
+        <a href="{{{E(options.RoutePrefix)}}}/checkpoints">Checkpoints</a>
+        <a href="{{{E(options.RoutePrefix)}}}/pipelines">Sync pipelines</a></nav>
+        <main>{{{body}}}<footer>Observed {{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}</footer></main>
+        <script src="{{{E(options.RoutePrefix)}}}/assets/dashboard.js" defer></script>
+        </body></html>
         """;
+
+    private static string PipelineControls(string pipelineId)
+    {
+        var target = E("pipeline:" + pipelineId);
+        return OperationButton(ControlPlaneOperationKind.RetryPipeline, target, "Retry") +
+               OperationButton(ControlPlaneOperationKind.ReconcilePipeline, target, "Reconcile") +
+               OperationButton(ControlPlaneOperationKind.RebuildPipeline, target, "Rebuild");
+    }
+
+    private static string OperationButton(
+        ControlPlaneOperationKind kind,
+        string encodedTarget,
+        string label) =>
+        $"<button type=\"button\" data-operation-kind=\"{(int)kind}\" data-operation-name=\"{kind}\" data-operation-target=\"{encodedTarget}\">{E(label)}</button>";
 
     private static string Card(string label, string value) =>
         $"<div class=\"card\"><span>{E(label)}</span><strong>{E(value)}</strong></div>";
@@ -322,4 +511,7 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
     private static string ShortFingerprint(string value) => value.Length <= 12 ? value : value[..12];
 
     private static string E(string value) => HtmlEncoder.Default.Encode(value);
+
+    private static bool CanMutate(ClaimsPrincipal user, BlueTuskDashboardOptions options) =>
+        user.IsInRole(options.OperatorRole) || user.IsInRole(options.AdministratorRole);
 }

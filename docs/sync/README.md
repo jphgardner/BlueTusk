@@ -34,9 +34,10 @@ bootstrap now reserves retention before export, restarts abandoned epochs, and
 resumes completed pipelines without resetting the destination. Dashboard
 read models now expose pipeline state, sampled throughput, checkpoint lag,
 failures, quarantine, retries, and rebuild/reconciliation state without leaking
-worker exception messages. Dashboard mutation controls and endurance remain
-gated work. The Sync release train remains non-publishable until those remaining
-Phase 5 gates pass.
+worker exception messages. Separately authorized retry, reconcile, and rebuild
+controls now pass exact confirmations through the audit-before-mutation control
+plane executor. Endurance and final release gates remain. The Sync release train
+remains non-publishable until those remaining Phase 5 gates pass.
 
 ## Retry, rate limits, and backpressure
 
