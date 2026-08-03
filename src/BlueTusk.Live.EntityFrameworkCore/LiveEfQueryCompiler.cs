@@ -156,6 +156,13 @@ public static class LiveEfQueryCompiler
             entityType,
             definition,
             keyPropertyName);
+        var dependencies = EntityDependencyCollector.Collect(
+            context.Model,
+            entityType,
+            query.Expression);
+        var capabilities = dependencies.Length == 1
+            ? shape.Capabilities
+            : shape.Capabilities & ~LiveQueryCapabilities.SingleTable;
         try
         {
             _ = query.ToQueryString();
@@ -180,6 +187,7 @@ public static class LiveEfQueryCompiler
             definition.TenantBinding?.ParameterName,
             definition.MaximumResultCount.ToString(System.Globalization.CultureInfo.InvariantCulture),
             shape.CanonicalExpression,
+            string.Join(',', dependencies.Select(static dependency => dependency.ToString())),
             definition.RowComparer.GetType().AssemblyQualifiedName);
         var fingerprint = LiveQueryFingerprint.Create(
             definition.Name,
@@ -189,8 +197,8 @@ public static class LiveEfQueryCompiler
             definition.Name,
             definition.DatabaseIdentity,
             fingerprint,
-            shape.Capabilities,
-            [new LiveTableDependency(schema, tableName)],
+            capabilities,
+            dependencies,
             definition.Parameters,
             definition.MaximumResultCount,
             async (execution, token) =>
@@ -226,6 +234,72 @@ public static class LiveEfQueryCompiler
 
     private sealed record QueryShape(LiveQueryCapabilities Capabilities, string CanonicalExpression);
 
+    private sealed class EntityDependencyCollector(IModel model) : ExpressionVisitor
+    {
+        private readonly HashSet<IEntityType> _entityTypes = [];
+
+        public static LiveTableDependency[] Collect(
+            IModel model,
+            IEntityType rootEntityType,
+            Expression expression)
+        {
+            var collector = new EntityDependencyCollector(model);
+            collector._entityTypes.Add(rootEntityType);
+            collector.Visit(expression);
+            return collector._entityTypes
+                .Select(entityType => new LiveTableDependency(
+                    entityType.GetSchema() ?? model.GetDefaultSchema() ?? "public",
+                    entityType.GetTableName() ??
+                        throw new LiveEfQueryRegistrationException(
+                            $"Entity '{entityType.DisplayName()}' is not mapped to a table.")))
+                .Distinct()
+                .OrderBy(static dependency => dependency.Schema, StringComparer.Ordinal)
+                .ThenBy(static dependency => dependency.Table, StringComparer.Ordinal)
+                .ToArray();
+        }
+
+        public override Expression? Visit(Expression? node)
+        {
+            if (node is not null)
+            {
+                CollectType(node.Type);
+            }
+
+            return base.Visit(node);
+        }
+
+        protected override Expression VisitMethodCall(MethodCallExpression node)
+        {
+            foreach (var genericArgument in node.Method.GetGenericArguments())
+            {
+                CollectType(genericArgument);
+            }
+
+            return base.VisitMethodCall(node);
+        }
+
+        private void CollectType(Type type)
+        {
+            var entityType = model.FindEntityType(type);
+            if (entityType is not null)
+            {
+                _entityTypes.Add(entityType);
+            }
+
+            if (type.HasElementType)
+            {
+                CollectType(type.GetElementType()!);
+            }
+
+            foreach (var genericArgument in type.IsGenericType
+                         ? type.GetGenericArguments()
+                         : Type.EmptyTypes)
+            {
+                CollectType(genericArgument);
+            }
+        }
+    }
+
     private static class LiveEfQueryShape
     {
         public static QueryShape Validate<TContext, TEntity, TKey>(
@@ -239,6 +313,8 @@ public static class LiveEfQueryCompiler
         {
             var hasPredicate = false;
             var hasTake = false;
+            var hasInclude = false;
+            var hasFullText = false;
             var orderProperties = new List<string>();
             var predicates = new List<LambdaExpression>();
             var current = expression;
@@ -252,7 +328,7 @@ public static class LiveEfQueryCompiler
                         case nameof(Queryable.Where):
                             hasPredicate = true;
                             var predicate = RequireLambda(methodCall.Arguments[1], "predicate");
-                            SimplePredicateValidator.Validate(predicate.Body);
+                            hasFullText |= SimplePredicateValidator.Validate(predicate.Body);
                             predicates.Add(predicate);
                             break;
                         case nameof(Queryable.OrderBy):
@@ -284,6 +360,12 @@ public static class LiveEfQueryCompiler
                                 $"Queryable method '{methodName}' is not supported by the initial Live compiler.");
                     }
                 }
+                else if (methodCall.Method.DeclaringType == typeof(EntityFrameworkQueryableExtensions) &&
+                    methodName is nameof(EntityFrameworkQueryableExtensions.Include) or
+                        nameof(EntityFrameworkQueryableExtensions.ThenInclude))
+                {
+                    hasInclude = true;
+                }
                 else if (methodCall.Method.DeclaringType != typeof(EntityFrameworkQueryableExtensions) ||
                     methodName != nameof(EntityFrameworkQueryableExtensions.AsNoTracking))
                 {
@@ -313,6 +395,16 @@ public static class LiveEfQueryCompiler
             if (hasPredicate)
             {
                 capabilities |= LiveQueryCapabilities.ParameterizedPredicate;
+            }
+
+            if (hasInclude)
+            {
+                capabilities |= LiveQueryCapabilities.Include;
+            }
+
+            if (hasFullText)
+            {
+                capabilities |= LiveQueryCapabilities.FullText;
             }
 
             return new QueryShape(capabilities, expression.ToString());
@@ -415,7 +507,14 @@ public static class LiveEfQueryCompiler
             ExpressionType.OrElse,
         ];
 
-        public static void Validate(Expression expression) => new SimplePredicateValidator().Visit(expression);
+        private bool _hasFullText;
+
+        public static bool Validate(Expression expression)
+        {
+            var validator = new SimplePredicateValidator();
+            validator.Visit(expression);
+            return validator._hasFullText;
+        }
 
         protected override Expression VisitBinary(BinaryExpression node)
         {
@@ -445,11 +544,15 @@ public static class LiveEfQueryCompiler
                 node.Method.Name is nameof(string.Contains) or nameof(string.StartsWith) or nameof(string.EndsWith);
             var supportedEfProperty = node.Method.DeclaringType == typeof(EF) &&
                 node.Method.Name == nameof(EF.Property);
-            if (!supportedStringMethod && !supportedEfProperty)
+            var supportedFullTextMethod = node.Method.DeclaringType == typeof(BlueTuskDbFunctionsExtensions) &&
+                (node.Method.Name.Contains("FullText", StringComparison.Ordinal) ||
+                 node.Method.Name.Contains("TextSearch", StringComparison.Ordinal));
+            if (!supportedStringMethod && !supportedEfProperty && !supportedFullTextMethod)
             {
                 throw Unsupported(node);
             }
 
+            _hasFullText |= supportedFullTextMethod;
             return base.VisitMethodCall(node);
         }
 

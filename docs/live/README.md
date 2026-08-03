@@ -28,7 +28,7 @@ Refreshes coalesce every invalidation since the last cursor into at most one aut
 
 ## EF query registration
 
-`BlueTusk.Live.EntityFrameworkCore` compiles trusted `IQueryable<TEntity>` factories at startup. The preview compiler accepts one mapped entity with one primary key, simple predicates, explicit tenant isolation, deterministic ordering including the primary key, and one bounded `Take`. It asks the configured EF provider to translate the query during registration, so unsupported shapes fail before a client can subscribe.
+`BlueTusk.Live.EntityFrameworkCore` compiles trusted `IQueryable<TEntity>` factories at startup. The compiler accepts one mapped root entity with one primary key, simple predicates, explicit tenant isolation, deterministic ordering including the primary key, and one bounded `Take`. Vetted one-to-many `Include` chains and PostgreSQL full-text predicates are supported. Every mapped entity reached by an include becomes an invalidation dependency, and multi-table plans no longer advertise the `SingleTable` capability. It asks the configured EF provider to translate the query during registration, so unsupported shapes fail before a client can subscribe.
 
 Tenant isolation must be declared as PostgreSQL RLS, an EF global query filter, or a registered entity-property/typed-parameter equality that the compiler verifies in the predicate. The query factory and key selector are server-owned delegates; no client SQL, LINQ, or expression tree crosses the transport boundary.
 
@@ -66,7 +66,7 @@ Each shared subscription now exposes an allocation-free operational snapshot: op
 
 `BlueTusk.Live.Testing` provides database-scoped deterministic invalidations, a sequence-fenced and retention-aware in-memory replay store, and a public replay-store conformance kit for custom providers. The in-memory components are for tests only and preserve the same replay identity, integrity, idempotency, and expiry rules as durable storage.
 
-The next Live slices add advanced vetted EF query shapes and the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.
+The next Live slices add vetted projected joins, grouping and aggregates plus the adversarial/load release gates. Package publication stays disabled until those vertical gates pass.
 
 ## Control-plane visibility
 

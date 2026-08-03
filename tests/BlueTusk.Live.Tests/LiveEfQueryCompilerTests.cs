@@ -1,4 +1,5 @@
 using BlueTusk.Live.EntityFrameworkCore;
+using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
 
 namespace BlueTusk.Live.Tests;
@@ -111,6 +112,79 @@ public sealed class LiveEfQueryCompilerTests
                 TestContext.Current.CancellationToken));
     }
 
+    [Fact]
+    public async Task Compiler_accepts_one_to_many_include_and_tracks_both_tables()
+    {
+        var plan = await LiveEfQueryCompiler.CompileAsync(
+            Factory(),
+            Definition((context, arguments) =>
+            {
+                var tenant = arguments.Get<string>("tenant")!;
+                return context.Orders
+                    .Include(order => order.Lines)
+                    .Where(order => order.TenantId == tenant)
+                    .OrderByDescending(order => order.CreatedAt)
+                    .ThenBy(order => order.Id)
+                    .Take(25);
+            }),
+            TestContext.Current.CancellationToken);
+
+        Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.Include));
+        Assert.False(plan.Capabilities.HasFlag(LiveQueryCapabilities.SingleTable));
+        Assert.Equal(
+            ["sales.order_lines", "sales.orders"],
+            plan.Dependencies.Select(static dependency => dependency.ToString()));
+    }
+
+    [Fact]
+    public async Task Compiler_accepts_translatable_PostgreSQL_full_text_predicate()
+    {
+        LiveQueryParameter[] parameters =
+        [
+            new("tenant", typeof(string)),
+            new("search", typeof(string)),
+        ];
+        IReadOnlyDictionary<string, object?> validationArguments =
+            new Dictionary<string, object?>
+            {
+                ["tenant"] = "tenant-a",
+                ["search"] = "durable relay",
+            };
+        var definition = new LiveEfQueryDefinition<OrdersContext, Order, int>(
+            "order-search",
+            "database",
+            "v1",
+            parameters,
+            validationArguments,
+            50,
+            (context, arguments) =>
+            {
+                var tenant = arguments.Get<string>("tenant")!;
+                var search = arguments.Get<string>("search")!;
+                return context.Orders
+                    .Where(order =>
+                        order.TenantId == tenant &&
+                        EF.Functions.FullTextMatches(
+                            order.SearchVector,
+                            EF.Functions.WebSearchToTextSearchQuery(search)))
+                    .OrderByDescending(order => order.CreatedAt)
+                    .ThenBy(order => order.Id)
+                    .Take(25);
+            },
+            order => order.Id,
+            EqualityComparer<Order>.Default,
+            LiveEfTenantIsolationMode.RegisteredPredicate,
+            new LiveEfTenantBinding(nameof(Order.TenantId), "tenant"));
+
+        var plan = await LiveEfQueryCompiler.CompileAsync(
+            Factory(),
+            definition,
+            TestContext.Current.CancellationToken);
+
+        Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.FullText));
+        Assert.True(plan.Capabilities.HasFlag(LiveQueryCapabilities.SingleTable));
+    }
+
     private static readonly LiveQueryParameter[] Parameters =
     [
         new("tenant", typeof(string)),
@@ -165,6 +239,14 @@ public sealed class LiveEfQueryCompilerTests
                 entity.ToTable("orders", "sales");
                 entity.HasKey(order => order.Id);
                 entity.Property(order => order.TenantId).IsRequired();
+                entity.HasMany(order => order.Lines)
+                    .WithOne(line => line.Order)
+                    .HasForeignKey(line => line.OrderId);
+            });
+            modelBuilder.Entity<OrderLine>(entity =>
+            {
+                entity.ToTable("order_lines", "sales");
+                entity.HasKey(line => line.Id);
             });
         }
     }
@@ -178,5 +260,18 @@ public sealed class LiveEfQueryCompilerTests
         public decimal Total { get; set; }
 
         public DateTimeOffset CreatedAt { get; set; }
+
+        public BlueTuskTextSearchVector SearchVector { get; set; } = new([]);
+
+        public List<OrderLine> Lines { get; } = [];
+    }
+
+    private sealed class OrderLine
+    {
+        public int Id { get; set; }
+
+        public int OrderId { get; set; }
+
+        public Order Order { get; set; } = null!;
     }
 }
