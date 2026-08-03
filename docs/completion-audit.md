@@ -108,9 +108,10 @@ the [checked-in provider report](../benchmarks/baselines/windows-ryzen7-5800x-do
 - Real-account AWS, Azure, and Google Cloud identity acceptance remains opt-in
   because repository CI does not hold customer credentials; deterministic SDK
   contract tests are mandatory and pass without those credentials.
-- Multiplexing is out of scope. Directly constructed ADO.NET connections are
-  intentionally unpooled, replication sessions are intentionally dedicated, and
-  ownership/grant plus documented raw-SQL-only boundaries remain application
-  responsibilities.
+- Bounded statement multiplexing is implemented for data-source-owned,
+  session-neutral commands. Explicit connections, transactions, prepared
+  commands, replication, notifications, and classified stateful SQL remain
+  intentionally session-affine. The release gate includes forced shutdown,
+  cancellation/error isolation, and a direct Npgsql benchmark comparison.
 - One tablespace integration case requires a server-owned filesystem directory
   and is intentionally skipped where that external directory is not configured.

@@ -115,6 +115,27 @@ their lower BlueTusk means. The exact values and environment are checked in unde
 `baselines/windows-ryzen7-5800x-dotnet10`; these paired results are not a
 provider-wide performance guarantee.
 
+`MultiplexingComparisonBenchmarks` is a separate fairness fixture for 64
+concurrent parameterized scalar commands. Both providers use four physical
+lanes, bounded queues, multiplexing enabled, no command timeout, identical SQL,
+and one command object per logical operation. `OperationsPerInvoke=64` reports
+per-command latency and allocation while preserving the real burst.
+It also repeats the burst with 64 reusable command objects so scheduler and
+protocol costs are visible separately from command construction.
+
+```powershell
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --filter '*MultiplexingComparisonBenchmarks*'
+```
+
+The 2026-08-04 Windows/Ryzen 7 5800X MediumRun records 21.71 µs and
+1,727 B per end-to-end BlueTusk command versus 24.33 µs and 1,738 B for
+Npgsql. Reused commands record 18.84/27.66 µs and 1,127/794 B respectively.
+BlueTusk has lower mean latency in both fixtures and slightly lower end-to-end
+allocation; Npgsql allocates less when construction is excluded. The
+end-to-end confidence intervals overlap narrowly, so the checked-in report is a
+regression gate rather than a universal provider claim.
+
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
 1,000-row scan pay 32 additional network exchanges. The optimized unlimited path
 sends Parse/Bind/Describe/Execute/Sync in one transport write without an

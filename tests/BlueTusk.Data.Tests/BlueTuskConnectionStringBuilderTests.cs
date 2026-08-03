@@ -13,6 +13,7 @@ public sealed class BlueTuskConnectionStringBuilderTests
         Assert.Equal("localhost", builder.Host);
         Assert.Equal(5432, builder.Port);
         Assert.True(builder.Pooling);
+        Assert.False(builder.Multiplexing);
         Assert.Equal(0, builder.MinimumPoolSize);
         Assert.Equal(100, builder.MaximumPoolSize);
         Assert.Equal(TimeSpan.FromMinutes(5), builder.ConnectionIdleLifetime);

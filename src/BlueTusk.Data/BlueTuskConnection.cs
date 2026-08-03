@@ -177,6 +177,34 @@ public sealed class BlueTuskConnection : DbConnection
 
     internal bool HasOpenSession => PhysicalSession is { IsOpen: true };
 
+    internal void AbortPhysicalSession()
+    {
+        var lease = Interlocked.Exchange(ref _sessionLease, null);
+        try
+        {
+            if (lease is BlueTuskPooledSession pooledSession)
+            {
+                try
+                {
+                    pooledSession.Session.Dispose();
+                }
+                finally
+                {
+                    _pool!.Return(pooledSession);
+                }
+            }
+            else if (lease is IBlueTuskPhysicalSession session)
+            {
+                session.Dispose();
+            }
+        }
+        finally
+        {
+            _sessionTouched = false;
+            SetState(ConnectionState.Closed);
+        }
+    }
+
     private IBlueTuskPhysicalSession? PhysicalSession => _sessionLease switch
     {
         BlueTuskPooledSession pooledSession => pooledSession.Session,

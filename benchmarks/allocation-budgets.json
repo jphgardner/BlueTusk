@@ -151,6 +151,16 @@
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AffectedGraphRefreshAndDiffAsync",
       "maximumBytesPerOperation": 960000,
       "reason": "Complete affected-invalidation path through PostgreSQL GRAPH_TABLE requery, 999 keyed comparisons, and immutable Live snapshot ownership."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks.BlueTuskConcurrentScalarBurstAsync",
+      "maximumBytesPerOperation": 1850,
+      "reason": "End-to-end data-source command, typed parameter, bounded multiplexing request, PostgreSQL pipeline group, scalar decode, and command disposal."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks.BlueTuskReusedScalarBurstAsync",
+      "maximumBytesPerOperation": 1250,
+      "reason": "Repeated execution through a persistent multiplexing lane with command and parameter construction outside the timed operation."
     }
   ]
 }

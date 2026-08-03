@@ -12,6 +12,7 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
 {
     private BlueTuskClientConfiguration _clientConfiguration = BlueTuskClientConfiguration.Empty;
+    private BlueTuskMultiplexingOptions? _multiplexing;
 
     public BlueTuskDataSourceBuilder(string connectionString)
     {
@@ -100,6 +101,19 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
     }
 
     /// <summary>
+    /// Enables bounded statement multiplexing for session-neutral commands created directly from
+    /// the data source.
+    /// </summary>
+    public BlueTuskDataSourceBuilder EnableMultiplexing(
+        Action<BlueTuskMultiplexingOptions>? configure = null)
+    {
+        var options = new BlueTuskMultiplexingOptions();
+        configure?.Invoke(options);
+        _multiplexing = options.Clone();
+        return this;
+    }
+
+    /// <summary>
     /// Uses an explicit credential for PostgreSQL GSSAPI/Kerberos or SSPI authentication.
     /// Omit this configuration to use the process identity or platform credential cache.
     /// </summary>
@@ -146,6 +160,7 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
             ConnectionString,
             Types.Build(),
             Features.Build(),
-            _clientConfiguration);
+            _clientConfiguration,
+            _multiplexing);
     }
 }

@@ -49,6 +49,17 @@ large-stream intervals overlap and are treated as parity despite lower BlueTusk
 means. These results are an optimization and regression baseline, not a
 provider-wide superiority claim or release performance guarantee.
 
+The V1 multiplexing MediumRun was added on 2026-08-04 on the same processor,
+runtime, and PostgreSQL 18 loopback server. Both providers use four physical
+lanes, 64 concurrent parameterized scalar commands, no command timeout, and one
+logical command per operation. End-to-end BlueTusk/Npgsql results are
+21.71/24.33 µs and 1,727/1,738 B per command. Reusing the 64 command objects
+records 18.84/27.66 µs and 1,127/794 B. BlueTusk therefore has the lower mean
+latency in both pairs and slightly lower end-to-end allocation, while Npgsql
+retains the allocation advantage when command construction is excluded.
+End-to-end latency intervals overlap narrowly, so this is a regression baseline,
+not a universal superiority claim.
+
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first
 execution measured 2.94 ms and 132,048 B; materializing 100 no-tracking orders

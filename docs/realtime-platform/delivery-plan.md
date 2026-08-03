@@ -12,6 +12,7 @@ The implementation uses two-week iterations and lands only passing vertical slic
 | 5 | Sync state machine, transformations, four connectors, reconciliation, rebuilds and dashboard | all connectors pass snapshot-plus-stream, recovery, upgrade, repair, and endurance suites |
 | 6 | registered Live compiler, gap-free initial results, diffs, replay, transports and clients | adversarial isolation and reconnect testing plus checked-in load budgets pass |
 | 7 | bounded SQL/PGQ registration, dependency invalidation, authoritative graph diff and samples | PostgreSQL 19 guards, graph correctness, cancellation, and workload benchmarks pass |
+| 8 | V1 expansion: multiplexing, managed hosting, capability-secured client SQL/LINQ, isolated transformations, and incremental graph evaluation | each capability has threat modelling, bounded resource contracts, fault recovery, operations, conformance, benchmarks, and an independently reviewable release gate |
 
 Every phase additionally requires formatting, a zero-warning build, current provider regressions, documentation-link validation, vulnerability auditing, packaging checks, and applicable public API and serialization baselines.
 
@@ -22,4 +23,9 @@ Every phase additionally requires formatting, a zero-warning build, current prov
 - Sync workers are in-process for 1.0.
 - Live ships SignalR and SSE, then TypeScript and Angular, with gRPC and React before 1.0.
 - Schema drift and poison records pause with diagnostics by default.
-- Managed hosting, arbitrary client SQL/LINQ, isolated transformation processes, multiplexing, and incremental graph evaluation are outside this roadmap.
+- Bounded statement multiplexing is implemented as the first Phase 8 vertical
+  slice. Managed hosting, capability-secured client SQL/LINQ, isolated
+  transformation processes, and incremental graph evaluation are V1 scope and
+  remain gated until their production contracts and evidence land. “Arbitrary”
+  client queries never means bypassing registration, RLS, tenant scope,
+  authorisation, cost limits, or cancellation.

@@ -35,6 +35,7 @@ var liveBenchmarkTypes = new HashSet<Type>
 {
     typeof(ContinuousGraphBenchmarks),
     typeof(EntityFrameworkCoreBenchmarks),
+    typeof(MultiplexingComparisonBenchmarks),
     typeof(ProviderComparisonBenchmarks),
     typeof(SqlPgqBenchmarks),
 };

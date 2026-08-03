@@ -137,6 +137,16 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<BlueTuskBatchQuery> queries,
         CancellationToken cancellationToken = default);
 
+    ValueTask ExecuteMultiplexedPipelineAsync(
+        IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands,
+        IReadOnlyList<CancellationToken>? groupCancellationTokens,
+        Action<int>? groupStarting,
+        Action<int>? groupCompleted,
+        Action<int, BlueTuskMultiplexedPipelineOutcome> outcomeCompleted,
+        CancellationToken dispatchCancellationToken) =>
+        throw new NotSupportedException(
+            "This physical-session implementation does not provide multiplexed pipeline I/O.");
+
     ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
         IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
         CancellationToken cancellationToken = default);
@@ -691,6 +701,21 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         IReadOnlyList<BlueTuskBatchQuery> queries,
         CancellationToken cancellationToken = default) =>
         _session.ExecuteBatchAsync(queries, cancellationToken);
+
+    public ValueTask ExecuteMultiplexedPipelineAsync(
+            IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands,
+            IReadOnlyList<CancellationToken>? groupCancellationTokens,
+            Action<int>? groupStarting,
+            Action<int>? groupCompleted,
+            Action<int, BlueTuskMultiplexedPipelineOutcome> outcomeCompleted,
+            CancellationToken dispatchCancellationToken) =>
+        _session.ExecuteMultiplexedPipelineAsync(
+            commands,
+            groupCancellationTokens,
+            groupStarting,
+            groupCompleted,
+            outcomeCompleted,
+            dispatchCancellationToken);
 
     public ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
         IReadOnlyList<BlueTuskPreparedBatchQuery> queries,

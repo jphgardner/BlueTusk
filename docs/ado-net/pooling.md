@@ -17,6 +17,24 @@ await dataSource.WarmUpAsync();
 await using var connection = await dataSource.OpenConnectionAsync();
 ```
 
+For high-concurrency, session-neutral commands, enable the bounded statement
+multiplexer and create commands directly from the data source:
+
+```csharp
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .EnableMultiplexing(options =>
+    {
+        options.WorkerCount = 4;
+        options.QueueCapacity = 1_024;
+        options.MaxPipelineCommands = 64;
+    })
+    .Build();
+
+await using var command = dataSource.CreateCommand("SELECT $1::int4");
+command.Parameters.Add(new BlueTuskParameter<int>(42));
+var value = await command.ExecuteScalarAsync<int>();
+```
+
 ## Settings
 
 | Setting | Default | Meaning |
@@ -26,6 +44,7 @@ await using var connection = await dataSource.OpenConnectionAsync();
 | `Maximum Pool Size` | `100` | Hard limit for physical sessions in each host endpoint pool. |
 | `Connection Idle Lifetime` | 5 minutes | Maximum idle age checked before reuse; zero disables idle expiry. |
 | `Connection Lifetime` | 1 hour | Maximum physical-session age checked at checkout and return; zero disables maximum-age expiry. |
+| `Multiplexing` | `false` | Enables bounded statement multiplexing; pooling must also be enabled. |
 
 When the pool is at its maximum, asynchronous opens wait in order for returned capacity. The caller's cancellation token cancels that wait without consuming a slot.
 
@@ -48,9 +67,34 @@ The reset round trip is also the health check for a touched lease. An untouched 
 - `GetHostPoolStatistics()` returns the same counters for each configured endpoint.
 - `ClearPool()` and `ClearPoolAsync()` close idle sessions and mark active sessions for disposal when they return.
 - Disposing the data source cancels queued opens, closes idle sessions, and drains active sessions as their logical connections close.
+- `GetMultiplexingStatistics()` reports queue, worker, completion, cancellation,
+  failure, and PostgreSQL pipeline counters for the data source.
+
+## Statement multiplexing
+
+Multiplexing uses persistent, bounded worker lanes rather than assigning one
+physical session to every logical command. The automatic worker count reserves
+at most half of the configured pool and never selects more than four workers.
+The default queue holds 1,024 commands, a pipeline flush contains at most 64
+independently synchronized commands, and a lane is recycled after 65,536
+commands. Disposal drains for 30 seconds before physically aborting a stuck
+lane.
+
+Only commands created directly from `BlueTuskDataSource` are eligible. Commands
+on explicit connections, enlisted transactions, explicitly prepared commands,
+and SQL that can depend on session state use a normal affine lease. This
+includes transaction control, `SET`/`RESET`, temporary objects, LISTEN, COPY,
+cursors, explicit PREPARE/EXECUTE, session advisory locks, and `set_config`.
+Set `MultiplexingMode` to `Require` to reject fallback or `Disable` for a trusted
+user-defined routine whose statefulness cannot be inferred from SQL text.
+
+Every command ends at its own PostgreSQL `Sync` boundary. Server errors,
+per-command timeouts, and caller cancellation are isolated from neighbouring
+commands. Queue, pipeline, lease, and shutdown bounds are enforced independently.
+See [ADR 0013](../architecture/decisions/0013-bounded-statement-multiplexing.md).
 
 The `BlueTusk.Diagnostics` meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Multi-host retries and non-first-host selections have separate counters. Statistics are scoped to one data source; meter instruments are process-wide aggregates. See [Diagnostics and observability](../observability.md) for names, dimensions, and redaction rules.
 
 The pooling production gate, its failure invariants, live version matrix, stress
-coverage, and deliberate non-multiplexing boundary are recorded in
+coverage, and multiplexing boundary are recorded in
 [Runtime release readiness](../release-readiness.md).

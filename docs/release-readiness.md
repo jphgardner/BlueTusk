@@ -42,8 +42,17 @@ publishes only through the protected production environment. See the
 
 Deterministic failure tests also prove that failed creation and validation
 release capacity, clearing retires leased sessions on return, and data-source
-disposal rejects queued opens. Multiplexing remains deliberately out of scope;
-one logical checkout exclusively owns one physical session.
+disposal rejects queued opens.
+
+Opt-in statement multiplexing is now part of the V1 gate. It provides bounded
+queues, persistent worker lanes, conservative session-state fallback, one
+PostgreSQL synchronization group per command, per-group cancellation and error
+isolation, forced-shutdown transport abort, and scheduler statistics. Explicit
+connections, transactions, prepared commands, replication, notifications, and
+stateful SQL remain session-affine. Live PostgreSQL tests cover concurrent
+fan-in, cancellation, timeouts, adjacent errors, reset isolation, and stuck-lane
+shutdown. The Npgsql comparison and checked-in regression budget must pass
+before the V1 baseline is frozen.
 
 ## Cancellation
 
