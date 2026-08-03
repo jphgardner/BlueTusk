@@ -50,8 +50,10 @@ CDC insert as one acknowledged transaction.
 
 - Delivery is at least once. Stable IDs assist idempotency; exactly once is not
   claimed.
-- Prepared/two-phase transaction decoding remains a deliberate fail-fast until
-  Phase 4 hardening.
+- Prepared/two-phase transaction delivery is fail-fast by default. The Phase 4
+  opt-in staging mode is available for consumers that durably stage `Prepared`
+  deliveries and atomically handle the later committed or rolled-back lifecycle
+  delivery; see [prepared transactions](prepared-transactions.md).
 - File storage is single-node. PostgreSQL is the production relay default;
   Redis is an alternative checkpoint/lease store.
 - `RestartSnapshot` is explicit because replacing an inactive slot discards its

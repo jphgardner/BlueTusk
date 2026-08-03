@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -35,7 +36,9 @@ public sealed class ChangeTransactionEnvelope
         _formatVersion = formatVersion;
     }
 
-    public const int CurrentFormatVersion = 1;
+    public const int MinimumSupportedFormatVersion = 1;
+
+    public const int CurrentFormatVersion = 2;
 
     public int FormatVersion => _formatVersion;
 
@@ -76,6 +79,8 @@ public static class ChangeTransactionEnvelopeCodec
             writer.Write(transaction.CommitTimestamp.UtcTicks);
             WriteOptionalString(writer, transaction.Origin, effectiveOptions);
             writer.Write(transaction.IsSynthetic);
+            writer.Write((byte)transaction.Outcome);
+            WriteOptionalString(writer, transaction.GlobalTransactionId, effectiveOptions);
             writer.Write(tables.Count);
             foreach (var table in tables.Keys)
             {
@@ -144,10 +149,17 @@ public static class ChangeTransactionEnvelopeCodec
             }
 
             var format = reader.ReadInt32();
-            if (format != ChangeTransactionEnvelope.CurrentFormatVersion)
+            if (format < ChangeTransactionEnvelope.MinimumSupportedFormatVersion ||
+                format > ChangeTransactionEnvelope.CurrentFormatVersion)
             {
                 throw new ChangeTransactionEnvelopeException(
                     $"Transaction envelope format {format} is not supported.");
+            }
+
+            if (format != envelope.FormatVersion)
+            {
+                throw new ChangeTransactionEnvelopeException(
+                    "The transaction envelope format metadata does not match its payload.");
             }
 
             var source = ReadSource(reader, effectiveOptions);
@@ -158,6 +170,20 @@ public static class ChangeTransactionEnvelopeCodec
             var commitTimestamp = new DateTimeOffset(reader.ReadInt64(), TimeSpan.Zero);
             var origin = ReadOptionalString(reader, effectiveOptions);
             var isSynthetic = reader.ReadBoolean();
+            var outcome = ChangeTransactionOutcome.Committed;
+            string? globalTransactionId = null;
+            if (format >= 2)
+            {
+                outcome = (ChangeTransactionOutcome)reader.ReadByte();
+                if (!Enum.IsDefined(outcome))
+                {
+                    throw new ChangeTransactionEnvelopeException(
+                        $"The transaction envelope contains unknown outcome {(byte)outcome}.");
+                }
+
+                globalTransactionId = ReadOptionalString(reader, effectiveOptions);
+            }
+
             var tableCount = ReadCount(reader, effectiveOptions.MaxTables, "tables");
             var tables = new ChangeTable[tableCount];
             for (var index = 0; index < tables.Length; index++)
@@ -199,6 +225,8 @@ public static class ChangeTransactionEnvelopeCodec
                 commitTimestamp,
                 origin,
                 isSynthetic,
+                outcome,
+                globalTransactionId,
                 changeSet);
         }
         catch (ChangeTransactionEnvelopeException)
@@ -220,15 +248,16 @@ public static class ChangeTransactionEnvelopeCodec
     {
         var effectiveOptions = options ?? new ChangeTransactionEnvelopeOptions();
         effectiveOptions.Validate();
-        if (data.Length > effectiveOptions.MaxEnvelopeBytes)
+        if (data.Length < sizeof(uint) + sizeof(int) + HashSize ||
+            data.Length > effectiveOptions.MaxEnvelopeBytes)
         {
-            throw new ChangeTransactionEnvelopeException(
-                $"The transaction envelope exceeds {effectiveOptions.MaxEnvelopeBytes} bytes.");
+            throw new ChangeTransactionEnvelopeException("The transaction envelope length is invalid.");
         }
 
+        var formatVersion = BinaryPrimitives.ReadInt32LittleEndian(data.Slice(sizeof(uint), sizeof(int)));
         var envelope = new ChangeTransactionEnvelope(
             data.ToArray(),
-            ChangeTransactionEnvelope.CurrentFormatVersion);
+            formatVersion);
         _ = Decode(envelope, effectiveOptions);
         return envelope;
     }

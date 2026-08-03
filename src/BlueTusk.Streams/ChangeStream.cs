@@ -3,6 +3,12 @@ using BlueTusk.Replication.PgOutput;
 
 namespace BlueTusk.Streams;
 
+public enum PreparedTransactionMode
+{
+    Fail,
+    Stage,
+}
+
 public sealed record TransactionAssemblyOptions
 {
     public long MaxInMemoryTransactionBytes { get; init; } = 4L * 1024 * 1024;
@@ -15,6 +21,9 @@ public sealed record TransactionAssemblyOptions
 
     public int MaxRelationsPerTransaction { get; init; } = 4096;
 
+    public PreparedTransactionMode PreparedTransactionMode { get; init; } =
+        PreparedTransactionMode.Fail;
+
     public string SpoolDirectory { get; init; } =
         Path.Combine(Path.GetTempPath(), "bluetusk-streams-spool");
 
@@ -25,6 +34,11 @@ public sealed record TransactionAssemblyOptions
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxSpoolBytes);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxChangesPerTransaction);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRelationsPerTransaction);
+        if (!Enum.IsDefined(PreparedTransactionMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(PreparedTransactionMode));
+        }
+
         ArgumentException.ThrowIfNullOrWhiteSpace(SpoolDirectory);
         if (MaxInMemoryTransactionBytes > MaxTransactionBytes)
         {
@@ -54,7 +68,9 @@ public sealed class TransactionAssemblyLimitExceededException : TransactionAssem
 public sealed class PreparedTransactionNotSupportedException : TransactionAssemblyException
 {
     public PreparedTransactionNotSupportedException()
-        : base("Prepared and two-phase transactions are reserved for the Streams hardening phase.")
+        : base(
+            "Prepared and two-phase transactions require TransactionAssemblyOptions.PreparedTransactionMode " +
+            "to be Stage so consumers explicitly opt in to durable staging semantics.")
     {
     }
 }

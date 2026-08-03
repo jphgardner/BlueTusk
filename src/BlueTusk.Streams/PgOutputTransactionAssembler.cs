@@ -10,6 +10,7 @@ internal sealed class PgOutputTransactionAssembler
     private readonly TransactionAssemblyOptions _options;
     private readonly ITransactionSpool _spool;
     private readonly Dictionary<uint, PendingTransaction> _transactions = [];
+    private readonly Dictionary<uint, string> _preparingTransactions = [];
     private readonly Dictionary<uint, ChangeTable> _relations = [];
     private readonly Dictionary<uint, ChangeTypeIdentity> _types = [];
     private uint? _ordinaryTransactionId;
@@ -69,12 +70,22 @@ internal sealed class PgOutputTransactionAssembler
             case BlueTuskPgOutputStreamAbort abort:
                 await AbortAsync(abort.TransactionId, cancellationToken).ConfigureAwait(false);
                 return null;
-            case BlueTuskPgOutputBeginPrepare or
-                BlueTuskPgOutputPrepare or
-                BlueTuskPgOutputCommitPrepared or
-                BlueTuskPgOutputRollbackPrepared or
-                BlueTuskPgOutputStreamPrepare:
-                throw new PreparedTransactionNotSupportedException();
+            case BlueTuskPgOutputBeginPrepare beginPrepare:
+                RequirePreparedTransactionStaging();
+                BeginPrepared(beginPrepare);
+                return null;
+            case BlueTuskPgOutputPrepare prepare:
+                RequirePreparedTransactionStaging();
+                return await PrepareOrdinaryAsync(prepare, cancellationToken).ConfigureAwait(false);
+            case BlueTuskPgOutputCommitPrepared commitPrepared:
+                RequirePreparedTransactionStaging();
+                return CreateCommitPrepared(commitPrepared);
+            case BlueTuskPgOutputRollbackPrepared rollbackPrepared:
+                RequirePreparedTransactionStaging();
+                return CreateRollbackPrepared(rollbackPrepared);
+            case BlueTuskPgOutputStreamPrepare streamPrepare:
+                RequirePreparedTransactionStaging();
+                return await PrepareStreamAsync(streamPrepare, cancellationToken).ConfigureAwait(false);
             default:
                 throw new TransactionAssemblyException(
                     $"Unsupported pgoutput message type {envelope.Message.GetType().Name}.");
@@ -89,6 +100,7 @@ internal sealed class PgOutputTransactionAssembler
         }
 
         _transactions.Clear();
+        _preparingTransactions.Clear();
         _ordinaryTransactionId = null;
     }
 
@@ -111,23 +123,48 @@ internal sealed class PgOutputTransactionAssembler
     }
 
     private void BeginOrdinary(BlueTuskPgOutputBegin begin)
+        => BeginOrdinary(
+            begin.TransactionId,
+            begin.FinalPosition,
+            begin.CommitTimestamp);
+
+    private void BeginPrepared(BlueTuskPgOutputBeginPrepare begin)
+    {
+        ValidateGlobalTransactionId(begin.GlobalTransactionId);
+        if (_preparingTransactions.ContainsKey(begin.TransactionId))
+        {
+            throw new TransactionAssemblyException(
+                $"Prepared transaction {begin.TransactionId} has already begun.");
+        }
+
+        BeginOrdinary(
+            begin.TransactionId,
+            begin.PreparePosition,
+            begin.PrepareTimestamp);
+        _preparingTransactions.Add(begin.TransactionId, begin.GlobalTransactionId);
+    }
+
+    private void BeginOrdinary(
+        uint transactionId,
+        BlueTuskLogSequenceNumber finalPosition,
+        DateTimeOffset timestamp)
     {
         if (_ordinaryTransactionId.HasValue)
         {
             throw new TransactionAssemblyException(
-                $"Transaction {_ordinaryTransactionId.Value} is still active when transaction {begin.TransactionId} begins.");
+                $"Transaction {_ordinaryTransactionId.Value} is still active when transaction {transactionId} begins.");
         }
 
         var transaction = CreateTransaction(
-            begin.TransactionId,
-            begin.FinalPosition,
-            begin.CommitTimestamp);
-        if (!_transactions.TryAdd(begin.TransactionId, transaction))
+            transactionId,
+            finalPosition,
+            timestamp);
+        if (!_transactions.TryAdd(transactionId, transaction))
         {
-            throw new TransactionAssemblyException($"Transaction {begin.TransactionId} has already begun.");
+            throw new TransactionAssemblyException($"Transaction {transactionId} has already begun.");
         }
 
-        _ordinaryTransactionId = begin.TransactionId;
+        _ordinaryTransactionId = transactionId;
     }
 
     private void BeginStream(BlueTuskPgOutputStreamStart start, DateTimeOffset serverClock)
@@ -274,6 +311,8 @@ internal sealed class PgOutputTransactionAssembler
             envelope.XLogData.ServerClock,
             origin: null,
             isSynthetic: true,
+            ChangeTransactionOutcome.Committed,
+            globalTransactionId: null,
             changeSet);
         return new AssembledChangeTransaction(transaction, release: null);
     }
@@ -284,12 +323,20 @@ internal sealed class PgOutputTransactionAssembler
     {
         var transactionId = _ordinaryTransactionId ?? throw new TransactionAssemblyException(
             "A commit arrived without an active ordinary transaction.");
+        if (_preparingTransactions.ContainsKey(transactionId))
+        {
+            throw new TransactionAssemblyException(
+                $"Prepared transaction {transactionId} ended with an ordinary commit message.");
+        }
+
         _ordinaryTransactionId = null;
         return await CommitAsync(
             transactionId,
             commit.CommitPosition,
             commit.TransactionEndPosition,
             commit.CommitTimestamp,
+            ChangeTransactionOutcome.Committed,
+            globalTransactionId: null,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -301,21 +348,124 @@ internal sealed class PgOutputTransactionAssembler
             commit.CommitPosition,
             commit.TransactionEndPosition,
             commit.CommitTimestamp,
+            ChangeTransactionOutcome.Committed,
+            globalTransactionId: null,
             cancellationToken);
+
+    private async ValueTask<AssembledChangeTransaction> PrepareOrdinaryAsync(
+        BlueTuskPgOutputPrepare prepare,
+        CancellationToken cancellationToken)
+    {
+        var transactionId = _ordinaryTransactionId ?? throw new TransactionAssemblyException(
+            "A prepare arrived without an active ordinary transaction.");
+        if (transactionId != prepare.TransactionId)
+        {
+            throw new TransactionAssemblyException(
+                $"Prepare for transaction {prepare.TransactionId} arrived while transaction {transactionId} is active.");
+        }
+
+        ValidatePreparingTransaction(prepare.TransactionId, prepare.GlobalTransactionId);
+        _ordinaryTransactionId = null;
+        _preparingTransactions.Remove(prepare.TransactionId);
+        return await CommitAsync(
+            prepare.TransactionId,
+            prepare.PreparePosition,
+            prepare.TransactionEndPosition,
+            prepare.PrepareTimestamp,
+            ChangeTransactionOutcome.Prepared,
+            prepare.GlobalTransactionId,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private ValueTask<AssembledChangeTransaction> PrepareStreamAsync(
+        BlueTuskPgOutputStreamPrepare prepare,
+        CancellationToken cancellationToken)
+    {
+        ValidateGlobalTransactionId(prepare.GlobalTransactionId);
+        return CommitAsync(
+            prepare.TransactionId,
+            prepare.PreparePosition,
+            prepare.TransactionEndPosition,
+            prepare.PrepareTimestamp,
+            ChangeTransactionOutcome.Prepared,
+            prepare.GlobalTransactionId,
+            cancellationToken);
+    }
+
+    private AssembledChangeTransaction CreateCommitPrepared(BlueTuskPgOutputCommitPrepared commit)
+    {
+        ValidateGlobalTransactionId(commit.GlobalTransactionId);
+        RejectIncompletePreparedFinalization(commit.TransactionId);
+        return CreateLifecycleTransaction(
+            commit.TransactionId,
+            commit.CommitPosition,
+            commit.CommitPosition,
+            commit.TransactionEndPosition,
+            commit.CommitTimestamp,
+            ChangeTransactionOutcome.Committed,
+            commit.GlobalTransactionId);
+    }
+
+    private AssembledChangeTransaction CreateRollbackPrepared(BlueTuskPgOutputRollbackPrepared rollback)
+    {
+        ValidateGlobalTransactionId(rollback.GlobalTransactionId);
+        RejectIncompletePreparedFinalization(rollback.TransactionId);
+        return CreateLifecycleTransaction(
+            rollback.TransactionId,
+            rollback.PreparedTransactionEndPosition,
+            rollback.PreparedTransactionEndPosition,
+            rollback.RollbackEndPosition,
+            rollback.RollbackTimestamp,
+            ChangeTransactionOutcome.RolledBack,
+            rollback.GlobalTransactionId);
+    }
+
+    private AssembledChangeTransaction CreateLifecycleTransaction(
+        uint transactionId,
+        BlueTuskLogSequenceNumber beginFinalPosition,
+        BlueTuskLogSequenceNumber commitPosition,
+        BlueTuskLogSequenceNumber commitEndPosition,
+        DateTimeOffset commitTimestamp,
+        ChangeTransactionOutcome outcome,
+        string globalTransactionId)
+    {
+        var changeSet = CreateMemoryChangeSet(
+            [],
+            [],
+            transactionId,
+            commitEndPosition,
+            estimatedBytes: 0);
+        var transaction = new ChangeTransaction(
+            _source,
+            transactionId,
+            beginFinalPosition,
+            commitPosition,
+            commitEndPosition,
+            commitTimestamp,
+            origin: null,
+            isSynthetic: false,
+            outcome,
+            globalTransactionId,
+            changeSet);
+        return new AssembledChangeTransaction(transaction, release: null);
+    }
 
     private async ValueTask<AssembledChangeTransaction> CommitAsync(
         uint transactionId,
         BlueTuskLogSequenceNumber commitPosition,
         BlueTuskLogSequenceNumber commitEndPosition,
         DateTimeOffset commitTimestamp,
+        ChangeTransactionOutcome outcome,
+        string? globalTransactionId,
         CancellationToken cancellationToken)
     {
-        if (!_transactions.Remove(transactionId, out var pending))
+        if (!_transactions.TryGetValue(transactionId, out var pending))
         {
             throw new TransactionAssemblyException($"A commit arrived for unknown transaction {transactionId}.");
         }
 
         var completed = await pending.CompleteAsync(cancellationToken).ConfigureAwait(false);
+        _transactions.Remove(transactionId);
         ChangeSet changeSet;
         Func<ValueTask>? release = null;
         if (completed.SpoolReader is null)
@@ -348,6 +498,8 @@ internal sealed class PgOutputTransactionAssembler
             commitTimestamp,
             pending.Origin,
             isSynthetic: false,
+            outcome,
+            globalTransactionId,
             changeSet);
         return new AssembledChangeTransaction(transaction, release);
     }
@@ -357,6 +509,12 @@ internal sealed class PgOutputTransactionAssembler
         if (!_transactions.Remove(transactionId, out var transaction))
         {
             throw new TransactionAssemblyException($"An abort arrived for unknown transaction {transactionId}.");
+        }
+
+        _preparingTransactions.Remove(transactionId);
+        if (_ordinaryTransactionId == transactionId)
+        {
+            _ordinaryTransactionId = null;
         }
 
         await transaction.AbortAsync(cancellationToken).ConfigureAwait(false);
@@ -375,6 +533,47 @@ internal sealed class PgOutputTransactionAssembler
     }
 
     private PendingTransaction RequireOrdinary() => ResolveTransaction(streamingTransactionId: null);
+
+    private void RequirePreparedTransactionStaging()
+    {
+        if (_options.PreparedTransactionMode != PreparedTransactionMode.Stage)
+        {
+            throw new PreparedTransactionNotSupportedException();
+        }
+    }
+
+    private void ValidatePreparingTransaction(uint transactionId, string globalTransactionId)
+    {
+        ValidateGlobalTransactionId(globalTransactionId);
+        if (!_preparingTransactions.TryGetValue(transactionId, out var expectedGlobalTransactionId))
+        {
+            throw new TransactionAssemblyException(
+                $"Prepare arrived for transaction {transactionId} without a matching begin-prepare message.");
+        }
+
+        if (!string.Equals(expectedGlobalTransactionId, globalTransactionId, StringComparison.Ordinal))
+        {
+            throw new TransactionAssemblyException(
+                $"Prepare for transaction {transactionId} changed its global transaction ID.");
+        }
+    }
+
+    private static void ValidateGlobalTransactionId(string globalTransactionId)
+    {
+        if (string.IsNullOrWhiteSpace(globalTransactionId))
+        {
+            throw new TransactionAssemblyException("A prepared transaction has an empty global transaction ID.");
+        }
+    }
+
+    private void RejectIncompletePreparedFinalization(uint transactionId)
+    {
+        if (_transactions.ContainsKey(transactionId) || _preparingTransactions.ContainsKey(transactionId))
+        {
+            throw new TransactionAssemblyException(
+                $"Prepared transaction {transactionId} was finalized before its prepare delivery completed.");
+        }
+    }
 
     private ChangeTable ResolveTable(uint relationId) =>
         _relations.TryGetValue(relationId, out var table)

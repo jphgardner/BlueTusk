@@ -184,6 +184,8 @@ public sealed class PostgreSqlConsistentSnapshotSource : IConsistentSnapshotSour
                     SlotName = _options.Source.SlotName,
                     OutputPlugin = "pgoutput",
                     SnapshotMode = BlueTuskLogicalSlotSnapshotMode.Export,
+                    TwoPhase = _options.TransactionAssembly.PreparedTransactionMode ==
+                        PreparedTransactionMode.Stage,
                 },
                 cancellationToken).ConfigureAwait(false);
             slotCreated = true;
@@ -419,6 +421,8 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
         try
         {
             var observer = _observerFactory?.Invoke(_replication);
+            var stagePreparedTransactions =
+                _options.TransactionAssembly.PreparedTransactionMode == PreparedTransactionMode.Stage;
             return new PgOutputChangeStream(
                 _replication.StartReplicationAsync(
                     new BlueTuskPgOutputReplicationOptions
@@ -426,10 +430,17 @@ internal sealed class PostgreSqlConsistentSnapshotAttempt : IConsistentSnapshotA
                         SlotName = _options.Source.SlotName,
                         PublicationNames = _options.PublicationNames,
                         StartPosition = Epoch.ConsistentPosition,
-                        ProtocolVersion = 2,
+                        ProtocolVersion = stagePreparedTransactions ? 3 : 2,
                         Messages = true,
                         StreamingMode = BlueTuskLogicalStreamingMode.On,
-                    }).DecodePgOutputAsync(),
+                        TwoPhase = stagePreparedTransactions,
+                    }).DecodePgOutputAsync(
+                        new BlueTuskPgOutputDecoderOptions
+                        {
+                            ProtocolVersion = stagePreparedTransactions ? 3 : 2,
+                            StreamingMode = BlueTuskPgOutputStreamingMode.On,
+                            TwoPhase = stagePreparedTransactions,
+                        }),
                 _options.Source,
                 _options.TransactionAssembly,
                 observer: observer);

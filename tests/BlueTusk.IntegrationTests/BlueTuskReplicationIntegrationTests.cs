@@ -719,6 +719,133 @@ public sealed class BlueTuskReplicationIntegrationTests
     }
 
     [Fact]
+    public async Task Streams_stages_and_commits_a_live_prepared_transaction()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_streams_twophase_{suffix}";
+        var publicationName = $"bluetusk_streams_twophase_pub_{suffix}";
+        var slotName = $"bluetusk_streams_twophase_slot_{suffix}";
+        var globalTransactionId = $"bluetusk_streams_gid_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        var quotedGlobalTransactionId = BlueTuskSql.QuoteLiteral(globalTransactionId);
+        var prepared = false;
+
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text NOT NULL)");
+        try
+        {
+            await ExecuteAsync(
+                administration,
+                $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+            try
+            {
+                await using var dataSource = BlueTuskDataSource.Create(connectionString);
+                BlueTuskReplicationSystemIdentity system;
+                await using (var identityConnection =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+                {
+                    system = await identityConnection.IdentifySystemAsync();
+                }
+
+                var table = new ChangeTable(
+                    relationId: 0,
+                    schema: "public",
+                    name: tableName,
+                    replicaIdentity: 'd',
+                    [
+                        new ChangeColumn(0, "id", 23, -1, true),
+                        new ChangeColumn(1, "value", 25, -1, false),
+                    ]);
+                var source = new PostgreSqlConsistentSnapshotSource(
+                    dataSource,
+                    new PostgreSqlConsistentSnapshotOptions
+                    {
+                        Source = new ChangeSourceIdentity(
+                            system.SystemIdentifier,
+                            system.DatabaseName!,
+                            slotName,
+                            publicationName),
+                        PublicationNames = [publicationName],
+                        Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                        TransactionAssembly = new TransactionAssemblyOptions
+                        {
+                            PreparedTransactionMode = PreparedTransactionMode.Stage,
+                        },
+                    });
+                await using var attempt = await source.BeginAttemptAsync(abandonedEpoch: null);
+                await foreach (var _ in attempt.ReadSnapshotAsync())
+                {
+                }
+
+                var stream = attempt.CreateChangeStream();
+                await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+                var preparedMove = enumerator.MoveNextAsync().AsTask();
+
+                await ExecuteAsync(administration, "BEGIN");
+                await ExecuteAsync(
+                    administration,
+                    $"INSERT INTO {quotedTable} VALUES (1, 'prepared')");
+                await ExecuteAsync(
+                    administration,
+                    $"PREPARE TRANSACTION {quotedGlobalTransactionId}");
+                prepared = true;
+
+                Assert.True(await preparedMove.WaitAsync(TimeSpan.FromSeconds(20)));
+                var staged = enumerator.Current;
+                Assert.Equal(ChangeTransactionOutcome.Prepared, staged.Transaction.Outcome);
+                Assert.Equal(globalTransactionId, staged.Transaction.GlobalTransactionId);
+                var insert = Assert.IsType<InsertChange>(
+                    Assert.Single(await staged.Transaction.Changes.MaterializeAsync()));
+                Assert.Equal("1", System.Text.Encoding.UTF8.GetString(insert.NewRow["id"].Data.Span));
+                await staged.AcknowledgeAsync();
+
+                var committedMove = enumerator.MoveNextAsync().AsTask();
+                await ExecuteAsync(
+                    administration,
+                    $"COMMIT PREPARED {quotedGlobalTransactionId}");
+                prepared = false;
+
+                Assert.True(await committedMove.WaitAsync(TimeSpan.FromSeconds(20)));
+                var committed = enumerator.Current;
+                Assert.Equal(ChangeTransactionOutcome.Committed, committed.Transaction.Outcome);
+                Assert.Equal(globalTransactionId, committed.Transaction.GlobalTransactionId);
+                Assert.Empty(await committed.Transaction.Changes.MaterializeAsync());
+                await committed.AcknowledgeAsync();
+            }
+            finally
+            {
+                if (prepared)
+                {
+                    await ExecuteAsync(
+                        administration,
+                        $"ROLLBACK PREPARED {quotedGlobalTransactionId}");
+                }
+
+                await using var cleanup =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                var slots = await cleanup.GetReplicationSlotsAsync();
+                if (slots.Any(slot => string.Equals(slot.SlotName, slotName, StringComparison.Ordinal)))
+                {
+                    await cleanup.DropReplicationSlotAsync(slotName, wait: true);
+                }
+
+                await ExecuteAsync(
+                    administration,
+                    $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            }
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
     public async Task Pgoutput_decodes_prepared_transaction_metadata()
     {
         var connectionString = GetConnectionString();

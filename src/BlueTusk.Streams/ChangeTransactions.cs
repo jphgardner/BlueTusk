@@ -104,6 +104,13 @@ public sealed class ChangeSet : IAsyncEnumerable<Change>
     }
 }
 
+public enum ChangeTransactionOutcome
+{
+    Committed,
+    Prepared,
+    RolledBack,
+}
+
 public sealed class ChangeTransaction
 {
     internal ChangeTransaction(
@@ -115,8 +122,42 @@ public sealed class ChangeTransaction
         DateTimeOffset commitTimestamp,
         string? origin,
         bool isSynthetic,
+        ChangeTransactionOutcome outcome,
+        string? globalTransactionId,
         ChangeSet changes)
     {
+        if (!Enum.IsDefined(outcome))
+        {
+            throw new ArgumentOutOfRangeException(nameof(outcome));
+        }
+
+        if (outcome is not ChangeTransactionOutcome.Committed &&
+            string.IsNullOrWhiteSpace(globalTransactionId))
+        {
+            throw new ArgumentException(
+                "Prepared and rolled-back lifecycle deliveries require a global transaction ID.",
+                nameof(globalTransactionId));
+        }
+
+        if (globalTransactionId is not null && string.IsNullOrWhiteSpace(globalTransactionId))
+        {
+            throw new ArgumentException("A global transaction ID cannot be empty.", nameof(globalTransactionId));
+        }
+
+        if (isSynthetic && globalTransactionId is not null)
+        {
+            throw new ArgumentException("A synthetic transaction cannot be a two-phase transaction.", nameof(isSynthetic));
+        }
+
+        if (globalTransactionId is not null &&
+            outcome is not ChangeTransactionOutcome.Prepared &&
+            changes.Count != 0)
+        {
+            throw new ArgumentException(
+                "Commit-prepared and rollback-prepared lifecycle deliveries cannot contain row changes.",
+                nameof(changes));
+        }
+
         Source = source;
         TransactionId = transactionId;
         BeginFinalPosition = beginFinalPosition;
@@ -125,6 +166,8 @@ public sealed class ChangeTransaction
         CommitTimestamp = commitTimestamp;
         Origin = origin;
         IsSynthetic = isSynthetic;
+        Outcome = outcome;
+        GlobalTransactionId = globalTransactionId;
         Changes = changes;
     }
 
@@ -143,6 +186,12 @@ public sealed class ChangeTransaction
     public string? Origin { get; }
 
     public bool IsSynthetic { get; }
+
+    public ChangeTransactionOutcome Outcome { get; }
+
+    public string? GlobalTransactionId { get; }
+
+    public bool IsTwoPhase => GlobalTransactionId is not null;
 
     public ChangeSet Changes { get; }
 }

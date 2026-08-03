@@ -201,10 +201,17 @@ BlueTusk.Streams.ChangeTransaction.Changes.get -> BlueTusk.Streams.ChangeSet!
 BlueTusk.Streams.ChangeTransaction.CommitEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
 BlueTusk.Streams.ChangeTransaction.CommitPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
 BlueTusk.Streams.ChangeTransaction.CommitTimestamp.get -> System.DateTimeOffset
+BlueTusk.Streams.ChangeTransaction.GlobalTransactionId.get -> string?
 BlueTusk.Streams.ChangeTransaction.IsSynthetic.get -> bool
+BlueTusk.Streams.ChangeTransaction.IsTwoPhase.get -> bool
 BlueTusk.Streams.ChangeTransaction.Origin.get -> string?
+BlueTusk.Streams.ChangeTransaction.Outcome.get -> BlueTusk.Streams.ChangeTransactionOutcome
 BlueTusk.Streams.ChangeTransaction.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
 BlueTusk.Streams.ChangeTransaction.TransactionId.get -> uint
+BlueTusk.Streams.ChangeTransactionOutcome
+BlueTusk.Streams.ChangeTransactionOutcome.Committed = 0 -> BlueTusk.Streams.ChangeTransactionOutcome
+BlueTusk.Streams.ChangeTransactionOutcome.Prepared = 1 -> BlueTusk.Streams.ChangeTransactionOutcome
+BlueTusk.Streams.ChangeTransactionOutcome.RolledBack = 2 -> BlueTusk.Streams.ChangeTransactionOutcome
 BlueTusk.Streams.ChangeTransactionDelivery
 BlueTusk.Streams.ChangeTransactionDelivery.AcknowledgeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Streams.ChangeTransactionDelivery.DisposeAsync() -> System.Threading.Tasks.ValueTask
@@ -345,6 +352,9 @@ BlueTusk.Streams.MemoryChangeStreamStateStore.RenewAsync(BlueTusk.Streams.Change
 BlueTusk.Streams.PgOutputChangeStream
 BlueTusk.Streams.PgOutputChangeStream.PgOutputChangeStream(System.Collections.Generic.IAsyncEnumerable<BlueTusk.Replication.PgOutput.BlueTuskPgOutputEnvelope!>! source, BlueTusk.Streams.ChangeSourceIdentity! sourceIdentity, BlueTusk.Streams.TransactionAssemblyOptions? options = null, BlueTusk.Streams.ITransactionSpool? spool = null, BlueTusk.Streams.IChangeDeliveryObserver? observer = null) -> void
 BlueTusk.Streams.PgOutputChangeStream.ReadTransactionsAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Streams.ChangeTransactionDelivery!>!
+BlueTusk.Streams.PreparedTransactionMode
+BlueTusk.Streams.PreparedTransactionMode.Fail = 0 -> BlueTusk.Streams.PreparedTransactionMode
+BlueTusk.Streams.PreparedTransactionMode.Stage = 1 -> BlueTusk.Streams.PreparedTransactionMode
 BlueTusk.Streams.PreparedTransactionNotSupportedException
 BlueTusk.Streams.PreparedTransactionNotSupportedException.PreparedTransactionNotSupportedException() -> void
 BlueTusk.Streams.TransactionAssemblyException
@@ -360,6 +370,8 @@ BlueTusk.Streams.TransactionAssemblyOptions.MaxInMemoryTransactionBytes.get -> l
 BlueTusk.Streams.TransactionAssemblyOptions.MaxInMemoryTransactionBytes.init -> void
 BlueTusk.Streams.TransactionAssemblyOptions.MaxRelationsPerTransaction.get -> int
 BlueTusk.Streams.TransactionAssemblyOptions.MaxRelationsPerTransaction.init -> void
+BlueTusk.Streams.TransactionAssemblyOptions.PreparedTransactionMode.get -> BlueTusk.Streams.PreparedTransactionMode
+BlueTusk.Streams.TransactionAssemblyOptions.PreparedTransactionMode.init -> void
 BlueTusk.Streams.TransactionAssemblyOptions.MaxSpoolBytes.get -> long
 BlueTusk.Streams.TransactionAssemblyOptions.MaxSpoolBytes.init -> void
 BlueTusk.Streams.TransactionAssemblyOptions.MaxTransactionBytes.get -> long
@@ -422,7 +434,8 @@ BlueTusk.Streams.UpdateChange<T>.OldRow.get -> BlueTusk.Streams.ChangeRow<T>!
 BlueTusk.Streams.UpdateChange<T>.OldRow.init -> void
 BlueTusk.Streams.UpdateChange<T>.UpdateChange(BlueTusk.Streams.ChangeId Id, BlueTusk.Streams.ChangeRow<T>! OldRow, BlueTusk.Streams.ChangeRow<T>! NewRow, BlueTusk.Streams.ChangedColumnSet! ChangedColumns) -> void
 const BlueTusk.Streams.ChangeStreamCheckpoint.CurrentFormatVersion = 1 -> int
-const BlueTusk.Streams.ChangeTransactionEnvelope.CurrentFormatVersion = 1 -> int
+const BlueTusk.Streams.ChangeTransactionEnvelope.CurrentFormatVersion = 2 -> int
+const BlueTusk.Streams.ChangeTransactionEnvelope.MinimumSupportedFormatVersion = 1 -> int
 override BlueTusk.Streams.Change.Equals(object? obj) -> bool
 override BlueTusk.Streams.Change.GetHashCode() -> int
 override BlueTusk.Streams.Change.ToString() -> string!

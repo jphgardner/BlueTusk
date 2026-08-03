@@ -7,7 +7,7 @@ BlueTusk Streams is the transaction-preserving application CDC layer above `Blue
 - immutable source, relation, column, row, transaction, change, and stable change-ID models;
 - explicit value, database-null, not-published, unavailable-old-value, unchanged-TOAST, and decoding-failure column states;
 - exact/unknown changed-column sets that require a complete old row before claiming exactness;
-- ordinary and streamed transaction assembly by PostgreSQL transaction ID;
+- ordinary, streamed, and opt-in prepared transaction assembly by PostgreSQL transaction ID;
 - insert, update, delete, truncate, transactional/nontransactional logical message, origin, timestamp, LSN, and ordering preservation;
 - bounded change, relation, transaction-memory, individual-record, and total spool-storage accounting;
 - versioned disk envelopes with completion footers, per-record CRC32 integrity, atomic `.partial` to `.ready` publication, and pluggable at-rest protection;
@@ -15,7 +15,10 @@ BlueTusk Streams is the transaction-preserving application CDC layer above `Blue
 - explicit one-shot acknowledgement semantics that stop a source read if a delivery is skipped or rejected; and
 - public API baselines plus fake pgoutput and PostgreSQL 15–19 integration coverage.
 
-Prepared/two-phase transactions deliberately fail with `PreparedTransactionNotSupportedException` until the Phase 4 preview feature is implemented.
+Prepared/two-phase transactions fail closed by default. The Phase 4 preview
+mode exposes durable prepare, commit-prepared, and rollback-prepared lifecycle
+deliveries for destinations that explicitly support invisible staging. See
+[prepared and two-phase transactions](prepared-transactions.md).
 
 ## Reading transactions
 
@@ -38,6 +41,8 @@ IChangeStream changes = new PgOutputChangeStream(
         MaxTransactionBytes = 1024L * 1024 * 1024,
         MaxSpoolBytes = 10L * 1024 * 1024 * 1024,
         SpoolDirectory = dedicatedSpoolDirectory,
+        // Opt in only when ApplyIdempotentlyAsync durably stages PREPARE.
+        PreparedTransactionMode = PreparedTransactionMode.Fail,
     });
 
 await foreach (var delivery in changes.ReadTransactionsAsync())
@@ -82,6 +87,10 @@ Only the active fenced lease may mutate a checkpoint. Backward positions, stale 
 See [checkpoint and lease stores](state-stores.md) for backend guarantees, file-store deployment constraints, and the custom-store conformance kit.
 
 See the [PostgreSQL durable relay](durable-relay.md) for source append ordering, group fan-out/replay, retention, storage bounds, and health signals.
+
+See [prepared and two-phase transactions](prepared-transactions.md) for the
+opt-in staging contract, final lifecycle deliveries, decoder configuration, and
+relay format 1-to-2 compatibility.
 
 See [typed mappings](typed-mappings.md) for convention and explicit mappings, schema and mapping fingerprints, partial-row safety, decoding policy, and the snapshot consumer lifecycle.
 
