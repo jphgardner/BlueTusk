@@ -100,6 +100,10 @@ fixture that proves its compatibility policy.
 The [public API compatibility policy](api-compatibility.md) describes the
 machine-enforced Streams 1.0 candidate freeze and its release gate.
 
+`BlueTusk.Streams.Testing` includes `ChangeDeliveryTestFactory`, allowing
+downstream products to exercise acknowledge/nack ordering through the public
+Streams contract without importing replication protocol types.
+
 See [typed mappings](typed-mappings.md) for convention and explicit mappings, schema and mapping fingerprints, partial-row safety, decoding policy, and the snapshot consumer lifecycle.
 
 See [consistent snapshot bootstrap](snapshot-bootstrap.md) for exported-snapshot lifetime, keyset binary COPY, bounded parallelism, restart epochs, and the PostgreSQL 15–19 no-gap proof.

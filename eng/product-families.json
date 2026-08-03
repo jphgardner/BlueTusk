@@ -31,7 +31,9 @@
     "Sync": {
       "versionFile": "eng/versions/Sync.props",
       "publishable": false,
-      "packages": []
+      "packages": [
+        "src/BlueTusk.Sync/BlueTusk.Sync.csproj"
+      ]
     },
     "Live": {
       "versionFile": "eng/versions/Live.props",

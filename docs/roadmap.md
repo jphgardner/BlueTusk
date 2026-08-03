@@ -32,6 +32,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 4 slice: executable fault-injected relay endurance harness, machine-readable evidence report, local smoke gate, and confirmed self-hosted 72-hour release workflow
 - [ ] Phase 4 release gate: complete and archive one successful 72-hour relay endurance report (the harness is implemented; a short run is not equivalent)
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
+- [x] Phase 5 slice: transaction-preserving Sync pipeline state machine, transform fingerprinting, durable-position acknowledgement gate, and explicit poison policy
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [ ] Phase 7: Continuous Graph preview
