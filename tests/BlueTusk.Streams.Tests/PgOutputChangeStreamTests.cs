@@ -1,3 +1,4 @@
+using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
 using System.Text;
 using System.Text.Json;
@@ -455,6 +456,57 @@ public sealed class PgOutputChangeStreamTests
                 {
                 }
             });
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task File_spool_rejects_unknown_versions_and_accounts_restart_artifacts()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var spool = new FileTransactionSpool(
+                new FileTransactionSpoolOptions
+                {
+                    DirectoryPath = spoolDirectory,
+                    MaxStorageBytes = 4096,
+                    MaxRecordBytes = 1024,
+                });
+            await using (var writer = await spool.CreateAsync(new TransactionSpoolKey("source", 1)))
+            {
+                await writer.AppendAsync("format"u8.ToArray());
+                await using var reader = await writer.CompleteAsync();
+                var path = Assert.Single(Directory.GetFiles(spoolDirectory, "*.ready"));
+                var bytes = await File.ReadAllBytesAsync(path);
+                BinaryPrimitives.WriteInt32LittleEndian(bytes.AsSpan(4), TransactionSpoolFormat.CurrentVersion + 1);
+                await File.WriteAllBytesAsync(path, bytes);
+
+                await Assert.ThrowsAsync<TransactionSpoolIntegrityException>(async () =>
+                {
+                    await foreach (var _ in reader.ReadRecordsAsync())
+                    {
+                    }
+                });
+            }
+
+            var orphanPath = Path.Combine(spoolDirectory, "crashed.partial");
+            await File.WriteAllBytesAsync(orphanPath, new byte[128]);
+            var restarted = new FileTransactionSpool(
+                new FileTransactionSpoolOptions
+                {
+                    DirectoryPath = spoolDirectory,
+                    MaxStorageBytes = 150,
+                    MaxRecordBytes = 1024,
+                });
+
+            Assert.Equal(128, restarted.ReservedBytes);
+            await Assert.ThrowsAsync<TransactionSpoolLimitExceededException>(
+                () => restarted.CreateAsync(new TransactionSpoolKey("source", 2)).AsTask());
+            Assert.Equal(128, restarted.ReservedBytes);
         }
         finally
         {

@@ -24,3 +24,5 @@ override BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.GetHash
 override BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.ToString() -> string!
 static BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.operator !=(BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? left, BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? right) -> bool
 static BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions.operator ==(BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? left, BlueTusk.Streams.Storage.File.FileChangeStreamStateStoreOptions? right) -> bool
+BlueTusk.Streams.Storage.File.FileChangeStreamStateFormat
+const BlueTusk.Streams.Storage.File.FileChangeStreamStateFormat.CurrentVersion = 1 -> int

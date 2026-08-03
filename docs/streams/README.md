@@ -11,6 +11,7 @@ BlueTusk Streams is the transaction-preserving application CDC layer above `Blue
 - insert, update, delete, truncate, transactional/nontransactional logical message, origin, timestamp, LSN, and ordering preservation;
 - bounded change, relation, transaction-memory, individual-record, and total spool-storage accounting;
 - versioned disk envelopes with completion footers, per-record CRC32 integrity, atomic `.partial` to `.ready` publication, and pluggable at-rest protection;
+- restart-safe spool accounting that includes pre-existing `.partial` and `.ready` artifacts in the configured disk ceiling;
 - streaming materialisation of spooled changes, with spool deletion tied to delivery acknowledgement, nack, or disposal;
 - explicit one-shot acknowledgement semantics that stop a source read if a delivery is skipped or rejected; and
 - public API baselines plus fake pgoutput and PostgreSQL 15–19 integration coverage.
@@ -91,6 +92,13 @@ See the [PostgreSQL durable relay](durable-relay.md) for source append ordering,
 See [prepared and two-phase transactions](prepared-transactions.md) for the
 opt-in staging contract, final lifecycle deliveries, decoder configuration, and
 relay format 1-to-2 compatibility.
+
+The [format compatibility registry](format-compatibility.md) records every
+durable or externally visible Streams format, its readable range, and the test
+fixture that proves its compatibility policy.
+
+The [public API compatibility policy](api-compatibility.md) describes the
+machine-enforced Streams 1.0 candidate freeze and its release gate.
 
 See [typed mappings](typed-mappings.md) for convention and explicit mappings, schema and mapping fingerprints, partial-row safety, decoding policy, and the snapshot consumer lifecycle.
 

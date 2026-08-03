@@ -7,6 +7,11 @@ using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Streams.Storage.File;
 
+public static class FileChangeStreamStateFormat
+{
+    public const int CurrentVersion = 1;
+}
+
 public sealed record FileChangeStreamStateStoreOptions
 {
     public required string DirectoryPath { get; init; }
@@ -35,7 +40,6 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
     private const int HeaderSize = 12;
     private const int HashSize = 32;
     private const int MaximumPayloadSize = 1024 * 1024;
-    private const int CurrentFormatVersion = 1;
     private static readonly JsonSerializerOptions SerializerOptions = new(JsonSerializerDefaults.Web);
 
     private readonly FileChangeStreamStateStoreOptions _options;
@@ -259,7 +263,7 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
         {
             var document = JsonSerializer.Deserialize<StateDocument>(payload, SerializerOptions) ??
                 throw new JsonException("The state payload is empty.");
-            if (document.FormatVersion != CurrentFormatVersion)
+            if (document.FormatVersion != FileChangeStreamStateFormat.CurrentVersion)
             {
                 throw new FileChangeStreamStateStoreException(
                     $"State format {document.FormatVersion} is not supported.");
@@ -346,7 +350,7 @@ public sealed class FileChangeStreamStateStore : IChangeStreamStateStore
 
     private sealed class StateDocument
     {
-        public int FormatVersion { get; init; } = CurrentFormatVersion;
+        public int FormatVersion { get; init; } = FileChangeStreamStateFormat.CurrentVersion;
 
         public CheckpointDocument? Checkpoint { get; set; }
 

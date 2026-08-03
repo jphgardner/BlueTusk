@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "baseline": "1.0.0-candidate",
+  "normalization": "utf8-lf",
+  "files": [
+    {
+      "path": "src/BlueTusk.Streams/PublicAPI.Unshipped.txt",
+      "sha256": "71904c93f72d2625ab6e90118cf207adaef3e30d6473cf2eb8080ef059bfd556"
+    },
+    {
+      "path": "src/BlueTusk.Streams.Aspire/PublicAPI.Unshipped.txt",
+      "sha256": "71da1cb0948ff926e3060472162c75a9484cea85645b7d7b5969de367363be64"
+    },
+    {
+      "path": "src/BlueTusk.Streams.CloudEvents/PublicAPI.Unshipped.txt",
+      "sha256": "4334101fbdd534aacfa9bd20199bfbbf1372f0d4babedcf700d9c20cb1aa1949"
+    },
+    {
+      "path": "src/BlueTusk.Streams.DependencyInjection/PublicAPI.Unshipped.txt",
+      "sha256": "af25bfddbbf2c688acf54508039c01aa827e03ea9cf134c7a999ed227746a36f"
+    },
+    {
+      "path": "src/BlueTusk.Streams.EntityFrameworkCore/PublicAPI.Unshipped.txt",
+      "sha256": "a95cabff8d3139207b69fb75d436e5e48446795abbd67272df4e5a84cc022305"
+    },
+    {
+      "path": "src/BlueTusk.Streams.Storage.File/PublicAPI.Unshipped.txt",
+      "sha256": "f2a10f836ae303347ce085922063c477a8bd5ed09cf69c49da9822ff9ed582bc"
+    },
+    {
+      "path": "src/BlueTusk.Streams.Storage.PostgreSql/PublicAPI.Unshipped.txt",
+      "sha256": "4ec354c8b61c6ca5723684dd59b5138e340a6b6908028ce5aa1069fa2bee0131"
+    },
+    {
+      "path": "src/BlueTusk.Streams.Storage.Redis/PublicAPI.Unshipped.txt",
+      "sha256": "ae8f749501cb4d627acfd7bb5f36ebc324aa03432cc4133eaf399dd069f9cf92"
+    },
+    {
+      "path": "src/BlueTusk.Streams.Testing/PublicAPI.Unshipped.txt",
+      "sha256": "c7cc4577bc42175f068fd50b3f147e8b484982635ff3dfa9f36e699720cc73f8"
+    }
+  ]
+}

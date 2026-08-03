@@ -868,3 +868,5 @@ BlueTusk.Streams.BlueTuskStreamsDiagnostics
 const BlueTusk.Streams.BlueTuskStreamsDiagnostics.InstrumentationName = "BlueTusk.Streams" -> string!
 static BlueTusk.Streams.BlueTuskStreamsDiagnostics.ActivitySource.get -> System.Diagnostics.ActivitySource!
 static BlueTusk.Streams.BlueTuskStreamsDiagnostics.Meter.get -> System.Diagnostics.Metrics.Meter!
+BlueTusk.Streams.TransactionSpoolFormat
+const BlueTusk.Streams.TransactionSpoolFormat.CurrentVersion = 1 -> int

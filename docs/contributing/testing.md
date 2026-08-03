@@ -217,6 +217,12 @@ The scheduled and manually dispatched `replication-endurance` CI job runs this
 path for 1,000 PostgreSQL 19 reconnect epochs. Pull requests retain the fast
 default while still running the three-epoch test on every PostgreSQL major.
 
+The separate Streams relay release gate is documented in
+[Streams release endurance](../streams/release-endurance.md). Its normal test
+path is skipped unless `BLUETUSK_RELAY_ENDURANCE_DURATION` is explicit. Local
+short runs validate the harness; only the confirmed self-hosted workflow's
+successful 72-hour JSON report satisfies the Streams 1.0 gate.
+
 ```powershell
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests"
 $env:BLUETUSK_REPLICATION_DURABILITY_EPOCHS = "250"

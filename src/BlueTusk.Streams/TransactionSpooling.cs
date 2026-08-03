@@ -4,6 +4,11 @@ using System.Text;
 
 namespace BlueTusk.Streams;
 
+public static class TransactionSpoolFormat
+{
+    public const int CurrentVersion = 1;
+}
+
 public readonly record struct TransactionSpoolKey(string SourceFingerprint, uint TransactionId);
 
 public interface ITransactionSpool
@@ -87,6 +92,14 @@ public sealed class FileTransactionSpool : ITransactionSpool
         options.Validate();
         _options = options;
         _protector = options.Protector ?? PassThroughTransactionSpoolProtector.Instance;
+        Directory.CreateDirectory(_options.DirectoryPath);
+        _reservedBytes = CalculateExistingReservation();
+        if (_reservedBytes > _options.MaxStorageBytes)
+        {
+            throw new TransactionSpoolLimitExceededException(
+                $"Existing transaction spool artifacts consume {_reservedBytes} bytes, " +
+                $"which exceeds the {_options.MaxStorageBytes}-byte storage limit.");
+        }
     }
 
     public long ReservedBytes => Interlocked.Read(ref _reservedBytes);
@@ -97,7 +110,6 @@ public sealed class FileTransactionSpool : ITransactionSpool
     {
         cancellationToken.ThrowIfCancellationRequested();
         ArgumentException.ThrowIfNullOrWhiteSpace(key.SourceFingerprint);
-        Directory.CreateDirectory(_options.DirectoryPath);
 
         var stem = $"{Sanitize(key.SourceFingerprint)}-{key.TransactionId}-{Guid.NewGuid():N}";
         var partialPath = Path.Combine(_options.DirectoryPath, stem + ".partial");
@@ -125,6 +137,20 @@ public sealed class FileTransactionSpool : ITransactionSpool
         return new string(buffer);
     }
 
+    private long CalculateExistingReservation()
+    {
+        long total = 0;
+        foreach (var pattern in new[] { "*.partial", "*.ready" })
+        {
+            foreach (var path in Directory.EnumerateFiles(_options.DirectoryPath, pattern))
+            {
+                total = checked(total + new FileInfo(path).Length);
+            }
+        }
+
+        return total;
+    }
+
     private void Reserve(long byteCount)
     {
         while (true)
@@ -149,7 +175,6 @@ public sealed class FileTransactionSpool : ITransactionSpool
     private sealed class FileTransactionSpoolWriter : ITransactionSpoolWriter
     {
         private const uint Magic = 0x50535442;
-        private const int FormatVersion = 1;
         private readonly FileTransactionSpool _owner;
         private readonly string _partialPath;
         private readonly string _readyPath;
@@ -185,7 +210,9 @@ public sealed class FileTransactionSpool : ITransactionSpool
             var protectorId = Encoding.UTF8.GetBytes(protector.Id);
             var header = new byte[20 + source.Length + protectorId.Length];
             BinaryPrimitives.WriteUInt32LittleEndian(header, Magic);
-            BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(4), FormatVersion);
+            BinaryPrimitives.WriteInt32LittleEndian(
+                header.AsSpan(4),
+                TransactionSpoolFormat.CurrentVersion);
             BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(8), key.TransactionId);
             BinaryPrimitives.WriteInt32LittleEndian(header.AsSpan(12), source.Length);
             source.CopyTo(header.AsSpan(16));
@@ -365,7 +392,8 @@ public sealed class FileTransactionSpool : ITransactionSpool
             var fixedHeader = new byte[16];
             await ReadExactlyAsync(stream, fixedHeader, cancellationToken).ConfigureAwait(false);
             if (BinaryPrimitives.ReadUInt32LittleEndian(fixedHeader) != Magic ||
-                BinaryPrimitives.ReadInt32LittleEndian(fixedHeader.AsSpan(4)) != 1)
+                BinaryPrimitives.ReadInt32LittleEndian(fixedHeader.AsSpan(4)) !=
+                TransactionSpoolFormat.CurrentVersion)
             {
                 throw new TransactionSpoolIntegrityException("The transaction spool header is invalid or unsupported.");
             }

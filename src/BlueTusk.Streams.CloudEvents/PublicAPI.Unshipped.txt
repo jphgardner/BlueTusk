@@ -53,3 +53,7 @@ static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.operator
 static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.operator ==(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata? left, BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata? right) -> bool
 static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.operator !=(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? left, BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? right) -> bool
 static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.operator ==(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? left, BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? right) -> bool
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat
+const BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat.CurrentVersion = 1 -> int
+const BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat.DataContentType = "application/vnd.bluetusk.change-transaction+binary;version=1" -> string!
+const BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat.EventType = "io.bluetusk.streams.transaction.v1" -> string!

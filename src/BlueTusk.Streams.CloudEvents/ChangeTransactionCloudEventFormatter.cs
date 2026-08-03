@@ -3,12 +3,21 @@ using System.Text.Json;
 
 namespace BlueTusk.Streams.CloudEvents;
 
+public static class ChangeTransactionCloudEventFormat
+{
+    public const int CurrentVersion = 1;
+
+    public const string EventType = "io.bluetusk.streams.transaction.v1";
+
+    public const string DataContentType =
+        "application/vnd.bluetusk.change-transaction+binary;version=1";
+}
+
 public sealed record ChangeTransactionCloudEventOptions
 {
-    public string EventType { get; init; } = "io.bluetusk.streams.transaction.v1";
+    public string EventType { get; init; } = ChangeTransactionCloudEventFormat.EventType;
 
-    public string DataContentType { get; init; } =
-        "application/vnd.bluetusk.change-transaction+binary;version=1";
+    public string DataContentType { get; init; } = ChangeTransactionCloudEventFormat.DataContentType;
 
     public int MaximumEventBytes { get; init; } = 384 * 1024 * 1024;
 

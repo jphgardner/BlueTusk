@@ -21,6 +21,9 @@
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication\BlueTusk.Replication.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Storage.PostgreSql\BlueTusk.Streams.Storage.PostgreSql.csproj" />
   </ItemGroup>
 
 </Project>

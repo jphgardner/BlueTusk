@@ -59,11 +59,15 @@ CDC insert as one acknowledged transaction.
 - `RestartSnapshot` is explicit because replacing an inactive slot discards its
   retained WAL. The destination must durably reset or supersede the abandoned
   snapshot epoch.
-- The preview has not completed the Phase 4 API freeze, complete format-upgrade
-  matrix, or 72-hour release endurance gate required for Streams 1.0. Relay
-  schema migration, bounded compaction, confirmed group removal,
+- The Phase 4 [public API candidate freeze](api-compatibility.md) and
+  [format compatibility registry](format-compatibility.md) are machine-enforced.
+  Relay schema migration, bounded compaction, confirmed group removal,
   payload-protection hooks, and atomic backup/restore are implemented as Phase
-  4 hardening slices.
+  4 hardening slices. The complete upgrade matrix and 72-hour release endurance
+  gate required for Streams 1.0 have not passed. The
+  [release endurance](release-endurance.md) harness and confirmed self-hosted
+  workflow are executable, but no short or queued run is represented as the
+  completed 72-hour evidence.
 
 The release workflow packages this family independently. It publishes to NuGet
 only after an explicit publish-enabled workflow dispatch or a matching Streams
