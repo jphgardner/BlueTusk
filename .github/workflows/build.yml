@@ -469,6 +469,7 @@ jobs:
         env:
           KRB5_CONFIG: ${{ github.workspace }}/eng/compose/gssapi/krb5-client.conf
           KRB5CCNAME: FILE:${{ runner.temp }}/bluetusk-krb5cc
+          KRB5_TRACE: /dev/stderr
           BLUETUSK_GSS_TEST_CONNECTION_STRING: Host=localhost;Port=5718;Username=bluetusk_gss_test;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable;Kerberos Service Name=postgres
         run: >-
           dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
