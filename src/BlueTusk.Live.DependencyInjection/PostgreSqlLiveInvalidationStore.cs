@@ -53,6 +53,8 @@ public sealed class PostgreSqlLiveInvalidationStore :
 {
     public const int CurrentSchemaVersion = 2;
 
+    public const int MinimumSupportedSchemaVersion = 1;
+
     private readonly PostgreSqlLiveStoreOptions _options;
     private readonly DbDataSource _dataSource;
     private readonly string _schema;
@@ -482,7 +484,7 @@ public sealed class PostgreSqlLiveInvalidationStore :
         var version = Convert.ToInt32(
             await versionCommand.ExecuteScalarAsync(CancellationToken.None).ConfigureAwait(false),
             System.Globalization.CultureInfo.InvariantCulture);
-        if (version < 1 || version > CurrentSchemaVersion)
+        if (version < MinimumSupportedSchemaVersion || version > CurrentSchemaVersion)
         {
             throw new PostgreSqlLiveStoreException(
                 $"PostgreSQL Live schema version {version} is unsupported; this build requires {CurrentSchemaVersion}.");

@@ -61,6 +61,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 6 slice: model-proven projected one-to-many joins, grouping, and aggregate query plans
 - [x] Phase 6 slice: adversarial reconnect sequencing plus checked-in diff, replay, coalescing, and 64-subscriber fan-out budgets
 - [x] Phase 6 release gate: PostgreSQL 15–19 production-store replay through SSE, SignalR, and gRPC plus verified NuGet/npm clients
+- [x] Phase 6 slice: Live 1.0 candidate API freeze, durable format registry, PostgreSQL schema upgrade/future-version rejection, and exact compatibility evidence
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [x] Phase 7 slice: PostgreSQL 19 capability-guarded typed SQL/PGQ registration, exact graph-element invalidation dependencies, bounded deterministic plans, and authoritative Live requery/diff
 - [x] Phase 7 slice: PostgreSQL 19 graph materialisation, affected-vertex requery/diff correctness, and in-flight lock cancellation acceptance

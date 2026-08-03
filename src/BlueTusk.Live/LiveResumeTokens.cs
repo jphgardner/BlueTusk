@@ -52,7 +52,10 @@ public sealed record LiveResumeTokenValidationResult(
 
 public sealed class LiveResumeTokenProtector
 {
-    private const byte CurrentVersion = 1;
+    public const int CurrentFormatVersion = 1;
+
+    public const int MinimumSupportedFormatVersion = 1;
+
     private const int IdentityLength = 32;
     private const int SignatureLength = 32;
     private const int MaximumTokenLength = 2_048;
@@ -94,7 +97,7 @@ public sealed class LiveResumeTokenProtector
         var identityBytes = Convert.FromHexString(identity.Fingerprint);
         var expiresAt = _timeProvider.GetUtcNow().Add(lifetime);
         var payload = new byte[1 + 1 + keyId.Length + IdentityLength + sizeof(long) + sizeof(long)];
-        payload[0] = CurrentVersion;
+        payload[0] = CurrentFormatVersion;
         payload[1] = checked((byte)keyId.Length);
         keyId.CopyTo(payload.AsSpan(2));
         var offset = 2 + keyId.Length;
@@ -128,7 +131,7 @@ public sealed class LiveResumeTokenProtector
             return new LiveResumeTokenValidationResult(LiveResumeTokenValidationStatus.Malformed, null);
         }
 
-        if (payload[0] != CurrentVersion)
+        if (payload[0] != CurrentFormatVersion)
         {
             return new LiveResumeTokenValidationResult(LiveResumeTokenValidationStatus.UnsupportedVersion, null);
         }

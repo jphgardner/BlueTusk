@@ -376,6 +376,10 @@ BlueTusk.Live.LiveTableDependency.LiveTableDependency(string! schema, string! ta
 BlueTusk.Live.LiveTableDependency.Schema.get -> string!
 BlueTusk.Live.LiveTableDependency.Table.get -> string!
 const BlueTusk.Live.LiveReplayJsonSerializer.ContentType = "application/vnd.bluetusk.live-event+json;v=1" -> string!
+const BlueTusk.Live.LiveReplayJsonSerializer.CurrentFormatVersion = 1 -> int
+const BlueTusk.Live.LiveReplayJsonSerializer.MinimumSupportedFormatVersion = 1 -> int
+const BlueTusk.Live.LiveResumeTokenProtector.CurrentFormatVersion = 1 -> int
+const BlueTusk.Live.LiveResumeTokenProtector.MinimumSupportedFormatVersion = 1 -> int
 override BlueTusk.Live.LiveDiffOptions.Equals(object? obj) -> bool
 override BlueTusk.Live.LiveDiffOptions.GetHashCode() -> int
 override BlueTusk.Live.LiveDiffOptions.ToString() -> string!

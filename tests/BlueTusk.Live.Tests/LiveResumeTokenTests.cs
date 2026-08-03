@@ -29,6 +29,18 @@ public sealed class LiveResumeTokenTests
             LiveResumeTokenValidationStatus.InvalidSignature,
             protector.Validate(tampered, identity).Status);
 
+        var unsupportedParts = token.Split('.');
+        var unsupportedPayload = DecodeBase64Url(unsupportedParts[1]);
+        unsupportedPayload[0] = checked((byte)(LiveResumeTokenProtector.CurrentFormatVersion + 1));
+        var unsupported = string.Join(
+            '.',
+            unsupportedParts[0],
+            EncodeBase64Url(unsupportedPayload),
+            unsupportedParts[2]);
+        Assert.Equal(
+            LiveResumeTokenValidationStatus.UnsupportedVersion,
+            protector.Validate(unsupported, identity).Status);
+
         time.Advance(TimeSpan.FromMinutes(5));
         Assert.Equal(
             LiveResumeTokenValidationStatus.Expired,
@@ -62,6 +74,16 @@ public sealed class LiveResumeTokenTests
             scope,
             "policy:v1",
             50);
+
+    private static byte[] DecodeBase64Url(string value)
+    {
+        var padded = value.Replace('-', '+').Replace('_', '/');
+        padded += new string('=', (4 - padded.Length % 4) % 4);
+        return Convert.FromBase64String(padded);
+    }
+
+    private static string EncodeBase64Url(ReadOnlySpan<byte> value) =>
+        Convert.ToBase64String(value).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
     private sealed class TestTimeProvider(DateTimeOffset utcNow) : TimeProvider
     {

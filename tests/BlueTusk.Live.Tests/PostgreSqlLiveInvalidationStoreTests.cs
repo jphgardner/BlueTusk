@@ -135,6 +135,71 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
         }
     }
 
+    [Fact]
+    public async Task Store_migrates_v1_metadata_and_rejects_future_schema_versions()
+    {
+        var schema = "bluetusk_live_upgrade_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        try
+        {
+            await using (var connection = await dataSource.OpenConnectionAsync())
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = $"""
+                    CREATE SCHEMA "{schema}";
+                    CREATE TABLE "{schema}".live_storage_metadata (
+                        singleton boolean PRIMARY KEY DEFAULT true CHECK (singleton),
+                        schema_version integer NOT NULL CHECK (schema_version > 0),
+                        updated_at timestamptz NOT NULL DEFAULT clock_timestamp());
+                    INSERT INTO "{schema}".live_storage_metadata (singleton, schema_version)
+                    VALUES (true, 1);
+                    """;
+                _ = await command.ExecuteNonQueryAsync();
+            }
+
+            var upgraded = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
+            {
+                ControlDataSource = dataSource,
+                ControlSchema = schema,
+            });
+            await upgraded.InitializeAsync(TestContext.Current.CancellationToken);
+            Assert.Equal(
+                PostgreSqlLiveInvalidationStore.CurrentSchemaVersion,
+                await ReadSchemaVersionAsync(dataSource, schema));
+
+            await using (var connection = await dataSource.OpenConnectionAsync())
+            await using (var command = connection.CreateCommand())
+            {
+                command.CommandText = $"""
+                    UPDATE "{schema}".live_storage_metadata
+                    SET schema_version = @future
+                    WHERE singleton
+                    """;
+                var parameter = command.CreateParameter();
+                parameter.ParameterName = "future";
+                parameter.Value = PostgreSqlLiveInvalidationStore.CurrentSchemaVersion + 1;
+                command.Parameters.Add(parameter);
+                _ = await command.ExecuteNonQueryAsync();
+            }
+
+            var future = new PostgreSqlLiveInvalidationStore(new PostgreSqlLiveStoreOptions
+            {
+                ControlDataSource = dataSource,
+                ControlSchema = schema,
+            });
+            var exception = await Assert.ThrowsAsync<PostgreSqlLiveStoreException>(
+                async () => await future.InitializeAsync(TestContext.Current.CancellationToken));
+            Assert.Contains("unsupported", exception.Message, StringComparison.OrdinalIgnoreCase);
+            Assert.Equal(
+                PostgreSqlLiveInvalidationStore.CurrentSchemaVersion + 1,
+                await ReadSchemaVersionAsync(dataSource, schema));
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
     private static ChangeTransactionDelivery Delivery(
         ChangeTable table,
         uint transactionId,
@@ -175,6 +240,19 @@ public sealed class PostgreSqlLiveInvalidationStoreTests
         return string.IsNullOrWhiteSpace(connectionString)
             ? throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured.")
             : connectionString;
+    }
+
+    private static async ValueTask<int> ReadSchemaVersionAsync(
+        DbDataSource dataSource,
+        string schema)
+    {
+        await using var connection = await dataSource.OpenConnectionAsync();
+        await using var command = connection.CreateCommand();
+        command.CommandText =
+            $"SELECT schema_version FROM \"{schema}\".live_storage_metadata WHERE singleton";
+        return Convert.ToInt32(
+            await command.ExecuteScalarAsync(),
+            System.Globalization.CultureInfo.InvariantCulture);
     }
 
     private static async ValueTask DropSchemaAsync(DbDataSource dataSource, string schema)

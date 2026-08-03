@@ -35,3 +35,4 @@ BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ReplayPruneBatchSiz
 BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ReplayRetentionWindow.get -> System.TimeSpan
 BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ReplayRetentionWindow.init -> void
 const BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.CurrentSchemaVersion = 2 -> int
+const BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.MinimumSupportedSchemaVersion = 1 -> int

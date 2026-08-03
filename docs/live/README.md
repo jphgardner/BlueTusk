@@ -113,6 +113,10 @@ publish-enabled dispatch or matching Live version tag. See the
 [preview release notes](release-notes-0.1.0-preview.1.md) for exact scope and
 boundaries.
 
+The [public API candidate freeze](api-compatibility.md) and
+[durable format registry](format-compatibility.md) prepare the Live 1.0 surface
+without claiming that its dependency release gates have completed.
+
 Run the production-store transport gate against any supported PostgreSQL
 service:
 

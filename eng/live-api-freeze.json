@@ -1,0 +1,43 @@
+{
+  "schemaVersion": 1,
+  "baseline": "1.0.0-candidate",
+  "normalization": "utf8-lf",
+  "files": [
+    {
+      "path": "src/BlueTusk.Live.Aspire/PublicAPI.Unshipped.txt",
+      "sha256": "d473761cf4abce1a4a69f8a908975fefdd1d8abde921abc2495ee1262b576382"
+    },
+    {
+      "path": "src/BlueTusk.Live.AspNetCore/PublicAPI.Unshipped.txt",
+      "sha256": "f07d345c24be2eeab48f1325c57c97851bc295a76113d2d74d3cea3a52ad59bc"
+    },
+    {
+      "path": "src/BlueTusk.Live.DependencyInjection/PublicAPI.Unshipped.txt",
+      "sha256": "36835bb7091580c7113362c5db243a6d04cccb90bb6c879d8ef78efacf2c5cb2"
+    },
+    {
+      "path": "src/BlueTusk.Live.EntityFrameworkCore/PublicAPI.Unshipped.txt",
+      "sha256": "de09b936008f1424eed73989af6ec3ca7966da3090878b868fbab998e34eddc6"
+    },
+    {
+      "path": "src/BlueTusk.Live.Grpc/PublicAPI.Unshipped.txt",
+      "sha256": "515f51e62d2d534d6d49a6ba27438bc962c99faede7c21e1cb5dd55720fad285"
+    },
+    {
+      "path": "src/BlueTusk.Live.ServerSentEvents/PublicAPI.Unshipped.txt",
+      "sha256": "c965c0fe5f063769d7efaf41f406854dfd5a74bf5689627da5ab7cd701662fd9"
+    },
+    {
+      "path": "src/BlueTusk.Live.SignalR/PublicAPI.Unshipped.txt",
+      "sha256": "4450acc8c07d1cf84c078a2b84090e3d4a401ceb318bcb4c44b040efbf5a58bd"
+    },
+    {
+      "path": "src/BlueTusk.Live.Testing/PublicAPI.Unshipped.txt",
+      "sha256": "a229bb9120bdb4a6b520380ac4a84f1b9da16d4dda7c1b52ad015e435dbf5981"
+    },
+    {
+      "path": "src/BlueTusk.Live/PublicAPI.Unshipped.txt",
+      "sha256": "635bcb5079eb3964b74c89fa189d3b9087cd22bae6df753bc7fc0016a36b88eb"
+    }
+  ]
+}

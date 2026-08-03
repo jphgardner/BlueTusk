@@ -172,6 +172,10 @@ public interface ILiveReplayStore
 
 public static class LiveReplayJsonSerializer
 {
+    public const int CurrentFormatVersion = 1;
+
+    public const int MinimumSupportedFormatVersion = 1;
+
     public const string ContentType = "application/vnd.bluetusk.live-event+json;v=1";
 
     public static LiveReplayEvent Serialize<T, TKey>(
