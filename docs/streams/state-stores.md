@@ -57,4 +57,21 @@ var report = await ChangeStreamStateStoreConformance.RunAsync(
 
 A passing result establishes the shared behavioral contract, not the backend's durability, disaster-recovery, latency, or security properties. Those remain backend-specific release gates.
 
-The Redis alternative is introduced in a later Phase 2 slice. PostgreSQL remains the default durable control store and relay backend.
+## Redis
+
+`BlueTusk.Streams.Storage.Redis` is the distributed alternative for checkpoints and leases. It accepts an application-owned `IConnectionMultiplexer`; BlueTusk does not create or dispose the shared Redis connection.
+
+```csharp
+var store = new RedisChangeStreamStateStore(
+    new RedisChangeStreamStateStoreOptions
+    {
+        Connection = redisConnection,
+        KeyPrefix = "bluetusk:streams",
+    });
+```
+
+Each consumer group is one Redis hash under a SHA-256-derived cluster hash tag. Lua scripts execute lease acquisition, renewal, release, monotonic compare-and-swap, compatibility checks, and fencing atomically on the Redis server clock. Commit LSNs use fixed-width unsigned decimal strings so comparison does not lose precision through Lua's numeric representation. Generations and fencing tokens remain signed 64-bit values managed by .NET and Redis integer operations.
+
+Configure Redis persistence, replication, authentication, TLS, eviction policy, backup, and failover to match the durability required for replication checkpoints. The package provides atomic state semantics; it cannot turn an ephemeral or evicting Redis deployment into a durable checkpoint service. PostgreSQL remains the default durable control store and the only relay backend in the first preview.
+
+The checked-in integration gate runs the public store conformance suite against Redis 8.

@@ -1,6 +1,6 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, memory/file/PostgreSQL state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on the Redis alternative and Phase 3 typed/snapshot integration.
+BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on Phase 3 typed mapping, safe snapshot bootstrap, and hosted integration.
 
 ## Implemented kernel
 

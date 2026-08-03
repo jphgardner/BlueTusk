@@ -87,6 +87,40 @@ jobs:
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
 
+  redis-streams-integration:
+    name: Redis Streams state-store conformance
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:8-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-dotnet@v5
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Run Redis checkpoint and lease conformance
+        env:
+          BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~BlueTuskStreamsRedisStateStoreIntegrationTests
+          --logger trx
+          --results-directory artifacts/test-results/redis-streams
+
   extension-integration:
     name: ${{ matrix.name }} dedicated extension image
     runs-on: ubuntu-latest

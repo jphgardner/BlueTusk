@@ -19,6 +19,7 @@
         "src/BlueTusk.Streams/BlueTusk.Streams.csproj",
         "src/BlueTusk.Streams.Storage.File/BlueTusk.Streams.Storage.File.csproj",
         "src/BlueTusk.Streams.Storage.PostgreSql/BlueTusk.Streams.Storage.PostgreSql.csproj",
+        "src/BlueTusk.Streams.Storage.Redis/BlueTusk.Streams.Storage.Redis.csproj",
         "src/BlueTusk.Streams.Testing/BlueTusk.Streams.Testing.csproj"
       ]
     },
