@@ -181,6 +181,48 @@ public sealed class SyncPipeline : IChangeStreamConsumer, IAsyncDisposable
         }
     }
 
+    public async ValueTask<SyncReconciliationResult> ReconcileAsync(
+        SyncReconciliationRequest request,
+        ISyncReconciliationReader source,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        ArgumentNullException.ThrowIfNull(source);
+        if (!string.Equals(request.PipelineId, _options.PipelineId, StringComparison.Ordinal))
+        {
+            throw new ArgumentException(
+                $"Reconciliation pipeline '{request.PipelineId}' does not match '{_options.PipelineId}'.",
+                nameof(request));
+        }
+
+        await EnterAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var previousState = (SyncPipelineState)Volatile.Read(ref _state);
+            RequireState(SyncPipelineState.Running, SyncPipelineState.Paused);
+            TransitionTo(SyncPipelineState.Reconciling);
+            try
+            {
+                var result = await SyncReconciler.ReconcileAsync(
+                    request,
+                    source,
+                    _destination,
+                    cancellationToken).ConfigureAwait(false);
+                TransitionTo(previousState);
+                return result;
+            }
+            catch (Exception exception)
+            {
+                Fault(exception);
+                throw;
+            }
+        }
+        finally
+        {
+            _gate.Release();
+        }
+    }
+
     public async ValueTask ResetSnapshotAsync(
         SnapshotReset reset,
         CancellationToken cancellationToken = default)

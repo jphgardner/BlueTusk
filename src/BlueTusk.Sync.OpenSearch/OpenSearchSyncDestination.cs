@@ -44,7 +44,6 @@ public sealed partial class OpenSearchSyncDestination : ISyncDestination, ISyncQ
     public SyncDestinationCapabilities Capabilities =>
         SyncDestinationCapabilities.IdempotentUpserts |
         SyncDestinationCapabilities.Deletes |
-        SyncDestinationCapabilities.Reconciliation |
         SyncDestinationCapabilities.AliasSwap;
 
     /// <summary>Creates or validates the BlueTusk-owned OpenSearch control index.</summary>

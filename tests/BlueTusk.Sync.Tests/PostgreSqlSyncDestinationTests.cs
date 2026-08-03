@@ -138,6 +138,8 @@ public sealed class PostgreSqlSyncDestinationTests
         var failingWriter = new FailingWriter(new PostgreSqlDocumentMutationWriter(schema));
         var destination = new PostgreSqlSyncDestination(
             Options(dataSource, schema) with { MutationWriter = failingWriter });
+        Assert.False(
+            destination.Capabilities.HasFlag(SyncDestinationCapabilities.Reconciliation));
         var transform = SyncTransformVersion.Create("orders", "v1");
         try
         {

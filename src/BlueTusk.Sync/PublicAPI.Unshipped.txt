@@ -8,8 +8,13 @@ BlueTusk.Sync.ISyncDestination.Name.get -> string!
 BlueTusk.Sync.ISyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
 BlueTusk.Sync.ISyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.ISyncReconciliationReader
+BlueTusk.Sync.ISyncReconciliationReader.CountAsync(string! pipelineId, string! collection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+BlueTusk.Sync.ISyncReconciliationReader.ReadPartitionAsync(string! pipelineId, string! collection, int partitionIndex, int partitionCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Sync.SyncReconciliationEntry!>!
 BlueTusk.Sync.ISyncQuarantineSink
 BlueTusk.Sync.ISyncQuarantineSink.StoreAsync(BlueTusk.Sync.SyncQuarantineRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Sync.ISyncRepairSink
+BlueTusk.Sync.ISyncRepairSink.ApplyRepairBatchAsync(BlueTusk.Sync.SyncRepairBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncTransform
 BlueTusk.Sync.ISyncTransform.TransformSnapshotBatchAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSnapshotMutation!>!>
 BlueTusk.Sync.ISyncTransform.TransformTransactionAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncMutation!>!>
@@ -63,6 +68,7 @@ BlueTusk.Sync.SyncPipeline.DisposeAsync() -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.SyncPipeline.PauseAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.SyncPipeline.ProvisionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.SyncPipeline.ResetSnapshotAsync(BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.SyncPipeline.ReconcileAsync(BlueTusk.Sync.SyncReconciliationRequest! request, BlueTusk.Sync.ISyncReconciliationReader! source, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncReconciliationResult!>
 BlueTusk.Sync.SyncPipeline.ResumeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.SyncPipeline.StartSnapshotAsync(BlueTusk.Streams.SnapshotStart! start, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.SyncPipeline.Status.get -> BlueTusk.Sync.SyncPipelineStatus!
@@ -134,6 +140,86 @@ BlueTusk.Sync.SyncProvisionResult.SyncProvisionResult(BlueTusk.Sync.SyncProvisio
 BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.Ready = 0 -> BlueTusk.Sync.SyncProvisionStatus
 BlueTusk.Sync.SyncProvisionStatus.RebuildRequired = 1 -> BlueTusk.Sync.SyncProvisionStatus
+BlueTusk.Sync.SyncReconciler
+BlueTusk.Sync.SyncReconciliationDifference
+BlueTusk.Sync.SyncReconciliationDifference.<Clone>$() -> BlueTusk.Sync.SyncReconciliationDifference!
+BlueTusk.Sync.SyncReconciliationDifference.Deconstruct(out string! Key, out BlueTusk.Sync.SyncReconciliationDifferenceKind Kind, out string? SourceContentHash, out string? DestinationContentHash) -> void
+BlueTusk.Sync.SyncReconciliationDifference.DestinationContentHash.get -> string?
+BlueTusk.Sync.SyncReconciliationDifference.DestinationContentHash.init -> void
+BlueTusk.Sync.SyncReconciliationDifference.Equals(BlueTusk.Sync.SyncReconciliationDifference? other) -> bool
+BlueTusk.Sync.SyncReconciliationDifference.Key.get -> string!
+BlueTusk.Sync.SyncReconciliationDifference.Key.init -> void
+BlueTusk.Sync.SyncReconciliationDifference.Kind.get -> BlueTusk.Sync.SyncReconciliationDifferenceKind
+BlueTusk.Sync.SyncReconciliationDifference.Kind.init -> void
+BlueTusk.Sync.SyncReconciliationDifference.SourceContentHash.get -> string?
+BlueTusk.Sync.SyncReconciliationDifference.SourceContentHash.init -> void
+BlueTusk.Sync.SyncReconciliationDifference.SyncReconciliationDifference(string! Key, BlueTusk.Sync.SyncReconciliationDifferenceKind Kind, string? SourceContentHash, string? DestinationContentHash) -> void
+BlueTusk.Sync.SyncReconciliationDifferenceKind
+BlueTusk.Sync.SyncReconciliationDifferenceKind.ContentMismatch = 2 -> BlueTusk.Sync.SyncReconciliationDifferenceKind
+BlueTusk.Sync.SyncReconciliationDifferenceKind.ExtraInDestination = 1 -> BlueTusk.Sync.SyncReconciliationDifferenceKind
+BlueTusk.Sync.SyncReconciliationDifferenceKind.MissingFromDestination = 0 -> BlueTusk.Sync.SyncReconciliationDifferenceKind
+BlueTusk.Sync.SyncReconciliationEntry
+BlueTusk.Sync.SyncReconciliationEntry.ContentHash.get -> string!
+BlueTusk.Sync.SyncReconciliationEntry.Key.get -> string!
+BlueTusk.Sync.SyncReconciliationEntry.RepairDocument.get -> BlueTusk.Sync.SyncRepairDocument?
+BlueTusk.Sync.SyncReconciliationEntry.SyncReconciliationEntry(string! key, string! contentHash, BlueTusk.Sync.SyncRepairDocument? repairDocument = null) -> void
+BlueTusk.Sync.SyncReconciliationException
+BlueTusk.Sync.SyncReconciliationException.SyncReconciliationException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.SyncReconciliationException.SyncReconciliationException(string! message) -> void
+BlueTusk.Sync.SyncReconciliationMode
+BlueTusk.Sync.SyncReconciliationMode.Count = 0 -> BlueTusk.Sync.SyncReconciliationMode
+BlueTusk.Sync.SyncReconciliationMode.KeySet = 1 -> BlueTusk.Sync.SyncReconciliationMode
+BlueTusk.Sync.SyncReconciliationMode.PartitionedContentHash = 2 -> BlueTusk.Sync.SyncReconciliationMode
+BlueTusk.Sync.SyncReconciliationRequest
+BlueTusk.Sync.SyncReconciliationRequest.<Clone>$() -> BlueTusk.Sync.SyncReconciliationRequest!
+BlueTusk.Sync.SyncReconciliationRequest.Collection.get -> string!
+BlueTusk.Sync.SyncReconciliationRequest.Collection.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.Equals(BlueTusk.Sync.SyncReconciliationRequest? other) -> bool
+BlueTusk.Sync.SyncReconciliationRequest.MaxReportedDifferences.get -> int
+BlueTusk.Sync.SyncReconciliationRequest.MaxReportedDifferences.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.MaxBufferedRepairsPerPartition.get -> int
+BlueTusk.Sync.SyncReconciliationRequest.MaxBufferedRepairsPerPartition.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.Mode.get -> BlueTusk.Sync.SyncReconciliationMode
+BlueTusk.Sync.SyncReconciliationRequest.Mode.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.PartitionCount.get -> int
+BlueTusk.Sync.SyncReconciliationRequest.PartitionCount.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.PipelineId.get -> string!
+BlueTusk.Sync.SyncReconciliationRequest.PipelineId.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.Repair.get -> bool
+BlueTusk.Sync.SyncReconciliationRequest.Repair.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.RepairBatchSize.get -> int
+BlueTusk.Sync.SyncReconciliationRequest.RepairBatchSize.init -> void
+BlueTusk.Sync.SyncReconciliationRequest.SyncReconciliationRequest() -> void
+BlueTusk.Sync.SyncReconciliationResult
+BlueTusk.Sync.SyncReconciliationResult.ContentMismatches.get -> long
+BlueTusk.Sync.SyncReconciliationResult.DestinationCount.get -> long
+BlueTusk.Sync.SyncReconciliationResult.DifferenceReportTruncated.get -> bool
+BlueTusk.Sync.SyncReconciliationResult.Differences.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncReconciliationDifference!>!
+BlueTusk.Sync.SyncReconciliationResult.ExtraInDestination.get -> long
+BlueTusk.Sync.SyncReconciliationResult.IsMatch.get -> bool
+BlueTusk.Sync.SyncReconciliationResult.MatchedKeys.get -> long
+BlueTusk.Sync.SyncReconciliationResult.MissingFromDestination.get -> long
+BlueTusk.Sync.SyncReconciliationResult.RepairedDifferences.get -> long
+BlueTusk.Sync.SyncReconciliationResult.Request.get -> BlueTusk.Sync.SyncReconciliationRequest!
+BlueTusk.Sync.SyncReconciliationResult.RequiresVerification.get -> bool
+BlueTusk.Sync.SyncReconciliationResult.SourceCount.get -> long
+BlueTusk.Sync.SyncRepairBatch
+BlueTusk.Sync.SyncRepairBatch.Collection.get -> string!
+BlueTusk.Sync.SyncRepairBatch.Mutations.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncRepairMutation!>!
+BlueTusk.Sync.SyncRepairBatch.PipelineId.get -> string!
+BlueTusk.Sync.SyncRepairBatch.SyncRepairBatch(string! pipelineId, string! collection, System.Collections.Generic.IEnumerable<BlueTusk.Sync.SyncRepairMutation!>! mutations) -> void
+BlueTusk.Sync.SyncRepairDocument
+BlueTusk.Sync.SyncRepairDocument.Content.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Sync.SyncRepairDocument.ContentType.get -> string!
+BlueTusk.Sync.SyncRepairDocument.PartitionKey.get -> string?
+BlueTusk.Sync.SyncRepairDocument.SyncRepairDocument(System.ReadOnlyMemory<byte> content, string! contentType, string? partitionKey = null) -> void
+BlueTusk.Sync.SyncRepairMutation
+BlueTusk.Sync.SyncRepairMutation.Document.get -> BlueTusk.Sync.SyncRepairDocument?
+BlueTusk.Sync.SyncRepairMutation.Key.get -> string!
+BlueTusk.Sync.SyncRepairMutation.Kind.get -> BlueTusk.Sync.SyncRepairMutationKind
+BlueTusk.Sync.SyncRepairMutationKind
+BlueTusk.Sync.SyncRepairMutationKind.Delete = 1 -> BlueTusk.Sync.SyncRepairMutationKind
+BlueTusk.Sync.SyncRepairMutationKind.Upsert = 0 -> BlueTusk.Sync.SyncRepairMutationKind
 BlueTusk.Sync.SyncQuarantineRecord
 BlueTusk.Sync.SyncQuarantineRecord.<Clone>$() -> BlueTusk.Sync.SyncQuarantineRecord!
 BlueTusk.Sync.SyncQuarantineRecord.CommitEndPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
@@ -248,8 +334,24 @@ static BlueTusk.Sync.SyncProvisionRequest.operator !=(BlueTusk.Sync.SyncProvisio
 static BlueTusk.Sync.SyncProvisionRequest.operator ==(BlueTusk.Sync.SyncProvisionRequest? left, BlueTusk.Sync.SyncProvisionRequest? right) -> bool
 static BlueTusk.Sync.SyncProvisionResult.operator !=(BlueTusk.Sync.SyncProvisionResult? left, BlueTusk.Sync.SyncProvisionResult? right) -> bool
 static BlueTusk.Sync.SyncProvisionResult.operator ==(BlueTusk.Sync.SyncProvisionResult? left, BlueTusk.Sync.SyncProvisionResult? right) -> bool
+override BlueTusk.Sync.SyncReconciliationDifference.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncReconciliationDifference.GetHashCode() -> int
+override BlueTusk.Sync.SyncReconciliationDifference.ToString() -> string!
+override BlueTusk.Sync.SyncReconciliationRequest.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncReconciliationRequest.GetHashCode() -> int
+override BlueTusk.Sync.SyncReconciliationRequest.ToString() -> string!
 static BlueTusk.Sync.SyncQuarantineRecord.operator !=(BlueTusk.Sync.SyncQuarantineRecord? left, BlueTusk.Sync.SyncQuarantineRecord? right) -> bool
 static BlueTusk.Sync.SyncQuarantineRecord.operator ==(BlueTusk.Sync.SyncQuarantineRecord? left, BlueTusk.Sync.SyncQuarantineRecord? right) -> bool
+static BlueTusk.Sync.SyncReconciler.GetPartitionIndex(string! key, int partitionCount) -> int
+static BlueTusk.Sync.SyncReconciler.GetKeyHash(string! key) -> uint
+static BlueTusk.Sync.SyncReconciler.ReconcileAsync(BlueTusk.Sync.SyncReconciliationRequest! request, BlueTusk.Sync.ISyncReconciliationReader! source, BlueTusk.Sync.ISyncDestination! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncReconciliationResult!>
+static BlueTusk.Sync.SyncReconciliationDifference.operator !=(BlueTusk.Sync.SyncReconciliationDifference? left, BlueTusk.Sync.SyncReconciliationDifference? right) -> bool
+static BlueTusk.Sync.SyncReconciliationDifference.operator ==(BlueTusk.Sync.SyncReconciliationDifference? left, BlueTusk.Sync.SyncReconciliationDifference? right) -> bool
+static BlueTusk.Sync.SyncReconciliationEntry.FromContent(string! key, System.ReadOnlyMemory<byte> content, string? contentType = null, string? partitionKey = null) -> BlueTusk.Sync.SyncReconciliationEntry!
+static BlueTusk.Sync.SyncReconciliationRequest.operator !=(BlueTusk.Sync.SyncReconciliationRequest? left, BlueTusk.Sync.SyncReconciliationRequest? right) -> bool
+static BlueTusk.Sync.SyncReconciliationRequest.operator ==(BlueTusk.Sync.SyncReconciliationRequest? left, BlueTusk.Sync.SyncReconciliationRequest? right) -> bool
+static BlueTusk.Sync.SyncRepairMutation.Delete(string! key) -> BlueTusk.Sync.SyncRepairMutation!
+static BlueTusk.Sync.SyncRepairMutation.Upsert(string! key, BlueTusk.Sync.SyncRepairDocument! document) -> BlueTusk.Sync.SyncRepairMutation!
 static BlueTusk.Sync.SyncSnapshotMutation.operator !=(BlueTusk.Sync.SyncSnapshotMutation? left, BlueTusk.Sync.SyncSnapshotMutation? right) -> bool
 static BlueTusk.Sync.SyncSnapshotMutation.operator ==(BlueTusk.Sync.SyncSnapshotMutation? left, BlueTusk.Sync.SyncSnapshotMutation? right) -> bool
 static BlueTusk.Sync.SyncSourceTransaction.operator !=(BlueTusk.Sync.SyncSourceTransaction? left, BlueTusk.Sync.SyncSourceTransaction? right) -> bool

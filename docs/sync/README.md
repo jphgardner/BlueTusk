@@ -23,9 +23,11 @@ redelivery.
 
 PostgreSQL, NATS JetStream, Redis, and OpenSearch connector slices are
 implemented and pass the same executable snapshot-plus-stream recovery
-contract. Full key/content-hash reconciliation, repair, and product-level
-rebuild orchestration remain gated work. The Sync release train remains
-non-publishable until those remaining Phase 5 recovery and endurance gates pass.
+contract. The shared count, key-set, and partitioned content-hash engine plus
+PostgreSQL and Redis repair paths are implemented. OpenSearch reconciliation,
+product-level rebuild orchestration, source adapters, and endurance remain
+gated work. The Sync release train remains non-publishable until those remaining
+Phase 5 gates pass.
 
 ## Shared destination conformance
 
@@ -46,6 +48,26 @@ An in-memory reference harness also proves the kit rejects a destination that
 reports a checkpoint beyond the applied source transaction. The live variants
 run in their existing connector CI jobs; PostgreSQL runs across versions 15–19.
 
+## Reconciliation and repair
+
+`SyncReconciler` supports three explicit depths: count, partitioned key set, and
+partitioned exact-content SHA-256. Key partitions are derived from the high
+32 bits of SHA-256 and compared in bounded streams ordered by hash and UTF-8 key.
+Results retain a configurable number of representative differences while exact
+totals continue to accumulate. Count-only equality is deliberately reported as
+count equality; it does not claim content equality.
+
+Repair is unavailable in count-only mode. For key-set or content-hash runs, the
+authoritative reader must include replacement content and the destination must
+implement `ISyncRepairSink`. Repairs are idempotent upserts/deletes sent in
+bounded batches. A repaired result remains a mismatch and sets
+`RequiresVerification`; only a subsequent clean comparison proves convergence.
+Repair never advances the source transaction checkpoint.
+
+`SyncPipeline.ReconcileAsync` serializes reconciliation with delivery, exposes
+the `Reconciling` state, restores the previous running/paused state after
+success, and faults with diagnostics on a reader or repair failure.
+
 ## PostgreSQL destination
 
 `BlueTusk.Sync.PostgreSql` stores an opaque materialised document collection and
@@ -59,6 +81,13 @@ The default writer folds repeated operations to the final per-key result while
 preserving collection-delete ordering, then sends bounded multi-row commands
 instead of one database round trip per document. The live acceptance suite
 covers batches beyond one command chunk as well as retry deduplication.
+
+The default document writer also exposes server-partitioned hash reconciliation
+and transactional repair. PostgreSQL computes the shared SHA-256 partition in
+SQL, streams rows in deterministic order, and applies a bounded repair batch in
+one database transaction without touching the pipeline checkpoint. A custom
+mutation writer does not advertise reconciliation because BlueTusk cannot infer
+how to inspect or repair an application-owned schema.
 
 Snapshot reset, batches, and completion are guarded by the active snapshot epoch
 and transform fingerprint. The destination also implements a durable,
@@ -135,6 +164,12 @@ completion prevents late batches for the epoch. Quarantine records use a stable
 transaction field and `HSET NX`, so retrying quarantine-and-advance cannot add
 duplicates.
 
+Redis format version 2 maintains a same-slot sorted reconciliation index beside
+each collection hash. Lua writes update the document, index, registry, and CDC
+checkpoint atomically. Partition reads use bounded score ranges instead of
+rescanning the whole collection, and repair updates the document hash and index
+in one Lua call without changing the CDC checkpoint.
+
 The live Redis suite deliberately introduces a wrong-type destination key and
 proves preflight rejection occurs before any mutation. It also covers retry,
 restart, collection-delete ordering, snapshot reset/completion, quarantine, and
@@ -152,8 +187,11 @@ idempotent on retry.
 
 OpenSearch bulk operations are independently applied by the server, so this
 connector deliberately does not advertise `TransactionalBatches` or a
-co-located checkpoint. Transaction preservation comes from bounded whole-batch
-submission, item-by-item response validation, stable external versions, and
+co-located checkpoint. It also does not yet advertise reconciliation: the
+hashed document IDs are intentionally not reversible, so the remaining work is
+a generation-owned key/hash sidecar rather than an unsafe inference from user
+JSON. Transaction preservation comes from bounded whole-batch submission,
+item-by-item response validation, stable external versions, and
 checkpoint-after-bulk ordering. Collection resets complete before the
 subsequent folded mutations are sent. JSON objects are the only accepted
 materialisation content.

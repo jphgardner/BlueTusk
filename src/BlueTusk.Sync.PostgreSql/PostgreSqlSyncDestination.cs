@@ -1,11 +1,16 @@
 using System.Data;
 using System.Data.Common;
+using System.Runtime.CompilerServices;
 using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Sync.PostgreSql;
 
-public sealed class PostgreSqlSyncDestination : ISyncDestination, ISyncQuarantineSink
+public sealed class PostgreSqlSyncDestination :
+    ISyncDestination,
+    ISyncQuarantineSink,
+    ISyncReconciliationReader,
+    ISyncRepairSink
 {
     public const int CurrentSchemaVersion = 1;
 
@@ -17,6 +22,7 @@ public sealed class PostgreSqlSyncDestination : ISyncDestination, ISyncQuarantin
     private readonly string _documentsTable;
     private readonly string _quarantineTable;
     private readonly IPostgreSqlSyncMutationWriter _writer;
+    private readonly bool _ownsDefaultDocuments;
     private readonly object _initializeLock = new();
     private Task? _initializationTask;
 
@@ -31,6 +37,7 @@ public sealed class PostgreSqlSyncDestination : ISyncDestination, ISyncQuarantin
         _pipelinesTable = _schema + ".pipelines";
         _documentsTable = _schema + ".documents";
         _quarantineTable = _schema + ".quarantine";
+        _ownsDefaultDocuments = options.MutationWriter is null;
         _writer = options.MutationWriter ?? new PostgreSqlDocumentMutationWriter(options.ControlSchema);
     }
 
@@ -41,7 +48,9 @@ public sealed class PostgreSqlSyncDestination : ISyncDestination, ISyncQuarantin
         SyncDestinationCapabilities.IdempotentUpserts |
         SyncDestinationCapabilities.Deletes |
         SyncDestinationCapabilities.CoLocatedCheckpoint |
-        SyncDestinationCapabilities.Reconciliation;
+        (_ownsDefaultDocuments
+            ? SyncDestinationCapabilities.Reconciliation
+            : SyncDestinationCapabilities.None);
 
     public async ValueTask InitializeAsync(CancellationToken cancellationToken = default)
     {
@@ -350,6 +359,223 @@ public sealed class PostgreSqlSyncDestination : ISyncDestination, ISyncQuarantin
         return rows is 0 or 1;
     }
 
+    public async ValueTask<long> CountAsync(
+        string pipelineId,
+        string collection,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureDefaultReconciliation();
+        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        _ = await ReadPipelineAsync(
+            connection,
+            transaction,
+            pipelineId,
+            false,
+            cancellationToken).ConfigureAwait(false) ??
+            throw new PostgreSqlSyncException($"Sync pipeline '{pipelineId}' is not provisioned.");
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"SELECT count(*) FROM {_documentsTable} WHERE pipeline_id = @pipeline AND collection_name = @collection";
+        AddParameter(command, "pipeline", pipelineId);
+        AddParameter(command, "collection", collection);
+        var count = Convert.ToInt64(
+            await command.ExecuteScalarAsync(cancellationToken).ConfigureAwait(false),
+            System.Globalization.CultureInfo.InvariantCulture);
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+        return count;
+    }
+
+    public async IAsyncEnumerable<SyncReconciliationEntry> ReadPartitionAsync(
+        string pipelineId,
+        string collection,
+        int partitionIndex,
+        int partitionCount,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        EnsureDefaultReconciliation();
+        ArgumentException.ThrowIfNullOrWhiteSpace(pipelineId);
+        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        ArgumentOutOfRangeException.ThrowIfLessThan(partitionCount, 1);
+        ArgumentOutOfRangeException.ThrowIfNegative(partitionIndex);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(partitionIndex, partitionCount);
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.RepeatableRead,
+            cancellationToken).ConfigureAwait(false);
+        _ = await ReadPipelineAsync(
+            connection,
+            transaction,
+            pipelineId,
+            false,
+            cancellationToken).ConfigureAwait(false) ??
+            throw new PostgreSqlSyncException($"Sync pipeline '{pipelineId}' is not provisioned.");
+        await using var command = connection.CreateCommand();
+        command.Transaction = transaction;
+        command.CommandText = $"""
+            SELECT document_key, content
+            FROM {_documentsTable}
+            CROSS JOIN LATERAL (
+                SELECT
+                    get_byte(sha256(convert_to(document_key, 'UTF8')), 0)::bigint * 16777216 +
+                    get_byte(sha256(convert_to(document_key, 'UTF8')), 1)::bigint * 65536 +
+                    get_byte(sha256(convert_to(document_key, 'UTF8')), 2)::bigint * 256 +
+                    get_byte(sha256(convert_to(document_key, 'UTF8')), 3)::bigint AS value
+            ) AS key_hash
+            WHERE pipeline_id = @pipeline
+              AND collection_name = @collection
+              AND (key_hash.value * @partition_count) / 4294967296 = @partition_index
+            ORDER BY key_hash.value, convert_to(document_key, 'UTF8')
+            """;
+        AddParameter(command, "pipeline", pipelineId);
+        AddParameter(command, "collection", collection);
+        AddParameter(command, "partition_count", partitionCount);
+        AddParameter(command, "partition_index", partitionIndex);
+        await using var reader = await command.ExecuteReaderAsync(cancellationToken)
+            .ConfigureAwait(false);
+        while (await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            yield return SyncReconciliationEntry.FromContent(
+                reader.GetString(0),
+                reader.GetFieldValue<byte[]>(1));
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async ValueTask ApplyRepairBatchAsync(
+        SyncRepairBatch batch,
+        CancellationToken cancellationToken = default)
+    {
+        EnsureDefaultReconciliation();
+        ArgumentNullException.ThrowIfNull(batch);
+        ValidateContentLimits(batch.Mutations
+            .Where(static mutation => mutation.Document is not null)
+            .Select(static mutation => mutation.Document!.Content));
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        await using var connection = await _dataSource.OpenConnectionAsync(cancellationToken)
+            .ConfigureAwait(false);
+        await using var transaction = await connection.BeginTransactionAsync(
+            IsolationLevel.ReadCommitted,
+            cancellationToken).ConfigureAwait(false);
+        _ = await RequirePipelineAsync(connection, transaction, batch.PipelineId, cancellationToken)
+            .ConfigureAwait(false);
+
+        foreach (var chunk in batch.Mutations.Chunk(512))
+        {
+            await ApplyRepairChunkAsync(
+                connection,
+                transaction,
+                batch.PipelineId,
+                batch.Collection,
+                chunk,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        await transaction.CommitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private async ValueTask ApplyRepairChunkAsync(
+        DbConnection connection,
+        DbTransaction transaction,
+        string pipelineId,
+        string collection,
+        IReadOnlyList<SyncRepairMutation> mutations,
+        CancellationToken cancellationToken)
+    {
+        var deletes = mutations
+            .Where(static mutation => mutation.Kind is SyncRepairMutationKind.Delete)
+            .ToArray();
+        if (deletes.Length != 0)
+        {
+            await using var command = connection.CreateCommand();
+            command.Transaction = transaction;
+            var keys = new string[deletes.Length];
+            AddParameter(command, "pipeline", pipelineId);
+            AddParameter(command, "collection", collection);
+            for (var index = 0; index < deletes.Length; index++)
+            {
+                keys[index] = $"@delete_key{index}";
+                AddParameter(command, $"delete_key{index}", deletes[index].Key);
+            }
+
+            command.CommandText = $"DELETE FROM {_documentsTable} WHERE pipeline_id = @pipeline AND collection_name = @collection AND document_key IN ({string.Join(',', keys)})";
+            _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var upserts = mutations
+            .Where(static mutation => mutation.Kind is SyncRepairMutationKind.Upsert)
+            .ToArray();
+        if (upserts.Length == 0)
+        {
+            return;
+        }
+
+        await using var upsert = connection.CreateCommand();
+        upsert.Transaction = transaction;
+        var sql = new System.Text.StringBuilder($"""
+            INSERT INTO {_documentsTable} (
+                pipeline_id, collection_name, document_key, partition_key,
+                content_type, content, source_change_id, snapshot_epoch, updated_at)
+            VALUES
+            """);
+        AddParameter(upsert, "pipeline", pipelineId);
+        AddParameter(upsert, "collection", collection);
+        for (var index = 0; index < upserts.Length; index++)
+        {
+            if (index != 0)
+            {
+                sql.Append(',');
+            }
+
+            sql.AppendLine();
+            sql.Append(
+                System.Globalization.CultureInfo.InvariantCulture,
+                $"(@pipeline, @collection, @upsert_key{index}, @partition{index}, @content_type{index}, @content{index}, @repair_id{index}, NULL, clock_timestamp())");
+            var mutation = upserts[index];
+            var document = mutation.Document!;
+            AddParameter(upsert, $"upsert_key{index}", mutation.Key);
+            AddNullableParameter(upsert, $"partition{index}", document.PartitionKey, DbType.String);
+            AddParameter(upsert, $"content_type{index}", document.ContentType);
+            AddParameter(upsert, $"content{index}", document.Content.ToArray());
+            AddParameter(
+                upsert,
+                $"repair_id{index}",
+                "repair:" + Convert.ToHexStringLower(
+                    System.Security.Cryptography.SHA256.HashData(document.Content.Span)));
+        }
+
+        sql.AppendLine();
+        sql.Append("""
+            ON CONFLICT (pipeline_id, collection_name, document_key)
+            DO UPDATE SET partition_key = EXCLUDED.partition_key,
+                          content_type = EXCLUDED.content_type,
+                          content = EXCLUDED.content,
+                          source_change_id = EXCLUDED.source_change_id,
+                          snapshot_epoch = NULL,
+                          updated_at = EXCLUDED.updated_at
+            """);
+        upsert.CommandText = sql.ToString();
+        _ = await upsert.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private void EnsureDefaultReconciliation()
+    {
+        if (!_ownsDefaultDocuments)
+        {
+            throw new NotSupportedException(
+                "The default PostgreSQL reconciliation reader cannot inspect a custom mutation writer.");
+        }
+    }
+
     private async ValueTask ValidateSnapshotAsync(
         string pipelineId,
         Guid epoch,
@@ -553,6 +779,19 @@ public sealed class PostgreSqlSyncDestination : ISyncDestination, ISyncQuarantin
         var parameter = command.CreateParameter();
         parameter.ParameterName = name;
         parameter.Value = value;
+        command.Parameters.Add(parameter);
+    }
+
+    private static void AddNullableParameter(
+        DbCommand command,
+        string name,
+        object? value,
+        DbType type)
+    {
+        var parameter = command.CreateParameter();
+        parameter.ParameterName = name;
+        parameter.Value = value ?? DBNull.Value;
+        parameter.DbType = type;
         command.Parameters.Add(parameter);
     }
 

@@ -1,5 +1,6 @@
 using System.Collections.Concurrent;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Channels;
@@ -9,7 +10,11 @@ using StackExchange.Redis;
 
 namespace BlueTusk.Sync.Redis;
 
-public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
+public sealed class RedisSyncDestination :
+    ISyncDestination,
+    ISyncQuarantineSink,
+    ISyncReconciliationReader,
+    ISyncRepairSink
 {
     private const string ProvisionScript = """
         local format = redis.call('HGET', KEYS[1], 'format')
@@ -39,29 +44,35 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
         if checkpoint and checkpoint >= ARGV[3] then return 1 end
         local registry_type = redis.call('TYPE', KEYS[2]).ok
         if registry_type ~= 'none' and registry_type ~= 'set' then return 5 end
-        for index = 3, #KEYS do
-            local key_type = redis.call('TYPE', KEYS[index]).ok
-            if key_type ~= 'none' and key_type ~= 'hash' then return 5 end
+        for index = 3, #KEYS, 2 do
+            local document_type = redis.call('TYPE', KEYS[index]).ok
+            local index_type = redis.call('TYPE', KEYS[index + 1]).ok
+            if document_type ~= 'none' and document_type ~= 'hash' then return 5 end
+            if index_type ~= 'none' and index_type ~= 'zset' then return 5 end
         end
         local count = tonumber(ARGV[5])
         local offset = 6
         for index = 1, count do
-            local key_index = tonumber(ARGV[offset])
-            local kind = ARGV[offset + 1]
-            local document_key = ARGV[offset + 2]
-            local value = ARGV[offset + 3]
+            local document_index = tonumber(ARGV[offset])
+            local sorted_index = tonumber(ARGV[offset + 1])
+            local kind = ARGV[offset + 2]
+            local document_key = ARGV[offset + 3]
+            local key_hash = ARGV[offset + 4]
+            local value = ARGV[offset + 5]
             if kind == '0' then
-                redis.call('HSET', KEYS[key_index], document_key, value)
-                redis.call('SADD', KEYS[2], KEYS[key_index])
+                redis.call('HSET', KEYS[document_index], document_key, value)
+                redis.call('ZADD', KEYS[sorted_index], key_hash, document_key)
+                redis.call('SADD', KEYS[2], KEYS[document_index], KEYS[sorted_index])
             elseif kind == '1' then
-                redis.call('HDEL', KEYS[key_index], document_key)
+                redis.call('HDEL', KEYS[document_index], document_key)
+                redis.call('ZREM', KEYS[sorted_index], document_key)
             elseif kind == '2' then
-                redis.call('DEL', KEYS[key_index])
-                redis.call('SREM', KEYS[2], KEYS[key_index])
+                redis.call('DEL', KEYS[document_index], KEYS[sorted_index])
+                redis.call('SREM', KEYS[2], KEYS[document_index], KEYS[sorted_index])
             else
                 return redis.error_reply('unsupported BlueTusk Sync mutation')
             end
-            offset = offset + 4
+            offset = offset + 6
         end
         redis.call('HSET', KEYS[1], 'checkpoint', ARGV[3], 'transaction_id', ARGV[4])
         redis.call('HINCRBY', KEYS[1], 'generation', 1)
@@ -98,22 +109,56 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
            redis.call('HGET', KEYS[1], 'snapshot_complete') ~= '0' then return 4 end
         local registry_type = redis.call('TYPE', KEYS[2]).ok
         if registry_type ~= 'none' and registry_type ~= 'set' then return 5 end
-        for index = 3, #KEYS do
-            local key_type = redis.call('TYPE', KEYS[index]).ok
-            if key_type ~= 'none' and key_type ~= 'hash' then return 5 end
+        for index = 3, #KEYS, 2 do
+            local document_type = redis.call('TYPE', KEYS[index]).ok
+            local index_type = redis.call('TYPE', KEYS[index + 1]).ok
+            if document_type ~= 'none' and document_type ~= 'hash' then return 5 end
+            if index_type ~= 'none' and index_type ~= 'zset' then return 5 end
         end
         local count = tonumber(ARGV[4])
         local offset = 5
         for index = 1, count do
-            local key_index = tonumber(ARGV[offset])
-            redis.call('HSET', KEYS[key_index], ARGV[offset + 1], ARGV[offset + 2])
-            redis.call('SADD', KEYS[2], KEYS[key_index])
-            offset = offset + 3
+            local document_index = tonumber(ARGV[offset])
+            local sorted_index = tonumber(ARGV[offset + 1])
+            local document_key = ARGV[offset + 2]
+            redis.call('HSET', KEYS[document_index], document_key, ARGV[offset + 4])
+            redis.call('ZADD', KEYS[sorted_index], ARGV[offset + 3], document_key)
+            redis.call('SADD', KEYS[2], KEYS[document_index], KEYS[sorted_index])
+            offset = offset + 5
         end
         return 0
         """;
 
-    private const int CurrentFormatVersion = 1;
+    private const string RepairScript = """
+        if redis.call('HGET', KEYS[1], 'source') ~= ARGV[1] then return 3 end
+        if redis.call('HGET', KEYS[1], 'transform') ~= ARGV[2] then return 2 end
+        local registry_type = redis.call('TYPE', KEYS[2]).ok
+        local document_type = redis.call('TYPE', KEYS[3]).ok
+        local index_type = redis.call('TYPE', KEYS[4]).ok
+        if registry_type ~= 'none' and registry_type ~= 'set' then return 5 end
+        if document_type ~= 'none' and document_type ~= 'hash' then return 5 end
+        if index_type ~= 'none' and index_type ~= 'zset' then return 5 end
+        local count = tonumber(ARGV[3])
+        local offset = 4
+        for index = 1, count do
+            local kind = ARGV[offset]
+            local document_key = ARGV[offset + 1]
+            if kind == '0' then
+                redis.call('HSET', KEYS[3], document_key, ARGV[offset + 3])
+                redis.call('ZADD', KEYS[4], ARGV[offset + 2], document_key)
+                redis.call('SADD', KEYS[2], KEYS[3], KEYS[4])
+            elseif kind == '1' then
+                redis.call('HDEL', KEYS[3], document_key)
+                redis.call('ZREM', KEYS[4], document_key)
+            else
+                return redis.error_reply('unsupported BlueTusk Sync repair')
+            end
+            offset = offset + 4
+        end
+        return 0
+        """;
+
+    private const int CurrentFormatVersion = 2;
 
     private readonly RedisSyncOptions _options;
     private readonly IDatabase _database;
@@ -134,7 +179,8 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
         SyncDestinationCapabilities.TransactionalBatches |
         SyncDestinationCapabilities.IdempotentUpserts |
         SyncDestinationCapabilities.Deletes |
-        SyncDestinationCapabilities.CoLocatedCheckpoint;
+        SyncDestinationCapabilities.CoLocatedCheckpoint |
+        SyncDestinationCapabilities.Reconciliation;
 
     public async ValueTask<SyncProvisionResult> ProvisionAsync(
         SyncProvisionRequest request,
@@ -352,6 +398,164 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
         return true;
     }
 
+    public async ValueTask<long> CountAsync(
+        string pipelineId,
+        string collection,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        var runtime = RequirePipeline(pipelineId);
+        return await _database.HashLengthAsync(CollectionKey(runtime.Keys, collection))
+            .WaitAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    public async IAsyncEnumerable<SyncReconciliationEntry> ReadPartitionAsync(
+        string pipelineId,
+        string collection,
+        int partitionIndex,
+        int partitionCount,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(collection);
+        ArgumentOutOfRangeException.ThrowIfLessThan(partitionCount, 1);
+        ArgumentOutOfRangeException.ThrowIfNegative(partitionIndex);
+        ArgumentOutOfRangeException.ThrowIfGreaterThanOrEqual(partitionIndex, partitionCount);
+        var runtime = RequirePipeline(pipelineId);
+        var documentsKey = CollectionKey(runtime.Keys, collection);
+        var indexKey = CollectionIndexKey(runtime.Keys, collection);
+        var (minimum, maximum) = PartitionScoreRange(partitionIndex, partitionCount);
+        const int pageSize = 512;
+        long offset = 0;
+        while (true)
+        {
+            var keys = await _database.SortedSetRangeByScoreAsync(
+                    indexKey,
+                    minimum,
+                    maximum,
+                    Exclude.None,
+                    Order.Ascending,
+                    offset,
+                    pageSize)
+                .WaitAsync(cancellationToken).ConfigureAwait(false);
+            if (keys.Length == 0)
+            {
+                yield break;
+            }
+
+            var values = await _database.HashGetAsync(documentsKey, keys)
+                .WaitAsync(cancellationToken).ConfigureAwait(false);
+            for (var index = 0; index < keys.Length; index++)
+            {
+                if (values[index].IsNull)
+                {
+                    throw new SyncReconciliationException(
+                        $"Redis reconciliation index contains missing document key '{keys[index]}'.");
+                }
+
+                var document = RedisSyncDocumentCodec.Decode((byte[])values[index]!);
+                yield return SyncReconciliationEntry.FromContent(
+                    keys[index].ToString(),
+                    document.Content);
+            }
+
+            offset += keys.Length;
+            if (keys.Length < pageSize)
+            {
+                yield break;
+            }
+        }
+    }
+
+    public async ValueTask ApplyRepairBatchAsync(
+        SyncRepairBatch batch,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(batch);
+        ValidateLimits(
+            batch.Mutations.Count,
+            batch.Mutations
+                .Where(static mutation => mutation.Document is not null)
+                .Select(static mutation => mutation.Document!.Content));
+        var runtime = RequirePipeline(batch.PipelineId);
+        await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
+        var arguments = new List<RedisValue>(3 + (batch.Mutations.Count * 4))
+        {
+            runtime.Source.Fingerprint,
+            runtime.Transform.Fingerprint,
+            batch.Mutations.Count,
+        };
+        long encodedBytes = 0;
+        foreach (var mutation in batch.Mutations)
+        {
+            arguments.Add((int)mutation.Kind);
+            arguments.Add(mutation.Key);
+            arguments.Add(SyncReconciler.GetKeyHash(mutation.Key));
+            if (mutation.Kind is SyncRepairMutationKind.Upsert)
+            {
+                var document = mutation.Document!;
+                var value = RedisSyncDocumentCodec.Encode(
+                    "repair:" + Convert.ToHexStringLower(SHA256.HashData(document.Content.Span)),
+                    document.Content,
+                    document.ContentType,
+                    document.PartitionKey);
+                encodedBytes = checked(encodedBytes + value.Length);
+                arguments.Add(value);
+            }
+            else
+            {
+                arguments.Add(RedisValue.EmptyString);
+            }
+        }
+
+        if (encodedBytes > _options.MaxTransactionBytes)
+        {
+            throw new RedisSyncException(
+                $"The encoded repair batch exceeds the configured {_options.MaxTransactionBytes}-byte Redis limit.");
+        }
+
+        var result = (int)await _database.ScriptEvaluateAsync(
+                RepairScript,
+                [
+                    runtime.Keys.State,
+                    runtime.Keys.Collections,
+                    CollectionKey(runtime.Keys, batch.Collection),
+                    CollectionIndexKey(runtime.Keys, batch.Collection),
+                ],
+                arguments.ToArray())
+            .WaitAsync(cancellationToken).ConfigureAwait(false);
+        switch (result)
+        {
+            case 0:
+                return;
+            case 2:
+                throw new RedisSyncException(
+                    $"Redis Sync pipeline '{batch.PipelineId}' changed transform metadata after provisioning.");
+            case 3:
+                throw new RedisSyncSourceMismatchException(
+                    $"Redis Sync pipeline '{batch.PipelineId}' belongs to a different source.");
+            case 5:
+                throw new RedisSyncException(
+                    $"Redis Sync pipeline '{batch.PipelineId}' contains a reconciliation key with an incompatible Redis type.");
+            default:
+                throw new RedisSyncException($"Redis repair script returned status {result}.");
+        }
+    }
+
+    private static (double Minimum, double Maximum) PartitionScoreRange(
+        int partitionIndex,
+        int partitionCount)
+    {
+        const ulong hashSpace = 1UL << 32;
+        var minimum = DivideRoundUp((ulong)partitionIndex * hashSpace, (uint)partitionCount);
+        var maximumExclusive = DivideRoundUp(
+            (ulong)(partitionIndex + 1) * hashSpace,
+            (uint)partitionCount);
+        return (minimum, maximumExclusive - 1);
+    }
+
+    private static ulong DivideRoundUp(ulong value, uint divisor) =>
+        (value + divisor - 1) / divisor;
+
     private async ValueTask ValidateSnapshotStateAsync(
         PipelineRuntime runtime,
         Guid epoch,
@@ -435,7 +639,7 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
         IReadOnlyList<MaterializedOperation> operations)
     {
         var builder = new CommandBuilder(runtime, operations.Select(operation => operation.Collection));
-        var arguments = new List<RedisValue>(5 + (operations.Count * 4))
+        var arguments = new List<RedisValue>(5 + (operations.Count * 6))
         {
             runtime.Source.Fingerprint,
             runtime.Transform.Fingerprint,
@@ -445,9 +649,12 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
         };
         foreach (var operation in operations)
         {
-            arguments.Add(builder.KeyIndex(operation.Collection));
+            var indexes = builder.KeyIndexes(operation.Collection);
+            arguments.Add(indexes.Documents);
+            arguments.Add(indexes.Sorted);
             arguments.Add((int)operation.Kind);
             arguments.Add(operation.Key ?? string.Empty);
+            arguments.Add(operation.Key is null ? 0 : SyncReconciler.GetKeyHash(operation.Key));
             arguments.Add(operation.Value);
         }
 
@@ -461,7 +668,7 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
         IReadOnlyList<MaterializedOperation> operations)
     {
         var builder = new CommandBuilder(runtime, operations.Select(operation => operation.Collection));
-        var arguments = new List<RedisValue>(4 + (operations.Count * 3))
+        var arguments = new List<RedisValue>(4 + (operations.Count * 5))
         {
             runtime.Source.Fingerprint,
             runtime.Transform.Fingerprint,
@@ -470,8 +677,11 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
         };
         foreach (var operation in operations)
         {
-            arguments.Add(builder.KeyIndex(operation.Collection));
+            var indexes = builder.KeyIndexes(operation.Collection);
+            arguments.Add(indexes.Documents);
+            arguments.Add(indexes.Sorted);
             arguments.Add(operation.Key!);
+            arguments.Add(SyncReconciler.GetKeyHash(operation.Key!));
             arguments.Add(operation.Value);
         }
 
@@ -589,6 +799,9 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
     private static RedisKey CollectionKey(PipelineKeys keys, string collection) =>
         keys.Root + ":collection:" + Fingerprint(collection);
 
+    private static RedisKey CollectionIndexKey(PipelineKeys keys, string collection) =>
+        keys.Root + ":collection-index:" + Fingerprint(collection);
+
     private static string Fingerprint(string value) =>
         Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(value)));
 
@@ -603,15 +816,16 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
 
     private sealed class CommandBuilder
     {
-        private readonly Dictionary<string, int> _indexes = new(StringComparer.Ordinal);
+        private readonly Dictionary<string, CollectionIndexes> _indexes = new(StringComparer.Ordinal);
 
         internal CommandBuilder(PipelineRuntime runtime, IEnumerable<string> collections)
         {
             var keys = new List<RedisKey> { runtime.Keys.State, runtime.Keys.Collections };
             foreach (var collection in collections.Distinct(StringComparer.Ordinal))
             {
-                _indexes[collection] = keys.Count + 1;
+                _indexes[collection] = new CollectionIndexes(keys.Count + 1, keys.Count + 2);
                 keys.Add(CollectionKey(runtime.Keys, collection));
+                keys.Add(CollectionIndexKey(runtime.Keys, collection));
             }
 
             Keys = keys.ToArray();
@@ -619,8 +833,10 @@ public sealed class RedisSyncDestination : ISyncDestination, ISyncQuarantineSink
 
         internal RedisKey[] Keys { get; }
 
-        internal int KeyIndex(string collection) => _indexes[collection];
+        internal CollectionIndexes KeyIndexes(string collection) => _indexes[collection];
     }
+
+    private readonly record struct CollectionIndexes(int Documents, int Sorted);
 
     private sealed class PipelineRuntime
     {

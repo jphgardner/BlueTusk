@@ -47,6 +47,7 @@ public sealed class OpenSearchSyncDestinationTests
             Assert.Equal(SyncProvisionStatus.Ready, provisioned.Status);
             Assert.True(destination.Capabilities.HasFlag(SyncDestinationCapabilities.AliasSwap));
             Assert.False(destination.Capabilities.HasFlag(SyncDestinationCapabilities.TransactionalBatches));
+            Assert.False(destination.Capabilities.HasFlag(SyncDestinationCapabilities.Reconciliation));
 
             await using var seedDelivery = ChangeDeliveryTestFactory.CreateCommitted(
                 Source,
