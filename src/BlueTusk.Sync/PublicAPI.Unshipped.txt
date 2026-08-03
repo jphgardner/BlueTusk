@@ -359,3 +359,134 @@ static BlueTusk.Sync.SyncSourceTransaction.operator ==(BlueTusk.Sync.SyncSourceT
 static BlueTusk.Sync.SyncTransformVersion.Create(string! name, string! version, System.ReadOnlySpan<byte> canonicalConfiguration = default(System.ReadOnlySpan<byte>)) -> BlueTusk.Sync.SyncTransformVersion!
 static BlueTusk.Sync.SyncTransformVersion.operator !=(BlueTusk.Sync.SyncTransformVersion? left, BlueTusk.Sync.SyncTransformVersion? right) -> bool
 static BlueTusk.Sync.SyncTransformVersion.operator ==(BlueTusk.Sync.SyncTransformVersion? left, BlueTusk.Sync.SyncTransformVersion? right) -> bool
+BlueTusk.Sync.ISyncRebuildDestination
+BlueTusk.Sync.ISyncRebuildDestination.ActivateRebuildAsync(string! pipelineId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.ISyncRebuildDestination.PrepareRebuildAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncRebuildPreparation!>
+BlueTusk.Sync.ISyncRebuildDestination.RetireRebuildGenerationAsync(string! pipelineId, string! generation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.ISyncRebuildDestination.VerifyRebuildReadyAsync(string! pipelineId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncRebuildVerification!>
+BlueTusk.Sync.ISyncRebuildCutoverBarrier
+BlueTusk.Sync.ISyncRebuildCutoverBarrier.AcquireAsync(string! pipelineId, BlueTusk.Streams.SnapshotEpoch snapshotEpoch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.ISyncRebuildCutoverLease!>
+BlueTusk.Sync.ISyncRebuildCutoverLease
+BlueTusk.Sync.ISyncRebuildCutoverLease.TargetPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.ISyncRebuildVerifier
+BlueTusk.Sync.ISyncRebuildVerifier.VerifyAsync(string! pipelineId, BlueTusk.Sync.ISyncDestination! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncRebuildVerification!>
+BlueTusk.Sync.SyncRebuildReconciliation
+BlueTusk.Sync.SyncRebuildReconciliation.Request.get -> BlueTusk.Sync.SyncReconciliationRequest!
+BlueTusk.Sync.SyncRebuildReconciliation.Source.get -> BlueTusk.Sync.ISyncReconciliationReader!
+BlueTusk.Sync.SyncRebuildReconciliation.SyncRebuildReconciliation(BlueTusk.Sync.SyncReconciliationRequest! request, BlueTusk.Sync.ISyncReconciliationReader! source) -> void
+BlueTusk.Sync.SyncReconciliationRebuildVerifier
+BlueTusk.Sync.SyncReconciliationRebuildVerifier.SyncReconciliationRebuildVerifier(System.Collections.Generic.IEnumerable<BlueTusk.Sync.SyncRebuildReconciliation!>! reconciliations) -> void
+BlueTusk.Sync.SyncReconciliationRebuildVerifier.VerifyAsync(string! pipelineId, BlueTusk.Sync.ISyncDestination! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncRebuildVerification!>
+BlueTusk.Sync.SyncRebuildCatchUpException
+BlueTusk.Sync.SyncRebuildCatchUpException.ReachedPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.SyncRebuildCatchUpException.SyncRebuildCatchUpException(BlueTusk.TypeSystem.BlueTuskLogSequenceNumber reachedPosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber targetPosition) -> void
+BlueTusk.Sync.SyncRebuildCatchUpException.TargetPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.SyncRebuildCoordinator
+BlueTusk.Sync.SyncRebuildCoordinator.RunAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<BlueTusk.Sync.SyncRebuildResult!>!
+BlueTusk.Sync.SyncRebuildCoordinator.SyncRebuildCoordinator(BlueTusk.Sync.SyncRebuildOptions! options, BlueTusk.Streams.ChangeSourceIdentity! sourceIdentity, BlueTusk.Streams.IConsistentSnapshotSource! source, BlueTusk.Sync.ISyncTransform! transform, BlueTusk.Sync.ISyncDestination! destination, BlueTusk.Sync.ISyncRebuildCutoverBarrier! cutoverBarrier, BlueTusk.Sync.ISyncRebuildVerifier! verifier, System.IProgress<BlueTusk.Sync.SyncRebuildProgress!>? progress = null) -> void
+BlueTusk.Sync.SyncRebuildException
+BlueTusk.Sync.SyncRebuildException.SyncRebuildException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.SyncRebuildException.SyncRebuildException(string! message) -> void
+BlueTusk.Sync.SyncRebuildOptions
+BlueTusk.Sync.SyncRebuildOptions.<Clone>$() -> BlueTusk.Sync.SyncRebuildOptions!
+BlueTusk.Sync.SyncRebuildOptions.Equals(BlueTusk.Sync.SyncRebuildOptions? other) -> bool
+BlueTusk.Sync.SyncRebuildOptions.MaximumSnapshotAttempts.get -> int
+BlueTusk.Sync.SyncRebuildOptions.MaximumSnapshotAttempts.init -> void
+BlueTusk.Sync.SyncRebuildOptions.PipelineId.get -> string!
+BlueTusk.Sync.SyncRebuildOptions.PipelineId.init -> void
+BlueTusk.Sync.SyncRebuildOptions.RetirePreviousGeneration.get -> bool
+BlueTusk.Sync.SyncRebuildOptions.RetirePreviousGeneration.init -> void
+BlueTusk.Sync.SyncRebuildOptions.SyncRebuildOptions() -> void
+BlueTusk.Sync.SyncRebuildPreparation
+BlueTusk.Sync.SyncRebuildPreparation.<Clone>$() -> BlueTusk.Sync.SyncRebuildPreparation!
+BlueTusk.Sync.SyncRebuildPreparation.Equals(BlueTusk.Sync.SyncRebuildPreparation? other) -> bool
+BlueTusk.Sync.SyncRebuildPreparation.PreviousGeneration.get -> string!
+BlueTusk.Sync.SyncRebuildPreparation.SyncRebuildPreparation(string! previousGeneration) -> void
+BlueTusk.Sync.SyncRebuildProgress
+BlueTusk.Sync.SyncRebuildProgress.<Clone>$() -> BlueTusk.Sync.SyncRebuildProgress!
+BlueTusk.Sync.SyncRebuildProgress.CatchUpTransactions.get -> long
+BlueTusk.Sync.SyncRebuildProgress.CatchUpTransactions.init -> void
+BlueTusk.Sync.SyncRebuildProgress.Deconstruct(out BlueTusk.Sync.SyncRebuildStage Stage, out System.Guid? SnapshotEpoch, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber DurablePosition, out long SnapshotRows, out long SnapshotBatches, out long CatchUpTransactions, out string? Detail) -> void
+BlueTusk.Sync.SyncRebuildProgress.Detail.get -> string?
+BlueTusk.Sync.SyncRebuildProgress.Detail.init -> void
+BlueTusk.Sync.SyncRebuildProgress.DurablePosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.SyncRebuildProgress.DurablePosition.init -> void
+BlueTusk.Sync.SyncRebuildProgress.Equals(BlueTusk.Sync.SyncRebuildProgress? other) -> bool
+BlueTusk.Sync.SyncRebuildProgress.SnapshotBatches.get -> long
+BlueTusk.Sync.SyncRebuildProgress.SnapshotBatches.init -> void
+BlueTusk.Sync.SyncRebuildProgress.SnapshotEpoch.get -> System.Guid?
+BlueTusk.Sync.SyncRebuildProgress.SnapshotEpoch.init -> void
+BlueTusk.Sync.SyncRebuildProgress.SnapshotRows.get -> long
+BlueTusk.Sync.SyncRebuildProgress.SnapshotRows.init -> void
+BlueTusk.Sync.SyncRebuildProgress.Stage.get -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildProgress.Stage.init -> void
+BlueTusk.Sync.SyncRebuildProgress.SyncRebuildProgress(BlueTusk.Sync.SyncRebuildStage Stage, System.Guid? SnapshotEpoch, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber DurablePosition, long SnapshotRows, long SnapshotBatches, long CatchUpTransactions, string? Detail = null) -> void
+BlueTusk.Sync.SyncRebuildResult
+BlueTusk.Sync.SyncRebuildResult.<Clone>$() -> BlueTusk.Sync.SyncRebuildResult!
+BlueTusk.Sync.SyncRebuildResult.ActivatedPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.SyncRebuildResult.ActivatedPosition.init -> void
+BlueTusk.Sync.SyncRebuildResult.CatchUpTransactions.get -> long
+BlueTusk.Sync.SyncRebuildResult.CatchUpTransactions.init -> void
+BlueTusk.Sync.SyncRebuildResult.Deconstruct(out System.Guid SnapshotEpoch, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber SnapshotPosition, out BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ActivatedPosition, out long SnapshotRows, out long SnapshotBatches, out long CatchUpTransactions, out string! PreviousGeneration, out bool PreviousGenerationRetired) -> void
+BlueTusk.Sync.SyncRebuildResult.Equals(BlueTusk.Sync.SyncRebuildResult? other) -> bool
+BlueTusk.Sync.SyncRebuildResult.PreviousGeneration.get -> string!
+BlueTusk.Sync.SyncRebuildResult.PreviousGeneration.init -> void
+BlueTusk.Sync.SyncRebuildResult.PreviousGenerationRetired.get -> bool
+BlueTusk.Sync.SyncRebuildResult.PreviousGenerationRetired.init -> void
+BlueTusk.Sync.SyncRebuildResult.SnapshotBatches.get -> long
+BlueTusk.Sync.SyncRebuildResult.SnapshotBatches.init -> void
+BlueTusk.Sync.SyncRebuildResult.SnapshotEpoch.get -> System.Guid
+BlueTusk.Sync.SyncRebuildResult.SnapshotEpoch.init -> void
+BlueTusk.Sync.SyncRebuildResult.SnapshotPosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber
+BlueTusk.Sync.SyncRebuildResult.SnapshotPosition.init -> void
+BlueTusk.Sync.SyncRebuildResult.SnapshotRows.get -> long
+BlueTusk.Sync.SyncRebuildResult.SnapshotRows.init -> void
+BlueTusk.Sync.SyncRebuildResult.SyncRebuildResult(System.Guid SnapshotEpoch, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber SnapshotPosition, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber ActivatedPosition, long SnapshotRows, long SnapshotBatches, long CatchUpTransactions, string! PreviousGeneration, bool PreviousGenerationRetired) -> void
+BlueTusk.Sync.SyncRebuildRetirementException
+BlueTusk.Sync.SyncRebuildRetirementException.ActivationCompleted.get -> bool
+BlueTusk.Sync.SyncRebuildRetirementException.Generation.get -> string!
+BlueTusk.Sync.SyncRebuildRetirementException.SyncRebuildRetirementException(string! generation, System.Exception! innerException) -> void
+BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildStage.Activating = 4 -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildStage.CatchingUp = 2 -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildStage.Completed = 6 -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildStage.Preparing = 0 -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildStage.Retiring = 5 -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildStage.Snapshotting = 1 -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildStage.Verifying = 3 -> BlueTusk.Sync.SyncRebuildStage
+BlueTusk.Sync.SyncRebuildVerification
+BlueTusk.Sync.SyncRebuildVerification.<Clone>$() -> BlueTusk.Sync.SyncRebuildVerification!
+BlueTusk.Sync.SyncRebuildVerification.Deconstruct(out bool IsMatch, out string? Detail) -> void
+BlueTusk.Sync.SyncRebuildVerification.Detail.get -> string?
+BlueTusk.Sync.SyncRebuildVerification.Detail.init -> void
+BlueTusk.Sync.SyncRebuildVerification.Equals(BlueTusk.Sync.SyncRebuildVerification? other) -> bool
+BlueTusk.Sync.SyncRebuildVerification.IsMatch.get -> bool
+BlueTusk.Sync.SyncRebuildVerification.IsMatch.init -> void
+BlueTusk.Sync.SyncRebuildVerification.SyncRebuildVerification(bool IsMatch, string? Detail = null) -> void
+BlueTusk.Sync.SyncRebuildVerificationException
+BlueTusk.Sync.SyncRebuildVerificationException.SyncRebuildVerificationException(string! message) -> void
+override BlueTusk.Sync.SyncRebuildOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRebuildOptions.GetHashCode() -> int
+override BlueTusk.Sync.SyncRebuildOptions.ToString() -> string!
+override BlueTusk.Sync.SyncRebuildPreparation.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRebuildPreparation.GetHashCode() -> int
+override BlueTusk.Sync.SyncRebuildPreparation.ToString() -> string!
+override BlueTusk.Sync.SyncRebuildProgress.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRebuildProgress.GetHashCode() -> int
+override BlueTusk.Sync.SyncRebuildProgress.ToString() -> string!
+override BlueTusk.Sync.SyncRebuildResult.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRebuildResult.GetHashCode() -> int
+override BlueTusk.Sync.SyncRebuildResult.ToString() -> string!
+override BlueTusk.Sync.SyncRebuildVerification.Equals(object? obj) -> bool
+override BlueTusk.Sync.SyncRebuildVerification.GetHashCode() -> int
+override BlueTusk.Sync.SyncRebuildVerification.ToString() -> string!
+static BlueTusk.Sync.SyncRebuildOptions.operator !=(BlueTusk.Sync.SyncRebuildOptions? left, BlueTusk.Sync.SyncRebuildOptions? right) -> bool
+static BlueTusk.Sync.SyncRebuildOptions.operator ==(BlueTusk.Sync.SyncRebuildOptions? left, BlueTusk.Sync.SyncRebuildOptions? right) -> bool
+static BlueTusk.Sync.SyncRebuildPreparation.operator !=(BlueTusk.Sync.SyncRebuildPreparation? left, BlueTusk.Sync.SyncRebuildPreparation? right) -> bool
+static BlueTusk.Sync.SyncRebuildPreparation.operator ==(BlueTusk.Sync.SyncRebuildPreparation? left, BlueTusk.Sync.SyncRebuildPreparation? right) -> bool
+static BlueTusk.Sync.SyncRebuildProgress.operator !=(BlueTusk.Sync.SyncRebuildProgress? left, BlueTusk.Sync.SyncRebuildProgress? right) -> bool
+static BlueTusk.Sync.SyncRebuildProgress.operator ==(BlueTusk.Sync.SyncRebuildProgress? left, BlueTusk.Sync.SyncRebuildProgress? right) -> bool
+static BlueTusk.Sync.SyncRebuildResult.operator !=(BlueTusk.Sync.SyncRebuildResult? left, BlueTusk.Sync.SyncRebuildResult? right) -> bool
+static BlueTusk.Sync.SyncRebuildResult.operator ==(BlueTusk.Sync.SyncRebuildResult? left, BlueTusk.Sync.SyncRebuildResult? right) -> bool
+static BlueTusk.Sync.SyncRebuildVerification.operator !=(BlueTusk.Sync.SyncRebuildVerification? left, BlueTusk.Sync.SyncRebuildVerification? right) -> bool
+static BlueTusk.Sync.SyncRebuildVerification.operator ==(BlueTusk.Sync.SyncRebuildVerification? left, BlueTusk.Sync.SyncRebuildVerification? right) -> bool

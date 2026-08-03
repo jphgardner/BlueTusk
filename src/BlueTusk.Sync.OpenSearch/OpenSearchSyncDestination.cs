@@ -19,7 +19,8 @@ public sealed partial class OpenSearchSyncDestination :
     ISyncDestination,
     ISyncQuarantineSink,
     ISyncReconciliationReader,
-    ISyncRepairSink
+    ISyncRepairSink,
+    ISyncRebuildDestination
 {
     /// <summary>Gets the control-document and index metadata format written by this build.</summary>
     public const int CurrentFormatVersion = 2;

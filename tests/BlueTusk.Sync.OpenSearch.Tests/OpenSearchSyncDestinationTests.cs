@@ -179,10 +179,13 @@ public sealed class OpenSearchSyncDestinationTests
                 new SyncProvisionRequest("orders", Source, replacementTransform));
             Assert.Equal(SyncProvisionStatus.RebuildRequired, mismatch.Status);
             Assert.Equal(transform.Fingerprint, mismatch.ExistingTransformFingerprint);
-            await replacement.BeginRebuildAsync(
+            var rebuildDestination = Assert.IsAssignableFrom<ISyncRebuildDestination>(replacement);
+            var preparation = await rebuildDestination.PrepareRebuildAsync(
                 new SyncProvisionRequest("orders", Source, replacementTransform));
+            Assert.Equal(transform.Fingerprint[..16], preparation.PreviousGeneration);
             replacement = new OpenSearchSyncDestination(options);
-            await replacement.BeginRebuildAsync(
+            rebuildDestination = Assert.IsAssignableFrom<ISyncRebuildDestination>(replacement);
+            _ = await rebuildDestination.PrepareRebuildAsync(
                 new SyncProvisionRequest("orders", Source, replacementTransform));
 
             var rebuildEpoch = new SnapshotEpoch(
@@ -211,7 +214,8 @@ public sealed class OpenSearchSyncDestinationTests
             var verification = await replacement.VerifyRebuildAsync("orders");
             Assert.True(verification.IsMatch);
             Assert.Equal(3, verification.Collections.Count);
-            await replacement.CompleteRebuildAsync("orders");
+            Assert.True((await rebuildDestination.VerifyRebuildReadyAsync("orders")).IsMatch);
+            await rebuildDestination.ActivateRebuildAsync("orders");
             AssertJson(
                 "{\"snapshot\":true,\"transform\":2}",
                 await replacement.ReadDocumentAsync("orders", "orders", "50"));
@@ -221,7 +225,9 @@ public sealed class OpenSearchSyncDestinationTests
                 SyncProvisionStatus.Ready,
                 (await finalRestart.ProvisionAsync(
                     new SyncProvisionRequest("orders", Source, replacementTransform))).Status);
-            await finalRestart.RetireGenerationAsync("orders", transform.Fingerprint[..16]);
+            await ((ISyncRebuildDestination)finalRestart).RetireRebuildGenerationAsync(
+                "orders",
+                transform.Fingerprint[..16]);
         }
         finally
         {

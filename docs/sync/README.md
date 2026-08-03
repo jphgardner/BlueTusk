@@ -25,7 +25,8 @@ PostgreSQL, NATS JetStream, Redis, and OpenSearch connector slices are
 implemented and pass the same executable snapshot-plus-stream recovery
 contract. The shared count, key-set, and partitioned content-hash engine plus
 PostgreSQL, Redis, and OpenSearch repair paths are implemented and live-tested.
-Product-level rebuild orchestration, source adapters, hosting, and endurance
+The destination-neutral rebuild coordinator is implemented with an explicit
+cutover barrier. Source adapters, hosting, dashboard integration, and endurance
 remain gated work. The Sync release train remains non-publishable until those
 remaining Phase 5 gates pass.
 
@@ -67,6 +68,39 @@ Repair never advances the source transaction checkpoint.
 `SyncPipeline.ReconcileAsync` serializes reconciliation with delivery, exposes
 the `Reconciling` state, restores the previous running/paused state after
 success, and faults with diagnostics on a reader or repair failure.
+
+## Zero-downtime rebuilds
+
+`SyncRebuildCoordinator` creates or resumes an isolated destination generation,
+runs a consistent snapshot with full-epoch restart after exporter loss, and
+then acquires an `ISyncRebuildCutoverBarrier`. The barrier must quiesce the
+active pipeline and capture the durable relay head as an exact transaction
+commit-end position. It remains held while the new generation consumes
+transaction-preserving catch-up, verifies, and performs the destination's atomic
+routing swap. This makes the cutover target an observed post-snapshot boundary
+instead of an unsafe position guessed before the snapshot began.
+
+Verification has two mandatory layers. `ISyncRebuildDestination` first checks
+generation-owned metadata and storage integrity. `ISyncRebuildVerifier` then
+checks the rebuilding materialisation against the authoritative transformed
+source view. `SyncReconciliationRebuildVerifier` supplies the default bounded
+implementation and accepts only non-repairing partitioned content-hash requests;
+count equality or old-generation equality cannot authorise a cutover because a
+new transform may legitimately change both content and cardinality.
+
+Every catch-up transaction is acknowledged only after the destination confirms
+the exact commit-end position. Wrong positions, transform failures, stream
+reordering, or an early finite stream nack the active delivery where possible,
+release the barrier, and leave the rebuilding generation inactive. Verification
+failure also releases the barrier without activation. Progress reports are
+observational and cannot alter durability semantics.
+
+Previous-generation retirement is optional and occurs only after activation.
+If retirement fails, `SyncRebuildRetirementException` explicitly reports that
+activation completed and must not be rolled back. Running the coordinator again
+is safe: destination preparation resumes its durable build metadata, while an
+interrupted snapshot starts a new epoch and clears the isolated generation
+before replay.
 
 ## PostgreSQL destination
 
@@ -220,6 +254,10 @@ registry, snapshot and catch-up writes target only the rebuild indexes,
 request. Previous generations are retained until an explicit
 `RetireGenerationAsync` call.
 
+OpenSearch also implements `ISyncRebuildDestination`, allowing the shared
+coordinator to drive those connector-native generation operations without
+depending on OpenSearch types.
+
 The control index owns versioned pipeline, collection, snapshot, checkpoint,
 and quarantine documents. Source and transform fingerprints are validated on
 every restart; a changed transform returns `RebuildRequired`. Index names,
@@ -240,7 +278,7 @@ mapping conflict after another item has succeeded, repairs and replays the same
 transaction, and then covers checkpoint deduplication, collection reset,
 snapshot lifecycle, quarantine, restart, transform isolation, count
 verification, atomic alias cutover, old-generation retirement, paged
-content-hash reconciliation, bounded repair, and checkpoint non-advancement. The design
-follows the official [Bulk API](https://docs.opensearch.org/latest/api-reference/document-apis/bulk/)
+content-hash reconciliation, bounded repair, and checkpoint non-advancement.
+The design follows the official [Bulk API](https://docs.opensearch.org/latest/api-reference/document-apis/bulk/)
 and [Manage Aliases API](https://docs.opensearch.org/latest/api-reference/alias/aliases-api/)
 contracts.

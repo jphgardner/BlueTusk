@@ -6,6 +6,50 @@ namespace BlueTusk.Sync.OpenSearch;
 
 public sealed partial class OpenSearchSyncDestination
 {
+    async ValueTask<SyncRebuildPreparation> ISyncRebuildDestination.PrepareRebuildAsync(
+        SyncProvisionRequest request,
+        CancellationToken cancellationToken)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        await InitializeAsync(cancellationToken).ConfigureAwait(false);
+        var pipelineHash = Fingerprint(request.PipelineId, 24);
+        var current = await ReadControlDocumentAsync<PipelineDocument>(
+            PipelineDocumentId(pipelineHash),
+            cancellationToken).ConfigureAwait(false) ??
+            throw new OpenSearchSyncException(
+                $"OpenSearch Sync pipeline '{request.PipelineId}' must be provisioned before a rebuild can begin.");
+        EnsurePipelineDocument(current, request.PipelineId, pipelineHash, request.Source);
+        var previousGeneration = current.Source.ActiveGeneration;
+        await BeginRebuildAsync(request, cancellationToken).ConfigureAwait(false);
+        return new SyncRebuildPreparation(previousGeneration);
+    }
+
+    async ValueTask<SyncRebuildVerification> ISyncRebuildDestination.VerifyRebuildReadyAsync(
+        string pipelineId,
+        CancellationToken cancellationToken)
+    {
+        var runtime = RequirePipeline(pipelineId);
+        if (!runtime.IsBuilding)
+        {
+            return new SyncRebuildVerification(false, "The pipeline is not in rebuild mode.");
+        }
+
+        await using var gate = await runtime.EnterAsync(cancellationToken).ConfigureAwait(false);
+        return await VerifyBuildingGenerationIntegrityAsync(runtime, cancellationToken)
+            .ConfigureAwait(false);
+    }
+
+    ValueTask ISyncRebuildDestination.ActivateRebuildAsync(
+        string pipelineId,
+        CancellationToken cancellationToken) =>
+        CompleteRebuildAsync(pipelineId, cancellationToken);
+
+    ValueTask ISyncRebuildDestination.RetireRebuildGenerationAsync(
+        string pipelineId,
+        string generation,
+        CancellationToken cancellationToken) =>
+        RetireGenerationAsync(pipelineId, generation, cancellationToken);
+
     /// <summary>Creates or resumes an isolated index generation for a new transform.</summary>
     public async ValueTask BeginRebuildAsync(
         SyncProvisionRequest request,
@@ -169,18 +213,14 @@ public sealed partial class OpenSearchSyncDestination
 
         await using var gate = await rebuildingRuntime.EnterAsync(cancellationToken)
             .ConfigureAwait(false);
-        var verification = await VerifyRebuildCoreAsync(rebuildingRuntime, cancellationToken)
+        var verification = await VerifyBuildingGenerationIntegrityAsync(
+            rebuildingRuntime,
+            cancellationToken)
             .ConfigureAwait(false);
         if (!verification.IsMatch)
         {
-            var mismatches = string.Join(
-                ", ",
-                verification.Collections
-                    .Where(collection => !collection.IsMatch)
-                    .Select(collection =>
-                        $"{collection.Collection} ({collection.ActiveDocuments} active, {collection.RebuildDocuments} rebuild)"));
             throw new OpenSearchSyncException(
-                $"OpenSearch Sync rebuild for pipeline '{pipelineId}' cannot be activated because count verification failed: {mismatches}.");
+                $"OpenSearch Sync rebuild for pipeline '{pipelineId}' cannot be activated because generation integrity verification failed: {verification.Detail}.");
         }
 
         for (var attempt = 0; attempt < 8; attempt++)
@@ -454,6 +494,64 @@ public sealed partial class OpenSearchSyncDestination
             HttpStatusCode.OK).ConfigureAwait(false);
         using var document = JsonDocument.Parse(response.Content);
         return document.RootElement.GetProperty("count").GetInt64();
+    }
+
+    private async ValueTask<SyncRebuildVerification> VerifyBuildingGenerationIntegrityAsync(
+        PipelineRuntime rebuildingRuntime,
+        CancellationToken cancellationToken)
+    {
+        var pipeline = await ReadControlDocumentAsync<PipelineDocument>(
+            PipelineDocumentId(rebuildingRuntime.PipelineHash),
+            cancellationToken).ConfigureAwait(false);
+        if (pipeline is null)
+        {
+            return new SyncRebuildVerification(false, "Pipeline control metadata is unavailable.");
+        }
+
+        EnsureBuildingRuntime(rebuildingRuntime, pipeline.Source);
+        var snapshot = await ReadControlDocumentAsync<SnapshotDocument>(
+            SnapshotDocumentId(rebuildingRuntime),
+            cancellationToken).ConfigureAwait(false);
+        if (snapshot is null ||
+            snapshot.Source.FormatVersion != CurrentFormatVersion ||
+            !snapshot.Source.Complete ||
+            !string.Equals(
+                snapshot.Source.SourceFingerprint,
+                rebuildingRuntime.Source.Fingerprint,
+                StringComparison.Ordinal) ||
+            !string.Equals(
+                snapshot.Source.TransformFingerprint,
+                rebuildingRuntime.Transform.Fingerprint,
+                StringComparison.Ordinal) ||
+            !string.Equals(
+                snapshot.Source.Generation,
+                rebuildingRuntime.Generation,
+                StringComparison.Ordinal))
+        {
+            return new SyncRebuildVerification(
+                false,
+                "The rebuilding generation does not have a compatible completed snapshot.");
+        }
+
+        var collections = await ReadCollectionsAsync(rebuildingRuntime, cancellationToken)
+            .ConfigureAwait(false);
+        foreach (var collection in collections)
+        {
+            var materializedCount = await CountDocumentsAsync(
+                collection.Index,
+                cancellationToken).ConfigureAwait(false);
+            var reconciliationCount = await CountDocumentsAsync(
+                ReconciliationIndex(collection),
+                cancellationToken).ConfigureAwait(false);
+            if (materializedCount != reconciliationCount)
+            {
+                return new SyncRebuildVerification(
+                    false,
+                    $"Collection '{collection.Collection}' contains {materializedCount} materialized documents and {reconciliationCount} reconciliation records.");
+            }
+        }
+
+        return new SyncRebuildVerification(true);
     }
 
     private static byte[] BuildAliasSwapPayload(
