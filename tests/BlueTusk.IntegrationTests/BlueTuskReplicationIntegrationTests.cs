@@ -784,6 +784,19 @@ public sealed class BlueTuskReplicationIntegrationTests
 
                 var stream = attempt.CreateChangeStream();
                 await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+
+                // PostgreSQL emits a prepared transaction as an ordinary commit when PREPARE
+                // happens before logical decoding has consumed it. A non-transactional message
+                // provides a deterministic stream-readiness barrier on every supported release.
+                var readyMove = enumerator.MoveNextAsync().AsTask();
+                await ExecuteAsync(
+                    administration,
+                    $"SELECT pg_logical_emit_message(false, " +
+                    $"{BlueTuskSql.QuoteLiteral($"bluetusk-ready-{suffix}")}, 'ready')");
+                Assert.True(await readyMove.WaitAsync(TimeSpan.FromSeconds(20)));
+                Assert.True(enumerator.Current.Transaction.IsSynthetic);
+                await enumerator.Current.AcknowledgeAsync();
+
                 var preparedMove = enumerator.MoveNextAsync().AsTask();
 
                 await ExecuteAsync(administration, "BEGIN");

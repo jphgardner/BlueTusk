@@ -36,6 +36,15 @@ var source = replication.StartReplicationAsync(
     });
 ```
 
+PostgreSQL can emit a two-phase transaction as one ordinary committed
+transaction, including its changes, when logical decoding did not process that
+transaction at `PREPARE TRANSACTION` time. This can occur while a consumer is
+starting or catching up. It is PostgreSQL's documented fallback and does not
+lose changes: consumers must always handle ordinary committed deliveries in
+addition to the staged lifecycle below. A workflow that must observe a staged
+delivery can first emit and consume a non-transactional logical message as a
+stream-readiness barrier before it begins the prepared transaction.
+
 ## Lifecycle deliveries
 
 Streams does not keep an acknowledged prepared transaction only in process
