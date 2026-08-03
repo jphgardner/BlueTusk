@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Text.Json.Serialization;
 
 namespace BlueTusk.Live;
 
@@ -46,22 +47,33 @@ public sealed class LiveResultEvent<T, TKey>
         ResetReason = resetReason;
     }
 
+    [JsonPropertyName("sequence")]
     public long Sequence { get; }
 
+    [JsonPropertyName("kind")]
+    [JsonConverter(typeof(JsonStringEnumConverter<LiveEventKind>))]
     public LiveEventKind Kind { get; }
 
+    [JsonPropertyName("key")]
     public TKey? Key { get; }
 
+    [JsonPropertyName("row")]
     public T? Row { get; }
 
+    [JsonPropertyName("previousIndex")]
     public int? PreviousIndex { get; }
 
+    [JsonPropertyName("currentIndex")]
     public int? CurrentIndex { get; }
 
+    [JsonPropertyName("rows")]
     public IReadOnlyList<T>? Rows { get; }
 
+    [JsonPropertyName("order")]
     public IReadOnlyList<TKey>? Order { get; }
 
+    [JsonPropertyName("resetReason")]
+    [JsonConverter(typeof(JsonStringEnumConverter<LiveResetReason>))]
     public LiveResetReason? ResetReason { get; }
 }
 

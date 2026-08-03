@@ -45,6 +45,11 @@
     "Live": {
       "versionFile": "eng/versions/Live.props",
       "publishable": false,
+      "npmPackages": [
+        "clients/live",
+        "clients/live-angular",
+        "clients/live-react"
+      ],
       "packages": [
         "src/BlueTusk.Live/BlueTusk.Live.csproj",
         "src/BlueTusk.Live.AspNetCore/BlueTusk.Live.AspNetCore.csproj",

@@ -2,6 +2,7 @@ using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Security.Claims;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -52,12 +53,17 @@ public sealed class LiveTransportMessage
         Event = liveEvent;
     }
 
+    [JsonPropertyName("kind")]
+    [JsonConverter(typeof(JsonStringEnumConverter<LiveSubscriberMessageKind>))]
     public LiveSubscriberMessageKind Kind { get; }
 
+    [JsonPropertyName("sequence")]
     public long? Sequence { get; }
 
+    [JsonPropertyName("resumeToken")]
     public string? ResumeToken { get; }
 
+    [JsonPropertyName("event")]
     public JsonElement? Event { get; }
 }
 

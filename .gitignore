@@ -14,3 +14,5 @@ coverage/
 *.nupkg
 *.snupkg
 .env
+node_modules/
+clients/*/dist/

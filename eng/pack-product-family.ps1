@@ -29,6 +29,22 @@ if (-not (Test-Path -LiteralPath $versionPath))
     throw "Product family '$Family' references missing version file '$($definition.versionFile)'."
 }
 
+[xml] $versionDocument = Get-Content -LiteralPath $versionPath -Raw
+$versionPrefix = [string] $versionDocument.Project.PropertyGroup.VersionPrefix
+$versionSuffix = [string] $versionDocument.Project.PropertyGroup.VersionSuffix
+$familyVersion = if ([string]::IsNullOrWhiteSpace($versionSuffix))
+{
+    $versionPrefix
+}
+else
+{
+    "$versionPrefix-$versionSuffix"
+}
+if ([string]::IsNullOrWhiteSpace($versionPrefix))
+{
+    throw "Product family '$Family' has no VersionPrefix in '$($definition.versionFile)'."
+}
+
 $projects = foreach ($entry in $definition.packages)
 {
     $candidate = Join-Path $repositoryRoot $entry
@@ -48,9 +64,33 @@ $projects = foreach ($entry in $definition.packages)
 }
 
 $projects = @($projects | Sort-Object FullName -Unique)
+$npmPackages = @()
+if ($null -ne $definition.PSObject.Properties['npmPackages'])
+{
+    $npmPackages = @(
+        foreach ($entry in $definition.npmPackages)
+        {
+            $candidate = Join-Path $repositoryRoot $entry
+            $manifestPath = Join-Path $candidate 'package.json'
+            if (-not (Test-Path -LiteralPath $manifestPath))
+            {
+                throw "Product family '$Family' references missing npm package '$entry'."
+            }
+
+            $npmManifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
+            if ($npmManifest.version -ne $familyVersion)
+            {
+                throw "npm package '$($npmManifest.name)' has version '$($npmManifest.version)', expected '$familyVersion'."
+            }
+
+            Get-Item -LiteralPath $candidate
+        }
+    )
+}
+
 if ($ValidateOnly)
 {
-    Write-Output "Validated $Family release train with $($projects.Count) registered project(s); publishable=$($definition.publishable)."
+    Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); publishable=$($definition.publishable)."
     return
 }
 
@@ -84,5 +124,14 @@ foreach ($project in $projects)
     if ($LASTEXITCODE -ne 0)
     {
         throw "Packing '$($project.FullName)' failed with exit code $LASTEXITCODE."
+    }
+}
+
+foreach ($package in $npmPackages)
+{
+    & npm pack $package.FullName --pack-destination $outputPath
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "npm pack failed for '$($package.FullName)'."
     }
 }

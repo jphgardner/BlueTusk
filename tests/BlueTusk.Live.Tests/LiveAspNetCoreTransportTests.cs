@@ -105,7 +105,9 @@ public sealed class LiveAspNetCoreTransportTests
 
         Assert.Contains("id: 1\n", text, StringComparison.Ordinal);
         Assert.Contains("event: change\n", text, StringComparison.Ordinal);
-        Assert.Contains("data: {", text, StringComparison.Ordinal);
+        Assert.Contains("\"kind\":\"Event\"", text, StringComparison.Ordinal);
+        Assert.Contains("\"sequence\":1", text, StringComparison.Ordinal);
+        Assert.Contains("\"resumeToken\":", text, StringComparison.Ordinal);
         Assert.EndsWith("\n\n", text, StringComparison.Ordinal);
     }
 
