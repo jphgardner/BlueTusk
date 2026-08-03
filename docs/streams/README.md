@@ -1,6 +1,6 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The Phase 1 transaction kernel plus memory, atomic single-node file, and production PostgreSQL state stores are implemented and tested but are not yet published: the first preview remains gated on the Redis alternative, direct consumer groups, and PostgreSQL relay fan-out.
+BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The transaction kernel, memory/file/PostgreSQL state stores, direct groups, and PostgreSQL durable relay fan-out are implemented and tested but are not yet published: the first preview remains gated on the Redis alternative and Phase 3 typed/snapshot integration.
 
 ## Implemented kernel
 
@@ -80,6 +80,8 @@ await using var acknowledgement =
 Only the active fenced lease may mutate a checkpoint. Backward positions, stale generations, incompatible source/mapping identities, and expired owners fail closed. If feedback fails after the checkpoint is durable, retry sends feedback from the stored position without rewriting or advancing the checkpoint. A nack never advances either checkpoint or feedback.
 
 See [checkpoint and lease stores](state-stores.md) for backend guarantees, file-store deployment constraints, and the custom-store conformance kit.
+
+See the [PostgreSQL durable relay](durable-relay.md) for source append ordering, group fan-out/replay, retention, storage bounds, and health signals.
 
 ## Performance baseline
 

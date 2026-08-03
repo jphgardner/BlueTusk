@@ -9,12 +9,27 @@ public sealed record PostgreSqlStreamsStorageOptions
 
     public string ControlSchema { get; init; } = "bluetusk_streams";
 
+    public long MaxRelayStorageBytes { get; init; } = 100L * 1024 * 1024 * 1024;
+
+    public int MaxEnvelopeBytes { get; init; } = 256 * 1024 * 1024;
+
+    public TimeSpan ResumeRetentionWindow { get; init; } = TimeSpan.FromHours(1);
+
+    public TimeSpan MaxAcknowledgementAge { get; init; } = TimeSpan.FromMinutes(5);
+
+    public long MaxWalLagBytes { get; init; } = 10L * 1024 * 1024 * 1024;
+
     internal string QuotedControlSchema => QuoteIdentifier(ControlSchema);
 
     internal void Validate()
     {
         ArgumentNullException.ThrowIfNull(ControlDataSource);
         ArgumentException.ThrowIfNullOrWhiteSpace(ControlSchema);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxRelayStorageBytes);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxEnvelopeBytes);
+        ArgumentOutOfRangeException.ThrowIfLessThan(ResumeRetentionWindow, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(MaxAcknowledgementAge, TimeSpan.Zero);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(MaxWalLagBytes);
         if (ControlSchema.Contains('\0') || Encoding.UTF8.GetByteCount(ControlSchema) > 63)
         {
             throw new ArgumentException(

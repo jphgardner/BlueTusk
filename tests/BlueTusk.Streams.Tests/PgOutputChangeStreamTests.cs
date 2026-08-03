@@ -342,6 +342,87 @@ public sealed class PgOutputChangeStreamTests
         }
     }
 
+    [Fact]
+    public async Task Relay_envelope_round_trips_transaction_metadata_tables_and_row_states()
+    {
+        var messages = new[]
+        {
+            Envelope(Relation(
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "payload", 25, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "optional", 25, -1))),
+            Envelope(new BlueTuskPgOutputBegin(Lsn(100), Timestamp, 77)),
+            Envelope(new BlueTuskPgOutputInsert(
+                null,
+                7,
+                Tuple(Text("1"), Toast()))),
+            Envelope(new BlueTuskPgOutputUpdate(
+                null,
+                7,
+                BlueTuskPgOutputOldRowKind.Full,
+                Tuple(Text("1"), Text("before"), Null()),
+                Tuple(Text("1"), Text("after"), Null()))),
+            Envelope(new BlueTuskPgOutputLogicalMessage(
+                null,
+                true,
+                Lsn(115),
+                "audit",
+                "changed"u8.ToArray())),
+            Envelope(new BlueTuskPgOutputCommit(Lsn(120), Lsn(125), Timestamp.AddSeconds(1))),
+        };
+        var stream = new PgOutputChangeStream(Messages(messages), SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+
+        var envelope = await ChangeTransactionEnvelopeCodec.EncodeAsync(delivery.Transaction);
+        var decoded = ChangeTransactionEnvelopeCodec.Decode(envelope);
+        var changes = await decoded.Changes.MaterializeAsync();
+
+        Assert.Equal(ChangeTransactionEnvelope.CurrentFormatVersion, envelope.FormatVersion);
+        Assert.Equal(delivery.Transaction.Source, decoded.Source);
+        Assert.Equal(delivery.Transaction.TransactionId, decoded.TransactionId);
+        Assert.Equal(delivery.Transaction.CommitEndPosition, decoded.CommitEndPosition);
+        Assert.Equal(delivery.Transaction.CommitTimestamp, decoded.CommitTimestamp);
+        Assert.Equal(3, changes.Count);
+        var insert = Assert.IsType<InsertChange>(changes[0]);
+        Assert.Equal(ChangeColumnState.UnchangedToast, insert.NewRow["payload"].State);
+        Assert.Equal(ChangeColumnState.NotPublished, insert.NewRow["optional"].State);
+        var update = Assert.IsType<UpdateChange>(changes[1]);
+        Assert.True(update.ChangedColumns.IsExact);
+        Assert.Equal([1], update.ChangedColumns.Ordinals);
+        var logical = Assert.IsType<LogicalMessageChange>(changes[2]);
+        Assert.Equal("audit", logical.Prefix);
+        Assert.Equal("changed"u8.ToArray(), logical.Content.ToArray());
+
+        await delivery.AcknowledgeAsync();
+    }
+
+    [Fact]
+    public async Task Relay_envelope_rejects_integrity_tampering()
+    {
+        var stream = new PgOutputChangeStream(
+            Messages(
+                Envelope(new BlueTuskPgOutputLogicalMessage(
+                    null,
+                    false,
+                    Lsn(300),
+                    "signal",
+                    "ready"u8.ToArray()))),
+            SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var envelope = await ChangeTransactionEnvelopeCodec.EncodeAsync(delivery.Transaction);
+        var bytes = envelope.Data.ToArray();
+        bytes[^1] ^= 0xFF;
+
+        Assert.Throws<ChangeTransactionEnvelopeException>(
+            () => ChangeTransactionEnvelopeCodec.FromData(bytes));
+
+        await delivery.AcknowledgeAsync();
+    }
+
     private static ChangeSourceIdentity SourceIdentity() =>
         new("739463", "app", "bluetusk_test", "public:orders");
 
