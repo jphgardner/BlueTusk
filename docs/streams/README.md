@@ -95,6 +95,8 @@ See the [validation and provisioning CLI](cli.md) for idempotent source/relay se
 
 See [Aspire integration](aspire.md) for secret-preserving source/control resource wiring and explicit relay versus direct delivery configuration.
 
+See the [snapshot-then-stream sample](sample.md) for a runnable hosted consumer using exported-snapshot binary COPY followed by transaction-preserving CDC.
+
 ## Performance baseline
 
 The checked-in Ryzen 7 5800X/.NET 10 ShortRun measures 422 ns and 852 B per change for a materialised 1,000-insert transaction. A 4 MiB durable spill, integrity check, streamed read, flush, and cleanup measures 38.3 ms and 12.1 MiB. See the [benchmark report](../../benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.StreamsTransactionBenchmarks-report-github.md). ShortRun values guide regression work and are not universal production claims.

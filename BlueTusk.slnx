@@ -26,6 +26,7 @@
     <Project Path="samples/BlueTusk.Samples.EntityFrameworkCore/BlueTusk.Samples.EntityFrameworkCore.csproj" />
     <Project Path="samples/BlueTusk.Samples.Graph/BlueTusk.Samples.Graph.csproj" />
     <Project Path="samples/BlueTusk.Samples.Replication/BlueTusk.Samples.Replication.csproj" />
+    <Project Path="samples/BlueTusk.Samples.Streams/BlueTusk.Samples.Streams.csproj" />
   </Folder>
   <Folder Name="/src/">
     <Project Path="src/BlueTusk.Client/BlueTusk.Client.csproj" />
