@@ -28,26 +28,29 @@ jobs:
         with:
           global-json-file: global.json
 
-      - name: Restore endurance dependencies
-        run: dotnet restore tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj
-
       - name: Start PostgreSQL 19
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
 
       - name: Run 72-hour fault-injected relay endurance
+        shell: pwsh
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
-          BLUETUSK_RELAY_ENDURANCE_DURATION: 3.00:00:00
-          BLUETUSK_RELAY_ENDURANCE_INTERVAL_MS: 250
-          BLUETUSK_RELAY_ENDURANCE_MIN_TRANSACTIONS: 100000
-          BLUETUSK_RELAY_ENDURANCE_REPORT: artifacts/test-results/streams-relay-endurance/report.json
         run: >-
-          dotnet test tests/BlueTusk.StressTests/BlueTusk.StressTests.csproj
-          --configuration Release
-          --no-restore
-          --filter FullyQualifiedName~StreamsRelayEnduranceTests
-          --logger trx
-          --results-directory artifacts/test-results/streams-relay-endurance
+          ./eng/run-streams-endurance.ps1
+          -Duration '3.00:00:00'
+          -MinimumTransactions 100000
+          -IntervalMilliseconds 250
+          -ReportPath 'artifacts/test-results/streams-relay-endurance/report.json'
+          -Configuration Release
+
+      - name: Verify endurance evidence
+        shell: pwsh
+        run: >-
+          ./eng/verify-streams-endurance-report.ps1
+          -ReportPath 'artifacts/test-results/streams-relay-endurance/report.json'
+          -RequiredDuration '3.00:00:00'
+          -MinimumTransactions 100000
+          -ExpectedCommit '${{ github.sha }}'
 
       - name: Upload endurance evidence
         if: always()
