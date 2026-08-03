@@ -31,6 +31,14 @@ public interface ILiveInvalidationLog
         CancellationToken cancellationToken = default);
 }
 
+public interface ILiveInvalidationSink
+{
+    ValueTask<LiveInvalidationCursor> AppendAsync(
+        string databaseIdentity,
+        BlueTusk.Streams.ChangeTransaction transaction,
+        CancellationToken cancellationToken = default);
+}
+
 public sealed record LiveQuerySessionOptions
 {
     public int MaximumInitialCatchUpPasses { get; init; } = 32;

@@ -46,7 +46,8 @@
       "versionFile": "eng/versions/Live.props",
       "publishable": false,
       "packages": [
-        "src/BlueTusk.Live/BlueTusk.Live.csproj"
+        "src/BlueTusk.Live/BlueTusk.Live.csproj",
+        "src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj"
       ]
     },
     "ControlPlane": {

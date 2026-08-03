@@ -2,6 +2,8 @@
 BlueTusk.Live.ILiveInvalidationLog
 BlueTusk.Live.ILiveInvalidationLog.GetCurrentCursorAsync(string! databaseIdentity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveInvalidationCursor>
 BlueTusk.Live.ILiveInvalidationLog.HasChangesAsync(string! databaseIdentity, System.Collections.Generic.IReadOnlyCollection<BlueTusk.Live.LiveTableDependency!>! dependencies, BlueTusk.Live.LiveInvalidationCursor afterExclusive, BlueTusk.Live.LiveInvalidationCursor throughInclusive, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Live.ILiveInvalidationSink
+BlueTusk.Live.ILiveInvalidationSink.AppendAsync(string! databaseIdentity, BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveInvalidationCursor>
 BlueTusk.Live.LiveDiffBatch<T, TKey>
 BlueTusk.Live.LiveDiffBatch<T, TKey>.Events.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveResultEvent<T, TKey>!>!
 BlueTusk.Live.LiveDiffBatch<T, TKey>.LastSequence.get -> long

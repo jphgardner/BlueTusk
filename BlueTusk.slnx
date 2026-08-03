@@ -39,6 +39,7 @@
     <Project Path="src/BlueTusk.Extensions.Abstractions/BlueTusk.Extensions.Abstractions.csproj" />
     <Project Path="src/BlueTusk.Extensions.Testing/BlueTusk.Extensions.Testing.csproj" />
     <Project Path="src/BlueTusk.Live/BlueTusk.Live.csproj" />
+    <Project Path="src/BlueTusk.Live.DependencyInjection/BlueTusk.Live.DependencyInjection.csproj" />
     <Project Path="src/BlueTusk.Protocol/BlueTusk.Protocol.csproj" />
     <Project Path="src/BlueTusk.Replication.PgOutput/BlueTusk.Replication.PgOutput.csproj" />
     <Project Path="src/BlueTusk.Replication/BlueTusk.Replication.csproj" />
