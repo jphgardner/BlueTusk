@@ -1,0 +1,37 @@
+#nullable enable
+Aspire.Hosting.BlueTuskSyncAspireDeliveryMode
+Aspire.Hosting.BlueTuskSyncAspireDeliveryMode.Direct = 1 -> Aspire.Hosting.BlueTuskSyncAspireDeliveryMode
+Aspire.Hosting.BlueTuskSyncAspireDeliveryMode.DurableRelay = 0 -> Aspire.Hosting.BlueTuskSyncAspireDeliveryMode
+Aspire.Hosting.BlueTuskSyncAspireDestination
+Aspire.Hosting.BlueTuskSyncAspireDestination.Nats = 1 -> Aspire.Hosting.BlueTuskSyncAspireDestination
+Aspire.Hosting.BlueTuskSyncAspireDestination.OpenSearch = 3 -> Aspire.Hosting.BlueTuskSyncAspireDestination
+Aspire.Hosting.BlueTuskSyncAspireDestination.PostgreSql = 0 -> Aspire.Hosting.BlueTuskSyncAspireDestination
+Aspire.Hosting.BlueTuskSyncAspireDestination.Redis = 2 -> Aspire.Hosting.BlueTuskSyncAspireDestination
+Aspire.Hosting.BlueTuskSyncAspireExtensions
+Aspire.Hosting.BlueTuskSyncAspireOptions
+Aspire.Hosting.BlueTuskSyncAspireOptions.<Clone>$() -> Aspire.Hosting.BlueTuskSyncAspireOptions!
+Aspire.Hosting.BlueTuskSyncAspireOptions.BlueTuskSyncAspireOptions() -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.ConsumerGroup.get -> string!
+Aspire.Hosting.BlueTuskSyncAspireOptions.ConsumerGroup.init -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.ControlSchema.get -> string!
+Aspire.Hosting.BlueTuskSyncAspireOptions.ControlSchema.init -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.DeliveryMode.get -> Aspire.Hosting.BlueTuskSyncAspireDeliveryMode
+Aspire.Hosting.BlueTuskSyncAspireOptions.DeliveryMode.init -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.Destination.get -> Aspire.Hosting.BlueTuskSyncAspireDestination
+Aspire.Hosting.BlueTuskSyncAspireOptions.Destination.init -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.Equals(Aspire.Hosting.BlueTuskSyncAspireOptions? other) -> bool
+Aspire.Hosting.BlueTuskSyncAspireOptions.PipelineId.get -> string!
+Aspire.Hosting.BlueTuskSyncAspireOptions.PipelineId.init -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.RebuildEnabled.get -> bool
+Aspire.Hosting.BlueTuskSyncAspireOptions.RebuildEnabled.init -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.ReconciliationEnabled.get -> bool
+Aspire.Hosting.BlueTuskSyncAspireOptions.ReconciliationEnabled.init -> void
+Aspire.Hosting.BlueTuskSyncAspireOptions.TransformVersion.get -> string!
+Aspire.Hosting.BlueTuskSyncAspireOptions.TransformVersion.init -> void
+override Aspire.Hosting.BlueTuskSyncAspireOptions.Equals(object? obj) -> bool
+override Aspire.Hosting.BlueTuskSyncAspireOptions.GetHashCode() -> int
+override Aspire.Hosting.BlueTuskSyncAspireOptions.ToString() -> string!
+static Aspire.Hosting.BlueTuskSyncAspireExtensions.WithBlueTuskSync<TWorker, TSource, TControl, TDestination>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<TWorker>! builder, Aspire.Hosting.ApplicationModel.IResourceBuilder<TSource>! source, Aspire.Hosting.ApplicationModel.IResourceBuilder<TControl>! control, Aspire.Hosting.ApplicationModel.IResourceBuilder<TDestination>! destination, Aspire.Hosting.BlueTuskSyncAspireOptions! options) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<TWorker>!
+static Aspire.Hosting.BlueTuskSyncAspireExtensions.WithBlueTuskSyncDirect<TWorker, TSource, TDestination>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<TWorker>! builder, Aspire.Hosting.ApplicationModel.IResourceBuilder<TSource>! source, Aspire.Hosting.ApplicationModel.IResourceBuilder<TDestination>! destination, Aspire.Hosting.BlueTuskSyncAspireOptions! options) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<TWorker>!
+static Aspire.Hosting.BlueTuskSyncAspireOptions.operator !=(Aspire.Hosting.BlueTuskSyncAspireOptions? left, Aspire.Hosting.BlueTuskSyncAspireOptions? right) -> bool
+static Aspire.Hosting.BlueTuskSyncAspireOptions.operator ==(Aspire.Hosting.BlueTuskSyncAspireOptions? left, Aspire.Hosting.BlueTuskSyncAspireOptions? right) -> bool

@@ -143,6 +143,13 @@ relay commit position, or the snapshot's consistent baseline when no later
 transaction exists. The rebuild source and handoff handler must use an
 independent relay group whose checkpoint is bound to that same snapshot epoch.
 
+`BlueTusk.Sync.Aspire` wires source, destination, and—by default—a distinct
+durable-relay control resource into an Aspire worker. Its options carry the
+pipeline, group, transform version, destination protocol, reconciliation, and
+rebuild settings through standard hierarchical configuration. Direct-slot mode
+is an explicit helper that omits the control resource; the durable-relay helper
+rejects using the source database itself as control storage.
+
 ## PostgreSQL destination
 
 `BlueTusk.Sync.PostgreSql` stores an opaque materialised document collection and

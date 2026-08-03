@@ -53,6 +53,7 @@
     <Project Path="src/BlueTusk.Streams.Storage.Redis/BlueTusk.Streams.Storage.Redis.csproj" />
     <Project Path="src/BlueTusk.Streams.Testing/BlueTusk.Streams.Testing.csproj" />
     <Project Path="src/BlueTusk.Sync/BlueTusk.Sync.csproj" />
+    <Project Path="src/BlueTusk.Sync.Aspire/BlueTusk.Sync.Aspire.csproj" />
     <Project Path="src/BlueTusk.Sync.DependencyInjection/BlueTusk.Sync.DependencyInjection.csproj" />
     <Project Path="src/BlueTusk.Sync.Nats/BlueTusk.Sync.Nats.csproj" />
     <Project Path="src/BlueTusk.Sync.OpenSearch/BlueTusk.Sync.OpenSearch.csproj" />
@@ -95,6 +96,7 @@
     <Project Path="tests/BlueTusk.Streams.DependencyInjection.Tests/BlueTusk.Streams.DependencyInjection.Tests.csproj" />
     <Project Path="tests/BlueTusk.Streams.EntityFrameworkCore.Tests/BlueTusk.Streams.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Sync.Aspire.Tests/BlueTusk.Sync.Aspire.Tests.csproj" />
     <Project Path="tests/BlueTusk.Sync.DependencyInjection.Tests/BlueTusk.Sync.DependencyInjection.Tests.csproj" />
     <Project Path="tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj" />
     <Project Path="tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj" />
