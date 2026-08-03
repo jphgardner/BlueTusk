@@ -141,11 +141,11 @@ server cannot implement their generated-column SQL.
 The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
 packages without warnings. Compiler-enforced public API/nullability baselines
 cover the stable core, replication, and extension-authoring seams. The final
-direct-and-transitive NuGet vulnerability audit covers all 66 solution projects
-and reports zero vulnerable package entries. All 24 checked-in allocation
+direct-and-transitive NuGet vulnerability audit covers the complete solution
+and reports zero vulnerable package entries. All 27 checked-in allocation
 budgets pass, including command, typed reader, protocol writer,
-structured-codec, large-value streaming, replication, EF Core application, and
-SQL/PGQ traversal paths.
+structured-codec, large-value streaming, replication, EF Core application,
+Live diff/replay/fan-out, and SQL/PGQ traversal paths.
 
 The live application benchmark gate adds fresh parameterized EF query
 compilation plus first execution, 100-entity materialization, normalized tracked
@@ -153,6 +153,15 @@ inserts and load/update paths, plus traversal of a 1,000-vertex/999-edge
 PostgreSQL 19 property graph through both a prepared raw command and the typed
 EF graph API. The checked-in ShortRun reports and allocation budgets are
 regression evidence, not universal latency or throughput claims.
+
+The in-memory Live application gate records a 76.4 µs/221,872 B keyed diff for
+one update in a bounded 1,000-row result, 881 ns/832 B versioned replay
+serialization, and a 92.3 µs/175,060 B lifecycle that coalesces 100 relevant
+invalidations and fans one update to 64 bounded subscribers. A deterministic
+race suite separately proves exactly-once observation through either replay or
+the live channel across 64 concurrent reconnect/publication boundaries. These
+figures exclude database and network time and are used only as checked-in
+regression budgets.
 
 The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and
 managed allocation on parameterized and explicitly prepared scalar execution,

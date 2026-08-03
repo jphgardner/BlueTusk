@@ -83,7 +83,27 @@ Each shared subscription now exposes an allocation-free operational snapshot: op
 
 `BlueTusk.Live.Testing` provides database-scoped deterministic invalidations, a sequence-fenced and retention-aware in-memory replay store, and a public replay-store conformance kit for custom providers. The in-memory components are for tests only and preserve the same replay identity, integrity, idempotency, and expiry rules as durable storage.
 
-The remaining Live hardening work is the adversarial security, reconnect-race, and checked-in load/performance gates. Package publication stays disabled until those vertical gates pass.
+## Security and load gates
+
+The offline adversarial suite covers initial-query/change races, concurrent
+reconnect/publication ordering, tampered and cross-scope resume tokens, expired
+replay, malicious parameter shapes, duplicate keys, cursor regression,
+slow-client exhaustion, and tenant/policy partitioning. A repeated race gate
+proves that whether reconnect or publication wins the subscription lock, each
+of 64 successive sequences arrives exactly once through replay or the bounded
+live channel.
+
+The deterministic scale gate coalesces 100 relevant invalidations into one
+authoritative refresh and fans its single update to 64 subscribers. The
+checked-in Ryzen 7 5800X/.NET 10 ShortRun measured a 1,000-row/one-update keyed
+diff at 76.4 µs and 221,872 B, replay serialization at 881 ns and 832 B, and
+the complete 100-invalidation/64-subscriber lifecycle at 92.3 µs and 175,060
+B. Machine-checked budgets cap those paths at 235,000 B, 900 B, and 185,000 B
+respectively. These are local regression baselines, not network latency or
+universal throughput claims.
+
+Live package publication remains disabled until the final release audit records
+the real-PostgreSQL store/transport matrix in addition to these offline gates.
 
 ## Control-plane visibility
 

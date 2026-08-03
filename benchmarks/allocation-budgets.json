@@ -121,6 +121,21 @@
       "benchmark": "BlueTusk.Benchmarks.SqlPgqBenchmarks.TypedEfGraphTraversalAsync",
       "maximumBytesPerOperation": 760000,
       "reason": "Typed EF graph translation, execution, and 999 caller-owned traversal result objects."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffOneUpdatedRowInOneThousand",
+      "maximumBytesPerOperation": 235000,
+      "reason": "Keyed comparison and immutable snapshot ownership for a bounded 1,000-row result with one changed row."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.SerializeOneUpdatedRow",
+      "maximumBytesPerOperation": 900,
+      "reason": "Versioned JSON replay payload, owned integrity hash, and one updated result row."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.CoalesceOneHundredInvalidationsAndFanOut64SubscribersAsync",
+      "maximumBytesPerOperation": 185000,
+      "reason": "Complete in-memory shared-subscription lifecycle, 100-invalidation coalescing, replay persistence, and bounded fan-out to 64 subscribers."
     }
   ]
 }

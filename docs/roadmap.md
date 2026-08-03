@@ -58,6 +58,7 @@ This file tracks executable repository status. The product vision is broader; un
 - [x] Phase 6 slice: redacted Live control-plane projection and authorised dashboard/API visibility
 - [x] Phase 6 slice: model-derived one-to-many Include invalidation and PostgreSQL full-text Live queries
 - [x] Phase 6 slice: model-proven projected one-to-many joins, grouping, and aggregate query plans
+- [x] Phase 6 slice: adversarial reconnect sequencing plus checked-in diff, replay, coalescing, and 64-subscriber fan-out budgets
 - [ ] Phase 6: authorised Live query platform and clients through 1.0
 - [ ] Phase 7: Continuous Graph preview
 

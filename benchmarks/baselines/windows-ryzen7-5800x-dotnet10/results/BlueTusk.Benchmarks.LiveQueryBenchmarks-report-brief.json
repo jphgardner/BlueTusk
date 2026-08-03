@@ -1,0 +1,81 @@
+{
+  "Title": "BlueTusk.Benchmarks.LiveQueryBenchmarks-20260803-185338",
+  "HostEnvironmentInfo": {
+    "BenchmarkDotNetVersion": "0.15.8",
+    "OsVersion": "Windows 11 (10.0.26200.8973/25H2/2025Update/HudsonValley2)",
+    "ProcessorName": "AMD Ryzen 7 5800X",
+    "PhysicalCoreCount": 8,
+    "LogicalCoreCount": 16,
+    "RuntimeVersion": ".NET 10.0.10 (10.0.10, 10.0.1026.32716)",
+    "Architecture": "X64",
+    "DotNetCliVersion": "10.0.302"
+  },
+  "Benchmarks": [
+    {
+      "DisplayInfo": "LiveQueryBenchmarks.DiffOneUpdatedRowInOneThousand: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+      "FullName": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffOneUpdatedRowInOneThousand",
+      "Statistics": {
+        "OriginalValues": [
+          68401.416015625,
+          86132.87353515625,
+          74696.30126953125
+        ],
+        "Mean": 76410.19694010417,
+        "Percentiles": {
+          "P95": 84989.21630859374
+        }
+      },
+      "Memory": {
+        "Gen0Collections": 108,
+        "Gen1Collections": 19,
+        "Gen2Collections": 0,
+        "TotalOperations": 8192,
+        "BytesAllocatedPerOperation": 221872
+      }
+    },
+    {
+      "DisplayInfo": "LiveQueryBenchmarks.SerializeOneUpdatedRow: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+      "FullName": "BlueTusk.Benchmarks.LiveQueryBenchmarks.SerializeOneUpdatedRow",
+      "Statistics": {
+        "OriginalValues": [
+          925.1716613769531,
+          866.5327072143555,
+          851.4560699462891
+        ],
+        "Mean": 881.0534795125326,
+        "Percentiles": {
+          "P95": 919.3077659606934
+        }
+      },
+      "Memory": {
+        "Gen0Collections": 52,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "TotalOperations": 1048576,
+        "BytesAllocatedPerOperation": 832
+      }
+    },
+    {
+      "DisplayInfo": "LiveQueryBenchmarks.CoalesceOneHundredInvalidationsAndFanOut64SubscribersAsync: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+      "FullName": "BlueTusk.Benchmarks.LiveQueryBenchmarks.CoalesceOneHundredInvalidationsAndFanOut64SubscribersAsync",
+      "Statistics": {
+        "OriginalValues": [
+          94859.326171875,
+          88742.626953125,
+          93378.955078125
+        ],
+        "Mean": 92326.96940104167,
+        "Percentiles": {
+          "P95": 94711.2890625
+        }
+      },
+      "Memory": {
+        "Gen0Collections": 21,
+        "Gen1Collections": 5,
+        "Gen2Collections": 0,
+        "TotalOperations": 2048,
+        "BytesAllocatedPerOperation": 175060
+      }
+    }
+  ]
+}

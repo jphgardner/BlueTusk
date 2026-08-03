@@ -1,6 +1,6 @@
 # BlueTusk benchmarks
 
-The BenchmarkDotNet suite covers complete synchronous/asynchronous command parameter and result paths, protocol-connection writes, protocol parsing and incremental payload streaming, typed buffered readers and large field access, integer/numeric/temporal/JSONB codecs, catalogue-composed array/enum/range/composite encoding and decoding, binary COPY field encoding, notification decoding, replication WAL-frame decoding and bounded pull consumption, large-object stream transfer overhead, warm-session pool checkout, EF query compilation/materialisation/writes, SQL/PGQ traversal, and the transport-pipeline decision. Pool, command, reader, protocol-streaming, replication, and large-object workloads isolate provider bookkeeping with in-memory sessions; the application and comparison fixtures execute against live PostgreSQL.
+The BenchmarkDotNet suite covers complete synchronous/asynchronous command parameter and result paths, protocol-connection writes, protocol parsing and incremental payload streaming, typed buffered readers and large field access, integer/numeric/temporal/JSONB codecs, catalogue-composed array/enum/range/composite encoding and decoding, binary COPY field encoding, notification decoding, replication WAL-frame decoding and bounded pull consumption, large-object stream transfer overhead, warm-session pool checkout, EF query compilation/materialisation/writes, Live query diff/replay/fan-out, SQL/PGQ traversal, and the transport-pipeline decision. Pool, command, reader, protocol-streaming, replication, Live, and large-object workloads isolate provider bookkeeping with in-memory sessions; the application and comparison fixtures execute against live PostgreSQL.
 
 `TransportPipelineBenchmarks` compares the production ArrayPool/Span/Memory reader with a benchmark-only, bounded `System.IO.Pipelines` prototype across fragmented rows, a 1 MiB field, COPY frames, and cancellation recovery, using genuine sync and async entry points. `TransportPipelineSocketBenchmarks` repeats the comparison over raw TCP and authenticated loopback TLS. The production packages do not reference `System.IO.Pipelines`; the resulting decision and limitations are in [ADR 0005](../docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md).
 
@@ -13,6 +13,17 @@ when the consumer requests the next message. The benchmark normalizes time and
 allocation per frame; it does not claim to measure server or network latency.
 
 ## Live application workloads
+
+`LiveQueryBenchmarks` measures the bounded real-time application path without
+network or database variance. It compares a 1,000-row keyed result after one
+row changes, serializes and integrity-protects the resulting replay event, and
+runs a complete shared-subscription lifecycle that coalesces 100 relevant
+invalidations into one authoritative refresh and fans the update out through
+bounded channels to 64 subscribers.
+
+```powershell
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*LiveQueryBenchmarks*' --exporters json
+```
 
 `EntityFrameworkCoreBenchmarks` uses one long-lived `BlueTuskDataSource` and a
 1,000-row table to measure fresh parameterized EF query compilation plus first

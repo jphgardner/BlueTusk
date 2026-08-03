@@ -68,3 +68,12 @@ CRC and redundant protection/deserialization copies reduced the spool workload
 from the profiling baseline of 110.2 ms and 32.1 MiB by 65% and 62%,
 respectively. These are local ShortRun figures; release budgets will use longer
 runs and representative storage devices.
+
+The initial Live load report was added on 2026-08-03. A keyed diff over 1,000
+rows with one update measured 76.4 µs and 221,872 B, including the new immutable
+snapshot and lookup dictionaries. Serializing and integrity-protecting the
+single update measured 881 ns and 832 B. Creating a shared subscription,
+coalescing 100 relevant invalidations into one authoritative query, persisting
+the diff, and delivering it through bounded channels to 64 subscribers measured
+92.3 µs and 175,060 B. These ShortRun values are local regression evidence, not
+network end-to-end latency claims.
