@@ -2,13 +2,18 @@
 
 This file tracks executable repository status. The product vision is broader; unchecked work is not implied by package names already present in the solution.
 
-The post-development V1 [hardening programme](hardening-programme.md) is now the
-release-critical path. Its internal EF↔Data provider SPI and provider-core
-NativeAOT/trimming slices are complete, including executable publish gates and
-measured budgets. Multiplexing hardening is also complete, including PgBouncer,
-failure/fairness coverage and commit-bound comparative mean/P95/P99/allocation
-evidence. Coverage-guided fuzzing is next; new product-family breadth remains
-paused until the current release chain has credible evidence.
+The post-development V1 [hardening programme](hardening-programme.md) is
+implemented. The internal EF↔Data SPI, NativeAOT/trimming, multiplexing,
+coverage-guided parser fuzzing, ADO.NET compatibility, API budgets,
+supply-chain provenance and PostgreSQL 19 milestone programme all have code,
+tests, documentation and fail-closed verification.
+
+The release-critical path now contains only exact-candidate and external
+evidence: the 72-hour Streams run, 24-hour Sync run, later PostgreSQL 19
+beta/RC/GA matrices, exact-commit CI/security evidence, independent review,
+application pilots, backup/restore and rollback rehearsal, and maintainer
+sign-off. Stable publication remains disabled until those records agree for one
+immutable candidate.
 
 ## Real-time platform release trains
 

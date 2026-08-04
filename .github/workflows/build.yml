@@ -68,6 +68,44 @@ jobs:
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
 
+  website:
+    name: Angular website and complete documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: website
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Restore website dependencies
+        run: npm ci
+
+      - name: Verify generated documentation
+        run: npm run docs:check
+
+      - name: Test website
+        run: npm test -- --watch=false
+
+      - name: Build website
+        run: npm run build
+
+      - name: Audit website dependencies
+        run: npm audit --audit-level=moderate
+
+      - name: Archive static website
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: bluetusk-website
+          path: website/dist/website/browser
+          if-no-files-found: error
+
   provider-core-publish:
     name: Provider core trimming and NativeAOT (${{ matrix.rid }})
     runs-on: ${{ matrix.os }}

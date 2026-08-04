@@ -12,6 +12,20 @@ if ($LASTEXITCODE -ne 0)
 {
     throw 'Unable to enumerate tracked Markdown files.'
 }
+$documentationRoot = Join-Path $RepositoryRoot 'docs'
+if (Test-Path -LiteralPath $documentationRoot -PathType Container)
+{
+    $workspaceDocumentation = @(
+        Get-ChildItem -LiteralPath $documentationRoot -Filter '*.md' -File -Recurse |
+            ForEach-Object {
+                [IO.Path]::GetRelativePath($RepositoryRoot, $_.FullName).Replace('\', '/')
+            }
+    )
+    $trackedMarkdown = @(
+        $trackedMarkdown + $workspaceDocumentation |
+            Sort-Object -Unique
+    )
+}
 
 $inlineLinkPattern = [regex]'\[[^\]]*\]\((?<target><[^>]+>|[^)\s]+)(?:\s+(?:"[^"]*"|''[^'']*''))?\)'
 $referenceLinkPattern = [regex]'(?m)^\s*\[[^\]]+\]:\s*(?<target><[^>]+>|\S+)'
@@ -80,4 +94,4 @@ if ($failures.Count -gt 0)
     throw "Documentation validation found $($failures.Count) broken local link(s)."
 }
 
-Write-Output "Verified $checkedLinks local links across $($trackedMarkdown.Count) tracked Markdown files."
+Write-Output "Verified $checkedLinks local links across $($trackedMarkdown.Count) Markdown files."

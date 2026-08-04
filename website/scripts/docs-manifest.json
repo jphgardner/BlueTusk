@@ -1,0 +1,452 @@
+[
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "architecture",
+    "source": "docs/architecture/overview.md",
+    "summary": "Understand the layers, dependency direction, ownership, and async boundaries.",
+    "keywords": ["architecture", "layers", "ownership"],
+    "order": 10
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "provider-overview",
+    "source": "docs/ado-net/README.md",
+    "summary": "Build and run the native ADO.NET provider.",
+    "keywords": ["ado.net", "quickstart", "connection"],
+    "order": 20
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "authentication",
+    "source": "docs/ado-net/authentication.md",
+    "summary": "Credentials, password files, TLS certificates, GSSAPI, Kerberos, and SSPI.",
+    "keywords": ["auth", "tls", "scram", "gssapi"],
+    "order": 10
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "cloud-identity",
+    "source": "docs/ado-net/cloud-identity.md",
+    "summary": "AWS, Azure, and Google Cloud identity integration and live-test boundaries.",
+    "keywords": ["aws", "azure", "gcp", "oauth"],
+    "order": 20
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "pooling",
+    "source": "docs/ado-net/pooling.md",
+    "summary": "Pool sizing, reset behavior, operational signals, and PgBouncer modes.",
+    "keywords": ["pool", "reset", "pgbouncer"],
+    "order": 30
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "multi-host",
+    "source": "docs/ado-net/multi-host.md",
+    "summary": "Multi-host routing, failover, target session attributes, and recovery.",
+    "keywords": ["failover", "host", "topology"],
+    "order": 40
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "batches",
+    "source": "docs/ado-net/batches.md",
+    "summary": "Execute ordered command batches with PostgreSQL-aware error behavior.",
+    "keywords": ["batch", "command"],
+    "order": 50
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "copy",
+    "source": "docs/ado-net/copy.md",
+    "summary": "Text and binary COPY APIs, typed values, cancellation, and completion.",
+    "keywords": ["copy", "import", "export", "binary"],
+    "order": 60
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "large-objects",
+    "source": "docs/ado-net/large-objects.md",
+    "summary": "Large-object ownership and streaming behavior.",
+    "keywords": ["large objects", "stream"],
+    "order": 70
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "notifications",
+    "source": "docs/ado-net/notifications.md",
+    "summary": "LISTEN and NOTIFY lifecycle, dispatch, and connection behavior.",
+    "keywords": ["listen", "notify"],
+    "order": 80
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "sequential-readers",
+    "source": "docs/ado-net/sequential-readers.md",
+    "summary": "Bounded sequential reads for large PostgreSQL values.",
+    "keywords": ["reader", "streaming", "memory"],
+    "order": 90
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "types",
+    "source": "docs/types/README.md",
+    "summary": "Catalogue-driven PostgreSQL type mappings and extension points.",
+    "keywords": ["types", "arrays", "ranges", "json"],
+    "order": 100
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "pipeline-mode",
+    "source": "docs/pipeline-mode.md",
+    "summary": "Pipeline groups, protocol Sync boundaries, and ordered failures.",
+    "keywords": ["pipeline", "protocol"],
+    "order": 110
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "replication",
+    "source": "docs/replication/README.md",
+    "summary": "Physical and logical replication, pgoutput, and WAL feedback.",
+    "keywords": ["logical", "physical", "wal", "pgoutput"],
+    "order": 120
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "overview",
+    "source": "docs/ef-core/README.md",
+    "summary": "Queries, mappings, migrations, scaffolding, and PostgreSQL 19 graph.",
+    "keywords": ["linq", "migrations", "scaffolding", "mapping"],
+    "order": 10
+  },
+  {
+    "category": "ef-core",
+    "categoryLabel": "EF Core",
+    "slug": "specification-tests",
+    "source": "docs/ef-core/specification-tests.md",
+    "summary": "Official relational specification coverage and native PostgreSQL gates.",
+    "keywords": ["tests", "1987", "2111"],
+    "order": 20
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "platform",
+    "source": "docs/realtime-platform/README.md",
+    "summary": "Correctness contract and independent release trains.",
+    "keywords": ["streams", "sync", "live", "contracts"],
+    "order": 10
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "contracts",
+    "source": "docs/realtime-platform/contracts.md",
+    "summary": "Shared delivery, checkpoint, and source identity contracts.",
+    "keywords": ["contract", "delivery", "checkpoint"],
+    "order": 20
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams",
+    "source": "docs/streams/README.md",
+    "summary": "The implemented Streams kernel, transactions, failures, and performance.",
+    "keywords": ["cdc", "stream", "transaction"],
+    "order": 30
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "snapshot-bootstrap",
+    "source": "docs/streams/snapshot-bootstrap.md",
+    "summary": "A fenced snapshot-then-stream protocol.",
+    "keywords": ["snapshot", "bootstrap", "fence"],
+    "order": 40
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "durable-relay",
+    "source": "docs/streams/durable-relay.md",
+    "summary": "Storage, backup, groups, retention, and relay fan-out.",
+    "keywords": ["relay", "retention", "backup"],
+    "order": 50
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "state-stores",
+    "source": "docs/streams/state-stores.md",
+    "summary": "State-store contracts and supported persistence behavior.",
+    "keywords": ["state", "store"],
+    "order": 60
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-hosting",
+    "source": "docs/streams/hosting-observability.md",
+    "summary": "Hosted services, health checks, metrics, and operational behavior.",
+    "keywords": ["hosting", "health", "metrics"],
+    "order": 70
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "streams-endurance",
+    "source": "docs/streams/release-endurance.md",
+    "summary": "The 72-hour endurance gate and evidence contract.",
+    "keywords": ["72h", "endurance", "release"],
+    "order": 80
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync",
+    "source": "docs/sync/README.md",
+    "summary": "Versioned destination synchronization, quarantine, reconciliation, and rebuilds.",
+    "keywords": ["redis", "nats", "opensearch", "destination"],
+    "order": 90
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "sync-endurance",
+    "source": "docs/sync/release-endurance.md",
+    "summary": "The 24-hour Sync release gate and evidence contract.",
+    "keywords": ["24h", "endurance", "release"],
+    "order": 100
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "live",
+    "source": "docs/live/README.md",
+    "summary": "Authorized live delivery, replay, subscriptions, transports, and browser clients.",
+    "keywords": ["websocket", "sse", "replay", "security"],
+    "order": 110
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "control-plane",
+    "source": "docs/control-plane/README.md",
+    "summary": "Operational queries, dashboard boundaries, authorization, and audit.",
+    "keywords": ["dashboard", "operations", "audit"],
+    "order": 120
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "continuous-graph",
+    "source": "docs/continuous-graph/README.md",
+    "summary": "Checkpointed graph projections for fraud and network workloads.",
+    "keywords": ["graph", "projection", "checkpoint"],
+    "order": 130
+  },
+  {
+    "category": "extensions",
+    "categoryLabel": "Extensions",
+    "slug": "catalog",
+    "source": "docs/extensions/README.md",
+    "summary": "Extension SDK plus seven first-party PostgreSQL extension families.",
+    "keywords": ["postgis", "pgvector", "timescaledb", "citext"],
+    "order": 10
+  },
+  {
+    "category": "graph",
+    "categoryLabel": "Graph",
+    "slug": "sql-pgq",
+    "source": "docs/graph/README.md",
+    "summary": "PostgreSQL 19 SQL/PGQ, discovery, migrations, and typed EF queries.",
+    "keywords": ["sql/pgq", "property graph", "postgresql 19"],
+    "order": 10
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "observability",
+    "source": "docs/observability.md",
+    "summary": "Metrics, traces, and slow-command events.",
+    "keywords": ["metrics", "tracing", "opentelemetry"],
+    "order": 10
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "security",
+    "source": "docs/security.md",
+    "summary": "Threat model, closed findings, application boundaries, and checks.",
+    "keywords": ["security", "threat", "secrets"],
+    "order": 20
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "release-readiness",
+    "source": "docs/release-readiness.md",
+    "summary": "Executable gates for provider, EF, extensions, artifacts, and documentation.",
+    "keywords": ["release", "gates", "artifacts"],
+    "order": 30
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "api-compatibility",
+    "source": "docs/api-compatibility.md",
+    "summary": "Public API baselines and compatibility expectations.",
+    "keywords": ["api", "compatibility", "freeze"],
+    "order": 40
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "testing",
+    "source": "docs/contributing/testing.md",
+    "summary": "Unit, live, topology, security, stress, and endurance test profiles.",
+    "keywords": ["testing", "postgresql", "docker"],
+    "order": 50
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "repository-layout",
+    "source": "docs/contributing/repository-layout.md",
+    "summary": "Repository projects and dependency boundaries.",
+    "keywords": ["repository", "projects", "dependencies"],
+    "order": 60
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "roadmap",
+    "source": "docs/roadmap.md",
+    "summary": "Provider, EF, graph, extension, real-time, and 1.0 milestones.",
+    "keywords": ["roadmap", "milestone"],
+    "order": 70
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "contributing",
+    "source": "CONTRIBUTING.md",
+    "summary": "Issue-first contribution flow, tests, compatibility, and secrets policy.",
+    "keywords": ["contribute", "issues", "pull request"],
+    "order": 80
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "report-security",
+    "source": "SECURITY.md",
+    "summary": "Report vulnerabilities privately through the repository hosting platform.",
+    "keywords": ["vulnerability", "reporting"],
+    "order": 90
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "handbook",
+    "source": "docs/README.md",
+    "summary": "Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.",
+    "keywords": ["documentation", "handbook", "navigation", "v1"],
+    "order": 1
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "quickstart",
+    "source": "docs/getting-started/quickstart.md",
+    "summary": "Build the repository, start PostgreSQL, run the provider, register dependency injection, and choose the right next layer.",
+    "keywords": ["quickstart", "install", "build", "sample", "docker"],
+    "order": 5
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "concepts",
+    "source": "docs/getting-started/concepts.md",
+    "summary": "Learn data-source ownership, sessions, capabilities, type identity, checkpoints, source identity, and release-state vocabulary.",
+    "keywords": ["concepts", "data source", "session", "checkpoint", "capability"],
+    "order": 8
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "dependency-injection",
+    "source": "docs/ado-net/dependency-injection.md",
+    "summary": "Register one long-lived provider data source, consume DbDataSource, and design readiness checks without harming liveness.",
+    "keywords": ["dependency injection", "health checks", "DbDataSource", "hosting"],
+    "order": 25
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
+    "slug": "schema-discovery",
+    "source": "docs/ado-net/schema-discovery.md",
+    "summary": "Use GetSchema, GetColumnSchema, GetSchemaTable, restrictions, and provider-neutral catalogue metadata.",
+    "keywords": ["schema", "metadata", "GetSchema", "columns", "catalogue"],
+    "order": 95
+  },
+  {
+    "category": "real-time",
+    "categoryLabel": "Real time",
+    "slug": "operations",
+    "source": "docs/realtime-platform/operations.md",
+    "summary": "Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.",
+    "keywords": ["operations", "incident", "failover", "checkpoint", "rebuild"],
+    "order": 125
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "deployment",
+    "source": "docs/operations/deployment.md",
+    "summary": "Design production topology, security roles, pool capacity, migrations, rolling deployment, and real-time persistence.",
+    "keywords": ["deployment", "configuration", "roles", "migrations", "rolling"],
+    "order": 5
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "troubleshooting",
+    "source": "docs/operations/troubleshooting.md",
+    "summary": "Diagnose connection, TLS, authentication, pool, command, type, EF, replication, and destination failures from the lowest boundary upward.",
+    "keywords": ["troubleshooting", "errors", "diagnostics", "pool", "replication"],
+    "order": 15
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "performance",
+    "source": "docs/operations/performance.md",
+    "summary": "Measure pool pressure, command paths, multiplexing, allocation, readers, COPY, and real-time throughput with reproducible evidence.",
+    "keywords": ["performance", "benchmark", "latency", "allocation", "throughput"],
+    "order": 25
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "upgrade-guide",
+    "source": "docs/operations/upgrade-guide.md",
+    "summary": "Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.",
+    "keywords": ["upgrade", "migration", "rollback", "format", "version"],
+    "order": 35
+  }
+]

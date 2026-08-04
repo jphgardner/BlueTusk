@@ -1,0 +1,246 @@
+<section class="hero">
+  <div class="hero-glow" aria-hidden="true"></div>
+  <div class="hero-inner">
+    <div class="release-label"><span></span> BLUETUSK 0.3.0-PREVIEW.1</div>
+    <h1>The PostgreSQL platform for <em>.NET</em></h1>
+    <p>
+      Build PostgreSQL-native .NET applications with a V1 candidate-ready provider, EF Core
+      integration, replication, real-time data pipelines, extensions, and graph capabilities—backed
+      by executable evidence.
+    </p>
+    <div class="hero-actions">
+      <a
+        mat-flat-button
+        routerLink="/documentation/getting-started/quickstart"
+        class="primary-action"
+        >Get Started</a
+      >
+      <a mat-stroked-button href="#ecosystem" class="secondary-action">Explore BlueTusk</a>
+      <a
+        mat-stroked-button
+        href="https://github.com/jphgardner/BlueTusk"
+        target="_blank"
+        rel="noreferrer"
+        class="secondary-action"
+      >
+        View GitHub
+      </a>
+    </div>
+  </div>
+</section>
+
+<section class="architecture-wrap" aria-labelledby="architecture-title">
+  <div class="section-label-row">
+    <span id="architecture-title">PLATFORM TOPOLOGY</span>
+    <span>POSTGRESQL-NATIVE DATA PLANE</span>
+  </div>
+  <figure class="architecture-frame">
+    <img
+      src="/bluetusk-architecture.png"
+      alt="BlueTusk architecture: .NET applications connect through the BlueTusk Provider and EF Core to PostgreSQL, then replication and Streams feed Relay and Sync destinations including Redis, NATS, OpenSearch, and applications."
+    />
+    <figcaption>
+      <span><i></i> Architecture overview</span>
+      <span>Provider → PostgreSQL → Streams → Sync</span>
+    </figcaption>
+  </figure>
+</section>
+
+<section class="content-section path-selector">
+  <div class="section-heading-split">
+    <div>
+      <span>CHOOSE YOUR ENTRY POINT</span>
+      <h2>Start from the job in front of you.</h2>
+    </div>
+    <p>
+      Each path leads to a working repository surface, its current evidence, and the exact boundary
+      between code readiness and release authorization.
+    </p>
+  </div>
+  <div class="path-layout">
+    <nav aria-label="Choose a BlueTusk path">
+      @for (path of paths; track path.id) {
+        <button
+          type="button"
+          [class.active]="selectedPath() === path.id"
+          (click)="selectedPath.set(path.id)"
+        >
+          <mat-icon>{{ path.icon }}</mat-icon
+          ><span
+            ><small>{{ path.label }}</small
+            ><strong>{{ path.title }}</strong></span
+          >
+        </button>
+      }
+    </nav>
+    <article>
+      <span>{{ activePath().proof }}</span
+      ><mat-icon>{{ activePath().icon }}</mat-icon>
+      <h3>{{ activePath().title }}</h3>
+      <p>{{ activePath().body }}</p>
+      <a mat-flat-button [routerLink]="activePath().route" class="primary-action">{{
+        activePath().action
+      }}</a>
+    </article>
+  </div>
+</section>
+
+<section id="ecosystem" class="content-section">
+  <div class="section-heading-center">
+    <span>THE ECOSYSTEM</span>
+    <h2>Engineered for the modern PostgreSQL stack</h2>
+    <p>Six product surfaces. One protocol-aware platform.</p>
+  </div>
+
+  <div class="ecosystem-grid">
+    @for (product of products; track product.name) {
+      <a [routerLink]="product.route" class="ecosystem-card" [attr.data-tone]="product.tone">
+        <div class="card-topline">
+          <mat-icon>{{ product.icon }}</mat-icon>
+          <span class="product-status" [attr.data-status]="product.statusKind">{{
+            product.status
+          }}</span>
+        </div>
+        <small>{{ product.kicker }}</small>
+        <h3>{{ product.name }}</h3>
+        <p>{{ product.description }}</p>
+        <span class="card-link">Explore <mat-icon>arrow_forward</mat-icon></span>
+      </a>
+    }
+  </div>
+</section>
+
+<section class="content-section code-section">
+  <div class="code-copy">
+    <span class="section-kicker">FAMILIAR .NET. NATIVE POSTGRESQL.</span>
+    <h2>Start with a connection.<br />Keep every capability.</h2>
+    <p>
+      BlueTusk follows standard ADO.NET and EF Core patterns while exposing PostgreSQL features
+      directly when your application needs them.
+    </p>
+    <ul>
+      <li><mat-icon>check</mat-icon> Typed parameters, never SQL interpolation</li>
+      <li><mat-icon>check</mat-icon> Async data paths and bounded resource use</li>
+      <li><mat-icon>check</mat-icon> Native COPY, replication, and type support</li>
+      <li><mat-icon>check</mat-icon> First-class diagnostics and release evidence</li>
+    </ul>
+  </div>
+
+  <div class="code-console">
+    <div class="code-tabs">
+      <mat-button-toggle-group
+        [value]="selectedExample()"
+        (change)="selectExample($event.value)"
+        aria-label="Choose a BlueTusk code example"
+        hideSingleSelectionIndicator
+      >
+        @for (example of examples; track example.id) {
+          <mat-button-toggle [value]="example.id">{{ example.label }}</mat-button-toggle>
+        }
+      </mat-button-toggle-group>
+    </div>
+    <div class="code-filebar">
+      <span><i></i><i></i><i></i></span>
+      <strong>{{ activeExample().file }}</strong>
+      <button type="button" (click)="copyCode()" matTooltip="Copy example">
+        <mat-icon>{{ copyState() === 'Copied' ? 'check' : 'content_copy' }}</mat-icon>
+        {{ copyState() }}
+      </button>
+    </div>
+    <pre><code>{{ activeExample().code }}</code></pre>
+  </div>
+</section>
+
+<section class="content-section capability-section">
+  <div class="section-heading-split">
+    <div>
+      <span>POSTGRESQL, FULLY EXPOSED</span>
+      <h2>The database stays powerful.</h2>
+    </div>
+    <p>
+      Types, schema objects, extensions, and SQL features stay first class across the provider and
+      EF Core.
+    </p>
+  </div>
+
+  <div class="capability-grid">
+    @for (group of capabilityGroups; track group.title; let index = $index) {
+      <article>
+        <span class="capability-index">0{{ index + 1 }}</span>
+        <small>{{ group.eyebrow }}</small>
+        <h3>{{ group.title }}</h3>
+        <div>
+          @for (item of group.items; track item) {
+            <span>{{ item }}</span>
+          }
+        </div>
+      </article>
+    }
+  </div>
+</section>
+
+<section class="content-section evidence-section">
+  <div class="evidence-header">
+    <div>
+      <span>V1 HARDENING EVIDENCE · 04 AUG 2026</span>
+      <h2>Candidate-ready, with receipts.</h2>
+    </div>
+    <p>
+      Feature development and hardening implementation are complete. Stable publication remains
+      deliberately blocked on exact endurance, PostgreSQL 19 GA, independent review, and operational
+      rehearsal.
+    </p>
+  </div>
+
+  <div class="evidence-grid">
+    @for (item of evidence; track item.label) {
+      <article>
+        <div>
+          <mat-icon>{{ item.icon }}</mat-icon>
+          <strong>{{ item.value }}</strong>
+        </div>
+        <h3>{{ item.label }}</h3>
+        <p>{{ item.detail }}</p>
+      </article>
+    }
+  </div>
+
+  <div class="evidence-footer">
+    <span><i></i> All product-spec engineering gates executable</span>
+    <a routerLink="/evidence">Inspect the evidence <mat-icon>arrow_forward</mat-icon></a>
+  </div>
+</section>
+
+<section class="content-section roadmap-section">
+  <div class="section-heading-center">
+    <span>RELEASE TRAINS</span>
+    <h2>A roadmap that separates code from confidence</h2>
+    <p>Each stage advances through explicit engineering and endurance gates.</p>
+  </div>
+
+  <div class="roadmap">
+    @for (stage of roadmap; track stage.name; let index = $index) {
+      <article [attr.data-kind]="stage.kind">
+        <div class="roadmap-line"><i></i></div>
+        <small>0{{ index + 1 }}</small>
+        <h3>{{ stage.name }}</h3>
+        <p>{{ stage.status }}</p>
+      </article>
+    }
+  </div>
+</section>
+
+<section class="community-section">
+  <div>
+    <span>BUILD WITH BLUETUSK</span>
+    <h2>Put the V1 candidate under a real workload.</h2>
+    <p>
+      Try it, report issues, contribute an extension, or become a design partner for the path to a
+      production-ready 1.0.
+    </p>
+  </div>
+  <div>
+    <a mat-flat-button routerLink="/documentation" class="primary-action">Start Building</a>
+    <a mat-stroked-button routerLink="/community" class="secondary-action">Join the Community</a>
+  </div>
+</section>

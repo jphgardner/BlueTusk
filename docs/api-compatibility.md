@@ -12,13 +12,14 @@ names inside the provider.
 
 ## Baseline scope
 
-The 2026-08-03 V1 candidate baseline records 8,225 public and protected
-signatures, including nullable annotations and compiler-generated record
-members:
+The 2026-08-04 V1 candidate budget records 8,292 public and protected
+signatures across 28 Provider-family API-governed libraries, including nullable
+annotations and compiler-generated record members. Across all six product
+families, the exact machine-enforced budget is 12,975 signatures.
 
 | Surface | Projects | Shipped signatures | Contract role |
 | --- | ---: | ---: | --- |
-| Core wire, security, type, client, and ADO.NET | 7 | 2,957 | Transport through pooled ADO.NET and native data paths |
+| Core wire, security, type, client, ADO.NET, and DI | 8 | 3,024 | Transport through pooled ADO.NET, schema discovery, hosting, and native data paths |
 | Replication and pgoutput | 2 | 847 | Physical/logical replication, decoding, slots, and feedback |
 | EF Core and design tooling | 2 | 3,890 | Runtime provider, PostgreSQL features, migrations, and scaffolding |
 | Extension SDK and testing | 2 | 62 | Immutable plug-in and compatibility seams |

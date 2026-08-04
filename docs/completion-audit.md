@@ -83,14 +83,13 @@ connection contract across all supported PostgreSQL versions:
 | 18 | 28 | 2,978 | 146 | 0 |
 | 19 Beta 2 | 28 | 2,978 | 146 | 0 |
 
-The provider audit produced a zero-warning Release build and 30 provider preview
-packages. Its V1 candidate API freeze locks 8,225 signatures across all 27
-publishable Provider library surfaces, while package conformance excludes
-embedded template content projects. The current monorepo-wide gate covers 115
-solution projects, reports
-no vulnerable direct or transitive NuGet dependencies, validates 254
-repository-local documentation links across 126 tracked Markdown files, and
-passes 30 allocation budgets.
+The provider audit produced a zero-warning Release build and 31 provider preview
+packages. Its V1 candidate API budget locks 8,292 signatures across 28
+API-governed Provider library surfaces, while package conformance excludes
+embedded template content projects. The current monorepo-wide gate covers 121
+solution projects, reports no vulnerable direct or transitive NuGet
+dependencies, validates every repository-local documentation link, and passes
+32 allocation budgets.
 The final two-launch
 provider MediumRun records lower BlueTusk mean latency and managed allocation in
 all five paired workloads; parameterized scalar, warm checkout, and 1,000-row

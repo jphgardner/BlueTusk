@@ -1,13 +1,17 @@
 # Runtime release readiness
 
 BlueTusk records production-readiness decisions as executable subsystem gates,
-not as synonyms for package version. The 2026-08-02 whole-product review closes
-the product-spec engineering gates for the ADO.NET provider, EF Core and design
-tooling, PostgreSQL-specific schema/query support, native data paths,
-replication, extensions, security, performance, stress, compatibility, and
-documentation. The repository and packages remain `0.3.0-preview.1`: completing
-an engineering gate does not substitute for external production experience or
-the maintainer's explicit decision to publish a stable release.
+not as synonyms for package version. The 2026-08-04 V1 hardening review closes
+the implementation gates for the ADO.NET provider, EF Core and design tooling,
+PostgreSQL-specific schema/query support, native data paths, replication,
+extensions, parser reliability, security, performance, API governance,
+supply-chain provenance, stress, compatibility and documentation.
+
+The repository and packages remain `0.3.0-preview.1`: completing an engineering
+gate does not substitute for exact-candidate endurance, PostgreSQL 19 GA,
+independent production experience or the maintainer's explicit decision to
+publish a stable release. The concise current status is in
+[V1 release readiness](v1-release-readiness.md).
 
 ## Publication gate
 
@@ -256,9 +260,9 @@ provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
-in all tracked Markdown files; the current review checks 254 local links across
-124 tracked Markdown files. The 2026-08-02 provider review separately resolved
-all 40 external Markdown references.
+in all tracked Markdown files. The Angular documentation build automatically
+discovers every repository guide, rewrites internal links to site routes,
+generates full-text search records and fails when generated content drifts.
 The support matrix identifies .NET 10, EF Core 10.0.10,
 PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 preview, including the
 remaining beta-syntax risk.

@@ -2,10 +2,23 @@
 
 **PostgreSQL, fully exposed to .NET.**
 
-BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, PostgreSQL SQL/PGQ support, and an independently versioned [real-time application platform](docs/realtime-platform/README.md)—without a runtime dependency on Npgsql.
+BlueTusk is a ground-up PostgreSQL platform for .NET. Its scope includes a
+native wire-protocol engine, ADO.NET, replication, Entity Framework Core,
+extension packages, PostgreSQL SQL/PGQ support, and an independently versioned
+[real-time application platform](docs/realtime-platform/README.md)—without a
+runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production endorsement. The product-spec engineering gates are implemented and executable, including ADO.NET, EF Core, design tooling, PostgreSQL-native data paths, replication, extensions, security, stress, compatibility, documentation, and the PostgreSQL 15–19 matrix. The preview label remains while the project accumulates external production experience and PostgreSQL 19 syntax remains beta-sensitive. See the [roadmap](docs/roadmap.md), [release-readiness record](docs/release-readiness.md), and [support matrix](VERSIONING.md) for the exact evidence and boundaries.
+> BlueTusk remains an experimental `0.3.0-preview.1` source release, not a
+> production endorsement. V1 feature development and release-hardening
+> implementation are complete, including bounded parser fuzzing, the ADO.NET
+> compatibility record, public API budgets, immutable automation dependencies,
+> SBOM/provenance checks and exact-candidate endurance tooling. Stable
+> publication remains disabled until PostgreSQL 19 GA evidence, the exact
+> 72-hour Streams and 24-hour Sync runs, independent review and operational
+> rehearsals pass for one immutable candidate. Start with the
+> [documentation handbook](docs/README.md), [V1 readiness record](docs/v1-release-readiness.md),
+> [roadmap](docs/roadmap.md), and [support matrix](VERSIONING.md).
 
 ## Build
 
@@ -81,25 +94,18 @@ Replication.PgOutput → Replication → Client
 
 See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [API compatibility](docs/api-compatibility.md), [runtime release readiness](docs/release-readiness.md), [release process](docs/release-process.md), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [security review](docs/security.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
 
-The real-time platform is delivered in independently gated Streams, Sync, Live, Control Plane, and Continuous Graph release trains. Package names in its [phased plan](docs/realtime-platform/delivery-plan.md) are commitments, not claims of already-published functionality.
+The real-time platform is delivered in independently gated Streams, Sync, Live,
+Control Plane, and Continuous Graph release trains. Their V1 code, tests,
+package manifests and evidence verifiers are implemented. The remaining release
+work is deliberately operational: archive the exact 72-hour Streams and
+24-hour Sync candidate runs, repeat PostgreSQL 19 at later milestones and GA,
+and obtain independent sign-off. Package names and successful local builds are
+not claims of public availability.
 
-The [Streams release train](docs/streams/README.md) has passed its first-preview
-implementation gate with bounded disk spill, durable checkpoints, direct groups,
-PostgreSQL relay fan-out, typed mappings, and snapshot bootstrap. [Sync](docs/sync/README.md)
-is in Phase 5 with its kernel, four destinations, reconciliation/repair, safe
-rebuild orchestration, versioned transformation composition, and in-process
-hosting implemented behind a non-publishable release gate.
-[Live](docs/live/README.md) has its authorised query engine, transports,
-framework clients, expanded vetted query shapes, and adversarial/load gates,
-and its `0.1.0-preview.1` release train has passed the real-PostgreSQL
-store/transport and package gates.
-[Continuous Graph 0.1.0-preview.1](docs/continuous-graph/release-notes-0.1.0-preview.1.md)
-has passed its Phase 7 implementation and package-verification gates with PostgreSQL
-19 capability guards, exact graph-element invalidation, authoritative
-`GRAPH_TABLE` requery/diff, operational visibility, samples, and live workload
-budgets. Its Live release dependency has passed, but the independently
-versioned Graph preview remains gated until the Control Plane dependency is
-publishable.
+Read the [platform contracts](docs/realtime-platform/contracts.md),
+[real-time operations guide](docs/realtime-platform/operations.md), and
+[release process](docs/release-process.md) before designing a production
+topology.
 
 ## Status
 
