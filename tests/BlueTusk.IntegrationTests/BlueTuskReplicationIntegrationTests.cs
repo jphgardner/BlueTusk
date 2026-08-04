@@ -668,18 +668,10 @@ public sealed class BlueTuskReplicationIntegrationTests
                     });
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 
-                var streamStart = Assert.IsType<BlueTuskPgOutputStreamStart>(
-                    (await ReadDecodedUntilAsync(
-                        enumerator,
-                        decoder,
-                        static message => message is BlueTuskPgOutputStreamStart,
-                        timeout.Token)).Message);
-                var streamedInsert = Assert.IsType<BlueTuskPgOutputInsert>(
-                    (await ReadDecodedUntilAsync(
-                        enumerator,
-                        decoder,
-                        static message => message is BlueTuskPgOutputInsert,
-                        timeout.Token)).Message);
+                var (streamStart, streamedInsert) = await ReadMatchingStreamedInsertAsync(
+                    enumerator,
+                    decoder,
+                    timeout.Token);
                 _ = Assert.IsType<BlueTuskPgOutputStreamStop>(
                     (await ReadDecodedUntilAsync(
                         enumerator,
@@ -695,7 +687,8 @@ public sealed class BlueTuskReplicationIntegrationTests
                     (await ReadDecodedUntilAsync(
                         enumerator,
                         decoder,
-                        static message => message is BlueTuskPgOutputStreamCommit,
+                        message => message is BlueTuskPgOutputStreamCommit commit &&
+                            commit.TransactionId == streamStart.TransactionId,
                         timeout.Token)).Message);
                 Assert.Equal(streamStart.TransactionId, streamCommit.TransactionId);
             }
@@ -784,18 +777,26 @@ public sealed class BlueTuskReplicationIntegrationTests
 
                 var stream = attempt.CreateChangeStream();
                 await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 
                 // PostgreSQL emits a prepared transaction as an ordinary commit when PREPARE
                 // happens before logical decoding has consumed it. A non-transactional message
                 // provides a deterministic stream-readiness barrier on every supported release.
+                var readyPrefix = $"bluetusk-ready-{suffix}";
                 var readyMove = enumerator.MoveNextAsync().AsTask();
                 await ExecuteAsync(
                     administration,
                     $"SELECT pg_logical_emit_message(false, " +
-                    $"{BlueTuskSql.QuoteLiteral($"bluetusk-ready-{suffix}")}, 'ready')");
-                Assert.True(await readyMove.WaitAsync(TimeSpan.FromSeconds(20)));
-                Assert.True(enumerator.Current.Transaction.IsSynthetic);
-                await enumerator.Current.AcknowledgeAsync();
+                    $"{BlueTuskSql.QuoteLiteral(readyPrefix)}, 'ready')");
+                var (ready, _) = await ReadDeliveryUntilAsync(
+                    enumerator,
+                    readyMove,
+                    (transaction, changes) =>
+                        transaction.IsSynthetic &&
+                        changes.OfType<LogicalMessageChange>().Any(
+                            message => message.Prefix == readyPrefix),
+                    timeout.Token);
+                await ready.AcknowledgeAsync(timeout.Token);
 
                 var preparedMove = enumerator.MoveNextAsync().AsTask();
 
@@ -808,14 +809,17 @@ public sealed class BlueTuskReplicationIntegrationTests
                     $"PREPARE TRANSACTION {quotedGlobalTransactionId}");
                 prepared = true;
 
-                Assert.True(await preparedMove.WaitAsync(TimeSpan.FromSeconds(20)));
-                var staged = enumerator.Current;
+                var (staged, stagedChanges) = await ReadDeliveryUntilAsync(
+                    enumerator,
+                    preparedMove,
+                    (_, changes) => changes.OfType<InsertChange>().Any(
+                        change => change.NewRow.Table.Name == tableName),
+                    timeout.Token);
                 Assert.Equal(ChangeTransactionOutcome.Prepared, staged.Transaction.Outcome);
                 Assert.Equal(globalTransactionId, staged.Transaction.GlobalTransactionId);
-                var insert = Assert.IsType<InsertChange>(
-                    Assert.Single(await staged.Transaction.Changes.MaterializeAsync()));
+                var insert = Assert.IsType<InsertChange>(Assert.Single(stagedChanges));
                 Assert.Equal("1", System.Text.Encoding.UTF8.GetString(insert.NewRow["id"].Data.Span));
-                await staged.AcknowledgeAsync();
+                await staged.AcknowledgeAsync(timeout.Token);
 
                 var committedMove = enumerator.MoveNextAsync().AsTask();
                 await ExecuteAsync(
@@ -823,12 +827,16 @@ public sealed class BlueTuskReplicationIntegrationTests
                     $"COMMIT PREPARED {quotedGlobalTransactionId}");
                 prepared = false;
 
-                Assert.True(await committedMove.WaitAsync(TimeSpan.FromSeconds(20)));
-                var committed = enumerator.Current;
+                var (committed, committedChanges) = await ReadDeliveryUntilAsync(
+                    enumerator,
+                    committedMove,
+                    (transaction, _) =>
+                        transaction.GlobalTransactionId == globalTransactionId,
+                    timeout.Token);
                 Assert.Equal(ChangeTransactionOutcome.Committed, committed.Transaction.Outcome);
                 Assert.Equal(globalTransactionId, committed.Transaction.GlobalTransactionId);
-                Assert.Empty(await committed.Transaction.Changes.MaterializeAsync());
-                await committed.AcknowledgeAsync();
+                Assert.Empty(committedChanges);
+                await committed.AcknowledgeAsync(timeout.Token);
             }
             finally
             {
@@ -1068,6 +1076,68 @@ public sealed class BlueTuskReplicationIntegrationTests
 
         throw new XunitException(
             "The logical replication stream completed before the expected pgoutput message.");
+    }
+
+    private static async Task<(BlueTuskPgOutputStreamStart Start, BlueTuskPgOutputInsert Insert)>
+        ReadMatchingStreamedInsertAsync(
+            IAsyncEnumerator<BlueTuskReplicationMessage> enumerator,
+            BlueTuskPgOutputDecoder decoder,
+            CancellationToken cancellationToken)
+    {
+        BlueTuskPgOutputStreamStart? activeStream = null;
+        while (await enumerator.MoveNextAsync().AsTask().WaitAsync(cancellationToken))
+        {
+            if (enumerator.Current is not BlueTuskXLogData xLogData)
+            {
+                continue;
+            }
+
+            var decoded = decoder.Decode(xLogData).Message;
+            if (decoded is BlueTuskPgOutputStreamStart streamStart)
+            {
+                activeStream = streamStart;
+            }
+            else if (decoded is BlueTuskPgOutputStreamStop)
+            {
+                activeStream = null;
+            }
+            else if (decoded is BlueTuskPgOutputInsert insert &&
+                     activeStream is not null &&
+                     insert.StreamingTransactionId == activeStream.TransactionId)
+            {
+                return (activeStream, insert);
+            }
+        }
+
+        throw new XunitException(
+            "The logical replication stream completed before a correlated streamed insert.");
+    }
+
+    private static async Task<(
+        ChangeTransactionDelivery Delivery,
+        IReadOnlyList<Change> Changes)> ReadDeliveryUntilAsync(
+            IAsyncEnumerator<ChangeTransactionDelivery> enumerator,
+            Task<bool> firstMove,
+            Func<ChangeTransaction, IReadOnlyList<Change>, bool> predicate,
+            CancellationToken cancellationToken)
+    {
+        var hasCurrent = await firstMove.WaitAsync(cancellationToken);
+        while (hasCurrent)
+        {
+            var delivery = enumerator.Current;
+            var changes = await delivery.Transaction.Changes
+                .MaterializeAsync(cancellationToken);
+            if (predicate(delivery.Transaction, changes))
+            {
+                return (delivery, changes);
+            }
+
+            await delivery.AcknowledgeAsync(cancellationToken);
+            hasCurrent = await enumerator.MoveNextAsync().AsTask().WaitAsync(cancellationToken);
+        }
+
+        throw new XunitException(
+            "The change stream completed before the correlated transaction was delivered.");
     }
 
     private static async Task<(IReadOnlyList<int> InsertedIds, BlueTuskLogSequenceNumber EndPosition)>

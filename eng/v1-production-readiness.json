@@ -5,6 +5,7 @@
     "verify-documentation.ps1",
     "verify-api-budgets.ps1",
     "verify-supply-chain.ps1",
+    "verify-github-governance.ps1",
     "verify-postgresql19-programme.ps1",
     "verify-benchmark-coverage.ps1",
     "verify-allocation-budgets.ps1",
@@ -81,6 +82,7 @@
     "ops/observability/grafana/bluetusk-v1.json",
     "docs/operations/observability.md",
     "docs/operations/production-readiness.md",
+    "eng/v1-github-governance.json",
     ".github/workflows/performance.yml",
     ".github/workflows/v1-candidate-readiness.yml"
   ]

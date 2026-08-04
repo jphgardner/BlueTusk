@@ -115,13 +115,14 @@ try {
     $env:BLUETUSK_FUZZ_TARGET = $Target
     $env:AFL_SKIP_BIN_CHECK = '1'
     $env:AFL_NO_UI = '1'
-    $env:AFL_MAX_FILE = $MaximumInputBytes.ToString([Globalization.CultureInfo]::InvariantCulture)
     $harness = Join-Path $publishDirectory 'BlueTusk.Fuzzing.dll'
     $arguments = @(
         '-i', $corpusDirectory,
         '-o', $findingsDirectory,
         '-t', "$ExecutionTimeoutMilliseconds+",
         '-m', $MemoryLimitMegabytes,
+        '-g', 1,
+        '-G', $MaximumInputBytes,
         '-V', $DurationSeconds,
         '--',
         'dotnet', $harness
@@ -136,7 +137,6 @@ finally {
     Remove-Item Env:\BLUETUSK_FUZZ_TARGET -ErrorAction SilentlyContinue
     Remove-Item Env:\AFL_SKIP_BIN_CHECK -ErrorAction SilentlyContinue
     Remove-Item Env:\AFL_NO_UI -ErrorAction SilentlyContinue
-    Remove-Item Env:\AFL_MAX_FILE -ErrorAction SilentlyContinue
 }
 
 $findingFiles = Get-ChildItem -LiteralPath $findingsDirectory -Recurse -File |

@@ -28,6 +28,11 @@ exact-candidate evidence below is complete.
 - A single fail-closed V1 verifier that distinguishes deterministic engineering
   readiness from PostgreSQL 19 GA, endurance, performance, pilot, recovery,
   game-day and accountable approval evidence for one immutable commit.
+- A source-controlled GitHub governance contract that requires 35 named status
+  checks, protected `main`, fresh independent review, self-review-protected
+  candidate/publication environments, the dependency graph, vulnerability
+  alerts, automated security fixes and private vulnerability reporting; both
+  release paths verify the live settings through the GitHub API.
 
 The detailed evidence and commands are in the
 [hardening programme](hardening-programme.md),
@@ -52,6 +57,7 @@ The final local verification on 2026-08-04 produced:
 | Provider candidate packaging | 31 NuGet packages and 29 symbol packages verified |
 | Candidate SBOM/provenance smoke | 60 artifact hashes and 317 components/packages verified in both SBOM formats |
 | Repository gates | Solution layout, documentation links, workflow YAML, PowerShell syntax, Action pins, supply chain and PostgreSQL 19 programme passed |
+| Live repository governance | Settings verified: 35 required checks, strict `main`, two protected environments, SPDX 2.3 dependency graph with 633 packages, alerts, automated fixes and private reporting; declared environment secrets remain to be provisioned |
 
 This snapshot validates the tooling and current working tree. It is not
 immutable release evidence: the final candidate must be committed, clean, and
@@ -59,24 +65,32 @@ rerun by the required workflows at that exact commit.
 
 ## Gates that must remain open
 
-1. Freeze the final commit, versions and package hashes.
-2. Run the complete manual `build.yml` evidence workflow at that commit,
+1. Add at least one additional eligible human reviewer. The repository
+   currently has one collaborator, and prevent-self-review correctly blocks
+   owner-initiated candidate and publication deployments until another reviewer
+   is available.
+2. Add a read-only `V1_GOVERNANCE_TOKEN` to both protected environments with
+   Administration read, Actions read, Contents read and Environments read so
+   exact-candidate and pre-publication jobs can verify the live settings and
+   required secret names.
+3. Freeze the final commit, versions and package hashes.
+4. Run the complete manual `build.yml` evidence workflow at that commit,
    including PostgreSQL 15–19, PgBouncer, NativeAOT/trimming, connector,
    authentication, stress and packaging jobs.
-3. Run the complete manual `performance.yml` reference-machine workflow at that
+5. Run the complete manual `performance.yml` reference-machine workflow at that
    commit and archive its integrity-bound result set.
-4. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
+6. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
    workflows at the same candidate commit. Any candidate code change restarts
    the applicable run.
-5. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
+7. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
    PostgreSQL 19 support as stable before the GA record passes.
-6. Complete the
+8. Complete the
    [independent release review](release-review-handoff.md), application pilots,
    backup/restore and rollback rehearsal, incident game day, security/SLO owner
    approval and maintainer sign-off.
-7. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
+9. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
    SHA-256-bound evidence directory.
-8. Enable stable publication one dependency-ordered product family at a time:
+10. Enable stable publication one dependency-ordered product family at a time:
    Provider, Streams, Sync/Live, Control Plane, then Continuous Graph preview.
 
 Until every applicable item is complete for one immutable commit, all

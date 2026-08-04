@@ -46,16 +46,64 @@ owners, environments and failure actions.
 2. documentation links and generated-source contract;
 3. exact public-API budgets for all six product families;
 4. pinned workflow actions and supply-chain source controls;
-5. the current digest-pinned PostgreSQL 19 programme record;
-6. complete, non-empty benchmark coverage for every `[Benchmark]` method;
-7. allocation, reference latency and multiplexing performance budgets;
-8. the six-meter, 60-instrument telemetry contract;
-9. all 14 reference SLOs, alerts, dashboard panels and Collector safety
+5. the declared protected-branch, required-check and deployment-environment
+   governance contract;
+6. the current digest-pinned PostgreSQL 19 programme record;
+7. complete, non-empty benchmark coverage for every `[Benchmark]` method;
+8. allocation, reference latency and multiplexing performance budgets;
+9. the six-meter, 60-instrument telemetry contract;
+10. all 14 reference SLOs, alerts, dashboard panels and Collector safety
    controls; and
-10. fail-closed publication policy.
+11. fail-closed publication policy.
 
 The normal build still compiles, tests and packages the full solution. This
 gate validates the production contracts around those outputs.
+
+## GitHub governance gate
+
+[`eng/v1-github-governance.json`](../../eng/v1-github-governance.json)
+defines the repository settings that cannot live in a workflow file. Source
+mode verifies that every required workflow is bound to the expected
+environment and that the contract remains fail closed:
+
+```powershell
+./eng/verify-github-governance.ps1
+```
+
+Remote mode queries GitHub and is mandatory inside both the exact-candidate
+and tag-release paths:
+
+```powershell
+./eng/verify-github-governance.ps1 -Mode Remote -Repository owner/repository
+```
+
+The active `main` ruleset must prevent deletion and force pushes, require a
+pull request, require a fresh independent approval after the last push,
+require resolved review threads, and require every V1 build, integration,
+security, fuzzing, website and observability check against the latest `main`.
+The same remote gate requires an SPDX 2.3 dependency graph with package
+evidence, vulnerability alerts, active automated security fixes, and private
+vulnerability reporting.
+
+Configure `v1-candidate-readiness` with at least one eligible reviewer,
+prevent self-review, and allow only protected branches. Configure
+`package-production` with the same reviewer protection and custom deployment
+patterns for the six release-tag prefixes. Repository administrators must
+create these settings before dispatching a candidate. Both environments must
+hold a `V1_GOVERNANCE_TOKEN` secret whose fine-grained repository permissions
+include Administration read, Actions read, Contents read and Environments
+read; the workflows use it only inside their protected environment to inspect
+settings and secret names, never secret values, and never write settings.
+Merely naming an environment in YAML is not protection: GitHub can create a
+referenced environment without reviewer rules, so both release workflows
+verify the live API state before accepting evidence or publishing.
+
+As of 2026-08-04 the live ruleset, both environments, all six tag policies and
+the repository security features satisfy their settings checks. The full
+remote contract remains fail closed until its declared environment secrets are
+provisioned. The repository also needs another eligible human reviewer: its
+only current collaborator is the owner, and prevent-self-review intentionally
+leaves owner-initiated deployments waiting for an independent approval.
 
 ## Reference performance gate
 
@@ -164,8 +212,9 @@ Run the final gate from a clean checkout at that exact commit:
 ```
 
 For the publication-grade run, configure a protected
-`v1-candidate-readiness` GitHub environment with required reviewers and the
-`V1_APPROVAL_EVIDENCE_BASE64` secret. The secret is a base64-encoded ZIP whose
+`v1-candidate-readiness` GitHub environment with required reviewers, the
+read-only `V1_GOVERNANCE_TOKEN` secret described above, and the
+`V1_APPROVAL_EVIDENCE_BASE64` secret. The approval secret is a base64-encoded ZIP whose
 `approvals` directory contains the nine exact approval JSON files. Dispatch
 `.github/workflows/v1-candidate-readiness.yml` with the candidate SHA and the
 four successful workflow run IDs. It queries GitHub for every run, downloads
@@ -256,5 +305,8 @@ As of 2026-08-04, deterministic engineering work can be verified locally, but
 stable V1 remains blocked by external facts: PostgreSQL 19 GA is not yet the
 recorded milestone, the exact final candidate workflows have not run, the
 72-hour/24-hour endurance artifacts do not yet exist for that SHA, and the
-independent pilots/rehearsals/approvals are not complete. Publication switches
-must remain disabled until candidate mode passes.
+independent pilots/rehearsals/approvals are not complete. The live repository
+settings satisfy the declared protection policy, but the required environment
+secrets and a second eligible reviewer are still needed before either
+protected environment can complete an owner-initiated deployment. Publication
+switches must remain disabled until candidate mode passes.

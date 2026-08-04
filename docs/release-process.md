@@ -62,10 +62,27 @@ matching tag after `verify-release-gates.ps1` succeeds.
 
 The publish job downloads the artifact created by the verified job, records a
 GitHub build-provenance attestation, and runs in the `package-production`
-environment. Repository administrators must configure that environment with
-required reviewers, restrict deployment branches/tags, and scope
-`NUGET_API_KEY` and `NPM_TOKEN` to it. NuGet and npm credentials must not be
-available to pull-request or candidate jobs.
+environment. That environment is configured with prevent-self-review and the
+six allowed release-tag patterns. Before the first candidate, add another
+eligible human reviewer; the repository currently has only its owner, so an
+owner-triggered deployment cannot self-approve. Scope `NUGET_API_KEY` and
+`NPM_TOKEN` only to `package-production`; they must not be available to
+pull-request or candidate jobs. Store a fine-grained
+`V1_GOVERNANCE_TOKEN` with Administration read, Actions read, Contents read
+and Environments read in both protected environments. It is used only for the
+fail-closed live settings and required-secret-name check; no workflow uses it
+to read secret values or change repository settings.
+
+The exact live settings are not informal setup advice. They are declared in
+`eng/v1-github-governance.json` and verified through the GitHub API by
+`verify-github-governance.ps1 -Mode Remote`. The same contract requires the
+`main` ruleset, all 35 V1 status checks, fresh independent review after the
+last push, resolved review threads, the protected
+`v1-candidate-readiness` environment, and the six allowed production tag
+patterns. It also requires the dependency graph, vulnerability alerts,
+automated security fixes and private vulnerability reporting. A missing or
+unprotected environment, or a disabled repository security feature, makes both
+candidate acceptance and tagged publication fail.
 
 The workflow packages only the selected family, and each package project is
 listed explicitly in the manifest. Candidate package creation uses

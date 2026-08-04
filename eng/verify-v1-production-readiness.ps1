@@ -145,6 +145,8 @@ if ($LASTEXITCODE -ne 0 -or $trackedStatus.Count -ne 0)
     throw 'Candidate verification requires a clean tracked worktree at the exact candidate commit.'
 }
 
+& (Join-Path $PSScriptRoot 'verify-github-governance.ps1') -Mode Remote
+
 $resolvedEvidence = (Resolve-Path -LiteralPath $EvidencePath).Path
 $evidenceRoot = Split-Path -Parent $resolvedEvidence
 $evidence = Get-Content -LiteralPath $resolvedEvidence -Raw | ConvertFrom-Json

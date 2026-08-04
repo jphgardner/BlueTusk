@@ -50,6 +50,18 @@ jobs:
           ref: ${{ inputs.candidate_sha }}
           fetch-depth: 0
 
+      - name: Verify protected repository and deployment governance
+        shell: pwsh
+        env:
+          V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
+            throw 'The protected environment has no V1_GOVERNANCE_TOKEN secret.'
+          }
+          ./eng/verify-github-governance.ps1 `
+            -Mode Remote `
+            -Token $env:V1_GOVERNANCE_TOKEN
+
       - name: Restore protected approval evidence
         shell: pwsh
         env:

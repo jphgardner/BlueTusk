@@ -1,0 +1,106 @@
+{
+  "schemaVersion": 1,
+  "repository": "jphgardner/BlueTusk",
+  "protectedBranch": "main",
+  "repositorySecurity": {
+    "dependencyGraph": true,
+    "minimumDependencyGraphPackages": 1,
+    "vulnerabilityAlerts": true,
+    "automatedSecurityFixes": true,
+    "privateVulnerabilityReporting": true
+  },
+  "ruleset": {
+    "name": "main",
+    "enforcement": "active",
+    "requiredRuleTypes": [
+      "deletion",
+      "non_fast_forward",
+      "pull_request",
+      "required_status_checks"
+    ],
+    "pullRequest": {
+      "minimumApprovals": 1,
+      "dismissStaleReviewsOnPush": true,
+      "requireLastPushApproval": true,
+      "requireReviewThreadResolution": true
+    },
+    "strictRequiredStatusChecksPolicy": true,
+    "requiredStatusChecks": [
+      "GitGuardian Security Checks",
+      "codeql",
+      "dependency-review",
+      "build-and-test (ubuntu-latest)",
+      "build-and-test (windows-latest)",
+      "Angular website and complete documentation",
+      "Prometheus and OpenTelemetry production config",
+      "Provider core trimming and NativeAOT (linux-x64)",
+      "Provider core trimming and NativeAOT (win-x64)",
+      "PostgreSQL 15 live matrix",
+      "PostgreSQL 16 live matrix",
+      "PostgreSQL 17 live matrix",
+      "PostgreSQL 18 live matrix",
+      "PostgreSQL 19 live matrix",
+      "Redis Streams state-store conformance",
+      "NATS JetStream Sync recovery",
+      "OpenSearch Sync recovery and rebuild",
+      "pgvector dedicated extension image",
+      "PostGIS dedicated extension image",
+      "TimescaleDB dedicated extension image",
+      "PgBouncer session and transaction pooling",
+      "PostgreSQL 18 en_GB.UTF-8 / Europe/London",
+      "PostgreSQL 18 de_DE.UTF-8 / America/New_York",
+      "PostgreSQL 18 primary/standby topology",
+      "PostgreSQL 18 native OAUTHBEARER",
+      "PostgreSQL 18 GSSAPI/Kerberos",
+      "fuzz (protocol-frames)",
+      "fuzz (authentication)",
+      "fuzz (pgoutput)",
+      "fuzz (binary-copy)",
+      "fuzz (array-codec)",
+      "fuzz (range-codec)",
+      "fuzz (composite-codec)",
+      "fuzz (streams-envelope)",
+      "fuzz (live-resume-token)"
+    ]
+  },
+  "environments": [
+    {
+      "name": "v1-candidate-readiness",
+      "workflow": ".github/workflows/v1-candidate-readiness.yml",
+      "minimumConfiguredReviewers": 1,
+      "preventSelfReview": true,
+      "requiredSecrets": [
+        "V1_GOVERNANCE_TOKEN",
+        "V1_APPROVAL_EVIDENCE_BASE64"
+      ],
+      "deploymentBranchPolicy": {
+        "protectedBranches": true,
+        "customBranchPolicies": false,
+        "requiredPatterns": []
+      }
+    },
+    {
+      "name": "package-production",
+      "workflow": ".github/workflows/release-product-family.yml",
+      "minimumConfiguredReviewers": 1,
+      "preventSelfReview": true,
+      "requiredSecrets": [
+        "V1_GOVERNANCE_TOKEN",
+        "NUGET_API_KEY",
+        "NPM_TOKEN"
+      ],
+      "deploymentBranchPolicy": {
+        "protectedBranches": false,
+        "customBranchPolicies": true,
+        "requiredPatterns": [
+          "provider-v*",
+          "streams-v*",
+          "sync-v*",
+          "live-v*",
+          "control-plane-v*",
+          "continuous-graph-v*"
+        ]
+      }
+    }
+  ]
+}
