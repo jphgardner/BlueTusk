@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "description": "Cold process wall-clock and second-pass managed allocation budgets for the offline provider-core smoke.",
+  "modes": {
+    "trimmed": {
+      "maximumDeployableBytes": 50000000,
+      "maximumStartupMilliseconds": 2000,
+      "maximumManagedAllocatedBytes": 2000000
+    },
+    "nativeAot": {
+      "maximumDeployableBytes": 25000000,
+      "maximumStartupMilliseconds": 1000,
+      "maximumManagedAllocatedBytes": 2000000
+    }
+  },
+  "observed": {
+    "win-x64": {
+      "recordedAtUtc": "2026-08-04T02:37:09Z",
+      "framework": ".NET 10.0.9",
+      "os": "Microsoft Windows 10.0.26200",
+      "trimmed": {
+        "deployableBytes": 21993850,
+        "startupMilliseconds": 248.994,
+        "managedAllocatedBytes": 327144
+      },
+      "nativeAot": {
+        "deployableBytes": 5783552,
+        "startupMilliseconds": 18.327,
+        "managedAllocatedBytes": 343392
+      }
+    }
+  }
+}

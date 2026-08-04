@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Runtime.Serialization;
 
@@ -44,7 +45,11 @@ public sealed class BlueTuskEnumValueCodec : BlueTuskCodec<BlueTuskEnumValue>
 }
 
 /// <summary>Maps a CLR enum to exact PostgreSQL enum labels.</summary>
-public sealed class BlueTuskEnumCodec<TEnum> : BlueTuskCodec<TEnum>
+public sealed class BlueTuskEnumCodec<
+    [DynamicallyAccessedMembers(
+        DynamicallyAccessedMemberTypes.PublicFields |
+        DynamicallyAccessedMemberTypes.PublicProperties)]
+TEnum> : BlueTuskCodec<TEnum>
     where TEnum : struct, Enum
 {
     private readonly Dictionary<TEnum, string> _labelsByValue;

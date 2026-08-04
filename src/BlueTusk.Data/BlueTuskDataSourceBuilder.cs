@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Net;
 using System.Net.Security;
 using System.Security.Cryptography.X509Certificates;
@@ -33,7 +34,11 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
         return this;
     }
 
-    public BlueTuskDataSourceBuilder MapEnum<TEnum>(
+    public BlueTuskDataSourceBuilder MapEnum<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicFields |
+            DynamicallyAccessedMemberTypes.PublicProperties)]
+    TEnum>(
         string postgresTypeName,
         IReadOnlyDictionary<TEnum, string>? labels = null)
         where TEnum : struct, Enum
@@ -43,7 +48,12 @@ public sealed class BlueTuskDataSourceBuilder : IBlueTuskPluginContext
         return this;
     }
 
-    public BlueTuskDataSourceBuilder MapComposite<T>(string postgresTypeName)
+    public BlueTuskDataSourceBuilder MapComposite<
+        [DynamicallyAccessedMembers(
+            DynamicallyAccessedMemberTypes.PublicConstructors |
+            DynamicallyAccessedMemberTypes.PublicProperties |
+            DynamicallyAccessedMemberTypes.PublicFields)]
+    T>(string postgresTypeName)
     {
         var typeName = BlueTuskTypeName.Parse(postgresTypeName);
         Types.Register(typeName.Schema, typeName.Name, new BlueTuskCompositeCodec<T>());

@@ -5,6 +5,8 @@ namespace BlueTusk.TypeSystem;
 /// <summary>Composes a PostgreSQL range codec from its catalogue-discovered subtype codec.</summary>
 public sealed class BlueTuskRangeCodec<T> :
     BlueTuskCodec<BlueTuskRange<T>>,
+    IBlueTuskRangeCodecFactory,
+    IBlueTuskArrayRangeCodecFactory,
     IBlueTuskMultirangeCodecFactory
 {
     private const byte EmptyFlag = 0x01;
@@ -69,6 +71,22 @@ public sealed class BlueTuskRangeCodec<T> :
     IBlueTuskCodec IBlueTuskMultirangeCodecFactory.CreateMultirangeCodec(
         BlueTuskTypeDescriptor rangeType) =>
         new BlueTuskMultirangeCodec<T>(rangeType, this);
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskDynamicRangeCodecFactory.Create(
+            typeof(BlueTuskRange<T>),
+            subtype,
+            subtypeCodec);
+
+    IBlueTuskCodec IBlueTuskArrayRangeCodecFactory.CreateArrayRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskDynamicRangeCodecFactory.Create(
+            typeof(BlueTuskRange<T>[]),
+            subtype,
+            subtypeCodec);
 
     private BlueTuskRange<T> ReadBinary(
         ref BlueTuskReader reader,

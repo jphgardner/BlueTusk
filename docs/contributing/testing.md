@@ -31,6 +31,25 @@ dotnet test BlueTusk.slnx -c Release --no-build --no-restore
 dotnet pack BlueTusk.slnx -c Release --no-build --no-restore --output artifacts/packages
 ```
 
+Provider-core trimming and NativeAOT are separate publish gates because an
+ordinary build does not run the linker or native compiler. On Windows x64:
+
+```powershell
+dotnet restore tests/BlueTusk.TrimSmoke/BlueTusk.TrimSmoke.csproj -r win-x64
+dotnet restore tests/BlueTusk.NativeAotSmoke/BlueTusk.NativeAotSmoke.csproj -r win-x64
+./eng/verify-provider-core-publish.ps1 -RuntimeIdentifier win-x64 -NoRestore
+```
+
+The verifier executes both published applications, applies the checked-in
+deployable-size, cold-start and second-pass managed-allocation budgets, and
+writes an evidence report under
+`artifacts/provider-core-smoke/win-x64/report.json`. Deployable size excludes
+optional PDB and XML documentation files while the report retains their bytes
+separately.
+Use `-SkipPublish` only to remeasure already published outputs; CI always
+publishes from source. The required CI matrix runs both `win-x64` and
+`linux-x64`.
+
 The documentation check validates every repository-local link in every tracked
 Markdown file on both Windows and Linux. External links remain a release-review
 responsibility because network availability must not make the normal build

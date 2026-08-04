@@ -4,7 +4,6 @@ using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Data;
 using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
-using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace BlueTusk.EntityFrameworkCore.Tests;

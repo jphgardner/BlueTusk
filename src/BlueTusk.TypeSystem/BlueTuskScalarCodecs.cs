@@ -92,8 +92,15 @@ public sealed class BlueTuskInt16Codec : BlueTuskCodec<short>
         new($"PostgreSQL {type.QualifiedName} binary values must contain exactly {width} bytes.");
 }
 
-public sealed class BlueTuskInt64Codec : BlueTuskCodec<long>
+public sealed class BlueTuskInt64Codec :
+    BlueTuskCodec<long>,
+    IBlueTuskRangeCodecFactory
 {
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<long>.Create(subtype, subtypeCodec);
+
     public override long ReadTyped(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,

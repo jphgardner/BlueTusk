@@ -4,6 +4,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using System.Globalization;
+using System.Runtime.CompilerServices;
 using System.Text;
 using BlueTusk.Client;
 using BlueTusk.Protocol;
@@ -270,7 +271,17 @@ public sealed class BlueTuskDataReader : DbDataReader
     public override string GetDataTypeName(int ordinal) =>
         BlueTuskValueDecoder.GetDataTypeName(_types, GetField(ordinal).TypeOid);
 
-    public override Type GetFieldType(int ordinal) => BlueTuskValueDecoder.GetFieldType(_types, GetField(ordinal));
+    [return: DynamicallyAccessedMembers(
+        DynamicallyAccessedMemberTypes.PublicFields |
+        DynamicallyAccessedMemberTypes.PublicProperties)]
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2073",
+        Justification =
+            "DbDataReader requires this annotation, but provider field types are runtime " +
+            "catalogue metadata and BlueTusk does not reflect over the returned Type.")]
+    public override Type GetFieldType(int ordinal) =>
+        BlueTuskValueDecoder.GetFieldType(_types, GetField(ordinal));
 
     public override object GetValue(int ordinal)
     {
@@ -313,6 +324,12 @@ public sealed class BlueTuskDataReader : DbDataReader
         return ConvertFieldValue<T>(value);
     }
 
+    [UnconditionalSuppressMessage(
+        "Aot",
+        "IL3050",
+        Justification =
+            "The dynamic conversion fallback is reached only when dynamic code is available; " +
+            "NativeAOT supports direct arrays and the explicitly rooted common conversions.")]
     private static T ConvertFieldValue<T>(object value)
     {
         if (value is DBNull)
@@ -327,13 +344,60 @@ public sealed class BlueTuskDataReader : DbDataReader
 
         if (value is Array array && typeof(T).IsArray)
         {
-            return (T)(object)ConvertArray(array, typeof(T));
+            if (typeof(T) == typeof(decimal[]))
+            {
+                return (T)(object)ConvertOneDimensionalArray<decimal>(array);
+            }
+
+            if (typeof(T) == typeof(TimeOnly[]))
+            {
+                return (T)(object)ConvertOneDimensionalArray<TimeOnly>(array);
+            }
+
+            if (typeof(T) == typeof(TimeSpan[]))
+            {
+                return (T)(object)ConvertOneDimensionalArray<TimeSpan>(array);
+            }
+
+            if (!RuntimeFeature.IsDynamicCodeSupported)
+            {
+                throw new NotSupportedException(
+                    $"NativeAOT cannot dynamically convert {array.GetType().FullName} to " +
+                    $"{typeof(T).FullName}. Request the codec-native array type, or use a " +
+                    "one-dimensional decimal[], TimeOnly[] or TimeSpan[] conversion.");
+            }
+
+            return (T)(object)ConvertArrayDynamic(array, typeof(T));
         }
 
         return (T)ConvertFieldValue(value, typeof(T));
     }
 
-    private static Array ConvertArray(Array value, Type targetType)
+    private static TElement[] ConvertOneDimensionalArray<TElement>(Array value)
+    {
+        if (value.Rank != 1 || value.GetLowerBound(0) != 0)
+        {
+            throw new NotSupportedException(
+                $"The statically rooted {typeof(TElement).Name}[] conversion requires a " +
+                "one-dimensional array with the standard PostgreSQL lower bound of 1.");
+        }
+
+        var result = new TElement[value.Length];
+        for (var index = 0; index < result.Length; index++)
+        {
+            var item = value.GetValue(index) ??
+                throw new InvalidCastException(
+                    $"A database NULL cannot be read as {typeof(TElement).FullName}.");
+            result[index] = ConvertFieldValue<TElement>(item);
+        }
+
+        return result;
+    }
+
+    [RequiresDynamicCode(
+        "Converting to an array type selected at runtime requires dynamic code. " +
+        "NativeAOT supports codec-native arrays and common one-dimensional conversions.")]
+    private static Array ConvertArrayDynamic(Array value, Type targetType)
     {
         if (targetType.GetArrayRank() != value.Rank)
         {

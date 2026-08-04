@@ -41,6 +41,10 @@ provider.
 
 Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
 
+[NativeAOT and trimming](nativeaot.md) documents the provider-core publish
+gate, source-generated mapping path, measured size/startup/allocation report,
+and explicit runtime-only feature boundaries.
+
 ```csharp
 await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
 await using var command = dataSource.CreateCommand("SELECT $1::int4 + $2::int4");

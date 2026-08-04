@@ -10,7 +10,7 @@ themselves, a production-readiness claim.
 | Priority | Current position | Evidence required to close | Status |
 | --- | --- | --- | --- |
 | 1. Minimal EF↔Data SPI | EF now consumes an internal Data-owned contract for connection/data-source creation, ownership, immutable type-registry snapshots, capabilities, admin connections, catalogue reload and diagnostics. Concrete types remain only at the public configuration boundary. | Contract tests, a source architecture guard, EF ownership tests, zero-warning build and documentation. | Complete |
-| 2. NativeAOT and trimming | The provider core has not yet passed trimmed or NativeAOT publish gates. Reflection-dependent features have not been fully classified. | `PublishTrimmed` and `PublishAot` smoke applications, correct annotations/source generation, unsupported-feature diagnostics, CI, startup/allocation/package-size baselines. | Open |
+| 2. NativeAOT and trimming | Transport through Data plus the required extension-abstraction dependency now pass full-trim and NativeAOT publishes. Runtime-selected shapes have explicit boundaries. | `PublishTrimmed` and `PublishAot` smoke applications, correct annotations/source generation, unsupported-feature diagnostics, Windows/Linux CI, startup/allocation/deployable-size baselines. | Complete |
 | 3. Multiplexing hardening | Bounded multiplexing, conservative affinity routing and scheduler metrics exist. The complete failure/fairness/session-state matrix and current comparative P95/P99 evidence remain open. | Fairness, exhaustion, cancellation, timeout, isolation, disposal/recovery and PgBouncer tests plus BlueTusk non-multiplexed and Npgsql comparisons. | Partial |
 | 4. Coverage-guided fuzzing | Parser and malformed-input unit tests exist, but there is no coverage-guided harness or checked-in minimized corpus. | Bounded fuzz targets for protocol, authentication, pgoutput, COPY, structured codecs, Streams envelopes and resume tokens; CI smoke and scheduled run. | Open |
 | 5. Release evidence | Reproducible Streams 72-hour and Sync 24-hour harnesses and fail-closed report verifiers exist. Exact-candidate reports have not been completed and archived. | Reports tied to commit, package hashes, runtime, OS and image digests, including process, network, storage, credential, failover, clock and minor-upgrade faults. | Open |
@@ -28,9 +28,13 @@ present.
    `IProviderServices`, `IProviderConnection` and `IProviderDataSource`
    assembly-internal. EF may mention concrete provider types only in its public
    `UseBlueTusk` overloads. Decision: [ADR 0017](architecture/decisions/0017-internal-ef-data-provider-spi.md).
-2. **NativeAOT and trimming.** Start with Transport, Protocol, Security,
-   TypeSystem, Client, Diagnostics and Data. Add smoke applications and measured
-   baselines before deciding whether a slim builder is justified.
+2. **NativeAOT and trimming — complete.** Transport, Protocol, Security,
+   TypeSystem, Client, Diagnostics, Data, and the required extension abstraction
+   now carry trimming/AOT contracts. Executable smoke applications cover the
+   linker and native compiler, common arrays and ranges, source-generated and
+   reflection composites, startup, allocation, and deployable size. Unsupported
+   runtime-selected shapes fail explicitly. The measured results do not justify
+   a slim builder yet.
 3. **Multiplexing and ADO.NET behaviour.** Complete the scheduler/session
    hardening matrix first, then use the same fixtures to publish the ADO.NET
    compatibility table and comparative performance record. ADR 0005 remains in
@@ -63,3 +67,17 @@ dotnet build BlueTusk.slnx --no-restore --configuration Release
 Live database lifecycle tests additionally require
 `BLUETUSK_TEST_CONNECTION_STRING`. A skipped live test does not count as
 external production evidence.
+
+The provider-core NativeAOT/trimming slice is reproducible on Windows x64 with:
+
+```powershell
+dotnet restore tests/BlueTusk.TrimSmoke/BlueTusk.TrimSmoke.csproj -r win-x64
+dotnet restore tests/BlueTusk.NativeAotSmoke/BlueTusk.NativeAotSmoke.csproj -r win-x64
+./eng/verify-provider-core-publish.ps1 -RuntimeIdentifier win-x64 -NoRestore
+dotnet test tests/BlueTusk.TypeSystem.Tests/BlueTusk.TypeSystem.Tests.csproj `
+  --configuration Release `
+  --filter "FullyQualifiedName~BlueTuskRangeCodecTests|FullyQualifiedName~BlueTuskArrayCodecTests"
+```
+
+CI runs the equivalent `win-x64` and `linux-x64` publish matrix and archives the
+measurement reports.

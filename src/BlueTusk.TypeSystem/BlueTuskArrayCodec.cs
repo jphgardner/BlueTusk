@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace BlueTusk.TypeSystem;
@@ -12,6 +14,7 @@ public sealed class BlueTuskArrayCodec :
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private readonly BlueTuskTypeDescriptor _elementType;
     private readonly IBlueTuskCodec _elementCodec;
+    private readonly IBlueTuskArrayFactory? _arrayFactory;
 
     public BlueTuskArrayCodec(
         BlueTuskTypeDescriptor elementType,
@@ -19,7 +22,8 @@ public sealed class BlueTuskArrayCodec :
     {
         _elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         _elementCodec = elementCodec ?? throw new ArgumentNullException(nameof(elementCodec));
-        ClrType = elementCodec.ClrType.MakeArrayType();
+        _arrayFactory = elementCodec as IBlueTuskArrayFactory;
+        ClrType = ResolveArrayClrType(elementCodec, _arrayFactory);
     }
 
     public Type ClrType { get; }
@@ -115,7 +119,7 @@ public sealed class BlueTuskArrayCodec :
 
         if (rank == 0)
         {
-            return Array.CreateInstance(_elementCodec.ClrType, 0);
+            return CreateArray([0], [0]);
         }
 
         var lengths = new int[rank];
@@ -139,7 +143,7 @@ public sealed class BlueTuskArrayCodec :
             }
         }
 
-        var result = Array.CreateInstance(_elementCodec.ClrType, lengths, lowerBounds);
+        var result = CreateArray(lengths, lowerBounds);
         PopulateBinary(ref reader, result, checked((int)elementCount), flags != 0, type);
         return result;
     }
@@ -190,13 +194,13 @@ public sealed class BlueTuskArrayCodec :
         var parsed = BlueTuskArrayTextParser.Parse(reader.ReadRemainingUtf8(), _elementType.Delimiter);
         if (parsed.Lengths.Length == 0)
         {
-            return Array.CreateInstance(_elementCodec.ClrType, 0);
+            return CreateArray([0], [0]);
         }
 
         var lowerBounds = parsed.LowerBounds
             .Select(lowerBound => checked(lowerBound - 1))
             .ToArray();
-        var result = Array.CreateInstance(_elementCodec.ClrType, parsed.Lengths, lowerBounds);
+        var result = CreateArray(parsed.Lengths, lowerBounds);
         var indexes = GetLowerBounds(result);
         foreach (var item in parsed.Elements)
         {
@@ -438,4 +442,59 @@ public sealed class BlueTuskArrayCodec :
                 $"PostgreSQL arrays support between 0 and {MaximumDimensions} dimensions; {rank} were supplied.");
         }
     }
+
+    [UnconditionalSuppressMessage(
+        "Aot",
+        "IL3050",
+        Justification =
+            "The dynamic fallback is guarded by RuntimeFeature.IsDynamicCodeSupported; " +
+            "NativeAOT requires the statically typed BlueTuskCodec<T> array factory.")]
+    private static Type ResolveArrayClrType(
+        IBlueTuskCodec elementCodec,
+        IBlueTuskArrayFactory? arrayFactory)
+    {
+        if (arrayFactory is not null)
+        {
+            return arrayFactory.ArrayClrType;
+        }
+
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            throw UnsupportedCustomCodec(elementCodec);
+        }
+
+        return elementCodec.ClrType.MakeArrayType();
+    }
+
+    [UnconditionalSuppressMessage(
+        "Aot",
+        "IL3050",
+        Justification =
+            "The dynamic fallback is guarded by RuntimeFeature.IsDynamicCodeSupported; " +
+            "NativeAOT requires the statically typed BlueTuskCodec<T> array factory.")]
+    private Array CreateArray(
+        ReadOnlySpan<int> lengths,
+        ReadOnlySpan<int> lowerBounds)
+    {
+        if (_arrayFactory is not null)
+        {
+            return _arrayFactory.CreateArray(lengths, lowerBounds);
+        }
+
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            throw UnsupportedCustomCodec(_elementCodec);
+        }
+
+        return Array.CreateInstance(
+            _elementCodec.ClrType,
+            lengths.ToArray(),
+            lowerBounds.ToArray());
+    }
+
+    private static NotSupportedException UnsupportedCustomCodec(IBlueTuskCodec elementCodec) =>
+        new(
+            $"NativeAOT array support requires element codec " +
+            $"'{elementCodec.GetType().FullName}' to derive from BlueTuskCodec<T>. " +
+            "Direct IBlueTuskCodec implementations require a JIT deployment.");
 }

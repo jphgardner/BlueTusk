@@ -2,9 +2,16 @@ using System.Globalization;
 
 namespace BlueTusk.TypeSystem;
 
-public sealed class BlueTuskDateCodec : BlueTuskCodec<DateOnly>
+public sealed class BlueTuskDateCodec :
+    BlueTuskCodec<DateOnly>,
+    IBlueTuskRangeCodecFactory
 {
     private static readonly DateOnly Epoch = new(2000, 1, 1);
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<DateOnly>.Create(subtype, subtypeCodec);
 
     public override DateOnly ReadTyped(
         ref BlueTuskReader reader,
@@ -153,9 +160,16 @@ public sealed class BlueTuskTimeCodec : BlueTuskCodec<TimeSpan>
         new($"PostgreSQL {type.QualifiedName} binary values must contain exactly {width} bytes.");
 }
 
-public sealed class BlueTuskTimestampCodec : BlueTuskCodec<DateTime>
+public sealed class BlueTuskTimestampCodec :
+    BlueTuskCodec<DateTime>,
+    IBlueTuskRangeCodecFactory
 {
     private static readonly DateTime Epoch = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<DateTime>.Create(subtype, subtypeCodec);
 
     public override DateTime ReadTyped(
         ref BlueTuskReader reader,
@@ -227,8 +241,15 @@ public sealed class BlueTuskTimestampCodec : BlueTuskCodec<DateTime>
                 : (value.Ticks - Epoch.Ticks) / TimeSpan.TicksPerMicrosecond);
 }
 
-public sealed class BlueTuskTimestampWithTimeZoneCodec : BlueTuskCodec<DateTimeOffset>
+public sealed class BlueTuskTimestampWithTimeZoneCodec :
+    BlueTuskCodec<DateTimeOffset>,
+    IBlueTuskRangeCodecFactory
 {
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<DateTimeOffset>.Create(subtype, subtypeCodec);
+
     public override DateTimeOffset ReadTyped(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,

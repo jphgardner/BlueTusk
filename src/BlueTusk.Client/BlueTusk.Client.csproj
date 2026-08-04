@@ -10,6 +10,8 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
+    <IsTrimmable>true</IsTrimmable>
+    <IsAotCompatible>true</IsAotCompatible>
     <Description>PostgreSQL connection, authentication, session, pooling, and command execution primitives.</Description>
   </PropertyGroup>
 

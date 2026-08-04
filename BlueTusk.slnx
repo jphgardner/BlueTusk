@@ -141,6 +141,10 @@
     <Project Path="tests/BlueTusk.Replication.PgOutput.Tests/BlueTusk.Replication.PgOutput.Tests.csproj" />
     <Project Path="tests/BlueTusk.Replication.Tests/BlueTusk.Replication.Tests.csproj" />
   </Folder>
+  <Folder Name="/Provider/Tests/Smoke/">
+    <Project Path="tests/BlueTusk.NativeAotSmoke/BlueTusk.NativeAotSmoke.csproj" />
+    <Project Path="tests/BlueTusk.TrimSmoke/BlueTusk.TrimSmoke.csproj" />
+  </Folder>
   <Folder Name="/Provider/Tooling/">
     <Project Path="tooling/BlueTusk.ProtocolInspector/BlueTusk.ProtocolInspector.csproj" />
     <Project Path="tooling/BlueTusk.SchemaInspector/BlueTusk.SchemaInspector.csproj" />

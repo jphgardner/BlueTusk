@@ -9,6 +9,7 @@ public sealed class BlueTuskRangeCodecTests
     private static readonly BlueTuskTypeId IntMultirangeId = new(90_411);
     private static readonly BlueTuskTypeId IntRangeArrayId = new(90_412);
     private static readonly BlueTuskTypeId IntMultirangeArrayId = new(90_413);
+    private static readonly BlueTuskTypeId NestedRangeId = new(90_414);
     private static readonly BlueTuskTypeId TextRangeId = new(90_420);
 
     [Fact]
@@ -29,6 +30,15 @@ public sealed class BlueTuskRangeCodecTests
         Assert.Equal(IntRangeId, rangeType!.Id);
         Assert.True(registry.TryGetType(typeof(BlueTuskMultirange<int>), out var multirangeType, out _));
         Assert.Equal(IntMultirangeId, multirangeType!.Id);
+    }
+
+    [Fact]
+    public void Jit_catalogue_composes_a_nested_range_without_recursive_static_instantiation()
+    {
+        var registry = CreateRegistry();
+
+        Assert.True(registry.TryGetCodec(NestedRangeId, out var codec));
+        Assert.IsType<BlueTuskRangeCodec<BlueTuskRange<int>>>(codec);
     }
 
     [Fact]
@@ -199,6 +209,16 @@ public sealed class BlueTuskRangeCodecTests
                 PostgreSqlCategory = 'R',
                 RangeSubtype = BlueTuskBuiltInTypes.Text.Id,
                 RangeType = TextRangeId,
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = NestedRangeId,
+                Schema = "app",
+                Name = "nested_int_span",
+                PostgreSqlKind = 'r',
+                PostgreSqlCategory = 'R',
+                RangeSubtype = IntRangeId,
+                RangeType = NestedRangeId,
             },
         ]);
 

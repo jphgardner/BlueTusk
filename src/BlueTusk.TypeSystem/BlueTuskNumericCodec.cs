@@ -4,13 +4,20 @@ using System.Numerics;
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Encodes PostgreSQL arbitrary-precision <c>numeric</c> text and base-10000 binary values.</summary>
-public sealed class BlueTuskNumericCodec : BlueTuskCodec<BlueTuskNumeric>
+public sealed class BlueTuskNumericCodec :
+    BlueTuskCodec<BlueTuskNumeric>,
+    IBlueTuskRangeCodecFactory
 {
     private const ushort PositiveSign = 0x0000;
     private const ushort NegativeSign = 0x4000;
     private const ushort NaNSign = 0xC000;
     private const ushort PositiveInfinitySign = 0xD000;
     private const ushort NegativeInfinitySign = 0xF000;
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<BlueTuskNumeric>.Create(subtype, subtypeCodec);
 
     public static int GetMaximumBinarySize(BlueTuskNumeric value)
     {

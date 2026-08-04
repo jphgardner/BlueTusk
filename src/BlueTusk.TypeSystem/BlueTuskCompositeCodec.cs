@@ -1,3 +1,4 @@
+using System.Diagnostics.CodeAnalysis;
 using System.Reflection;
 using System.Text;
 
@@ -13,7 +14,12 @@ internal interface IBlueTuskDeferredCodec : IBlueTuskCodec
 }
 
 /// <summary>Maps a catalogue-discovered PostgreSQL composite to a CLR object.</summary>
-public sealed class BlueTuskCompositeCodec<T> : BlueTuskCodec<T>, IBlueTuskDeferredCodec
+public sealed class BlueTuskCompositeCodec<
+    [DynamicallyAccessedMembers(
+        DynamicallyAccessedMemberTypes.PublicConstructors |
+        DynamicallyAccessedMemberTypes.PublicProperties |
+        DynamicallyAccessedMemberTypes.PublicFields)]
+T> : BlueTuskCodec<T>, IBlueTuskDeferredCodec
 {
     private readonly BlueTuskRecordCodec? _recordCodec;
     private readonly IBlueTuskBoundCompositeMapping<T>? _mapping;

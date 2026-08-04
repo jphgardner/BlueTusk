@@ -183,6 +183,16 @@ PostgreSQL 19 property graph through both a prepared raw command and the typed
 EF graph API. The checked-in ShortRun reports and allocation budgets are
 regression evidence, not universal latency or throughput claims.
 
+The provider core also publishes and executes full-trim and NativeAOT offline
+smokes on Windows and Linux. The first Windows x64 observation records a
+21,993,850-byte trimmed deployment at 248.994 ms cold wall-clock and 327,144 B
+second-pass managed allocation, plus a 5,783,552-byte NativeAOT executable at
+18.327 ms and 343,392 B. This covers the provider construction/type-system path
+without a database; it is regression evidence rather than production latency
+or Npgsql-comparison evidence. The documented AOT boundary keeps common
+built-in ranges and one-dimensional arrays static and fails explicitly for
+runtime-selected unsupported shapes.
+
 The in-memory Live application gate records a 76.4 µs/221,872 B keyed diff for
 one update in a bounded 1,000-row result, 881 ns/832 B versioned replay
 serialization, and a 92.3 µs/175,060 B lifecycle that coalesces 100 relevant
