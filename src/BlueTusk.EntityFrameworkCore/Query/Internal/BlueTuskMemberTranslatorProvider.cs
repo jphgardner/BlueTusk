@@ -14,14 +14,17 @@ internal sealed class BlueTuskMemberTranslatorProvider : RelationalMemberTransla
         IDbContextOptions contextOptions)
         : base(dependencies)
     {
-        var dataSource = contextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource;
+        var typeRegistry = contextOptions
+            .FindExtension<BlueTuskOptionsExtension>()?
+            .DataSource?
+            .TypeRegistry;
         AddTranslators(
         [
             new BlueTuskCompositeMemberTranslator(
                 new BlueTuskCompositeFieldMappingResolver(
                     typeMappingSource,
                     sqlGenerationHelper,
-                    dataSource)),
+                    typeRegistry)),
             new BlueTuskStringMemberTranslator(dependencies.SqlExpressionFactory),
         ]);
     }

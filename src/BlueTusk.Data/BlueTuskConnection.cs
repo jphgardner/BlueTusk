@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using BlueTusk.Client;
 using BlueTusk.Data.Copy;
+using BlueTusk.Data.Internal;
 using BlueTusk.Data.LargeObjects;
 using BlueTusk.Data.Notifications;
 using BlueTusk.Diagnostics;
@@ -14,7 +15,7 @@ using BlueTusk.TypeSystem;
 namespace BlueTusk.Data;
 
 /// <summary>Represents a logical connection to PostgreSQL.</summary>
-public sealed class BlueTuskConnection : DbConnection
+public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 {
     private const int NotificationBufferCapacity = 1_024;
     private readonly BlueTuskConnectionPoolBase? _pool;
@@ -295,6 +296,27 @@ public sealed class BlueTuskConnection : DbConnection
         ObjectDisposedException.ThrowIf(_disposed, this);
         return _typeMetadata.ReloadAsync(Session, cancellationToken);
     }
+
+    DbConnection IProviderConnection.Instance => this;
+
+    string IProviderConnection.UnredactedConnectionString => UnredactedConnectionString;
+
+    BlueTuskTypeRegistry IProviderConnection.TypeRegistry => TypeRegistry;
+
+    ProviderCapabilities? IProviderConnection.Capabilities =>
+        ServerCapabilities is { } capabilities
+            ? new ProviderCapabilities(capabilities.SupportsSqlPgq)
+            : null;
+
+    BlueTuskDiagnosticsOptions IProviderConnection.Diagnostics => DiagnosticsOptions;
+
+    DbConnection IProviderConnection.CreateAdminConnection(string connectionString) =>
+        CreateUnpooledConnection(connectionString);
+
+    void IProviderConnection.ReloadTypes() => ReloadTypes();
+
+    ValueTask IProviderConnection.ReloadTypesAsync(CancellationToken cancellationToken) =>
+        ReloadTypesAsync(cancellationToken);
 
     internal BlueTuskTransaction? CurrentTransaction
     {

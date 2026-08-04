@@ -2,6 +2,12 @@
 
 This file tracks executable repository status. The product vision is broader; unchecked work is not implied by package names already present in the solution.
 
+The post-development V1 [hardening programme](hardening-programme.md) is now the
+release-critical path. Its first slice—the internal EF↔Data provider SPI,
+contract tests and architecture guard—is complete. NativeAOT/trimming is next;
+new product-family breadth remains paused until the current release chain has
+credible evidence.
+
 ## Real-time platform release trains
 
 - [x] Phase 0: accepted delivery, checkpoint, snapshot, spool, relay, Live security, and Sync connector decisions

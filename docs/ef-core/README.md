@@ -17,6 +17,14 @@ services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 
 The long-lived data source is the recommended application entry point: EF-created logical connections share its physical pool, configured codecs, and runtime type catalogue, while the dependency-injection container owns the data source lifetime. `UseBlueTusk` also accepts a connection string or an existing `BlueTuskConnection` for compatibility and dedicated-lifetime scenarios; directly constructed connections are unpooled.
 
+Internally, EF reaches Data only through a small assembly-private provider
+contract. That contract covers logical/data-source creation, ownership,
+type-registry snapshots, capability probing, dedicated administration
+connections, pool/catalogue lifecycle and diagnostics. It adds no public API and
+prevents query, graph and database-lifecycle services from casting or
+constructing concrete provider types. See
+[ADR 0017](../architecture/decisions/0017-internal-ef-data-provider-spi.md).
+
 Configure runtime user-defined types before registering the data source:
 
 ```csharp

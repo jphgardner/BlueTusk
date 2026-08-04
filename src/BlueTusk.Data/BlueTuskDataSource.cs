@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
+using BlueTusk.Data.Internal;
 using BlueTusk.Diagnostics;
 using BlueTusk.Extensions;
 using BlueTusk.TypeSystem;
@@ -8,7 +9,7 @@ using BlueTusk.TypeSystem;
 namespace BlueTusk.Data;
 
 /// <summary>Creates BlueTusk connections and owns their physical connection pool.</summary>
-public sealed class BlueTuskDataSource : DbDataSource
+public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
 {
     private readonly BlueTuskConnectionStringBuilder _settings;
     private readonly BlueTuskConnectionPoolBase? _pool;
@@ -205,6 +206,23 @@ public sealed class BlueTuskDataSource : DbDataSource
     public void ClearPool() => _pool?.Clear();
 
     public ValueTask ClearPoolAsync() => _pool?.ClearAsync() ?? ValueTask.CompletedTask;
+
+    DbDataSource IProviderDataSource.Instance => this;
+
+    string IProviderDataSource.UnredactedConnectionString => _connectionString;
+
+    BlueTuskTypeRegistry IProviderDataSource.TypeRegistry => TypeRegistry;
+
+    BlueTuskDiagnosticsOptions IProviderDataSource.Diagnostics => DiagnosticsOptions;
+
+    DbConnection IProviderDataSource.CreateConnection() => CreateConnection();
+
+    DbConnection IProviderDataSource.CreateAdminConnection(string connectionString) =>
+        CreateUnpooledConnection(connectionString);
+
+    void IProviderDataSource.ClearPool() => ClearPool();
+
+    ValueTask IProviderDataSource.ClearPoolAsync() => ClearPoolAsync();
 
     protected override DbConnection CreateDbConnection() =>
         new BlueTuskConnection(

@@ -17,7 +17,7 @@ internal sealed class BlueTuskMethodCallTranslatorProvider
         var compositeFieldMappingResolver = new BlueTuskCompositeFieldMappingResolver(
             dependencies.RelationalTypeMappingSource,
             sqlGenerationHelper,
-            contextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource);
+            contextOptions.FindExtension<BlueTuskOptionsExtension>()?.DataSource?.TypeRegistry);
         AddTranslators(
         [
             new BlueTuskWindowFunctionTranslator(
