@@ -43,9 +43,9 @@ retained crash inputs:
   zero failures;
 - the focused TypeSystem suite passed all 211 tests;
 - full-workspace formatting required no changes;
-- all 11 Angular tests and the production website build passed;
+- all 13 Angular tests and the production website build passed;
 - the npm audit reported zero vulnerabilities; and
-- the unified V1 engineering gate passed all 12 source gates.
+- the unified V1 engineering gate passed all 13 source gates.
 
 These results establish ordinary regression safety. They do not close the fuzz
 finding because only an independently reviewed clean coverage-guided run at the

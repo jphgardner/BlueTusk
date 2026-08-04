@@ -102,6 +102,42 @@ jobs:
           path: website/dist/website/browser
           if-no-files-found: error
 
+  candidate-packages:
+    name: Immutable all-family V1 package evidence
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Build and verify canonical V1 packages, SBOMs, and provenance
+        shell: pwsh
+        run: >-
+          ./eng/build-v1-candidate-packages.ps1
+          -Commit ${{ github.sha }}
+
+      - name: Archive immutable V1 package evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: v1-candidate-packages-${{ github.sha }}
+          path: |
+            artifacts/v1-candidate-packages/package-manifest.json
+            artifacts/v1-candidate-packages/packages
+            artifacts/v1-candidate-packages/sbom
+          if-no-files-found: error
+          retention-days: 90
+
   observability-config:
     name: Prometheus and OpenTelemetry production config
     runs-on: ubuntu-latest

@@ -70,7 +70,20 @@
   },
   "performance": {
     "resultsPath": "performance/results",
-    "multiplexingEvidencePath": "performance/multiplexing-evidence.json"
+    "multiplexingEvidencePath": "performance/multiplexing-evidence.json",
+    "multiplexingEvidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "website": {
+    "distributionPath": "website",
+    "productionMetricsPath": "website/production-metrics.json",
+    "productionMetricsSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "packages": {
+    "evidencePath": "packages",
+    "manifestPath": "packages/package-manifest.json",
+    "manifestSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "provenancePath": "packages/sbom/build-provenance.json",
+    "provenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
   },
   "approvals": [
     {
@@ -91,6 +104,11 @@
     {
       "id": "application-pilot-b",
       "path": "approvals/application-pilot-b.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "website-deployment-acceptance",
+      "path": "approvals/website-deployment-acceptance.json",
       "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
     },
     {

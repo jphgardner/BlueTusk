@@ -23,13 +23,14 @@ is intentionally impossible to pass with the checked-in example evidence.
 
 ## What V1 measures
 
-The V1 evidence set covers four different questions. They must not be collapsed
+The V1 evidence set covers five different questions. They must not be collapsed
 into one number.
 
 | Evidence | Question answered | Authority |
 | --- | --- | --- |
 | Correctness and compatibility | Does the implementation satisfy its declared contract? | Unit, integration, specification, fuzz, stress and package tests |
 | Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 89 BenchmarkDotNet results, 37 allocation budgets, 18 latency budgets and locked multiplexing comparisons |
+| Website delivery | Is the documentation and evidence surface bounded and deployable? | Hashed production output, raw/Brotli bundle budgets, static metadata and the archived build report |
 | Production SLOs | Is one deployed application meeting its reliability objectives? | 60 runtime instruments, 14 SLOs, Prometheus rules and deployment telemetry |
 | Release acceptance | Is this exact immutable candidate safe to publish? | Manual workflows, endurance, GA evidence, rehearsals, pilots and named approvals |
 
@@ -47,19 +48,26 @@ owners, environments and failure actions.
 3. exact public-API budgets for all six product families;
 4. the synchronized nine-target fuzzing contract, encoded corpus coverage and
    bounded execution policy;
-5. pinned workflow actions and supply-chain source controls;
-6. the declared protected-branch, required-check and deployment-environment
+5. the Angular website production contract, delivery budgets, metadata and
+   automatic emitted-build verification;
+6. pinned workflow actions and supply-chain source controls;
+7. the declared protected-branch, required-check and deployment-environment
    governance contract;
-7. the current digest-pinned PostgreSQL 19 programme record;
-8. complete, non-empty benchmark coverage for every `[Benchmark]` method;
-9. allocation, reference latency and multiplexing performance budgets;
-10. the six-meter, 60-instrument telemetry contract;
-11. all 14 reference SLOs, alerts, dashboard panels and Collector safety
+8. the current digest-pinned PostgreSQL 19 programme record;
+9. complete, non-empty benchmark coverage for every `[Benchmark]` method;
+10. allocation, reference latency and multiplexing performance budgets;
+11. the six-meter, 60-instrument telemetry contract;
+12. all 14 reference SLOs, alerts, dashboard panels and Collector safety
    controls; and
-12. fail-closed publication policy.
+13. fail-closed publication policy.
 
 The normal build still compiles, tests and packages the full solution. This
 gate validates the production contracts around those outputs.
+
+The website delivery budgets and their exact emitted-build measurements are
+documented in [website production](website-production.md). They are synthetic
+release regression gates, not a substitute for pilot traffic and field Core
+Web Vitals.
 
 ## GitHub governance gate
 
@@ -174,6 +182,16 @@ artifacts and approval records:
 ```text
 v1-evidence/
 ├── candidate.json
+├── packages/
+│   ├── package-manifest.json
+│   ├── packages/*.{nupkg,snupkg,tgz}
+│   └── sbom/
+│       ├── bluetusk.cdx.json
+│       ├── bluetusk.spdx.json
+│       └── build-provenance.json
+├── website/
+│   ├── production-metrics.json
+│   └── hashed production assets
 ├── streams/
 │   ├── report.json
 │   └── candidate-sbom/build-provenance.json
@@ -188,6 +206,7 @@ v1-evidence/
     ├── security-review.json
     ├── application-pilot-a.json
     ├── application-pilot-b.json
+    ├── website-deployment-acceptance.json
     ├── backup-restore-rehearsal.json
     ├── rollback-rehearsal.json
     ├── incident-response-game-day.json
@@ -217,19 +236,26 @@ For the publication-grade run, configure a protected
 `v1-candidate-readiness` GitHub environment with required reviewers, the
 read-only `V1_GOVERNANCE_TOKEN` secret described above, and the
 `V1_APPROVAL_EVIDENCE_BASE64` secret. The approval secret is a base64-encoded ZIP whose
-`approvals` directory contains the nine exact approval JSON files. Dispatch
+`approvals` directory contains the ten exact approval JSON files. Dispatch
 `.github/workflows/v1-candidate-readiness.yml` with the candidate SHA and the
 six successful workflow run IDs: build, security, one-hour-per-target fuzzing,
 performance, Streams endurance and Sync endurance. It queries GitHub for every
-run, downloads the non-expired performance/endurance artifacts, constructs the
-content-addressed manifest, executes candidate mode, and archives the verified
-bundle.
+run; downloads the non-expired package, website, performance and endurance
+artifacts; constructs the content-addressed manifest; executes candidate mode;
+and archives the verified bundle.
 
 Candidate mode proves all of the following:
 
 - exactly one successful manual build, security, one-hour-per-target fuzzing,
   performance, Streams 72-hour and Sync 24-hour run is recorded for the
   candidate SHA, with no extra workflow records accepted;
+- the archived Angular production metrics match the candidate, every emitted
+  website file matches its recorded length and SHA-256, and all delivery
+  budgets pass;
+- all six product-family package sets have exact archive inventories and
+  metadata, every NuGet/npm and symbol archive matches its byte length and
+  SHA-256, and the CycloneDX 1.6, SPDX 2.3 and provenance records are bound to
+  the same candidate commit;
 - the Streams report contains at least 100,000 transactions over at least 72
   hours, fault-injection counters, bounded/empty final storage and package
   provenance;
@@ -246,6 +272,10 @@ Moving a tag, editing a workflow, changing a dependency, altering a package
 version, changing a publication policy or fixing any candidate code creates a
 new commit and invalidates the evidence.
 
+The canonical package artifact, reconstruction verifier and publication
+separation are documented in
+[canonical V1 package evidence](package-evidence.md).
+
 ## Operational acceptance
 
 ### Application pilots
@@ -255,6 +285,15 @@ pilot record must define traffic and data shape, PostgreSQL topology, enabled
 families, duration, expected SLOs, upgrade/rollback path, observed resource
 limits, defects and acceptance owner. A demo or maintainer-only sample is not
 an independent pilot.
+
+### Website deployment acceptance
+
+Record the selected public origin, certificate and TLS result, SPA fallback,
+hashed-asset and `index.html` cache policy, Brotli/gzip behavior, security
+headers, broken-link crawl, supported desktop/mobile browsers and representative
+field LCP, INP and CLS. The approval must reference the exact archived website
+artifact and candidate commit; localhost laboratory measurements alone do not
+pass this gate.
 
 ### Backup and restore
 

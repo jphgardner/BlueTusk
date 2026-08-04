@@ -116,6 +116,10 @@ if ($provenance.schemaVersion -ne 1)
 {
     throw 'Build provenance must use schema version 1.'
 }
+if ([string]$provenance.sourceCommit -notmatch '^[0-9a-fA-F]{40}$')
+{
+    throw 'Build provenance must identify a full source commit.'
+}
 if (-not [string]::IsNullOrWhiteSpace($ExpectedCommit) -and
     -not [string]::Equals(
         [string]$provenance.sourceCommit,
@@ -130,13 +134,52 @@ if ($provenance.sourceTreeDirty -eq $true -and -not $AllowDirty)
 {
     throw 'Candidate provenance reports a dirty tracked source tree.'
 }
+if (@($cyclone.metadata.properties | Where-Object {
+            [string]$_.name -eq 'bluetusk:source-commit' -and
+            [string]::Equals(
+                [string]$_.value,
+                [string]$provenance.sourceCommit,
+                [StringComparison]::OrdinalIgnoreCase)
+        }).Count -ne 1)
+{
+    throw 'CycloneDX metadata does not identify the provenance source commit.'
+}
+if ([string]$spdx.name -ne "BlueTusk-$($provenance.sourceCommit)" -or
+    -not ([string]$spdx.documentNamespace).Contains(
+        "/$($provenance.sourceCommit)/",
+        [StringComparison]::OrdinalIgnoreCase))
+{
+    throw 'SPDX metadata does not identify the provenance source commit.'
+}
 
-$artifactFiles = Get-ChildItem -LiteralPath $resolvedPackages -File |
+$allPackageFiles = @(
+    Get-ChildItem -LiteralPath $resolvedPackages -Recurse -File
+)
+$artifactFiles = @($allPackageFiles |
     Where-Object { $_.Extension -in @('.nupkg', '.snupkg', '.tgz') } |
-    Sort-Object Name
+    Sort-Object Name)
 if ($artifactFiles.Count -eq 0)
 {
     throw 'No candidate package artifacts were found.'
+}
+if ($allPackageFiles.Count -ne $artifactFiles.Count -or
+    @($artifactFiles | Where-Object {
+            $_.Directory.FullName -ne $resolvedPackages
+        }).Count -ne 0)
+{
+    throw 'Candidate package directories may contain only top-level NuGet, symbol and npm archives.'
+}
+
+$provenanceArtifacts = @($provenance.artifacts)
+$provenanceArtifactPaths = @(
+    $provenanceArtifacts |
+        ForEach-Object { [string]$_.path }
+)
+if ($provenanceArtifacts.Count -ne $artifactFiles.Count -or
+    @($provenanceArtifactPaths | Sort-Object -Unique).Count -ne
+        $provenanceArtifacts.Count)
+{
+    throw 'Build provenance does not contain exactly one record per candidate package.'
 }
 
 foreach ($artifact in $artifactFiles)
@@ -152,9 +195,10 @@ foreach ($artifact in $artifactFiles)
     if (-not [string]::Equals(
         $actualHash,
         [string]$record[0].sha256,
-        [StringComparison]::OrdinalIgnoreCase))
+        [StringComparison]::OrdinalIgnoreCase) -or
+        $artifact.Length -ne [long]$record[0].bytes)
     {
-        throw "Candidate artifact '$($artifact.Name)' does not match its provenance hash."
+        throw "Candidate artifact '$($artifact.Name)' does not match its provenance hash or bytes."
     }
     $cycloneComponent = @($cyclone.components | Where-Object {
         @($_.properties | Where-Object {
@@ -180,7 +224,18 @@ foreach ($artifact in $artifactFiles)
     }
 }
 
-foreach ($sbomRecord in @($provenance.sboms))
+$sbomRecords = @($provenance.sboms)
+$expectedSbomNames = @('bluetusk.cdx.json', 'bluetusk.spdx.json')
+$actualSbomNames = @($sbomRecords | ForEach-Object { [string]$_.path } | Sort-Object)
+if ($sbomRecords.Count -ne $expectedSbomNames.Count -or
+    -not [Linq.Enumerable]::SequenceEqual(
+        [string[]]$expectedSbomNames,
+        [string[]]$actualSbomNames,
+        [StringComparer]::Ordinal))
+{
+    throw 'Build provenance must identify exactly the CycloneDX and SPDX SBOM documents.'
+}
+foreach ($sbomRecord in $sbomRecords)
 {
     $path = Join-Path $resolvedSbom $sbomRecord.path
     $actualHash = (

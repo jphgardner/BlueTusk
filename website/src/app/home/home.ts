@@ -259,7 +259,7 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
       icon: 'account_tree',
     },
     {
-      value: '32',
+      value: '37',
       label: 'Allocation budgets',
       detail: 'Machine-checked command, COPY, replication, EF, Live, Sync, and graph budgets.',
       icon: 'verified',

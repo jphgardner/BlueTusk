@@ -139,6 +139,8 @@ Use these documents when the question is not “how do I call the API?”:
 - [Performance engineering](operations/performance.md)
 - [Production observability and SLOs](operations/observability.md)
 - [V1 production-readiness gates and exact-candidate evidence](operations/production-readiness.md)
+- [Canonical V1 package evidence](operations/package-evidence.md)
+- [Angular website production contract](operations/website-production.md)
 - [Upgrade guide](operations/upgrade-guide.md)
 - [Observability](observability.md)
 - [Security model](security.md)

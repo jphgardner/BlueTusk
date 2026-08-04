@@ -12,7 +12,7 @@ ancestor-commit evidence does not pass.
 | Version and tag | |
 | Full source commit | |
 | Candidate workflow URL and run ID | |
-| Package artifact SHA-256 values | See `build-provenance.json` |
+| Package artifact SHA-256 values | See canonical `package-manifest.json` and `build-provenance.json` |
 | CycloneDX 1.6 SHA-256 | |
 | SPDX 2.3 SHA-256 | |
 | GitHub attestation URL | |
@@ -22,6 +22,15 @@ ancestor-commit evidence does not pass.
 - [ ] Release dependencies are published at the exact versions declared by the
       candidate.
 - [ ] The full manual `build.yml` run passed at the candidate commit.
+- [ ] The build retained exactly one `v1-candidate-packages-<sha>` artifact;
+      its six family inventories, package contents, SBOMs, provenance and
+      manifest pass `verify-v1-package-evidence.ps1`.
+- [ ] The archived Angular `production-metrics.json` passes the checked-in
+      startup, lazy-chunk and complete-distribution budgets, and pilot evidence
+      records field LCP, INP and CLS for the selected production host.
+- [ ] `website-deployment-acceptance.json` records TLS, SPA fallback, cache and
+      security-header policy, broken-link crawl, supported browsers and field
+      Core Web Vitals for the exact archived website artifact.
 - [ ] The manual `security.yml` CodeQL run passed at the candidate commit.
 - [ ] Every target in the manual `fuzzing.yml` run completed for at least one
       hour without a crash or hang finding at the candidate commit.
@@ -31,8 +40,9 @@ ancestor-commit evidence does not pass.
 - [ ] CodeQL, dependency review and the complete NuGet vulnerability audit
       passed.
 - [ ] Public API budgets and the applicable API freeze passed.
-- [ ] Package-content verification, CycloneDX, SPDX, provenance hashes and
-      GitHub build attestation agree.
+- [ ] Package-content verification, exact byte lengths and SHA-256 values,
+      CycloneDX, SPDX, provenance hashes and dependency versions are complete
+      for all six families from the same build run.
 - [ ] The PostgreSQL 15–19 matrix and the required PostgreSQL 19 milestone
       evidence passed.
 - [ ] Streams has an exact 72-hour report when it is in the dependency chain.

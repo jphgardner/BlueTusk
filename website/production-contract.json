@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "distributionRoot": "dist/website/browser",
+  "limits": {
+    "initialRawBytes": 650000,
+    "initialBrotliBytes": 143360,
+    "largestLazyBrotliBytes": 281600,
+    "totalDistributionBytes": 8388608
+  },
+  "requiredAssets": [
+    "favicon.ico",
+    "robots.txt",
+    ".well-known/security.txt"
+  ],
+  "requiredMetadata": [
+    "<html lang=\"en\"",
+    "<meta name=\"viewport\"",
+    "name=\"description\"",
+    "<meta name=\"theme-color\"",
+    "<meta property=\"og:title\"",
+    "property=\"og:description\"",
+    "property=\"og:image\"",
+    "<meta name=\"twitter:card\""
+  ]
+}

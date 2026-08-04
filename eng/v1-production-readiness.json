@@ -5,6 +5,7 @@
     "verify-documentation.ps1",
     "verify-api-budgets.ps1",
     "verify-fuzzing-contract.ps1",
+    "verify-website-production.ps1",
     "verify-supply-chain.ps1",
     "verify-github-governance.ps1",
     "verify-postgresql19-programme.ps1",
@@ -38,6 +39,10 @@
     {
       "id": "application-pilot-b",
       "description": "A second independently operated application has completed its documented pilot acceptance criteria."
+    },
+    {
+      "id": "website-deployment-acceptance",
+      "description": "The selected production host has passed TLS, routing, caching, security-header and representative field Core Web Vitals acceptance."
     },
     {
       "id": "backup-restore-rehearsal",
@@ -80,6 +85,10 @@
     "eng/telemetry-contract.json",
     "eng/v1-production-slos.json",
     "eng/fuzzing-contract.json",
+    "eng/build-v1-candidate-packages.ps1",
+    "eng/verify-v1-package-evidence.ps1",
+    "eng/verify-website-evidence.ps1",
+    "website/production-contract.json",
     "benchmarks/allocation-budgets.json",
     "benchmarks/latency-budgets.json",
     "ops/observability/otel-collector.yaml",
@@ -87,7 +96,9 @@
     "ops/observability/grafana/bluetusk-v1.json",
     "docs/operations/observability.md",
     "docs/operations/fuzz-finding-handoff.md",
+    "docs/operations/package-evidence.md",
     "docs/operations/production-readiness.md",
+    "docs/operations/website-production.md",
     "docs/release-review-handoff.md",
     "eng/v1-github-governance.json",
     "eng/v1-candidate-evidence.example.json",

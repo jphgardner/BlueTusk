@@ -103,6 +103,58 @@ if ($requiredFuzzDuration -lt 1 -or
 
 $candidateWorkflowPath = Join-Path $repositoryRoot '.github/workflows/v1-candidate-readiness.yml'
 $candidateWorkflowSource = Get-Content -LiteralPath $candidateWorkflowPath -Raw
+$buildWorkflowSource = Get-Content -LiteralPath (
+    Join-Path $repositoryRoot '.github/workflows/build.yml') -Raw
+foreach ($requiredBuildSource in @(
+        './eng/build-v1-candidate-packages.ps1',
+        'name: v1-candidate-packages-${{ github.sha }}',
+        'retention-days: 90'))
+{
+    if (-not $buildWorkflowSource.Contains(
+            $requiredBuildSource,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            'The manual build does not create retained canonical package evidence through ' +
+            "'$requiredBuildSource'.")
+    }
+}
+foreach ($requiredCandidateSource in @(
+        "Prefix = 'bluetusk-website'",
+        'productionMetricsPath = Relative $websiteMetrics',
+        'productionMetricsSha256 = Hash $websiteMetrics'))
+{
+    if (-not $candidateWorkflowSource.Contains(
+            $requiredCandidateSource,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            'The exact-candidate aggregation workflow does not bind the production website ' +
+            "artifact through '$requiredCandidateSource'.")
+    }
+}
+foreach ($requiredCandidateSource in @(
+        'Prefix = "v1-candidate-packages-$($env:CANDIDATE_SHA)"',
+        'manifestPath = Relative $packageManifest',
+        'manifestSha256 = Hash $packageManifest',
+        'provenanceSha256 = Hash $packageProvenance'))
+{
+    if (-not $candidateWorkflowSource.Contains(
+            $requiredCandidateSource,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            'The exact-candidate aggregation workflow does not bind the canonical package ' +
+            "artifact through '$requiredCandidateSource'.")
+    }
+}
+if (-not $candidateWorkflowSource.Contains(
+        'multiplexingEvidenceSha256 = Hash $performanceManifest',
+        [StringComparison]::Ordinal))
+{
+    throw 'The exact-candidate aggregation workflow does not hash the performance manifest.'
+}
+
 $exampleEvidence = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'v1-candidate-evidence.example.json') -Raw | ConvertFrom-Json
 $exampleWorkflowRuns = @($exampleEvidence.workflowRuns)
@@ -130,6 +182,35 @@ foreach ($workflow in @($configuration.requiredWorkflows))
     if ($exampleMatches.Count -ne 1)
     {
         throw "The candidate-evidence example must contain exactly one '$workflow' record."
+    }
+}
+
+$exampleApprovalEntries = @($exampleEvidence.approvals)
+if ($exampleApprovalEntries.Count -ne @($configuration.requiredApprovalEvidence).Count)
+{
+    throw (
+        'The candidate-evidence example must contain exactly one record for every required ' +
+        "approval; found $($exampleApprovalEntries.Count).")
+}
+foreach ($requiredApproval in @($configuration.requiredApprovalEvidence))
+{
+    $approvalId = [string]$requiredApproval.id
+    if (-not $candidateWorkflowSource.Contains(
+            "'$approvalId'",
+            [StringComparison]::Ordinal))
+    {
+        throw "The exact-candidate aggregation workflow does not require approval '$approvalId'."
+    }
+
+    $exampleApprovalMatches = @($exampleApprovalEntries | Where-Object {
+        [string]::Equals(
+            [string]$_.id,
+            $approvalId,
+            [StringComparison]::Ordinal)
+    })
+    if ($exampleApprovalMatches.Count -ne 1)
+    {
+        throw "The candidate-evidence example must contain exactly one '$approvalId' approval."
     }
 }
 
@@ -238,6 +319,75 @@ foreach ($requiredWorkflow in @($configuration.requiredWorkflows))
     }
 }
 
+$websiteDistribution = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.website.distributionPath) `
+    -Directory
+$websiteMetricsPath = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.website.productionMetricsPath)
+$websiteMetricsHash = (
+    Get-FileHash -LiteralPath $websiteMetricsPath -Algorithm SHA256
+).Hash.ToLowerInvariant()
+if ([string]$evidence.website.productionMetricsSha256 -notmatch '^[0-9a-f]{64}$' -or
+    $websiteMetricsHash -ne [string]$evidence.website.productionMetricsSha256)
+{
+    throw 'The website production metrics do not match the candidate-manifest SHA-256.'
+}
+
+& (Join-Path $PSScriptRoot 'verify-website-evidence.ps1') `
+    -DistributionPath $websiteDistribution `
+    -MetricsPath $websiteMetricsPath `
+    -ExpectedCommit $Commit
+
+$packageEvidenceRoot = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.packages.evidencePath) `
+    -Directory
+$packageManifestPath = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.packages.manifestPath)
+$packageProvenancePath = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.packages.provenancePath)
+$expectedPackageManifestPath = (
+    Resolve-Path -LiteralPath (
+        Join-Path $packageEvidenceRoot 'package-manifest.json')
+).Path
+$expectedPackageProvenancePath = (
+    Resolve-Path -LiteralPath (
+        Join-Path $packageEvidenceRoot 'sbom/build-provenance.json')
+).Path
+if ($packageManifestPath -ne $expectedPackageManifestPath -or
+    $packageProvenancePath -ne $expectedPackageProvenancePath)
+{
+    throw 'Candidate package manifest or provenance path is not canonical.'
+}
+foreach ($integrityCheck in @(
+        @{
+            Path = $packageManifestPath
+            Expected = [string]$evidence.packages.manifestSha256
+            Description = 'V1 package manifest'
+        },
+        @{
+            Path = $packageProvenancePath
+            Expected = [string]$evidence.packages.provenanceSha256
+            Description = 'V1 package provenance'
+        }))
+{
+    $actualHash = (
+        Get-FileHash -LiteralPath $integrityCheck.Path -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    if ($integrityCheck.Expected -notmatch '^[0-9a-f]{64}$' -or
+        $actualHash -ne $integrityCheck.Expected)
+    {
+        throw "$($integrityCheck.Description) does not match its candidate-manifest SHA-256."
+    }
+}
+& (Join-Path $PSScriptRoot 'verify-v1-package-evidence.ps1') `
+    -EvidenceRoot $packageEvidenceRoot `
+    -ExpectedCommit $Commit
+
 $programme = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'postgresql19-programme.json') -Raw | ConvertFrom-Json
 $milestone = @($programme.milestones | Where-Object {
@@ -339,6 +489,16 @@ $performanceResults = Resolve-EvidenceFile `
 $multiplexingEvidence = Resolve-EvidenceFile `
     -BasePath $evidenceRoot `
     -Path ([string]$evidence.performance.multiplexingEvidencePath)
+$multiplexingEvidenceHash = (
+    Get-FileHash -LiteralPath $multiplexingEvidence -Algorithm SHA256
+).Hash.ToLowerInvariant()
+if ([string]$evidence.performance.multiplexingEvidenceSha256 -notmatch
+        '^[0-9a-f]{64}$' -or
+    $multiplexingEvidenceHash -ne
+        [string]$evidence.performance.multiplexingEvidenceSha256)
+{
+    throw 'Multiplexing performance evidence does not match the candidate-manifest SHA-256.'
+}
 $multiplexingManifest = Get-Content -LiteralPath $multiplexingEvidence -Raw |
     ConvertFrom-Json
 if (-not [string]::Equals(
@@ -467,7 +627,8 @@ foreach ($gateId in $requiredApprovalIds)
 
 Write-Output (
     "V1 candidate readiness passed for immutable commit ${Commit}: " +
-    "$($workflowRuns.Count) exact workflow runs, 72-hour Streams and 24-hour Sync endurance, " +
-    "fresh reference-machine performance evidence, PostgreSQL 19 GA, and " +
+    "$($workflowRuns.Count) exact workflow runs, six-family package/SBOM/provenance evidence, " +
+    "72-hour Streams and 24-hour Sync endurance, fresh reference-machine performance evidence, " +
+    "PostgreSQL 19 GA, and " +
     "$($requiredApprovalIds.Count) integrity-checked approvals. Stable publication may now be " +
     "enabled through the protected release environments.")

@@ -16,6 +16,9 @@ exact-candidate evidence below is complete.
 - Commit-pinned workflow actions, CodeQL, dependency review, NuGet advisory
   auditing, CycloneDX 1.6 and SPDX 2.3 SBOMs, artifact hashes and build
   provenance.
+- A canonical evidence-only package artifact for all six product families,
+  with exact per-family archive reconstruction, package-content verification,
+  SHA-256 inventory, SBOM/provenance binding and no registry credentials.
 - A digest-pinned PostgreSQL 19 programme with upstream milestone-drift
   detection and a GA-only stable-publication gate.
 - Streams and Sync endurance workflows that bind reports to the candidate
@@ -57,6 +60,7 @@ The final local verification on 2026-08-04 produced:
 | Dependency vulnerability audit | No advisory matched in any solution project |
 | Provider candidate packaging | 31 NuGet packages and 29 symbol packages verified |
 | Candidate SBOM/provenance smoke | 60 artifact hashes and 317 components/packages verified in both SBOM formats |
+| Angular website delivery | Initial raw/Brotli, largest lazy chunk and complete distribution are budgeted; hashed assets, metadata and no-source-map policy are verified after every production build |
 | Repository gates | Solution layout, documentation links, workflow YAML, PowerShell syntax, Action pins, supply chain and PostgreSQL 19 programme passed |
 | Live repository governance | Settings verified: 35 required checks, strict `main`, two protected environments, SPDX 2.3 dependency graph with 633 packages, alerts, automated fixes and private reporting; declared environment secrets remain to be provisioned |
 
@@ -74,10 +78,11 @@ rerun by the required workflows at that exact commit.
    Administration read, Actions read, Contents read and Environments read so
    exact-candidate and pre-publication jobs can verify the live settings and
    required secret names.
-3. Freeze the final commit, versions and package hashes.
+3. Freeze the final commit and versions; the manual build must then generate
+   and retain the canonical six-family package hashes, SBOMs and provenance.
 4. Run the complete manual `build.yml` evidence workflow at that commit,
    including PostgreSQL 15–19, PgBouncer, NativeAOT/trimming, connector,
-   authentication, stress and packaging jobs.
+   authentication, stress, website and canonical all-family packaging jobs.
 5. Run the manual `security.yml` CodeQL workflow and the manual `fuzzing.yml`
    workflow for at least one hour per parser target at that exact commit. Every
    fuzz target must complete without a crash or hang finding.
@@ -90,8 +95,8 @@ rerun by the required workflows at that exact commit.
    PostgreSQL 19 support as stable before the GA record passes.
 9. Complete the
    [independent release review](release-review-handoff.md), application pilots,
-   backup/restore and rollback rehearsal, incident game day, security/SLO owner
-   approval and maintainer sign-off.
+   website deployment acceptance, backup/restore and rollback rehearsal,
+   incident game day, security/SLO owner approval and maintainer sign-off.
 10. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
    SHA-256-bound evidence directory.
 11. Enable stable publication one dependency-ordered product family at a time:

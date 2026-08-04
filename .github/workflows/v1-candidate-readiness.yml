@@ -118,38 +118,61 @@ jobs:
             @{
               Workflow = 'build.yml'
               RunId = $env:BUILD_RUN_ID
-              ArtifactPrefix = $null
-              Destination = $null
+              Artifacts = @(
+                @{
+                  Prefix = 'bluetusk-website'
+                  Destination = 'website'
+                  ExactName = $true
+                },
+                @{
+                  Prefix = "v1-candidate-packages-$($env:CANDIDATE_SHA)"
+                  Destination = 'packages'
+                  ExactName = $true
+                }
+              )
             },
             @{
               Workflow = 'security.yml'
               RunId = $env:SECURITY_RUN_ID
-              ArtifactPrefix = $null
-              Destination = $null
+              Artifacts = @()
             },
             @{
               Workflow = 'fuzzing.yml'
               RunId = $env:FUZZING_RUN_ID
-              ArtifactPrefix = $null
-              Destination = $null
+              Artifacts = @()
             },
             @{
               Workflow = 'performance.yml'
               RunId = $env:PERFORMANCE_RUN_ID
-              ArtifactPrefix = "v1-performance-$($env:CANDIDATE_SHA)-"
-              Destination = 'performance'
+              Artifacts = @(
+                @{
+                  Prefix = "v1-performance-$($env:CANDIDATE_SHA)-"
+                  Destination = 'performance'
+                  ExactName = $false
+                }
+              )
             },
             @{
               Workflow = 'streams-release-endurance.yml'
               RunId = $env:STREAMS_RUN_ID
-              ArtifactPrefix = 'streams-relay-endurance-'
-              Destination = 'streams'
+              Artifacts = @(
+                @{
+                  Prefix = 'streams-relay-endurance-'
+                  Destination = 'streams'
+                  ExactName = $false
+                }
+              )
             },
             @{
               Workflow = 'sync-release-endurance.yml'
               RunId = $env:SYNC_RUN_ID
-              ArtifactPrefix = 'sync-endurance-'
-              Destination = 'sync'
+              Artifacts = @(
+                @{
+                  Prefix = 'sync-endurance-'
+                  Destination = 'sync'
+                  ExactName = $false
+                }
+              )
             }
           )
           $records = @()
@@ -178,29 +201,40 @@ jobs:
               url = [string]$run.html_url
             }
 
-            if ($null -eq $requirement.ArtifactPrefix) {
-              continue
+            if (@($requirement.Artifacts).Count -gt 0) {
+              $artifactsUri = "$runUri/artifacts?per_page=100"
+              $artifactResponse = Invoke-RestMethod -Method Get -Uri $artifactsUri -Headers $headers
+              foreach ($artifactRequirement in @($requirement.Artifacts)) {
+                $matches = @($artifactResponse.artifacts | Where-Object {
+                  if ($_.expired) {
+                    return $false
+                  }
+                  if ($artifactRequirement.ExactName -eq $true) {
+                    return [string]::Equals(
+                      [string]$_.name,
+                      [string]$artifactRequirement.Prefix,
+                      [StringComparison]::Ordinal)
+                  }
+                  return ([string]$_.name).StartsWith(
+                    [string]$artifactRequirement.Prefix,
+                    [StringComparison]::Ordinal)
+                })
+                if ($matches.Count -ne 1) {
+                  throw (
+                    "Run $runId has $($matches.Count) matching non-expired artifacts " +
+                    "for prefix '$($artifactRequirement.Prefix)'.")
+                }
+                $destination = Join-Path artifacts/v1-evidence $artifactRequirement.Destination
+                New-Item -ItemType Directory -Force -Path $destination | Out-Null
+                $archive = Join-Path $destination evidence.zip
+                Invoke-WebRequest `
+                  -Uri ([string]$matches[0].archive_download_url) `
+                  -Headers $headers `
+                  -OutFile $archive
+                Expand-Archive -LiteralPath $archive -DestinationPath $destination
+                Remove-Item -LiteralPath $archive
+              }
             }
-            $artifactsUri = "$runUri/artifacts?per_page=100"
-            $artifactResponse = Invoke-RestMethod -Method Get -Uri $artifactsUri -Headers $headers
-            $matches = @($artifactResponse.artifacts | Where-Object {
-              -not $_.expired -and
-              ([string]$_.name).StartsWith(
-                [string]$requirement.ArtifactPrefix,
-                [StringComparison]::Ordinal)
-            })
-            if ($matches.Count -ne 1) {
-              throw "Run $runId has $($matches.Count) matching non-expired evidence artifacts."
-            }
-            $destination = Join-Path artifacts/v1-evidence $requirement.Destination
-            New-Item -ItemType Directory -Force -Path $destination | Out-Null
-            $archive = Join-Path $destination evidence.zip
-            Invoke-WebRequest `
-              -Uri ([string]$matches[0].archive_download_url) `
-              -Headers $headers `
-              -OutFile $archive
-            Expand-Archive -LiteralPath $archive -DestinationPath $destination
-            Remove-Item -LiteralPath $archive
           }
           $records | ConvertTo-Json -Depth 6 |
             Set-Content artifacts/v1-evidence/workflow-runs.json -Encoding utf8NoBOM
@@ -231,6 +265,9 @@ jobs:
           $syncReport = OneFile (Join-Path $root sync) report.json
           $syncProvenance = OneFile (Join-Path $root sync) build-provenance.json
           $performanceManifest = OneFile (Join-Path $root performance) multiplexing-evidence.json
+          $websiteMetrics = OneFile (Join-Path $root website) production-metrics.json
+          $packageManifest = OneFile (Join-Path $root packages) package-manifest.json
+          $packageProvenance = OneFile (Join-Path $root packages) build-provenance.json
           $performance = Get-Content -Raw $performanceManifest.FullName | ConvertFrom-Json
           $results = Join-Path $performanceManifest.Directory.FullName results
           if (-not (Test-Path -LiteralPath $results -PathType Container)) {
@@ -243,6 +280,7 @@ jobs:
             'security-review',
             'application-pilot-a',
             'application-pilot-b',
+            'website-deployment-acceptance',
             'backup-restore-rehearsal',
             'rollback-rehearsal',
             'incident-response-game-day',
@@ -280,6 +318,23 @@ jobs:
             performance = [ordered]@{
               resultsPath = [IO.Path]::GetRelativePath($root, $results).Replace('\', '/')
               multiplexingEvidencePath = Relative $performanceManifest
+              multiplexingEvidenceSha256 = Hash $performanceManifest
+            }
+            website = [ordered]@{
+              distributionPath = [IO.Path]::GetRelativePath(
+                $root,
+                $websiteMetrics.Directory.FullName).Replace('\', '/')
+              productionMetricsPath = Relative $websiteMetrics
+              productionMetricsSha256 = Hash $websiteMetrics
+            }
+            packages = [ordered]@{
+              evidencePath = [IO.Path]::GetRelativePath(
+                $root,
+                $packageManifest.Directory.FullName).Replace('\', '/')
+              manifestPath = Relative $packageManifest
+              manifestSha256 = Hash $packageManifest
+              provenancePath = Relative $packageProvenance
+              provenanceSha256 = Hash $packageProvenance
             }
             approvals = $approvals
           }

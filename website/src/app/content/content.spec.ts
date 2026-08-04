@@ -17,8 +17,17 @@ describe('website content integrity', () => {
     expect(EVIDENCE.find((item) => item.id === 'pg-matrix')?.value).toBe('15–19');
     expect(EVIDENCE.find((item) => item.id === 'ef-suite')?.value).toBe('1,987 / 2,111');
     expect(EVIDENCE.filter((item) => item.status === 'pending').map((item) => item.id)).toEqual(
-      expect.arrayContaining(['streams-endurance', 'sync-endurance']),
+      expect.arrayContaining([
+        'fuzzing',
+        'canonical-package-set',
+        'website-field-vitals',
+        'streams-endurance',
+        'sync-endurance',
+      ]),
     );
+    expect(EVIDENCE.find((item) => item.id === 'allocations')?.value).toBe('37');
+    expect(EVIDENCE.find((item) => item.id === 'website-delivery')?.status).toBe('passed');
+    expect(EVIDENCE.find((item) => item.id === 'canonical-package-set')?.status).toBe('pending');
   });
 
   it('publishes all seven first-party extension families', () => {
