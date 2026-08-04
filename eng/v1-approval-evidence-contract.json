@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "approvalSchemaVersion": 2,
+  "minimumSummaryLength": 40,
+  "gates": [
+    {
+      "id": "independent-release-review",
+      "details": [
+        { "name": "reviewerOrganisation", "type": "string", "minLength": 2 },
+        { "name": "reviewerIndependent", "type": "boolean", "equals": true },
+        { "name": "checklistItemsPassed", "type": "integer", "minimum": 17 },
+        { "name": "requiredWorkflowRunsReviewed", "type": "integer", "minimum": 6 },
+        { "name": "packageFamiliesReviewed", "type": "integer", "equals": 6 },
+        { "name": "candidateEvidenceReproduced", "type": "boolean", "equals": true },
+        { "name": "unresolvedFindings", "type": "integer", "equals": 0 }
+      ]
+    },
+    {
+      "id": "security-review",
+      "details": [
+        { "name": "threatModelReviewed", "type": "boolean", "equals": true },
+        { "name": "codeqlPassed", "type": "boolean", "equals": true },
+        { "name": "dependencyReviewPassed", "type": "boolean", "equals": true },
+        { "name": "nugetAuditPassed", "type": "boolean", "equals": true },
+        { "name": "sbomFormatsReviewed", "type": "integer", "minimum": 2 },
+        { "name": "provenanceVerified", "type": "boolean", "equals": true },
+        { "name": "externalSecretFindingsDispositioned", "type": "integer", "minimum": 0 },
+        { "name": "unresolvedSecretFindings", "type": "integer", "equals": 0 },
+        { "name": "unresolvedVulnerabilities", "type": "integer", "equals": 0 },
+        { "name": "unresolvedBlockingFindings", "type": "integer", "equals": 0 }
+      ]
+    },
+    {
+      "id": "application-pilot-a",
+      "details": [
+        { "name": "applicationName", "type": "string", "minLength": 2 },
+        { "name": "operatorOrganisation", "type": "string", "minLength": 2 },
+        { "name": "operatorIndependent", "type": "boolean", "equals": true },
+        { "name": "durationHours", "type": "number", "minimum": 24 },
+        { "name": "operations", "type": "integer", "minimum": 1000 },
+        { "name": "transactions", "type": "integer", "minimum": 100 },
+        { "name": "postgresqlMajorVersion", "type": "integer", "minimum": 15, "maximum": 19 },
+        { "name": "topology", "type": "string", "minLength": 3 },
+        { "name": "enabledProductFamilies", "type": "stringArray", "minimumItems": 1 },
+        { "name": "upgradePassed", "type": "boolean", "equals": true },
+        { "name": "rollbackPathValidated", "type": "boolean", "equals": true },
+        { "name": "peakCpuPercent", "type": "number", "minimum": 0, "maximum": 100 },
+        { "name": "peakMemoryBytes", "type": "integer", "minimum": 1 },
+        { "name": "declaredSloCount", "type": "integer", "minimum": 1 },
+        { "name": "sloViolations", "type": "integer", "equals": 0 },
+        { "name": "blockingDefects", "type": "integer", "equals": 0 },
+        { "name": "acceptanceOwner", "type": "string", "minLength": 2 }
+      ]
+    },
+    {
+      "id": "application-pilot-b",
+      "details": [
+        { "name": "applicationName", "type": "string", "minLength": 2 },
+        { "name": "operatorOrganisation", "type": "string", "minLength": 2 },
+        { "name": "operatorIndependent", "type": "boolean", "equals": true },
+        { "name": "durationHours", "type": "number", "minimum": 24 },
+        { "name": "operations", "type": "integer", "minimum": 1000 },
+        { "name": "transactions", "type": "integer", "minimum": 100 },
+        { "name": "postgresqlMajorVersion", "type": "integer", "minimum": 15, "maximum": 19 },
+        { "name": "topology", "type": "string", "minLength": 3 },
+        { "name": "enabledProductFamilies", "type": "stringArray", "minimumItems": 1 },
+        { "name": "upgradePassed", "type": "boolean", "equals": true },
+        { "name": "rollbackPathValidated", "type": "boolean", "equals": true },
+        { "name": "peakCpuPercent", "type": "number", "minimum": 0, "maximum": 100 },
+        { "name": "peakMemoryBytes", "type": "integer", "minimum": 1 },
+        { "name": "declaredSloCount", "type": "integer", "minimum": 1 },
+        { "name": "sloViolations", "type": "integer", "equals": 0 },
+        { "name": "blockingDefects", "type": "integer", "equals": 0 },
+        { "name": "acceptanceOwner", "type": "string", "minLength": 2 }
+      ]
+    },
+    {
+      "id": "website-deployment-acceptance",
+      "details": [
+        { "name": "publicOrigin", "type": "httpsUri" },
+        { "name": "productionMetricsSha256", "type": "sha256" },
+        { "name": "certificateValid", "type": "boolean", "equals": true },
+        { "name": "tlsMinimumVersion", "type": "string", "allowedValues": [ "TLS 1.2", "TLS 1.3" ] },
+        { "name": "spaFallbackPassed", "type": "boolean", "equals": true },
+        { "name": "hashedAssetCachingPassed", "type": "boolean", "equals": true },
+        { "name": "indexNoCachePassed", "type": "boolean", "equals": true },
+        { "name": "compressionPassed", "type": "boolean", "equals": true },
+        { "name": "securityHeadersPassed", "type": "boolean", "equals": true },
+        { "name": "brokenLinks", "type": "integer", "equals": 0 },
+        { "name": "desktopBrowsersTested", "type": "integer", "minimum": 2 },
+        { "name": "mobileBrowsersTested", "type": "integer", "minimum": 1 },
+        { "name": "fieldSampleSize", "type": "integer", "minimum": 100 },
+        { "name": "fieldWindowDays", "type": "integer", "minimum": 28 },
+        { "name": "lcpP75Milliseconds", "type": "number", "minimum": 0, "maximum": 2500 },
+        { "name": "inpP75Milliseconds", "type": "number", "minimum": 0, "maximum": 200 },
+        { "name": "clsP75", "type": "number", "minimum": 0, "maximum": 0.1 }
+      ]
+    },
+    {
+      "id": "backup-restore-rehearsal",
+      "details": [
+        { "name": "backupId", "type": "string", "minLength": 2 },
+        { "name": "operator", "type": "string", "minLength": 2 },
+        { "name": "backupEncrypted", "type": "boolean", "equals": true },
+        { "name": "restoreTargetEmpty", "type": "boolean", "equals": true },
+        { "name": "sourceObjectCount", "type": "integer", "minimum": 1 },
+        { "name": "restoredObjectCount", "type": "integer", "equalsField": "sourceObjectCount" },
+        { "name": "sourceRowCount", "type": "integer", "minimum": 1 },
+        { "name": "restoredRowCount", "type": "integer", "equalsField": "sourceRowCount" },
+        { "name": "sourceCheckpointPosition", "type": "string", "minLength": 1 },
+        { "name": "restoredCheckpointPosition", "type": "string", "equalsField": "sourceCheckpointPosition" },
+        { "name": "rpoSeconds", "type": "number", "minimum": 0 },
+        { "name": "observedRecoveryPointGapSeconds", "type": "number", "minimum": 0, "maximumField": "rpoSeconds" },
+        { "name": "rtoSeconds", "type": "number", "minimum": 1 },
+        { "name": "observedRestoreSeconds", "type": "number", "minimum": 0, "maximumField": "rtoSeconds" },
+        { "name": "integrityMismatches", "type": "integer", "equals": 0 },
+        { "name": "reconciliationPassed", "type": "boolean", "equals": true }
+      ]
+    },
+    {
+      "id": "rollback-rehearsal",
+      "details": [
+        { "name": "candidateVersion", "type": "string", "minLength": 1 },
+        { "name": "rollbackVersion", "type": "string", "minLength": 1 },
+        { "name": "trigger", "type": "string", "minLength": 5 },
+        { "name": "decisionAuthority", "type": "string", "minLength": 2 },
+        { "name": "durationSeconds", "type": "number", "minimum": 0 },
+        { "name": "versionCompatibilityPassed", "type": "boolean", "equals": true },
+        { "name": "connectionDrainPassed", "type": "boolean", "equals": true },
+        { "name": "durableFormatCompatibilityPassed", "type": "boolean", "equals": true },
+        { "name": "relayCheckpointOwnershipPassed", "type": "boolean", "equals": true },
+        { "name": "liveClientResetPassed", "type": "boolean", "equals": true },
+        { "name": "controlPlaneFencingPassed", "type": "boolean", "equals": true },
+        { "name": "reconciliationPassed", "type": "boolean", "equals": true },
+        { "name": "dataLossEvents", "type": "integer", "equals": 0 }
+      ]
+    },
+    {
+      "id": "incident-response-game-day",
+      "details": [
+        { "name": "scenario", "type": "string", "minLength": 5 },
+        { "name": "affectedSloIds", "type": "stringArray", "minimumItems": 1 },
+        { "name": "detectedByShippedTelemetry", "type": "boolean", "equals": true },
+        { "name": "detectionSeconds", "type": "number", "minimum": 0 },
+        { "name": "triageSeconds", "type": "number", "minimum": 0 },
+        { "name": "mitigationSeconds", "type": "number", "minimum": 0 },
+        { "name": "runbookFollowed", "type": "boolean", "equals": true },
+        { "name": "durableStatePreserved", "type": "boolean", "equals": true },
+        { "name": "postmortemComplete", "type": "boolean", "equals": true },
+        { "name": "followUpOwners", "type": "stringArray", "minimumItems": 1 },
+        { "name": "blockingFollowUps", "type": "integer", "equals": 0 }
+      ]
+    },
+    {
+      "id": "slo-owner-approval",
+      "details": [
+        { "name": "serviceOwners", "type": "stringArray", "minimumItems": 1 },
+        { "name": "acceptedSloCount", "type": "integer", "minimum": 14 },
+        { "name": "acceptedRecoveryObjectiveCount", "type": "integer", "minimum": 5 },
+        { "name": "acceptedAlertCount", "type": "integer", "minimum": 20 },
+        { "name": "alertRoutesVerified", "type": "boolean", "equals": true },
+        { "name": "errorBudgetPolicyAccepted", "type": "boolean", "equals": true },
+        { "name": "onCallCoverageConfirmed", "type": "boolean", "equals": true },
+        { "name": "unownedSlos", "type": "integer", "equals": 0 }
+      ]
+    },
+    {
+      "id": "maintainer-signoff",
+      "details": [
+        { "name": "versions", "type": "stringArray", "minimumItems": 6 },
+        { "name": "versionsFrozen", "type": "boolean", "equals": true },
+        { "name": "candidateImmutable", "type": "boolean", "equals": true },
+        { "name": "publicationOrderAccepted", "type": "boolean", "equals": true },
+        { "name": "publicationSwitchesConfirmedDisabled", "type": "boolean", "equals": true },
+        { "name": "stopConditionsAccepted", "type": "boolean", "equals": true },
+        { "name": "rollbackAuthority", "type": "string", "minLength": 2 },
+        { "name": "releaseWindowUtc", "type": "utcDateTime" }
+      ]
+    }
+  ]
+}

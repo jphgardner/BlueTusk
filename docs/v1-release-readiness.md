@@ -42,6 +42,10 @@ exact-candidate evidence below is complete.
 - A single fail-closed V1 verifier that distinguishes deterministic engineering
   readiness from PostgreSQL 19 GA, endurance, performance, pilot, recovery,
   game-day and accountable approval evidence for one immutable commit.
+- A schema-2 operational approval contract with ten gate-specific evidence
+  shapes, measured pilot and field-performance minimums, restore/RPO/RTO
+  comparisons, rollback and game-day outcomes, cross-pilot independence checks
+  and fail-closed mutation self-tests.
 - A source-controlled GitHub governance contract that requires 35 named status
   checks, protected `main`, fresh independent review, self-review-protected
   candidate/publication environments, the dependency graph, vulnerability

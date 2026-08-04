@@ -31,6 +31,10 @@ ancestor-commit evidence does not pass.
 - [ ] `website-deployment-acceptance.json` records TLS, SPA fallback, cache and
       security-header policy, broken-link crawl, supported browsers and field
       Core Web Vitals for the exact archived website artifact.
+- [ ] All ten schema-2 operational approval files pass
+      `verify-v1-approval-evidence.ps1`; generic narrative approvals, unknown
+      fields, measurements outside budget and approvals older than the
+      candidate are rejected.
 - [ ] The manual `security.yml` CodeQL run passed at the candidate commit.
 - [ ] Every target in the manual `fuzzing.yml` run completed for at least one
       hour without a crash or hang finding at the candidate commit.

@@ -221,12 +221,17 @@ v1-evidence/
 Start from
 [`eng/v1-candidate-evidence.example.json`](../../eng/v1-candidate-evidence.example.json)
 and
-[`eng/v1-approval-evidence.example.json`](../../eng/v1-approval-evidence.example.json).
+[`eng/v1-approval-evidence.examples.json`](../../eng/v1-approval-evidence.examples.json).
 Replace every placeholder. Approval files are content-addressed from the
-candidate manifest; each one must identify the required gate, exact candidate
-commit, accountable person, UTC approval time, acceptance summary and zero
-blocking findings. Each approval must cite at least one retained HTTPS evidence
-record; a blank, local-path-only or untraceable approval fails candidate mode.
+candidate manifest and validated against the exact gate-specific contract in
+[`eng/v1-approval-evidence-contract.json`](../../eng/v1-approval-evidence-contract.json).
+Each one must identify the required gate, exact candidate commit, accountable
+person, UTC approval time, acceptance summary, zero blocking findings and the
+required measured details. Each approval must cite at least one retained HTTPS
+evidence record; a blank, local-path-only, generic narrative or untraceable
+approval fails candidate mode. See
+[V1 operational approval evidence](approval-evidence.md) for every required
+field, threshold and retained record.
 
 Run the final gate from a clean checkout at that exact commit:
 
@@ -279,7 +284,10 @@ Candidate mode proves all of the following:
 - fresh performance results pass coverage, latency, allocation and
   multiplexing budgets on the reference machine;
 - PostgreSQL 19 is a verified GA milestone rather than a beta or RC; and
-- every required approval file has a matching SHA-256 and candidate commit.
+- every required approval file has a matching SHA-256 and candidate commit,
+  passes its gate-specific measurement contract and was approved after the
+  immutable commit; the two pilots have distinct applications, operators and
+  approvers, and website acceptance names the exact production-metrics hash.
 
 Moving a tag, editing a workflow, changing a dependency, altering a package
 version, changing a publication policy or fixing any candidate code creates a
@@ -299,7 +307,9 @@ Run at least two independently operated, representative applications. Each
 pilot record must define traffic and data shape, PostgreSQL topology, enabled
 families, duration, expected SLOs, upgrade/rollback path, observed resource
 limits, defects and acceptance owner. A demo or maintainer-only sample is not
-an independent pilot.
+an independent pilot. Each pilot must run for at least 24 hours and record at
+least 1,000 operations and 100 transactions; the two records must have distinct
+applications, operator organisations and accountable approvers.
 
 ### Website deployment acceptance
 
@@ -308,7 +318,8 @@ hashed-asset and `index.html` cache policy, Brotli/gzip behavior, security
 headers, broken-link crawl, supported desktop/mobile browsers and representative
 field LCP, INP and CLS. The approval must reference the exact archived website
 artifact and candidate commit; localhost laboratory measurements alone do not
-pass this gate.
+pass this gate. V1 requires at least 100 field samples over 28 days with p75
+LCP at most 2,500 ms, INP at most 200 ms and CLS at most 0.1.
 
 ### Backup and restore
 

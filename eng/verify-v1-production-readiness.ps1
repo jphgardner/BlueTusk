@@ -236,17 +236,64 @@ foreach ($requiredApproval in @($configuration.requiredApprovalEvidence))
     }
 }
 
-$approvalExample = Get-Content -LiteralPath (
-    Join-Path $PSScriptRoot 'v1-approval-evidence.example.json') -Raw | ConvertFrom-Json
-$approvalExampleReferences = @($approvalExample.references | ForEach-Object { [string]$_ })
-if ($approvalExampleReferences.Count -lt 1 -or
-    @($approvalExampleReferences | Where-Object {
-        $uri = [Uri]::new('https://invalid.example')
-        -not [Uri]::TryCreate($_, [UriKind]::Absolute, [ref]$uri) -or
-        $uri.Scheme -ne [Uri]::UriSchemeHttps
-    }).Count -ne 0)
+$approvalContract = Get-Content -LiteralPath (
+    Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json') -Raw |
+    ConvertFrom-Json
+$contractGateIds = @($approvalContract.gates | ForEach-Object { [string]$_.id })
+$requiredApprovalIds = @(
+    $configuration.requiredApprovalEvidence |
+        ForEach-Object { [string]$_.id }
+)
+if ($contractGateIds.Count -ne $requiredApprovalIds.Count -or
+    @($contractGateIds | Select-Object -Unique).Count -ne $contractGateIds.Count -or
+    @($requiredApprovalIds | Where-Object { $_ -notin $contractGateIds }).Count -ne 0)
 {
-    throw 'The approval-evidence example must contain at least one absolute HTTPS reference.'
+    throw (
+        'The gate-specific approval contract must define exactly the configured V1 ' +
+        'approval gates.')
+}
+
+$approvalExamples = Get-Content -LiteralPath (
+    Join-Path $PSScriptRoot 'v1-approval-evidence.examples.json') -Raw |
+    ConvertFrom-Json
+$exampleApprovals = @($approvalExamples.examples)
+if ($exampleApprovals.Count -ne $requiredApprovalIds.Count)
+{
+    throw (
+        'The detailed approval examples must contain exactly one record for every ' +
+        "required approval; found $($exampleApprovals.Count).")
+}
+$zeroCommit = '0' * 40
+$approvalVerifier = Join-Path $PSScriptRoot 'verify-v1-approval-evidence.ps1'
+foreach ($gateId in $requiredApprovalIds)
+{
+    $matches = @($exampleApprovals | Where-Object {
+        [string]$_.gateId -eq $gateId
+    })
+    if ($matches.Count -ne 1)
+    {
+        throw "The detailed approval examples must contain exactly one '$gateId' record."
+    }
+
+    $temporaryExample = Join-Path (
+        [IO.Path]::GetTempPath()
+    ) "bluetusk-v1-approval-$([Guid]::NewGuid().ToString('N')).json"
+    try
+    {
+        $matches[0] | ConvertTo-Json -Depth 20 |
+            Set-Content -LiteralPath $temporaryExample -Encoding utf8NoBOM
+        & $approvalVerifier `
+            -EvidencePath $temporaryExample `
+            -ExpectedGateId $gateId `
+            -ExpectedCommit $zeroCommit | Out-Null
+    }
+    finally
+    {
+        if (Test-Path -LiteralPath $temporaryExample)
+        {
+            Remove-Item -LiteralPath $temporaryExample -Force
+        }
+    }
 }
 
 foreach ($gate in @($configuration.engineeringGates))
@@ -627,16 +674,29 @@ $multiplexingReport = Resolve-EvidenceFile `
     -ReportPath $multiplexingReport `
     -EvidencePath $multiplexingEvidence
 
-$requiredApprovalIds = @(
-    $configuration.requiredApprovalEvidence |
-        ForEach-Object { [string]$_.id }
-)
 $approvalEntries = @($evidence.approvals)
 if ($approvalEntries.Count -ne $requiredApprovalIds.Count)
 {
     throw (
         "Candidate evidence contains $($approvalEntries.Count) approval records; " +
         "$($requiredApprovalIds.Count) are required.")
+}
+
+$candidateCommitUtcText = (
+    & git -C $repositoryRoot show -s --format=%cI $Commit
+).Trim()
+if ($LASTEXITCODE -ne 0)
+{
+    throw "Could not read commit timestamp for candidate '$Commit'."
+}
+$candidateCommitUtc = [DateTimeOffset]::MinValue
+if (-not [DateTimeOffset]::TryParse(
+        $candidateCommitUtcText,
+        [Globalization.CultureInfo]::InvariantCulture,
+        [Globalization.DateTimeStyles]::AssumeUniversal,
+        [ref]$candidateCommitUtc))
+{
+    throw "Candidate '$Commit' has an invalid commit timestamp."
 }
 
 foreach ($gateId in $requiredApprovalIds)
@@ -652,6 +712,14 @@ foreach ($gateId in $requiredApprovalIds)
     $approvalPath = Resolve-EvidenceFile `
         -BasePath $evidenceRoot `
         -Path ([string]$entry[0].path)
+    $canonicalApprovalPath = (
+        Resolve-Path -LiteralPath (
+            Join-Path $evidenceRoot "approvals/$gateId.json")
+    ).Path
+    if ($approvalPath -ne $canonicalApprovalPath)
+    {
+        throw "Approval '$gateId' is not at its canonical evidence path."
+    }
     $expectedHash = ([string]$entry[0].sha256).ToLowerInvariant()
     $actualHash = (
         Get-FileHash -LiteralPath $approvalPath -Algorithm SHA256
@@ -662,46 +730,15 @@ foreach ($gateId in $requiredApprovalIds)
         throw "Approval '$gateId' does not match its declared SHA-256."
     }
 
-    $approval = Get-Content -LiteralPath $approvalPath -Raw | ConvertFrom-Json
-    $approvalReferences = @($approval.references | ForEach-Object { [string]$_ })
-    if ($approvalReferences.Count -lt 1)
-    {
-        throw "Approval '$gateId' must cite at least one retained evidence record."
-    }
-    foreach ($approvalReference in $approvalReferences)
-    {
-        $referenceUri = [Uri]::new('https://invalid.example')
-        if (-not [Uri]::TryCreate(
-                $approvalReference,
-                [UriKind]::Absolute,
-                [ref]$referenceUri) -or
-            $referenceUri.Scheme -ne [Uri]::UriSchemeHttps)
-        {
-            throw "Approval '$gateId' reference '$approvalReference' must be an absolute HTTPS URI."
-        }
-    }
-    $approvedUtc = [DateTimeOffset]::MinValue
-    if ([int]$approval.schemaVersion -ne 1 -or
-        [string]$approval.gateId -ne $gateId -or
-        -not [string]::Equals(
-            [string]$approval.candidateCommit,
-            $Commit,
-            [StringComparison]::OrdinalIgnoreCase) -or
-        [string]$approval.outcome -ne 'approved' -or
-        [string]::IsNullOrWhiteSpace([string]$approval.approvedBy) -or
-        [string]::IsNullOrWhiteSpace([string]$approval.summary) -or
-        [long]$approval.blockingFindings -ne 0 -or
-        -not [DateTimeOffset]::TryParse(
-            [string]$approval.approvedUtc,
-            [Globalization.CultureInfo]::InvariantCulture,
-            [Globalization.DateTimeStyles]::AssumeUniversal,
-            [ref]$approvedUtc) -or
-        $approvedUtc.Offset -ne [TimeSpan]::Zero -or
-        $approvedUtc -gt [DateTimeOffset]::UtcNow)
-    {
-        throw "Approval '$gateId' is incomplete, non-UTC, future-dated, blocked, or for another candidate."
-    }
 }
+
+& (Join-Path $PSScriptRoot 'verify-v1-approval-evidence-set.ps1') `
+    -EvidenceDirectory (Join-Path $evidenceRoot 'approvals') `
+    -ExpectedCommit $Commit `
+    -ExpectedWebsiteProductionMetricsSha256 (
+        [string]$evidence.website.productionMetricsSha256
+    ) `
+    -NotBeforeUtc $candidateCommitUtc
 
 & (Join-Path $PSScriptRoot 'verify-postgresql19-programme.ps1') `
     -RepositoryRoot $repositoryRoot `

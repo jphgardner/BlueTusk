@@ -7,6 +7,7 @@
     "verify-fuzzing-contract.ps1",
     "verify-test-credential-inventory.ps1",
     "verify-endurance-disturbance-contract.ps1",
+    "test-v1-approval-evidence-verifier.ps1",
     "verify-website-production.ps1",
     "verify-supply-chain.ps1",
     "verify-github-governance.ps1",
@@ -106,6 +107,7 @@
     "ops/observability/prometheus-rules.yml",
     "ops/observability/grafana/bluetusk-v1.json",
     "docs/operations/observability.md",
+    "docs/operations/approval-evidence.md",
     "docs/operations/fuzz-finding-handoff.md",
     "docs/operations/endurance-disturbance-evidence.md",
     "docs/operations/package-evidence.md",
@@ -114,7 +116,11 @@
     "docs/release-review-handoff.md",
     "eng/v1-github-governance.json",
     "eng/v1-candidate-evidence.example.json",
-    "eng/v1-approval-evidence.example.json",
+    "eng/v1-approval-evidence-contract.json",
+    "eng/v1-approval-evidence.examples.json",
+    "eng/verify-v1-approval-evidence.ps1",
+    "eng/verify-v1-approval-evidence-set.ps1",
+    "eng/test-v1-approval-evidence-verifier.ps1",
     ".github/workflows/performance.yml",
     ".github/workflows/v1-candidate-readiness.yml"
   ]

@@ -27,7 +27,7 @@ distinguish implemented code from release authorization.
 | Query or maintain graph data | [SQL/PGQ](graph/README.md) | [Continuous Graph](continuous-graph/README.md) |
 | Operate a deployment | [Deployment](operations/deployment.md) | [Troubleshooting](operations/troubleshooting.md), [production observability](operations/observability.md) and [V1 production readiness](operations/production-readiness.md) |
 | Contribute | [Repository layout](contributing/repository-layout.md) | [Testing](contributing/testing.md) |
-| Prepare a release | [Release process](release-process.md) | [Independent review handoff](release-review-handoff.md) |
+| Prepare a release | [Release process](release-process.md) | [Operational approval evidence](operations/approval-evidence.md) and [independent review handoff](release-review-handoff.md) |
 
 ## Product families
 
@@ -141,6 +141,7 @@ Use these documents when the question is not “how do I call the API?”:
 - [Production observability and SLOs](operations/observability.md)
 - [V1 production-readiness gates and exact-candidate evidence](operations/production-readiness.md)
 - [Canonical V1 package evidence](operations/package-evidence.md)
+- [V1 operational approval evidence](operations/approval-evidence.md)
 - [Angular website production contract](operations/website-production.md)
 - [Upgrade guide](operations/upgrade-guide.md)
 - [Observability](observability.md)

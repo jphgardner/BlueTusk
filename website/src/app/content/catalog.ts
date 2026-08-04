@@ -240,9 +240,9 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     value: 'Pilot pending',
     label: 'Field Core Web Vitals',
     detail:
-      'Real-user LCP, INP and CLS still require the selected production host, geography and representative pilot traffic.',
+      'The public host still needs 100 field samples over 28 days with p75 LCP ≤2,500 ms, INP ≤200 ms and CLS ≤0.1.',
     asOf: '2026-08-04',
-    sourcePath: 'docs/operations/website-production.md',
+    sourcePath: 'docs/operations/approval-evidence.md',
   },
   {
     id: 'streams-endurance',
@@ -302,6 +302,18 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
       'Beta 2 is digest-pinned and capability-guarded; stable support waits for the GA programme.',
     asOf: '2026-08-04',
     sourcePath: 'docs/postgresql19-programme.md',
+  },
+  {
+    id: 'operational-approvals',
+    subsystem: 'Platform',
+    kind: 'release',
+    status: 'pending',
+    value: '10 required',
+    label: 'Measured operational acceptance',
+    detail:
+      'Gate-specific schemas now reject narrative-only approvals; two pilots, field vitals, recovery, rollback, game day, SLO ownership and sign-off remain external.',
+    asOf: '2026-08-04',
+    sourcePath: 'docs/operations/approval-evidence.md',
   },
   {
     id: 'independent-review',

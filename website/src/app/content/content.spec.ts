@@ -25,6 +25,7 @@ describe('website content integrity', () => {
         'sync-endurance',
         'endurance-disturbances',
         'secret-scanner-triage',
+        'operational-approvals',
       ]),
     );
     expect(EVIDENCE.find((item) => item.id === 'allocations')?.value).toBe('37');
