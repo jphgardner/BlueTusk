@@ -198,6 +198,8 @@ jobs:
               event = [string]$run.event
               conclusion = [string]$run.conclusion
               runId = $runId
+              runAttempt = [int]$run.run_attempt
+              completedUtc = [string]$run.updated_at
               url = [string]$run.html_url
             }
 
@@ -297,7 +299,7 @@ jobs:
             }
           })
           $manifest = [ordered]@{
-            schemaVersion = 1
+            schemaVersion = 2
             candidateCommit = $env:CANDIDATE_SHA.ToLowerInvariant()
             workflowRuns = @(
               Get-Content -Raw (Join-Path $root workflow-runs.json) |

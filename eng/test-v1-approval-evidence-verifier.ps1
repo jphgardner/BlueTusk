@@ -205,6 +205,38 @@ try
         })[0]
         $website.details.productionMetricsSha256 = '1' * 64
     }
+    Assert-SetRejected -Name 'premature-independent-review' -Mutate {
+        param($copies)
+        $security = @($copies | Where-Object {
+            [string]$_.gateId -eq 'security-review'
+        })[0]
+        $security.approvedUtc = '2026-01-02T00:00:00Z'
+    }
+    Assert-SetRejected -Name 'premature-maintainer-signoff' -Mutate {
+        param($copies)
+        $review = @($copies | Where-Object {
+            [string]$_.gateId -eq 'independent-release-review'
+        })[0]
+        $review.approvedUtc = '2026-01-02T00:00:00Z'
+    }
+
+    $staleSet = Write-ExampleSet 'stale-set'
+    try
+    {
+        & $setVerifier `
+            -EvidenceDirectory $staleSet `
+            -ExpectedCommit $zeroCommit `
+            -ExpectedWebsiteProductionMetricsSha256 ('0' * 64) `
+            -NotBeforeUtc ([DateTimeOffset]'2026-01-02T00:00:00Z') *> $null
+        throw "Negative approval set 'stale-set' was accepted."
+    }
+    catch
+    {
+        if ($_.Exception.Message -eq "Negative approval set 'stale-set' was accepted.")
+        {
+            throw
+        }
+    }
 }
 finally
 {
@@ -213,4 +245,5 @@ finally
 
 Write-Output (
     'V1 approval-evidence verifier self-test passed: ten positive schemas, one ' +
-    'complete set, five record mutations and two cross-record mutations.')
+    'complete set, five record mutations, four cross-record mutations and one ' +
+    'stale-set mutation.')

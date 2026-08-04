@@ -45,7 +45,10 @@ exact-candidate evidence below is complete.
 - A schema-2 operational approval contract with ten gate-specific evidence
   shapes, measured pilot and field-performance minimums, restore/RPO/RTO
   comparisons, rollback and game-day outcomes, cross-pilot independence checks
-  and fail-closed mutation self-tests.
+  and fail-closed mutation self-tests. Candidate evidence schema 2 binds every
+  workflow run attempt and completion time, rejects stale approvals, orders
+  independent review after operational acceptance and makes maintainer
+  sign-off the final decision.
 - A source-controlled GitHub governance contract that requires 35 named status
   checks, protected `main`, fresh independent review, self-review-protected
   candidate/publication environments, the dependency graph, vulnerability

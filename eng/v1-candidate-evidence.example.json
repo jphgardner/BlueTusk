@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "candidateCommit": "0000000000000000000000000000000000000000",
   "workflowRuns": [
     {
@@ -7,48 +7,60 @@
       "headSha": "0000000000000000000000000000000000000000",
       "event": "workflow_dispatch",
       "conclusion": "success",
-      "runId": 0,
-      "url": "https://github.example/runs/0"
+      "runId": 1,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:01Z",
+      "url": "https://github.com/example/repository/actions/runs/1"
     },
     {
       "workflowFile": "security.yml",
       "headSha": "0000000000000000000000000000000000000000",
       "event": "workflow_dispatch",
       "conclusion": "success",
-      "runId": 0,
-      "url": "https://github.example/runs/0"
+      "runId": 2,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:02Z",
+      "url": "https://github.com/example/repository/actions/runs/2"
     },
     {
       "workflowFile": "fuzzing.yml",
       "headSha": "0000000000000000000000000000000000000000",
       "event": "workflow_dispatch",
       "conclusion": "success",
-      "runId": 0,
-      "url": "https://github.example/runs/0"
+      "runId": 3,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:03Z",
+      "url": "https://github.com/example/repository/actions/runs/3"
     },
     {
       "workflowFile": "performance.yml",
       "headSha": "0000000000000000000000000000000000000000",
       "event": "workflow_dispatch",
       "conclusion": "success",
-      "runId": 0,
-      "url": "https://github.example/runs/0"
+      "runId": 4,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:04Z",
+      "url": "https://github.com/example/repository/actions/runs/4"
     },
     {
       "workflowFile": "streams-release-endurance.yml",
       "headSha": "0000000000000000000000000000000000000000",
       "event": "workflow_dispatch",
       "conclusion": "success",
-      "runId": 0,
-      "url": "https://github.example/runs/0"
+      "runId": 5,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:05Z",
+      "url": "https://github.com/example/repository/actions/runs/5"
     },
     {
       "workflowFile": "sync-release-endurance.yml",
       "headSha": "0000000000000000000000000000000000000000",
       "event": "workflow_dispatch",
       "conclusion": "success",
-      "runId": 0,
-      "url": "https://github.example/runs/0"
+      "runId": 6,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:06Z",
+      "url": "https://github.com/example/repository/actions/runs/6"
     }
   ],
   "streams": {

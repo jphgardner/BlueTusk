@@ -64,6 +64,55 @@ function Resolve-EvidenceFile
     return $resolved
 }
 
+function ConvertTo-VerifiedUtcDateTime
+{
+    param(
+        [Parameter(Mandatory)]
+        [object] $Value,
+
+        [Parameter(Mandatory)]
+        [string] $Context
+    )
+
+    if ($Value -is [DateTimeOffset])
+    {
+        $parsed = [DateTimeOffset]$Value
+        if ($parsed.Offset -ne [TimeSpan]::Zero)
+        {
+            throw "$Context must be an ISO 8601 UTC timestamp with a Z offset."
+        }
+
+        return $parsed
+    }
+    if ($Value -is [DateTime])
+    {
+        $dateTime = [DateTime]$Value
+        if ($dateTime.Kind -ne [DateTimeKind]::Utc)
+        {
+            throw "$Context must be an ISO 8601 UTC timestamp with a Z offset."
+        }
+
+        return [DateTimeOffset]::new($dateTime)
+    }
+    if ($Value -isnot [string])
+    {
+        throw "$Context must be an ISO 8601 UTC timestamp."
+    }
+
+    $parsed = [DateTimeOffset]::MinValue
+    if (-not [DateTimeOffset]::TryParse(
+            [string]$Value,
+            [Globalization.CultureInfo]::InvariantCulture,
+            [Globalization.DateTimeStyles]::AssumeUniversal,
+            [ref]$parsed) -or
+        $parsed.Offset -ne [TimeSpan]::Zero)
+    {
+        throw "$Context must be an ISO 8601 UTC timestamp with a Z offset."
+    }
+
+    return $parsed
+}
+
 foreach ($relativePath in @($configuration.requiredFiles))
 {
     $path = Join-Path $repositoryRoot ([string]$relativePath)
@@ -176,9 +225,27 @@ foreach ($requiredCandidateSource in @(
             "through '$requiredCandidateSource'.")
     }
 }
+foreach ($requiredCandidateSource in @(
+        'runAttempt = [int]$run.run_attempt',
+        'completedUtc = [string]$run.updated_at',
+        'schemaVersion = 2'))
+{
+    if (-not $candidateWorkflowSource.Contains(
+            $requiredCandidateSource,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            'The exact-candidate aggregation workflow does not preserve temporal ' +
+            "workflow evidence through '$requiredCandidateSource'.")
+    }
+}
 
 $exampleEvidence = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'v1-candidate-evidence.example.json') -Raw | ConvertFrom-Json
+if ([int]$exampleEvidence.schemaVersion -ne 2)
+{
+    throw 'The candidate-evidence example must use schema 2.'
+}
 $exampleWorkflowRuns = @($exampleEvidence.workflowRuns)
 if ($exampleWorkflowRuns.Count -ne @($configuration.requiredWorkflows).Count)
 {
@@ -205,6 +272,13 @@ foreach ($workflow in @($configuration.requiredWorkflows))
     {
         throw "The candidate-evidence example must contain exactly one '$workflow' record."
     }
+    if ([int]$exampleMatches[0].runAttempt -lt 1)
+    {
+        throw "The candidate-evidence example '$workflow' run attempt is invalid."
+    }
+    $null = ConvertTo-VerifiedUtcDateTime `
+        $exampleMatches[0].completedUtc `
+        "Candidate-evidence example '$workflow' completedUtc"
 }
 
 $exampleApprovalEntries = @($exampleEvidence.approvals)
@@ -353,14 +427,25 @@ if ($LASTEXITCODE -ne 0 -or $trackedStatus.Count -ne 0)
     throw 'Candidate verification requires a clean tracked worktree at the exact candidate commit.'
 }
 
+$candidateCommitUtcText = (
+    & git -C $repositoryRoot show -s --format=%cI $Commit
+).Trim()
+if ($LASTEXITCODE -ne 0)
+{
+    throw "Could not read commit timestamp for candidate '$Commit'."
+}
+$candidateCommitUtc = ConvertTo-VerifiedUtcDateTime `
+    $candidateCommitUtcText `
+    "Candidate '$Commit' commit timestamp"
+
 & (Join-Path $PSScriptRoot 'verify-github-governance.ps1') -Mode Remote
 
 $resolvedEvidence = (Resolve-Path -LiteralPath $EvidencePath).Path
 $evidenceRoot = Split-Path -Parent $resolvedEvidence
 $evidence = Get-Content -LiteralPath $resolvedEvidence -Raw | ConvertFrom-Json
-if ([int]$evidence.schemaVersion -ne 1)
+if ([int]$evidence.schemaVersion -ne 2)
 {
-    throw "Expected candidate-evidence schema 1; found '$($evidence.schemaVersion)'."
+    throw "Expected candidate-evidence schema 2; found '$($evidence.schemaVersion)'."
 }
 if (-not [string]::Equals(
         [string]$evidence.candidateCommit,
@@ -371,35 +456,13 @@ if (-not [string]::Equals(
 }
 
 $workflowRuns = @($evidence.workflowRuns)
-if ($workflowRuns.Count -ne @($configuration.requiredWorkflows).Count)
-{
-    throw (
-        'Candidate evidence must contain exactly one run record for each required workflow; ' +
-        "expected $(@($configuration.requiredWorkflows).Count), found $($workflowRuns.Count).")
-}
-foreach ($requiredWorkflow in @($configuration.requiredWorkflows))
-{
-    $successful = @($workflowRuns | Where-Object {
-        [string]::Equals(
-            [string]$_.workflowFile,
-            [string]$requiredWorkflow,
-            [StringComparison]::Ordinal) -and
-        [string]::Equals(
-            [string]$_.headSha,
-            $Commit,
-            [StringComparison]::OrdinalIgnoreCase) -and
-        [string]$_.event -eq 'workflow_dispatch' -and
-        [string]$_.conclusion -eq 'success' -and
-        [long]$_.runId -gt 0 -and
-        [Uri]::IsWellFormedUriString([string]$_.url, [UriKind]::Absolute)
-    })
-    if ($successful.Count -ne 1)
-    {
-        throw (
-            "Candidate evidence must contain exactly one successful manual '$requiredWorkflow' " +
-            "run for '$Commit'; found $($successful.Count).")
-    }
-}
+$workflowEvidence = & (
+    Join-Path $PSScriptRoot 'verify-v1-workflow-evidence.ps1'
+) `
+    -EvidencePath $resolvedEvidence `
+    -ExpectedCommit $Commit `
+    -CandidateCommitUtc $candidateCommitUtc
+$latestWorkflowCompletedUtc = [DateTimeOffset]$workflowEvidence.LatestCompletedUtc
 
 $websiteDistribution = Resolve-EvidenceFile `
     -BasePath $evidenceRoot `
@@ -682,23 +745,6 @@ if ($approvalEntries.Count -ne $requiredApprovalIds.Count)
         "$($requiredApprovalIds.Count) are required.")
 }
 
-$candidateCommitUtcText = (
-    & git -C $repositoryRoot show -s --format=%cI $Commit
-).Trim()
-if ($LASTEXITCODE -ne 0)
-{
-    throw "Could not read commit timestamp for candidate '$Commit'."
-}
-$candidateCommitUtc = [DateTimeOffset]::MinValue
-if (-not [DateTimeOffset]::TryParse(
-        $candidateCommitUtcText,
-        [Globalization.CultureInfo]::InvariantCulture,
-        [Globalization.DateTimeStyles]::AssumeUniversal,
-        [ref]$candidateCommitUtc))
-{
-    throw "Candidate '$Commit' has an invalid commit timestamp."
-}
-
 foreach ($gateId in $requiredApprovalIds)
 {
     $entry = @($approvalEntries | Where-Object {
@@ -738,7 +784,7 @@ foreach ($gateId in $requiredApprovalIds)
     -ExpectedWebsiteProductionMetricsSha256 (
         [string]$evidence.website.productionMetricsSha256
     ) `
-    -NotBeforeUtc $candidateCommitUtc
+    -NotBeforeUtc $latestWorkflowCompletedUtc
 
 & (Join-Path $PSScriptRoot 'verify-postgresql19-programme.ps1') `
     -RepositoryRoot $repositoryRoot `

@@ -12,6 +12,9 @@ The authoritative assets are:
   types, minimums and pass values for all ten gates;
 - `eng/v1-approval-evidence.examples.json`, which contains one complete
   structural example per gate;
+- `eng/verify-v1-workflow-evidence.ps1`, which validates the six unique GitHub
+  run IDs, attempts, URLs and completion times that establish the approval
+  cutoff;
 - `eng/verify-v1-approval-evidence.ps1`, which validates one record; and
 - `eng/verify-v1-approval-evidence-set.ps1`, which validates the canonical
   ten-file set, pilot independence and website hash binding; and
@@ -33,17 +36,22 @@ Every approval file uses schema 2 and contains exactly these top-level fields:
 | `candidateCommit` | Full 40-character immutable candidate SHA |
 | `outcome` | `approved` |
 | `approvedBy` | Named accountable person or durable organisational identity |
-| `approvedUtc` | UTC timestamp at or after the candidate commit and not in the future |
+| `approvedUtc` | UTC timestamp at or after the latest exact-candidate workflow completion and not in the future |
 | `summary` | At least 40 non-whitespace characters describing what was accepted |
 | `blockingFindings` | `0` |
 | `references` | One or more absolute HTTPS URLs for retained evidence |
 | `details` | Exact gate-specific measured fields; missing and unknown fields fail |
 
-Candidate mode rejects ancestor-commit approvals, future-dated approvals,
-non-HTTPS references, unexpected fields and narrative-only records. A reference
-should resolve to a retained workflow, change, test, dashboard snapshot,
-incident record or evidence archive that the protected reviewer can access.
-Do not put credentials, access tokens or personal data in approval JSON.
+Candidate evidence schema 2 records the positive run attempt and GitHub
+completion timestamp for all six required workflows. Candidate mode rejects
+ancestor-commit approvals, approvals created before the latest exact workflow
+completed, future-dated approvals, non-HTTPS references, unexpected fields and
+narrative-only records. Independent release review must not predate any
+operational approval, and maintainer sign-off must be the final approval
+decision. A reference should resolve to a retained workflow, change, test,
+dashboard snapshot, incident record or evidence archive that the protected
+reviewer can access. Do not put credentials, access tokens or personal data in
+approval JSON.
 
 Validate an individual record before packaging it:
 
@@ -57,6 +65,7 @@ Validate an individual record before packaging it:
 Run the verifier self-test after changing any schema or validator:
 
 ```powershell
+./eng/test-v1-workflow-evidence-verifier.ps1
 ./eng/test-v1-approval-evidence-verifier.ps1
 ```
 
@@ -201,8 +210,9 @@ requires:
 - a UTC release window.
 
 The sign-off is valid only after PostgreSQL 19 GA, every protected workflow,
-endurance and disturbance evidence, both pilots, all rehearsals and every other
-approval pass for the same commit.
+endurance and disturbance evidence, both pilots, all rehearsals, independent
+release review and every other approval pass for the same commit. Its
+`approvedUtc` must be at or after every other approval timestamp.
 
 ## Protected archive
 
@@ -212,12 +222,14 @@ sibling `disturbances/` directory. Create a ZIP containing those two top-level
 directories, base64-encode it outside CI logs, and store the result as the
 protected `V1_APPROVAL_EVIDENCE_BASE64` environment secret.
 
-The candidate workflow restores the archive, rejects duplicate or missing
-approval filenames, downloads exact workflow artifacts, hashes every approval
-into `candidate.json`, and runs the complete candidate verifier. Keep the
+Create the protected approval archive only after all six exact workflows have
+completed successfully. The candidate workflow restores the archive, rejects
+duplicate or missing approval filenames, downloads exact workflow artifacts,
+records each run attempt and completion time, hashes every approval into
+schema-2 `candidate.json`, and runs the complete candidate verifier. Keep the
 original evidence outside the repository in access-controlled, retention-bound
-storage. The uploaded readiness artifact is retained for 90 days; organisational
-release records may require longer retention.
+storage. The uploaded readiness artifact is retained for 90 days;
+organisational release records may require longer retention.
 
 Any candidate code, version, dependency, workflow, publication policy or
 package-content change invalidates the approval set. Regenerate the affected

@@ -260,7 +260,9 @@ Candidate mode proves all of the following:
 
 - exactly one successful manual build, security, one-hour-per-target fuzzing,
   performance, Streams 72-hour and Sync 24-hour run is recorded for the
-  candidate SHA, with no extra workflow records accepted;
+  candidate SHA, with a unique positive run ID/attempt, HTTPS URL and
+  non-future completion timestamp after the candidate commit; no extra or
+  duplicate workflow records are accepted;
 - the intentional test-credential inventory passes inside the exact security
   run, and every external secret-scanner finding is independently resolved or
   accepted with a retained review reference;
@@ -286,8 +288,10 @@ Candidate mode proves all of the following:
 - PostgreSQL 19 is a verified GA milestone rather than a beta or RC; and
 - every required approval file has a matching SHA-256 and candidate commit,
   passes its gate-specific measurement contract and was approved after the
-  immutable commit; the two pilots have distinct applications, operators and
-  approvers, and website acceptance names the exact production-metrics hash.
+  latest exact workflow completed; the two pilots have distinct applications,
+  operators and approvers, website acceptance names the exact
+  production-metrics hash, independent review follows all operational
+  approvals, and maintainer sign-off is the final decision.
 
 Moving a tag, editing a workflow, changing a dependency, altering a package
 version, changing a publication policy or fixing any candidate code creates a

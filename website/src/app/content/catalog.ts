@@ -311,7 +311,7 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     value: '10 required',
     label: 'Measured operational acceptance',
     detail:
-      'Gate-specific schemas now reject narrative-only approvals; two pilots, field vitals, recovery, rollback, game day, SLO ownership and sign-off remain external.',
+      'Gate-specific schemas reject narrative-only or stale approvals and enforce final review/sign-off ordering; measured external records remain outstanding.',
     asOf: '2026-08-04',
     sourcePath: 'docs/operations/approval-evidence.md',
   },

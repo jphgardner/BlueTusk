@@ -34,7 +34,8 @@ ancestor-commit evidence does not pass.
 - [ ] All ten schema-2 operational approval files pass
       `verify-v1-approval-evidence.ps1`; generic narrative approvals, unknown
       fields, measurements outside budget and approvals older than the
-      candidate are rejected.
+      latest exact workflow are rejected. Independent review follows all
+      operational approvals, and maintainer sign-off is last.
 - [ ] The manual `security.yml` CodeQL run passed at the candidate commit.
 - [ ] Every target in the manual `fuzzing.yml` run completed for at least one
       hour without a crash or hang finding at the candidate commit.

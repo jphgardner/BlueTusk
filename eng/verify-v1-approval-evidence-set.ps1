@@ -99,6 +99,44 @@ if (-not [string]::Equals(
         'production-metrics record.')
 }
 
+$operationalGateIds = @(
+    $gateIds |
+        Where-Object { $_ -notin @('independent-release-review', 'maintainer-signoff') }
+)
+$latestOperationalApprovalUtc = [DateTimeOffset]::MinValue
+foreach ($gateId in $operationalGateIds)
+{
+    $approvedUtc = [DateTimeOffset]$approvals[$gateId].approvedUtc
+    if ($approvedUtc -gt $latestOperationalApprovalUtc)
+    {
+        $latestOperationalApprovalUtc = $approvedUtc
+    }
+}
+$independentReviewUtc = [DateTimeOffset]$approvals[
+    'independent-release-review'
+].approvedUtc
+if ($independentReviewUtc -lt $latestOperationalApprovalUtc)
+{
+    throw (
+        'Independent release review must not predate any operational, security, ' +
+        'pilot, recovery, game-day, or SLO approval.')
+}
+$maintainerSignoffUtc = [DateTimeOffset]$approvals['maintainer-signoff'].approvedUtc
+$latestPreSignoffApprovalUtc = $independentReviewUtc
+foreach ($gateId in $operationalGateIds)
+{
+    $approvedUtc = [DateTimeOffset]$approvals[$gateId].approvedUtc
+    if ($approvedUtc -gt $latestPreSignoffApprovalUtc)
+    {
+        $latestPreSignoffApprovalUtc = $approvedUtc
+    }
+}
+if ($maintainerSignoffUtc -lt $latestPreSignoffApprovalUtc)
+{
+    throw 'Maintainer sign-off must be the final V1 approval decision.'
+}
+
 Write-Output (
     "V1 approval-evidence set passed: $($gateIds.Count) gate-specific records, " +
-    'two independent pilots, and exact website production-metrics binding.')
+    'two independent pilots, exact website production-metrics binding, and ' +
+    'ordered independent review and maintainer sign-off.')
