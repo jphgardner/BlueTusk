@@ -138,6 +138,30 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     sourcePath: 'docs/operations/fuzz-finding-handoff.md',
   },
   {
+    id: 'test-credential-boundary',
+    subsystem: 'Platform',
+    kind: 'security',
+    status: 'passed',
+    value: '22 scoped',
+    label: 'Intentional test credentials',
+    detail:
+      'Every literal is fingerprinted, counted and confined to localhost or disposable Compose/Kerberos infrastructure; unknown or external-host use fails closed.',
+    asOf: '2026-08-04',
+    sourcePath: 'docs/security.md',
+  },
+  {
+    id: 'secret-scanner-triage',
+    subsystem: 'Platform',
+    kind: 'security',
+    status: 'pending',
+    value: '6 pending',
+    label: 'External scanner disposition',
+    detail:
+      'The live PR findings match inventoried test values, but an independent reviewer must still record the external false-positive disposition.',
+    asOf: '2026-08-04',
+    sourcePath: 'docs/security.md',
+  },
+  {
     id: 'api-budget',
     subsystem: 'Platform',
     kind: 'compatibility',

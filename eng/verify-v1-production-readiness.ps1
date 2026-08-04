@@ -105,6 +105,14 @@ $candidateWorkflowPath = Join-Path $repositoryRoot '.github/workflows/v1-candida
 $candidateWorkflowSource = Get-Content -LiteralPath $candidateWorkflowPath -Raw
 $buildWorkflowSource = Get-Content -LiteralPath (
     Join-Path $repositoryRoot '.github/workflows/build.yml') -Raw
+$securityWorkflowSource = Get-Content -LiteralPath (
+    Join-Path $repositoryRoot '.github/workflows/security.yml') -Raw
+if (-not $securityWorkflowSource.Contains(
+        './eng/verify-test-credential-inventory.ps1',
+        [StringComparison]::Ordinal))
+{
+    throw 'The exact security workflow does not verify the intentional test-credential boundary.'
+}
 foreach ($requiredBuildSource in @(
         './eng/build-v1-candidate-packages.ps1',
         'name: v1-candidate-packages-${{ github.sha }}',

@@ -256,6 +256,9 @@ Candidate mode proves all of the following:
 - exactly one successful manual build, security, one-hour-per-target fuzzing,
   performance, Streams 72-hour and Sync 24-hour run is recorded for the
   candidate SHA, with no extra workflow records accepted;
+- the intentional test-credential inventory passes inside the exact security
+  run, and every external secret-scanner finding is independently resolved or
+  accepted with a retained review reference;
 - the archived Angular production metrics match the candidate, every emitted
   website file matches its recorded length and SHA-256, and all delivery
   budgets pass;
@@ -364,5 +367,8 @@ recoveries do not yet exist for that SHA, and the
 independent pilots/rehearsals/approvals are not complete. The live repository
 settings satisfy the declared protection policy, but the required environment
 secrets and a second eligible reviewer are still needed before either
-protected environment can complete an owner-initiated deployment. Publication
-switches must remain disabled until candidate mode passes.
+protected environment can complete an owner-initiated deployment. The six
+current GitGuardian findings refer to inventoried disposable test credentials,
+but still require explicit external false-positive disposition before the
+security approval can pass. Publication switches must remain disabled until
+candidate mode passes.

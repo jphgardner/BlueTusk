@@ -24,11 +24,15 @@ describe('website content integrity', () => {
         'streams-endurance',
         'sync-endurance',
         'endurance-disturbances',
+        'secret-scanner-triage',
       ]),
     );
     expect(EVIDENCE.find((item) => item.id === 'allocations')?.value).toBe('37');
     expect(EVIDENCE.find((item) => item.id === 'website-delivery')?.status).toBe('passed');
     expect(EVIDENCE.find((item) => item.id === 'canonical-package-set')?.status).toBe('pending');
+    expect(EVIDENCE.find((item) => item.id === 'test-credential-boundary')?.value).toBe(
+      '22 scoped',
+    );
   });
 
   it('publishes all seven first-party extension families', () => {

@@ -23,6 +23,38 @@ claim of independent penetration testing or a production support SLA.
 | Commands and schema tooling | SQL injection, unsafe identifier/literal handling, accidental trusted SQL execution | Runtime values use protocol parameters. Provider-generated identifiers and literals use central quoting. APIs that accept SQL expressions, routine bodies, predicates, or migration fragments are documented trusted-code boundaries and retain explicit validation/diagnostics; they do not reinterpret user input as parameters. |
 | Diagnostics and captures | SQL, parameters, exception messages, credentials, or tokens in telemetry | Provider activities/metrics expose bounded stable attributes without SQL or parameter values. Slow-command events are opt-in and redacted. Protocol capture requires explicit payload capture, uses bounded records, and supplies a redaction-aware inspector. |
 | Dependencies and release | Known vulnerable direct/transitive package, compromised review trail | Restore explicitly enables `NuGetAuditMode=all` at `NuGetAuditLevel=low`; warnings are errors and there are no advisory suppressions. The 2026-08-02 machine-readable audit reported no vulnerable direct or transitive packages. CI has read-only default permissions and pinned major action versions. |
+| Test credentials and automation | A disposable credential is mistaken for production material, copied into a release path, or silently replaced by a real secret | `eng/test-credential-inventory.json` records SHA-256 fingerprints rather than repeating values. Its verifier scans workflow and Compose sources, fixes the accepted file/context/count for every literal, requires localhost or named disposable containers, and forbids literal credentials in candidate and publication workflows. Unknown fingerprints and external-host use fail closed. |
+
+## Intentional test credentials and external scanner triage
+
+The repository contains three low-entropy values used only by disposable local
+PostgreSQL and MIT Kerberos test infrastructure. They are not credentials for
+GitHub, package registries, cloud services, deployed databases or any
+maintainer account. The current inventory covers 22 literal occurrences across
+workflow and Compose inputs:
+
+- the PostgreSQL credential used by localhost Compose services, PgBouncer and
+  their test clients;
+- the disposable Kerberos test-principal credential; and
+- the disposable KDC database bootstrap value.
+
+`eng/verify-test-credential-inventory.ps1` discovers literal password forms
+instead of trusting a hand-maintained occurrence list. Every discovery must
+match one registered fingerprint, exact relative file, expected count and
+local-only line context. The fingerprint is computed in memory and the
+temporary plaintext byte buffer is zeroed. Candidate-readiness and package
+publication workflows are explicitly forbidden inventory locations.
+
+The verifier self-test proves that a registered localhost fixture passes while
+the same value on an external host and an unregistered literal both fail. It
+runs as a V1 engineering gate and inside the manual `security.yml` CodeQL job.
+
+An external scanner finding is not closed merely because this local gate
+passes. A security reviewer must inspect the scanner record, confirm that its
+fingerprint and locations match this inventory, and explicitly mark it as a
+test-credential false positive. A value with any production reuse, unknown
+origin, different location or external endpoint must instead be revoked,
+removed and handled as a security incident.
 
 ## Findings closed by this review
 
@@ -69,6 +101,7 @@ dotnet package list --project BlueTusk.slnx --vulnerable --include-transitive --
 dotnet test tests/BlueTusk.Security.Tests -c Release --no-restore
 dotnet test tests/BlueTusk.Transport.Tests -c Release --no-restore
 dotnet test tests/BlueTusk.ConformanceTests -c Release --no-restore
+./eng/verify-test-credential-inventory.ps1
 ```
 
 The PostgreSQL 15–19 matrix, OAuth-validator job, Kerberos/KDC job, provider

@@ -16,6 +16,11 @@ exact-candidate evidence below is complete.
 - Commit-pinned workflow actions, CodeQL, dependency review, NuGet advisory
   auditing, CycloneDX 1.6 and SPDX 2.3 SBOMs, artifact hashes and build
   provenance.
+- A machine-checked intentional test-credential inventory covering 22
+  workflow/Compose occurrences by fingerprint, exact path, count and
+  local-only context; unknown values, external-host use and release-workflow
+  literals fail closed. External scanner disposition remains independently
+  required.
 - A canonical evidence-only package artifact for all six product families,
   with exact per-family archive reconstruction, package-content verification,
   SHA-256 inventory, SBOM/provenance binding and no registry credentials.
