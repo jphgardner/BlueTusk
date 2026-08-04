@@ -268,6 +268,7 @@ jobs:
           $websiteMetrics = OneFile (Join-Path $root website) production-metrics.json
           $packageManifest = OneFile (Join-Path $root packages) package-manifest.json
           $packageProvenance = OneFile (Join-Path $root packages) build-provenance.json
+          $disturbanceReport = OneFile (Join-Path $root disturbances) operational-disturbance-evidence.json
           $performance = Get-Content -Raw $performanceManifest.FullName | ConvertFrom-Json
           $results = Join-Path $performanceManifest.Directory.FullName results
           if (-not (Test-Path -LiteralPath $results -PathType Container)) {
@@ -335,6 +336,10 @@ jobs:
               manifestSha256 = Hash $packageManifest
               provenancePath = Relative $packageProvenance
               provenanceSha256 = Hash $packageProvenance
+            }
+            disturbances = [ordered]@{
+              reportPath = Relative $disturbanceReport
+              reportSha256 = Hash $disturbanceReport
             }
             approvals = $approvals
           }

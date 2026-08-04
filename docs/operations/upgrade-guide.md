@@ -102,7 +102,10 @@ passes. Raw SQL remains the escape hatch for server syntax outside the
 documented typed subset.
 
 For a minor upgrade, still rehearse the production topology and failover path.
-The endurance contracts include PostgreSQL minor-upgrade fault scenarios.
+The endurance-disturbance contract requires one real same-major PostgreSQL
+minor upgrade inside each exact endurance window, using two distinct
+digest-pinned images. See
+[endurance disturbance evidence](endurance-disturbance-evidence.md).
 
 ## Rolling upgrade
 

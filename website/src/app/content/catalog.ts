@@ -244,6 +244,18 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     sourcePath: 'docs/sync/release-endurance.md',
   },
   {
+    id: 'endurance-disturbances',
+    subsystem: 'Platform',
+    kind: 'release',
+    status: 'pending',
+    value: '14 pending',
+    label: 'Operational disturbance recoveries',
+    detail:
+      'Both exact endurance windows must each contain seven passed, content-addressed production disturbance recoveries backed by 28 unique injection/recovery summaries.',
+    asOf: '2026-08-04',
+    sourcePath: 'docs/operations/endurance-disturbance-evidence.md',
+  },
+  {
     id: 'live-preview',
     subsystem: 'Live',
     kind: 'release',

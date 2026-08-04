@@ -10,10 +10,11 @@ tests, documentation and fail-closed verification.
 
 The release-critical path now contains only exact-candidate and external
 evidence: the 72-hour Streams run, 24-hour Sync run, later PostgreSQL 19
-beta/RC/GA matrices, exact-commit CI/security evidence, independent review,
+beta/RC/GA matrices, 14 in-window operational disturbance recoveries with 28
+hashed observations, exact-commit CI/security evidence, independent review,
 application pilots, backup/restore and rollback rehearsal, and maintainer
-sign-off. Stable publication remains disabled until those records agree for one
-immutable candidate.
+sign-off. Stable publication remains disabled until those records agree for
+one immutable candidate.
 
 ## Real-time platform release trains
 
@@ -46,7 +47,7 @@ immutable candidate.
 - [x] Phase 4 slice: Control Plane compiler API freeze, executable HTTP/audit format registry, and isolation of the optional Continuous Graph adapter from the stable core
 - [x] Phase 4 slice: version-bound format registry, upgrade evidence, Streams 1.0 candidate API freeze, and restart-safe spool storage accounting
 - [x] Phase 4 slice: isolated-source fault-injected relay endurance runner, immutable binary fingerprinting, fail-closed evidence verifier, local smoke gate, and confirmed self-hosted 72-hour release workflow
-- [ ] Phase 4 release gate: complete and archive one successful 72-hour relay endurance report (the harness is implemented; a short run is not equivalent)
+- [ ] Phase 4 release gate: complete and archive one successful 72-hour relay endurance report with all seven content-addressed in-window operational disturbances (the harness is implemented; a short run is not equivalent)
 - [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
 - [x] Phase 5 slice: transaction-preserving Sync pipeline state machine, transform fingerprinting, durable-position acknowledgement gate, and explicit poison policy
 - [x] Phase 5 slice: PostgreSQL atomic document mutation/checkpoint destination, guarded snapshot epochs, custom transactional writer, and durable quarantine
@@ -59,7 +60,7 @@ immutable candidate.
 - [x] Phase 5 slice: redacted Sync control-plane read models plus separately authorized, confirmed, and audited retry/reconcile/rebuild dashboard controls
 - [x] Phase 5 slice: isolated-source four-destination 24-hour endurance runner, source/binary integrity report and fail-closed verifier, local smoke path, and confirmed self-hosted workflow
 - [x] Phase 5 slice: Sync 1.0 candidate API freeze, exact transform-fingerprint fixture, connector format registry, and PostgreSQL upgrade/future-version evidence
-- [ ] Phase 5 release gate: complete and archive one successful 24-hour Sync endurance report (a short orchestration smoke is not equivalent)
+- [ ] Phase 5 release gate: complete and archive one successful 24-hour Sync endurance report with all seven content-addressed in-window operational disturbances (a short orchestration smoke is not equivalent)
 - [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
 - [x] Phase 6 slice: trusted typed query registrations, security-partitioned identities, bounded keyed diffs, and signed rotating resume tokens
 - [x] Phase 6 slice: gap-free cursor reservation, concurrent-invalidation catch-up, coalesced authoritative requery, and fail-closed session bounds

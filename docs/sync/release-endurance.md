@@ -39,6 +39,14 @@ counts, clean isolated source, identical artifact fingerprints, Release
 configuration, absence of failure metadata, and worktree cleanup. The release
 workflow runs this verifier before uploading evidence.
 
+The native report does not by itself claim the complete production disturbance
+matrix. During the same 24-hour observation window, operators must also record
+process death, network interruption, controlled storage exhaustion, credential
+rotation, primary failover, backward/forward clock movement and a real
+PostgreSQL minor upgrade. Those seven records are independently
+content-addressed and verified with the Streams records by the
+[endurance disturbance evidence contract](../operations/endurance-disturbance-evidence.md).
+
 ## Local smoke
 
 Start PostgreSQL 19, Redis 8, NATS JetStream, and OpenSearch 3.7 using the same
@@ -78,5 +86,6 @@ labelled `self-hosted`, `linux`, `x64`, and `bluetusk-endurance`, retains the
 report for 90 days, and captures all service logs on failure.
 
 Sync stays non-publishable until one successful format-3 report is reviewed and
-archived. A format-2 report from the shared-output runner is diagnostic only
-and cannot satisfy the release gate.
+archived and all seven Sync disturbance records occur inside its exact
+observation window. A format-2 report from the shared-output runner is
+diagnostic only and cannot satisfy the release gate.

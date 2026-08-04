@@ -267,7 +267,8 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
     {
       value: '72h / 24h',
       label: 'Evidence still pending',
-      detail: 'Streams and Sync harnesses exist; required archived runs are not yet complete.',
+      detail:
+        'Exact runs plus 14 in-window disturbance recoveries and 28 hashed observations remain open.',
       icon: 'monitor_heart',
     },
   ] as const;
@@ -318,8 +319,8 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
 
   protected readonly roadmap = [
     { name: 'Provider', status: 'V1 code and hardening complete', kind: 'complete' },
-    { name: 'Streams', status: 'Exact 72-hour run pending', kind: 'pending' },
-    { name: 'Sync', status: 'Exact 24-hour run pending', kind: 'pending' },
+    { name: 'Streams', status: 'Exact 72-hour + 7 disturbances pending', kind: 'pending' },
+    { name: 'Sync', status: 'Exact 24-hour + 7 disturbances pending', kind: 'pending' },
     { name: 'Live', status: 'V1 code and package gates complete', kind: 'complete' },
     { name: 'Control Plane', status: 'Dependency release chain pending', kind: 'pending' },
     { name: 'Continuous Graph', status: 'Preview candidate code-ready', kind: 'complete' },

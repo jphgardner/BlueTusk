@@ -37,6 +37,14 @@ fault-injection counters, the 64 MiB storage ceiling, zero final retained
 storage, clean isolated source, immutable Release artifacts, and worktree
 cleanup.
 
+The native report does not by itself claim the complete production disturbance
+matrix. During the same 72-hour observation window, operators must also record
+process death, network interruption, controlled storage exhaustion, credential
+rotation, primary failover, backward/forward clock movement and a real
+PostgreSQL minor upgrade. Those seven records are independently
+content-addressed and verified with the Sync records by the
+[endurance disturbance evidence contract](../operations/endurance-disturbance-evidence.md).
+
 ## Local smoke run
 
 The endurance case is skipped unless `BLUETUSK_RELAY_ENDURANCE_DURATION` is explicitly set. A short run exercises the same code path without claiming the release gate:
@@ -75,3 +83,5 @@ least 100,000 transactions, non-zero duplicate/replay/conflict/fencing/restart
 counters, bounded maximum storage, zero final storage bytes, the exact
 unchanged source, immutable test artifacts, exact candidate package hashes, a
 digest-pinned PostgreSQL image, and successful isolated-worktree cleanup.
+The V1 candidate gate additionally requires all seven Streams disturbance
+records to occur inside this exact report window.

@@ -15,7 +15,8 @@ runtime dependency on Npgsql.
 > compatibility record, public API budgets, immutable automation dependencies,
 > SBOM/provenance checks and exact-candidate endurance tooling. Stable
 > publication remains disabled until PostgreSQL 19 GA evidence, the exact
-> 72-hour Streams and 24-hour Sync runs, independent review and operational
+> 72-hour Streams and 24-hour Sync runs, all seven content-addressed
+> operational disturbances inside each run, independent review and operational
 > rehearsals pass for one immutable candidate. Start with the
 > [documentation handbook](docs/README.md), [V1 readiness record](docs/v1-release-readiness.md),
 > [roadmap](docs/roadmap.md), and [support matrix](VERSIONING.md).
@@ -98,9 +99,10 @@ The real-time platform is delivered in independently gated Streams, Sync, Live,
 Control Plane, and Continuous Graph release trains. Their V1 code, tests,
 package manifests and evidence verifiers are implemented. The remaining release
 work is deliberately operational: archive the exact 72-hour Streams and
-24-hour Sync candidate runs, repeat PostgreSQL 19 at later milestones and GA,
-and obtain independent sign-off. Package names and successful local builds are
-not claims of public availability.
+24-hour Sync candidate runs with 14 total in-window disturbance recoveries,
+repeat PostgreSQL 19 at later milestones and GA, and obtain independent
+sign-off. Package names and successful local builds are not claims of public
+availability.
 
 Read the [platform contracts](docs/realtime-platform/contracts.md),
 [real-time operations guide](docs/realtime-platform/operations.md), and

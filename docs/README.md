@@ -8,9 +8,10 @@ Continuous Graph only when their delivery contracts match the workload.
 
 The V1 implementation and release-hardening work are complete. Stable
 publication is still fail closed while exact-candidate endurance evidence,
-PostgreSQL 19 GA evidence, independent review and operational rehearsals remain
-outstanding. Start with [V1 release readiness](v1-release-readiness.md) if you
-need to distinguish implemented code from release authorization.
+its 14 required in-window operational disturbance recoveries, PostgreSQL 19 GA
+evidence, independent review and operational rehearsals remain outstanding.
+Start with [V1 release readiness](v1-release-readiness.md) if you need to
+distinguish implemented code from release authorization.
 
 ## Choose a path
 

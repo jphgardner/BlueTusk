@@ -51,8 +51,10 @@ present.
    budgets, security analysis, dependency review, immutable Action pins,
    CycloneDX/SPDX generation, package hashes and provenance verification are
    enforced without expanding public product-family breadth.
-6. **Candidate evidence — open.** Run and archive the exact 72-hour Streams and 24-hour
-   Sync candidates with the full fault matrix. No short run substitutes for
+6. **Candidate evidence — open.** Run and archive the exact 72-hour Streams and
+   24-hour Sync candidates with all seven operational disturbances inside each
+   native report window. The cross-run verifier requires 14 recoveries and 28
+   content-addressed observation summaries. No short run substitutes for
    either release gate.
 7. **PostgreSQL 19 progression — GA pending.** Re-run the isolated SQL/PGQ programme for every
    later beta, RC and GA build; keep beta-sensitive syntax isolated until GA

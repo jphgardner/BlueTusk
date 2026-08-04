@@ -23,6 +23,11 @@ exact-candidate evidence below is complete.
   detection and a GA-only stable-publication gate.
 - Streams and Sync endurance workflows that bind reports to the candidate
   commit, NuGet/npm hashes, runtime, operating system and service-image digests.
+- A fail-closed cross-run disturbance contract requiring process death,
+  network interruption, controlled storage exhaustion, credential rotation,
+  primary failover, backward/forward clock movement and PostgreSQL minor
+  upgrade during both exact endurance windows: 14 recoveries and 28 hashed
+  injection/recovery summaries.
 - A six-meter, 60-instrument telemetry contract; 14 reference production SLOs;
   a deployable OpenTelemetry Collector, Prometheus rules and Grafana dashboard;
   and metric lifecycle tests for every product family.
@@ -89,8 +94,9 @@ rerun by the required workflows at that exact commit.
 6. Run the complete manual `performance.yml` reference-machine workflow at that
    commit and archive its integrity-bound result set.
 7. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
-   workflows at the same candidate commit. Any candidate code change restarts
-   the applicable run.
+   workflows at the same candidate commit. Perform and content-address all
+   seven required operational disturbances inside each report window. Any
+   candidate code change restarts the applicable run.
 8. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
    PostgreSQL 19 support as stable before the GA record passes.
 9. Complete the

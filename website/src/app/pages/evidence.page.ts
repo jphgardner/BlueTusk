@@ -157,7 +157,8 @@ import { StatusPill } from '../shared/technical-ui';
         </li>
         <li>
           Streams 72-hour and Sync 24-hour evidence remains pending until archived exact-candidate
-          runs satisfy their contracts.
+          runs satisfy their contracts, including all seven in-window operational disturbances for
+          each run.
         </li>
         <li>
           SQL/PGQ is capability-guarded and stable PostgreSQL 19 support waits for GA evidence.

@@ -198,6 +198,10 @@ v1-evidence/
 ├── sync/
 │   ├── report.json
 │   └── candidate-sbom/build-provenance.json
+├── disturbances/
+│   ├── operational-disturbance-evidence.json
+│   ├── streams/*-injection.json and *-recovery.json
+│   └── sync/*-injection.json and *-recovery.json
 ├── performance/
 │   ├── multiplexing-evidence.json
 │   └── results/*.json
@@ -221,7 +225,8 @@ and
 Replace every placeholder. Approval files are content-addressed from the
 candidate manifest; each one must identify the required gate, exact candidate
 commit, accountable person, UTC approval time, acceptance summary and zero
-blocking findings.
+blocking findings. Each approval must cite at least one retained HTTPS evidence
+record; a blank, local-path-only or untraceable approval fails candidate mode.
 
 Run the final gate from a clean checkout at that exact commit:
 
@@ -235,8 +240,10 @@ Run the final gate from a clean checkout at that exact commit:
 For the publication-grade run, configure a protected
 `v1-candidate-readiness` GitHub environment with required reviewers, the
 read-only `V1_GOVERNANCE_TOKEN` secret described above, and the
-`V1_APPROVAL_EVIDENCE_BASE64` secret. The approval secret is a base64-encoded ZIP whose
-`approvals` directory contains the ten exact approval JSON files. Dispatch
+`V1_APPROVAL_EVIDENCE_BASE64` secret. The approval secret is a base64-encoded
+ZIP whose `approvals` directory contains the ten exact approval JSON files and
+whose `disturbances` directory contains the reviewed operational-disturbance
+report plus its 28 content-addressed injection/recovery summaries. Dispatch
 `.github/workflows/v1-candidate-readiness.yml` with the candidate SHA and the
 six successful workflow run IDs: build, security, one-hour-per-target fuzzing,
 performance, Streams endurance and Sync endurance. It queries GitHub for every
@@ -263,6 +270,9 @@ Candidate mode proves all of the following:
   all six projects and three digest-pinned destination services;
 - both endurance reports, package provenance and service images match the
   candidate;
+- all seven production disturbances passed inside each exact endurance report
+  window: 14 recoveries with zero blockers or observed data loss, backed by 28
+  unique SHA-256-bound injection/recovery records;
 - fresh performance results pass coverage, latency, allocation and
   multiplexing budgets on the reference machine;
 - PostgreSQL 19 is a verified GA milestone rather than a beta or RC; and
@@ -275,6 +285,8 @@ new commit and invalidates the evidence.
 The canonical package artifact, reconstruction verifier and publication
 separation are documented in
 [canonical V1 package evidence](package-evidence.md).
+The cross-run operational matrix and protected evidence layout are documented
+in [endurance disturbance evidence](endurance-disturbance-evidence.md).
 
 ## Operational acceptance
 
@@ -347,7 +359,8 @@ rollback/pinning, not replacing an already published archive.
 As of 2026-08-04, deterministic engineering work can be verified locally, but
 stable V1 remains blocked by external facts: PostgreSQL 19 GA is not yet the
 recorded milestone, the exact final candidate workflows have not run, the
-72-hour/24-hour endurance artifacts do not yet exist for that SHA, and the
+72-hour/24-hour endurance artifacts and their 14 in-window disturbance
+recoveries do not yet exist for that SHA, and the
 independent pilots/rehearsals/approvals are not complete. The live repository
 settings satisfy the declared protection policy, but the required environment
 secrets and a second eligible reviewer are still needed before either

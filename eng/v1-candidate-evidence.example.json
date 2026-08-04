@@ -85,6 +85,10 @@
     "provenancePath": "packages/sbom/build-provenance.json",
     "provenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
   },
+  "disturbances": {
+    "reportPath": "disturbances/operational-disturbance-evidence.json",
+    "reportSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
   "approvals": [
     {
       "id": "independent-release-review",

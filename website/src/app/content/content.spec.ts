@@ -23,6 +23,7 @@ describe('website content integrity', () => {
         'website-field-vitals',
         'streams-endurance',
         'sync-endurance',
+        'endurance-disturbances',
       ]),
     );
     expect(EVIDENCE.find((item) => item.id === 'allocations')?.value).toBe('37');

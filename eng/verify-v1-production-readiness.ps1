@@ -154,6 +154,20 @@ if (-not $candidateWorkflowSource.Contains(
 {
     throw 'The exact-candidate aggregation workflow does not hash the performance manifest.'
 }
+foreach ($requiredCandidateSource in @(
+        '$disturbanceReport = OneFile (Join-Path $root disturbances) operational-disturbance-evidence.json',
+        'reportPath = Relative $disturbanceReport',
+        'reportSha256 = Hash $disturbanceReport'))
+{
+    if (-not $candidateWorkflowSource.Contains(
+            $requiredCandidateSource,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            'The exact-candidate aggregation workflow does not bind operational disturbances ' +
+            "through '$requiredCandidateSource'.")
+    }
+}
 
 $exampleEvidence = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'v1-candidate-evidence.example.json') -Raw | ConvertFrom-Json
@@ -212,6 +226,19 @@ foreach ($requiredApproval in @($configuration.requiredApprovalEvidence))
     {
         throw "The candidate-evidence example must contain exactly one '$approvalId' approval."
     }
+}
+
+$approvalExample = Get-Content -LiteralPath (
+    Join-Path $PSScriptRoot 'v1-approval-evidence.example.json') -Raw | ConvertFrom-Json
+$approvalExampleReferences = @($approvalExample.references | ForEach-Object { [string]$_ })
+if ($approvalExampleReferences.Count -lt 1 -or
+    @($approvalExampleReferences | Where-Object {
+        $uri = [Uri]::new('https://invalid.example')
+        -not [Uri]::TryCreate($_, [UriKind]::Absolute, [ref]$uri) -or
+        $uri.Scheme -ne [Uri]::UriSchemeHttps
+    }).Count -ne 0)
+{
+    throw 'The approval-evidence example must contain at least one absolute HTTPS reference.'
 }
 
 foreach ($gate in @($configuration.engineeringGates))
@@ -482,6 +509,36 @@ if ($destinationImages.Count -ne 3 -or
     -ExpectedPostgreSqlImage $postgresqlImage `
     -ExpectedDestinationImages $destinationImages
 
+$disturbanceReport = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.disturbances.reportPath)
+$expectedDisturbanceReport = (
+    Resolve-Path -LiteralPath (
+        Join-Path $evidenceRoot 'disturbances/operational-disturbance-evidence.json')
+).Path
+if ($disturbanceReport -ne $expectedDisturbanceReport)
+{
+    throw 'Operational-disturbance evidence path is not canonical.'
+}
+$disturbanceReportHash = (
+    Get-FileHash -LiteralPath $disturbanceReport -Algorithm SHA256
+).Hash.ToLowerInvariant()
+if ([string]$evidence.disturbances.reportSha256 -notmatch '^[0-9a-f]{64}$' -or
+    $disturbanceReportHash -ne [string]$evidence.disturbances.reportSha256)
+{
+    throw 'Operational-disturbance evidence does not match the candidate-manifest SHA-256.'
+}
+& (Join-Path $PSScriptRoot 'verify-endurance-disturbance-evidence.ps1') `
+    -EvidencePath $disturbanceReport `
+    -EvidenceRoot $evidenceRoot `
+    -ExpectedCommit $Commit `
+    -ExpectedPackageManifestSha256 ([string]$evidence.packages.manifestSha256) `
+    -ExpectedPackageProvenanceSha256 ([string]$evidence.packages.provenanceSha256) `
+    -StreamsReportPath $streamsReport `
+    -ExpectedStreamsReportSha256 ([string]$evidence.streams.reportSha256) `
+    -SyncReportPath $syncReport `
+    -ExpectedSyncReportSha256 ([string]$evidence.sync.reportSha256)
+
 $performanceResults = Resolve-EvidenceFile `
     -BasePath $evidenceRoot `
     -Path ([string]$evidence.performance.resultsPath) `
@@ -598,6 +655,23 @@ foreach ($gateId in $requiredApprovalIds)
     }
 
     $approval = Get-Content -LiteralPath $approvalPath -Raw | ConvertFrom-Json
+    $approvalReferences = @($approval.references | ForEach-Object { [string]$_ })
+    if ($approvalReferences.Count -lt 1)
+    {
+        throw "Approval '$gateId' must cite at least one retained evidence record."
+    }
+    foreach ($approvalReference in $approvalReferences)
+    {
+        $referenceUri = [Uri]::new('https://invalid.example')
+        if (-not [Uri]::TryCreate(
+                $approvalReference,
+                [UriKind]::Absolute,
+                [ref]$referenceUri) -or
+            $referenceUri.Scheme -ne [Uri]::UriSchemeHttps)
+        {
+            throw "Approval '$gateId' reference '$approvalReference' must be an absolute HTTPS URI."
+        }
+    }
     $approvedUtc = [DateTimeOffset]::MinValue
     if ([int]$approval.schemaVersion -ne 1 -or
         [string]$approval.gateId -ne $gateId -or
@@ -625,10 +699,15 @@ foreach ($gateId in $requiredApprovalIds)
     -RepositoryRoot $repositoryRoot `
     -RequireGeneralAvailability
 
+$disturbanceRecoveryCount =
+    [int]$configuration.minimums.enduranceDisturbanceRuns *
+    [int]$configuration.minimums.enduranceDisturbancesPerRun
 Write-Output (
     "V1 candidate readiness passed for immutable commit ${Commit}: " +
     "$($workflowRuns.Count) exact workflow runs, six-family package/SBOM/provenance evidence, " +
-    "72-hour Streams and 24-hour Sync endurance, fresh reference-machine performance evidence, " +
+    "72-hour Streams and 24-hour Sync endurance with " +
+    "$disturbanceRecoveryCount content-addressed disturbance " +
+    "recoveries, fresh reference-machine performance evidence, " +
     "PostgreSQL 19 GA, and " +
     "$($requiredApprovalIds.Count) integrity-checked approvals. Stable publication may now be " +
     "enabled through the protected release environments.")

@@ -1,0 +1,84 @@
+{
+  "schemaVersion": 1,
+  "requiredRuns": [
+    "streams",
+    "sync"
+  ],
+  "requiredScenarios": [
+    {
+      "id": "process-death",
+      "description": "Terminate a production-path process without a graceful shutdown and prove durable, duplicate-safe recovery.",
+      "requiredFacts": [
+        "preFaultProcessIdentity",
+        "postRecoveryProcessIdentity"
+      ]
+    },
+    {
+      "id": "network-interruption",
+      "description": "Interrupt a production-path network dependency and prove bounded detection, reconnection, and progress recovery.",
+      "requiredFacts": [
+        "interruptionSeconds",
+        "recoveredConnections"
+      ]
+    },
+    {
+      "id": "storage-exhaustion",
+      "description": "Reach a controlled storage hard limit, prove fail-closed behaviour, release capacity, and resume without data loss.",
+      "requiredFacts": [
+        "capacityBytes",
+        "peakUsedBytes",
+        "recoveredFreeBytes",
+        "exhaustionSignalObserved"
+      ]
+    },
+    {
+      "id": "credential-rotation",
+      "description": "Rotate a live production-path credential, reject the retired credential, and resume with the replacement.",
+      "requiredFacts": [
+        "previousCredentialVersion",
+        "currentCredentialVersion",
+        "oldCredentialRejected",
+        "newCredentialAccepted"
+      ]
+    },
+    {
+      "id": "primary-failover",
+      "description": "Replace the active PostgreSQL primary and prove role-compatible routing plus source and checkpoint continuity.",
+      "requiredFacts": [
+        "previousPrimaryIdentity",
+        "currentPrimaryIdentity",
+        "sourceIdentityContinuityVerified"
+      ]
+    },
+    {
+      "id": "clock-movement",
+      "description": "Inject backward and forward UTC movement through an isolated clock boundary and prove ordering and expiry safety.",
+      "requiredFacts": [
+        "timeSource",
+        "backwardOffsetSeconds",
+        "forwardOffsetSeconds"
+      ]
+    },
+    {
+      "id": "postgresql-minor-upgrade",
+      "description": "Move between two distinct minor releases of one supported PostgreSQL major and prove state and checkpoint continuity.",
+      "requiredFacts": [
+        "fromVersion",
+        "toVersion",
+        "fromImage",
+        "toImage",
+        "stateContinuityVerified",
+        "checkpointContinuityVerified"
+      ]
+    }
+  ],
+  "requiredArtifactRoles": [
+    "injection",
+    "recovery"
+  ],
+  "allowedClockTimeSources": [
+    "injected-time-provider",
+    "isolated-runtime-clock"
+  ],
+  "storageMinimumUtilisation": 0.95
+}
