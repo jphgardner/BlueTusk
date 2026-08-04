@@ -19,13 +19,23 @@ exact-candidate evidence below is complete.
   detection and a GA-only stable-publication gate.
 - Streams and Sync endurance workflows that bind reports to the candidate
   commit, NuGet/npm hashes, runtime, operating system and service-image digests.
+- A six-meter, 60-instrument telemetry contract; 14 reference production SLOs;
+  a deployable OpenTelemetry Collector, Prometheus rules and Grafana dashboard;
+  and metric lifecycle tests for every product family.
+- Complete checked-in BenchmarkDotNet coverage for 89 measured workloads across
+  21 fixtures, 37 allocation budgets, 18 reference-machine latency budgets and
+  a manual exact-candidate performance workflow.
+- A single fail-closed V1 verifier that distinguishes deterministic engineering
+  readiness from PostgreSQL 19 GA, endurance, performance, pilot, recovery,
+  game-day and accountable approval evidence for one immutable commit.
 
 The detailed evidence and commands are in the
 [hardening programme](hardening-programme.md),
 [ADO.NET compatibility matrix](ado-net/compatibility.md),
 [fuzzing guide](fuzzing.md),
 [PostgreSQL 19 programme](postgresql19-programme.md), and
-[release process](release-process.md).
+[release process](release-process.md). The operational definition and evidence
+layout are in [V1 production readiness](operations/production-readiness.md).
 
 ## Verification snapshot
 
@@ -53,15 +63,20 @@ rerun by the required workflows at that exact commit.
 2. Run the complete manual `build.yml` evidence workflow at that commit,
    including PostgreSQL 15–19, PgBouncer, NativeAOT/trimming, connector,
    authentication, stress and packaging jobs.
-3. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
+3. Run the complete manual `performance.yml` reference-machine workflow at that
+   commit and archive its integrity-bound result set.
+4. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
    workflows at the same candidate commit. Any candidate code change restarts
    the applicable run.
-4. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
+5. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
    PostgreSQL 19 support as stable before the GA record passes.
-5. Complete the
+6. Complete the
    [independent release review](release-review-handoff.md), application pilots,
-   backup/restore and rollback rehearsal, and maintainer sign-off.
-6. Enable stable publication one dependency-ordered product family at a time:
+   backup/restore and rollback rehearsal, incident game day, security/SLO owner
+   approval and maintainer sign-off.
+7. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
+   SHA-256-bound evidence directory.
+8. Enable stable publication one dependency-ordered product family at a time:
    Provider, Streams, Sync/Live, Control Plane, then Continuous Graph preview.
 
 Until every applicable item is complete for one immutable commit, all

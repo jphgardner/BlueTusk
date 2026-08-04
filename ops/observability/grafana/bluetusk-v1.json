@@ -1,0 +1,194 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 1,
+  "links": [],
+  "panels": [
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "percentunit" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 0 },
+      "id": 1,
+      "options": { "legend": { "displayMode": "list", "placement": "bottom" } },
+      "targets": [
+        {
+          "expr": "1 - (sum(rate(bluetusk_commands_failed_total[$__rate_interval])) / clamp_min(sum(rate(bluetusk_commands_executed_total[$__rate_interval])), 1))",
+          "legendFormat": "command success",
+          "refId": "A"
+        }
+      ],
+      "title": "Provider command success",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 0 },
+      "id": 2,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(bluetusk_pool_checkout_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "pool checkout P95",
+          "refId": "A"
+        },
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(bluetusk_multiplexing_queue_wait_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "multiplexing queue P95",
+          "refId": "B"
+        }
+      ],
+      "title": "Provider queue latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 0 },
+      "id": 3,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le) (rate(bluetusk_replication_receive_lag_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "receive lag P95",
+          "refId": "A"
+        }
+      ],
+      "title": "Replication receive lag",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "ops" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 8 },
+      "id": 4,
+      "targets": [
+        {
+          "expr": "sum by (bluetusk_streams_delivery_outcome) (rate(bluetusk_streams_deliveries_settled_total[$__rate_interval]))",
+          "legendFormat": "{{bluetusk_streams_delivery_outcome}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Streams settlements",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "ms" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 8 },
+      "id": 5,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, sync_pipeline_id) (rate(bluetusk_sync_transaction_duration_milliseconds_bucket[$__rate_interval])))",
+          "legendFormat": "{{sync_pipeline_id}} P95",
+          "refId": "A"
+        }
+      ],
+      "title": "Sync transaction latency",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 8 },
+      "id": 6,
+      "targets": [
+        {
+          "expr": "sum(bluetusk_live_clients_active)",
+          "legendFormat": "active clients",
+          "refId": "A"
+        },
+        {
+          "expr": "sum(rate(bluetusk_live_fanout_deliveries_total[$__rate_interval]))",
+          "legendFormat": "fan-out / second",
+          "refId": "B"
+        }
+      ],
+      "title": "Live clients and fan-out",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 0, "y": 16 },
+      "id": 7,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, bluetusk_live_query_name) (rate(bluetusk_live_refresh_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "{{bluetusk_live_query_name}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Live refresh P95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 8, "y": 16 },
+      "id": 8,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, bluetusk_graph_evaluation_mode) (rate(bluetusk_graph_evaluation_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "{{bluetusk_graph_evaluation_mode}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Continuous Graph evaluation P95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "s" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 8, "x": 16, "y": 16 },
+      "id": 9,
+      "targets": [
+        {
+          "expr": "histogram_quantile(0.95, sum by (le, bluetusk_control_plane_operation) (rate(bluetusk_control_plane_operation_duration_seconds_bucket[$__rate_interval])))",
+          "legendFormat": "{{bluetusk_control_plane_operation}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Control Plane operation P95",
+      "type": "timeseries"
+    },
+    {
+      "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+      "fieldConfig": { "defaults": { "unit": "short" }, "overrides": [] },
+      "gridPos": { "h": 8, "w": 24, "x": 0, "y": 24 },
+      "id": 10,
+      "targets": [
+        {
+          "expr": "sum(ALERTS{service=\"bluetusk\",alertstate=\"firing\"}) by (alertname, severity)",
+          "legendFormat": "{{severity}} / {{alertname}}",
+          "refId": "A"
+        }
+      ],
+      "title": "Firing BlueTusk alerts",
+      "type": "timeseries"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 42,
+  "tags": ["bluetusk", "v1", "production"],
+  "templating": {
+    "list": [
+      {
+        "current": {},
+        "label": "Prometheus",
+        "name": "DS_PROMETHEUS",
+        "query": "prometheus",
+        "type": "datasource"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timezone": "browser",
+  "title": "BlueTusk V1 Production",
+  "uid": "bluetusk-v1-production",
+  "version": 1
+}

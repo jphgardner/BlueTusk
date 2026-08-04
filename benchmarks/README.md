@@ -1,10 +1,28 @@
 # BlueTusk benchmarks
 
+Every public `[Benchmark]` method must have a non-empty checked-in result.
+`eng/verify-benchmark-coverage.ps1` currently binds 89 measured results to all
+methods across 21 fixtures and rejects empty, stale, duplicate or statistically
+invalid reports. `eng/verify-allocation-budgets.ps1` enforces 37 managed
+allocation budgets, while `eng/verify-latency-budgets.ps1` enforces 18
+production-critical latency/P95 budgets on the named Windows/Ryzen 7
+5800X/.NET 10 reference environment. These are regression controls, not
+application SLOs.
+
 The BenchmarkDotNet suite covers complete synchronous/asynchronous command parameter and result paths, protocol-connection writes, protocol parsing and incremental payload streaming, typed buffered readers and large field access, integer/numeric/temporal/JSONB codecs, catalogue-composed array/enum/range/composite encoding and decoding, binary COPY field encoding, notification decoding, replication WAL-frame decoding and bounded pull consumption, large-object stream transfer overhead, warm-session pool checkout, EF query compilation/materialisation/writes, Live query diff/replay/fan-out, SQL/PGQ traversal, and the transport-pipeline decision. Pool, command, reader, protocol-streaming, replication, Live, and large-object workloads isolate provider bookkeeping with in-memory sessions; the application and comparison fixtures execute against live PostgreSQL.
 
 `TransportPipelineBenchmarks` compares the production ArrayPool/Span/Memory reader with a benchmark-only, bounded `System.IO.Pipelines` prototype across fragmented rows, a 1 MiB field, COPY frames, and cancellation recovery, using genuine sync and async entry points. `TransportPipelineSocketBenchmarks` repeats the comparison over raw TCP and authenticated loopback TLS. The production packages do not reference `System.IO.Pipelines`; the resulting decision and limitations are in [ADR 0005](../docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md).
 
 `StreamsTransactionBenchmarks` measures the application CDC boundary separately from wire decoding. It reports per-change cost for assembling and materialising a 1,000-insert transaction, and the end-to-end cost/allocation of spilling and streaming a 4 MiB transaction through the integrity-checked disk spool. The latter includes durable file flush and cleanup by design.
+
+The 2026-08-04 reference ShortRun records 703.540 ns P95 717.917 ns and
+853 B per materialised change, and 46.752 ms P95 47.639 ms with 12,731,471 B
+for the complete 4 MiB spill/stream/cleanup operation.
+
+`NativeCapabilityBenchmarks` covers binary COPY field encoding,
+NotificationResponse decoding and a warm large-object chunk read. The same
+reference run records 53.363 ns/88 B, 100.760 ns/136 B and 113.814 ns/0 B
+respectively.
 
 `PullOneThousandBoundedXLogFrames` consumes one already-owned frame at a time
 without a prefetch queue. This mirrors the replication async iterator's
@@ -230,5 +248,13 @@ dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-restore -- -
 On Windows, the TLS benchmark needs access to the current user's certificate key store for its transient self-signed server certificate. Validate the loopback harness with `--transport-tls-smoke` if needed.
 
 Markdown and brief JSON reports are written below `artifacts/benchmarks` by default. Set `BLUETUSK_BENCHMARK_ARTIFACTS` to redirect them. Checked-in results below `benchmarks/baselines` document one named reference environment; they are evidence and comparison inputs, not universal performance promises.
+
+For an exact V1 candidate, dispatch `.github/workflows/performance.yml`. It
+uses MediumRun, the in-process toolchain, the named self-hosted reference
+machine and digest-pinned PostgreSQL 19, then runs all coverage, allocation,
+latency and multiplexing gates. BenchmarkDotNet can return zero after producing
+an empty report or logging a cleanup exception; the V1 wrapper therefore
+validates the report inventory and scans the log instead of trusting only the
+process exit code.
 
 Allocation ownership, the current end-to-end numbers, and the machine-checked regression budgets are documented in [Allocation discipline](../docs/architecture/allocation-discipline.md).

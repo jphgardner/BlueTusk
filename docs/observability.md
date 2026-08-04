@@ -5,6 +5,11 @@ without requiring an OpenTelemetry runtime dependency. Register the activity
 source and meter named `BlueTusk.Diagnostics` with the application's chosen
 exporter.
 
+This guide defines the Provider-level contract. The complete six-family meter
+inventory, reference SLOs, Collector configuration, alert rules, dashboard and
+incident procedures are in
+[Production observability and SLOs](operations/observability.md).
+
 ```csharp
 services.AddOpenTelemetry()
     .WithTracing(tracing => tracing.AddSource(BlueTuskDiagnostics.InstrumentationName))

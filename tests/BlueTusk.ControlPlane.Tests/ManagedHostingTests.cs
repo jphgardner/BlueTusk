@@ -6,6 +6,59 @@ public sealed class ManagedHostingTests
         new(10, 100, 1_000_000, 1L << 50, 1L << 50);
 
     [Fact]
+    public async Task Reconciliation_emits_bounded_operation_metrics()
+    {
+        var measurements =
+            new System.Collections.Concurrent.ConcurrentQueue<(string Name, long Value, string? Outcome)>();
+        using var listener = new System.Diagnostics.Metrics.MeterListener
+        {
+            InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (instrument.Meter.Name == "BlueTusk.ControlPlane")
+                {
+                    meterListener.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
+        {
+            string? outcome = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "bluetusk.control_plane.outcome")
+                {
+                    outcome = tag.Value?.ToString();
+                }
+            }
+
+            measurements.Enqueue((instrument.Name, value, outcome));
+        });
+        listener.Start();
+
+        var store = new InMemoryManagedDeploymentStore();
+        await store.PutAsync(Spec(), expectedGeneration: 0);
+        var controller = Controller(store, new RecordingProvider());
+
+        _ = await controller.ReconcileAsync(
+            "orders",
+            TestContext.Current.CancellationToken);
+
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.control_plane.operations.active" &&
+                item.Value == 1);
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.control_plane.operations.active" &&
+                item.Value == -1);
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.control_plane.operations" &&
+                item.Value == 1 &&
+                item.Outcome == "changed");
+    }
+
+    [Fact]
     public void Fingerprint_is_canonical_and_excludes_generation()
     {
         var first = Spec() with

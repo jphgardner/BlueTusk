@@ -105,6 +105,7 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
 {
     private readonly Func<CancellationToken, ValueTask> _acknowledge;
     private readonly Func<Exception?, CancellationToken, ValueTask> _nack;
+    private readonly long _telemetryStarted;
     private int _state;
 
     public ChangeTransactionDelivery(
@@ -128,6 +129,7 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
         Transaction = transaction;
         _acknowledge = acknowledge;
         _nack = nack;
+        _telemetryStarted = BlueTuskStreamsDiagnostics.StartDelivery(transaction);
     }
 
     public ChangeTransaction Transaction { get; }
@@ -148,10 +150,17 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
         {
             await _acknowledge(cancellationToken).ConfigureAwait(false);
             Volatile.Write(ref _state, 2);
+            BlueTuskStreamsDiagnostics.RecordDeliverySettlement(
+                Transaction,
+                "acknowledged",
+                _telemetryStarted);
         }
         catch
         {
             Volatile.Write(ref _state, 0);
+            BlueTuskStreamsDiagnostics.RecordDeliverySettlementFailure(
+                Transaction,
+                "acknowledge");
             throw;
         }
     }
@@ -163,10 +172,17 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
         {
             await _nack(error, cancellationToken).ConfigureAwait(false);
             Volatile.Write(ref _state, 3);
+            BlueTuskStreamsDiagnostics.RecordDeliverySettlement(
+                Transaction,
+                "nacked",
+                _telemetryStarted);
         }
         catch
         {
             Volatile.Write(ref _state, 0);
+            BlueTuskStreamsDiagnostics.RecordDeliverySettlementFailure(
+                Transaction,
+                "nack");
             throw;
         }
     }
@@ -182,10 +198,17 @@ public sealed class ChangeTransactionDelivery : IAsyncDisposable
         {
             await _nack(null, CancellationToken.None).ConfigureAwait(false);
             Volatile.Write(ref _state, 4);
+            BlueTuskStreamsDiagnostics.RecordDeliverySettlement(
+                Transaction,
+                "disposed",
+                _telemetryStarted);
         }
         catch
         {
             Volatile.Write(ref _state, 0);
+            BlueTuskStreamsDiagnostics.RecordDeliverySettlementFailure(
+                Transaction,
+                "dispose");
             throw;
         }
     }

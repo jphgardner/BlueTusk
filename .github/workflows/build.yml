@@ -57,13 +57,9 @@ jobs:
       - name: Test
         run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
-      - name: Verify checked-in allocation budgets
+      - name: Verify V1 engineering production readiness
         shell: pwsh
-        run: ./eng/verify-allocation-budgets.ps1
-
-      - name: Verify checked-in multiplexing performance evidence
-        shell: pwsh
-        run: ./eng/verify-multiplexing-performance.ps1
+        run: ./eng/verify-v1-production-readiness.ps1
 
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
@@ -105,6 +101,33 @@ jobs:
           name: bluetusk-website
           path: website/dist/website/browser
           if-no-files-found: error
+
+  observability-config:
+    name: Prometheus and OpenTelemetry production config
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+
+      - name: Verify telemetry, SLO, dashboard, and alert contracts
+        shell: pwsh
+        run: ./eng/verify-production-observability.ps1
+
+      - name: Validate Prometheus rules
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}/ops/observability:/work:ro"
+          --entrypoint /bin/promtool
+          prom/prometheus:v3.13.1@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
+          check rules /work/prometheus-rules.yml
+
+      - name: Validate OpenTelemetry Collector configuration
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}/ops/observability:/work:ro"
+          --env BLUETUSK_TRACES_ENDPOINT=https://traces.example.test:4317
+          otel/opentelemetry-collector-contrib:0.153.0@sha256:93aad750175cbf1a973ae1c5886c3371f4d800f61be25cdd26870b8441ffe9fa
+          validate --config=/work/otel-collector.yaml
 
   provider-core-publish:
     name: Provider core trimming and NativeAOT (${{ matrix.rid }})
@@ -181,7 +204,7 @@ jobs:
     runs-on: ubuntu-latest
     services:
       redis:
-        image: redis:8-alpine
+        image: redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
         ports:
           - 6379:6379
         options: >-
@@ -235,7 +258,7 @@ jobs:
 
       - name: Start NATS JetStream
         run: |
-          docker run --detach --name bluetusk-nats --publish 4222:4222 nats:2.14-alpine -js
+          docker run --detach --name bluetusk-nats --publish 4222:4222 nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66 -js
           for attempt in $(seq 1 20); do
             if nc -z 127.0.0.1 4222; then exit 0; fi
             sleep 1
@@ -282,7 +305,7 @@ jobs:
             --env DISABLE_SECURITY_PLUGIN=true \
             --env DISABLE_INSTALL_DEMO_CONFIG=true \
             --env "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" \
-            opensearchproject/opensearch:3.7.0
+            opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9
           for attempt in $(seq 1 90); do
             if curl --fail --silent http://127.0.0.1:9200 >/dev/null; then exit 0; fi
             sleep 1

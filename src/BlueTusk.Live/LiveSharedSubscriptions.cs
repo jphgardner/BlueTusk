@@ -288,12 +288,14 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         {
             if (Volatile.Read(ref _started) == 0)
             {
+                LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.NotStarted);
                 return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.NotStarted, null);
             }
 
             if (_subscribers.Count >= _options.MaximumSubscribers)
             {
                 Interlocked.Increment(ref _quotaRejections);
+                LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.QuotaExceeded);
                 return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.QuotaExceeded, null);
             }
 
@@ -307,6 +309,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 if (afterSequence != 0)
                 {
                     Interlocked.Increment(ref _replayRejections);
+                    LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.ReplayUnavailable);
                     return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayUnavailable, null);
                 }
 
@@ -328,6 +331,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                  replay.Events[^1].Sequence < replay.LastSequence))
             {
                 Interlocked.Increment(ref _replayRejections);
+                LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.ReplayLimitExceeded);
                 return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.ReplayLimitExceeded, null);
             }
 
@@ -353,6 +357,12 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 RemoveSubscriber);
             Interlocked.Increment(ref _connectedClients);
             Interlocked.Add(ref _replayedEvents, replay.Events.Count);
+            LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.Connected);
+            LiveDiagnostics.RecordActiveClientDelta(1);
+            LiveDiagnostics.RecordReplay(
+                replay.Events.Count,
+                GetReplayBytes(replay.Events),
+                operation: "read");
             return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.Connected, connection);
         }
         finally
@@ -370,6 +380,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         ArgumentNullException.ThrowIfNull(tokenProtector);
         Interlocked.Increment(ref _resumeAttempts);
         var validation = tokenProtector.Validate(resumeToken, Identity);
+        LiveDiagnostics.RecordResumeValidation(validation.Status);
         if (validation.Status is LiveResumeTokenValidationStatus.Expired)
         {
             Interlocked.Increment(ref _resumeRejections);
@@ -401,12 +412,19 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
+            var connected = _subscribers.Count;
             foreach (var subscriber in _subscribers.Values)
             {
                 subscriber.Channel.Writer.TryComplete();
             }
 
             _subscribers.Clear();
+            if (connected != 0)
+            {
+                Interlocked.Add(ref _connectedClients, -connected);
+                LiveDiagnostics.RecordActiveClientDelta(-connected);
+            }
+
             await _session.DisposeAsync().ConfigureAwait(false);
         }
         finally
@@ -442,17 +460,15 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
 
         Interlocked.Exchange(ref _persistedSequence, finalSequence);
         Interlocked.Add(ref _publishedEvents, replayEvents.Length);
-        Interlocked.Add(
-            ref _replayBytesAppended,
-            replayEvents.Sum(static item =>
-                (long)item.Payload.Length +
-                item.IntegrityHash.Length +
-                System.Text.Encoding.UTF8.GetByteCount(item.ContentType)));
+        var replayBytes = GetReplayBytes(replayEvents);
+        Interlocked.Add(ref _replayBytesAppended, replayBytes);
+        LiveDiagnostics.RecordReplay(replayEvents.Length, replayBytes, "append");
         return replayEvents;
     }
 
     private void Publish(IReadOnlyList<LiveReplayEvent> events)
     {
+        long deliveries = 0;
         foreach (var (id, subscriber) in _subscribers)
         {
             var active = true;
@@ -462,11 +478,13 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                         new LiveSubscriberMessage(LiveSubscriberMessageKind.Event, replayEvent)))
                 {
                     Interlocked.Increment(ref _fanOutDeliveries);
+                    deliveries++;
                     continue;
                 }
 
                 active = false;
                 Interlocked.Increment(ref _slowClientDisconnects);
+                LiveDiagnostics.RecordSlowClientDisconnect(_options.SlowClientPolicy);
                 if (_options.SlowClientPolicy is LiveSlowClientPolicy.RequireReset)
                 {
                     Volatile.Write(ref _lastDisconnectCode, "slow-client-reset");
@@ -486,7 +504,12 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                             $"Live subscriber '{id}' exceeded its bounded delivery buffer."));
                 }
 
-                _subscribers.TryRemove(id, out _);
+                if (_subscribers.TryRemove(id, out _))
+                {
+                    Interlocked.Decrement(ref _connectedClients);
+                    LiveDiagnostics.RecordActiveClientDelta(-1);
+                }
+
                 break;
             }
 
@@ -495,15 +518,25 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 continue;
             }
         }
+
+        LiveDiagnostics.RecordFanOut(deliveries);
     }
 
     private void RemoveSubscriber(Guid id)
     {
         if (_subscribers.TryRemove(id, out var subscriber))
         {
+            Interlocked.Decrement(ref _connectedClients);
+            LiveDiagnostics.RecordActiveClientDelta(-1);
             subscriber.Channel.Writer.TryComplete();
         }
     }
+
+    private static long GetReplayBytes(IReadOnlyList<LiveReplayEvent> events) =>
+        events.Sum(static item =>
+            (long)item.Payload.Length +
+            item.IntegrityHash.Length +
+            System.Text.Encoding.UTF8.GetByteCount(item.ContentType));
 
     private void EnsureStarted()
     {

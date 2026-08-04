@@ -1,0 +1,121 @@
+{
+  "schemaVersion": 1,
+  "environment": "windows-ryzen7-5800x-dotnet10",
+  "unit": "nanoseconds",
+  "policy": {
+    "purpose": "Reference-machine regression detection only. These values are not production SLOs or cross-machine performance promises.",
+    "maximumMeanRegressionPercent": 25,
+    "maximumP95RegressionPercent": 25,
+    "minimumSamples": 3
+  },
+  "budgets": [
+    {
+      "benchmark": "BlueTusk.Benchmarks.CommandPathBenchmarks.ExecuteInt32ParameterAndScalar",
+      "maximumMeanNanoseconds": 500,
+      "maximumP95Nanoseconds": 510,
+      "reason": "Complete synchronous binary int4 parameter and scalar command path."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.CommandPathBenchmarks.ExecuteInt32ParameterAndScalarAsync",
+      "maximumMeanNanoseconds": 575,
+      "maximumP95Nanoseconds": 585,
+      "reason": "Complete asynchronous binary int4 parameter and scalar command path."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.PoolCheckoutBenchmarks.CheckoutWarmSession",
+      "maximumMeanNanoseconds": 305,
+      "maximumP95Nanoseconds": 310,
+      "reason": "Warm in-memory session pool checkout and return."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ProtocolWritePathBenchmarks.WriteSimpleQuery",
+      "maximumMeanNanoseconds": 25,
+      "maximumP95Nanoseconds": 26,
+      "reason": "Warm reusable simple-query protocol write."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ProtocolWritePathBenchmarks.WriteExtendedQuery",
+      "maximumMeanNanoseconds": 245,
+      "maximumP95Nanoseconds": 255,
+      "reason": "Warm reusable Parse/Bind/Describe/Execute/Sync protocol write."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ReplicationBenchmarks.DecodeOneKilobyteXLogData",
+      "maximumMeanNanoseconds": 24,
+      "maximumP95Nanoseconds": 25,
+      "reason": "Zero-copy decode of one already-owned 1 KiB WAL frame."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ReplicationBenchmarks.PullOneThousandBoundedXLogFrames",
+      "maximumMeanNanoseconds": 23,
+      "maximumP95Nanoseconds": 24,
+      "reason": "Bounded pull consumption normalized per replication frame."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffOneUpdatedRowInOneThousand",
+      "maximumMeanNanoseconds": 96000,
+      "maximumP95Nanoseconds": 107000,
+      "reason": "Keyed Live diff of a 1,000-row result with one update."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.SerializeOneUpdatedRow",
+      "maximumMeanNanoseconds": 1110,
+      "maximumP95Nanoseconds": 1160,
+      "reason": "Versioned and integrity-protected replay event serialization."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.CoalesceOneHundredInvalidationsAndFanOut64SubscribersAsync",
+      "maximumMeanNanoseconds": 116000,
+      "maximumP95Nanoseconds": 119000,
+      "reason": "Shared-subscription coalescing, authoritative refresh, replay persistence, and fan-out."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.CompileGraphRegistrationAsync",
+      "maximumMeanNanoseconds": 1240000,
+      "maximumP95Nanoseconds": 1350000,
+      "reason": "PostgreSQL-backed graph registration, validation, translation, and fingerprinting."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AuthoritativeGraphRequeryAsync",
+      "maximumMeanNanoseconds": 3540000,
+      "maximumP95Nanoseconds": 3610000,
+      "reason": "Authoritative PostgreSQL GRAPH_TABLE query and materialisation of 999 results."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AffectedGraphRefreshAndDiffAsync",
+      "maximumMeanNanoseconds": 5290000,
+      "maximumP95Nanoseconds": 5470000,
+      "reason": "Affected invalidation, authoritative graph requery, and keyed Live diff."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.EncodeBinaryCopyInt32",
+      "maximumMeanNanoseconds": 67,
+      "maximumP95Nanoseconds": 69,
+      "reason": "Binary COPY int4 field encoding."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.DecodeNotification",
+      "maximumMeanNanoseconds": 127,
+      "maximumP95Nanoseconds": 129,
+      "reason": "NotificationResponse decoding."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.ReadLargeObjectChunkAsync",
+      "maximumMeanNanoseconds": 143,
+      "maximumP95Nanoseconds": 147,
+      "reason": "Warm large-object chunk read into caller-owned memory."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts",
+      "maximumMeanNanoseconds": 880,
+      "maximumP95Nanoseconds": 900,
+      "reason": "CDC transaction assembly and materialisation normalized per change."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction",
+      "maximumMeanNanoseconds": 58500000,
+      "maximumP95Nanoseconds": 59600000,
+      "reason": "Durable 4 MiB transaction spill, integrity-checked stream, and cleanup."
+    }
+  ]
+}

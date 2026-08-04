@@ -161,6 +161,31 @@
       "benchmark": "BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks.BlueTuskReusedScalarBurstAsync",
       "maximumBytesPerOperation": 1250,
       "reason": "Repeated execution through a persistent multiplexing lane with command and parameter construction outside the timed operation."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.EncodeBinaryCopyInt32",
+      "maximumBytesPerOperation": 112,
+      "reason": "One caller-owned binary COPY field payload plus the bounded encoder result envelope."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.DecodeNotification",
+      "maximumBytesPerOperation": 160,
+      "reason": "One decoded notification response and its bounded channel/payload strings."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.ReadLargeObjectChunkAsync",
+      "maximumBytesPerOperation": 32,
+      "reason": "Warm large-object chunk transfer into caller-owned storage must remain allocation free apart from measurement tolerance."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts",
+      "maximumBytesPerOperation": 1000,
+      "reason": "CDC transaction assembly and materialisation normalized per change, including owned row values and transaction metadata."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction",
+      "maximumBytesPerOperation": 14000000,
+      "reason": "End-to-end integrity-checked 4 MiB spool write, durable flush, stream, and cleanup; the budget includes intentionally owned wire and spool buffers."
     }
   ]
 }

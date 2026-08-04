@@ -1,0 +1,425 @@
+groups:
+  - name: bluetusk-v1-slos
+    interval: 30s
+    rules:
+      - alert: BlueTuskProviderCommandErrorBudgetBurn
+        expr: |
+          (
+            sum(rate(bluetusk_commands_failed_total[1h]))
+            /
+            clamp_min(sum(rate(bluetusk_commands_executed_total[1h])), 1)
+          ) > 0.0144
+          and
+          (
+            sum(rate(bluetusk_commands_failed_total[5m]))
+            /
+            clamp_min(sum(rate(bluetusk_commands_executed_total[5m])), 1)
+          ) > 0.0144
+        for: 5m
+        labels:
+          severity: page
+          service: bluetusk
+          slo: provider-command-success
+        annotations:
+          summary: BlueTusk command failures are rapidly consuming the V1 error budget
+          runbook: docs/operations/observability.md#provider-command-failures
+
+      - alert: BlueTuskProviderCommandErrorBudgetSlowBurn
+        expr: |
+          (
+            sum(rate(bluetusk_commands_failed_total[6h]))
+            /
+            clamp_min(sum(rate(bluetusk_commands_executed_total[6h])), 1)
+          ) > 0.006
+          and
+          (
+            sum(rate(bluetusk_commands_failed_total[30m]))
+            /
+            clamp_min(sum(rate(bluetusk_commands_executed_total[30m])), 1)
+          ) > 0.006
+        for: 0m
+        labels:
+          severity: ticket
+          service: bluetusk
+          slo: provider-command-success
+        annotations:
+          summary: BlueTusk command failures are steadily consuming the V1 error budget
+          runbook: docs/operations/observability.md#provider-command-failures
+
+      - alert: BlueTuskPoolCheckoutLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bluetusk_pool_checkout_duration_seconds_bucket[5m]))
+          ) > 0.05
+        for: 10m
+        labels:
+          severity: warning
+          service: bluetusk
+          slo: provider-pool-checkout-p95
+        annotations:
+          summary: BlueTusk pool checkout P95 exceeds 50 ms
+          runbook: docs/operations/observability.md#pool-saturation
+
+      - alert: BlueTuskReplicationLag
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bluetusk_replication_receive_lag_seconds_bucket[5m]))
+          ) > 5
+        for: 10m
+        labels:
+          severity: page
+          service: bluetusk
+          slo: provider-replication-receive-lag-p95
+        annotations:
+          summary: BlueTusk replication receive lag P95 exceeds five seconds
+          runbook: docs/operations/observability.md#replication-and-streams-lag
+
+      - alert: BlueTuskStreamsDeliveryErrorBudgetBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_streams_deliveries_settled_total{
+                bluetusk_streams_delivery_outcome="acknowledged"
+              }[1h]))
+              /
+              clamp_min(sum(rate(bluetusk_streams_deliveries_settled_total[1h])), 1)
+            )
+          ) > 0.00144
+        for: 5m
+        labels:
+          severity: page
+          service: bluetusk
+          slo: streams-acknowledged-deliveries
+        annotations:
+          summary: Streams nacks or abandoned deliveries are consuming the V1 error budget
+          runbook: docs/operations/observability.md#streams-delivery-failures
+
+      - alert: BlueTuskStreamsDeliveryErrorBudgetSlowBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_streams_deliveries_settled_total{
+                bluetusk_streams_delivery_outcome="acknowledged"
+              }[6h]))
+              /
+              clamp_min(sum(rate(bluetusk_streams_deliveries_settled_total[6h])), 1)
+            )
+          ) > 0.0006
+          and
+          (
+            1 -
+            (
+              sum(rate(bluetusk_streams_deliveries_settled_total{
+                bluetusk_streams_delivery_outcome="acknowledged"
+              }[30m]))
+              /
+              clamp_min(sum(rate(bluetusk_streams_deliveries_settled_total[30m])), 1)
+            )
+          ) > 0.0006
+        for: 0m
+        labels:
+          severity: ticket
+          service: bluetusk
+          slo: streams-acknowledged-deliveries
+        annotations:
+          summary: Streams settlement failures are steadily consuming the V1 error budget
+          runbook: docs/operations/observability.md#streams-delivery-failures
+
+      - alert: BlueTuskStreamsDeliveryLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bluetusk_streams_delivery_duration_seconds_bucket[5m]))
+          ) > 5
+        for: 10m
+        labels:
+          severity: warning
+          service: bluetusk
+          slo: streams-delivery-p95
+        annotations:
+          summary: Streams durable settlement P95 exceeds five seconds
+          runbook: docs/operations/observability.md#streams-delivery-failures
+
+      - alert: BlueTuskSyncErrorBudgetBurn
+        expr: |
+          (
+            sum(rate(bluetusk_sync_errors_total[1h]))
+            /
+            clamp_min(
+              sum(rate(bluetusk_sync_transactions_total[1h]))
+              + sum(rate(bluetusk_sync_errors_total[1h])),
+              1
+            )
+          ) > 0.0144
+        for: 5m
+        labels:
+          severity: page
+          service: bluetusk
+          slo: sync-transaction-success
+        annotations:
+          summary: Sync transaction errors are rapidly consuming the V1 error budget
+          runbook: docs/operations/observability.md#sync-failures-and-throttling
+
+      - alert: BlueTuskSyncErrorBudgetSlowBurn
+        expr: |
+          (
+            sum(rate(bluetusk_sync_errors_total[6h]))
+            /
+            clamp_min(
+              sum(rate(bluetusk_sync_transactions_total[6h]))
+              + sum(rate(bluetusk_sync_errors_total[6h])),
+              1
+            )
+          ) > 0.006
+          and
+          (
+            sum(rate(bluetusk_sync_errors_total[30m]))
+            /
+            clamp_min(
+              sum(rate(bluetusk_sync_transactions_total[30m]))
+              + sum(rate(bluetusk_sync_errors_total[30m])),
+              1
+            )
+          ) > 0.006
+        for: 0m
+        labels:
+          severity: ticket
+          service: bluetusk
+          slo: sync-transaction-success
+        annotations:
+          summary: Sync transaction errors are steadily consuming the V1 error budget
+          runbook: docs/operations/observability.md#sync-failures-and-throttling
+
+      - alert: BlueTuskSyncTransactionLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bluetusk_sync_transaction_duration_milliseconds_bucket[5m]))
+          ) > 2000
+        for: 10m
+        labels:
+          severity: warning
+          service: bluetusk
+          slo: sync-transaction-p95
+        annotations:
+          summary: Sync destination application P95 exceeds two seconds
+          runbook: docs/operations/observability.md#sync-failures-and-throttling
+
+      - alert: BlueTuskLiveConnectErrorBudgetBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_live_connections_total{
+                bluetusk_live_connection_outcome="connected"
+              }[1h]))
+              /
+              clamp_min(sum(rate(bluetusk_live_connections_total[1h])), 1)
+            )
+          ) > 0.144
+        for: 5m
+        labels:
+          severity: page
+          service: bluetusk
+          slo: live-connect-success
+        annotations:
+          summary: Live connection rejections are rapidly consuming the V1 error budget
+          runbook: docs/operations/observability.md#live-replay-and-slow-clients
+
+      - alert: BlueTuskLiveConnectErrorBudgetSlowBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_live_connections_total{
+                bluetusk_live_connection_outcome="connected"
+              }[6h]))
+              /
+              clamp_min(sum(rate(bluetusk_live_connections_total[6h])), 1)
+            )
+          ) > 0.06
+          and
+          (
+            1 -
+            (
+              sum(rate(bluetusk_live_connections_total{
+                bluetusk_live_connection_outcome="connected"
+              }[30m]))
+              /
+              clamp_min(sum(rate(bluetusk_live_connections_total[30m])), 1)
+            )
+          ) > 0.06
+        for: 0m
+        labels:
+          severity: ticket
+          service: bluetusk
+          slo: live-connect-success
+        annotations:
+          summary: Live connection rejections are steadily consuming the V1 error budget
+          runbook: docs/operations/observability.md#live-replay-and-slow-clients
+
+      - alert: BlueTuskLiveRefreshLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bluetusk_live_refresh_duration_seconds_bucket[5m]))
+          ) > 0.25
+        for: 10m
+        labels:
+          severity: warning
+          service: bluetusk
+          slo: live-refresh-p95
+        annotations:
+          summary: Live refresh P95 exceeds 250 ms
+          runbook: docs/operations/observability.md#live-replay-and-slow-clients
+
+      - alert: BlueTuskLiveSlowClients
+        expr: increase(bluetusk_live_slow_client_disconnects_total[10m]) > 0
+        for: 0m
+        labels:
+          severity: warning
+          service: bluetusk
+          slo: live-slow-client-disconnects
+        annotations:
+          summary: A bounded Live subscriber was disconnected as a slow client
+          runbook: docs/operations/observability.md#live-replay-and-slow-clients
+
+      - alert: BlueTuskGraphEvaluationErrorBudgetBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_graph_evaluations_total{
+                bluetusk_graph_evaluation_outcome="committed"
+              }[1h]))
+              /
+              clamp_min(sum(rate(bluetusk_graph_evaluations_total[1h])), 1)
+            )
+          ) > 0.0144
+        for: 5m
+        labels:
+          severity: page
+          service: bluetusk
+          slo: graph-evaluation-commit
+        annotations:
+          summary: Continuous Graph evaluations are not reaching durable commit
+          runbook: docs/operations/observability.md#continuous-graph-repair
+
+      - alert: BlueTuskGraphEvaluationErrorBudgetSlowBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_graph_evaluations_total{
+                bluetusk_graph_evaluation_outcome="committed"
+              }[6h]))
+              /
+              clamp_min(sum(rate(bluetusk_graph_evaluations_total[6h])), 1)
+            )
+          ) > 0.006
+          and
+          (
+            1 -
+            (
+              sum(rate(bluetusk_graph_evaluations_total{
+                bluetusk_graph_evaluation_outcome="committed"
+              }[30m]))
+              /
+              clamp_min(sum(rate(bluetusk_graph_evaluations_total[30m])), 1)
+            )
+          ) > 0.006
+        for: 0m
+        labels:
+          severity: ticket
+          service: bluetusk
+          slo: graph-evaluation-commit
+        annotations:
+          summary: Continuous Graph settlement failures are steadily consuming the V1 error budget
+          runbook: docs/operations/observability.md#continuous-graph-repair
+
+      - alert: BlueTuskGraphEvaluationLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bluetusk_graph_evaluation_duration_seconds_bucket[5m]))
+          ) > 1
+        for: 10m
+        labels:
+          severity: warning
+          service: bluetusk
+          slo: graph-evaluation-p95
+        annotations:
+          summary: Continuous Graph evaluation P95 exceeds one second
+          runbook: docs/operations/observability.md#continuous-graph-repair
+
+      - alert: BlueTuskControlPlaneErrorBudgetBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_control_plane_operations_total{
+                bluetusk_control_plane_outcome=~"changed|no_change|paused|deleted"
+              }[1h]))
+              /
+              clamp_min(sum(rate(bluetusk_control_plane_operations_total[1h])), 1)
+            )
+          ) > 0.0144
+        for: 5m
+        labels:
+          severity: page
+          service: bluetusk
+          slo: control-plane-operation-success
+        annotations:
+          summary: Control Plane operations are failing or losing their fenced lease
+          runbook: docs/operations/observability.md#control-plane-reconciliation
+
+      - alert: BlueTuskControlPlaneErrorBudgetSlowBurn
+        expr: |
+          (
+            1 -
+            (
+              sum(rate(bluetusk_control_plane_operations_total{
+                bluetusk_control_plane_outcome=~"changed|no_change|paused|deleted"
+              }[6h]))
+              /
+              clamp_min(sum(rate(bluetusk_control_plane_operations_total[6h])), 1)
+            )
+          ) > 0.006
+          and
+          (
+            1 -
+            (
+              sum(rate(bluetusk_control_plane_operations_total{
+                bluetusk_control_plane_outcome=~"changed|no_change|paused|deleted"
+              }[30m]))
+              /
+              clamp_min(sum(rate(bluetusk_control_plane_operations_total[30m])), 1)
+            )
+          ) > 0.006
+        for: 0m
+        labels:
+          severity: ticket
+          service: bluetusk
+          slo: control-plane-operation-success
+        annotations:
+          summary: Control Plane failures are steadily consuming the V1 error budget
+          runbook: docs/operations/observability.md#control-plane-reconciliation
+
+      - alert: BlueTuskControlPlaneOperationLatency
+        expr: |
+          histogram_quantile(
+            0.95,
+            sum by (le) (rate(bluetusk_control_plane_operation_duration_seconds_bucket[5m]))
+          ) > 60
+        for: 10m
+        labels:
+          severity: warning
+          service: bluetusk
+          slo: control-plane-operation-p95
+        annotations:
+          summary: Control Plane operation P95 exceeds 60 seconds
+          runbook: docs/operations/observability.md#control-plane-reconciliation

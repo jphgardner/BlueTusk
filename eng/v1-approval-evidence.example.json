@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "gateId": "replace-with-required-gate-id",
+  "candidateCommit": "0000000000000000000000000000000000000000",
+  "outcome": "approved",
+  "approvedBy": "named-accountable-person",
+  "approvedUtc": "2026-01-01T00:00:00Z",
+  "summary": "Replace with the acceptance criteria exercised, observations, and evidence locations.",
+  "blockingFindings": 0,
+  "references": [
+    "https://evidence.example/change-or-test-record"
+  ]
+}

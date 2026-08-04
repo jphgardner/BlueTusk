@@ -5,6 +5,7 @@ using BlueTusk.Live.Testing;
 namespace BlueTusk.Benchmarks;
 
 [MemoryDiagnoser]
+[JsonExporterAttribute.Brief]
 public class LiveQueryBenchmarks
 {
     private const int ResultCount = 1_000;

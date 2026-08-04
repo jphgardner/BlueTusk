@@ -1,4 +1,5 @@
 using System.Collections.ObjectModel;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Live;
 using BlueTusk.Streams;
@@ -183,6 +184,8 @@ public sealed class ContinuousGraphEvaluationDelivery<TResult, TKey> : IAsyncDis
     where TKey : notnull
 {
     private readonly Func<bool, ValueTask> _settle;
+    private readonly Activity? _telemetryActivity;
+    private readonly long _telemetryStarted;
     private int _settled;
 
     internal ContinuousGraphEvaluationDelivery(
@@ -191,6 +194,8 @@ public sealed class ContinuousGraphEvaluationDelivery<TResult, TKey> : IAsyncDis
     {
         Evaluation = evaluation;
         _settle = settle;
+        (_telemetryStarted, _telemetryActivity) =
+            ContinuousGraphDiagnostics.StartEvaluation(evaluation.Mode);
     }
 
     public ContinuousGraphEvaluation<TResult, TKey> Evaluation { get; }
@@ -205,16 +210,42 @@ public sealed class ContinuousGraphEvaluationDelivery<TResult, TKey> : IAsyncDis
                 "A continuous graph evaluation can be settled only once.");
         }
 
-        await _settle(true).ConfigureAwait(false);
+        try
+        {
+            await _settle(true).ConfigureAwait(false);
+            RecordTelemetry("committed");
+        }
+        catch
+        {
+            RecordTelemetry("commit_failed");
+            throw;
+        }
     }
 
     public async ValueTask DisposeAsync()
     {
         if (Interlocked.Exchange(ref _settled, 1) == 0)
         {
-            await _settle(false).ConfigureAwait(false);
+            try
+            {
+                await _settle(false).ConfigureAwait(false);
+                RecordTelemetry("abandoned");
+            }
+            catch
+            {
+                RecordTelemetry("abandon_failed");
+                throw;
+            }
         }
     }
+
+    private void RecordTelemetry(string outcome) =>
+        ContinuousGraphDiagnostics.RecordEvaluation(
+            Evaluation.Mode,
+            outcome,
+            Evaluation.Batch?.Events.Count ?? 0,
+            _telemetryStarted,
+            _telemetryActivity);
 }
 
 public sealed class ContinuousGraphIncrementalStatus

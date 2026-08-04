@@ -11,7 +11,7 @@ namespace BlueTusk.Benchmarks;
 
 [MemoryDiagnoser]
 [JsonExporterAttribute.Brief]
-public class NativeCapabilityBenchmarks : IDisposable
+public class NativeCapabilityBenchmarks : IAsyncDisposable
 {
     private readonly BlueTuskTypeRegistry _registry = BlueTuskBuiltInTypes.CreateRegistry();
     private readonly byte[] _largeObjectBuffer = new byte[8192];
@@ -48,9 +48,12 @@ public class NativeCapabilityBenchmarks : IDisposable
         _largeObjectStream.ReadAsync(_largeObjectBuffer);
 
     [GlobalCleanup]
-    public void Dispose()
+    public Task CleanupAsync() =>
+        DisposeAsync().AsTask();
+
+    public async ValueTask DisposeAsync()
     {
-        _largeObjectStream.Dispose();
+        await _largeObjectStream.DisposeAsync().ConfigureAwait(false);
         GC.SuppressFinalize(this);
     }
 

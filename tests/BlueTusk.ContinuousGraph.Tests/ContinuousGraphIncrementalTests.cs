@@ -12,6 +12,59 @@ public sealed class ContinuousGraphIncrementalTests
         new("graph-system", "graph-database", "graph-slot", "graph-publication");
 
     [Fact]
+    public async Task Evaluation_lifecycle_emits_committed_metrics()
+    {
+        var measurements =
+            new System.Collections.Concurrent.ConcurrentQueue<(string Name, long Value, string? Outcome)>();
+        using var listener = new System.Diagnostics.Metrics.MeterListener
+        {
+            InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (instrument.Meter.Name == "BlueTusk.ContinuousGraph")
+                {
+                    meterListener.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
+        {
+            string? outcome = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "bluetusk.graph.evaluation.outcome")
+                {
+                    outcome = tag.Value?.ToString();
+                }
+            }
+
+            measurements.Enqueue((instrument.Name, value, outcome));
+        });
+        listener.Start();
+
+        var evaluator = new QueueEvaluator();
+        await using var session = CreateSession(
+            [new GraphRow(1, 100, "one")],
+            evaluator);
+        await CommitInitialAsync(
+            session,
+            TestContext.Current.CancellationToken);
+
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.graph.evaluations.active" &&
+                item.Value == 1);
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.graph.evaluations.active" &&
+                item.Value == -1);
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.graph.evaluations" &&
+                item.Value == 1 &&
+                item.Outcome == "committed");
+    }
+
+    [Fact]
     public async Task Exact_rows_update_and_admit_top_n_candidates_without_full_query()
     {
         var cancellationToken = TestContext.Current.CancellationToken;

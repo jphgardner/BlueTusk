@@ -176,6 +176,9 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
         CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+        var telemetryStarted = LiveDiagnostics.GetTimestamp();
+        var telemetryOutcome = "success";
+        var telemetryEvents = 0;
         await _gate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
@@ -223,10 +226,26 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
                 Interlocked.Exchange(ref _lastSequence, batch.Events[^1].Sequence);
             }
 
+            telemetryEvents = batch.Events.Count;
             return batch;
+        }
+        catch (OperationCanceledException)
+        {
+            telemetryOutcome = "canceled";
+            throw;
+        }
+        catch
+        {
+            telemetryOutcome = "error";
+            throw;
         }
         finally
         {
+            LiveDiagnostics.RecordRefresh(
+                _plan.Name,
+                telemetryOutcome,
+                telemetryStarted,
+                telemetryEvents);
             _gate.Release();
         }
     }
@@ -291,16 +310,48 @@ public sealed class LiveQuerySession<T, TKey> : IAsyncDisposable
     private async ValueTask<IReadOnlyList<T>> ExecuteAuthoritativeQueryAsync(
         CancellationToken cancellationToken)
     {
-        var rows = await _plan.ExecuteAsync(_context, cancellationToken).ConfigureAwait(false);
-        ArgumentNullException.ThrowIfNull(rows);
-        if (rows.Count > Identity.ResultLimit)
+        var telemetryStarted = LiveDiagnostics.GetTimestamp();
+        using var activity = LiveDiagnostics.StartAuthoritativeQuery(_plan.Name);
+        try
         {
-            throw new LiveQueryResultLimitException(
-                $"Live query '{_plan.Name}' returned {rows.Count} rows, exceeding its bound of {Identity.ResultLimit}.");
-        }
+            var rows = await _plan.ExecuteAsync(_context, cancellationToken).ConfigureAwait(false);
+            ArgumentNullException.ThrowIfNull(rows);
+            if (rows.Count > Identity.ResultLimit)
+            {
+                throw new LiveQueryResultLimitException(
+                    $"Live query '{_plan.Name}' returned {rows.Count} rows, exceeding its bound of {Identity.ResultLimit}.");
+            }
 
-        Interlocked.Increment(ref _authoritativeQueryCount);
-        return rows;
+            Interlocked.Increment(ref _authoritativeQueryCount);
+            LiveDiagnostics.RecordAuthoritativeQuery(
+                _plan.Name,
+                "success",
+                telemetryStarted,
+                rows.Count);
+            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Ok);
+            activity?.SetTag("bluetusk.live.result.rows", rows.Count);
+            return rows;
+        }
+        catch (OperationCanceledException)
+        {
+            LiveDiagnostics.RecordAuthoritativeQuery(
+                _plan.Name,
+                "canceled",
+                telemetryStarted,
+                rowCount: -1);
+            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error, "canceled");
+            throw;
+        }
+        catch
+        {
+            LiveDiagnostics.RecordAuthoritativeQuery(
+                _plan.Name,
+                "error",
+                telemetryStarted,
+                rowCount: -1);
+            activity?.SetStatus(System.Diagnostics.ActivityStatusCode.Error);
+            throw;
+        }
     }
 
     private void EnsureStarted()

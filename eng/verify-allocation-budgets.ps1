@@ -8,7 +8,11 @@ Set-StrictMode -Version Latest
 
 $configuration = Get-Content -LiteralPath $BudgetFile -Raw | ConvertFrom-Json
 $actual = @{}
-Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json" | ForEach-Object {
+$reportFiles = @(
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json"
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*MultiplexingComparisonBenchmarks-report-full.json"
+)
+$reportFiles | ForEach-Object {
     $report = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
     foreach ($benchmark in $report.Benchmarks) {
         if ($null -ne $benchmark.Memory -and $null -ne $benchmark.Memory.BytesAllocatedPerOperation) {

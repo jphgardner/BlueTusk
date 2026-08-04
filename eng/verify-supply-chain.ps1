@@ -15,6 +15,19 @@ $workflowFiles = Get-ChildItem -LiteralPath (
     Join-Path $RepositoryRoot '.github/workflows') -Filter '*.yml' -File
 $usesPattern = [regex]'(?m)^\s*(?:-\s*)?uses:\s*(?<action>[^@\s]+)@(?<reference>[^\s#]+)'
 $unpinned = [System.Collections.Generic.List[string]]::new()
+$unpinnedImages = [System.Collections.Generic.List[string]]::new()
+$serviceImagePattern = [regex]'(?m)^\s*image:\s*(?<image>[^\s#]+)'
+$knownWorkflowImagePattern = [regex](
+    '(?<![A-Za-z0-9._/-])' +
+    '(?<image>(?:' +
+    'nats|' +
+    'opensearchproject/opensearch|' +
+    'otel/opentelemetry-collector-contrib|' +
+    'postgres|' +
+    'prom/prometheus|' +
+    'redis' +
+    '):[A-Za-z0-9._-]+)' +
+    '(?<digest>@sha256:[0-9a-f]{64})?')
 foreach ($workflow in $workflowFiles)
 {
     $content = Get-Content -LiteralPath $workflow.FullName -Raw
@@ -30,10 +43,31 @@ foreach ($workflow in $workflowFiles)
                 "$($workflow.Name): $($match.Groups['action'].Value)@$($match.Groups['reference'].Value)")
         }
     }
+    foreach ($match in $serviceImagePattern.Matches($content))
+    {
+        if ($match.Groups['image'].Value -notmatch '@sha256:[0-9a-f]{64}$')
+        {
+            $unpinnedImages.Add(
+                "$($workflow.Name): $($match.Groups['image'].Value)")
+        }
+    }
+    foreach ($match in $knownWorkflowImagePattern.Matches($content))
+    {
+        if (-not $match.Groups['digest'].Success)
+        {
+            $unpinnedImages.Add(
+                "$($workflow.Name): $($match.Groups['image'].Value)")
+        }
+    }
 }
 if ($unpinned.Count -gt 0)
 {
     throw "Workflow actions must use immutable commits: $($unpinned -join '; ')."
+}
+if ($unpinnedImages.Count -gt 0)
+{
+    $distinctImages = $unpinnedImages | Sort-Object -Unique
+    throw "Workflow container images must use immutable SHA-256 digests: $($distinctImages -join '; ')."
 }
 
 & (Join-Path $RepositoryRoot 'eng/verify-api-budgets.ps1') -RepositoryRoot $RepositoryRoot
@@ -41,7 +75,9 @@ if ($unpinned.Count -gt 0)
 if ([string]::IsNullOrWhiteSpace($PackageDirectory) -and
     [string]::IsNullOrWhiteSpace($SbomDirectory))
 {
-    Write-Host "Supply-chain source gates verified across $($workflowFiles.Count) workflows."
+    Write-Host (
+        "Supply-chain source gates verified across $($workflowFiles.Count) workflows " +
+        'with immutable actions and CI container images.')
     return
 }
 if ([string]::IsNullOrWhiteSpace($PackageDirectory) -or

@@ -8,6 +8,7 @@ using BlueTusk.TypeSystem;
 namespace BlueTusk.Benchmarks;
 
 [MemoryDiagnoser]
+[JsonExporterAttribute.Brief]
 public class StreamsTransactionBenchmarks
 {
     private const int ChangeCount = 1000;

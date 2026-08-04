@@ -3,6 +3,82 @@ namespace BlueTusk.Live.Tests;
 public sealed class LiveSharedSubscriptionTests
 {
     [Fact]
+    public async Task Subscription_lifecycle_emits_metrics_and_balances_connected_clients()
+    {
+        var measurements =
+            new System.Collections.Concurrent.ConcurrentQueue<(
+                string Name,
+                long Value,
+                string? Outcome,
+                string? Operation)>();
+        using var listener = new System.Diagnostics.Metrics.MeterListener
+        {
+            InstrumentPublished = (instrument, meterListener) =>
+            {
+                if (instrument.Meter.Name == "BlueTusk.Live")
+                {
+                    meterListener.EnableMeasurementEvents(instrument);
+                }
+            },
+        };
+        listener.SetMeasurementEventCallback<long>((instrument, value, tags, _) =>
+        {
+            string? outcome = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "bluetusk.live.connection.outcome")
+                {
+                    outcome = tag.Value?.ToString();
+                }
+            }
+
+            string? operation = null;
+            foreach (var tag in tags)
+            {
+                if (tag.Key == "bluetusk.live.replay.operation")
+                {
+                    operation = tag.Value?.ToString();
+                }
+            }
+
+            measurements.Enqueue((instrument.Name, value, outcome, operation));
+        });
+        listener.Start();
+
+        await using var shared = Shared(
+            new InvalidationLog(),
+            new ReplayStore(),
+            () => [new Row(1, "one")]);
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        var connected = await shared.ConnectAsync(
+            0,
+            TestContext.Current.CancellationToken);
+        Assert.Equal(1, shared.Status.ConnectedClients);
+
+        await connected.Connection!.DisposeAsync();
+
+        Assert.Equal(0, shared.Status.ConnectedClients);
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.live.connections" &&
+                item.Value == 1 &&
+                item.Outcome == "connected");
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.live.clients.active" &&
+                item.Value == 1);
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.live.clients.active" &&
+                item.Value == -1);
+        Assert.Contains(
+            measurements,
+            item => item.Name == "bluetusk.live.replay.bytes" &&
+                item.Value > 0 &&
+                item.Operation == "read");
+    }
+
+    [Fact]
     public async Task Matching_subscribers_share_one_query_and_resume_without_a_gap()
     {
         var invalidations = new InvalidationLog();
@@ -38,6 +114,7 @@ public sealed class LiveSharedSubscriptionTests
         await first.Connection.DisposeAsync();
         await second.Connection.DisposeAsync();
         await resumed.Connection.DisposeAsync();
+        Assert.Equal(0, shared.Status.ConnectedClients);
     }
 
     [Fact]

@@ -55,6 +55,7 @@ public sealed class ManagedDeploymentController
         CancellationToken cancellationToken = default)
     {
         ValidateDeploymentId(deploymentId);
+        using var telemetry = ControlPlaneDiagnostics.StartOperation("reconcile");
         var lease = await _leases.TryAcquireAsync(
             deploymentId,
             _owner,
@@ -62,6 +63,7 @@ public sealed class ManagedDeploymentController
             cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
+            telemetry.Complete("lease_unavailable");
             throw new ManagedDeploymentLeaseException(
                 $"Deployment '{deploymentId}' is being reconciled by another owner.");
         }
@@ -93,6 +95,7 @@ public sealed class ManagedDeploymentController
                     null,
                     lease.FencingToken,
                     guard).ConfigureAwait(false);
+                telemetry.Complete("paused");
                 return Result(paused, changed: paused.Status.State != deployment.Status.State);
             }
 
@@ -142,6 +145,7 @@ public sealed class ManagedDeploymentController
                     null,
                     lease.FencingToken,
                     guard).ConfigureAwait(false);
+                telemetry.Complete("no_change");
                 return Result(ready, changed: false);
             }
 
@@ -171,19 +175,23 @@ public sealed class ManagedDeploymentController
                 null,
                 lease.FencingToken,
                 guard).ConfigureAwait(false);
+            telemetry.Complete("changed");
             return Result(completed, changed: true);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            telemetry.Complete("canceled");
             throw;
         }
         catch (OperationCanceledException) when (guard.IsLost)
         {
+            telemetry.Complete("lease_lost");
             throw new ManagedDeploymentLeaseException(
                 "The managed deployment reconciliation lease was lost.");
         }
         catch (Exception exception)
         {
+            telemetry.Complete("failed");
             await TryRecordFailureAsync(
                 deploymentId,
                 lease.FencingToken,
@@ -201,6 +209,7 @@ public sealed class ManagedDeploymentController
     {
         ValidateDeploymentId(deploymentId);
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(expectedGeneration);
+        using var telemetry = ControlPlaneDiagnostics.StartOperation("delete");
 
         var lease = await _leases.TryAcquireAsync(
             deploymentId,
@@ -209,6 +218,7 @@ public sealed class ManagedDeploymentController
             cancellationToken).ConfigureAwait(false);
         if (lease is null)
         {
+            telemetry.Complete("lease_unavailable");
             throw new ManagedDeploymentLeaseException(
                 $"Deployment '{deploymentId}' is being reconciled by another owner.");
         }
@@ -243,6 +253,7 @@ public sealed class ManagedDeploymentController
 
             if (deployment.Status.State == ManagedDeploymentState.Deleted)
             {
+                telemetry.Complete("no_change");
                 return Result(deployment, changed: false);
             }
 
@@ -271,19 +282,23 @@ public sealed class ManagedDeploymentController
                 null,
                 lease.FencingToken,
                 guard).ConfigureAwait(false);
+            telemetry.Complete("deleted");
             return Result(deleted, changed: true);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
+            telemetry.Complete("canceled");
             throw;
         }
         catch (OperationCanceledException) when (guard.IsLost)
         {
+            telemetry.Complete("lease_lost");
             throw new ManagedDeploymentLeaseException(
                 "The managed deployment reconciliation lease was lost.");
         }
         catch (Exception exception)
         {
+            telemetry.Complete("failed");
             await TryRecordFailureAsync(
                 deploymentId,
                 lease.FencingToken,
