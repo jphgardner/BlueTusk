@@ -685,5 +685,8 @@ Every milestone requires unit, fake-server, conformance, and real-server accepta
   generation/revision compare and swap, renewable fencing leases, deletion
   protection, a durable PostgreSQL store, and provider conformance boundaries
 - [ ] Capability-secured registered client SQL/LINQ
-- [ ] Isolated, resource-bounded transformation execution
+- [x] Deterministic resource-bounded transformation sandbox with a finite JSON
+  instruction VM, stable fingerprinting, cancellation/time/operation/byte
+  budgets, tenant-safe routing, poison handling, and no code-loading or host-I/O
+  surface
 - [ ] Incremental Continuous Graph evaluation with authoritative repair

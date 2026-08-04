@@ -613,6 +613,51 @@ static BlueTusk.Sync.SyncSourceTransaction.operator ==(BlueTusk.Sync.SyncSourceT
 static BlueTusk.Sync.SyncTransformVersion.Create(string! name, string! version, System.ReadOnlySpan<byte> canonicalConfiguration = default(System.ReadOnlySpan<byte>)) -> BlueTusk.Sync.SyncTransformVersion!
 static BlueTusk.Sync.SyncTransformVersion.operator !=(BlueTusk.Sync.SyncTransformVersion? left, BlueTusk.Sync.SyncTransformVersion? right) -> bool
 static BlueTusk.Sync.SyncTransformVersion.operator ==(BlueTusk.Sync.SyncTransformVersion? left, BlueTusk.Sync.SyncTransformVersion? right) -> bool
+BlueTusk.Sync.SandboxedSyncTransformStage
+BlueTusk.Sync.SandboxedSyncTransformStage.SandboxedSyncTransformStage(BlueTusk.Sync.SyncTransformSandboxOptions! options) -> void
+BlueTusk.Sync.SandboxedSyncTransformStage.TransformSnapshotBatchAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSnapshotMutation!>! mutations, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSnapshotMutation!>!>
+BlueTusk.Sync.SandboxedSyncTransformStage.TransformTransactionAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncMutation!>! mutations, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncMutation!>!>
+BlueTusk.Sync.SandboxedSyncTransformStage.Version.get -> BlueTusk.Sync.SyncTransformVersion!
+BlueTusk.Sync.SyncSandboxInstruction
+BlueTusk.Sync.SyncSandboxInstruction.Operation.get -> BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncSandboxInstruction.Path.get -> string!
+BlueTusk.Sync.SyncSandboxInstruction.SourcePath.get -> string?
+BlueTusk.Sync.SyncSandboxInstruction.ValueJson.get -> string?
+BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncSandboxOperation.Copy = 2 -> BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncSandboxOperation.DropWhenEquals = 4 -> BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncSandboxOperation.Remove = 0 -> BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncSandboxOperation.RequireEquals = 5 -> BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncSandboxOperation.Route = 3 -> BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncSandboxOperation.Set = 1 -> BlueTusk.Sync.SyncSandboxOperation
+BlueTusk.Sync.SyncTransformSandboxOptions
+BlueTusk.Sync.SyncTransformSandboxOptions.Instructions.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Sync.SyncSandboxInstruction!>!
+BlueTusk.Sync.SyncTransformSandboxOptions.Instructions.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumBatchBytes.get -> long
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumBatchBytes.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumDocumentBytes.get -> int
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumDocumentBytes.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumExecutionTime.get -> System.TimeSpan
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumExecutionTime.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumJsonDepth.get -> int
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumJsonDepth.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumMutationsPerBatch.get -> int
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumMutationsPerBatch.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumOperationsPerBatch.get -> int
+BlueTusk.Sync.SyncTransformSandboxOptions.MaximumOperationsPerBatch.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.Name.get -> string!
+BlueTusk.Sync.SyncTransformSandboxOptions.Name.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.RequirePartitionedDeletes.get -> bool
+BlueTusk.Sync.SyncTransformSandboxOptions.RequirePartitionedDeletes.init -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.SyncTransformSandboxOptions() -> void
+BlueTusk.Sync.SyncTransformSandboxOptions.Version.get -> string!
+BlueTusk.Sync.SyncTransformSandboxOptions.Version.init -> void
+static BlueTusk.Sync.SyncSandboxInstruction.Copy(string! sourcePath, string! targetPath) -> BlueTusk.Sync.SyncSandboxInstruction!
+static BlueTusk.Sync.SyncSandboxInstruction.DropWhenEquals(string! path, string! valueJson) -> BlueTusk.Sync.SyncSandboxInstruction!
+static BlueTusk.Sync.SyncSandboxInstruction.Remove(string! path) -> BlueTusk.Sync.SyncSandboxInstruction!
+static BlueTusk.Sync.SyncSandboxInstruction.RequireEquals(string! path, string! valueJson) -> BlueTusk.Sync.SyncSandboxInstruction!
+static BlueTusk.Sync.SyncSandboxInstruction.Route(string! path) -> BlueTusk.Sync.SyncSandboxInstruction!
+static BlueTusk.Sync.SyncSandboxInstruction.Set(string! path, string! valueJson) -> BlueTusk.Sync.SyncSandboxInstruction!
 BlueTusk.Sync.ISyncRebuildDestination
 BlueTusk.Sync.ISyncRebuildDestination.ActivateRebuildAsync(string! pipelineId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.Sync.ISyncRebuildDestination.PrepareRebuildAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncRebuildPreparation!>

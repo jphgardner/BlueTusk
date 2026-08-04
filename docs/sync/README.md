@@ -38,6 +38,61 @@ collection deletes. Stages may filter and rewrite mapped content but cannot
 invent a transaction change ID or snapshot row ID. Those rules keep replay and
 destination deduplication stable.
 
+## Transformation sandbox
+
+`SandboxedSyncTransformStage` runs untrusted transformation configuration as a
+finite JSON instruction program. It does not load assemblies, compile
+expressions, invoke delegates, use reflection, or expose file, network, process,
+clock, environment, or service-provider access. The only operations are remove,
+set, copy, route, conditional drop, and equality requirement. There are no
+branches other than those finite predicates and no loops.
+
+```csharp
+var sandbox = new SandboxedSyncTransformStage(
+    new SyncTransformSandboxOptions
+    {
+        Name = "public-orders",
+        Version = "v4",
+        Instructions =
+        [
+            SyncSandboxInstruction.RequireEquals("kind", "\"order\""),
+            SyncSandboxInstruction.Copy("customer.name", "displayName"),
+            SyncSandboxInstruction.Remove("customer.email"),
+            SyncSandboxInstruction.Set("metadata.source", "\"cdc\""),
+            SyncSandboxInstruction.Route("tenant.id"),
+            SyncSandboxInstruction.DropWhenEquals("status", "\"cancelled\""),
+        ],
+        MaximumDocumentBytes = 256 * 1024,
+        MaximumBatchBytes = 8 * 1024 * 1024,
+        MaximumOperationsPerBatch = 250_000,
+        MaximumExecutionTime = TimeSpan.FromSeconds(2),
+    });
+```
+
+Construction canonicalises literal JSON and includes instruction order and
+every execution limit in the transform fingerprint. Changing the program or a
+limit therefore requires the same explicit destination rebuild or migration as
+any other transform-version change.
+
+Execution is bounded independently by instruction count, mutation count, input
+and output document size, aggregate batch bytes, JSON depth, operation count,
+cancellation, and elapsed time. A violation becomes a poison record and follows
+the pipeline's configured pause/quarantine policy. Stable change IDs and
+snapshot row IDs are preserved. A routing program rejects collection-wide
+deletes and, by default, requires ordinary deletes to retain the partition key
+established by the source mapper.
+
+This is the V1 sandbox contract. It deliberately does not claim that an
+in-process C# delegate or a child process without an operating-system policy is
+sandboxed. Native, managed-assembly, and general-purpose script plug-ins remain
+outside the trusted boundary.
+
+Reproduce the sandbox contract suite with:
+
+```powershell
+dotnet test tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj --filter FullyQualifiedName~SyncTransformTests
+```
+
 Poison transformations pause by default. `QuarantineAndAdvance` is accepted only
 with an explicit durable quarantine sink, and the source delivery is not
 acknowledged until that sink confirms storage. Destination outages and rejected

@@ -150,6 +150,121 @@ public sealed class SyncTransformTests
             }));
     }
 
+    [Fact]
+    public async Task Sandbox_executes_finite_json_program_and_preserves_source_identity()
+    {
+        await using var delivery = Delivery();
+        var epoch = SnapshotEpoch.Create(Source, new BlueTuskLogSequenceNumber(100));
+        var snapshot = SnapshotBatch(epoch);
+        var stage = Sandbox(
+            SyncSandboxInstruction.RequireEquals("kind", "\"order\""),
+            SyncSandboxInstruction.Copy("customer.name", "displayName"),
+            SyncSandboxInstruction.Set("metadata.source", "\"cdc\""),
+            SyncSandboxInstruction.Remove("secret"),
+            SyncSandboxInstruction.Route("tenant.id"),
+            SyncSandboxInstruction.DropWhenEquals("status", "\"cancelled\""));
+        var retained = Mutation(
+            delivery.Transaction,
+            0,
+            "42",
+            """{"kind":"order","status":"open","tenant":{"id":"acme"},"customer":{"name":"Ada"},"secret":"hidden"}"""u8.ToArray());
+        var dropped = Mutation(
+            delivery.Transaction,
+            1,
+            "43",
+            """{"kind":"order","status":"cancelled","tenant":{"id":"acme"},"customer":{"name":"Grace"}}"""u8.ToArray());
+        var snapshotMutation = new SyncSnapshotMutation(
+            new SnapshotRowId(epoch.Value, "public.orders", "42"),
+            "orders",
+            "42",
+            retained.Content,
+            "application/json");
+
+        var transactionResult = Assert.Single(
+            await stage.TransformTransactionAsync(delivery.Transaction, [retained, dropped]));
+        var snapshotResult = Assert.Single(
+            await stage.TransformSnapshotBatchAsync(snapshot, [snapshotMutation]));
+
+        Assert.Equal(retained.ChangeId, transactionResult.ChangeId);
+        Assert.Equal(snapshotMutation.RowId, snapshotResult.RowId);
+        Assert.Equal("acme", transactionResult.PartitionKey);
+        Assert.Equal("acme", snapshotResult.PartitionKey);
+        AssertSandboxJson(transactionResult.Content.Span);
+        AssertSandboxJson(snapshotResult.Content.Span);
+    }
+
+    [Fact]
+    public void Sandbox_fingerprint_is_canonical_and_program_order_sensitive()
+    {
+        var canonical = Sandbox(
+            SyncSandboxInstruction.Set("metadata", """{"verified":true,"region":"eu"}"""),
+            SyncSandboxInstruction.Remove("secret"));
+        var reorderedJson = Sandbox(
+            SyncSandboxInstruction.Set("metadata", """{"region":"eu","verified":true}"""),
+            SyncSandboxInstruction.Remove("secret"));
+        var reorderedProgram = Sandbox(
+            SyncSandboxInstruction.Remove("secret"),
+            SyncSandboxInstruction.Set("metadata", """{"region":"eu","verified":true}"""));
+
+        Assert.Equal(canonical.Version, reorderedJson.Version);
+        Assert.NotEqual(canonical.Version, reorderedProgram.Version);
+    }
+
+    [Fact]
+    public async Task Sandbox_enforces_operation_byte_cancellation_and_delete_boundaries()
+    {
+        await using var delivery = Delivery();
+        var operationBound = Sandbox(
+            new SyncTransformSandboxOptions
+            {
+                Name = "sandbox-orders",
+                Version = "v1",
+                Instructions =
+                [
+                    SyncSandboxInstruction.Set("first", "1"),
+                    SyncSandboxInstruction.Set("second", "2"),
+                ],
+                MaximumOperationsPerBatch = 1,
+            });
+        await Assert.ThrowsAsync<SyncPoisonRecordException>(() =>
+            operationBound.TransformTransactionAsync(
+                delivery.Transaction,
+                [Mutation(delivery.Transaction, 0, "42")]).AsTask());
+
+        var byteBound = Sandbox(
+            new SyncTransformSandboxOptions
+            {
+                Name = "sandbox-orders",
+                Version = "v1",
+                Instructions = [SyncSandboxInstruction.Set("value", "\"expanded\"")],
+                MaximumDocumentBytes = 32,
+                MaximumBatchBytes = 4,
+            });
+        await Assert.ThrowsAsync<SyncPoisonRecordException>(() =>
+            byteBound.TransformTransactionAsync(
+                delivery.Transaction,
+                [Mutation(delivery.Transaction, 0, "42")]).AsTask());
+
+        var routed = Sandbox(SyncSandboxInstruction.Route("tenant"));
+        await Assert.ThrowsAsync<SyncPoisonRecordException>(() =>
+            routed.TransformTransactionAsync(
+                delivery.Transaction,
+                [new SyncMutation(
+                    new ChangeId(Source, delivery.Transaction.CommitEndPosition, delivery.Transaction.TransactionId, 0),
+                    SyncMutationKind.Delete,
+                    "orders",
+                    "42",
+                    ReadOnlyMemory<byte>.Empty)]).AsTask());
+
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() =>
+            routed.TransformTransactionAsync(
+                delivery.Transaction,
+                [Mutation(delivery.Transaction, 0, "42")],
+                cancellation.Token).AsTask());
+    }
+
     private static void AssertMaterialisedJson(ReadOnlySpan<byte> content)
     {
         using var document = JsonDocument.Parse(content.ToArray());
@@ -161,6 +276,28 @@ public sealed class SyncTransformTests
         Assert.False(root.TryGetProperty("profile__secret", out _));
         Assert.False(root.TryGetProperty("secret", out _));
     }
+
+    private static void AssertSandboxJson(ReadOnlySpan<byte> content)
+    {
+        using var document = JsonDocument.Parse(content.ToArray());
+        var root = document.RootElement;
+        Assert.Equal("Ada", root.GetProperty("displayName").GetString());
+        Assert.Equal("cdc", root.GetProperty("metadata").GetProperty("source").GetString());
+        Assert.False(root.TryGetProperty("secret", out _));
+    }
+
+    private static SandboxedSyncTransformStage Sandbox(
+        params SyncSandboxInstruction[] instructions) =>
+        Sandbox(new SyncTransformSandboxOptions
+        {
+            Name = "sandbox-orders",
+            Version = "v1",
+            Instructions = instructions,
+        });
+
+    private static SandboxedSyncTransformStage Sandbox(
+        SyncTransformSandboxOptions options) =>
+        new(options);
 
     private static SyncPredicateTransformStage Predicate(
         string name,

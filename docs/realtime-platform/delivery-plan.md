@@ -25,8 +25,10 @@ Every phase additionally requires formatting, a zero-warning build, current prov
 - Schema drift and poison records pause with diagnostics by default.
 - Bounded statement multiplexing and fenced, quota-aware managed-hosting
   reconciliation are implemented as the first two Phase 8 vertical slices.
-  Capability-secured client SQL/LINQ, isolated transformation processes, and
-  incremental graph evaluation are V1 scope and remain gated until their
-  production contracts and evidence land. “Arbitrary”
+  The deterministic, resource-bounded Sync JSON transformation sandbox is also
+  implemented; it executes a finite instruction VM rather than treating
+  in-process C# or an unconstrained child process as isolated.
+  Capability-secured client SQL/LINQ and incremental graph evaluation remain
+  V1 scope and gated until their production contracts and evidence land. “Arbitrary”
   client queries never means bypassing registration, RLS, tenant scope,
   authorisation, cost limits, or cancellation.
