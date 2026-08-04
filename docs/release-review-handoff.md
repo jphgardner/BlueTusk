@@ -22,6 +22,11 @@ ancestor-commit evidence does not pass.
 - [ ] Release dependencies are published at the exact versions declared by the
       candidate.
 - [ ] The full manual `build.yml` run passed at the candidate commit.
+- [ ] The manual `security.yml` CodeQL run passed at the candidate commit.
+- [ ] Every target in the manual `fuzzing.yml` run completed for at least one
+      hour without a crash or hang finding at the candidate commit.
+- [ ] The [fuzz-finding review handoff](operations/fuzz-finding-handoff.md) is
+      closed by an independent security reviewer.
 - [ ] All workflow actions are pinned to full commits.
 - [ ] CodeQL, dependency review and the complete NuGet vulnerability audit
       passed.

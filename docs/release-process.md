@@ -29,19 +29,23 @@ documented V1 gates are complete.
    or branch-push run is not release evidence because the manual run includes
    the elevated PostgreSQL, connector, authentication, stress, and endurance
    jobs.
-4. Dispatch `performance.yml` at that exact commit on the labelled reference
+4. Dispatch `security.yml` at that exact commit and require the manual CodeQL
+   run to succeed. Dispatch `fuzzing.yml` at the same commit for its enforced
+   minimum of one hour per target; every target must finish without a crash or
+   hang finding.
+5. Dispatch `performance.yml` at that exact commit on the labelled reference
    runner and retain its integrity-bound complete benchmark evidence.
-5. For Streams, also complete
+6. For Streams, also complete
    `streams-release-endurance.yml` at that commit. For Sync, also complete
    `sync-release-endurance.yml` at that commit.
-6. Complete the external acceptance records and run
+7. Complete the external acceptance records and run
    the protected `v1-candidate-readiness.yml` aggregation workflow as described
    in [V1 production readiness](operations/production-readiness.md). Every
    family release requires this successful workflow at the exact commit.
-7. Do not change the candidate commit after evidence succeeds. Any source,
+8. Do not change the candidate commit after evidence succeeds. Any source,
    project, dependency, version, workflow, or release-policy change creates a
    new commit and invalidates the evidence.
-8. Create the exact version tag declared by the manifest, such as
+9. Create the exact version tag declared by the manifest, such as
    `provider-v1.0.0`, on the verified commit.
 
 The release workflow rejects a tag that differs from the version property,

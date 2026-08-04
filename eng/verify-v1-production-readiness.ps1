@@ -88,6 +88,51 @@ foreach ($workflow in @($configuration.requiredWorkflows))
     }
 }
 
+$fuzzWorkflowSource = Get-Content -LiteralPath (
+    Join-Path $repositoryRoot '.github/workflows/fuzzing.yml') -Raw
+$requiredFuzzDuration = [int]$configuration.minimums.fuzzTargetSeconds
+if ($requiredFuzzDuration -lt 1 -or
+    -not $fuzzWorkflowSource.Contains(
+        "`$duration -lt $requiredFuzzDuration",
+        [StringComparison]::Ordinal))
+{
+    throw (
+        'The manual fuzzing workflow does not enforce the configured exact-candidate minimum of ' +
+        "$requiredFuzzDuration seconds per target.")
+}
+
+$candidateWorkflowPath = Join-Path $repositoryRoot '.github/workflows/v1-candidate-readiness.yml'
+$candidateWorkflowSource = Get-Content -LiteralPath $candidateWorkflowPath -Raw
+$exampleEvidence = Get-Content -LiteralPath (
+    Join-Path $PSScriptRoot 'v1-candidate-evidence.example.json') -Raw | ConvertFrom-Json
+$exampleWorkflowRuns = @($exampleEvidence.workflowRuns)
+if ($exampleWorkflowRuns.Count -ne @($configuration.requiredWorkflows).Count)
+{
+    throw (
+        'The candidate-evidence example must contain exactly one record for every required ' +
+        "workflow; found $($exampleWorkflowRuns.Count).")
+}
+foreach ($workflow in @($configuration.requiredWorkflows))
+{
+    if (-not $candidateWorkflowSource.Contains(
+            "Workflow = '$workflow'",
+            [StringComparison]::Ordinal))
+    {
+        throw "The exact-candidate aggregation workflow does not require '$workflow'."
+    }
+
+    $exampleMatches = @($exampleWorkflowRuns | Where-Object {
+        [string]::Equals(
+            [string]$_.workflowFile,
+            [string]$workflow,
+            [StringComparison]::Ordinal)
+    })
+    if ($exampleMatches.Count -ne 1)
+    {
+        throw "The candidate-evidence example must contain exactly one '$workflow' record."
+    }
+}
+
 foreach ($gate in @($configuration.engineeringGates))
 {
     $scriptPath = Join-Path $PSScriptRoot ([string]$gate)
@@ -163,6 +208,12 @@ if (-not [string]::Equals(
 }
 
 $workflowRuns = @($evidence.workflowRuns)
+if ($workflowRuns.Count -ne @($configuration.requiredWorkflows).Count)
+{
+    throw (
+        'Candidate evidence must contain exactly one run record for each required workflow; ' +
+        "expected $(@($configuration.requiredWorkflows).Count), found $($workflowRuns.Count).")
+}
 foreach ($requiredWorkflow in @($configuration.requiredWorkflows))
 {
     $successful = @($workflowRuns | Where-Object {

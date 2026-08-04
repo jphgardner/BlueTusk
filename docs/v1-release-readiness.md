@@ -7,7 +7,8 @@ exact-candidate evidence below is complete.
 ## Implemented V1 hardening
 
 - Nine bounded parser fuzzing targets, replayable corpus tests, CI/scheduled
-  coverage-guided runs, and finding archive/minimisation tools.
+  coverage-guided runs, finding archive/minimisation tools, and a
+  machine-checked target/corpus/limit/workflow synchronization contract.
 - An explicit ADO.NET compatibility contract covering PostgreSQL routines,
   parameter directions, transactions, reader behaviours, schema discovery,
   Dapper, dependency injection, health checks and documented exclusions.
@@ -77,20 +78,23 @@ rerun by the required workflows at that exact commit.
 4. Run the complete manual `build.yml` evidence workflow at that commit,
    including PostgreSQL 15–19, PgBouncer, NativeAOT/trimming, connector,
    authentication, stress and packaging jobs.
-5. Run the complete manual `performance.yml` reference-machine workflow at that
+5. Run the manual `security.yml` CodeQL workflow and the manual `fuzzing.yml`
+   workflow for at least one hour per parser target at that exact commit. Every
+   fuzz target must complete without a crash or hang finding.
+6. Run the complete manual `performance.yml` reference-machine workflow at that
    commit and archive its integrity-bound result set.
-6. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
+7. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
    workflows at the same candidate commit. Any candidate code change restarts
    the applicable run.
-7. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
+8. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
    PostgreSQL 19 support as stable before the GA record passes.
-8. Complete the
+9. Complete the
    [independent release review](release-review-handoff.md), application pilots,
    backup/restore and rollback rehearsal, incident game day, security/SLO owner
    approval and maintainer sign-off.
-9. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
+10. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
    SHA-256-bound evidence directory.
-10. Enable stable publication one dependency-ordered product family at a time:
+11. Enable stable publication one dependency-ordered product family at a time:
    Provider, Streams, Sync/Live, Control Plane, then Continuous Graph preview.
 
 Until every applicable item is complete for one immutable commit, all

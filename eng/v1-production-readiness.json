@@ -4,6 +4,7 @@
     "verify-solution-layout.ps1",
     "verify-documentation.ps1",
     "verify-api-budgets.ps1",
+    "verify-fuzzing-contract.ps1",
     "verify-supply-chain.ps1",
     "verify-github-governance.ps1",
     "verify-postgresql19-programme.ps1",
@@ -15,6 +16,8 @@
   ],
   "requiredWorkflows": [
     "build.yml",
+    "security.yml",
+    "fuzzing.yml",
     "performance.yml",
     "streams-release-endurance.yml",
     "sync-release-endurance.yml"
@@ -65,6 +68,7 @@
     "benchmarkFixtures": 21,
     "benchmarkResults": 89,
     "performanceArtifacts": 42,
+    "fuzzTargetSeconds": 3600,
     "allocationBudgets": 37,
     "latencyBudgets": 18,
     "streamsEnduranceHours": 72,
@@ -75,14 +79,19 @@
   "requiredFiles": [
     "eng/telemetry-contract.json",
     "eng/v1-production-slos.json",
+    "eng/fuzzing-contract.json",
     "benchmarks/allocation-budgets.json",
     "benchmarks/latency-budgets.json",
     "ops/observability/otel-collector.yaml",
     "ops/observability/prometheus-rules.yml",
     "ops/observability/grafana/bluetusk-v1.json",
     "docs/operations/observability.md",
+    "docs/operations/fuzz-finding-handoff.md",
     "docs/operations/production-readiness.md",
+    "docs/release-review-handoff.md",
     "eng/v1-github-governance.json",
+    "eng/v1-candidate-evidence.example.json",
+    "eng/v1-approval-evidence.example.json",
     ".github/workflows/performance.yml",
     ".github/workflows/v1-candidate-readiness.yml"
   ]

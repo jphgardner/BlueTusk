@@ -11,6 +11,14 @@ on:
         description: Successful manual build.yml run ID
         required: true
         type: string
+      security_run_id:
+        description: Successful manual security.yml run ID
+        required: true
+        type: string
+      fuzzing_run_id:
+        description: Successful manual one-hour fuzzing.yml run ID
+        required: true
+        type: string
       performance_run_id:
         description: Successful manual performance.yml run ID
         required: true
@@ -85,6 +93,8 @@ jobs:
           REPOSITORY: ${{ github.repository }}
           CANDIDATE_SHA: ${{ inputs.candidate_sha }}
           BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          SECURITY_RUN_ID: ${{ inputs.security_run_id }}
+          FUZZING_RUN_ID: ${{ inputs.fuzzing_run_id }}
           PERFORMANCE_RUN_ID: ${{ inputs.performance_run_id }}
           STREAMS_RUN_ID: ${{ inputs.streams_run_id }}
           SYNC_RUN_ID: ${{ inputs.sync_run_id }}
@@ -108,6 +118,18 @@ jobs:
             @{
               Workflow = 'build.yml'
               RunId = $env:BUILD_RUN_ID
+              ArtifactPrefix = $null
+              Destination = $null
+            },
+            @{
+              Workflow = 'security.yml'
+              RunId = $env:SECURITY_RUN_ID
+              ArtifactPrefix = $null
+              Destination = $null
+            },
+            @{
+              Workflow = 'fuzzing.yml'
+              RunId = $env:FUZZING_RUN_ID
               ArtifactPrefix = $null
               Destination = $null
             },

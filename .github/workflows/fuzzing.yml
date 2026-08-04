@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       duration_seconds:
-        description: Seconds to run each fuzz target
+        description: Seconds to run each fuzz target (manual evidence requires at least 3600)
         required: false
         default: "3600"
         type: string
@@ -73,6 +73,9 @@ jobs:
           if ($env:EVENT_NAME -eq 'workflow_dispatch' -and
               -not [string]::IsNullOrWhiteSpace($env:REQUESTED_DURATION)) {
             $duration = [int]$env:REQUESTED_DURATION
+          }
+          if ($env:EVENT_NAME -eq 'workflow_dispatch' -and $duration -lt 3600) {
+            throw 'Manual coverage-guided evidence requires at least 3600 seconds per target.'
           }
           ./eng/run-fuzz.ps1 `
             -Target '${{ matrix.target }}' `

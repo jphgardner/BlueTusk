@@ -176,14 +176,15 @@ server cannot implement their generated-column SQL.
 
 ## Release artifacts and documentation
 
-The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
-packages without warnings. Compiler-enforced public API/nullability baselines
+The reviewed Provider-family Release candidate produces 31
+`0.3.0-preview.1` NuGet/tool/template packages and 29 symbol packages without
+warnings. Compiler-enforced public API/nullability baselines
 cover all 27 Provider-family library surfaces and are locked by the
 [V1 candidate hash manifest](../eng/provider-api-freeze.json). Package
 conformance also prevents embedded extension-template content projects from
 entering the release train. The final
 direct-and-transitive NuGet vulnerability audit covers the complete solution
-and reports zero vulnerable package entries. All 30 checked-in allocation
+and reports zero vulnerable package entries. All 37 checked-in allocation
 budgets pass, including command, typed reader, protocol writer,
 structured-codec, large-value streaming, replication, EF Core application,
 Live diff/replay/fan-out, SQL/PGQ traversal, and Continuous Graph registration,

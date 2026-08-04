@@ -11,6 +11,22 @@
       "url": "https://github.example/runs/0"
     },
     {
+      "workflowFile": "security.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 0,
+      "url": "https://github.example/runs/0"
+    },
+    {
+      "workflowFile": "fuzzing.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 0,
+      "url": "https://github.example/runs/0"
+    },
+    {
       "workflowFile": "performance.yml",
       "headSha": "0000000000000000000000000000000000000000",
       "event": "workflow_dispatch",

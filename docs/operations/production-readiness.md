@@ -45,16 +45,18 @@ owners, environments and failure actions.
 1. solution ownership and dependency layout;
 2. documentation links and generated-source contract;
 3. exact public-API budgets for all six product families;
-4. pinned workflow actions and supply-chain source controls;
-5. the declared protected-branch, required-check and deployment-environment
+4. the synchronized nine-target fuzzing contract, encoded corpus coverage and
+   bounded execution policy;
+5. pinned workflow actions and supply-chain source controls;
+6. the declared protected-branch, required-check and deployment-environment
    governance contract;
-6. the current digest-pinned PostgreSQL 19 programme record;
-7. complete, non-empty benchmark coverage for every `[Benchmark]` method;
-8. allocation, reference latency and multiplexing performance budgets;
-9. the six-meter, 60-instrument telemetry contract;
-10. all 14 reference SLOs, alerts, dashboard panels and Collector safety
+7. the current digest-pinned PostgreSQL 19 programme record;
+8. complete, non-empty benchmark coverage for every `[Benchmark]` method;
+9. allocation, reference latency and multiplexing performance budgets;
+10. the six-meter, 60-instrument telemetry contract;
+11. all 14 reference SLOs, alerts, dashboard panels and Collector safety
    controls; and
-11. fail-closed publication policy.
+12. fail-closed publication policy.
 
 The normal build still compiles, tests and packages the full solution. This
 gate validates the production contracts around those outputs.
@@ -217,15 +219,17 @@ read-only `V1_GOVERNANCE_TOKEN` secret described above, and the
 `V1_APPROVAL_EVIDENCE_BASE64` secret. The approval secret is a base64-encoded ZIP whose
 `approvals` directory contains the nine exact approval JSON files. Dispatch
 `.github/workflows/v1-candidate-readiness.yml` with the candidate SHA and the
-four successful workflow run IDs. It queries GitHub for every run, downloads
-the non-expired performance/endurance artifacts, constructs the
+six successful workflow run IDs: build, security, one-hour-per-target fuzzing,
+performance, Streams endurance and Sync endurance. It queries GitHub for every
+run, downloads the non-expired performance/endurance artifacts, constructs the
 content-addressed manifest, executes candidate mode, and archives the verified
 bundle.
 
 Candidate mode proves all of the following:
 
-- exactly one successful manual `build.yml`, performance, Streams 72-hour and
-  Sync 24-hour run is recorded for the candidate SHA;
+- exactly one successful manual build, security, one-hour-per-target fuzzing,
+  performance, Streams 72-hour and Sync 24-hour run is recorded for the
+  candidate SHA, with no extra workflow records accepted;
 - the Streams report contains at least 100,000 transactions over at least 72
   hours, fault-injection counters, bounded/empty final storage and package
   provenance;

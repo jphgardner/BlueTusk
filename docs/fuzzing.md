@@ -24,6 +24,15 @@ AFL's virtual-address-space limit is disabled because the .NET runtime reserves
 more address space than it commits; the GC heap hard limit supplies the bounded
 managed-memory control instead.
 
+The machine-readable source contract is
+[`eng/fuzzing-contract.json`](../eng/fuzzing-contract.json). It prevents the
+target registry, runner, workflow matrix, encoded corpus directories and
+resource limits from silently drifting apart:
+
+```powershell
+./eng/verify-fuzzing-contract.ps1
+```
+
 Structured codecs reject declared array-element and record-field lengths before
 slicing the remaining payload. Text arrays enforce the same six-dimension
 ceiling as binary arrays, CLR array-bound translation is range checked, and
@@ -67,6 +76,14 @@ requests, a one-hour-per-target scheduled run, and an explicitly configurable
 manual run. Each job archives its fuzzer state. Crash and hang inputs are also
 converted to replayable Base64 with source-commit and SHA-256 metadata by
 `archive-fuzz-findings.ps1`, and make the job fail.
+
+Manual runs enforce at least 3,600 seconds per target. A successful manual run
+ID for the exact candidate commit is mandatory input to the protected V1
+readiness workflow; a push, pull-request, scheduled, ancestor-commit or shorter
+run is not candidate evidence.
+
+The current release-blocking review record is the
+[V1 fuzz-finding handoff](operations/fuzz-finding-handoff.md).
 
 The raw AFL state is compressed before artifact upload because AFL++ queue
 filenames contain colons, which are valid on Linux but rejected by GitHub's
