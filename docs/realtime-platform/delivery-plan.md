@@ -28,7 +28,9 @@ Every phase additionally requires formatting, a zero-warning build, current prov
   The deterministic, resource-bounded Sync JSON transformation sandbox is also
   implemented; it executes a finite instruction VM rather than treating
   in-process C# or an unconstrained child process as isolated.
-  Capability-secured client SQL/LINQ and incremental graph evaluation remain
-  V1 scope and gated until their production contracts and evidence land. “Arbitrary”
-  client queries never means bypassing registration, RLS, tenant scope,
-  authorisation, cost limits, or cancellation.
+  Capability-secured client SQL/remote LINQ is implemented with explicit
+  application grants, RLS plus dedicated read-only roles for SQL, bounded
+  execution, conservative invalidation, and security-scoped sharing.
+  Incremental graph evaluation remains V1 scope and gated until its production
+  contract and evidence land. “Arbitrary” client queries never means bypassing
+  RLS, tenant scope, authorisation, cost limits, or cancellation.

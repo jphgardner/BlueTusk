@@ -11,6 +11,11 @@ Replication tuples do not carry application authorisation context and may omit c
 
 Live queries are registered by trusted server code. Clients provide typed parameters only and cannot submit SQL or expression trees. CDC invalidates affected subscriptions; the engine coalesces changes, reruns the bounded authorised EF query, and diffs keyed results.
 
+ADR 0015 adds a separate, explicitly enabled client-query capability for V1.
+It does not change the authoritative-requery decision: an application-issued
+database capability, PostgreSQL RLS/read-only role, bounded execution, and the
+same security-scoped subscription identity are required.
+
 Shared-subscription identity includes database, plan fingerprint, parameters, tenant/security scope, authorisation-policy version, and result limit. Resume tokens are signed, expiring, versioned, and bound to that identity. Subscriptions never share results or replay across security scopes.
 
 ## Consequences

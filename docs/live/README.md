@@ -1,6 +1,10 @@
 # BlueTusk Live
 
-BlueTusk Live is the authorised real-time query layer built on BlueTusk Streams. Trusted server code registers bounded query plans; remote clients can select a registration and supply only its declared scalar parameters. SQL and expression trees are never accepted from clients.
+BlueTusk Live is the authorised real-time query layer built on BlueTusk Streams.
+Trusted server code registers bounded query plans by default. V1 also provides
+an explicitly enabled client-query capability for bounded exploratory SQL and a
+finite remote LINQ document. Uploaded CLR expression trees and dynamically
+compiled client code are never accepted.
 
 ## Security and sharing boundary
 
@@ -30,7 +34,7 @@ Refreshes coalesce every invalidation since the last cursor into at most one aut
 
 `BlueTusk.Live.EntityFrameworkCore` compiles trusted `IQueryable<TEntity>` factories at startup. The compiler accepts one mapped root entity with one primary key, simple predicates, explicit tenant isolation, deterministic ordering including the primary key, and one bounded `Take`. Vetted one-to-many `Include` chains and PostgreSQL full-text predicates are supported. Every mapped entity reached by an include becomes an invalidation dependency, and multi-table plans no longer advertise the `SingleTable` capability. It asks the configured EF provider to translate the query during registration, so unsupported shapes fail before a client can subscribe.
 
-Tenant isolation must be declared as PostgreSQL RLS, an EF global query filter, or a registered entity-property/typed-parameter equality that the compiler verifies in the predicate. The query factory and key selector are server-owned delegates; no client SQL, LINQ, or expression tree crosses the transport boundary.
+Tenant isolation must be declared as PostgreSQL RLS, an EF global query filter, or a registered entity-property/typed-parameter equality that the compiler verifies in the predicate. The EF query factory and key selector are server-owned delegates; this trusted-registration path does not accept a client query document.
 
 `CompileProjectionAsync` accepts a separate mapped root and immutable result
 type for bounded projections. Its current allowlist covers:
@@ -49,6 +53,53 @@ expression, and asks EF to translate the complete query at startup. Raw
 `Join`/`GroupJoin`, unproven `SelectMany`, client evaluation, unbounded output,
 and arbitrary method calls fail registration with an actionable diagnostic.
 
+## Capability-secured client queries
+
+`LiveClientQueryCompiler` creates an ordinary
+`LiveQueryPlan<LiveClientRow, string>` from a trusted application-issued
+`LiveClientQueryPolicy`. Trusted registration remains the default; a client
+cannot enable this path or choose its data source, policy, database identity,
+security scope, role, relation allowlist, timeouts, or resource limits.
+
+Remote LINQ is a JSON relational document—not a serialized CLR expression
+tree. It permits an allowlisted table and columns, parameter-bound comparisons,
+null tests, starts-with/contains filters, projection, deterministic ordering
+including every result key, and a mandatory limit. BlueTusk quotes every
+identifier and generates named-parameter SQL. The exact relation becomes the
+invalidation dependency.
+
+Raw SQL is separately disabled by default. Enabling it requires a policy with
+both `DatabaseRowLevelSecurity` and `DedicatedReadOnlyRole`. Execution uses the
+grant's application-owned data source and:
+
+- begins a read-only transaction before the query;
+- enables `row_security`;
+- applies statement, lock, and idle-in-transaction timeouts;
+- binds only declared scalar parameters;
+- bounds query bytes, parameter count, result rows, columns, and serialized
+  bytes; and
+- rejects comments, multiple statements, positional parameters, database
+  mutation/administration commands, row locks, and known side-effecting server
+  functions.
+
+Those lexical checks are defense in depth, not a SQL sandbox. The dedicated
+role must not be a database owner, superuser, or have `BYPASSRLS`. Revoke
+function execution from `PUBLIC` and grant only capability-approved
+side-effect-free functions; a read-only transaction cannot undo an external
+side effect performed by a user-defined function. SQL subscriptions
+conservatively invalidate on every relation declared by the policy.
+
+`LiveClientQueryTransportResolver` implements the existing authenticated
+transport resolver. The application supplies `ILiveClientQueryAuthorizer`; it
+is called for every connection and returns a `LiveClientQueryGrant` or denies
+the request. The resolver parses a fail-closed transport document, compiles and
+binds the plan, partitions it by the returned `LiveSecurityScope`, starts the
+ordinary gap-free Live session, and shares only an identical complete
+subscription identity.
+
+See [ADR 0015](../architecture/decisions/0015-capability-secured-client-queries.md)
+for the threat model and operator obligations.
+
 ## Replay window
 
 Live replay events use a versioned JSON media type and a SHA-256 integrity hash. The PostgreSQL store appends a contiguous sequence only when its expected prior sequence matches, treats a byte-identical crash retry as already stored, and rejects divergent forks. Reads distinguish current, available, expired, and unknown subscriptions. Retention pruning advances an explicit first-available watermark so an expired resume token produces a reset instead of a silent gap.
@@ -65,7 +116,7 @@ Each shared subscription now exposes an allocation-free operational snapshot: op
 
 ## ASP.NET transports
 
-`BlueTusk.Live.AspNetCore` defines the authenticated transport session and an application-supplied resolver. The resolver is trusted server code: it selects a registered plan, binds the request JSON to that plan's declared scalar parameters, derives the caller's security scope, and returns the matching shared subscription. Anonymous callers and non-object parameter payloads are rejected before connection.
+`BlueTusk.Live.AspNetCore` defines the authenticated transport session and an application-supplied resolver. The resolver is trusted server code: it selects a registered plan or an explicitly granted client-query capability, binds the request JSON to declared scalar parameters, derives the caller's security scope, and returns the matching shared subscription. Anonymous callers and non-object parameter payloads are rejected before connection.
 
 `BlueTusk.Live.SignalR` exposes a streaming hub, and `BlueTusk.Live.ServerSentEvents` exposes a fetch-streaming POST endpoint. Both send replay before new events and attach a fresh signed, expiring, subscription-bound resume token to every sequence. SSE disables proxy buffering and maps quota, invalid token, expired replay, and unavailable subscription states to explicit HTTP responses.
 
@@ -124,6 +175,19 @@ service:
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
 dotnet test tests/BlueTusk.Live.Tests --filter FullyQualifiedName~LivePostgreSqlTransportMatrixTests
 ```
+
+Run the offline client-query policy, transport, sharing, and bounded-execution
+suite:
+
+```powershell
+dotnet test tests/BlueTusk.Live.Tests/BlueTusk.Live.Tests.csproj --filter FullyQualifiedName~LiveClientQueryTests
+npm run build --prefix clients/live
+npm test --prefix clients/live
+```
+
+Setting `BLUETUSK_TEST_CONNECTION_STRING` adds the live PostgreSQL proof that
+parameters materialise correctly and an otherwise-allowed user function cannot
+write through the enforced read-only transaction.
 
 ## Control-plane visibility
 

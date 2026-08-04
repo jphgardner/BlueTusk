@@ -42,6 +42,92 @@ export interface LiveSubscriptionRequest<TParameters extends object> {
   readonly resumeToken?: string;
 }
 
+export type LiveClientParameterType =
+  | "string"
+  | "boolean"
+  | "byte"
+  | "sbyte"
+  | "int16"
+  | "uint16"
+  | "int32"
+  | "uint32"
+  | "int64"
+  | "uint64"
+  | "single"
+  | "double"
+  | "decimal"
+  | "guid"
+  | "date"
+  | "time"
+  | "timestamp"
+  | "timestamptz";
+
+export interface LiveClientParameter {
+  readonly type: LiveClientParameterType;
+  readonly allowNull?: boolean;
+  readonly value: unknown;
+}
+
+export type LiveClientParameters = Readonly<Record<string, LiveClientParameter>>;
+
+export type LiveClientFilterOperator =
+  | "Equal"
+  | "NotEqual"
+  | "LessThan"
+  | "LessThanOrEqual"
+  | "GreaterThan"
+  | "GreaterThanOrEqual"
+  | "StartsWith"
+  | "Contains"
+  | "IsNull"
+  | "IsNotNull";
+
+export interface LiveClientFilter {
+  readonly column: string;
+  readonly operator: LiveClientFilterOperator;
+  readonly parameter?: string;
+}
+
+export type LiveClientSortDirection = "Ascending" | "Descending";
+
+export interface LiveClientOrdering {
+  readonly column: string;
+  readonly direction: LiveClientSortDirection;
+}
+
+export interface LiveClientLinqDocument {
+  readonly schema: string;
+  readonly table: string;
+  readonly columns: readonly string[];
+  readonly filters: readonly LiveClientFilter[];
+  readonly orderings: readonly LiveClientOrdering[];
+}
+
+export interface LiveSqlClientQueryDocument {
+  readonly language: "sql";
+  readonly sql: string;
+  readonly keyColumns: readonly string[];
+  readonly maximumResultCount: number;
+  readonly parameters: LiveClientParameters;
+}
+
+export interface LiveLinqClientQueryDocument {
+  readonly language: "linq";
+  readonly linq: LiveClientLinqDocument;
+  readonly keyColumns: readonly string[];
+  readonly maximumResultCount: number;
+  readonly parameters: LiveClientParameters;
+}
+
+export type LiveClientQueryDocument =
+  | LiveSqlClientQueryDocument
+  | LiveLinqClientQueryDocument;
+
+export interface LiveClientRow {
+  readonly values: Readonly<Record<string, unknown>>;
+  readonly fingerprint: string;
+}
+
 export type LiveConnectionPhase =
   | "idle"
   | "connecting"
@@ -431,6 +517,22 @@ export class BlueTuskLiveClient {
     }
 
     return new LiveQuery<TRow, TKey, TParameters>(this, request);
+  }
+
+  createClientQuery(
+    capability: string,
+    document: LiveClientQueryDocument,
+    resumeToken?: string
+  ): LiveQuery<LiveClientRow, string, LiveClientQueryDocument> {
+    if (capability.trim().length === 0) {
+      throw new TypeError("A client-query capability name is required.");
+    }
+
+    return this.createQuery({
+      query: capability,
+      parameters: document,
+      ...(resumeToken === undefined ? {} : { resumeToken })
+    });
   }
 
   async open<TParameters extends object>(

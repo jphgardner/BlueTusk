@@ -9,7 +9,7 @@
     },
     {
       "path": "src/BlueTusk.Live.AspNetCore/PublicAPI.Unshipped.txt",
-      "sha256": "f07d345c24be2eeab48f1325c57c97851bc295a76113d2d74d3cea3a52ad59bc"
+      "sha256": "22931f04f4a8ae818099893fd7a089f7a6256fc4a74a2660080ea0a2f31f60b3"
     },
     {
       "path": "src/BlueTusk.Live.DependencyInjection/PublicAPI.Unshipped.txt",
@@ -37,7 +37,7 @@
     },
     {
       "path": "src/BlueTusk.Live/PublicAPI.Unshipped.txt",
-      "sha256": "635bcb5079eb3964b74c89fa189d3b9087cd22bae6df753bc7fc0016a36b88eb"
+      "sha256": "864e991f357bce57715649f24e1f57fd40a46c5f3bf0b84ed378fd752a1136e0"
     }
   ]
 }
