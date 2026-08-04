@@ -5,10 +5,13 @@ namespace BlueTusk.TypeSystem;
 
 internal static class BlueTuskArrayTextParser
 {
-    public static BlueTuskParsedArray Parse(string text, char delimiter)
+    public static BlueTuskParsedArray Parse(
+        string text,
+        char delimiter,
+        int maximumDimensions)
     {
         ArgumentNullException.ThrowIfNull(text);
-        var parser = new Parser(text, delimiter);
+        var parser = new Parser(text, delimiter, maximumDimensions);
         return parser.Parse();
     }
 
@@ -16,12 +19,14 @@ internal static class BlueTuskArrayTextParser
     {
         private readonly string _text;
         private readonly char _delimiter;
+        private readonly int _maximumDimensions;
         private int _offset;
 
-        public Parser(string text, char delimiter)
+        public Parser(string text, char delimiter, int maximumDimensions)
         {
             _text = text;
             _delimiter = delimiter;
+            _maximumDimensions = maximumDimensions;
         }
 
         public BlueTuskParsedArray Parse()
@@ -52,7 +57,7 @@ internal static class BlueTuskArrayTextParser
                 SkipWhitespace();
             }
 
-            var root = ParseLevel();
+            var root = ParseLevel(depth: 1);
             SkipWhitespace();
             if (_offset != _text.Length)
             {
@@ -79,8 +84,14 @@ internal static class BlueTuskArrayTextParser
                 Flatten(root));
         }
 
-        private Node ParseLevel()
+        private Node ParseLevel(int depth)
         {
+            if (depth > _maximumDimensions)
+            {
+                throw Error(
+                    $"PostgreSQL arrays support at most {_maximumDimensions} dimensions.");
+            }
+
             Require('{');
             SkipWhitespace();
             if (TryConsume('}'))
@@ -98,7 +109,7 @@ internal static class BlueTuskArrayTextParser
                     throw Error("Array elements and sub-arrays cannot be mixed at the same level.");
                 }
 
-                items.Add(nested ? ParseLevel() : ParseElement());
+                items.Add(nested ? ParseLevel(depth + 1) : ParseElement());
                 SkipWhitespace();
                 if (TryConsume(_delimiter))
                 {

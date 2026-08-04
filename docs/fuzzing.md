@@ -24,6 +24,12 @@ AFL's virtual-address-space limit is disabled because the .NET runtime reserves
 more address space than it commits; the GC heap hard limit supplies the bounded
 managed-memory control instead.
 
+Structured codecs reject declared array-element and record-field lengths before
+slicing the remaining payload. Text arrays enforce the same six-dimension
+ceiling as binary arrays, CLR array-bound translation is range checked, and
+binary timestamps outside the representable .NET range are rejected as malformed
+values.
+
 ## Deterministic replay
 
 Every seed and minimized regression is stored as Base64 in

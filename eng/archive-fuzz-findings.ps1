@@ -19,30 +19,35 @@ if ([string]::IsNullOrWhiteSpace($ArchiveDirectory)) {
 }
 
 New-Item -ItemType Directory -Path $ArchiveDirectory -Force | Out-Null
-$findings = Get-ChildItem -LiteralPath $findingRoot -Recurse -File |
-    Where-Object {
-        $_.Name -ne 'README.txt' -and
-        ($_.Directory.Name -eq 'crashes' -or $_.Directory.Name -eq 'hangs')
-    }
+$findings = @(
+    Get-ChildItem -LiteralPath $findingRoot -Recurse -File |
+        Where-Object {
+            $_.Name -ne 'README.txt' -and
+            ($_.Directory.Name -eq 'crashes' -or $_.Directory.Name -eq 'hangs')
+        }
+)
 
 $commit = (git -C $repositoryRoot rev-parse HEAD).Trim()
-$records = foreach ($finding in $findings) {
-    $bytes = [System.IO.File]::ReadAllBytes($finding.FullName)
-    $hash = Convert.ToHexStringLower([Security.Cryptography.SHA256]::HashData($bytes))
-    $category = $finding.Directory.Name
-    $encodedName = "$category-$hash.b64"
-    [System.IO.File]::WriteAllText(
-        (Join-Path $ArchiveDirectory $encodedName),
-        [Convert]::ToBase64String($bytes) + [Environment]::NewLine)
-    [ordered]@{
-        target = $Target
-        category = $category
-        sha256 = $hash
-        bytes = $bytes.Length
-        encoded_case = $encodedName
-        source_name = $finding.Name
+$records = @(
+    foreach ($finding in $findings) {
+        $bytes = [System.IO.File]::ReadAllBytes($finding.FullName)
+        $hash = [Convert]::ToHexString(
+            [Security.Cryptography.SHA256]::HashData($bytes)).ToLowerInvariant()
+        $category = $finding.Directory.Name
+        $encodedName = "$category-$hash.b64"
+        [System.IO.File]::WriteAllText(
+            (Join-Path $ArchiveDirectory $encodedName),
+            [Convert]::ToBase64String($bytes) + [Environment]::NewLine)
+        [ordered]@{
+            target = $Target
+            category = $category
+            sha256 = $hash
+            bytes = $bytes.Length
+            encoded_case = $encodedName
+            source_name = $finding.Name
+        }
     }
-}
+)
 
 $metadata = [ordered]@{
     schema_version = 1

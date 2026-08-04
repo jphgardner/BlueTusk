@@ -135,7 +135,10 @@ public sealed class BlueTuskArrayCodec :
             }
 
             lengths[dimension] = length;
-            lowerBounds[dimension] = checked(reader.ReadInt32BigEndian() - 1);
+            lowerBounds[dimension] = TranslateLowerBound(
+                reader.ReadInt32BigEndian(),
+                length,
+                type);
             elementCount = checked(elementCount * length);
             if (elementCount > Array.MaxLength)
             {
@@ -185,6 +188,13 @@ public sealed class BlueTuskArrayCodec :
                         $"The {arrayType.QualifiedName} binary array has invalid element length {length}.");
                 }
 
+                if (length > reader.Remaining)
+                {
+                    throw new InvalidOperationException(
+                        $"The {arrayType.QualifiedName} binary array element length {length} " +
+                        $"exceeds the {reader.Remaining} remaining field bytes.");
+                }
+
                 var elementReader = new BlueTuskReader(reader.ReadBytes(length));
                 value = _elementCodec.Read(ref elementReader, BlueTuskDataFormat.Binary, _elementType);
                 EnsureElementConsumed(elementReader.Remaining);
@@ -197,15 +207,24 @@ public sealed class BlueTuskArrayCodec :
 
     private Array ReadText(ref BlueTuskReader reader, BlueTuskTypeDescriptor arrayType)
     {
-        var parsed = BlueTuskArrayTextParser.Parse(reader.ReadRemainingUtf8(), _elementType.Delimiter);
+        var parsed = BlueTuskArrayTextParser.Parse(
+            reader.ReadRemainingUtf8(),
+            _elementType.Delimiter,
+            MaximumDimensions);
         if (parsed.Lengths.Length == 0)
         {
             return CreateArray([0], [0]);
         }
 
-        var lowerBounds = parsed.LowerBounds
-            .Select(lowerBound => checked(lowerBound - 1))
-            .ToArray();
+        var lowerBounds = new int[parsed.LowerBounds.Length];
+        for (var dimension = 0; dimension < lowerBounds.Length; dimension++)
+        {
+            lowerBounds[dimension] = TranslateLowerBound(
+                parsed.LowerBounds[dimension],
+                parsed.Lengths[dimension],
+                arrayType);
+        }
+
         var result = CreateArray(parsed.Lengths, lowerBounds);
         var indexes = GetLowerBounds(result);
         foreach (var item in parsed.Elements)
@@ -447,6 +466,24 @@ public sealed class BlueTuskArrayCodec :
             throw new InvalidOperationException(
                 $"PostgreSQL arrays support between 0 and {MaximumDimensions} dimensions; {rank} were supplied.");
         }
+    }
+
+    private static int TranslateLowerBound(
+        int postgreSqlLowerBound,
+        int length,
+        BlueTuskTypeDescriptor arrayType)
+    {
+        var lowerBound = (long)postgreSqlLowerBound - 1;
+        var upperBound = lowerBound + length - 1L;
+        if (lowerBound < int.MinValue ||
+            lowerBound > int.MaxValue ||
+            (length > 0 && upperBound > int.MaxValue))
+        {
+            throw new InvalidOperationException(
+                $"The {arrayType.QualifiedName} array bounds cannot be represented by a CLR array.");
+        }
+
+        return (int)lowerBound;
     }
 
     [UnconditionalSuppressMessage(
