@@ -25,11 +25,13 @@ cycles, project runs, the slowest cycle, exact source commit and branch,
 isolated start/end commits and cleanliness, combined SHA-256 start/end hashes
 of every test artifact, artifact count, isolated-worktree cleanup, the launch
 repository state at completion, .NET SDK, host OS/architecture, processor
-count, and exact project list. A report is successful only when `completed` is
-true, the requested duration and minimum cycle count pass, the detached source
-is unchanged, every test artifact hash is unchanged, and the isolated worktree
-is removed. Restore, build, test, source-integrity, artifact-integrity, and
-cleanup failures are distinguished by `failedPhase`.
+count, exact project list, candidate package/provenance hashes, and the
+digest-pinned PostgreSQL, Redis, NATS and OpenSearch images. A report is
+successful only when `completed` is true, the requested duration and minimum
+cycle count pass, the detached source is unchanged, every test artifact and
+candidate-package hash is unchanged, all service images are pinned, and the
+isolated worktree is removed. Restore, build, test, source-integrity,
+artifact-integrity, and cleanup failures are distinguished by `failedPhase`.
 
 `eng/verify-sync-endurance-report.ps1` is the fail-closed evidence reader. It
 checks the exact expected commit, format, duration, cycle and project-run

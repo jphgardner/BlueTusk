@@ -24,10 +24,12 @@ test.
 
 The format-1 JSON report contains the exact source commit and branch, isolated
 start/end commits and cleanliness, combined SHA-256 start/end artifact hashes,
-artifact count, worktree cleanup, requested and actual duration, transaction
-and injected-event counts, maximum relay rows/bytes, final storage bytes, and
-host/runtime identity. Restore, build, test, harness-report, source-integrity,
-artifact-integrity, and cleanup failures are distinguished by `failedPhase`.
+artifact count, exact candidate package hashes and provenance hash, the
+digest-pinned PostgreSQL image, worktree cleanup, requested and actual duration,
+transaction and injected-event counts, maximum relay rows/bytes, final storage
+bytes, and host/runtime identity. Restore, build, test, harness-report,
+source-integrity, artifact-integrity, and cleanup failures are distinguished by
+`failedPhase`.
 
 `eng/verify-streams-endurance-report.ps1` is the fail-closed evidence reader.
 It checks the expected commit, format, duration, transaction count, all
@@ -71,5 +73,5 @@ queued, skipped, cancelled, or smoke-tested. Completion requires a successful
 format-1 report, accepted by the verifier, that records at least 72 hours, at
 least 100,000 transactions, non-zero duplicate/replay/conflict/fencing/restart
 counters, bounded maximum storage, zero final storage bytes, the exact
-unchanged source, immutable artifacts, and successful isolated-worktree
-cleanup.
+unchanged source, immutable test artifacts, exact candidate package hashes, a
+digest-pinned PostgreSQL image, and successful isolated-worktree cleanup.

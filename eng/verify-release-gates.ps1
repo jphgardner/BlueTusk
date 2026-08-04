@@ -125,6 +125,10 @@ if ($null -eq $publication -or $publication.enabled -ne $true)
     throw "Product family '$Family' is gated and cannot be published."
 }
 
+& (Join-Path $PSScriptRoot 'verify-postgresql19-programme.ps1') `
+    -RepositoryRoot $repositoryRoot `
+    -RequireGeneralAvailability
+
 foreach ($dependency in @($definition.releaseDependencies))
 {
     if ($manifest.families.$dependency.publication.enabled -ne $true)

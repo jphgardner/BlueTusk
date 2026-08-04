@@ -14,6 +14,12 @@ param(
 
     [string] $IsolatedWorktreePath,
 
+    [string] $CandidateProvenancePath,
+
+    [string] $PostgreSqlImage,
+
+    [string[]] $DestinationImages = @(),
+
     [ValidateSet('Debug', 'Release')]
     [string] $Configuration = 'Release',
 
@@ -102,6 +108,43 @@ if ($LASTEXITCODE -ne 0)
 if (-not [string]::IsNullOrWhiteSpace(($trackedStatus -join [Environment]::NewLine)))
 {
     throw 'Sync endurance requires a clean tracked worktree so its report identifies the exact tested source.'
+}
+
+$candidateProvenanceSha256 = $null
+$candidateArtifacts = @()
+if (-not [string]::IsNullOrWhiteSpace($CandidateProvenancePath))
+{
+    $resolvedCandidateProvenancePath = (
+        Resolve-Path -LiteralPath $CandidateProvenancePath).Path
+    $candidateProvenance = Get-Content `
+        -LiteralPath $resolvedCandidateProvenancePath `
+        -Raw | ConvertFrom-Json
+    if ($candidateProvenance.schemaVersion -ne 1 -or
+        $candidateProvenance.sourceTreeDirty -eq $true -or
+        -not [string]::Equals(
+            [string]$candidateProvenance.sourceCommit,
+            $sourceCommit,
+            [StringComparison]::OrdinalIgnoreCase) -or
+        @($candidateProvenance.artifacts).Count -eq 0)
+    {
+        throw 'Sync candidate provenance is incomplete, dirty, or for another commit.'
+    }
+    $candidateProvenanceSha256 = (
+        Get-FileHash -LiteralPath $resolvedCandidateProvenancePath -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    $candidateArtifacts = @($candidateProvenance.artifacts)
+}
+if ($Duration -ge [TimeSpan]::FromHours(24) -and
+    ([string]::IsNullOrWhiteSpace($candidateProvenanceSha256) -or
+     [string]$PostgreSqlImage -notmatch '@sha256:[0-9a-f]{64}$' -or
+     @($DestinationImages).Count -ne 3 -or
+     @($DestinationImages | Where-Object {
+         [string]$_ -notmatch '@sha256:[0-9a-f]{64}$'
+     }).Count -ne 0))
+{
+    throw (
+        'The 24-hour Sync gate requires clean candidate-package provenance ' +
+        'and digest-pinned PostgreSQL, Redis, NATS, and OpenSearch images.')
 }
 
 $fullReportPath = if ([IO.Path]::IsPathRooted($ReportPath))
@@ -372,6 +415,10 @@ finally
         formatVersion = 3
         sourceCommit = $sourceCommit
         sourceBranch = $sourceBranch
+        candidateProvenanceSha256 = $candidateProvenanceSha256
+        candidateArtifacts = $candidateArtifacts
+        postgresqlImage = $PostgreSqlImage
+        destinationImages = @($DestinationImages)
         trackedWorktreeCleanAtStart = $true
         isolatedWorkspaceKind = 'detached-git-worktree'
         isolatedSourceCommitAtStart = $isolatedSourceCommitAtStart

@@ -131,6 +131,23 @@ public sealed class BlueTuskArrayCodecTests
         Assert.Throws<InvalidOperationException>(() => Read(codec, bytes, BlueTuskDataFormat.Binary));
     }
 
+    [Fact]
+    public void Binary_array_rejects_allocation_amplification_before_creating_the_array()
+    {
+        var bytes = Convert.FromHexString(
+            "00000001" +
+            "00000000" +
+            "00000017" +
+            "000003E8" +
+            "00000001");
+        var codec = new BlueTuskArrayCodec(BlueTuskBuiltInTypes.Int4, new BlueTuskInt32Codec());
+
+        var exception = Assert.Throws<InvalidOperationException>(
+            () => Read(codec, bytes, BlueTuskDataFormat.Binary));
+
+        Assert.Contains("remaining field size", exception.Message, StringComparison.Ordinal);
+    }
+
     [Theory]
     [InlineData("{{1,2},{3}}")]
     [InlineData("[1:3]={1,2}")]

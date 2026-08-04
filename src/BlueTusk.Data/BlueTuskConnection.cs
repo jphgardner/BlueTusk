@@ -129,6 +129,54 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     protected override DbProviderFactory DbProviderFactory => BlueTuskProviderFactory.Instance;
 
+    public override DataTable GetSchema() =>
+        BlueTuskSchemaCollections.Get(this, "MetaDataCollections", restrictions: null);
+
+    public override DataTable GetSchema(string collectionName) =>
+        BlueTuskSchemaCollections.Get(this, collectionName, restrictions: null);
+
+    public override DataTable GetSchema(string collectionName, string?[]? restrictionValues) =>
+        BlueTuskSchemaCollections.Get(this, collectionName, restrictionValues);
+
+    [SuppressMessage(
+        "ApiDesign",
+        "RS0026:Do not add multiple public overloads with optional parameters",
+        Justification = "The optional cancellation token is inherited from DbConnection.")]
+    public override Task<DataTable> GetSchemaAsync(
+        CancellationToken cancellationToken = default) =>
+        BlueTuskSchemaCollections.GetAsync(
+            this,
+            "MetaDataCollections",
+            restrictions: null,
+            cancellationToken);
+
+    [SuppressMessage(
+        "ApiDesign",
+        "RS0026:Do not add multiple public overloads with optional parameters",
+        Justification = "The optional cancellation token is inherited from DbConnection.")]
+    public override Task<DataTable> GetSchemaAsync(
+        string collectionName,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskSchemaCollections.GetAsync(
+            this,
+            collectionName,
+            restrictions: null,
+            cancellationToken);
+
+    [SuppressMessage(
+        "ApiDesign",
+        "RS0026:Do not add multiple public overloads with optional parameters",
+        Justification = "The optional cancellation token is inherited from DbConnection.")]
+    public override Task<DataTable> GetSchemaAsync(
+        string collectionName,
+        string?[]? restrictionValues,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskSchemaCollections.GetAsync(
+            this,
+            collectionName,
+            restrictionValues,
+            cancellationToken);
+
     /// <summary>Gets the asynchronous stream of notifications received by this connection.</summary>
     public IAsyncEnumerable<BlueTuskNotification> Notifications
     {

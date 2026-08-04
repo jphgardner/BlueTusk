@@ -243,17 +243,19 @@ public sealed class BlueTuskCommand : DbCommand
     }
 
     protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) =>
-        behavior.HasFlag(CommandBehavior.SequentialAccess)
+        ValidateCommandBehavior(behavior).HasFlag(CommandBehavior.SequentialAccess)
             ? ExecuteStreamingDataReaderAfterMultiplexingValidation(behavior)
             : new BlueTuskDataReader(
                 ExecuteCore(),
                 behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
-                GetTypeRegistry());
+                GetTypeRegistry(),
+                behavior);
 
     protected override Task<DbDataReader> ExecuteDbDataReaderAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
+        ValidateCommandBehavior(behavior);
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))
         {
             ValidateSequentialMultiplexing();
@@ -261,6 +263,34 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         return ExecuteBufferedDataReaderAsync(behavior, cancellationToken);
+    }
+
+    private static CommandBehavior ValidateCommandBehavior(CommandBehavior behavior)
+    {
+        const CommandBehavior supported =
+            CommandBehavior.SingleResult |
+            CommandBehavior.SingleRow |
+            CommandBehavior.SequentialAccess |
+            CommandBehavior.CloseConnection;
+        const CommandBehavior explicitlyUnsupported =
+            CommandBehavior.SchemaOnly |
+            CommandBehavior.KeyInfo;
+        if ((behavior & explicitlyUnsupported) != 0)
+        {
+            throw new NotSupportedException(
+                "BlueTusk does not support CommandBehavior.SchemaOnly or CommandBehavior.KeyInfo. " +
+                "Execute the query normally and use GetColumnSchema for result metadata.");
+        }
+
+        if ((behavior & ~supported) != 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(behavior),
+                behavior,
+                "The command behavior contains unknown flags.");
+        }
+
+        return behavior;
     }
 
     private BlueTuskDataReader ExecuteStreamingDataReaderAfterMultiplexingValidation(
@@ -302,7 +332,8 @@ public sealed class BlueTuskCommand : DbCommand
         return new BlueTuskDataReader(
             result,
             behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
-            GetTypeRegistry());
+            GetTypeRegistry(),
+            behavior);
     }
 
     private BlueTuskDataReader ExecuteStreamingDataReader(CommandBehavior behavior)

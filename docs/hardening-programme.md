@@ -12,11 +12,11 @@ themselves, a production-readiness claim.
 | 1. Minimal EF↔Data SPI | EF now consumes an internal Data-owned contract for connection/data-source creation, ownership, immutable type-registry snapshots, capabilities, admin connections, catalogue reload and diagnostics. Concrete types remain only at the public configuration boundary. | Contract tests, a source architecture guard, EF ownership tests, zero-warning build and documentation. | Complete |
 | 2. NativeAOT and trimming | Transport through Data plus the required extension-abstraction dependency now pass full-trim and NativeAOT publishes. Runtime-selected shapes have explicit boundaries. | `PublishTrimmed` and `PublishAot` smoke applications, correct annotations/source generation, unsupported-feature diagnostics, Windows/Linux CI, startup/allocation/deployable-size baselines. | Complete |
 | 3. Multiplexing hardening | Bounded multiplexing now fails closed for every known session-affine surface, exposes bounded scheduler telemetry, and has deterministic fairness/failure/recovery coverage. | Fairness, exhaustion, admission cancellation, timeout, pipeline isolation, disposal, forced shutdown, session recovery, stateful SQL, PgBouncer session/transaction modes, and a commit-bound MediumRun against both non-multiplexed BlueTusk and Npgsql. | Complete |
-| 4. Coverage-guided fuzzing | Parser and malformed-input unit tests exist, but there is no coverage-guided harness or checked-in minimized corpus. | Bounded fuzz targets for protocol, authentication, pgoutput, COPY, structured codecs, Streams envelopes and resume tokens; CI smoke and scheduled run. | Open |
+| 4. Coverage-guided fuzzing | Nine bounded SharpFuzz/AFL++ targets cover protocol frames, authentication, pgoutput, binary COPY, arrays, ranges, composites, Streams envelopes and Live resume tokens. Replayable Base64 corpus cases, deterministic tests, CI smoke, scheduled runs, finding archival and minimisation tooling are checked in. | Keep minimized findings in the deterministic corpus and require a clean bounded run for the exact candidate. | Complete |
 | 5. Release evidence | Reproducible Streams 72-hour and Sync 24-hour harnesses and fail-closed report verifiers exist. Exact-candidate reports have not been completed and archived. | Reports tied to commit, package hashes, runtime, OS and image digests, including process, network, storage, credential, failover, clock and minor-upgrade faults. | Open |
-| 6. ADO.NET compatibility | Core conformance and EF relational specification coverage exist. A single supported/excluded compatibility matrix does not. | StoredProcedure/INOUT, `System.Transactions`, `CommandBehavior`, schema APIs, Dapper, DI, health checks and migration-path audit with tests or explicit exclusions. | Open |
-| 7. API and supply chain | Candidate API freezes and release provenance exist. API budgets, CodeQL, dependency review, SHA-pinned Actions and SBOM evidence are incomplete. | Per-family API budget gate, security workflows, SBOM/provenance retention and independent review preparation. | Partial |
-| 8. PostgreSQL 19 programme | Beta 2, capability guards, raw-SQL escape hatches and an upstream branch-snapshot gate exist. The later beta/RC/GA cadence is not yet evidenced. | Repeatable beta/RC/GA matrix, catalogue/grammar drift checks and a published typed-subset compatibility record. | Partial |
+| 6. ADO.NET compatibility | The supported/excluded contract now covers routines, parameters, transactions, reader behaviours, schema APIs, Dapper, DI, health checks and the Npgsql migration path. Unsupported modes fail explicitly. | Unit and live acceptance coverage plus the published compatibility matrix. | Complete |
+| 7. API and supply chain | Exact per-family API budgets, CodeQL, dependency review, commit-pinned Actions, CycloneDX/SPDX generation, package-hash provenance verification and an independent-review handoff are enforced. | Run the gates and archive the generated records for the exact candidate. | Complete |
+| 8. PostgreSQL 19 programme | Beta 2 is digest-pinned; capability guards, raw-SQL escape hatches, the typed-subset record, upstream drift detection and the later beta/RC/GA cadence are machine-enforced. | Repeat the matrix at each future milestone; GA evidence is a fail-closed stable-publication prerequisite. | Implemented; GA pending |
 
 ## Phased implementation
 
@@ -35,21 +35,26 @@ present.
    reflection composites, startup, allocation, and deployable size. Unsupported
    runtime-selected shapes fail explicitly. The measured results do not justify
    a slim builder yet.
-3. **Multiplexing — complete; ADO.NET behaviour remains.** The scheduler/session
+3. **Multiplexing and ADO.NET compatibility — complete.** The scheduler/session
    hardening matrix, PgBouncer modes, telemetry and comparative performance
-   record are complete. The ADO.NET compatibility table remains a later
-   programme slice. ADR 0005 remains in force: the measured
+   record are complete. The provider contract is recorded in the
+   [V1 ADO.NET compatibility matrix](ado-net/compatibility.md). ADR 0005 remains
+   in force: the measured
    ArrayPool/Span/Memory transport is retained because no new end-to-end result
    has cleared its adoption gate.
-4. **Coverage-guided fuzzing.** Introduce bounded harnesses and a minimized
-   regression corpus after the provider execution surfaces are stable.
-5. **Supply-chain and public-surface gates.** Add API budgets, security analysis,
-   dependency review, SHA pinning and SBOM production without expanding public
-   product-family breadth.
-6. **Candidate evidence.** Run and archive the exact 72-hour Streams and 24-hour
+4. **Coverage-guided fuzzing — complete.** Nine parser targets enforce a
+   64-KiB input ceiling, execution and memory limits, bounded protocol loops and
+   collection-size limits. The checked-in encoded corpus is replayed
+   deterministically; CI and scheduled AFL++ runs archive and minimize findings.
+   Commands and triage procedure are in [the fuzzing guide](fuzzing.md).
+5. **Supply-chain and public-surface gates — complete.** Exact per-family API
+   budgets, security analysis, dependency review, immutable Action pins,
+   CycloneDX/SPDX generation, package hashes and provenance verification are
+   enforced without expanding public product-family breadth.
+6. **Candidate evidence — open.** Run and archive the exact 72-hour Streams and 24-hour
    Sync candidates with the full fault matrix. No short run substitutes for
    either release gate.
-7. **PostgreSQL 19 progression.** Re-run the isolated SQL/PGQ programme for every
+7. **PostgreSQL 19 progression — GA pending.** Re-run the isolated SQL/PGQ programme for every
    later beta, RC and GA build; keep beta-sensitive syntax isolated until GA
    evidence is archived.
 

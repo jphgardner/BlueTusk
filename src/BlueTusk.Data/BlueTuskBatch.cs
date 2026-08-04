@@ -199,22 +199,51 @@ public sealed class BlueTuskBatch : DbBatch
 
     protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior)
     {
+        ValidateCommandBehavior(behavior);
         var execution = ExecuteCore();
         return new BlueTuskDataReader(
             execution.Result,
             behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
-            execution.Types);
+            execution.Types,
+            behavior);
     }
 
     protected override async Task<DbDataReader> ExecuteDbDataReaderAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
+        ValidateCommandBehavior(behavior);
         var execution = await ExecuteCoreAsync(cancellationToken).ConfigureAwait(false);
         return new BlueTuskDataReader(
             execution.Result,
             behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
-            execution.Types);
+            execution.Types,
+            behavior);
+    }
+
+    private static void ValidateCommandBehavior(CommandBehavior behavior)
+    {
+        const CommandBehavior supported =
+            CommandBehavior.SingleResult |
+            CommandBehavior.SingleRow |
+            CommandBehavior.SequentialAccess |
+            CommandBehavior.CloseConnection;
+        const CommandBehavior explicitlyUnsupported =
+            CommandBehavior.SchemaOnly |
+            CommandBehavior.KeyInfo;
+        if ((behavior & explicitlyUnsupported) != 0)
+        {
+            throw new NotSupportedException(
+                "BlueTusk does not support CommandBehavior.SchemaOnly or CommandBehavior.KeyInfo.");
+        }
+
+        if ((behavior & ~supported) != 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(behavior),
+                behavior,
+                "The batch behavior contains unknown flags.");
+        }
     }
 
     private async ValueTask<BatchResult> ExecuteCoreAsync(CancellationToken cancellationToken)

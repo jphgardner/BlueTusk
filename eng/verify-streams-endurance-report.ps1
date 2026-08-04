@@ -10,7 +10,11 @@ param(
     [ValidateRange(260, [long]::MaxValue)]
     [long] $MinimumTransactions,
 
-    [string] $ExpectedCommit
+    [string] $ExpectedCommit,
+
+    [string] $CandidateProvenancePath,
+
+    [string] $ExpectedPostgreSqlImage
 )
 
 Set-StrictMode -Version Latest
@@ -56,6 +60,60 @@ if ($actualDuration -lt $requestedDuration)
 {
     $failures.Add(
         "Actual duration $actualDuration is below requested duration $requestedDuration.")
+}
+
+$releaseDuration = [TimeSpan]::FromHours(72)
+if ($RequiredDuration -ge $releaseDuration)
+{
+    if ([string]$report.candidateProvenanceSha256 -notmatch '^[0-9a-f]{64}$' -or
+        @($report.candidateArtifacts).Count -eq 0)
+    {
+        $failures.Add('The release report has no candidate-package provenance.')
+    }
+    if ([string]$report.postgresqlImage -notmatch
+        '^postgres:19[^@\s]+@sha256:[0-9a-f]{64}$')
+    {
+        $failures.Add('The release report has no digest-pinned PostgreSQL image.')
+    }
+}
+
+if (-not [string]::IsNullOrWhiteSpace($CandidateProvenancePath))
+{
+    $provenancePath = (Resolve-Path -LiteralPath $CandidateProvenancePath).Path
+    $provenance = Get-Content -LiteralPath $provenancePath -Raw | ConvertFrom-Json
+    $provenanceHash = (
+        Get-FileHash -LiteralPath $provenancePath -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    if ($provenanceHash -ne [string]$report.candidateProvenanceSha256 -or
+        -not [string]::Equals(
+            [string]$provenance.sourceCommit,
+            [string]$report.sourceCommit,
+            [StringComparison]::OrdinalIgnoreCase))
+    {
+        $failures.Add('Candidate provenance hash or source commit does not match the report.')
+    }
+    foreach ($artifact in @($provenance.artifacts))
+    {
+        $matches = @($report.candidateArtifacts | Where-Object {
+            $_.path -eq $artifact.path -and
+            $_.sha256 -eq $artifact.sha256 -and
+            [long]$_.bytes -eq [long]$artifact.bytes
+        })
+        if ($matches.Count -ne 1)
+        {
+            $failures.Add(
+                "Candidate artifact '$($artifact.path)' does not match the report.")
+        }
+    }
+}
+
+if (-not [string]::IsNullOrWhiteSpace($ExpectedPostgreSqlImage) -and
+    -not [string]::Equals(
+        [string]$report.postgresqlImage,
+        $ExpectedPostgreSqlImage,
+        [StringComparison]::Ordinal))
+{
+    $failures.Add('The PostgreSQL image does not match the expected candidate digest.')
 }
 
 if ([long]$report.minimumTransactions -lt $MinimumTransactions)

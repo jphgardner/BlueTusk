@@ -23,25 +23,38 @@ jobs:
     timeout-minutes: 1530
 
     steps:
-      - uses: actions/checkout@v6
-      - uses: actions/setup-dotnet@v5
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-dotnet@26b0ec14cb23fa6904739307f278c14f94c95bf1 # v5
         with:
           global-json-file: global.json
+
+      - name: Build exact Sync candidate and provenance
+        shell: pwsh
+        run: |
+          ./eng/pack-product-family.ps1 `
+            -Family Sync `
+            -Candidate `
+            -Output 'artifacts/test-results/sync-endurance/candidate-packages'
+          ./eng/generate-sbom.ps1 `
+            -PackageDirectory 'artifacts/test-results/sync-endurance/candidate-packages' `
+            -OutputDirectory 'artifacts/test-results/sync-endurance/candidate-sbom' `
+            -Commit '${{ github.sha }}' `
+            -NoRestore
 
       - name: Start PostgreSQL 19
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
 
       - name: Start Redis, NATS JetStream, and OpenSearch
         run: |
-          docker run --detach --name bluetusk-sync-endurance-redis --publish 6379:6379 redis:8-alpine
-          docker run --detach --name bluetusk-sync-endurance-nats --publish 4222:4222 nats:2.14-alpine -js
+          docker run --detach --name bluetusk-sync-endurance-redis --publish 6379:6379 redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
+          docker run --detach --name bluetusk-sync-endurance-nats --publish 4222:4222 nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66 -js
           docker run --detach --name bluetusk-sync-endurance-opensearch \
             --publish 9200:9200 \
             --env discovery.type=single-node \
             --env DISABLE_SECURITY_PLUGIN=true \
             --env DISABLE_INSTALL_DEMO_CONFIG=true \
             --env "OPENSEARCH_JAVA_OPTS=-Xms1g -Xmx1g" \
-            opensearchproject/opensearch:3.7.0
+            opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9
           for attempt in $(seq 1 120); do
             if docker exec bluetusk-sync-endurance-redis redis-cli ping | grep -q PONG && \
                nc -z 127.0.0.1 4222 && \
@@ -58,25 +71,39 @@ jobs:
           BLUETUSK_NATS_URL: nats://localhost:4222
           BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
           BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
-        run: >-
-          ./eng/run-sync-endurance.ps1
-          -Duration '1.00:00:00'
-          -MinimumCycles 100
-          -ReportPath 'artifacts/test-results/sync-endurance/report.json'
-          -Configuration Release
+        run: |
+          ./eng/run-sync-endurance.ps1 `
+            -Duration '1.00:00:00' `
+            -MinimumCycles 100 `
+            -ReportPath 'artifacts/test-results/sync-endurance/report.json' `
+            -CandidateProvenancePath 'artifacts/test-results/sync-endurance/candidate-sbom/build-provenance.json' `
+            -PostgreSqlImage 'postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e' `
+            -DestinationImages @(
+              'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
+              'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
+              'opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9'
+            ) `
+            -Configuration Release
 
       - name: Verify endurance evidence
         shell: pwsh
-        run: >-
-          ./eng/verify-sync-endurance-report.ps1
-          -ReportPath 'artifacts/test-results/sync-endurance/report.json'
-          -RequiredDuration '1.00:00:00'
-          -MinimumCycles 100
-          -ExpectedCommit '${{ github.sha }}'
+        run: |
+          ./eng/verify-sync-endurance-report.ps1 `
+            -ReportPath 'artifacts/test-results/sync-endurance/report.json' `
+            -RequiredDuration '1.00:00:00' `
+            -MinimumCycles 100 `
+            -ExpectedCommit '${{ github.sha }}' `
+            -CandidateProvenancePath 'artifacts/test-results/sync-endurance/candidate-sbom/build-provenance.json' `
+            -ExpectedPostgreSqlImage 'postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e' `
+            -ExpectedDestinationImages @(
+              'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
+              'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
+              'opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9'
+            )
 
       - name: Upload endurance evidence
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
           name: sync-endurance-${{ github.run_id }}
           path: artifacts/test-results/sync-endurance

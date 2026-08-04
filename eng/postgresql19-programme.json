@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "majorVersion": 19,
+  "officialDocumentationUrl": "https://www.postgresql.org/docs/19/",
+  "currentOfficialMilestone": "19beta2",
+  "currentDocumentationMarker": "PostgreSQL 19beta2 Documentation",
+  "targetGeneralAvailability": "September 2026",
+  "milestones": [
+    {
+      "version": "19beta2",
+      "channel": "beta",
+      "released": "2026-07-16",
+      "status": "verified",
+      "image": "postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e",
+      "evidence": "docs/release-readiness.md"
+    }
+  ],
+  "requiredFutureCadence": [
+    "every later beta",
+    "every release candidate",
+    "19.0 general availability"
+  ],
+  "generalAvailability": {
+    "status": "pending",
+    "version": null,
+    "image": null,
+    "evidence": null,
+    "sourceCommit": null
+  },
+  "typedSubsetRecord": "docs/graph/README.md"
+}

@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Collections;
+using System.Collections.ObjectModel;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
@@ -20,12 +21,13 @@ namespace BlueTusk.Data;
     "Usage",
     "CA2201:Do not raise reserved exception types",
     Justification = "ADO.NET readers conventionally use IndexOutOfRangeException for missing columns.")]
-public sealed class BlueTuskDataReader : DbDataReader
+public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
 {
     private static readonly Encoding StrictUtf8 = new UTF8Encoding(false, true);
     private readonly BlueTuskQueryResult? _result;
     private readonly BlueTuskTypeRegistry _types;
     private readonly bool _singleRow;
+    private readonly bool _singleResult;
     private readonly BlueTuskCommand? _streamingCommand;
     private readonly BlueTuskCommandTimeout? _streamingTimeoutTimer;
     private readonly BlueTuskConnection? _executionConnection;
@@ -43,11 +45,16 @@ public sealed class BlueTuskDataReader : DbDataReader
     internal BlueTuskDataReader(
         BlueTuskQueryResult result,
         BlueTuskConnection? connectionToClose,
-        BlueTuskTypeRegistry types)
+        BlueTuskTypeRegistry types,
+        CommandBehavior behavior = CommandBehavior.Default)
     {
         _result = result ?? throw new ArgumentNullException(nameof(result));
         _connectionToClose = connectionToClose;
         _types = types ?? throw new ArgumentNullException(nameof(types));
+        _singleRow = behavior.HasFlag(CommandBehavior.SingleRow);
+        _singleResult =
+            _singleRow ||
+            behavior.HasFlag(CommandBehavior.SingleResult);
     }
 
     internal BlueTuskDataReader(
@@ -107,7 +114,9 @@ public sealed class BlueTuskDataReader : DbDataReader
         }
 
         var resultSet = CurrentResultSet;
-        if (resultSet is null || _rowIndex + 1 >= resultSet.Rows.Count)
+        if (resultSet is null ||
+            _singleRow && _rowIndex >= 0 ||
+            _rowIndex + 1 >= resultSet.Rows.Count)
         {
             return false;
         }
@@ -222,7 +231,7 @@ public sealed class BlueTuskDataReader : DbDataReader
             return false;
         }
 
-        if (_resultIndex + 1 >= _result!.ResultSets.Count)
+        if (_singleResult || _resultIndex + 1 >= _result!.ResultSets.Count)
         {
             return false;
         }
@@ -614,9 +623,121 @@ public sealed class BlueTuskDataReader : DbDataReader
             leaveOpen: false);
     }
 
-    public override DataTable? GetSchemaTable() => null;
+    public ReadOnlyCollection<DbColumn> GetColumnSchema()
+    {
+        var columns = new DbColumn[CurrentFields.Count];
+        for (var ordinal = 0; ordinal < columns.Length; ordinal++)
+        {
+            var field = CurrentFields[ordinal];
+            columns[ordinal] = new BlueTuskDbColumn(
+                field.Name,
+                ordinal,
+                GetFieldType(ordinal),
+                GetDataTypeName(ordinal),
+                field.TypeSize > 0 ? field.TypeSize : null,
+                field.TypeOid,
+                field.TableOid,
+                field.ColumnAttributeNumber);
+        }
+
+        return Array.AsReadOnly(columns);
+    }
+
+    public override Task<ReadOnlyCollection<DbColumn>> GetColumnSchemaAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(GetColumnSchema());
+    }
+
+    [UnconditionalSuppressMessage(
+        "Trimming",
+        "IL2111",
+        Justification =
+            "ADO.NET schema tables require a System.Type-valued DataType column; BlueTusk does not reflect over that type.")]
+    public override DataTable? GetSchemaTable()
+    {
+        var table = new DataTable("SchemaTable")
+        {
+            Locale = CultureInfo.InvariantCulture,
+        };
+        table.Columns.Add(SchemaTableColumn.ColumnName, typeof(string));
+        table.Columns.Add(SchemaTableColumn.ColumnOrdinal, typeof(int));
+        table.Columns.Add(SchemaTableColumn.ColumnSize, typeof(int));
+        table.Columns.Add(SchemaTableColumn.DataType, typeof(Type));
+        table.Columns.Add(SchemaTableColumn.ProviderType, typeof(int));
+        table.Columns.Add(SchemaTableColumn.IsLong, typeof(bool));
+        table.Columns.Add(SchemaTableColumn.AllowDBNull, typeof(bool));
+        table.Columns.Add(SchemaTableOptionalColumn.IsReadOnly, typeof(bool));
+        table.Columns.Add(SchemaTableColumn.IsUnique, typeof(bool));
+        table.Columns.Add(SchemaTableColumn.IsKey, typeof(bool));
+        table.Columns.Add(SchemaTableOptionalColumn.BaseCatalogName, typeof(string));
+        table.Columns.Add(SchemaTableColumn.BaseSchemaName, typeof(string));
+        table.Columns.Add(SchemaTableColumn.BaseTableName, typeof(string));
+        table.Columns.Add(SchemaTableColumn.BaseColumnName, typeof(string));
+
+        foreach (var column in GetColumnSchema())
+        {
+            var row = table.NewRow();
+            row[SchemaTableColumn.ColumnName] = column.ColumnName ?? string.Empty;
+            row[SchemaTableColumn.ColumnOrdinal] = column.ColumnOrdinal ?? 0;
+            row[SchemaTableColumn.ColumnSize] =
+                column.ColumnSize is { } size ? size : DBNull.Value;
+            row[SchemaTableColumn.DataType] = column.DataType ?? typeof(object);
+            row[SchemaTableColumn.ProviderType] =
+                column is BlueTuskDbColumn blueTusk ? checked((int)blueTusk.TypeOid) : 0;
+            row[SchemaTableColumn.IsLong] = column.ColumnSize is null;
+            row[SchemaTableColumn.AllowDBNull] = column.AllowDBNull ?? true;
+            row[SchemaTableOptionalColumn.IsReadOnly] = column.IsReadOnly ?? true;
+            row[SchemaTableColumn.IsUnique] = column.IsUnique ?? false;
+            row[SchemaTableColumn.IsKey] = column.IsKey ?? false;
+            row[SchemaTableOptionalColumn.BaseCatalogName] =
+                column.BaseCatalogName ?? string.Empty;
+            row[SchemaTableColumn.BaseSchemaName] = column.BaseSchemaName ?? string.Empty;
+            row[SchemaTableColumn.BaseTableName] = column.BaseTableName ?? string.Empty;
+            row[SchemaTableColumn.BaseColumnName] = column.BaseColumnName ?? string.Empty;
+            table.Rows.Add(row);
+        }
+
+        return table;
+    }
+
+    public override Task<DataTable?> GetSchemaTableAsync(
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(GetSchemaTable());
+    }
 
     public override IEnumerator GetEnumerator() => new DbEnumerator(this, closeReader: false);
+
+    private sealed class BlueTuskDbColumn : DbColumn
+    {
+        public BlueTuskDbColumn(
+            string name,
+            int ordinal,
+            Type dataType,
+            string dataTypeName,
+            int? columnSize,
+            uint typeOid,
+            uint tableOid,
+            short columnAttributeNumber)
+        {
+            ColumnName = name;
+            ColumnOrdinal = ordinal;
+            DataType = dataType;
+            DataTypeName = dataTypeName;
+            ColumnSize = columnSize;
+            AllowDBNull = null;
+            IsAliased = tableOid == 0 || columnAttributeNumber == 0;
+            IsExpression = tableOid == 0;
+            IsReadOnly = true;
+            BaseColumnName = tableOid == 0 ? null : name;
+            TypeOid = typeOid;
+        }
+
+        public uint TypeOid { get; }
+    }
 
     public override void Close()
     {

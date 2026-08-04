@@ -681,3 +681,12 @@ BlueTusk.Data.BlueTuskMultiplexingStatistics.Workers.init -> void
 override BlueTusk.Data.BlueTuskMultiplexingStatistics.GetHashCode() -> int
 static BlueTusk.Data.BlueTuskMultiplexingStatistics.operator !=(BlueTusk.Data.BlueTuskMultiplexingStatistics left, BlueTusk.Data.BlueTuskMultiplexingStatistics right) -> bool
 static BlueTusk.Data.BlueTuskMultiplexingStatistics.operator ==(BlueTusk.Data.BlueTuskMultiplexingStatistics left, BlueTusk.Data.BlueTuskMultiplexingStatistics right) -> bool
+BlueTusk.Data.BlueTuskDataReader.GetColumnSchema() -> System.Collections.ObjectModel.ReadOnlyCollection<System.Data.Common.DbColumn!>!
+override BlueTusk.Data.BlueTuskConnection.GetSchema() -> System.Data.DataTable!
+override BlueTusk.Data.BlueTuskConnection.GetSchema(string! collectionName) -> System.Data.DataTable!
+override BlueTusk.Data.BlueTuskConnection.GetSchema(string! collectionName, string?[]? restrictionValues) -> System.Data.DataTable!
+override BlueTusk.Data.BlueTuskConnection.GetSchemaAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable!>!
+override BlueTusk.Data.BlueTuskConnection.GetSchemaAsync(string! collectionName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable!>!
+override BlueTusk.Data.BlueTuskConnection.GetSchemaAsync(string! collectionName, string?[]? restrictionValues, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable!>!
+override BlueTusk.Data.BlueTuskDataReader.GetColumnSchemaAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.ObjectModel.ReadOnlyCollection<System.Data.Common.DbColumn!>!>!
+override BlueTusk.Data.BlueTuskDataReader.GetSchemaTableAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable?>!

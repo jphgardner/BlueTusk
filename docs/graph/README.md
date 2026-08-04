@@ -1,5 +1,8 @@
 # PostgreSQL 19 SQL/PGQ preview
 
+The cross-milestone test and publication cadence is documented in the
+[PostgreSQL 19 compatibility programme](../postgresql19-programme.md).
+
 BlueTusk `0.3.0-preview.1` supports PostgreSQL 19 SQL/PGQ through raw ADO.NET
 SQL, a typed EF query subset, and read-only property-graph schema discovery. ADO.NET
 sessions enable `SupportsSqlPgq` only after probing the documented

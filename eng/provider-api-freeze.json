@@ -65,7 +65,11 @@
     },
     {
       "path": "src/BlueTusk.Data/PublicAPI.Shipped.txt",
-      "sha256": "21797e4286e12eccf317c3a2b6299fcad44423aea602792f028270b31a06db61"
+      "sha256": "08798bcace24623b00bbb4dd743fbf0403cf4845123a43562c76a36cbedf3821"
+    },
+    {
+      "path": "src/BlueTusk.Data.DependencyInjection/PublicAPI.Shipped.txt",
+      "sha256": "e5e86ff6f0905f5f96251b906f4b88d239e27ef3352b37fbe194dc8dee52857b"
     },
     {
       "path": "src/BlueTusk.Diagnostics/PublicAPI.Shipped.txt",

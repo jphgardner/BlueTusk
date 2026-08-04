@@ -2,6 +2,10 @@
 
 The current preview provides native synchronous and asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, `BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use blocking socket, TLS, protocol, authentication, pool, and query implementations rather than blocking asynchronous I/O.
 
+The [V1 compatibility matrix](compatibility.md) records the supported and
+explicitly excluded ADO.NET, Dapper, dependency-injection, schema and routine
+surfaces.
+
 Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
 
 Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers

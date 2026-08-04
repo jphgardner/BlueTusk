@@ -317,6 +317,35 @@ public sealed class BlueTuskPgOutputDecoderTests
     }
 
     [Fact]
+    public void Rejects_collection_counts_above_the_parser_ceiling()
+    {
+        var decoder = new BlueTuskPgOutputDecoder();
+
+        Assert.Throws<BlueTuskPgOutputProtocolException>(
+            () => decoder.Decode(
+                new PayloadBuilder('R')
+                    .UInt32(1)
+                    .CString("public")
+                    .CString("items")
+                    .Byte((byte)'d')
+                    .Int16(4097)
+                    .Build()));
+        Assert.Throws<BlueTuskPgOutputProtocolException>(
+            () => decoder.Decode(
+                new PayloadBuilder('I')
+                    .UInt32(1)
+                    .Byte((byte)'N')
+                    .Int16(4097)
+                    .Build()));
+        Assert.Throws<BlueTuskPgOutputProtocolException>(
+            () => decoder.Decode(
+                new PayloadBuilder('T')
+                    .Int32(4097)
+                    .Byte(0)
+                    .Build()));
+    }
+
+    [Fact]
     public async Task Async_extension_preserves_the_xlog_envelope()
     {
         var data = new PayloadBuilder('B')

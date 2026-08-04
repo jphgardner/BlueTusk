@@ -34,6 +34,7 @@
         "identity/BlueTusk.Identity.GoogleCloud/BlueTusk.Identity.GoogleCloud.csproj",
         "src/BlueTusk.Client/BlueTusk.Client.csproj",
         "src/BlueTusk.Data/BlueTusk.Data.csproj",
+        "src/BlueTusk.Data.DependencyInjection/BlueTusk.Data.DependencyInjection.csproj",
         "src/BlueTusk.Diagnostics/BlueTusk.Diagnostics.csproj",
         "src/BlueTusk.EntityFrameworkCore.Design/BlueTusk.EntityFrameworkCore.Design.csproj",
         "src/BlueTusk.EntityFrameworkCore/BlueTusk.EntityFrameworkCore.csproj",

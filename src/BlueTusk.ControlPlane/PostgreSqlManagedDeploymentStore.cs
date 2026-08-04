@@ -384,10 +384,26 @@ public sealed class PostgreSqlManagedDeploymentStore :
         AddParameter(command, "observed_generation", status.ObservedGeneration);
         AddParameter(command, "revision", status.Revision);
         AddParameter(command, "fencing_token", status.FencingToken);
-        AddParameter(command, "desired_fingerprint", status.DesiredFingerprint);
-        AddParameter(command, "applied_plan_fingerprint", status.AppliedPlanFingerprint);
-        AddParameter(command, "provider_resource_id", status.ProviderResourceId);
-        AddParameter(command, "diagnostic_code", status.DiagnosticCode);
+        AddParameter(
+            command,
+            "desired_fingerprint",
+            status.DesiredFingerprint,
+            DbType.String);
+        AddParameter(
+            command,
+            "applied_plan_fingerprint",
+            status.AppliedPlanFingerprint,
+            DbType.String);
+        AddParameter(
+            command,
+            "provider_resource_id",
+            status.ProviderResourceId,
+            DbType.String);
+        AddParameter(
+            command,
+            "diagnostic_code",
+            status.DiagnosticCode,
+            DbType.String);
         AddParameter(command, "updated_at", status.UpdatedAt);
         AddParameter(command, "id", deploymentId);
         AddParameter(command, "expected_revision", expectedRevision);
@@ -664,11 +680,19 @@ public sealed class PostgreSqlManagedDeploymentStore :
         _ = await command.ExecuteNonQueryAsync(cancellationToken).ConfigureAwait(false);
     }
 
-    private static void AddParameter(DbCommand command, string name, object? value)
+    private static void AddParameter(
+        DbCommand command,
+        string name,
+        object? value,
+        DbType? dbType = null)
     {
         var parameter = command.CreateParameter();
         parameter.ParameterName = name;
         parameter.Value = value ?? DBNull.Value;
+        if (dbType is { } specifiedDbType)
+        {
+            parameter.DbType = specifiedDbType;
+        }
         command.Parameters.Add(parameter);
     }
 

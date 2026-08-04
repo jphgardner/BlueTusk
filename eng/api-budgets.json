@@ -1,0 +1,42 @@
+{
+  "schemaVersion": 1,
+  "measurement": "non-comment PublicAPI.Shipped.txt and PublicAPI.Unshipped.txt signatures",
+  "families": {
+    "Provider": {
+      "maximumSignatures": 8292,
+      "baselineProjects": 28,
+      "apiExemptProjects": [
+        "src/BlueTusk.SourceGeneration/BlueTusk.SourceGeneration.csproj",
+        "templates/BlueTusk.Extension/BlueTusk.Templates.csproj",
+        "tooling/BlueTusk.Tool/BlueTusk.Tool.csproj"
+      ]
+    },
+    "Streams": {
+      "maximumSignatures": 1622,
+      "baselineProjects": 9,
+      "apiExemptProjects": [
+        "tooling/BlueTusk.Streams.Tool/BlueTusk.Streams.Tool.csproj"
+      ]
+    },
+    "Sync": {
+      "maximumSignatures": 1283,
+      "baselineProjects": 8,
+      "apiExemptProjects": []
+    },
+    "Live": {
+      "maximumSignatures": 783,
+      "baselineProjects": 9,
+      "apiExemptProjects": []
+    },
+    "ControlPlane": {
+      "maximumSignatures": 861,
+      "baselineProjects": 2,
+      "apiExemptProjects": []
+    },
+    "ContinuousGraph": {
+      "maximumSignatures": 134,
+      "baselineProjects": 2,
+      "apiExemptProjects": []
+    }
+  }
+}

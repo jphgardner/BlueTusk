@@ -71,3 +71,17 @@ compiled npm distributions without install lifecycle scripts. Duplicate NuGet
 publication is a release failure, and npm publication uses registry provenance.
 Dependency order is Provider, Streams, Sync/Live, Control Plane, then Continuous
 Graph preview.
+
+Every external GitHub Action reference is pinned to a full commit.
+`security.yml` runs CodeQL and pull-request dependency review, while
+`verify-supply-chain.ps1` enforces the pins and exact per-family API budgets.
+The release job generates CycloneDX 1.6 and SPDX 2.3 SBOMs, plus a provenance
+manifest containing the source commit and SHA-256 of every NuGet, symbols and
+npm artifact. It verifies those records before upload and includes the package
+set and SBOMs in the GitHub build-provenance attestation.
+
+An independent reviewer completes the
+[release review handoff](release-review-handoff.md) for the exact candidate
+before an administrator enables publication. The
+[V1 release-readiness record](v1-release-readiness.md) separates implemented
+hardening from the remaining exact-candidate and external evidence.

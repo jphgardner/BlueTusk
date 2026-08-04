@@ -5,6 +5,9 @@ namespace BlueTusk.Protocol;
 /// <summary>Decodes complete backend message payloads into validated protocol values.</summary>
 public static class BlueTuskBackendMessageDecoder
 {
+    private const int MaximumCollectionCount = 4096;
+    private const int MaximumSaslMechanisms = 128;
+    private const int MinimumRowDescriptionFieldBytes = 19;
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
 
     public static BlueTuskAuthenticationRequest DecodeAuthentication(BlueTuskBackendMessage message)
@@ -85,6 +88,11 @@ public static class BlueTuskBackendMessageDecoder
             throw new BlueTuskProtocolException("RowDescription declared a negative field count.");
         }
 
+        ValidateCollectionCount(
+            count,
+            reader.Remaining,
+            MinimumRowDescriptionFieldBytes,
+            "RowDescription field");
         var fields = new BlueTuskFieldDescription[count];
         for (var index = 0; index < fields.Length; index++)
         {
@@ -112,6 +120,7 @@ public static class BlueTuskBackendMessageDecoder
             throw new BlueTuskProtocolException("DataRow field count does not match its row description.");
         }
 
+        ValidateCollectionCount(count, reader.Remaining, sizeof(int), "DataRow field");
         var values = new ReadOnlyMemory<byte>?[count];
         for (var index = 0; index < values.Length; index++)
         {
@@ -147,6 +156,7 @@ public static class BlueTuskBackendMessageDecoder
                 "DataRow field count does not match its row description.");
         }
 
+        ValidateCollectionCount(count, reader.Remaining, sizeof(int), "DataRow field");
         ReadOnlyMemory<byte>? firstValue = null;
         for (var index = 0; index < count; index++)
         {
@@ -197,6 +207,11 @@ public static class BlueTuskBackendMessageDecoder
             throw new BlueTuskProtocolException("COPY response declared a negative column count.");
         }
 
+        ValidateCollectionCount(
+            columnCount,
+            reader.Remaining,
+            sizeof(short),
+            "COPY response column");
         var columnFormats = new BlueTuskCopyFormat[columnCount];
         for (var index = 0; index < columnFormats.Length; index++)
         {
@@ -256,6 +271,12 @@ public static class BlueTuskBackendMessageDecoder
                 return new BlueTuskAuthenticationRequest.Sasl(mechanisms);
             }
 
+            if (mechanisms.Count == MaximumSaslMechanisms)
+            {
+                throw new BlueTuskProtocolException(
+                    $"AuthenticationSASL advertised more than {MaximumSaslMechanisms} mechanisms.");
+            }
+
             mechanisms.Add(mechanism);
         }
 
@@ -268,6 +289,20 @@ public static class BlueTuskBackendMessageDecoder
         1 => BlueTuskCopyFormat.Binary,
         _ => throw new BlueTuskProtocolException($"COPY response contained unknown format code {value}."),
     };
+
+    private static void ValidateCollectionCount(
+        int count,
+        int remainingBytes,
+        int minimumBytesPerItem,
+        string description)
+    {
+        if (count > MaximumCollectionCount ||
+            count > remainingBytes / minimumBytesPerItem)
+        {
+            throw new BlueTuskProtocolException(
+                $"{description} count {count} exceeds the bounded payload capacity.");
+        }
+    }
 
     private static BlueTuskBackendPayloadReader CreateReader(
         BlueTuskBackendMessage message,

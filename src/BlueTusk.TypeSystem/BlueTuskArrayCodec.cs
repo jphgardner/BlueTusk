@@ -143,6 +143,12 @@ public sealed class BlueTuskArrayCodec :
             }
         }
 
+        if (elementCount > reader.Remaining / sizeof(int))
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} binary array element count exceeds the remaining field size.");
+        }
+
         var result = CreateArray(lengths, lowerBounds);
         PopulateBinary(ref reader, result, checked((int)elementCount), flags != 0, type);
         return result;
