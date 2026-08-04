@@ -55,7 +55,9 @@ if (Test-Path -LiteralPath $targetRoot) {
 New-Item -ItemType Directory -Path $publishDirectory, $corpusDirectory, $findingsDirectory -Force | Out-Null
 
 $encodedCorpus = Join-Path $repositoryRoot "tests/fuzz-corpus/$Target"
-$corpusCases = Get-ChildItem -LiteralPath $encodedCorpus -Filter '*.b64' -File
+$corpusCases = @(
+    Get-ChildItem -LiteralPath $encodedCorpus -Filter '*.b64' -File
+)
 if ($corpusCases.Count -eq 0) {
     throw "Fuzz target '$Target' has no checked-in encoded corpus."
 }
@@ -71,6 +73,8 @@ foreach ($case in $corpusCases) {
     [System.IO.File]::WriteAllBytes((Join-Path $corpusDirectory $rawName), $bytes)
 }
 
+$hadHeapHardLimit = Test-Path Env:\DOTNET_GCHeapHardLimit
+$previousHeapHardLimit = $env:DOTNET_GCHeapHardLimit
 Push-Location $repositoryRoot
 try {
     if (-not $NoRestore) {
@@ -95,8 +99,10 @@ try {
         throw "Failed to publish fuzz target '$Target'."
     }
 
-    $instrumentationTargets = Get-ChildItem -LiteralPath $publishDirectory -Filter 'BlueTusk*.dll' -File |
-        Where-Object Name -NE 'BlueTusk.Fuzzing.dll'
+    $instrumentationTargets = @(
+        Get-ChildItem -LiteralPath $publishDirectory -Filter 'BlueTusk*.dll' -File |
+            Where-Object Name -NE 'BlueTusk.Fuzzing.dll'
+    )
     if ($instrumentationTargets.Count -eq 0) {
         throw "No BlueTusk assemblies were found to instrument for '$Target'."
     }
@@ -115,12 +121,16 @@ try {
     $env:BLUETUSK_FUZZ_TARGET = $Target
     $env:AFL_SKIP_BIN_CHECK = '1'
     $env:AFL_NO_UI = '1'
+    $heapHardLimitBytes = [long]$MemoryLimitMegabytes * 1MB
+    $env:DOTNET_GCHeapHardLimit = '0x' + $heapHardLimitBytes.ToString(
+        'X',
+        [Globalization.CultureInfo]::InvariantCulture)
     $harness = Join-Path $publishDirectory 'BlueTusk.Fuzzing.dll'
     $arguments = @(
         '-i', $corpusDirectory,
         '-o', $findingsDirectory,
         '-t', "$ExecutionTimeoutMilliseconds+",
-        '-m', $MemoryLimitMegabytes,
+        '-m', 'none',
         '-g', 1,
         '-G', $MaximumInputBytes,
         '-V', $DurationSeconds,
@@ -137,13 +147,21 @@ finally {
     Remove-Item Env:\BLUETUSK_FUZZ_TARGET -ErrorAction SilentlyContinue
     Remove-Item Env:\AFL_SKIP_BIN_CHECK -ErrorAction SilentlyContinue
     Remove-Item Env:\AFL_NO_UI -ErrorAction SilentlyContinue
+    if ($hadHeapHardLimit) {
+        $env:DOTNET_GCHeapHardLimit = $previousHeapHardLimit
+    }
+    else {
+        Remove-Item Env:\DOTNET_GCHeapHardLimit -ErrorAction SilentlyContinue
+    }
 }
 
-$findingFiles = Get-ChildItem -LiteralPath $findingsDirectory -Recurse -File |
-    Where-Object {
-        $_.Name -ne 'README.txt' -and
-        ($_.Directory.Name -eq 'crashes' -or $_.Directory.Name -eq 'hangs')
-    }
+$findingFiles = @(
+    Get-ChildItem -LiteralPath $findingsDirectory -Recurse -File |
+        Where-Object {
+            $_.Name -ne 'README.txt' -and
+            ($_.Directory.Name -eq 'crashes' -or $_.Directory.Name -eq 'hangs')
+        }
+)
 if ($findingFiles.Count -gt 0) {
     & (Join-Path $PSScriptRoot 'archive-fuzz-findings.ps1') `
         -Target $Target `
@@ -152,8 +170,10 @@ if ($findingFiles.Count -gt 0) {
 }
 
 Write-Output (
-    "Fuzz target '{0}' completed for {1}s with a {2}ms execution timeout, " +
-    "{3} MiB memory limit, and {4}-byte input limit." -f
+    (
+        "Fuzz target '{0}' completed for {1}s with a {2}ms execution timeout, " +
+        "{3} MiB managed-heap limit, and {4}-byte input limit."
+    ) -f
     $Target,
     $DurationSeconds,
     $ExecutionTimeoutMilliseconds,

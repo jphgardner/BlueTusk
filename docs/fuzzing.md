@@ -19,7 +19,10 @@ The harness accepts at most 64 KiB. A protocol input may yield at most 512
 messages. Collection decoders reject counts that exceed either their remaining
 payload capacity or the 4,096-item parser ceiling. Streams decoding uses
 separate limits of 512 changes, 128 tables, 256 columns per table and 4 KiB per
-string. CI gives each execution 2 seconds and the fuzz worker 1 GiB.
+string. CI gives each execution 2 seconds and the .NET managed heap 1 GiB.
+AFL's virtual-address-space limit is disabled because the .NET runtime reserves
+more address space than it commits; the GC heap hard limit supplies the bounded
+managed-memory control instead.
 
 ## Deterministic replay
 
@@ -58,6 +61,10 @@ requests, a one-hour-per-target scheduled run, and an explicitly configurable
 manual run. Each job archives its fuzzer state. Crash and hang inputs are also
 converted to replayable Base64 with source-commit and SHA-256 metadata by
 `archive-fuzz-findings.ps1`, and make the job fail.
+
+The raw AFL state is compressed before artifact upload because AFL++ queue
+filenames contain colons, which are valid on Linux but rejected by GitHub's
+cross-platform artifact service.
 
 Minimize a finding against the instrumented harness with:
 

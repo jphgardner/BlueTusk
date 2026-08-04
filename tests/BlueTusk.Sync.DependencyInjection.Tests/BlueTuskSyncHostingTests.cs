@@ -57,6 +57,7 @@ public sealed class BlueTuskSyncHostingTests
 
         await hosted.StartAsync(TestContext.Current.CancellationToken);
         var registry = provider.GetRequiredService<BlueTuskSyncHealthRegistry>();
+        await observer.Acknowledged.WaitAsync(TestContext.Current.CancellationToken);
         await WaitUntilAsync(
             () => registry.GetStatuses().SingleOrDefault()?.State is SyncPipelineState.Stopped,
             TestContext.Current.CancellationToken);

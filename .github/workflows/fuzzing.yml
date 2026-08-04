@@ -82,11 +82,22 @@ jobs:
             -MaximumInputBytes 65536 `
             -NoRestore
 
+      - name: Package findings and fuzzer state
+        if: always()
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: >-
+          tar --create --gzip
+          --file "artifacts/fuzz-${TARGET}-${GITHUB_RUN_ID}.tar.gz"
+          --directory artifacts/fuzz
+          "$TARGET"
+
       - name: Archive findings and fuzzer state
         if: always()
         uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
         with:
           name: fuzz-${{ matrix.target }}-${{ github.run_id }}
-          path: artifacts/fuzz
+          path: artifacts/fuzz-${{ matrix.target }}-${{ github.run_id }}.tar.gz
           if-no-files-found: error
           retention-days: 30

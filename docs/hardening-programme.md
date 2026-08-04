@@ -43,8 +43,8 @@ present.
    ArrayPool/Span/Memory transport is retained because no new end-to-end result
    has cleared its adoption gate.
 4. **Coverage-guided fuzzing — complete.** Nine parser targets enforce a
-   64-KiB input ceiling, execution and memory limits, bounded protocol loops and
-   collection-size limits. The checked-in encoded corpus is replayed
+   64-KiB input ceiling, execution and managed-heap limits, bounded protocol
+   loops and collection-size limits. The checked-in encoded corpus is replayed
    deterministically; CI and scheduled AFL++ runs archive and minimize findings.
    Commands and triage procedure are in [the fuzzing guide](fuzzing.md).
 5. **Supply-chain and public-surface gates — complete.** Exact per-family API

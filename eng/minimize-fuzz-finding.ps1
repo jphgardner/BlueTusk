@@ -37,12 +37,18 @@ if (-not (Test-Path -LiteralPath $harness -PathType Leaf)) {
 
 $env:BLUETUSK_FUZZ_TARGET = $Target
 $env:AFL_SKIP_BIN_CHECK = '1'
+$hadHeapHardLimit = Test-Path Env:\DOTNET_GCHeapHardLimit
+$previousHeapHardLimit = $env:DOTNET_GCHeapHardLimit
+$heapHardLimitBytes = [long]$MemoryLimitMegabytes * 1MB
+$env:DOTNET_GCHeapHardLimit = '0x' + $heapHardLimitBytes.ToString(
+    'X',
+    [Globalization.CultureInfo]::InvariantCulture)
 try {
     & $MinimizerCommand `
         -i $input `
         -o $OutputPath `
         -t "$ExecutionTimeoutMilliseconds+" `
-        -m $MemoryLimitMegabytes `
+        -m none `
         -- dotnet $harness
     if ($LASTEXITCODE -ne 0) {
         throw "Fuzz minimization failed with exit code $LASTEXITCODE."
@@ -51,6 +57,12 @@ try {
 finally {
     Remove-Item Env:\BLUETUSK_FUZZ_TARGET -ErrorAction SilentlyContinue
     Remove-Item Env:\AFL_SKIP_BIN_CHECK -ErrorAction SilentlyContinue
+    if ($hadHeapHardLimit) {
+        $env:DOTNET_GCHeapHardLimit = $previousHeapHardLimit
+    }
+    else {
+        Remove-Item Env:\DOTNET_GCHeapHardLimit -ErrorAction SilentlyContinue
+    }
 }
 
 Write-Output "Minimized '$input' to '$OutputPath'."
