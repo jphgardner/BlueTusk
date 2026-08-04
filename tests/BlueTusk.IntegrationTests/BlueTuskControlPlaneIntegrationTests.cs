@@ -141,6 +141,122 @@ public sealed class BlueTuskControlPlaneIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Managed_hosting_store_persists_CAS_state_and_fenced_leases()
+    {
+        var schema = "bluetusk_managed_hosting_" + Guid.NewGuid().ToString("N");
+        await using var dataSource = BlueTuskDataSource.Create(GetConnectionString());
+        try
+        {
+            var store = new PostgreSqlManagedDeploymentStore(dataSource, schema);
+            await store.InitializeAsync();
+            await store.InitializeAsync();
+            Assert.Equal(
+                PostgreSqlManagedDeploymentStore.CurrentSchemaVersion,
+                await store.GetSchemaVersionAsync());
+
+            var spec = new ManagedDeploymentSpec(
+                "orders",
+                "tenant-a",
+                "kubernetes",
+                "eu-west",
+                1,
+                Paused: false,
+                DeleteProtection: true,
+                [
+                    new ManagedWorkloadSpec(
+                        ManagedWorkloadKind.Streams,
+                        "1.0.0",
+                        new ManagedResourceRequest(
+                            2,
+                            500,
+                            256 * 1024 * 1024,
+                            1024 * 1024 * 1024),
+                        [new ManagedSecretReference("vault", "postgres/orders", "7")],
+                        new Dictionary<string, string> { ["mode"] = "relay" }),
+                ],
+                new Dictionary<string, string> { ["environment"] = "acceptance" });
+            var created = await store.PutAsync(spec, expectedGeneration: 0);
+            Assert.Equal(ManagedDeploymentState.Pending, created.Status.State);
+            Assert.Equal("postgres/orders", Assert.Single(
+                Assert.Single(created.Spec.Workloads).SecretReferences).Name);
+            var listed = new List<ManagedDeployment>();
+            await foreach (var deployment in store.ListAsync("tenant-a"))
+            {
+                listed.Add(deployment);
+            }
+
+            Assert.Single(listed);
+
+            var firstLease = Assert.IsType<ManagedDeploymentLease>(
+                await store.TryAcquireAsync(
+                    spec.DeploymentId,
+                    "worker-a",
+                    TimeSpan.FromMinutes(1)));
+            Assert.Null(
+                await store.TryAcquireAsync(
+                    spec.DeploymentId,
+                    "worker-b",
+                    TimeSpan.FromMinutes(1)));
+            var status = new ManagedDeploymentStatus(
+                ManagedDeploymentState.Ready,
+                spec.Generation,
+                Revision: 1,
+                firstLease.FencingToken,
+                ManagedDeploymentValidation.GetFingerprint(spec),
+                "plan-1",
+                "resource/orders",
+                null,
+                DateTimeOffset.UtcNow);
+            var updated = await store.UpdateStatusAsync(
+                spec.DeploymentId,
+                status,
+                expectedRevision: 0);
+            Assert.Equal(ManagedDeploymentState.Ready, updated.Status.State);
+            await Assert.ThrowsAsync<ManagedDeploymentConcurrencyException>(
+                () => store.UpdateStatusAsync(
+                    spec.DeploymentId,
+                    status,
+                    expectedRevision: 0).AsTask());
+
+            await store.ReleaseAsync(firstLease);
+            var secondLease = Assert.IsType<ManagedDeploymentLease>(
+                await store.TryAcquireAsync(
+                    spec.DeploymentId,
+                    "worker-b",
+                    TimeSpan.FromMinutes(1)));
+            Assert.True(secondLease.FencingToken > firstLease.FencingToken);
+            await Assert.ThrowsAsync<ManagedDeploymentLeaseException>(
+                () => store.ReleaseAsync(firstLease).AsTask());
+            await store.ReleaseAsync(secondLease);
+
+            var next = spec with { Generation = 2, Paused = true };
+            var stored = await store.PutAsync(next, expectedGeneration: 1);
+            Assert.Equal(2, stored.Spec.Generation);
+            Assert.Equal(ManagedDeploymentState.Pending, stored.Status.State);
+            await Assert.ThrowsAsync<ManagedDeploymentConcurrencyException>(
+                () => store.PutAsync(
+                    next with { Generation = 3 },
+                    expectedGeneration: 1).AsTask());
+
+            await ExecuteAsync(
+                dataSource,
+                $"""
+                 UPDATE "{schema}".managed_deployments
+                 SET document_format =
+                     {PostgreSqlManagedDeploymentStore.CurrentDocumentFormatVersion + 1}
+                 WHERE deployment_id = 'orders'
+                 """);
+            var futureFormat = await Assert.ThrowsAsync<InvalidOperationException>(
+                () => store.GetAsync("orders").AsTask());
+            Assert.Contains("format", futureFormat.Message, StringComparison.OrdinalIgnoreCase);
+        }
+        finally
+        {
+            await DropSchemaAsync(dataSource, schema);
+        }
+    }
+
     private static string GetConnectionString()
     {
         var connectionString = Environment.GetEnvironmentVariable(

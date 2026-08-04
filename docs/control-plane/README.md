@@ -143,6 +143,69 @@ reconciliation, rebuild, pause/resume, checkpoint, and slot coordinators.
 
 Run `InitializeAsync` with a migration owner before starting operation workers, then give the application identity only schema usage, sequence usage, and insert privileges. Take a database backup before package upgrades. Database owners can still drop database objects, so production audit retention also requires restricted ownership, PostgreSQL backups, and external log export appropriate to the organisation's compliance boundary.
 
+## Managed hosting reconciliation
+
+Managed hosting is a versioned desired-state controller in the Control Plane.
+It is deliberately provider-neutral: an AWS, Azure, Google Cloud, Kubernetes,
+or private-infrastructure adapter implements `IManagedInfrastructureProvider`
+without moving provider SDKs or credentials into the core package.
+
+`ManagedDeploymentSpec` identifies one tenant, provider, and region and
+contains bounded workload resources for Streams, Sync, Live, the Control
+Plane, the Dashboard, and Continuous Graph. Placement identity is immutable;
+updates advance the generation by exactly one through `PutAsync` compare and
+swap. Canonical fingerprints exclude the generation itself, sort maps and
+workloads, and let a provider distinguish a version bump from an actual desired
+change.
+
+Workloads contain `ManagedSecretReference` values only. There is no control
+plane type or callback that accepts a password, token, certificate, or secret
+value. A provider adapter resolves its references inside its own identity and
+audit boundary. Plans and results are bounded non-sensitive metadata and are
+validated before status can advance.
+
+```csharp
+var store = new PostgreSqlManagedDeploymentStore(controlDataSource);
+await store.InitializeAsync();
+
+var quotas = new ManagedDeploymentQuotaSource(
+    store,
+    new Dictionary<string, ManagedTenantQuota>
+    {
+        ["tenant-a"] = new(
+            MaximumDeployments: 10,
+            MaximumReplicas: 100,
+            MaximumCpuMillicores: 100_000,
+            MaximumMemoryBytes: 512L * 1024 * 1024 * 1024,
+            MaximumStorageBytes: 10L * 1024 * 1024 * 1024 * 1024),
+    });
+var controller = new ManagedDeploymentController(
+    store,
+    store,
+    quotas,
+    new ManagedInfrastructureProviderResolver([kubernetesProvider]),
+    owner: instanceIdentity);
+
+await store.PutAsync(desired, expectedGeneration: 0);
+await controller.ReconcileAsync(desired.DeploymentId);
+```
+
+Every reconciliation owns a renewable lease and passes its monotonically
+increasing fencing token to plan application or deletion. Desired generation
+and observed status revision are independently compared and swapped. A
+concurrent specification change, lease loss, over-quota request, mismatched
+provider plan, or future stored document format fails closed. Provider failure
+messages are not written to status; operators see a stable diagnostic code and
+correlate it with protected host logs.
+
+Provider `ApplyAsync` and `DeleteAsync` implementations must be idempotent for
+deployment ID, generation, plan fingerprint, and fencing token. They must
+reject a token older than the last accepted token even if cancellation arrives
+late. Delete protection additionally requires the exact expected desired
+generation and an explicit override. See
+[ADR 0014](../architecture/decisions/0014-managed-hosting-reconciliation.md)
+for the complete failure and security contract.
+
 ## Verification status
 
 The unit gate covers role escalation, exact confirmation, handler failure,
@@ -156,6 +219,13 @@ group, snapshot run, and direct checkpoint, verifies their inventory
 projections, upgrades a legacy audit table to schema version 2 without losing
 rows, initializes a fresh schema idempotently, proves stored audit rows reject
 update and delete attempts, and rejects a future schema version.
+
+The managed-hosting gate adds canonical-fingerprint, validation, quota,
+generation/revision CAS, lease exclusion, fencing, idempotent convergence,
+delete-protection, and non-sensitive failure tests. Its PostgreSQL acceptance
+initializes the durable schema idempotently, round-trips secret references,
+rejects concurrent updates, advances fencing tokens, and rejects a future
+desired-document format.
 
 See the [API and format compatibility policy](api-compatibility.md) and
 [0.1.0-preview.1 release notes](release-notes-0.1.0-preview.1.md) for the exact

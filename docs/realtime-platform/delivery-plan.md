@@ -23,9 +23,10 @@ Every phase additionally requires formatting, a zero-warning build, current prov
 - Sync workers are in-process for 1.0.
 - Live ships SignalR and SSE, then TypeScript and Angular, with gRPC and React before 1.0.
 - Schema drift and poison records pause with diagnostics by default.
-- Bounded statement multiplexing is implemented as the first Phase 8 vertical
-  slice. Managed hosting, capability-secured client SQL/LINQ, isolated
-  transformation processes, and incremental graph evaluation are V1 scope and
-  remain gated until their production contracts and evidence land. “Arbitrary”
+- Bounded statement multiplexing and fenced, quota-aware managed-hosting
+  reconciliation are implemented as the first two Phase 8 vertical slices.
+  Capability-secured client SQL/LINQ, isolated transformation processes, and
+  incremental graph evaluation are V1 scope and remain gated until their
+  production contracts and evidence land. “Arbitrary”
   client queries never means bypassing registration, RLS, tenant scope,
   authorisation, cost limits, or cancellation.

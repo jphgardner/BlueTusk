@@ -674,3 +674,16 @@ explicit environment and workload gate below is executable and checked.
 - [x] Representative EF query compilation/materialisation/write and raw/typed SQL/PGQ traversal benchmarks with checked-in ShortRun allocation baselines
 
 Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.
+
+## V1 platform expansion
+
+- [x] Bounded statement multiplexing with session-affinity isolation, exact
+  parse/row-description reuse, persistent lanes, bounded queues, error
+  isolation, statistics, and live PostgreSQL acceptance
+- [x] Provider-neutral managed-hosting reconciliation with versioned desired
+  state, canonical plan identity, resource quotas, secret references only,
+  generation/revision compare and swap, renewable fencing leases, deletion
+  protection, a durable PostgreSQL store, and provider conformance boundaries
+- [ ] Capability-secured registered client SQL/LINQ
+- [ ] Isolated, resource-bounded transformation execution
+- [ ] Incremental Continuous Graph evaluation with authoritative repair

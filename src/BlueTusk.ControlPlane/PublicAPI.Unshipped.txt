@@ -1,1 +1,341 @@
 #nullable enable
+BlueTusk.ControlPlane.IManagedDeploymentLeaseStore
+BlueTusk.ControlPlane.IManagedDeploymentLeaseStore.ReleaseAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.IManagedDeploymentLeaseStore.RenewAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease!>
+BlueTusk.ControlPlane.IManagedDeploymentLeaseStore.TryAcquireAsync(string! deploymentId, string! owner, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease?>
+BlueTusk.ControlPlane.IManagedDeploymentStore
+BlueTusk.ControlPlane.IManagedDeploymentStore.GetAsync(string! deploymentId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment?>
+BlueTusk.ControlPlane.IManagedDeploymentStore.ListAsync(string? tenantId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.ControlPlane.ManagedDeployment!>!
+BlueTusk.ControlPlane.IManagedDeploymentStore.PutAsync(BlueTusk.ControlPlane.ManagedDeploymentSpec! spec, long expectedGeneration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment!>
+BlueTusk.ControlPlane.IManagedDeploymentStore.UpdateStatusAsync(string! deploymentId, BlueTusk.ControlPlane.ManagedDeploymentStatus! status, long expectedRevision, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment!>
+BlueTusk.ControlPlane.IManagedInfrastructureProvider
+BlueTusk.ControlPlane.IManagedInfrastructureProvider.ApplyAsync(BlueTusk.ControlPlane.ManagedDeploymentSpec! desired, BlueTusk.ControlPlane.ManagedDeploymentPlan! plan, long fencingToken, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedProviderResult!>
+BlueTusk.ControlPlane.IManagedInfrastructureProvider.DeleteAsync(BlueTusk.ControlPlane.ManagedDeploymentSpec! desired, long fencingToken, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.IManagedInfrastructureProvider.Name.get -> string!
+BlueTusk.ControlPlane.IManagedInfrastructureProvider.PlanAsync(BlueTusk.ControlPlane.ManagedDeploymentSpec! desired, BlueTusk.ControlPlane.ManagedDeploymentStatus! current, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentPlan!>
+BlueTusk.ControlPlane.IManagedInfrastructureProviderResolver
+BlueTusk.ControlPlane.IManagedInfrastructureProviderResolver.Resolve(string! provider) -> BlueTusk.ControlPlane.IManagedInfrastructureProvider!
+BlueTusk.ControlPlane.IManagedTenantQuotaSource
+BlueTusk.ControlPlane.IManagedTenantQuotaSource.GetQuotaAsync(string! tenantId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedTenantQuota!>
+BlueTusk.ControlPlane.IManagedTenantQuotaSource.GetUsageAsync(string! tenantId, string! replacingDeploymentId, BlueTusk.ControlPlane.ManagedDeploymentSpec! desired, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedTenantUsage!>
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.GetAsync(string! deploymentId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment?>
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.InMemoryManagedDeploymentStore(System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.ListAsync(string? tenantId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.ControlPlane.ManagedDeployment!>!
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.PutAsync(BlueTusk.ControlPlane.ManagedDeploymentSpec! spec, long expectedGeneration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment!>
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.ReleaseAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.RenewAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease!>
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.TryAcquireAsync(string! deploymentId, string! owner, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease?>
+BlueTusk.ControlPlane.InMemoryManagedDeploymentStore.UpdateStatusAsync(string! deploymentId, BlueTusk.ControlPlane.ManagedDeploymentStatus! status, long expectedRevision, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment!>
+BlueTusk.ControlPlane.ManagedDeployment
+BlueTusk.ControlPlane.ManagedDeployment.<Clone>$() -> BlueTusk.ControlPlane.ManagedDeployment!
+BlueTusk.ControlPlane.ManagedDeployment.Deconstruct(out BlueTusk.ControlPlane.ManagedDeploymentSpec! Spec, out BlueTusk.ControlPlane.ManagedDeploymentStatus! Status) -> void
+BlueTusk.ControlPlane.ManagedDeployment.Equals(BlueTusk.ControlPlane.ManagedDeployment? other) -> bool
+BlueTusk.ControlPlane.ManagedDeployment.ManagedDeployment(BlueTusk.ControlPlane.ManagedDeploymentSpec! Spec, BlueTusk.ControlPlane.ManagedDeploymentStatus! Status) -> void
+BlueTusk.ControlPlane.ManagedDeployment.Spec.get -> BlueTusk.ControlPlane.ManagedDeploymentSpec!
+BlueTusk.ControlPlane.ManagedDeployment.Spec.init -> void
+BlueTusk.ControlPlane.ManagedDeployment.Status.get -> BlueTusk.ControlPlane.ManagedDeploymentStatus!
+BlueTusk.ControlPlane.ManagedDeployment.Status.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentAction
+BlueTusk.ControlPlane.ManagedDeploymentAction.<Clone>$() -> BlueTusk.ControlPlane.ManagedDeploymentAction!
+BlueTusk.ControlPlane.ManagedDeploymentAction.Deconstruct(out string! Kind, out string! Resource, out string! Summary) -> void
+BlueTusk.ControlPlane.ManagedDeploymentAction.Equals(BlueTusk.ControlPlane.ManagedDeploymentAction? other) -> bool
+BlueTusk.ControlPlane.ManagedDeploymentAction.Kind.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentAction.Kind.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentAction.ManagedDeploymentAction(string! Kind, string! Resource, string! Summary) -> void
+BlueTusk.ControlPlane.ManagedDeploymentAction.Resource.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentAction.Resource.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentAction.Summary.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentAction.Summary.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentConcurrencyException
+BlueTusk.ControlPlane.ManagedDeploymentConcurrencyException.ManagedDeploymentConcurrencyException(string! message) -> void
+BlueTusk.ControlPlane.ManagedDeploymentController
+BlueTusk.ControlPlane.ManagedDeploymentController.DeleteAsync(string! deploymentId, long expectedGeneration, bool overrideProtection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedReconcileResult!>
+BlueTusk.ControlPlane.ManagedDeploymentController.ManagedDeploymentController(BlueTusk.ControlPlane.IManagedDeploymentStore! store, BlueTusk.ControlPlane.IManagedDeploymentLeaseStore! leases, BlueTusk.ControlPlane.IManagedTenantQuotaSource! quotas, BlueTusk.ControlPlane.IManagedInfrastructureProviderResolver! providers, string! owner, System.TimeSpan? leaseDuration = null, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.ManagedDeploymentController.ReconcileAsync(string! deploymentId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedReconcileResult!>
+BlueTusk.ControlPlane.ManagedDeploymentLease
+BlueTusk.ControlPlane.ManagedDeploymentLease.<Clone>$() -> BlueTusk.ControlPlane.ManagedDeploymentLease!
+BlueTusk.ControlPlane.ManagedDeploymentLease.Deconstruct(out string! DeploymentId, out string! Owner, out long FencingToken, out System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.ControlPlane.ManagedDeploymentLease.DeploymentId.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentLease.DeploymentId.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentLease.Equals(BlueTusk.ControlPlane.ManagedDeploymentLease? other) -> bool
+BlueTusk.ControlPlane.ManagedDeploymentLease.ExpiresAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ManagedDeploymentLease.ExpiresAt.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentLease.FencingToken.get -> long
+BlueTusk.ControlPlane.ManagedDeploymentLease.FencingToken.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentLease.ManagedDeploymentLease(string! DeploymentId, string! Owner, long FencingToken, System.DateTimeOffset ExpiresAt) -> void
+BlueTusk.ControlPlane.ManagedDeploymentLease.Owner.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentLease.Owner.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentLeaseException
+BlueTusk.ControlPlane.ManagedDeploymentLeaseException.ManagedDeploymentLeaseException(string! message) -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan
+BlueTusk.ControlPlane.ManagedDeploymentPlan.<Clone>$() -> BlueTusk.ControlPlane.ManagedDeploymentPlan!
+BlueTusk.ControlPlane.ManagedDeploymentPlan.Actions.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedDeploymentAction!>!
+BlueTusk.ControlPlane.ManagedDeploymentPlan.Actions.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan.Deconstruct(out string! DeploymentId, out long Generation, out string! DesiredFingerprint, out string! PlanFingerprint, out bool RequiresChange, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedDeploymentAction!>! Actions) -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan.DeploymentId.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentPlan.DeploymentId.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan.DesiredFingerprint.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentPlan.DesiredFingerprint.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan.Equals(BlueTusk.ControlPlane.ManagedDeploymentPlan? other) -> bool
+BlueTusk.ControlPlane.ManagedDeploymentPlan.Generation.get -> long
+BlueTusk.ControlPlane.ManagedDeploymentPlan.Generation.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan.ManagedDeploymentPlan(string! DeploymentId, long Generation, string! DesiredFingerprint, string! PlanFingerprint, bool RequiresChange, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedDeploymentAction!>! Actions) -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan.PlanFingerprint.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentPlan.PlanFingerprint.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentPlan.RequiresChange.get -> bool
+BlueTusk.ControlPlane.ManagedDeploymentPlan.RequiresChange.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentQuotaSource
+BlueTusk.ControlPlane.ManagedDeploymentQuotaSource.GetQuotaAsync(string! tenantId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedTenantQuota!>
+BlueTusk.ControlPlane.ManagedDeploymentQuotaSource.GetUsageAsync(string! tenantId, string! replacingDeploymentId, BlueTusk.ControlPlane.ManagedDeploymentSpec! desired, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedTenantUsage!>
+BlueTusk.ControlPlane.ManagedDeploymentQuotaSource.ManagedDeploymentQuotaSource(BlueTusk.ControlPlane.IManagedDeploymentStore! store, System.Collections.Generic.IReadOnlyDictionary<string!, BlueTusk.ControlPlane.ManagedTenantQuota!>! tenantQuotas, BlueTusk.ControlPlane.ManagedTenantQuota? defaultQuota = null) -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec
+BlueTusk.ControlPlane.ManagedDeploymentSpec.<Clone>$() -> BlueTusk.ControlPlane.ManagedDeploymentSpec!
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Deconstruct(out string! DeploymentId, out string! TenantId, out string! Provider, out string! Region, out long Generation, out bool Paused, out bool DeleteProtection, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedWorkloadSpec!>! Workloads, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Labels) -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.DeleteProtection.get -> bool
+BlueTusk.ControlPlane.ManagedDeploymentSpec.DeleteProtection.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.DeploymentId.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentSpec.DeploymentId.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Equals(BlueTusk.ControlPlane.ManagedDeploymentSpec? other) -> bool
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Generation.get -> long
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Generation.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Labels.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Labels.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.ManagedDeploymentSpec(string! DeploymentId, string! TenantId, string! Provider, string! Region, long Generation, bool Paused, bool DeleteProtection, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedWorkloadSpec!>! Workloads, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Labels) -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Paused.get -> bool
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Paused.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Provider.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Provider.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Region.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Region.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.TenantId.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentSpec.TenantId.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Workloads.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedWorkloadSpec!>!
+BlueTusk.ControlPlane.ManagedDeploymentSpec.Workloads.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Applying = 2 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Degraded = 4 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Deleted = 7 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Deleting = 6 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Failed = 8 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Paused = 5 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Pending = 0 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Planning = 1 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentState.Ready = 3 -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentStatus
+BlueTusk.ControlPlane.ManagedDeploymentStatus.<Clone>$() -> BlueTusk.ControlPlane.ManagedDeploymentStatus!
+BlueTusk.ControlPlane.ManagedDeploymentStatus.AppliedPlanFingerprint.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentStatus.AppliedPlanFingerprint.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.Deconstruct(out BlueTusk.ControlPlane.ManagedDeploymentState State, out long ObservedGeneration, out long Revision, out long? FencingToken, out string? DesiredFingerprint, out string? AppliedPlanFingerprint, out string? ProviderResourceId, out string? DiagnosticCode, out System.DateTimeOffset UpdatedAt) -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.DesiredFingerprint.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentStatus.DesiredFingerprint.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentStatus.DiagnosticCode.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.Equals(BlueTusk.ControlPlane.ManagedDeploymentStatus? other) -> bool
+BlueTusk.ControlPlane.ManagedDeploymentStatus.FencingToken.get -> long?
+BlueTusk.ControlPlane.ManagedDeploymentStatus.FencingToken.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.ManagedDeploymentStatus(BlueTusk.ControlPlane.ManagedDeploymentState State, long ObservedGeneration, long Revision, long? FencingToken, string? DesiredFingerprint, string? AppliedPlanFingerprint, string? ProviderResourceId, string? DiagnosticCode, System.DateTimeOffset UpdatedAt) -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.ObservedGeneration.get -> long
+BlueTusk.ControlPlane.ManagedDeploymentStatus.ObservedGeneration.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.ProviderResourceId.get -> string?
+BlueTusk.ControlPlane.ManagedDeploymentStatus.ProviderResourceId.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.Revision.get -> long
+BlueTusk.ControlPlane.ManagedDeploymentStatus.Revision.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.State.get -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedDeploymentStatus.State.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentStatus.UpdatedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ManagedDeploymentStatus.UpdatedAt.init -> void
+BlueTusk.ControlPlane.ManagedDeploymentValidation
+BlueTusk.ControlPlane.ManagedDeploymentValidationException
+BlueTusk.ControlPlane.ManagedDeploymentValidationException.Code.get -> string!
+BlueTusk.ControlPlane.ManagedDeploymentValidationException.ManagedDeploymentValidationException(string! code, string! message) -> void
+BlueTusk.ControlPlane.ManagedInfrastructureProviderResolver
+BlueTusk.ControlPlane.ManagedInfrastructureProviderResolver.ManagedInfrastructureProviderResolver(System.Collections.Generic.IEnumerable<BlueTusk.ControlPlane.IManagedInfrastructureProvider!>! providers) -> void
+BlueTusk.ControlPlane.ManagedInfrastructureProviderResolver.Resolve(string! provider) -> BlueTusk.ControlPlane.IManagedInfrastructureProvider!
+BlueTusk.ControlPlane.ManagedProviderResult
+BlueTusk.ControlPlane.ManagedProviderResult.<Clone>$() -> BlueTusk.ControlPlane.ManagedProviderResult!
+BlueTusk.ControlPlane.ManagedProviderResult.AppliedPlanFingerprint.get -> string!
+BlueTusk.ControlPlane.ManagedProviderResult.AppliedPlanFingerprint.init -> void
+BlueTusk.ControlPlane.ManagedProviderResult.Deconstruct(out string! ProviderResourceId, out string! AppliedPlanFingerprint) -> void
+BlueTusk.ControlPlane.ManagedProviderResult.Equals(BlueTusk.ControlPlane.ManagedProviderResult? other) -> bool
+BlueTusk.ControlPlane.ManagedProviderResult.ManagedProviderResult(string! ProviderResourceId, string! AppliedPlanFingerprint) -> void
+BlueTusk.ControlPlane.ManagedProviderResult.ProviderResourceId.get -> string!
+BlueTusk.ControlPlane.ManagedProviderResult.ProviderResourceId.init -> void
+BlueTusk.ControlPlane.ManagedReconcileResult
+BlueTusk.ControlPlane.ManagedReconcileResult.<Clone>$() -> BlueTusk.ControlPlane.ManagedReconcileResult!
+BlueTusk.ControlPlane.ManagedReconcileResult.Changed.get -> bool
+BlueTusk.ControlPlane.ManagedReconcileResult.Changed.init -> void
+BlueTusk.ControlPlane.ManagedReconcileResult.Deconstruct(out string! DeploymentId, out long Generation, out BlueTusk.ControlPlane.ManagedDeploymentState State, out bool Changed, out string? DiagnosticCode) -> void
+BlueTusk.ControlPlane.ManagedReconcileResult.DeploymentId.get -> string!
+BlueTusk.ControlPlane.ManagedReconcileResult.DeploymentId.init -> void
+BlueTusk.ControlPlane.ManagedReconcileResult.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.ManagedReconcileResult.DiagnosticCode.init -> void
+BlueTusk.ControlPlane.ManagedReconcileResult.Equals(BlueTusk.ControlPlane.ManagedReconcileResult? other) -> bool
+BlueTusk.ControlPlane.ManagedReconcileResult.Generation.get -> long
+BlueTusk.ControlPlane.ManagedReconcileResult.Generation.init -> void
+BlueTusk.ControlPlane.ManagedReconcileResult.ManagedReconcileResult(string! DeploymentId, long Generation, BlueTusk.ControlPlane.ManagedDeploymentState State, bool Changed, string? DiagnosticCode) -> void
+BlueTusk.ControlPlane.ManagedReconcileResult.State.get -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ManagedReconcileResult.State.init -> void
+BlueTusk.ControlPlane.ManagedResourceRequest
+BlueTusk.ControlPlane.ManagedResourceRequest.<Clone>$() -> BlueTusk.ControlPlane.ManagedResourceRequest!
+BlueTusk.ControlPlane.ManagedResourceRequest.CpuMillicoresPerReplica.get -> int
+BlueTusk.ControlPlane.ManagedResourceRequest.CpuMillicoresPerReplica.init -> void
+BlueTusk.ControlPlane.ManagedResourceRequest.Deconstruct(out int Replicas, out int CpuMillicoresPerReplica, out long MemoryBytesPerReplica, out long StorageBytes) -> void
+BlueTusk.ControlPlane.ManagedResourceRequest.Equals(BlueTusk.ControlPlane.ManagedResourceRequest? other) -> bool
+BlueTusk.ControlPlane.ManagedResourceRequest.ManagedResourceRequest(int Replicas, int CpuMillicoresPerReplica, long MemoryBytesPerReplica, long StorageBytes) -> void
+BlueTusk.ControlPlane.ManagedResourceRequest.MemoryBytesPerReplica.get -> long
+BlueTusk.ControlPlane.ManagedResourceRequest.MemoryBytesPerReplica.init -> void
+BlueTusk.ControlPlane.ManagedResourceRequest.Replicas.get -> int
+BlueTusk.ControlPlane.ManagedResourceRequest.Replicas.init -> void
+BlueTusk.ControlPlane.ManagedResourceRequest.StorageBytes.get -> long
+BlueTusk.ControlPlane.ManagedResourceRequest.StorageBytes.init -> void
+BlueTusk.ControlPlane.ManagedSecretReference
+BlueTusk.ControlPlane.ManagedSecretReference.<Clone>$() -> BlueTusk.ControlPlane.ManagedSecretReference!
+BlueTusk.ControlPlane.ManagedSecretReference.Deconstruct(out string! Store, out string! Name, out string? Version) -> void
+BlueTusk.ControlPlane.ManagedSecretReference.Equals(BlueTusk.ControlPlane.ManagedSecretReference? other) -> bool
+BlueTusk.ControlPlane.ManagedSecretReference.ManagedSecretReference(string! Store, string! Name, string? Version = null) -> void
+BlueTusk.ControlPlane.ManagedSecretReference.Name.get -> string!
+BlueTusk.ControlPlane.ManagedSecretReference.Name.init -> void
+BlueTusk.ControlPlane.ManagedSecretReference.Store.get -> string!
+BlueTusk.ControlPlane.ManagedSecretReference.Store.init -> void
+BlueTusk.ControlPlane.ManagedSecretReference.Version.get -> string?
+BlueTusk.ControlPlane.ManagedSecretReference.Version.init -> void
+BlueTusk.ControlPlane.ManagedTenantQuota
+BlueTusk.ControlPlane.ManagedTenantQuota.<Clone>$() -> BlueTusk.ControlPlane.ManagedTenantQuota!
+BlueTusk.ControlPlane.ManagedTenantQuota.Deconstruct(out int MaximumDeployments, out int MaximumReplicas, out long MaximumCpuMillicores, out long MaximumMemoryBytes, out long MaximumStorageBytes) -> void
+BlueTusk.ControlPlane.ManagedTenantQuota.Equals(BlueTusk.ControlPlane.ManagedTenantQuota? other) -> bool
+BlueTusk.ControlPlane.ManagedTenantQuota.ManagedTenantQuota(int MaximumDeployments, int MaximumReplicas, long MaximumCpuMillicores, long MaximumMemoryBytes, long MaximumStorageBytes) -> void
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumCpuMillicores.get -> long
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumCpuMillicores.init -> void
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumDeployments.get -> int
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumDeployments.init -> void
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumMemoryBytes.get -> long
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumMemoryBytes.init -> void
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumReplicas.get -> int
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumReplicas.init -> void
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumStorageBytes.get -> long
+BlueTusk.ControlPlane.ManagedTenantQuota.MaximumStorageBytes.init -> void
+BlueTusk.ControlPlane.ManagedTenantUsage
+BlueTusk.ControlPlane.ManagedTenantUsage.<Clone>$() -> BlueTusk.ControlPlane.ManagedTenantUsage!
+BlueTusk.ControlPlane.ManagedTenantUsage.CpuMillicores.get -> long
+BlueTusk.ControlPlane.ManagedTenantUsage.CpuMillicores.init -> void
+BlueTusk.ControlPlane.ManagedTenantUsage.Deconstruct(out int Deployments, out int Replicas, out long CpuMillicores, out long MemoryBytes, out long StorageBytes) -> void
+BlueTusk.ControlPlane.ManagedTenantUsage.Deployments.get -> int
+BlueTusk.ControlPlane.ManagedTenantUsage.Deployments.init -> void
+BlueTusk.ControlPlane.ManagedTenantUsage.Equals(BlueTusk.ControlPlane.ManagedTenantUsage? other) -> bool
+BlueTusk.ControlPlane.ManagedTenantUsage.ManagedTenantUsage(int Deployments, int Replicas, long CpuMillicores, long MemoryBytes, long StorageBytes) -> void
+BlueTusk.ControlPlane.ManagedTenantUsage.MemoryBytes.get -> long
+BlueTusk.ControlPlane.ManagedTenantUsage.MemoryBytes.init -> void
+BlueTusk.ControlPlane.ManagedTenantUsage.Replicas.get -> int
+BlueTusk.ControlPlane.ManagedTenantUsage.Replicas.init -> void
+BlueTusk.ControlPlane.ManagedTenantUsage.StorageBytes.get -> long
+BlueTusk.ControlPlane.ManagedTenantUsage.StorageBytes.init -> void
+BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadKind.ContinuousGraph = 5 -> BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadKind.ControlPlane = 3 -> BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadKind.Dashboard = 4 -> BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadKind.Live = 2 -> BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadKind.Streams = 0 -> BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadKind.Sync = 1 -> BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadSpec
+BlueTusk.ControlPlane.ManagedWorkloadSpec.<Clone>$() -> BlueTusk.ControlPlane.ManagedWorkloadSpec!
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Deconstruct(out BlueTusk.ControlPlane.ManagedWorkloadKind Kind, out string! Version, out BlueTusk.ControlPlane.ManagedResourceRequest! Resources, out System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedSecretReference!>! SecretReferences, out System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Settings) -> void
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Equals(BlueTusk.ControlPlane.ManagedWorkloadSpec? other) -> bool
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Kind.get -> BlueTusk.ControlPlane.ManagedWorkloadKind
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Kind.init -> void
+BlueTusk.ControlPlane.ManagedWorkloadSpec.ManagedWorkloadSpec(BlueTusk.ControlPlane.ManagedWorkloadKind Kind, string! Version, BlueTusk.ControlPlane.ManagedResourceRequest! Resources, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedSecretReference!>! SecretReferences, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Settings) -> void
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Resources.get -> BlueTusk.ControlPlane.ManagedResourceRequest!
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Resources.init -> void
+BlueTusk.ControlPlane.ManagedWorkloadSpec.SecretReferences.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedSecretReference!>!
+BlueTusk.ControlPlane.ManagedWorkloadSpec.SecretReferences.init -> void
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Settings.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Settings.init -> void
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Version.get -> string!
+BlueTusk.ControlPlane.ManagedWorkloadSpec.Version.init -> void
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.GetAsync(string! deploymentId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment?>
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.GetSchemaVersionAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.ListAsync(string? tenantId = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.ControlPlane.ManagedDeployment!>!
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.PostgreSqlManagedDeploymentStore(System.Data.Common.DbDataSource! dataSource, string! controlSchema = "bluetusk_control") -> void
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.PutAsync(BlueTusk.ControlPlane.ManagedDeploymentSpec! spec, long expectedGeneration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment!>
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.ReleaseAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.RenewAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease!>
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.TryAcquireAsync(string! deploymentId, string! owner, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease?>
+BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.UpdateStatusAsync(string! deploymentId, BlueTusk.ControlPlane.ManagedDeploymentStatus! status, long expectedRevision, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment!>
+const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumLabels = 128 -> int
+const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumReplicasPerWorkload = 256 -> int
+const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumSecretReferencesPerWorkload = 128 -> int
+const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumSettingsPerWorkload = 256 -> int
+const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumWorkloads = 32 -> int
+const BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.CurrentDocumentFormatVersion = 1 -> int
+const BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.CurrentSchemaVersion = 1 -> int
+override BlueTusk.ControlPlane.ManagedDeployment.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedDeployment.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedDeployment.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedDeploymentAction.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedDeploymentAction.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedDeploymentAction.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedDeploymentLease.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedDeploymentLease.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedDeploymentLease.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedDeploymentPlan.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedDeploymentPlan.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedDeploymentPlan.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedDeploymentSpec.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedDeploymentSpec.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedDeploymentSpec.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedDeploymentStatus.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedDeploymentStatus.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedDeploymentStatus.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedProviderResult.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedProviderResult.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedProviderResult.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedReconcileResult.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedReconcileResult.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedReconcileResult.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedResourceRequest.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedResourceRequest.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedResourceRequest.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedSecretReference.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedSecretReference.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedSecretReference.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedTenantQuota.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedTenantQuota.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedTenantQuota.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedTenantUsage.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedTenantUsage.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedTenantUsage.ToString() -> string!
+override BlueTusk.ControlPlane.ManagedWorkloadSpec.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ManagedWorkloadSpec.GetHashCode() -> int
+override BlueTusk.ControlPlane.ManagedWorkloadSpec.ToString() -> string!
+static BlueTusk.ControlPlane.ManagedDeployment.operator !=(BlueTusk.ControlPlane.ManagedDeployment? left, BlueTusk.ControlPlane.ManagedDeployment? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeployment.operator ==(BlueTusk.ControlPlane.ManagedDeployment? left, BlueTusk.ControlPlane.ManagedDeployment? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentAction.operator !=(BlueTusk.ControlPlane.ManagedDeploymentAction? left, BlueTusk.ControlPlane.ManagedDeploymentAction? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentAction.operator ==(BlueTusk.ControlPlane.ManagedDeploymentAction? left, BlueTusk.ControlPlane.ManagedDeploymentAction? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentLease.operator !=(BlueTusk.ControlPlane.ManagedDeploymentLease? left, BlueTusk.ControlPlane.ManagedDeploymentLease? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentLease.operator ==(BlueTusk.ControlPlane.ManagedDeploymentLease? left, BlueTusk.ControlPlane.ManagedDeploymentLease? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentPlan.operator !=(BlueTusk.ControlPlane.ManagedDeploymentPlan? left, BlueTusk.ControlPlane.ManagedDeploymentPlan? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentPlan.operator ==(BlueTusk.ControlPlane.ManagedDeploymentPlan? left, BlueTusk.ControlPlane.ManagedDeploymentPlan? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentSpec.operator !=(BlueTusk.ControlPlane.ManagedDeploymentSpec? left, BlueTusk.ControlPlane.ManagedDeploymentSpec? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentSpec.operator ==(BlueTusk.ControlPlane.ManagedDeploymentSpec? left, BlueTusk.ControlPlane.ManagedDeploymentSpec? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentStatus.operator !=(BlueTusk.ControlPlane.ManagedDeploymentStatus? left, BlueTusk.ControlPlane.ManagedDeploymentStatus? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentStatus.operator ==(BlueTusk.ControlPlane.ManagedDeploymentStatus? left, BlueTusk.ControlPlane.ManagedDeploymentStatus? right) -> bool
+static BlueTusk.ControlPlane.ManagedDeploymentValidation.EnforceQuota(BlueTusk.ControlPlane.ManagedDeploymentSpec! spec, BlueTusk.ControlPlane.ManagedTenantQuota! quota, BlueTusk.ControlPlane.ManagedTenantUsage! usage) -> void
+static BlueTusk.ControlPlane.ManagedDeploymentValidation.GetFingerprint(BlueTusk.ControlPlane.ManagedDeploymentSpec! spec) -> string!
+static BlueTusk.ControlPlane.ManagedDeploymentValidation.GetRequestedUsage(BlueTusk.ControlPlane.ManagedDeploymentSpec! spec) -> BlueTusk.ControlPlane.ManagedTenantUsage!
+static BlueTusk.ControlPlane.ManagedDeploymentValidation.Validate(BlueTusk.ControlPlane.ManagedDeploymentSpec! spec) -> void
+static BlueTusk.ControlPlane.ManagedProviderResult.operator !=(BlueTusk.ControlPlane.ManagedProviderResult? left, BlueTusk.ControlPlane.ManagedProviderResult? right) -> bool
+static BlueTusk.ControlPlane.ManagedProviderResult.operator ==(BlueTusk.ControlPlane.ManagedProviderResult? left, BlueTusk.ControlPlane.ManagedProviderResult? right) -> bool
+static BlueTusk.ControlPlane.ManagedReconcileResult.operator !=(BlueTusk.ControlPlane.ManagedReconcileResult? left, BlueTusk.ControlPlane.ManagedReconcileResult? right) -> bool
+static BlueTusk.ControlPlane.ManagedReconcileResult.operator ==(BlueTusk.ControlPlane.ManagedReconcileResult? left, BlueTusk.ControlPlane.ManagedReconcileResult? right) -> bool
+static BlueTusk.ControlPlane.ManagedResourceRequest.operator !=(BlueTusk.ControlPlane.ManagedResourceRequest? left, BlueTusk.ControlPlane.ManagedResourceRequest? right) -> bool
+static BlueTusk.ControlPlane.ManagedResourceRequest.operator ==(BlueTusk.ControlPlane.ManagedResourceRequest? left, BlueTusk.ControlPlane.ManagedResourceRequest? right) -> bool
+static BlueTusk.ControlPlane.ManagedSecretReference.operator !=(BlueTusk.ControlPlane.ManagedSecretReference? left, BlueTusk.ControlPlane.ManagedSecretReference? right) -> bool
+static BlueTusk.ControlPlane.ManagedSecretReference.operator ==(BlueTusk.ControlPlane.ManagedSecretReference? left, BlueTusk.ControlPlane.ManagedSecretReference? right) -> bool
+static BlueTusk.ControlPlane.ManagedTenantQuota.operator !=(BlueTusk.ControlPlane.ManagedTenantQuota? left, BlueTusk.ControlPlane.ManagedTenantQuota? right) -> bool
+static BlueTusk.ControlPlane.ManagedTenantQuota.operator ==(BlueTusk.ControlPlane.ManagedTenantQuota? left, BlueTusk.ControlPlane.ManagedTenantQuota? right) -> bool
+static BlueTusk.ControlPlane.ManagedTenantUsage.operator !=(BlueTusk.ControlPlane.ManagedTenantUsage? left, BlueTusk.ControlPlane.ManagedTenantUsage? right) -> bool
+static BlueTusk.ControlPlane.ManagedTenantUsage.operator ==(BlueTusk.ControlPlane.ManagedTenantUsage? left, BlueTusk.ControlPlane.ManagedTenantUsage? right) -> bool
+static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator !=(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
+static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator ==(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
