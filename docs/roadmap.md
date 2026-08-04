@@ -693,4 +693,6 @@ Every milestone requires unit, fake-server, conformance, and real-server accepta
   instruction VM, stable fingerprinting, cancellation/time/operation/byte
   budgets, tenant-safe routing, poison handling, and no code-loading or host-I/O
   surface
-- [ ] Incremental Continuous Graph evaluation with authoritative repair
+- [x] Incremental Continuous Graph evaluation with authorised affected-key
+  queries, bounded top-N maintenance, authoritative repair, proposal rollback,
+  idempotent replay, and replay-before-Streams-ack ordering

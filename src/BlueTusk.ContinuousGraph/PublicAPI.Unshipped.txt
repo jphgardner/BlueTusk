@@ -1,6 +1,77 @@
 #nullable enable
 BlueTusk.ContinuousGraph.ContinuousGraphCapabilityException
 BlueTusk.ContinuousGraph.ContinuousGraphCapabilityException.ContinuousGraphCapabilityException(string! message) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>.Batch.get -> BlueTusk.Live.LiveDiffBatch<TResult!, TKey>?
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>.Detail.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>.Mode.get -> BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>.SourcePosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationDelivery<TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationDelivery<TResult, TKey>.CommitAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationDelivery<TResult, TKey>.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationDelivery<TResult, TKey>.Evaluation.get -> BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult!, TKey>!
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode.AuthoritativeRepair = 3 -> BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode.Duplicate = 4 -> BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode.Incremental = 2 -> BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode.Initial = 0 -> BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode.Unrelated = 1 -> BlueTusk.ContinuousGraph.ContinuousGraphEvaluationMode
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.CompleteSnapshotAsync(BlueTusk.Streams.SnapshotComplete! complete, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.ConsumeSnapshotBatchAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.ConsumeTransactionAsync(BlueTusk.Streams.ChangeTransactionDelivery! delivery, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.ContinuousGraphIncrementalConsumer(BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult!, TKey>! session, BlueTusk.Live.ILiveReplayStore! replayStore) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.Identity.get -> BlueTusk.Live.LiveSubscriptionIdentity!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.ResetSnapshotAsync(BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalConsumer<TResult, TKey>.StartSnapshotAsync(BlueTusk.Streams.SnapshotStart! start, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition.Exact = 1 -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition.RequiresRepair = 2 -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition.Unrelated = 0 -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalException
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalException.ContinuousGraphIncrementalException(string! message, System.Exception! innerException) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalException.ContinuousGraphIncrementalException(string! message) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.ContinuousGraphIncrementalOptions() -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.DiffOptions.get -> BlueTusk.Live.LiveDiffOptions!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.DiffOptions.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.KeyOrdering.get -> System.Collections.Generic.IComparer<TKey>!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.KeyOrdering.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.MaximumAffectedKeys.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.MaximumAffectedKeys.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.MaximumRepairInterval.get -> System.TimeSpan
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.MaximumRepairInterval.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.RepairAfterTransactions.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.RepairAfterTransactions.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.ResultOrdering.get -> System.Collections.Generic.IComparer<TResult!>!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.ResultOrdering.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.TimeProvider.get -> System.TimeProvider!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult, TKey>.TimeProvider.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.AffectedKeys.get -> System.Collections.Generic.IReadOnlyList<TKey>!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.Detail.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.Disposition.get -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalDisposition
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.Rows.get -> System.Collections.Generic.IReadOnlyList<TResult!>!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult, TKey>
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult, TKey>.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult, TKey>.Identity.get -> BlueTusk.Live.LiveSubscriptionIdentity!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult, TKey>.PrepareInitialAsync(long nextSequence = 1, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphEvaluationDelivery<TResult!, TKey>!>
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult, TKey>.PrepareRepairAsync(string! detail, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphEvaluationDelivery<TResult!, TKey>!>
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult, TKey>.PrepareTransactionAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphEvaluationDelivery<TResult!, TKey>!>
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult, TKey>.Status.get -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.AuthoritativeRepairs.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.DuplicateTransactions.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.FallbackRepairs.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.IncrementalTransactions.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.IsInitialized.get -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.LastRepairAt.get -> System.DateTimeOffset?
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.NextSequence.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.SourcePosition.get -> BlueTusk.TypeSystem.BlueTuskLogSequenceNumber?
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.TransactionsSinceRepair.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.UnrelatedTransactions.get -> long
 BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler
 BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>
 BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext, TResult, TKey>.ContinuousGraphQueryDefinition(string! name, string! databaseIdentity, string! version, string! graphName, string? graphSchema, System.Collections.Generic.IEnumerable<string!>! elementTableAliases, System.Collections.Generic.IEnumerable<BlueTusk.Live.LiveQueryParameter!>! parameters, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! validationArguments, int maximumResultCount, System.Func<TContext!, BlueTusk.Live.LiveQueryArguments!, System.Linq.IQueryable<TResult!>!>! queryFactory, System.Linq.Expressions.Expression<System.Func<TResult!, TKey>!>! keySelector, System.Collections.Generic.IEqualityComparer<TResult!>! rowComparer) -> void
@@ -29,6 +100,7 @@ BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.MaximumResultCount.get -
 BlueTusk.ContinuousGraph.ContinuousGraphQueryDescriptor.Name.get -> string!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Bind(System.Collections.Generic.IReadOnlyDictionary<string!, object?>! values) -> BlueTusk.Live.LiveQueryArguments!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.CreateIncrementalSession(BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, BlueTusk.ContinuousGraph.IContinuousGraphIncrementalEvaluator<TResult!, TKey>! evaluator, BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult!, TKey>! options, int? resultLimit = null) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult!, TKey>!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.CreateSession(BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, BlueTusk.Live.ILiveInvalidationLog! invalidationLog, int? resultLimit = null, BlueTusk.Live.LiveQuerySessionOptions? options = null) -> BlueTusk.Live.LiveQuerySession<TResult!, TKey>!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Dependencies.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.Live.LiveTableDependency!>!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.ElementTableAliases.get -> System.Collections.Generic.IReadOnlyList<string!>!
@@ -38,8 +110,8 @@ BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.GraphSchema.get
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.LivePlan.get -> BlueTusk.Live.LiveQueryPlan<TResult!, TKey>!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.Name.get -> string!
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException
-BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException.ContinuousGraphQueryRegistrationException(string! message) -> void
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException.ContinuousGraphQueryRegistrationException(string! message, System.Exception! innerException) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistrationException.ContinuousGraphQueryRegistrationException(string! message) -> void
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.ContinuousGraphQueryRegistry() -> void
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.Count.get -> int
@@ -49,7 +121,12 @@ BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.Register<TResult, TKey>(Bl
 BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry.Unregister(string! fingerprint) -> bool
 BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe
 BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe.EnsureSupportedAsync(Microsoft.EntityFrameworkCore.DbContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ContinuousGraph.IContinuousGraphIncrementalEvaluator<TResult, TKey>
+BlueTusk.ContinuousGraph.IContinuousGraphIncrementalEvaluator<TResult, TKey>.EvaluateAsync(BlueTusk.Streams.ChangeTransaction! transaction, BlueTusk.Live.LiveQueryExecutionContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult!, TKey>!>
 BlueTusk.ContinuousGraph.PostgreSql19ContinuousGraphCapabilityProbe
 BlueTusk.ContinuousGraph.PostgreSql19ContinuousGraphCapabilityProbe.EnsureSupportedAsync(Microsoft.EntityFrameworkCore.DbContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
 BlueTusk.ContinuousGraph.PostgreSql19ContinuousGraphCapabilityProbe.PostgreSql19ContinuousGraphCapabilityProbe() -> void
+static BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.Exact(System.Collections.Generic.IEnumerable<TKey>! affectedKeys, System.Collections.Generic.IEnumerable<TResult!>! rows, string? detail = null) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult!, TKey>!
+static BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.RequiresRepair(string! detail) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult!, TKey>!
+static BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.Unrelated(string? detail = null) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult!, TKey>!
 static BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler.CompileAsync<TContext, TResult, TKey>(Microsoft.EntityFrameworkCore.IDbContextFactory<TContext!>! contextFactory, BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext!, TResult!, TKey>! definition, BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe? capabilityProbe = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult!, TKey>!>

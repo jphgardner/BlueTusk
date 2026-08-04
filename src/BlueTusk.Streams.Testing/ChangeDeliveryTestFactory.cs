@@ -41,6 +41,55 @@ public static class ChangeDeliveryTestFactory
                 estimatedBytes: 0,
                 isSpooled: false,
                 cancellationToken => ReadChangesAsync(materialized, cancellationToken)));
+        return CreateDelivery(transaction, observer);
+    }
+
+    public static ChangeTransactionDelivery CreateTwoPhase(
+        ChangeSourceIdentity source,
+        uint transactionId,
+        BlueTuskLogSequenceNumber commitEndPosition,
+        ChangeTransactionOutcome outcome,
+        string globalTransactionId,
+        IEnumerable<Change>? changes = null,
+        IChangeDeliveryObserver? observer = null,
+        DateTimeOffset? commitTimestamp = null)
+    {
+        ArgumentNullException.ThrowIfNull(source);
+        ArgumentException.ThrowIfNullOrWhiteSpace(globalTransactionId);
+        var materialized = changes?.ToArray() ?? [];
+        if (materialized.Any(change =>
+                change.Id.Source != source ||
+                change.Id.CommitEndPosition != commitEndPosition ||
+                change.Id.TransactionId != transactionId))
+        {
+            throw new ArgumentException(
+                "Every test change must retain the transaction identity.",
+                nameof(changes));
+        }
+
+        var transaction = new ChangeTransaction(
+            source,
+            transactionId,
+            commitEndPosition,
+            commitEndPosition,
+            commitEndPosition,
+            commitTimestamp ?? DateTimeOffset.UtcNow,
+            origin: null,
+            isSynthetic: false,
+            outcome,
+            globalTransactionId,
+            new ChangeSet(
+                materialized.Length,
+                estimatedBytes: 0,
+                isSpooled: false,
+                cancellationToken => ReadChangesAsync(materialized, cancellationToken)));
+        return CreateDelivery(transaction, observer);
+    }
+
+    private static ChangeTransactionDelivery CreateDelivery(
+        ChangeTransaction transaction,
+        IChangeDeliveryObserver? observer)
+    {
         return new ChangeTransactionDelivery(
             transaction,
             cancellationToken => observer?.AcknowledgeAsync(transaction, cancellationToken) ??

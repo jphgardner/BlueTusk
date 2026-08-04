@@ -31,6 +31,9 @@ Every phase additionally requires formatting, a zero-warning build, current prov
   Capability-secured client SQL/remote LINQ is implemented with explicit
   application grants, RLS plus dedicated read-only roles for SQL, bounded
   execution, conservative invalidation, and security-scoped sharing.
-  Incremental graph evaluation remains V1 scope and gated until its production
-  contract and evidence land. “Arbitrary” client queries never means bypassing
-  RLS, tenant scope, authorisation, cost limits, or cancellation.
+  Bounded incremental graph evaluation is implemented with authorised
+  affected-key queries, conservative top-N maintenance, authoritative repair,
+  transactional proposal commit, and replay-before-ack recovery. It remains
+  release-gated until the Phase 8 production evidence lands. “Arbitrary” client
+  queries never means bypassing RLS, tenant scope, authorisation, cost limits,
+  or cancellation.

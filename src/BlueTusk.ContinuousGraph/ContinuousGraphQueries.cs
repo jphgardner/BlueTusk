@@ -207,6 +207,21 @@ public sealed class ContinuousGraphQueryPlan<TResult, TKey>
         int? resultLimit = null,
         LiveQuerySessionOptions? options = null) =>
         new(LivePlan, arguments, securityScope, invalidationLog, resultLimit, options);
+
+    public ContinuousGraphIncrementalSession<TResult, TKey>
+        CreateIncrementalSession(
+            LiveQueryArguments arguments,
+            LiveSecurityScope securityScope,
+            IContinuousGraphIncrementalEvaluator<TResult, TKey> evaluator,
+            ContinuousGraphIncrementalOptions<TResult, TKey> options,
+            int? resultLimit = null) =>
+        new(
+            this,
+            arguments,
+            securityScope,
+            evaluator,
+            options,
+            resultLimit);
 }
 
 /// <summary>Compiles registered typed SQL/PGQ queries into bounded authoritative Live plans.</summary>

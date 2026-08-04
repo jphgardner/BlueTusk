@@ -103,9 +103,55 @@ source of client-visible data. The context factory and registered query remain
 responsible for applying RLS, tenant settings, and application authorisation.
 Security scopes participate in Live subscription identity and are never shared.
 
-Cancellation flows through context creation and EF execution. Incremental graph
-maintenance, arbitrary client SQL/LINQ, unbounded paths, and dependency
-inference from caller-authored raw SQL are outside this preview.
+Cancellation flows through context creation and EF execution. Unbounded paths
+and dependency inference from caller-authored raw SQL remain unsupported.
+
+## Incremental maintenance
+
+For high-change workloads, a compiled plan can maintain its bounded result from
+authorised affected-key queries and use a full `GRAPH_TABLE` query only when
+correctness cannot be proved:
+
+```csharp
+var incremental = plan.CreateIncrementalSession(
+    arguments,
+    new LiveSecurityScope("tenant:acme:user:17", "fraud-policy-v4"),
+    affectedKeyEvaluator,
+    new ContinuousGraphIncrementalOptions<FraudPath, long>
+    {
+        ResultOrdering = FraudPathOrdering.Instance,
+        KeyOrdering = Comparer<long>.Default,
+        MaximumAffectedKeys = 512,
+        RepairAfterTransactions = 1_000,
+        MaximumRepairInterval = TimeSpan.FromMinutes(5),
+    });
+
+var consumer = new ContinuousGraphIncrementalConsumer<FraudPath, long>(
+    incremental,
+    replayStore);
+```
+
+`IContinuousGraphIncrementalEvaluator<TResult,TKey>` receives one immutable
+Streams transaction and the bound Live security context. It must derive the
+complete affected result-key set and run a registered, authorised key-scoped
+database query. Return `Exact` only when that set is complete, `Unrelated` when
+the transaction cannot affect the plan, or `RequiresRepair` when coverage is
+uncertain. CDC tuple values are never suitable as the returned rows.
+
+The engine safely applies new candidates, in-place changes, and rank
+improvements. It performs an authoritative full query when a visible row is
+removed, leaves the predicate, worsens in rank, exceeds the affected-key
+budget, comes through commit-prepared, or reaches a transaction/time repair
+interval. These fallbacks recover rows outside the currently visible top-N.
+Malformed evaluator output fails closed.
+
+Each evaluation is a prepared transition. Disposing it rolls back; committing
+it advances the source position and event sequence. The supplied Streams
+consumer persists Live replay first, commits the transition second, and
+acknowledges the source delivery last. Byte-identical replay retry closes the
+post-store/pre-ack crash window. A process restart emits a new authoritative
+initial result at the next replay sequence before source consumption resumes.
+See [ADR 0016](../architecture/decisions/0016-authoritative-incremental-graph-maintenance.md).
 
 ## Samples
 
@@ -142,14 +188,20 @@ Control Plane core does not reference Continuous Graph.
 The two packages are independently versioned as `0.1.0-preview.1` and have
 passed their Phase 7 implementation gates. `BlueTusk.ContinuousGraph` contains
 the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
-operations adapter. The family remains non-publishable until Provider, Live,
-and Control Plane release dependencies are enabled in order. The release
-script machine-enforces that dependency readiness.
+operations adapter. The family remains non-publishable until Provider,
+Streams, Live, and Control Plane release dependencies are enabled in order.
+The release script machine-enforces that dependency readiness.
+The Phase 8 incremental-maintenance slice is implemented and remains in the
+unshipped API baseline while its production evidence is gathered.
 See the [preview release notes](release-notes-0.1.0-preview.1.md) for the exact
 scope and boundaries.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,
 Live session handoff, unsupported-server rejection, and fail-closed query
-shapes. The opt-in PostgreSQL 19 acceptance test creates a real property graph,
+shapes. Incremental state-machine tests cover exact top-N updates, repair
+fallbacks, bounded affected keys, two-phase lifecycle handling, rollback,
+duplicate delivery, evaluator contract failures, and replay-before-ack
+recovery. The opt-in PostgreSQL 19
+acceptance test creates a real property graph,
 materialises the initial result, mutates an affected vertex, observes the
 authoritative keyed update, and cancellation-aborts a graph query blocked on an
 exclusive table lock.
@@ -160,6 +212,12 @@ Run that live gate against the repository's PostgreSQL 19 service:
 docker compose -f eng/compose/postgres.yml --profile preview up -d postgres19
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable"
 dotnet test tests/BlueTusk.ContinuousGraph.Tests
+```
+
+Run only the deterministic incremental contract:
+
+```powershell
+dotnet test tests/BlueTusk.ContinuousGraph.Tests/BlueTusk.ContinuousGraph.Tests.csproj --filter FullyQualifiedName~ContinuousGraphIncrementalTests
 ```
 
 The checked-in live workload measures capability-guarded registration,
