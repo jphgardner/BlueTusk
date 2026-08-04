@@ -83,6 +83,7 @@ $familyNames = @(
 )
 $artifactRecords = [Collections.Generic.List[object]]::new()
 $familyRecords = [Collections.Generic.List[object]]::new()
+$totalPackageBytes = 0L
 $artifactNames = [Collections.Generic.HashSet[string]]::new(
     [StringComparer]::OrdinalIgnoreCase)
 
@@ -138,6 +139,7 @@ try
                 bytes = $copied.Length
             })
             $familyBytes += $copied.Length
+            $totalPackageBytes += $copied.Length
         }
 
         $familyRecords.Add([ordered]@{
@@ -180,10 +182,7 @@ try
         sourceCommit = $Commit
         familyCount = $familyRecords.Count
         artifactCount = $sortedArtifacts.Count
-        totalBytes = [long](
-            $sortedArtifacts |
-                Measure-Object -Property bytes -Sum
-        ).Sum
+        totalBytes = $totalPackageBytes
         families = @($familyRecords | Sort-Object id)
         artifacts = $sortedArtifacts
         supplyChain = $supplyFiles
@@ -204,4 +203,4 @@ finally
 Write-Output (
     "Built immutable V1 package evidence for commit ${Commit}: " +
     "$($familyRecords.Count) families, $($artifactRecords.Count) package artifacts, " +
-    "$([long]($artifactRecords | Measure-Object -Property bytes -Sum).Sum) bytes.")
+    "$totalPackageBytes bytes.")

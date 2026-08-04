@@ -154,10 +154,11 @@ foreach ($family in $expectedFamilies)
         [string]$_.family -eq $family
     })
     $summary = @($familyEntries | Where-Object { [string]$_.id -eq $family })
-    $familyBytes = [long](
-        $familyRecords |
-            Measure-Object -Property bytes -Sum
-    ).Sum
+    $familyBytes = 0L
+    foreach ($familyRecord in $familyRecords)
+    {
+        $familyBytes += [long]$familyRecord.bytes
+    }
     if ($summary.Count -ne 1 -or
         $familyRecords.Count -eq 0 -or
         [int]$summary[0].artifactCount -ne $familyRecords.Count -or
