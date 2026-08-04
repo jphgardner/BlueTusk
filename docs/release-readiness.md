@@ -50,9 +50,18 @@ PostgreSQL synchronization group per command, per-group cancellation and error
 isolation, forced-shutdown transport abort, and scheduler statistics. Explicit
 connections, transactions, prepared commands, replication, notifications, and
 stateful SQL remain session-affine. Live PostgreSQL tests cover concurrent
-fan-in, cancellation, timeouts, adjacent errors, reset isolation, and stuck-lane
-shutdown. The Npgsql comparison and checked-in regression budget must pass
-before the V1 baseline is frozen.
+fan-in, FIFO fairness, pool exhaustion, queue admission cancellation, command
+timeouts, adjacent errors, reset isolation, lease rotation, and stuck-lane
+shutdown. PgBouncer session and transaction modes have separate live acceptance.
+
+The frozen V1 MediumRun from commit `9ba2c50` compares four physical lanes and
+64-command bursts against both Npgsql multiplexing and ordinary pooled
+BlueTusk/Npgsql. BlueTusk records lower mean, P95, and P99 latency than Npgsql
+for fresh and reused multiplexed commands in the named loopback environment,
+while its fresh-command allocation is also slightly lower. The full report,
+environment/image/commit manifest, SHA-256, and machine-readable budget are
+checked in and verified by CI. This is a regression gate, not a universal
+performance or production-readiness claim.
 
 ## Cancellation
 

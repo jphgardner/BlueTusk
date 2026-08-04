@@ -55,6 +55,10 @@ jobs:
         shell: pwsh
         run: ./eng/verify-allocation-budgets.ps1
 
+      - name: Verify checked-in multiplexing performance evidence
+        shell: pwsh
+        run: ./eng/verify-multiplexing-performance.ps1
+
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
 

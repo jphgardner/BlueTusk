@@ -43,6 +43,15 @@ intervals overlap and are treated as parity despite lower BlueTusk means. These
 longer paired results are regression evidence, not a
 provider-wide latency guarantee.
 
+The V1 multiplexing MediumRun uses four physical lanes and 64-command bursts.
+It records BlueTusk/Npgsql fresh-command allocation at 1,733/1,738 B and
+reused-command allocation at 1,143/794 B. Mean latency is 19.83/20.57 µs for
+fresh commands and 17.41/20.01 µs for reused commands; BlueTusk also records
+lower P95 and P99 in both pairs. Against ordinary pooled BlueTusk, multiplexing
+uses less than 30% of the latency and 60% of the allocation allowed by the
+checked-in budgets. The full result measurements and environment manifest are
+stored under `benchmarks/baselines/windows-ryzen7-5800x-dotnet10`.
+
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session. Incremental field reads of at least 8 KiB pass the caller's buffer directly to the transport after consuming buffered bytes, avoiding both an intermediate copy and a transient large rental; smaller reads use adaptive bounded read-ahead. The socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 
 Warm command instances cache the structural named-parameter plan, but parameter
@@ -92,6 +101,7 @@ Machine-readable limits live in `benchmarks/allocation-budgets.json`. They inten
 
 ```powershell
 pwsh -File eng/verify-allocation-budgets.ps1
+pwsh -File eng/verify-multiplexing-performance.ps1
 ```
 
 Raising a budget requires an explanation in the budget file and updated benchmark evidence. A release-grade performance claim still requires longer runs across supported environments; the short baselines and paired MediumRun are regression evidence, not universal throughput promises.

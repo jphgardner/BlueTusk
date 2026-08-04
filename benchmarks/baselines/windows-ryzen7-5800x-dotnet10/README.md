@@ -49,16 +49,24 @@ large-stream intervals overlap and are treated as parity despite lower BlueTusk
 means. These results are an optimization and regression baseline, not a
 provider-wide superiority claim or release performance guarantee.
 
-The V1 multiplexing MediumRun was added on 2026-08-04 on the same processor,
-runtime, and PostgreSQL 18 loopback server. Both providers use four physical
-lanes, 64 concurrent parameterized scalar commands, no command timeout, and one
-logical command per operation. End-to-end BlueTusk/Npgsql results are
-21.71/24.33 µs and 1,727/1,738 B per command. Reusing the 64 command objects
-records 18.84/27.66 µs and 1,127/794 B. BlueTusk therefore has the lower mean
-latency in both pairs and slightly lower end-to-end allocation, while Npgsql
-retains the allocation advantage when command construction is excluded.
-End-to-end latency intervals overlap narrowly, so this is a regression baseline,
-not a universal superiority claim.
+The V1 multiplexing MediumRun was captured from commit
+`9ba2c50c05c9d995b3b78cf65f6d88ee207e835f` on 2026-08-04 on the
+same processor and a PostgreSQL 18 loopback server. Both providers use four
+physical lanes, 64 concurrent parameterized scalar commands, no command
+timeout, and one logical command per operation. End-to-end BlueTusk/Npgsql
+results are 19.83/20.57 µs mean, 20.93/22.26 µs P95, 21.06/22.51 µs P99,
+and 1,733/1,738 B per command. Reusing the 64 command objects records
+17.41/20.01 µs mean, 19.34/21.53 µs P95, 20.04/21.69 µs P99, and
+1,143/794 B. BlueTusk therefore has lower mean and tail latency in both
+pairs and slightly lower end-to-end allocation, while Npgsql retains the
+allocation advantage when command construction is excluded.
+
+The checked-in full JSON contains 25–30 measured samples per workload and
+passes the machine-readable mean, P95, P99, throughput-derived, and allocation
+budgets. The adjacent evidence manifest binds the report hash to the source
+commit, runtime, operating system, and PostgreSQL image digest. This is a
+named-environment regression baseline, not a universal provider superiority
+claim.
 
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first

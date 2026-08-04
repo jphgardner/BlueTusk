@@ -1,0 +1,37 @@
+{
+  "schemaVersion": 1,
+  "sourceCommit": "9ba2c50c05c9d995b3b78cf65f6d88ee207e835f",
+  "capturedUtc": "2026-08-04T03:23:11.2365171Z",
+  "benchmark": {
+    "framework": "BenchmarkDotNet 0.15.8",
+    "job": "MediumRun",
+    "toolchain": "InProcessEmitToolchain",
+    "launchCount": 2,
+    "warmupCount": 10,
+    "iterationCount": 15,
+    "logicalOperationsPerBurst": 64,
+    "physicalLanes": 4,
+    "commandTimeout": "infinite"
+  },
+  "environment": {
+    "os": "Windows 11 10.0.26200.8973",
+    "architecture": "x64",
+    "processor": "AMD Ryzen 7 5800X 8-Core Processor",
+    "dotnetSdk": "10.0.302",
+    "dotnetRuntime": "10.0.10",
+    "postgresqlMajor": 18,
+    "postgresqlImage": "postgres:18-alpine",
+    "postgresqlImageDigest": "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "topology": "Dedicated PostgreSQL loopback server; BlueTusk and Npgsql each use four physical lanes."
+  },
+  "command": "dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj -c Release --no-build -- --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'",
+  "report": {
+    "path": "results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json",
+    "sha256": "befd48164bdb4db7cf6d21915ed552c1f8e52dd12803c73fdfc5711276a921db"
+  },
+  "verification": {
+    "budgetPath": "../../../eng/multiplexing-performance-budgets.json",
+    "command": "./eng/verify-multiplexing-performance.ps1",
+    "result": "passed"
+  }
+}

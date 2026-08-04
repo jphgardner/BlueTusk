@@ -4,7 +4,11 @@ param(
             "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\results\" +
             "BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json")),
     [string]$BudgetPath = (
-        Join-Path $PSScriptRoot "multiplexing-performance-budgets.json")
+        Join-Path $PSScriptRoot "multiplexing-performance-budgets.json"),
+    [string]$EvidencePath = (
+        Join-Path $PSScriptRoot (
+            "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\" +
+            "multiplexing-evidence.json"))
 )
 
 $ErrorActionPreference = 'Stop'
@@ -93,6 +97,53 @@ $resolvedReport = (Resolve-Path -LiteralPath $ReportPath).Path
 $resolvedBudgets = (Resolve-Path -LiteralPath $BudgetPath).Path
 $report = Get-Content -LiteralPath $resolvedReport -Raw | ConvertFrom-Json
 $budgets = Get-Content -LiteralPath $resolvedBudgets -Raw | ConvertFrom-Json
+
+# The default CI invocation validates the immutable checked-in evidence as well
+# as its budgets. A caller supplying a fresh -ReportPath can evaluate a new run
+# without pretending that it is the frozen reference. Supplying -EvidencePath
+# explicitly validates both a custom report and its proposed manifest.
+$validateEvidence = (
+    -not $PSBoundParameters.ContainsKey('ReportPath') -or
+    $PSBoundParameters.ContainsKey('EvidencePath'))
+if ($validateEvidence) {
+    $resolvedEvidence = (Resolve-Path -LiteralPath $EvidencePath).Path
+    $evidence = Get-Content -LiteralPath $resolvedEvidence -Raw | ConvertFrom-Json
+    $manifestReport = (
+        Resolve-Path -LiteralPath (
+            Join-Path (Split-Path -Parent $resolvedEvidence) ([string]$evidence.report.path))
+    ).Path
+    if ($manifestReport -ne $resolvedReport) {
+        throw "The evidence manifest references '$manifestReport', not '$resolvedReport'."
+    }
+
+    $actualReportHash = (
+        Get-FileHash -LiteralPath $resolvedReport -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    $expectedReportHash = ([string]$evidence.report.sha256).ToLowerInvariant()
+    if ($actualReportHash -ne $expectedReportHash) {
+        throw (
+            "The multiplexing report SHA-256 is $actualReportHash; " +
+            "the evidence manifest requires $expectedReportHash.")
+    }
+
+    if ([string]$evidence.sourceCommit -notmatch '^[0-9a-f]{40}$') {
+        throw "The evidence source commit must be a full lowercase Git SHA."
+    }
+
+    if ([string]$evidence.environment.postgresqlImageDigest -notmatch '^postgres@sha256:[0-9a-f]{64}$') {
+        throw "The evidence manifest must pin the PostgreSQL image digest."
+    }
+
+    if ([string]$report.HostEnvironmentInfo.DotNetCliVersion -ne [string]$evidence.environment.dotnetSdk) {
+        throw "The report SDK does not match the evidence manifest."
+    }
+
+    if ([string]$report.HostEnvironmentInfo.RuntimeVersion -notlike (
+        ".NET $($evidence.environment.dotnetRuntime)*")) {
+        throw "The report runtime does not match the evidence manifest."
+    }
+}
+
 $minimumSamples = [int]$budgets.minimumResultSamples
 $metrics = @{}
 
@@ -162,3 +213,8 @@ $metrics.Values |
 Write-Host (
     "Multiplexing performance evidence satisfies all configured mean, P95, P99, " +
     "throughput-derived, and allocation budgets.")
+if ($validateEvidence) {
+    Write-Host (
+        "Evidence integrity matches source commit $($evidence.sourceCommit), " +
+        "the report SHA-256, runtime, SDK, and pinned PostgreSQL image digest.")
+}

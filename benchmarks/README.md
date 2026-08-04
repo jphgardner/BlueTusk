@@ -125,16 +125,25 @@ protocol costs are visible separately from command construction.
 
 ```powershell
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --filter '*MultiplexingComparisonBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
+./eng/verify-multiplexing-performance.ps1 `
+  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json
 ```
 
-The 2026-08-04 Windows/Ryzen 7 5800X MediumRun records 21.71 µs and
-1,727 B per end-to-end BlueTusk command versus 24.33 µs and 1,738 B for
-Npgsql. Reused commands record 18.84/27.66 µs and 1,127/794 B respectively.
-BlueTusk has lower mean latency in both fixtures and slightly lower end-to-end
-allocation; Npgsql allocates less when construction is excluded. The
-end-to-end confidence intervals overlap narrowly, so the checked-in report is a
-regression gate rather than a universal provider claim.
+The 2026-08-04 Windows/Ryzen 7 5800X MediumRun from commit `9ba2c50`
+records BlueTusk/Npgsql at 19.83/20.57 µs mean, 20.93/22.26 µs P95,
+21.06/22.51 µs P99, and 1,733/1,738 B for end-to-end commands. Reused
+commands record 17.41/20.01 µs mean, 19.34/21.53 µs P95,
+20.04/21.69 µs P99, and 1,143/794 B. BlueTusk has lower mean and tail
+latency in both fixtures and slightly lower end-to-end allocation; Npgsql
+allocates less when construction is excluded. The full checked-in report,
+environment manifest, and budget verifier make this a reproducible regression
+gate rather than a universal provider claim.
+
+`--inProcess` is required for this repository fixture on Windows because
+archived worktrees below ignored artifact directories can otherwise be
+discovered by BenchmarkDotNet's generated-project build. It does not change
+the workload, iteration counts, or measured command boundary.
 
 The sequential-reader baseline exposed a 32-row portal-fetch default that made a
 1,000-row scan pay 32 additional network exchanges. The optimized unlimited path

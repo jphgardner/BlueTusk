@@ -5,8 +5,10 @@ This file tracks executable repository status. The product vision is broader; un
 The post-development V1 [hardening programme](hardening-programme.md) is now the
 release-critical path. Its internal EF↔Data provider SPI and provider-core
 NativeAOT/trimming slices are complete, including executable publish gates and
-measured budgets. Multiplexing hardening is next; new product-family breadth
-remains paused until the current release chain has credible evidence.
+measured budgets. Multiplexing hardening is also complete, including PgBouncer,
+failure/fairness coverage and commit-bound comparative mean/P95/P99/allocation
+evidence. Coverage-guided fuzzing is next; new product-family breadth remains
+paused until the current release chain has credible evidence.
 
 ## Real-time platform release trains
 
@@ -685,7 +687,9 @@ Every milestone requires unit, fake-server, conformance, and real-server accepta
 
 - [x] Bounded statement multiplexing with session-affinity isolation, exact
   parse/row-description reuse, persistent lanes, bounded queues, error
-  isolation, statistics, and live PostgreSQL acceptance
+  isolation, scheduler telemetry, forced shutdown, fairness, pool/queue
+  exhaustion, admission cancellation, PgBouncer session/transaction acceptance,
+  and a commit-bound MediumRun against non-multiplexed BlueTusk and Npgsql
 - [x] Provider-neutral managed-hosting reconciliation with versioned desired
   state, canonical plan identity, resource quotas, secret references only,
   generation/revision compare and swap, renewable fencing leases, deletion

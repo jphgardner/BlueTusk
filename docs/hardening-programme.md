@@ -11,7 +11,7 @@ themselves, a production-readiness claim.
 | --- | --- | --- | --- |
 | 1. Minimal EF↔Data SPI | EF now consumes an internal Data-owned contract for connection/data-source creation, ownership, immutable type-registry snapshots, capabilities, admin connections, catalogue reload and diagnostics. Concrete types remain only at the public configuration boundary. | Contract tests, a source architecture guard, EF ownership tests, zero-warning build and documentation. | Complete |
 | 2. NativeAOT and trimming | Transport through Data plus the required extension-abstraction dependency now pass full-trim and NativeAOT publishes. Runtime-selected shapes have explicit boundaries. | `PublishTrimmed` and `PublishAot` smoke applications, correct annotations/source generation, unsupported-feature diagnostics, Windows/Linux CI, startup/allocation/deployable-size baselines. | Complete |
-| 3. Multiplexing hardening | Bounded multiplexing, conservative affinity routing and scheduler metrics exist. The complete failure/fairness/session-state matrix and current comparative P95/P99 evidence remain open. | Fairness, exhaustion, cancellation, timeout, isolation, disposal/recovery and PgBouncer tests plus BlueTusk non-multiplexed and Npgsql comparisons. | Partial |
+| 3. Multiplexing hardening | Bounded multiplexing now fails closed for every known session-affine surface, exposes bounded scheduler telemetry, and has deterministic fairness/failure/recovery coverage. | Fairness, exhaustion, admission cancellation, timeout, pipeline isolation, disposal, forced shutdown, session recovery, stateful SQL, PgBouncer session/transaction modes, and a commit-bound MediumRun against both non-multiplexed BlueTusk and Npgsql. | Complete |
 | 4. Coverage-guided fuzzing | Parser and malformed-input unit tests exist, but there is no coverage-guided harness or checked-in minimized corpus. | Bounded fuzz targets for protocol, authentication, pgoutput, COPY, structured codecs, Streams envelopes and resume tokens; CI smoke and scheduled run. | Open |
 | 5. Release evidence | Reproducible Streams 72-hour and Sync 24-hour harnesses and fail-closed report verifiers exist. Exact-candidate reports have not been completed and archived. | Reports tied to commit, package hashes, runtime, OS and image digests, including process, network, storage, credential, failover, clock and minor-upgrade faults. | Open |
 | 6. ADO.NET compatibility | Core conformance and EF relational specification coverage exist. A single supported/excluded compatibility matrix does not. | StoredProcedure/INOUT, `System.Transactions`, `CommandBehavior`, schema APIs, Dapper, DI, health checks and migration-path audit with tests or explicit exclusions. | Open |
@@ -35,11 +35,12 @@ present.
    reflection composites, startup, allocation, and deployable size. Unsupported
    runtime-selected shapes fail explicitly. The measured results do not justify
    a slim builder yet.
-3. **Multiplexing and ADO.NET behaviour.** Complete the scheduler/session
-   hardening matrix first, then use the same fixtures to publish the ADO.NET
-   compatibility table and comparative performance record. ADR 0005 remains in
-   force: the measured ArrayPool/Span/Memory transport is retained unless a new
-   end-to-end result clears its adoption gate.
+3. **Multiplexing — complete; ADO.NET behaviour remains.** The scheduler/session
+   hardening matrix, PgBouncer modes, telemetry and comparative performance
+   record are complete. The ADO.NET compatibility table remains a later
+   programme slice. ADR 0005 remains in force: the measured
+   ArrayPool/Span/Memory transport is retained because no new end-to-end result
+   has cleared its adoption gate.
 4. **Coverage-guided fuzzing.** Introduce bounded harnesses and a minimized
    regression corpus after the provider execution surfaces are stable.
 5. **Supply-chain and public-surface gates.** Add API budgets, security analysis,
@@ -81,3 +82,28 @@ dotnet test tests/BlueTusk.TypeSystem.Tests/BlueTusk.TypeSystem.Tests.csproj `
 
 CI runs the equivalent `win-x64` and `linux-x64` publish matrix and archives the
 measurement reports.
+
+The multiplexing slice is reproducible with:
+
+```powershell
+dotnet test tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj `
+  --configuration Release `
+  --filter "FullyQualifiedName~BlueTuskMultiplexingTests"
+dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj `
+  --configuration Release `
+  --filter "FullyQualifiedName~BlueTuskMultiplexingIntegrationTests"
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "<dedicated PostgreSQL connection string>"
+dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj `
+  --configuration Release -- `
+  --job medium --inProcess --filter "*MultiplexingComparisonBenchmarks*"
+./eng/verify-multiplexing-performance.ps1 `
+  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json
+```
+
+The checked-in run is bound to source commit `9ba2c50`, PostgreSQL image digest
+`sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15`,
+and a SHA-256-protected full report. It records lower BlueTusk mean, P95 and
+P99 latency than Npgsql for fresh and reused multiplexed commands in this named
+loopback environment. It also records lower latency and allocation than
+non-multiplexed BlueTusk. This closes the regression-evidence gate, not the
+independent production-validation gate.
