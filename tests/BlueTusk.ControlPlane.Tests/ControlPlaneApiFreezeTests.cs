@@ -31,7 +31,7 @@ public sealed class ControlPlaneApiFreezeTests
         var discovered = Directory
             .EnumerateFiles(
                 Path.Combine(repositoryRoot, "src"),
-                "PublicAPI.Shipped.txt",
+                "PublicAPI.*.txt",
                 SearchOption.AllDirectories)
             .Where(IsControlPlaneApiBaseline)
             .Select(path => Path.GetRelativePath(repositoryRoot, path).Replace('\\', '/'))
@@ -47,11 +47,6 @@ public sealed class ControlPlaneApiFreezeTests
                     SHA256.HashData(Encoding.UTF8.GetBytes(contents)))
                 .ToLowerInvariant();
             Assert.Equal(registered[path], digest);
-
-            var unshippedPath = Path.Combine(
-                Path.GetDirectoryName(shippedPath)!,
-                "PublicAPI.Unshipped.txt");
-            Assert.Equal("#nullable enable\n", Normalize(File.ReadAllText(unshippedPath)));
         }
     }
 

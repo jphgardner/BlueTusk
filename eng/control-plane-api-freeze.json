@@ -8,8 +8,16 @@
       "sha256": "dfc659f71a45b26623222ab8c7b6870bcb20434fe70e51f7ef02e73a297c4fd1"
     },
     {
+      "path": "src/BlueTusk.ControlPlane/PublicAPI.Unshipped.txt",
+      "sha256": "40a2a8b98e1f64046b474f755cb799b860bc8d4966d62122902505ddb2efaf45"
+    },
+    {
       "path": "src/BlueTusk.Dashboard/PublicAPI.Shipped.txt",
       "sha256": "80b31b7af81ade713d51c5279834cb74c4de78522860d17f0ce77bd79086002d"
+    },
+    {
+      "path": "src/BlueTusk.Dashboard/PublicAPI.Unshipped.txt",
+      "sha256": "3c3b422dddb1efeb0fc5b228608fd8682452b2a9507d4031894bce3c4dedadbd"
     }
   ]
 }

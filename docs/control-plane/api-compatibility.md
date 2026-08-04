@@ -9,8 +9,10 @@ surfaces:
 The compiler surface is hash-locked by
 [`eng/control-plane-api-freeze.json`](../../eng/control-plane-api-freeze.json).
 The normal conformance suite rejects an edited, removed, or silently replaced
-shipped signature. Additive APIs must first enter `PublicAPI.Unshipped.txt` and
-be reviewed before the next compatible baseline is promoted.
+shipped or candidate signature. Additive APIs first enter
+`PublicAPI.Unshipped.txt`; after review, their candidate hash is updated without
+misrepresenting them as shipped. Promotion moves the accepted signatures to
+the shipped baseline and updates the manifest in the same release change.
 
 [`eng/control-plane-formats.json`](../../eng/control-plane-formats.json)
 registers every persisted or remotely consumed format with its current and
