@@ -3,6 +3,7 @@ using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using System.Threading.Tasks.Sources;
 using BlueTusk.Client;
+using BlueTusk.Diagnostics;
 
 namespace BlueTusk.Data;
 
@@ -80,10 +81,24 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         MultiplexedCommandRequest<T> request,
         CancellationToken cancellationToken)
     {
-        ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
-        cancellationToken.ThrowIfCancellationRequested();
+        if (Volatile.Read(ref _disposed) != 0)
+        {
+            request.RecordQueueWait();
+            request.Dispose();
+            BlueTuskDiagnostics.RecordMultiplexingAdmission("closed");
+            throw new ObjectDisposedException(nameof(BlueTuskDataSource));
+        }
+
+        if (cancellationToken.IsCancellationRequested)
+        {
+            request.RecordQueueWait();
+            request.Dispose();
+            BlueTuskDiagnostics.RecordMultiplexingAdmission("canceled");
+            cancellationToken.ThrowIfCancellationRequested();
+        }
 
         Interlocked.Increment(ref _queued);
+        BlueTuskDiagnostics.RecordMultiplexingPendingDelta(1);
         var writing = _queue.Writer.WriteAsync(request, cancellationToken);
         if (writing.IsCompletedSuccessfully)
         {
@@ -104,14 +119,18 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         }
         catch (OperationCanceledException)
         {
-            Interlocked.Decrement(ref _queued);
+            DecrementQueued();
+            request.RecordQueueWait();
             request.Dispose();
+            BlueTuskDiagnostics.RecordMultiplexingAdmission("canceled");
             throw;
         }
         catch (ChannelClosedException exception)
         {
-            Interlocked.Decrement(ref _queued);
+            DecrementQueued();
+            request.RecordQueueWait();
             request.Dispose();
+            BlueTuskDiagnostics.RecordMultiplexingAdmission("closed");
             throw new ObjectDisposedException(nameof(BlueTuskDataSource), exception);
         }
 
@@ -122,6 +141,28 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     private void RecordAccepted()
     {
         Interlocked.Increment(ref _accepted);
+        BlueTuskDiagnostics.RecordMultiplexingAdmission("accepted");
+    }
+
+    private void DecrementQueued()
+    {
+        Interlocked.Decrement(ref _queued);
+        BlueTuskDiagnostics.RecordMultiplexingPendingDelta(-1);
+    }
+
+    private static void RecordOutcome(string outcome) =>
+        BlueTuskDiagnostics.RecordMultiplexingCommandOutcome(outcome);
+
+    private void BeginExecuting()
+    {
+        Interlocked.Increment(ref _executing);
+        BlueTuskDiagnostics.RecordMultiplexingExecutingDelta(1);
+    }
+
+    private void EndExecuting()
+    {
+        Interlocked.Decrement(ref _executing);
+        BlueTuskDiagnostics.RecordMultiplexingExecutingDelta(-1);
     }
 
     private async Task WorkerAsync(int workerIndex)
@@ -186,10 +227,11 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                         return new LeaseExecutionResult(connection, processed);
                     }
 
-                    Interlocked.Decrement(ref _queued);
+                    DecrementQueued();
                     if (!request.TryBeginExecution())
                     {
                         Interlocked.Increment(ref _canceled);
+                        RecordOutcome("canceled");
                         processed++;
                         continue;
                     }
@@ -209,6 +251,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                         request.TrySetException(
                             new ObjectDisposedException(nameof(BlueTuskDataSource)));
                         Interlocked.Increment(ref _canceled);
+                        RecordOutcome("canceled");
                         processed++;
                         continue;
                     }
@@ -216,6 +259,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                     {
                         request.TrySetException(exception);
                         Interlocked.Increment(ref _faulted);
+                        RecordOutcome("faulted");
                         processed++;
                         continue;
                     }
@@ -232,10 +276,11 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                            processed + batch.Count < commandLimit &&
                            _queue.Reader.TryRead(out var candidate))
                     {
-                        Interlocked.Decrement(ref _queued);
+                        DecrementQueued();
                         if (!candidate.TryBeginExecution())
                         {
                             Interlocked.Increment(ref _canceled);
+                            RecordOutcome("canceled");
                             processed++;
                             continue;
                         }
@@ -273,6 +318,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 pending.TrySetException(
                     new ObjectDisposedException(nameof(BlueTuskDataSource)));
                 Interlocked.Increment(ref _canceled);
+                RecordOutcome("canceled");
             }
 
         }
@@ -284,7 +330,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         BlueTuskConnection connection,
         IMultiplexedCommandRequest request)
     {
-        Interlocked.Increment(ref _executing);
+        BeginExecuting();
         using var execution = CancellationTokenSource.CreateLinkedTokenSource(
             request.CancellationToken,
             _shutdown.Token);
@@ -303,26 +349,30 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                         result,
                         ScalarResult: default));
             Interlocked.Increment(ref _completed);
+            RecordOutcome("completed");
         }
         catch (OperationCanceledException) when (request.CancellationToken.IsCancellationRequested)
         {
             request.TrySetCanceled(request.CancellationToken);
             Interlocked.Increment(ref _canceled);
+            RecordOutcome("canceled");
         }
         catch (OperationCanceledException) when (_shutdown.IsCancellationRequested)
         {
             request.TrySetException(
                 new ObjectDisposedException(nameof(BlueTuskDataSource)));
             Interlocked.Increment(ref _canceled);
+            RecordOutcome("canceled");
         }
         catch (Exception exception)
         {
             request.TrySetException(exception);
             Interlocked.Increment(ref _faulted);
+            RecordOutcome("faulted");
         }
         finally
         {
-            Interlocked.Decrement(ref _executing);
+            EndExecuting();
         }
     }
 
@@ -372,12 +422,13 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
                     activeBuffer[activeCount] = request;
                     activeCount++;
-                    Interlocked.Increment(ref _executing);
+                    BeginExecuting();
                 }
                 catch (Exception exception)
                 {
                     request.TrySetException(exception);
                     Interlocked.Increment(ref _faulted);
+                    RecordOutcome("faulted");
                 }
             }
 
@@ -402,6 +453,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
             {
                 Interlocked.Increment(ref _pipelineFlushes);
                 Interlocked.Add(ref _pipelinedCommands, activeCount);
+                BlueTuskDiagnostics.RecordMultiplexingPipelineSize(activeCount);
                 await connection.Session.ExecuteMultiplexedPipelineAsync(
                     commands,
                     groupCancellationTokens,
@@ -438,6 +490,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                         }
 
                         Interlocked.Increment(ref _canceled);
+                        RecordOutcome("canceled");
                         return;
                     }
 
@@ -446,6 +499,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                         request.TrySetException(
                             request.Command.TranslateMultiplexedPipelineError(outcome.Error));
                         Interlocked.Increment(ref _faulted);
+                        RecordOutcome("faulted");
                     }
                     else
                     {
@@ -454,6 +508,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                                 outcome.Result,
                                 outcome.ScalarResult));
                         Interlocked.Increment(ref _completed);
+                        RecordOutcome("completed");
                     }
                 }
             }
@@ -464,6 +519,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                     if (request.TrySetException(exception))
                     {
                         Interlocked.Increment(ref _faulted);
+                        RecordOutcome("faulted");
                     }
                 }
             }
@@ -473,7 +529,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 {
                     activeRequests[index].Command.CompleteMultiplexedPipelineExecution();
                     scopeBuffer?[index]?.Dispose();
-                    Interlocked.Decrement(ref _executing);
+                    EndExecuting();
                 }
             }
         }
@@ -498,11 +554,13 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     {
         while (_queue.Reader.TryRead(out var request))
         {
-            Interlocked.Decrement(ref _queued);
+            DecrementQueued();
+            request.RecordQueueWait();
             request.Dispose();
             request.TrySetException(
                 new ObjectDisposedException(nameof(BlueTuskDataSource)));
             Interlocked.Increment(ref _canceled);
+            RecordOutcome("canceled");
         }
     }
 
@@ -525,6 +583,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
         if (_workers.Any(static worker => !worker.IsCompleted))
         {
+            BlueTuskDiagnostics.RecordMultiplexingForcedShutdown();
             _shutdown.Cancel();
             AbortWorkerConnections();
             CancelQueued();
@@ -550,6 +609,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         }
         catch (TimeoutException)
         {
+            BlueTuskDiagnostics.RecordMultiplexingForcedShutdown();
             _shutdown.Cancel();
             AbortWorkerConnections();
             CancelQueued();
@@ -593,6 +653,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         bool TrySetCanceled(CancellationToken cancellationToken);
 
         bool TryBeginExecution();
+
+        void RecordQueueWait();
     }
 
     private sealed class MultiplexedCommandRequest<T> :
@@ -603,6 +665,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         private readonly CancellationTokenRegistration _cancellationRegistration;
         private ManualResetValueTaskSourceCore<T> _completion;
         private int _completionState;
+        private long _queuedAt = BlueTuskDiagnostics.GetMultiplexingQueueTimestamp();
         private int _state;
 
         internal MultiplexedCommandRequest(
@@ -676,12 +739,20 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         {
             if (Interlocked.CompareExchange(ref _state, 1, 0) != 0)
             {
+                RecordQueueWait();
                 Dispose();
                 return false;
             }
 
+            RecordQueueWait();
             Dispose();
             return true;
+        }
+
+        public void RecordQueueWait()
+        {
+            var queuedAt = Interlocked.Exchange(ref _queuedAt, 0);
+            BlueTuskDiagnostics.RecordMultiplexingQueueWait(queuedAt);
         }
 
         private void CancelQueued()
@@ -759,36 +830,74 @@ internal static class BlueTuskMultiplexingClassifier
 {
     private static readonly HashSet<string> SessionStateTokens = new(StringComparer.OrdinalIgnoreCase)
     {
+        "ABORT",
         "BEGIN",
+        "CALL",
+        "CLOSE",
         "COMMIT",
         "COPY",
         "DECLARE",
         "DEALLOCATE",
         "DISCARD",
+        "DO",
         "EXECUTE",
         "FETCH",
         "LISTEN",
         "LOAD",
         "LOCK",
         "MOVE",
+        "NOTIFY",
+        "PG_TEMP",
         "PREPARE",
+        "RELEASE",
         "RESET",
         "ROLLBACK",
         "SAVEPOINT",
         "SET",
+        "SHOW",
         "START",
+        "TEMP",
+        "TEMPORARY",
         "UNLISTEN",
     };
 
     private static readonly HashSet<string> SessionStateRoutines = new(StringComparer.OrdinalIgnoreCase)
     {
+        "CURRENT_SETTING",
+        "CURRVAL",
+        "LASTVAL",
+        "LO_CLOSE",
+        "LO_CREAT",
+        "LO_CREATE",
+        "LO_EXPORT",
+        "LO_GET",
+        "LO_IMPORT",
+        "LO_LSEEK",
+        "LO_LSEEK64",
+        "LO_OPEN",
+        "LO_PUT",
+        "LO_READ",
+        "LO_TELL",
+        "LO_TELL64",
+        "LO_TRUNCATE",
+        "LO_TRUNCATE64",
+        "LO_UNLINK",
+        "LO_WRITE",
+        "LOREAD",
+        "LOWRITE",
         "PG_ADVISORY_LOCK",
         "PG_ADVISORY_LOCK_SHARED",
+        "PG_ADVISORY_XACT_LOCK",
+        "PG_ADVISORY_XACT_LOCK_SHARED",
         "PG_ADVISORY_UNLOCK",
         "PG_ADVISORY_UNLOCK_ALL",
         "PG_ADVISORY_UNLOCK_SHARED",
+        "PG_LISTENING_CHANNELS",
+        "PG_MY_TEMP_SCHEMA",
         "PG_TRY_ADVISORY_LOCK",
         "PG_TRY_ADVISORY_LOCK_SHARED",
+        "PG_TRY_ADVISORY_XACT_LOCK",
+        "PG_TRY_ADVISORY_XACT_LOCK_SHARED",
         "SET_CONFIG",
     };
 
@@ -804,16 +913,14 @@ internal static class BlueTuskMultiplexingClassifier
                 return false;
             }
 
-            if (token.Equals("CREATE", StringComparison.OrdinalIgnoreCase) &&
-                index + 1 < tokens.Count &&
-                (tokens[index + 1].Equals("TEMP", StringComparison.OrdinalIgnoreCase) ||
-                 tokens[index + 1].Equals("TEMPORARY", StringComparison.OrdinalIgnoreCase)))
+            if (token.Equals("END", StringComparison.OrdinalIgnoreCase) &&
+                (index == 0 || tokens[index - 1] == ";"))
             {
                 return false;
             }
         }
 
-        return tokens.Count != 0;
+        return tokens.Exists(static token => token != ";");
     }
 
     private static List<string> Tokenize(string sql)
@@ -823,8 +930,15 @@ internal static class BlueTuskMultiplexingClassifier
         while (index < sql.Length)
         {
             var current = sql[index];
-            if (char.IsWhiteSpace(current) || current is ';' or ',' or '(' or ')' or '.')
+            if (char.IsWhiteSpace(current) || current is ',' or '(' or ')' or '.')
             {
+                index++;
+                continue;
+            }
+
+            if (current == ';')
+            {
+                tokens.Add(";");
                 index++;
                 continue;
             }

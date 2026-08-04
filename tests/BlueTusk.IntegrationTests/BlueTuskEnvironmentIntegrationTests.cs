@@ -6,6 +6,43 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskEnvironmentIntegrationTests
 {
+    [Theory]
+    [InlineData("BLUETUSK_PGBOUNCER_SESSION_CONNECTION_STRING")]
+    [InlineData("BLUETUSK_PGBOUNCER_TRANSACTION_CONNECTION_STRING")]
+    public async Task PgBouncer_modes_support_bounded_statement_multiplexing(
+        string environmentVariable)
+    {
+        var settings = new BlueTuskConnectionStringBuilder(
+            RequireEnvironmentVariable(environmentVariable))
+        {
+            Pooling = true,
+            MaximumPoolSize = 4,
+        };
+        await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionString)
+            .EnableMultiplexing(options =>
+            {
+                options.WorkerCount = 2;
+                options.QueueCapacity = 64;
+                options.MaxPipelineCommands = 8;
+            })
+            .Build();
+        var tasks = Enumerable.Range(0, 32)
+            .Select(async value =>
+            {
+                await using var command = dataSource.CreateCommand("SELECT $1::int4");
+                command.Parameters.Add(new BlueTuskParameter<int>(value));
+                return await command.ExecuteScalarAsync<int>();
+            })
+            .ToArray();
+
+        Assert.Equal(Enumerable.Range(0, 32), await Task.WhenAll(tasks));
+        var statistics = dataSource.GetMultiplexingStatistics();
+        Assert.Equal(32, statistics.Accepted);
+        Assert.Equal(32, statistics.Completed);
+        Assert.Equal(0, statistics.Canceled);
+        Assert.Equal(0, statistics.Faulted);
+    }
+
     [Fact]
     public async Task PgBouncer_session_mode_supports_session_affine_provider_features()
     {

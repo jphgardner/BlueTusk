@@ -193,6 +193,7 @@ public sealed class BlueTuskCommand : DbCommand
 
         try
         {
+            ValidatePreparationMultiplexing();
             _prepareRequested = true;
             _ = EnsurePrepared();
         }
@@ -215,6 +216,7 @@ public sealed class BlueTuskCommand : DbCommand
 
         try
         {
+            ValidatePreparationMultiplexing();
             _prepareRequested = true;
             _ = await EnsurePreparedAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -242,7 +244,7 @@ public sealed class BlueTuskCommand : DbCommand
 
     protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) =>
         behavior.HasFlag(CommandBehavior.SequentialAccess)
-            ? ExecuteStreamingDataReader(behavior)
+            ? ExecuteStreamingDataReaderAfterMultiplexingValidation(behavior)
             : new BlueTuskDataReader(
                 ExecuteCore(),
                 behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
@@ -254,10 +256,42 @@ public sealed class BlueTuskCommand : DbCommand
     {
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))
         {
+            ValidateSequentialMultiplexing();
             return ExecuteStreamingDataReaderAsync(behavior, cancellationToken);
         }
 
         return ExecuteBufferedDataReaderAsync(behavior, cancellationToken);
+    }
+
+    private BlueTuskDataReader ExecuteStreamingDataReaderAfterMultiplexingValidation(
+        CommandBehavior behavior)
+    {
+        ValidateSequentialMultiplexing();
+        return ExecuteStreamingDataReader(behavior);
+    }
+
+    private void ValidateSequentialMultiplexing()
+    {
+        if (MultiplexingMode != BlueTuskMultiplexingMode.Require)
+        {
+            return;
+        }
+
+        _ = ResolveMultiplexer();
+        throw new InvalidOperationException(
+            "The command cannot be multiplexed because sequential readers require session affinity.");
+    }
+
+    private void ValidatePreparationMultiplexing()
+    {
+        if (MultiplexingMode != BlueTuskMultiplexingMode.Require)
+        {
+            return;
+        }
+
+        _ = ResolveMultiplexer();
+        throw new InvalidOperationException(
+            "The command cannot be multiplexed because explicit preparation requires session affinity.");
     }
 
     private async Task<DbDataReader> ExecuteBufferedDataReaderAsync(
@@ -967,8 +1001,19 @@ public sealed class BlueTuskCommand : DbCommand
 
     private BlueTuskCommandMultiplexer? ResolveMultiplexer()
     {
-        if (_connection is not null || MultiplexingMode == BlueTuskMultiplexingMode.Disable)
+        if (MultiplexingMode == BlueTuskMultiplexingMode.Disable)
         {
+            return null;
+        }
+
+        if (_connection is not null)
+        {
+            if (MultiplexingMode == BlueTuskMultiplexingMode.Require)
+            {
+                throw new InvalidOperationException(
+                    "The command cannot be multiplexed because commands on an explicit connection require session affinity.");
+            }
+
             return null;
         }
 
@@ -1005,10 +1050,10 @@ public sealed class BlueTuskCommand : DbCommand
     }
 
     private bool ShouldUseMultiplexingScalarPath() =>
+        MultiplexingMode == BlueTuskMultiplexingMode.Require ||
         _connection is null &&
-        _dataSource is not null &&
-        (MultiplexingMode == BlueTuskMultiplexingMode.Require ||
-         _dataSource.IsMultiplexingEnabled && MultiplexingMode != BlueTuskMultiplexingMode.Disable);
+        _dataSource is { IsMultiplexingEnabled: true } &&
+        MultiplexingMode != BlueTuskMultiplexingMode.Disable;
 
     private async Task<T?> ExecuteMultiplexedScalarAsync<T>(CancellationToken cancellationToken)
     {

@@ -129,6 +129,11 @@ Low-level clients can use [PostgreSQL pipeline mode](../pipeline-mode.md) to sen
 
 `BlueTuskDataSource` owns a bounded physical connection pool by default. Logical connections return their physical session when closed or disposed; reuse rolls back an unfinished transaction when necessary and issues `DISCARD ALL` before handing the session to another caller. See [Connection pooling](pooling.md) for sizing, lifetime, warm-up, statistics, and drain controls.
 
+Opt-in bounded statement multiplexing shares session-neutral commands across a
+fixed number of worker lanes. The [multiplexing compatibility
+matrix](multiplexing-compatibility.md) defines strict fallback, session-state,
+failure, PgBouncer, metrics, and performance-evidence behavior.
+
 [Multi-host connections](multi-host.md) support ordered or randomized attempts, shared or per-host ports, and primary/standby/read-write/read-only target selection.
 
 Connection-owned [COPY APIs](copy.md) stream raw text, CSV, or binary payloads to and from PostgreSQL while preserving exclusive use of the physical session.

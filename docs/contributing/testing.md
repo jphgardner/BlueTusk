@@ -292,3 +292,23 @@ Commit only the brief JSON and GitHub Markdown reports. Record the PostgreSQL
 major version, machine profile, SDK/runtime, date, and any material semantic
 difference between the provider pairs. Never turn a ShortRun ratio into a
 universal performance claim.
+
+The multiplexing comparison is the deliberate full-JSON exception: measured
+workload samples are required to reproduce P99. It compares both providers'
+multiplexed and ordinary four-session pools. Use the MediumRun and in-process
+toolchain so ignored archival worktrees cannot confuse BenchmarkDotNet project
+discovery:
+
+```powershell
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+$env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
+  --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
+./eng/verify-multiplexing-performance.ps1
+```
+
+Commit its full JSON and GitHub Markdown reports. The machine gate requires at
+least 20 measured samples and enforces relative mean, P95, P99, throughput, and
+managed-allocation budgets against Npgsql multiplexing and BlueTusk's ordinary
+pool. A budget change requires the report, rationale, and documentation in the
+same review.

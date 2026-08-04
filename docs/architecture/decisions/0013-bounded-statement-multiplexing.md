@@ -13,9 +13,21 @@ Multiplexing is opt-in on `BlueTuskDataSource`. A bounded channel feeds a fixed 
 
 Only commands created directly from the data source are eligible. Explicit connections and transactions remain session-affine. A conservative SQL classifier routes known stateful statements and routines away from multiplexing. `Auto`, `Require`, and `Disable` let a caller accept fallback, fail closed, or pin a command deliberately.
 
+`Require` is a strict contract: explicit connections, transactions, prepared
+commands, sequential readers, and classified session-state SQL fail before
+execution. The classifier covers transaction/cursor/preparation commands,
+temporary schemas and objects, settings and sequence-session readers,
+notifications, advisory locks, large-object routines, `CALL`, and `DO`. It
+cannot prove an arbitrary user function is pure, so callers remain responsible
+for disabling multiplexing around trusted stateful routines.
+
 Each eligible command is its own PostgreSQL pipeline synchronization group. Errors, cancellation, and timeouts therefore cannot advance or poison adjacent commands. Scalar responses retain only their first value; repeated row descriptions and statement shapes are reused; transient batch storage is pooled. Text result format remains the safe default because PostgreSQL user-defined types are not required to expose binary output.
 
 Shutdown first drains accepted work. After the configured deadline it closes the active physical transport, completes queued commands with disposal errors, and waits for every worker to stop. Scheduler statistics expose queue depth, active work, completions, failures, cancellations, pipeline flushes, and pipelined command counts.
+
+The shared diagnostics meter additionally publishes pending and executing
+up/down counters, admission and command outcomes, queue-wait duration, pipeline
+size, and forced shutdown count. Dimensions are bounded outcomes only.
 
 ## Consequences
 

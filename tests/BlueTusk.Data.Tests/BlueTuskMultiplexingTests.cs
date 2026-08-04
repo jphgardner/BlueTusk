@@ -1,3 +1,5 @@
+using System.Data;
+
 namespace BlueTusk.Data.Tests;
 
 public sealed class BlueTuskMultiplexingTests
@@ -65,10 +67,26 @@ public sealed class BlueTuskMultiplexingTests
     [InlineData("SET application_name = 'worker'", false)]
     [InlineData("SELECT set_config('application_name', 'worker', false)", false)]
     [InlineData("SELECT pg_advisory_lock(42)", false)]
+    [InlineData("SELECT pg_advisory_xact_lock(42)", false)]
+    [InlineData("SELECT current_setting('application_name')", false)]
+    [InlineData("SELECT currval('app.sequence')", false)]
+    [InlineData("SELECT lo_open(42, 262144)", false)]
+    [InlineData("SELECT pg_temp.session_value()", false)]
     [InlineData("CREATE TEMP TABLE state(value int)", false)]
+    [InlineData("SELECT 1 INTO TEMPORARY state", false)]
     [InlineData("BEGIN; SELECT 1; COMMIT", false)]
+    [InlineData("ABORT", false)]
+    [InlineData("SELECT 1; END TRANSACTION", false)]
+    [InlineData("SELECT CASE WHEN true THEN 1 ELSE 0 END", true)]
+    [InlineData("PREPARE statement AS SELECT 1", false)]
+    [InlineData("EXECUTE statement", false)]
+    [InlineData("DECLARE values CURSOR FOR SELECT 1", false)]
+    [InlineData("SHOW application_name", false)]
     [InlineData("LISTEN changes", false)]
+    [InlineData("NOTIFY changes", false)]
     [InlineData("COPY app.items TO STDOUT", false)]
+    [InlineData("CALL app.update_session()", false)]
+    [InlineData("DO $$ BEGIN PERFORM set_config('application_name', 'x', false); END $$", false)]
     public void Classifier_conservatively_routes_session_state(
         string sql,
         bool expectedSessionNeutral)
@@ -76,5 +94,57 @@ public sealed class BlueTuskMultiplexingTests
         Assert.Equal(
             expectedSessionNeutral,
             BlueTuskMultiplexingClassifier.IsSessionNeutral(sql));
+    }
+
+    [Fact]
+    public async Task Require_fails_closed_for_explicit_connections()
+    {
+        await using var connection = new BlueTuskConnection(
+            "Host=db.example.test;Username=worker");
+        await using var command = new BlueTuskCommand("SELECT 1", connection)
+        {
+            MultiplexingMode = BlueTuskMultiplexingMode.Require,
+        };
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => command.ExecuteScalarAsync<int>());
+
+        Assert.Contains("explicit connection", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Require_fails_closed_for_sequential_readers()
+    {
+        await using var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Username=worker;Maximum Pool Size=2")
+            .EnableMultiplexing(options => options.WorkerCount = 1)
+            .Build();
+        await using var command = dataSource.CreateCommand("SELECT 1");
+        command.MultiplexingMode = BlueTuskMultiplexingMode.Require;
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(
+            async () => await command.ExecuteReaderAsync(CommandBehavior.SequentialAccess));
+
+        Assert.Contains("sequential", exception.Message, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task Scheduler_rejects_pre_canceled_and_post_disposal_commands_before_connecting()
+    {
+        var dataSource = new BlueTuskDataSourceBuilder(
+                "Host=db.example.test;Username=worker;Maximum Pool Size=2")
+            .EnableMultiplexing(options => options.WorkerCount = 1)
+            .Build();
+        await using var canceled = dataSource.CreateCommand("SELECT 1");
+        using var cancellation = new CancellationTokenSource();
+        cancellation.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(
+            () => canceled.ExecuteScalarAsync<int>(cancellation.Token));
+
+        await using var disposed = dataSource.CreateCommand("SELECT 1");
+        await dataSource.DisposeAsync();
+        await Assert.ThrowsAsync<ObjectDisposedException>(
+            () => disposed.ExecuteScalarAsync<int>());
     }
 }

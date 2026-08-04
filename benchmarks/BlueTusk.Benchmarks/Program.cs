@@ -27,7 +27,10 @@ if (string.IsNullOrWhiteSpace(artifactsPath))
 var configuration = ManualConfig
     .Create(DefaultConfig.Instance)
     .WithArtifactsPath(Path.GetFullPath(artifactsPath))
-    .AddColumn(StatisticColumn.P95);
+    .AddColumn(
+        StatisticColumn.P95,
+        Percentile99Column.Instance,
+        StatisticColumn.OperationsPerSecond);
 
 var competitiveConnectionString = Environment.GetEnvironmentVariable(
     ProviderComparisonBenchmarks.ConnectionStringEnvironmentVariable);

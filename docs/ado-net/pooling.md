@@ -84,14 +84,19 @@ Only commands created directly from `BlueTuskDataSource` are eligible. Commands
 on explicit connections, enlisted transactions, explicitly prepared commands,
 and SQL that can depend on session state use a normal affine lease. This
 includes transaction control, `SET`/`RESET`, temporary objects, LISTEN, COPY,
-cursors, explicit PREPARE/EXECUTE, session advisory locks, and `set_config`.
-Set `MultiplexingMode` to `Require` to reject fallback or `Disable` for a trusted
-user-defined routine whose statefulness cannot be inferred from SQL text.
+cursors and sequential readers, explicit PREPARE/EXECUTE, large-object
+routines, session advisory locks, `SHOW`/`current_setting`, and `set_config`.
+`CALL`, `DO`, and notification statements are conservatively affine too. Set
+`MultiplexingMode` to `Require` to reject every fallback—including explicit
+connections and sequential readers—or `Disable` for a trusted user-defined
+routine whose statefulness cannot be inferred from SQL text.
 
 Every command ends at its own PostgreSQL `Sync` boundary. Server errors,
 per-command timeouts, and caller cancellation are isolated from neighbouring
 commands. Queue, pipeline, lease, and shutdown bounds are enforced independently.
 See [ADR 0013](../architecture/decisions/0013-bounded-statement-multiplexing.md).
+The complete routing, PgBouncer, failure, and verification matrix is in
+[Multiplexing compatibility](multiplexing-compatibility.md).
 
 The `BlueTusk.Diagnostics` meter publishes connection, lease, waiter, reuse, reset, discard, and checkout-duration instruments. Multi-host retries and non-first-host selections have separate counters. Statistics are scoped to one data source; meter instruments are process-wide aggregates. See [Diagnostics and observability](../observability.md) for names, dimensions, and redaction rules.
 
