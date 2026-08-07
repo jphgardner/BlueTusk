@@ -253,6 +253,13 @@ if ($privateVulnerabilityReporting.enabled -ne $true)
 }
 
 $rulesetSummary = @($rulesets | Where-Object {
+    if ($null -eq $_ -or
+        $null -eq $_.PSObject.Properties['name'] -or
+        $null -eq $_.PSObject.Properties['enforcement'])
+    {
+        return $false
+    }
+
     [string]$_.name -eq [string]$configuration.ruleset.name -and
     [string]$_.enforcement -eq [string]$configuration.ruleset.enforcement
 })
