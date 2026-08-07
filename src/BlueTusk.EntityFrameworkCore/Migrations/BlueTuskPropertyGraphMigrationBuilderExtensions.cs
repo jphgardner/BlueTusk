@@ -1,6 +1,7 @@
 using System.ComponentModel;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Graphs.Internal;
+using BlueTusk.EntityFrameworkCore.Migrations.Builders;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
 using Microsoft.EntityFrameworkCore.Migrations.Operations.Builders;
 
@@ -9,6 +10,20 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for PostgreSQL 19 property graphs.</summary>
 public static class BlueTuskPropertyGraphMigrationBuilderExtensions
 {
+    public static OperationBuilder<CreatePropertyGraphOperation> CreatePropertyGraph(
+        this MigrationBuilder migrationBuilder,
+        string name,
+        Action<BlueTuskPropertyGraphMigrationBuilder> configure,
+        string? schema = null)
+    {
+        ArgumentNullException.ThrowIfNull(migrationBuilder);
+        ArgumentException.ThrowIfNullOrWhiteSpace(name);
+        ArgumentNullException.ThrowIfNull(configure);
+        var builder = new BlueTuskPropertyGraphMigrationBuilder(name, schema);
+        configure(builder);
+        return CreatePropertyGraph(migrationBuilder, builder.Build());
+    }
+
     public static OperationBuilder<CreatePropertyGraphOperation> CreatePropertyGraph(
         this MigrationBuilder migrationBuilder,
         BlueTuskPropertyGraphDefinition definition)

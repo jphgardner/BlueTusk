@@ -1,6 +1,8 @@
 using BlueTusk.EntityFrameworkCore.Design.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -112,9 +114,82 @@ public sealed class PropertyGraphMetadataTests
             builder);
 
         var code = builder.ToString();
+        Assert.DoesNotContain("migrationBuildermigrationBuilder", code, StringComparison.Ordinal);
+        Assert.DoesNotContain("{\"name\"", code, StringComparison.Ordinal);
         Assert.Contains("migrationBuilder.CreatePropertyGraph(", code, StringComparison.Ordinal);
+        Assert.Contains(".Vertex(", code, StringComparison.Ordinal);
+        Assert.Contains(".Edge(", code, StringComparison.Ordinal);
+        Assert.Contains(".HasLabel(", code, StringComparison.Ordinal);
+        Assert.Contains(".HasSource(", code, StringComparison.Ordinal);
         Assert.Contains("migrationBuilder.AlterPropertyGraph(\"social\"", code, StringComparison.Ordinal);
         Assert.Contains("migrationBuilder.DropPropertyGraph(\"renamed_social\"", code, StringComparison.Ordinal);
+
+        var source = $$"""
+            using Microsoft.EntityFrameworkCore.Migrations;
+
+            public sealed class GeneratedGraphMigration : Migration
+            {
+                protected override void Up(MigrationBuilder migrationBuilder)
+                {
+                    {{code}}
+                }
+
+                protected override void Down(MigrationBuilder migrationBuilder) { }
+            }
+            """;
+        var compilation = CSharpCompilation.Create(
+            "GeneratedGraphMigration",
+            [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Latest))],
+            AppDomain.CurrentDomain.GetAssemblies()
+                .Where(assembly => !assembly.IsDynamic && !string.IsNullOrWhiteSpace(assembly.Location))
+                .Select(assembly => MetadataReference.CreateFromFile(assembly.Location)),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var errors = compilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+        Assert.True(
+            errors.Length == 0,
+            string.Join(Environment.NewLine, errors.Select(error => error.ToString())) +
+            Environment.NewLine + source);
+    }
+
+    [Fact]
+    public void Migration_builder_creates_typed_definition_without_serialized_metadata()
+    {
+        var migration = new MigrationBuilder("BlueTusk");
+
+        migration.CreatePropertyGraph(
+            "payments",
+            graph => graph
+                .Vertex(
+                    "accounts",
+                    "accounts",
+                    "finance",
+                    vertex => vertex
+                        .HasKey("Id")
+                        .HasLabel("account", label => label.Property("Id").Property("Name")))
+                .Edge(
+                    "transfers",
+                    "transfers",
+                    "finance",
+                    edge => edge
+                        .HasKey("Id")
+                        .HasLabel("transfer", label => label.Property("Amount"))
+                        .HasSource("accounts", ["SourceId"], ["Id"])
+                        .HasDestination("accounts", ["DestinationId"], ["Id"])),
+            "finance");
+
+        var operation = Assert.IsType<CreatePropertyGraphOperation>(
+            Assert.Single(migration.Operations));
+
+        Assert.Equal("payments", operation.Definition.Name);
+        Assert.Equal("finance", operation.Definition.Schema);
+        Assert.Equal(2, operation.Definition.ElementTables.Count);
+        var edge = Assert.Single(
+            operation.Definition.ElementTables,
+            element => element.Kind == BlueTuskGraphElementKind.Edge);
+        Assert.Equal(["SourceId"], edge.Source?.EdgeKeyColumns);
+        Assert.Equal(["Id"], edge.Destination?.VertexKeyColumns);
     }
 
     private static TContext CreateContext<TContext>()

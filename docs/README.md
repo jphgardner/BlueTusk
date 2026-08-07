@@ -150,6 +150,7 @@ Use these documents when the question is not “how do I call the API?”:
 - [Release process](release-process.md)
 - [V1 hardening programme](hardening-programme.md)
 - [PostgreSQL 19 programme](postgresql19-programme.md)
+- [V1 application suite and RC deployment](v1-applications.md)
 
 ## Documentation contract
 

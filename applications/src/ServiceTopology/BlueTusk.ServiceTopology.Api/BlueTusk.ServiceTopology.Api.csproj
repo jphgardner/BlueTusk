@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\BlueTusk.Applications.Hosting\BlueTusk.Applications.Hosting.csproj" />
+    <ProjectReference Include="..\BlueTusk.ServiceTopology.Infrastructure\BlueTusk.ServiceTopology.Infrastructure.csproj" />
+    <PackageReference Include="BlueTusk.ContinuousGraph.ControlPlane" />
+    <PackageReference Include="BlueTusk.ControlPlane" />
+    <PackageReference Include="BlueTusk.Dashboard" />
+    <PackageReference Include="BlueTusk.Live.AspNetCore" />
+    <PackageReference Include="BlueTusk.Live.SignalR" />
+  </ItemGroup>
+</Project>

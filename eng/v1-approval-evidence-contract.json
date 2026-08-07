@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "approvalSchemaVersion": 3,
+  "approvalSchemaVersion": 4,
   "minimumSummaryLength": 40,
   "gates": [
     {
@@ -172,8 +172,12 @@
         { "name": "candidateImmutable", "type": "boolean", "equals": true },
         { "name": "publicationOrderAccepted", "type": "boolean", "equals": true },
         { "name": "publicationPoliciesArmed", "type": "boolean", "equals": true },
-        { "name": "releaseTagsCreated", "type": "integer", "equals": 0 },
-        { "name": "candidatePackagesPublished", "type": "integer", "equals": 0 },
+        { "name": "stableReleaseTagsCreated", "type": "integer", "equals": 0 },
+        { "name": "stableCandidatePackagesPublished", "type": "integer", "equals": 0 },
+        { "name": "publishedPrereleaseVersion", "type": "string", "allowedValues": [ "1.0.0-rc.1" ] },
+        { "name": "publishedPrereleaseCommit", "type": "gitSha" },
+        { "name": "publishedPrereleaseTags", "type": "integer", "equals": 6 },
+        { "name": "publishedPrereleaseFamilies", "type": "stringArray", "minimumItems": 6 },
         { "name": "protectedProductionApprovalPending", "type": "boolean", "equals": true },
         { "name": "stopConditionsAccepted", "type": "boolean", "equals": true },
         { "name": "rollbackAuthority", "type": "string", "minLength": 2 },

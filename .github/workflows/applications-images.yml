@@ -1,0 +1,186 @@
+name: applications-images
+
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: Reviewed immutable main commit containing the RC tags
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  packages: write
+  id-token: write
+  attestations: write
+  security-events: write
+
+jobs:
+  build:
+    if: github.repository == 'jphgardner/BlueTusk'
+    runs-on: ubuntu-latest
+    environment: package-prerelease
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - app: order-operations
+            family: OrderOperations
+            component: api
+          - app: order-operations
+            family: OrderOperations
+            component: worker
+          - app: order-operations
+            family: OrderOperations
+            component: ui
+            web: order-operations
+            output: dist
+          - app: service-topology
+            family: ServiceTopology
+            component: api
+          - app: service-topology
+            family: ServiceTopology
+            component: worker
+          - app: service-topology
+            family: ServiceTopology
+            component: ui
+            web: service-topology
+            output: dist/service-topology/browser
+          - app: fraud-investigation
+            family: FraudInvestigation
+            component: api
+          - app: fraud-investigation
+            family: FraudInvestigation
+            component: worker
+          - app: fraud-investigation
+            family: FraudInvestigation
+            component: ui
+            web: fraud-investigation
+            output: dist
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.commit }}
+          fetch-depth: 0
+
+      - name: Verify immutable main RC and public packages
+        shell: pwsh
+        run: |
+          if ('${{ inputs.commit }}' -notmatch '^[0-9a-f]{40}$') { throw 'A lowercase full commit SHA is required.' }
+          if ((git rev-parse HEAD) -ne '${{ inputs.commit }}') { throw 'Checkout SHA mismatch.' }
+          git fetch origin main --no-tags
+          git merge-base --is-ancestor '${{ inputs.commit }}' origin/main
+          if ($LASTEXITCODE -ne 0) { throw 'The requested image commit is not on reviewed main.' }
+          ./eng/verify-applications.ps1
+          ./eng/verify-prerelease-package-availability.ps1 `
+            -BeforeFamily ContinuousGraph `
+            -Version 1.0.0-rc.1 `
+            -IncludeFamily
+
+      - uses: docker/setup-buildx-action@8d2750c68a42422c14e847fe6c8ac0403b4cbd6f # v3
+      - uses: docker/login-action@c94ce9fb468520275223c153574b00df6fe4bcc9 # v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Resolve immutable image name
+        id: image
+        shell: bash
+        run: |
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          echo "name=ghcr.io/${owner}/bluetusk-${{ matrix.app }}" >> "$GITHUB_OUTPUT"
+          echo "tag=${{ matrix.component }}-${{ inputs.commit }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push component
+        id: build
+        uses: docker/build-push-action@10e90e3645eae34f1e60eeb005ba3a3d33f178e8 # v6
+        with:
+          context: .
+          file: applications/containers/Dockerfile.${{ matrix.component }}
+          push: true
+          sbom: true
+          provenance: mode=max
+          tags: ${{ steps.image.outputs.name }}:${{ steps.image.outputs.tag }}
+          build-args: |
+            PROJECT_FAMILY=${{ matrix.family }}
+            WEB_DIRECTORY=${{ matrix.web }}
+            WEB_OUTPUT=${{ matrix.output }}
+
+      - name: Scan immutable image
+        uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
+        with:
+          image: ${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}
+          fail-build: true
+          severity-cutoff: high
+          output-format: sarif
+          output-file: scan.sarif
+
+      - name: Upload scan result
+        uses: github/codeql-action/upload-sarif@e3062a64e96eb337b1b3bc57f65be3cf3c3c2f2e # v4
+        with:
+          sarif_file: scan.sarif
+
+      - name: Attest pushed image
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-name: ${{ steps.image.outputs.name }}
+          subject-digest: ${{ steps.build.outputs.digest }}
+          push-to-registry: true
+
+      - name: Record deployable digest
+        shell: bash
+        run: |
+          printf '%s@%s\n' '${{ steps.image.outputs.name }}' '${{ steps.build.outputs.digest }}' > image-digest.txt
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: image-${{ matrix.app }}-${{ matrix.component }}
+          path: image-digest.txt
+          if-no-files-found: error
+
+  evidence:
+    name: Aggregate immutable deployment evidence
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.commit }}
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          pattern: image-*
+          path: artifacts/application-image-digests
+
+      - name: Build and verify exact-SHA image manifest
+        shell: pwsh
+        run: |
+          $images = [ordered]@{}
+          foreach ($application in @('order-operations', 'service-topology', 'fraud-investigation')) {
+            $components = [ordered]@{}
+            foreach ($component in @('api', 'worker', 'ui')) {
+              $path = "artifacts/application-image-digests/image-$application-$component/image-digest.txt"
+              if (-not (Test-Path -LiteralPath $path -PathType Leaf)) { throw "Missing digest artifact '$path'." }
+              $components[$component] = (Get-Content -LiteralPath $path -Raw).Trim()
+            }
+            $images[$application] = $components
+          }
+          $evidence = [ordered]@{
+            schemaVersion = 1
+            rcVersion = '1.0.0-rc.1'
+            workflow = 'applications-images.yml'
+            repository = '${{ github.repository }}'
+            workflowRunId = '${{ github.run_id }}'
+            commit = '${{ inputs.commit }}'
+            images = $images
+          }
+          $path = 'artifacts/application-images.json'
+          $evidence | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $path -Encoding utf8NoBOM
+          ./eng/verify-application-image-evidence.ps1 -EvidencePath $path -ExpectedCommit '${{ inputs.commit }}'
+
+      - uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: application-image-evidence-${{ inputs.commit }}
+          path: artifacts/application-images.json
+          if-no-files-found: error
+          retention-days: 90

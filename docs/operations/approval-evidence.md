@@ -27,11 +27,11 @@ actual candidate.
 
 ## Common envelope
 
-Every approval file uses schema 3 and contains exactly these top-level fields:
+Every approval file uses schema 4 and contains exactly these top-level fields:
 
 | Field | Requirement |
 | --- | --- |
-| `schemaVersion` | `3` |
+| `schemaVersion` | `4` |
 | `gateId` | Exact required gate identifier and file stem |
 | `candidateCommit` | Full 40-character immutable candidate SHA |
 | `outcome` | `approved` |
@@ -209,8 +209,10 @@ requires:
 - accepted dependency-ordered publication;
 - confirmation that all six publication policies are armed in the immutable
   candidate;
-- confirmation that zero release tags exist and zero candidate packages have
-  been published;
+- confirmation that zero stable release tags exist and zero exact stable
+  candidate packages have been published;
+- the immutable commit, six tags, exact version and six-family inventory for
+  the already-published `1.0.0-rc.1` validation train;
 - confirmation that protected production approval is still pending;
 - accepted stop conditions;
 - a named rollback authority; and

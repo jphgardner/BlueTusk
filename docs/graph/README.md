@@ -129,6 +129,13 @@ GRAPH`; changing an element definition emits drop/create because PostgreSQL's
 individual label/element alterations cannot represent every model change as
 one atomic command.
 
+Generated migration C# uses the public fluent graph builder rather than a
+serialized definition string. It describes vertices, edges, labels,
+properties, keys and endpoints directly and validates the definition before
+adding the operation. The strongly typed model builder above remains the
+preferred source of truth; the migration builder makes the generated schema
+change readable and reviewable.
+
 All generated graph DDL is executed inside a server-side guard. PostgreSQL
 15–18 receive SQLSTATE `0A000` with a BlueTusk-specific requirement message;
 the PostgreSQL 19 DDL is dynamic inside the guard so an older parser never sees

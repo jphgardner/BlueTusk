@@ -18,3 +18,8 @@ Support starts only after `sync-v1.0.0` is tagged from the immutable reviewed
 `main` candidate and registry availability, hashes, provenance, smoke tests,
 and dependency resolution pass. Published 1.0.0 artifacts are immutable;
 defects use rollback or pinning and a new fixed version.
+
+Order Fulfilment Operations exercises the PostgreSQL read-model projection,
+reconciliation, rebuild, and cutover runbooks from exact `1.0.0-rc.1`
+packages. RC staging does not replace the exact-candidate 24-hour
+multi-destination endurance gate.

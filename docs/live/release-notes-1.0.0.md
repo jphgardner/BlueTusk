@@ -17,3 +17,8 @@ Support starts only after `live-v1.0.0` is tagged from the immutable reviewed
 `main` candidate and NuGet/npm availability, hashes, provenance, smoke tests,
 and dependency resolution pass. Published 1.0.0 artifacts are immutable;
 defects use rollback or pinning and a new fixed version.
+
+The V1 RC applications cover all three browser surfaces: Orders uses the React
+adapter, Service Topology uses the Angular adapter, and Fraud uses the
+framework-neutral client directly. Their BFF sessions, replay/resume, fan-out,
+and browser journeys are staging evidence, not either formal stable pilot.

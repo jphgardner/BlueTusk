@@ -21,3 +21,13 @@ commitment.
 Breaking public API or wire-contract changes require a new major version.
 Post-publication defects use rollback or pinning followed by a new fixed
 version; the 1.0.0 artifacts are never replaced.
+
+The V1 provider also generates readable fluent property-graph migrations. The
+builder validates vertex/edge aliases, labels, key cardinality, properties and
+endpoints; generated migrations no longer expose serialized graph metadata as
+a long string. The existing definition overload remains compatible.
+
+The three-application RC suite restores Provider only from exact
+`1.0.0-rc.1` packages and covers migrations, tenant isolation, idempotency,
+optimistic concurrency, PostgreSQL 19 graphs, and package-only architecture.
+This is staging verification, not stable support or pilot evidence.

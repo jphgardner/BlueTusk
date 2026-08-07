@@ -12,6 +12,71 @@ permissions:
   contents: read
 
 jobs:
+  applications:
+    name: Package-only application suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+
+      - name: Verify application and deployment contracts
+        shell: pwsh
+        run: |
+          ./eng/verify-applications.ps1
+          ./eng/test-application-image-evidence-verifier.ps1
+          ./eng/test-prerelease-release-verifier.ps1
+
+      - name: Build exact local RC feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+
+      - name: Restore, format, build, and test applications
+        shell: pwsh
+        run: |
+          dotnet restore applications/BlueTusk.Applications.slnx `
+            -p:RestoreAdditionalProjectSources=$PWD/artifacts/prerelease/feed
+          dotnet format applications/BlueTusk.Applications.slnx --no-restore --verify-no-changes
+          dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
+          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore
+
+      - name: Test applications against digest-pinned PostgreSQL 19 Beta 2
+        shell: pwsh
+        run: ./eng/test-applications-postgresql.ps1
+
+      - name: Build all browser clients from local RC npm artifacts
+        shell: pwsh
+        run: ./eng/build-application-web.ps1
+
+      - name: Exercise primary browser journeys
+        shell: pwsh
+        run: |
+          npm exec --yes playwright@1.62.1 install --with-deps chromium
+          Get-ChildItem artifacts/application-web -Directory | ForEach-Object {
+            Push-Location (Join-Path $_.FullName 'work')
+            try { npm run test:e2e }
+            finally { Pop-Location }
+          }
+
+      - name: Lint digest-only application chart
+        shell: bash
+        run: |
+          digest="sha256:$(printf '0%.0s' {1..64})"
+          helm lint applications/deploy/charts/bluetusk-application \
+            --set hostname=test.example.invalid \
+            --set images.api.repository=ghcr.io/test/api --set images.api.digest="$digest" \
+            --set images.worker.repository=ghcr.io/test/worker --set images.worker.digest="$digest" \
+            --set images.ui.repository=ghcr.io/test/ui --set images.ui.digest="$digest" \
+            --set database.ownerSecret=test-db-owner \
+            --set secrets.runtime=test-runtime --set secrets.liveTenant=test-live --set secrets.oidc=test-oidc \
+            --set authentication.authority=https://auth.example.invalid/realms/bluetusk \
+            --set authentication.clientId=test
+
   build-and-test:
     strategy:
       fail-fast: false
@@ -49,7 +114,16 @@ jobs:
         shell: pwsh
         run: |
           'Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph' |
-            ForEach-Object { ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly }
+            ForEach-Object {
+              ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
+              ./eng/pack-product-family.ps1 `
+                -Family $_ `
+                -ValidateOnly `
+                -Prerelease `
+                -VersionOverride 1.0.0-rc.1
+            }
+          ./eng/test-prerelease-release-verifier.ps1
+          ./eng/test-v1-approval-evidence-verifier.ps1
 
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore

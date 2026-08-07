@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\BlueTusk.Applications.Hosting\BlueTusk.Applications.Hosting.csproj" />
+    <ProjectReference Include="..\BlueTusk.OrderOperations.Infrastructure\BlueTusk.OrderOperations.Infrastructure.csproj" />
+    <PackageReference Include="BlueTusk.Streams" />
+    <PackageReference Include="BlueTusk.Streams.DependencyInjection" />
+    <PackageReference Include="BlueTusk.Streams.Storage.PostgreSql" />
+    <PackageReference Include="BlueTusk.Sync" />
+    <PackageReference Include="BlueTusk.Sync.DependencyInjection" />
+    <PackageReference Include="BlueTusk.Sync.PostgreSql" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+</Project>

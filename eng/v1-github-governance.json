@@ -80,6 +80,29 @@
       }
     },
     {
+      "name": "package-prerelease",
+      "workflow": ".github/workflows/release-product-family.yml",
+      "minimumConfiguredReviewers": 1,
+      "preventSelfReview": true,
+      "requiredSecrets": [
+        "V1_GOVERNANCE_TOKEN",
+        "NUGET_API_KEY",
+        "NPM_TOKEN"
+      ],
+      "deploymentBranchPolicy": {
+        "protectedBranches": false,
+        "customBranchPolicies": true,
+        "requiredPatterns": [
+          "provider-v1.0.0-rc.*",
+          "streams-v1.0.0-rc.*",
+          "sync-v1.0.0-rc.*",
+          "live-v1.0.0-rc.*",
+          "control-plane-v1.0.0-rc.*",
+          "continuous-graph-v1.0.0-rc.*"
+        ]
+      }
+    },
+    {
       "name": "package-production",
       "workflow": ".github/workflows/release-product-family.yml",
       "minimumConfiguredReviewers": 1,
@@ -93,12 +116,12 @@
         "protectedBranches": false,
         "customBranchPolicies": true,
         "requiredPatterns": [
-          "provider-v*",
-          "streams-v*",
-          "sync-v*",
-          "live-v*",
-          "control-plane-v*",
-          "continuous-graph-v*"
+          "provider-v1.0.0",
+          "streams-v1.0.0",
+          "sync-v1.0.0",
+          "live-v1.0.0",
+          "control-plane-v1.0.0",
+          "continuous-graph-v1.0.0"
         ]
       }
     }

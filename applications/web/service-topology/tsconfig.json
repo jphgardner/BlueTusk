@@ -1,0 +1,10 @@
+{
+  "compilerOptions": {
+    "target": "ES2023", "useDefineForClassFields": false, "module": "preserve",
+    "lib": ["ES2023", "DOM"], "moduleResolution": "bundler", "strict": true,
+    "skipLibCheck": true, "isolatedModules": true, "experimentalDecorators": true,
+    "importHelpers": true, "noImplicitOverride": true, "noPropertyAccessFromIndexSignature": true,
+    "noImplicitReturns": true, "noFallthroughCasesInSwitch": true
+  },
+  "angularCompilerOptions": { "strictInjectionParameters": true, "strictTemplates": true }
+}

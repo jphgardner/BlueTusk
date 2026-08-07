@@ -1,0 +1,60 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: {{ include "bluetusk.fullname" . }}-postgresql
+  labels:
+    {{- include "bluetusk.labels" . | nindent 4 }}
+spec:
+  instances: {{ .Values.database.instances }}
+  imageName: {{ .Values.database.image | quote }}
+  primaryUpdateStrategy: unsupervised
+  enableSuperuserAccess: false
+  bootstrap:
+    initdb:
+      database: application
+      owner: application_owner
+      secret: { name: {{ .Values.database.ownerSecret }} }
+      postInitApplicationSQL:
+        - ALTER DATABASE application SET timezone = 'UTC'
+        - REVOKE CREATE ON SCHEMA public FROM PUBLIC
+  postgresql:
+    parameters:
+      wal_level: logical
+      max_replication_slots: "16"
+      max_wal_senders: "16"
+      shared_preload_libraries: ""
+  storage:
+    storageClass: {{ .Values.database.storageClass }}
+    size: {{ .Values.database.storageSize }}
+  monitoring:
+    enablePodMonitor: true
+  affinity:
+    enablePodAntiAffinity: true
+    topologyKey: kubernetes.io/hostname
+  resources:
+    requests: { cpu: 150m, memory: 384Mi }
+    limits: { cpu: 1500m, memory: 1536Mi }
+  {{- if .Values.database.backup.enabled }}
+  backup:
+    retentionPolicy: 30d
+    barmanObjectStore:
+      destinationPath: {{ required "database.backup.destinationPath is required" .Values.database.backup.destinationPath | quote }}
+      endpointURL: {{ required "database.backup.endpointUrl is required" .Values.database.backup.endpointUrl | quote }}
+      s3Credentials:
+        accessKeyId: { name: {{ .Values.database.backup.credentialsSecret }}, key: ACCESS_KEY_ID }
+        secretAccessKey: { name: {{ .Values.database.backup.credentialsSecret }}, key: ACCESS_SECRET_KEY }
+      wal: { compression: gzip, maxParallel: 2 }
+      data: { compression: gzip, jobs: 2 }
+  {{- end }}
+---
+{{- if .Values.database.backup.enabled }}
+apiVersion: postgresql.cnpg.io/v1
+kind: ScheduledBackup
+metadata:
+  name: {{ include "bluetusk.fullname" . }}-daily
+spec:
+  schedule: "0 17 2 * * *"
+  backupOwnerReference: self
+  cluster: { name: {{ include "bluetusk.fullname" . }}-postgresql }
+  immediate: true
+{{- end }}

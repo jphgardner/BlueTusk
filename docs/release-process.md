@@ -19,6 +19,21 @@ final immutable candidate, `enabled=true` means the family is armed; it does
 not publish a package. Exact release tags and protected `package-production`
 approval remain the publication boundary.
 
+## RC application train
+
+`eng/prerelease-train.json` defines the separate immutable `1.0.0-rc.1` train
+for all six families in stable dependency order. RC packing uses version
+overrides and temporary npm artifact copies; it does not rewrite the stable
+family manifests. Every internal NuGet/npm dependency must resolve to the same
+exact RC version. Exact `*-v1.0.0-rc.1` tags publish through the protected
+`package-prerelease` environment, and npm packages use the `rc` dist-tag,
+never `latest`. A correction is `rc.2`; an RC is never overwritten.
+
+RC tags, packages, images, deployments, and observations cannot satisfy a
+stable exact-SHA gate. The three package-consumer applications and the
+staging/production boundary are documented in the
+[V1 application suite](v1-applications.md).
+
 ## Candidate sequence
 
 1. Finish code, documentation, API/format freezes, upgrades, package inspection,

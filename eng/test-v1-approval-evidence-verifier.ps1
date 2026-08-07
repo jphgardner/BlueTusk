@@ -143,7 +143,7 @@ try
         -ExpectedWebsiteProductionMetricsSha256 ('0' * 64) *> $null
 
     $genericPilot = [ordered]@{
-        schemaVersion = 3
+        schemaVersion = 4
         gateId = 'application-pilot-a'
         candidateCommit = $zeroCommit
         outcome = 'approved'
@@ -193,8 +193,30 @@ try
             [string]$_.gateId -eq 'maintainer-signoff'
         })[0] | ConvertTo-Json -Depth 20 | ConvertFrom-Json
     )
-    $prematureTag.details.releaseTagsCreated = 1
+    $prematureTag.details.stableReleaseTagsCreated = 1
     Assert-Rejected $prematureTag 'maintainer-signoff' 'premature-release-tag'
+
+    $publishedStableCandidate = (
+        @($examples.examples | Where-Object {
+            [string]$_.gateId -eq 'maintainer-signoff'
+        })[0] | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+    )
+    $publishedStableCandidate.details.stableCandidatePackagesPublished = 1
+    Assert-Rejected `
+        $publishedStableCandidate `
+        'maintainer-signoff' `
+        'published-stable-candidate'
+
+    $wrongPrereleaseCommit = (
+        @($examples.examples | Where-Object {
+            [string]$_.gateId -eq 'maintainer-signoff'
+        })[0] | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+    )
+    $wrongPrereleaseCommit.details.publishedPrereleaseCommit = 'not-a-commit'
+    Assert-Rejected `
+        $wrongPrereleaseCommit `
+        'maintainer-signoff' `
+        'wrong-prerelease-commit'
 
     $unarmedPolicies = (
         @($examples.examples | Where-Object {
@@ -285,5 +307,5 @@ finally
 
 Write-Output (
     'V1 approval-evidence verifier self-test passed: ten positive schemas, one ' +
-    'complete set, seven record mutations, six cross-record mutations and one ' +
+    'complete set, nine record mutations, six cross-record mutations and one ' +
     'stale-set mutation.')

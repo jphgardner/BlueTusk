@@ -33,9 +33,13 @@ jobs:
     outputs:
       family: ${{ steps.release.outputs.family }}
       is_tag: ${{ steps.release.outputs.is_tag }}
+      is_prerelease: ${{ steps.release.outputs.is_prerelease }}
+      version: ${{ steps.release.outputs.version }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
       - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
@@ -47,8 +51,15 @@ jobs:
           REQUESTED_FAMILY: ${{ inputs.family }}
         run: |
           $family = $env:REQUESTED_FAMILY
+          $version = ''
+          $isPrerelease = 'false'
           if ([string]::IsNullOrWhiteSpace($family)) {
-            $prefix = $env:GITHUB_REF_NAME.Split('-v', 2)[0]
+            $marker = $env:GITHUB_REF_NAME.IndexOf('-v', [StringComparison]::Ordinal)
+            if ($marker -le 0) {
+              throw "Unsupported release tag '$env:GITHUB_REF_NAME'."
+            }
+            $prefix = $env:GITHUB_REF_NAME.Substring(0, $marker)
+            $version = $env:GITHUB_REF_NAME.Substring($marker + 2)
             $family = switch ($prefix) {
               'provider' { 'Provider' }
               'streams' { 'Streams' }
@@ -58,8 +69,15 @@ jobs:
               'continuous-graph' { 'ContinuousGraph' }
               default { throw "Unsupported release tag '$env:GITHUB_REF_NAME'." }
             }
+            $isPrerelease = if ($version.Contains('-', [StringComparison]::Ordinal)) {
+              'true'
+            } else {
+              'false'
+            }
           }
           "family=$family" >> $env:GITHUB_OUTPUT
+          "version=$version" >> $env:GITHUB_OUTPUT
+          "is_prerelease=$isPrerelease" >> $env:GITHUB_OUTPUT
           $isTag = if ($env:GITHUB_REF_TYPE -eq 'tag') { 'true' } else { 'false' }
           "is_tag=$isTag" >> $env:GITHUB_OUTPUT
 
@@ -69,14 +87,28 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           ./eng/verify-github-governance.ps1
-          ./eng/pack-product-family.ps1 `
-            -Family '${{ steps.release.outputs.family }}' `
-            -ValidateOnly
+          $packArguments = @{
+            Family = '${{ steps.release.outputs.family }}'
+            ValidateOnly = $true
+          }
+          if ('${{ steps.release.outputs.is_prerelease }}' -eq 'true') {
+            $packArguments.Prerelease = $true
+            $packArguments.VersionOverride = '${{ steps.release.outputs.version }}'
+          }
+          ./eng/pack-product-family.ps1 @packArguments
           if ($env:GITHUB_REF_TYPE -eq 'tag') {
-            ./eng/verify-release-gates.ps1 `
-              -Family '${{ steps.release.outputs.family }}' `
-              -Commit '${{ github.sha }}' `
-              -Tag '${{ github.ref_name }}'
+            if ('${{ steps.release.outputs.is_prerelease }}' -eq 'true') {
+              ./eng/verify-prerelease-release.ps1 `
+                -Family '${{ steps.release.outputs.family }}' `
+                -Version '${{ steps.release.outputs.version }}' `
+                -Commit '${{ github.sha }}' `
+                -Tag '${{ github.ref_name }}'
+            } else {
+              ./eng/verify-release-gates.ps1 `
+                -Family '${{ steps.release.outputs.family }}' `
+                -Commit '${{ github.sha }}' `
+                -Tag '${{ github.ref_name }}'
+            }
           }
 
       - name: Restore
@@ -107,15 +139,24 @@ jobs:
           if ($env:GITHUB_REF_TYPE -ne 'tag') {
             $arguments.Candidate = $true
           }
+          if ('${{ steps.release.outputs.is_prerelease }}' -eq 'true') {
+            $arguments.Prerelease = $true
+            $arguments.VersionOverride = '${{ steps.release.outputs.version }}'
+          }
           ./eng/pack-product-family.ps1 @arguments
 
       - name: Verify package contents and provenance
         shell: pwsh
-        run: >-
-          ./eng/verify-product-family-packages.ps1
-          -Family '${{ steps.release.outputs.family }}'
-          -PackageDirectory 'artifacts/packages'
-          -ExpectedCommit '${{ github.sha }}'
+        run: |
+          $arguments = @{
+            Family = '${{ steps.release.outputs.family }}'
+            PackageDirectory = 'artifacts/packages'
+            ExpectedCommit = '${{ github.sha }}'
+          }
+          if ('${{ steps.release.outputs.is_prerelease }}' -eq 'true') {
+            $arguments.ExpectedVersion = '${{ steps.release.outputs.version }}'
+          }
+          ./eng/verify-product-family-packages.ps1 @arguments
 
       - name: Generate and verify candidate SBOMs
         shell: pwsh
@@ -139,9 +180,11 @@ jobs:
           if-no-files-found: error
           retention-days: 14
 
-  publish:
+  publish-stable:
     needs: verify-and-package
-    if: needs.verify-and-package.outputs.is_tag == 'true'
+    if: >-
+      needs.verify-and-package.outputs.is_tag == 'true' &&
+      needs.verify-and-package.outputs.is_prerelease != 'true'
     runs-on: ubuntu-latest
     environment: package-production
     permissions:
@@ -206,4 +249,84 @@ jobs:
               tag="${prerelease%%.*}"
             fi
             npm publish "$package" --access public --tag "$tag" --provenance
+          done
+
+  publish-prerelease:
+    needs: verify-and-package
+    if: >-
+      needs.verify-and-package.outputs.is_tag == 'true' &&
+      needs.verify-and-package.outputs.is_prerelease == 'true'
+    runs-on: ubuntu-latest
+    environment: package-prerelease
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+
+      - name: Re-verify the fail-closed prerelease boundary
+        shell: pwsh
+        env:
+          V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
+            throw 'The protected prerelease environment has no V1_GOVERNANCE_TOKEN secret.'
+          }
+          ./eng/verify-github-governance.ps1 `
+            -Mode Remote `
+            -Token $env:V1_GOVERNANCE_TOKEN
+          ./eng/verify-prerelease-release.ps1 `
+            -Family '${{ needs.verify-and-package.outputs.family }}' `
+            -Version '${{ needs.verify-and-package.outputs.version }}' `
+            -Commit '${{ github.sha }}' `
+            -Tag '${{ github.ref_name }}'
+          ./eng/verify-prerelease-package-availability.ps1 `
+            -BeforeFamily '${{ needs.verify-and-package.outputs.family }}' `
+            -Version '${{ needs.verify-and-package.outputs.version }}'
+
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: ${{ needs.verify-and-package.outputs.family }}-packages
+          path: artifacts
+
+      - name: Attest prerelease package provenance
+        uses: actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3
+        with:
+          subject-path: |
+            artifacts/packages/*
+            artifacts/sbom/*
+
+      - name: Publish prerelease NuGet packages
+        env:
+          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
+        run: >-
+          dotnet nuget push "artifacts/packages/*.nupkg"
+          --api-key "$NUGET_API_KEY"
+          --source https://api.nuget.org/v3/index.json
+
+      - name: Publish prerelease npm packages
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: |
+          shopt -s nullglob
+          packages=(artifacts/packages/*.tgz)
+          if (( ${#packages[@]} == 0 )); then
+            exit 0
+          fi
+          printf '//registry.npmjs.org/:_authToken=${NODE_AUTH_TOKEN}\n' > "$RUNNER_TEMP/bluetusk-npmrc"
+          export NPM_CONFIG_USERCONFIG="$RUNNER_TEMP/bluetusk-npmrc"
+          for package in "${packages[@]}"; do
+            version="$(
+              tar -xOf "$package" package/package.json |
+                node -e "let value=''; process.stdin.on('data', chunk => value += chunk).on('end', () => process.stdout.write(JSON.parse(value).version));"
+            )"
+            if [[ "$version" != *-rc.* ]]; then
+              printf 'Refusing to publish non-RC npm version %s through prerelease.\n' "$version" >&2
+              exit 1
+            fi
+            npm publish "$package" --access public --tag rc --provenance
           done

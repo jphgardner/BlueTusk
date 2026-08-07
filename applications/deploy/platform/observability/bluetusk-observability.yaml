@@ -1,0 +1,52 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PrometheusRule
+metadata:
+  name: bluetusk-application-slos
+  namespace: observability
+  labels: { release: kube-prometheus-stack }
+spec:
+  groups:
+    - name: bluetusk-applications
+      rules:
+        - alert: BlueTuskHttpErrorBudgetBurn
+          expr: sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~"5..",service_namespace="bluetusk-applications"}[5m])) / clamp_min(sum(rate(http_server_request_duration_seconds_count{service_namespace="bluetusk-applications"}[5m])), 1) > 0.01
+          for: 10m
+          labels: { severity: page }
+          annotations: { summary: BlueTusk application HTTP error budget is burning }
+        - alert: BlueTuskLiveP95AboveOneSecond
+          expr: histogram_quantile(0.95, sum by (le, service_name) (rate(bluetusk_live_refresh_duration_seconds_bucket[10m]))) > 1
+          for: 15m
+          labels: { severity: page }
+          annotations: { summary: BlueTusk Live P95 lifecycle exceeded one second }
+        - alert: BlueTuskGraphEvaluationFailures
+          expr: sum(rate(bluetusk_graph_evaluations_total{bluetusk_graph_evaluation_outcome!="committed"}[10m])) > 0
+          for: 5m
+          labels: { severity: warning }
+          annotations: { summary: ContinuousGraph evaluation has non-committed outcomes }
+        - alert: BlueTuskStreamSettlementFailures
+          expr: sum(increase(bluetusk_streams_delivery_settlement_failures_total[10m])) > 0
+          for: 1m
+          labels: { severity: page }
+          annotations: { summary: Streams delivery settlement failed }
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bluetusk-applications-dashboard
+  namespace: observability
+  labels: { grafana_dashboard: "1" }
+data:
+  bluetusk-applications.json: |
+    {
+      "title": "BlueTusk Applications RC",
+      "uid": "bluetusk-applications-rc",
+      "schemaVersion": 41,
+      "refresh": "30s",
+      "time": { "from": "now-6h", "to": "now" },
+      "panels": [
+        { "type": "timeseries", "title": "HTTP request rate", "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 }, "targets": [{ "expr": "sum by (service_name) (rate(http_server_request_duration_seconds_count{service_namespace=\"bluetusk-applications\"}[5m]))", "legendFormat": "{{service_name}}" }] },
+        { "type": "timeseries", "title": "Live refresh P95", "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 }, "targets": [{ "expr": "histogram_quantile(0.95, sum by (le, service_name) (rate(bluetusk_live_refresh_duration_seconds_bucket[5m])))", "legendFormat": "{{service_name}}" }] },
+        { "type": "timeseries", "title": "Streams deliveries", "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 }, "targets": [{ "expr": "sum by (service_name) (rate(bluetusk_streams_transactions_delivered_total[5m]))", "legendFormat": "{{service_name}}" }] },
+        { "type": "timeseries", "title": "ContinuousGraph evaluations", "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 }, "targets": [{ "expr": "sum by (service_name, bluetusk_graph_evaluation_outcome) (rate(bluetusk_graph_evaluations_total[5m]))", "legendFormat": "{{service_name}} / {{bluetusk_graph_evaluation_outcome}}" }] }
+      ]
+    }

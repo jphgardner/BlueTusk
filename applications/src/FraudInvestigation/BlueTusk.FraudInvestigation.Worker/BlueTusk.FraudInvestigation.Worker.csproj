@@ -1,0 +1,12 @@
+<Project Sdk="Microsoft.NET.Sdk.Worker">
+  <PropertyGroup><TargetFramework>net10.0</TargetFramework></PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Shared\BlueTusk.Applications.Hosting\BlueTusk.Applications.Hosting.csproj" />
+    <ProjectReference Include="..\BlueTusk.FraudInvestigation.Infrastructure\BlueTusk.FraudInvestigation.Infrastructure.csproj" />
+    <PackageReference Include="BlueTusk.ContinuousGraph" />
+    <PackageReference Include="BlueTusk.ContinuousGraph.ControlPlane" />
+    <PackageReference Include="BlueTusk.Live.DependencyInjection" />
+    <PackageReference Include="BlueTusk.Streams.DependencyInjection" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" />
+  </ItemGroup>
+</Project>

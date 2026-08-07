@@ -1,0 +1,15 @@
+:root { font-family: Inter, ui-sans-serif, system-ui; color: #19262d; background: #e9efed; }
+* { box-sizing: border-box; } body { margin: 0; } nav { height: 68px; padding: 0 32px; display: flex; align-items: center; justify-content: space-between; background: #173a36; color: white; }
+main { max-width: 1220px; margin: auto; padding: 44px 28px; } header { display: flex; justify-content: space-between; align-items: end; }
+header p { margin: 0; color: #277367; font-weight: 750; text-transform: uppercase; letter-spacing: .09em; } h1 { margin: 6px 0; font-size: clamp(2.5rem, 5vw, 4.6rem); letter-spacing: -.05em; }
+.live { color: #19765c; padding-bottom: 12px; } .summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 32px 0; }
+.summary article { padding: 20px; display: flex; align-items: baseline; gap: 12px; background: #f9fbfa; border: 1px solid #cedbd7; border-radius: 12px; }
+.summary b { font-size: 2rem; } .canvas { min-height: 480px; padding: 26px; background-color: #f9fbfa; background-image: radial-gradient(#b8c8c3 1px, transparent 1px); background-size: 22px 22px; border: 1px solid #cbd8d4; border-radius: 16px; }
+.toolbar { display: flex; justify-content: space-between; align-items: center; } .toolbar form { display: flex; gap: 8px; }
+input, select { padding: 10px 12px; border: 1px solid #9eb2ac; border-radius: 7px; background: white; } button { padding: 10px 16px; border: 0; border-radius: 7px; background: #196e5f; color: white; font-weight: 700; }
+.nodes { display: grid; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); gap: 20px; padding-top: 34px; }
+.node { display: flex; align-items: center; gap: 12px; padding: 18px; background: white; border: 1px solid #bfcfca; border-radius: 12px; box-shadow: 0 8px 22px #2c494013; }
+.node div { display: grid; flex: 1; } .node small { color: #6d817b; } .node em { font-style: normal; color: #6d817b; }
+.pulse { width: 12px; height: 12px; background: #27a47e; border-radius: 50%; box-shadow: 0 0 0 5px #27a47e22; } .degraded .pulse { background: #db6b42; box-shadow: 0 0 0 5px #db6b4222; }
+.empty { color: #667b75; } @media(max-width: 700px) { .summary { grid-template-columns: 1fr; } .toolbar { align-items: stretch; flex-direction: column; } .toolbar form { flex-direction: column; } }
+.dependency { display: flex; gap: 12px; align-items: end; margin: 28px 0; } .dependency label { display: grid; gap: 5px; }

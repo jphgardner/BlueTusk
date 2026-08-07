@@ -1,0 +1,7 @@
+apiVersion: v2
+name: bluetusk-application
+description: Secure RC and production deployment contract for one BlueTusk application
+type: application
+version: 1.0.0-rc.1
+appVersion: 1.0.0-rc.1
+kubeVersion: ">=1.35.0-0"

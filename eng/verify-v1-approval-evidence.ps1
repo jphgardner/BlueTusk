@@ -151,7 +151,7 @@ function ConvertTo-UtcDateTime
 $contractPath = Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json'
 $contract = Get-Content -LiteralPath $contractPath -Raw | ConvertFrom-Json
 if ([int]$contract.schemaVersion -ne 1 -or
-    [int]$contract.approvalSchemaVersion -ne 3)
+    [int]$contract.approvalSchemaVersion -ne 4)
 {
     throw 'The V1 approval-evidence contract has an unsupported schema.'
 }
@@ -353,6 +353,13 @@ foreach ($rule in $rules)
             if ($value -isnot [string] -or [string]$value -notmatch '^[0-9a-fA-F]{64}$')
             {
                 throw "$context must be a SHA-256 value."
+            }
+        }
+        'gitSha'
+        {
+            if ($value -isnot [string] -or [string]$value -notmatch '^[0-9a-fA-F]{40}$')
+            {
+                throw "$context must be a full Git commit SHA."
             }
         }
         'utcDateTime'

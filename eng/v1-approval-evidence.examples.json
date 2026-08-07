@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "examples": [
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "independent-release-review",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -22,7 +22,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "security-review",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -45,7 +45,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "application-pilot-a",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -75,7 +75,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "application-pilot-b",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -105,7 +105,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "website-deployment-acceptance",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -135,7 +135,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "backup-restore-rehearsal",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -164,7 +164,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "rollback-rehearsal",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -190,7 +190,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "incident-response-game-day",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -214,7 +214,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "slo-owner-approval",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -235,7 +235,7 @@
       }
     },
     {
-      "schemaVersion": 3,
+      "schemaVersion": 4,
       "gateId": "maintainer-signoff",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -250,8 +250,12 @@
         "candidateImmutable": true,
         "publicationOrderAccepted": true,
         "publicationPoliciesArmed": true,
-        "releaseTagsCreated": 0,
-        "candidatePackagesPublished": 0,
+        "stableReleaseTagsCreated": 0,
+        "stableCandidatePackagesPublished": 0,
+        "publishedPrereleaseVersion": "1.0.0-rc.1",
+        "publishedPrereleaseCommit": "1111111111111111111111111111111111111111",
+        "publishedPrereleaseTags": 6,
+        "publishedPrereleaseFamilies": [ "Provider", "Streams", "Sync", "Live", "ControlPlane", "ContinuousGraph" ],
         "protectedProductionApprovalPending": true,
         "stopConditionsAccepted": true,
         "rollbackAuthority": "rollback-authority",

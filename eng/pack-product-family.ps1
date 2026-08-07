@@ -8,6 +8,8 @@ param(
     [string] $Output = 'artifacts/packages',
     [switch] $ValidateOnly,
     [switch] $Candidate,
+    [switch] $Prerelease,
+    [string] $VersionOverride,
     [switch] $NoRestore
 )
 
@@ -20,6 +22,49 @@ $manifest = Get-Content $manifestPath -Raw | ConvertFrom-Json
 if ($manifest.schemaVersion -ne 2)
 {
     throw "Expected product-family manifest schema 2; found '$($manifest.schemaVersion)'."
+}
+
+if ($Candidate -and $Prerelease)
+{
+    throw 'Candidate and Prerelease packaging modes are mutually exclusive.'
+}
+
+$prereleaseManifest = $null
+if ($Prerelease)
+{
+    $prereleaseManifestPath = Join-Path $PSScriptRoot 'prerelease-train.json'
+    $prereleaseManifest = Get-Content -LiteralPath $prereleaseManifestPath -Raw |
+        ConvertFrom-Json
+    if ([int]$prereleaseManifest.schemaVersion -ne 1 -or
+        $prereleaseManifest.publicationEnabled -ne $true)
+    {
+        throw 'The prerelease train is not enabled with supported schema 1.'
+    }
+
+    if ([string]::IsNullOrWhiteSpace($VersionOverride) -or
+        -not [string]::Equals(
+            $VersionOverride,
+            [string]$prereleaseManifest.version,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            "Prerelease packaging requires exact train version " +
+            "'$($prereleaseManifest.version)'.")
+    }
+
+    if ($VersionOverride -notmatch '^\d+\.\d+\.\d+-[0-9A-Za-z]+(?:[.-][0-9A-Za-z]+)*$')
+    {
+        throw "Prerelease version '$VersionOverride' is not valid SemVer."
+    }
+
+    if ($Family -notin @($prereleaseManifest.families))
+    {
+        throw "Product family '$Family' is not armed for the prerelease train."
+    }
+}
+elseif (-not [string]::IsNullOrWhiteSpace($VersionOverride))
+{
+    throw 'VersionOverride is permitted only with Prerelease packaging.'
 }
 
 $definition = $manifest.families.$Family
@@ -147,13 +192,21 @@ if (-not (Test-Path -LiteralPath $versionPath))
 [xml] $versionDocument = Get-Content -LiteralPath $versionPath -Raw
 $versionPrefix = [string] $versionDocument.Project.PropertyGroup.VersionPrefix
 $versionSuffix = [string] $versionDocument.Project.PropertyGroup.VersionSuffix
-$familyVersion = if ([string]::IsNullOrWhiteSpace($versionSuffix))
+$sourceFamilyVersion = if ([string]::IsNullOrWhiteSpace($versionSuffix))
 {
     $versionPrefix
 }
 else
 {
     "$versionPrefix-$versionSuffix"
+}
+$familyVersion = if ($Prerelease)
+{
+    $VersionOverride
+}
+else
+{
+    $sourceFamilyVersion
 }
 if ([string]::IsNullOrWhiteSpace($versionPrefix))
 {
@@ -244,9 +297,9 @@ if ($null -ne $definition.PSObject.Properties['npmPackages'])
             }
 
             $npmManifest = Get-Content -LiteralPath $manifestPath -Raw | ConvertFrom-Json
-            if ($npmManifest.version -ne $familyVersion)
+            if ($npmManifest.version -ne $sourceFamilyVersion)
             {
-                throw "npm package '$($npmManifest.name)' has version '$($npmManifest.version)', expected '$familyVersion'."
+                throw "npm package '$($npmManifest.name)' has version '$($npmManifest.version)', expected source version '$sourceFamilyVersion'."
             }
 
             Get-Item -LiteralPath $npmPackagePath
@@ -273,11 +326,12 @@ if ($ValidateOnly)
         $blockedReleaseDependencies -join ','
     }
 
-    Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); publicationEnabled=$publicationEnabled; channel=$publicationChannel; releaseDependencies=$dependencySummary; blockedDependencies=$blockedSummary; exactCommitWorkflows=$($requiredWorkflowEvidence.Count)."
+    $mode = if ($Prerelease) { "prerelease/$familyVersion" } elseif ($Candidate) { 'candidate' } else { 'stable' }
+    Write-Output "Validated $Family release train with $($projects.Count) registered project(s) and $($npmPackages.Count) npm package(s); mode=$mode; publicationEnabled=$publicationEnabled; channel=$publicationChannel; releaseDependencies=$dependencySummary; blockedDependencies=$blockedSummary; exactCommitWorkflows=$($requiredWorkflowEvidence.Count)."
     return
 }
 
-if (-not $publicationEnabled -and -not $Candidate)
+if (-not $publicationEnabled -and -not $Candidate -and -not $Prerelease)
 {
     throw "Product family '$Family' has not passed its publication gate."
 }
@@ -343,6 +397,10 @@ foreach ($project in $projects)
     {
         $arguments += '--no-restore'
     }
+    if ($Prerelease)
+    {
+        $arguments += "-p:Version=$familyVersion"
+    }
 
     & dotnet @arguments
     if ($LASTEXITCODE -ne 0)
@@ -353,8 +411,62 @@ foreach ($project in $projects)
 
 foreach ($package in $npmPackages)
 {
-    & npm pack $package.FullName --pack-destination $outputPath
-    if ($LASTEXITCODE -ne 0)
+    $packagePath = $package.FullName
+    $temporaryPackagePath = $null
+    if ($Prerelease)
+    {
+        $artifactsRoot = [IO.Path]::GetFullPath((
+            Join-Path $repositoryRoot 'artifacts'))
+        $temporaryRoot = [IO.Path]::GetFullPath((
+            Join-Path $artifactsRoot "prerelease-work/$Family"))
+        if (-not $temporaryRoot.StartsWith(
+                $artifactsRoot + [IO.Path]::DirectorySeparatorChar,
+                [StringComparison]::OrdinalIgnoreCase))
+        {
+            throw "Prerelease workspace '$temporaryRoot' must remain below artifacts."
+        }
+        New-Item -ItemType Directory -Path $temporaryRoot -Force | Out-Null
+        $temporaryPackagePath = Join-Path $temporaryRoot $package.Name
+        if (Test-Path -LiteralPath $temporaryPackagePath)
+        {
+            Remove-Item -LiteralPath $temporaryPackagePath -Recurse -Force
+        }
+        Copy-Item -LiteralPath $package.FullName -Destination $temporaryPackagePath -Recurse
+
+        $temporaryManifestPath = Join-Path $temporaryPackagePath 'package.json'
+        $temporaryManifest = Get-Content -LiteralPath $temporaryManifestPath -Raw |
+            ConvertFrom-Json
+        $temporaryManifest.version = $familyVersion
+        foreach ($dependencyProperty in @('dependencies', 'optionalDependencies'))
+        {
+            $dependencies = $temporaryManifest.PSObject.Properties[$dependencyProperty]
+            if ($null -eq $dependencies)
+            {
+                continue
+            }
+            foreach ($dependency in $dependencies.Value.PSObject.Properties)
+            {
+                if ($dependency.Name.StartsWith(
+                        '@bluetusk/',
+                        [StringComparison]::Ordinal))
+                {
+                    $dependency.Value = $familyVersion
+                }
+            }
+        }
+        $temporaryManifest | ConvertTo-Json -Depth 32 |
+            Set-Content -LiteralPath $temporaryManifestPath -Encoding utf8NoBOM
+        $packagePath = $temporaryPackagePath
+    }
+
+    & npm pack $packagePath --pack-destination $outputPath
+    $packExitCode = $LASTEXITCODE
+    if ($null -ne $temporaryPackagePath -and
+        (Test-Path -LiteralPath $temporaryPackagePath))
+    {
+        Remove-Item -LiteralPath $temporaryPackagePath -Recurse -Force
+    }
+    if ($packExitCode -ne 0)
     {
         throw "npm pack failed for '$($package.FullName)'."
     }

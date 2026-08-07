@@ -16,7 +16,10 @@ $workflowFiles = Get-ChildItem -LiteralPath (
 $usesPattern = [regex]'(?m)^\s*(?:-\s*)?uses:\s*(?<action>[^@\s]+)@(?<reference>[^\s#]+)'
 $unpinned = [System.Collections.Generic.List[string]]::new()
 $unpinnedImages = [System.Collections.Generic.List[string]]::new()
-$serviceImagePattern = [regex]'(?m)^\s*image:\s*(?<image>[^\s#]+)'
+$serviceImagePattern = [regex]'(?m)^\s*image:\s*(?<image>[^\r\n#]+?)\s*(?:#.*)?$'
+$builtImageDigestPattern = [regex](
+    '^\$\{\{\s*steps\.image\.outputs\.name\s*\}\}@' +
+    '\$\{\{\s*steps\.build\.outputs\.digest\s*\}\}$')
 $knownWorkflowImagePattern = [regex](
     '(?<![A-Za-z0-9._/-])' +
     '(?<image>(?:' +
@@ -45,10 +48,15 @@ foreach ($workflow in $workflowFiles)
     }
     foreach ($match in $serviceImagePattern.Matches($content))
     {
-        if ($match.Groups['image'].Value -notmatch '@sha256:[0-9a-f]{64}$')
+        $image = $match.Groups['image'].Value.Trim()
+        $isBuiltDigest = $builtImageDigestPattern.IsMatch($image) -and
+            $content -match '(?m)^\s*id:\s*image\s*$' -and
+            $content -match '(?m)^\s*id:\s*build\s*$' -and
+            $content -match 'docker/build-push-action@[0-9a-f]{40}'
+        if ($image -notmatch '@sha256:[0-9a-f]{64}$' -and -not $isBuiltDigest)
         {
             $unpinnedImages.Add(
-                "$($workflow.Name): $($match.Groups['image'].Value)")
+                "$($workflow.Name): $image")
         }
     }
     foreach ($match in $knownWorkflowImagePattern.Matches($content))

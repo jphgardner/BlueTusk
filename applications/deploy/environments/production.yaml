@@ -1,0 +1,19 @@
+environment: production
+api: { replicas: 2 }
+worker: { replicas: 2 }
+ui: { replicas: 2 }
+autoscaling: { enabled: true, minimumReplicas: 2, maximumReplicas: 6, targetCpuUtilization: 70 }
+database:
+  instances: 3
+  storageSize: 50Gi
+  backup:
+    enabled: true
+    destinationPath: ""
+    endpointUrl: ""
+    credentialsSecret: ""
+quota:
+  requestsCpu: "8"
+  requestsMemory: 12Gi
+  limitsCpu: "16"
+  limitsMemory: 24Gi
+  persistentVolumeClaims: "8"

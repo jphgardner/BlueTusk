@@ -1,0 +1,12 @@
+environment: rc
+nameOverride: order-operations
+hostname: orders.192.168.1.230.nip.io
+images:
+  api: { repository: ghcr.io/jphgardner/bluetusk-order-operations, digest: "" }
+  worker: { repository: ghcr.io/jphgardner/bluetusk-order-operations, digest: "" }
+  ui: { repository: ghcr.io/jphgardner/bluetusk-order-operations, digest: "" }
+database: { ownerSecret: orders-db-owner, storageSize: 10Gi }
+secrets: { runtime: orders-runtime, liveTenant: orders-live-tenant, oidc: orders-oidc }
+authentication:
+  authority: https://auth.192.168.1.230.nip.io/realms/bluetusk
+  clientId: order-operations-bff

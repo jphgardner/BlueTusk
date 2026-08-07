@@ -21,3 +21,9 @@ immutable reviewed `main` candidate and registry availability, hashes,
 provenance, smoke tests, and dependency resolution pass. Published 1.0.0
 artifacts are immutable; defects use rollback or pinning and a new fixed
 version.
+
+Service Topology Centre and Fraud Graph Investigator exercise repair,
+checkpoint/restart, disconnect recovery, cancellation, path analysis, and
+ordered result handling from exact RC packages. They also use readable fluent
+property-graph migrations. This is PostgreSQL 19 Beta 2 staging coverage;
+neither application is yet an independent stable pilot.

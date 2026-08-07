@@ -103,6 +103,14 @@ ContinuousGraph candidate runs, complete the content-addressed disturbance
 recoveries and external acceptance window, and obtain independent sign-off.
 Package names and successful local builds are not claims of public availability.
 
+Three package-consumer applications now exercise the release train end to end:
+Order Fulfilment Operations, Service Topology Centre, and Fraud Graph
+Investigator. Their exact-RC architecture, application workflows, PostgreSQL
+19 staging boundary, local verification, Kubernetes topology, and stable-pilot
+promotion rules are recorded in the
+[V1 application suite](docs/v1-applications.md). RC application evidence is
+deliberately separate from immutable stable-candidate and pilot evidence.
+
 Read the [platform contracts](docs/realtime-platform/contracts.md),
 [real-time operations guide](docs/realtime-platform/operations.md), and
 [release process](docs/release-process.md) before designing a production
@@ -165,6 +173,9 @@ The release-prepared `1.0.0` implementation provides:
 - EF Core CRUD, transactions, generated values, core LINQ, physical database lifecycle, table CHECK and exclusion constraints, advanced column/expression PostgreSQL indexes, table/view/event-trigger, rewrite-rule, logical-publication/subscription, foreign-data-wrapper/server/user-mapping/foreign-table, tablespace, operator/operator-family/operator-class/cast/aggregate, declarative partition, row-level-security, direct table-inheritance, collation, installed-extension, enum/domain/composite/range/multirange-type, function/procedure, and ordinary/materialised-view migrations/scaffolding, typed PostgreSQL
   operator translations including `ANY`/`ALL`, row-value comparisons, array/range/multirange algebra, JSONB extraction/mutation, full-text composition, network arithmetic, bit strings, and complete built-in geometric forms, typed array/string/bytea/numeric/formatting/range/JSONB/regex/network/full-text/date-time/geometric scalar functions, complete built-in PostgreSQL aggregate families (including PostgreSQL 16 strict/unique variants), multidimensional array construction/subscripts/slices, lateral array element/subscript expansion, typed `generate_series`, scalar/key-value/model-derived JSONB roots, typed two- through four-array `unnest`, regex/delimiter table roots, runtime enum/domain predicates, catalogue-resolved nested composite/lossless-record field access, ordered `DISTINCT ON`, `TABLESAMPLE`, row locking, ranking/value window projections, recursive/materialized CTEs, `RETURNING`, `ON CONFLICT`, single-row `MERGE`, typed system columns with `xmin` concurrency, model-registered table-valued functions, initial migrations, and reverse engineering;
 - PostgreSQL-native EF scalar, array, range, multirange, enum, domain, composite, and record mappings.
+- readable fluent `CreatePropertyGraph` migrations with validated vertex,
+  edge, label, property, key, source, and destination builders; generated
+  migrations no longer embed serialized graph metadata strings.
 - a packaged `bluetusk scaffold` database-first tool with schema/table filters,
   PostgreSQL-specific metadata retention, and secure-by-default connection handling.
 - an immutable data-source feature registry plus independently packaged,

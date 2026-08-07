@@ -216,7 +216,7 @@ public sealed class ProductFamilyArchitectureTests
     }
 
     [Fact]
-    public void Release_workflow_is_tag_only_fail_closed_and_verifies_artifacts()
+    public void Release_workflow_is_tag_only_fail_closed_and_separates_stable_from_prerelease()
     {
         var repositoryRoot = FindRepositoryRoot();
         var workflow = File.ReadAllText(Path.Combine(
@@ -228,11 +228,25 @@ public sealed class ProductFamilyArchitectureTests
         Assert.DoesNotContain("publish:\n        description:", workflow, StringComparison.Ordinal);
         Assert.DoesNotContain("--skip-duplicate", workflow, StringComparison.Ordinal);
         Assert.Contains(
-            "if: needs.verify-and-package.outputs.is_tag == 'true'",
+            "needs.verify-and-package.outputs.is_tag == 'true' &&\n" +
+            "      needs.verify-and-package.outputs.is_prerelease != 'true'",
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(
             "environment: package-production",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "needs.verify-and-package.outputs.is_tag == 'true' &&\n" +
+            "      needs.verify-and-package.outputs.is_prerelease == 'true'",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "environment: package-prerelease",
+            workflow,
+            StringComparison.Ordinal);
+        Assert.Contains(
+            "npm publish \"$package\" --access public --tag rc --provenance",
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(

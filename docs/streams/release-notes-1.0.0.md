@@ -18,3 +18,8 @@ reviewed `main` candidate and its packages, hashes, provenance, smoke tests,
 and Provider dependency have been verified. Candidate artifacts remain
 test-only. Published 1.0.0 artifacts are immutable; defects use rollback or
 pinning and a new fixed version.
+
+The Orders, Topology, and Fraud RC applications exercise durable relay,
+replay/invalidation, worker restart, cancellation, and corruption/recovery
+contracts from exact `1.0.0-rc.1` packages. These staging observations do not
+replace the exact-candidate 72-hour gate.

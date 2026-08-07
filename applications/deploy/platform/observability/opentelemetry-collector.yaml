@@ -1,0 +1,19 @@
+mode: deployment
+replicaCount: 1
+image: { repository: otel/opentelemetry-collector-k8s, tag: 0.156.0 }
+presets:
+  kubernetesAttributes: { enabled: true }
+  kubernetesEvents: { enabled: true }
+  clusterMetrics: { enabled: true }
+config:
+  exporters:
+    otlphttp/prometheus: { endpoint: http://kube-prometheus-stack-prometheus.observability.svc:9090/api/v1/otlp }
+    otlphttp/loki: { endpoint: http://loki-gateway.observability.svc/otlp }
+  service:
+    pipelines:
+      traces: { receivers: [otlp], processors: [memory_limiter, batch], exporters: [debug] }
+      metrics: { receivers: [otlp], processors: [memory_limiter, batch], exporters: [otlphttp/prometheus] }
+      logs: { receivers: [otlp], processors: [memory_limiter, batch], exporters: [otlphttp/loki] }
+resources:
+  requests: { cpu: 50m, memory: 128Mi }
+  limits: { cpu: 500m, memory: 512Mi }

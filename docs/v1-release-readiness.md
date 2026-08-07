@@ -43,10 +43,12 @@ exact-candidate evidence below is complete.
 - A single fail-closed V1 verifier that distinguishes deterministic engineering
   readiness from PostgreSQL 19 GA, endurance, performance, pilot, recovery,
   game-day and accountable approval evidence for one immutable commit.
-- A schema-3 operational approval contract with ten gate-specific evidence
+- A schema-4 operational approval contract with ten gate-specific evidence
   shapes, measured pilot and field-performance minimums, restore/RPO/RTO
   comparisons, rollback and game-day outcomes, cross-pilot independence checks
-  and fail-closed mutation self-tests. Candidate evidence schema 3 binds all
+  and fail-closed mutation self-tests. Approval schema 4 distinguishes public
+  prereleases from unpublished stable-candidate artifacts. Candidate evidence
+  schema 3 binds all
   seven workflow run attempts and completion times, rejects stale approvals, orders
   independent review after operational acceptance and makes maintainer
   sign-off the final decision.
@@ -66,7 +68,7 @@ layout are in [V1 production readiness](operations/production-readiness.md).
 
 ## Verification snapshot
 
-The final local verification on 2026-08-04 produced:
+The combined local verification record through 2026-08-07 produced:
 
 | Gate | Result |
 | --- | --- |
@@ -74,7 +76,7 @@ The final local verification on 2026-08-04 produced:
 | Formatting | No changes required |
 | PostgreSQL 19 full solution matrix | 3,289 passed, 158 environment-specific skips, zero failures across 45 test assemblies |
 | ADO.NET live compatibility suite | 11 passed, including function `IN`/`OUT`/`INOUT`, procedure `CALL`, Dapper, schema and DI health checks |
-| Public API budget | 12,975 signatures across six product families |
+| Public API budget | 12,991 signatures across six product families |
 | Dependency vulnerability audit | No advisory matched in any solution project |
 | Provider candidate packaging | 31 NuGet packages and 29 symbol packages verified |
 | Candidate SBOM/provenance smoke | 60 artifact hashes and 317 components/packages verified in both SBOM formats |
@@ -85,6 +87,13 @@ The final local verification on 2026-08-04 produced:
 This snapshot validates the tooling and current working tree. It is not
 immutable release evidence: the final candidate must be committed, clean, and
 rerun by the required workflows at that exact commit.
+
+The separately verified [V1 application suite](v1-applications.md) adds three
+package-only applications, PostgreSQL 19 Beta 2 migration/integration coverage,
+three browser journeys, exact RC packaging contracts, image evidence, Helm
+deployments, and platform preflight tooling. It is RC staging evidence only:
+publication/deployment still require protected credentials and approvals, and
+the applications do not yet count as formal V1 pilots.
 
 ## Gates that must remain open
 

@@ -91,12 +91,12 @@ if ($configuration.ruleset.strictRequiredStatusChecksPolicy -ne $true)
 }
 
 $environments = @($configuration.environments)
-if ($environments.Count -ne 2 -or
+if ($environments.Count -ne 3 -or
     $environments.Count -ne @(
         $environments.name | Sort-Object -Unique
     ).Count)
 {
-    throw 'Exactly two uniquely named V1 deployment environments are required.'
+    throw 'Exactly three uniquely named V1 deployment environments are required.'
 }
 foreach ($environment in $environments)
 {

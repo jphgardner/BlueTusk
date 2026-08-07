@@ -1,0 +1,27 @@
+grafana:
+  persistence: { enabled: true, storageClassName: longhorn, size: 5Gi }
+  admin:
+    existingSecret: grafana-admin
+    userKey: username
+    passwordKey: password
+  sidecar:
+    dashboards: { enabled: true, label: grafana_dashboard, searchNamespace: ALL }
+prometheus:
+  prometheusSpec:
+    retention: 15d
+    retentionSize: 15GB
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: [ReadWriteOnce]
+          resources: { requests: { storage: 20Gi } }
+alertmanager:
+  alertmanagerSpec:
+    retention: 120h
+    storage:
+      volumeClaimTemplate:
+        spec:
+          storageClassName: longhorn
+          accessModes: [ReadWriteOnce]
+          resources: { requests: { storage: 5Gi } }

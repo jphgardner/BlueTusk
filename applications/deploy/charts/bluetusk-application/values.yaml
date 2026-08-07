@@ -1,0 +1,70 @@
+environment: rc
+nameOverride: ""
+hostname: ""
+tenantId: pilot
+
+images:
+  api: { repository: "", digest: "" }
+  worker: { repository: "", digest: "" }
+  ui: { repository: "", digest: "" }
+
+api:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { cpu: 750m, memory: 512Mi }
+worker:
+  replicas: 1
+  resources:
+    requests: { cpu: 100m, memory: 192Mi }
+    limits: { cpu: 1000m, memory: 768Mi }
+ui:
+  replicas: 1
+  resources:
+    requests: { cpu: 25m, memory: 32Mi }
+    limits: { cpu: 200m, memory: 128Mi }
+
+autoscaling:
+  enabled: false
+  minimumReplicas: 2
+  maximumReplicas: 6
+  targetCpuUtilization: 70
+
+gateway:
+  namespace: ingress
+  name: traefik-gateway
+  sectionName: websecure
+
+networking:
+  gatewayAddressCidr: 192.168.1.230/32
+
+database:
+  instances: 1
+  image: ghcr.io/cloudnative-pg/postgresql:19beta2-standard-trixie@sha256:28788af08b1c15b7b521c23ac970c8742e043ae57838fbc05373b6701f86c593
+  storageClass: longhorn
+  storageSize: 10Gi
+  ownerSecret: ""
+  backup:
+    enabled: false
+    destinationPath: ""
+    endpointUrl: ""
+    credentialsSecret: ""
+
+secrets:
+  runtime: ""
+  liveTenant: ""
+  oidc: ""
+
+authentication:
+  authority: ""
+  clientId: ""
+
+observability:
+  otlpEndpoint: http://otel-collector.observability.svc.cluster.local:4317
+
+quota:
+  requestsCpu: "3"
+  requestsMemory: 4Gi
+  limitsCpu: "6"
+  limitsMemory: 8Gi
+  persistentVolumeClaims: "4"

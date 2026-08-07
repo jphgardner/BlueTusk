@@ -81,7 +81,7 @@
     },
     {
       "path": "src/BlueTusk.EntityFrameworkCore/PublicAPI.Shipped.txt",
-      "sha256": "c720215f8b061d3c352efbe5280116a2d8d6f832bcf480a103887408a59b7af0"
+      "sha256": "52abffa6a0bb35d01e2e536d98d1e8cb2f64fdfd9e40bc404f2bedf94dce6d9c"
     },
     {
       "path": "src/BlueTusk.Extensions.Abstractions/PublicAPI.Shipped.txt",

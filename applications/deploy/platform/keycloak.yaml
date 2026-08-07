@@ -1,0 +1,47 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata: { name: keycloak-postgresql, namespace: keycloak }
+spec:
+  instances: 1
+  imageName: ghcr.io/cloudnative-pg/postgresql:19beta2-standard-trixie@sha256:28788af08b1c15b7b521c23ac970c8742e043ae57838fbc05373b6701f86c593
+  enableSuperuserAccess: false
+  bootstrap:
+    initdb:
+      database: keycloak
+      owner: keycloak_owner
+      secret: { name: keycloak-db-owner }
+  storage: { storageClass: longhorn, size: 10Gi }
+  monitoring: { enablePodMonitor: true }
+  resources:
+    requests: { cpu: 100m, memory: 256Mi }
+    limits: { cpu: 1000m, memory: 1Gi }
+---
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata: { name: keycloak, namespace: keycloak }
+spec:
+  instances: 1
+  db:
+    vendor: postgres
+    host: keycloak-postgresql-rw.keycloak.svc.cluster.local
+    database: keycloak
+    usernameSecret: { name: keycloak-db-runtime, key: username }
+    passwordSecret: { name: keycloak-db-runtime, key: password }
+  bootstrapAdmin:
+    user: { secret: keycloak-bootstrap-admin }
+  http: { httpEnabled: true }
+  hostname: { hostname: auth.192.168.1.230.nip.io }
+  proxy: { headers: xforwarded }
+  ingress: { enabled: false }
+  resources:
+    requests: { cpu: 100m, memory: 384Mi }
+    limits: { cpu: 1000m, memory: 1Gi }
+---
+apiVersion: gateway.networking.k8s.io/v1
+kind: HTTPRoute
+metadata: { name: keycloak, namespace: keycloak }
+spec:
+  parentRefs: [{ name: traefik-gateway, namespace: ingress, sectionName: websecure }]
+  hostnames: [auth.192.168.1.230.nip.io]
+  rules:
+    - backendRefs: [{ name: keycloak-service, port: 8080 }]

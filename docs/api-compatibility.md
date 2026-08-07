@@ -12,10 +12,10 @@ names inside the provider.
 
 ## Baseline scope
 
-The 2026-08-07 V1 candidate budget records 8,292 public and protected
+The 2026-08-07 V1 candidate budget records 8,308 public and protected
 signatures across 28 Provider-family API-governed libraries, including nullable
 annotations and compiler-generated record members. Across all six product
-families, the exact machine-enforced budget is 12,975 signatures.
+families, the exact machine-enforced budget is 12,991 signatures.
 
 | Surface | Projects | Shipped signatures | Contract role |
 | --- | ---: | ---: | --- |

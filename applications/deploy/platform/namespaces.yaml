@@ -1,0 +1,41 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: cnpg-system
+  labels: { pod-security.kubernetes.io/enforce: restricted, pod-security.kubernetes.io/audit: restricted, pod-security.kubernetes.io/warn: restricted }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: keycloak-operator
+  labels: { pod-security.kubernetes.io/enforce: restricted, pod-security.kubernetes.io/audit: restricted, pod-security.kubernetes.io/warn: restricted }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: keycloak
+  labels: { pod-security.kubernetes.io/enforce: restricted, pod-security.kubernetes.io/audit: restricted, pod-security.kubernetes.io/warn: restricted }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: observability
+  labels: { pod-security.kubernetes.io/enforce: baseline, pod-security.kubernetes.io/audit: restricted, pod-security.kubernetes.io/warn: restricted }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bluetusk-orders-rc
+  labels: { pod-security.kubernetes.io/enforce: restricted, pod-security.kubernetes.io/audit: restricted, pod-security.kubernetes.io/warn: restricted }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bluetusk-topology-rc
+  labels: { pod-security.kubernetes.io/enforce: restricted, pod-security.kubernetes.io/audit: restricted, pod-security.kubernetes.io/warn: restricted }
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bluetusk-fraud-rc
+  labels: { pod-security.kubernetes.io/enforce: restricted, pod-security.kubernetes.io/audit: restricted, pod-security.kubernetes.io/warn: restricted }

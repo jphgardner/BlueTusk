@@ -17,7 +17,19 @@ rehearsal, and maintainer sign-off. Publication remains disabled during
 preparation; after GA a reviewed arming PR to `main` creates the immutable
 candidate.
 
+The three-application V1 RC suite, exact prerelease manifest and pack
+verification, GHCR image-evidence workflow, Kubernetes/Helm platform, fluent
+property-graph migration API, and local browser/PostgreSQL acceptance are
+implemented. Public RC publication and homelab rollout remain open external
+operations requiring protected credentials, operators, Secrets, and the
+reviewed immutable `main` commit. See the
+[V1 application suite](v1-applications.md).
+
 ## Real-time platform release trains
+
+- [x] V1 RC application suite: Orders, Service Topology, and Fraud package-only consumers with migrations, workers, browser clients, tests, images, Helm, SLOs, and runbooks
+- [x] V1 RC release tooling: exact six-family prerelease manifest, dependency verification, protected prerelease tags, image SBOM/provenance evidence, and fail-closed mutation tests
+- [ ] V1 RC external gate: merge the reviewed applications PR, publish sequential immutable RC packages/images, provision staging prerequisites, and archive the verified homelab rollout
 
 - [x] Phase 0: accepted delivery, checkpoint, snapshot, spool, relay, Live security, and Sync connector decisions
 - [x] Phase 0: independent Provider, Streams, Sync, Live, Control Plane, and Continuous Graph version properties and release workflow

@@ -6,7 +6,9 @@ param(
 
     [string] $PackageDirectory = 'artifacts/packages',
 
-    [string] $ExpectedCommit
+    [string] $ExpectedCommit,
+
+    [string] $ExpectedVersion
 )
 
 Set-StrictMode -Version Latest
@@ -120,6 +122,23 @@ if ($manifest.schemaVersion -ne 2)
     throw "Expected product-family manifest schema 2; found '$($manifest.schemaVersion)'."
 }
 
+$prereleaseManifest = $null
+if (-not [string]::IsNullOrWhiteSpace($ExpectedVersion))
+{
+    $prereleaseManifest = Get-Content -LiteralPath (
+        Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
+        ConvertFrom-Json
+    if ([int]$prereleaseManifest.schemaVersion -ne 1 -or
+        $prereleaseManifest.publicationEnabled -ne $true -or
+        -not [string]::Equals(
+            [string]$prereleaseManifest.version,
+            $ExpectedVersion,
+            [StringComparison]::Ordinal))
+    {
+        throw "ExpectedVersion '$ExpectedVersion' is not the armed prerelease train."
+    }
+}
+
 $definition = $manifest.families.$Family
 if ($null -eq $definition)
 {
@@ -130,9 +149,17 @@ $familyVersions = @{}
 $packageFamilies = @{}
 foreach ($familyProperty in $manifest.families.PSObject.Properties)
 {
-    $familyVersions[$familyProperty.Name] = Get-FamilyVersion `
-        -Definition $familyProperty.Value `
-        -Root $repositoryRoot
+    $familyVersions[$familyProperty.Name] = if (
+        [string]::IsNullOrWhiteSpace($ExpectedVersion))
+    {
+        Get-FamilyVersion `
+            -Definition $familyProperty.Value `
+            -Root $repositoryRoot
+    }
+    else
+    {
+        $ExpectedVersion
+    }
     foreach ($project in @($familyProperty.Value.packages))
     {
         $projectPath = Join-Path $repositoryRoot $project
