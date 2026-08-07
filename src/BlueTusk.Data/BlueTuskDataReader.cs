@@ -525,7 +525,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         Span<byte> buffer = stackalloc byte[sizeof(short)];
         return TryReadStreamingBinaryScalar(ordinal, 21, buffer)
             ? BinaryPrimitives.ReadInt16BigEndian(buffer)
-            : DecodeScalar<short>(ordinal);
+            : DecodeInt16(ordinal);
     }
 
     public override int GetInt32(int ordinal)
@@ -548,7 +548,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         Span<byte> buffer = stackalloc byte[sizeof(int)];
         return TryReadStreamingBinaryScalar(ordinal, 23, buffer)
             ? BinaryPrimitives.ReadInt32BigEndian(buffer)
-            : DecodeScalar<int>(ordinal);
+            : DecodeInt32(ordinal);
     }
 
     public override long GetInt64(int ordinal)
@@ -556,7 +556,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         Span<byte> buffer = stackalloc byte[sizeof(long)];
         return TryReadStreamingBinaryScalar(ordinal, 20, buffer)
             ? BinaryPrimitives.ReadInt64BigEndian(buffer)
-            : DecodeScalar<long>(ordinal);
+            : DecodeInt64(ordinal);
     }
 
     public override float GetFloat(int ordinal) => DecodeScalar<float>(ordinal);
@@ -905,6 +905,87 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     {
         var resolved = GetResolvedField(ordinal);
         return BlueTuskValueDecoder.DecodeTyped<T>(resolved, ReadRawValue(ordinal));
+    }
+
+    private short DecodeInt16(int ordinal)
+    {
+        var resolved = GetResolvedField(ordinal);
+        var raw = ReadRawValue(ordinal);
+        if (resolved.Codec is IBlueTuskCodec<short>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<short>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<byte>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<byte>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<int>)
+        {
+            return checked((short)BlueTuskValueDecoder.DecodeTyped<int>(resolved, raw));
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<long>)
+        {
+            return checked((short)BlueTuskValueDecoder.DecodeTyped<long>(resolved, raw));
+        }
+
+        return DecodeFieldValue<short>(resolved, raw);
+    }
+
+    private int DecodeInt32(int ordinal)
+    {
+        var resolved = GetResolvedField(ordinal);
+        var raw = ReadRawValue(ordinal);
+        if (resolved.Codec is IBlueTuskCodec<int>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<int>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<byte>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<byte>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<short>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<short>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<long>)
+        {
+            return checked((int)BlueTuskValueDecoder.DecodeTyped<long>(resolved, raw));
+        }
+
+        return DecodeFieldValue<int>(resolved, raw);
+    }
+
+    private long DecodeInt64(int ordinal)
+    {
+        var resolved = GetResolvedField(ordinal);
+        var raw = ReadRawValue(ordinal);
+        if (resolved.Codec is IBlueTuskCodec<long>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<long>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<byte>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<byte>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<short>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<short>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<int>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<int>(resolved, raw);
+        }
+
+        return DecodeFieldValue<long>(resolved, raw);
     }
 
     private static T DecodeFieldValue<T>(

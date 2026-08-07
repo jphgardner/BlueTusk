@@ -452,6 +452,7 @@ public static class FuzzTargets
             BlueTuskAuthenticationException or
             ChangeTransactionEnvelopeException or
             InvalidOperationException or
+            ArgumentException or
             EndOfStreamException or
             DecoderFallbackException or
             FormatException or
