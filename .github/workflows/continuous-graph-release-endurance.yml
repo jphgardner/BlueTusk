@@ -1,0 +1,96 @@
+name: ContinuousGraph 24-hour release endurance
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE to start the release gate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: continuous-graph-24-hour-release-endurance
+  cancel-in-progress: false
+
+jobs:
+  graph-endurance:
+    name: PostgreSQL 19 GA ContinuousGraph endurance
+    if: inputs.confirmation == 'RUN-CONTINUOUS-GRAPH-24-HOUR-ENDURANCE'
+    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    timeout-minutes: 1530
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Require the recorded PostgreSQL 19 GA milestone
+        shell: pwsh
+        run: |
+          ./eng/verify-postgresql19-programme.ps1 -RequireGeneralAvailability
+          $programme = Get-Content eng/postgresql19-programme.json -Raw |
+            ConvertFrom-Json
+          "BLUETUSK_POSTGRESQL19_GA_IMAGE=$($programme.generalAvailability.image)" |
+            Add-Content -LiteralPath $env:GITHUB_ENV
+
+      - name: Build exact ContinuousGraph candidate, SBOM, and provenance
+        shell: pwsh
+        run: |
+          ./eng/pack-product-family.ps1 `
+            -Family ContinuousGraph `
+            -Candidate `
+            -Output 'artifacts/test-results/continuous-graph-endurance/candidate-packages'
+          ./eng/generate-sbom.ps1 `
+            -PackageDirectory 'artifacts/test-results/continuous-graph-endurance/candidate-packages' `
+            -OutputDirectory 'artifacts/test-results/continuous-graph-endurance/candidate-sbom' `
+            -Commit '${{ github.sha }}' `
+            -NoRestore
+
+      - name: Start PostgreSQL 19 GA
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Run 24-hour ContinuousGraph recovery endurance
+        shell: pwsh
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          ./eng/run-continuous-graph-endurance.ps1
+          -Duration '1.00:00:00'
+          -MinimumEvaluations 100000
+          -IntervalMilliseconds 250
+          -ReportPath 'artifacts/test-results/continuous-graph-endurance/report.json'
+          -CandidateProvenancePath 'artifacts/test-results/continuous-graph-endurance/candidate-sbom/build-provenance.json'
+          -PostgreSqlImage $env:BLUETUSK_POSTGRESQL19_GA_IMAGE
+          -Configuration Release
+
+      - name: Verify ContinuousGraph endurance evidence
+        shell: pwsh
+        run: >-
+          ./eng/verify-continuous-graph-endurance-report.ps1
+          -ReportPath 'artifacts/test-results/continuous-graph-endurance/report.json'
+          -RequiredDuration '1.00:00:00'
+          -MinimumEvaluations 100000
+          -ExpectedCommit '${{ github.sha }}'
+          -CandidateProvenancePath 'artifacts/test-results/continuous-graph-endurance/candidate-sbom/build-provenance.json'
+          -ExpectedPostgreSqlImage $env:BLUETUSK_POSTGRESQL19_GA_IMAGE
+
+      - name: Upload ContinuousGraph endurance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: continuous-graph-endurance-${{ github.run_id }}
+          path: artifacts/test-results/continuous-graph-endurance
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes

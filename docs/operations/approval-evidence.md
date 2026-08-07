@@ -12,7 +12,7 @@ The authoritative assets are:
   types, minimums and pass values for all ten gates;
 - `eng/v1-approval-evidence.examples.json`, which contains one complete
   structural example per gate;
-- `eng/verify-v1-workflow-evidence.ps1`, which validates the six unique GitHub
+- `eng/verify-v1-workflow-evidence.ps1`, which validates the seven unique GitHub
   run IDs, attempts, URLs and completion times that establish the approval
   cutoff;
 - `eng/verify-v1-approval-evidence.ps1`, which validates one record; and
@@ -27,11 +27,11 @@ actual candidate.
 
 ## Common envelope
 
-Every approval file uses schema 2 and contains exactly these top-level fields:
+Every approval file uses schema 3 and contains exactly these top-level fields:
 
 | Field | Requirement |
 | --- | --- |
-| `schemaVersion` | `2` |
+| `schemaVersion` | `3` |
 | `gateId` | Exact required gate identifier and file stem |
 | `candidateCommit` | Full 40-character immutable candidate SHA |
 | `outcome` | `approved` |
@@ -42,8 +42,8 @@ Every approval file uses schema 2 and contains exactly these top-level fields:
 | `references` | One or more absolute HTTPS URLs for retained evidence |
 | `details` | Exact gate-specific measured fields; missing and unknown fields fail |
 
-Candidate evidence schema 2 records the positive run attempt and GitHub
-completion timestamp for all six required workflows. Candidate mode rejects
+Candidate evidence schema 3 records the positive run attempt and GitHub
+completion timestamp for all seven required workflows. Candidate mode rejects
 ancestor-commit approvals, approvals created before the latest exact workflow
 completed, future-dated approvals, non-HTTPS references, unexpected fields and
 narrative-only records. Independent release review must not predate any
@@ -76,7 +76,7 @@ implementation path. The record requires:
 
 - the reviewer organisation and an explicit independence attestation;
 - all 17 handoff checklist items passed;
-- all six exact workflow records reviewed;
+- all seven exact workflow records reviewed;
 - all six product-family package inventories reviewed;
 - independent reproduction of the candidate evidence; and
 - zero unresolved review findings.
@@ -115,6 +115,9 @@ organisations and accountable approvers between pilot A and pilot B. A sample
 application run twice by the maintainer is not two independent pilots. Retain
 the workload definition, topology, version inventory, time-series metrics,
 defect log and acceptance decision behind each evidence URL.
+
+The two pilots must collectively cover exactly the six registered product
+families, and at least one pilot must exercise ContinuousGraph.
 
 ## Website deployment acceptance
 
@@ -204,7 +207,11 @@ requires:
 
 - an immutable candidate;
 - accepted dependency-ordered publication;
-- confirmation that publication switches are still disabled before approval;
+- confirmation that all six publication policies are armed in the immutable
+  candidate;
+- confirmation that zero release tags exist and zero candidate packages have
+  been published;
+- confirmation that protected production approval is still pending;
 - accepted stop conditions;
 - a named rollback authority; and
 - a UTC release window.
@@ -222,11 +229,11 @@ sibling `disturbances/` directory. Create a ZIP containing those two top-level
 directories, base64-encode it outside CI logs, and store the result as the
 protected `V1_APPROVAL_EVIDENCE_BASE64` environment secret.
 
-Create the protected approval archive only after all six exact workflows have
+Create the protected approval archive only after all seven exact workflows have
 completed successfully. The candidate workflow restores the archive, rejects
 duplicate or missing approval filenames, downloads exact workflow artifacts,
 records each run attempt and completion time, hashes every approval into
-schema-2 `candidate.json`, and runs the complete candidate verifier. Keep the
+schema-3 `candidate.json`, and runs the complete candidate verifier. Keep the
 original evidence outside the repository in access-controlled, retention-bound
 storage. The uploaded readiness artifact is retained for 90 days;
 organisational release records may require longer retention.

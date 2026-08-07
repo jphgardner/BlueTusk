@@ -1,8 +1,8 @@
 param(
     [string]$BenchmarkSourcePath = (Join-Path $PSScriptRoot "..\benchmarks\BlueTusk.Benchmarks"),
     [string]$BaselinePath = (Join-Path $PSScriptRoot "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\results"),
-    [int]$MinimumFixtureCount = 21,
-    [int]$MinimumBenchmarkCount = 89
+    [int]$MinimumFixtureCount = 22,
+    [int]$MinimumBenchmarkCount = 98
 )
 
 $ErrorActionPreference = "Stop"

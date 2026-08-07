@@ -1,5 +1,6 @@
 using System.Buffers.Binary;
 using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.Json;
 using BlueTusk.Replication;
@@ -13,6 +14,36 @@ public sealed class PgOutputChangeStreamTests
 {
     private static readonly DateTimeOffset Timestamp =
         new(2026, 8, 3, 12, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public async Task Public_pgoutput_envelopes_defensively_copy_tuple_payloads()
+    {
+        var payload = new byte[] { 1, 2, 3, 4 };
+        var stream = new PgOutputChangeStream(MutableMessages(payload), SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var insert = Assert.IsType<InsertChange>(
+            Assert.Single(await delivery.Transaction.Changes.MaterializeAsync()));
+        Assert.Equal(new byte[] { 1, 2, 3, 4 }, insert.NewRow[0].Data.ToArray());
+        await delivery.AcknowledgeAsync();
+
+        static async IAsyncEnumerable<BlueTuskPgOutputEnvelope> MutableMessages(byte[] value)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+            yield return Envelope(Relation(
+                new BlueTuskPgOutputRelationColumn(
+                    BlueTuskPgOutputRelationColumnOptions.Key,
+                    "id",
+                    17,
+                    -1)));
+            yield return Envelope(new BlueTuskPgOutputBegin(Lsn(10), Timestamp, 1));
+            yield return Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Binary(value))));
+            value[0] = 99;
+            yield return Envelope(new BlueTuskPgOutputCommit(Lsn(20), Lsn(21), Timestamp));
+        }
+    }
 
     [Fact]
     public async Task Ordinary_transaction_preserves_order_identity_and_explicit_row_states()
@@ -456,6 +487,48 @@ public sealed class PgOutputChangeStreamTests
                 {
                 }
             });
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Large_pass_through_spool_records_remain_valid_after_reader_disposal()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var payload = new byte[128 * 1024];
+            for (var index = 0; index < payload.Length; index++)
+            {
+                payload[index] = unchecked((byte)index);
+            }
+
+            var spool = new FileTransactionSpool(
+                new FileTransactionSpoolOptions
+                {
+                    DirectoryPath = spoolDirectory,
+                    MaxStorageBytes = 512 * 1024,
+                    MaxRecordBytes = 256 * 1024,
+                });
+            await using var writer = await spool.CreateAsync(new TransactionSpoolKey("source", 1));
+            await writer.AppendAsync(payload);
+            var reader = await writer.CompleteAsync();
+            ReadOnlyMemory<byte> replayed;
+            await using (var enumerator = reader.ReadRecordsAsync().GetAsyncEnumerator())
+            {
+                Assert.True(await enumerator.MoveNextAsync());
+                replayed = enumerator.Current;
+                Assert.False(MemoryMarshal.TryGetArray(replayed, out _));
+                Assert.False(await enumerator.MoveNextAsync());
+            }
+
+            await reader.DisposeAsync();
+
+            Assert.Empty(Directory.GetFiles(spoolDirectory));
+            Assert.True(payload.AsSpan().SequenceEqual(replayed.Span));
         }
         finally
         {

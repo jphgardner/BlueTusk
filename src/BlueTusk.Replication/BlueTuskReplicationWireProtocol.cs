@@ -66,10 +66,11 @@ internal static class BlueTuskReplicationWireProtocol
 
         var span = payload.Span;
         return new BlueTuskXLogData(
-            new BlueTuskLogSequenceNumber(BinaryPrimitives.ReadUInt64BigEndian(span[1..])),
-            new BlueTuskLogSequenceNumber(BinaryPrimitives.ReadUInt64BigEndian(span[9..])),
-            FromPostgreSqlMicroseconds(BinaryPrimitives.ReadInt64BigEndian(span[17..])),
-            payload[XLogDataHeaderLength..]);
+                new BlueTuskLogSequenceNumber(BinaryPrimitives.ReadUInt64BigEndian(span[1..])),
+                new BlueTuskLogSequenceNumber(BinaryPrimitives.ReadUInt64BigEndian(span[9..])),
+                FromPostgreSqlMicroseconds(BinaryPrimitives.ReadInt64BigEndian(span[17..])),
+                payload[XLogDataHeaderLength..])
+            .MarkDataOwned();
     }
 
     private static BlueTuskPrimaryKeepalive DecodeKeepalive(ReadOnlySpan<byte> payload)

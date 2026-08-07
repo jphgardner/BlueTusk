@@ -1,5 +1,5 @@
 {
-   "Title":"BlueTusk.Benchmarks.StructuredCodecBenchmarks-20260801-002652",
+   "Title":"BlueTusk.Benchmarks.StructuredCodecBenchmarks-20260807-181123",
    "HostEnvironmentInfo":{
       "BenchmarkDotNetCaption":"BenchmarkDotNet",
       "BenchmarkDotNetVersion":"0.15.8",
@@ -21,28 +21,28 @@
    },
    "Benchmarks":[
       {
-         "DisplayInfo":"StructuredCodecBenchmarks.ReadInt32ArrayBinary: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "DisplayInfo":"StructuredCodecBenchmarks.ReadInt32ArrayBinary: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
          "Namespace":"BlueTusk.Benchmarks",
          "Type":"StructuredCodecBenchmarks",
          "Method":"ReadInt32ArrayBinary",
          "MethodTitle":"ReadInt32ArrayBinary",
          "Parameters":"",
          "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32ArrayBinary",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "HardwareIntrinsics":"",
          "Statistics":{
             "OriginalValues":[
-               151.531720161438,144.64809894561768,169.68348026275635
+               37.352561950683594,36.73498034477234,37.09596395492554
             ],
             "N":3,
-            "Min":144.64809894561768,
-            "LowerFence":129.31337356567383,
-            "Q1":148.08990955352783,
-            "Median":151.531720161438,
-            "Mean":155.287766456604,
-            "Q3":160.60760021209717,
-            "UpperFence":179.38413619995117,
-            "Max":169.68348026275635,
-            "InterquartileRange":12.517690658569336,
+            "Min":36.73498034477234,
+            "LowerFence":36.4522859454155,
+            "Q1":36.91547214984894,
+            "Median":37.09596395492554,
+            "Mean":37.06116875012716,
+            "Q3":37.224262952804565,
+            "UpperFence":37.68744915723801,
+            "Max":37.352561950683594,
+            "InterquartileRange":0.30879080295562744,
             "LowerOutliers":[
 
             ],
@@ -52,62 +52,127 @@
             "AllOutliers":[
 
             ],
-            "StandardError":7.467116628976381,
-            "Variance":167.27349225220678,
-            "StandardDeviation":12.933425387429534,
-            "Skewness":0.2659203116749056,
-            "Kurtosis":0.6666666666666666,
+            "StandardError":0.17912731942922802,
+            "Variance":0.09625978969770206,
+            "StandardDeviation":0.3102576182750426,
+            "Skewness":-0.11073883937138108,
+            "Kurtosis":0.66666666666667,
             "ConfidenceInterval":{
                "N":3,
-               "Mean":155.287766456604,
-               "StandardError":7.467116628976381,
+               "Mean":37.06116875012716,
+               "StandardError":0.17912731942922802,
                "Level":12,
-               "Margin":235.9538249328599,
-               "Lower":-80.6660584762559,
-               "Upper":391.2415913894639
+               "Margin":5.660253919870874,
+               "Lower":31.400914830256283,
+               "Upper":42.721422669998034
             },
             "Percentiles":{
-               "P0":144.64809894561768,
-               "P25":148.08990955352783,
-               "P50":151.531720161438,
-               "P67":157.70331859588623,
-               "P80":162.422776222229,
-               "P85":164.23795223236084,
-               "P90":166.05312824249268,
-               "P95":167.8683042526245,
-               "P100":169.68348026275635
+               "P0":36.73498034477234,
+               "P25":36.91547214984894,
+               "P50":37.09596395492554,
+               "P67":37.183207273483276,
+               "P80":37.24992275238037,
+               "P85":37.27558255195618,
+               "P90":37.30124235153198,
+               "P95":37.32690215110779,
+               "P100":37.352561950683594
             }
          },
          "Memory":{
-            "Gen0Collections":96,
+            "Gen0Collections":40,
             "Gen1Collections":0,
             "Gen2Collections":0,
-            "TotalOperations":4194304,
-            "BytesAllocatedPerOperation":384
+            "TotalOperations":16777216,
+            "BytesAllocatedPerOperation":40
          }
       },{
-         "DisplayInfo":"StructuredCodecBenchmarks.ReadEnumBinary: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "DisplayInfo":"StructuredCodecBenchmarks.ReadInt32ArrayBinaryTyped: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"StructuredCodecBenchmarks",
+         "Method":"ReadInt32ArrayBinaryTyped",
+         "MethodTitle":"ReadInt32ArrayBinaryTyped",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32ArrayBinaryTyped",
+         "HardwareIntrinsics":"",
+         "Statistics":{
+            "OriginalValues":[
+               36.48473620414734,36.92935109138489,37.11491823196411
+            ],
+            "N":3,
+            "Min":36.48473620414734,
+            "LowerFence":36.234407126903534,
+            "Q1":36.70704364776611,
+            "Median":36.92935109138489,
+            "Mean":36.84300184249878,
+            "Q3":37.0221346616745,
+            "UpperFence":37.49477118253708,
+            "Max":37.11491823196411,
+            "InterquartileRange":0.31509101390838623,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":0.1869710241661447,
+            "Variance":0.10487449163321116,
+            "StandardDeviation":0.32384331339895095,
+            "Skewness":-0.2476819183494981,
+            "Kurtosis":0.6666666666666666,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":36.84300184249878,
+               "StandardError":0.1869710241661447,
+               "Level":12,
+               "Margin":5.908107572931224,
+               "Lower":30.934894269567558,
+               "Upper":42.75110941543
+            },
+            "Percentiles":{
+               "P0":36.48473620414734,
+               "P25":36.70704364776611,
+               "P50":36.92935109138489,
+               "P67":36.992443919181824,
+               "P80":37.04069137573242,
+               "P85":37.059248089790344,
+               "P90":37.07780480384827,
+               "P95":37.09636151790619,
+               "P100":37.11491823196411
+            }
+         },
+         "Memory":{
+            "Gen0Collections":40,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":16777216,
+            "BytesAllocatedPerOperation":40
+         }
+      },{
+         "DisplayInfo":"StructuredCodecBenchmarks.ReadEnumBinary: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
          "Namespace":"BlueTusk.Benchmarks",
          "Type":"StructuredCodecBenchmarks",
          "Method":"ReadEnumBinary",
          "MethodTitle":"ReadEnumBinary",
          "Parameters":"",
          "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadEnumBinary",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "HardwareIntrinsics":"",
          "Statistics":{
             "OriginalValues":[
-               23.449838161468506,23.2985258102417,23.356252908706665
+               27.48779058456421,27.227184176445007,27.346017956733704
             ],
             "N":3,
-            "Min":23.2985258102417,
-            "LowerFence":23.213905096054077,
-            "Q1":23.327389359474182,
-            "Median":23.356252908706665,
-            "Mean":23.368205626805622,
-            "Q3":23.403045535087585,
-            "UpperFence":23.51652979850769,
-            "Max":23.449838161468506,
-            "InterquartileRange":0.07565617561340332,
+            "Min":27.227184176445007,
+            "LowerFence":27.091146260499954,
+            "Q1":27.286601066589355,
+            "Median":27.346017956733704,
+            "Mean":27.35366423924764,
+            "Q3":27.416904270648956,
+            "UpperFence":27.612359076738358,
+            "Max":27.48779058456421,
+            "InterquartileRange":0.13030320405960083,
             "LowerOutliers":[
 
             ],
@@ -117,257 +182,62 @@
             "AllOutliers":[
 
             ],
-            "StandardError":0.044087063525524876,
-            "Variance":0.005831007510910998,
-            "StandardDeviation":0.07636103398272576,
-            "Skewness":0.15269385362352186,
-            "Kurtosis":0.6666666666666762,
+            "StandardError":0.07532767135524229,
+            "Variance":0.01702277421541017,
+            "StandardDeviation":0.1304713540031304,
+            "Skewness":0.058403785278468824,
+            "Kurtosis":0.666666666666669,
             "ConfidenceInterval":{
                "N":3,
-               "Mean":23.368205626805622,
-               "StandardError":0.044087063525524876,
+               "Mean":27.35366423924764,
+               "StandardError":0.07532767135524229,
                "Level":12,
-               "Margin":1.3931095208207005,
-               "Lower":21.97509610598492,
-               "Upper":24.761315147626323
+               "Margin":2.380283188638417,
+               "Lower":24.973381050609223,
+               "Upper":29.733947427886054
             },
             "Percentiles":{
-               "P0":23.2985258102417,
-               "P25":23.327389359474182,
-               "P50":23.356252908706665,
-               "P67":23.38807189464569,
-               "P80":23.41240406036377,
-               "P85":23.421762585639954,
-               "P90":23.431121110916138,
-               "P95":23.440479636192322,
-               "P100":23.449838161468506
-            }
-         },
-         "Memory":{
-            "Gen0Collections":48,
-            "Gen1Collections":0,
-            "Gen2Collections":0,
-            "TotalOperations":16777216,
-            "BytesAllocatedPerOperation":48
-         }
-      },{
-         "DisplayInfo":"StructuredCodecBenchmarks.ReadInt32RangeBinary: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
-         "Namespace":"BlueTusk.Benchmarks",
-         "Type":"StructuredCodecBenchmarks",
-         "Method":"ReadInt32RangeBinary",
-         "MethodTitle":"ReadInt32RangeBinary",
-         "Parameters":"",
-         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32RangeBinary",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
-         "Statistics":{
-            "OriginalValues":[
-               29.667779803276062,30.335518717765808,30.786004662513733
-            ],
-            "N":3,
-            "Min":29.667779803276062,
-            "LowerFence":29.162980616092682,
-            "Q1":30.001649260520935,
-            "Median":30.335518717765808,
-            "Mean":30.2631010611852,
-            "Q3":30.56076169013977,
-            "UpperFence":31.399430334568024,
-            "Max":30.786004662513733,
-            "InterquartileRange":0.5591124296188354,
-            "LowerOutliers":[
-
-            ],
-            "UpperOutliers":[
-
-            ],
-            "AllOutliers":[
-
-            ],
-            "StandardError":0.3248281323473216,
-            "Variance":0.31653994669274726,
-            "StandardDeviation":0.5626188289532685,
-            "Skewness":-0.1265828015606708,
-            "Kurtosis":0.6666666666666657,
-            "ConfidenceInterval":{
-               "N":3,
-               "Mean":30.2631010611852,
-               "StandardError":0.3248281323473216,
-               "Level":12,
-               "Margin":10.264261840470873,
-               "Lower":19.998839220714327,
-               "Upper":40.527362901656076
-            },
-            "Percentiles":{
-               "P0":29.667779803276062,
-               "P25":30.001649260520935,
-               "P50":30.335518717765808,
-               "P67":30.488683938980103,
-               "P80":30.605810284614563,
-               "P85":30.650858879089355,
-               "P90":30.695907473564148,
-               "P95":30.74095606803894,
-               "P100":30.786004662513733
-            }
-         },
-         "Memory":{
-            "Gen0Collections":48,
-            "Gen1Collections":0,
-            "Gen2Collections":0,
-            "TotalOperations":16777216,
-            "BytesAllocatedPerOperation":48
-         }
-      },{
-         "DisplayInfo":"StructuredCodecBenchmarks.ReadCompositeBinary: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
-         "Namespace":"BlueTusk.Benchmarks",
-         "Type":"StructuredCodecBenchmarks",
-         "Method":"ReadCompositeBinary",
-         "MethodTitle":"ReadCompositeBinary",
-         "Parameters":"",
-         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadCompositeBinary",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
-         "Statistics":{
-            "OriginalValues":[
-               103.52950692176819,101.2245237827301,100.36951899528503
-            ],
-            "N":3,
-            "Min":100.36951899528503,
-            "LowerFence":98.4270304441452,
-            "Q1":100.79702138900757,
-            "Median":101.2245237827301,
-            "Mean":101.70784989992778,
-            "Q3":102.37701535224915,
-            "UpperFence":104.74700629711151,
-            "Max":103.52950692176819,
-            "InterquartileRange":1.5799939632415771,
-            "LowerOutliers":[
-
-            ],
-            "UpperOutliers":[
-
-            ],
-            "AllOutliers":[
-
-            ],
-            "StandardError":0.9436779156671801,
-            "Variance":2.67158402555386,
-            "StandardDeviation":1.634498095916254,
-            "Skewness":0.269846708753128,
-            "Kurtosis":0.6666666666666634,
-            "ConfidenceInterval":{
-               "N":3,
-               "Mean":101.70784989992778,
-               "StandardError":0.9436779156671801,
-               "Level":12,
-               "Margin":29.819329839081885,
-               "Lower":71.88852006084589,
-               "Upper":131.52717973900965
-            },
-            "Percentiles":{
-               "P0":100.36951899528503,
-               "P25":100.79702138900757,
-               "P50":101.2245237827301,
-               "P67":102.00821805000305,
-               "P80":102.60751366615295,
-               "P85":102.83801198005676,
-               "P90":103.06851029396057,
-               "P95":103.29900860786438,
-               "P100":103.52950692176819
-            }
-         },
-         "Memory":{
-            "Gen0Collections":176,
-            "Gen1Collections":0,
-            "Gen2Collections":0,
-            "TotalOperations":8388608,
-            "BytesAllocatedPerOperation":352
-         }
-      },{
-         "DisplayInfo":"StructuredCodecBenchmarks.EncodeInt32ArrayParameter: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
-         "Namespace":"BlueTusk.Benchmarks",
-         "Type":"StructuredCodecBenchmarks",
-         "Method":"EncodeInt32ArrayParameter",
-         "MethodTitle":"EncodeInt32ArrayParameter",
-         "Parameters":"",
-         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeInt32ArrayParameter",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
-         "Statistics":{
-            "OriginalValues":[
-               183.26177597045898,194.6986436843872,185.57260036468506
-            ],
-            "N":3,
-            "Min":183.26177597045898,
-            "LowerFence":175.83953738212585,
-            "Q1":184.41718816757202,
-            "Median":185.57260036468506,
-            "Mean":187.8443400065104,
-            "Q3":190.13562202453613,
-            "UpperFence":198.7132728099823,
-            "Max":194.6986436843872,
-            "InterquartileRange":5.718433856964111,
-            "LowerOutliers":[
-
-            ],
-            "UpperOutliers":[
-
-            ],
-            "AllOutliers":[
-
-            ],
-            "StandardError":3.4914699161744687,
-            "Variance":36.57108652665405,
-            "StandardDeviation":6.047403287912428,
-            "Skewness":0.3226440389502594,
-            "Kurtosis":0.6666666666666685,
-            "ConfidenceInterval":{
-               "N":3,
-               "Mean":187.8443400065104,
-               "StandardError":3.4914699161744687,
-               "Level":12,
-               "Margin":110.32714798674714,
-               "Lower":77.51719201976327,
-               "Upper":298.17148799325753
-            },
-            "Percentiles":{
-               "P0":183.26177597045898,
-               "P25":184.41718816757202,
-               "P50":185.57260036468506,
-               "P67":188.6754550933838,
-               "P80":191.04822635650635,
-               "P85":191.96083068847656,
-               "P90":192.87343502044678,
-               "P95":193.786039352417,
-               "P100":194.6986436843872
+               "P0":27.227184176445007,
+               "P25":27.286601066589355,
+               "P50":27.346017956733704,
+               "P67":27.394220650196075,
+               "P80":27.431081533432007,
+               "P85":27.445258796215057,
+               "P90":27.459436058998108,
+               "P95":27.47361332178116,
+               "P100":27.48779058456421
             }
          },
          "Memory":{
             "Gen0Collections":96,
             "Gen1Collections":0,
             "Gen2Collections":0,
-            "TotalOperations":4194304,
-            "BytesAllocatedPerOperation":384
+            "TotalOperations":33554432,
+            "BytesAllocatedPerOperation":48
          }
       },{
-         "DisplayInfo":"StructuredCodecBenchmarks.EncodeCompositeParameter: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "DisplayInfo":"StructuredCodecBenchmarks.ReadInt32RangeBinary: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
          "Namespace":"BlueTusk.Benchmarks",
          "Type":"StructuredCodecBenchmarks",
-         "Method":"EncodeCompositeParameter",
-         "MethodTitle":"EncodeCompositeParameter",
+         "Method":"ReadInt32RangeBinary",
+         "MethodTitle":"ReadInt32RangeBinary",
          "Parameters":"",
-         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeCompositeParameter",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32RangeBinary",
+         "HardwareIntrinsics":"",
          "Statistics":{
             "OriginalValues":[
-               78.47338914871216,77.25421190261841,74.17740821838379
+               27.161958813667297,27.176257967948914,27.16367244720459
             ],
             "N":3,
-            "Min":74.17740821838379,
-            "LowerFence":72.49382436275482,
-            "Q1":75.7158100605011,
-            "Median":77.25421190261841,
-            "Mean":76.63500308990479,
-            "Q3":77.86380052566528,
-            "UpperFence":81.08578622341156,
-            "Max":78.47338914871216,
-            "InterquartileRange":2.1479904651641846,
+            "Min":27.161958813667297,
+            "LowerFence":27.15209126472473,
+            "Q1":27.162815630435944,
+            "Median":27.16367244720459,
+            "Mean":27.167296409606934,
+            "Q3":27.16996520757675,
+            "UpperFence":27.180689573287964,
+            "Max":27.176257967948914,
+            "InterquartileRange":0.0071495771408081055,
             "LowerOutliers":[
 
             ],
@@ -377,30 +247,290 @@
             "AllOutliers":[
 
             ],
-            "StandardError":1.2782054743197473,
-            "Variance":4.901427703742911,
-            "StandardDeviation":2.213916824034478,
-            "Skewness":-0.2578102838073448,
-            "Kurtosis":0.6666666666666667,
+            "StandardError":0.004508003287212889,
+            "Variance":6.096628091256662e-05,
+            "StandardDeviation":0.007808090734140237,
+            "Skewness":0.36414836121513827,
+            "Kurtosis":0.6666666666666666,
             "ConfidenceInterval":{
                "N":3,
-               "Mean":76.63500308990479,
-               "StandardError":1.2782054743197473,
+               "Mean":27.167296409606934,
+               "StandardError":0.004508003287212889,
                "Level":12,
-               "Margin":40.39008437949212,
-               "Lower":36.24491871041266,
-               "Upper":117.02508746939691
+               "Margin":0.14244864132698032,
+               "Lower":27.024847768279955,
+               "Upper":27.309745050933913
             },
             "Percentiles":{
-               "P0":74.17740821838379,
-               "P25":75.7158100605011,
-               "P50":77.25421190261841,
-               "P67":77.66873216629028,
-               "P80":77.98571825027466,
-               "P85":78.10763597488403,
-               "P90":78.22955369949341,
-               "P95":78.35147142410278,
-               "P100":78.47338914871216
+               "P0":27.161958813667297,
+               "P25":27.162815630435944,
+               "P50":27.16367244720459,
+               "P67":27.16795152425766,
+               "P80":27.171223759651184,
+               "P85":27.172482311725616,
+               "P90":27.17374086380005,
+               "P95":27.17499941587448,
+               "P100":27.176257967948914
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":33554432,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"StructuredCodecBenchmarks.ReadInt32RangeBinaryTyped: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"StructuredCodecBenchmarks",
+         "Method":"ReadInt32RangeBinaryTyped",
+         "MethodTitle":"ReadInt32RangeBinaryTyped",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32RangeBinaryTyped",
+         "HardwareIntrinsics":"",
+         "Statistics":{
+            "OriginalValues":[
+               21.033746004104614,21.855777502059937,28.25441062450409
+            ],
+            "N":3,
+            "Min":21.033746004104614,
+            "LowerFence":16.02926328778267,
+            "Q1":21.444761753082275,
+            "Median":21.855777502059937,
+            "Mean":23.71464471022288,
+            "Q3":25.055094063282013,
+            "UpperFence":30.47059252858162,
+            "Max":28.25441062450409,
+            "InterquartileRange":3.6103323101997375,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":2.282253262549959,
+            "Variance":15.626039863259795,
+            "StandardDeviation":3.9529786064763615,
+            "Skewness":0.36625945024911644,
+            "Kurtosis":0.6666666666666664,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":23.71464471022288,
+               "StandardError":2.282253262549959,
+               "Level":12,
+               "Margin":72.11704510874658,
+               "Lower":-48.402400398523696,
+               "Upper":95.83168981896947
+            },
+            "Percentiles":{
+               "P0":21.033746004104614,
+               "P25":21.444761753082275,
+               "P50":21.855777502059937,
+               "P67":24.03131276369095,
+               "P80":25.694957375526428,
+               "P85":26.334820687770844,
+               "P90":26.97468400001526,
+               "P95":27.614547312259674,
+               "P100":28.25441062450409
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":33554432,
+            "BytesAllocatedPerOperation":0
+         }
+      },{
+         "DisplayInfo":"StructuredCodecBenchmarks.ReadCompositeBinary: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"StructuredCodecBenchmarks",
+         "Method":"ReadCompositeBinary",
+         "MethodTitle":"ReadCompositeBinary",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadCompositeBinary",
+         "HardwareIntrinsics":"",
+         "Statistics":{
+            "OriginalValues":[
+               107.3075532913208,107.58039951324463,108.75284671783447
+            ],
+            "N":3,
+            "Min":107.3075532913208,
+            "LowerFence":106.36000633239746,
+            "Q1":107.44397640228271,
+            "Median":107.58039951324463,
+            "Mean":107.88026650746663,
+            "Q3":108.16662311553955,
+            "UpperFence":109.2505931854248,
+            "Max":108.75284671783447,
+            "InterquartileRange":0.7226467132568359,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":0.44334276914095594,
+            "Variance":0.5896584328487128,
+            "StandardDeviation":0.767892201320415,
+            "Skewness":0.3309561532193372,
+            "Kurtosis":0.6666666666666747,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":107.88026650746663,
+               "StandardError":0.44334276914095594,
+               "Level":12,
+               "Margin":14.009212301465624,
+               "Lower":93.871054206001,
+               "Upper":121.88947880893225
+            },
+            "Percentiles":{
+               "P0":107.3075532913208,
+               "P25":107.44397640228271,
+               "P50":107.58039951324463,
+               "P67":107.97903156280518,
+               "P80":108.28386783599854,
+               "P85":108.40111255645752,
+               "P90":108.5183572769165,
+               "P95":108.63560199737549,
+               "P100":108.75284671783447
+            }
+         },
+         "Memory":{
+            "Gen0Collections":88,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":4194304,
+            "BytesAllocatedPerOperation":352
+         }
+      },{
+         "DisplayInfo":"StructuredCodecBenchmarks.EncodeInt32ArrayParameter: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"StructuredCodecBenchmarks",
+         "Method":"EncodeInt32ArrayParameter",
+         "MethodTitle":"EncodeInt32ArrayParameter",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeInt32ArrayParameter",
+         "HardwareIntrinsics":"",
+         "Statistics":{
+            "OriginalValues":[
+               79.78471517562866,79.64341640472412,82.21558332443237
+            ],
+            "N":3,
+            "Min":79.64341640472412,
+            "LowerFence":77.7849406003952,
+            "Q1":79.71406579017639,
+            "Median":79.78471517562866,
+            "Mean":80.54790496826172,
+            "Q3":81.00014925003052,
+            "UpperFence":82.9292744398117,
+            "Max":82.21558332443237,
+            "InterquartileRange":1.286083459854126,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":0.8348362435022463,
+            "Variance":2.0908546603948253,
+            "StandardDeviation":1.4459787897458334,
+            "Skewness":0.3807695035612753,
+            "Kurtosis":0.6666666666666669,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":80.54790496826172,
+               "StandardError":0.8348362435022463,
+               "Level":12,
+               "Margin":26.38003591406855,
+               "Lower":54.16786905419317,
+               "Upper":106.92794088233026
+            },
+            "Percentiles":{
+               "P0":79.64341640472412,
+               "P25":79.71406579017639,
+               "P50":79.78471517562866,
+               "P67":80.61121034622192,
+               "P80":81.24323606491089,
+               "P85":81.48632287979126,
+               "P90":81.72940969467163,
+               "P95":81.972496509552,
+               "P100":82.21558332443237
+            }
+         },
+         "Memory":{
+            "Gen0Collections":40,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":8388608,
+            "BytesAllocatedPerOperation":80
+         }
+      },{
+         "DisplayInfo":"StructuredCodecBenchmarks.EncodeCompositeParameter: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"StructuredCodecBenchmarks",
+         "Method":"EncodeCompositeParameter",
+         "MethodTitle":"EncodeCompositeParameter",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeCompositeParameter",
+         "HardwareIntrinsics":"",
+         "Statistics":{
+            "OriginalValues":[
+               94.66277360916138,96.23587131500244,95.86625099182129
+            ],
+            "N":3,
+            "Min":94.66277360916138,
+            "LowerFence":94.08468902111053,
+            "Q1":95.26451230049133,
+            "Median":95.86625099182129,
+            "Mean":95.5882986386617,
+            "Q3":96.05106115341187,
+            "UpperFence":97.23088443279266,
+            "Max":96.23587131500244,
+            "InterquartileRange":0.7865488529205322,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":0.47490428193507894,
+            "Variance":0.6766022310008187,
+            "StandardDeviation":0.8225583450435712,
+            "Skewness":-0.29932769468673864,
+            "Kurtosis":0.6666666666666596,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":95.5882986386617,
+               "StandardError":0.47490428193507894,
+               "Level":12,
+               "Margin":15.00652626272641,
+               "Lower":80.58177237593529,
+               "Upper":110.59482490138811
+            },
+            "Percentiles":{
+               "P0":94.66277360916138,
+               "P25":95.26451230049133,
+               "P50":95.86625099182129,
+               "P67":95.99192190170288,
+               "P80":96.08802318572998,
+               "P85":96.1249852180481,
+               "P90":96.16194725036621,
+               "P95":96.19890928268433,
+               "P100":96.23587131500244
             }
          },
          "Memory":{

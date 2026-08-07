@@ -164,5 +164,6 @@ content drifts. When behavior changes:
 5. regenerate and validate the website documentation.
 
 Examples must use parameterized SQL, explicit cancellation where useful and
-honest package availability. Preview gates, stable-publication gates and
+honest package availability. Experimental-feature boundaries,
+stable-publication gates and
 external production validation must never be collapsed into one status.

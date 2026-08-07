@@ -4,7 +4,7 @@
 provider. Install the packed .NET tool, then scaffold a PostgreSQL schema:
 
 ```powershell
-dotnet tool install --global BlueTusk.Tool --version 0.3.0-preview.1
+dotnet tool install --global BlueTusk.Tool --version 1.0.0
 $env:BLUETUSK_CONNECTION_STRING = "Host=localhost;Database=app;Username=app;Password=..."
 bluetusk scaffold --schema app --output Models --context AppDbContext
 ```

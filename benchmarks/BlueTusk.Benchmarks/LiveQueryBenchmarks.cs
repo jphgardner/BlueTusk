@@ -47,6 +47,14 @@ public class LiveQueryBenchmarks
             nextSequence: 2);
 
     [Benchmark]
+    public LiveDiffBatch<Row, int> DiffUnchangedOneThousandRows() =>
+        LiveResultDiffer.Diff(
+            _snapshot,
+            _snapshot.Rows,
+            KeySelector,
+            nextSequence: 2);
+
+    [Benchmark]
     public LiveReplayEvent SerializeOneUpdatedRow() =>
         LiveReplayJsonSerializer.Serialize(_updatedEvent);
 

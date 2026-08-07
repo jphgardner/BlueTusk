@@ -70,5 +70,24 @@ public sealed class LiveResultDifferTests
             static row => row.Id));
     }
 
+    [Fact]
+    public void Snapshot_defensively_copies_rows_and_remains_stable_for_later_diffs()
+    {
+        var rows = new[] { new Row(1, "one"), new Row(2, "two") };
+        var initial = LiveResultDiffer.Initial<Row, int>(rows, static row => row.Id);
+        rows[0] = new Row(99, "mutated");
+
+        var diff = LiveResultDiffer.Diff(
+            initial.Snapshot,
+            [new Row(1, "ONE"), new Row(2, "two")],
+            static row => row.Id,
+            nextSequence: 2);
+
+        Assert.Equal(1, initial.Snapshot.Keys[0]);
+        var updated = Assert.Single(diff.Events);
+        Assert.Equal(LiveEventKind.RowUpdated, updated.Kind);
+        Assert.Equal(1, updated.Key);
+    }
+
     private sealed record Row(int Id, string Value);
 }

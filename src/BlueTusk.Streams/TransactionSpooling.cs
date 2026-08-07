@@ -1,4 +1,6 @@
+using System.Buffers;
 using System.Buffers.Binary;
+using System.IO.MemoryMappedFiles;
 using System.Runtime.CompilerServices;
 using System.Text;
 
@@ -25,6 +27,19 @@ public interface ITransactionSpoolWriter : IAsyncDisposable
     ValueTask<ITransactionSpoolReader> CompleteAsync(CancellationToken cancellationToken = default);
 
     ValueTask AbortAsync(CancellationToken cancellationToken = default);
+}
+
+internal interface ITransactionSpoolBufferWriter
+{
+    ValueTask AppendAsync<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> serializer,
+        CancellationToken cancellationToken = default);
+}
+
+internal interface IBufferWriterSegmentSink : IBufferWriter<byte>
+{
+    void Write(ReadOnlyMemory<byte> source);
 }
 
 public interface ITransactionSpoolReader : IAsyncDisposable
@@ -172,7 +187,9 @@ public sealed class FileTransactionSpool : ITransactionSpool
 
     private void Release(long byteCount) => Interlocked.Add(ref _reservedBytes, -byteCount);
 
-    private sealed class FileTransactionSpoolWriter : ITransactionSpoolWriter
+    private sealed class FileTransactionSpoolWriter :
+        ITransactionSpoolWriter,
+        ITransactionSpoolBufferWriter
     {
         private const uint Magic = 0x50535442;
         private readonly FileTransactionSpool _owner;
@@ -184,6 +201,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
         private long _reservedBytes;
         private int _recordCount;
         private bool _completed;
+        private readonly byte[] _recordHeader = new byte[8];
 
         public FileTransactionSpoolWriter(
             FileTransactionSpool owner,
@@ -256,19 +274,51 @@ public sealed class FileTransactionSpool : ITransactionSpool
                     $"A protected spool record of {protectedData.Length} bytes exceeds the {_maxRecordBytes}-byte record limit.");
             }
 
-            var header = new byte[8];
-            BinaryPrimitives.WriteInt32LittleEndian(header, protectedData.Length);
-            BinaryPrimitives.WriteUInt32LittleEndian(header.AsSpan(4), Crc32.Compute(protectedData.Span));
-            Reserve(header.Length + protectedData.Length);
+            BinaryPrimitives.WriteInt32LittleEndian(_recordHeader, protectedData.Length);
+            BinaryPrimitives.WriteUInt32LittleEndian(
+                _recordHeader.AsSpan(4),
+                Crc32.Compute(protectedData.Span));
+            Reserve(_recordHeader.Length + protectedData.Length);
             try
             {
-                await stream.WriteAsync(header, cancellationToken).ConfigureAwait(false);
+                await stream.WriteAsync(_recordHeader, cancellationToken).ConfigureAwait(false);
                 await stream.WriteAsync(protectedData, cancellationToken).ConfigureAwait(false);
                 _recordCount++;
             }
             catch
             {
-                Release(header.Length + protectedData.Length);
+                Release(_recordHeader.Length + protectedData.Length);
+                throw;
+            }
+        }
+
+        public async ValueTask AppendAsync<TState>(
+            TState state,
+            Action<IBufferWriter<byte>, TState> serializer,
+            CancellationToken cancellationToken = default)
+        {
+            ArgumentNullException.ThrowIfNull(serializer);
+            if (!ReferenceEquals(_protector, PassThroughTransactionSpoolProtector.Instance))
+            {
+                var contiguous = new ArrayBufferWriter<byte>();
+                serializer(contiguous, state);
+                await AppendAsync(contiguous.WrittenMemory, cancellationToken).ConfigureAwait(false);
+                return;
+            }
+
+            var stream = RequireActive();
+            using var record = new PooledSegmentBufferWriter(_maxRecordBytes);
+            serializer(record, state);
+            record.WriteRecordHeader();
+            Reserve(_recordHeader.Length + record.WrittenCount);
+            try
+            {
+                await record.WriteToAsync(stream, cancellationToken).ConfigureAwait(false);
+                _recordCount++;
+            }
+            catch
+            {
+                Release(_recordHeader.Length + record.WrittenCount);
                 throw;
             }
         }
@@ -277,13 +327,12 @@ public sealed class FileTransactionSpool : ITransactionSpool
             CancellationToken cancellationToken = default)
         {
             var stream = RequireActive();
-            var footer = new byte[8];
-            BinaryPrimitives.WriteInt32LittleEndian(footer, -1);
-            BinaryPrimitives.WriteInt32LittleEndian(footer.AsSpan(4), _recordCount);
-            Reserve(footer.Length);
+            BinaryPrimitives.WriteInt32LittleEndian(_recordHeader, -1);
+            BinaryPrimitives.WriteInt32LittleEndian(_recordHeader.AsSpan(4), _recordCount);
+            Reserve(_recordHeader.Length);
             try
             {
-                await stream.WriteAsync(footer, cancellationToken).ConfigureAwait(false);
+                await stream.WriteAsync(_recordHeader, cancellationToken).ConfigureAwait(false);
                 await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
                 stream.Flush(flushToDisk: true);
                 await stream.DisposeAsync().ConfigureAwait(false);
@@ -299,7 +348,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
             }
             catch
             {
-                Release(footer.Length);
+                Release(_recordHeader.Length);
                 throw;
             }
         }
@@ -353,9 +402,147 @@ public sealed class FileTransactionSpool : ITransactionSpool
         }
     }
 
+    private sealed class PooledSegmentBufferWriter : IBufferWriterSegmentSink, IDisposable
+    {
+        private const int SegmentSize = 64 * 1024;
+        private readonly int _maximumLength;
+        private readonly List<Segment> _segments = [];
+        private byte[]? _current;
+        private int _currentWritten;
+        private int _writtenCount;
+        private uint _checksumState = uint.MaxValue;
+
+        internal PooledSegmentBufferWriter(int maximumLength)
+        {
+            _maximumLength = maximumLength;
+            _current = ArrayPool<byte>.Shared.Rent(SegmentSize);
+            _currentWritten = 8;
+            _segments.Add(new Segment(_current.AsMemory(0, _currentWritten), _current));
+        }
+
+        internal int WrittenCount => _writtenCount;
+
+        internal uint Checksum => ~_checksumState;
+
+        internal void WriteRecordHeader()
+        {
+            var header = _segments[0].Owner!.AsSpan(0, 8);
+            BinaryPrimitives.WriteInt32LittleEndian(header, WrittenCount);
+            BinaryPrimitives.WriteUInt32LittleEndian(header[4..], Checksum);
+        }
+
+        public void Advance(int count)
+        {
+            if (_current is null ||
+                count < 0 ||
+                count > _current.Length - _currentWritten ||
+                count > _maximumLength - _writtenCount)
+            {
+                throw new ArgumentOutOfRangeException(nameof(count));
+            }
+
+            _checksumState = Crc32.Append(
+                _checksumState,
+                _current.AsSpan(_currentWritten, count));
+            _currentWritten += count;
+            _writtenCount += count;
+            _segments[^1] = new Segment(
+                _current.AsMemory(0, _currentWritten),
+                _current);
+        }
+
+        public Memory<byte> GetMemory(int sizeHint = 0)
+        {
+            EnsureBuffer(sizeHint);
+            return _current.AsMemory(_currentWritten);
+        }
+
+        public Span<byte> GetSpan(int sizeHint = 0)
+        {
+            EnsureBuffer(sizeHint);
+            return _current.AsSpan(_currentWritten);
+        }
+
+        public void Write(ReadOnlyMemory<byte> source)
+        {
+            if (source.IsEmpty)
+            {
+                return;
+            }
+
+            if (source.Length > _maximumLength - _writtenCount)
+            {
+                throw new TransactionSpoolLimitExceededException(
+                    $"A spool record exceeds the {_maximumLength}-byte record limit.");
+            }
+
+            _checksumState = Crc32.Append(_checksumState, source.Span);
+            _writtenCount += source.Length;
+            _current = null;
+            _currentWritten = 0;
+            _segments.Add(new Segment(source, Owner: null));
+        }
+
+        internal async ValueTask WriteToAsync(
+            Stream destination,
+            CancellationToken cancellationToken)
+        {
+            foreach (var segment in _segments)
+            {
+                await destination.WriteAsync(
+                    segment.Memory,
+                    cancellationToken).ConfigureAwait(false);
+            }
+        }
+
+        public void Dispose()
+        {
+            foreach (var segment in _segments)
+            {
+                if (segment.Owner is not null)
+                {
+                    ArrayPool<byte>.Shared.Return(segment.Owner);
+                }
+            }
+
+            _segments.Clear();
+            _current = null;
+            _currentWritten = 0;
+        }
+
+        private void EnsureBuffer(int sizeHint)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(sizeHint);
+            if (sizeHint == 0)
+            {
+                sizeHint = 1;
+            }
+
+            if (sizeHint > _maximumLength - _writtenCount)
+            {
+                throw new TransactionSpoolLimitExceededException(
+                    $"A spool record exceeds the {_maximumLength}-byte record limit.");
+            }
+
+            if (_current is not null && sizeHint <= _current.Length - _currentWritten)
+            {
+                return;
+            }
+
+            _current = ArrayPool<byte>.Shared.Rent(Math.Max(SegmentSize, sizeHint));
+            _currentWritten = 0;
+            _segments.Add(new Segment(ReadOnlyMemory<byte>.Empty, _current));
+        }
+
+        private readonly record struct Segment(
+            ReadOnlyMemory<byte> Memory,
+            byte[]? Owner);
+    }
+
     private sealed class FileTransactionSpoolReader : ITransactionSpoolReader
     {
         private const uint Magic = 0x50535442;
+        private const int MemoryMappedRecordThreshold = 85_000;
         private readonly FileTransactionSpool _owner;
         private readonly string _path;
         private readonly long _reservedBytes;
@@ -385,7 +572,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
                 _path,
                 FileMode.Open,
                 FileAccess.Read,
-                FileShare.Read,
+                FileShare.Read | FileShare.Delete,
                 64 * 1024,
                 FileOptions.Asynchronous | FileOptions.SequentialScan);
 
@@ -428,9 +615,19 @@ public sealed class FileTransactionSpool : ITransactionSpool
                     yield break;
                 }
 
-                var protectedData = await ReadBoundedBytesAsync(stream, recordLength, cancellationToken).ConfigureAwait(false);
+                var protectedData = ReferenceEquals(
+                    _protector,
+                    PassThroughTransactionSpoolProtector.Instance)
+                    ? await ReadBoundedRecordAsync(
+                        stream,
+                        recordLength,
+                        cancellationToken).ConfigureAwait(false)
+                    : await ReadBoundedBytesAsync(
+                        stream,
+                        recordLength,
+                        cancellationToken).ConfigureAwait(false);
                 var expectedChecksum = BinaryPrimitives.ReadUInt32LittleEndian(recordHeader.AsSpan(4));
-                if (Crc32.Compute(protectedData) != expectedChecksum)
+                if (Crc32.Compute(protectedData.Span) != expectedChecksum)
                 {
                     throw new TransactionSpoolIntegrityException("A transaction spool record failed its integrity check.");
                 }
@@ -440,7 +637,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
                     _protector,
                     PassThroughTransactionSpoolProtector.Instance)
                     ? protectedData
-                    : _protector.Unprotect(protectedData);
+                    : _protector.Unprotect(protectedData.Span);
             }
         }
 
@@ -471,6 +668,41 @@ public sealed class FileTransactionSpool : ITransactionSpool
             return buffer;
         }
 
+        private async ValueTask<ReadOnlyMemory<byte>> ReadBoundedRecordAsync(
+            FileStream stream,
+            int length,
+            CancellationToken cancellationToken)
+        {
+            ValidateRecordLength(length);
+            if (length < MemoryMappedRecordThreshold)
+            {
+                return await ReadBoundedBytesAsync(
+                    stream,
+                    length,
+                    cancellationToken).ConfigureAwait(false);
+            }
+
+            cancellationToken.ThrowIfCancellationRequested();
+            if (length > stream.Length - stream.Position)
+            {
+                throw new TransactionSpoolIntegrityException(
+                    "The transaction spool ended before its declared data was complete.");
+            }
+
+            var memory = MemoryMappedRecordMemory.Create(stream, length);
+            stream.Position += length;
+            return memory;
+        }
+
+        private void ValidateRecordLength(int length)
+        {
+            if (length < 0 || length > _maxRecordBytes)
+            {
+                throw new TransactionSpoolIntegrityException(
+                    $"A transaction spool length of {length} is outside the configured bounds.");
+            }
+        }
+
         private static async ValueTask ReadExactlyAsync(
             Stream stream,
             Memory<byte> buffer,
@@ -486,6 +718,121 @@ public sealed class FileTransactionSpool : ITransactionSpool
                     "The transaction spool ended before its declared data was complete.",
                     exception);
             }
+        }
+    }
+
+    private sealed unsafe class MemoryMappedRecordMemory : MemoryManager<byte>
+    {
+        private readonly MemoryMappedRecordOwner _owner;
+        private readonly int _length;
+        private int _disposed;
+
+        private MemoryMappedRecordMemory(MemoryMappedRecordOwner owner, int length)
+        {
+            _owner = owner;
+            _length = length;
+        }
+
+        internal static ReadOnlyMemory<byte> Create(FileStream stream, int length)
+        {
+            var mapping = MemoryMappedFile.CreateFromFile(
+                stream,
+                mapName: null,
+                capacity: 0,
+                MemoryMappedFileAccess.Read,
+                HandleInheritability.None,
+                leaveOpen: true);
+            MemoryMappedViewAccessor? accessor = null;
+            try
+            {
+                accessor = mapping.CreateViewAccessor(
+                    stream.Position,
+                    length,
+                    MemoryMappedFileAccess.Read);
+                var owner = new MemoryMappedRecordOwner(mapping, accessor);
+                mapping = null!;
+                accessor = null;
+                return new MemoryMappedRecordMemory(owner, length).Memory;
+            }
+            finally
+            {
+                accessor?.Dispose();
+                mapping?.Dispose();
+            }
+        }
+
+        public override Span<byte> GetSpan()
+        {
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            return new Span<byte>(_owner.Pointer, _length);
+        }
+
+        public override MemoryHandle Pin(int elementIndex = 0)
+        {
+            ArgumentOutOfRangeException.ThrowIfGreaterThan((uint)elementIndex, (uint)_length);
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+            return new MemoryHandle(_owner.Pointer + elementIndex, pinnable: this);
+        }
+
+        public override void Unpin()
+        {
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) == 0)
+            {
+                _owner.Dispose();
+            }
+        }
+    }
+
+    private sealed unsafe class MemoryMappedRecordOwner : IDisposable
+    {
+        private MemoryMappedFile? _mapping;
+        private MemoryMappedViewAccessor? _accessor;
+        private byte* _pointer;
+        private int _disposed;
+
+        internal MemoryMappedRecordOwner(
+            MemoryMappedFile mapping,
+            MemoryMappedViewAccessor accessor)
+        {
+            _mapping = mapping;
+            _accessor = accessor;
+            byte* basePointer = null;
+            accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref basePointer);
+            _pointer = basePointer + accessor.PointerOffset;
+        }
+
+        ~MemoryMappedRecordOwner()
+        {
+            Dispose();
+        }
+
+        internal byte* Pointer
+        {
+            get
+            {
+                ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed) != 0, this);
+                return _pointer;
+            }
+        }
+
+        public void Dispose()
+        {
+            if (Interlocked.Exchange(ref _disposed, 1) != 0)
+            {
+                return;
+            }
+
+            _accessor!.SafeMemoryMappedViewHandle.ReleasePointer();
+            _pointer = null;
+            _accessor.Dispose();
+            _accessor = null;
+            _mapping!.Dispose();
+            _mapping = null;
+            GC.SuppressFinalize(this);
         }
     }
 
@@ -506,13 +853,18 @@ public sealed class FileTransactionSpool : ITransactionSpool
 
         public static uint Compute(ReadOnlySpan<byte> data)
         {
-            var value = uint.MaxValue;
+            var value = Append(uint.MaxValue, data);
+            return ~value;
+        }
+
+        public static uint Append(uint value, ReadOnlySpan<byte> data)
+        {
             foreach (var item in data)
             {
                 value = (value >> 8) ^ Table[(value ^ item) & 0xFF];
             }
 
-            return ~value;
+            return value;
         }
 
         private static uint[] CreateTable()

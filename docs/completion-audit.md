@@ -3,16 +3,16 @@
 This record maps the original BlueTusk product specification and the subsequent
 architecture-gap review to concrete repository evidence. “Complete” here means
 the engineering surface is implemented, documented, and covered by an
-executable gate. It does not change the package version from
-`0.3.0-preview.1`, replace external production experience, or declare every
-PostgreSQL deployment suitable without application-specific validation. Those
+executable gate. All six families are release-prepared at `1.0.0`, but this
+record does not publish them, replace external production experience, or
+declare every PostgreSQL deployment suitable without application-specific validation. Those
 release boundaries remain in [Runtime release readiness](release-readiness.md).
 
 ## Original product specification
 
 | Specification area | Engineering state | Primary evidence |
 | --- | --- | --- |
-| 1–5. Vision, layers, repository, package family, and branding | Implemented as the layered BlueTusk package family; packages remain preview. | [Architecture overview](architecture/overview.md), [layering ADR](architecture/decisions/0001-layered-dependency-direction.md), [roadmap](roadmap.md), and the Release packaging gate in [CI](../.github/workflows/build.yml). |
+| 1–5. Vision, layers, repository, package family, and branding | Implemented as six layered, release-prepared stable 1.0.0 product families; publication remains gated. | [Architecture overview](architecture/overview.md), [layering ADR](architecture/decisions/0001-layered-dependency-direction.md), [roadmap](roadmap.md), and the Release packaging gate in [CI](../.github/workflows/build.yml). |
 | 6. Transport | Implemented with genuine sync/async socket and TLS paths, cancellation-safe lifetimes, bounded buffers, and multi-host endpoints. | [Transport architecture](architecture/transport.md), [transport tests](../tests/BlueTusk.Transport.Tests/BlueTuskSocketTransportTests.cs), and [TLS tests](../tests/BlueTusk.Transport.Tests/BlueTuskTlsTransportTests.cs). |
 | 7. PostgreSQL protocol engine | Implemented independently of ADO.NET and EF, including framing, state transitions, extended query, streaming payloads, cancellation, and capture tooling. | [Protocol guide](protocol/README.md), [state-machine tests](../tests/BlueTusk.Protocol.Tests/BlueTuskProtocolStateMachineTests.cs), [streaming tests](../tests/BlueTusk.Protocol.Tests/BlueTuskProtocolConnectionStreamingTests.cs), and [fake-server conformance](../tests/BlueTusk.ConformanceTests/FakePostgreSqlServerTests.cs). |
 | 8. Authentication and security | Implemented for TLS, channel binding, SCRAM, MD5 compatibility, OAuth bearer, GSSAPI/Kerberos, SSPI, client certificates, password files, and redaction. | [Security guide](security.md), [security tests](../tests/BlueTusk.Security.Tests/BlueTuskScramSha256ClientTests.cs), and [authentication conformance](../tests/BlueTusk.ConformanceTests/AuthenticationConformanceTests.cs). |
@@ -44,7 +44,7 @@ release boundaries remain in [Runtime release readiness](release-readiness.md).
 | 5. Complete the extension seam | `BlueTuskDataSourceBuilder.Features` builds an immutable registry carried by the data source. Citext is implemented end-to-end for ADO.NET and EF, optional packages remain isolated, and the template plus compatibility harness are executable through the [extension guide](extensions/README.md) and [template contract](../tests/BlueTusk.ExtensionTemplate.Tests/ExtensionTemplateContractTests.cs). |
 | 6. Keep replication first-class | Physical/logical replication and pgoutput remain separate packages and never borrow pooled ADO.NET sessions. Allocation/backpressure, cancellation/disposal, reconnect/checkpoint, PG15–19, stress, and scheduled endurance evidence is catalogued in the [replication guide](replication/README.md) and [release readiness](release-readiness.md). |
 | 7. PostgreSQL 19 and SQL/PGQ | Capability detection, live DDL/query/preparation/batch/cancellation/pooling coverage, metadata, migrations, reverse engineering, typed `GRAPH_TABLE` translation, sample, and tooling are implemented while PG15–18 remain green. Beta-sensitive syntax is isolated and documented in the [graph guide](graph/README.md). |
-| 8. Documentation and release truthfulness | README, roadmap, package version, support limits, executable evidence, and preview boundaries are reconciled in [release readiness](release-readiness.md). The documentation gate validates every tracked local link on Windows and Linux. |
+| 8. Documentation and release truthfulness | README, roadmap, stable-candidate package versions, support limits, executable evidence, and publication boundaries are reconciled in [release readiness](release-readiness.md). The documentation gate validates every tracked local link on Windows and Linux. |
 
 ## Real-time platform phased plan
 
@@ -58,11 +58,11 @@ required real-duration endurance report is the evidence that permits promotion.
 | 0. Architecture and release groundwork | Implemented. Delivery, checkpoint, snapshot, spool, relay, Live security, and Sync destination decisions are recorded; dependency direction and publication policy are executable. | [ADRs 0006–0012](architecture/decisions/0006-streams-delivery-semantics.md), [product-family manifest](../eng/product-families.json), [release process](release-process.md), and [product-family architecture tests](../tests/BlueTusk.ConformanceTests/ProductFamilyArchitectureTests.cs). | None for the architecture gate. |
 | 1. Streams transaction kernel | Implemented for ordinary, streamed, committed, aborted, prepared, and two-phase transactions with explicit tuple state and bounded spooling. | [pgoutput stream tests](../tests/BlueTusk.Streams.Tests/PgOutputChangeStreamTests.cs), [durable-state tests](../tests/BlueTusk.Streams.Tests/DurableStateTests.cs), and [live replication tests](../tests/BlueTusk.IntegrationTests/BlueTuskReplicationIntegrationTests.cs). | Included in the Streams release-endurance gate. |
 | 2. Checkpoints, leases, groups, and relay | Implemented with monotonic compare-and-swap state, fencing, direct groups, durable PostgreSQL relay, replay, retention, and separate-control-schema validation. | [state-store conformance](../tests/BlueTusk.Streams.Tests/StateStoreConformanceTests.cs), [relay integration](../tests/BlueTusk.IntegrationTests/BlueTuskStreamsRelayIntegrationTests.cs), and [storage validation](../tests/BlueTusk.Streams.Tests/PostgreSqlStorageValidationTests.cs). | Included in the Streams release-endurance gate. |
-| 3. Typed Streams, snapshot bootstrap, and preview | Implemented with typed/dynamic mappings, EF mapping, exported-snapshot restart semantics, CloudEvents, DI, Aspire, CLI, health, telemetry, testing helpers, and all registered packages. | [typed mapping tests](../tests/BlueTusk.Streams.Tests/TypedChangeMappingTests.cs), [snapshot coordinator tests](../tests/BlueTusk.Streams.Tests/SnapshotThenStreamCoordinatorTests.cs), [Streams package manifest](../eng/product-families.json), and [Streams guide](streams/README.md). | Preview artifacts are candidate-ready; stable promotion remains gated. |
+| 3. Typed Streams and snapshot bootstrap | Implemented with typed/dynamic mappings, EF mapping, exported-snapshot restart semantics, CloudEvents, DI, Aspire, CLI, health, telemetry, testing helpers, and all registered packages. | [typed mapping tests](../tests/BlueTusk.Streams.Tests/TypedChangeMappingTests.cs), [snapshot coordinator tests](../tests/BlueTusk.Streams.Tests/SnapshotThenStreamCoordinatorTests.cs), [Streams package manifest](../eng/product-families.json), and [Streams guide](streams/README.md). | Stable 1.0.0 artifacts are release-prepared; exact-candidate promotion remains gated. |
 | 4. Streams hardening and Control Plane foundation | Engineering slices are implemented, including format/API freezes, relay upgrades, operations APIs, dashboard views, and release evidence tooling. | [Streams API freeze](../eng/streams-api-freeze.json), [Streams format registry](../eng/streams-formats.json), [Control Plane API freeze](../eng/control-plane-api-freeze.json), [Control Plane format registry](../eng/control-plane-formats.json), [Control Plane tests](../tests/BlueTusk.ControlPlane.Tests/ControlPlaneOperationTests.cs), and [Streams endurance verifier](../eng/verify-streams-endurance-report.ps1). | A verified, archived 72-hour report for the exact Streams candidate is still mandatory. |
-| 5. Sync preview and 1.0 | The pipeline, all four destinations, conformance kit, transforms, quarantine/replay, reconciliation/repair, rebuild/cutover, hosting, telemetry, Aspire, candidate API freeze, and durable-format registry are implemented. | [shared destination conformance](../tests/BlueTusk.Sync.Testing.Tests/SyncDestinationConformanceSuiteTests.cs), [Sync API freeze](../eng/sync-api-freeze.json), [format registry](../eng/sync-formats.json), and [Sync guide](sync/README.md). | A verified, archived 24-hour report for the exact Sync candidate is still mandatory before stable promotion. |
-| 6. Live preview and 1.0 | Authorised registered EF plans, gap-free initial delivery, keyed diffing, replay, signed resume, security-scoped sharing, quotas, SignalR, SSE, gRPC, TypeScript, Angular, React, advanced query capabilities, candidate API freeze, and durable-format registry are implemented. | [query compiler tests](../tests/BlueTusk.Live.Tests/LiveEfQueryCompilerTests.cs), [adversarial/load tests](../tests/BlueTusk.Live.Tests/LiveLoadGateTests.cs), [transport matrix](../tests/BlueTusk.Live.Tests/LivePostgreSqlTransportMatrixTests.cs), and [Live API freeze](../eng/live-api-freeze.json). | Live 1.0 cannot be promoted ahead of its Streams dependency and final release verification. |
-| 7. Continuous Graph preview | Implemented as capability-guarded registered SQL/PGQ plans with dependency-aware invalidation, authoritative `GRAPH_TABLE` requery/diff, bounded affected-key incremental maintenance with authoritative repair, samples, an optional Control Plane adapter, and benchmarks. | [compiler tests](../tests/BlueTusk.ContinuousGraph.Tests/ContinuousGraphQueryCompilerTests.cs), [incremental state-machine tests](../tests/BlueTusk.ContinuousGraph.Tests/ContinuousGraphIncrementalTests.cs), [PostgreSQL 19 integration](../tests/BlueTusk.ContinuousGraph.Tests/ContinuousGraphQueryIntegrationTests.cs), [ADR 0016](architecture/decisions/0016-authoritative-incremental-graph-maintenance.md), and the [Continuous Graph guide](continuous-graph/README.md). | Preview only and gated behind Control Plane; Phase 8 production evidence remains required. |
+| 5. Sync 1.0 | The pipeline, all four destinations, conformance kit, transforms, quarantine/replay, reconciliation/repair, rebuild/cutover, hosting, telemetry, Aspire, candidate API freeze, and durable-format registry are implemented. | [shared destination conformance](../tests/BlueTusk.Sync.Testing.Tests/SyncDestinationConformanceSuiteTests.cs), [Sync API freeze](../eng/sync-api-freeze.json), [format registry](../eng/sync-formats.json), and [Sync guide](sync/README.md). | A verified, archived 24-hour report for the exact Sync candidate is still mandatory before publication. |
+| 6. Live 1.0 | Authorised registered EF plans, gap-free initial delivery, keyed diffing, replay, signed resume, security-scoped sharing, quotas, SignalR, SSE, gRPC, TypeScript, Angular, React, advanced query capabilities, candidate API freeze, and durable-format registry are implemented. | [query compiler tests](../tests/BlueTusk.Live.Tests/LiveEfQueryCompilerTests.cs), [adversarial/load tests](../tests/BlueTusk.Live.Tests/LiveLoadGateTests.cs), [transport matrix](../tests/BlueTusk.Live.Tests/LivePostgreSqlTransportMatrixTests.cs), and [Live API freeze](../eng/live-api-freeze.json). | Live 1.0 cannot be published ahead of its Streams dependency and final release verification. |
+| 7. ContinuousGraph 1.0 | Implemented as capability-guarded registered SQL/PGQ plans with dependency-aware invalidation, authoritative `GRAPH_TABLE` requery/diff, bounded affected-key incremental maintenance with authoritative repair, samples, an optional Control Plane adapter, API freeze, and benchmarks. | [compiler tests](../tests/BlueTusk.ContinuousGraph.Tests/ContinuousGraphQueryCompilerTests.cs), [incremental state-machine tests](../tests/BlueTusk.ContinuousGraph.Tests/ContinuousGraphIncrementalTests.cs), [PostgreSQL 19 integration](../tests/BlueTusk.ContinuousGraph.Tests/ContinuousGraphQueryIntegrationTests.cs), [API freeze](../eng/continuous-graph-api-freeze.json), [ADR 0016](architecture/decisions/0016-authoritative-incremental-graph-maintenance.md), and the [ContinuousGraph guide](continuous-graph/README.md). | PostgreSQL 19 GA, the exact 24-hour/100,000-evaluation endurance report, dependency publication, and an independent pilot remain mandatory. |
 
 `artifacts/` is ignored by source control because endurance runs contain large
 binary and test-result trees. A release gate is complete only after its verifier
@@ -83,13 +83,13 @@ connection contract across all supported PostgreSQL versions:
 | 18 | 28 | 2,978 | 146 | 0 |
 | 19 Beta 2 | 28 | 2,978 | 146 | 0 |
 
-The provider audit produced a zero-warning Release build and 31 provider preview
-packages. Its V1 candidate API budget locks 8,292 signatures across 28
+The provider audit produced a zero-warning Release build and 31 stable 1.0.0
+candidate packages. Its V1 candidate API budget locks 8,292 signatures across 28
 API-governed Provider library surfaces, while package conformance excludes
 embedded template content projects. The current monorepo-wide gate covers 121
 solution projects, reports no vulnerable direct or transitive NuGet
 dependencies, validates every repository-local documentation link, and passes
-32 allocation budgets.
+37 allocation budgets.
 The final two-launch
 provider MediumRun records lower BlueTusk mean latency and managed allocation in
 all five paired workloads; parameterized scalar, warm checkout, and 1,000-row
@@ -100,8 +100,9 @@ the [checked-in provider report](../benchmarks/baselines/windows-ryzen7-5800x-do
 
 ## Explicit release boundaries
 
-- Packages remain `0.3.0-preview.1`; engineering-gate completion is not a
-  substitute for external production experience or a stable-release decision.
+- Packages are release-prepared at stable `1.0.0`, but engineering-gate
+  completion is not publication and does not substitute for external
+  production experience or protected release approval.
 - PostgreSQL 19 coverage uses the official Beta 2 image plus a scheduled build of
   the upstream PostgreSQL 19 branch; beta syntax can still change before GA.
 - Real-account AWS, Azure, and Google Cloud identity acceptance remains opt-in

@@ -151,7 +151,7 @@ function ConvertTo-UtcDateTime
 $contractPath = Join-Path $PSScriptRoot 'v1-approval-evidence-contract.json'
 $contract = Get-Content -LiteralPath $contractPath -Raw | ConvertFrom-Json
 if ([int]$contract.schemaVersion -ne 1 -or
-    [int]$contract.approvalSchemaVersion -ne 2)
+    [int]$contract.approvalSchemaVersion -ne 3)
 {
     throw 'The V1 approval-evidence contract has an unsupported schema.'
 }

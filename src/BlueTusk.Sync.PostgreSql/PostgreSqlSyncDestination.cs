@@ -759,7 +759,10 @@ public sealed class PostgreSqlSyncDestination :
             AddParameter(upsert, $"upsert_key{index}", mutation.Key);
             AddNullableParameter(upsert, $"partition{index}", document.PartitionKey, DbType.String);
             AddParameter(upsert, $"content_type{index}", document.ContentType);
-            AddParameter(upsert, $"content{index}", document.Content.ToArray());
+            AddParameter(
+                upsert,
+                $"content{index}",
+                PostgreSqlDocumentMutationWriter.CopyParameterPayload(document.Content));
             AddParameter(
                 upsert,
                 $"repair_id{index}",

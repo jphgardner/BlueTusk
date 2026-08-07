@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.PgVector
 
-Preview PostgreSQL `pgvector` support for BlueTusk. The package provides
+Stable PostgreSQL `pgvector` support for BlueTusk. The package provides
 immutable `BlueTuskVector`, `BlueTuskHalfVector`, and `BlueTuskSparseVector`
 values, native text and binary codecs, array composition, parameter inference,
 and data-source registration.
@@ -30,5 +30,5 @@ also maps Hamming and Jaccard distance over the core provider's
 `BlueTuskBitString`, so PostgreSQL's general `bit` type remains outside the
 optional extension codec package.
 
-This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
-APIs, not stable or production-ready contracts.
+This package and the BlueTusk extension SDK use the stable 1.0.0
+Provider-family contract.

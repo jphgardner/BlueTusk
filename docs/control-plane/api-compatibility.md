@@ -22,13 +22,13 @@ PostgreSQL audit storage uses independently versioned schema and record
 formats, performs transactional in-place migrations, and refuses a future
 schema.
 
-The original unversioned preview routes remain aliases for the V1 payload
-during the `0.1.0-preview.1` line. They are not a separate compatibility
+The original unversioned routes remain compatibility aliases for the V1
+payload throughout the 1.x line. They are not a separate compatibility
 contract. Incompatible changes require a new route/envelope version and a
 documented migration path.
 
-Continuous Graph integration is deliberately outside the stable Control Plane
-core. Applications that install the graph preview add
+ContinuousGraph integration is deliberately outside the Control Plane core.
+Applications that install the stable optional adapter add
 `BlueTusk.ContinuousGraph.ControlPlane`, which supplies the optional graph
-projection. This prevents a stable Control Plane package from taking a
-dependency on a preview feature.
+projection. This keeps graph dependencies out of applications that do not use
+the feature while allowing both families to retain stable V1 contracts.

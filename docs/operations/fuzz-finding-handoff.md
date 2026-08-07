@@ -79,7 +79,7 @@ The finding is closed only when all of the following are true:
 - no crash or hang finding is saved;
 - deterministic corpus replay passes in the same workflow;
 - the exact run is present once in `candidate.json`; and
-- the protected candidate-readiness workflow accepts the complete six-run
+- the protected candidate-readiness workflow accepts the complete seven-run
   manifest.
 
 Until then, stable publication remains disabled.

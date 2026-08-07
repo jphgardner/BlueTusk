@@ -1,6 +1,13 @@
 # BlueTusk Streams
 
-BlueTusk Streams is the transaction-preserving application CDC layer above `BlueTusk.Replication.PgOutput`. The `0.1.0-preview.1` release train contains the transaction kernel, typed core mappings, no-gap snapshot bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and PostgreSQL durable relay fan-out. Candidate packages can be reproduced, but publication is disabled until the exact Streams V1 candidate completes its full manual build and 72-hour endurance evidence.
+BlueTusk Streams is the transaction-preserving application CDC layer above
+`BlueTusk.Replication.PgOutput`. The stable `1.0.0` release-prepared family
+contains the transaction kernel, typed core mappings, no-gap snapshot
+bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer
+lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and
+PostgreSQL durable relay fan-out. Candidate packages can be reproduced, but
+publication is disabled until the immutable Streams V1 candidate completes its
+full manual build and 72-hour endurance evidence.
 
 ## Implemented kernel
 
@@ -16,9 +23,10 @@ BlueTusk Streams is the transaction-preserving application CDC layer above `Blue
 - explicit one-shot acknowledgement semantics that stop a source read if a delivery is skipped or rejected; and
 - public API baselines plus fake pgoutput and PostgreSQL 15–19 integration coverage.
 
-Prepared/two-phase transactions fail closed by default. The Phase 4 preview
-mode exposes durable prepare, commit-prepared, and rollback-prepared lifecycle
-deliveries for destinations that explicitly support invisible staging. See
+Prepared/two-phase transactions fail closed by default. The opt-in
+experimental mode outside the default V1 contract exposes durable prepare,
+commit-prepared, and rollback-prepared lifecycle deliveries for destinations
+that explicitly support invisible staging. See
 [prepared and two-phase transactions](prepared-transactions.md).
 
 ## Reading transactions
@@ -118,7 +126,8 @@ See [Aspire integration](aspire.md) for secret-preserving source/control resourc
 
 See the [snapshot-then-stream sample](sample.md) for a runnable hosted consumer using exported-snapshot binary COPY followed by transaction-preserving CDC.
 
-See the [0.1.0-preview.1 release notes](release-notes-0.1.0-preview.1.md) for the package list, guarantees, validation evidence, and preview limitations.
+See the [1.0.0 release record](release-notes-1.0.0.md) for the package list,
+guarantees, evidence gate, and support boundary.
 
 ## Performance baseline
 

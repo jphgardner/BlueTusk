@@ -14,6 +14,15 @@ public sealed class LiveReplayEvent
         LiveEventKind kind,
         string contentType,
         ReadOnlySpan<byte> payload)
+        : this(sequence, kind, contentType, payload.ToArray())
+    {
+    }
+
+    private LiveReplayEvent(
+        long sequence,
+        LiveEventKind kind,
+        string contentType,
+        byte[] ownedPayload)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(sequence);
         if (!Enum.IsDefined(kind))
@@ -25,7 +34,6 @@ public sealed class LiveReplayEvent
         Sequence = sequence;
         Kind = kind;
         ContentType = contentType;
-        var ownedPayload = payload.ToArray();
         _payload = ownedPayload;
         _integrityHash = SHA256.HashData(ownedPayload);
     }
@@ -39,6 +47,16 @@ public sealed class LiveReplayEvent
     public ReadOnlyMemory<byte> Payload => _payload;
 
     public ReadOnlyMemory<byte> IntegrityHash => _integrityHash;
+
+    internal static LiveReplayEvent CreateOwned(
+        long sequence,
+        LiveEventKind kind,
+        string contentType,
+        byte[] payload)
+    {
+        ArgumentNullException.ThrowIfNull(payload);
+        return new LiveReplayEvent(sequence, kind, contentType, payload);
+    }
 
     public static LiveReplayEvent Restore(
         long sequence,
@@ -66,30 +84,36 @@ public sealed class LiveReplayAppendRequest
         LiveSubscriptionIdentity identity,
         long expectedLastSequence,
         IEnumerable<LiveReplayEvent> events)
+        : this(identity, expectedLastSequence, MaterializeEvents(events))
+    {
+    }
+
+    private LiveReplayAppendRequest(
+        LiveSubscriptionIdentity identity,
+        long expectedLastSequence,
+        LiveReplayEvent[] events)
     {
         ArgumentNullException.ThrowIfNull(identity);
         ArgumentOutOfRangeException.ThrowIfNegative(expectedLastSequence);
-        ArgumentNullException.ThrowIfNull(events);
-        var eventArray = events.ToArray();
-        if (eventArray.Length == 0)
+        if (events.Length == 0)
         {
             throw new ArgumentException("A Live replay append requires at least one event.", nameof(events));
         }
 
-        for (var index = 0; index < eventArray.Length; index++)
+        for (var index = 0; index < events.Length; index++)
         {
             var expected = checked(expectedLastSequence + index + 1);
-            if (eventArray[index].Sequence != expected)
+            if (events[index].Sequence != expected)
             {
                 throw new ArgumentException(
-                    $"Live replay sequence {eventArray[index].Sequence} is not the expected sequence {expected}.",
+                    $"Live replay sequence {events[index].Sequence} is not the expected sequence {expected}.",
                     nameof(events));
             }
         }
 
         Identity = identity;
         ExpectedLastSequence = expectedLastSequence;
-        _events = Array.AsReadOnly(eventArray);
+        _events = Array.AsReadOnly(events);
     }
 
     public LiveSubscriptionIdentity Identity { get; }
@@ -97,6 +121,21 @@ public sealed class LiveReplayAppendRequest
     public long ExpectedLastSequence { get; }
 
     public IReadOnlyList<LiveReplayEvent> Events => _events;
+
+    internal static LiveReplayAppendRequest CreateOwned(
+        LiveSubscriptionIdentity identity,
+        long expectedLastSequence,
+        LiveReplayEvent[] events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        return new LiveReplayAppendRequest(identity, expectedLastSequence, events);
+    }
+
+    private static LiveReplayEvent[] MaterializeEvents(IEnumerable<LiveReplayEvent> events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        return events.ToArray();
+    }
 }
 
 public enum LiveReplayAppendStatus
@@ -127,6 +166,15 @@ public sealed class LiveReplayReadResult
         long firstAvailableSequence,
         long lastSequence,
         IEnumerable<LiveReplayEvent>? events = null)
+        : this(status, firstAvailableSequence, lastSequence, events?.ToArray() ?? [])
+    {
+    }
+
+    private LiveReplayReadResult(
+        LiveReplayReadStatus status,
+        long firstAvailableSequence,
+        long lastSequence,
+        LiveReplayEvent[] events)
     {
         if (!Enum.IsDefined(status))
         {
@@ -143,7 +191,7 @@ public sealed class LiveReplayReadResult
         Status = status;
         FirstAvailableSequence = firstAvailableSequence;
         LastSequence = lastSequence;
-        _events = Array.AsReadOnly(events?.ToArray() ?? []);
+        _events = Array.AsReadOnly(events);
     }
 
     public LiveReplayReadStatus Status { get; }
@@ -153,6 +201,16 @@ public sealed class LiveReplayReadResult
     public long LastSequence { get; }
 
     public IReadOnlyList<LiveReplayEvent> Events => _events;
+
+    internal static LiveReplayReadResult CreateOwned(
+        LiveReplayReadStatus status,
+        long firstAvailableSequence,
+        long lastSequence,
+        LiveReplayEvent[] events)
+    {
+        ArgumentNullException.ThrowIfNull(events);
+        return new LiveReplayReadResult(status, firstAvailableSequence, lastSequence, events);
+    }
 }
 
 public interface ILiveReplayStore
@@ -184,7 +242,7 @@ public static class LiveReplayJsonSerializer
         where TKey : notnull
     {
         ArgumentNullException.ThrowIfNull(liveEvent);
-        return new LiveReplayEvent(
+        return LiveReplayEvent.CreateOwned(
             liveEvent.Sequence,
             liveEvent.Kind,
             ContentType,

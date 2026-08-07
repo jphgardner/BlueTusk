@@ -67,9 +67,9 @@ $configuration = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'v1-production-readiness.json') -Raw |
     ConvertFrom-Json
 $evidence = Get-Content -LiteralPath $EvidencePath -Raw | ConvertFrom-Json
-if ([int]$evidence.schemaVersion -ne 2)
+if ([int]$evidence.schemaVersion -ne 3)
 {
-    throw "Expected candidate-evidence schema 2; found '$($evidence.schemaVersion)'."
+    throw "Expected candidate-evidence schema 3; found '$($evidence.schemaVersion)'."
 }
 if (-not [string]::Equals(
         [string]$evidence.candidateCommit,

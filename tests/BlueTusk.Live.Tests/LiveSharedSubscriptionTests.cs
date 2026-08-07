@@ -108,6 +108,9 @@ public sealed class LiveSharedSubscriptionTests
         Assert.Equal(4, shared.Status.FanOutDeliveries);
         Assert.Equal(2, shared.Status.ConnectedClients);
         Assert.Equal(2, shared.Status.ConnectionOpenAttempts);
+        var firstMessage = await ReadOneAsync(first.Connection!, TestContext.Current.CancellationToken);
+        var secondMessage = await ReadOneAsync(second.Connection!, TestContext.Current.CancellationToken);
+        Assert.Same(firstMessage, secondMessage);
 
         var resumed = await shared.ConnectAsync(1, TestContext.Current.CancellationToken);
         Assert.Equal([2L, 3L], resumed.Connection!.Replay.Select(item => item.Sequence));

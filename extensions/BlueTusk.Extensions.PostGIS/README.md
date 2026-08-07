@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.PostGIS
 
-Preview PostGIS transport support for BlueTusk. The package registers distinct
+Stable PostGIS transport support for BlueTusk. The package registers distinct
 `BlueTuskGeometry` and `BlueTuskGeography` CLR values, native EWKB binary
 transport, WKT/EWKT text input, hexadecimal EWKB text fallback, array
 composition, and parameter inference.
@@ -30,5 +30,5 @@ Applications that need a rich geometry model and EF spatial queries can add
 NetTopologySuite geometries through these lossless codecs without adding a
 geometry dependency to BlueTusk core.
 
-This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
-APIs, not stable or production-ready contracts.
+This package and the BlueTusk extension SDK use the stable 1.0.0
+Provider-family contract.

@@ -83,7 +83,7 @@ fingerprints, graph/database identities, explicit element aliases, exact
 relational dependencies, result bounds, and capabilities. It does not expose
 bound parameters or graph result rows. The authorised `/graphs` and
 `/api/graphs` endpoints HTML-encode every application-provided value.
-The stable Control Plane core does not reference the Continuous Graph preview.
+The Control Plane core does not reference the optional ContinuousGraph adapter.
 
 ## Versioned agent API
 
@@ -105,7 +105,7 @@ proxies cannot silently rewrite content negotiation.
 
 The original unversioned `/api/overview`, `/api/sync`, `/api/live`,
 `/api/graphs`, and `/api/operations` routes remain compatibility aliases for
-the `0.1.0-preview.1` release. New fields may be added compatibly within v1;
+the stable 1.x line. New fields may be added compatibly within v1;
 removing or changing the meaning or JSON type of an existing v1 field requires
 a new API version. The dashboard itself uses the v1 mutation endpoint.
 
@@ -228,5 +228,5 @@ rejects concurrent updates, advances fencing tokens, and rejects a future
 desired-document format.
 
 See the [API and format compatibility policy](api-compatibility.md) and
-[0.1.0-preview.1 release notes](release-notes-0.1.0-preview.1.md) for the exact
+[1.0.0 release record](release-notes-1.0.0.md) for the exact
 candidate gate and remaining publication dependency.

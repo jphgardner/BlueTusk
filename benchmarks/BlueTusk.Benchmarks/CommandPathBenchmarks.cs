@@ -17,6 +17,8 @@ public class CommandPathBenchmarks : IDisposable
     private BlueTuskCommand _textCommand = null!;
     private BlueTuskCommand _readerCommand = null!;
     private BlueTuskCommand _asyncInt32Command = null!;
+    private readonly string _classificationSql =
+        "/* benchmark */ SELECT value FROM app.items WHERE id = $1";
 
     [GlobalSetup]
     public void Setup()
@@ -75,6 +77,10 @@ public class CommandPathBenchmarks : IDisposable
     [Benchmark]
     public Task<object?> ExecuteInt32ParameterAndScalarAsync() =>
         _asyncInt32Command.ExecuteScalarAsync(CancellationToken.None);
+
+    [Benchmark]
+    public bool ClassifySessionNeutralSql() =>
+        BlueTuskMultiplexingClassifier.IsSessionNeutral(_classificationSql);
 
     [GlobalCleanup]
     public void Dispose()

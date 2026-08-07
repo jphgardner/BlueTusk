@@ -230,10 +230,9 @@ public sealed class ChangeEntityMappingBuilder<T>
             throw new InvalidOperationException($"No CLR properties are mapped for {table}.");
         }
 
-        var columnsByName = table.Columns.ToDictionary(column => column.Name, StringComparer.Ordinal);
         foreach (var binding in _bindings.Values)
         {
-            if (!columnsByName.TryGetValue(binding.ColumnName, out var column))
+            if (!table.TryGetColumn(binding.ColumnName, out var column))
             {
                 throw new InvalidOperationException(
                     $"Mapped column {table}.{binding.ColumnName} does not exist.");
@@ -249,11 +248,11 @@ public sealed class ChangeEntityMappingBuilder<T>
         }
 
         var keys = _keys.Count == 0
-            ? table.Columns.Where(column => column.IsKey).Select(column => column.Name).ToArray()
+            ? GetKeyNames(table)
             : _keys.Order(StringComparer.Ordinal).ToArray();
         foreach (var key in keys)
         {
-            if (!columnsByName.ContainsKey(key))
+            if (!table.TryGetColumn(key, out _))
             {
                 throw new InvalidOperationException($"Mapped key column {table}.{key} does not exist.");
             }
@@ -264,6 +263,18 @@ public sealed class ChangeEntityMappingBuilder<T>
             _bindings.Values.OrderBy(binding => binding.ColumnName, StringComparer.Ordinal).ToArray(),
             keys,
             policy ?? new ChangeMappingPolicy());
+    }
+
+    private static string[] GetKeyNames(ChangeTable table)
+    {
+        var keyOrdinals = table.KeyOrdinals;
+        var keys = new string[keyOrdinals.Length];
+        for (var index = 0; index < keys.Length; index++)
+        {
+            keys[index] = table.Columns[keyOrdinals[index]].Name;
+        }
+
+        return keys;
     }
 
     private void AddConventionBindings(ChangeTable table)

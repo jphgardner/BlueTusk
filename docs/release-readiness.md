@@ -1,30 +1,30 @@
 # Runtime release readiness
 
 BlueTusk records production-readiness decisions as executable subsystem gates,
-not as synonyms for package version. The 2026-08-04 V1 hardening review closes
+not as synonyms for package version. The 2026-08-07 V1 hardening review closes
 the implementation gates for the ADO.NET provider, EF Core and design tooling,
 PostgreSQL-specific schema/query support, native data paths, replication,
 extensions, parser reliability, security, performance, API governance,
 supply-chain provenance, stress, compatibility and documentation.
 
-The repository and packages remain `0.3.0-preview.1`: completing an engineering
-gate does not substitute for exact-candidate endurance, PostgreSQL 19 GA,
-independent production experience or the maintainer's explicit decision to
-publish a stable release. The concise current status is in
+The repository is release-prepared as six stable `1.0.0` families, but no V1
+package is published. Completing an engineering gate does not substitute for
+exact-candidate endurance, PostgreSQL 19 GA, independent production experience,
+or protected publication approval. The concise current status is in
 [V1 release readiness](v1-release-readiness.md).
 
 ## Publication gate
 
-All six product-family publication policies are currently disabled. Manual
-release-workflow dispatches create candidate artifacts only; they cannot
-publish. Provider, Streams, Sync, Live, and Control Plane are locked to stable
-1.0.0-or-newer versions, while Continuous Graph is locked to a prerelease
-version.
+All six product-family publication policies are disabled during preparation.
+Manual release-workflow dispatches create candidate artifacts only; they
+cannot publish. Provider, Streams, Sync, Live, Control Plane, and
+ContinuousGraph are all locked to stable `1.0.0` without prerelease suffixes.
 
-The final candidate commit must enable only the family whose dependencies are
-already enabled, then pass an explicit full `build.yml` dispatch at that exact
-SHA. Streams additionally requires its exact 72-hour workflow and Sync its
-exact 24-hour workflow. The release workflow verifies those successful GitHub
+After PostgreSQL 19 GA, a reviewed final PR arms all six policies on `main`.
+That resulting SHA is the immutable candidate. It must have no V1 release tags
+or published candidate packages and must pass seven exact-SHA workflows:
+build, security, fuzzing, performance, Streams endurance, Sync endurance, and
+ContinuousGraph endurance. The release workflow verifies successful GitHub
 Actions runs by `head_sha`, rejects a mismatched version tag or checkout, and
 publishes only through the protected production environment. See the
 [release process](release-process.md).
@@ -177,7 +177,7 @@ server cannot implement their generated-column SQL.
 ## Release artifacts and documentation
 
 The reviewed Provider-family Release candidate produces 31
-`0.3.0-preview.1` NuGet/tool/template packages and 29 symbol packages without
+`1.0.0` NuGet/tool/template packages and 29 symbol packages without
 warnings. Compiler-enforced public API/nullability baselines
 cover all 27 Provider-family library surfaces and are locked by the
 [V1 candidate hash manifest](../eng/provider-api-freeze.json). Package
@@ -224,29 +224,31 @@ source is constant-time and in-memory, but the `GRAPH_TABLE` query and provider
 work are included. These ShortRun values are checked-in regression evidence,
 not production latency objectives.
 
-The independently versioned `BlueTusk.ContinuousGraph 0.1.0-preview.1` runtime
-and `BlueTusk.ContinuousGraph.ControlPlane` adapter
-passes a zero-warning repository Release build, the complete offline solution
-suite, all eight graph tests including PostgreSQL 19 acceptance, public API and
-dependency-direction conformance, documentation-link and allocation-budget
-gates, and inspected NuGet packs. The Graph family remains non-publishable
-until Provider, Live, and Control Plane are publishable. The Live gate covers signed
+The independently versioned `BlueTusk.ContinuousGraph 1.0.0` runtime and
+`BlueTusk.ContinuousGraph.ControlPlane` adapter pass a zero-warning repository
+Release build, the graph suite including PostgreSQL 19 acceptance, public API
+freeze, dependency-direction conformance, documentation-link and
+allocation-budget gates, and inspected NuGet packs. ContinuousGraph remains
+unpublished until PostgreSQL 19 GA, its dependencies, the exact 24-hour
+100,000-evaluation recovery-endurance report, and an independent pilot pass.
+The Live gate covers signed
 disconnect/resume replay from the PostgreSQL production store through SSE,
 SignalR/WebSockets, and HTTP/2 gRPC on PostgreSQL 15–19. The release script
 rejects any publishable family with a gated dependency. This does not mark the
-still-open Streams 72-hour, Sync 24-hour, Live 1.0, or Control Plane release
-gates complete.
+still-open Streams 72-hour, Sync 24-hour, ContinuousGraph 24-hour, pilot, or
+protected publication gates complete.
 
 The independently versioned Control Plane candidate now exposes discoverable
-v1 agent routes with versioned envelopes while retaining the original preview
+v1 agent routes with versioned envelopes while retaining the original
+unversioned
 routes as compatibility aliases. Its audit store transactionally upgrades the
 legacy pre-metadata table to schema version 2, preserves and format-marks
 existing rows, rejects future schemas, and fences appends to the exact running
 schema version. Eleven unit tests, a hash-locked compiler API baseline, an
 executable format registry, and the live PostgreSQL 15–19 matrix cover route
 authorization, version negotiation, immutable audit, fresh initialization, and
-legacy upgrade. The `BlueTusk.ControlPlane` and `BlueTusk.Dashboard
-0.1.0-preview.1` candidates remain non-publishable because the declared Sync
+legacy upgrade. The `BlueTusk.ControlPlane` and `BlueTusk.Dashboard` 1.0.0
+candidates remain unpublished because the declared Sync
 release dependency has not yet archived its required 24-hour endurance
 evidence.
 
@@ -265,7 +267,7 @@ in all tracked Markdown files. The Angular documentation build automatically
 discovers every repository guide, rewrites internal links to site routes,
 generates full-text search records and fails when generated content drifts.
 The support matrix identifies .NET 10, EF Core 10.0.10,
-PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 preview, including the
+PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 candidate evidence, including the
 remaining beta-syntax risk.
 
 ## Automated gates
@@ -288,6 +290,6 @@ contract.
 The [specification completion audit](completion-audit.md) maps every original
 product area and architecture-gap priority to its primary executable evidence.
 This evidence closes the repository's current product-spec engineering gates.
-It does not rename the packages to `1.0.0`, guarantee suitability for a
+It does not publish the `1.0.0` packages, guarantee suitability for a
 particular production deployment, validate optional cloud credentials that were
 not supplied, or expand the documented raw-SQL and ownership/grant boundaries.

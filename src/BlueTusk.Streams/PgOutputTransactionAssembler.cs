@@ -45,13 +45,25 @@ internal sealed class PgOutputTransactionAssembler
                 RequireOrdinary().Origin = origin.Name;
                 return null;
             case BlueTuskPgOutputInsert insert:
-                await AppendInsertAsync(insert, Estimate(envelope), cancellationToken).ConfigureAwait(false);
+                await AppendInsertAsync(
+                    insert,
+                    Estimate(envelope),
+                    envelope.OwnsPayload,
+                    cancellationToken).ConfigureAwait(false);
                 return null;
             case BlueTuskPgOutputUpdate update:
-                await AppendUpdateAsync(update, Estimate(envelope), cancellationToken).ConfigureAwait(false);
+                await AppendUpdateAsync(
+                    update,
+                    Estimate(envelope),
+                    envelope.OwnsPayload,
+                    cancellationToken).ConfigureAwait(false);
                 return null;
             case BlueTuskPgOutputDelete delete:
-                await AppendDeleteAsync(delete, Estimate(envelope), cancellationToken).ConfigureAwait(false);
+                await AppendDeleteAsync(
+                    delete,
+                    Estimate(envelope),
+                    envelope.OwnsPayload,
+                    cancellationToken).ConfigureAwait(false);
                 return null;
             case BlueTuskPgOutputTruncate truncate:
                 await AppendTruncateAsync(truncate, Estimate(envelope), cancellationToken).ConfigureAwait(false);
@@ -106,15 +118,20 @@ internal sealed class PgOutputTransactionAssembler
 
     private void CacheRelation(BlueTuskPgOutputRelation relation)
     {
-        var columns = relation.Columns.Select((column, ordinal) =>
-            new ChangeColumn(
+        var columns = new ChangeColumn[relation.Columns.Count];
+        for (var ordinal = 0; ordinal < columns.Length; ordinal++)
+        {
+            var column = relation.Columns[ordinal];
+            columns[ordinal] = new ChangeColumn(
                 ordinal,
                 column.Name,
                 column.TypeOid,
                 column.TypeModifier,
                 (column.Options & BlueTuskPgOutputRelationColumnOptions.Key) != 0,
-                _types.GetValueOrDefault(column.TypeOid)));
-        _relations[relation.RelationId] = new ChangeTable(
+                _types.GetValueOrDefault(column.TypeOid));
+        }
+
+        _relations[relation.RelationId] = ChangeTable.CreateOwned(
             relation.RelationId,
             relation.Namespace,
             relation.Name,
@@ -198,6 +215,7 @@ internal sealed class PgOutputTransactionAssembler
     private async ValueTask AppendInsertAsync(
         BlueTuskPgOutputInsert insert,
         long estimatedBytes,
+        bool ownsPayload,
         CancellationToken cancellationToken)
     {
         var transaction = ResolveTransaction(insert.StreamingTransactionId);
@@ -207,7 +225,7 @@ internal sealed class PgOutputTransactionAssembler
             {
                 Kind = PendingChangeKind.Insert,
                 TableToken = transaction.GetTableToken(table),
-                NewRow = CopyTuple(insert.NewRow),
+                NewRow = CreatePendingTuple(insert.NewRow, ownsPayload),
             },
             estimatedBytes,
             cancellationToken).ConfigureAwait(false);
@@ -216,6 +234,7 @@ internal sealed class PgOutputTransactionAssembler
     private async ValueTask AppendUpdateAsync(
         BlueTuskPgOutputUpdate update,
         long estimatedBytes,
+        bool ownsPayload,
         CancellationToken cancellationToken)
     {
         var transaction = ResolveTransaction(update.StreamingTransactionId);
@@ -226,8 +245,10 @@ internal sealed class PgOutputTransactionAssembler
                 Kind = PendingChangeKind.Update,
                 TableToken = transaction.GetTableToken(table),
                 OldRowKind = update.OldRowKind,
-                OldRow = update.OldRow is null ? null : CopyTuple(update.OldRow),
-                NewRow = CopyTuple(update.NewRow),
+                OldRow = update.OldRow is null
+                    ? null
+                    : CreatePendingTuple(update.OldRow, ownsPayload),
+                NewRow = CreatePendingTuple(update.NewRow, ownsPayload),
             },
             estimatedBytes,
             cancellationToken).ConfigureAwait(false);
@@ -236,6 +257,7 @@ internal sealed class PgOutputTransactionAssembler
     private async ValueTask AppendDeleteAsync(
         BlueTuskPgOutputDelete delete,
         long estimatedBytes,
+        bool ownsPayload,
         CancellationToken cancellationToken)
     {
         var transaction = ResolveTransaction(delete.StreamingTransactionId);
@@ -246,7 +268,7 @@ internal sealed class PgOutputTransactionAssembler
                 Kind = PendingChangeKind.Delete,
                 TableToken = transaction.GetTableToken(table),
                 OldRowKind = delete.OldRowKind,
-                OldRow = CopyTuple(delete.OldRow),
+                OldRow = CreatePendingTuple(delete.OldRow, ownsPayload),
             },
             estimatedBytes,
             cancellationToken).ConfigureAwait(false);
@@ -283,7 +305,9 @@ internal sealed class PgOutputTransactionAssembler
             IsTransactionalMessage = message.IsTransactional,
             MessagePosition = message.Position,
             MessagePrefix = message.Prefix,
-            MessageContent = message.Content.ToArray(),
+            MessageContent = envelope.OwnsPayload
+                ? message.Content
+                : message.Content.ToArray(),
         };
 
         if (message.IsTransactional || message.StreamingTransactionId.HasValue || _ordinaryTransactionId.HasValue)
@@ -581,8 +605,21 @@ internal sealed class PgOutputTransactionAssembler
             : throw new TransactionAssemblyException(
                 $"A change references relation {relationId} before its metadata was received.");
 
-    private static PendingTuple CopyTuple(BlueTuskPgOutputTuple tuple) =>
-        new(tuple.Values.Select(value => new PendingTupleValue(value.Kind, value.Data.ToArray())).ToArray());
+    private static PendingTuple CreatePendingTuple(
+        BlueTuskPgOutputTuple tuple,
+        bool ownsPayload)
+    {
+        var values = new PendingTupleValue[tuple.Values.Count];
+        for (var index = 0; index < values.Length; index++)
+        {
+            var value = tuple.Values[index];
+            values[index] = new PendingTupleValue(
+                value.Kind,
+                ownsPayload ? value.Data : value.Data.ToArray());
+        }
+
+        return new PendingTuple(values);
+    }
 
     private static long Estimate(BlueTuskPgOutputEnvelope envelope)
     {
@@ -738,7 +775,9 @@ internal sealed class PgOutputTransactionAssembler
     }
 
     private static ChangeRow BuildUnavailableOldRow(ChangeTable table) =>
-        new(table, Enumerable.Repeat(ChangeColumnValue.OldValueUnavailable, table.Columns.Count));
+        ChangeRow.CreateOwned(
+            table,
+            CreateFilledValues(table.Columns.Count, ChangeColumnValue.OldValueUnavailable));
 
     private static ChangeRow BuildRow(
         ChangeTable table,
@@ -748,10 +787,10 @@ internal sealed class PgOutputTransactionAssembler
         var unavailable = oldRowKind.HasValue
             ? ChangeColumnValue.OldValueUnavailable
             : ChangeColumnValue.NotPublished;
-        var values = Enumerable.Repeat(unavailable, table.Columns.Count).ToArray();
+        var values = CreateFilledValues(table.Columns.Count, unavailable);
         if (oldRowKind == BlueTuskPgOutputOldRowKind.Key)
         {
-            var keys = table.Columns.Where(column => column.IsKey).Select(column => column.Ordinal).ToArray();
+            var keys = table.KeyOrdinals;
             if (tuple.Values.Length == table.Columns.Count)
             {
                 foreach (var keyOrdinal in keys)
@@ -786,7 +825,14 @@ internal sealed class PgOutputTransactionAssembler
             }
         }
 
-        return new ChangeRow(table, values);
+        return ChangeRow.CreateOwned(table, values);
+    }
+
+    private static ChangeColumnValue[] CreateFilledValues(int count, ChangeColumnValue value)
+    {
+        var values = new ChangeColumnValue[count];
+        Array.Fill(values, value);
+        return values;
     }
 
     private static ChangeColumnValue MaterializeValue(PendingTupleValue value) => value.Kind switch

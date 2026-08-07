@@ -1,10 +1,12 @@
-# PostgreSQL 19 SQL/PGQ preview
+# PostgreSQL 19 SQL/PGQ V1 candidate
 
 The cross-milestone test and publication cadence is documented in the
 [PostgreSQL 19 compatibility programme](../postgresql19-programme.md).
 
-BlueTusk `0.3.0-preview.1` supports PostgreSQL 19 SQL/PGQ through raw ADO.NET
-SQL, a typed EF query subset, and read-only property-graph schema discovery. ADO.NET
+BlueTusk's release-prepared `1.0.0` Provider family exposes PostgreSQL 19
+SQL/PGQ through raw ADO.NET SQL, a typed EF query subset, and read-only
+property-graph schema discovery. Stable support remains gated on PostgreSQL 19
+GA and the exact-candidate PostgreSQL 15–19 matrix. ADO.NET
 sessions enable `SupportsSqlPgq` only after probing the documented
 `information_schema.property_graphs` view; a major-version check alone is not
 used as evidence.
@@ -180,7 +182,7 @@ applies its normal tracking behavior. The resulting `IQueryable` supports
 ordinary outer LINQ composition, including filters, joins, grouping, sorting,
 pagination, and further projections.
 
-## Exact preview boundary
+## Exact V1 typed-subset boundary
 
 Supported now:
 

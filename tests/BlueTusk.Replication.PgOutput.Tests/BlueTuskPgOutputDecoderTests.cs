@@ -7,6 +7,30 @@ namespace BlueTusk.Replication.PgOutput.Tests;
 public sealed class BlueTuskPgOutputDecoderTests
 {
     [Fact]
+    public void Caller_supplied_xlog_memory_is_not_marked_as_internally_owned()
+    {
+        var payload = new PayloadBuilder('B')
+            .UInt64(10)
+            .Int64(1_000_000)
+            .UInt32(42)
+            .Build();
+        var xLogData = new BlueTuskXLogData(
+            new BlueTuskLogSequenceNumber(1),
+            new BlueTuskLogSequenceNumber(2),
+            DateTimeOffset.UnixEpoch,
+            payload);
+
+        var envelope = new BlueTuskPgOutputDecoder().Decode(xLogData);
+        var publicEquivalent = new BlueTuskPgOutputEnvelope(
+            envelope.XLogData,
+            envelope.Message);
+
+        Assert.False(envelope.OwnsPayload);
+        Assert.Equal(publicEquivalent, envelope);
+        Assert.Equal(publicEquivalent.GetHashCode(), envelope.GetHashCode());
+    }
+
+    [Fact]
     public void Decodes_transaction_boundaries_and_origin()
     {
         var decoder = new BlueTuskPgOutputDecoder();

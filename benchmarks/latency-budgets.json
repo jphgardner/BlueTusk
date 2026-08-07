@@ -88,6 +88,12 @@
       "reason": "Affected invalidation, authoritative graph requery, and keyed Live diff."
     },
     {
+      "benchmark": "BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks.BlueTuskReusedScalarBurstAsync",
+      "maximumMeanNanoseconds": 17414,
+      "maximumP95Nanoseconds": 19344,
+      "reason": "Reused-command multiplexing must remain below its frozen comparison baseline while meeting the hardened allocation gate."
+    },
+    {
       "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.EncodeBinaryCopyInt32",
       "maximumMeanNanoseconds": 67,
       "maximumP95Nanoseconds": 69,

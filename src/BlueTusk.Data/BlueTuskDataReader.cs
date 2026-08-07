@@ -32,6 +32,8 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     private readonly BlueTuskCommandTimeout? _streamingTimeoutTimer;
     private readonly BlueTuskConnection? _executionConnection;
     private readonly BlueTuskFieldDescription[]? _streamingFields;
+    private readonly BlueTuskResolvedField[][]? _bufferedResolvedFields;
+    private readonly BlueTuskResolvedField[]? _streamingResolvedFields;
     private BlueTuskConnection? _connectionToClose;
     private BlueTuskPortal? _portal;
     private BlueTuskPortalRow? _streamingRow;
@@ -51,6 +53,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         _result = result ?? throw new ArgumentNullException(nameof(result));
         _connectionToClose = connectionToClose;
         _types = types ?? throw new ArgumentNullException(nameof(types));
+        _bufferedResolvedFields = ResolveResultFields(result);
         _singleRow = behavior.HasFlag(CommandBehavior.SingleRow);
         _singleResult =
             _singleRow ||
@@ -71,6 +74,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         _connectionToClose = connectionToClose;
         _types = types ?? throw new ArgumentNullException(nameof(types));
         _streamingFields = portal.Fields as BlueTuskFieldDescription[] ?? [.. portal.Fields];
+        _streamingResolvedFields = ResolveFields(_streamingFields);
         _singleRow = singleRow;
         _streamingCommand = streamingCommand ?? throw new ArgumentNullException(nameof(streamingCommand));
         _streamingTimeoutTimer = streamingTimeoutTimer;
@@ -278,7 +282,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     }
 
     public override string GetDataTypeName(int ordinal) =>
-        BlueTuskValueDecoder.GetDataTypeName(_types, GetField(ordinal).TypeOid);
+        BlueTuskValueDecoder.GetDataTypeName(GetResolvedField(ordinal));
 
     [return: DynamicallyAccessedMembers(
         DynamicallyAccessedMemberTypes.PublicFields |
@@ -290,15 +294,12 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
             "DbDataReader requires this annotation, but provider field types are runtime " +
             "catalogue metadata and BlueTusk does not reflect over the returned Type.")]
     public override Type GetFieldType(int ordinal) =>
-        BlueTuskValueDecoder.GetFieldType(_types, GetField(ordinal));
+        BlueTuskValueDecoder.GetFieldType(GetResolvedField(ordinal));
 
     public override object GetValue(int ordinal)
     {
-        var field = GetField(ordinal);
-        var value = _portal is null
-            ? CurrentRow.Values[ordinal]
-            : GetStreamingRow().ReadField(ordinal);
-        return BlueTuskValueDecoder.Decode(_types, field, value);
+        var resolved = GetResolvedField(ordinal);
+        return BlueTuskValueDecoder.Decode(resolved, ReadRawValue(ordinal));
     }
 
     public override int GetValues(object[] values)
@@ -329,8 +330,8 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     public override T GetFieldValue<T>(int ordinal)
     {
-        var value = GetValue(ordinal);
-        return ConvertFieldValue<T>(value);
+        var resolved = GetResolvedField(ordinal);
+        return DecodeFieldValue<T>(resolved, ReadRawValue(ordinal));
     }
 
     [UnconditionalSuppressMessage(
@@ -484,24 +485,47 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
             return GetFieldValue<T>(ordinal);
         }
 
-        var field = GetField(ordinal);
         var raw = await GetStreamingRow().ReadFieldAsync(
             ordinal,
             cancellationToken).ConfigureAwait(false);
-        var value = BlueTuskValueDecoder.Decode(_types, field, raw);
-        return ConvertFieldValue<T>(value);
+        return DecodeFieldValue<T>(GetResolvedField(ordinal), raw);
     }
 
-    public override bool GetBoolean(int ordinal) => GetFieldValue<bool>(ordinal);
+    public override bool GetBoolean(int ordinal) => DecodeScalar<bool>(ordinal);
 
-    public override byte GetByte(int ordinal) => GetFieldValue<byte>(ordinal);
+    public override byte GetByte(int ordinal)
+    {
+        var resolved = GetResolvedField(ordinal);
+        var raw = ReadRawValue(ordinal);
+        if (resolved.Codec is IBlueTuskCodec<byte>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<byte>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<short>)
+        {
+            return checked((byte)BlueTuskValueDecoder.DecodeTyped<short>(resolved, raw));
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<int>)
+        {
+            return checked((byte)BlueTuskValueDecoder.DecodeTyped<int>(resolved, raw));
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<long>)
+        {
+            return checked((byte)BlueTuskValueDecoder.DecodeTyped<long>(resolved, raw));
+        }
+
+        return DecodeFieldValue<byte>(resolved, raw);
+    }
 
     public override short GetInt16(int ordinal)
     {
         Span<byte> buffer = stackalloc byte[sizeof(short)];
         return TryReadStreamingBinaryScalar(ordinal, 21, buffer)
             ? BinaryPrimitives.ReadInt16BigEndian(buffer)
-            : GetFieldValue<short>(ordinal);
+            : DecodeScalar<short>(ordinal);
     }
 
     public override int GetInt32(int ordinal)
@@ -524,7 +548,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         Span<byte> buffer = stackalloc byte[sizeof(int)];
         return TryReadStreamingBinaryScalar(ordinal, 23, buffer)
             ? BinaryPrimitives.ReadInt32BigEndian(buffer)
-            : GetFieldValue<int>(ordinal);
+            : DecodeScalar<int>(ordinal);
     }
 
     public override long GetInt64(int ordinal)
@@ -532,18 +556,33 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         Span<byte> buffer = stackalloc byte[sizeof(long)];
         return TryReadStreamingBinaryScalar(ordinal, 20, buffer)
             ? BinaryPrimitives.ReadInt64BigEndian(buffer)
-            : GetFieldValue<long>(ordinal);
+            : DecodeScalar<long>(ordinal);
     }
 
-    public override float GetFloat(int ordinal) => GetFieldValue<float>(ordinal);
+    public override float GetFloat(int ordinal) => DecodeScalar<float>(ordinal);
 
-    public override double GetDouble(int ordinal) => GetFieldValue<double>(ordinal);
+    public override double GetDouble(int ordinal) => DecodeScalar<double>(ordinal);
 
-    public override decimal GetDecimal(int ordinal) => GetFieldValue<decimal>(ordinal);
+    public override decimal GetDecimal(int ordinal)
+    {
+        var resolved = GetResolvedField(ordinal);
+        var raw = ReadRawValue(ordinal);
+        if (resolved.Codec is IBlueTuskCodec<decimal>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<decimal>(resolved, raw);
+        }
 
-    public override Guid GetGuid(int ordinal) => GetFieldValue<Guid>(ordinal);
+        if (resolved.Codec is IBlueTuskCodec<BlueTuskNumeric>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<BlueTuskNumeric>(resolved, raw).ToDecimal();
+        }
 
-    public override string GetString(int ordinal) => GetFieldValue<string>(ordinal);
+        return DecodeFieldValue<decimal>(resolved, raw);
+    }
+
+    public override Guid GetGuid(int ordinal) => DecodeScalar<Guid>(ordinal);
+
+    public override string GetString(int ordinal) => DecodeScalar<string>(ordinal);
 
     public override char GetChar(int ordinal)
     {
@@ -553,13 +592,27 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
             : throw new InvalidCastException("The field does not contain exactly one character.");
     }
 
-    public override DateTime GetDateTime(int ordinal) => GetValue(ordinal) switch
+    public override DateTime GetDateTime(int ordinal)
     {
-        DateTime value => value,
-        DateTimeOffset value => value.UtcDateTime,
-        DateOnly value => value.ToDateTime(TimeOnly.MinValue),
-        _ => throw new InvalidCastException("The field is not a PostgreSQL date or timestamp."),
-    };
+        var resolved = GetResolvedField(ordinal);
+        var raw = ReadRawValue(ordinal);
+        if (resolved.Codec is IBlueTuskCodec<DateTime>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<DateTime>(resolved, raw);
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<DateTimeOffset>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<DateTimeOffset>(resolved, raw).UtcDateTime;
+        }
+
+        if (resolved.Codec is IBlueTuskCodec<DateOnly>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<DateOnly>(resolved, raw).ToDateTime(TimeOnly.MinValue);
+        }
+
+        throw new InvalidCastException("The field is not a PostgreSQL date or timestamp.");
+    }
 
     public override long GetBytes(int ordinal, long dataOffset, byte[]? buffer, int bufferOffset, int length)
     {
@@ -573,6 +626,23 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
 
             ValidateBufferArguments(buffer, bufferOffset, length);
             return row.ReadBytes(ordinal, dataOffset, buffer.AsSpan(bufferOffset, length));
+        }
+
+        if (_portal is null && GetField(ordinal) is { TypeOid: 17, FormatCode: 1 })
+        {
+            var rawValue = GetBufferedRawValue(ordinal);
+            if (buffer is null)
+            {
+                return rawValue.Length;
+            }
+
+            ValidateBufferArguments(buffer, bufferOffset, length);
+            ArgumentOutOfRangeException.ThrowIfNegative(dataOffset);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(dataOffset, rawValue.Length);
+            var count = Math.Min(length, rawValue.Length - checked((int)dataOffset));
+            rawValue.Span.Slice(checked((int)dataOffset), count)
+                .CopyTo(buffer.AsSpan(bufferOffset, count));
+            return count;
         }
 
         var value = GetFieldValue<byte[]>(ordinal);
@@ -593,18 +663,25 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
             return GetStreamingRow().OpenFieldStream(ordinal);
         }
 
+        if (_portal is null && field is { TypeOid: 17, FormatCode: 1 })
+        {
+            return new BlueTuskReadOnlyMemoryStream(GetBufferedRawValue(ordinal));
+        }
+
         return new MemoryStream(GetFieldValue<byte[]>(ordinal), writable: false);
     }
 
     public override TextReader GetTextReader(int ordinal)
     {
         var field = GetField(ordinal);
-        if (_portal is null || !IsStreamingTextType(field.TypeOid))
+        if (!IsStreamingTextType(field.TypeOid))
         {
             return new StringReader(GetString(ordinal));
         }
 
-        var stream = GetStreamingRow().OpenFieldStream(ordinal);
+        var stream = _portal is null
+            ? new BlueTuskReadOnlyMemoryStream(GetBufferedRawValue(ordinal))
+            : GetStreamingRow().OpenFieldStream(ordinal);
         if (field is { TypeOid: 3802, FormatCode: 1 })
         {
             var version = stream.ReadByte();
@@ -824,15 +901,70 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         GC.SuppressFinalize(this);
     }
 
-    private BlueTuskFieldDescription GetField(int ordinal)
+    private T DecodeScalar<T>(int ordinal)
     {
-        var fields = CurrentFields;
-        if (fields.Count == 0)
+        var resolved = GetResolvedField(ordinal);
+        return BlueTuskValueDecoder.DecodeTyped<T>(resolved, ReadRawValue(ordinal));
+    }
+
+    private static T DecodeFieldValue<T>(
+        in BlueTuskResolvedField resolved,
+        ReadOnlyMemory<byte>? raw)
+    {
+        if (resolved.Type is not null && resolved.Codec is IBlueTuskCodec<T>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<T>(resolved, raw);
+        }
+
+        return ConvertFieldValue<T>(BlueTuskValueDecoder.Decode(resolved, raw));
+    }
+
+    private ReadOnlyMemory<byte>? ReadRawValue(int ordinal) =>
+        _portal is null
+            ? CurrentRow.Values[ordinal]
+            : GetStreamingRow().ReadField(ordinal);
+
+    private ReadOnlyMemory<byte> GetBufferedRawValue(int ordinal) =>
+        CurrentRow.Values[ValidateOrdinal(ordinal)] ??
+        throw new InvalidCastException("A database NULL cannot be read as a non-null value.");
+
+    private BlueTuskResolvedField GetResolvedField(int ordinal)
+    {
+        var fields = _streamingResolvedFields ??
+            (_bufferedResolvedFields is not null && _resultIndex < _bufferedResolvedFields.Length
+                ? _bufferedResolvedFields[_resultIndex]
+                : null);
+        if (fields is null || fields.Length == 0)
         {
             throw new InvalidOperationException("The reader has no current result.");
         }
 
         return fields[ValidateOrdinal(ordinal)];
+    }
+
+    private BlueTuskFieldDescription GetField(int ordinal) =>
+        GetResolvedField(ordinal).Field;
+
+    private BlueTuskResolvedField[][] ResolveResultFields(BlueTuskQueryResult result)
+    {
+        var resolved = new BlueTuskResolvedField[result.ResultSets.Count][];
+        for (var index = 0; index < resolved.Length; index++)
+        {
+            resolved[index] = ResolveFields(result.ResultSets[index].Fields);
+        }
+
+        return resolved;
+    }
+
+    private BlueTuskResolvedField[] ResolveFields(IReadOnlyList<BlueTuskFieldDescription> fields)
+    {
+        var resolved = new BlueTuskResolvedField[fields.Count];
+        for (var index = 0; index < resolved.Length; index++)
+        {
+            resolved[index] = BlueTuskValueDecoder.Resolve(_types, fields[index]);
+        }
+
+        return resolved;
     }
 
     private int ValidateOrdinal(int ordinal)
@@ -987,6 +1119,146 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         oid is 18 or 19 or 25 or 114 or 142 or 1042 or 1043 or 3802;
 
     private static void ValidateBufferArguments(byte[] buffer, int offset, int count)
+    {
+        ArgumentNullException.ThrowIfNull(buffer);
+        ArgumentOutOfRangeException.ThrowIfNegative(offset);
+        ArgumentOutOfRangeException.ThrowIfNegative(count);
+        if (offset > buffer.Length - count)
+        {
+            throw new ArgumentException("The buffer offset and length exceed the destination array.");
+        }
+    }
+}
+
+internal sealed class BlueTuskReadOnlyMemoryStream : Stream
+{
+    private ReadOnlyMemory<byte> _memory;
+    private int _position;
+    private bool _disposed;
+
+    public BlueTuskReadOnlyMemoryStream(ReadOnlyMemory<byte> memory)
+    {
+        _memory = memory;
+    }
+
+    public override bool CanRead => !_disposed;
+
+    public override bool CanSeek => !_disposed;
+
+    public override bool CanWrite => false;
+
+    public override long Length
+    {
+        get
+        {
+            EnsureOpen();
+            return _memory.Length;
+        }
+    }
+
+    public override long Position
+    {
+        get
+        {
+            EnsureOpen();
+            return _position;
+        }
+        set
+        {
+            EnsureOpen();
+            ArgumentOutOfRangeException.ThrowIfNegative(value);
+            ArgumentOutOfRangeException.ThrowIfGreaterThan(value, _memory.Length);
+            _position = checked((int)value);
+        }
+    }
+
+    public override int Read(byte[] buffer, int offset, int count)
+    {
+        ValidateReadArguments(buffer, offset, count);
+        return Read(buffer.AsSpan(offset, count));
+    }
+
+    public override int Read(Span<byte> buffer)
+    {
+        EnsureOpen();
+        var count = Math.Min(buffer.Length, _memory.Length - _position);
+        _memory.Span.Slice(_position, count).CopyTo(buffer);
+        _position += count;
+        return count;
+    }
+
+    public override int ReadByte()
+    {
+        EnsureOpen();
+        return _position < _memory.Length
+            ? _memory.Span[_position++]
+            : -1;
+    }
+
+    public override Task<int> ReadAsync(
+        byte[] buffer,
+        int offset,
+        int count,
+        CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return Task.FromResult(Read(buffer, offset, count));
+    }
+
+    public override ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        return ValueTask.FromResult(Read(buffer.Span));
+    }
+
+    public override long Seek(long offset, SeekOrigin origin)
+    {
+        EnsureOpen();
+        var position = origin switch
+        {
+            SeekOrigin.Begin => offset,
+            SeekOrigin.Current => checked(_position + offset),
+            SeekOrigin.End => checked(_memory.Length + offset),
+            _ => throw new ArgumentOutOfRangeException(nameof(origin)),
+        };
+        Position = position;
+        return position;
+    }
+
+    public override void Flush() => EnsureOpen();
+
+    public override Task FlushAsync(CancellationToken cancellationToken)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+        EnsureOpen();
+        return Task.CompletedTask;
+    }
+
+    public override void SetLength(long value) => throw new NotSupportedException();
+
+    public override void Write(byte[] buffer, int offset, int count) =>
+        throw new NotSupportedException();
+
+    protected override void Dispose(bool disposing)
+    {
+        if (disposing)
+        {
+            _memory = default;
+            _position = 0;
+            _disposed = true;
+        }
+
+        base.Dispose(disposing);
+    }
+
+    private void EnsureOpen()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+    }
+
+    private static void ValidateReadArguments(byte[] buffer, int offset, int count)
     {
         ArgumentNullException.ThrowIfNull(buffer);
         ArgumentOutOfRangeException.ThrowIfNegative(offset);

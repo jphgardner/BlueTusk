@@ -1,155 +1,174 @@
 {
-   "Title":"BlueTusk.Benchmarks.StreamsTransactionBenchmarks-20260804-124420",
-   "HostEnvironmentInfo":{
-      "BenchmarkDotNetCaption":"BenchmarkDotNet",
-      "BenchmarkDotNetVersion":"0.15.8",
-      "OsVersion":"Windows 11 (10.0.26200.8973/25H2/2025Update/HudsonValley2)",
-      "ProcessorName":"AMD Ryzen 7 5800X",
-      "PhysicalProcessorCount":1,
-      "PhysicalCoreCount":8,
-      "LogicalCoreCount":16,
-      "RuntimeVersion":".NET 10.0.10 (10.0.10, 10.0.1026.32716)",
-      "Architecture":"X64",
-      "HasAttachedDebugger":false,
-      "HasRyuJit":true,
-      "Configuration":"RELEASE",
-      "DotNetCliVersion":"10.0.302",
-      "ChronometerFrequency":{
-         "Hertz":10000000
+  "Title": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks-20260807-182612",
+  "HostEnvironmentInfo": {
+    "BenchmarkDotNetCaption": "BenchmarkDotNet",
+    "BenchmarkDotNetVersion": "0.15.8",
+    "OsVersion": "Windows 11 (10.0.26200.8973/25H2/2025Update/HudsonValley2)",
+    "ProcessorName": "AMD Ryzen 7 5800X",
+    "PhysicalProcessorCount": 1,
+    "PhysicalCoreCount": 8,
+    "LogicalCoreCount": 16,
+    "RuntimeVersion": ".NET 10.0.10 (10.0.10, 10.0.1026.32716)",
+    "Architecture": "X64",
+    "HasAttachedDebugger": false,
+    "HasRyuJit": true,
+    "Configuration": "RELEASE",
+    "DotNetCliVersion": "10.0.302",
+    "ChronometerFrequency": {
+      "Hertz": 10000000
+    },
+    "HardwareTimerKind": "Unknown"
+  },
+  "Benchmarks": [
+    {
+      "DisplayInfo": "StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
+      "Namespace": "BlueTusk.Benchmarks",
+      "Type": "StreamsTransactionBenchmarks",
+      "Method": "AssembleAndMaterializeOneThousandInserts",
+      "MethodTitle": "AssembleAndMaterializeOneThousandInserts",
+      "Parameters": "",
+      "FullName": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts",
+      "HardwareIntrinsics": "",
+      "Statistics": {
+        "OriginalValues": [
+          349.85732421875,
+          347.784033203125,
+          350.991064453125
+        ],
+        "N": 3,
+        "Min": 347.784033203125,
+        "LowerFence": 346.4154052734375,
+        "Q1": 348.8206787109375,
+        "Median": 349.85732421875,
+        "Mean": 349.544140625,
+        "Q3": 350.4241943359375,
+        "UpperFence": 352.8294677734375,
+        "Max": 350.991064453125,
+        "InterquartileRange": 1.603515625,
+        "LowerOutliers": [],
+        "UpperOutliers": [],
+        "AllOutliers": [],
+        "StandardError": 0.9389400641440998,
+        "Variance": 2.6448253321647783,
+        "StandardDeviation": 1.6262918963595614,
+        "Skewness": -0.18543356694691707,
+        "Kurtosis": 0.6666666666666754,
+        "ConfidenceInterval": {
+          "N": 3,
+          "Mean": 349.544140625,
+          "StandardError": 0.9389400641440998,
+          "Level": 12,
+          "Margin": 29.669618210834823,
+          "Lower": 319.8745224141652,
+          "Upper": 379.2137588358348
+        },
+        "Percentiles": {
+          "P0": 347.784033203125,
+          "P25": 348.8206787109375,
+          "P50": 349.85732421875,
+          "P67": 350.2427958984375,
+          "P80": 350.537568359375,
+          "P85": 350.6509423828125,
+          "P90": 350.76431640625003,
+          "P95": 350.87769042968745,
+          "P100": 350.991064453125
+        }
       },
-      "HardwareTimerKind":"Unknown"
-   },
-   "Benchmarks":[
-      {
-         "DisplayInfo":"StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
-         "Namespace":"BlueTusk.Benchmarks",
-         "Type":"StreamsTransactionBenchmarks",
-         "Method":"AssembleAndMaterializeOneThousandInserts",
-         "MethodTitle":"AssembleAndMaterializeOneThousandInserts",
-         "Parameters":"",
-         "FullName":"BlueTusk.Benchmarks.StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts",
-         "HardwareIntrinsics":"",
-         "Statistics":{
-            "OriginalValues":[
-               699.39150390625,719.9755859375,691.25146484375
-            ],
-            "N":3,
-            "Min":691.25146484375,
-            "LowerFence":673.7783935546875,
-            "Q1":695.321484375,
-            "Median":699.39150390625,
-            "Mean":703.5395182291667,
-            "Q3":709.683544921875,
-            "UpperFence":731.2266357421875,
-            "Max":719.9755859375,
-            "InterquartileRange":14.362060546875,
-            "LowerOutliers":[
-
-            ],
-            "UpperOutliers":[
-
-            ],
-            "AllOutliers":[
-
-            ],
-            "StandardError":8.547383620528658,
-            "Variance":219.1733002694447,
-            "StandardDeviation":14.804502702537654,
-            "Skewness":0.2581902200512529,
-            "Kurtosis":0.6666666666666666,
-            "ConfidenceInterval":{
-               "N":3,
-               "Mean":703.5395182291667,
-               "StandardError":8.547383620528658,
-               "Level":12,
-               "Margin":270.08924041791505,
-               "Lower":433.4502778112516,
-               "Upper":973.6287586470817
-            },
-            "Percentiles":{
-               "P0":691.25146484375,
-               "P25":695.321484375,
-               "P50":699.39150390625,
-               "P67":706.390091796875,
-               "P80":711.741953125,
-               "P85":713.8003613281251,
-               "P90":715.85876953125,
-               "P95":717.917177734375,
-               "P100":719.9755859375
-            }
-         },
-         "Memory":{
-            "Gen0Collections":52,
-            "Gen1Collections":32,
-            "Gen2Collections":0,
-            "TotalOperations":1024000,
-            "BytesAllocatedPerOperation":853
-         }
-      },{
-         "DisplayInfo":"StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
-         "Namespace":"BlueTusk.Benchmarks",
-         "Type":"StreamsTransactionBenchmarks",
-         "Method":"SpillAndStreamFourMiBTransaction",
-         "MethodTitle":"SpillAndStreamFourMiBTransaction",
-         "Parameters":"",
-         "FullName":"BlueTusk.Benchmarks.StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction",
-         "HardwareIntrinsics":"",
-         "Statistics":{
-            "OriginalValues":[
-               44994050,47621283.333333336,47641025
-            ],
-            "N":3,
-            "Min":44994050,
-            "LowerFence":44322435.41666667,
-            "Q1":46307666.66666667,
-            "Median":47621283.333333336,
-            "Mean":46752119.44444445,
-            "Q3":47631154.16666667,
-            "UpperFence":49616385.41666667,
-            "Max":47641025,
-            "InterquartileRange":1323487.5,
-            "LowerOutliers":[
-
-            ],
-            "UpperOutliers":[
-
-            ],
-            "AllOutliers":[
-
-            ],
-            "StandardError":879053.1955779837,
-            "Variance":2318203561967.5947,
-            "StandardDeviation":1522564.7972968488,
-            "Skewness":-0.38482738319582094,
-            "Kurtosis":0.6666666666666692,
-            "ConfidenceInterval":{
-               "N":3,
-               "Mean":46752119.44444445,
-               "StandardError":879053.1955779837,
-               "Level":12,
-               "Margin":27777249.790259663,
-               "Lower":18974869.654184785,
-               "Upper":74529369.2347041
-            },
-            "Percentiles":{
-               "P0":44994050,
-               "P25":46307666.66666667,
-               "P50":47621283.333333336,
-               "P67":47627995.5,
-               "P80":47633128.33333333,
-               "P85":47635102.5,
-               "P90":47637076.66666667,
-               "P95":47639050.83333333,
-               "P100":47641025
-            }
-         },
-         "Memory":{
-            "Gen0Collections":7,
-            "Gen1Collections":7,
-            "Gen2Collections":7,
-            "TotalOperations":12,
-            "BytesAllocatedPerOperation":12731471
-         }
+      "Memory": {
+        "Gen0Collections": 50,
+        "Gen1Collections": 24,
+        "Gen2Collections": 0,
+        "TotalOperations": 2048000,
+        "BytesAllocatedPerOperation": 413
       }
-   ]
+    },
+    {
+      "DisplayInfo": "StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction: MediumRun(IterationCount=15, LaunchCount=2, WarmupCount=10)",
+      "Namespace": "BlueTusk.Benchmarks",
+      "Type": "StreamsTransactionBenchmarks",
+      "Method": "SpillAndStreamFourMiBTransaction",
+      "MethodTitle": "SpillAndStreamFourMiBTransaction",
+      "Parameters": "",
+      "FullName": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction",
+      "HardwareIntrinsics": "AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+      "Statistics": {
+        "OriginalValues": [
+          23567581.25,
+          23215790.625,
+          25473828.125,
+          24790906.25,
+          22720103.125,
+          22640862.5,
+          23597193.75,
+          23494668.75,
+          23563459.375,
+          24470462.5,
+          22756793.75,
+          23759278.125,
+          22724390.625,
+          23961690.625,
+          25300290.625,
+          22663556.25,
+          22742084.375,
+          25382246.875,
+          22905275,
+          23015859.375,
+          29041750,
+          22762337.5,
+          25415571.875,
+          22730587.5,
+          22938915.625,
+          25716268.75,
+          23057918.75,
+          27418690.625,
+          25435946.875
+        ],
+        "N": 29,
+        "Min": 22640862.5,
+        "LowerFence": 18955407.8125,
+        "Q1": 22762337.5,
+        "Median": 23563459.375,
+        "Mean": 24043596.875,
+        "Q3": 25300290.625,
+        "UpperFence": 29107220.3125,
+        "Max": 29041750,
+        "InterquartileRange": 2537953.125,
+        "LowerOutliers": [],
+        "UpperOutliers": [],
+        "AllOutliers": [],
+        "StandardError": 292566.0494694357,
+        "Variance": 2482251905762.4165,
+        "StandardDeviation": 1575516.3933651773,
+        "Skewness": 1.379362622419968,
+        "Kurtosis": 4.533183910859323,
+        "ConfidenceInterval": {
+          "N": 29,
+          "Mean": 24043596.875,
+          "StandardError": 292566.0494694357,
+          "Level": 12,
+          "Margin": 1074860.2812510745,
+          "Lower": 22968736.593748927,
+          "Upper": 25118457.156251073
+        },
+        "Percentiles": {
+          "P0": 22640862.5,
+          "P25": 22762337.5,
+          "P50": 23563459.375,
+          "P67": 24348357.25,
+          "P80": 25395576.875,
+          "P85": 25431871.875,
+          "P90": 25522316.25,
+          "P95": 26737721.874999996,
+          "P100": 29041750
+        }
+      },
+      "Memory": {
+        "Gen0Collections": 0,
+        "Gen1Collections": 0,
+        "Gen2Collections": 0,
+        "TotalOperations": 32,
+        "BytesAllocatedPerOperation": 142444
+      }
+    }
+  ]
 }

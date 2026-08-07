@@ -1,6 +1,11 @@
 # ADO.NET
 
-The current preview provides native synchronous and asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, `BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use blocking socket, TLS, protocol, authentication, pool, and query implementations rather than blocking asynchronous I/O.
+The stable V1 contract provides native synchronous and asynchronous
+`BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`,
+`BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider
+factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use
+blocking socket, TLS, protocol, authentication, pool, and query
+implementations rather than blocking asynchronous I/O.
 
 The [V1 compatibility matrix](compatibility.md) records the supported and
 explicitly excluded ADO.NET, Dapper, dependency-injection, schema and routine

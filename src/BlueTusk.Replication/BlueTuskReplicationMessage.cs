@@ -1,3 +1,5 @@
+using System.Runtime.CompilerServices;
+
 namespace BlueTusk.Replication;
 
 /// <summary>A message received from a PostgreSQL WAL sender.</summary>
@@ -10,9 +12,20 @@ public sealed record BlueTuskXLogData(
     DateTimeOffset ServerClock,
     ReadOnlyMemory<byte> Data) : BlueTuskReplicationMessage
 {
+    private static readonly ConditionalWeakTable<BlueTuskXLogData, object> OwnedData = new();
+    private static readonly object OwnedDataMarker = new();
+
     /// <summary>The position immediately after this message's data.</summary>
     public BlueTuskLogSequenceNumber WalEnd =>
         WalStart + checked((ulong)Data.Length);
+
+    internal bool OwnsData => OwnedData.TryGetValue(this, out _);
+
+    internal BlueTuskXLogData MarkDataOwned()
+    {
+        _ = OwnedData.GetValue(this, static _ => OwnedDataMarker);
+        return this;
+    }
 }
 
 /// <summary>A keepalive sent by the PostgreSQL WAL sender.</summary>

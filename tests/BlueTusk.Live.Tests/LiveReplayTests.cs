@@ -16,6 +16,22 @@ public sealed class LiveReplayTests
             [replayEvent]));
     }
 
+    [Fact]
+    public void Public_replay_payload_constructor_defensively_copies_bytes()
+    {
+        byte[] payload = [1, 2, 3];
+        var replayEvent = new LiveReplayEvent(
+            1,
+            LiveEventKind.InitialResult,
+            LiveReplayJsonSerializer.ContentType,
+            payload);
+
+        payload[0] = 42;
+
+        Assert.Equal(1, replayEvent.Payload.Span[0]);
+        Assert.True(LiveReplayJsonSerializer.VerifyIntegrity(replayEvent));
+    }
+
     private static LiveSubscriptionIdentity Identity() =>
         new(
             "database",

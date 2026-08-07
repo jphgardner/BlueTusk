@@ -74,9 +74,9 @@ try
         -EvidencePath $positivePath `
         -ExpectedCommit $zeroCommit `
         -CandidateCommitUtc $candidateUtc
-    if ([int]$result.RunCount -ne 6 -or
+    if ([int]$result.RunCount -ne 7 -or
         [DateTimeOffset]$result.LatestCompletedUtc -ne
-            [DateTimeOffset]'2026-01-01T00:00:06Z')
+            [DateTimeOffset]'2026-01-01T00:00:07Z')
     {
         throw 'Positive workflow evidence returned an unexpected summary.'
     }
@@ -120,5 +120,5 @@ finally
 }
 
 Write-Output (
-    'V1 workflow-evidence verifier self-test passed: one complete six-run set ' +
+    'V1 workflow-evidence verifier self-test passed: one complete seven-run set ' +
     'and seven fail-closed mutations.')

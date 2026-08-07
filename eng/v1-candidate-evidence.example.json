@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "candidateCommit": "0000000000000000000000000000000000000000",
   "workflowRuns": [
     {
@@ -61,6 +61,16 @@
       "runAttempt": 1,
       "completedUtc": "2026-01-01T00:00:06Z",
       "url": "https://github.com/example/repository/actions/runs/6"
+    },
+    {
+      "workflowFile": "continuous-graph-release-endurance.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 7,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:07Z",
+      "url": "https://github.com/example/repository/actions/runs/7"
     }
   ],
   "streams": {
@@ -79,6 +89,12 @@
       "nats:2-alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000",
       "opensearchproject/opensearch:3@sha256:0000000000000000000000000000000000000000000000000000000000000000"
     ]
+  },
+  "continuousGraph": {
+    "reportPath": "continuous-graph/report.json",
+    "reportSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "candidateProvenancePath": "continuous-graph/candidate-sbom/build-provenance.json",
+    "candidateProvenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
   },
   "performance": {
     "resultsPath": "performance/results",

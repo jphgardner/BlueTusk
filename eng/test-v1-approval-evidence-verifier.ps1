@@ -143,7 +143,7 @@ try
         -ExpectedWebsiteProductionMetricsSha256 ('0' * 64) *> $null
 
     $genericPilot = [ordered]@{
-        schemaVersion = 2
+        schemaVersion = 3
         gateId = 'application-pilot-a'
         candidateCommit = $zeroCommit
         outcome = 'approved'
@@ -188,6 +188,22 @@ try
     $wrongCommit.candidateCommit = '1' * 40
     Assert-Rejected $wrongCommit 'maintainer-signoff' 'wrong-commit'
 
+    $prematureTag = (
+        @($examples.examples | Where-Object {
+            [string]$_.gateId -eq 'maintainer-signoff'
+        })[0] | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+    )
+    $prematureTag.details.releaseTagsCreated = 1
+    Assert-Rejected $prematureTag 'maintainer-signoff' 'premature-release-tag'
+
+    $unarmedPolicies = (
+        @($examples.examples | Where-Object {
+            [string]$_.gateId -eq 'maintainer-signoff'
+        })[0] | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+    )
+    $unarmedPolicies.details.publicationPoliciesArmed = $false
+    Assert-Rejected $unarmedPolicies 'maintainer-signoff' 'unarmed-policies'
+
     Assert-SetRejected -Name 'duplicate-pilot' -Mutate {
         param($copies)
         $pilotA = @($copies | Where-Object {
@@ -219,6 +235,30 @@ try
         })[0]
         $review.approvedUtc = '2026-01-02T00:00:00Z'
     }
+    Assert-SetRejected -Name 'incomplete-family-coverage' -Mutate {
+        param($copies)
+        foreach ($pilot in @($copies | Where-Object {
+            [string]$_.gateId -in @('application-pilot-a', 'application-pilot-b')
+        }))
+        {
+            $pilot.details.enabledProductFamilies = @(
+                $pilot.details.enabledProductFamilies |
+                    Where-Object { [string]$_ -ne 'ControlPlane' }
+            )
+        }
+    }
+    Assert-SetRejected -Name 'missing-continuous-graph-pilot' -Mutate {
+        param($copies)
+        foreach ($pilot in @($copies | Where-Object {
+            [string]$_.gateId -in @('application-pilot-a', 'application-pilot-b')
+        }))
+        {
+            $pilot.details.enabledProductFamilies = @(
+                $pilot.details.enabledProductFamilies |
+                    Where-Object { [string]$_ -ne 'ContinuousGraph' }
+            )
+        }
+    }
 
     $staleSet = Write-ExampleSet 'stale-set'
     try
@@ -245,5 +285,5 @@ finally
 
 Write-Output (
     'V1 approval-evidence verifier self-test passed: ten positive schemas, one ' +
-    'complete set, five record mutations, four cross-record mutations and one ' +
+    'complete set, seven record mutations, six cross-record mutations and one ' +
     'stale-set mutation.')

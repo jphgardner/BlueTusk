@@ -1,10 +1,10 @@
 # BlueTusk benchmarks
 
 Every public `[Benchmark]` method must have a non-empty checked-in result.
-`eng/verify-benchmark-coverage.ps1` currently binds 89 measured results to all
-methods across 21 fixtures and rejects empty, stale, duplicate or statistically
-invalid reports. `eng/verify-allocation-budgets.ps1` enforces 37 managed
-allocation budgets, while `eng/verify-latency-budgets.ps1` enforces 18
+`eng/verify-benchmark-coverage.ps1` currently binds 98 measured results to all
+methods across 22 fixtures and rejects empty, stale, duplicate or statistically
+invalid reports. `eng/verify-allocation-budgets.ps1` enforces 46 managed
+allocation budgets, while `eng/verify-latency-budgets.ps1` enforces 19
 production-critical latency/P95 budgets on the named Windows/Ryzen 7
 5800X/.NET 10 reference environment. These are regression controls, not
 application SLOs.
@@ -15,9 +15,17 @@ The BenchmarkDotNet suite covers complete synchronous/asynchronous command param
 
 `StreamsTransactionBenchmarks` measures the application CDC boundary separately from wire decoding. It reports per-change cost for assembling and materialising a 1,000-insert transaction, and the end-to-end cost/allocation of spilling and streaming a 4 MiB transaction through the integrity-checked disk spool. The latter includes durable file flush and cleanup by design.
 
-The 2026-08-04 reference ShortRun records 703.540 ns P95 717.917 ns and
-853 B per materialised change, and 46.752 ms P95 47.639 ms with 12,731,471 B
-for the complete 4 MiB spill/stream/cleanup operation.
+The 2026-08-07 hardening run records 349.544 ns, P95 350.878 ns and
+413 B per materialised change. The final out-of-process MediumRun records
+24.044 ms mean, 26.738 ms P95, 28.587 ms P99 and 142,444 B for the complete
+4 MiB spill/stream/cleanup operation, with zero Gen0, Gen1 or Gen2 collections.
+Large pass-through records are read directly from read-only memory-mapped spool
+storage; the mapping owns its file handle independently, so acknowledgement can
+atomically remove the spool name while already-materialised values remain valid.
+
+`SyncConnectorBenchmarks` records ownership/allocation baselines for the core
+transaction batch and NATS, OpenSearch, and PostgreSQL connector payload paths
+before connector ownership is changed.
 
 `NativeCapabilityBenchmarks` covers binary COPY field encoding,
 NotificationResponse decoding and a warm large-object chunk read. The same
@@ -121,15 +129,12 @@ intervals. The checked-in provider comparison therefore uses `--job medium`
 (two launches, ten warmups, and fifteen measured iterations) and still does not
 claim that one provider is universally faster.
 
-The final 2026-08-02 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
+The refreshed 2026-08-07 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
 mean latency and managed allocation on all five paired workloads. BlueTusk/Npgsql
-measure 446/487 us and 1,663/2,094 B for the parameterized scalar, 288/326 ns and
-168/184 B for warm checkout, 436/445 us and 796/1,099 B for the prepared scalar,
-672/743 us and 1,400/1,529 B for the 1,000-row reader, and 4.390/4.482 ms and
-3,900/8,938 B for the isolated 1 MiB stream. Parameterized execution, checkout,
-and the row reader have non-overlapping latency intervals; prepared and
-large-stream intervals overlap and are conservatively treated as parity despite
-their lower BlueTusk means. The exact values and environment are checked in under
+measure 365/392 us and 1,634/2,079 B for the parameterized scalar, 195/209 ns and
+168/184 B for warm checkout, 356/358 us and 773/1,137 B for the prepared scalar,
+529/549 us and 1,413/1,418 B for the 1,000-row reader, and 2.279/2.305 ms and
+3,832/8,426 B for the isolated 1 MiB stream. The exact values and environment are checked in under
 `baselines/windows-ryzen7-5800x-dotnet10`; these paired results are not a
 provider-wide performance guarantee.
 
@@ -151,12 +156,18 @@ dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium -
 The 2026-08-04 Windows/Ryzen 7 5800X MediumRun from commit `9ba2c50`
 records BlueTusk/Npgsql at 19.83/20.57 µs mean, 20.93/22.26 µs P95,
 21.06/22.51 µs P99, and 1,733/1,738 B for end-to-end commands. Reused
-commands record 17.41/20.01 µs mean, 19.34/21.53 µs P95,
-20.04/21.69 µs P99, and 1,143/794 B. BlueTusk has lower mean and tail
-latency in both fixtures and slightly lower end-to-end allocation; Npgsql
-allocates less when construction is excluded. The full checked-in report,
+commands were refreshed on 2026-08-07 and record 16.37 µs mean, 16.76 µs P95,
+16.82 µs P99, and 749 B for BlueTusk, clearing the 800 B/op gate without a
+latency regression. The unchanged comparison row records Npgsql at 20.01 µs
+mean, 21.53 µs P95, 21.69 µs P99, and 794 B. The full checked-in report,
 environment manifest, and budget verifier make this a reproducible regression
 gate rather than a universal provider claim.
+
+The immutable full comparison report remains bound to its original commit and
+image digest. The refreshed BlueTusk row is stored in the adjacent
+`MultiplexingComparisonBenchmarks-reused-hardening.json` supplemental report;
+the allocation verifier reads it after the frozen report so the 800 B/op gate
+uses the current measurement without invalidating historical evidence.
 
 `--inProcess` is required for this repository fixture on Windows because
 archived worktrees below ignored artifact directories can otherwise be

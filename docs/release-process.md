@@ -6,25 +6,27 @@ package is evidence, not permission to publish.
 `eng/product-families.json` schema 2 records, for every independently versioned
 family:
 
-- whether publication is enabled;
+- whether publication is armed in an immutable candidate;
 - whether the release channel is stable or preview;
 - the one exact tag prefix;
 - cross-family release dependencies; and
 - the GitHub Actions workflows that must have succeeded for the exact release
   commit from an approved event.
 
-Provider, Streams, Sync, Live, and Control Plane are locked to stable
-1.0.0-or-newer versions without a prerelease suffix. Continuous Graph is locked
-to a prerelease version. All publication switches remain disabled until their
-documented V1 gates are complete.
+All six families are release-prepared at stable `1.0.0` without prerelease
+suffixes. During preparation every publication policy remains disabled. In the
+final immutable candidate, `enabled=true` means the family is armed; it does
+not publish a package. Exact release tags and protected `package-production`
+approval remain the publication boundary.
 
 ## Candidate sequence
 
 1. Finish code, documentation, API/format freezes, upgrades, package inspection,
    security audit, live matrices, and performance gates.
-2. Set the intended family version and enable its publication policy in the
-   same clean candidate commit. Every declared release dependency must already
-   be enabled and available at the version referenced by the candidate.
+2. After PostgreSQL 19 GA, merge a reviewed final arming PR to `main`. Its
+   resulting SHA must contain exactly six stable `1.0.0` families, all armed
+   in dependency order, with no V1 release tags and no candidate packages
+   published. That reviewed `main` SHA is the immutable candidate.
 3. Dispatch `build.yml` explicitly at that exact commit. A normal pull-request
    or branch-push run is not release evidence because the manual run includes
    the elevated PostgreSQL, connector, authentication, stress, and endurance
@@ -35,9 +37,13 @@ documented V1 gates are complete.
    hang finding.
 5. Dispatch `performance.yml` at that exact commit on the labelled reference
    runner and retain its integrity-bound complete benchmark evidence.
-6. For Streams, also complete
-   `streams-release-endurance.yml` at that commit. For Sync, also complete
-   `sync-release-endurance.yml` at that commit.
+6. Complete `streams-release-endurance.yml`,
+   `sync-release-endurance.yml`, and
+   `continuous-graph-release-endurance.yml` at that commit. The three windows
+   are 72, 24, and 24 hours respectively. ContinuousGraph additionally requires
+   at least 100,000 evaluations, 99.9% committed outcomes, P95 lifecycle at or
+   below one second, repair/restart/cancellation/disconnect evidence, and no
+   ordering or reconciliation errors.
 7. Complete the external acceptance records and run
    the protected `v1-candidate-readiness.yml` aggregation workflow as described
    in [V1 production readiness](operations/production-readiness.md). Every
@@ -45,8 +51,12 @@ documented V1 gates are complete.
 8. Do not change the candidate commit after evidence succeeds. Any source,
    project, dependency, version, workflow, or release-policy change creates a
    new commit and invalidates the evidence.
-9. Create the exact version tag declared by the manifest, such as
-   `provider-v1.0.0`, on the verified commit.
+9. Create the exact tags sequentially on the verified commit:
+   `provider-v1.0.0`, `streams-v1.0.0`, `sync-v1.0.0`,
+   `live-v1.0.0`, `control-plane-v1.0.0`, then
+   `continuous-graph-v1.0.0`. After every tag, verify registry availability,
+   hashes, provenance, installation, and dependency resolution before creating
+   the next tag.
 
 The release workflow rejects a tag that differs from the version property,
 rejects a dirty or different checkout, and queries GitHub Actions for every
@@ -55,8 +65,8 @@ It does not accept a run for an ancestor, a rebuilt binary from another tree, a
 pull-request event, or a merely uploaded report. Before accepting a dependent
 family, it also verifies that every exact dependency package version is already
 available from NuGet, including all npm clients owned by a dependency family.
-Enabling several family switches in one commit therefore cannot bypass the
-publication order.
+Arming all families in the candidate therefore cannot bypass the tag and
+protected-environment publication order.
 
 ## Publication boundary
 
@@ -96,8 +106,8 @@ NuGet, symbol, and npm archive set; safe archive paths; MIT metadata; repository
 commit provenance; correct internal dependency versions; portable PDBs; and
 compiled npm distributions without install lifecycle scripts. Duplicate NuGet
 publication is a release failure, and npm publication uses registry provenance.
-Dependency order is Provider, Streams, Sync/Live, Control Plane, then Continuous
-Graph preview.
+Dependency order is Provider, Streams, Sync, Live, Control Plane, then
+ContinuousGraph.
 
 Every external GitHub Action reference is pinned to a full commit.
 `security.yml` runs CodeQL and pull-request dependency review, while

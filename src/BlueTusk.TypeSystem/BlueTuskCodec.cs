@@ -11,6 +11,11 @@ internal interface IBlueTuskArrayFactory
     Array CreateArray(ReadOnlySpan<int> lengths, ReadOnlySpan<int> lowerBounds);
 }
 
+internal interface IBlueTuskArrayCodecFactory
+{
+    IBlueTuskCodec CreateArrayCodec(BlueTuskTypeDescriptor elementType);
+}
+
 internal interface IBlueTuskRangeCodecFactory
 {
     IBlueTuskCodec? CreateRangeCodec(
@@ -131,7 +136,8 @@ public abstract class BlueTuskCodec<T> :
     IBlueTuskCodec<T>,
     IBlueTuskRangeCodecFactory,
     IBlueTuskArrayRangeCodecFactory,
-    IBlueTuskArrayFactory
+    IBlueTuskArrayFactory,
+    IBlueTuskArrayCodecFactory
 {
     public Type ClrType => typeof(T);
 
@@ -177,6 +183,10 @@ public abstract class BlueTuskCodec<T> :
         BlueTuskTypeDescriptor subtype,
         IBlueTuskCodec subtypeCodec) =>
         BlueTuskDynamicRangeCodecFactory.Create(typeof(T[]), subtype, subtypeCodec);
+
+    IBlueTuskCodec IBlueTuskArrayCodecFactory.CreateArrayCodec(
+        BlueTuskTypeDescriptor elementType) =>
+        new BlueTuskArrayCodec<T>(elementType, this);
 
     [UnconditionalSuppressMessage(
         "Aot",

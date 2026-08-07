@@ -7,6 +7,7 @@
 
   <ItemGroup>
     <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
     <PackageReference Include="Microsoft.NET.Test.Sdk" />
     <PackageReference Include="xunit.v3" />
     <PackageReference Include="xunit.runner.visualstudio" />
@@ -17,11 +18,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.ContinuousGraph\BlueTusk.ContinuousGraph.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live\BlueTusk.Live.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication\BlueTusk.Replication.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams\BlueTusk.Streams.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams.Storage.PostgreSql\BlueTusk.Streams.Storage.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
   </ItemGroup>
 
 </Project>

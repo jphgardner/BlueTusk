@@ -15,9 +15,9 @@ Record:
 - database migrations to apply; and
 - rollback target.
 
-Read the relevant release notes and API/format compatibility document. Preview
-versions may contain intentional breaking changes that a stable line would
-forbid.
+Read the relevant stable release notes and API/format compatibility document.
+The 1.x line follows semantic versioning; an incompatible public contract
+change requires a new major version.
 
 ## Dependency order
 
@@ -25,9 +25,10 @@ The release/dependency order is:
 
 1. Provider
 2. Streams
-3. Sync and Live
-4. Control Plane
-5. Continuous Graph preview
+3. Sync
+4. Live
+5. Control Plane
+6. ContinuousGraph
 
 EF Core and extension packages must use compatible Provider-family versions.
 Do not mix an arbitrary set of locally built packages because they share a

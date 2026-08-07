@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "examples": [
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "independent-release-review",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -15,14 +15,14 @@
         "reviewerOrganisation": "independent-team",
         "reviewerIndependent": true,
         "checklistItemsPassed": 17,
-        "requiredWorkflowRunsReviewed": 6,
+        "requiredWorkflowRunsReviewed": 7,
         "packageFamiliesReviewed": 6,
         "candidateEvidenceReproduced": true,
         "unresolvedFindings": 0
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "security-review",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -45,7 +45,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "application-pilot-a",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -63,7 +63,7 @@
         "transactions": 100,
         "postgresqlMajorVersion": 18,
         "topology": "primary-plus-replica",
-        "enabledProductFamilies": [ "Provider", "Streams" ],
+        "enabledProductFamilies": [ "Provider", "Streams", "Live", "ContinuousGraph" ],
         "upgradePassed": true,
         "rollbackPathValidated": true,
         "peakCpuPercent": 50,
@@ -75,7 +75,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "application-pilot-b",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -93,7 +93,7 @@
         "transactions": 100,
         "postgresqlMajorVersion": 17,
         "topology": "single-primary",
-        "enabledProductFamilies": [ "Provider", "Sync", "Live" ],
+        "enabledProductFamilies": [ "Provider", "Sync", "ControlPlane" ],
         "upgradePassed": true,
         "rollbackPathValidated": true,
         "peakCpuPercent": 50,
@@ -105,7 +105,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "website-deployment-acceptance",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -135,7 +135,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "backup-restore-rehearsal",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -164,7 +164,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "rollback-rehearsal",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -190,7 +190,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "incident-response-game-day",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -214,7 +214,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "slo-owner-approval",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -235,7 +235,7 @@
       }
     },
     {
-      "schemaVersion": 2,
+      "schemaVersion": 3,
       "gateId": "maintainer-signoff",
       "candidateCommit": "0000000000000000000000000000000000000000",
       "outcome": "approved",
@@ -245,11 +245,14 @@
       "blockingFindings": 0,
       "references": [ "https://evidence.example/maintainer-signoff" ],
       "details": {
-        "versions": [ "Provider 1.0.0", "Streams 1.0.0", "Sync 1.0.0", "Live 1.0.0", "Control Plane 1.0.0", "Continuous Graph 1.0.0-preview.1" ],
+        "versions": [ "Provider 1.0.0", "Streams 1.0.0", "Sync 1.0.0", "Live 1.0.0", "Control Plane 1.0.0", "Continuous Graph 1.0.0" ],
         "versionsFrozen": true,
         "candidateImmutable": true,
         "publicationOrderAccepted": true,
-        "publicationSwitchesConfirmedDisabled": true,
+        "publicationPoliciesArmed": true,
+        "releaseTagsCreated": 0,
+        "candidatePackagesPublished": 0,
+        "protectedProductionApprovalPending": true,
         "stopConditionsAccepted": true,
         "rollbackAuthority": "rollback-authority",
         "releaseWindowUtc": "2026-09-01T00:00:00Z"

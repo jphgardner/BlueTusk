@@ -31,6 +31,10 @@ on:
         description: Successful 24-hour Sync run ID
         required: true
         type: string
+      continuous_graph_run_id:
+        description: Successful 24-hour ContinuousGraph run ID
+        required: true
+        type: string
       confirmation:
         description: Type VERIFY-V1-EXACT-CANDIDATE to enter the protected gate
         required: true
@@ -98,6 +102,7 @@ jobs:
           PERFORMANCE_RUN_ID: ${{ inputs.performance_run_id }}
           STREAMS_RUN_ID: ${{ inputs.streams_run_id }}
           SYNC_RUN_ID: ${{ inputs.sync_run_id }}
+          CONTINUOUS_GRAPH_RUN_ID: ${{ inputs.continuous_graph_run_id }}
         run: |
           $ErrorActionPreference = 'Stop'
           if ($env:CANDIDATE_SHA -notmatch '^[0-9a-fA-F]{40}$') {
@@ -170,6 +175,17 @@ jobs:
                 @{
                   Prefix = 'sync-endurance-'
                   Destination = 'sync'
+                  ExactName = $false
+                }
+              )
+            },
+            @{
+              Workflow = 'continuous-graph-release-endurance.yml'
+              RunId = $env:CONTINUOUS_GRAPH_RUN_ID
+              Artifacts = @(
+                @{
+                  Prefix = 'continuous-graph-endurance-'
+                  Destination = 'continuous-graph'
                   ExactName = $false
                 }
               )
@@ -266,6 +282,8 @@ jobs:
           $streamsProvenance = OneFile (Join-Path $root streams) build-provenance.json
           $syncReport = OneFile (Join-Path $root sync) report.json
           $syncProvenance = OneFile (Join-Path $root sync) build-provenance.json
+          $continuousGraphReport = OneFile (Join-Path $root continuous-graph) report.json
+          $continuousGraphProvenance = OneFile (Join-Path $root continuous-graph) build-provenance.json
           $performanceManifest = OneFile (Join-Path $root performance) multiplexing-evidence.json
           $websiteMetrics = OneFile (Join-Path $root website) production-metrics.json
           $packageManifest = OneFile (Join-Path $root packages) package-manifest.json
@@ -299,7 +317,7 @@ jobs:
             }
           })
           $manifest = [ordered]@{
-            schemaVersion = 2
+            schemaVersion = 3
             candidateCommit = $env:CANDIDATE_SHA.ToLowerInvariant()
             workflowRuns = @(
               Get-Content -Raw (Join-Path $root workflow-runs.json) |
@@ -317,6 +335,12 @@ jobs:
               candidateProvenancePath = Relative $syncProvenance
               candidateProvenanceSha256 = Hash $syncProvenance
               expectedDestinationImages = @($syncData.destinationImages)
+            }
+            continuousGraph = [ordered]@{
+              reportPath = Relative $continuousGraphReport
+              reportSha256 = Hash $continuousGraphReport
+              candidateProvenancePath = Relative $continuousGraphProvenance
+              candidateProvenanceSha256 = Hash $continuousGraphProvenance
             }
             performance = [ordered]@{
               resultsPath = [IO.Path]::GetRelativePath($root, $results).Replace('\', '/')

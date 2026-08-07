@@ -1,4 +1,3 @@
-using System.Buffers;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using System.Threading.Tasks.Sources;
@@ -168,6 +167,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     private async Task WorkerAsync(int workerIndex)
     {
         BlueTuskConnection? connection = null;
+        var buffers = new PipelineWorkerBuffers(_options.MaxPipelineCommands);
         var processedOnLease = 0;
         try
         {
@@ -176,7 +176,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 var result = await ExecuteLeaseAsync(
                     connection,
                     workerIndex,
-                    _options.MaxCommandsPerLease - processedOnLease).ConfigureAwait(false);
+                    _options.MaxCommandsPerLease - processedOnLease,
+                    buffers).ConfigureAwait(false);
                 connection = result.Connection;
                 Volatile.Write(ref _workerConnections[workerIndex], connection);
                 processedOnLease += result.Processed;
@@ -210,7 +211,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     private async Task<LeaseExecutionResult> ExecuteLeaseAsync(
         BlueTuskConnection? connection,
         int workerIndex,
-        int commandLimit)
+        int commandLimit,
+        PipelineWorkerBuffers buffers)
     {
         IMultiplexedCommandRequest? pending = null;
         var processed = 0;
@@ -267,13 +269,10 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
                 if (request.Command.CanUseMultiplexedPipeline)
                 {
-                    var batch = new List<IMultiplexedCommandRequest>(
-                        _options.MaxPipelineCommands)
-                    {
-                        request,
-                    };
-                    while (batch.Count < _options.MaxPipelineCommands &&
-                           processed + batch.Count < commandLimit &&
+                    var batchCount = 1;
+                    buffers.Requests[0] = request;
+                    while (batchCount < _options.MaxPipelineCommands &&
+                           processed + batchCount < commandLimit &&
                            _queue.Reader.TryRead(out var candidate))
                     {
                         DecrementQueued();
@@ -291,11 +290,11 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                             break;
                         }
 
-                        batch.Add(candidate);
+                        buffers.Requests[batchCount++] = candidate;
                     }
 
-                    await ExecutePipelineAsync(connection, batch).ConfigureAwait(false);
-                    processed += batch.Count;
+                    await ExecutePipelineAsync(connection, buffers, batchCount).ConfigureAwait(false);
+                    processed += batchCount;
                 }
                 else
                 {
@@ -378,49 +377,40 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
     private async Task ExecutePipelineAsync(
         BlueTuskConnection connection,
-        IReadOnlyList<IMultiplexedCommandRequest> requests)
+        PipelineWorkerBuffers buffers,
+        int requestCount)
     {
-        var activeBuffer = ArrayPool<IMultiplexedCommandRequest>.Shared.Rent(requests.Count);
-        var commandBuffer = ArrayPool<BlueTuskMultiplexedPipelineCommand>.Shared.Rent(requests.Count);
-        PipelineCancellationScope?[]? scopeBuffer = null;
-        CancellationToken[]? tokenBuffer = null;
         var activeCount = 0;
+        var hasCancellationTokens = false;
         try
         {
-            foreach (var request in requests)
+            for (var requestIndex = 0; requestIndex < requestCount; requestIndex++)
             {
+                var request = buffers.Requests[requestIndex];
                 try
                 {
                     request.StartTelemetry(connection);
-                    commandBuffer[activeCount] = request.Command.CreateMultiplexedPipelineCommand(
+                    buffers.Commands[activeCount] = request.Command.CreateMultiplexedPipelineCommand(
                         connection,
                         request.Scalar);
                     if (request.Command.CommandTimeout > 0 ||
                         request.CancellationToken.CanBeCanceled)
                     {
-                        if (scopeBuffer is null)
-                        {
-                            scopeBuffer = ArrayPool<PipelineCancellationScope?>.Shared.Rent(
-                                requests.Count);
-                            tokenBuffer = ArrayPool<CancellationToken>.Shared.Rent(requests.Count);
-                            Array.Clear(scopeBuffer, 0, activeCount);
-                            Array.Clear(tokenBuffer, 0, activeCount);
-                        }
-
                         var scope = new PipelineCancellationScope(
                             request.Command.CommandTimeout,
                             request.CancellationToken,
                             _shutdown.Token);
-                        scopeBuffer[activeCount] = scope;
-                        tokenBuffer![activeCount] = scope.Token;
+                        buffers.Scopes[activeCount] = scope;
+                        buffers.CancellationTokens[activeCount] = scope.Token;
+                        hasCancellationTokens = true;
                     }
-                    else if (tokenBuffer is not null)
+                    else
                     {
-                        scopeBuffer![activeCount] = null;
-                        tokenBuffer[activeCount] = CancellationToken.None;
+                        buffers.Scopes[activeCount] = null;
+                        buffers.CancellationTokens[activeCount] = CancellationToken.None;
                     }
 
-                    activeBuffer[activeCount] = request;
+                    buffers.Requests[activeCount] = request;
                     activeCount++;
                     BeginExecuting();
                 }
@@ -438,17 +428,20 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
             }
 
             var activeRequests = new ArraySegment<IMultiplexedCommandRequest>(
-                activeBuffer,
+                buffers.Requests,
                 0,
                 activeCount);
             var commands = new ArraySegment<BlueTuskMultiplexedPipelineCommand>(
-                commandBuffer,
+                buffers.Commands,
                 0,
                 activeCount);
             IReadOnlyList<CancellationToken>? groupCancellationTokens =
-                tokenBuffer is null
+                !hasCancellationTokens
                     ? (IReadOnlyList<CancellationToken>?)null
-                    : new ArraySegment<CancellationToken>(tokenBuffer, 0, activeCount);
+                    : new ArraySegment<CancellationToken>(
+                        buffers.CancellationTokens,
+                        0,
+                        activeCount);
             try
             {
                 Interlocked.Increment(ref _pipelineFlushes);
@@ -469,7 +462,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                     BlueTuskMultiplexedPipelineOutcome outcome)
                 {
                     var request = activeRequests[index];
-                    var scope = scopeBuffer?[index];
+                    var scope = buffers.Scopes[index];
                     if (outcome.Cancellation is not null)
                     {
                         if (request.CancellationToken.IsCancellationRequested)
@@ -528,24 +521,19 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 for (var index = 0; index < activeCount; index++)
                 {
                     activeRequests[index].Command.CompleteMultiplexedPipelineExecution();
-                    scopeBuffer?[index]?.Dispose();
+                    buffers.Scopes[index]?.Dispose();
                     EndExecuting();
                 }
             }
         }
         finally
         {
-            Array.Clear(activeBuffer, 0, activeCount);
-            ArrayPool<IMultiplexedCommandRequest>.Shared.Return(activeBuffer);
-            ArrayPool<BlueTuskMultiplexedPipelineCommand>.Shared.Return(
-                commandBuffer,
-                clearArray: true);
-            if (scopeBuffer is not null)
+            for (var index = 0; index < requestCount; index++)
             {
-                Array.Clear(scopeBuffer, 0, activeCount);
-                ArrayPool<PipelineCancellationScope?>.Shared.Return(scopeBuffer);
-                Array.Clear(tokenBuffer!, 0, activeCount);
-                ArrayPool<CancellationToken>.Shared.Return(tokenBuffer!);
+                buffers.Requests[index] = null!;
+                buffers.Commands[index] = default;
+                buffers.Scopes[index] = null;
+                buffers.CancellationTokens[index] = default;
             }
         }
     }
@@ -787,6 +775,25 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         BlueTuskConnection? Connection,
         int Processed);
 
+    private sealed class PipelineWorkerBuffers
+    {
+        internal PipelineWorkerBuffers(int capacity)
+        {
+            Requests = new IMultiplexedCommandRequest[capacity];
+            Commands = new BlueTuskMultiplexedPipelineCommand[capacity];
+            Scopes = new PipelineCancellationScope?[capacity];
+            CancellationTokens = new CancellationToken[capacity];
+        }
+
+        internal IMultiplexedCommandRequest[] Requests { get; }
+
+        internal BlueTuskMultiplexedPipelineCommand[] Commands { get; }
+
+        internal PipelineCancellationScope?[] Scopes { get; }
+
+        internal CancellationToken[] CancellationTokens { get; }
+    }
+
     private sealed class PipelineCancellationScope : IDisposable
     {
         private readonly CancellationTokenSource? _timeout;
@@ -828,8 +835,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
 internal static class BlueTuskMultiplexingClassifier
 {
-    private static readonly HashSet<string> SessionStateTokens = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly string[] SessionStateTokens =
+    [
         "ABORT",
         "BEGIN",
         "CALL",
@@ -859,10 +866,10 @@ internal static class BlueTuskMultiplexingClassifier
         "TEMP",
         "TEMPORARY",
         "UNLISTEN",
-    };
+    ];
 
-    private static readonly HashSet<string> SessionStateRoutines = new(StringComparer.OrdinalIgnoreCase)
-    {
+    private static readonly string[] SessionStateRoutines =
+    [
         "CURRENT_SETTING",
         "CURRVAL",
         "LASTVAL",
@@ -899,37 +906,18 @@ internal static class BlueTuskMultiplexingClassifier
         "PG_TRY_ADVISORY_XACT_LOCK",
         "PG_TRY_ADVISORY_XACT_LOCK_SHARED",
         "SET_CONFIG",
-    };
+    ];
 
     internal static bool IsSessionNeutral(string sql)
     {
         ArgumentNullException.ThrowIfNull(sql);
-        var tokens = Tokenize(sql);
-        for (var index = 0; index < tokens.Count; index++)
-        {
-            var token = tokens[index];
-            if (SessionStateTokens.Contains(token) || SessionStateRoutines.Contains(token))
-            {
-                return false;
-            }
-
-            if (token.Equals("END", StringComparison.OrdinalIgnoreCase) &&
-                (index == 0 || tokens[index - 1] == ";"))
-            {
-                return false;
-            }
-        }
-
-        return tokens.Exists(static token => token != ";");
-    }
-
-    private static List<string> Tokenize(string sql)
-    {
-        var tokens = new List<string>();
+        var text = sql.AsSpan();
         var index = 0;
-        while (index < sql.Length)
+        var hasToken = false;
+        var atStatementStart = true;
+        while (index < text.Length)
         {
-            var current = sql[index];
+            var current = text[index];
             if (char.IsWhiteSpace(current) || current is ',' or '(' or ')' or '.')
             {
                 index++;
@@ -938,15 +926,15 @@ internal static class BlueTuskMultiplexingClassifier
 
             if (current == ';')
             {
-                tokens.Add(";");
+                atStatementStart = true;
                 index++;
                 continue;
             }
 
-            if (current == '-' && index + 1 < sql.Length && sql[index + 1] == '-')
+            if (current == '-' && index + 1 < text.Length && text[index + 1] == '-')
             {
                 index += 2;
-                while (index < sql.Length && sql[index] is not ('\r' or '\n'))
+                while (index < text.Length && text[index] is not ('\r' or '\n'))
                 {
                     index++;
                 }
@@ -954,78 +942,129 @@ internal static class BlueTuskMultiplexingClassifier
                 continue;
             }
 
-            if (current == '/' && index + 1 < sql.Length && sql[index + 1] == '*')
+            if (current == '/' && index + 1 < text.Length && text[index + 1] == '*')
             {
-                index = SkipBlockComment(sql, index + 2);
+                if (!TrySkipBlockComment(text, ref index))
+                {
+                    return false;
+                }
+
                 continue;
             }
 
             if (current == '\'')
             {
-                index = SkipQuoted(sql, index + 1, '\'', doubledEscape: true);
+                if (!TrySkipQuoted(text, ref index, '\'', allowBackslashEscape: false))
+                {
+                    return false;
+                }
+
                 continue;
             }
 
-            if (current == '$' && TryReadDollarQuote(sql, index, out var delimiter))
+            if (current == '$' && TrySkipDollarQuote(text, ref index, out var closed))
             {
-                var end = sql.IndexOf(delimiter, index + delimiter.Length, StringComparison.Ordinal);
-                index = end < 0 ? sql.Length : end + delimiter.Length;
+                if (!closed)
+                {
+                    return false;
+                }
+
                 continue;
             }
 
             if (current == '"')
             {
                 var start = ++index;
-                var identifier = new System.Text.StringBuilder();
-                while (index < sql.Length)
+                var containsEscape = false;
+                while (index < text.Length)
                 {
-                    if (sql[index] == '"')
+                    if (text[index] == '"')
                     {
-                        if (index + 1 < sql.Length && sql[index + 1] == '"')
+                        if (index + 1 < text.Length && text[index + 1] == '"')
                         {
-                            identifier.Append(sql, start, index - start).Append('"');
+                            containsEscape = true;
                             index += 2;
-                            start = index;
                             continue;
                         }
 
-                        identifier.Append(sql, start, index - start);
+                        var token = text[start..index];
                         index++;
-                        break;
+                        hasToken = true;
+                        if (!containsEscape && IsSessionStateToken(token))
+                        {
+                            return false;
+                        }
+
+                        atStatementStart = false;
+                        goto ContinueScanning;
                     }
 
                     index++;
                 }
 
-                if (identifier.Length != 0)
-                {
-                    tokens.Add(identifier.ToString());
-                }
-
-                continue;
+                return false;
             }
 
             if (char.IsLetter(current) || current == '_')
             {
                 var start = index++;
-                while (index < sql.Length &&
-                       (char.IsLetterOrDigit(sql[index]) || sql[index] is '_' or '$'))
+                while (index < text.Length &&
+                       (char.IsLetterOrDigit(text[index]) || text[index] is '_' or '$'))
                 {
                     index++;
                 }
 
-                tokens.Add(sql[start..index]);
+                var token = text[start..index];
+                hasToken = true;
+                if (IsSessionStateToken(token) ||
+                    atStatementStart && token.Equals("END", StringComparison.OrdinalIgnoreCase))
+                {
+                    return false;
+                }
+
+                atStatementStart = false;
+                if (token.Length == 1 &&
+                    (token[0] is 'E' or 'e') &&
+                    index < text.Length &&
+                    text[index] == '\'' &&
+                    !TrySkipQuoted(text, ref index, '\'', allowBackslashEscape: true))
+                {
+                    return false;
+                }
+
                 continue;
             }
 
             index++;
+            continue;
+
+        ContinueScanning:
+            continue;
         }
 
-        return tokens;
+        return hasToken;
     }
 
-    private static int SkipBlockComment(string sql, int index)
+    private static bool IsSessionStateToken(ReadOnlySpan<char> token) =>
+        Contains(SessionStateTokens, token) ||
+        Contains(SessionStateRoutines, token);
+
+    private static bool Contains(string[] candidates, ReadOnlySpan<char> token)
     {
+        foreach (var candidate in candidates)
+        {
+            if (token.Equals(candidate, StringComparison.OrdinalIgnoreCase))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static bool TrySkipBlockComment(ReadOnlySpan<char> sql, ref int index)
+    {
+        index += 2;
         var depth = 1;
         while (index < sql.Length && depth != 0)
         {
@@ -1045,32 +1084,47 @@ internal static class BlueTuskMultiplexingClassifier
             }
         }
 
-        return index;
+        return depth == 0;
     }
 
-    private static int SkipQuoted(string sql, int index, char quote, bool doubledEscape)
+    private static bool TrySkipQuoted(
+        ReadOnlySpan<char> sql,
+        ref int index,
+        char quote,
+        bool allowBackslashEscape)
     {
+        index++;
         while (index < sql.Length)
         {
+            if (allowBackslashEscape && sql[index] == '\\' && index + 1 < sql.Length)
+            {
+                index += 2;
+                continue;
+            }
+
             if (sql[index] != quote)
             {
                 index++;
                 continue;
             }
 
-            if (doubledEscape && index + 1 < sql.Length && sql[index + 1] == quote)
+            if (index + 1 < sql.Length && sql[index + 1] == quote)
             {
                 index += 2;
                 continue;
             }
 
-            return index + 1;
+            index++;
+            return true;
         }
 
-        return index;
+        return false;
     }
 
-    private static bool TryReadDollarQuote(string sql, int index, out string delimiter)
+    private static bool TrySkipDollarQuote(
+        ReadOnlySpan<char> sql,
+        ref int index,
+        out bool closed)
     {
         var end = index + 1;
         while (end < sql.Length && (char.IsLetterOrDigit(sql[end]) || sql[end] == '_'))
@@ -1080,11 +1134,17 @@ internal static class BlueTuskMultiplexingClassifier
 
         if (end < sql.Length && sql[end] == '$')
         {
-            delimiter = sql[index..(end + 1)];
+            var delimiter = sql[index..(end + 1)];
+            var contentStart = end + 1;
+            var closingOffset = sql[contentStart..].IndexOf(delimiter);
+            closed = closingOffset >= 0;
+            index = closed
+                ? contentStart + closingOffset + delimiter.Length
+                : sql.Length;
             return true;
         }
 
-        delimiter = string.Empty;
+        closed = false;
         return false;
     }
 }

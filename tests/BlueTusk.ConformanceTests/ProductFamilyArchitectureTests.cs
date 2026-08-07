@@ -176,12 +176,7 @@ public sealed class ProductFamilyArchitectureTests
         {
             var publication = family.Value.GetProperty("publication");
             var channel = publication.GetProperty("channel").GetString();
-            Assert.True(
-                channel is "stable" or "preview",
-                $"{family.Name} has unsupported release channel '{channel}'.");
-            Assert.Equal(
-                family.Name == "ContinuousGraph" ? "preview" : "stable",
-                channel);
+            Assert.Equal("stable", channel);
 
             var tagPrefix = publication.GetProperty("tagPrefix").GetString()!;
             Assert.Matches("^[a-z][a-z0-9]*(?:-[a-z0-9]+)*$", tagPrefix);

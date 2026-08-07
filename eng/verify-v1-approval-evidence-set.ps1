@@ -88,6 +88,41 @@ if ([string]::Equals(
     throw 'Application pilots A and B must have distinct accountable approvers.'
 }
 
+$requiredFamilies = @(
+    'Provider',
+    'Streams',
+    'Sync',
+    'Live',
+    'ControlPlane',
+    'ContinuousGraph'
+)
+$pilotFamilies = @(
+    @($pilotA.details.enabledProductFamilies) +
+    @($pilotB.details.enabledProductFamilies) |
+        ForEach-Object { [string]$_ } |
+        Sort-Object -Unique
+)
+$unknownPilotFamilies = @(
+    $pilotFamilies | Where-Object { $_ -notin $requiredFamilies }
+)
+$missingPilotFamilies = @(
+    $requiredFamilies | Where-Object { $_ -notin $pilotFamilies }
+)
+if ($unknownPilotFamilies.Count -ne 0 -or $missingPilotFamilies.Count -ne 0)
+{
+    throw (
+        'Application pilots must collectively cover exactly all six V1 product ' +
+        "families. Missing: " +
+        "$(if ($missingPilotFamilies.Count) { $missingPilotFamilies -join ', ' } else { '<none>' }); " +
+        "unknown: " +
+        "$(if ($unknownPilotFamilies.Count) { $unknownPilotFamilies -join ', ' } else { '<none>' }).")
+}
+if ('ContinuousGraph' -notin @($pilotA.details.enabledProductFamilies) -and
+    'ContinuousGraph' -notin @($pilotB.details.enabledProductFamilies))
+{
+    throw 'At least one independent application pilot must exercise ContinuousGraph.'
+}
+
 $websiteApproval = $approvals['website-deployment-acceptance']
 if (-not [string]::Equals(
         [string]$websiteApproval.details.productionMetricsSha256,
@@ -138,5 +173,6 @@ if ($maintainerSignoffUtc -lt $latestPreSignoffApprovalUtc)
 
 Write-Output (
     "V1 approval-evidence set passed: $($gateIds.Count) gate-specific records, " +
-    'two independent pilots, exact website production-metrics binding, and ' +
+    'two independent pilots covering all six stable families, exact website ' +
+    'production-metrics binding, and ' +
     'ordered independent review and maintainer sign-off.')

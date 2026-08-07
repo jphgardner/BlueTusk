@@ -3,6 +3,12 @@ using BlueTusk.TypeSystem;
 
 namespace BlueTusk.Data;
 
+internal readonly record struct BlueTuskResolvedField(
+    BlueTuskFieldDescription Field,
+    BlueTuskDataFormat? Format,
+    BlueTuskTypeDescriptor? Type,
+    IBlueTuskCodec? Codec);
+
 internal static class BlueTuskValueDecoder
 {
     private static readonly BlueTuskTypeRegistry BuiltInTypes = BlueTuskBuiltInTypes.CreateRegistry();
@@ -16,27 +22,45 @@ internal static class BlueTuskValueDecoder
         ReadOnlyMemory<byte>? value)
     {
         ArgumentNullException.ThrowIfNull(types);
+        var resolved = Resolve(types, field);
+        return Decode(resolved, value);
+    }
+
+    internal static BlueTuskResolvedField Resolve(
+        BlueTuskTypeRegistry types,
+        BlueTuskFieldDescription field)
+    {
+        ArgumentNullException.ThrowIfNull(types);
+        var format = field.FormatCode switch
+        {
+            0 => BlueTuskDataFormat.Text,
+            1 => BlueTuskDataFormat.Binary,
+            _ => (BlueTuskDataFormat?)null,
+        };
+        var id = new BlueTuskTypeId(field.TypeOid);
+        _ = types.TryGetType(id, out var type);
+        _ = types.TryGetCodec(id, out var codec);
+        return new BlueTuskResolvedField(field, format, type, codec);
+    }
+
+    internal static object Decode(
+        in BlueTuskResolvedField resolved,
+        ReadOnlyMemory<byte>? value)
+    {
         if (value is null)
         {
             return DBNull.Value;
         }
 
-        var format = field.FormatCode switch
+        var format = GetFormat(resolved);
+        if (resolved.Type is not { } type)
         {
-            0 => BlueTuskDataFormat.Text,
-            1 => BlueTuskDataFormat.Binary,
-            _ => throw new InvalidOperationException(
-                $"PostgreSQL field '{field.Name}' has unknown format code {field.FormatCode}."),
-        };
-        var id = new BlueTuskTypeId(field.TypeOid);
-        if (!types.TryGetType(id, out var type) || type is null)
-        {
-            return Unknown(field, format, value.Value, type: null);
+            return Unknown(resolved.Field, format, value.Value, type: null);
         }
 
-        if (!types.TryGetCodec(id, out var codec) || codec is null)
+        if (resolved.Codec is not { } codec)
         {
-            return Unknown(field, format, value.Value, type);
+            return Unknown(resolved.Field, format, value.Value, type);
         }
 
         var reader = new BlueTuskReader(value.Value.Span);
@@ -50,17 +74,39 @@ internal static class BlueTuskValueDecoder
         return decoded ?? DBNull.Value;
     }
 
+    internal static T DecodeTyped<T>(
+        in BlueTuskResolvedField resolved,
+        ReadOnlyMemory<byte>? value)
+    {
+        if (value is null)
+        {
+            throw new InvalidCastException("A database NULL cannot be read as a non-null value.");
+        }
+
+        if (resolved.Type is not { } type ||
+            resolved.Codec is not IBlueTuskCodec<T> codec)
+        {
+            throw new InvalidCastException(
+                $"PostgreSQL field '{resolved.Field.Name}' does not have a codec for {typeof(T).FullName}.");
+        }
+
+        var reader = new BlueTuskReader(value.Value.Span);
+        var decoded = codec.ReadTyped(ref reader, GetFormat(resolved), type);
+        EnsureFullyRead(type, reader.Remaining);
+        return decoded;
+    }
+
     public static Type GetFieldType(BlueTuskFieldDescription field)
         => GetFieldType(BuiltInTypes, field);
 
     public static Type GetFieldType(BlueTuskTypeRegistry types, BlueTuskFieldDescription field)
     {
         ArgumentNullException.ThrowIfNull(types);
-        var id = new BlueTuskTypeId(field.TypeOid);
-        return types.TryGetCodec(id, out var codec) && codec is not null
-            ? codec.ClrType
-            : typeof(BlueTuskUnknownValue);
+        return GetFieldType(Resolve(types, field));
     }
+
+    internal static Type GetFieldType(in BlueTuskResolvedField resolved) =>
+        resolved.Codec?.ClrType ?? typeof(BlueTuskUnknownValue);
 
     public static string GetDataTypeName(uint oid) =>
         GetDataTypeName(BuiltInTypes, oid);
@@ -71,6 +117,22 @@ internal static class BlueTuskValueDecoder
         return types.TryGetType(new BlueTuskTypeId(oid), out var type) && type is not null
             ? type.Name
             : $"oid_{oid}";
+    }
+
+    internal static string GetDataTypeName(in BlueTuskResolvedField resolved) =>
+        resolved.Type?.Name ?? $"oid_{resolved.Field.TypeOid}";
+
+    private static BlueTuskDataFormat GetFormat(in BlueTuskResolvedField resolved) =>
+        resolved.Format ?? throw new InvalidOperationException(
+            $"PostgreSQL field '{resolved.Field.Name}' has unknown format code {resolved.Field.FormatCode}.");
+
+    private static void EnsureFullyRead(BlueTuskTypeDescriptor type, int remaining)
+    {
+        if (remaining != 0)
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} codec left {remaining} unread field bytes.");
+        }
     }
 
     private static BlueTuskUnknownValue Unknown(

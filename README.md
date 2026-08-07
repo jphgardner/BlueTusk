@@ -9,15 +9,14 @@ extension packages, PostgreSQL SQL/PGQ support, and an independently versioned
 runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk remains an experimental `0.3.0-preview.1` source release, not a
-> production endorsement. V1 feature development and release-hardening
-> implementation are complete, including bounded parser fuzzing, the ADO.NET
-> compatibility record, public API budgets, immutable automation dependencies,
-> SBOM/provenance checks and exact-candidate endurance tooling. Stable
-> publication remains disabled until PostgreSQL 19 GA evidence, the exact
-> 72-hour Streams and 24-hour Sync runs, all seven content-addressed
-> operational disturbances inside each run, independent review and operational
-> rehearsals pass for one immutable candidate. Start with the
+> BlueTusk is prepared as six stable `1.0.0` product families, but no V1
+> package has been published and this is not yet a production endorsement.
+> Publication remains disabled during preparation. The immutable candidate
+> cannot be armed on `main` until PostgreSQL 19 GA is recorded, and it cannot
+> be published until the seven exact-SHA workflows—including 72-hour Streams,
+> 24-hour Sync, and 24-hour ContinuousGraph endurance—plus the two independent
+> pilots, 28-day website field window, operational rehearsals, review, and
+> protected approvals pass. Start with the
 > [documentation handbook](docs/README.md), [V1 readiness record](docs/v1-release-readiness.md),
 > [roadmap](docs/roadmap.md), and [support matrix](VERSIONING.md).
 
@@ -98,11 +97,11 @@ See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/deci
 The real-time platform is delivered in independently gated Streams, Sync, Live,
 Control Plane, and Continuous Graph release trains. Their V1 code, tests,
 package manifests and evidence verifiers are implemented. The remaining release
-work is deliberately operational: archive the exact 72-hour Streams and
-24-hour Sync candidate runs with 14 total in-window disturbance recoveries,
-repeat PostgreSQL 19 at later milestones and GA, and obtain independent
-sign-off. Package names and successful local builds are not claims of public
-availability.
+work is deliberately operational: merge the final arming PR after PostgreSQL 19
+GA, archive the exact 72-hour Streams, 24-hour Sync, and 24-hour
+ContinuousGraph candidate runs, complete the content-addressed disturbance
+recoveries and external acceptance window, and obtain independent sign-off.
+Package names and successful local builds are not claims of public availability.
 
 Read the [platform contracts](docs/realtime-platform/contracts.md),
 [real-time operations guide](docs/realtime-platform/operations.md), and
@@ -111,7 +110,7 @@ topology.
 
 ## Status
 
-The current `0.3.0-preview.1` implementation provides:
+The release-prepared `1.0.0` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
@@ -169,7 +168,7 @@ The current `0.3.0-preview.1` implementation provides:
 - a packaged `bluetusk scaffold` database-first tool with schema/table filters,
   PostgreSQL-specific metadata retention, and secure-by-default connection handling.
 - an immutable data-source feature registry plus independently packaged,
-  live-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF, `citext` ADO.NET/EF, `hstore`, `ltree`, `pg_trgm`, and pgvector ADO.NET/EF previews.
+  live-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF, `citext` ADO.NET/EF, `hstore`, `ltree`, `pg_trgm`, and pgvector ADO.NET/EF integrations.
 - a packaged extension-authoring template and framework-neutral live compatibility harness.
 - catalogue-probed PostgreSQL 19 SQL/PGQ capability detection, live raw-SQL property-graph coverage, typed information-schema discovery, text/JSON schema tooling, capability-guarded EF migrations/reverse engineering, and typed composable EF linear-path queries.
 - a benchmark-backed decision to retain the genuine sync/async ArrayPool/Span/Memory

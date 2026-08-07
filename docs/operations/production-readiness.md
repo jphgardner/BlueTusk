@@ -19,7 +19,9 @@ and the verifier defaults to the safe engineering mode:
 ```
 
 The command must finish with every publication switch disabled. Candidate mode
-is intentionally impossible to pass with the checked-in example evidence.
+instead requires all six stable policies armed in the immutable reviewed
+`origin/main` commit, with no release tags or candidate packages published.
+It is intentionally impossible to pass with the checked-in example evidence.
 
 ## What V1 measures
 
@@ -198,6 +200,9 @@ v1-evidence/
 ├── sync/
 │   ├── report.json
 │   └── candidate-sbom/build-provenance.json
+├── continuous-graph/
+│   ├── report.json
+│   └── candidate-sbom/build-provenance.json
 ├── disturbances/
 │   ├── operational-disturbance-evidence.json
 │   ├── streams/*-injection.json and *-recovery.json
@@ -250,8 +255,9 @@ ZIP whose `approvals` directory contains the ten exact approval JSON files and
 whose `disturbances` directory contains the reviewed operational-disturbance
 report plus its 28 content-addressed injection/recovery summaries. Dispatch
 `.github/workflows/v1-candidate-readiness.yml` with the candidate SHA and the
-six successful workflow run IDs: build, security, one-hour-per-target fuzzing,
-performance, Streams endurance and Sync endurance. It queries GitHub for every
+seven successful workflow run IDs: build, security, one-hour-per-target fuzzing,
+performance, Streams endurance, Sync endurance and ContinuousGraph endurance.
+It queries GitHub for every
 run; downloads the non-expired package, website, performance and endurance
 artifacts; constructs the content-addressed manifest; executes candidate mode;
 and archives the verified bundle.
@@ -259,7 +265,8 @@ and archives the verified bundle.
 Candidate mode proves all of the following:
 
 - exactly one successful manual build, security, one-hour-per-target fuzzing,
-  performance, Streams 72-hour and Sync 24-hour run is recorded for the
+  performance, Streams 72-hour, Sync 24-hour, and ContinuousGraph 24-hour run
+  is recorded for the
   candidate SHA, with a unique positive run ID/attempt, HTTPS URL and
   non-future completion timestamp after the candidate commit; no extra or
   duplicate workflow records are accepted;
@@ -278,7 +285,12 @@ Candidate mode proves all of the following:
   provenance;
 - the Sync report contains at least 100 cycles over at least 24 hours across
   all six projects and three digest-pinned destination services;
-- both endurance reports, package provenance and service images match the
+- the ContinuousGraph report contains at least 100,000 evaluations over at
+  least 24 hours, at least 99.9% committed outcomes, lifecycle P95 at or below
+  one second, positive authoritative-repair, replay-restart,
+  cancellation-cleanup, and PostgreSQL disconnect-recovery evidence, and zero
+  ordering or reconciliation errors;
+- all three endurance reports, package provenance and service images match the
   candidate;
 - all seven production disturbances passed inside each exact endurance report
   window: 14 recoveries with zero blockers or observed data loss, backed by 28
@@ -289,7 +301,8 @@ Candidate mode proves all of the following:
 - every required approval file has a matching SHA-256 and candidate commit,
   passes its gate-specific measurement contract and was approved after the
   latest exact workflow completed; the two pilots have distinct applications,
-  operators and approvers, website acceptance names the exact
+  operators and approvers, collectively cover all six families, include
+  ContinuousGraph in at least one pilot, and website acceptance names the exact
   production-metrics hash, independent review follows all operational
   approvals, and maintainer sign-off is the final decision.
 
@@ -313,7 +326,9 @@ families, duration, expected SLOs, upgrade/rollback path, observed resource
 limits, defects and acceptance owner. A demo or maintainer-only sample is not
 an independent pilot. Each pilot must run for at least 24 hours and record at
 least 1,000 operations and 100 transactions; the two records must have distinct
-applications, operator organisations and accountable approvers.
+applications, operator organisations and accountable approvers. Collectively
+they must cover all six product families, and at least one must exercise
+ContinuousGraph.
 
 ### Website deployment acceptance
 
@@ -351,13 +366,14 @@ time-stamped incident record with follow-up owners.
 The protected `package-production` environment remains the credential and
 final human-approval boundary. Only exact version tags can publish. Every
 product family requires successful manual build, reference-performance and
-protected V1 candidate-readiness workflows at its release commit; Streams and
-Sync additionally require their own endurance workflow. The release verifier
+protected V1 candidate-readiness workflows at its release commit; Streams,
+Sync, and ContinuousGraph additionally require their own endurance workflows.
+The release verifier
 queries GitHub by exact `head_sha`, so a local or fabricated candidate manifest
 cannot substitute for the protected readiness workflow.
 
-Release order remains Provider, Streams, Sync/Live, Control Plane, then
-Continuous Graph preview. Stop if a dependency package is unavailable, an SLO
+Release order is Provider, Streams, Sync, Live, Control Plane, then
+ContinuousGraph. Stop if a dependency package is unavailable, an SLO
 is burning, evidence points to another SHA, or a protected reviewer declines.
 
 For a package defect:
@@ -374,10 +390,11 @@ rollback/pinning, not replacing an already published archive.
 
 ## Current V1 boundary
 
-As of 2026-08-04, deterministic engineering work can be verified locally, but
+As of 2026-08-07, deterministic engineering work can be verified locally, but
 stable V1 remains blocked by external facts: PostgreSQL 19 GA is not yet the
 recorded milestone, the exact final candidate workflows have not run, the
-72-hour/24-hour endurance artifacts and their 14 in-window disturbance
+72-hour Streams, 24-hour Sync, and 24-hour ContinuousGraph endurance artifacts
+and the required in-window disturbance
 recoveries do not yet exist for that SHA, and the
 independent pilots/rehearsals/approvals are not complete. The live repository
 settings satisfy the declared protection policy, but the required environment
@@ -385,5 +402,6 @@ secrets and a second eligible reviewer are still needed before either
 protected environment can complete an owner-initiated deployment. The six
 current GitGuardian findings refer to inventoried disposable test credentials,
 but still require explicit external false-positive disposition before the
-security approval can pass. Publication switches must remain disabled until
-candidate mode passes.
+security approval can pass. Publication switches remain disabled during
+preparation. The final post-GA arming PR creates the candidate; tags and
+protected production approval remain the actual publication boundary.

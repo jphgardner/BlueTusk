@@ -1,8 +1,8 @@
 # Security review
 
-Review date: 2026-08-02
+Review date: 2026-08-07
 
-Reviewed version: `0.3.0-preview.1`
+Reviewed version: release-prepared `1.0.0` source candidate
 
 Scope: BlueTusk provider, EF/design tooling, first-party extensions and identity
 adapters, build dependencies, and checked-in test infrastructure.
@@ -30,7 +30,7 @@ claim of independent penetration testing or a production support SLA.
 The repository contains three low-entropy values used only by disposable local
 PostgreSQL and MIT Kerberos test infrastructure. They are not credentials for
 GitHub, package registries, cloud services, deployed databases or any
-maintainer account. The current inventory covers 22 literal occurrences across
+maintainer account. The current inventory covers 23 literal occurrences across
 workflow and Compose inputs:
 
 - the PostgreSQL credential used by localhost Compose services, PgBouncer and
@@ -89,8 +89,8 @@ public issues.
   policy, KDC/keytab security, certificate issuance, secret storage, network
   isolation, PostgreSQL patching, backups, and server auditing are deployment
   responsibilities.
-- BlueTusk is still a preview. Re-run this review before each preview and 1.0
-  release, after a new authentication mechanism, or after a material transport,
+- BlueTusk 1.0.0 is not published. Re-run this review for the exact immutable
+  candidate and before each stable release, after a new authentication mechanism, or after a material transport,
   pooling, parser, dependency, or diagnostic change.
 
 ## Repeatable release checks

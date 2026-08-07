@@ -16,7 +16,7 @@ exact-candidate evidence below is complete.
 - Commit-pinned workflow actions, CodeQL, dependency review, NuGet advisory
   auditing, CycloneDX 1.6 and SPDX 2.3 SBOMs, artifact hashes and build
   provenance.
-- A machine-checked intentional test-credential inventory covering 22
+- A machine-checked intentional test-credential inventory covering 23
   workflow/Compose occurrences by fingerprint, exact path, count and
   local-only context; unknown values, external-host use and release-workflow
   literals fail closed. External scanner disposition remains independently
@@ -26,8 +26,9 @@ exact-candidate evidence below is complete.
   SHA-256 inventory, SBOM/provenance binding and no registry credentials.
 - A digest-pinned PostgreSQL 19 programme with upstream milestone-drift
   detection and a GA-only stable-publication gate.
-- Streams and Sync endurance workflows that bind reports to the candidate
-  commit, NuGet/npm hashes, runtime, operating system and service-image digests.
+- Streams, Sync, and ContinuousGraph endurance workflows that bind reports to
+  the candidate commit, NuGet/npm hashes, runtime, operating system and
+  service-image digests.
 - A fail-closed cross-run disturbance contract requiring process death,
   network interruption, controlled storage exhaustion, credential rotation,
   primary failover, backward/forward clock movement and PostgreSQL minor
@@ -42,11 +43,11 @@ exact-candidate evidence below is complete.
 - A single fail-closed V1 verifier that distinguishes deterministic engineering
   readiness from PostgreSQL 19 GA, endurance, performance, pilot, recovery,
   game-day and accountable approval evidence for one immutable commit.
-- A schema-2 operational approval contract with ten gate-specific evidence
+- A schema-3 operational approval contract with ten gate-specific evidence
   shapes, measured pilot and field-performance minimums, restore/RPO/RTO
   comparisons, rollback and game-day outcomes, cross-pilot independence checks
-  and fail-closed mutation self-tests. Candidate evidence schema 2 binds every
-  workflow run attempt and completion time, rejects stale approvals, orders
+  and fail-closed mutation self-tests. Candidate evidence schema 3 binds all
+  seven workflow run attempts and completion times, rejects stale approvals, orders
   independent review after operational acceptance and makes maintainer
   sign-off the final decision.
 - A source-controlled GitHub governance contract that requires 35 named status
@@ -95,8 +96,9 @@ rerun by the required workflows at that exact commit.
    Administration read, Actions read, Contents read and Environments read so
    exact-candidate and pre-publication jobs can verify the live settings and
    required secret names.
-3. Freeze the final commit and versions; the manual build must then generate
-   and retain the canonical six-family package hashes, SBOMs and provenance.
+3. After PostgreSQL 19 GA, merge the reviewed final arming PR to `main`. All
+   six policies must be stable `1.0.0` and armed in that immutable commit; no
+   release tag or candidate package publication may exist yet.
 4. Run the complete manual `build.yml` evidence workflow at that commit,
    including PostgreSQL 15–19, PgBouncer, NativeAOT/trimming, connector,
    authentication, stress, website and canonical all-family packaging jobs.
@@ -105,20 +107,29 @@ rerun by the required workflows at that exact commit.
    fuzz target must complete without a crash or hang finding.
 6. Run the complete manual `performance.yml` reference-machine workflow at that
    commit and archive its integrity-bound result set.
-7. Complete and archive the exact 72-hour Streams and 24-hour Sync endurance
-   workflows at the same candidate commit. Perform and content-address all
-   seven required operational disturbances inside each report window. Any
-   candidate code change restarts the applicable run.
+7. Complete and archive the exact 72-hour Streams, 24-hour Sync, and 24-hour
+   ContinuousGraph endurance workflows at the same candidate commit.
+   ContinuousGraph must complete at least 100,000 evaluations, commit at least
+   99.9%, keep lifecycle P95 at or below one second, record repair, replay
+   restart, cancellation cleanup and PostgreSQL disconnect recovery, and
+   report zero ordering or reconciliation errors. Perform and content-address
+   all required operational disturbances. Any candidate change restarts the
+   affected workflows.
 8. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
    PostgreSQL 19 support as stable before the GA record passes.
 9. Complete the
-   [independent release review](release-review-handoff.md), application pilots,
+   [independent release review](release-review-handoff.md), two independent
+   24-hour application pilots that collectively cover all six families and
+   include ContinuousGraph in at least one pilot,
    website deployment acceptance, backup/restore and rollback rehearsal,
    incident game day, security/SLO owner approval and maintainer sign-off.
 10. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
    SHA-256-bound evidence directory.
-11. Enable stable publication one dependency-ordered product family at a time:
-   Provider, Streams, Sync/Live, Control Plane, then Continuous Graph preview.
+11. Approve protected production publication and create tags one at a time:
+   Provider, Streams, Sync, Live, Control Plane, then ContinuousGraph. Verify
+   registry availability, hashes, provenance, installation, and dependency
+   resolution after each tag before creating the next.
 
-Until every applicable item is complete for one immutable commit, all
-publication switches must remain disabled.
+During preparation all publication switches remain disabled. In the immutable
+candidate they are armed; tags and protected `package-production` approval are
+the actual publication boundary.

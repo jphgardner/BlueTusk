@@ -1,5 +1,4 @@
 using System.Collections.Concurrent;
-using System.Collections.ObjectModel;
 using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 
@@ -112,17 +111,17 @@ public sealed class LiveSubscriptionConnection : IAsyncDisposable
 {
     private readonly ChannelReader<LiveSubscriberMessage> _reader;
     private readonly Action<Guid> _onDispose;
-    private readonly ReadOnlyCollection<LiveReplayEvent> _replay;
+    private readonly IReadOnlyList<LiveReplayEvent> _replay;
     private int _disposed;
 
     internal LiveSubscriptionConnection(
         Guid id,
-        IEnumerable<LiveReplayEvent> replay,
+        IReadOnlyList<LiveReplayEvent> replay,
         ChannelReader<LiveSubscriberMessage> reader,
         Action<Guid> onDispose)
     {
         Id = id;
-        _replay = Array.AsReadOnly(replay.ToArray());
+        _replay = replay;
         _reader = reader;
         _onDispose = onDispose;
     }
@@ -174,6 +173,8 @@ public interface ILiveSharedSubscription : IAsyncDisposable
 public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     where TKey : notnull
 {
+    private static readonly LiveSubscriberMessage ResetRequiredMessage =
+        new(LiveSubscriberMessageKind.ResetRequired, null);
     private readonly LiveQuerySession<T, TKey> _session;
     private readonly ILiveReplayStore _replayStore;
     private readonly LiveSharedSubscriptionOptions _options;
@@ -268,7 +269,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
 
             var replayEvents = await PersistAsync(batch.Events, cancellationToken).ConfigureAwait(false);
             Publish(replayEvents);
-            return replayEvents.Count;
+            return replayEvents.Length;
         }
         finally
         {
@@ -318,7 +319,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                     cancellationToken).ConfigureAwait(false);
                 var resetEvents = await PersistAsync(reset.Events, cancellationToken).ConfigureAwait(false);
                 Publish(resetEvents);
-                replay = new LiveReplayReadResult(
+                replay = LiveReplayReadResult.CreateOwned(
                     LiveReplayReadStatus.Available,
                     resetEvents[0].Sequence,
                     resetEvents[^1].Sequence,
@@ -434,16 +435,19 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         }
     }
 
-    private async ValueTask<IReadOnlyList<LiveReplayEvent>> PersistAsync(
+    private async ValueTask<LiveReplayEvent[]> PersistAsync(
         IReadOnlyList<LiveResultEvent<T, TKey>> events,
         CancellationToken cancellationToken)
     {
-        var replayEvents = events
-            .Select(liveEvent => LiveReplayJsonSerializer.Serialize(liveEvent))
-            .ToArray();
+        var replayEvents = new LiveReplayEvent[events.Count];
+        for (var index = 0; index < replayEvents.Length; index++)
+        {
+            replayEvents[index] = LiveReplayJsonSerializer.Serialize(events[index]);
+        }
+
         var expected = Interlocked.Read(ref _persistedSequence);
         var result = await _replayStore.AppendAsync(
-            new LiveReplayAppendRequest(Identity, expected, replayEvents),
+            LiveReplayAppendRequest.CreateOwned(Identity, expected, replayEvents),
             cancellationToken).ConfigureAwait(false);
         if (result.Status is LiveReplayAppendStatus.SequenceConflict)
         {
@@ -466,16 +470,23 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         return replayEvents;
     }
 
-    private void Publish(IReadOnlyList<LiveReplayEvent> events)
+    private void Publish(LiveReplayEvent[] events)
     {
+        var messages = new LiveSubscriberMessage[events.Length];
+        for (var index = 0; index < messages.Length; index++)
+        {
+            messages[index] = new LiveSubscriberMessage(
+                LiveSubscriberMessageKind.Event,
+                events[index]);
+        }
+
         long deliveries = 0;
         foreach (var (id, subscriber) in _subscribers)
         {
             var active = true;
-            foreach (var replayEvent in events)
+            foreach (var message in messages)
             {
-                if (subscriber.Channel.Writer.TryWrite(
-                        new LiveSubscriberMessage(LiveSubscriberMessageKind.Event, replayEvent)))
+                if (subscriber.Channel.Writer.TryWrite(message))
                 {
                     Interlocked.Increment(ref _fanOutDeliveries);
                     deliveries++;
@@ -492,8 +503,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                     {
                     }
 
-                    _ = subscriber.Channel.Writer.TryWrite(
-                        new LiveSubscriberMessage(LiveSubscriberMessageKind.ResetRequired, null));
+                    _ = subscriber.Channel.Writer.TryWrite(ResetRequiredMessage);
                     subscriber.Channel.Writer.TryComplete();
                 }
                 else
@@ -532,11 +542,18 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         }
     }
 
-    private static long GetReplayBytes(IReadOnlyList<LiveReplayEvent> events) =>
-        events.Sum(static item =>
-            (long)item.Payload.Length +
-            item.IntegrityHash.Length +
-            System.Text.Encoding.UTF8.GetByteCount(item.ContentType));
+    private static long GetReplayBytes(IReadOnlyList<LiveReplayEvent> events)
+    {
+        long bytes = 0;
+        foreach (var item in events)
+        {
+            bytes += (long)item.Payload.Length +
+                item.IntegrityHash.Length +
+                System.Text.Encoding.UTF8.GetByteCount(item.ContentType);
+        }
+
+        return bytes;
+    }
 
     private void EnsureStarted()
     {

@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "baseline": "1.0.0-candidate",
+  "normalization": "utf8-lf",
+  "files": [
+    {
+      "path": "src/BlueTusk.ContinuousGraph.ControlPlane/PublicAPI.Shipped.txt",
+      "sha256": "3c3b422dddb1efeb0fc5b228608fd8682452b2a9507d4031894bce3c4dedadbd"
+    },
+    {
+      "path": "src/BlueTusk.ContinuousGraph.ControlPlane/PublicAPI.Unshipped.txt",
+      "sha256": "d732e50de209ea8ed32f53d0040fc096951a7eea034da8a8b37b24e59fb627d4"
+    },
+    {
+      "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Shipped.txt",
+      "sha256": "3c3b422dddb1efeb0fc5b228608fd8682452b2a9507d4031894bce3c4dedadbd"
+    },
+    {
+      "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Unshipped.txt",
+      "sha256": "9ec383da03783717ccc38f90eda746b31bb4ea4273ecf175c8502fb3388017a0"
+    }
+  ]
+}

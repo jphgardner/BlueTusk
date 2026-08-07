@@ -23,6 +23,11 @@
       "reason": "Complete asynchronous named-parameter and scalar path including cancellation/timeout infrastructure."
     },
     {
+      "benchmark": "BlueTusk.Benchmarks.CommandPathBenchmarks.ClassifySessionNeutralSql",
+      "maximumBytesPerOperation": 0,
+      "reason": "Exact-command multiplexing classification uses the allocation-free span scanner."
+    },
+    {
       "benchmark": "BlueTusk.Benchmarks.ProtocolWritePathBenchmarks.WriteSimpleQuery",
       "maximumBytesPerOperation": 0,
       "reason": "Warm-session simple protocol write using reusable bounded session storage."
@@ -34,8 +39,13 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32ArrayBinary",
-      "maximumBytesPerOperation": 448,
-      "reason": "Returned CLR array and boxed element values are caller-owned allocations."
+      "maximumBytesPerOperation": 64,
+      "reason": "The standard one-dimensional array path allocates only the caller-owned CLR array."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32ArrayBinaryTyped",
+      "maximumBytesPerOperation": 64,
+      "reason": "The typed standard one-dimensional array path allocates only the caller-owned CLR array."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadEnumBinary",
@@ -44,8 +54,13 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32RangeBinary",
-      "maximumBytesPerOperation": 64,
-      "reason": "Returned range boxes decoded bounds in its general representation."
+      "maximumBytesPerOperation": 16,
+      "reason": "Typed subtype delegation avoids boxing range bounds."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadInt32RangeBinaryTyped",
+      "maximumBytesPerOperation": 16,
+      "reason": "The generic range path delegates directly to the typed subtype codec."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.ReadCompositeBinary",
@@ -54,8 +69,8 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeInt32ArrayParameter",
-      "maximumBytesPerOperation": 448,
-      "reason": "Exact caller-owned wire payload plus structured array traversal state."
+      "maximumBytesPerOperation": 96,
+      "reason": "Exact caller-owned wire payload with typed one-dimensional array traversal."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StructuredCodecBenchmarks.EncodeCompositeParameter",
@@ -64,13 +79,18 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.DataReaderBenchmarks.ReadThousandTypedInt32Rows",
-      "maximumBytesPerOperation": 28000,
-      "reason": "Buffered reader object and result traversal; typed int4 values do not allocate individually."
+      "maximumBytesPerOperation": 4096,
+      "reason": "Buffered reader traversal caches field resolution and does not box 1,000 typed int4 values."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.DataReaderBenchmarks.ReadThousandGenericInt32Rows",
+      "maximumBytesPerOperation": 4096,
+      "reason": "Generic Decode<T> dispatch reads 1,000 typed int4 values without object decoding or boxing."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.DataReaderBenchmarks.ReadOneMegabyteByteaStream",
-      "maximumBytesPerOperation": 1060000,
-      "reason": "Buffered bytea necessarily owns the returned one-megabyte CLR byte array."
+      "maximumBytesPerOperation": 8192,
+      "reason": "The read-only stream is a zero-copy view over the buffered one-megabyte bytea field."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.DataReaderBenchmarks.ReadOneMegabyteTextReader",
@@ -124,8 +144,13 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffOneUpdatedRowInOneThousand",
-      "maximumBytesPerOperation": 235000,
-      "reason": "Keyed comparison and immutable snapshot ownership for a bounded 1,000-row result with one changed row."
+      "maximumBytesPerOperation": 102400,
+      "reason": "The keyed 1,000-row diff reuses the previous snapshot map and owns only the new snapshot state."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffUnchangedOneThousandRows",
+      "maximumBytesPerOperation": 102400,
+      "reason": "The unchanged 1,000-row diff reuses cached snapshot keys and indexes."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.SerializeOneUpdatedRow",
@@ -159,8 +184,8 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks.BlueTuskReusedScalarBurstAsync",
-      "maximumBytesPerOperation": 1250,
-      "reason": "Repeated execution through a persistent multiplexing lane with command and parameter construction outside the timed operation."
+      "maximumBytesPerOperation": 800,
+      "reason": "Repeated execution through a persistent multiplexing lane with command and parameter construction outside the timed operation; the hardening gate is below 800 B/op."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.NativeCapabilityBenchmarks.EncodeBinaryCopyInt32",
@@ -184,8 +209,29 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction",
-      "maximumBytesPerOperation": 14000000,
-      "reason": "End-to-end integrity-checked 4 MiB spool write, durable flush, stream, and cleanup; the budget includes intentionally owned wire and spool buffers."
+      "maximumBytesPerOperation": 262144,
+      "maximumGen2Collections": 0,
+      "reason": "End-to-end integrity-checked 4 MiB spool write, durable flush, memory-mapped replay, and cleanup must avoid managed large-object materialisation and Gen2 collection."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.ConstructCoreTransactionBatch",
+      "maximumBytesPerOperation": 256,
+      "reason": "Core Sync batch ownership baseline before connector-specific ownership changes."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.EncodeNatsTransactionEnvelope",
+      "maximumBytesPerOperation": 72000,
+      "reason": "NATS transaction-envelope encoding baseline before connector payload ownership changes."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.ValidateOpenSearchDocument",
+      "maximumBytesPerOperation": 128,
+      "reason": "OpenSearch JSON validation baseline before connector payload ownership changes."
+    },
+    {
+      "benchmark": "BlueTusk.Benchmarks.SyncConnectorBenchmarks.CopyPostgreSqlParameterPayload",
+      "maximumBytesPerOperation": 36000,
+      "reason": "PostgreSQL parameter-payload copy baseline before connector payload ownership changes."
     }
   ]
 }

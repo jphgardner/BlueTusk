@@ -28,8 +28,10 @@ public sealed class BlueTuskCommand : DbCommand
     private BlueTuskCommandPlan? _commandPlan;
     private string? _commandPlanText;
     private int _commandPlanParameterVersion = -1;
-    private BlueTuskExtendedQueryParameter[]? _preparedEncodedParameters;
-    private byte[]?[]? _preparedParameterBuffers;
+    private BlueTuskExtendedQueryParameter[]? _encodedParameters;
+    private byte[]?[]? _parameterBuffers;
+    private string? _multiplexingClassificationText;
+    private bool _multiplexingSessionNeutral;
     private ReusableCommandTimeout? _preparedCommandTimeout;
 
     public BlueTuskCommand()
@@ -1064,7 +1066,7 @@ public sealed class BlueTuskCommand : DbCommand
             ? "commands enlisted in a transaction require session affinity"
             : _prepareRequested
                 ? "explicitly prepared commands require session affinity"
-                : !BlueTuskMultiplexingClassifier.IsSessionNeutral(CommandText)
+                : !IsSessionNeutralCommandText()
                     ? "the SQL can change or depend on physical-session state"
                     : null;
         if (reason is null)
@@ -1078,6 +1080,23 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         return null;
+    }
+
+    private bool IsSessionNeutralCommandText()
+    {
+        var commandText = CommandText;
+        if (string.Equals(
+                _multiplexingClassificationText,
+                commandText,
+                StringComparison.Ordinal))
+        {
+            return _multiplexingSessionNeutral;
+        }
+
+        var sessionNeutral = BlueTuskMultiplexingClassifier.IsSessionNeutral(commandText);
+        _multiplexingClassificationText = commandText;
+        _multiplexingSessionNeutral = sessionNeutral;
+        return sessionNeutral;
     }
 
     private bool ShouldUseMultiplexingScalarPath() =>
@@ -1322,10 +1341,15 @@ public sealed class BlueTuskCommand : DbCommand
             return default;
         }
 
-        var value = BlueTuskValueDecoder.Decode(
-            types,
-            result.Field,
-            result.Value);
+        var resolved = BlueTuskValueDecoder.Resolve(types, result.Field);
+        if (result.Value is not null &&
+            resolved.Type is not null &&
+            resolved.Codec is BlueTusk.TypeSystem.IBlueTuskCodec<T>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<T>(resolved, result.Value);
+        }
+
+        var value = BlueTuskValueDecoder.Decode(resolved, result.Value);
         if (value is null or DBNull)
         {
             return typeof(T) == typeof(object)
@@ -1521,28 +1545,28 @@ public sealed class BlueTuskCommand : DbCommand
             connection.DiagnosticsOptions);
     }
 
-    private IReadOnlyList<BlueTuskExtendedQueryParameter> EncodeParameters(
+    private BlueTuskExtendedQueryParameter[] EncodeParameters(
         BlueTuskCommandPlan plan,
         BlueTusk.TypeSystem.BlueTuskTypeRegistry types)
     {
-        if (!_prepareRequested)
+        var count = plan.Parameters.Count;
+        if (count == 0)
         {
-            return BlueTuskParameterEncoder.Encode(plan.Parameters, types);
+            return Array.Empty<BlueTuskExtendedQueryParameter>();
         }
 
-        var count = plan.Parameters.Count;
-        if (_preparedEncodedParameters is null || _preparedEncodedParameters.Length != count)
+        if (_encodedParameters is null || _encodedParameters.Length != count)
         {
-            _preparedEncodedParameters = new BlueTuskExtendedQueryParameter[count];
-            _preparedParameterBuffers = new byte[]?[count];
+            _encodedParameters = new BlueTuskExtendedQueryParameter[count];
+            _parameterBuffers = new byte[]?[count];
         }
 
         BlueTuskParameterEncoder.Encode(
             plan.Parameters,
             types,
-            _preparedEncodedParameters,
-            _preparedParameterBuffers!);
-        return _preparedEncodedParameters;
+            _encodedParameters,
+            _parameterBuffers!);
+        return _encodedParameters;
     }
 
     private static bool ParameterTypeOidsMatch(

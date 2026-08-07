@@ -1,6 +1,10 @@
 # BlueTusk real-time platform
 
-BlueTusk extends the native provider with transaction-preserving change streams, durable fan-out, destination synchronisation, authorised live queries, and eventually continuous graph queries. Every component is MIT licensed and remains in this monorepo, but each product family has an independent semantic version and release train.
+BlueTusk extends the native provider with transaction-preserving change
+streams, durable fan-out, destination synchronisation, authorised live queries,
+and ContinuousGraph queries. Every component is MIT licensed and remains in
+this monorepo, but each product family has an independent semantic version and
+release train.
 
 ```text
 PostgreSQL 15–19
@@ -21,7 +25,8 @@ Streams is the only application-level CDC boundary. Sync, Live, and Continuous G
 - Delivery is ordered, transaction-preserving, and at least once. Exactly once is not claimed.
 - Durable downstream handling precedes checkpoint persistence; checkpoint persistence precedes PostgreSQL feedback.
 - Checkpoints are monotonic compare-and-swap records bound to a source identity and lease fencing token.
-- Direct groups own independent slots. The first Streams preview also includes PostgreSQL relay fan-out from one slot.
+- Direct groups own independent slots. Streams also includes PostgreSQL relay
+  fan-out from one slot.
 - All memory, transaction, spool, acknowledgement-age, and WAL-lag queues are bounded.
 - Exported snapshots restart with a new epoch after exporter/session loss; an expired snapshot is not resumable.
 - Live uses CDC as invalidation and reruns an authorised bounded EF query before emitting client-visible data.
@@ -36,9 +41,10 @@ The release manifest is `eng/product-families.json`; version properties live und
 An empty family is valid during architecture work but cannot be packaged. This prevents placeholder NuGet packages from implying implemented behavior.
 
 Each family declares its cross-family release dependencies and an explicit
-schema-2 publication policy. A family cannot enable publication while any
-dependency is still gated. Stable and preview channels, exact tag prefixes, and
-required exact-commit workflow evidence are machine-enforced. Every package
+schema-2 publication policy. During preparation all policies are disabled; in
+the immutable candidate all six are armed. Exact stable channels, tag prefixes,
+dependency order, and required exact-commit workflow evidence are
+machine-enforced. Every package
 project is listed explicitly, so a new project cannot silently enter a release
 train. `-Candidate` can build a gated verification
 artifact without opening its publication gate. Families with npm artifacts
@@ -46,4 +52,15 @@ always run a clean locked install, vulnerability audit, client build, and
 client tests before any tarball is created. See the
 [release process](../release-process.md).
 
-Implementation status: [Streams 0.1.0-preview.1](../streams/release-notes-0.1.0-preview.1.md) has passed the Phase 3 implementation and packaging gates. The [Control Plane and Dashboard](../control-plane/README.md) provide source/relay, Sync, Live, and Continuous Graph inventory, versioned v1 agent APIs, authorised pages, confirmed/audited operation controls, and transactionally migrated immutable PostgreSQL audit. [Sync](../sync/README.md) has its pipeline kernel, all four required destinations on one live conformance contract, bounded reconciliation/repair, cutover-safe rebuild, in-process hosting, restart-aware relay bootstrap, retry/rate-limit policy, dashboard integration, and an executable 24-hour endurance workflow. [Live 0.1.0-preview.1](../live/release-notes-0.1.0-preview.1.md) has passed its implementation, PostgreSQL 15–19 store/transport, client, and package gates. [Continuous Graph 0.1.0-preview.1](../continuous-graph/release-notes-0.1.0-preview.1.md) has passed its Phase 7 implementation and packaging gates, and its Phase 8 bounded incremental-maintenance slice now uses authorised affected-key queries plus authoritative repair. All six publication policies are currently disabled while the exact V1 release evidence remains open; candidate artifacts do not grant publication permission.
+Implementation status: all six families are release-prepared at stable
+`1.0.0`. [Streams](../streams/release-notes-1.0.0.md) has its complete CDC and
+relay contracts; [Sync](../sync/release-notes-1.0.0.md) has all four
+destinations on one conformance contract; [Live](../live/release-notes-1.0.0.md)
+has its PostgreSQL stores, transports, and NuGet/npm clients; the
+[Control Plane and Dashboard](../control-plane/release-notes-1.0.0.md) provide
+authorised inventory, operations, audit, and versioned v1 APIs; and
+[ContinuousGraph](../continuous-graph/release-notes-1.0.0.md) has bounded
+incremental maintenance plus authoritative repair. Publication remains
+disabled during preparation. After PostgreSQL 19 GA, a reviewed arming PR to
+`main` creates the immutable candidate; tags and protected production approval
+remain the publication boundary.

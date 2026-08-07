@@ -29,7 +29,10 @@ public sealed class BlueTuskPgOutputDecoder
     public BlueTuskPgOutputEnvelope Decode(BlueTuskXLogData xLogData)
     {
         ArgumentNullException.ThrowIfNull(xLogData);
-        return new BlueTuskPgOutputEnvelope(xLogData, Decode(xLogData.Data));
+        var message = Decode(xLogData.Data);
+        return xLogData.OwnsData
+            ? BlueTuskPgOutputEnvelope.CreateOwned(xLogData, message)
+            : new BlueTuskPgOutputEnvelope(xLogData, message);
     }
 
     /// <summary>Decodes one complete pgoutput message payload.</summary>

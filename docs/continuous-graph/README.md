@@ -1,6 +1,6 @@
 # BlueTusk Continuous Graph
 
-`BlueTusk.ContinuousGraph` is the post-1.0-platform graph preview. Trusted
+`BlueTusk.ContinuousGraph` is the release-prepared stable graph family. Trusted
 server code registers bounded typed SQL/PGQ queries; the compiler validates the
 query against EF property-graph metadata and then delegates gap-free
 invalidation, authoritative requery, and keyed result diffs to BlueTusk Live.
@@ -60,7 +60,7 @@ the corresponding relational tables as Live invalidation dependencies. A
 change to an unrelated graph element therefore does not rerun this query.
 Unknown and duplicate aliases fail during registration.
 
-The preview query envelope permits outer `Where`, `Select`, deterministic
+The V1 query envelope permits outer `Where`, `Select`, deterministic
 `OrderBy`/`ThenBy`, one bounded `Take`, and `AsNoTracking`. Ordering must include
 the direct result key. The ordinary typed graph builder remains responsible for
 safe graph-pattern and projection translation, and EF must produce
@@ -180,21 +180,22 @@ plan with the application registry. Install the optional
 fingerprints, graph names, databases, element aliases, exact table
 dependencies, result limits, and capabilities. The authorised dashboard
 exposes the same inventory at `/graphs` and `/api/graphs`; every application
-value is HTML encoded. This adapter owns the preview-to-stable dependency; the
-Control Plane core does not reference Continuous Graph.
+value is HTML encoded. The optional adapter owns the graph dependency; the
+Control Plane core does not reference ContinuousGraph.
 
 ## Release state
 
-The two packages are independently versioned as `0.1.0-preview.1` and have
-passed their Phase 7 implementation gates. `BlueTusk.ContinuousGraph` contains
+The two packages are release-prepared at stable `1.0.0`.
+`BlueTusk.ContinuousGraph` contains
 the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
-operations adapter. The family remains non-publishable until Provider,
-Streams, Live, and Control Plane release dependencies are enabled in order.
-The release script machine-enforces that dependency readiness.
-The Phase 8 incremental-maintenance slice is implemented and remains in the
-unshipped API baseline while its production evidence is gathered.
-See the [preview release notes](release-notes-0.1.0-preview.1.md) for the exact
-scope and boundaries.
+operations adapter. The family remains unpublished until PostgreSQL 19 GA,
+Provider, Streams, Live, and Control Plane 1.0.0, the exact 24-hour endurance
+report, and at least one independent ContinuousGraph pilot pass. The release
+script machine-enforces dependency readiness and protected tag ordering. The
+V1 public surface is hash-locked by the
+[API compatibility contract](api-compatibility.md). See the
+[1.0.0 release record](release-notes-1.0.0.md) for the exact support and
+publication boundary.
 Offline compiler tests cover exact dependency extraction, stable fingerprints,
 Live session handoff, unsupported-server rejection, and fail-closed query
 shapes. Incremental state-machine tests cover exact top-N updates, repair

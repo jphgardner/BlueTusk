@@ -80,6 +80,19 @@ if ($RequireGeneralAvailability)
             'Stable publication is blocked until PostgreSQL 19 GA has a ' +
             'digest-pinned image and exact-commit compatibility evidence.')
     }
+    if (-not [string]::Equals(
+            [string]$manifest.currentOfficialMilestone,
+            [string]$ga.version,
+            [StringComparison]::Ordinal) -or
+        -not [string]::Equals(
+            [string]$current[0].image,
+            [string]$ga.image,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            'Stable publication requires PostgreSQL 19 GA to be the current ' +
+            'official milestone and the compose-pinned milestone image.')
+    }
 }
 
 Write-Host (

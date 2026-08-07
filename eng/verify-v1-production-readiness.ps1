@@ -226,9 +226,24 @@ foreach ($requiredCandidateSource in @(
     }
 }
 foreach ($requiredCandidateSource in @(
+        '$continuousGraphReport = OneFile (Join-Path $root continuous-graph) report.json',
+        '$continuousGraphProvenance = OneFile (Join-Path $root continuous-graph) build-provenance.json',
+        'reportSha256 = Hash $continuousGraphReport',
+        'candidateProvenanceSha256 = Hash $continuousGraphProvenance'))
+{
+    if (-not $candidateWorkflowSource.Contains(
+            $requiredCandidateSource,
+            [StringComparison]::Ordinal))
+    {
+        throw (
+            'The exact-candidate aggregation workflow does not bind the ' +
+            "ContinuousGraph endurance artifact through '$requiredCandidateSource'.")
+    }
+}
+foreach ($requiredCandidateSource in @(
         'runAttempt = [int]$run.run_attempt',
         'completedUtc = [string]$run.updated_at',
-        'schemaVersion = 2'))
+        'schemaVersion = 3'))
 {
     if (-not $candidateWorkflowSource.Contains(
             $requiredCandidateSource,
@@ -242,9 +257,9 @@ foreach ($requiredCandidateSource in @(
 
 $exampleEvidence = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'v1-candidate-evidence.example.json') -Raw | ConvertFrom-Json
-if ([int]$exampleEvidence.schemaVersion -ne 2)
+if ([int]$exampleEvidence.schemaVersion -ne 3)
 {
-    throw 'The candidate-evidence example must use schema 2.'
+    throw 'The candidate-evidence example must use schema 3.'
 }
 $exampleWorkflowRuns = @($exampleEvidence.workflowRuns)
 if ($exampleWorkflowRuns.Count -ne @($configuration.requiredWorkflows).Count)
@@ -427,6 +442,88 @@ if ($LASTEXITCODE -ne 0 -or $trackedStatus.Count -ne 0)
     throw 'Candidate verification requires a clean tracked worktree at the exact candidate commit.'
 }
 
+$expectedFamilyOrder = @(
+    'Provider',
+    'Streams',
+    'Sync',
+    'Live',
+    'ControlPlane',
+    'ContinuousGraph'
+)
+$registeredFamilies = @($families.families.PSObject.Properties.Name)
+if ($registeredFamilies.Count -ne $expectedFamilyOrder.Count -or
+    (Compare-Object $expectedFamilyOrder $registeredFamilies))
+{
+    throw (
+        'The immutable candidate must register exactly the six V1 product ' +
+        'families in dependency order.')
+}
+
+$seenFamilies = [Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+foreach ($familyName in $expectedFamilyOrder)
+{
+    $family = $families.families.$familyName
+    if ($family.publication.enabled -ne $true)
+    {
+        throw "Candidate family '$familyName' is not armed for protected publication."
+    }
+    if (-not [string]::Equals(
+            [string]$family.publication.channel,
+            'stable',
+            [StringComparison]::Ordinal))
+    {
+        throw "Candidate family '$familyName' is not on the stable channel."
+    }
+
+    [xml]$versionDocument = Get-Content -LiteralPath (
+        Join-Path $repositoryRoot ([string]$family.versionFile)) -Raw
+    $versionPrefix = [string]$versionDocument.Project.PropertyGroup.VersionPrefix
+    $versionSuffix = [string]$versionDocument.Project.PropertyGroup.VersionSuffix
+    if ($versionPrefix -ne '1.0.0' -or
+        -not [string]::IsNullOrWhiteSpace($versionSuffix))
+    {
+        throw "Candidate family '$familyName' must have exact stable version 1.0.0."
+    }
+
+    foreach ($dependency in @($family.releaseDependencies))
+    {
+        if (-not $seenFamilies.Contains([string]$dependency))
+        {
+            throw (
+                "Candidate family '$familyName' has out-of-order or unknown " +
+                "dependency '$dependency'.")
+        }
+    }
+    [void]$seenFamilies.Add($familyName)
+}
+
+$originMain = (& git -C $repositoryRoot rev-parse refs/remotes/origin/main).Trim()
+if ($LASTEXITCODE -ne 0 -or
+    -not [string]::Equals(
+        $originMain,
+        $Commit,
+        [StringComparison]::OrdinalIgnoreCase))
+{
+    throw (
+        "Candidate '$Commit' must be the reviewed immutable origin/main commit; " +
+        "origin/main is '$originMain'.")
+}
+$releaseTags = @(
+    & git -C $repositoryRoot tag --points-at $Commit |
+        Where-Object {
+            $_ -match (
+                '^(?:provider|streams|sync|live|control-plane|' +
+                'continuous-graph)-v1\.0\.0$')
+        }
+)
+if ($LASTEXITCODE -ne 0 -or $releaseTags.Count -ne 0)
+{
+    throw (
+        'Candidate verification is a pre-publication gate; release tags already ' +
+        "exist at the candidate: $($releaseTags -join ', ').")
+}
+
 $candidateCommitUtcText = (
     & git -C $repositoryRoot show -s --format=%cI $Commit
 ).Trim()
@@ -438,14 +535,17 @@ $candidateCommitUtc = ConvertTo-VerifiedUtcDateTime `
     $candidateCommitUtcText `
     "Candidate '$Commit' commit timestamp"
 
+& (Join-Path $PSScriptRoot 'verify-postgresql19-programme.ps1') `
+    -RepositoryRoot $repositoryRoot `
+    -RequireGeneralAvailability
 & (Join-Path $PSScriptRoot 'verify-github-governance.ps1') -Mode Remote
 
 $resolvedEvidence = (Resolve-Path -LiteralPath $EvidencePath).Path
 $evidenceRoot = Split-Path -Parent $resolvedEvidence
 $evidence = Get-Content -LiteralPath $resolvedEvidence -Raw | ConvertFrom-Json
-if ([int]$evidence.schemaVersion -ne 2)
+if ([int]$evidence.schemaVersion -ne 3)
 {
-    throw "Expected candidate-evidence schema 2; found '$($evidence.schemaVersion)'."
+    throw "Expected candidate-evidence schema 3; found '$($evidence.schemaVersion)'."
 }
 if (-not [string]::Equals(
         [string]$evidence.candidateCommit,
@@ -535,14 +635,7 @@ foreach ($integrityCheck in @(
 
 $programme = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'postgresql19-programme.json') -Raw | ConvertFrom-Json
-$milestone = @($programme.milestones | Where-Object {
-    [string]$_.version -eq [string]$programme.currentOfficialMilestone
-})
-if ($milestone.Count -ne 1)
-{
-    throw 'The current PostgreSQL 19 programme milestone is ambiguous.'
-}
-$postgresqlImage = [string]$milestone[0].image
+$postgresqlImage = [string]$programme.generalAvailability.image
 
 $streamsReport = Resolve-EvidenceFile `
     -BasePath $evidenceRoot `
@@ -626,6 +719,43 @@ if ($destinationImages.Count -ne 3 -or
     -CandidateProvenancePath $syncProvenance `
     -ExpectedPostgreSqlImage $postgresqlImage `
     -ExpectedDestinationImages $destinationImages
+
+$continuousGraphReport = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.continuousGraph.reportPath)
+$continuousGraphProvenance = Resolve-EvidenceFile `
+    -BasePath $evidenceRoot `
+    -Path ([string]$evidence.continuousGraph.candidateProvenancePath)
+foreach ($integrityCheck in @(
+        @{
+            Path = $continuousGraphReport
+            Expected = [string]$evidence.continuousGraph.reportSha256
+            Description = 'ContinuousGraph endurance report'
+        },
+        @{
+            Path = $continuousGraphProvenance
+            Expected = [string]$evidence.continuousGraph.candidateProvenanceSha256
+            Description = 'ContinuousGraph candidate provenance'
+        }))
+{
+    $actualHash = (
+        Get-FileHash -LiteralPath $integrityCheck.Path -Algorithm SHA256
+    ).Hash.ToLowerInvariant()
+    if ($integrityCheck.Expected -notmatch '^[0-9a-f]{64}$' -or
+        $actualHash -ne $integrityCheck.Expected)
+    {
+        throw "$($integrityCheck.Description) does not match its candidate-manifest SHA-256."
+    }
+}
+& (Join-Path $PSScriptRoot 'verify-continuous-graph-endurance-report.ps1') `
+    -ReportPath $continuousGraphReport `
+    -RequiredDuration ([TimeSpan]::FromHours(
+        [double]$configuration.minimums.continuousGraphEnduranceHours)) `
+    -MinimumEvaluations (
+        [long]$configuration.minimums.continuousGraphMinimumEvaluations) `
+    -ExpectedCommit $Commit `
+    -CandidateProvenancePath $continuousGraphProvenance `
+    -ExpectedPostgreSqlImage $postgresqlImage
 
 $disturbanceReport = Resolve-EvidenceFile `
     -BasePath $evidenceRoot `
@@ -786,17 +916,13 @@ foreach ($gateId in $requiredApprovalIds)
     ) `
     -NotBeforeUtc $latestWorkflowCompletedUtc
 
-& (Join-Path $PSScriptRoot 'verify-postgresql19-programme.ps1') `
-    -RepositoryRoot $repositoryRoot `
-    -RequireGeneralAvailability
-
 $disturbanceRecoveryCount =
     [int]$configuration.minimums.enduranceDisturbanceRuns *
     [int]$configuration.minimums.enduranceDisturbancesPerRun
 Write-Output (
     "V1 candidate readiness passed for immutable commit ${Commit}: " +
     "$($workflowRuns.Count) exact workflow runs, six-family package/SBOM/provenance evidence, " +
-    "72-hour Streams and 24-hour Sync endurance with " +
+    "72-hour Streams, 24-hour Sync, and 24-hour ContinuousGraph endurance with " +
     "$disturbanceRecoveryCount content-addressed disturbance " +
     "recoveries, fresh reference-machine performance evidence, " +
     "PostgreSQL 19 GA, and " +

@@ -1,6 +1,6 @@
 # PostgreSQL 19 compatibility programme
 
-PostgreSQL 19 is currently at Beta 2. BlueTusk treats it as preview evidence,
+PostgreSQL 19 is currently at Beta 2. BlueTusk treats it as pre-GA evidence,
 not a production dependency. The official project warns that beta features and
 behaviour may still change and does not recommend beta releases for production.
 General availability is currently planned for September 2026.
@@ -22,7 +22,7 @@ For every later beta and every release candidate:
 5. Archive test results, server version, image digest, source commit and
    package hashes; then update the programme record.
 
-The [typed SQL/PGQ boundary](graph/README.md#exact-preview-boundary) remains
+The [typed SQL/PGQ boundary](graph/README.md#exact-v1-typed-subset-boundary) remains
 fixed: linear typed paths and direct scalar predicates are supported; the rest
 stays available through parameterised raw SQL. Unsupported typed forms fail
 without a string-concatenation fallback.

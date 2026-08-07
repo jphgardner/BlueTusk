@@ -12,6 +12,11 @@
     <ProjectReference Include="..\..\src\BlueTusk.Replication\BlueTusk.Replication.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync.Nats\BlueTusk.Sync.Nats.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync.OpenSearch\BlueTusk.Sync.OpenSearch.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync.PostgreSql\BlueTusk.Sync.PostgreSql.csproj" />
   </ItemGroup>
 
   <PropertyGroup>

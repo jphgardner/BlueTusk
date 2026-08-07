@@ -155,18 +155,18 @@ B. Machine-checked budgets cap those paths at 235,000 B, 900 B, and 185,000 B
 respectively. These are local regression baselines, not network latency or
 universal throughput claims.
 
-The `0.1.0-preview.1` release train has passed its final preview audit. The
+The stable `1.0.0` release-prepared family has passed its implementation audit. The
 PostgreSQL 15–19 matrix persists initial and update replay in the production
 store and drives signed disconnect/resume delivery through real SSE,
 SignalR/WebSockets, and HTTP/2 gRPC endpoints. Live candidate packages are
 reproducible, but publication is disabled until its V1 dependencies and
 exact-commit release gates pass. See the
-[preview release notes](release-notes-0.1.0-preview.1.md) for exact scope and
+[1.0.0 release record](release-notes-1.0.0.md) for exact scope and
 boundaries.
 
 The [public API candidate freeze](api-compatibility.md) and
 [durable format registry](format-compatibility.md) prepare the Live 1.0 surface
-without claiming that its dependency release gates have completed.
+without claiming that its dependency release gates or publication have completed.
 
 Run the production-store transport gate against any supported PostgreSQL
 service:

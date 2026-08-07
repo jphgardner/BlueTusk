@@ -7,6 +7,7 @@
     "verify-fuzzing-contract.ps1",
     "verify-test-credential-inventory.ps1",
     "verify-endurance-disturbance-contract.ps1",
+    "test-continuous-graph-endurance-verifier.ps1",
     "test-v1-approval-evidence-verifier.ps1",
     "test-v1-workflow-evidence-verifier.ps1",
     "verify-website-production.ps1",
@@ -25,7 +26,8 @@
     "fuzzing.yml",
     "performance.yml",
     "streams-release-endurance.yml",
-    "sync-release-endurance.yml"
+    "sync-release-endurance.yml",
+    "continuous-graph-release-endurance.yml"
   ],
   "requiredApprovalEvidence": [
     {
@@ -75,7 +77,7 @@
     "productionSlos": 14,
     "recoveryObjectives": 5,
     "benchmarkFixtures": 21,
-    "benchmarkResults": 89,
+    "benchmarkResults": 98,
     "performanceArtifacts": 42,
     "fuzzTargetSeconds": 3600,
     "allocationBudgets": 37,
@@ -84,6 +86,8 @@
     "streamsMinimumTransactions": 100000,
     "syncEnduranceHours": 24,
     "syncMinimumCycles": 100,
+    "continuousGraphEnduranceHours": 24,
+    "continuousGraphMinimumEvaluations": 100000,
     "enduranceDisturbanceRuns": 2,
     "enduranceDisturbancesPerRun": 7
   },
@@ -98,7 +102,11 @@
     "eng/v1-operational-disturbance-evidence.example.json",
     "eng/verify-endurance-disturbance-evidence.ps1",
     "eng/test-endurance-disturbance-verifier.ps1",
+    "eng/run-continuous-graph-endurance.ps1",
+    "eng/verify-continuous-graph-endurance-report.ps1",
+    "eng/test-continuous-graph-endurance-verifier.ps1",
     "eng/build-v1-candidate-packages.ps1",
+    "eng/continuous-graph-api-freeze.json",
     "eng/verify-v1-package-evidence.ps1",
     "eng/verify-website-evidence.ps1",
     "website/production-contract.json",
@@ -125,6 +133,7 @@
     "eng/verify-v1-approval-evidence-set.ps1",
     "eng/test-v1-approval-evidence-verifier.ps1",
     ".github/workflows/performance.yml",
+    ".github/workflows/continuous-graph-release-endurance.yml",
     ".github/workflows/v1-candidate-readiness.yml"
   ]
 }

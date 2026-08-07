@@ -1,4 +1,6 @@
+using System.Collections;
 using System.Collections.ObjectModel;
+using System.Diagnostics.CodeAnalysis;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -51,6 +53,8 @@ public sealed record ChangeColumn(
 public sealed class ChangeTable
 {
     private readonly ReadOnlyCollection<ChangeColumn> _columns;
+    private readonly Dictionary<string, int> _columnOrdinals;
+    private readonly int[] _keyOrdinals;
 
     public ChangeTable(
         uint relationId,
@@ -58,25 +62,62 @@ public sealed class ChangeTable
         string name,
         char replicaIdentity,
         IEnumerable<ChangeColumn> columns)
+        : this(
+            relationId,
+            schema,
+            name,
+            replicaIdentity,
+            MaterializeColumns(columns))
+    {
+    }
+
+    private ChangeTable(
+        uint relationId,
+        string schema,
+        string name,
+        char replicaIdentity,
+        ChangeColumn[] columns)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(schema);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        ArgumentNullException.ThrowIfNull(columns);
 
         RelationId = relationId;
         Schema = schema;
         Name = name;
         ReplicaIdentity = replicaIdentity;
-        var materialized = columns.ToArray();
-        for (var index = 0; index < materialized.Length; index++)
+        _columnOrdinals = new Dictionary<string, int>(columns.Length, StringComparer.Ordinal);
+        var keyCount = 0;
+        for (var index = 0; index < columns.Length; index++)
         {
-            if (materialized[index].Ordinal != index)
+            var column = columns[index];
+            if (column.Ordinal != index)
             {
                 throw new ArgumentException("Column ordinals must be contiguous and zero based.", nameof(columns));
             }
+
+            if (!_columnOrdinals.TryAdd(column.Name, column.Ordinal))
+            {
+                throw new ArgumentException(
+                    $"Column names must be unique; '{column.Name}' is repeated.",
+                    nameof(columns));
+            }
+
+            if (column.IsKey)
+            {
+                keyCount++;
+            }
         }
 
-        _columns = Array.AsReadOnly(materialized);
+        _keyOrdinals = new int[keyCount];
+        for (int index = 0, keyIndex = 0; index < columns.Length; index++)
+        {
+            if (columns[index].IsKey)
+            {
+                _keyOrdinals[keyIndex++] = index;
+            }
+        }
+
+        _columns = Array.AsReadOnly(columns);
     }
 
     public uint RelationId { get; }
@@ -89,7 +130,40 @@ public sealed class ChangeTable
 
     public IReadOnlyList<ChangeColumn> Columns => _columns;
 
+    internal ReadOnlySpan<int> KeyOrdinals => _keyOrdinals;
+
+    internal int GetColumnOrdinal(string name) => _columnOrdinals[name];
+
+    internal bool TryGetColumn(string name, [NotNullWhen(true)] out ChangeColumn? column)
+    {
+        if (_columnOrdinals.TryGetValue(name, out var ordinal))
+        {
+            column = _columns[ordinal];
+            return true;
+        }
+
+        column = null;
+        return false;
+    }
+
+    internal static ChangeTable CreateOwned(
+        uint relationId,
+        string schema,
+        string name,
+        char replicaIdentity,
+        ChangeColumn[] columns)
+    {
+        ArgumentNullException.ThrowIfNull(columns);
+        return new ChangeTable(relationId, schema, name, replicaIdentity, columns);
+    }
+
     public override string ToString() => $"{Schema}.{Name}";
+
+    private static ChangeColumn[] MaterializeColumns(IEnumerable<ChangeColumn> columns)
+    {
+        ArgumentNullException.ThrowIfNull(columns);
+        return columns.ToArray();
+    }
 }
 
 public enum ChangeColumnState
@@ -189,33 +263,53 @@ public sealed class ChangeColumnValue : IEquatable<ChangeColumnValue>
     }
 }
 
-public sealed class ChangeRow
+public sealed class ChangeRow : IReadOnlyList<ChangeColumnValue>
 {
-    private readonly ReadOnlyCollection<ChangeColumnValue> _values;
-    private readonly Dictionary<string, int> _ordinals;
+    private readonly ChangeColumnValue[] _values;
 
     public ChangeRow(ChangeTable table, IEnumerable<ChangeColumnValue> values)
+        : this(table, MaterializeValues(values))
+    {
+    }
+
+    private ChangeRow(ChangeTable table, ChangeColumnValue[] values)
     {
         ArgumentNullException.ThrowIfNull(table);
-        ArgumentNullException.ThrowIfNull(values);
         Table = table;
-        var materialized = values.ToArray();
-        if (materialized.Length != table.Columns.Count)
+        if (values.Length != table.Columns.Count)
         {
             throw new ArgumentException("A change row must contain one state for every table column.", nameof(values));
         }
 
-        _values = Array.AsReadOnly(materialized);
-        _ordinals = table.Columns.ToDictionary(column => column.Name, column => column.Ordinal, StringComparer.Ordinal);
+        _values = values;
     }
 
     public ChangeTable Table { get; }
 
-    public IReadOnlyList<ChangeColumnValue> Values => _values;
+    public IReadOnlyList<ChangeColumnValue> Values => this;
 
     public ChangeColumnValue this[int ordinal] => _values[ordinal];
 
-    public ChangeColumnValue this[string name] => _values[_ordinals[name]];
+    public ChangeColumnValue this[string name] => _values[Table.GetColumnOrdinal(name)];
+
+    int IReadOnlyCollection<ChangeColumnValue>.Count => _values.Length;
+
+    IEnumerator<ChangeColumnValue> IEnumerable<ChangeColumnValue>.GetEnumerator() =>
+        ((IEnumerable<ChangeColumnValue>)_values).GetEnumerator();
+
+    IEnumerator IEnumerable.GetEnumerator() => _values.GetEnumerator();
+
+    internal static ChangeRow CreateOwned(ChangeTable table, ChangeColumnValue[] values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return new ChangeRow(table, values);
+    }
+
+    private static ChangeColumnValue[] MaterializeValues(IEnumerable<ChangeColumnValue> values)
+    {
+        ArgumentNullException.ThrowIfNull(values);
+        return values.ToArray();
+    }
 }
 
 public sealed class ChangeRow<T>

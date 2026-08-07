@@ -69,6 +69,16 @@ public class StructuredCodecBenchmarks
     }
 
     [Benchmark]
+    public int[] ReadInt32ArrayBinaryTyped()
+    {
+        var reader = new BlueTuskReader(_array);
+        return ((IBlueTuskCodec<int[]>)_arrayCodec).ReadTyped(
+            ref reader,
+            BlueTuskDataFormat.Binary,
+            _arrayType);
+    }
+
+    [Benchmark]
     public BlueTuskEnumValue ReadEnumBinary()
     {
         var reader = new BlueTuskReader(_enum);
@@ -86,6 +96,16 @@ public class StructuredCodecBenchmarks
             ref reader,
             BlueTuskDataFormat.Binary,
             _rangeType)!;
+    }
+
+    [Benchmark]
+    public BlueTuskRange<int> ReadInt32RangeBinaryTyped()
+    {
+        var reader = new BlueTuskReader(_range);
+        return ((IBlueTuskCodec<BlueTuskRange<int>>)_rangeCodec).ReadTyped(
+            ref reader,
+            BlueTuskDataFormat.Binary,
+            _rangeType);
     }
 
     [Benchmark]

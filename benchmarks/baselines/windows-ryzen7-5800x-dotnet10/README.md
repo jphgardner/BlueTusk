@@ -35,19 +35,32 @@ measured 703.540 ns and 853 B per change; the complete durable 4 MiB
 spill/stream/cleanup measured 46.752 ms and 12,731,471 B. The full checked-in
 inventory is now 89 results across 21 fixtures.
 
+The 2026-08-07 performance-hardening refresh, captured with .NET SDK 10.0.302,
+replaces the DataReader, command-path,
+structured-codec, Live, and Streams reports and adds allocation baselines for
+the core Sync, NATS, OpenSearch, and PostgreSQL connector paths. The refreshed
+inventory contains 98 results across 22 fixtures. Typed 1,000-row `int4` reads
+measure 18.8 µs and 224 B, the buffered 1 MiB `bytea` stream 12.0 µs and 272 B,
+the one-row-in-1,000 Live diff 41.4 µs and 34,584 B, and the in-memory reusable
+scalar path 191 ns and 184 B. The final out-of-process Streams MediumRun records
+24.044 ms mean, 26.738 ms P95, 28.587 ms P99 and 142,444 B for the durable
+4 MiB spool path using direct read-only memory-mapped replay, with zero Gen0,
+Gen1 or Gen2 collections. The mapping survives acknowledgement/file deletion
+until the last materialised memory reference is collected.
+
 The transport-pipeline decision reports were added on 2026-08-01. The bounded `System.IO.Pipelines` prototype improves the adversarial fragmented async batch and tiny cancellation-drain cases, but is approximately 2x slower for a 1 MiB field, 42% slower for synchronous COPY, effectively tied for asynchronous COPY and TLS, and 76% slower for asynchronous raw TCP. Both warm loopback readers report zero measured managed allocation; the prototype reports 96 B for the large-field batch. These short-run measurements support retaining the current transport, as recorded in ADR 0005.
 
-The live PostgreSQL 19 provider-comparison report was refreshed on 2026-08-02
+The live PostgreSQL provider-comparison report was refreshed again on 2026-08-07
 against the local server on this machine after the command, pool, transport, and
 streaming hot-path work. Unlike the short iteration runs used during profiling,
 the checked-in report is a MediumRun with two launches, ten warmups, and fifteen
 measured iterations. The large-field fixture creates the same one-row 1 MiB
 temporary payload on each provider connection during setup, keeping PostgreSQL
 payload-generation CPU outside the timed operations. BlueTusk/Npgsql means are
-446/487 µs and 1,663/2,094 B for a parameterized scalar, 436/445 µs and
-796/1,099 B for an explicitly prepared scalar, 288/326 ns and 168/184 B for an
-untouched warm pool checkout, 672/743 µs and 1,400/1,529 B for a sequential
-1,000-row read, and 4.390/4.482 ms and 3,900/8,938 B for a sequential 1 MiB
+365/392 µs and 1,634/2,079 B for a parameterized scalar, 356/358 µs and
+773/1,137 B for an explicitly prepared scalar, 195/209 ns and 168/184 B for an
+untouched warm pool checkout, 529/549 µs and 1,413/1,418 B for a sequential
+1,000-row read, and 2.279/2.305 ms and 3,832/8,426 B for a sequential 1 MiB
 `bytea` stream.
 
 The current MediumRun therefore records lower BlueTusk mean latency and managed
@@ -63,13 +76,19 @@ same processor and a PostgreSQL 18 loopback server. Both providers use four
 physical lanes, 64 concurrent parameterized scalar commands, no command
 timeout, and one logical command per operation. End-to-end BlueTusk/Npgsql
 results are 19.83/20.57 µs mean, 20.93/22.26 µs P95, 21.06/22.51 µs P99,
-and 1,733/1,738 B per command. Reusing the 64 command objects records
-17.41/20.01 µs mean, 19.34/21.53 µs P95, 20.04/21.69 µs P99, and
-1,143/794 B. BlueTusk therefore has lower mean and tail latency in both
-pairs and slightly lower end-to-end allocation, while Npgsql retains the
-allocation advantage when command construction is excluded.
+and 1,733/1,738 B per command. The BlueTusk reused-command row was refreshed
+on 2026-08-07 and records 16.37 µs mean, 16.76 µs P95, 16.82 µs P99 and
+749 B, compared with the retained Npgsql row at 20.01 µs, 21.53 µs,
+21.69 µs and 794 B. BlueTusk therefore clears the 800 B/op gate while
+retaining lower mean and tail latency.
 
-The checked-in full JSON contains 25–30 measured samples per workload and
+The immutable full JSON contains 25–30 measured samples per original workload
+and remains hash-bound to its source commit. The adjacent
+`MultiplexingComparisonBenchmarks-reused-hardening.json` report contains the
+out-of-process 2026-08-07 BlueTusk refresh and supersedes that one row for the
+allocation gate without altering the frozen evidence.
+
+The checked-in comparison evidence
 passes the machine-readable mean, P95, P99, throughput-derived, and allocation
 budgets. The adjacent evidence manifest binds the report hash to the source
 commit, runtime, operating system, and PostgreSQL image digest. This is a

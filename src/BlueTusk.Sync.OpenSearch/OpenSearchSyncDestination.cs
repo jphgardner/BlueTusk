@@ -717,7 +717,7 @@ public sealed partial class OpenSearchSyncDestination :
         return checked((long)position.Value);
     }
 
-    private static void ValidateJsonDocument(ReadOnlyMemory<byte> content, string contentType)
+    internal static void ValidateJsonDocument(ReadOnlyMemory<byte> content, string contentType)
     {
         if (!contentType.StartsWith("application/json", StringComparison.OrdinalIgnoreCase))
         {

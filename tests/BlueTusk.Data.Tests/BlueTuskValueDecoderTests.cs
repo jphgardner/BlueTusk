@@ -101,6 +101,50 @@ public sealed class BlueTuskValueDecoderTests
         Assert.Equal(json, textReader.ReadToEnd());
     }
 
+    [Fact]
+    public void Data_reader_typed_getters_use_generic_codec_without_object_dispatch()
+    {
+        var type = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(80_001),
+            Schema = "public",
+            Name = "tracked_int",
+            Kind = BlueTuskTypeKind.Base,
+        };
+        var codec = new TrackingInt32Codec();
+        var types = new BlueTuskTypeRegistryBuilder()
+            .Register(type, codec)
+            .Build();
+        byte[] bytes = [0, 0, 0, 42];
+        using var reader = CreateReader(Field(type.Id.Oid, formatCode: 1), bytes, types);
+
+        Assert.True(reader.Read());
+        Assert.Equal(42, reader.GetFieldValue<int>(0));
+        Assert.Equal(42, reader.GetInt32(0));
+        Assert.Equal(2, codec.TypedReadCount);
+        Assert.Equal(0, codec.ObjectReadCount);
+
+        Assert.Equal(42, reader.GetValue(0));
+        Assert.Equal(3, codec.TypedReadCount);
+        Assert.Equal(1, codec.ObjectReadCount);
+    }
+
+    [Fact]
+    public void Buffered_streams_are_read_only_views_that_outlive_the_reader()
+    {
+        byte[] bytes = [0, 1, 2, 3];
+        var reader = CreateReader(Field(17, formatCode: 1), bytes);
+        Assert.True(reader.Read());
+        var stream = reader.GetStream(0);
+        reader.Dispose();
+
+        bytes[0] = 42;
+        Assert.False(stream.CanWrite);
+        Assert.Equal(42, stream.ReadByte());
+        Assert.Throws<NotSupportedException>(() => stream.WriteByte(1));
+        stream.Dispose();
+    }
+
     private static object DecodeParameter(BlueTuskParameter parameter)
     {
         var encoded = BlueTuskParameterEncoder.Encode(parameter);
@@ -147,5 +191,46 @@ public sealed class BlueTuskValueDecoderTests
         var writer = new BlueTuskWriter(destination);
         codec.Write(ref writer, value, BlueTuskDataFormat.Binary, type);
         return destination[..writer.WrittenCount].ToArray();
+    }
+
+    private sealed class TrackingInt32Codec : IBlueTuskCodec<int>
+    {
+        public int TypedReadCount { get; private set; }
+
+        public int ObjectReadCount { get; private set; }
+
+        public Type ClrType => typeof(int);
+
+        public int ReadTyped(
+            ref BlueTuskReader reader,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type)
+        {
+            TypedReadCount++;
+            return reader.ReadInt32BigEndian();
+        }
+
+        public object Read(
+            ref BlueTuskReader reader,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type)
+        {
+            ObjectReadCount++;
+            return ReadTyped(ref reader, format, type);
+        }
+
+        public void WriteTyped(
+            ref BlueTuskWriter writer,
+            int value,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type) =>
+            writer.WriteInt32BigEndian(value);
+
+        public void Write(
+            ref BlueTuskWriter writer,
+            object? value,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type) =>
+            WriteTyped(ref writer, (int)value!, format, type);
     }
 }

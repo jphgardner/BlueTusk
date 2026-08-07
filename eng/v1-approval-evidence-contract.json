@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "approvalSchemaVersion": 2,
+  "approvalSchemaVersion": 3,
   "minimumSummaryLength": 40,
   "gates": [
     {
@@ -9,7 +9,7 @@
         { "name": "reviewerOrganisation", "type": "string", "minLength": 2 },
         { "name": "reviewerIndependent", "type": "boolean", "equals": true },
         { "name": "checklistItemsPassed", "type": "integer", "minimum": 17 },
-        { "name": "requiredWorkflowRunsReviewed", "type": "integer", "minimum": 6 },
+        { "name": "requiredWorkflowRunsReviewed", "type": "integer", "minimum": 7 },
         { "name": "packageFamiliesReviewed", "type": "integer", "equals": 6 },
         { "name": "candidateEvidenceReproduced", "type": "boolean", "equals": true },
         { "name": "unresolvedFindings", "type": "integer", "equals": 0 }
@@ -171,7 +171,10 @@
         { "name": "versionsFrozen", "type": "boolean", "equals": true },
         { "name": "candidateImmutable", "type": "boolean", "equals": true },
         { "name": "publicationOrderAccepted", "type": "boolean", "equals": true },
-        { "name": "publicationSwitchesConfirmedDisabled", "type": "boolean", "equals": true },
+        { "name": "publicationPoliciesArmed", "type": "boolean", "equals": true },
+        { "name": "releaseTagsCreated", "type": "integer", "equals": 0 },
+        { "name": "candidatePackagesPublished", "type": "integer", "equals": 0 },
+        { "name": "protectedProductionApprovalPending", "type": "boolean", "equals": true },
         { "name": "stopConditionsAccepted", "type": "boolean", "equals": true },
         { "name": "rollbackAuthority", "type": "string", "minLength": 2 },
         { "name": "releaseWindowUtc", "type": "utcDateTime" }

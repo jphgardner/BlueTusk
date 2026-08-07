@@ -1,6 +1,6 @@
 {
   "name": "@bluetusk/live",
-  "version": "0.1.0-preview.1",
+  "version": "1.0.0",
   "description": "Framework-neutral browser client for BlueTusk Live.",
   "license": "MIT",
   "repository": {

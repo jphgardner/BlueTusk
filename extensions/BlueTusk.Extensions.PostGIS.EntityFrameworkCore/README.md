@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.PostGIS.EntityFrameworkCore
 
-Preview NetTopologySuite integration for BlueTusk's separately packaged
+Stable NetTopologySuite integration for BlueTusk's separately packaged
 PostGIS transport. Register the EWKB codecs on the long-lived data source and
 the spatial mappings on the EF provider:
 
@@ -46,5 +46,5 @@ EF change tracking snapshots mutable geometry instances and geometry arrays.
 Use `EnsurePostGis()` and `DropPostGis()` in migrations when the
 application owns the extension lifecycle. The live PostgreSQL 18/PostGIS 3.6
 gate covers geometry, geography, typmods, arrays, parameters, spatial filters,
-projections, and compiled queries. These APIs remain experimental
-`0.3.0-preview.1` contracts.
+projections, and compiled queries. These APIs use the stable 1.0.0
+Provider-family contract.

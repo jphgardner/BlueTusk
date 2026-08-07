@@ -7,9 +7,8 @@ The extension-authoring seam is compatibility-stable: the public surfaces of
 `BlueTusk.TypeSystem`, and the ADO.NET integration points have compiler-enforced
 shipped API/nullability baselines. `BlueTusk.Extensions.Citext` supplied the
 first executable compatibility slice and the packaged template exercises the
-same contract. Individual extension packages and their EF integrations remain
-preview and may evolve independently until their own public surfaces are
-baselined.
+same contract. The registered first-party extension packages and their EF
+integrations are included in the stable Provider 1.0.0 API freeze.
 
 ## Start an extension package
 
@@ -35,7 +34,7 @@ and dispose the data source. Extension authors must also add representative
 value round trips, PostgreSQL behavioural tests, package-content inspection,
 and any separate EF translation/migration plug-in tests.
 
-## citext preview
+## citext
 
 Install `citext` in PostgreSQL, configure one long-lived data source, and use the extension-owned CLR value so runtime type inference remains unambiguous from ordinary PostgreSQL `text`:
 
@@ -124,10 +123,10 @@ No citext SQL, CLR type, or package reference is present in `BlueTusk.Data`,
 `BlueTusk.Client`, `BlueTusk.EntityFrameworkCore`, or lower layers. The EF
 mapping and migration SQL live only in the companion package. The authoring
 template and compatibility harness establish the executable stable authoring
-contract. Citext-specific and EF-specific convenience APIs remain preview;
-stability of the seam does not promote every optional package to 1.0.
+contract. Citext-specific and EF-specific convenience APIs are part of the
+stable Provider 1.0.0 contract.
 
-## pgvector preview
+## pgvector
 
 `BlueTusk.Extensions.PgVector` provides executable support for pgvector's
 `vector`, `halfvec`, and `sparsevec` types. Install the extension before building
@@ -183,7 +182,7 @@ to `<~>` and `<%>`. Its live gate verifies EF writes, materialisation, array
 round trips, dimension constraints, and parameterized distance execution for
 the complete pgvector type family.
 
-## hstore preview
+## hstore
 
 `BlueTusk.Extensions.HStore` maps PostgreSQL's key/value type to an immutable
 `BlueTuskHStore` value. Install and register it before building the data source:
@@ -212,7 +211,7 @@ trailing bytes. Runtime catalogue composition supplies `BlueTuskHStore[]` with
 no array-specific registration. The live gate covers scalar and array binary
 round trips plus key lookup, existence, and null-definition semantics.
 
-## ltree preview
+## ltree
 
 `BlueTusk.Extensions.LTree` covers all three public ltree data types: label
 paths, hierarchical patterns, and position-independent text patterns.
@@ -240,7 +239,7 @@ characters depend on the database locale. The live gate resolves all three
 catalogue types and exercises arrays, hierarchical matching,
 position-independent matching, and path-level functions.
 
-## pg_trgm preview
+## pg_trgm
 
 pg_trgm contributes functions, operators, and index operator classes but no
 wire type, so `BlueTusk.Extensions.PgTrgm` is intentionally a feature-only
@@ -270,7 +269,7 @@ are schema-qualified, including quoted custom schemas. The live gate moves the
 extension into a spaced identifier, executes the same behavior, and restores
 it to `public`.
 
-## PostGIS preview
+## PostGIS
 
 `BlueTusk.Extensions.PostGIS` provides distinct geometry and geography
 identities without introducing a geometry-model dependency into BlueTusk core:
@@ -330,7 +329,7 @@ snapshots, and migration helpers own optional extension create/drop SQL. The
 PostgreSQL 18/PostGIS 3.6 live gate covers round trips, arrays, parameters,
 projections, spatial filters, and compiled queries.
 
-## TimescaleDB preview
+## TimescaleDB
 
 TimescaleDB adds SQL behavior instead of a wire type, so
 `BlueTusk.Extensions.TimescaleDB` is a feature-only package. It provides typed

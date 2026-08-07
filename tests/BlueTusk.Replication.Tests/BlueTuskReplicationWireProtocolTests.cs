@@ -27,6 +27,16 @@ public sealed class BlueTuskReplicationWireProtocolTests
             new DateTimeOffset(2000, 1, 1, 0, 0, 1, 500, TimeSpan.Zero),
             message.ServerClock);
         Assert.Equal([1, 2, 3], message.Data.ToArray());
+        Assert.True(message.OwnsData);
+
+        var publicEquivalent = new BlueTuskXLogData(
+            message.WalStart,
+            message.ServerWalEnd,
+            message.ServerClock,
+            message.Data);
+        Assert.False(publicEquivalent.OwnsData);
+        Assert.Equal(publicEquivalent, message);
+        Assert.Equal(publicEquivalent.GetHashCode(), message.GetHashCode());
     }
 
     [Theory]

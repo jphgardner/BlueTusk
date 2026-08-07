@@ -293,7 +293,7 @@ var documents = await context.Documents
     .ToListAsync(cancellationToken);
 ```
 
-The preview covers:
+The V1 contract covers:
 
 - text `ILIKE`, case-sensitive `~`/`!~`, and case-insensitive `~*`/`!~*`;
 - array containment (`@>`, `<@`), overlap (`&&`), append/prepend, and concatenation;
@@ -582,7 +582,7 @@ uniquification, ordinality preserves PostgreSQL array order, and nullable array
 elements materialize without being collapsed. For an outer expansion over a
 non-nullable value-type array, project the element to its nullable form before
 `DefaultIfEmpty()` so the absent row remains distinguishable from the CLR
-default value. This preview covers mapped array columns only.
+default value. This V1 contract covers mapped array columns only.
 
 Series are also available as typed, composable query roots. Use
 `Database.GenerateSeries` for a standalone series; `int`, `long`, and `decimal`
@@ -2283,7 +2283,7 @@ PostgreSQL 19 property graphs have typed model metadata, migration diffing and o
 ## PostgreSQL 19 property-graph queries
 
 `PropertyGraph` creates a typed SQL/PGQ query from graph metadata configured in
-the EF model. The preview translates linear directed paths to `GRAPH_TABLE`,
+the EF model. The V1 contract translates linear directed paths to `GRAPH_TABLE`,
 keeps captured predicate values parameterized, and returns a composable
 `IQueryable`. It supports outer relational filters, joins, grouping, ordering,
 pagination, DTO projections, and tracked entity materialization:

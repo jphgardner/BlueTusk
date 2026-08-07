@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.PgTrgm
 
-Preview PostgreSQL `pg_trgm` support for BlueTusk. Because pg_trgm adds
+Stable PostgreSQL `pg_trgm` support for BlueTusk. Because pg_trgm adds
 functions, operators, and index operator classes rather than a wire type, this
 package contributes an immutable data-source feature and a parameterized
 comparison API instead of a codec.
@@ -24,5 +24,5 @@ the installation schema to `UsePgTrgm(schema)` when it is not `public`; function
 and operator qualification remains safe for quoted schema names.
 
 PostgreSQL must have `CREATE EXTENSION pg_trgm` applied before comparison.
-This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
-APIs, not stable or production-ready contracts.
+This package and the BlueTusk extension SDK use the stable 1.0.0
+Provider-family contract.

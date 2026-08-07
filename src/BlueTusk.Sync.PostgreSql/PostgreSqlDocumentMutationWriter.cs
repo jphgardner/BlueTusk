@@ -148,7 +148,7 @@ public sealed class PostgreSqlDocumentMutationWriter : IPostgreSqlSyncMutationWr
                 AddParameter(command, $"key{index}", item.Key);
                 AddParameter(command, $"partition{index}", item.PartitionKey, DbType.String);
                 AddParameter(command, $"content_type{index}", item.ContentType);
-                AddParameter(command, $"content{index}", item.Content.ToArray());
+                AddParameter(command, $"content{index}", CopyParameterPayload(item.Content));
                 AddParameter(command, $"change_id{index}", item.ChangeId);
                 AddParameter(command, $"snapshot_epoch{index}", item.SnapshotEpoch, DbType.Guid);
             }
@@ -222,6 +222,9 @@ public sealed class PostgreSqlDocumentMutationWriter : IPostgreSqlSyncMutationWr
 
     private static string FormatSnapshotId(SnapshotRowId id) =>
         string.Create(CultureInfo.InvariantCulture, $"{id.Epoch:N}:{id.TableIdentity}:{id.KeyIdentity}");
+
+    internal static byte[] CopyParameterPayload(ReadOnlyMemory<byte> content) =>
+        content.ToArray();
 
     private static DbCommand CreateCommand(
         DbConnection connection,

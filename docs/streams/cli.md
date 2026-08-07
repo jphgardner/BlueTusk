@@ -6,7 +6,7 @@ source/control isolation, relay-schema exclusion, and canonical publication
 fingerprint before a worker starts.
 
 ```powershell
-dotnet tool install --global BlueTusk.Streams.Tool --version 0.1.0-preview.1
+dotnet tool install --global BlueTusk.Streams.Tool --version 1.0.0
 $env:BLUETUSK_STREAMS_SOURCE = "Host=source;Database=app;Username=streams;Password=..."
 $env:BLUETUSK_STREAMS_CONTROL = "Host=control;Database=streams;Username=streams;Password=..."
 

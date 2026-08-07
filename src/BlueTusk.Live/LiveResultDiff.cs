@@ -82,16 +82,31 @@ public sealed class LiveResultSnapshot<T, TKey>
 {
     private readonly ReadOnlyCollection<T> _rows;
     private readonly ReadOnlyCollection<TKey> _keys;
+    private readonly Dictionary<TKey, int> _keyIndexes;
 
-    internal LiveResultSnapshot(IEnumerable<T> rows, IEnumerable<TKey> keys)
+    private LiveResultSnapshot(
+        T[] rows,
+        TKey[] keys,
+        Dictionary<TKey, int> keyIndexes)
     {
-        _rows = Array.AsReadOnly(rows.ToArray());
-        _keys = Array.AsReadOnly(keys.ToArray());
+        _rows = Array.AsReadOnly(rows);
+        _keys = Array.AsReadOnly(keys);
+        _keyIndexes = keyIndexes;
     }
 
     public IReadOnlyList<T> Rows => _rows;
 
     public IReadOnlyList<TKey> Keys => _keys;
+
+    internal Dictionary<TKey, int> KeyIndexes => _keyIndexes;
+
+    internal IEqualityComparer<TKey> KeyComparer => _keyIndexes.Comparer;
+
+    internal static LiveResultSnapshot<T, TKey> CreateOwned(
+        T[] rows,
+        TKey[] keys,
+        Dictionary<TKey, int> keyIndexes) =>
+        new(rows, keys, keyIndexes);
 }
 
 public sealed record LiveDiffOptions
@@ -107,9 +122,16 @@ public sealed class LiveDiffBatch<T, TKey>
     internal LiveDiffBatch(
         LiveResultSnapshot<T, TKey> snapshot,
         IEnumerable<LiveResultEvent<T, TKey>> events)
+        : this(snapshot, events.ToArray())
+    {
+    }
+
+    private LiveDiffBatch(
+        LiveResultSnapshot<T, TKey> snapshot,
+        LiveResultEvent<T, TKey>[] events)
     {
         Snapshot = snapshot;
-        Events = Array.AsReadOnly(events.ToArray());
+        Events = Array.AsReadOnly(events);
     }
 
     public LiveResultSnapshot<T, TKey> Snapshot { get; }
@@ -117,6 +139,15 @@ public sealed class LiveDiffBatch<T, TKey>
     public IReadOnlyList<LiveResultEvent<T, TKey>> Events { get; }
 
     public long LastSequence => Events.Count == 0 ? 0 : Events[^1].Sequence;
+
+    internal static LiveDiffBatch<T, TKey> CreateOwned(
+        LiveResultSnapshot<T, TKey> snapshot,
+        LiveResultEvent<T, TKey>[] events)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        ArgumentNullException.ThrowIfNull(events);
+        return new LiveDiffBatch<T, TKey>(snapshot, events);
+    }
 }
 
 public static class LiveResultDiffer
@@ -142,7 +173,7 @@ public static class LiveResultDiffer
             snapshot.Rows,
             snapshot.Keys,
             null);
-        return new LiveDiffBatch<T, TKey>(snapshot, [initial]);
+        return LiveDiffBatch<T, TKey>.CreateOwned(snapshot, [initial]);
     }
 
     public static LiveDiffBatch<T, TKey> Diff<T, TKey>(
@@ -165,12 +196,8 @@ public static class LiveResultDiffer
         keyComparer ??= EqualityComparer<TKey>.Default;
 
         var current = CreateSnapshot(currentRows, keySelector, keyComparer);
-        var oldByKey = previous.Keys
-            .Select((key, index) => (key, index))
-            .ToDictionary(item => item.key, item => item.index, keyComparer);
-        var newByKey = current.Keys
-            .Select((key, index) => (key, index))
-            .ToDictionary(item => item.key, item => item.index, keyComparer);
+        var oldByKey = GetKeyIndexes(previous, keyComparer);
+        var newByKey = current.KeyIndexes;
         var events = new List<LiveResultEvent<T, TKey>>();
         var sequence = nextSequence;
 
@@ -223,9 +250,7 @@ public static class LiveResultDiffer
             }
         }
 
-        var oldCommon = previous.Keys.Where(newByKey.ContainsKey);
-        var newCommon = current.Keys.Where(oldByKey.ContainsKey);
-        if (!oldCommon.SequenceEqual(newCommon, keyComparer))
+        if (CommonOrderChanged(previous, current, oldByKey, newByKey, keyComparer))
         {
             events.Add(new LiveResultEvent<T, TKey>(
                 sequence++,
@@ -254,7 +279,7 @@ public static class LiveResultDiffer
                 LiveResetReason.DiffLimitExceeded));
         }
 
-        return new LiveDiffBatch<T, TKey>(current, events);
+        return LiveDiffBatch<T, TKey>.CreateOwned(current, events.ToArray());
     }
 
     private static LiveResultSnapshot<T, TKey> CreateSnapshot<T, TKey>(
@@ -263,20 +288,84 @@ public static class LiveResultDiffer
         IEqualityComparer<TKey> keyComparer)
         where TKey : notnull
     {
+        var ownedRows = new T[rows.Count];
         var keys = new TKey[rows.Count];
-        var seen = new HashSet<TKey>(keyComparer);
+        var keyIndexes = new Dictionary<TKey, int>(rows.Count, keyComparer);
         for (var index = 0; index < rows.Count; index++)
         {
-            var key = keySelector(rows[index]) ??
+            var row = rows[index];
+            var key = keySelector(row) ??
                 throw new InvalidOperationException("A live query key selector returned null.");
-            if (!seen.Add(key))
+            if (!keyIndexes.TryAdd(key, index))
             {
                 throw new InvalidOperationException($"A live query returned duplicate key '{key}'.");
             }
 
+            ownedRows[index] = row;
             keys[index] = key;
         }
 
-        return new LiveResultSnapshot<T, TKey>(rows, keys);
+        return LiveResultSnapshot<T, TKey>.CreateOwned(ownedRows, keys, keyIndexes);
+    }
+
+    private static Dictionary<TKey, int> GetKeyIndexes<T, TKey>(
+        LiveResultSnapshot<T, TKey> snapshot,
+        IEqualityComparer<TKey> keyComparer)
+        where TKey : notnull
+    {
+        if (ReferenceEquals(snapshot.KeyComparer, keyComparer) ||
+            snapshot.KeyComparer.Equals(keyComparer))
+        {
+            return snapshot.KeyIndexes;
+        }
+
+        var keyIndexes = new Dictionary<TKey, int>(snapshot.Keys.Count, keyComparer);
+        for (var index = 0; index < snapshot.Keys.Count; index++)
+        {
+            keyIndexes.Add(snapshot.Keys[index], index);
+        }
+
+        return keyIndexes;
+    }
+
+    private static bool CommonOrderChanged<T, TKey>(
+        LiveResultSnapshot<T, TKey> previous,
+        LiveResultSnapshot<T, TKey> current,
+        Dictionary<TKey, int> oldByKey,
+        Dictionary<TKey, int> newByKey,
+        IEqualityComparer<TKey> keyComparer)
+        where TKey : notnull
+    {
+        var oldIndex = 0;
+        var newIndex = 0;
+        while (true)
+        {
+            while (oldIndex < previous.Keys.Count &&
+                   !newByKey.ContainsKey(previous.Keys[oldIndex]))
+            {
+                oldIndex++;
+            }
+
+            while (newIndex < current.Keys.Count &&
+                   !oldByKey.ContainsKey(current.Keys[newIndex]))
+            {
+                newIndex++;
+            }
+
+            var oldEnded = oldIndex == previous.Keys.Count;
+            var newEnded = newIndex == current.Keys.Count;
+            if (oldEnded || newEnded)
+            {
+                return oldEnded != newEnded;
+            }
+
+            if (!keyComparer.Equals(previous.Keys[oldIndex], current.Keys[newIndex]))
+            {
+                return true;
+            }
+
+            oldIndex++;
+            newIndex++;
+        }
     }
 }

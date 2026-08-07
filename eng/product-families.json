@@ -250,7 +250,7 @@
       "versionFile": "eng/versions/ContinuousGraph.props",
       "publication": {
         "enabled": false,
-        "channel": "preview",
+        "channel": "stable",
         "tagPrefix": "continuous-graph",
         "requiredWorkflowEvidence": [
           {
@@ -261,6 +261,12 @@
           },
           {
             "workflowFile": "performance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
+            "workflowFile": "continuous-graph-release-endurance.yml",
             "allowedEvents": [
               "workflow_dispatch"
             ]

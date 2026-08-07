@@ -9,12 +9,13 @@ supply-chain provenance and PostgreSQL 19 milestone programme all have code,
 tests, documentation and fail-closed verification.
 
 The release-critical path now contains only exact-candidate and external
-evidence: the 72-hour Streams run, 24-hour Sync run, later PostgreSQL 19
-beta/RC/GA matrices, 14 in-window operational disturbance recoveries with 28
-hashed observations, exact-commit CI/security evidence, independent review,
-application pilots, backup/restore and rollback rehearsal, and maintainer
-sign-off. Stable publication remains disabled until those records agree for
-one immutable candidate.
+evidence: PostgreSQL 19 GA, the 72-hour Streams, 24-hour Sync, and 24-hour
+ContinuousGraph runs, the in-window operational disturbance recoveries,
+seven exact-SHA workflow records, independent review, two pilots covering all
+six families, the 28-day website field window, backup/restore and rollback
+rehearsal, and maintainer sign-off. Publication remains disabled during
+preparation; after GA a reviewed arming PR to `main` creates the immutable
+candidate.
 
 ## Real-time platform release trains
 
@@ -88,6 +89,8 @@ one immutable candidate.
 - [x] Phase 7 slice: inspected 0.1.0-preview.1 NuGet pack plus machine-enforced cross-family publication ordering
 - [x] Phase 7 release gate: enable Continuous Graph only after its Live release dependency passes
 - [x] Phase 7: Continuous Graph 0.1.0-preview.1 implementation and packaging gate
+- [x] ContinuousGraph V1 slice: stable 1.0.0 metadata, API freeze, package/SBOM provenance, 24-hour recovery-endurance workflow, fail-closed verifier, and mutation tests
+- [ ] ContinuousGraph V1 release gate: archive one exact-candidate 24-hour PostgreSQL 19 GA run with at least 100,000 evaluations, 99.9% committed outcomes, lifecycle P95 at or below one second, required repair/restart/cancellation/disconnect evidence, and zero ordering/reconciliation errors
 - [x] Control Plane implementation gate: versioned agent contract, PostgreSQL 15–19 upgrade acceptance, and inspected 0.1.0-preview.1 candidate packages
 - [ ] Control Plane publication gate: enable only after the Sync release dependency archives its successful 24-hour endurance report
 
@@ -623,11 +626,11 @@ The detailed contracts and release gates are maintained in the [real-time platfo
 
 ## 1.0.0 engineering gate (Milestone 9, complete)
 
-This milestone tracks the repository's 1.0 engineering gates. It does not declare a
-stable or production-endorsed release: published packages remain `0.3.0-preview.1`
-while the provider accumulates external production experience and PostgreSQL 19
-syntax remains beta-sensitive. The product-spec audit is complete: every
-explicit environment and workload gate below is executable and checked.
+This milestone tracks the repository's 1.0 engineering gates. All six families
+are release-prepared at stable `1.0.0`, but no V1 package is published and this
+does not declare a production-endorsed release. PostgreSQL 19 syntax remains
+beta-sensitive until GA. The product-spec audit is complete: every explicit
+environment and workload gate below is executable and checked.
 
 - [x] Stable ADO.NET APIs
   - [x] Compiler-enforced shipped API/nullability baselines for Transport, Protocol, Security, Diagnostics, TypeSystem, Client, and Data
@@ -678,7 +681,9 @@ explicit environment and workload gate below is executable and checked.
 - [x] Complete documentation
   - [x] Data-source-first ADO.NET, EF, replication, extension, graph, security, observability, testing, versioning, and release-readiness guides match executable behavior
   - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files
-  - [x] Preview claims retain explicit production, optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 beta boundaries
+  - [x] Stable-candidate claims retain explicit publication, production,
+    optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 GA
+    boundaries
 - [x] Supported-version CI
 - [x] Dedicated extension-image CI for pgvector, PostGIS, and TimescaleDB ADO.NET/EF gates
 - [x] PgBouncer session- and transaction-pooling CI with live prepared/transaction acceptance

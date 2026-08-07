@@ -12,7 +12,11 @@ if ([int]$configuration.schemaVersion -ne 1) {
 }
 
 $actual = @{}
-Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json" | ForEach-Object {
+$reports = @(
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json"
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*-hardening.json"
+)
+$reports | ForEach-Object {
     $report = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
     foreach ($benchmark in @($report.Benchmarks)) {
         if ($null -eq $benchmark.Statistics -or
