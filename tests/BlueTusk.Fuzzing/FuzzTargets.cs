@@ -453,6 +453,7 @@ public static class FuzzTargets
             ChangeTransactionEnvelopeException or
             InvalidOperationException or
             ArgumentException or
+            InvalidDataException or
             EndOfStreamException or
             DecoderFallbackException or
             FormatException or
