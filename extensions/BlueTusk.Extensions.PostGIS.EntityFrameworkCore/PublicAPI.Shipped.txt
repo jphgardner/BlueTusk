@@ -1,0 +1,18 @@
+#nullable enable
+BlueTusk.Extensions.PostGIS.EntityFrameworkCore.BlueTuskPostGisGeometryConversions
+Microsoft.EntityFrameworkCore.BlueTuskPostGisDbContextOptionsBuilderExtensions
+Microsoft.EntityFrameworkCore.BlueTuskPostGisDbFunctionsExtensions
+Microsoft.EntityFrameworkCore.Migrations.BlueTuskPostGisMigrationBuilderExtensions
+static BlueTusk.Extensions.PostGIS.EntityFrameworkCore.BlueTuskPostGisGeometryConversions.ToBlueTuskGeography(this NetTopologySuite.Geometries.Geometry! geometry) -> BlueTusk.Extensions.PostGIS.BlueTuskGeography!
+static BlueTusk.Extensions.PostGIS.EntityFrameworkCore.BlueTuskPostGisGeometryConversions.ToBlueTuskGeometry(this NetTopologySuite.Geometries.Geometry! geometry) -> BlueTusk.Extensions.PostGIS.BlueTuskGeometry!
+static BlueTusk.Extensions.PostGIS.EntityFrameworkCore.BlueTuskPostGisGeometryConversions.ToNetTopologySuite(this BlueTusk.Extensions.PostGIS.BlueTuskGeography! geography) -> NetTopologySuite.Geometries.Geometry!
+static BlueTusk.Extensions.PostGIS.EntityFrameworkCore.BlueTuskPostGisGeometryConversions.ToNetTopologySuite(this BlueTusk.Extensions.PostGIS.BlueTuskGeometry! geometry) -> NetTopologySuite.Geometries.Geometry!
+static Microsoft.EntityFrameworkCore.BlueTuskPostGisDbContextOptionsBuilderExtensions.UsePostGis(this BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder! optionsBuilder, string! schema = "public") -> BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder!
+static Microsoft.EntityFrameworkCore.BlueTuskPostGisDbFunctionsExtensions.AsGeoJson(this Microsoft.EntityFrameworkCore.DbFunctions! _, NetTopologySuite.Geometries.Geometry! geometry) -> string!
+static Microsoft.EntityFrameworkCore.BlueTuskPostGisDbFunctionsExtensions.BoundingBoxIntersects(this Microsoft.EntityFrameworkCore.DbFunctions! _, NetTopologySuite.Geometries.Geometry! left, NetTopologySuite.Geometries.Geometry! right) -> bool
+static Microsoft.EntityFrameworkCore.BlueTuskPostGisDbFunctionsExtensions.Force2D<TGeometry>(this Microsoft.EntityFrameworkCore.DbFunctions! _, TGeometry! geometry) -> TGeometry!
+static Microsoft.EntityFrameworkCore.BlueTuskPostGisDbFunctionsExtensions.IsWithinDistance(this Microsoft.EntityFrameworkCore.DbFunctions! _, NetTopologySuite.Geometries.Geometry! left, NetTopologySuite.Geometries.Geometry! right, double distance) -> bool
+static Microsoft.EntityFrameworkCore.BlueTuskPostGisDbFunctionsExtensions.MakeValid(this Microsoft.EntityFrameworkCore.DbFunctions! _, NetTopologySuite.Geometries.Geometry! geometry) -> NetTopologySuite.Geometries.Geometry!
+static Microsoft.EntityFrameworkCore.BlueTuskPostGisDbFunctionsExtensions.Transform<TGeometry>(this Microsoft.EntityFrameworkCore.DbFunctions! _, TGeometry! geometry, int srid) -> TGeometry!
+static Microsoft.EntityFrameworkCore.Migrations.BlueTuskPostGisMigrationBuilderExtensions.DropPostGis(this Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder! migrationBuilder, bool cascade = false) -> Microsoft.EntityFrameworkCore.Migrations.Operations.Builders.OperationBuilder<Microsoft.EntityFrameworkCore.Migrations.Operations.SqlOperation!>!
+static Microsoft.EntityFrameworkCore.Migrations.BlueTuskPostGisMigrationBuilderExtensions.EnsurePostGis(this Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder! migrationBuilder, string! schema = "public") -> Microsoft.EntityFrameworkCore.Migrations.Operations.Builders.OperationBuilder<Microsoft.EntityFrameworkCore.Migrations.Operations.SqlOperation!>!

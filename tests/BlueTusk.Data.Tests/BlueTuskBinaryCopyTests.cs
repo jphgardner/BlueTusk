@@ -64,6 +64,33 @@ public sealed class BlueTuskBinaryCopyTests
     }
 
     [Fact]
+    public async Task Exporter_can_preserve_raw_binary_fields_without_type_decoding()
+    {
+        var pipe = new BlueTuskCopyPipe();
+        var completion = new TaskCompletionSource<BlueTuskRawCopyResult>(
+            TaskCreationOptions.RunContinuationsAsynchronously);
+        await using var exporter = new BlueTuskBinaryExporter(
+            pipe,
+            completion.Task,
+            BlueTuskBuiltInTypes.CreateRegistry(),
+            columnCount: 2);
+
+        var producer = ProduceFragmentedAsync(pipe);
+        completion.SetResult(BinaryResult(rows: 1, BinaryRow.Length));
+        await exporter.InitializeAsync(CancellationToken.None);
+
+        Assert.Equal(2, await exporter.StartRowAsync(CancellationToken.None));
+        var first = await exporter.ReadRawAsync();
+        var second = await exporter.ReadRawAsync();
+        Assert.True(first.HasValue);
+        Assert.True(second.HasValue);
+        Assert.Equal(Convert.FromHexString("0000002A"), first.GetValueOrDefault().ToArray());
+        Assert.Equal("hi", System.Text.Encoding.UTF8.GetString(second.GetValueOrDefault().Span));
+        Assert.Equal(-1, await exporter.StartRowAsync(CancellationToken.None));
+        await producer;
+    }
+
+    [Fact]
     public async Task Importer_rejects_incomplete_rows()
     {
         var pipe = new BlueTuskCopyPipe();

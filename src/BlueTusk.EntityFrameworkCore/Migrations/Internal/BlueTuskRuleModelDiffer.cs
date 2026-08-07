@@ -88,7 +88,7 @@ internal static class BlueTuskRuleModelDiffer
             if (candidates.Length == 1)
             {
                 var renamed = candidates[0];
-                after.Add(new RenameBlueTuskRuleOperation
+                after.Add(new RenameRuleOperation
                 {
                     Table = targetTable.Name,
                     Schema = targetTable.Schema,
@@ -140,13 +140,13 @@ internal static class BlueTuskRuleModelDiffer
         return rename is null ? source : new Key(rename.NewSchema ?? rename.Schema, rename.NewName ?? rename.Name);
     }
 
-    private static CreateBlueTuskRuleOperation Create(Key key, BlueTuskRuleDefinition rule, bool orReplace = false) =>
+    private static CreateRuleOperation Create(Key key, BlueTuskRuleDefinition rule, bool orReplace = false) =>
         new() { Table = key.Name, Schema = key.Schema, Definition = rule, OrReplace = orReplace };
 
-    private static DropBlueTuskRuleOperation Drop(Key key, string name) =>
+    private static DropRuleOperation Drop(Key key, string name) =>
         new() { Table = key.Name, Schema = key.Schema, Name = name, IsDestructiveChange = true };
 
-    private static AlterBlueTuskRuleEnabledModeOperation AlterMode(Key key, BlueTuskRuleDefinition rule) =>
+    private static AlterRuleEnabledModeOperation AlterMode(Key key, BlueTuskRuleDefinition rule) =>
         new() { Table = key.Name, Schema = key.Schema, Name = rule.Name, EnabledMode = rule.EnabledMode };
 
     private static bool BodyEquals(BlueTuskRuleDefinition left, BlueTuskRuleDefinition right) =>

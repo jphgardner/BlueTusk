@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Live</BlueTuskProductFamily>
+    <Description>Authenticated gRPC streaming transport for BlueTusk Live.</Description>
+    <PackageTags>postgresql;live-query;grpc;realtime</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Live.props" />
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Google.Protobuf" />
+    <PackageReference Include="Grpc.AspNetCore.Server" />
+    <PackageReference Include="Grpc.Tools" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
+    <ProjectReference Include="..\BlueTusk.Live.AspNetCore\BlueTusk.Live.AspNetCore.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Protobuf Include="Protos\bluetusk_live.proto" GrpcServices="Both" />
+    <None Update="Protos\bluetusk_live.proto" Pack="true" PackagePath="protos" />
+    <InternalsVisibleTo Include="BlueTusk.Live.Tests" />
+  </ItemGroup>
+</Project>

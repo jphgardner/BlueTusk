@@ -9,6 +9,7 @@ public sealed class BlueTuskTypeRegistry
     private readonly Dictionary<BlueTuskTypeName, BlueTuskTypeDescriptor> _namedTypes;
     private readonly IReadOnlyList<BlueTuskTypeDescriptor> _typeList;
     private readonly Dictionary<Type, BlueTuskTypeId> _uniqueClrTypes;
+    private readonly Dictionary<Type, BlueTuskTypeId> _uniqueArrayElementTypes;
 
     internal BlueTuskTypeRegistry(
         IReadOnlyDictionary<BlueTuskTypeId, BlueTuskTypeDescriptor> types,
@@ -26,6 +27,11 @@ public sealed class BlueTuskTypeRegistry
             .GroupBy(registration => registration.Value.ClrType)
             .Where(group => group.Count() == 1)
             .ToDictionary(group => group.Key, group => group.Single().Key);
+        _uniqueArrayElementTypes = _uniqueClrTypes
+            .Where(registration => registration.Key.IsSZArray)
+            .ToDictionary(
+                registration => registration.Key.GetElementType()!,
+                registration => registration.Value);
     }
 
     private static bool IsInferenceCandidate(
@@ -91,7 +97,7 @@ public sealed class BlueTuskTypeRegistry
         {
             var elementType = clrType.GetElementType()!;
             elementType = Nullable.GetUnderlyingType(elementType) ?? elementType;
-            _uniqueClrTypes.TryGetValue(elementType.MakeArrayType(), out id);
+            _uniqueArrayElementTypes.TryGetValue(elementType, out id);
         }
 
         if (id != default)

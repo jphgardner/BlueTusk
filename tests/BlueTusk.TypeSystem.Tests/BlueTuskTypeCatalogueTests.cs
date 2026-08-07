@@ -222,12 +222,78 @@ public sealed class BlueTuskTypeCatalogueTests
         ]);
 
         Assert.True(registry.TryGetCodec(new BlueTuskTypeId(1007), out var registered));
-        var codec = Assert.IsType<BlueTuskArrayCodec>(registered);
+        var codec = Assert.IsAssignableFrom<IBlueTuskCodec<int[]>>(registered);
         Assert.Equal(typeof(int[]), codec.ClrType);
         Assert.True(registry.TryGetType(typeof(int[,]), out var type, out _));
         Assert.Equal(1007U, type!.Id.Oid);
         Assert.True(registry.TryGetType(typeof(int?[]), out type, out _));
         Assert.Equal(1007U, type!.Id.Oid);
+    }
+
+    [Fact]
+    public void Typed_array_registration_preserves_object_dispatch_for_non_vector_shapes()
+    {
+        var registry = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.Int4.Id,
+                Schema = "pg_catalog",
+                Name = "int4",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = new BlueTuskTypeId(1007),
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = new BlueTuskTypeId(1007),
+                Schema = "pg_catalog",
+                Name = "_int4",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.Int4.Id,
+            },
+        ]);
+
+        Assert.True(registry.TryGetCodec(new BlueTuskTypeId(1007), out var codec));
+        Assert.True(registry.TryGetType(new BlueTuskTypeId(1007), out var type));
+
+        var matrix = new int[,] { { 1, 2 }, { 3, 4 } };
+        var bounded = Array.CreateInstance(typeof(int), [2], [-1]);
+        bounded.SetValue(5, -1);
+        bounded.SetValue(6, 0);
+
+        AssertShapeAndValues(matrix, RoundTripObject(codec!, type!, matrix));
+        AssertShapeAndValues(bounded, RoundTripObject(codec!, type!, bounded));
+    }
+
+    private static Array RoundTripObject(
+        IBlueTuskCodec codec,
+        BlueTuskTypeDescriptor type,
+        Array expected)
+    {
+        var destination = new byte[256];
+        var writer = new BlueTuskWriter(destination);
+        codec.Write(
+            ref writer,
+            expected,
+            BlueTuskDataFormat.Binary,
+            type);
+        var reader = new BlueTuskReader(destination.AsSpan(0, writer.WrittenCount));
+        return Assert.IsAssignableFrom<Array>(
+            codec.Read(ref reader, BlueTuskDataFormat.Binary, type));
+    }
+
+    private static void AssertShapeAndValues(Array expected, Array actual)
+    {
+        Assert.Equal(expected.Rank, actual.Rank);
+        for (var dimension = 0; dimension < expected.Rank; dimension++)
+        {
+            Assert.Equal(expected.GetLength(dimension), actual.GetLength(dimension));
+            Assert.Equal(expected.GetLowerBound(dimension), actual.GetLowerBound(dimension));
+        }
+
+        Assert.Equal(expected.Cast<object?>(), actual.Cast<object?>());
     }
 
     private readonly record struct SpecialValue(string Value);

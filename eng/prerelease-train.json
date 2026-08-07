@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "version": "1.0.0-rc.1",
+  "npmDistTag": "rc",
+  "protectedEnvironment": "package-prerelease",
+  "publicationEnabled": true,
+  "families": [
+    "Provider",
+    "Streams",
+    "Sync",
+    "Live",
+    "ControlPlane",
+    "ContinuousGraph"
+  ],
+  "requiredWorkflows": [
+    "build.yml",
+    "security.yml",
+    "performance.yml"
+  ]
+}

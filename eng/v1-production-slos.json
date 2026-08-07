@@ -1,0 +1,212 @@
+{
+  "schemaVersion": 1,
+  "profile": "reference-production",
+  "status": "reference-objectives-require-deployment-owner-approval",
+  "policy": {
+    "measurementWindow": "30d",
+    "errorBudgetPolicy": "Page at 14.4x burn over 1h/5m; ticket at 6x burn over 6h/30m; freeze rollout when the 30-day budget is exhausted.",
+    "scope": "These are reference deployment objectives for an application using BlueTusk. They are not universal latency guarantees for the package on arbitrary networks, databases, query plans, or hardware.",
+    "candidateRequirement": "The deployment owner must accept these objectives or commit an explicitly reviewed override before production sign-off."
+  },
+  "objectives": [
+    {
+      "id": "provider-command-success",
+      "family": "Provider",
+      "description": "Successful PostgreSQL command completions.",
+      "kind": "ratio",
+      "numeratorMetric": "bluetusk.commands.executed",
+      "failureMetric": "bluetusk.commands.failed",
+      "target": 0.999,
+      "window": "30d",
+      "alert": "BlueTuskProviderCommandErrorBudgetBurn",
+      "slowBurnAlert": "BlueTuskProviderCommandErrorBudgetSlowBurn"
+    },
+    {
+      "id": "provider-pool-checkout-p95",
+      "family": "Provider",
+      "description": "Warm and cold pool checkout latency, including bounded waiting.",
+      "kind": "histogram-percentile",
+      "metric": "bluetusk.pool.checkout.duration",
+      "percentile": 0.95,
+      "maximum": 0.05,
+      "unit": "s",
+      "window": "5m",
+      "alert": "BlueTuskPoolCheckoutLatency"
+    },
+    {
+      "id": "provider-replication-receive-lag-p95",
+      "family": "Provider",
+      "description": "Logical replication receive-clock lag.",
+      "kind": "histogram-percentile",
+      "metric": "bluetusk.replication.receive_lag",
+      "percentile": 0.95,
+      "maximum": 5,
+      "unit": "s",
+      "window": "5m",
+      "alert": "BlueTuskReplicationLag"
+    },
+    {
+      "id": "streams-acknowledged-deliveries",
+      "family": "Streams",
+      "description": "Delivered transactions settled by acknowledgement rather than nack or disposal.",
+      "kind": "tagged-ratio",
+      "metric": "bluetusk.streams.deliveries.settled",
+      "successTag": "bluetusk.streams.delivery.outcome=acknowledged",
+      "target": 0.9999,
+      "window": "30d",
+      "alert": "BlueTuskStreamsDeliveryErrorBudgetBurn",
+      "slowBurnAlert": "BlueTuskStreamsDeliveryErrorBudgetSlowBurn"
+    },
+    {
+      "id": "streams-delivery-p95",
+      "family": "Streams",
+      "description": "Time from transaction delivery creation through durable settlement.",
+      "kind": "histogram-percentile",
+      "metric": "bluetusk.streams.delivery.duration",
+      "percentile": 0.95,
+      "maximum": 5,
+      "unit": "s",
+      "window": "5m",
+      "alert": "BlueTuskStreamsDeliveryLatency"
+    },
+    {
+      "id": "sync-transaction-success",
+      "family": "Sync",
+      "description": "Sync transactions completed without a worker error.",
+      "kind": "ratio",
+      "numeratorMetric": "bluetusk.sync.transactions",
+      "failureMetric": "bluetusk.sync.errors",
+      "target": 0.999,
+      "window": "30d",
+      "alert": "BlueTuskSyncErrorBudgetBurn",
+      "slowBurnAlert": "BlueTuskSyncErrorBudgetSlowBurn"
+    },
+    {
+      "id": "sync-transaction-p95",
+      "family": "Sync",
+      "description": "End-to-end destination application time per transaction.",
+      "kind": "histogram-percentile",
+      "metric": "bluetusk.sync.transaction.duration",
+      "percentile": 0.95,
+      "maximum": 2000,
+      "unit": "ms",
+      "window": "5m",
+      "alert": "BlueTuskSyncTransactionLatency"
+    },
+    {
+      "id": "live-connect-success",
+      "family": "Live",
+      "description": "Connection attempts accepted as connected.",
+      "kind": "tagged-ratio",
+      "metric": "bluetusk.live.connections",
+      "successTag": "bluetusk.live.connection.outcome=connected",
+      "target": 0.99,
+      "window": "30d",
+      "alert": "BlueTuskLiveConnectErrorBudgetBurn",
+      "slowBurnAlert": "BlueTuskLiveConnectErrorBudgetSlowBurn"
+    },
+    {
+      "id": "live-refresh-p95",
+      "family": "Live",
+      "description": "Invalidation coalescing, authoritative requery, and keyed-diff latency.",
+      "kind": "histogram-percentile",
+      "metric": "bluetusk.live.refresh.duration",
+      "percentile": 0.95,
+      "maximum": 0.25,
+      "unit": "s",
+      "window": "5m",
+      "alert": "BlueTuskLiveRefreshLatency"
+    },
+    {
+      "id": "live-slow-client-disconnects",
+      "family": "Live",
+      "description": "Bounded subscriber buffers do not routinely evict clients.",
+      "kind": "maximum-increase",
+      "metric": "bluetusk.live.slow_client.disconnects",
+      "maximum": 0,
+      "unit": "{disconnect}",
+      "window": "10m",
+      "alert": "BlueTuskLiveSlowClients"
+    },
+    {
+      "id": "graph-evaluation-commit",
+      "family": "ContinuousGraph",
+      "description": "Prepared graph evaluations are durably committed.",
+      "kind": "tagged-ratio",
+      "metric": "bluetusk.graph.evaluations",
+      "successTag": "bluetusk.graph.evaluation.outcome=committed",
+      "target": 0.999,
+      "window": "30d",
+      "alert": "BlueTuskGraphEvaluationErrorBudgetBurn",
+      "slowBurnAlert": "BlueTuskGraphEvaluationErrorBudgetSlowBurn"
+    },
+    {
+      "id": "graph-evaluation-p95",
+      "family": "ContinuousGraph",
+      "description": "Graph evaluation lifecycle through durable settlement.",
+      "kind": "histogram-percentile",
+      "metric": "bluetusk.graph.evaluation.duration",
+      "percentile": 0.95,
+      "maximum": 1,
+      "unit": "s",
+      "window": "5m",
+      "alert": "BlueTuskGraphEvaluationLatency"
+    },
+    {
+      "id": "control-plane-operation-success",
+      "family": "ControlPlane",
+      "description": "Reconcile and delete operations complete in an accepted terminal outcome.",
+      "kind": "tagged-ratio",
+      "metric": "bluetusk.control_plane.operations",
+      "successTag": "bluetusk.control_plane.outcome=changed|no_change|paused|deleted",
+      "target": 0.999,
+      "window": "30d",
+      "alert": "BlueTuskControlPlaneErrorBudgetBurn",
+      "slowBurnAlert": "BlueTuskControlPlaneErrorBudgetSlowBurn"
+    },
+    {
+      "id": "control-plane-operation-p95",
+      "family": "ControlPlane",
+      "description": "Fenced reconciliation and deletion lifecycle duration.",
+      "kind": "histogram-percentile",
+      "metric": "bluetusk.control_plane.operation.duration",
+      "percentile": 0.95,
+      "maximum": 60,
+      "unit": "s",
+      "window": "5m",
+      "alert": "BlueTuskControlPlaneOperationLatency"
+    }
+  ],
+  "recoveryObjectives": [
+    {
+      "id": "provider-application",
+      "rto": "15m",
+      "rpo": "Application-owned",
+      "proof": "Failover and connection recovery rehearsal against the production topology."
+    },
+    {
+      "id": "streams-relay",
+      "rto": "30m",
+      "rpo": "0 acknowledged transactions",
+      "proof": "Encrypted relay backup, empty-schema restore, checkpoint comparison, and replay reconciliation."
+    },
+    {
+      "id": "sync-destinations",
+      "rto": "60m",
+      "rpo": "0 transactions beyond the durable relay checkpoint",
+      "proof": "Rebuild/cutover rehearsal for every configured destination."
+    },
+    {
+      "id": "live-replay",
+      "rto": "30m",
+      "rpo": "Bound by the durable replay-store commit",
+      "proof": "Replay-store restore followed by signed resume-token and forced-reset validation."
+    },
+    {
+      "id": "control-plane",
+      "rto": "60m",
+      "rpo": "15m for desired state; immutable audit retained externally",
+      "proof": "Database restore, reconciliation convergence, audit export, and delete-protection validation."
+    }
+  ]
+}

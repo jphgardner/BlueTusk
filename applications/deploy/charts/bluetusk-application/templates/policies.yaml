@@ -1,0 +1,78 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: {{ include "bluetusk.fullname" . }}
+spec:
+  hard:
+    requests.cpu: {{ .Values.quota.requestsCpu | quote }}
+    requests.memory: {{ .Values.quota.requestsMemory | quote }}
+    limits.cpu: {{ .Values.quota.limitsCpu | quote }}
+    limits.memory: {{ .Values.quota.limitsMemory | quote }}
+    persistentvolumeclaims: {{ .Values.quota.persistentVolumeClaims | quote }}
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: {{ include "bluetusk.fullname" . }}
+spec:
+  limits:
+    - type: Container
+      defaultRequest: { cpu: 25m, memory: 32Mi }
+      default: { cpu: 500m, memory: 512Mi }
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bluetusk.fullname" . }}-default-deny
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/component, operator: In, values: [api, worker, ui, migration] }
+  policyTypes: [Ingress, Egress]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bluetusk.fullname" . }}-dns
+spec:
+  podSelector:
+    matchExpressions:
+      - { key: app.kubernetes.io/component, operator: In, values: [api, worker, ui, migration] }
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: kube-system } }
+          podSelector: { matchLabels: { k8s-app: kube-dns } }
+      ports: [{ protocol: UDP, port: 53 }, { protocol: TCP, port: 53 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bluetusk.fullname" . }}-ingress
+spec:
+  podSelector:
+    matchExpressions: [{ key: app.kubernetes.io/component, operator: In, values: [api, ui] }]
+  policyTypes: [Ingress]
+  ingress:
+    - from:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: {{ .Values.gateway.namespace }} } }
+      ports: [{ protocol: TCP, port: 8080 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: {{ include "bluetusk.fullname" . }}-application-egress
+spec:
+  podSelector:
+    matchExpressions: [{ key: app.kubernetes.io/component, operator: In, values: [api, worker, migration] }]
+  policyTypes: [Egress]
+  egress:
+    - to:
+        - podSelector: { matchLabels: { cnpg.io/cluster: {{ include "bluetusk.fullname" . }}-postgresql } }
+      ports: [{ protocol: TCP, port: 5432 }]
+    - to:
+        - ipBlock: { cidr: {{ .Values.networking.gatewayAddressCidr | quote }} }
+      ports: [{ protocol: TCP, port: 443 }]
+    - to:
+        - namespaceSelector: { matchLabels: { kubernetes.io/metadata.name: observability } }
+      ports: [{ protocol: TCP, port: 4317 }]

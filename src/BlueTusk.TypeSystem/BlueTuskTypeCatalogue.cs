@@ -352,7 +352,11 @@ public static class BlueTuskTypeCatalogue
                 continue;
             }
 
-            builder.RegisterCodec(arrayType.Id, new BlueTuskArrayCodec(elementType, elementCodec));
+            builder.RegisterCodec(
+                arrayType.Id,
+                elementCodec is IBlueTuskArrayCodecFactory factory
+                    ? factory.CreateArrayCodec(elementType)
+                    : new BlueTuskArrayCodec(elementType, elementCodec));
             changed = true;
         }
 

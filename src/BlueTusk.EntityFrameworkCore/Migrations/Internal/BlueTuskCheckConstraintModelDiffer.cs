@@ -26,7 +26,7 @@ internal static class BlueTuskCheckConstraintModelDiffer
                 BlueTuskCheckConstraintMetadata.IsNotEnforced(changed.Source) ==
                 BlueTuskCheckConstraintMetadata.IsNotEnforced(changed.Target))
             {
-                after.Add(new ValidateBlueTuskCheckConstraintOperation
+                after.Add(new ValidateCheckConstraintOperation
                 {
                     Name = changed.Name,
                     Table = changed.TargetTable,

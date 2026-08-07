@@ -1,6 +1,7 @@
 using System.Data.Common;
 using System.Diagnostics.CodeAnalysis;
 using BlueTusk.Client;
+using BlueTusk.Data.Internal;
 using BlueTusk.Diagnostics;
 using BlueTusk.Extensions;
 using BlueTusk.TypeSystem;
@@ -8,19 +9,21 @@ using BlueTusk.TypeSystem;
 namespace BlueTusk.Data;
 
 /// <summary>Creates BlueTusk connections and owns their physical connection pool.</summary>
-public sealed class BlueTuskDataSource : DbDataSource
+public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
 {
     private readonly BlueTuskConnectionStringBuilder _settings;
     private readonly BlueTuskConnectionPoolBase? _pool;
     private readonly BlueTuskTypeMetadataCache _typeMetadata;
     private readonly BlueTuskClientConfiguration _clientConfiguration;
     private readonly string _connectionString;
+    private readonly BlueTuskCommandMultiplexer? _multiplexer;
 
     internal BlueTuskDataSource(
         string connectionString,
         BlueTuskTypeRegistry? configuredTypes = null,
         BlueTuskFeatureRegistry? features = null,
-        BlueTuskClientConfiguration? clientConfiguration = null)
+        BlueTuskClientConfiguration? clientConfiguration = null,
+        BlueTuskMultiplexingOptions? multiplexing = null)
     {
         _settings = new BlueTuskConnectionStringBuilder(connectionString);
         _settings.Validate();
@@ -36,6 +39,18 @@ public sealed class BlueTuskDataSource : DbDataSource
                 ? new BlueTuskMultiHostConnectionPool(_settings, _clientConfiguration)
                 : new BlueTuskConnectionPool(_settings, clientConfiguration: _clientConfiguration);
         }
+
+        if (_settings.Multiplexing || multiplexing is not null)
+        {
+            if (_pool is null)
+            {
+                throw new ArgumentException("Multiplexing requires connection pooling.", nameof(connectionString));
+            }
+
+            var resolved = (multiplexing ?? new BlueTuskMultiplexingOptions())
+                .Resolve(_settings.MaximumPoolSize);
+            _multiplexer = new BlueTuskCommandMultiplexer(this, resolved);
+        }
     }
 
     public override string ConnectionString { get; }
@@ -45,6 +60,11 @@ public sealed class BlueTuskDataSource : DbDataSource
     public BlueTuskTypeRegistry TypeRegistry => _typeMetadata.Registry;
 
     internal BlueTuskDiagnosticsOptions DiagnosticsOptions => _clientConfiguration.Diagnostics;
+
+    internal BlueTuskCommandMultiplexer? Multiplexer => _multiplexer;
+
+    /// <summary>Gets whether bounded statement multiplexing is enabled for this data source.</summary>
+    public bool IsMultiplexingEnabled => _multiplexer is not null;
 
     /// <summary>Gets the immutable optional-feature snapshot configured for this data source.</summary>
     public BlueTuskFeatureRegistry Features { get; }
@@ -152,6 +172,20 @@ public sealed class BlueTuskDataSource : DbDataSource
     public IReadOnlyDictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics> GetHostPoolStatistics() =>
         _pool?.HostStatistics ?? new Dictionary<BlueTuskHostEndpoint, BlueTuskPoolStatistics>();
 
+    /// <summary>Gets a point-in-time snapshot of the statement multiplexing scheduler.</summary>
+    public BlueTuskMultiplexingStatistics GetMultiplexingStatistics() =>
+        _multiplexer?.Statistics ?? new BlueTuskMultiplexingStatistics(
+            Enabled: false,
+            Workers: 0,
+            Queued: 0,
+            Executing: 0,
+            Accepted: 0,
+            Completed: 0,
+            Canceled: 0,
+            Faulted: 0,
+            PipelineFlushes: 0,
+            PipelinedCommands: 0);
+
     public ValueTask WarmUpAsync(CancellationToken cancellationToken = default) =>
         _pool?.WarmUpAsync(cancellationToken) ?? ValueTask.CompletedTask;
 
@@ -173,6 +207,23 @@ public sealed class BlueTuskDataSource : DbDataSource
 
     public ValueTask ClearPoolAsync() => _pool?.ClearAsync() ?? ValueTask.CompletedTask;
 
+    DbDataSource IProviderDataSource.Instance => this;
+
+    string IProviderDataSource.UnredactedConnectionString => _connectionString;
+
+    BlueTuskTypeRegistry IProviderDataSource.TypeRegistry => TypeRegistry;
+
+    BlueTuskDiagnosticsOptions IProviderDataSource.Diagnostics => DiagnosticsOptions;
+
+    DbConnection IProviderDataSource.CreateConnection() => CreateConnection();
+
+    DbConnection IProviderDataSource.CreateAdminConnection(string connectionString) =>
+        CreateUnpooledConnection(connectionString);
+
+    void IProviderDataSource.ClearPool() => ClearPool();
+
+    ValueTask IProviderDataSource.ClearPoolAsync() => ClearPoolAsync();
+
     protected override DbConnection CreateDbConnection() =>
         new BlueTuskConnection(
             _connectionString,
@@ -181,6 +232,10 @@ public sealed class BlueTuskDataSource : DbDataSource
             _clientConfiguration,
             hideSensitiveConnectionString: true,
             sharedSettings: _settings);
+
+    internal ValueTask<BlueTuskConnection> OpenMultiplexingConnectionAsync(
+        CancellationToken cancellationToken) =>
+        OpenConnectionAsync(cancellationToken);
 
     protected override DbConnection OpenDbConnection()
     {
@@ -237,6 +292,7 @@ public sealed class BlueTuskDataSource : DbDataSource
     {
         if (disposing)
         {
+            _multiplexer?.Dispose();
             _pool?.Dispose();
         }
 
@@ -245,6 +301,11 @@ public sealed class BlueTuskDataSource : DbDataSource
 
     protected override async ValueTask DisposeAsyncCore()
     {
+        if (_multiplexer is not null)
+        {
+            await _multiplexer.DisposeAsync().ConfigureAwait(false);
+        }
+
         if (_pool is not null)
         {
             await _pool.DisposeAsync().ConfigureAwait(false);

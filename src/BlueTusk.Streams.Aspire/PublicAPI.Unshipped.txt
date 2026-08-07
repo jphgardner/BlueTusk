@@ -1,0 +1,26 @@
+#nullable enable
+Aspire.Hosting.BlueTuskStreamsAspireDeliveryMode
+Aspire.Hosting.BlueTuskStreamsAspireDeliveryMode.Direct = 1 -> Aspire.Hosting.BlueTuskStreamsAspireDeliveryMode
+Aspire.Hosting.BlueTuskStreamsAspireDeliveryMode.DurableRelay = 0 -> Aspire.Hosting.BlueTuskStreamsAspireDeliveryMode
+Aspire.Hosting.BlueTuskStreamsAspireExtensions
+Aspire.Hosting.BlueTuskStreamsAspireOptions
+Aspire.Hosting.BlueTuskStreamsAspireOptions.<Clone>$() -> Aspire.Hosting.BlueTuskStreamsAspireOptions!
+Aspire.Hosting.BlueTuskStreamsAspireOptions.BlueTuskStreamsAspireOptions() -> void
+Aspire.Hosting.BlueTuskStreamsAspireOptions.ConsumerGroup.get -> string!
+Aspire.Hosting.BlueTuskStreamsAspireOptions.ConsumerGroup.init -> void
+Aspire.Hosting.BlueTuskStreamsAspireOptions.ControlSchema.get -> string!
+Aspire.Hosting.BlueTuskStreamsAspireOptions.ControlSchema.init -> void
+Aspire.Hosting.BlueTuskStreamsAspireOptions.DeliveryMode.get -> Aspire.Hosting.BlueTuskStreamsAspireDeliveryMode
+Aspire.Hosting.BlueTuskStreamsAspireOptions.DeliveryMode.init -> void
+Aspire.Hosting.BlueTuskStreamsAspireOptions.Equals(Aspire.Hosting.BlueTuskStreamsAspireOptions? other) -> bool
+Aspire.Hosting.BlueTuskStreamsAspireOptions.Publications.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Aspire.Hosting.BlueTuskStreamsAspireOptions.Publications.init -> void
+Aspire.Hosting.BlueTuskStreamsAspireOptions.Slot.get -> string!
+Aspire.Hosting.BlueTuskStreamsAspireOptions.Slot.init -> void
+override Aspire.Hosting.BlueTuskStreamsAspireOptions.Equals(object? obj) -> bool
+override Aspire.Hosting.BlueTuskStreamsAspireOptions.GetHashCode() -> int
+override Aspire.Hosting.BlueTuskStreamsAspireOptions.ToString() -> string!
+static Aspire.Hosting.BlueTuskStreamsAspireExtensions.WithBlueTuskStreams<TDestination, TSource, TControl>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<TDestination>! builder, Aspire.Hosting.ApplicationModel.IResourceBuilder<TSource>! source, Aspire.Hosting.ApplicationModel.IResourceBuilder<TControl>! control, Aspire.Hosting.BlueTuskStreamsAspireOptions! options) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<TDestination>!
+static Aspire.Hosting.BlueTuskStreamsAspireExtensions.WithBlueTuskStreamsDirect<TDestination, TSource>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<TDestination>! builder, Aspire.Hosting.ApplicationModel.IResourceBuilder<TSource>! source, Aspire.Hosting.BlueTuskStreamsAspireOptions! options) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<TDestination>!
+static Aspire.Hosting.BlueTuskStreamsAspireOptions.operator !=(Aspire.Hosting.BlueTuskStreamsAspireOptions? left, Aspire.Hosting.BlueTuskStreamsAspireOptions? right) -> bool
+static Aspire.Hosting.BlueTuskStreamsAspireOptions.operator ==(Aspire.Hosting.BlueTuskStreamsAspireOptions? left, Aspire.Hosting.BlueTuskStreamsAspireOptions? right) -> bool

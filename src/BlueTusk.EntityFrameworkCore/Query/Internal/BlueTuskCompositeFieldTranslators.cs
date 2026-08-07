@@ -1,6 +1,5 @@
 using System.Reflection;
 using System.Text;
-using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Storage.Internal;
 using BlueTusk.TypeSystem;
 using Microsoft.EntityFrameworkCore;
@@ -89,7 +88,7 @@ internal sealed class BlueTuskRecordFieldTranslator(
 internal sealed class BlueTuskCompositeFieldMappingResolver(
     IRelationalTypeMappingSource typeMappingSource,
     ISqlGenerationHelper sqlGenerationHelper,
-    BlueTuskDataSource? dataSource)
+    BlueTuskTypeRegistry? typeRegistry)
 {
     public RelationalTypeMapping Resolve(
         RelationalTypeMapping compositeMapping,
@@ -117,7 +116,7 @@ internal sealed class BlueTuskCompositeFieldMappingResolver(
         out RelationalTypeMapping mapping)
     {
         mapping = null!;
-        var registry = dataSource?.TypeRegistry;
+        var registry = typeRegistry;
         if (registry is null
             || !TryParseTypeName(compositeMapping.StoreType, out var compositeName)
             || !registry.TryGetType(compositeName, out var compositeType, out _)

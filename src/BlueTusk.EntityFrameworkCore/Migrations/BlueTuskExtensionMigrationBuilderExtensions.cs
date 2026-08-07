@@ -10,20 +10,20 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration-builder extensions for PostgreSQL extension installations.</summary>
 public static class BlueTuskExtensionMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskExtensionOperation> CreateBlueTuskExtension(
+    public static OperationBuilder<CreateExtensionOperation> CreateExtension(
         this MigrationBuilder migrationBuilder,
         BlueTuskExtensionDefinition definition,
         bool ifNotExists = false)
     {
         BlueTuskExtensionMetadata.Validate(definition);
-        return Add(migrationBuilder, new CreateBlueTuskExtensionOperation
+        return Add(migrationBuilder, new CreateExtensionOperation
         {
             Definition = BlueTuskExtensionMetadata.Normalize(definition),
             IfNotExists = ifNotExists,
         });
     }
 
-    public static OperationBuilder<AlterBlueTuskExtensionOperation> AlterBlueTuskExtension(
+    public static OperationBuilder<AlterExtensionOperation> AlterExtension(
         this MigrationBuilder migrationBuilder,
         BlueTuskExtensionDefinition definition,
         BlueTuskExtensionDefinition oldDefinition)
@@ -36,21 +36,21 @@ public static class BlueTuskExtensionMigrationBuilderExtensions
                 "PostgreSQL cannot rename an extension. Use an explicit create/drop migration.");
         }
 
-        return Add(migrationBuilder, new AlterBlueTuskExtensionOperation
+        return Add(migrationBuilder, new AlterExtensionOperation
         {
             Definition = BlueTuskExtensionMetadata.Normalize(definition),
             OldDefinition = BlueTuskExtensionMetadata.Normalize(oldDefinition),
         });
     }
 
-    public static OperationBuilder<DropBlueTuskExtensionOperation> DropBlueTuskExtension(
+    public static OperationBuilder<DropExtensionOperation> DropExtension(
         this MigrationBuilder migrationBuilder,
         string name,
         bool ifExists = false,
         bool cascade = false)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        return Add(migrationBuilder, new DropBlueTuskExtensionOperation
+        return Add(migrationBuilder, new DropExtensionOperation
         {
             Name = name,
             IfExists = ifExists,
@@ -60,21 +60,21 @@ public static class BlueTuskExtensionMigrationBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskExtensionOperation> CreateBlueTuskExtension(
+    public static OperationBuilder<CreateExtensionOperation> CreateExtension(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         bool ifNotExists = false) =>
-        CreateBlueTuskExtension(
+        CreateExtension(
             migrationBuilder,
             BlueTuskExtensionMetadata.DeserializeDefinition(serializedDefinition),
             ifNotExists);
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskExtensionOperation> AlterBlueTuskExtension(
+    public static OperationBuilder<AlterExtensionOperation> AlterExtension(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        AlterBlueTuskExtension(
+        AlterExtension(
             migrationBuilder,
             BlueTuskExtensionMetadata.DeserializeDefinition(serializedDefinition),
             BlueTuskExtensionMetadata.DeserializeDefinition(serializedOldDefinition));

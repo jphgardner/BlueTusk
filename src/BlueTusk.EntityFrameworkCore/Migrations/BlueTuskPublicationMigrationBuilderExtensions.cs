@@ -8,24 +8,24 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public static class BlueTuskPublicationMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskPublicationOperation> CreateBlueTuskPublication(
+    public static OperationBuilder<CreatePublicationOperation> CreatePublication(
         this MigrationBuilder migrationBuilder,
         BlueTuskPublicationDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskPublicationMetadata.Validate(definition);
-        var operation = new CreateBlueTuskPublicationOperation { Definition = definition };
+        var operation = new CreatePublicationOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskPublicationOperation>(operation);
+        return new OperationBuilder<CreatePublicationOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskPublicationOperation> CreateBlueTuskPublication(
+    public static OperationBuilder<CreatePublicationOperation> CreatePublication(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskPublication(migrationBuilder, BlueTuskPublicationMetadata.DeserializeDefinition(serializedDefinition));
+        CreatePublication(migrationBuilder, BlueTuskPublicationMetadata.DeserializeDefinition(serializedDefinition));
 
-    public static OperationBuilder<AlterBlueTuskPublicationOperation> AlterBlueTuskPublication(
+    public static OperationBuilder<AlterPublicationOperation> AlterPublication(
         this MigrationBuilder migrationBuilder,
         BlueTuskPublicationDefinition oldDefinition,
         BlueTuskPublicationDefinition definition)
@@ -33,37 +33,37 @@ public static class BlueTuskPublicationMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskPublicationMetadata.Validate(oldDefinition);
         BlueTuskPublicationMetadata.Validate(definition);
-        var operation = new AlterBlueTuskPublicationOperation
+        var operation = new AlterPublicationOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskPublicationOperation>(operation);
+        return new OperationBuilder<AlterPublicationOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskPublicationOperation> AlterBlueTuskPublication(
+    public static OperationBuilder<AlterPublicationOperation> AlterPublication(
         this MigrationBuilder migrationBuilder,
         string serializedOldDefinition,
         string serializedDefinition) =>
-        AlterBlueTuskPublication(
+        AlterPublication(
             migrationBuilder,
             BlueTuskPublicationMetadata.DeserializeDefinition(serializedOldDefinition),
             BlueTuskPublicationMetadata.DeserializeDefinition(serializedDefinition));
 
-    public static OperationBuilder<DropBlueTuskPublicationOperation> DropBlueTuskPublication(
+    public static OperationBuilder<DropPublicationOperation> DropPublication(
         this MigrationBuilder migrationBuilder,
         string name)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskPublicationOperation { Name = name, IsDestructiveChange = true };
+        var operation = new DropPublicationOperation { Name = name, IsDestructiveChange = true };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskPublicationOperation>(operation);
+        return new OperationBuilder<DropPublicationOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskPublicationOperation> RenameBlueTuskPublication(
+    public static OperationBuilder<RenamePublicationOperation> RenamePublication(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName)
@@ -71,8 +71,8 @@ public static class BlueTuskPublicationMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskPublicationOperation { Name = name, NewName = newName };
+        var operation = new RenamePublicationOperation { Name = name, NewName = newName };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskPublicationOperation>(operation);
+        return new OperationBuilder<RenamePublicationOperation>(operation);
     }
 }

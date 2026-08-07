@@ -1326,3 +1326,15 @@ static BlueTusk.TypeSystem.BlueTuskUnknownValue.operator ==(BlueTusk.TypeSystem.
 virtual BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.EqualityContract.get -> System.Type!
 virtual BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.Equals(BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode? other) -> bool
 virtual BlueTusk.TypeSystem.BlueTuskTextSearchQueryNode.PrintMembers(System.Text.StringBuilder! builder) -> bool
+BlueTusk.TypeSystem.BlueTuskCompositeAttribute
+BlueTusk.TypeSystem.BlueTuskCompositeAttribute.BlueTuskCompositeAttribute(string! schema, string! name) -> void
+BlueTusk.TypeSystem.BlueTuskCompositeAttribute.Name.get -> string!
+BlueTusk.TypeSystem.BlueTuskCompositeAttribute.Schema.get -> string!
+BlueTusk.TypeSystem.BlueTuskCompositeCodec<T>.BlueTuskCompositeCodec(BlueTusk.TypeSystem.BlueTuskCompositeMapping<T>! mapping) -> void
+BlueTusk.TypeSystem.BlueTuskCompositeMapping<T>
+BlueTusk.TypeSystem.BlueTuskCompositeMapping<T>.BlueTuskCompositeMapping(System.Collections.Generic.IEnumerable<BlueTusk.TypeSystem.BlueTuskCompositeMember<T>!>! members, System.Func<System.Collections.Generic.IReadOnlyList<object?>!, T>! factory) -> void
+BlueTusk.TypeSystem.BlueTuskCompositeMember
+static BlueTusk.TypeSystem.BlueTuskCompositeMember.Create<T, TMember>(string! name, System.Func<T, TMember>! getter) -> BlueTusk.TypeSystem.BlueTuskCompositeMember<T>!
+BlueTusk.TypeSystem.BlueTuskCompositeMember<T>
+BlueTusk.TypeSystem.BlueTuskCompositeMember<T>.ClrType.get -> System.Type!
+BlueTusk.TypeSystem.BlueTuskCompositeMember<T>.Name.get -> string!

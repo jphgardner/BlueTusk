@@ -36,12 +36,12 @@ public sealed class CollationMigrationsTests
             emptyContext.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
 
         Assert.True(
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskCollationOperation) <
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskDomainTypeOperation));
+            Array.FindIndex(creates, operation => operation is CreateCollationOperation) <
+            Array.FindIndex(creates, operation => operation is CreateDomainTypeOperation));
         Assert.True(
-            Array.FindIndex(drops, operation => operation is DropBlueTuskDomainTypeOperation) <
-            Array.FindIndex(drops, operation => operation is DropBlueTuskCollationOperation));
-        Assert.True(Assert.Single(drops.OfType<DropBlueTuskCollationOperation>()).IsDestructiveChange);
+            Array.FindIndex(drops, operation => operation is DropDomainTypeOperation) <
+            Array.FindIndex(drops, operation => operation is DropCollationOperation));
+        Assert.True(Assert.Single(drops.OfType<DropCollationOperation>()).IsDestructiveChange);
     }
 
     [Fact]
@@ -62,7 +62,7 @@ public sealed class CollationMigrationsTests
         Assert.Contains("VERSION = ''version''''one''", sql, StringComparison.Ordinal);
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskCollation(new BlueTuskCollationDefinition(
+        migration.CreateCollation(new BlueTuskCollationDefinition(
             "builtin_test",
             "collation_tests",
             BlueTuskCollationProvider.Builtin,
@@ -90,7 +90,7 @@ public sealed class CollationMigrationsTests
         var targetModel = renamedContext.GetService<IDesignTimeModel>().Model;
         var operations = differ.GetDifferences(source, targetModel.GetRelationalModel()).ToArray();
 
-        var rename = Assert.Single(operations.OfType<RenameBlueTuskCollationOperation>());
+        var rename = Assert.Single(operations.OfType<RenameCollationOperation>());
         Assert.Equal("case_insensitive", rename.Name);
         Assert.Equal("case_insensitive_v2", rename.NewName);
         Assert.Equal("collation_tests_moved", rename.NewSchema);
@@ -121,14 +121,14 @@ public sealed class CollationMigrationsTests
         using var context = CreateContext<InitialCollationContext>(OfflineConnectionString);
         var model = context.GetService<IDesignTimeModel>().Model;
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskCollationFrom(
+        migration.CreateCollationFrom(
             "quoted\"copy",
             "C",
             "quoted\"schema",
             "pg_catalog",
             ifNotExists: true);
-        migration.RefreshBlueTuskCollationVersion("case_insensitive", "collation_tests");
-        migration.DropBlueTuskCollation(
+        migration.RefreshCollationVersion("case_insensitive", "collation_tests");
+        migration.DropCollation(
             "case_insensitive",
             "collation_tests",
             ifExists: true,
@@ -159,9 +159,9 @@ public sealed class CollationMigrationsTests
         var builder = new IndentedStringBuilder();
         generator.Generate("migrationBuilder", migration.Operations, builder);
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskCollationFrom", code, StringComparison.Ordinal);
-        Assert.Contains("RefreshBlueTuskCollationVersion", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskCollation", code, StringComparison.Ordinal);
+        Assert.Contains("CreateCollationFrom", code, StringComparison.Ordinal);
+        Assert.Contains("RefreshCollationVersion", code, StringComparison.Ordinal);
+        Assert.Contains("DropCollation", code, StringComparison.Ordinal);
         Assert.Contains(", true, true);", code, StringComparison.Ordinal);
     }
 
@@ -169,18 +169,18 @@ public sealed class CollationMigrationsTests
     public void Invalid_provider_option_combinations_are_rejected()
     {
         var modelBuilder = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskCollation(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasCollation(
             "invalid_libc",
             collation => collation
                 .UseProvider(BlueTuskCollationProvider.Libc)
                 .UseLocale("C")
                 .IsDeterministic(false)));
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskCollation(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasCollation(
             "invalid_icu",
             collation => collation
                 .UseProvider(BlueTuskCollationProvider.Icu)
                 .UseLibcLocales("C", "C")));
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskCollation(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasCollation(
             "missing_locale",
             collation => collation.UseProvider(BlueTuskCollationProvider.Icu)));
     }
@@ -234,7 +234,7 @@ public sealed class CollationMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskCollations(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasCollations(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
             }
 
             await VerifyVersionedFeaturesAsync(initialContext, connectionString);
@@ -303,7 +303,7 @@ public sealed class CollationMigrationsTests
             string errorMessage)
         {
             var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            migration.CreateBlueTuskCollation(definition);
+            migration.CreateCollation(definition);
             var sql = Assert.Single(context.GetService<IMigrationsSqlGenerator>()
                 .Generate(migration.Operations, context.GetService<IDesignTimeModel>().Model)).CommandText;
             if (serverVersion >= minimumVersion)
@@ -389,7 +389,7 @@ public sealed class CollationMigrationsTests
     private static void ConfigureCaseInsensitiveCollation(
         ModelBuilder modelBuilder,
         string name,
-        string? schema) => modelBuilder.HasBlueTuskCollation(
+        string? schema) => modelBuilder.HasCollation(
         name,
         collation => collation
             .UseProvider(BlueTuskCollationProvider.Icu)
@@ -414,7 +414,7 @@ public sealed class CollationMigrationsTests
     private sealed class AlteredCollationContext(DbContextOptions<AlteredCollationContext> options)
         : DbContext(options)
     {
-        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasBlueTuskCollation(
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasCollation(
             "case_insensitive",
             collation => collation
                 .UseProvider(BlueTuskCollationProvider.Icu)
@@ -433,7 +433,7 @@ public sealed class CollationMigrationsTests
     private sealed class RulesCollationContext(DbContextOptions<RulesCollationContext> options)
         : DbContext(options)
     {
-        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasBlueTuskCollation(
+        protected override void OnModelCreating(ModelBuilder modelBuilder) => modelBuilder.HasCollation(
             "quoted\"collation",
             collation => collation
                 .UseProvider(BlueTuskCollationProvider.Icu)
@@ -450,7 +450,7 @@ public sealed class CollationMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureCaseInsensitiveCollation(modelBuilder, "case_insensitive", "collation_tests");
-            modelBuilder.HasBlueTuskDomain(
+            modelBuilder.HasDomain(
                 "case_insensitive_text",
                 "text",
                 domain => domain.UseCollation("collation_tests.case_insensitive"),

@@ -1,0 +1,36 @@
+{
+  "name": "@bluetusk/live-angular",
+  "version": "1.0.0",
+  "description": "Angular signals integration for BlueTusk Live.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jphgardner/BlueTusk.git",
+    "directory": "clients/live-angular"
+  },
+  "homepage": "https://github.com/jphgardner/BlueTusk#readme",
+  "bugs": {
+    "url": "https://github.com/jphgardner/BlueTusk/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": ["dist", "README.md"],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@bluetusk/live": "1.0.0"
+  },
+  "peerDependencies": {
+    "@angular/core": ">=20 <23"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

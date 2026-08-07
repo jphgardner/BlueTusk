@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for provider-owned PostgreSQL expression indexes.</summary>
 public static class BlueTuskExpressionIndexMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskExpressionIndexOperation> CreateBlueTuskExpressionIndex(
+    public static OperationBuilder<CreateExpressionIndexOperation> CreateExpressionIndex(
         this MigrationBuilder migrationBuilder,
         string table,
         BlueTuskExpressionIndexDefinition definition,
@@ -18,29 +18,29 @@ public static class BlueTuskExpressionIndexMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         BlueTuskExpressionIndexMetadata.Validate(definition);
-        var operation = new CreateBlueTuskExpressionIndexOperation
+        var operation = new CreateExpressionIndexOperation
         {
             Table = table,
             Schema = schema,
             Definition = BlueTuskExpressionIndexMetadata.Normalize(definition),
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskExpressionIndexOperation>(operation);
+        return new OperationBuilder<CreateExpressionIndexOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskExpressionIndexOperation> CreateBlueTuskExpressionIndex(
+    public static OperationBuilder<CreateExpressionIndexOperation> CreateExpressionIndex(
         this MigrationBuilder migrationBuilder,
         string table,
         string serializedDefinition,
         string? schema = null) =>
-        CreateBlueTuskExpressionIndex(
+        CreateExpressionIndex(
             migrationBuilder,
             table,
             BlueTuskExpressionIndexMetadata.DeserializeDefinition(serializedDefinition),
             schema);
 
-    public static OperationBuilder<DropBlueTuskExpressionIndexOperation> DropBlueTuskExpressionIndex(
+    public static OperationBuilder<DropExpressionIndexOperation> DropExpressionIndex(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null,
@@ -48,7 +48,7 @@ public static class BlueTuskExpressionIndexMigrationBuilderExtensions
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskExpressionIndexOperation
+        var operation = new DropExpressionIndexOperation
         {
             Name = name,
             Schema = schema,
@@ -56,10 +56,10 @@ public static class BlueTuskExpressionIndexMigrationBuilderExtensions
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskExpressionIndexOperation>(operation);
+        return new OperationBuilder<DropExpressionIndexOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskExpressionIndexOperation> RenameBlueTuskExpressionIndex(
+    public static OperationBuilder<RenameExpressionIndexOperation> RenameExpressionIndex(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName,
@@ -68,13 +68,13 @@ public static class BlueTuskExpressionIndexMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskExpressionIndexOperation
+        var operation = new RenameExpressionIndexOperation
         {
             Name = name,
             Schema = schema,
             NewName = newName,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskExpressionIndexOperation>(operation);
+        return new OperationBuilder<RenameExpressionIndexOperation>(operation);
     }
 }

@@ -1,5 +1,5 @@
 {
-   "Title":"BlueTusk.Benchmarks.DataReaderBenchmarks-20260731-214818",
+   "Title":"BlueTusk.Benchmarks.DataReaderBenchmarks-20260807-174316",
    "HostEnvironmentInfo":{
       "BenchmarkDotNetCaption":"BenchmarkDotNet",
       "BenchmarkDotNetVersion":"0.15.8",
@@ -21,199 +21,264 @@
    },
    "Benchmarks":[
       {
-         "DisplayInfo":"DataReaderBenchmarks.ReadThousandTypedInt32Rows: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "DisplayInfo":"DataReaderBenchmarks.ReadThousandTypedInt32Rows: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
          "Namespace":"BlueTusk.Benchmarks",
          "Type":"DataReaderBenchmarks",
          "Method":"ReadThousandTypedInt32Rows",
          "MethodTitle":"ReadThousandTypedInt32Rows",
          "Parameters":"",
          "FullName":"BlueTusk.Benchmarks.DataReaderBenchmarks.ReadThousandTypedInt32Rows",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "HardwareIntrinsics":"",
          "Statistics":{
             "OriginalValues":[
-               20458.078002929688,21440.34423828125,22578.424072265625
+               18668.258666992188,18912.60986328125,18797.05810546875
             ],
             "N":3,
-            "Min":20458.078002929688,
-            "LowerFence":19358.951568603516,
-            "Q1":20949.21112060547,
-            "Median":21440.34423828125,
-            "Mean":21492.282104492188,
-            "Q3":22009.384155273438,
-            "UpperFence":23599.64370727539,
-            "Max":22578.424072265625,
-            "InterquartileRange":1060.1730346679688,
+            "Min":18668.258666992188,
+            "LowerFence":18549.394989013672,
+            "Q1":18732.65838623047,
+            "Median":18797.05810546875,
+            "Mean":18792.642211914062,
+            "Q3":18854.833984375,
+            "UpperFence":19038.097381591797,
+            "Max":18912.60986328125,
+            "InterquartileRange":122.17559814453125,
             "LowerOutliers":[
-               
+
             ],
             "UpperOutliers":[
-               
+
             ],
             "AllOutliers":[
-               
+
             ],
-            "StandardError":612.6418257288128,
-            "Variance":1125990.019896999,
-            "StandardDeviation":1061.1267690040615,
-            "Skewness":0.04882869778164983,
-            "Kurtosis":0.6666666666666665,
+            "StandardError":70.57266200847828,
+            "Variance":14941.501868888736,
+            "StandardDeviation":122.23543622407021,
+            "Skewness":-0.036078984290739614,
+            "Kurtosis":0.6666666666666666,
             "ConfidenceInterval":{
                "N":3,
-               "Mean":21492.282104492188,
-               "StandardError":612.6418257288128,
+               "Mean":18792.642211914062,
+               "StandardError":70.57266200847828,
                "Level":12,
-               "Margin":19358.90240867714,
-               "Lower":2133.3796958150488,
-               "Upper":40851.184513169326
+               "Margin":2230.0293893865532,
+               "Lower":16562.61282252751,
+               "Upper":21022.671601300615
             },
             "Percentiles":{
-               "P0":20458.078002929688,
-               "P25":20949.21112060547,
-               "P50":21440.34423828125,
-               "P67":21827.291381835938,
-               "P80":22123.192138671875,
-               "P85":22237.000122070312,
-               "P90":22350.80810546875,
-               "P95":22464.616088867188,
-               "P100":22578.424072265625
+               "P0":18668.258666992188,
+               "P25":18732.65838623047,
+               "P50":18797.05810546875,
+               "P67":18836.345703125,
+               "P80":18866.38916015625,
+               "P85":18877.9443359375,
+               "P90":18889.49951171875,
+               "P95":18901.0546875,
+               "P100":18912.60986328125
             }
          },
          "Memory":{
-            "Gen0Collections":47,
+            "Gen0Collections":0,
             "Gen1Collections":0,
             "Gen2Collections":0,
             "TotalOperations":32768,
-            "BytesAllocatedPerOperation":24120
+            "BytesAllocatedPerOperation":224
          }
       },{
-         "DisplayInfo":"DataReaderBenchmarks.ReadOneMegabyteByteaStream: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "DisplayInfo":"DataReaderBenchmarks.ReadThousandGenericInt32Rows: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "Namespace":"BlueTusk.Benchmarks",
+         "Type":"DataReaderBenchmarks",
+         "Method":"ReadThousandGenericInt32Rows",
+         "MethodTitle":"ReadThousandGenericInt32Rows",
+         "Parameters":"",
+         "FullName":"BlueTusk.Benchmarks.DataReaderBenchmarks.ReadThousandGenericInt32Rows",
+         "HardwareIntrinsics":"",
+         "Statistics":{
+            "OriginalValues":[
+               16215.911865234375,16036.682128906248,16008.508300781248
+            ],
+            "N":3,
+            "Min":16008.508300781248,
+            "LowerFence":15867.042541503903,
+            "Q1":16022.595214843748,
+            "Median":16036.682128906248,
+            "Mean":16087.034098307291,
+            "Q3":16126.296997070312,
+            "UpperFence":16281.84967041016,
+            "Max":16215.911865234375,
+            "InterquartileRange":103.70178222656432,
+            "LowerOutliers":[
+
+            ],
+            "UpperOutliers":[
+
+            ],
+            "AllOutliers":[
+
+            ],
+            "StandardError":64.95010970965383,
+            "Variance":12655.550253888205,
+            "StandardDeviation":112.49688997429308,
+            "Skewness":0.3579194265256419,
+            "Kurtosis":0.6666666666666591,
+            "ConfidenceInterval":{
+               "N":3,
+               "Mean":16087.034098307291,
+               "StandardError":64.95010970965383,
+               "Level":12,
+               "Margin":2052.3620531560573,
+               "Lower":14034.672045151234,
+               "Upper":18139.39615146335
+            },
+            "Percentiles":{
+               "P0":16008.508300781248,
+               "P25":16022.595214843748,
+               "P50":16036.682128906248,
+               "P67":16097.620239257812,
+               "P80":16144.219970703125,
+               "P85":16162.142944335938,
+               "P90":16180.065917968748,
+               "P95":16197.988891601562,
+               "P100":16215.911865234375
+            }
+         },
+         "Memory":{
+            "Gen0Collections":0,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":32768,
+            "BytesAllocatedPerOperation":224
+         }
+      },{
+         "DisplayInfo":"DataReaderBenchmarks.ReadOneMegabyteByteaStream: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
          "Namespace":"BlueTusk.Benchmarks",
          "Type":"DataReaderBenchmarks",
          "Method":"ReadOneMegabyteByteaStream",
          "MethodTitle":"ReadOneMegabyteByteaStream",
          "Parameters":"",
          "FullName":"BlueTusk.Benchmarks.DataReaderBenchmarks.ReadOneMegabyteByteaStream",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "HardwareIntrinsics":"",
          "Statistics":{
             "OriginalValues":[
-               438411.71875,430649.169921875,432141.357421875
+               12664.875030517578,11743.672943115234,11710.761260986328
             ],
             "N":3,
-            "Min":430649.169921875,
-            "LowerFence":425573.35205078125,
-            "Q1":431395.263671875,
-            "Median":432141.357421875,
-            "Mean":433734.08203125,
-            "Q3":435276.5380859375,
-            "UpperFence":441098.44970703125,
-            "Max":438411.71875,
-            "InterquartileRange":3881.2744140625,
+            "Min":11710.761260986328,
+            "LowerFence":11011.631774902344,
+            "Q1":11727.217102050781,
+            "Median":11743.672943115234,
+            "Mean":12039.769744873047,
+            "Q3":12204.273986816406,
+            "UpperFence":12919.859313964844,
+            "Max":12664.875030517578,
+            "InterquartileRange":477.056884765625,
             "LowerOutliers":[
-               
+
             ],
             "UpperOutliers":[
-               
+
             ],
             "AllOutliers":[
-               
+
             ],
-            "StandardError":2378.1554363440146,
-            "Variance":16966869.838237762,
-            "StandardDeviation":4119.086044043966,
-            "Skewness":0.32885722177118476,
+            "StandardError":312.69700899895986,
+            "Variance":293338.2583106868,
+            "StandardDeviation":541.6071069610209,
+            "Skewness":0.38330185491329066,
             "Kurtosis":0.6666666666666666,
             "ConfidenceInterval":{
                "N":3,
-               "Mean":433734.08203125,
-               "StandardError":2378.1554363440146,
+               "Mean":12039.769744873047,
+               "StandardError":312.69700899895986,
                "Level":12,
-               "Margin":75147.46312020133,
-               "Lower":358586.6189110487,
-               "Upper":508881.5451514513
+               "Margin":9880.92981326365,
+               "Lower":2158.8399316093964,
+               "Upper":21920.699558136697
             },
             "Percentiles":{
-               "P0":430649.169921875,
-               "P25":431395.263671875,
-               "P50":432141.357421875,
-               "P67":434273.2802734375,
-               "P80":435903.57421875,
-               "P85":436530.6103515625,
-               "P90":437157.646484375,
-               "P95":437784.6826171875,
-               "P100":438411.71875
+               "P0":11710.761260986328,
+               "P25":11727.217102050781,
+               "P50":11743.672943115234,
+               "P67":12056.881652832031,
+               "P80":12296.39419555664,
+               "P85":12388.514404296875,
+               "P90":12480.63461303711,
+               "P95":12572.754821777344,
+               "P100":12664.875030517578
             }
          },
          "Memory":{
-            "Gen0Collections":509,
-            "Gen1Collections":509,
-            "Gen2Collections":509,
-            "TotalOperations":2048,
-            "BytesAllocatedPerOperation":1049117
+            "Gen0Collections":1,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":65536,
+            "BytesAllocatedPerOperation":272
          }
       },{
-         "DisplayInfo":"DataReaderBenchmarks.ReadOneMegabyteTextReader: ShortRun(IterationCount=3, LaunchCount=1, WarmupCount=3)",
+         "DisplayInfo":"DataReaderBenchmarks.ReadOneMegabyteTextReader: ShortRun(Toolchain=InProcessEmitToolchain, IterationCount=3, LaunchCount=1, WarmupCount=3)",
          "Namespace":"BlueTusk.Benchmarks",
          "Type":"DataReaderBenchmarks",
          "Method":"ReadOneMegabyteTextReader",
          "MethodTitle":"ReadOneMegabyteTextReader",
          "Parameters":"",
          "FullName":"BlueTusk.Benchmarks.DataReaderBenchmarks.ReadOneMegabyteTextReader",
-         "HardwareIntrinsics":"AVX2+BMI1+BMI2+F16C+FMA+LZCNT+MOVBE,AVX,SSE3+SSSE3+SSE4.1+SSE4.2+POPCNT,X86Base+SSE+SSE2,AES+PCLMUL VectorSize=256",
+         "HardwareIntrinsics":"",
          "Statistics":{
             "OriginalValues":[
-               317800.09765625,319198.193359375,334125.5859375
+               59398.38562011719,59512.53967285156,59372.87902832031
             ],
             "N":3,
-            "Min":317800.09765625,
-            "LowerFence":306255.029296875,
-            "Q1":318499.1455078125,
-            "Median":319198.193359375,
-            "Mean":323707.958984375,
-            "Q3":326661.8896484375,
-            "UpperFence":338906.005859375,
-            "Max":334125.5859375,
-            "InterquartileRange":8162.744140625,
+            "Min":59372.87902832031,
+            "LowerFence":59280.88684082031,
+            "Q1":59385.63232421875,
+            "Median":59398.38562011719,
+            "Mean":59427.93477376302,
+            "Q3":59455.462646484375,
+            "UpperFence":59560.20812988281,
+            "Max":59512.53967285156,
+            "InterquartileRange":69.830322265625,
             "LowerOutliers":[
-               
+
             ],
             "UpperOutliers":[
-               
+
             ],
             "AllOutliers":[
-               
+
             ],
-            "StandardError":5224.426009927838,
-            "Variance":81883881.3996315,
-            "StandardDeviation":9048.971289579358,
-            "Skewness":0.3745893584361076,
-            "Kurtosis":0.6666666666666667,
+            "StandardError":42.93847640756808,
+            "Variance":5531.138268609842,
+            "StandardDeviation":74.37162273750548,
+            "Skewness":0.3345965298396118,
+            "Kurtosis":0.6666666666666228,
             "ConfidenceInterval":{
                "N":3,
-               "Mean":323707.958984375,
-               "StandardError":5224.426009927838,
+               "Mean":59427.93477376302,
+               "StandardError":42.93847640756808,
                "Level":12,
-               "Margin":165086.921950244,
-               "Lower":158621.037034131,
-               "Upper":488794.880934619
+               "Margin":1356.8152539414557,
+               "Lower":58071.119519821565,
+               "Upper":60784.75002770448
             },
             "Percentiles":{
-               "P0":317800.09765625,
-               "P25":318499.1455078125,
-               "P50":319198.193359375,
-               "P67":324273.5068359375,
-               "P80":328154.62890625,
-               "P85":329647.3681640625,
-               "P90":331140.107421875,
-               "P95":332632.8466796875,
-               "P100":334125.5859375
+               "P0":59372.87902832031,
+               "P25":59385.63232421875,
+               "P50":59398.38562011719,
+               "P67":59437.197998046875,
+               "P80":59466.87805175781,
+               "P85":59478.29345703125,
+               "P90":59489.70886230469,
+               "P95":59501.124267578125,
+               "P100":59512.53967285156
             }
          },
          "Memory":{
-            "Gen0Collections":681,
-            "Gen1Collections":681,
-            "Gen2Collections":681,
-            "TotalOperations":2048,
-            "BytesAllocatedPerOperation":2097447
+            "Gen0Collections":3,
+            "Gen1Collections":0,
+            "Gen2Collections":0,
+            "TotalOperations":16384,
+            "BytesAllocatedPerOperation":3552
          }
       }
    ]

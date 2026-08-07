@@ -8,27 +8,27 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public static class BlueTuskForeignDataMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskForeignDataWrapperOperation>
-        CreateBlueTuskForeignDataWrapper(
+    public static OperationBuilder<CreateForeignDataWrapperOperation>
+        CreateForeignDataWrapper(
             this MigrationBuilder migrationBuilder,
             BlueTuskForeignDataWrapperDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(definition);
-        var operation = new CreateBlueTuskForeignDataWrapperOperation { Definition = definition };
+        var operation = new CreateForeignDataWrapperOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskForeignDataWrapperOperation>(operation);
+        return new OperationBuilder<CreateForeignDataWrapperOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskForeignDataWrapperOperation>
-        CreateBlueTuskForeignDataWrapper(this MigrationBuilder migrationBuilder, string serializedDefinition) =>
-        CreateBlueTuskForeignDataWrapper(
+    public static OperationBuilder<CreateForeignDataWrapperOperation>
+        CreateForeignDataWrapper(this MigrationBuilder migrationBuilder, string serializedDefinition) =>
+        CreateForeignDataWrapper(
             migrationBuilder,
             BlueTuskForeignDataMetadata.DeserializeWrapper(serializedDefinition));
 
-    public static OperationBuilder<AlterBlueTuskForeignDataWrapperOperation>
-        AlterBlueTuskForeignDataWrapper(
+    public static OperationBuilder<AlterForeignDataWrapperOperation>
+        AlterForeignDataWrapper(
             this MigrationBuilder migrationBuilder,
             BlueTuskForeignDataWrapperDefinition oldDefinition,
             BlueTuskForeignDataWrapperDefinition definition)
@@ -36,42 +36,42 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(oldDefinition);
         BlueTuskForeignDataMetadata.Validate(definition);
-        var operation = new AlterBlueTuskForeignDataWrapperOperation
+        var operation = new AlterForeignDataWrapperOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskForeignDataWrapperOperation>(operation);
+        return new OperationBuilder<AlterForeignDataWrapperOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskForeignDataWrapperOperation>
-        AlterBlueTuskForeignDataWrapper(
+    public static OperationBuilder<AlterForeignDataWrapperOperation>
+        AlterForeignDataWrapper(
             this MigrationBuilder migrationBuilder,
             string serializedOldDefinition,
             string serializedDefinition) =>
-        AlterBlueTuskForeignDataWrapper(
+        AlterForeignDataWrapper(
             migrationBuilder,
             BlueTuskForeignDataMetadata.DeserializeWrapper(serializedOldDefinition),
             BlueTuskForeignDataMetadata.DeserializeWrapper(serializedDefinition));
 
-    public static OperationBuilder<DropBlueTuskForeignDataWrapperOperation> DropBlueTuskForeignDataWrapper(
+    public static OperationBuilder<DropForeignDataWrapperOperation> DropForeignDataWrapper(
         this MigrationBuilder migrationBuilder,
         string name)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskForeignDataWrapperOperation
+        var operation = new DropForeignDataWrapperOperation
         {
             Name = name,
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskForeignDataWrapperOperation>(operation);
+        return new OperationBuilder<DropForeignDataWrapperOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskForeignDataWrapperOperation> RenameBlueTuskForeignDataWrapper(
+    public static OperationBuilder<RenameForeignDataWrapperOperation> RenameForeignDataWrapper(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName)
@@ -79,31 +79,31 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskForeignDataWrapperOperation { Name = name, NewName = newName };
+        var operation = new RenameForeignDataWrapperOperation { Name = name, NewName = newName };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskForeignDataWrapperOperation>(operation);
+        return new OperationBuilder<RenameForeignDataWrapperOperation>(operation);
     }
 
-    public static OperationBuilder<CreateBlueTuskForeignServerOperation> CreateBlueTuskForeignServer(
+    public static OperationBuilder<CreateForeignServerOperation> CreateForeignServer(
         this MigrationBuilder migrationBuilder,
         BlueTuskForeignServerDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(definition);
-        var operation = new CreateBlueTuskForeignServerOperation { Definition = definition };
+        var operation = new CreateForeignServerOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskForeignServerOperation>(operation);
+        return new OperationBuilder<CreateForeignServerOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskForeignServerOperation> CreateBlueTuskForeignServer(
+    public static OperationBuilder<CreateForeignServerOperation> CreateForeignServer(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskForeignServer(
+        CreateForeignServer(
             migrationBuilder,
             BlueTuskForeignDataMetadata.DeserializeServer(serializedDefinition));
 
-    public static OperationBuilder<AlterBlueTuskForeignServerOperation> AlterBlueTuskForeignServer(
+    public static OperationBuilder<AlterForeignServerOperation> AlterForeignServer(
         this MigrationBuilder migrationBuilder,
         BlueTuskForeignServerDefinition oldDefinition,
         BlueTuskForeignServerDefinition definition)
@@ -111,41 +111,41 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(oldDefinition);
         BlueTuskForeignDataMetadata.Validate(definition);
-        var operation = new AlterBlueTuskForeignServerOperation
+        var operation = new AlterForeignServerOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskForeignServerOperation>(operation);
+        return new OperationBuilder<AlterForeignServerOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskForeignServerOperation> AlterBlueTuskForeignServer(
+    public static OperationBuilder<AlterForeignServerOperation> AlterForeignServer(
         this MigrationBuilder migrationBuilder,
         string serializedOldDefinition,
         string serializedDefinition) =>
-        AlterBlueTuskForeignServer(
+        AlterForeignServer(
             migrationBuilder,
             BlueTuskForeignDataMetadata.DeserializeServer(serializedOldDefinition),
             BlueTuskForeignDataMetadata.DeserializeServer(serializedDefinition));
 
-    public static OperationBuilder<DropBlueTuskForeignServerOperation> DropBlueTuskForeignServer(
+    public static OperationBuilder<DropForeignServerOperation> DropForeignServer(
         this MigrationBuilder migrationBuilder,
         string name)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskForeignServerOperation
+        var operation = new DropForeignServerOperation
         {
             Name = name,
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskForeignServerOperation>(operation);
+        return new OperationBuilder<DropForeignServerOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskForeignServerOperation> RenameBlueTuskForeignServer(
+    public static OperationBuilder<RenameForeignServerOperation> RenameForeignServer(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName)
@@ -153,31 +153,31 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskForeignServerOperation { Name = name, NewName = newName };
+        var operation = new RenameForeignServerOperation { Name = name, NewName = newName };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskForeignServerOperation>(operation);
+        return new OperationBuilder<RenameForeignServerOperation>(operation);
     }
 
-    public static OperationBuilder<CreateBlueTuskUserMappingOperation> CreateBlueTuskUserMapping(
+    public static OperationBuilder<CreateUserMappingOperation> CreateUserMapping(
         this MigrationBuilder migrationBuilder,
         BlueTuskUserMappingDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(definition);
-        var operation = new CreateBlueTuskUserMappingOperation { Definition = definition };
+        var operation = new CreateUserMappingOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskUserMappingOperation>(operation);
+        return new OperationBuilder<CreateUserMappingOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskUserMappingOperation> CreateBlueTuskUserMapping(
+    public static OperationBuilder<CreateUserMappingOperation> CreateUserMapping(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskUserMapping(
+        CreateUserMapping(
             migrationBuilder,
             BlueTuskForeignDataMetadata.DeserializeUserMapping(serializedDefinition));
 
-    public static OperationBuilder<AlterBlueTuskUserMappingOperation> AlterBlueTuskUserMapping(
+    public static OperationBuilder<AlterUserMappingOperation> AlterUserMapping(
         this MigrationBuilder migrationBuilder,
         BlueTuskUserMappingDefinition oldDefinition,
         BlueTuskUserMappingDefinition definition)
@@ -185,26 +185,26 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskForeignDataMetadata.Validate(oldDefinition);
         BlueTuskForeignDataMetadata.Validate(definition);
-        var operation = new AlterBlueTuskUserMappingOperation
+        var operation = new AlterUserMappingOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskUserMappingOperation>(operation);
+        return new OperationBuilder<AlterUserMappingOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskUserMappingOperation> AlterBlueTuskUserMapping(
+    public static OperationBuilder<AlterUserMappingOperation> AlterUserMapping(
         this MigrationBuilder migrationBuilder,
         string serializedOldDefinition,
         string serializedDefinition) =>
-        AlterBlueTuskUserMapping(
+        AlterUserMapping(
             migrationBuilder,
             BlueTuskForeignDataMetadata.DeserializeUserMapping(serializedOldDefinition),
             BlueTuskForeignDataMetadata.DeserializeUserMapping(serializedDefinition));
 
-    public static OperationBuilder<DropBlueTuskUserMappingOperation> DropBlueTuskUserMapping(
+    public static OperationBuilder<DropUserMappingOperation> DropUserMapping(
         this MigrationBuilder migrationBuilder,
         string serverName,
         string? userName = null)
@@ -216,13 +216,13 @@ public static class BlueTuskForeignDataMigrationBuilderExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(userName);
         }
 
-        var operation = new DropBlueTuskUserMappingOperation
+        var operation = new DropUserMappingOperation
         {
             ServerName = serverName,
             UserName = userName,
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskUserMappingOperation>(operation);
+        return new OperationBuilder<DropUserMappingOperation>(operation);
     }
 }

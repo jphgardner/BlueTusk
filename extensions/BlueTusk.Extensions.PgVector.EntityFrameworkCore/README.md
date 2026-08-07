@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.PgVector.EntityFrameworkCore
 
-Preview Entity Framework Core integration for `BlueTusk.Extensions.PgVector`.
+Stable Entity Framework Core integration for `BlueTusk.Extensions.PgVector`.
 Register the ADO.NET codec on the data source and the EF mappings on the provider:
 
 ```csharp
@@ -20,6 +20,6 @@ store types such as `vector(768)` are preserved. `EF.Functions.L2Distance`,
 index-compatible `<->`, `<#>`, `<=>`, and `<+>` operators. `HammingDistance` and
 `JaccardDistance` translate `BlueTuskBitString` operands to `<~>` and `<%>`.
 
-Use `EnsureBlueTuskPgVector()` and `DropBlueTuskPgVector()` in migrations when
+Use `EnsurePgVector()` and `DropPgVector()` in migrations when
 the application owns the extension lifecycle. These APIs and the BlueTusk EF
-provider remain experimental `0.3.0-preview.1` previews.
+provider use the stable 1.0.0 Provider-family contract.

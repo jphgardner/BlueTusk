@@ -33,9 +33,9 @@ public sealed class PublicationMigrationsTests
         var model = initial.GetService<IDesignTimeModel>().Model;
         var differ = initial.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, model.GetRelationalModel()).ToArray();
-        var create = Assert.Single(creates.OfType<CreateBlueTuskPublicationOperation>());
+        var create = Assert.Single(creates.OfType<CreatePublicationOperation>());
         Assert.True(Array.FindLastIndex(creates, operation => operation is CreateTableOperation) <
-                    Array.FindIndex(creates, operation => operation is CreateBlueTuskPublicationOperation));
+                    Array.FindIndex(creates, operation => operation is CreatePublicationOperation));
         var sql = Assert.Single(initial.GetService<IMigrationsSqlGenerator>().Generate([create], model)).CommandText;
         Assert.Contains(
             "CREATE PUBLICATION \"documents_publication\" FOR TABLE ONLY " +
@@ -48,19 +48,19 @@ public sealed class PublicationMigrationsTests
         var alters = differ.GetDifferences(
             model.GetRelationalModel(),
             changed.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(alters.OfType<AlterBlueTuskPublicationOperation>());
-        Assert.Empty(alters.OfType<DropBlueTuskPublicationOperation>());
+        Assert.Single(alters.OfType<AlterPublicationOperation>());
+        Assert.Empty(alters.OfType<DropPublicationOperation>());
         var renameOperations = differ.GetDifferences(
             changed.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             renamed.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(renameOperations.OfType<RenameBlueTuskPublicationOperation>());
+        Assert.Single(renameOperations.OfType<RenamePublicationOperation>());
 
         var removals = differ.GetDifferences(
             model.GetRelationalModel(),
             removed.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
-        Assert.True(Array.FindIndex(removals, operation => operation is DropBlueTuskPublicationOperation) <
+        Assert.True(Array.FindIndex(removals, operation => operation is DropPublicationOperation) <
                     Array.FindIndex(removals, operation => operation is DropTableOperation));
-        var drop = Assert.Single(removals.OfType<DropBlueTuskPublicationOperation>());
+        var drop = Assert.Single(removals.OfType<DropPublicationOperation>());
         Assert.True(drop.IsDestructiveChange);
         Assert.Contains(
             " RESTRICT",
@@ -72,7 +72,7 @@ public sealed class PublicationMigrationsTests
             GeneratedColumns = BlueTuskPublicationGeneratedColumns.Stored,
         };
         var generatedSql = Assert.Single(initial.GetService<IMigrationsSqlGenerator>().Generate(
-            [new CreateBlueTuskPublicationOperation { Definition = generatedDefinition }], model)).CommandText;
+            [new CreatePublicationOperation { Definition = generatedDefinition }], model)).CommandText;
         Assert.Contains("server_version_num')::integer < 180000", generatedSql, StringComparison.Ordinal);
         Assert.Contains("publish_generated_columns = stored", generatedSql, StringComparison.Ordinal);
 
@@ -92,42 +92,42 @@ public sealed class PublicationMigrationsTests
             PublishViaPartitionRoot: false,
             BlueTuskPublicationGeneratedColumns.None);
         var version19Sql = Assert.Single(initial.GetService<IMigrationsSqlGenerator>().Generate(
-            [new CreateBlueTuskPublicationOperation { Definition = allSequencesDefinition }], model)).CommandText;
+            [new CreatePublicationOperation { Definition = allSequencesDefinition }], model)).CommandText;
         Assert.Contains("server_version_num')::integer < 190000", version19Sql, StringComparison.Ordinal);
         Assert.Contains("ALL TABLES EXCEPT (TABLE ONLY", version19Sql, StringComparison.Ordinal);
         Assert.Contains("ALL SEQUENCES", version19Sql, StringComparison.Ordinal);
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskPublication(create.Definition);
-        migration.AlterBlueTuskPublication(create.Definition, generatedDefinition);
-        migration.RenameBlueTuskPublication("documents_publication", "documents_publication_v2");
-        migration.DropBlueTuskPublication("documents_publication_v2");
+        migration.CreatePublication(create.Definition);
+        migration.AlterPublication(create.Definition, generatedDefinition);
+        migration.RenamePublication("documents_publication", "documents_publication_v2");
+        migration.DropPublication("documents_publication_v2");
         using var provider = DesignServices();
         var builder = new IndentedStringBuilder();
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, builder);
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskPublication", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskPublication", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskPublication", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskPublication", code, StringComparison.Ordinal);
+        Assert.Contains("CreatePublication", code, StringComparison.Ordinal);
+        Assert.Contains("AlterPublication", code, StringComparison.Ordinal);
+        Assert.Contains("RenamePublication", code, StringComparison.Ordinal);
+        Assert.Contains("DropPublication", code, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Invalid_publication_combinations_are_rejected()
     {
         var model = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => model.HasBlueTuskPublication(
+        Assert.Throws<ArgumentException>(() => model.HasPublication(
             "invalid",
             publication => publication
                 .ForAllTables()
                 .ForTable("documents", "publication_tests")));
-        Assert.Throws<ArgumentException>(() => model.HasBlueTuskPublication(
+        Assert.Throws<ArgumentException>(() => model.HasPublication(
             "invalid_columns",
             publication => publication
                 .ForTable("documents", "publication_tests", table => table.HasColumns("id"))
                 .ForTablesInSchema("publication_tests")));
-        Assert.Throws<ArgumentException>(() => model.HasBlueTuskPublication(
+        Assert.Throws<ArgumentException>(() => model.HasPublication(
             "invalid_except",
             publication => publication.ExceptTable("documents", "publication_tests")));
     }
@@ -170,7 +170,7 @@ public sealed class PublicationMigrationsTests
                 BlueTuskPublicationGeneratedColumns.None);
             await ExecuteOperations(
                 initial,
-                [new CreateBlueTuskPublicationOperation { Definition = schemaPublication }],
+                [new CreatePublicationOperation { Definition = schemaPublication }],
                 cs);
             var schemaDatabase = new BlueTuskDatabaseModelFactory().Create(
                 cs,
@@ -200,7 +200,7 @@ public sealed class PublicationMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskPublications(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasPublications(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
             }
 
             using var changed = Create<ChangedPublicationContext>(cs);
@@ -229,7 +229,7 @@ public sealed class PublicationMigrationsTests
                         "documents", "publication_tests", false, null, null)],
                     [], false, false, BlueTuskPublicationOperations.Insert, false,
                     BlueTuskPublicationGeneratedColumns.Stored);
-                await ExecuteOperations(initial, [new CreateBlueTuskPublicationOperation { Definition = generated }], cs);
+                await ExecuteOperations(initial, [new CreatePublicationOperation { Definition = generated }], cs);
                 var generatedDatabase = new BlueTuskDatabaseModelFactory().Create(
                     cs,
                     new DatabaseModelFactoryOptions([], ["publication_tests"]));
@@ -250,7 +250,7 @@ public sealed class PublicationMigrationsTests
                         "audit", "publication_tests", false, null, null, IsExcluded: true)],
                     [], true, true, BlueTuskPublicationOperations.All, false,
                     BlueTuskPublicationGeneratedColumns.None);
-                await ExecuteOperations(initial, [new CreateBlueTuskPublicationOperation { Definition = allData }], cs);
+                await ExecuteOperations(initial, [new CreatePublicationOperation { Definition = allData }], cs);
                 var allDataDatabase = new BlueTuskDatabaseModelFactory().Create(
                     cs,
                     new DatabaseModelFactoryOptions([], ["publication_tests"]));
@@ -267,7 +267,7 @@ public sealed class PublicationMigrationsTests
                         "documents", "publication_tests", false, null, null, IsExcluded: true)],
                 };
                 await ExecuteOperations(initial,
-                    [new AlterBlueTuskPublicationOperation
+                    [new AlterPublicationOperation
                     {
                         OldDefinition = allData,
                         Definition = changedAllData,
@@ -319,7 +319,7 @@ public sealed class PublicationMigrationsTests
         bool viaRoot)
     {
         ConfigureEntities(modelBuilder);
-        modelBuilder.HasBlueTuskPublication(name, publication => publication
+        modelBuilder.HasPublication(name, publication => publication
             .ForTable("documents", "publication_tests", table => table
                 .HasColumns("id", "note")
                 .HasRowFilter(filter))

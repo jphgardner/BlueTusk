@@ -1,0 +1,31 @@
+#nullable enable
+Aspire.Hosting.BlueTuskLiveAspireExtensions
+Aspire.Hosting.BlueTuskLiveAspireOptions
+Aspire.Hosting.BlueTuskLiveAspireOptions.<Clone>$() -> Aspire.Hosting.BlueTuskLiveAspireOptions!
+Aspire.Hosting.BlueTuskLiveAspireOptions.BlueTuskLiveAspireOptions() -> void
+Aspire.Hosting.BlueTuskLiveAspireOptions.ControlSchema.get -> string!
+Aspire.Hosting.BlueTuskLiveAspireOptions.ControlSchema.init -> void
+Aspire.Hosting.BlueTuskLiveAspireOptions.Equals(Aspire.Hosting.BlueTuskLiveAspireOptions? other) -> bool
+Aspire.Hosting.BlueTuskLiveAspireOptions.MaximumReplayEventsPerConnect.get -> int
+Aspire.Hosting.BlueTuskLiveAspireOptions.MaximumReplayEventsPerConnect.init -> void
+Aspire.Hosting.BlueTuskLiveAspireOptions.MaximumSharedSubscriptions.get -> int
+Aspire.Hosting.BlueTuskLiveAspireOptions.MaximumSharedSubscriptions.init -> void
+Aspire.Hosting.BlueTuskLiveAspireOptions.MaximumSubscribersPerQuery.get -> int
+Aspire.Hosting.BlueTuskLiveAspireOptions.MaximumSubscribersPerQuery.init -> void
+Aspire.Hosting.BlueTuskLiveAspireOptions.ReplayRetention.get -> System.TimeSpan
+Aspire.Hosting.BlueTuskLiveAspireOptions.ReplayRetention.init -> void
+Aspire.Hosting.BlueTuskLiveAspireOptions.SubscriberBufferCapacity.get -> int
+Aspire.Hosting.BlueTuskLiveAspireOptions.SubscriberBufferCapacity.init -> void
+Aspire.Hosting.BlueTuskLiveAspireOptions.Transports.get -> Aspire.Hosting.BlueTuskLiveAspireTransports
+Aspire.Hosting.BlueTuskLiveAspireOptions.Transports.init -> void
+Aspire.Hosting.BlueTuskLiveAspireTransports
+Aspire.Hosting.BlueTuskLiveAspireTransports.All = Aspire.Hosting.BlueTuskLiveAspireTransports.SignalR | Aspire.Hosting.BlueTuskLiveAspireTransports.ServerSentEvents | Aspire.Hosting.BlueTuskLiveAspireTransports.Grpc -> Aspire.Hosting.BlueTuskLiveAspireTransports
+Aspire.Hosting.BlueTuskLiveAspireTransports.Grpc = 4 -> Aspire.Hosting.BlueTuskLiveAspireTransports
+Aspire.Hosting.BlueTuskLiveAspireTransports.ServerSentEvents = 2 -> Aspire.Hosting.BlueTuskLiveAspireTransports
+Aspire.Hosting.BlueTuskLiveAspireTransports.SignalR = 1 -> Aspire.Hosting.BlueTuskLiveAspireTransports
+override Aspire.Hosting.BlueTuskLiveAspireOptions.Equals(object? obj) -> bool
+override Aspire.Hosting.BlueTuskLiveAspireOptions.GetHashCode() -> int
+override Aspire.Hosting.BlueTuskLiveAspireOptions.ToString() -> string!
+static Aspire.Hosting.BlueTuskLiveAspireExtensions.WithBlueTuskLive<THost, TSource, TControl>(this Aspire.Hosting.ApplicationModel.IResourceBuilder<THost>! builder, Aspire.Hosting.ApplicationModel.IResourceBuilder<TSource>! source, Aspire.Hosting.ApplicationModel.IResourceBuilder<TControl>! control, Aspire.Hosting.BlueTuskLiveAspireOptions? options = null) -> Aspire.Hosting.ApplicationModel.IResourceBuilder<THost>!
+static Aspire.Hosting.BlueTuskLiveAspireOptions.operator !=(Aspire.Hosting.BlueTuskLiveAspireOptions? left, Aspire.Hosting.BlueTuskLiveAspireOptions? right) -> bool
+static Aspire.Hosting.BlueTuskLiveAspireOptions.operator ==(Aspire.Hosting.BlueTuskLiveAspireOptions? left, Aspire.Hosting.BlueTuskLiveAspireOptions? right) -> bool

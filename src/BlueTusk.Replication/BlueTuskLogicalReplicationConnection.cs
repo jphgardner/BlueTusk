@@ -344,17 +344,51 @@ public sealed class BlueTuskLogicalReplicationConnection : BlueTuskReplicationCo
         string outputPlugin = "pgoutput",
         bool temporary = false,
         bool twoPhase = false,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default) =>
+        await CreateReplicationSlotAsync(
+            new BlueTuskLogicalReplicationSlotCreationOptions
+            {
+                SlotName = slotName,
+                OutputPlugin = outputPlugin,
+                Temporary = temporary,
+                TwoPhase = twoPhase,
+            },
+            cancellationToken).ConfigureAwait(false);
+
+    /// <summary>Creates a logical replication slot with explicit snapshot handling.</summary>
+    public ValueTask<BlueTuskReplicationSlotCreationResult> CreateReplicationSlotAsync(
+        BlueTuskLogicalReplicationSlotCreationOptions options) =>
+        CreateReplicationSlotAsync(options, CancellationToken.None);
+
+    /// <summary>Creates a logical replication slot with explicit snapshot handling.</summary>
+    public async ValueTask<BlueTuskReplicationSlotCreationResult> CreateReplicationSlotAsync(
+        BlueTuskLogicalReplicationSlotCreationOptions options,
+        CancellationToken cancellationToken)
     {
+        ArgumentNullException.ThrowIfNull(options);
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.SlotName);
+        ArgumentException.ThrowIfNullOrWhiteSpace(options.OutputPlugin);
+        if (!Enum.IsDefined(options.SnapshotMode))
+        {
+            throw new ArgumentOutOfRangeException(nameof(options), "Unknown logical slot snapshot mode.");
+        }
+
         var command =
-            $"CREATE_REPLICATION_SLOT {BlueTuskSql.QuoteIdentifier(slotName)}";
-        if (temporary)
+            $"CREATE_REPLICATION_SLOT {BlueTuskSql.QuoteIdentifier(options.SlotName)}";
+        if (options.Temporary)
         {
             command += " TEMPORARY";
         }
 
-        command += $" LOGICAL {BlueTuskSql.QuoteIdentifier(outputPlugin)} NOEXPORT_SNAPSHOT";
-        if (twoPhase)
+        command += $" LOGICAL {BlueTuskSql.QuoteIdentifier(options.OutputPlugin)} ";
+        command += options.SnapshotMode switch
+        {
+            BlueTuskLogicalSlotSnapshotMode.NoExport => "NOEXPORT_SNAPSHOT",
+            BlueTuskLogicalSlotSnapshotMode.Export => "EXPORT_SNAPSHOT",
+            BlueTuskLogicalSlotSnapshotMode.Use => "USE_SNAPSHOT",
+            _ => throw new UnreachableException(),
+        };
+        if (options.TwoPhase)
         {
             command += " TWO_PHASE";
         }

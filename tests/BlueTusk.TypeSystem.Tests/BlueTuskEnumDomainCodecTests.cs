@@ -128,7 +128,9 @@ public sealed class BlueTuskEnumDomainCodecTests
         Assert.True(registry.TryGetCodec(StatusType.Id, out var enumCodec));
         Assert.IsType<BlueTuskEnumCodec<OrderStatus>>(enumCodec);
         Assert.True(registry.TryGetCodec(new BlueTuskTypeId(90_101), out var enumArrayCodec));
-        Assert.Equal(typeof(OrderStatus[]), Assert.IsType<BlueTuskArrayCodec>(enumArrayCodec).ClrType);
+        Assert.Equal(
+            typeof(OrderStatus[]),
+            Assert.IsAssignableFrom<IBlueTuskCodec<OrderStatus[]>>(enumArrayCodec).ClrType);
         Assert.True(registry.TryGetCodec(new BlueTuskTypeId(90_200), out var domainCodec));
         Assert.IsType<BlueTuskDomainCodec>(domainCodec);
         Assert.True(registry.TryGetCodec(new BlueTuskTypeId(90_201), out var domainArrayCodec));

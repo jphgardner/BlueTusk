@@ -196,15 +196,15 @@ public sealed class ReverseEngineeringTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains("UseBlueTusk", scaffolded.ContextFile.Code, StringComparison.Ordinal);
-                Assert.Contains("UseBlueTuskIndexMethod", scaffolded.ContextFile.Code, StringComparison.Ordinal);
-                Assert.Contains("UseBlueTuskOperatorClass", scaffolded.ContextFile.Code, StringComparison.Ordinal);
-                Assert.Contains("UseBlueTuskCollation", scaffolded.ContextFile.Code, StringComparison.Ordinal);
-                Assert.Contains("HasBlueTuskNullSortOrder", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("UseIndexMethod", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("UseOperatorClass", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("UseCollation", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasNullSortOrder", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.Contains("IncludeProperties", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.Contains("BlueTusk:IndexStorageParameters", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 if (supportsSqlPgq)
                 {
-                    Assert.Contains("HasBlueTuskPropertyGraphs", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                    Assert.Contains("HasPropertyGraphs", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 }
 
                 Assert.Contains(scaffolded.AdditionalFiles, file => file.Code.Contains("class Parent", StringComparison.Ordinal));

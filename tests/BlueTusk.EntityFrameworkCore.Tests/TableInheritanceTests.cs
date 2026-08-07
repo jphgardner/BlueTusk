@@ -32,7 +32,7 @@ public sealed class TableInheritanceTests
         var operations = context.GetService<IMigrationsModelDiffer>()
             .GetDifferences(null, model.GetRelationalModel())
             .ToArray();
-        var additions = operations.OfType<AddBlueTuskTableInheritanceOperation>().ToArray();
+        var additions = operations.OfType<AddTableInheritanceOperation>().ToArray();
 
         Assert.Equal(2, additions.Length);
         Assert.Equal("base_events", additions[0].ParentTable);
@@ -40,7 +40,7 @@ public sealed class TableInheritanceTests
         Assert.All(additions, operation => Assert.Equal("inheritance_tests", operation.Schema));
         Assert.True(
             Array.FindLastIndex(operations, operation => operation is CreateTableOperation) <
-            Array.FindIndex(operations, operation => operation is AddBlueTuskTableInheritanceOperation));
+            Array.FindIndex(operations, operation => operation is AddTableInheritanceOperation));
 
         var createChild = Assert.Single(
             operations.OfType<CreateTableOperation>(),
@@ -78,16 +78,16 @@ public sealed class TableInheritanceTests
             source,
             singleContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
         Assert.Equal("audit_records", Assert.Single(
-            single.OfType<RemoveBlueTuskTableInheritanceOperation>()).ParentTable);
-        Assert.Empty(single.OfType<AddBlueTuskTableInheritanceOperation>());
+            single.OfType<RemoveTableInheritanceOperation>()).ParentTable);
+        Assert.Empty(single.OfType<AddTableInheritanceOperation>());
 
         var reordered = differ.GetDifferences(
             source,
             reorderedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Equal(2, reordered.OfType<RemoveBlueTuskTableInheritanceOperation>().Count());
+        Assert.Equal(2, reordered.OfType<RemoveTableInheritanceOperation>().Count());
         Assert.Equal(
             ["audit_records", "base_events"],
-            reordered.OfType<AddBlueTuskTableInheritanceOperation>()
+            reordered.OfType<AddTableInheritanceOperation>()
                 .Select(operation => operation.ParentTable));
 
         var renamed = differ.GetDifferences(
@@ -95,14 +95,14 @@ public sealed class TableInheritanceTests
             renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
         Assert.Equal("base_events_renamed", Assert.Single(
             renamed.OfType<RenameTableOperation>()).NewName);
-        Assert.Empty(renamed.OfType<AddBlueTuskTableInheritanceOperation>());
-        Assert.Empty(renamed.OfType<RemoveBlueTuskTableInheritanceOperation>());
+        Assert.Empty(renamed.OfType<AddTableInheritanceOperation>());
+        Assert.Empty(renamed.OfType<RemoveTableInheritanceOperation>());
 
         var removed = differ.GetDifferences(
             source,
             removedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Equal(2, removed.OfType<RemoveBlueTuskTableInheritanceOperation>().Count());
-        Assert.Empty(removed.OfType<AddBlueTuskTableInheritanceOperation>());
+        Assert.Equal(2, removed.OfType<RemoveTableInheritanceOperation>().Count());
+        Assert.Empty(removed.OfType<AddTableInheritanceOperation>());
     }
 
     [Fact]
@@ -112,13 +112,13 @@ public sealed class TableInheritanceTests
         ConfigureChild(modelBuilder);
 
         Assert.Throws<ArgumentException>(() => modelBuilder.Entity<EventMessage>()
-            .HasBlueTuskTableInheritance([]));
+            .HasTableInheritance([]));
         Assert.Throws<ArgumentException>(() => modelBuilder.Entity<EventMessage>()
-            .HasBlueTuskTableInheritance(
+            .HasTableInheritance(
                 new BlueTuskInheritedTableDefinition("base_events", "inheritance_tests"),
                 new BlueTuskInheritedTableDefinition("base_events", "inheritance_tests")));
         Assert.Throws<InvalidOperationException>(() => modelBuilder.Entity<EventMessage>()
-            .InheritsFromBlueTuskTable<UnknownParent>());
+            .InheritsFromTable<UnknownParent>());
     }
 
     [Fact]
@@ -126,12 +126,12 @@ public sealed class TableInheritanceTests
     {
         using var context = CreateContext<InheritanceContext>(OfflineConnectionString);
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.AddBlueTuskTableInheritance(
+        migration.AddTableInheritance(
             "event_messages",
             "base_events",
             "inheritance_tests",
             "inheritance_tests");
-        migration.RemoveBlueTuskTableInheritance(
+        migration.RemoveTableInheritance(
             "event_messages",
             "base_events",
             "inheritance_tests",
@@ -162,14 +162,14 @@ public sealed class TableInheritanceTests
         generator.Generate(
             "migrationBuilder",
             [
-                new AddBlueTuskTableInheritanceOperation
+                new AddTableInheritanceOperation
                 {
                     Table = "event_messages",
                     Schema = "inheritance_tests",
                     ParentTable = "base_events",
                     ParentSchema = "inheritance_tests",
                 },
-                new RemoveBlueTuskTableInheritanceOperation
+                new RemoveTableInheritanceOperation
                 {
                     Table = "event_messages",
                     Schema = "inheritance_tests",
@@ -180,8 +180,8 @@ public sealed class TableInheritanceTests
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("migrationBuilder.AddBlueTuskTableInheritance(\"event_messages\"", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.RemoveBlueTuskTableInheritance(\"event_messages\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.AddTableInheritance(\"event_messages\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.RemoveTableInheritance(\"event_messages\"", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -253,19 +253,19 @@ public sealed class TableInheritanceTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains(
-                    "HasBlueTuskTableInheritance(",
+                    "HasTableInheritance(",
                     scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
                 Assert.Equal(3, scaffolded.AdditionalFiles.Count);
             }
 
             var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            migration.RemoveBlueTuskTableInheritance(
+            migration.RemoveTableInheritance(
                 "event_messages",
                 "audit_records",
                 "inheritance_tests",
                 "inheritance_tests");
-            migration.AddBlueTuskTableInheritance(
+            migration.AddTableInheritance(
                 "event_messages",
                 "audit_records",
                 "inheritance_tests",
@@ -368,8 +368,8 @@ public sealed class TableInheritanceTests
         {
             ConfigureTables(modelBuilder);
             modelBuilder.Entity<EventMessage>()
-                .InheritsFromBlueTuskTable<BaseEvent>()
-                .InheritsFromBlueTuskTable<AuditRecord>();
+                .InheritsFromTable<BaseEvent>()
+                .InheritsFromTable<AuditRecord>();
         }
     }
 
@@ -378,7 +378,7 @@ public sealed class TableInheritanceTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureTables(modelBuilder);
-            modelBuilder.Entity<EventMessage>().InheritsFromBlueTuskTable<BaseEvent>();
+            modelBuilder.Entity<EventMessage>().InheritsFromTable<BaseEvent>();
         }
     }
 
@@ -388,8 +388,8 @@ public sealed class TableInheritanceTests
         {
             ConfigureTables(modelBuilder);
             modelBuilder.Entity<EventMessage>()
-                .InheritsFromBlueTuskTable<AuditRecord>()
-                .InheritsFromBlueTuskTable<BaseEvent>();
+                .InheritsFromTable<AuditRecord>()
+                .InheritsFromTable<BaseEvent>();
         }
     }
 
@@ -399,8 +399,8 @@ public sealed class TableInheritanceTests
         {
             ConfigureTables(modelBuilder, "base_events_renamed");
             modelBuilder.Entity<EventMessage>()
-                .InheritsFromBlueTuskTable<BaseEvent>()
-                .InheritsFromBlueTuskTable<AuditRecord>();
+                .InheritsFromTable<BaseEvent>()
+                .InheritsFromTable<AuditRecord>();
         }
     }
 

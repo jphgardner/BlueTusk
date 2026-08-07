@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskTriggerOperation : MigrationOperation
+public sealed class CreateTriggerOperation : MigrationOperation
 {
     public required string Table { get; init; }
 
@@ -14,7 +14,7 @@ public sealed class CreateBlueTuskTriggerOperation : MigrationOperation
     public bool OrReplace { get; init; }
 }
 
-public sealed class DropBlueTuskTriggerOperation : MigrationOperation
+public sealed class DropTriggerOperation : MigrationOperation
 {
     public required string Table { get; init; }
 
@@ -23,7 +23,7 @@ public sealed class DropBlueTuskTriggerOperation : MigrationOperation
     public required string Name { get; init; }
 }
 
-public sealed class RenameBlueTuskTriggerOperation : MigrationOperation
+public sealed class RenameTriggerOperation : MigrationOperation
 {
     public required string Table { get; init; }
 
@@ -34,7 +34,7 @@ public sealed class RenameBlueTuskTriggerOperation : MigrationOperation
     public required string NewName { get; init; }
 }
 
-public sealed class AlterBlueTuskTriggerEnabledModeOperation : MigrationOperation
+public sealed class AlterTriggerEnabledModeOperation : MigrationOperation
 {
     public required string Table { get; init; }
 

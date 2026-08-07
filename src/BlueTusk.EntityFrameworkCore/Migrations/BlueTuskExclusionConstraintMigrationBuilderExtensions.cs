@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for PostgreSQL exclusion constraints.</summary>
 public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
 {
-    public static OperationBuilder<AddBlueTuskExclusionConstraintOperation> AddBlueTuskExclusionConstraint(
+    public static OperationBuilder<AddExclusionConstraintOperation> AddExclusionConstraint(
         this MigrationBuilder migrationBuilder,
         string table,
         BlueTuskExclusionConstraintDefinition definition,
@@ -18,29 +18,29 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         BlueTuskExclusionConstraintMetadata.Validate(definition);
-        var operation = new AddBlueTuskExclusionConstraintOperation
+        var operation = new AddExclusionConstraintOperation
         {
             Table = table,
             Schema = schema,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AddBlueTuskExclusionConstraintOperation>(operation);
+        return new OperationBuilder<AddExclusionConstraintOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AddBlueTuskExclusionConstraintOperation> AddBlueTuskExclusionConstraint(
+    public static OperationBuilder<AddExclusionConstraintOperation> AddExclusionConstraint(
         this MigrationBuilder migrationBuilder,
         string table,
         string serializedDefinition,
         string? schema = null) =>
-        AddBlueTuskExclusionConstraint(
+        AddExclusionConstraint(
             migrationBuilder,
             table,
             BlueTuskExclusionConstraintMetadata.DeserializeDefinition(serializedDefinition),
             schema);
 
-    public static OperationBuilder<DropBlueTuskExclusionConstraintOperation> DropBlueTuskExclusionConstraint(
+    public static OperationBuilder<DropExclusionConstraintOperation> DropExclusionConstraint(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -49,7 +49,7 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskExclusionConstraintOperation
+        var operation = new DropExclusionConstraintOperation
         {
             Table = table,
             Schema = schema,
@@ -57,10 +57,10 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskExclusionConstraintOperation>(operation);
+        return new OperationBuilder<DropExclusionConstraintOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskExclusionConstraintOperation> RenameBlueTuskExclusionConstraint(
+    public static OperationBuilder<RenameExclusionConstraintOperation> RenameExclusionConstraint(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -71,7 +71,7 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskExclusionConstraintOperation
+        var operation = new RenameExclusionConstraintOperation
         {
             Table = table,
             Schema = schema,
@@ -79,6 +79,6 @@ public static class BlueTuskExclusionConstraintMigrationBuilderExtensions
             NewName = newName,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskExclusionConstraintOperation>(operation);
+        return new OperationBuilder<RenameExclusionConstraintOperation>(operation);
     }
 }

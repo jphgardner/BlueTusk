@@ -1,0 +1,45 @@
+#nullable enable
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.<Clone>$() -> BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult!
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.BlueTuskHypertableResult(int HypertableId, bool Created) -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.Created.get -> bool
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.Created.init -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.Deconstruct(out int HypertableId, out bool Created) -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.Equals(BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult? other) -> bool
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.HypertableId.get -> int
+BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.HypertableId.init -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceBuilderExtensions
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.<Clone>$() -> BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature!
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.BlueTuskTimescaleDbFeature(string! Schema) -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.Deconstruct(out string! Schema) -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.Equals(BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature? other) -> bool
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.Schema.get -> string!
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.Schema.init -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbPlugin
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbPlugin.BlueTuskTimescaleDbPlugin(string! schema = "public") -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbPlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbPlugin.Schema.get -> string!
+const BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.RegistryName = "bluetusk.extensions.timescaledb" -> string!
+override BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.Equals(object? obj) -> bool
+override BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.GetHashCode() -> int
+override BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.ToString() -> string!
+override BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.GetHashCode() -> int
+override BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.ToString() -> string!
+static BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.operator !=(BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult? left, BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult? right) -> bool
+static BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult.operator ==(BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult? left, BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult? right) -> bool
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceBuilderExtensions.UseTimescaleDb(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, string! schema = "public") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.AddColumnstorePolicyAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, BlueTusk.TypeSystem.BlueTuskInterval after, bool ifNotExists = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.AddContinuousAggregatePolicyAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, BlueTusk.TypeSystem.BlueTuskInterval startOffset, BlueTusk.TypeSystem.BlueTuskInterval endOffset, BlueTusk.TypeSystem.BlueTuskInterval scheduleInterval, bool ifNotExists = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.AddRetentionPolicyAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, BlueTusk.TypeSystem.BlueTuskInterval dropAfter, bool ifNotExists = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.CreateHypertableAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, string! timeColumn, bool ifNotExists = true, bool migrateData = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Extensions.TimescaleDB.BlueTuskHypertableResult!>
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.GetApproximateRowCountAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.GetTimescaleDbVersionAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.RefreshContinuousAggregateAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, System.DateTimeOffset windowStart, System.DateTimeOffset windowEnd, bool force = false, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.RemoveColumnstorePolicyAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, bool ifExists = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.RemoveContinuousAggregatePolicyAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, bool ifExists = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbDataSourceExtensions.RemoveRetentionPolicyAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! relation, bool ifExists = true, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.operator !=(BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature? left, BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature? right) -> bool
+static BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature.operator ==(BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature? left, BlueTusk.Extensions.TimescaleDB.BlueTuskTimescaleDbFeature? right) -> bool

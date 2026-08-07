@@ -534,7 +534,24 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         {
             session.LastReturned = _timeProvider.GetUtcNow();
             Interlocked.Increment(ref _idle);
-            if (Interlocked.CompareExchange(ref _fastSession, session, null) is null)
+            if (Volatile.Read(ref _waiting) > 0)
+            {
+                lock (_stateSync)
+                {
+                    if (Volatile.Read(ref _disposed) != 0 ||
+                        session.Generation != _generation ||
+                        !_available.Writer.TryWrite(new BlueTuskPoolSlot(session)))
+                    {
+                        Interlocked.Decrement(ref _idle);
+                        discard = true;
+                    }
+                    else
+                    {
+                        Monitor.Pulse(_stateSync);
+                    }
+                }
+            }
+            else if (Interlocked.CompareExchange(ref _fastSession, session, null) is null)
             {
                 if (Volatile.Read(ref _disposed) != 0 ||
                     session.Generation != Volatile.Read(ref _generation))

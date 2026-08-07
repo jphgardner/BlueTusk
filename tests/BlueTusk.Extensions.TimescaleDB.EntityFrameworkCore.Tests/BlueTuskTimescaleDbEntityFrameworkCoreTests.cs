@@ -100,14 +100,14 @@ public sealed class BlueTuskTimescaleDbEntityFrameworkCoreTests
     {
         var migrationBuilder = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
 
-        migrationBuilder.EnsureBlueTuskTimescaleDb("Extension \"Schema");
-        migrationBuilder.ConvertToBlueTuskHypertable(
+        migrationBuilder.EnsureTimescaleDb("Extension \"Schema");
+        migrationBuilder.ConvertToHypertable(
             "Metric's \"Data",
             "recorded'at",
             "Tenant's \"Space",
             "Extension \"Schema",
             migrateData: true);
-        migrationBuilder.DropBlueTuskTimescaleDb(cascade: true);
+        migrationBuilder.DropTimescaleDb(cascade: true);
 
         var operations = migrationBuilder.Operations.Cast<SqlOperation>().ToArray();
         Assert.Equal(

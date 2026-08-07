@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "targets": [
+    "protocol-frames",
+    "authentication",
+    "pgoutput",
+    "binary-copy",
+    "array-codec",
+    "range-codec",
+    "composite-codec",
+    "streams-envelope",
+    "live-resume-token"
+  ],
+  "limits": {
+    "maximumInputBytes": 65536,
+    "maximumMessagesPerInput": 512,
+    "executionTimeoutMilliseconds": 2000,
+    "managedHeapMegabytes": 1024,
+    "manualDurationSecondsPerTarget": 3600,
+    "artifactRetentionDays": 30
+  },
+  "requiredFiles": [
+    "eng/run-fuzz.ps1",
+    "eng/minimize-fuzz-finding.ps1",
+    "eng/archive-fuzz-findings.ps1",
+    "tests/BlueTusk.Fuzzing/FuzzTargets.cs",
+    "tests/BlueTusk.Fuzzing/Program.cs",
+    "tests/BlueTusk.Fuzzing.Tests/FuzzCorpusTests.cs",
+    ".github/workflows/fuzzing.yml",
+    "docs/fuzzing.md",
+    "docs/operations/fuzz-finding-handoff.md"
+  ]
+}

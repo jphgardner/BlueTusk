@@ -1,4 +1,4 @@
-using BlueTusk.Data;
+using BlueTusk.Data.Internal;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -21,13 +21,13 @@ public sealed class BlueTuskOptionsExtension : RelationalOptionsExtension
 
     internal string? AdminDatabase { get; private set; }
 
-    internal BlueTuskDataSource? DataSource { get; private set; }
+    internal IProviderDataSource? DataSource { get; private set; }
 
     public override DbContextOptionsExtensionInfo Info => _info ??= new ExtensionInfo(this);
 
     protected override RelationalOptionsExtension Clone() => new BlueTuskOptionsExtension(this);
 
-    internal BlueTuskOptionsExtension WithDataSource(BlueTuskDataSource? dataSource)
+    internal BlueTuskOptionsExtension WithDataSource(IProviderDataSource? dataSource)
     {
         var clone = new BlueTuskOptionsExtension(this)
         {

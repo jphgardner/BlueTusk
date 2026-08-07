@@ -105,7 +105,7 @@ internal static class BlueTuskExpressionIndexModelDiffer
             if (renameCandidates.Length == 1)
             {
                 var renamed = renameCandidates[0];
-                after.Add(new RenameBlueTuskExpressionIndexOperation
+                after.Add(new RenameExpressionIndexOperation
                 {
                     Name = sourceIndex.Name,
                     Schema = targetTable.Schema,
@@ -135,7 +135,7 @@ internal static class BlueTuskExpressionIndexModelDiffer
             : new TableKey(rename.NewSchema ?? rename.Schema, rename.NewName ?? rename.Name);
     }
 
-    private static CreateBlueTuskExpressionIndexOperation Create(
+    private static CreateExpressionIndexOperation Create(
         TableKey table,
         BlueTuskExpressionIndexDefinition definition) =>
         new()
@@ -145,7 +145,7 @@ internal static class BlueTuskExpressionIndexModelDiffer
             Definition = definition,
         };
 
-    private static DropBlueTuskExpressionIndexOperation Drop(
+    private static DropExpressionIndexOperation Drop(
         TableKey table,
         BlueTuskExpressionIndexDefinition definition) =>
         new()

@@ -17,7 +17,7 @@ public enum BlueTuskIdentityGeneration
 public static class BlueTuskPropertyBuilderExtensions
 {
     /// <summary>Configures a PostgreSQL identity column with the selected generation behavior.</summary>
-    public static PropertyBuilder UseBlueTuskIdentityColumn(
+    public static PropertyBuilder UseIdentityColumn(
         this PropertyBuilder propertyBuilder,
         BlueTuskIdentityGeneration generation = BlueTuskIdentityGeneration.ByDefault)
     {
@@ -35,12 +35,12 @@ public static class BlueTuskPropertyBuilderExtensions
         return propertyBuilder;
     }
 
-    /// <inheritdoc cref="UseBlueTuskIdentityColumn(PropertyBuilder,BlueTuskIdentityGeneration)" />
-    public static PropertyBuilder<TProperty> UseBlueTuskIdentityColumn<TProperty>(
+    /// <inheritdoc cref="UseIdentityColumn(PropertyBuilder,BlueTuskIdentityGeneration)" />
+    public static PropertyBuilder<TProperty> UseIdentityColumn<TProperty>(
         this PropertyBuilder<TProperty> propertyBuilder,
         BlueTuskIdentityGeneration generation = BlueTuskIdentityGeneration.ByDefault)
     {
-        UseBlueTuskIdentityColumn((PropertyBuilder)propertyBuilder, generation);
+        UseIdentityColumn((PropertyBuilder)propertyBuilder, generation);
         return propertyBuilder;
     }
 }

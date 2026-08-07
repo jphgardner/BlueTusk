@@ -36,10 +36,10 @@ public sealed class EventTriggerMigrationsTests
         var model = initial.GetService<IDesignTimeModel>().Model;
         var differ = initial.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, model.GetRelationalModel()).ToArray();
-        var create = Assert.Single(creates.OfType<CreateBlueTuskEventTriggerOperation>());
+        var create = Assert.Single(creates.OfType<CreateEventTriggerOperation>());
         Assert.True(Array.FindIndex(creates, operation => operation is CreateTableOperation) <
                     Array.IndexOf(creates, create));
-        Assert.True(Array.FindIndex(creates, operation => operation is CreateBlueTuskRoutineOperation) <
+        Assert.True(Array.FindIndex(creates, operation => operation is CreateRoutineOperation) <
                     Array.IndexOf(creates, create));
 
         var generator = initial.GetService<IMigrationsSqlGenerator>();
@@ -53,7 +53,7 @@ public sealed class EventTriggerMigrationsTests
         var disabledModel = disabled.GetService<IDesignTimeModel>().Model;
         var modeChanges = differ.GetDifferences(
             model.GetRelationalModel(), disabledModel.GetRelationalModel()).ToArray();
-        var mode = Assert.Single(modeChanges.OfType<AlterBlueTuskEventTriggerEnabledModeOperation>());
+        var mode = Assert.Single(modeChanges.OfType<AlterEventTriggerEnabledModeOperation>());
         Assert.Equal(BlueTuskEventTriggerEnabledMode.Disabled, mode.EnabledMode);
         Assert.Contains("ALTER EVENT TRIGGER \"bluetusk_capture_ddl\" DISABLE",
             generator.Generate(modeChanges, disabledModel).Single().CommandText, StringComparison.Ordinal);
@@ -61,20 +61,20 @@ public sealed class EventTriggerMigrationsTests
         var replacementModel = replaced.GetService<IDesignTimeModel>().Model;
         var replacements = differ.GetDifferences(
             model.GetRelationalModel(), replacementModel.GetRelationalModel()).ToArray();
-        Assert.Single(replacements.OfType<DropBlueTuskEventTriggerOperation>());
-        Assert.Single(replacements.OfType<CreateBlueTuskEventTriggerOperation>());
+        Assert.Single(replacements.OfType<DropEventTriggerOperation>());
+        Assert.Single(replacements.OfType<CreateEventTriggerOperation>());
 
         var renamedModel = renamed.GetService<IDesignTimeModel>().Model;
         var renames = differ.GetDifferences(
             disabledModel.GetRelationalModel(), renamedModel.GetRelationalModel()).ToArray();
-        Assert.Single(renames.OfType<RenameBlueTuskEventTriggerOperation>());
+        Assert.Single(renames.OfType<RenameEventTriggerOperation>());
 
         var removals = differ.GetDifferences(
             renamedModel.GetRelationalModel(),
             removed.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
-        var dropIndex = Array.FindIndex(removals, operation => operation is DropBlueTuskEventTriggerOperation);
+        var dropIndex = Array.FindIndex(removals, operation => operation is DropEventTriggerOperation);
         Assert.True(dropIndex < Array.FindIndex(removals, operation => operation is DropTableOperation));
-        Assert.True(dropIndex < Array.FindIndex(removals, operation => operation is DropBlueTuskRoutineOperation));
+        Assert.True(dropIndex < Array.FindIndex(removals, operation => operation is DropRoutineOperation));
 
         var login = create.Definition with
         {
@@ -84,7 +84,7 @@ public sealed class EventTriggerMigrationsTests
             EnabledMode = BlueTuskEventTriggerEnabledMode.Disabled,
         };
         var loginSql = string.Concat(generator.Generate(
-                [new CreateBlueTuskEventTriggerOperation { Definition = login }])
+                [new CreateEventTriggerOperation { Definition = login }])
             .Select(command => command.CommandText));
         Assert.Contains("server_version_num')::integer < 170000", loginSql, StringComparison.Ordinal);
         Assert.Contains(" ON login EXECUTE FUNCTION ", loginSql, StringComparison.Ordinal);
@@ -92,26 +92,26 @@ public sealed class EventTriggerMigrationsTests
             StringComparison.Ordinal);
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskEventTrigger(create.Definition);
-        migration.AlterBlueTuskEventTriggerEnabledMode(TriggerName, BlueTuskEventTriggerEnabledMode.Always);
-        migration.RenameBlueTuskEventTrigger(TriggerName, $"{TriggerName}_v2");
-        migration.DropBlueTuskEventTrigger($"{TriggerName}_v2");
+        migration.CreateEventTrigger(create.Definition);
+        migration.AlterEventTriggerEnabledMode(TriggerName, BlueTuskEventTriggerEnabledMode.Always);
+        migration.RenameEventTrigger(TriggerName, $"{TriggerName}_v2");
+        migration.DropEventTrigger($"{TriggerName}_v2");
         using var provider = DesignServices();
         var codeBuilder = new IndentedStringBuilder();
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, codeBuilder);
         var code = codeBuilder.ToString();
-        Assert.Contains("CreateBlueTuskEventTrigger(", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskEventTriggerEnabledMode(", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskEventTrigger(", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskEventTrigger(", code, StringComparison.Ordinal);
+        Assert.Contains("CreateEventTrigger(", code, StringComparison.Ordinal);
+        Assert.Contains("AlterEventTriggerEnabledMode(", code, StringComparison.Ordinal);
+        Assert.Contains("RenameEventTrigger(", code, StringComparison.Ordinal);
+        Assert.Contains("DropEventTrigger(", code, StringComparison.Ordinal);
     }
 
     [Fact]
     public void Login_event_rejects_command_tags()
     {
         var model = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => model.HasBlueTuskEventTrigger(
+        Assert.Throws<ArgumentException>(() => model.HasEventTrigger(
             "login_audit",
             BlueTuskEventTriggerEvent.Login,
             "capture_ddl",
@@ -167,7 +167,7 @@ public sealed class EventTriggerMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskEventTriggers(", scaffolded.ContextFile.Code,
+                Assert.Contains("HasEventTriggers(", scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
             }
 
@@ -183,7 +183,7 @@ public sealed class EventTriggerMigrationsTests
                     EnabledMode = BlueTuskEventTriggerEnabledMode.Disabled,
                 };
                 foreach (var command in initial.GetService<IMigrationsSqlGenerator>().Generate(
-                             [new CreateBlueTuskEventTriggerOperation { Definition = login }]))
+                             [new CreateEventTriggerOperation { Definition = login }]))
                 {
                     await Execute(cs, command.CommandText);
                 }
@@ -233,7 +233,7 @@ public sealed class EventTriggerMigrationsTests
             entity.Property(item => item.Id).HasColumnName("id").ValueGeneratedOnAdd();
             entity.Property(item => item.Tag).HasColumnName("tag").IsRequired();
         });
-        modelBuilder.HasBlueTuskFunction(
+        modelBuilder.HasFunction(
             "capture_ddl",
             "event_trigger",
             """
@@ -249,7 +249,7 @@ public sealed class EventTriggerMigrationsTests
             """,
             function => function.UseLanguage("plpgsql"),
             Schema);
-        modelBuilder.HasBlueTuskEventTrigger(
+        modelBuilder.HasEventTrigger(
             renamed ? $"{TriggerName}_v2" : TriggerName,
             replaced ? BlueTuskEventTriggerEvent.DdlCommandStart : BlueTuskEventTriggerEvent.DdlCommandEnd,
             "capture_ddl",

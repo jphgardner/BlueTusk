@@ -28,8 +28,10 @@ public sealed class BlueTuskCommand : DbCommand
     private BlueTuskCommandPlan? _commandPlan;
     private string? _commandPlanText;
     private int _commandPlanParameterVersion = -1;
-    private BlueTuskExtendedQueryParameter[]? _preparedEncodedParameters;
-    private byte[]?[]? _preparedParameterBuffers;
+    private BlueTuskExtendedQueryParameter[]? _encodedParameters;
+    private byte[]?[]? _parameterBuffers;
+    private string? _multiplexingClassificationText;
+    private bool _multiplexingSessionNeutral;
     private ReusableCommandTimeout? _preparedCommandTimeout;
 
     public BlueTuskCommand()
@@ -69,6 +71,9 @@ public sealed class BlueTuskCommand : DbCommand
             ? value
             : throw new ArgumentOutOfRangeException(nameof(value));
     }
+
+    /// <summary>Gets or sets whether this command may use a multiplexed statement lane.</summary>
+    public BlueTuskMultiplexingMode MultiplexingMode { get; set; }
 
     /// <summary>
     /// Gets or sets the maximum rows requested per portal fetch for sequential readers.
@@ -190,6 +195,7 @@ public sealed class BlueTuskCommand : DbCommand
 
         try
         {
+            ValidatePreparationMultiplexing();
             _prepareRequested = true;
             _ = EnsurePrepared();
         }
@@ -212,6 +218,7 @@ public sealed class BlueTuskCommand : DbCommand
 
         try
         {
+            ValidatePreparationMultiplexing();
             _prepareRequested = true;
             _ = await EnsurePreparedAsync(cancellationToken).ConfigureAwait(false);
         }
@@ -238,23 +245,85 @@ public sealed class BlueTuskCommand : DbCommand
     }
 
     protected override DbDataReader ExecuteDbDataReader(CommandBehavior behavior) =>
-        behavior.HasFlag(CommandBehavior.SequentialAccess)
-            ? ExecuteStreamingDataReader(behavior)
+        ValidateCommandBehavior(behavior).HasFlag(CommandBehavior.SequentialAccess)
+            ? ExecuteStreamingDataReaderAfterMultiplexingValidation(behavior)
             : new BlueTuskDataReader(
                 ExecuteCore(),
                 behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
-                GetTypeRegistry());
+                GetTypeRegistry(),
+                behavior);
 
     protected override Task<DbDataReader> ExecuteDbDataReaderAsync(
         CommandBehavior behavior,
         CancellationToken cancellationToken)
     {
+        ValidateCommandBehavior(behavior);
         if (behavior.HasFlag(CommandBehavior.SequentialAccess))
         {
+            ValidateSequentialMultiplexing();
             return ExecuteStreamingDataReaderAsync(behavior, cancellationToken);
         }
 
         return ExecuteBufferedDataReaderAsync(behavior, cancellationToken);
+    }
+
+    private static CommandBehavior ValidateCommandBehavior(CommandBehavior behavior)
+    {
+        const CommandBehavior supported =
+            CommandBehavior.SingleResult |
+            CommandBehavior.SingleRow |
+            CommandBehavior.SequentialAccess |
+            CommandBehavior.CloseConnection;
+        const CommandBehavior explicitlyUnsupported =
+            CommandBehavior.SchemaOnly |
+            CommandBehavior.KeyInfo;
+        if ((behavior & explicitlyUnsupported) != 0)
+        {
+            throw new NotSupportedException(
+                "BlueTusk does not support CommandBehavior.SchemaOnly or CommandBehavior.KeyInfo. " +
+                "Execute the query normally and use GetColumnSchema for result metadata.");
+        }
+
+        if ((behavior & ~supported) != 0)
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(behavior),
+                behavior,
+                "The command behavior contains unknown flags.");
+        }
+
+        return behavior;
+    }
+
+    private BlueTuskDataReader ExecuteStreamingDataReaderAfterMultiplexingValidation(
+        CommandBehavior behavior)
+    {
+        ValidateSequentialMultiplexing();
+        return ExecuteStreamingDataReader(behavior);
+    }
+
+    private void ValidateSequentialMultiplexing()
+    {
+        if (MultiplexingMode != BlueTuskMultiplexingMode.Require)
+        {
+            return;
+        }
+
+        _ = ResolveMultiplexer();
+        throw new InvalidOperationException(
+            "The command cannot be multiplexed because sequential readers require session affinity.");
+    }
+
+    private void ValidatePreparationMultiplexing()
+    {
+        if (MultiplexingMode != BlueTuskMultiplexingMode.Require)
+        {
+            return;
+        }
+
+        _ = ResolveMultiplexer();
+        throw new InvalidOperationException(
+            "The command cannot be multiplexed because explicit preparation requires session affinity.");
     }
 
     private async Task<DbDataReader> ExecuteBufferedDataReaderAsync(
@@ -265,7 +334,8 @@ public sealed class BlueTuskCommand : DbCommand
         return new BlueTuskDataReader(
             result,
             behavior.HasFlag(CommandBehavior.CloseConnection) ? _connection : null,
-            GetTypeRegistry());
+            GetTypeRegistry(),
+            behavior);
     }
 
     private BlueTuskDataReader ExecuteStreamingDataReader(CommandBehavior behavior)
@@ -588,10 +658,14 @@ public sealed class BlueTuskCommand : DbCommand
     }
 
     public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) =>
-        ExecuteScalarCoreAsync<object?>(cancellationToken).AsTask();
+        ShouldUseMultiplexingScalarPath()
+            ? ExecuteMultiplexedScalarAsync<object?>(cancellationToken)
+            : ExecuteScalarCoreAsync<object?>(cancellationToken).AsTask();
 
     public Task<T?> ExecuteScalarAsync<T>(CancellationToken cancellationToken = default) =>
-        ExecuteScalarCoreAsync<T>(cancellationToken).AsTask();
+        ShouldUseMultiplexingScalarPath()
+            ? ExecuteMultiplexedScalarAsync<T>(cancellationToken)
+            : ExecuteScalarCoreAsync<T>(cancellationToken).AsTask();
 
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreAsync(CancellationToken cancellationToken)
     {
@@ -606,6 +680,14 @@ public sealed class BlueTuskCommand : DbCommand
         Exception? failure = null;
         try
         {
+            if (ResolveMultiplexer() is { } multiplexer)
+            {
+                return await multiplexer.ExecuteAsync(
+                    this,
+                    connection => telemetry = StartTelemetry(connection),
+                    cancellationToken).ConfigureAwait(false);
+            }
+
             return await ExecuteCoreOnceAsync(
                 connection => telemetry = StartTelemetry(connection),
                 cancellationToken).ConfigureAwait(false);
@@ -636,6 +718,17 @@ public sealed class BlueTuskCommand : DbCommand
         Exception? failure = null;
         try
         {
+            if (ResolveMultiplexer() is { } multiplexer)
+            {
+                return multiplexer.ExecuteAsync(
+                        this,
+                        connection => telemetry = StartTelemetry(connection),
+                        CancellationToken.None)
+                    .AsTask()
+                    .GetAwaiter()
+                    .GetResult();
+            }
+
             return ExecuteCoreOnce(connection => telemetry = StartTelemetry(connection));
         }
         catch (Exception exception)
@@ -764,15 +857,16 @@ public sealed class BlueTuskCommand : DbCommand
 
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(
         Action<BlueTuskConnection> startTelemetry,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        BlueTuskConnection? dispatchedConnection = null)
     {
-        if (_connection is null && _dataSource is null)
+        if (_connection is null && _dataSource is null && dispatchedConnection is null)
         {
             throw new InvalidOperationException("The command has no connection or data source.");
         }
 
         BlueTuskConnection? ownedConnection = null;
-        var connection = _connection;
+        var connection = dispatchedConnection ?? _connection;
         if (connection is null)
         {
             ownedConnection = await _dataSource!.OpenConnectionAsync(cancellationToken).ConfigureAwait(false);
@@ -895,6 +989,157 @@ public sealed class BlueTuskCommand : DbCommand
             {
                 await ownedConnection.DisposeAsync().ConfigureAwait(false);
             }
+        }
+    }
+
+    internal ValueTask<BlueTuskQueryResult> ExecuteDispatchedAsync(
+        BlueTuskConnection connection,
+        Action<BlueTuskConnection> startTelemetry,
+        CancellationToken cancellationToken) =>
+        ExecuteCoreOnceAsync(startTelemetry, cancellationToken, connection);
+
+    internal bool CanUseMultiplexedPipeline =>
+        ExecutionMode != BlueTuskCommandExecutionMode.Simple &&
+        !_prepareRequested;
+
+    internal BlueTuskMultiplexedPipelineCommand CreateMultiplexedPipelineCommand(
+        BlueTuskConnection connection,
+        bool scalar)
+    {
+        connection.ValidateCommandTransaction(_transaction);
+        if (string.IsNullOrWhiteSpace(CommandText))
+        {
+            throw new InvalidOperationException("CommandText is required.");
+        }
+
+        var plan = GetCommandPlan();
+        var parameters = EncodeParameters(plan, connection.TypeRegistry);
+        return new BlueTuskMultiplexedPipelineCommand(
+            plan.Sql,
+            parameters,
+            UseBinaryResults: false,
+            scalar);
+    }
+
+    internal void SetMultiplexedPipelineActiveConnection(
+        BlueTuskConnection connection) =>
+        Volatile.Write(ref _executingConnection, connection);
+
+    internal void CompleteMultiplexedPipelineExecution() =>
+        Volatile.Write(ref _executingConnection, null);
+
+    internal Exception TranslateMultiplexedPipelineError(
+        BlueTuskServerException exception) =>
+        TranslateReaderServerException(exception);
+
+    private BlueTuskCommandMultiplexer? ResolveMultiplexer()
+    {
+        if (MultiplexingMode == BlueTuskMultiplexingMode.Disable)
+        {
+            return null;
+        }
+
+        if (_connection is not null)
+        {
+            if (MultiplexingMode == BlueTuskMultiplexingMode.Require)
+            {
+                throw new InvalidOperationException(
+                    "The command cannot be multiplexed because commands on an explicit connection require session affinity.");
+            }
+
+            return null;
+        }
+
+        var multiplexer = _dataSource?.Multiplexer;
+        if (multiplexer is null)
+        {
+            if (MultiplexingMode == BlueTuskMultiplexingMode.Require)
+            {
+                throw new InvalidOperationException(
+                    "The command requires multiplexing, but its data source has not enabled it.");
+            }
+
+            return null;
+        }
+
+        var reason = _transaction is not null
+            ? "commands enlisted in a transaction require session affinity"
+            : _prepareRequested
+                ? "explicitly prepared commands require session affinity"
+                : !IsSessionNeutralCommandText()
+                    ? "the SQL can change or depend on physical-session state"
+                    : null;
+        if (reason is null)
+        {
+            return multiplexer;
+        }
+
+        if (MultiplexingMode == BlueTuskMultiplexingMode.Require)
+        {
+            throw new InvalidOperationException($"The command cannot be multiplexed because {reason}.");
+        }
+
+        return null;
+    }
+
+    private bool IsSessionNeutralCommandText()
+    {
+        var commandText = CommandText;
+        if (string.Equals(
+                _multiplexingClassificationText,
+                commandText,
+                StringComparison.Ordinal))
+        {
+            return _multiplexingSessionNeutral;
+        }
+
+        var sessionNeutral = BlueTuskMultiplexingClassifier.IsSessionNeutral(commandText);
+        _multiplexingClassificationText = commandText;
+        _multiplexingSessionNeutral = sessionNeutral;
+        return sessionNeutral;
+    }
+
+    private bool ShouldUseMultiplexingScalarPath() =>
+        MultiplexingMode == BlueTuskMultiplexingMode.Require ||
+        _connection is null &&
+        _dataSource is { IsMultiplexingEnabled: true } &&
+        MultiplexingMode != BlueTuskMultiplexingMode.Disable;
+
+    private async Task<T?> ExecuteMultiplexedScalarAsync<T>(CancellationToken cancellationToken)
+    {
+        var multiplexer = ResolveMultiplexer();
+        if (multiplexer is null)
+        {
+            return await ExecuteScalarCoreAsync<T>(cancellationToken).ConfigureAwait(false);
+        }
+
+        if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
+        {
+            throw new InvalidOperationException("The command is already executing.");
+        }
+
+        Interlocked.Exchange(ref _cancellationRequested, 0);
+        Interlocked.Exchange(ref _timeoutRequested, 0);
+        var telemetry = default(BlueTuskCommandInstrumentation);
+        Exception? failure = null;
+        try
+        {
+            var result = await multiplexer.ExecuteScalarAsync(
+                this,
+                connection => telemetry = StartTelemetry(connection),
+                cancellationToken).ConfigureAwait(false);
+            return DecodeScalar<T>(GetTypeRegistry(), result);
+        }
+        catch (Exception exception)
+        {
+            failure = exception;
+            throw;
+        }
+        finally
+        {
+            telemetry.Complete(failure);
+            Volatile.Write(ref _executingConnection, null);
+            Volatile.Write(ref _executing, 0);
         }
     }
 
@@ -1084,6 +1329,11 @@ public sealed class BlueTuskCommand : DbCommand
 
     private static T? DecodeScalar<T>(
         BlueTuskConnection connection,
+        BlueTuskScalarQueryResult result) =>
+        DecodeScalar<T>(connection.TypeRegistry, result);
+
+    private static T? DecodeScalar<T>(
+        BlueTusk.TypeSystem.BlueTuskTypeRegistry types,
         BlueTuskScalarQueryResult result)
     {
         if (result is not { HasValue: true, Field: not null })
@@ -1091,10 +1341,15 @@ public sealed class BlueTuskCommand : DbCommand
             return default;
         }
 
-        var value = BlueTuskValueDecoder.Decode(
-            connection.TypeRegistry,
-            result.Field,
-            result.Value);
+        var resolved = BlueTuskValueDecoder.Resolve(types, result.Field);
+        if (result.Value is not null &&
+            resolved.Type is not null &&
+            resolved.Codec is BlueTusk.TypeSystem.IBlueTuskCodec<T>)
+        {
+            return BlueTuskValueDecoder.DecodeTyped<T>(resolved, result.Value);
+        }
+
+        var value = BlueTuskValueDecoder.Decode(resolved, result.Value);
         if (value is null or DBNull)
         {
             return typeof(T) == typeof(object)
@@ -1290,28 +1545,28 @@ public sealed class BlueTuskCommand : DbCommand
             connection.DiagnosticsOptions);
     }
 
-    private IReadOnlyList<BlueTuskExtendedQueryParameter> EncodeParameters(
+    private BlueTuskExtendedQueryParameter[] EncodeParameters(
         BlueTuskCommandPlan plan,
         BlueTusk.TypeSystem.BlueTuskTypeRegistry types)
     {
-        if (!_prepareRequested)
+        var count = plan.Parameters.Count;
+        if (count == 0)
         {
-            return BlueTuskParameterEncoder.Encode(plan.Parameters, types);
+            return Array.Empty<BlueTuskExtendedQueryParameter>();
         }
 
-        var count = plan.Parameters.Count;
-        if (_preparedEncodedParameters is null || _preparedEncodedParameters.Length != count)
+        if (_encodedParameters is null || _encodedParameters.Length != count)
         {
-            _preparedEncodedParameters = new BlueTuskExtendedQueryParameter[count];
-            _preparedParameterBuffers = new byte[]?[count];
+            _encodedParameters = new BlueTuskExtendedQueryParameter[count];
+            _parameterBuffers = new byte[]?[count];
         }
 
         BlueTuskParameterEncoder.Encode(
             plan.Parameters,
             types,
-            _preparedEncodedParameters,
-            _preparedParameterBuffers!);
-        return _preparedEncodedParameters;
+            _encodedParameters,
+            _parameterBuffers!);
+        return _encodedParameters;
     }
 
     private static bool ParameterTypeOidsMatch(

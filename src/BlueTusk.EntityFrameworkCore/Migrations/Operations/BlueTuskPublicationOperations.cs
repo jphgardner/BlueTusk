@@ -3,23 +3,23 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskPublicationOperation : MigrationOperation
+public sealed class CreatePublicationOperation : MigrationOperation
 {
     public required BlueTuskPublicationDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskPublicationOperation : MigrationOperation
+public sealed class AlterPublicationOperation : MigrationOperation
 {
     public required BlueTuskPublicationDefinition OldDefinition { get; init; }
     public required BlueTuskPublicationDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskPublicationOperation : MigrationOperation
+public sealed class DropPublicationOperation : MigrationOperation
 {
     public required string Name { get; init; }
 }
 
-public sealed class RenameBlueTuskPublicationOperation : MigrationOperation
+public sealed class RenamePublicationOperation : MigrationOperation
 {
     public required string Name { get; init; }
     public required string NewName { get; init; }

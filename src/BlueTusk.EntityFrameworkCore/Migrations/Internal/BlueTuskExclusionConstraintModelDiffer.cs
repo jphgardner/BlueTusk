@@ -108,7 +108,7 @@ internal static class BlueTuskExclusionConstraintModelDiffer
             if (renameCandidates.Length == 1)
             {
                 var renamed = renameCandidates[0];
-                after.Add(new RenameBlueTuskExclusionConstraintOperation
+                after.Add(new RenameExclusionConstraintOperation
                 {
                     Table = targetTable.Name,
                     Schema = targetTable.Schema,
@@ -142,7 +142,7 @@ internal static class BlueTuskExclusionConstraintModelDiffer
             : new TableKey(rename.NewSchema ?? rename.Schema, rename.NewName ?? rename.Name);
     }
 
-    private static AddBlueTuskExclusionConstraintOperation CreateAdd(
+    private static AddExclusionConstraintOperation CreateAdd(
         TableKey table,
         BlueTuskExclusionConstraintDefinition definition) =>
         new()
@@ -152,7 +152,7 @@ internal static class BlueTuskExclusionConstraintModelDiffer
             Definition = definition,
         };
 
-    private static DropBlueTuskExclusionConstraintOperation CreateDrop(TableKey table, string name) =>
+    private static DropExclusionConstraintOperation CreateDrop(TableKey table, string name) =>
         new()
         {
             Table = table.Name,

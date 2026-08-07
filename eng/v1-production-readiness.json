@@ -1,0 +1,139 @@
+{
+  "schemaVersion": 1,
+  "engineeringGates": [
+    "verify-solution-layout.ps1",
+    "verify-documentation.ps1",
+    "verify-api-budgets.ps1",
+    "verify-fuzzing-contract.ps1",
+    "verify-test-credential-inventory.ps1",
+    "verify-endurance-disturbance-contract.ps1",
+    "test-continuous-graph-endurance-verifier.ps1",
+    "test-v1-approval-evidence-verifier.ps1",
+    "test-v1-workflow-evidence-verifier.ps1",
+    "verify-website-production.ps1",
+    "verify-supply-chain.ps1",
+    "verify-github-governance.ps1",
+    "verify-postgresql19-programme.ps1",
+    "verify-benchmark-coverage.ps1",
+    "verify-allocation-budgets.ps1",
+    "verify-latency-budgets.ps1",
+    "verify-multiplexing-performance.ps1",
+    "verify-production-observability.ps1"
+  ],
+  "requiredWorkflows": [
+    "build.yml",
+    "security.yml",
+    "fuzzing.yml",
+    "performance.yml",
+    "streams-release-endurance.yml",
+    "sync-release-endurance.yml",
+    "continuous-graph-release-endurance.yml"
+  ],
+  "requiredApprovalEvidence": [
+    {
+      "id": "independent-release-review",
+      "description": "An engineer who did not implement the candidate has completed the release-review handoff."
+    },
+    {
+      "id": "security-review",
+      "description": "Threat model, dependency, secret, identity, and supply-chain findings have no unresolved blocker."
+    },
+    {
+      "id": "application-pilot-a",
+      "description": "A representative application has completed its documented pilot acceptance criteria."
+    },
+    {
+      "id": "application-pilot-b",
+      "description": "A second independently operated application has completed its documented pilot acceptance criteria."
+    },
+    {
+      "id": "website-deployment-acceptance",
+      "description": "The selected production host has passed TLS, routing, caching, security-header and representative field Core Web Vitals acceptance."
+    },
+    {
+      "id": "backup-restore-rehearsal",
+      "description": "State stores and PostgreSQL recovery have met the declared RPO and RTO in a timed rehearsal."
+    },
+    {
+      "id": "rollback-rehearsal",
+      "description": "Package and application rollback has been rehearsed from the immutable candidate."
+    },
+    {
+      "id": "incident-response-game-day",
+      "description": "Operators have detected, triaged, mitigated, and documented a representative failure using the shipped telemetry."
+    },
+    {
+      "id": "slo-owner-approval",
+      "description": "Named service owners have accepted the V1 SLOs, alert routes, and error-budget policy."
+    },
+    {
+      "id": "maintainer-signoff",
+      "description": "The accountable maintainer has approved stable publication for the exact candidate."
+    }
+  ],
+  "minimums": {
+    "runtimeMeters": 6,
+    "runtimeInstruments": 60,
+    "productionSlos": 14,
+    "recoveryObjectives": 5,
+    "benchmarkFixtures": 21,
+    "benchmarkResults": 98,
+    "performanceArtifacts": 42,
+    "fuzzTargetSeconds": 3600,
+    "allocationBudgets": 37,
+    "latencyBudgets": 18,
+    "streamsEnduranceHours": 72,
+    "streamsMinimumTransactions": 100000,
+    "syncEnduranceHours": 24,
+    "syncMinimumCycles": 100,
+    "continuousGraphEnduranceHours": 24,
+    "continuousGraphMinimumEvaluations": 100000,
+    "enduranceDisturbanceRuns": 2,
+    "enduranceDisturbancesPerRun": 7
+  },
+  "requiredFiles": [
+    "eng/telemetry-contract.json",
+    "eng/v1-production-slos.json",
+    "eng/fuzzing-contract.json",
+    "eng/test-credential-inventory.json",
+    "eng/test-test-credential-inventory-verifier.ps1",
+    "eng/verify-test-credential-inventory.ps1",
+    "eng/v1-endurance-disturbance-contract.json",
+    "eng/v1-operational-disturbance-evidence.example.json",
+    "eng/verify-endurance-disturbance-evidence.ps1",
+    "eng/test-endurance-disturbance-verifier.ps1",
+    "eng/run-continuous-graph-endurance.ps1",
+    "eng/verify-continuous-graph-endurance-report.ps1",
+    "eng/test-continuous-graph-endurance-verifier.ps1",
+    "eng/build-v1-candidate-packages.ps1",
+    "eng/continuous-graph-api-freeze.json",
+    "eng/verify-v1-package-evidence.ps1",
+    "eng/verify-website-evidence.ps1",
+    "website/production-contract.json",
+    "benchmarks/allocation-budgets.json",
+    "benchmarks/latency-budgets.json",
+    "ops/observability/otel-collector.yaml",
+    "ops/observability/prometheus-rules.yml",
+    "ops/observability/grafana/bluetusk-v1.json",
+    "docs/operations/observability.md",
+    "docs/operations/approval-evidence.md",
+    "docs/operations/fuzz-finding-handoff.md",
+    "docs/operations/endurance-disturbance-evidence.md",
+    "docs/operations/package-evidence.md",
+    "docs/operations/production-readiness.md",
+    "docs/operations/website-production.md",
+    "docs/release-review-handoff.md",
+    "eng/v1-github-governance.json",
+    "eng/v1-candidate-evidence.example.json",
+    "eng/verify-v1-workflow-evidence.ps1",
+    "eng/test-v1-workflow-evidence-verifier.ps1",
+    "eng/v1-approval-evidence-contract.json",
+    "eng/v1-approval-evidence.examples.json",
+    "eng/verify-v1-approval-evidence.ps1",
+    "eng/verify-v1-approval-evidence-set.ps1",
+    "eng/test-v1-approval-evidence-verifier.ps1",
+    ".github/workflows/performance.yml",
+    ".github/workflows/continuous-graph-release-endurance.yml",
+    ".github/workflows/v1-candidate-readiness.yml"
+  ]
+}

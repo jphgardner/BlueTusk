@@ -214,7 +214,7 @@ public class SqlPgqBenchmarks : IAsyncDisposable
                 entity.Property(friendship => friendship.FromPersonId).HasColumnName("from_id");
                 entity.Property(friendship => friendship.ToPersonId).HasColumnName("to_id");
             });
-            modelBuilder.HasBlueTuskPropertyGraph(
+            modelBuilder.HasPropertyGraph(
                 "bluetusk_benchmark_graph",
                 graph =>
                 {

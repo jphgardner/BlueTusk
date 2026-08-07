@@ -1,0 +1,29 @@
+#nullable enable
+BlueTusk.Sync.Testing.ISyncDestinationConformanceHarness
+BlueTusk.Sync.Testing.ISyncDestinationConformanceHarness.CreateDestinationAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.ISyncDestination!>
+BlueTusk.Sync.Testing.ISyncDestinationConformanceHarness.PipelineId.get -> string!
+BlueTusk.Sync.Testing.ISyncDestinationConformanceHarness.Source.get -> BlueTusk.Streams.ChangeSourceIdentity!
+BlueTusk.Sync.Testing.ISyncDestinationConformanceHarness.VerifyDurableStateAsync(BlueTusk.Sync.Testing.SyncDestinationConformanceStage stage, BlueTusk.Sync.ISyncDestination! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Testing.SyncDestinationConformanceException
+BlueTusk.Sync.Testing.SyncDestinationConformanceException.SyncDestinationConformanceException(string! message) -> void
+BlueTusk.Sync.Testing.SyncDestinationConformanceResult
+BlueTusk.Sync.Testing.SyncDestinationConformanceResult.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.Testing.SyncDestinationConformanceResult.DestinationName.get -> string!
+BlueTusk.Sync.Testing.SyncDestinationConformanceResult.QuarantineVerified.get -> bool
+BlueTusk.Sync.Testing.SyncDestinationConformanceStage
+BlueTusk.Sync.Testing.SyncDestinationConformanceStage.RestartRedelivery = 3 -> BlueTusk.Sync.Testing.SyncDestinationConformanceStage
+BlueTusk.Sync.Testing.SyncDestinationConformanceStage.SnapshotApplied = 0 -> BlueTusk.Sync.Testing.SyncDestinationConformanceStage
+BlueTusk.Sync.Testing.SyncDestinationConformanceStage.SnapshotRestart = 1 -> BlueTusk.Sync.Testing.SyncDestinationConformanceStage
+BlueTusk.Sync.Testing.SyncDestinationConformanceStage.TransactionApplied = 2 -> BlueTusk.Sync.Testing.SyncDestinationConformanceStage
+BlueTusk.Sync.Testing.SyncDestinationConformanceSuite
+static BlueTusk.Sync.Testing.SyncDestinationConformanceSuite.VerifyAsync(BlueTusk.Sync.Testing.ISyncDestinationConformanceHarness! harness, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.Testing.SyncDestinationConformanceResult!>
+BlueTusk.Sync.Testing.SyncReconciliationTestDocument
+BlueTusk.Sync.Testing.SyncReconciliationTestDocument.Content.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Sync.Testing.SyncReconciliationTestDocument.ContentType.get -> string!
+BlueTusk.Sync.Testing.SyncReconciliationTestDocument.Key.get -> string!
+BlueTusk.Sync.Testing.SyncReconciliationTestDocument.PartitionKey.get -> string?
+BlueTusk.Sync.Testing.SyncReconciliationTestDocument.SyncReconciliationTestDocument(string! key, System.ReadOnlyMemory<byte> content, string! contentType = "application/json", string? partitionKey = null) -> void
+BlueTusk.Sync.Testing.SyncReconciliationTestReader
+BlueTusk.Sync.Testing.SyncReconciliationTestReader.CountAsync(string! pipelineId, string! collection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+BlueTusk.Sync.Testing.SyncReconciliationTestReader.ReadPartitionAsync(string! pipelineId, string! collection, int partitionIndex, int partitionCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Sync.SyncReconciliationEntry!>!
+BlueTusk.Sync.Testing.SyncReconciliationTestReader.SyncReconciliationTestReader(System.Collections.Generic.IEnumerable<BlueTusk.Sync.Testing.SyncReconciliationTestDocument!>! documents) -> void

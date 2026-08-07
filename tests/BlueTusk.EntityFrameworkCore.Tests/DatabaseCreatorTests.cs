@@ -1,7 +1,7 @@
 using BlueTusk.Client;
 using BlueTusk.Data;
+using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
-using BlueTusk.EntityFrameworkCore.Storage.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
@@ -21,7 +21,7 @@ public sealed class DatabaseCreatorTests
             "Username=postgres;Password=secret;Pooling=true;Target Session Attributes=Standby;" +
             "SSL Mode=Disable;Channel Binding=Disable";
 
-        var lifecycle = BlueTuskDatabaseCreator.CreateLifecycleSettings(
+        var lifecycle = ProviderServices.Instance.CreateDatabaseLifecycleSettings(
             connectionString,
             "Admin Database");
         var admin = new BlueTuskConnectionStringBuilder(lifecycle.AdminConnectionString);
@@ -35,13 +35,13 @@ public sealed class DatabaseCreatorTests
         Assert.False(admin.Pooling);
         Assert.Equal(BlueTuskTargetSessionAttributes.ReadWrite, admin.TargetSessionAttributes);
 
-        var postgresTarget = BlueTuskDatabaseCreator.CreateLifecycleSettings(
+        var postgresTarget = ProviderServices.Instance.CreateDatabaseLifecycleSettings(
             "Host=localhost;Database=postgres;Username=postgres;Password=secret");
         Assert.Equal(
             "template1",
             new BlueTuskConnectionStringBuilder(postgresTarget.AdminConnectionString).Database);
         Assert.Throws<InvalidOperationException>(() =>
-            BlueTuskDatabaseCreator.CreateLifecycleSettings(
+            ProviderServices.Instance.CreateDatabaseLifecycleSettings(
                 connectionString,
                 "Target \"Database"));
     }

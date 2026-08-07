@@ -18,3 +18,15 @@ public sealed record BlueTuskPipelineResult(IReadOnlyList<BlueTuskPipelineGroupR
 {
     public bool Succeeded => Groups.All(static group => group.Succeeded);
 }
+
+internal readonly record struct BlueTuskMultiplexedPipelineCommand(
+    string Sql,
+    IReadOnlyList<BlueTuskExtendedQueryParameter> Parameters,
+    bool UseBinaryResults,
+    bool Scalar);
+
+internal readonly record struct BlueTuskMultiplexedPipelineOutcome(
+    BlueTuskQueryResult? Result,
+    BlueTuskScalarQueryResult ScalarResult,
+    BlueTuskServerException? Error,
+    OperationCanceledException? Cancellation);

@@ -134,8 +134,8 @@ public sealed class BlueTuskPgVectorEntityFrameworkCoreTests
     {
         var migrationBuilder = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
 
-        migrationBuilder.EnsureBlueTuskPgVector("Application \"Types");
-        migrationBuilder.DropBlueTuskPgVector(cascade: true);
+        migrationBuilder.EnsurePgVector("Application \"Types");
+        migrationBuilder.DropPgVector(cascade: true);
 
         var operations = migrationBuilder.Operations.Cast<SqlOperation>().ToArray();
         Assert.Equal(

@@ -17,6 +17,14 @@ services.AddDbContext<AppDbContext>((serviceProvider, options) =>
 
 The long-lived data source is the recommended application entry point: EF-created logical connections share its physical pool, configured codecs, and runtime type catalogue, while the dependency-injection container owns the data source lifetime. `UseBlueTusk` also accepts a connection string or an existing `BlueTuskConnection` for compatibility and dedicated-lifetime scenarios; directly constructed connections are unpooled.
 
+Internally, EF reaches Data only through a small assembly-private provider
+contract. That contract covers logical/data-source creation, ownership,
+type-registry snapshots, capability probing, dedicated administration
+connections, pool/catalogue lifecycle and diagnostics. It adds no public API and
+prevents query, graph and database-lifecycle services from casting or
+constructing concrete provider types. See
+[ADR 0017](../architecture/decisions/0017-internal-ef-data-provider-spi.md).
+
 Configure runtime user-defined types before registering the data source:
 
 ```csharp
@@ -285,7 +293,7 @@ var documents = await context.Documents
     .ToListAsync(cancellationToken);
 ```
 
-The preview covers:
+The V1 contract covers:
 
 - text `ILIKE`, case-sensitive `~`/`!~`, and case-insensitive `~*`/`!~*`;
 - array containment (`@>`, `<@`), overlap (`&&`), append/prepend, and concatenation;
@@ -574,7 +582,7 @@ uniquification, ordinality preserves PostgreSQL array order, and nullable array
 elements materialize without being collapsed. For an outer expansion over a
 non-nullable value-type array, project the element to its nullable form before
 `DefaultIfEmpty()` so the absent row remains distinguishable from the CLR
-default value. This preview covers mapped array columns only.
+default value. This V1 contract covers mapped array columns only.
 
 Series are also available as typed, composable query roots. Use
 `Database.GenerateSeries` for a standalone series; `int`, `long`, and `decimal`
@@ -1049,8 +1057,8 @@ DDL because PostgreSQL owns them:
 protected override void OnModelCreating(ModelBuilder modelBuilder)
 {
     var document = modelBuilder.Entity<Document>();
-    document.UseBlueTuskSystemColumns();
-    document.UseBlueTuskXminConcurrencyToken();
+    document.UseSystemColumns();
+    document.UseXminConcurrencyToken();
 }
 
 var physicalRows = await context.Documents
@@ -1068,8 +1076,8 @@ var physicalRows = await context.Documents
 
 `tableoid` maps to `uint`; `xmin`/`xmax` map to `BlueTuskTransactionId`;
 `cmin`/`cmax` map to `BlueTuskCommandId`; and `ctid` maps to
-`BlueTuskTupleId`. `UseBlueTuskSystemColumn` enables one selected column when
-the full set is unnecessary. `UseBlueTuskXminConcurrencyToken` configures
+`BlueTuskTupleId`. `UseSystemColumn` enables one selected column when
+the full set is unnecessary. `UseXminConcurrencyToken` configures
 `xmin` as a store-generated concurrency token, so EF includes the original
 transaction ID in updates and reports a normal `DbUpdateConcurrencyException`
 for a stale tracked entity. Querying, migration exclusion, native
@@ -1114,7 +1122,7 @@ mode is part of the model contract:
 ```csharp
 modelBuilder.Entity<Order>()
     .Property(order => order.Id)
-    .UseBlueTuskIdentityColumn(BlueTuskIdentityGeneration.Always);
+    .UseIdentityColumn(BlueTuskIdentityGeneration.Always);
 ```
 
 `Always` rejects normal explicit values unless SQL uses PostgreSQL's
@@ -1152,11 +1160,11 @@ modelBuilder.Entity<Measurement>().ToTable(
     table =>
     {
         table.HasCheckConstraint("measurements_bounded", "\"value\" < 100")
-            .IsBlueTuskNoInherit();
+            .IsNoInherit();
         table.HasCheckConstraint("measurements_positive", "\"value\" > 0")
-            .IsBlueTuskNotValid();
+            .IsNotValid();
         table.HasCheckConstraint("measurements_legacy_limit", "\"value\" < 50")
-            .IsBlueTuskNotEnforced(); // PostgreSQL 18+
+            .IsNotEnforced(); // PostgreSQL 18+
     });
 ```
 
@@ -1174,8 +1182,8 @@ does not allow a table CHECK constraint's enforcement state to be altered in
 place. A `NOT ENFORCED` constraint is unvalidated and cannot be validated until
 it has been replaced with an enforced constraint.
 
-Manual migrations can use `AddBlueTuskCheckConstraint` for the PostgreSQL
-options and `ValidateBlueTuskCheckConstraint` for a staged rollout. CHECK SQL is
+Manual migrations can use `AddCheckConstraint` for the PostgreSQL
+options and `ValidateCheckConstraint` for a staged rollout. CHECK SQL is
 trusted model-time SQL and must never be populated from request data or other
 untrusted input. Database-first discovery reads the canonical expression,
 validation state, inheritance flag, and PostgreSQL 18+ enforcement state from
@@ -1196,10 +1204,10 @@ modelBuilder.Entity<Document>()
     .IsUnique()
     .IsDescending(false, true)
     .HasFilter("\"title\" IS NOT NULL")
-    .UseBlueTuskIndexMethod("btree")
-    .UseBlueTuskOperatorClass("text_pattern_ops", null)
-    .UseBlueTuskCollation("C", null)
-    .HasBlueTuskNullSortOrder(
+    .UseIndexMethod("btree")
+    .UseOperatorClass("text_pattern_ops", null)
+    .UseCollation("C", null)
+    .HasNullSortOrder(
         BlueTuskIndexNullSortOrder.NullsFirst,
         BlueTuskIndexNullSortOrder.NullsLast)
     .IncludeProperties(document => new
@@ -1207,12 +1215,12 @@ modelBuilder.Entity<Document>()
         document.SearchVector,
         document.Summary,
     })
-    .HasBlueTuskFillFactor(80)
-    .HasBlueTuskNullsDistinct(false)
-    .IsBlueTuskConcurrent();
+    .HasFillFactor(80)
+    .HasNullsDistinct(false)
+    .IsConcurrent();
 ```
 
-`UseBlueTuskIndexMethod` accepts built-in B-tree, hash, GiST, SP-GiST, GIN,
+`UseIndexMethod` accepts built-in B-tree, hash, GiST, SP-GiST, GIN,
 and BRIN methods as well as extension-provided access methods. Operator classes
 and collations are configured per leading key and may be schema-qualified.
 Included properties are resolved through EF's table/column mapping, while
@@ -1221,7 +1229,7 @@ storage-parameter names and values are restricted to safe PostgreSQL tokens.
 current minimum supported server.
 
 Trusted expression indexes can replace selected mapped keys with
-`HasBlueTuskIndexExpressions`; an empty entry retains the mapped column. These
+`HasIndexExpressions`; an empty entry retains the mapped column. These
 expressions become migration DDL verbatim and must be fixed application model
 metadata, never request data or user input. Partial indexes continue to use
 EF's `HasFilter` API.
@@ -1232,7 +1240,7 @@ BlueTusk therefore retains pure and mixed expression indexes as provider-owned
 table metadata without inventing placeholder properties:
 
 ```csharp
-modelBuilder.Entity<Document>().HasBlueTuskExpressionIndex(
+modelBuilder.Entity<Document>().HasExpressionIndex(
     "documents_search",
     index => index
         .HasKeySql(
@@ -1276,7 +1284,7 @@ elements use typed property selectors and resolve through EF's table mapping:
 
 ```csharp
 modelBuilder.Entity<Reservation>()
-    .HasBlueTuskExclusionConstraint(
+    .HasExclusionConstraint(
         "reservations_no_overlap",
         constraint => constraint
             .UseIndexMethod("gist")
@@ -1320,7 +1328,7 @@ trigger, and extension names are identifier-quoted independently:
 
 ```csharp
 modelBuilder.Entity<Document>()
-    .HasBlueTuskTrigger(
+    .HasTrigger(
         "normalize_note",
         trigger => trigger
             .UseTiming(BlueTuskTriggerTiming.Before)
@@ -1369,14 +1377,14 @@ refer to a provider-owned or pre-existing no-argument function returning
 `event_trigger`:
 
 ```csharp
-modelBuilder.HasBlueTuskFunction(
+modelBuilder.HasFunction(
     "capture_ddl",
     "event_trigger",
     "BEGIN INSERT INTO application.ddl_log(tag) VALUES (TG_TAG); END",
     function => function.UseLanguage("plpgsql"),
     schema: "application");
 
-modelBuilder.HasBlueTuskEventTrigger(
+modelBuilder.HasEventTrigger(
     "capture_table_creation",
     BlueTuskEventTriggerEvent.DdlCommandEnd,
     "capture_ddl",
@@ -1414,7 +1422,7 @@ trusted model-time SQL; names and the target relation are quoted centrally:
 
 ```csharp
 modelBuilder.Entity<Document>()
-    .HasBlueTuskRule(
+    .HasRule(
         "audit_insert",
         BlueTuskRuleEvent.Insert,
         "INSERT INTO application.document_audit(document_id, note) " +
@@ -1449,7 +1457,7 @@ membership, per-table column lists and row filters, published DML operations,
 and partition-root behavior:
 
 ```csharp
-modelBuilder.HasBlueTuskPublication(
+modelBuilder.HasPublication(
     "document_changes",
     publication => publication
         .ForTable(
@@ -1508,7 +1516,7 @@ deployment because PostgreSQL does not contact the publisher, create a remote
 slot, copy data, or enable its worker:
 
 ```csharp
-modelBuilder.HasBlueTuskSubscription(
+modelBuilder.HasSubscription(
     "application_subscription",
     subscription => subscription
         .UseConnectionString("host=publisher dbname=app user=replicator")
@@ -1525,7 +1533,7 @@ with an associated slot, publication/sequence refreshes, failover changes, and
 disabling prepared two-phase subscription state are likewise kept outside the
 ambient migration transaction where PostgreSQL requires it. Publication-list
 model changes use `refresh = false`; data-copy side effects remain an explicit
-`RefreshBlueTuskSubscription` operation. Manual operations also cover
+`RefreshSubscription` operation. Manual operations also cover
 PostgreSQL 19 `REFRESH SEQUENCES` and `SKIP (lsn = ...)` recovery handling.
 
 The typed options include slot name, enabled/binary/streaming modes,
@@ -1558,11 +1566,11 @@ entity can map a foreign table and retain both table-level and store-column
 wrapper options:
 
 ```csharp
-modelBuilder.HasBlueTuskForeignDataWrapper(
+modelBuilder.HasForeignDataWrapper(
     "application_fdw",
     wrapper => wrapper.HasOption("debug", "false"));
 
-modelBuilder.HasBlueTuskForeignServer(
+modelBuilder.HasForeignServer(
     "application_remote",
     "application_fdw",
     server => server
@@ -1570,7 +1578,7 @@ modelBuilder.HasBlueTuskForeignServer(
         .HasVersion("1")
         .HasOption("endpoint", "primary"));
 
-modelBuilder.HasBlueTuskPublicUserMapping(
+modelBuilder.HasPublicUserMapping(
     "application_remote",
     mapping => mapping.HasOption("user", "reader"));
 
@@ -1578,7 +1586,7 @@ modelBuilder.Entity<RemoteDocument>(entity =>
 {
     entity.HasNoKey();
     entity.ToTable("remote_documents", "application");
-    entity.HasBlueTuskForeignTable(
+    entity.HasForeignTable(
         "application_remote",
         table => table
             .HasOption("table_name", "documents")
@@ -1631,7 +1639,7 @@ snapshots, and reverse-engineered models:
 
 ```csharp
 modelBuilder.Entity<Event>()
-    .HasBlueTuskRangePartitioning(item => item.OccurredOn)
+    .HasRangePartitioning(item => item.OccurredOn)
     .HasRangePartition(
         "events_2025",
         BlueTuskPartitionValue.Literal(new DateOnly(2025, 1, 1)),
@@ -1671,7 +1679,7 @@ Existing compatible tables can be attached and partitions can be detached from
 manual migrations:
 
 ```csharp
-migrationBuilder.AttachBlueTuskPartition(
+migrationBuilder.AttachPartition(
     "events",
     "events_2027",
     BlueTuskPartitionBound.Range(
@@ -1680,7 +1688,7 @@ migrationBuilder.AttachBlueTuskPartition(
     parentSchema: "application",
     partitionSchema: "application");
 
-migrationBuilder.DetachBlueTuskPartition(
+migrationBuilder.DetachPartition(
     "events",
     "events_2027",
     BlueTuskPartitionDetachMode.Concurrently,
@@ -1702,7 +1710,7 @@ table-owned EF metadata:
 
 ```csharp
 modelBuilder.Entity<Document>()
-    .UseBlueTuskRowLevelSecurity(enabled: true, forced: true)
+    .UseRowLevelSecurity(enabled: true, forced: true)
     .HasPolicy(
         "tenant_select",
         BlueTuskRowSecurityPolicyCommand.Select,
@@ -1754,12 +1762,12 @@ modelBuilder.Entity<AuditRecord>()
 
 modelBuilder.Entity<EventMessage>()
     .ToTable("event_messages", "application")
-    .InheritsFromBlueTuskTable<BaseEvent>()
-    .InheritsFromBlueTuskTable<AuditRecord>();
+    .InheritsFromTable<BaseEvent>()
+    .InheritsFromTable<AuditRecord>();
 ```
 
 Configure each parent entity and its final table mapping before using the typed
-helper. `InheritsFromBlueTuskTable("base_events", "application")` is available
+helper. `InheritsFromTable("base_events", "application")` is available
 when the parent is external to the EF model. The child must contain compatible
 columns, nullability, and inheritable check constraints for every parent;
 PostgreSQL validates those structural rules when the migration is applied.
@@ -1769,8 +1777,8 @@ Migration diffing emits `NO INHERIT` before a relationship or dependent table
 is removed and `INHERIT` after both tables exist. Parent and child table/schema
 renames preserve an unchanged relationship without detaching it. Reordering
 multiple parents performs an explicit detach/reattach so the catalogue order is
-deterministic. Manual migrations can use `AddBlueTuskTableInheritance` and
-`RemoveBlueTuskTableInheritance`; removal leaves both tables and their columns
+deterministic. Manual migrations can use `AddTableInheritance` and
+`RemoveTableInheritance`; removal leaves both tables and their columns
 in place. Normal PostgreSQL queries against a parent include descendant rows,
 while `ONLY parent_table` restricts a query to the parent's own rows.
 
@@ -1781,7 +1789,7 @@ snapshots, generated migration C#, dependency ordering, and database-first
 scaffolding:
 
 ```csharp
-modelBuilder.HasBlueTuskCollation(
+modelBuilder.HasCollation(
     "case_insensitive",
     collation => collation
         .UseProvider(BlueTuskCollationProvider.Icu)
@@ -1810,20 +1818,20 @@ Manual migrations can copy an existing collation or control collision/drop
 semantics:
 
 ```csharp
-migrationBuilder.CreateBlueTuskCollationFrom(
+migrationBuilder.CreateCollationFrom(
     "application_default",
     "C",
     schema: "application",
     sourceSchema: "pg_catalog");
 
-migrationBuilder.DropBlueTuskCollation(
+migrationBuilder.DropCollation(
     "application_default",
     schema: "application");
 ```
 
 Provider version drift needs special care. Rebuild every affected index and
 other stored object first, then use
-`RefreshBlueTuskCollationVersion`; PostgreSQL's refresh only updates the
+`RefreshCollationVersion`; PostgreSQL's refresh only updates the
 catalogue version and does not verify or rebuild dependants. `HasVersion` is the
 low-level creation option primarily used when preserving state through upgrade
 or scaffolding, not an automatic upgrade mechanism.
@@ -1840,7 +1848,7 @@ Cluster-wide tablespaces participate in model snapshots, dependency-ordered
 migration diffs, generated migration C#, and full-database reverse engineering:
 
 ```csharp
-modelBuilder.HasBlueTuskTablespace(
+modelBuilder.HasTablespace(
     "archive_space",
     "/srv/postgresql/archive_space",
     tablespace => tablespace
@@ -1886,14 +1894,14 @@ snapshots, generated migration C#, dependency ordering, and database-first
 scaffolding:
 
 ```csharp
-modelBuilder.HasBlueTuskExtension(
+modelBuilder.HasExtension(
     "hstore",
     extension => extension
         .UseSchema("application_types")
         .HasVersion("1.8"));
 
-modelBuilder.HasBlueTuskExtension("postgis");
-modelBuilder.HasBlueTuskExtension(
+modelBuilder.HasExtension("postgis");
+modelBuilder.HasExtension(
     "postgis_topology",
     extension => extension
         .DependsOnExtension("postgis")
@@ -1921,8 +1929,8 @@ not prove that an existing installation has the requested schema, version, or
 configuration. Automatic drops are destructive and explicitly use `RESTRICT`;
 dependent provider-owned objects are removed first, while unmanaged dependants
 make PostgreSQL reject the drop. Manual migrations can use
-`CreateBlueTuskExtension`, `AlterBlueTuskExtension`, and
-`DropBlueTuskExtension`, including explicit `IF NOT EXISTS` or `CASCADE`
+`CreateExtension`, `AlterExtension`, and
+`DropExtension`, including explicit `IF NOT EXISTS` or `CASCADE`
 options when the application owns that risk. `InstallDependencies` adds
 `CASCADE` only during creation so PostgreSQL may recursively install missing
 required extensions.
@@ -1944,12 +1952,12 @@ schema objects use typed model metadata and participate in migration diffing,
 snapshots, generated migration C#, and database-first scaffolding:
 
 ```csharp
-modelBuilder.HasBlueTuskEnum(
+modelBuilder.HasEnum(
     "mood",
     ["sad", "ok", "happy"],
     schema: "application");
 
-modelBuilder.HasBlueTuskDomain(
+modelBuilder.HasDomain(
     "positive_integer",
     "integer",
     domain => domain
@@ -1961,14 +1969,14 @@ modelBuilder.HasBlueTuskDomain(
             isValidated: false),
     schema: "application");
 
-modelBuilder.HasBlueTuskComposite(
+modelBuilder.HasComposite(
     "address",
     composite => composite
         .HasAttribute("street", "text")
         .HasAttribute("postal_code", "application.positive_integer"),
     schema: "application");
 
-modelBuilder.HasBlueTuskRange(
+modelBuilder.HasRange(
     "measurement_range",
     "float8",
     range => range
@@ -2002,8 +2010,8 @@ Enum `ADD VALUE` commands are transaction-suppressed so a new label can be used
 by following migration commands. Automatic type/schema renames require an
 otherwise unchanged definition; split a rename from a simultaneous body change
 into separate migrations. Manual migrations can use the typed
-`CreateBlueTusk*Type`, `AlterBlueTusk*Type`, `DropBlueTusk*Type`, and
-`RenameBlueTuskUserDefinedType` helpers when a replacement or staged rollout is
+`Create*Type`, `Alter*Type`, `Drop*Type`, and
+`RenameUserDefinedType` helpers when a replacement or staged rollout is
 needed.
 
 Custom ranges retain structured, schema-qualified references to their subtype,
@@ -2037,7 +2045,7 @@ The routine schema API models PostgreSQL overload identity and generates actual
 `CREATE FUNCTION`/`CREATE PROCEDURE` migrations:
 
 ```csharp
-modelBuilder.HasBlueTuskFunction(
+modelBuilder.HasFunction(
     "calculate_total",
     "numeric",
     "SELECT amount * (1 + tax_rate)",
@@ -2050,7 +2058,7 @@ modelBuilder.HasBlueTuskFunction(
         .HasCost(1),
     schema: "application");
 
-modelBuilder.HasBlueTuskProcedure(
+modelBuilder.HasProcedure(
     "record_call",
     "BEGIN INSERT INTO application.call_log(message) VALUES (message); END",
     procedure => procedure
@@ -2074,7 +2082,7 @@ the routine's ownership and privileges. PostgreSQL cannot replace a routine
 while changing its kind, input signature, parameter name/mode/output shape,
 function return type, or `WINDOW` status; BlueTusk diagnoses same-signature
 changes and treats a different signature as destructive create/drop. Use the
-signature-qualified `RenameBlueTuskRoutine` helper for dependency-preserving
+signature-qualified `RenameRoutine` helper for dependency-preserving
 name or schema changes.
 
 User-defined types are created before routines and dropped after them. Quoted
@@ -2096,7 +2104,7 @@ separate from query translation: defining an operator or aggregate creates the
 PostgreSQL object but does not automatically add a new LINQ translation.
 
 ```csharp
-modelBuilder.HasBlueTuskOperator(
+modelBuilder.HasOperator(
     "===",
     op => op
         .HasLeftType("integer")
@@ -2107,12 +2115,12 @@ modelBuilder.HasBlueTuskOperator(
         .SupportsMergeJoin(),
     schema: "application");
 
-modelBuilder.HasBlueTuskOperatorFamily(
+modelBuilder.HasOperatorFamily(
     "integer_family",
     "btree",
     schema: "application");
 
-modelBuilder.HasBlueTuskOperatorClass(
+modelBuilder.HasOperatorClass(
     "integer_ops",
     "integer",
     "btree",
@@ -2132,12 +2140,12 @@ modelBuilder.HasBlueTuskOperatorClass(
             "pg_catalog"),
     schema: "application");
 
-modelBuilder.HasBlueTuskCast(
+modelBuilder.HasCast(
     "application.mood",
     "text",
     cast => cast.UsesInputOutput().IsAssignment());
 
-modelBuilder.HasBlueTuskAggregate(
+modelBuilder.HasAggregate(
     "product",
     "integer",
     aggregate => aggregate
@@ -2194,7 +2202,7 @@ output names, and view-on-view dependencies in migrations, snapshots, generated
 migration C#, and database-first scaffolding:
 
 ```csharp
-modelBuilder.HasBlueTuskView(
+modelBuilder.HasView(
     "active_orders",
     "SELECT id, tenant_id, total FROM application.orders WHERE total >= 0",
     view => view
@@ -2204,7 +2212,7 @@ modelBuilder.HasBlueTuskView(
         .HasCheckOption(BlueTuskViewCheckOption.Cascaded),
     schema: "application");
 
-modelBuilder.HasBlueTuskMaterializedView(
+modelBuilder.HasMaterializedView(
     "order_totals",
     "SELECT tenant_id, sum(total)::numeric AS total " +
         "FROM application.orders GROUP BY tenant_id",
@@ -2215,7 +2223,7 @@ modelBuilder.HasBlueTuskMaterializedView(
         .IsPopulated(),
     schema: "application");
 
-modelBuilder.HasBlueTuskView(
+modelBuilder.HasView(
     "large_order_totals",
     "SELECT tenant_id, total FROM application.order_totals WHERE total >= 1000",
     view => view
@@ -2251,7 +2259,7 @@ the definition.
 Manual refreshes use typed migration operations:
 
 ```csharp
-migrationBuilder.RefreshBlueTuskMaterializedView(
+migrationBuilder.RefreshMaterializedView(
     "order_totals",
     schema: "application",
     concurrently: true);
@@ -2275,7 +2283,7 @@ PostgreSQL 19 property graphs have typed model metadata, migration diffing and o
 ## PostgreSQL 19 property-graph queries
 
 `PropertyGraph` creates a typed SQL/PGQ query from graph metadata configured in
-the EF model. The preview translates linear directed paths to `GRAPH_TABLE`,
+the EF model. The V1 contract translates linear directed paths to `GRAPH_TABLE`,
 keeps captured predicate values parameterized, and returns a composable
 `IQueryable`. It supports outer relational filters, joins, grouping, ordering,
 pagination, DTO projections, and tracked entity materialization:

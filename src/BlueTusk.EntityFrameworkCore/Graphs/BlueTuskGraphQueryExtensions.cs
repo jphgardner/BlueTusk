@@ -12,7 +12,7 @@ public static class BlueTuskGraphQueryExtensions
     {
         ArgumentNullException.ThrowIfNull(context);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var matches = context.Model.GetBlueTuskPropertyGraphs()
+        var matches = context.Model.GetPropertyGraphs()
             .Where(graph =>
                 string.Equals(graph.Name, name, StringComparison.Ordinal) &&
                 (schema is null || string.Equals(graph.Schema, schema, StringComparison.Ordinal)))

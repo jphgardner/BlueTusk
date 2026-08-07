@@ -1,0 +1,4 @@
+Contact: https://github.com/jphgardner/BlueTusk/security/policy
+Policy: https://github.com/jphgardner/BlueTusk/security/policy
+Canonical: https://github.com/jphgardner/BlueTusk/blob/main/SECURITY.md
+Expires: 2027-08-01T23:59:59Z

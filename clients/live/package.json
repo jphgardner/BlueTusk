@@ -1,0 +1,34 @@
+{
+  "name": "@bluetusk/live",
+  "version": "1.0.0",
+  "description": "Framework-neutral browser client for BlueTusk Live.",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/jphgardner/BlueTusk.git",
+    "directory": "clients/live"
+  },
+  "homepage": "https://github.com/jphgardner/BlueTusk#readme",
+  "bugs": {
+    "url": "https://github.com/jphgardner/BlueTusk/issues"
+  },
+  "type": "module",
+  "sideEffects": false,
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "node --test test/*.test.mjs"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

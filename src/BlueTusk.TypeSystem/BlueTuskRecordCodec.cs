@@ -174,6 +174,13 @@ public sealed class BlueTuskRecordCodec : BlueTuskCodec<BlueTuskRecord>
         BlueTuskTypeDescriptor? fieldType,
         IBlueTuskCodec? fieldCodec)
     {
+        if (length > reader.Remaining)
+        {
+            throw new InvalidOperationException(
+                $"The binary record field with OID {wireTypeId} declares {length} bytes, " +
+                $"but only {reader.Remaining} bytes remain.");
+        }
+
         var bytes = reader.ReadBytes(length);
         if (fieldType is null || fieldCodec is null)
         {

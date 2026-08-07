@@ -1,0 +1,391 @@
+name: V1 exact-candidate readiness
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character candidate commit SHA
+        required: true
+        type: string
+      build_run_id:
+        description: Successful manual build.yml run ID
+        required: true
+        type: string
+      security_run_id:
+        description: Successful manual security.yml run ID
+        required: true
+        type: string
+      fuzzing_run_id:
+        description: Successful manual one-hour fuzzing.yml run ID
+        required: true
+        type: string
+      performance_run_id:
+        description: Successful manual performance.yml run ID
+        required: true
+        type: string
+      streams_run_id:
+        description: Successful 72-hour Streams run ID
+        required: true
+        type: string
+      sync_run_id:
+        description: Successful 24-hour Sync run ID
+        required: true
+        type: string
+      continuous_graph_run_id:
+        description: Successful 24-hour ContinuousGraph run ID
+        required: true
+        type: string
+      confirmation:
+        description: Type VERIFY-V1-EXACT-CANDIDATE to enter the protected gate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: v1-exact-candidate-readiness
+  cancel-in-progress: false
+
+jobs:
+  verify-candidate:
+    name: Aggregate and verify immutable V1 evidence
+    if: inputs.confirmation == 'VERIFY-V1-EXACT-CANDIDATE'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    environment: v1-candidate-readiness
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+
+      - name: Verify protected repository and deployment governance
+        shell: pwsh
+        env:
+          V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:V1_GOVERNANCE_TOKEN)) {
+            throw 'The protected environment has no V1_GOVERNANCE_TOKEN secret.'
+          }
+          ./eng/verify-github-governance.ps1 `
+            -Mode Remote `
+            -Token $env:V1_GOVERNANCE_TOKEN
+
+      - name: Restore protected approval evidence
+        shell: pwsh
+        env:
+          APPROVAL_EVIDENCE_BASE64: ${{ secrets.V1_APPROVAL_EVIDENCE_BASE64 }}
+        run: |
+          if ([string]::IsNullOrWhiteSpace($env:APPROVAL_EVIDENCE_BASE64)) {
+            throw 'The protected environment has no V1_APPROVAL_EVIDENCE_BASE64 secret.'
+          }
+          $root = New-Item -ItemType Directory -Force -Path artifacts/v1-evidence
+          $archive = Join-Path $root.FullName approvals.zip
+          [IO.File]::WriteAllBytes(
+            $archive,
+            [Convert]::FromBase64String($env:APPROVAL_EVIDENCE_BASE64))
+          Expand-Archive -LiteralPath $archive -DestinationPath $root.FullName
+          Remove-Item -LiteralPath $archive
+
+      - name: Verify workflow runs and download endurance/performance artifacts
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          BUILD_RUN_ID: ${{ inputs.build_run_id }}
+          SECURITY_RUN_ID: ${{ inputs.security_run_id }}
+          FUZZING_RUN_ID: ${{ inputs.fuzzing_run_id }}
+          PERFORMANCE_RUN_ID: ${{ inputs.performance_run_id }}
+          STREAMS_RUN_ID: ${{ inputs.streams_run_id }}
+          SYNC_RUN_ID: ${{ inputs.sync_run_id }}
+          CONTINUOUS_GRAPH_RUN_ID: ${{ inputs.continuous_graph_run_id }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          if ($env:CANDIDATE_SHA -notmatch '^[0-9a-fA-F]{40}$') {
+            throw 'candidate_sha must be a full Git SHA.'
+          }
+          $head = (git rev-parse HEAD).Trim()
+          if (-not [string]::Equals($head, $env:CANDIDATE_SHA, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Checked out '$head', expected '$env:CANDIDATE_SHA'."
+          }
+
+          $headers = @{
+            Accept = 'application/vnd.github+json'
+            Authorization = "Bearer $env:GH_TOKEN"
+            'User-Agent' = 'BlueTusk-v1-candidate-gate'
+            'X-GitHub-Api-Version' = '2022-11-28'
+          }
+          $requirements = @(
+            @{
+              Workflow = 'build.yml'
+              RunId = $env:BUILD_RUN_ID
+              Artifacts = @(
+                @{
+                  Prefix = 'bluetusk-website'
+                  Destination = 'website'
+                  ExactName = $true
+                },
+                @{
+                  Prefix = "v1-candidate-packages-$($env:CANDIDATE_SHA)"
+                  Destination = 'packages'
+                  ExactName = $true
+                }
+              )
+            },
+            @{
+              Workflow = 'security.yml'
+              RunId = $env:SECURITY_RUN_ID
+              Artifacts = @()
+            },
+            @{
+              Workflow = 'fuzzing.yml'
+              RunId = $env:FUZZING_RUN_ID
+              Artifacts = @()
+            },
+            @{
+              Workflow = 'performance.yml'
+              RunId = $env:PERFORMANCE_RUN_ID
+              Artifacts = @(
+                @{
+                  Prefix = "v1-performance-$($env:CANDIDATE_SHA)-"
+                  Destination = 'performance'
+                  ExactName = $false
+                }
+              )
+            },
+            @{
+              Workflow = 'streams-release-endurance.yml'
+              RunId = $env:STREAMS_RUN_ID
+              Artifacts = @(
+                @{
+                  Prefix = 'streams-relay-endurance-'
+                  Destination = 'streams'
+                  ExactName = $false
+                }
+              )
+            },
+            @{
+              Workflow = 'sync-release-endurance.yml'
+              RunId = $env:SYNC_RUN_ID
+              Artifacts = @(
+                @{
+                  Prefix = 'sync-endurance-'
+                  Destination = 'sync'
+                  ExactName = $false
+                }
+              )
+            },
+            @{
+              Workflow = 'continuous-graph-release-endurance.yml'
+              RunId = $env:CONTINUOUS_GRAPH_RUN_ID
+              Artifacts = @(
+                @{
+                  Prefix = 'continuous-graph-endurance-'
+                  Destination = 'continuous-graph'
+                  ExactName = $false
+                }
+              )
+            }
+          )
+          $records = @()
+          foreach ($requirement in $requirements) {
+            $runId = 0L
+            if (-not [long]::TryParse([string]$requirement.RunId, [ref]$runId) -or $runId -le 0) {
+              throw "Run ID '$($requirement.RunId)' is invalid."
+            }
+            $runUri = "https://api.github.com/repos/$env:REPOSITORY/actions/runs/$runId"
+            $run = Invoke-RestMethod -Method Get -Uri $runUri -Headers $headers
+            if ([string]$run.path -ne ".github/workflows/$($requirement.Workflow)" -or
+                -not [string]::Equals(
+                  [string]$run.head_sha,
+                  $env:CANDIDATE_SHA,
+                  [StringComparison]::OrdinalIgnoreCase) -or
+                [string]$run.event -ne 'workflow_dispatch' -or
+                [string]$run.conclusion -ne 'success') {
+              throw "Run $runId is not a successful manual '$($requirement.Workflow)' run for the candidate."
+            }
+            $records += [ordered]@{
+              workflowFile = $requirement.Workflow
+              headSha = [string]$run.head_sha
+              event = [string]$run.event
+              conclusion = [string]$run.conclusion
+              runId = $runId
+              runAttempt = [int]$run.run_attempt
+              completedUtc = [string]$run.updated_at
+              url = [string]$run.html_url
+            }
+
+            if (@($requirement.Artifacts).Count -gt 0) {
+              $artifactsUri = "$runUri/artifacts?per_page=100"
+              $artifactResponse = Invoke-RestMethod -Method Get -Uri $artifactsUri -Headers $headers
+              foreach ($artifactRequirement in @($requirement.Artifacts)) {
+                $matches = @($artifactResponse.artifacts | Where-Object {
+                  if ($_.expired) {
+                    return $false
+                  }
+                  if ($artifactRequirement.ExactName -eq $true) {
+                    return [string]::Equals(
+                      [string]$_.name,
+                      [string]$artifactRequirement.Prefix,
+                      [StringComparison]::Ordinal)
+                  }
+                  return ([string]$_.name).StartsWith(
+                    [string]$artifactRequirement.Prefix,
+                    [StringComparison]::Ordinal)
+                })
+                if ($matches.Count -ne 1) {
+                  throw (
+                    "Run $runId has $($matches.Count) matching non-expired artifacts " +
+                    "for prefix '$($artifactRequirement.Prefix)'.")
+                }
+                $destination = Join-Path artifacts/v1-evidence $artifactRequirement.Destination
+                New-Item -ItemType Directory -Force -Path $destination | Out-Null
+                $archive = Join-Path $destination evidence.zip
+                Invoke-WebRequest `
+                  -Uri ([string]$matches[0].archive_download_url) `
+                  -Headers $headers `
+                  -OutFile $archive
+                Expand-Archive -LiteralPath $archive -DestinationPath $destination
+                Remove-Item -LiteralPath $archive
+              }
+            }
+          }
+          $records | ConvertTo-Json -Depth 6 |
+            Set-Content artifacts/v1-evidence/workflow-runs.json -Encoding utf8NoBOM
+
+      - name: Build the content-addressed candidate manifest
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $root = (Resolve-Path artifacts/v1-evidence).Path
+          function OneFile([string] $path, [string] $filter) {
+            $matches = @(Get-ChildItem -LiteralPath $path -Recurse -File -Filter $filter)
+            if ($matches.Count -ne 1) {
+              throw "Expected one '$filter' below '$path'; found $($matches.Count)."
+            }
+            return $matches[0]
+          }
+          function Relative([IO.FileSystemInfo] $item) {
+            return [IO.Path]::GetRelativePath($root, $item.FullName).Replace('\', '/')
+          }
+          function Hash([IO.FileInfo] $item) {
+            return (Get-FileHash -LiteralPath $item.FullName -Algorithm SHA256).Hash.ToLowerInvariant()
+          }
+
+          $streamsReport = OneFile (Join-Path $root streams) report.json
+          $streamsProvenance = OneFile (Join-Path $root streams) build-provenance.json
+          $syncReport = OneFile (Join-Path $root sync) report.json
+          $syncProvenance = OneFile (Join-Path $root sync) build-provenance.json
+          $continuousGraphReport = OneFile (Join-Path $root continuous-graph) report.json
+          $continuousGraphProvenance = OneFile (Join-Path $root continuous-graph) build-provenance.json
+          $performanceManifest = OneFile (Join-Path $root performance) multiplexing-evidence.json
+          $websiteMetrics = OneFile (Join-Path $root website) production-metrics.json
+          $packageManifest = OneFile (Join-Path $root packages) package-manifest.json
+          $packageProvenance = OneFile (Join-Path $root packages) build-provenance.json
+          $disturbanceReport = OneFile (Join-Path $root disturbances) operational-disturbance-evidence.json
+          $performance = Get-Content -Raw $performanceManifest.FullName | ConvertFrom-Json
+          $results = Join-Path $performanceManifest.Directory.FullName results
+          if (-not (Test-Path -LiteralPath $results -PathType Container)) {
+            throw "Performance results directory '$results' is missing."
+          }
+          $syncData = Get-Content -Raw $syncReport.FullName | ConvertFrom-Json
+
+          $approvalIds = @(
+            'independent-release-review',
+            'security-review',
+            'application-pilot-a',
+            'application-pilot-b',
+            'website-deployment-acceptance',
+            'backup-restore-rehearsal',
+            'rollback-rehearsal',
+            'incident-response-game-day',
+            'slo-owner-approval',
+            'maintainer-signoff'
+          )
+          $approvals = @($approvalIds | ForEach-Object {
+            $file = OneFile (Join-Path $root approvals) "$_.json"
+            [ordered]@{
+              id = $_
+              path = Relative $file
+              sha256 = Hash $file
+            }
+          })
+          $manifest = [ordered]@{
+            schemaVersion = 3
+            candidateCommit = $env:CANDIDATE_SHA.ToLowerInvariant()
+            workflowRuns = @(
+              Get-Content -Raw (Join-Path $root workflow-runs.json) |
+                ConvertFrom-Json
+            )
+            streams = [ordered]@{
+              reportPath = Relative $streamsReport
+              reportSha256 = Hash $streamsReport
+              candidateProvenancePath = Relative $streamsProvenance
+              candidateProvenanceSha256 = Hash $streamsProvenance
+            }
+            sync = [ordered]@{
+              reportPath = Relative $syncReport
+              reportSha256 = Hash $syncReport
+              candidateProvenancePath = Relative $syncProvenance
+              candidateProvenanceSha256 = Hash $syncProvenance
+              expectedDestinationImages = @($syncData.destinationImages)
+            }
+            continuousGraph = [ordered]@{
+              reportPath = Relative $continuousGraphReport
+              reportSha256 = Hash $continuousGraphReport
+              candidateProvenancePath = Relative $continuousGraphProvenance
+              candidateProvenanceSha256 = Hash $continuousGraphProvenance
+            }
+            performance = [ordered]@{
+              resultsPath = [IO.Path]::GetRelativePath($root, $results).Replace('\', '/')
+              multiplexingEvidencePath = Relative $performanceManifest
+              multiplexingEvidenceSha256 = Hash $performanceManifest
+            }
+            website = [ordered]@{
+              distributionPath = [IO.Path]::GetRelativePath(
+                $root,
+                $websiteMetrics.Directory.FullName).Replace('\', '/')
+              productionMetricsPath = Relative $websiteMetrics
+              productionMetricsSha256 = Hash $websiteMetrics
+            }
+            packages = [ordered]@{
+              evidencePath = [IO.Path]::GetRelativePath(
+                $root,
+                $packageManifest.Directory.FullName).Replace('\', '/')
+              manifestPath = Relative $packageManifest
+              manifestSha256 = Hash $packageManifest
+              provenancePath = Relative $packageProvenance
+              provenanceSha256 = Hash $packageProvenance
+            }
+            disturbances = [ordered]@{
+              reportPath = Relative $disturbanceReport
+              reportSha256 = Hash $disturbanceReport
+            }
+            approvals = $approvals
+          }
+          $manifest | ConvertTo-Json -Depth 10 |
+            Set-Content (Join-Path $root candidate.json) -Encoding utf8NoBOM
+
+      - name: Run the fail-closed candidate gate
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+        run: >-
+          ./eng/verify-v1-production-readiness.ps1
+          -Mode Candidate
+          -Commit $env:CANDIDATE_SHA
+          -EvidencePath artifacts/v1-evidence/candidate.json
+
+      - name: Upload verified V1 readiness evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: v1-candidate-readiness-${{ inputs.candidate_sha }}-${{ github.run_id }}
+          path: artifacts/v1-evidence
+          if-no-files-found: error
+          retention-days: 90

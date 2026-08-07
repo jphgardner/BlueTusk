@@ -50,7 +50,7 @@ internal static class BlueTuskExtensionModelDiffer
 
         foreach (var definition in OrderByDependencies(creates, target))
         {
-            beforeObjects.Add(new CreateBlueTuskExtensionOperation { Definition = definition });
+            beforeObjects.Add(new CreateExtensionOperation { Definition = definition });
         }
 
         foreach (var definition in alterations)
@@ -63,7 +63,7 @@ internal static class BlueTuskExtensionModelDiffer
                     "Configure the target schema explicitly or stage a manual migration.");
             }
 
-            beforeObjects.Add(new AlterBlueTuskExtensionOperation
+            beforeObjects.Add(new AlterExtensionOperation
             {
                 OldDefinition = oldDefinition,
                 Definition = definition,
@@ -73,7 +73,7 @@ internal static class BlueTuskExtensionModelDiffer
         var drops = source.Values.Where(definition => !target.ContainsKey(definition.Name)).ToArray();
         foreach (var definition in OrderByDependencies(drops, source).AsEnumerable().Reverse())
         {
-            afterObjects.Add(new DropBlueTuskExtensionOperation
+            afterObjects.Add(new DropExtensionOperation
             {
                 Name = definition.Name,
                 IsDestructiveChange = true,

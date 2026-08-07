@@ -41,10 +41,10 @@ public sealed class ExpressionIndexTests
             operation => operation is CreateTableOperation { Name: Table });
         var indexPosition = Array.FindIndex(
             operations,
-            operation => operation is CreateBlueTuskExpressionIndexOperation);
+            operation => operation is CreateExpressionIndexOperation);
         Assert.True(tablePosition >= 0 && tablePosition < indexPosition);
 
-        var create = Assert.Single(operations.OfType<CreateBlueTuskExpressionIndexOperation>());
+        var create = Assert.Single(operations.OfType<CreateExpressionIndexOperation>());
         Assert.Equal(Index, create.Definition.Name);
         Assert.Equal(
             ["(lower(\"title\")) COLLATE \"C\" text_pattern_ops", "\"created_at\" DESC NULLS LAST"],
@@ -75,22 +75,22 @@ public sealed class ExpressionIndexTests
         var rename = Assert.Single(differ.GetDifferences(
                 source,
                 renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .OfType<RenameBlueTuskExpressionIndexOperation>());
+            .OfType<RenameExpressionIndexOperation>());
         Assert.Equal(Index, rename.Name);
         Assert.Equal(RenamedIndex, rename.NewName);
 
         var changed = differ.GetDifferences(
             source,
             changedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.True(Assert.Single(changed.OfType<DropBlueTuskExpressionIndexOperation>()).IsDestructiveChange);
+        Assert.True(Assert.Single(changed.OfType<DropExpressionIndexOperation>()).IsDestructiveChange);
         Assert.Equal(
             "NOT \"active\"",
-            Assert.Single(changed.OfType<CreateBlueTuskExpressionIndexOperation>()).Definition.PredicateSql);
+            Assert.Single(changed.OfType<CreateExpressionIndexOperation>()).Definition.PredicateSql);
 
         Assert.Single(differ.GetDifferences(
                 source,
                 removedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .OfType<DropBlueTuskExpressionIndexOperation>());
+            .OfType<DropExpressionIndexOperation>());
     }
 
     [Fact]
@@ -99,21 +99,21 @@ public sealed class ExpressionIndexTests
         var modelBuilder = new ModelBuilder();
         ConfigureEntity(modelBuilder);
         Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>()
-            .HasBlueTuskExpressionIndex("empty", _ => { }));
+            .HasExpressionIndex("empty", _ => { }));
         Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>()
-            .HasBlueTuskExpressionIndex(
+            .HasExpressionIndex(
                 "bad_storage",
                 index => index.HasKeySql("lower(title)").HasStorageParameter("bad;name", "1")));
         Assert.Throws<ArgumentException>(() => modelBuilder.Entity<Document>()
-            .HasBlueTuskExpressionIndex(
+            .HasExpressionIndex(
                 "bad_nulls",
                 index => index.HasKeySql("lower(title)").HasNullsDistinct(false)));
 
         var definition = Definition(Index) with { Tablespace = "fast_indexes", IsConcurrent = true };
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskExpressionIndex(Table, definition, Schema);
-        migration.RenameBlueTuskExpressionIndex(Index, RenamedIndex, Schema);
-        migration.DropBlueTuskExpressionIndex(RenamedIndex, Schema, concurrently: true);
+        migration.CreateExpressionIndex(Table, definition, Schema);
+        migration.RenameExpressionIndex(Index, RenamedIndex, Schema);
+        migration.DropExpressionIndex(RenamedIndex, Schema, concurrently: true);
         using var context = CreateContext<NoIndexContext>(OfflineConnectionString);
         var commands = context.GetService<IMigrationsSqlGenerator>()
             .Generate(migration.Operations, context.GetService<IDesignTimeModel>().Model);
@@ -135,9 +135,9 @@ public sealed class ExpressionIndexTests
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, codeBuilder);
         var code = codeBuilder.ToString();
-        Assert.Contains("CreateBlueTuskExpressionIndex(", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskExpressionIndex(", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskExpressionIndex(", code, StringComparison.Ordinal);
+        Assert.Contains("CreateExpressionIndex(", code, StringComparison.Ordinal);
+        Assert.Contains("RenameExpressionIndex(", code, StringComparison.Ordinal);
+        Assert.Contains("DropExpressionIndex(", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -189,11 +189,11 @@ public sealed class ExpressionIndexTests
                 parameter => parameter.Name == "fillfactor" && parameter.Value == "80");
 
             var replay = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            replay.CreateBlueTuskExpressionIndex(
+            replay.CreateExpressionIndex(
                 Table,
                 discovered with { Name = "documents_search_replayed" },
                 Schema);
-            replay.DropBlueTuskExpressionIndex("documents_search_replayed", Schema);
+            replay.DropExpressionIndex("documents_search_replayed", Schema);
             foreach (var command in initialContext.GetService<IMigrationsSqlGenerator>()
                          .Generate(replay.Operations, initialModel))
             {
@@ -218,7 +218,7 @@ public sealed class ExpressionIndexTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains(
-                    "HasBlueTuskExpressionIndexes(",
+                    "HasExpressionIndexes(",
                     scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
                 Assert.Contains(Index, scaffolded.ContextFile.Code, StringComparison.Ordinal);
@@ -274,7 +274,7 @@ public sealed class ExpressionIndexTests
     {
         ConfigureEntity(modelBuilder);
         var definition = Definition(name, predicate);
-        modelBuilder.Entity<Document>().HasBlueTuskExpressionIndex(
+        modelBuilder.Entity<Document>().HasExpressionIndex(
             definition.Name,
             index => index.HasKeySql(definition.KeySql.ToArray())
                 .UseMethod(definition.Method)

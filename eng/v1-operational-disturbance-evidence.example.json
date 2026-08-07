@@ -1,0 +1,590 @@
+{
+  "schemaVersion": 1,
+  "candidateCommit": "0000000000000000000000000000000000000000",
+  "packageManifestSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "packageProvenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+  "reviewedBy": "named-accountable-operator",
+  "reviewedUtc": "2026-01-04T00:00:00Z",
+  "summary": "Replace every placeholder with the exact disturbance, detection, recovery, continuity, and data-loss observations.",
+  "blockingFindings": 0,
+  "runs": [
+    {
+      "id": "streams",
+      "enduranceReportSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "scenarios": [
+        {
+          "id": "process-death",
+          "startedAt": "2026-01-01T01:00:00Z",
+          "completedAt": "2026-01-01T01:05:00Z",
+          "target": "Streams worker",
+          "injectionMethod": "Replace with the exact ungraceful termination method.",
+          "detectionSignal": "Replace with the alert, health, log, or metric that detected the stop.",
+          "recoveryAction": "Replace with the exact restart or rescheduling action.",
+          "recoveryProbe": "Replace with the progress, ordering, duplicate, and checkpoint probe.",
+          "observations": "Replace with measured detection and recovery behaviour.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "preFaultProcessIdentity": "process-before",
+            "postRecoveryProcessIdentity": "process-after"
+          },
+          "references": [
+            "https://evidence.example/streams/process-death"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/streams/process-death-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/streams/process-death-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "network-interruption",
+          "startedAt": "2026-01-01T05:00:00Z",
+          "completedAt": "2026-01-01T05:05:00Z",
+          "target": "Streams PostgreSQL connection",
+          "injectionMethod": "Replace with the exact isolated network interruption.",
+          "detectionSignal": "Replace with the reconnect, retry, health, or alert signal.",
+          "recoveryAction": "Replace with the network restoration action.",
+          "recoveryProbe": "Replace with the resumed source and checkpoint progress probe.",
+          "observations": "Replace with interruption and recovery measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "interruptionSeconds": 60,
+            "recoveredConnections": 1
+          },
+          "references": [
+            "https://evidence.example/streams/network-interruption"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/streams/network-interruption-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/streams/network-interruption-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "storage-exhaustion",
+          "startedAt": "2026-01-01T09:00:00Z",
+          "completedAt": "2026-01-01T09:10:00Z",
+          "target": "Streams bounded relay storage",
+          "injectionMethod": "Replace with the exact controlled hard-limit method.",
+          "detectionSignal": "Replace with the storage rejection, metric, health, or alert signal.",
+          "recoveryAction": "Replace with the capacity restoration or safe compaction action.",
+          "recoveryProbe": "Replace with bounded storage and resumed ordered progress probes.",
+          "observations": "Replace with capacity, peak-use, rejection, and recovery measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "capacityBytes": 67108864,
+            "peakUsedBytes": 67108864,
+            "recoveredFreeBytes": 33554432,
+            "exhaustionSignalObserved": true
+          },
+          "references": [
+            "https://evidence.example/streams/storage-exhaustion"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/streams/storage-exhaustion-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/streams/storage-exhaustion-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "credential-rotation",
+          "startedAt": "2026-01-01T13:00:00Z",
+          "completedAt": "2026-01-01T13:10:00Z",
+          "target": "Streams source credential",
+          "injectionMethod": "Replace with the exact credential rotation method without secret material.",
+          "detectionSignal": "Replace with the retired-session or authentication signal.",
+          "recoveryAction": "Replace with the credential refresh and pool/session rotation action.",
+          "recoveryProbe": "Replace with old-credential rejection and new-credential progress probes.",
+          "observations": "Replace with non-secret credential versions and recovery timing.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "previousCredentialVersion": "credential-v1",
+            "currentCredentialVersion": "credential-v2",
+            "oldCredentialRejected": true,
+            "newCredentialAccepted": true
+          },
+          "references": [
+            "https://evidence.example/streams/credential-rotation"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/streams/credential-rotation-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/streams/credential-rotation-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "primary-failover",
+          "startedAt": "2026-01-01T17:00:00Z",
+          "completedAt": "2026-01-01T17:15:00Z",
+          "target": "Streams PostgreSQL topology",
+          "injectionMethod": "Replace with the exact primary removal and promotion method.",
+          "detectionSignal": "Replace with the role, reconnect, health, or failover signal.",
+          "recoveryAction": "Replace with the routing or promotion completion action.",
+          "recoveryProbe": "Replace with role, source identity, slot, WAL, and checkpoint probes.",
+          "observations": "Replace with old/new primary identities and continuity measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "previousPrimaryIdentity": "primary-a",
+            "currentPrimaryIdentity": "primary-b",
+            "sourceIdentityContinuityVerified": true
+          },
+          "references": [
+            "https://evidence.example/streams/primary-failover"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/streams/primary-failover-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/streams/primary-failover-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "clock-movement",
+          "startedAt": "2026-01-01T21:00:00Z",
+          "completedAt": "2026-01-01T21:10:00Z",
+          "target": "Streams isolated time boundary",
+          "injectionMethod": "Replace with the exact injected backward and forward movement.",
+          "detectionSignal": "Replace with expiry, lease, retention, or reporting observations.",
+          "recoveryAction": "Replace with the time-boundary restoration action.",
+          "recoveryProbe": "Replace with ordering, lease, expiry, retention, and UTC report probes.",
+          "observations": "Replace with both applied offsets and continuity measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "timeSource": "injected-time-provider",
+            "backwardOffsetSeconds": -300,
+            "forwardOffsetSeconds": 600
+          },
+          "references": [
+            "https://evidence.example/streams/clock-movement"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/streams/clock-movement-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/streams/clock-movement-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "postgresql-minor-upgrade",
+          "startedAt": "2026-01-02T01:00:00Z",
+          "completedAt": "2026-01-02T01:30:00Z",
+          "target": "Streams PostgreSQL service",
+          "injectionMethod": "Replace with the exact same-major minor-upgrade method.",
+          "detectionSignal": "Replace with shutdown, reconnect, capability, and lag signals.",
+          "recoveryAction": "Replace with the exact upgraded-service start or failover action.",
+          "recoveryProbe": "Replace with version, slot, publication, checkpoint, and lag probes.",
+          "observations": "Replace with exact versions, digest-pinned images, and recovery timing.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "fromVersion": "18.1",
+            "toVersion": "18.2",
+            "fromImage": "postgres:18.1-alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "toImage": "postgres:18.2-alpine@sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "stateContinuityVerified": true,
+            "checkpointContinuityVerified": true
+          },
+          "references": [
+            "https://evidence.example/streams/postgresql-minor-upgrade"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/streams/postgresql-minor-upgrade-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/streams/postgresql-minor-upgrade-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "sync",
+      "enduranceReportSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+      "scenarios": [
+        {
+          "id": "process-death",
+          "startedAt": "2026-01-03T01:00:00Z",
+          "completedAt": "2026-01-03T01:05:00Z",
+          "target": "Sync worker",
+          "injectionMethod": "Replace with the exact ungraceful termination method.",
+          "detectionSignal": "Replace with the alert, health, log, or metric that detected the stop.",
+          "recoveryAction": "Replace with the exact restart or rescheduling action.",
+          "recoveryProbe": "Replace with destination, progress, duplicate, and checkpoint probes.",
+          "observations": "Replace with measured detection and recovery behaviour.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "preFaultProcessIdentity": "process-before",
+            "postRecoveryProcessIdentity": "process-after"
+          },
+          "references": [
+            "https://evidence.example/sync/process-death"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/sync/process-death-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/sync/process-death-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "network-interruption",
+          "startedAt": "2026-01-03T04:00:00Z",
+          "completedAt": "2026-01-03T04:05:00Z",
+          "target": "Sync destination connection",
+          "injectionMethod": "Replace with the exact isolated network interruption.",
+          "detectionSignal": "Replace with the reconnect, retry, health, or alert signal.",
+          "recoveryAction": "Replace with the network restoration action.",
+          "recoveryProbe": "Replace with destination convergence and checkpoint progress probes.",
+          "observations": "Replace with interruption and recovery measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "interruptionSeconds": 60,
+            "recoveredConnections": 1
+          },
+          "references": [
+            "https://evidence.example/sync/network-interruption"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/sync/network-interruption-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/sync/network-interruption-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "storage-exhaustion",
+          "startedAt": "2026-01-03T07:00:00Z",
+          "completedAt": "2026-01-03T07:10:00Z",
+          "target": "Sync destination sidecar storage",
+          "injectionMethod": "Replace with the exact controlled hard-limit method.",
+          "detectionSignal": "Replace with the storage rejection, metric, health, or alert signal.",
+          "recoveryAction": "Replace with the capacity restoration or safe cleanup action.",
+          "recoveryProbe": "Replace with destination convergence and resumed progress probes.",
+          "observations": "Replace with capacity, peak-use, rejection, and recovery measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "capacityBytes": 67108864,
+            "peakUsedBytes": 67108864,
+            "recoveredFreeBytes": 33554432,
+            "exhaustionSignalObserved": true
+          },
+          "references": [
+            "https://evidence.example/sync/storage-exhaustion"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/sync/storage-exhaustion-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/sync/storage-exhaustion-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "credential-rotation",
+          "startedAt": "2026-01-03T10:00:00Z",
+          "completedAt": "2026-01-03T10:10:00Z",
+          "target": "Sync destination credential",
+          "injectionMethod": "Replace with the exact credential rotation method without secret material.",
+          "detectionSignal": "Replace with the retired-session or authentication signal.",
+          "recoveryAction": "Replace with the credential refresh and pool/session rotation action.",
+          "recoveryProbe": "Replace with old-credential rejection and new-credential convergence probes.",
+          "observations": "Replace with non-secret credential versions and recovery timing.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "previousCredentialVersion": "credential-v1",
+            "currentCredentialVersion": "credential-v2",
+            "oldCredentialRejected": true,
+            "newCredentialAccepted": true
+          },
+          "references": [
+            "https://evidence.example/sync/credential-rotation"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/sync/credential-rotation-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/sync/credential-rotation-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "primary-failover",
+          "startedAt": "2026-01-03T13:00:00Z",
+          "completedAt": "2026-01-03T13:15:00Z",
+          "target": "Sync PostgreSQL topology",
+          "injectionMethod": "Replace with the exact primary removal and promotion method.",
+          "detectionSignal": "Replace with the role, reconnect, health, or failover signal.",
+          "recoveryAction": "Replace with the routing or promotion completion action.",
+          "recoveryProbe": "Replace with role, source identity, slot, checkpoint, and destination probes.",
+          "observations": "Replace with old/new primary identities and continuity measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "previousPrimaryIdentity": "primary-a",
+            "currentPrimaryIdentity": "primary-b",
+            "sourceIdentityContinuityVerified": true
+          },
+          "references": [
+            "https://evidence.example/sync/primary-failover"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/sync/primary-failover-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/sync/primary-failover-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "clock-movement",
+          "startedAt": "2026-01-03T16:00:00Z",
+          "completedAt": "2026-01-03T16:10:00Z",
+          "target": "Sync isolated time boundary",
+          "injectionMethod": "Replace with the exact injected backward and forward movement.",
+          "detectionSignal": "Replace with expiry, retry, retention, or reporting observations.",
+          "recoveryAction": "Replace with the time-boundary restoration action.",
+          "recoveryProbe": "Replace with ordering, retry, expiry, retention, and UTC report probes.",
+          "observations": "Replace with both applied offsets and continuity measurements.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "timeSource": "injected-time-provider",
+            "backwardOffsetSeconds": -300,
+            "forwardOffsetSeconds": 600
+          },
+          "references": [
+            "https://evidence.example/sync/clock-movement"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/sync/clock-movement-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/sync/clock-movement-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        },
+        {
+          "id": "postgresql-minor-upgrade",
+          "startedAt": "2026-01-03T20:00:00Z",
+          "completedAt": "2026-01-03T20:30:00Z",
+          "target": "Sync PostgreSQL service",
+          "injectionMethod": "Replace with the exact same-major minor-upgrade method.",
+          "detectionSignal": "Replace with shutdown, reconnect, capability, and lag signals.",
+          "recoveryAction": "Replace with the exact upgraded-service start or failover action.",
+          "recoveryProbe": "Replace with version, slot, checkpoint, destination, and lag probes.",
+          "observations": "Replace with exact versions, digest-pinned images, and recovery timing.",
+          "outcome": "passed",
+          "faultInjected": true,
+          "detectionObserved": true,
+          "recoveryObserved": true,
+          "continuityVerified": true,
+          "dataLossObserved": false,
+          "blockingFindings": 0,
+          "facts": {
+            "fromVersion": "18.1",
+            "toVersion": "18.2",
+            "fromImage": "postgres:18.1-alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+            "toImage": "postgres:18.2-alpine@sha256:1111111111111111111111111111111111111111111111111111111111111111",
+            "stateContinuityVerified": true,
+            "checkpointContinuityVerified": true
+          },
+          "references": [
+            "https://evidence.example/sync/postgresql-minor-upgrade"
+          ],
+          "artifacts": [
+            {
+              "role": "injection",
+              "path": "disturbances/sync/postgresql-minor-upgrade-injection.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            },
+            {
+              "role": "recovery",
+              "path": "disturbances/sync/postgresql-minor-upgrade-recovery.json",
+              "sha256": "0000000000000000000000000000000000000000000000000000000000000000",
+              "mediaType": "application/json"
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

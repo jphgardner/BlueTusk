@@ -72,7 +72,7 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
                     sourceItem.Definition is BlueTuskRangeTypeDefinition sourceRange &&
                     renamed.Definition is BlueTuskRangeTypeDefinition targetRange
                         ? CreateRangeRename(sourceRange, targetRange)
-                        : new RenameBlueTuskUserDefinedTypeOperation
+                        : new RenameUserDefinedTypeOperation
                         {
                             Kind = sourceItem.Kind,
                             Name = sourceItem.Key.Name,
@@ -94,13 +94,13 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
                 ? new[] { item.Key.Schema, range.MultirangeType.Schema }
                 : [item.Key.Schema])
             .Concat(targetOperations.Select(item => item.Operation)
-                .OfType<RenameBlueTuskUserDefinedTypeOperation>()
+                .OfType<RenameUserDefinedTypeOperation>()
                 .Where(operation =>
                     operation.NewSchema is not null &&
                     !string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal))
                 .Select(operation => operation.NewSchema))
             .Concat(targetOperations.Select(item => item.Operation)
-                .OfType<RenameBlueTuskRangeTypeOperation>()
+                .OfType<RenameRangeTypeOperation>()
                 .SelectMany(operation => new[]
                 {
                     !string.Equals(operation.Schema, operation.NewSchema, StringComparison.Ordinal)
@@ -144,36 +144,36 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type kind '{target.Kind}'."),
         };
 
-    private static AlterBlueTuskEnumTypeOperation CreateEnumAlter(TypeItem source, TypeItem target)
+    private static AlterEnumTypeOperation CreateEnumAlter(TypeItem source, TypeItem target)
     {
         var oldDefinition = (BlueTuskEnumTypeDefinition)source.Definition;
         var definition = (BlueTuskEnumTypeDefinition)target.Definition;
         _ = BlueTuskUserDefinedTypeAlterationPlanner.PlanEnum(oldDefinition, definition);
-        return new AlterBlueTuskEnumTypeOperation
+        return new AlterEnumTypeOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
         };
     }
 
-    private static AlterBlueTuskDomainTypeOperation CreateDomainAlter(TypeItem source, TypeItem target)
+    private static AlterDomainTypeOperation CreateDomainAlter(TypeItem source, TypeItem target)
     {
         var oldDefinition = (BlueTuskDomainTypeDefinition)source.Definition;
         var definition = (BlueTuskDomainTypeDefinition)target.Definition;
         BlueTuskUserDefinedTypeAlterationPlanner.ValidateDomain(oldDefinition, definition);
-        return new AlterBlueTuskDomainTypeOperation
+        return new AlterDomainTypeOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
         };
     }
 
-    private static AlterBlueTuskCompositeTypeOperation CreateCompositeAlter(TypeItem source, TypeItem target)
+    private static AlterCompositeTypeOperation CreateCompositeAlter(TypeItem source, TypeItem target)
     {
         var oldDefinition = (BlueTuskCompositeTypeDefinition)source.Definition;
         var definition = (BlueTuskCompositeTypeDefinition)target.Definition;
         var changes = BlueTuskUserDefinedTypeAlterationPlanner.PlanComposite(oldDefinition, definition);
-        return new AlterBlueTuskCompositeTypeOperation
+        return new AlterCompositeTypeOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
@@ -185,38 +185,38 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
         item.Kind switch
         {
             BlueTuskUserDefinedTypeKind.Enum =>
-                new CreateBlueTuskEnumTypeOperation { Definition = (BlueTuskEnumTypeDefinition)item.Definition },
+                new CreateEnumTypeOperation { Definition = (BlueTuskEnumTypeDefinition)item.Definition },
             BlueTuskUserDefinedTypeKind.Domain =>
-                new CreateBlueTuskDomainTypeOperation { Definition = (BlueTuskDomainTypeDefinition)item.Definition },
+                new CreateDomainTypeOperation { Definition = (BlueTuskDomainTypeDefinition)item.Definition },
             BlueTuskUserDefinedTypeKind.Composite =>
-                new CreateBlueTuskCompositeTypeOperation { Definition = (BlueTuskCompositeTypeDefinition)item.Definition },
+                new CreateCompositeTypeOperation { Definition = (BlueTuskCompositeTypeDefinition)item.Definition },
             BlueTuskUserDefinedTypeKind.Range =>
-                new CreateBlueTuskRangeTypeOperation { Definition = (BlueTuskRangeTypeDefinition)item.Definition },
+                new CreateRangeTypeOperation { Definition = (BlueTuskRangeTypeDefinition)item.Definition },
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type kind '{item.Kind}'."),
         };
 
     private static MigrationOperation CreateDrop(TypeItem item) =>
         item.Kind switch
         {
-            BlueTuskUserDefinedTypeKind.Enum => new DropBlueTuskEnumTypeOperation
+            BlueTuskUserDefinedTypeKind.Enum => new DropEnumTypeOperation
             {
                 Name = item.Key.Name,
                 Schema = item.Key.Schema,
                 IsDestructiveChange = true,
             },
-            BlueTuskUserDefinedTypeKind.Domain => new DropBlueTuskDomainTypeOperation
+            BlueTuskUserDefinedTypeKind.Domain => new DropDomainTypeOperation
             {
                 Name = item.Key.Name,
                 Schema = item.Key.Schema,
                 IsDestructiveChange = true,
             },
-            BlueTuskUserDefinedTypeKind.Composite => new DropBlueTuskCompositeTypeOperation
+            BlueTuskUserDefinedTypeKind.Composite => new DropCompositeTypeOperation
             {
                 Name = item.Key.Name,
                 Schema = item.Key.Schema,
                 IsDestructiveChange = true,
             },
-            BlueTuskUserDefinedTypeKind.Range => new DropBlueTuskRangeTypeOperation
+            BlueTuskUserDefinedTypeKind.Range => new DropRangeTypeOperation
             {
                 Name = item.Key.Name,
                 Schema = item.Key.Schema,
@@ -370,7 +370,7 @@ internal static class BlueTuskUserDefinedTypeModelDiffer
             _ => throw new InvalidOperationException($"Unknown PostgreSQL type definition '{item.Definition.GetType().Name}'."),
         };
 
-    private static RenameBlueTuskRangeTypeOperation CreateRangeRename(
+    private static RenameRangeTypeOperation CreateRangeRename(
         BlueTuskRangeTypeDefinition source,
         BlueTuskRangeTypeDefinition target) =>
         new()

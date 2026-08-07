@@ -1,0 +1,107 @@
+{
+  "schemaVersion": 1,
+  "minimumInstrumentCount": 60,
+  "cardinalityClasses": {
+    "none": "No attributes create additional time series.",
+    "bounded": "Every attribute value comes from a closed enum or fixed operation set.",
+    "deployment-bounded": "Values come from explicitly configured databases, hosts, queries, sources, slots, or pipelines; operators must bound those registries."
+  },
+  "meters": [
+    {
+      "name": "BlueTusk.Diagnostics",
+      "sourceFile": "src/BlueTusk.Diagnostics/BlueTuskDiagnostics.cs",
+      "instruments": [
+        { "name": "bluetusk.connections.opened", "type": "Counter", "unit": "{connection}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.connections.failed", "type": "Counter", "unit": "{connection}", "cardinality": "deployment-bounded", "tags": ["server.address", "server.port", "error.type"] },
+        { "name": "bluetusk.commands.duration", "type": "Histogram", "unit": "s", "cardinality": "none", "tags": [] },
+        { "name": "db.client.operation.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["db.namespace", "db.operation.name", "server.address", "server.port", "error.type"] },
+        { "name": "bluetusk.commands.executed", "type": "Counter", "unit": "{command}", "cardinality": "deployment-bounded", "tags": ["db.namespace", "db.operation.name", "server.address", "server.port"] },
+        { "name": "bluetusk.commands.failed", "type": "Counter", "unit": "{command}", "cardinality": "deployment-bounded", "tags": ["db.namespace", "db.operation.name", "server.address", "server.port", "error.type"] },
+        { "name": "bluetusk.protocol.message.size", "type": "Histogram", "unit": "By", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.copy.bytes", "type": "Counter", "unit": "By", "cardinality": "bounded", "tags": ["direction"] },
+        { "name": "bluetusk.prepared_statements", "type": "Counter", "unit": "{statement}", "cardinality": "bounded", "tags": ["bluetusk.prepared.kind", "bluetusk.prepared.action"] },
+        { "name": "bluetusk.connections.retries", "type": "Counter", "unit": "{attempt}", "cardinality": "deployment-bounded", "tags": ["server.address", "server.port", "bluetusk.retry.reason"] },
+        { "name": "bluetusk.connections.failovers", "type": "Counter", "unit": "{connection}", "cardinality": "deployment-bounded", "tags": ["server.address", "server.port"] },
+        { "name": "bluetusk.replication.receive_lag", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["db.namespace", "server.address", "server.port"] },
+        { "name": "bluetusk.replication.wal_lag", "type": "Histogram", "unit": "By", "cardinality": "deployment-bounded", "tags": ["db.namespace", "server.address", "server.port"] },
+        { "name": "bluetusk.pool.connections", "type": "UpDownCounter", "unit": "{connection}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.pool.leases", "type": "UpDownCounter", "unit": "{connection}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.pool.waiters", "type": "UpDownCounter", "unit": "{request}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.pool.reuses", "type": "Counter", "unit": "{connection}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.pool.discards", "type": "Counter", "unit": "{connection}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.pool.resets", "type": "Counter", "unit": "{connection}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.pool.checkout.duration", "type": "Histogram", "unit": "s", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.multiplexing.commands.pending", "type": "UpDownCounter", "unit": "{command}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.multiplexing.commands.executing", "type": "UpDownCounter", "unit": "{command}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.multiplexing.admissions", "type": "Counter", "unit": "{command}", "cardinality": "bounded", "tags": ["bluetusk.multiplexing.admission.outcome"] },
+        { "name": "bluetusk.multiplexing.commands", "type": "Counter", "unit": "{command}", "cardinality": "bounded", "tags": ["bluetusk.multiplexing.command.outcome"] },
+        { "name": "bluetusk.multiplexing.queue.wait.duration", "type": "Histogram", "unit": "s", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.multiplexing.pipeline.size", "type": "Histogram", "unit": "{command}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.multiplexing.forced_shutdowns", "type": "Counter", "unit": "{shutdown}", "cardinality": "none", "tags": [] }
+      ]
+    },
+    {
+      "name": "BlueTusk.Streams",
+      "sourceFile": "src/BlueTusk.Streams/BlueTuskStreamsDiagnostics.cs",
+      "instruments": [
+        { "name": "bluetusk.streams.transactions.delivered", "type": "Counter", "unit": "{transaction}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.slot"] },
+        { "name": "bluetusk.streams.changes.delivered", "type": "Counter", "unit": "{change}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.slot"] },
+        { "name": "bluetusk.streams.snapshot.rows", "type": "Counter", "unit": "{row}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.table"] },
+        { "name": "bluetusk.streams.transaction.bytes", "type": "Histogram", "unit": "By", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.slot"] },
+        { "name": "bluetusk.streams.transactions.spooled", "type": "Counter", "unit": "{transaction}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.slot"] },
+        { "name": "bluetusk.streams.deliveries.active", "type": "UpDownCounter", "unit": "{delivery}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled"] },
+        { "name": "bluetusk.streams.deliveries.settled", "type": "Counter", "unit": "{delivery}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] },
+        { "name": "bluetusk.streams.delivery.settlement.failures", "type": "Counter", "unit": "{failure}", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.operation"] },
+        { "name": "bluetusk.streams.delivery.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["bluetusk.source", "bluetusk.streams.spooled", "bluetusk.streams.delivery.outcome"] }
+      ]
+    },
+    {
+      "name": "BlueTusk.Sync",
+      "sourceFile": "src/BlueTusk.Sync.DependencyInjection/BlueTuskSyncHosting.cs",
+      "instruments": [
+        { "name": "bluetusk.sync.transactions", "type": "Counter", "unit": "{transaction}", "cardinality": "deployment-bounded", "tags": ["sync.pipeline.id"] },
+        { "name": "bluetusk.sync.retries", "type": "Counter", "unit": "{attempt}", "cardinality": "deployment-bounded", "tags": ["sync.pipeline.id"] },
+        { "name": "bluetusk.sync.throttle.duration", "type": "Histogram", "unit": "ms", "cardinality": "deployment-bounded", "tags": ["sync.pipeline.id"] },
+        { "name": "bluetusk.sync.snapshot.rows", "type": "Counter", "unit": "{row}", "cardinality": "deployment-bounded", "tags": ["sync.pipeline.id"] },
+        { "name": "bluetusk.sync.errors", "type": "Counter", "unit": "{error}", "cardinality": "deployment-bounded", "tags": ["sync.pipeline.id"] },
+        { "name": "bluetusk.sync.transaction.duration", "type": "Histogram", "unit": "ms", "cardinality": "deployment-bounded", "tags": ["sync.pipeline.id"] }
+      ]
+    },
+    {
+      "name": "BlueTusk.Live",
+      "sourceFile": "src/BlueTusk.Live/LiveDiagnostics.cs",
+      "instruments": [
+        { "name": "bluetusk.live.authoritative_query.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["bluetusk.live.query.name", "bluetusk.live.outcome"] },
+        { "name": "bluetusk.live.authoritative_query.rows", "type": "Histogram", "unit": "{row}", "cardinality": "deployment-bounded", "tags": ["bluetusk.live.query.name", "bluetusk.live.outcome"] },
+        { "name": "bluetusk.live.refresh.duration", "type": "Histogram", "unit": "s", "cardinality": "deployment-bounded", "tags": ["bluetusk.live.query.name", "bluetusk.live.outcome"] },
+        { "name": "bluetusk.live.refresh.events", "type": "Histogram", "unit": "{event}", "cardinality": "deployment-bounded", "tags": ["bluetusk.live.query.name", "bluetusk.live.outcome"] },
+        { "name": "bluetusk.live.connections", "type": "Counter", "unit": "{connection}", "cardinality": "bounded", "tags": ["bluetusk.live.connection.outcome"] },
+        { "name": "bluetusk.live.clients.active", "type": "UpDownCounter", "unit": "{client}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.live.fanout.deliveries", "type": "Counter", "unit": "{delivery}", "cardinality": "none", "tags": [] },
+        { "name": "bluetusk.live.replay.events", "type": "Counter", "unit": "{event}", "cardinality": "bounded", "tags": ["bluetusk.live.replay.operation"] },
+        { "name": "bluetusk.live.replay.bytes", "type": "Counter", "unit": "By", "cardinality": "bounded", "tags": ["bluetusk.live.replay.operation"] },
+        { "name": "bluetusk.live.slow_client.disconnects", "type": "Counter", "unit": "{disconnect}", "cardinality": "bounded", "tags": ["bluetusk.live.slow_client.policy"] },
+        { "name": "bluetusk.live.resume.validations", "type": "Counter", "unit": "{validation}", "cardinality": "bounded", "tags": ["bluetusk.live.resume.outcome"] }
+      ]
+    },
+    {
+      "name": "BlueTusk.ContinuousGraph",
+      "sourceFile": "src/BlueTusk.ContinuousGraph/ContinuousGraphDiagnostics.cs",
+      "instruments": [
+        { "name": "bluetusk.graph.evaluations.active", "type": "UpDownCounter", "unit": "{evaluation}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode"] },
+        { "name": "bluetusk.graph.evaluations", "type": "Counter", "unit": "{evaluation}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.evaluation.outcome"] },
+        { "name": "bluetusk.graph.evaluation.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.evaluation.outcome"] },
+        { "name": "bluetusk.graph.evaluation.events", "type": "Histogram", "unit": "{event}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.evaluation.outcome"] }
+      ]
+    },
+    {
+      "name": "BlueTusk.ControlPlane",
+      "sourceFile": "src/BlueTusk.ControlPlane/ControlPlaneDiagnostics.cs",
+      "instruments": [
+        { "name": "bluetusk.control_plane.operations.active", "type": "UpDownCounter", "unit": "{operation}", "cardinality": "bounded", "tags": ["bluetusk.control_plane.operation"] },
+        { "name": "bluetusk.control_plane.operations", "type": "Counter", "unit": "{operation}", "cardinality": "bounded", "tags": ["bluetusk.control_plane.operation", "bluetusk.control_plane.outcome"] },
+        { "name": "bluetusk.control_plane.operation.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["bluetusk.control_plane.operation", "bluetusk.control_plane.outcome"] }
+      ]
+    }
+  ]
+}

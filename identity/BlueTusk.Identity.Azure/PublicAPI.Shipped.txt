@@ -1,0 +1,4 @@
+#nullable enable
+BlueTusk.Identity.Azure.BlueTuskAzureIdentityExtensions
+const BlueTusk.Identity.Azure.BlueTuskAzureIdentityExtensions.DefaultScope = "https://ossrdbms-aad.database.windows.net/.default" -> string!
+static BlueTusk.Identity.Azure.BlueTuskAzureIdentityExtensions.UseAzurePostgreSqlEntraAuthentication(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, Azure.Core.TokenCredential! credential, string! scope = "https://ossrdbms-aad.database.windows.net/.default") -> BlueTusk.Data.BlueTuskDataSourceBuilder!

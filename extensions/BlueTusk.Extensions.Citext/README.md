@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.Citext
 
-Preview PostgreSQL `citext` support for BlueTusk. The package registers an extension-owned CLR value and runtime codec without adding citext-specific dependencies to the core provider.
+Stable PostgreSQL `citext` support for BlueTusk. The package registers an extension-owned CLR value and runtime codec without adding citext-specific dependencies to the core provider.
 
 ```csharp
 using BlueTusk.Data;
@@ -20,4 +20,4 @@ Entity Framework Core integration is separately packaged as
 `BlueTusk.Extensions.Citext.EntityFrameworkCore`. This keeps EF dependencies,
 type mappings, and migration SQL out of the ADO.NET codec package.
 
-This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1` APIs, not stable or production-ready contracts.
+This package and the BlueTusk extension SDK use the stable 1.0.0 Provider-family contract.

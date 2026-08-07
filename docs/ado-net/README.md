@@ -1,6 +1,15 @@
 # ADO.NET
 
-The current preview provides native synchronous and asynchronous `BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`, `BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use blocking socket, TLS, protocol, authentication, pool, and query implementations rather than blocking asynchronous I/O.
+The stable V1 contract provides native synchronous and asynchronous
+`BlueTuskConnection`, `BlueTuskCommand`, `BlueTuskTransaction`,
+`BlueTuskBatch`, buffered and sequential `BlueTuskDataReader`, provider
+factory, and pooled `BlueTuskDataSource` paths. Synchronous operations use
+blocking socket, TLS, protocol, authentication, pool, and query
+implementations rather than blocking asynchronous I/O.
+
+The [V1 compatibility matrix](compatibility.md) records the supported and
+explicitly excluded ADO.NET, Dapper, dependency-injection, schema and routine
+surfaces.
 
 Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths.
 
@@ -40,6 +49,10 @@ PostgreSQL, and Google Cloud SQL while keeping their SDKs out of the core
 provider.
 
 Commands without parameters use PostgreSQL's simple-query protocol and receive text fields. Commands with positional `$1`, `$2`, and subsequent placeholders use Parse, Bind, Describe, Execute, and Sync and prefer binary fields. Named `@name` and `:name` placeholders are rewritten to positional placeholders by a PostgreSQL-aware lexer that skips quoted strings, quoted identifiers, dollar-quoted bodies, and comments. If PostgreSQL reports that a selected type has no binary output function, an autocommit command retries once with text fields. Commands inside explicit transactions request text fields up front so format negotiation cannot abort the transaction. Parameter values are encoded separately as typed text or binary payloads and are never interpolated into SQL. The [type mapping reference](../types/README.md) lists the formats, CLR types, and edge-case behavior implemented by the current provider.
+
+[NativeAOT and trimming](nativeaot.md) documents the provider-core publish
+gate, source-generated mapping path, measured size/startup/allocation report,
+and explicit runtime-only feature boundaries.
 
 ```csharp
 await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();
@@ -124,6 +137,11 @@ Cancellation tokens and `CommandTimeout` send PostgreSQL `CancelRequest` on a se
 Low-level clients can use [PostgreSQL pipeline mode](../pipeline-mode.md) to send multiple extended-query synchronization groups in one flush. This is a Client-layer API rather than an ADO.NET batching alias; `BlueTuskBatch` remains the provider-neutral `DbBatch` surface.
 
 `BlueTuskDataSource` owns a bounded physical connection pool by default. Logical connections return their physical session when closed or disposed; reuse rolls back an unfinished transaction when necessary and issues `DISCARD ALL` before handing the session to another caller. See [Connection pooling](pooling.md) for sizing, lifetime, warm-up, statistics, and drain controls.
+
+Opt-in bounded statement multiplexing shares session-neutral commands across a
+fixed number of worker lanes. The [multiplexing compatibility
+matrix](multiplexing-compatibility.md) defines strict fallback, session-state,
+failure, PgBouncer, metrics, and performance-evidence behavior.
 
 [Multi-host connections](multi-host.md) support ordered or randomized attempts, shared or per-host ports, and primary/standby/read-write/read-only target selection.
 

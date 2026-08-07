@@ -1,0 +1,62 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "type": "object",
+  "required": ["hostname", "images", "database", "secrets", "authentication"],
+  "properties": {
+    "hostname": { "type": "string", "minLength": 1 },
+    "images": {
+      "type": "object",
+      "required": ["api", "worker", "ui"],
+      "properties": {
+        "api": { "$ref": "#/$defs/image" },
+        "worker": { "$ref": "#/$defs/image" },
+        "ui": { "$ref": "#/$defs/image" }
+      }
+    },
+    "database": {
+      "type": "object",
+      "required": ["image", "ownerSecret"],
+      "properties": {
+        "image": { "type": "string", "pattern": "@sha256:[a-f0-9]{64}$" },
+        "ownerSecret": { "type": "string", "minLength": 1 }
+      }
+    },
+    "secrets": {
+      "type": "object",
+      "required": ["runtime", "liveTenant", "oidc"],
+      "properties": {
+        "runtime": { "type": "string", "minLength": 1 },
+        "liveTenant": { "type": "string", "minLength": 1 },
+        "oidc": { "type": "string", "minLength": 1 }
+      }
+    },
+    "authentication": {
+      "type": "object",
+      "required": ["authority", "clientId"],
+      "properties": {
+        "authority": { "type": "string", "pattern": "^https://" },
+        "clientId": { "type": "string", "minLength": 1 }
+      }
+    },
+    "networking": {
+      "type": "object",
+      "required": ["gatewayAddressCidr"],
+      "properties": {
+        "gatewayAddressCidr": {
+          "type": "string",
+          "pattern": "^(?:[0-9]{1,3}\\.){3}[0-9]{1,3}/(?:[0-9]|[12][0-9]|3[0-2])$"
+        }
+      }
+    }
+  },
+  "$defs": {
+    "image": {
+      "type": "object",
+      "required": ["repository", "digest"],
+      "properties": {
+        "repository": { "type": "string", "pattern": "^ghcr\\.io/" },
+        "digest": { "type": "string", "pattern": "^sha256:[a-f0-9]{64}$" }
+      }
+    }
+  }
+}

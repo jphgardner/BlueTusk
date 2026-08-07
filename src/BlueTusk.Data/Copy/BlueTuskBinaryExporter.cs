@@ -211,6 +211,31 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return BlueTuskBinaryCopyCodec.Decode<T>(payload, postgreSqlTypeOid, _registry);
     }
 
+    /// <summary>Reads the current field without decoding its PostgreSQL binary payload.</summary>
+    public ReadOnlyMemory<byte>? ReadRaw()
+    {
+        EnsureSynchronousMode();
+        EnsureFieldAvailable();
+        var lengthBytes = new byte[sizeof(int)];
+        ReadExactly(lengthBytes);
+        var length = BinaryPrimitives.ReadInt32BigEndian(lengthBytes);
+        _fieldIndex++;
+        if (length == -1)
+        {
+            return null;
+        }
+
+        if (length < -1)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL binary COPY field declared invalid length {length}.");
+        }
+
+        var payload = new byte[length];
+        ReadExactly(payload);
+        return payload;
+    }
+
     public async ValueTask<T?> ReadAsync<T>(
         uint? postgreSqlTypeOid,
         CancellationToken cancellationToken = default)
@@ -249,6 +274,37 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
             payload,
             postgreSqlTypeOid,
             _registry);
+    }
+
+    /// <summary>Reads the current field without decoding its PostgreSQL binary payload.</summary>
+    public async ValueTask<ReadOnlyMemory<byte>?> ReadRawAsync(
+        CancellationToken cancellationToken = default)
+    {
+        EnsureReadable();
+        if (!_rowStarted || _fieldIndex >= _fieldCount)
+        {
+            throw new InvalidOperationException(
+                "StartRowAsync must identify a row with an unread field before ReadRawAsync is called.");
+        }
+
+        var lengthBytes = new byte[sizeof(int)];
+        await ReadExactlyAsync(lengthBytes, cancellationToken).ConfigureAwait(false);
+        var length = BinaryPrimitives.ReadInt32BigEndian(lengthBytes);
+        _fieldIndex++;
+        if (length == -1)
+        {
+            return null;
+        }
+
+        if (length < -1)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL binary COPY field declared invalid length {length}.");
+        }
+
+        var payload = new byte[length];
+        await ReadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
+        return payload;
     }
 
     public async ValueTask DisposeAsync()

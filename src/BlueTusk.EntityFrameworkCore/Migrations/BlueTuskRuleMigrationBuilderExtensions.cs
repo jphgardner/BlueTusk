@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public static class BlueTuskRuleMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskRuleOperation> CreateBlueTuskRule(
+    public static OperationBuilder<CreateRuleOperation> CreateRule(
         this MigrationBuilder migrationBuilder,
         string table,
         BlueTuskRuleDefinition definition,
@@ -18,7 +18,7 @@ public static class BlueTuskRuleMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         BlueTuskRuleMetadata.Validate(definition);
-        var operation = new CreateBlueTuskRuleOperation
+        var operation = new CreateRuleOperation
         {
             Table = table,
             Schema = schema,
@@ -26,24 +26,24 @@ public static class BlueTuskRuleMigrationBuilderExtensions
             OrReplace = orReplace,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskRuleOperation>(operation);
+        return new OperationBuilder<CreateRuleOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskRuleOperation> CreateBlueTuskRule(
+    public static OperationBuilder<CreateRuleOperation> CreateRule(
         this MigrationBuilder migrationBuilder,
         string table,
         string serializedDefinition,
         string? schema = null,
         bool orReplace = false) =>
-        CreateBlueTuskRule(
+        CreateRule(
             migrationBuilder,
             table,
             BlueTuskRuleMetadata.DeserializeDefinition(serializedDefinition),
             schema,
             orReplace);
 
-    public static OperationBuilder<DropBlueTuskRuleOperation> DropBlueTuskRule(
+    public static OperationBuilder<DropRuleOperation> DropRule(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -52,7 +52,7 @@ public static class BlueTuskRuleMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskRuleOperation
+        var operation = new DropRuleOperation
         {
             Table = table,
             Schema = schema,
@@ -60,10 +60,10 @@ public static class BlueTuskRuleMigrationBuilderExtensions
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskRuleOperation>(operation);
+        return new OperationBuilder<DropRuleOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskRuleOperation> RenameBlueTuskRule(
+    public static OperationBuilder<RenameRuleOperation> RenameRule(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -74,7 +74,7 @@ public static class BlueTuskRuleMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskRuleOperation
+        var operation = new RenameRuleOperation
         {
             Table = table,
             Schema = schema,
@@ -82,10 +82,10 @@ public static class BlueTuskRuleMigrationBuilderExtensions
             NewName = newName,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskRuleOperation>(operation);
+        return new OperationBuilder<RenameRuleOperation>(operation);
     }
 
-    public static OperationBuilder<AlterBlueTuskRuleEnabledModeOperation> AlterBlueTuskRuleEnabledMode(
+    public static OperationBuilder<AlterRuleEnabledModeOperation> AlterRuleEnabledMode(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -100,7 +100,7 @@ public static class BlueTuskRuleMigrationBuilderExtensions
             throw new ArgumentOutOfRangeException(nameof(enabledMode));
         }
 
-        var operation = new AlterBlueTuskRuleEnabledModeOperation
+        var operation = new AlterRuleEnabledModeOperation
         {
             Table = table,
             Schema = schema,
@@ -108,6 +108,6 @@ public static class BlueTuskRuleMigrationBuilderExtensions
             EnabledMode = enabledMode,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskRuleEnabledModeOperation>(operation);
+        return new OperationBuilder<AlterRuleEnabledModeOperation>(operation);
     }
 }

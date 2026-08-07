@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.LTree
 
-Preview PostgreSQL `ltree` support for BlueTusk. The package registers distinct
+Stable PostgreSQL `ltree` support for BlueTusk. The package registers distinct
 CLR values and versioned text/binary codecs for `ltree`, `lquery`, and
 `ltxtquery`, including their catalogue-composed array types.
 
@@ -26,5 +26,5 @@ built. Pass the installation schema to `UseLTree(schema)` when it is not
 on the database locale; BlueTusk preserves the server's canonical text and
 rejects embedded null characters and unsupported binary versions.
 
-This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
-APIs, not stable or production-ready contracts.
+This package and the BlueTusk extension SDK use the stable 1.0.0
+Provider-family contract.

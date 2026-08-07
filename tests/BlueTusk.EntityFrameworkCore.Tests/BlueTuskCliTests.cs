@@ -66,7 +66,7 @@ public sealed class BlueTuskCliTests
                 Assert.Single(files, file => Path.GetFileName(file) == "CliContext.cs"));
             Assert.Contains("class CliContext", contextCode, StringComparison.Ordinal);
             Assert.Contains("HasComment(\"CLI people\")", contextCode, StringComparison.Ordinal);
-            Assert.Contains("UseBlueTuskIdentityColumn(BlueTuskIdentityGeneration.Always)",
+            Assert.Contains("UseIdentityColumn(BlueTuskIdentityGeneration.Always)",
                 contextCode, StringComparison.Ordinal);
             Assert.DoesNotContain(connectionString, contextCode, StringComparison.Ordinal);
             Assert.DoesNotContain("Password=postgres", contextCode, StringComparison.OrdinalIgnoreCase);

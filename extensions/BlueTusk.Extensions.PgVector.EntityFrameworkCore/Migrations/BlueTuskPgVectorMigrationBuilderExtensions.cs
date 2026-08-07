@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 public static class BlueTuskPgVectorMigrationBuilderExtensions
 {
     /// <summary>Creates PostgreSQL's vector extension if it is not installed.</summary>
-    public static OperationBuilder<SqlOperation> EnsureBlueTuskPgVector(
+    public static OperationBuilder<SqlOperation> EnsurePgVector(
         this MigrationBuilder migrationBuilder,
         string schema = "public")
     {
@@ -20,7 +20,7 @@ public static class BlueTuskPgVectorMigrationBuilderExtensions
     }
 
     /// <summary>Drops PostgreSQL's vector extension if it is installed.</summary>
-    public static OperationBuilder<SqlOperation> DropBlueTuskPgVector(
+    public static OperationBuilder<SqlOperation> DropPgVector(
         this MigrationBuilder migrationBuilder,
         bool cascade = false)
     {

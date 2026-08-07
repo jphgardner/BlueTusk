@@ -7,6 +7,30 @@ namespace BlueTusk.Replication.PgOutput.Tests;
 public sealed class BlueTuskPgOutputDecoderTests
 {
     [Fact]
+    public void Caller_supplied_xlog_memory_is_not_marked_as_internally_owned()
+    {
+        var payload = new PayloadBuilder('B')
+            .UInt64(10)
+            .Int64(1_000_000)
+            .UInt32(42)
+            .Build();
+        var xLogData = new BlueTuskXLogData(
+            new BlueTuskLogSequenceNumber(1),
+            new BlueTuskLogSequenceNumber(2),
+            DateTimeOffset.UnixEpoch,
+            payload);
+
+        var envelope = new BlueTuskPgOutputDecoder().Decode(xLogData);
+        var publicEquivalent = new BlueTuskPgOutputEnvelope(
+            envelope.XLogData,
+            envelope.Message);
+
+        Assert.False(envelope.OwnsPayload);
+        Assert.Equal(publicEquivalent, envelope);
+        Assert.Equal(publicEquivalent.GetHashCode(), envelope.GetHashCode());
+    }
+
+    [Fact]
     public void Decodes_transaction_boundaries_and_origin()
     {
         var decoder = new BlueTuskPgOutputDecoder();
@@ -313,6 +337,35 @@ public sealed class BlueTuskPgOutputDecoderTests
                     .UInt64(1)
                     .UInt64(2)
                     .Int64(0)
+                    .Build()));
+    }
+
+    [Fact]
+    public void Rejects_collection_counts_above_the_parser_ceiling()
+    {
+        var decoder = new BlueTuskPgOutputDecoder();
+
+        Assert.Throws<BlueTuskPgOutputProtocolException>(
+            () => decoder.Decode(
+                new PayloadBuilder('R')
+                    .UInt32(1)
+                    .CString("public")
+                    .CString("items")
+                    .Byte((byte)'d')
+                    .Int16(4097)
+                    .Build()));
+        Assert.Throws<BlueTuskPgOutputProtocolException>(
+            () => decoder.Decode(
+                new PayloadBuilder('I')
+                    .UInt32(1)
+                    .Byte((byte)'N')
+                    .Int16(4097)
+                    .Build()));
+        Assert.Throws<BlueTuskPgOutputProtocolException>(
+            () => decoder.Decode(
+                new PayloadBuilder('T')
+                    .Int32(4097)
+                    .Byte(0)
                     .Build()));
     }
 

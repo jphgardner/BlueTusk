@@ -36,7 +36,7 @@ public sealed class TablespaceMigrationsTests
         var alteredModel = altered.GetService<IDesignTimeModel>().Model;
         var differ = initial.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, initialModel.GetRelationalModel()).ToArray();
-        var create = Assert.Single(creates.OfType<CreateBlueTuskTablespaceOperation>());
+        var create = Assert.Single(creates.OfType<CreateTablespaceOperation>());
         Assert.True(Array.IndexOf(creates, create) <
                     Array.FindIndex(creates, operation => operation is CreateTableOperation));
 
@@ -59,8 +59,8 @@ public sealed class TablespaceMigrationsTests
 
         var changes = differ.GetDifferences(
             initialModel.GetRelationalModel(), alteredModel.GetRelationalModel()).ToArray();
-        var rename = Assert.Single(changes.OfType<RenameBlueTuskTablespaceOperation>());
-        var alter = Assert.Single(changes.OfType<AlterBlueTuskTablespaceOperation>());
+        var rename = Assert.Single(changes.OfType<RenameTablespaceOperation>());
+        var alter = Assert.Single(changes.OfType<AlterTablespaceOperation>());
         Assert.True(Array.IndexOf(changes, rename) < Array.IndexOf(changes, alter));
         var alterSql = string.Concat(generator.Generate(changes, alteredModel)
             .Select(command => command.CommandText));
@@ -77,7 +77,7 @@ public sealed class TablespaceMigrationsTests
         var drops = differ.GetDifferences(
             alteredModel.GetRelationalModel(), empty.GetService<IDesignTimeModel>().Model.GetRelationalModel())
             .ToArray();
-        var drop = Assert.Single(drops.OfType<DropBlueTuskTablespaceOperation>());
+        var drop = Assert.Single(drops.OfType<DropTablespaceOperation>());
         Assert.True(Array.FindIndex(drops, operation => operation is DropTableOperation) <
                     Array.IndexOf(drops, drop));
         Assert.True(drop.IsDestructiveChange);
@@ -92,19 +92,19 @@ public sealed class TablespaceMigrationsTests
             StringComparison.Ordinal);
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskTablespace(create.Definition);
-        migration.AlterBlueTuskTablespace(alter.Definition, alter.OldDefinition);
-        migration.RenameBlueTuskTablespace(Name, RenamedName);
-        migration.DropBlueTuskTablespace(RenamedName, ifExists: true);
+        migration.CreateTablespace(create.Definition);
+        migration.AlterTablespace(alter.Definition, alter.OldDefinition);
+        migration.RenameTablespace(Name, RenamedName);
+        migration.DropTablespace(RenamedName, ifExists: true);
         using var provider = DesignServices();
         var codeBuilder = new IndentedStringBuilder();
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, codeBuilder);
         var code = codeBuilder.ToString();
-        Assert.Contains("CreateBlueTuskTablespace(", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskTablespace(", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskTablespace(", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskTablespace(", code, StringComparison.Ordinal);
+        Assert.Contains("CreateTablespace(", code, StringComparison.Ordinal);
+        Assert.Contains("AlterTablespace(", code, StringComparison.Ordinal);
+        Assert.Contains("RenameTablespace(", code, StringComparison.Ordinal);
+        Assert.Contains("DropTablespace(", code, StringComparison.Ordinal);
         Assert.Contains(", true);", code, StringComparison.Ordinal);
     }
 
@@ -112,13 +112,13 @@ public sealed class TablespaceMigrationsTests
     public void Invalid_tablespace_names_options_and_locations_are_rejected()
     {
         var modelBuilder = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskTablespace(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasTablespace(
             "pg_reserved", "/srv/postgresql/reserved"));
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskTablespace(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasTablespace(
             "invalid_option",
             "/srv/postgresql/invalid_option",
             tablespace => tablespace.HasOption("future_option", "1")));
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskTablespace(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasTablespace(
             "missing_location", " "));
     }
 
@@ -166,7 +166,7 @@ public sealed class TablespaceMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskTablespaces(", scaffolded.ContextFile.Code,
+                Assert.Contains("HasTablespaces(", scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
             }
 
@@ -209,7 +209,7 @@ public sealed class TablespaceMigrationsTests
             entity.HasKey(item => item.Id);
             entity.Property(item => item.Id).HasColumnName("id");
         });
-        modelBuilder.HasBlueTuskTablespace(
+        modelBuilder.HasTablespace(
             altered ? RenamedName : Name,
             relocated ? $"{TablespaceLocation()}_moved" : TablespaceLocation(),
             tablespace =>

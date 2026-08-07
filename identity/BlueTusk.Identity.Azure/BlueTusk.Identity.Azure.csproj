@@ -7,8 +7,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <PackageId>BlueTusk.Identity.Azure</PackageId>
     <Description>Optional Microsoft Entra authentication for Azure Database for PostgreSQL with BlueTusk.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;azure;entra;managed-identity</PackageTags>

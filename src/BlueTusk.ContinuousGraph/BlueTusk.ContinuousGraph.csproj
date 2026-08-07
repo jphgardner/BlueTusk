@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>ContinuousGraph</BlueTuskProductFamily>
+    <Description>Capability-guarded SQL/PGQ queries with bounded incremental maintenance and authoritative Live repair.</Description>
+    <PackageTags>postgresql;sql-pgq;graph;live-query;realtime</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\ContinuousGraph.props" />
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
+    <ProjectReference Include="..\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+  </ItemGroup>
+</Project>

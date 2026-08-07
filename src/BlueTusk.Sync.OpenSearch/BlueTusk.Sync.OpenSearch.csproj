@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Sync</BlueTuskProductFamily>
+    <Description>Bulk indexing, recovery, and zero-downtime rebuild destination for BlueTusk Sync and OpenSearch.</Description>
+    <PackageTags>postgresql;cdc;sync;opensearch;search</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Sync.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+  </ItemGroup>
+</Project>

@@ -1,3 +1,5 @@
+using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace BlueTusk.TypeSystem;
@@ -12,6 +14,7 @@ public sealed class BlueTuskArrayCodec :
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private readonly BlueTuskTypeDescriptor _elementType;
     private readonly IBlueTuskCodec _elementCodec;
+    private readonly IBlueTuskArrayFactory? _arrayFactory;
 
     public BlueTuskArrayCodec(
         BlueTuskTypeDescriptor elementType,
@@ -19,7 +22,8 @@ public sealed class BlueTuskArrayCodec :
     {
         _elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
         _elementCodec = elementCodec ?? throw new ArgumentNullException(nameof(elementCodec));
-        ClrType = elementCodec.ClrType.MakeArrayType();
+        _arrayFactory = elementCodec as IBlueTuskArrayFactory;
+        ClrType = ResolveArrayClrType(elementCodec, _arrayFactory);
     }
 
     public Type ClrType { get; }
@@ -115,7 +119,7 @@ public sealed class BlueTuskArrayCodec :
 
         if (rank == 0)
         {
-            return Array.CreateInstance(_elementCodec.ClrType, 0);
+            return CreateArray([0], [0]);
         }
 
         var lengths = new int[rank];
@@ -131,7 +135,10 @@ public sealed class BlueTuskArrayCodec :
             }
 
             lengths[dimension] = length;
-            lowerBounds[dimension] = checked(reader.ReadInt32BigEndian() - 1);
+            lowerBounds[dimension] = TranslateLowerBound(
+                reader.ReadInt32BigEndian(),
+                length,
+                type);
             elementCount = checked(elementCount * length);
             if (elementCount > Array.MaxLength)
             {
@@ -139,7 +146,13 @@ public sealed class BlueTuskArrayCodec :
             }
         }
 
-        var result = Array.CreateInstance(_elementCodec.ClrType, lengths, lowerBounds);
+        if (elementCount > reader.Remaining / sizeof(int))
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} binary array element count exceeds the remaining field size.");
+        }
+
+        var result = CreateArray(lengths, lowerBounds);
         PopulateBinary(ref reader, result, checked((int)elementCount), flags != 0, type);
         return result;
     }
@@ -175,6 +188,13 @@ public sealed class BlueTuskArrayCodec :
                         $"The {arrayType.QualifiedName} binary array has invalid element length {length}.");
                 }
 
+                if (length > reader.Remaining)
+                {
+                    throw new InvalidOperationException(
+                        $"The {arrayType.QualifiedName} binary array element length {length} " +
+                        $"exceeds the {reader.Remaining} remaining field bytes.");
+                }
+
                 var elementReader = new BlueTuskReader(reader.ReadBytes(length));
                 value = _elementCodec.Read(ref elementReader, BlueTuskDataFormat.Binary, _elementType);
                 EnsureElementConsumed(elementReader.Remaining);
@@ -187,16 +207,25 @@ public sealed class BlueTuskArrayCodec :
 
     private Array ReadText(ref BlueTuskReader reader, BlueTuskTypeDescriptor arrayType)
     {
-        var parsed = BlueTuskArrayTextParser.Parse(reader.ReadRemainingUtf8(), _elementType.Delimiter);
+        var parsed = BlueTuskArrayTextParser.Parse(
+            reader.ReadRemainingUtf8(),
+            _elementType.Delimiter,
+            MaximumDimensions);
         if (parsed.Lengths.Length == 0)
         {
-            return Array.CreateInstance(_elementCodec.ClrType, 0);
+            return CreateArray([0], [0]);
         }
 
-        var lowerBounds = parsed.LowerBounds
-            .Select(lowerBound => checked(lowerBound - 1))
-            .ToArray();
-        var result = Array.CreateInstance(_elementCodec.ClrType, parsed.Lengths, lowerBounds);
+        var lowerBounds = new int[parsed.LowerBounds.Length];
+        for (var dimension = 0; dimension < lowerBounds.Length; dimension++)
+        {
+            lowerBounds[dimension] = TranslateLowerBound(
+                parsed.LowerBounds[dimension],
+                parsed.Lengths[dimension],
+                arrayType);
+        }
+
+        var result = CreateArray(parsed.Lengths, lowerBounds);
         var indexes = GetLowerBounds(result);
         foreach (var item in parsed.Elements)
         {
@@ -438,4 +467,335 @@ public sealed class BlueTuskArrayCodec :
                 $"PostgreSQL arrays support between 0 and {MaximumDimensions} dimensions; {rank} were supplied.");
         }
     }
+
+    private static int TranslateLowerBound(
+        int postgreSqlLowerBound,
+        int length,
+        BlueTuskTypeDescriptor arrayType)
+    {
+        var lowerBound = (long)postgreSqlLowerBound - 1;
+        var upperBound = lowerBound + length - 1L;
+        if (lowerBound < int.MinValue ||
+            lowerBound > int.MaxValue ||
+            (length > 0 && upperBound > int.MaxValue))
+        {
+            throw new InvalidOperationException(
+                $"The {arrayType.QualifiedName} array bounds cannot be represented by a CLR array.");
+        }
+
+        return (int)lowerBound;
+    }
+
+    [UnconditionalSuppressMessage(
+        "Aot",
+        "IL3050",
+        Justification =
+            "The dynamic fallback is guarded by RuntimeFeature.IsDynamicCodeSupported; " +
+            "NativeAOT requires the statically typed BlueTuskCodec<T> array factory.")]
+    private static Type ResolveArrayClrType(
+        IBlueTuskCodec elementCodec,
+        IBlueTuskArrayFactory? arrayFactory)
+    {
+        if (arrayFactory is not null)
+        {
+            return arrayFactory.ArrayClrType;
+        }
+
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            throw UnsupportedCustomCodec(elementCodec);
+        }
+
+        return elementCodec.ClrType.MakeArrayType();
+    }
+
+    [UnconditionalSuppressMessage(
+        "Aot",
+        "IL3050",
+        Justification =
+            "The dynamic fallback is guarded by RuntimeFeature.IsDynamicCodeSupported; " +
+            "NativeAOT requires the statically typed BlueTuskCodec<T> array factory.")]
+    private Array CreateArray(
+        ReadOnlySpan<int> lengths,
+        ReadOnlySpan<int> lowerBounds)
+    {
+        if (_arrayFactory is not null)
+        {
+            return _arrayFactory.CreateArray(lengths, lowerBounds);
+        }
+
+        if (!RuntimeFeature.IsDynamicCodeSupported)
+        {
+            throw UnsupportedCustomCodec(_elementCodec);
+        }
+
+        return Array.CreateInstance(
+            _elementCodec.ClrType,
+            lengths.ToArray(),
+            lowerBounds.ToArray());
+    }
+
+    private static NotSupportedException UnsupportedCustomCodec(IBlueTuskCodec elementCodec) =>
+        new(
+            $"NativeAOT array support requires element codec " +
+            $"'{elementCodec.GetType().FullName}' to derive from BlueTuskCodec<T>. " +
+            "Direct IBlueTuskCodec implementations require a JIT deployment.");
+}
+
+internal sealed class BlueTuskArrayCodec<T> :
+    IBlueTuskCodec<T[]>,
+    IBlueTuskRangeCodecFactory,
+    IBlueTuskWriteFormatSelector
+{
+    private readonly BlueTuskTypeDescriptor _elementType;
+    private readonly IBlueTuskCodec<T> _elementCodec;
+    private readonly BlueTuskArrayCodec _fallback;
+
+    internal BlueTuskArrayCodec(
+        BlueTuskTypeDescriptor elementType,
+        IBlueTuskCodec<T> elementCodec)
+    {
+        _elementType = elementType ?? throw new ArgumentNullException(nameof(elementType));
+        _elementCodec = elementCodec ?? throw new ArgumentNullException(nameof(elementCodec));
+        _fallback = new BlueTuskArrayCodec(elementType, elementCodec);
+    }
+
+    public Type ClrType => typeof(T[]);
+
+    public object Read(
+        ref BlueTuskReader reader,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        if (format == BlueTuskDataFormat.Binary && CanReadTypedBinary(ref reader))
+        {
+            return ReadTyped(ref reader, format, type);
+        }
+
+        return _fallback.Read(ref reader, format, type);
+    }
+
+    public T[] ReadTyped(
+        ref BlueTuskReader reader,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        if (format == BlueTuskDataFormat.Text)
+        {
+            var value = _fallback.Read(ref reader, format, type);
+            return value as T[] ?? throw UnsupportedTypedShape(type);
+        }
+
+        if (format != BlueTuskDataFormat.Binary)
+        {
+            throw new ArgumentOutOfRangeException(nameof(format));
+        }
+
+        var probe = reader;
+        var rank = probe.ReadInt32BigEndian();
+        if (rank > 1)
+        {
+            throw UnsupportedTypedShape(type);
+        }
+
+        if (rank < 0)
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} binary array has invalid rank {rank}.");
+        }
+
+        var flags = probe.ReadInt32BigEndian();
+        if (flags is not 0 and not 1)
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} binary array has invalid flags {flags}.");
+        }
+
+        var elementTypeId = new BlueTuskTypeId(probe.ReadUInt32BigEndian());
+        if (elementTypeId != _elementType.Id)
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} binary array contains element OID {elementTypeId}; " +
+                $"OID {_elementType.Id} was expected.");
+        }
+
+        if (rank == 0)
+        {
+            reader = probe;
+            return [];
+        }
+
+        var length = probe.ReadInt32BigEndian();
+        if (length < 0)
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} binary array has a negative dimension length.");
+        }
+
+        var lowerBound = (long)probe.ReadInt32BigEndian() - 1;
+        if (lowerBound != 0)
+        {
+            throw UnsupportedTypedShape(type);
+        }
+
+        if (length > probe.Remaining / sizeof(int))
+        {
+            throw new InvalidOperationException(
+                $"The {type.QualifiedName} binary array element count exceeds the remaining field size.");
+        }
+
+        var result = new T[length];
+        for (var index = 0; index < result.Length; index++)
+        {
+            var elementLength = probe.ReadInt32BigEndian();
+            if (elementLength == -1)
+            {
+                if (flags == 0)
+                {
+                    throw new InvalidOperationException(
+                        $"The {type.QualifiedName} binary array contains a null element without the null flag.");
+                }
+
+                if (typeof(T).IsValueType && Nullable.GetUnderlyingType(typeof(T)) is null)
+                {
+                    throw new InvalidOperationException(
+                        $"The {type.QualifiedName} array contains a null {_elementType.QualifiedName} element, " +
+                        $"which cannot be stored in {typeof(T).FullName}[].");
+                }
+
+                result[index] = default!;
+                continue;
+            }
+
+            if (elementLength < 0 || elementLength > probe.Remaining)
+            {
+                throw new InvalidOperationException(
+                    $"The {type.QualifiedName} binary array contains invalid element length {elementLength}.");
+            }
+
+            var elementReader = new BlueTuskReader(probe.ReadBytes(elementLength));
+            result[index] = _elementCodec.ReadTyped(
+                ref elementReader,
+                BlueTuskDataFormat.Binary,
+                _elementType);
+            if (elementReader.Remaining != 0)
+            {
+                throw new InvalidOperationException(
+                    $"The {_elementType.QualifiedName} codec left {elementReader.Remaining} unread array-element bytes.");
+            }
+        }
+
+        reader = probe;
+        return result;
+    }
+
+    public void Write(
+        ref BlueTuskWriter writer,
+        object? value,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        if (value is T[] typedValue)
+        {
+            WriteTyped(ref writer, typedValue, format, type);
+            return;
+        }
+
+        _fallback.Write(ref writer, value, format, type);
+    }
+
+    public void WriteTyped(
+        ref BlueTuskWriter writer,
+        T[] value,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        ArgumentNullException.ThrowIfNull(value);
+        if (format == BlueTuskDataFormat.Text)
+        {
+            _fallback.Write(ref writer, value, format, type);
+            return;
+        }
+
+        if (format != BlueTuskDataFormat.Binary)
+        {
+            throw new ArgumentOutOfRangeException(nameof(format));
+        }
+
+        var hasNulls = false;
+        if (!typeof(T).IsValueType || Nullable.GetUnderlyingType(typeof(T)) is not null)
+        {
+            foreach (var item in value)
+            {
+                if (item is null)
+                {
+                    hasNulls = true;
+                    break;
+                }
+            }
+        }
+
+        var rank = value.Length == 0 ? 0 : 1;
+        writer.WriteInt32BigEndian(rank);
+        writer.WriteInt32BigEndian(hasNulls ? 1 : 0);
+        writer.WriteUInt32BigEndian(_elementType.Id.Oid);
+        if (rank != 0)
+        {
+            writer.WriteInt32BigEndian(value.Length);
+            writer.WriteInt32BigEndian(1);
+        }
+
+        foreach (var item in value)
+        {
+            if (item is null)
+            {
+                writer.WriteInt32BigEndian(-1);
+                continue;
+            }
+
+            var lengthOffset = writer.WrittenCount;
+            writer.WriteInt32BigEndian(0);
+            var valueOffset = writer.WrittenCount;
+            _elementCodec.WriteTyped(
+                ref writer,
+                item,
+                BlueTuskDataFormat.Binary,
+                _elementType);
+            writer.WriteInt32BigEndianAt(lengthOffset, writer.WrittenCount - valueOffset);
+        }
+    }
+
+    public BlueTuskDataFormat GetPreferredWriteFormat(
+        object value,
+        BlueTuskTypeDescriptor type) =>
+        _fallback.GetPreferredWriteFormat(value, type);
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        ((IBlueTuskRangeCodecFactory)_fallback).CreateRangeCodec(
+            subtype,
+            subtypeCodec);
+
+    private static bool CanReadTypedBinary(ref BlueTuskReader reader)
+    {
+        var probe = reader;
+        var rank = probe.ReadInt32BigEndian();
+        if (rank != 1)
+        {
+            return rank == 0;
+        }
+
+        probe.ReadInt32BigEndian();
+        probe.ReadUInt32BigEndian();
+        probe.ReadInt32BigEndian();
+        return probe.ReadInt32BigEndian() == 1;
+    }
+
+    private static InvalidCastException UnsupportedTypedShape(
+        BlueTuskTypeDescriptor type) =>
+        new(
+            $"The typed {type.QualifiedName} codec supports one-dimensional arrays " +
+            "with PostgreSQL's standard lower bound of 1. Use the non-generic codec " +
+            "to read multidimensional arrays or arrays with non-standard lower bounds.");
 }

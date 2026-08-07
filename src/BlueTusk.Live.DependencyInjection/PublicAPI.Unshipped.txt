@@ -1,0 +1,38 @@
+#nullable enable
+BlueTusk.Live.DependencyInjection.LiveInvalidationConsumer
+BlueTusk.Live.DependencyInjection.LiveInvalidationConsumer.CompleteSnapshotAsync(BlueTusk.Streams.SnapshotComplete! complete, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.DependencyInjection.LiveInvalidationConsumer.ConsumeSnapshotBatchAsync(BlueTusk.Streams.ChangeSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.DependencyInjection.LiveInvalidationConsumer.ConsumeTransactionAsync(BlueTusk.Streams.ChangeTransactionDelivery! delivery, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.DependencyInjection.LiveInvalidationConsumer.LiveInvalidationConsumer(string! databaseIdentity, BlueTusk.Live.ILiveInvalidationSink! sink) -> void
+BlueTusk.Live.DependencyInjection.LiveInvalidationConsumer.ResetSnapshotAsync(BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.DependencyInjection.LiveInvalidationConsumer.StartSnapshotAsync(BlueTusk.Streams.SnapshotStart! start, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.AppendAsync(string! databaseIdentity, BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveInvalidationCursor>
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.AppendReplayAsync(BlueTusk.Live.LiveReplayAppendRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveReplayAppendResult!>
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.GetCurrentCursorAsync(string! databaseIdentity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveInvalidationCursor>
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.HasChangesAsync(string! databaseIdentity, System.Collections.Generic.IReadOnlyCollection<BlueTusk.Live.LiveTableDependency!>! dependencies, BlueTusk.Live.LiveInvalidationCursor afterExclusive, BlueTusk.Live.LiveInvalidationCursor throughInclusive, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.InitializeAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.PostgreSqlLiveInvalidationStore(BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions! options) -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.PruneAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<int>
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.ReadAsync(BlueTusk.Live.LiveSubscriptionIdentity! identity, long afterSequence, int maximumEvents, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Live.LiveReplayReadResult!>
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreException
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreException.PostgreSqlLiveStoreException(string! message) -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreException.PostgreSqlLiveStoreException(string! message, System.Exception! innerException) -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ControlDataSource.get -> System.Data.Common.DbDataSource!
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ControlDataSource.init -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ControlSchema.get -> string!
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ControlSchema.init -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.MaximumDependenciesPerQuery.get -> int
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.MaximumDependenciesPerQuery.init -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.MaximumDependenciesPerTransaction.get -> int
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.MaximumDependenciesPerTransaction.init -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.MaximumReplayEventBytes.get -> int
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.MaximumReplayEventBytes.init -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.PostgreSqlLiveStoreOptions() -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ReplayPruneBatchSize.get -> int
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ReplayPruneBatchSize.init -> void
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ReplayRetentionWindow.get -> System.TimeSpan
+BlueTusk.Live.DependencyInjection.PostgreSqlLiveStoreOptions.ReplayRetentionWindow.init -> void
+const BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.CurrentSchemaVersion = 2 -> int
+const BlueTusk.Live.DependencyInjection.PostgreSqlLiveInvalidationStore.MinimumSupportedSchemaVersion = 1 -> int

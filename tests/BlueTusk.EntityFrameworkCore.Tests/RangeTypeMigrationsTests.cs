@@ -33,10 +33,10 @@ public sealed class RangeTypeMigrationsTests
             .GetDifferences(null, model.GetRelationalModel())
             .ToArray();
 
-        var createRange = Assert.Single(operations.OfType<CreateBlueTuskRangeTypeOperation>());
-        var createDomain = Assert.Single(operations.OfType<CreateBlueTuskDomainTypeOperation>());
+        var createRange = Assert.Single(operations.OfType<CreateRangeTypeOperation>());
+        var createDomain = Assert.Single(operations.OfType<CreateDomainTypeOperation>());
         Assert.True(Array.IndexOf(operations, createRange) < Array.IndexOf(operations, createDomain));
-        var definition = Assert.Single(model.GetBlueTuskUserDefinedTypes().Ranges);
+        var definition = Assert.Single(model.GetUserDefinedTypes().Ranges);
         Assert.Equal("measurement_multirange", definition.MultirangeType.Name);
         Assert.Equal("range_tests", definition.MultirangeType.Schema);
 
@@ -58,12 +58,12 @@ public sealed class RangeTypeMigrationsTests
         var drops = context.GetService<IMigrationsModelDiffer>().GetDifferences(
                 model.GetRelationalModel(),
                 emptyContext.GetService<IDesignTimeModel>().Model.GetRelationalModel())
-            .Where(operation => operation is DropBlueTuskDomainTypeOperation or DropBlueTuskRangeTypeOperation)
+            .Where(operation => operation is DropDomainTypeOperation or DropRangeTypeOperation)
             .ToArray();
         Assert.Collection(
             drops,
-            operation => Assert.IsType<DropBlueTuskDomainTypeOperation>(operation),
-            operation => Assert.IsType<DropBlueTuskRangeTypeOperation>(operation));
+            operation => Assert.IsType<DropDomainTypeOperation>(operation),
+            operation => Assert.IsType<DropRangeTypeOperation>(operation));
         var dropSql = string.Concat(context.GetService<IMigrationsSqlGenerator>()
             .Generate(drops, model)
             .Select(command => command.CommandText));
@@ -77,15 +77,15 @@ public sealed class RangeTypeMigrationsTests
     public void Range_default_multirange_name_matches_PostgreSQL_and_names_are_validated_globally()
     {
         var modelBuilder = new ModelBuilder();
-        modelBuilder.HasBlueTuskRange("foo_range_range", "integer", schema: "range_tests");
-        var range = Assert.Single(modelBuilder.Model.GetBlueTuskUserDefinedTypes().Ranges);
+        modelBuilder.HasRange("foo_range_range", "integer", schema: "range_tests");
+        var range = Assert.Single(modelBuilder.Model.GetUserDefinedTypes().Ranges);
         Assert.Equal("foo_multirange_range", range.MultirangeType.Name);
         Assert.Empty(BlueTuskUserDefinedTypeMetadata.Deserialize(
             "{\"enums\":[],\"domains\":[],\"composites\":[]}").Ranges);
 
         var collision = new ModelBuilder();
-        collision.HasBlueTuskEnum("measurement_multirange", ["one"], "range_tests");
-        Assert.Throws<ArgumentException>(() => collision.HasBlueTuskRange(
+        collision.HasEnum("measurement_multirange", ["one"], "range_tests");
+        Assert.Throws<ArgumentException>(() => collision.HasRange(
             "measurement_range",
             "float8",
             rangeBuilder => rangeBuilder.HasMultirangeType("measurement_multirange"),
@@ -115,7 +115,7 @@ public sealed class RangeTypeMigrationsTests
         var operations = sourceContext.GetService<IMigrationsModelDiffer>().GetDifferences(
             sourceContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             targetModel.GetRelationalModel());
-        var rename = Assert.Single(operations.OfType<RenameBlueTuskRangeTypeOperation>());
+        var rename = Assert.Single(operations.OfType<RenameRangeTypeOperation>());
         Assert.Equal("measurement_multirange", rename.MultirangeName);
         Assert.Equal("reading_multirange", rename.NewMultirangeName);
         Assert.Contains(operations, operation =>
@@ -155,8 +155,8 @@ public sealed class RangeTypeMigrationsTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskRangeTypeOperation { Definition = definition },
-                new RenameBlueTuskRangeTypeOperation
+                new CreateRangeTypeOperation { Definition = definition },
+                new RenameRangeTypeOperation
                 {
                     Name = "measurement_range",
                     Schema = "range_tests",
@@ -167,14 +167,14 @@ public sealed class RangeTypeMigrationsTests
                     NewMultirangeName = "reading_multirange",
                     NewMultirangeSchema = "range_tests_next",
                 },
-                new DropBlueTuskRangeTypeOperation { Name = "reading_range", Schema = "range_tests_next" },
+                new DropRangeTypeOperation { Name = "reading_range", Schema = "range_tests_next" },
             ],
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskRangeType", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskRangeType", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskRangeType", code, StringComparison.Ordinal);
+        Assert.Contains("CreateRangeType", code, StringComparison.Ordinal);
+        Assert.Contains("RenameRangeType", code, StringComparison.Ordinal);
+        Assert.Contains("DropRangeType", code, StringComparison.Ordinal);
         Assert.Contains("measurement_multirange", code, StringComparison.Ordinal);
     }
 
@@ -237,7 +237,7 @@ public sealed class RangeTypeMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskUserDefinedTypes(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasUserDefinedTypes(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
             }
 
             using var movedContext = CreateContext<MovedRangeContext>(connectionString);
@@ -260,7 +260,7 @@ public sealed class RangeTypeMigrationsTests
             var emptyModel = emptyContext.GetService<IDesignTimeModel>().Model;
             var drop = Assert.Single(differ.GetDifferences(
                 movedModel.GetRelationalModel(),
-                emptyModel.GetRelationalModel()).OfType<DropBlueTuskRangeTypeOperation>());
+                emptyModel.GetRelationalModel()).OfType<DropRangeTypeOperation>());
             Assert.True(drop.IsDestructiveChange);
             await ExecuteAsync(
                 connectionString,
@@ -284,7 +284,7 @@ public sealed class RangeTypeMigrationsTests
         string schema,
         string multirangeName,
         string subtypeName = "float8") =>
-        modelBuilder.HasBlueTuskRange(
+        modelBuilder.HasRange(
             name,
             subtypeName,
             range => range.UseSubtypeOperatorClass(subtypeName == "float8" ? "float8_ops" : "int4_ops")
@@ -299,7 +299,7 @@ public sealed class RangeTypeMigrationsTests
     {
         var modelBuilder = new ModelBuilder();
         ConfigureLiveRange(modelBuilder, name, schema, multirangeName);
-        return Assert.Single(modelBuilder.Model.GetBlueTuskUserDefinedTypes().Ranges);
+        return Assert.Single(modelBuilder.Model.GetUserDefinedTypes().Ranges);
     }
 
     private static TContext CreateContext<TContext>(string connectionString)
@@ -358,7 +358,7 @@ public sealed class RangeTypeMigrationsTests
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasBlueTuskRange(
+            modelBuilder.HasRange(
                 "measurement_range",
                 "float8",
                 range => range.UseSubtypeOperatorClass("float8_ops", "pg_catalog")
@@ -368,7 +368,7 @@ public sealed class RangeTypeMigrationsTests
                     .HasMultirangeType("measurement_multirange"),
                 "range_tests",
                 "pg_catalog");
-            modelBuilder.HasBlueTuskDomain(
+            modelBuilder.HasDomain(
                 "measurement_set",
                 "range_tests.measurement_multirange",
                 schema: "range_tests");

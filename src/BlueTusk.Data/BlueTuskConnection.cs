@@ -5,6 +5,7 @@ using System.Diagnostics.CodeAnalysis;
 using System.Threading.Channels;
 using BlueTusk.Client;
 using BlueTusk.Data.Copy;
+using BlueTusk.Data.Internal;
 using BlueTusk.Data.LargeObjects;
 using BlueTusk.Data.Notifications;
 using BlueTusk.Diagnostics;
@@ -14,7 +15,7 @@ using BlueTusk.TypeSystem;
 namespace BlueTusk.Data;
 
 /// <summary>Represents a logical connection to PostgreSQL.</summary>
-public sealed class BlueTuskConnection : DbConnection
+public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 {
     private const int NotificationBufferCapacity = 1_024;
     private readonly BlueTuskConnectionPoolBase? _pool;
@@ -128,6 +129,54 @@ public sealed class BlueTuskConnection : DbConnection
 
     protected override DbProviderFactory DbProviderFactory => BlueTuskProviderFactory.Instance;
 
+    public override DataTable GetSchema() =>
+        BlueTuskSchemaCollections.Get(this, "MetaDataCollections", restrictions: null);
+
+    public override DataTable GetSchema(string collectionName) =>
+        BlueTuskSchemaCollections.Get(this, collectionName, restrictions: null);
+
+    public override DataTable GetSchema(string collectionName, string?[]? restrictionValues) =>
+        BlueTuskSchemaCollections.Get(this, collectionName, restrictionValues);
+
+    [SuppressMessage(
+        "ApiDesign",
+        "RS0026:Do not add multiple public overloads with optional parameters",
+        Justification = "The optional cancellation token is inherited from DbConnection.")]
+    public override Task<DataTable> GetSchemaAsync(
+        CancellationToken cancellationToken = default) =>
+        BlueTuskSchemaCollections.GetAsync(
+            this,
+            "MetaDataCollections",
+            restrictions: null,
+            cancellationToken);
+
+    [SuppressMessage(
+        "ApiDesign",
+        "RS0026:Do not add multiple public overloads with optional parameters",
+        Justification = "The optional cancellation token is inherited from DbConnection.")]
+    public override Task<DataTable> GetSchemaAsync(
+        string collectionName,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskSchemaCollections.GetAsync(
+            this,
+            collectionName,
+            restrictions: null,
+            cancellationToken);
+
+    [SuppressMessage(
+        "ApiDesign",
+        "RS0026:Do not add multiple public overloads with optional parameters",
+        Justification = "The optional cancellation token is inherited from DbConnection.")]
+    public override Task<DataTable> GetSchemaAsync(
+        string collectionName,
+        string?[]? restrictionValues,
+        CancellationToken cancellationToken = default) =>
+        BlueTuskSchemaCollections.GetAsync(
+            this,
+            collectionName,
+            restrictionValues,
+            cancellationToken);
+
     /// <summary>Gets the asynchronous stream of notifications received by this connection.</summary>
     public IAsyncEnumerable<BlueTuskNotification> Notifications
     {
@@ -176,6 +225,34 @@ public sealed class BlueTuskConnection : DbConnection
     }
 
     internal bool HasOpenSession => PhysicalSession is { IsOpen: true };
+
+    internal void AbortPhysicalSession()
+    {
+        var lease = Interlocked.Exchange(ref _sessionLease, null);
+        try
+        {
+            if (lease is BlueTuskPooledSession pooledSession)
+            {
+                try
+                {
+                    pooledSession.Session.Dispose();
+                }
+                finally
+                {
+                    _pool!.Return(pooledSession);
+                }
+            }
+            else if (lease is IBlueTuskPhysicalSession session)
+            {
+                session.Dispose();
+            }
+        }
+        finally
+        {
+            _sessionTouched = false;
+            SetState(ConnectionState.Closed);
+        }
+    }
 
     private IBlueTuskPhysicalSession? PhysicalSession => _sessionLease switch
     {
@@ -267,6 +344,27 @@ public sealed class BlueTuskConnection : DbConnection
         ObjectDisposedException.ThrowIf(_disposed, this);
         return _typeMetadata.ReloadAsync(Session, cancellationToken);
     }
+
+    DbConnection IProviderConnection.Instance => this;
+
+    string IProviderConnection.UnredactedConnectionString => UnredactedConnectionString;
+
+    BlueTuskTypeRegistry IProviderConnection.TypeRegistry => TypeRegistry;
+
+    ProviderCapabilities? IProviderConnection.Capabilities =>
+        ServerCapabilities is { } capabilities
+            ? new ProviderCapabilities(capabilities.SupportsSqlPgq)
+            : null;
+
+    BlueTuskDiagnosticsOptions IProviderConnection.Diagnostics => DiagnosticsOptions;
+
+    DbConnection IProviderConnection.CreateAdminConnection(string connectionString) =>
+        CreateUnpooledConnection(connectionString);
+
+    void IProviderConnection.ReloadTypes() => ReloadTypes();
+
+    ValueTask IProviderConnection.ReloadTypesAsync(CancellationToken cancellationToken) =>
+        ReloadTypesAsync(cancellationToken);
 
     internal BlueTuskTransaction? CurrentTransaction
     {

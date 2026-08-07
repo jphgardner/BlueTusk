@@ -1,0 +1,6 @@
+#nullable enable
+BlueTusk.Data.DependencyInjection.BlueTuskDataServiceCollectionExtensions
+BlueTusk.Data.DependencyInjection.BlueTuskDataSourceHealthCheck
+BlueTusk.Data.DependencyInjection.BlueTuskDataSourceHealthCheck.BlueTuskDataSourceHealthCheck(BlueTusk.Data.BlueTuskDataSource! dataSource) -> void
+BlueTusk.Data.DependencyInjection.BlueTuskDataSourceHealthCheck.CheckHealthAsync(Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Microsoft.Extensions.Diagnostics.HealthChecks.HealthCheckResult>!
+static BlueTusk.Data.DependencyInjection.BlueTuskDataServiceCollectionExtensions.AddDataSource(this Microsoft.Extensions.DependencyInjection.IServiceCollection! services, string! connectionString, System.Action<BlueTusk.Data.BlueTuskDataSourceBuilder!>? configure = null, string! healthCheckName = "bluetusk") -> Microsoft.Extensions.DependencyInjection.IServiceCollection!

@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
+    <Description>Transaction-preserving PostgreSQL change streams for BlueTusk.</Description>
+    <PackageTags>postgresql;cdc;logical-replication;streaming</PackageTags>
+    <NoWarn>$(NoWarn);CA1711</NoWarn>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Streams.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
+  </ItemGroup>
+</Project>

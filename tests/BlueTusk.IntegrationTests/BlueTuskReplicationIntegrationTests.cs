@@ -1,7 +1,9 @@
+using System.Buffers.Binary;
 using BlueTusk.Client;
 using BlueTusk.Data;
 using BlueTusk.Replication;
 using BlueTusk.Replication.PgOutput;
+using BlueTusk.Streams;
 using BlueTusk.TypeSystem;
 using Xunit.Sdk;
 
@@ -9,6 +11,193 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskReplicationIntegrationTests
 {
+    [Fact]
+    public async Task Exported_snapshot_and_matching_stream_have_no_concurrent_write_gap()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_snapshot_{suffix}";
+        var publicationName = $"bluetusk_snapshot_publication_{suffix}";
+        var slotName = $"bluetusk_snapshot_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id integer PRIMARY KEY, value text NOT NULL)");
+        await ExecuteAsync(
+            administration,
+            $"INSERT INTO {quotedTable} SELECT value, 'initial-' || value FROM generate_series(1, 5) value");
+        await ExecuteAsync(
+            administration,
+            $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+
+        try
+        {
+            await using var dataSource = BlueTuskDataSource.Create(connectionString);
+            BlueTuskReplicationSystemIdentity identity;
+            await using (var identityConnection =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+            {
+                identity = await identityConnection.IdentifySystemAsync();
+            }
+
+            var table = new ChangeTable(
+                relationId: 0,
+                schema: "public",
+                name: tableName,
+                replicaIdentity: 'd',
+                [
+                    new ChangeColumn(0, "id", 23, -1, true),
+                    new ChangeColumn(1, "value", 25, -1, false),
+                ]);
+            var source = new PostgreSqlConsistentSnapshotSource(
+                dataSource,
+                new PostgreSqlConsistentSnapshotOptions
+                {
+                    Source = new ChangeSourceIdentity(
+                        identity.SystemIdentifier,
+                        identity.DatabaseName!,
+                        slotName,
+                        publicationName),
+                    PublicationNames = [publicationName],
+                    Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                    CopyPageRows = 2,
+                    MaximumBatchRows = 1,
+                });
+
+            await using (var attempt = await source.BeginAttemptAsync(abandonedEpoch: null))
+            {
+                await ExecuteAsync(
+                    administration,
+                    $"INSERT INTO {quotedTable} VALUES (6, 'during-snapshot')");
+
+                var snapshotIds = new List<int>();
+                await foreach (var batch in attempt.ReadSnapshotAsync())
+                {
+                    snapshotIds.AddRange(batch.Rows.Select(row =>
+                        BinaryPrimitives.ReadInt32BigEndian(row.Row["id"].Data.Span)));
+                }
+
+                Assert.Equal([1, 2, 3, 4, 5], snapshotIds);
+
+                await using var changes = attempt
+                    .CreateChangeStream()
+                    .ReadTransactionsAsync()
+                    .GetAsyncEnumerator();
+                Assert.True(await changes.MoveNextAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+                var delivery = changes.Current;
+                var transactionChanges = await delivery.Transaction.Changes.MaterializeAsync();
+                var insert = Assert.IsType<InsertChange>(Assert.Single(transactionChanges));
+                Assert.Equal(
+                    "6",
+                    System.Text.Encoding.UTF8.GetString(insert.NewRow["id"].Data.Span));
+                await delivery.AcknowledgeAsync();
+            }
+
+            await using var cleanup =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+            await cleanup.DropReplicationSlotAsync(slotName, wait: true);
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task New_process_can_explicitly_restart_an_inactive_snapshot_slot_with_a_new_epoch()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_snapshot_restart_{suffix}";
+        var publicationName = $"bluetusk_snapshot_restart_publication_{suffix}";
+        var slotName = $"bluetusk_snapshot_restart_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id integer PRIMARY KEY, value text NOT NULL)");
+        await ExecuteAsync(administration, $"INSERT INTO {quotedTable} VALUES (1, 'initial')");
+        await ExecuteAsync(
+            administration,
+            $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+
+        try
+        {
+            await using var dataSource = BlueTuskDataSource.Create(connectionString);
+            BlueTuskReplicationSystemIdentity system;
+            await using (var identityConnection =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+            {
+                system = await identityConnection.IdentifySystemAsync();
+            }
+
+            var table = new ChangeTable(
+                relationId: 0,
+                schema: "public",
+                name: tableName,
+                replicaIdentity: 'd',
+                [
+                    new ChangeColumn(0, "id", 23, -1, true),
+                    new ChangeColumn(1, "value", 25, -1, false),
+                ]);
+            var identity = new ChangeSourceIdentity(
+                system.SystemIdentifier,
+                system.DatabaseName!,
+                slotName,
+                publicationName);
+            var firstSource = new PostgreSqlConsistentSnapshotSource(
+                dataSource,
+                new PostgreSqlConsistentSnapshotOptions
+                {
+                    Source = identity,
+                    PublicationNames = [publicationName],
+                    Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                });
+            var firstAttempt = await firstSource.BeginAttemptAsync(abandonedEpoch: null);
+            var firstEpoch = firstAttempt.Epoch;
+            await foreach (var _ in firstAttempt.ReadSnapshotAsync())
+            {
+            }
+
+            _ = firstAttempt.CreateChangeStream();
+            await firstAttempt.DisposeAsync();
+
+            var restartedSource = new PostgreSqlConsistentSnapshotSource(
+                dataSource,
+                new PostgreSqlConsistentSnapshotOptions
+                {
+                    Source = identity,
+                    PublicationNames = [publicationName],
+                    Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                    ExistingSlotMode = PostgreSqlExistingSnapshotSlotMode.RestartSnapshot,
+                });
+            await using var restartedAttempt =
+                await restartedSource.BeginAttemptAsync(abandonedEpoch: null);
+
+            Assert.NotEqual(firstEpoch.Value, restartedAttempt.Epoch.Value);
+            Assert.True(restartedAttempt.Epoch.ConsistentPosition >= firstEpoch.ConsistentPosition);
+        }
+        finally
+        {
+            await using var cleanup =
+                await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+            var slots = await cleanup.GetReplicationSlotsAsync();
+            if (slots.Any(slot => string.Equals(slot.SlotName, slotName, StringComparison.Ordinal)))
+            {
+                await cleanup.DropReplicationSlotAsync(slotName, wait: true);
+            }
+
+            await ExecuteAsync(administration, $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
     [Fact]
     public async Task Data_source_derived_replication_session_is_dedicated_and_unpooled()
     {
@@ -168,6 +357,94 @@ public sealed class BlueTuskReplicationIntegrationTests
                         xLogData.WalEnd,
                         xLogData.WalEnd,
                         xLogData.WalEnd));
+            }
+            finally
+            {
+                await ExecuteAsync(
+                    administration,
+                    $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            }
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task Streams_assembles_live_pgoutput_DML_as_one_ordered_transaction()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_streams_{suffix}";
+        var publicationName = $"bluetusk_streams_publication_{suffix}";
+        var slotName = $"bluetusk_streams_slot_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text, payload text)");
+        try
+        {
+            await ExecuteAsync(
+                administration,
+                $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+            try
+            {
+                await using var replication =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                var identity = await replication.IdentifySystemAsync();
+                _ = await replication.CreateReplicationSlotAsync(slotName, temporary: true);
+                var stream = new PgOutputChangeStream(
+                    replication.StartReplicationAsync(slotName, publicationName).DecodePgOutputAsync(),
+                    new ChangeSourceIdentity(
+                        identity.SystemIdentifier,
+                        identity.DatabaseName!,
+                        slotName,
+                        publicationName));
+                await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+                var deliveryTask = enumerator.MoveNextAsync().AsTask();
+
+                await using (var transaction = await administration.BeginTransactionAsync(CancellationToken.None))
+                {
+                    await ExecuteAsync(
+                        administration,
+                        $"INSERT INTO {quotedTable} VALUES (1, 'before', repeat('x', 4096))",
+                        transaction);
+                    await ExecuteAsync(
+                        administration,
+                        $"UPDATE {quotedTable} SET value = 'after' WHERE id = 1",
+                        transaction);
+                    await ExecuteAsync(
+                        administration,
+                        $"DELETE FROM {quotedTable} WHERE id = 1",
+                        transaction);
+                    await transaction.CommitAsync(CancellationToken.None);
+                }
+
+                Assert.True(await deliveryTask.WaitAsync(TimeSpan.FromSeconds(15)));
+                var delivery = enumerator.Current;
+                var changes = await delivery.Transaction.Changes.MaterializeAsync();
+                Assert.Collection(
+                    changes,
+                    change => Assert.IsType<InsertChange>(change),
+                    change => Assert.IsType<UpdateChange>(change),
+                    change => Assert.IsType<DeleteChange>(change));
+                Assert.Equal([0, 1, 2], changes.Select(change => change.Id.Ordinal));
+                Assert.Equal(delivery.Transaction.CommitEndPosition, changes[2].Id.CommitEndPosition);
+                await delivery.AcknowledgeAsync();
+
+                var truncateDeliveryTask = enumerator.MoveNextAsync().AsTask();
+                await ExecuteAsync(administration, $"TRUNCATE TABLE {quotedTable}");
+                Assert.True(await truncateDeliveryTask.WaitAsync(TimeSpan.FromSeconds(15)));
+                var truncateDelivery = enumerator.Current;
+                var truncate = Assert.IsType<TruncateChange>(
+                    Assert.Single(await truncateDelivery.Transaction.Changes.MaterializeAsync()));
+                Assert.Equal(tableName, Assert.Single(truncate.Tables).Name);
+                await truncateDelivery.AcknowledgeAsync();
             }
             finally
             {
@@ -391,18 +668,10 @@ public sealed class BlueTuskReplicationIntegrationTests
                     });
                 using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
 
-                var streamStart = Assert.IsType<BlueTuskPgOutputStreamStart>(
-                    (await ReadDecodedUntilAsync(
-                        enumerator,
-                        decoder,
-                        static message => message is BlueTuskPgOutputStreamStart,
-                        timeout.Token)).Message);
-                var streamedInsert = Assert.IsType<BlueTuskPgOutputInsert>(
-                    (await ReadDecodedUntilAsync(
-                        enumerator,
-                        decoder,
-                        static message => message is BlueTuskPgOutputInsert,
-                        timeout.Token)).Message);
+                var (streamStart, streamedInsert) = await ReadMatchingStreamedInsertAsync(
+                    enumerator,
+                    decoder,
+                    timeout.Token);
                 _ = Assert.IsType<BlueTuskPgOutputStreamStop>(
                     (await ReadDecodedUntilAsync(
                         enumerator,
@@ -418,7 +687,8 @@ public sealed class BlueTuskReplicationIntegrationTests
                     (await ReadDecodedUntilAsync(
                         enumerator,
                         decoder,
-                        static message => message is BlueTuskPgOutputStreamCommit,
+                        message => message is BlueTuskPgOutputStreamCommit commit &&
+                            commit.TransactionId == streamStart.TransactionId,
                         timeout.Token)).Message);
                 Assert.Equal(streamStart.TransactionId, streamCommit.TransactionId);
             }
@@ -428,6 +698,161 @@ public sealed class BlueTuskReplicationIntegrationTests
                 {
                     await ExecuteAsync(administration, "ROLLBACK");
                     transactionOpen = false;
+                }
+
+                await ExecuteAsync(
+                    administration,
+                    $"DROP PUBLICATION IF EXISTS {quotedPublication}");
+            }
+        }
+        finally
+        {
+            await ExecuteAsync(administration, $"DROP TABLE IF EXISTS {quotedTable}");
+        }
+    }
+
+    [Fact]
+    public async Task Streams_stages_and_commits_a_live_prepared_transaction()
+    {
+        var connectionString = GetConnectionString();
+        var suffix = Guid.NewGuid().ToString("N");
+        var tableName = $"bluetusk_streams_twophase_{suffix}";
+        var publicationName = $"bluetusk_streams_twophase_pub_{suffix}";
+        var slotName = $"bluetusk_streams_twophase_slot_{suffix}";
+        var globalTransactionId = $"bluetusk_streams_gid_{suffix}";
+        var quotedTable = BlueTuskSql.QuoteIdentifier(tableName);
+        var quotedPublication = BlueTuskSql.QuoteIdentifier(publicationName);
+        var quotedGlobalTransactionId = BlueTuskSql.QuoteLiteral(globalTransactionId);
+        var prepared = false;
+
+        await using var administration = new BlueTuskConnection(connectionString);
+        await administration.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(
+            administration,
+            $"CREATE TABLE {quotedTable} (id int PRIMARY KEY, value text NOT NULL)");
+        try
+        {
+            await ExecuteAsync(
+                administration,
+                $"CREATE PUBLICATION {quotedPublication} FOR TABLE {quotedTable}");
+            try
+            {
+                await using var dataSource = BlueTuskDataSource.Create(connectionString);
+                BlueTuskReplicationSystemIdentity system;
+                await using (var identityConnection =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString))
+                {
+                    system = await identityConnection.IdentifySystemAsync();
+                }
+
+                var table = new ChangeTable(
+                    relationId: 0,
+                    schema: "public",
+                    name: tableName,
+                    replicaIdentity: 'd',
+                    [
+                        new ChangeColumn(0, "id", 23, -1, true),
+                        new ChangeColumn(1, "value", 25, -1, false),
+                    ]);
+                var source = new PostgreSqlConsistentSnapshotSource(
+                    dataSource,
+                    new PostgreSqlConsistentSnapshotOptions
+                    {
+                        Source = new ChangeSourceIdentity(
+                            system.SystemIdentifier,
+                            system.DatabaseName!,
+                            slotName,
+                            publicationName),
+                        PublicationNames = [publicationName],
+                        Tables = [new PostgreSqlSnapshotTable(table, [0])],
+                        TransactionAssembly = new TransactionAssemblyOptions
+                        {
+                            PreparedTransactionMode = PreparedTransactionMode.Stage,
+                        },
+                    });
+                await using var attempt = await source.BeginAttemptAsync(abandonedEpoch: null);
+                await foreach (var _ in attempt.ReadSnapshotAsync())
+                {
+                }
+
+                var stream = attempt.CreateChangeStream();
+                await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+                using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(20));
+
+                // PostgreSQL emits a prepared transaction as an ordinary commit when PREPARE
+                // happens before logical decoding has consumed it. A non-transactional message
+                // provides a deterministic stream-readiness barrier on every supported release.
+                var readyPrefix = $"bluetusk-ready-{suffix}";
+                var readyMove = enumerator.MoveNextAsync().AsTask();
+                await ExecuteAsync(
+                    administration,
+                    $"SELECT pg_logical_emit_message(false, " +
+                    $"{BlueTuskSql.QuoteLiteral(readyPrefix)}, 'ready')");
+                var (ready, _) = await ReadDeliveryUntilAsync(
+                    enumerator,
+                    readyMove,
+                    (transaction, changes) =>
+                        transaction.IsSynthetic &&
+                        changes.OfType<LogicalMessageChange>().Any(
+                            message => message.Prefix == readyPrefix),
+                    timeout.Token);
+                await ready.AcknowledgeAsync(timeout.Token);
+
+                var preparedMove = enumerator.MoveNextAsync().AsTask();
+
+                await ExecuteAsync(administration, "BEGIN");
+                await ExecuteAsync(
+                    administration,
+                    $"INSERT INTO {quotedTable} VALUES (1, 'prepared')");
+                await ExecuteAsync(
+                    administration,
+                    $"PREPARE TRANSACTION {quotedGlobalTransactionId}");
+                prepared = true;
+
+                var (staged, stagedChanges) = await ReadDeliveryUntilAsync(
+                    enumerator,
+                    preparedMove,
+                    (_, changes) => changes.OfType<InsertChange>().Any(
+                        change => change.NewRow.Table.Name == tableName),
+                    timeout.Token);
+                Assert.Equal(ChangeTransactionOutcome.Prepared, staged.Transaction.Outcome);
+                Assert.Equal(globalTransactionId, staged.Transaction.GlobalTransactionId);
+                var insert = Assert.IsType<InsertChange>(Assert.Single(stagedChanges));
+                Assert.Equal("1", System.Text.Encoding.UTF8.GetString(insert.NewRow["id"].Data.Span));
+                await staged.AcknowledgeAsync(timeout.Token);
+
+                var committedMove = enumerator.MoveNextAsync().AsTask();
+                await ExecuteAsync(
+                    administration,
+                    $"COMMIT PREPARED {quotedGlobalTransactionId}");
+                prepared = false;
+
+                var (committed, committedChanges) = await ReadDeliveryUntilAsync(
+                    enumerator,
+                    committedMove,
+                    (transaction, _) =>
+                        transaction.GlobalTransactionId == globalTransactionId,
+                    timeout.Token);
+                Assert.Equal(ChangeTransactionOutcome.Committed, committed.Transaction.Outcome);
+                Assert.Equal(globalTransactionId, committed.Transaction.GlobalTransactionId);
+                Assert.Empty(committedChanges);
+                await committed.AcknowledgeAsync(timeout.Token);
+            }
+            finally
+            {
+                if (prepared)
+                {
+                    await ExecuteAsync(
+                        administration,
+                        $"ROLLBACK PREPARED {quotedGlobalTransactionId}");
+                }
+
+                await using var cleanup =
+                    await BlueTuskLogicalReplicationConnection.OpenAsync(connectionString);
+                var slots = await cleanup.GetReplicationSlotsAsync();
+                if (slots.Any(slot => string.Equals(slot.SlotName, slotName, StringComparison.Ordinal)))
+                {
+                    await cleanup.DropReplicationSlotAsync(slotName, wait: true);
                 }
 
                 await ExecuteAsync(
@@ -653,6 +1078,68 @@ public sealed class BlueTuskReplicationIntegrationTests
             "The logical replication stream completed before the expected pgoutput message.");
     }
 
+    private static async Task<(BlueTuskPgOutputStreamStart Start, BlueTuskPgOutputInsert Insert)>
+        ReadMatchingStreamedInsertAsync(
+            IAsyncEnumerator<BlueTuskReplicationMessage> enumerator,
+            BlueTuskPgOutputDecoder decoder,
+            CancellationToken cancellationToken)
+    {
+        BlueTuskPgOutputStreamStart? activeStream = null;
+        while (await enumerator.MoveNextAsync().AsTask().WaitAsync(cancellationToken))
+        {
+            if (enumerator.Current is not BlueTuskXLogData xLogData)
+            {
+                continue;
+            }
+
+            var decoded = decoder.Decode(xLogData).Message;
+            if (decoded is BlueTuskPgOutputStreamStart streamStart)
+            {
+                activeStream = streamStart;
+            }
+            else if (decoded is BlueTuskPgOutputStreamStop)
+            {
+                activeStream = null;
+            }
+            else if (decoded is BlueTuskPgOutputInsert insert &&
+                     activeStream is not null &&
+                     insert.StreamingTransactionId == activeStream.TransactionId)
+            {
+                return (activeStream, insert);
+            }
+        }
+
+        throw new XunitException(
+            "The logical replication stream completed before a correlated streamed insert.");
+    }
+
+    private static async Task<(
+        ChangeTransactionDelivery Delivery,
+        IReadOnlyList<Change> Changes)> ReadDeliveryUntilAsync(
+            IAsyncEnumerator<ChangeTransactionDelivery> enumerator,
+            Task<bool> firstMove,
+            Func<ChangeTransaction, IReadOnlyList<Change>, bool> predicate,
+            CancellationToken cancellationToken)
+    {
+        var hasCurrent = await firstMove.WaitAsync(cancellationToken);
+        while (hasCurrent)
+        {
+            var delivery = enumerator.Current;
+            var changes = await delivery.Transaction.Changes
+                .MaterializeAsync(cancellationToken);
+            if (predicate(delivery.Transaction, changes))
+            {
+                return (delivery, changes);
+            }
+
+            await delivery.AcknowledgeAsync(cancellationToken);
+            hasCurrent = await enumerator.MoveNextAsync().AsTask().WaitAsync(cancellationToken);
+        }
+
+        throw new XunitException(
+            "The change stream completed before the correlated transaction was delivered.");
+    }
+
     private static async Task<(IReadOnlyList<int> InsertedIds, BlueTuskLogSequenceNumber EndPosition)>
         ReadCommittedTransactionAsync(
             IAsyncEnumerator<BlueTuskReplicationMessage> enumerator,
@@ -706,9 +1193,15 @@ public sealed class BlueTuskReplicationIntegrationTests
         await ExecuteAsync(connection, "SELECT pg_switch_wal()");
     }
 
-    private static async Task ExecuteAsync(BlueTuskConnection connection, string sql)
+    private static async Task ExecuteAsync(
+        BlueTuskConnection connection,
+        string sql,
+        BlueTuskTransaction? transaction = null)
     {
-        await using var command = new BlueTuskCommand(sql, connection);
+        await using var command = new BlueTuskCommand(sql, connection)
+        {
+            Transaction = transaction,
+        };
         _ = await command.ExecuteNonQueryAsync(CancellationToken.None);
     }
 

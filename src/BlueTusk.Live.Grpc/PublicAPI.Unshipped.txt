@@ -1,0 +1,6 @@
+#nullable enable
+BlueTusk.Live.Grpc.BlueTuskLiveGrpcEndpointRouteBuilderExtensions
+BlueTusk.Live.Grpc.BlueTuskLiveGrpcService
+BlueTusk.Live.Grpc.BlueTuskLiveGrpcService.BlueTuskLiveGrpcService(BlueTusk.Live.AspNetCore.ILiveTransportSubscriptionResolver! resolver, BlueTusk.Live.LiveResumeTokenProtector! tokenProtector, BlueTusk.Live.AspNetCore.LiveAspNetCoreOptions! options) -> void
+override BlueTusk.Live.Grpc.BlueTuskLiveGrpcService.Subscribe(BlueTusk.Live.Grpc.Protocol.LiveGrpcSubscriptionRequest! request, Grpc.Core.IServerStreamWriter<BlueTusk.Live.Grpc.Protocol.LiveGrpcTransportMessage!>! responseStream, Grpc.Core.ServerCallContext! context) -> System.Threading.Tasks.Task!
+static BlueTusk.Live.Grpc.BlueTuskLiveGrpcEndpointRouteBuilderExtensions.MapBlueTuskLiveGrpc(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints) -> Microsoft.AspNetCore.Builder.GrpcServiceEndpointConventionBuilder!

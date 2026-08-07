@@ -1,0 +1,12 @@
+environment: rc
+nameOverride: service-topology
+hostname: topology.192.168.1.230.nip.io
+images:
+  api: { repository: ghcr.io/jphgardner/bluetusk-service-topology, digest: "" }
+  worker: { repository: ghcr.io/jphgardner/bluetusk-service-topology, digest: "" }
+  ui: { repository: ghcr.io/jphgardner/bluetusk-service-topology, digest: "" }
+database: { ownerSecret: topology-db-owner, storageSize: 10Gi }
+secrets: { runtime: topology-runtime, liveTenant: topology-live-tenant, oidc: topology-oidc }
+authentication:
+  authority: https://auth.192.168.1.230.nip.io/realms/bluetusk
+  clientId: service-topology-bff

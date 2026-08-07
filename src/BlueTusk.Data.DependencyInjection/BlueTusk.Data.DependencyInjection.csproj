@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Provider</BlueTuskProductFamily>
+    <Description>Dependency injection and health-check integration for the BlueTusk ADO.NET provider.</Description>
+    <PackageTags>postgresql;ado.net;dependency-injection;health-checks</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <ProjectReference Include="..\BlueTusk.Data\BlueTusk.Data.csproj" />
+  </ItemGroup>
+</Project>

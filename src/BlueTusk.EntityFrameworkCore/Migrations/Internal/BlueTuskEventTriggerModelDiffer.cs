@@ -27,16 +27,16 @@ internal static class BlueTuskEventTriggerModelDiffer
                 processedTargets.Add(name);
                 if (!BlueTuskEventTriggerMetadata.CreateBodyEquals(oldDefinition, definition))
                 {
-                    before.Add(new DropBlueTuskEventTriggerOperation
+                    before.Add(new DropEventTriggerOperation
                     {
                         Name = name,
                         IsDestructiveChange = true,
                     });
-                    after.Add(new CreateBlueTuskEventTriggerOperation { Definition = definition });
+                    after.Add(new CreateEventTriggerOperation { Definition = definition });
                 }
                 else if (oldDefinition.EnabledMode != definition.EnabledMode)
                 {
-                    after.Add(new AlterBlueTuskEventTriggerEnabledModeOperation
+                    after.Add(new AlterEventTriggerEnabledModeOperation
                     {
                         Name = name,
                         EnabledMode = definition.EnabledMode,
@@ -56,11 +56,11 @@ internal static class BlueTuskEventTriggerModelDiffer
             {
                 var renamed = renameCandidates[0];
                 processedTargets.Add(renamed.Name);
-                after.Add(new RenameBlueTuskEventTriggerOperation { Name = name, NewName = renamed.Name });
+                after.Add(new RenameEventTriggerOperation { Name = name, NewName = renamed.Name });
             }
             else
             {
-                before.Add(new DropBlueTuskEventTriggerOperation
+                before.Add(new DropEventTriggerOperation
                 {
                     Name = name,
                     IsDestructiveChange = true,
@@ -72,7 +72,7 @@ internal static class BlueTuskEventTriggerModelDiffer
         {
             if (!source.ContainsKey(name) && !processedTargets.Contains(name))
             {
-                after.Add(new CreateBlueTuskEventTriggerOperation { Definition = definition });
+                after.Add(new CreateEventTriggerOperation { Definition = definition });
             }
         }
     }

@@ -109,7 +109,7 @@ public sealed class BlueTuskCompositeCodecGenerator : IIncrementalGenerator
             return;
         }
 
-        foreach (var reserved in new[] { "BlueTuskGeneratedCodec", "RegisterBlueTuskCodec" })
+        foreach (var reserved in new[] { "BlueTuskGeneratedCodec", "RegisterCodec" })
         {
             if (type.GetMembers(reserved).Length != 0)
             {
@@ -351,7 +351,7 @@ public sealed class BlueTuskCompositeCodecGenerator : IIncrementalGenerator
             .Append(factory)
             .AppendLine("));")
             .AppendLine()
-            .AppendLine("    public static global::BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder RegisterBlueTuskCodec(")
+            .AppendLine("    public static global::BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder RegisterCodec(")
             .AppendLine("        global::BlueTusk.TypeSystem.BlueTuskTypeRegistryBuilder types)")
             .AppendLine("    {")
             .AppendLine("        global::System.ArgumentNullException.ThrowIfNull(types);")

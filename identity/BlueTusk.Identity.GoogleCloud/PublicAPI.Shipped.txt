@@ -1,0 +1,5 @@
+#nullable enable
+BlueTusk.Identity.GoogleCloud.BlueTuskGoogleCloudIdentityExtensions
+const BlueTusk.Identity.GoogleCloud.BlueTuskGoogleCloudIdentityExtensions.CloudSqlLoginScope = "https://www.googleapis.com/auth/sqlservice.login" -> string!
+static BlueTusk.Identity.GoogleCloud.BlueTuskGoogleCloudIdentityExtensions.UseGoogleCloudSqlIamAuthentication(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, Google.Apis.Auth.OAuth2.GoogleCredential! credential, string! scope = "https://www.googleapis.com/auth/sqlservice.login") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Identity.GoogleCloud.BlueTuskGoogleCloudIdentityExtensions.UseGoogleCloudSqlIamAuthentication(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, Google.Apis.Auth.OAuth2.ITokenAccess! tokenAccess) -> BlueTusk.Data.BlueTuskDataSourceBuilder!

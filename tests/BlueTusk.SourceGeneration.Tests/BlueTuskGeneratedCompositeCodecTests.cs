@@ -14,7 +14,7 @@ public sealed class BlueTuskGeneratedCompositeCodecTests
     public void Generated_private_construction_and_member_access_round_trip(
         BlueTuskDataFormat format)
     {
-        var configuredTypes = GeneratedAddress.RegisterBlueTuskCodec(
+        var configuredTypes = GeneratedAddress.RegisterCodec(
             new BlueTuskTypeRegistryBuilder()).Build();
         var registry = BlueTuskTypeCatalogue.BuildRegistry(CreateCatalogue(), configuredTypes);
         var type = Assert.Single(registry.Types, candidate => candidate.Id == AddressId);
@@ -51,7 +51,7 @@ public sealed class BlueTuskGeneratedCompositeCodecTests
     [Fact]
     public void Generated_codec_preserves_null_validation()
     {
-        var configuredTypes = GeneratedAddress.RegisterBlueTuskCodec(
+        var configuredTypes = GeneratedAddress.RegisterCodec(
             new BlueTuskTypeRegistryBuilder()).Build();
         var registry = BlueTuskTypeCatalogue.BuildRegistry(CreateCatalogue(), configuredTypes);
         var type = Assert.Single(registry.Types, candidate => candidate.Id == AddressId);

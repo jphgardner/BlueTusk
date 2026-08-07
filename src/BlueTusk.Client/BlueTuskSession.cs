@@ -816,6 +816,119 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    internal async ValueTask ExecuteMultiplexedPipelineAsync(
+            IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands,
+            IReadOnlyList<CancellationToken>? groupCancellationTokens,
+            Action<int>? groupStarting,
+            Action<int>? groupCompleted,
+            Action<int, BlueTuskMultiplexedPipelineOutcome> outcomeCompleted,
+            CancellationToken dispatchCancellationToken)
+    {
+        ValidateMultiplexedPipeline(commands);
+        ArgumentNullException.ThrowIfNull(outcomeCompleted);
+        if (groupCancellationTokens is not null &&
+            groupCancellationTokens.Count != commands.Count)
+        {
+            throw new ArgumentException(
+                "A multiplexed pipeline requires one cancellation token per group.",
+                nameof(groupCancellationTokens));
+        }
+
+        await _operationLock.WaitAsync(dispatchCancellationToken).ConfigureAwait(false);
+        var started = Stopwatch.GetTimestamp();
+        var messagesWritten = false;
+        try
+        {
+            InvalidateUnnamedStatement();
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                output => WriteMultiplexedPipeline(output, commands),
+                dispatchCancellationToken).ConfigureAwait(false);
+            messagesWritten = true;
+
+            for (var index = 0; index < commands.Count; index++)
+            {
+                var groupCancellationToken =
+                    groupCancellationTokens?[index] ?? CancellationToken.None;
+                groupStarting?.Invoke(index);
+                BlueTuskMultiplexedPipelineOutcome outcome;
+                try
+                {
+                    if (commands[index].Scalar)
+                    {
+                        try
+                        {
+                            outcome = new BlueTuskMultiplexedPipelineOutcome(
+                                Result: null,
+                                await ReadScalarResponseWithCancellationAsync(
+                                        preparedDescription: null,
+                                        groupCancellationToken)
+                                    .ConfigureAwait(false),
+                                Error: null,
+                                Cancellation: null);
+                        }
+                        catch (BlueTuskServerException exception)
+                        {
+                            outcome = new BlueTuskMultiplexedPipelineOutcome(
+                                Result: null,
+                                ScalarResult: default,
+                                exception,
+                                Cancellation: null);
+                        }
+                    }
+                    else
+                    {
+                        var result = await ReadPipelineGroupResponseWithCancellationAsync(
+                                groupCancellationToken)
+                            .ConfigureAwait(false);
+                        outcome = new BlueTuskMultiplexedPipelineOutcome(
+                            result.Result,
+                            ScalarResult: default,
+                            result.Error,
+                            Cancellation: null);
+                    }
+                }
+                catch (OperationCanceledException exception) when (
+                    groupCancellationToken.IsCancellationRequested)
+                {
+                    outcome = new BlueTuskMultiplexedPipelineOutcome(
+                        Result: null,
+                        ScalarResult: default,
+                        Error: null,
+                        exception);
+                }
+                finally
+                {
+                    groupCompleted?.Invoke(index);
+                }
+                outcomeCompleted(index, outcome);
+
+                if (index + 1 < commands.Count)
+                {
+                    BeginNextPipelineGroup();
+                }
+            }
+
+            return;
+        }
+        catch
+        {
+            if (!messagesWritten || _connection.StateMachine.State is not (
+                    BlueTuskConnectionState.Ready or BlueTuskConnectionState.FailedTransaction))
+            {
+                _open = false;
+                await _connection.DisposeAsync().ConfigureAwait(false);
+            }
+
+            throw;
+        }
+        finally
+        {
+            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
+    }
+
     /// <summary>Executes multiple named prepared statements in one protocol cycle.</summary>
     public ValueTask<BlueTuskQueryResult> ExecutePreparedBatchAsync(
         IReadOnlyList<BlueTuskPreparedBatchQuery> queries,
@@ -1457,7 +1570,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     case '2':
                         break;
                     case 'T':
-                        fields = DecodePortalRowDescription(message);
+                        fields = DecodeCachedRowDescription(message);
                         break;
                     case 'n':
                         fields = [];
@@ -1630,7 +1743,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 case '2':
                     break;
                 case 'T':
-                    return DecodePortalRowDescription(message);
+                    return DecodeCachedRowDescription(message);
                 case 'n':
                     return [];
                 case 'A':
@@ -2281,7 +2394,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return BlueTuskBackendMessageDecoder.DecodeCommandComplete(message);
     }
 
-    private IReadOnlyList<BlueTuskFieldDescription> DecodePortalRowDescription(
+    private IReadOnlyList<BlueTuskFieldDescription> DecodeCachedRowDescription(
         BlueTuskBackendMessage message)
     {
         if (message.Payload.IsSingleSegment)
@@ -2402,6 +2515,36 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    private void ValidateMultiplexedPipeline(
+        IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands)
+    {
+        ArgumentNullException.ThrowIfNull(commands);
+        if (commands.Count == 0)
+        {
+            throw new ArgumentException(
+                "A multiplexed PostgreSQL pipeline requires at least one command.",
+                nameof(commands));
+        }
+
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (!_open)
+        {
+            throw new InvalidOperationException("The PostgreSQL session is not open.");
+        }
+
+        if (!Capabilities.SupportsPipelineMode)
+        {
+            throw new NotSupportedException(
+                $"PostgreSQL pipeline mode requires PostgreSQL 14 or later; the connected server is {Capabilities.ServerVersion}.");
+        }
+
+        foreach (var command in commands)
+        {
+            ValidateQuery(command.Sql);
+            ArgumentNullException.ThrowIfNull(command.Parameters);
+        }
+    }
+
     private static void WritePipeline(
         IBufferWriter<byte> output,
         IReadOnlyList<BlueTuskPipelineGroup> groups)
@@ -2430,6 +2573,60 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
             BlueTuskFrontendMessageWriter.WriteSync(output);
         }
+    }
+
+    private static void WriteMultiplexedPipeline(
+        IBufferWriter<byte> output,
+        IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands)
+    {
+        BlueTuskMultiplexedPipelineCommand previous = default;
+        var hasPrevious = false;
+        foreach (var command in commands)
+        {
+            if (!hasPrevious || !MatchesPipelineStatement(previous, command))
+            {
+                var typeOids = new ExtendedQueryTypeOidSource(command.Parameters);
+                BlueTuskFrontendMessageWriter.WriteParse(
+                    output,
+                    string.Empty,
+                    command.Sql,
+                    typeOids);
+            }
+
+            var bindParameters = new ExtendedQueryBindParameterSource(command.Parameters);
+            BlueTuskFrontendMessageWriter.WriteBind(
+                output,
+                string.Empty,
+                string.Empty,
+                bindParameters,
+                command.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
+            BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+            BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+            BlueTuskFrontendMessageWriter.WriteSync(output);
+            previous = command;
+            hasPrevious = true;
+        }
+    }
+
+    private static bool MatchesPipelineStatement(
+        BlueTuskMultiplexedPipelineCommand left,
+        BlueTuskMultiplexedPipelineCommand right)
+    {
+        if (!string.Equals(left.Sql, right.Sql, StringComparison.Ordinal) ||
+            left.Parameters.Count != right.Parameters.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < left.Parameters.Count; index++)
+        {
+            if (left.Parameters[index].TypeOid != right.Parameters[index].TypeOid)
+            {
+                return false;
+            }
+        }
+
+        return true;
     }
 
     private void BeginNextPipelineGroup() =>
@@ -2721,7 +2918,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         EnqueueNotification(message);
                         break;
                     case 'T' when !firstResultComplete:
-                        fields = BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                        fields = DecodeCachedRowDescription(message);
                         fieldCount = fields.Count;
                         firstField = fields.Count == 0 ? null : fields[0];
                         break;
@@ -3540,7 +3737,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     EnqueueNotification(message);
                     break;
                 case 'T':
-                    fields = BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                    fields = DecodeCachedRowDescription(message);
                     rows = [];
                     break;
                 case 'D':
@@ -3715,7 +3912,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     EnqueueNotification(message);
                     break;
                 case 'T' when !firstResultComplete:
-                    fields = BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                    fields = DecodeCachedRowDescription(message);
                     fieldCount = fields.Count;
                     firstField = fields.Count == 0 ? null : fields[0];
                     break;
@@ -3771,7 +3968,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     EnqueueNotification(message);
                     break;
                 case 'T':
-                    fields = BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
+                    fields = DecodeCachedRowDescription(message);
                     rows = [];
                     break;
                 case 'D':

@@ -10,9 +10,9 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="BlueTusk.Data" Version="0.3.0-preview.1" />
-    <PackageReference Include="BlueTusk.Extensions.Abstractions" Version="0.3.0-preview.1" />
-    <PackageReference Include="BlueTusk.TypeSystem" Version="0.3.0-preview.1" />
+    <PackageReference Include="BlueTusk.Data" Version="1.0.0" />
+    <PackageReference Include="BlueTusk.Extensions.Abstractions" Version="1.0.0" />
+    <PackageReference Include="BlueTusk.TypeSystem" Version="1.0.0" />
   </ItemGroup>
 
   <ItemGroup>

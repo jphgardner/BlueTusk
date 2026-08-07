@@ -8,11 +8,19 @@ Set-StrictMode -Version Latest
 
 $configuration = Get-Content -LiteralPath $BudgetFile -Raw | ConvertFrom-Json
 $actual = @{}
-Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json" | ForEach-Object {
+$reportFiles = @(
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json"
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*MultiplexingComparisonBenchmarks-report-full.json"
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*-hardening.json"
+)
+$reportFiles | ForEach-Object {
     $report = Get-Content -LiteralPath $_.FullName -Raw | ConvertFrom-Json
     foreach ($benchmark in $report.Benchmarks) {
         if ($null -ne $benchmark.Memory -and $null -ne $benchmark.Memory.BytesAllocatedPerOperation) {
-            $actual[$benchmark.FullName] = [long]$benchmark.Memory.BytesAllocatedPerOperation
+            $actual[$benchmark.FullName] = [pscustomobject]@{
+                BytesAllocatedPerOperation = [long]$benchmark.Memory.BytesAllocatedPerOperation
+                Gen2Collections = [long]$benchmark.Memory.Gen2Collections
+            }
         }
     }
 }
@@ -24,13 +32,27 @@ foreach ($budget in $configuration.budgets) {
         continue
     }
 
-    $allocated = $actual[$budget.benchmark]
+    $measurement = $actual[$budget.benchmark]
+    $allocated = $measurement.BytesAllocatedPerOperation
     $maximum = [long]$budget.maximumBytesPerOperation
     if ($allocated -gt $maximum) {
         $failures.Add("$($budget.benchmark) allocated $allocated B/op; budget is $maximum B/op.")
     }
     else {
         Write-Host "$($budget.benchmark): $allocated B/op <= $maximum B/op"
+    }
+
+    if ($budget.PSObject.Properties.Name -contains "maximumGen2Collections") {
+        $maximumGen2 = [long]$budget.maximumGen2Collections
+        if ($measurement.Gen2Collections -gt $maximumGen2) {
+            $failures.Add(
+                "$($budget.benchmark) recorded $($measurement.Gen2Collections) Gen2 collections; " +
+                "budget is $maximumGen2.")
+        }
+        else {
+            Write-Host (
+                "$($budget.benchmark): $($measurement.Gen2Collections) Gen2 collections <= $maximumGen2")
+        }
     }
 }
 

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Sync</BlueTuskProductFamily>
+    <Description>Transaction-preserving NATS JetStream destination for BlueTusk Sync.</Description>
+    <PackageTags>postgresql;cdc;sync;nats;jetstream</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Sync.props" />
+
+  <ItemGroup>
+    <PackageReference Include="NATS.Net" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+  </ItemGroup>
+</Project>

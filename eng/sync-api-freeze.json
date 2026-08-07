@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "baseline": "1.0.0-candidate",
+  "normalization": "utf8-lf",
+  "files": [
+    {
+      "path": "src/BlueTusk.Sync.Aspire/PublicAPI.Unshipped.txt",
+      "sha256": "e432c82c048a34542371b8f5ad5f433a1c2d1b99077fe99a132d84c67027d381"
+    },
+    {
+      "path": "src/BlueTusk.Sync.DependencyInjection/PublicAPI.Unshipped.txt",
+      "sha256": "74f77c960f99819e25ed2e87cfef2efecebd887b5277b7512a543a1932b44720"
+    },
+    {
+      "path": "src/BlueTusk.Sync.Nats/PublicAPI.Unshipped.txt",
+      "sha256": "6e06d329f8675bc33cdf5784c8d000ce405448a35311841814d6ddb19b681953"
+    },
+    {
+      "path": "src/BlueTusk.Sync.OpenSearch/PublicAPI.Unshipped.txt",
+      "sha256": "82209866c167285664a74ec832f659d7fac4c194b973994ea4b6e13987050bec"
+    },
+    {
+      "path": "src/BlueTusk.Sync.PostgreSql/PublicAPI.Unshipped.txt",
+      "sha256": "76b2ea9a0ded614f472579a0664ed60d1b00ef2de972b05e527a0d4845083c6b"
+    },
+    {
+      "path": "src/BlueTusk.Sync.Redis/PublicAPI.Unshipped.txt",
+      "sha256": "2add681afbf13dbd64240cda1e17dafc6f08b8efbe1b0f5b7de73c34c21cf8cb"
+    },
+    {
+      "path": "src/BlueTusk.Sync.Testing/PublicAPI.Unshipped.txt",
+      "sha256": "193e3c137d0a122025165183a8e7c282c347a4c9fda79bacb78b4244dfd5b21e"
+    },
+    {
+      "path": "src/BlueTusk.Sync/PublicAPI.Unshipped.txt",
+      "sha256": "f3566562aced705defca965f7192b46c60ae746a49c5a5282afaefd3ecd7b41a"
+    }
+  ]
+}

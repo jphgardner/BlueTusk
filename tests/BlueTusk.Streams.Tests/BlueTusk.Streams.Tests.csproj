@@ -1,0 +1,29 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Streams</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Streams.props" />
+
+  <ItemGroup>
+    <PackageReference Include="coverlet.collector" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.CloudEvents\BlueTusk.Streams.CloudEvents.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Storage.File\BlueTusk.Streams.Storage.File.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Storage.PostgreSql\BlueTusk.Streams.Storage.PostgreSql.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
+    <ProjectReference Include="..\..\tooling\BlueTusk.Streams.Tool\BlueTusk.Streams.Tool.csproj" />
+  </ItemGroup>
+</Project>

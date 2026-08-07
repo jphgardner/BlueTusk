@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 public static class BlueTuskCitextMigrationBuilderExtensions
 {
     /// <summary>Creates PostgreSQL's citext extension if it is not installed.</summary>
-    public static OperationBuilder<SqlOperation> EnsureBlueTuskCitext(
+    public static OperationBuilder<SqlOperation> EnsureCitext(
         this MigrationBuilder migrationBuilder,
         string schema = "public")
     {
@@ -20,7 +20,7 @@ public static class BlueTuskCitextMigrationBuilderExtensions
     }
 
     /// <summary>Drops PostgreSQL's citext extension if it is installed.</summary>
-    public static OperationBuilder<SqlOperation> DropBlueTuskCitext(
+    public static OperationBuilder<SqlOperation> DropCitext(
         this MigrationBuilder migrationBuilder,
         bool cascade = false)
     {

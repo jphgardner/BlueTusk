@@ -1,0 +1,15 @@
+deploymentMode: SingleBinary
+singleBinary:
+  replicas: 1
+  persistence: { enabled: true, storageClass: longhorn, size: 20Gi }
+loki:
+  auth_enabled: false
+  commonConfig: { replication_factor: 1 }
+  storage: { type: filesystem }
+  limits_config: { retention_period: 336h, allow_structured_metadata: true }
+chunksCache: { enabled: false }
+resultsCache: { enabled: false }
+backend: { replicas: 0 }
+read: { replicas: 0 }
+write: { replicas: 0 }
+gateway: { enabled: true }

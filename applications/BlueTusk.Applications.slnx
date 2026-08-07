@@ -1,0 +1,32 @@
+<Solution>
+  <Folder Name="/Shared/">
+    <Project Path="src/Shared/BlueTusk.Applications.Hosting/BlueTusk.Applications.Hosting.csproj" />
+  </Folder>
+  <Folder Name="/OrderOperations/">
+    <Project Path="src/OrderOperations/BlueTusk.OrderOperations.Domain/BlueTusk.OrderOperations.Domain.csproj" />
+    <Project Path="src/OrderOperations/BlueTusk.OrderOperations.Application/BlueTusk.OrderOperations.Application.csproj" />
+    <Project Path="src/OrderOperations/BlueTusk.OrderOperations.Infrastructure/BlueTusk.OrderOperations.Infrastructure.csproj" />
+    <Project Path="src/OrderOperations/BlueTusk.OrderOperations.Api/BlueTusk.OrderOperations.Api.csproj" />
+    <Project Path="src/OrderOperations/BlueTusk.OrderOperations.Worker/BlueTusk.OrderOperations.Worker.csproj" />
+    <Project Path="tests/BlueTusk.OrderOperations.Tests/BlueTusk.OrderOperations.Tests.csproj" />
+  </Folder>
+  <Folder Name="/ServiceTopology/">
+    <Project Path="src/ServiceTopology/BlueTusk.ServiceTopology.Domain/BlueTusk.ServiceTopology.Domain.csproj" />
+    <Project Path="src/ServiceTopology/BlueTusk.ServiceTopology.Application/BlueTusk.ServiceTopology.Application.csproj" />
+    <Project Path="src/ServiceTopology/BlueTusk.ServiceTopology.Infrastructure/BlueTusk.ServiceTopology.Infrastructure.csproj" />
+    <Project Path="src/ServiceTopology/BlueTusk.ServiceTopology.Api/BlueTusk.ServiceTopology.Api.csproj" />
+    <Project Path="src/ServiceTopology/BlueTusk.ServiceTopology.Worker/BlueTusk.ServiceTopology.Worker.csproj" />
+    <Project Path="tests/BlueTusk.ServiceTopology.Tests/BlueTusk.ServiceTopology.Tests.csproj" />
+  </Folder>
+  <Folder Name="/FraudInvestigation/">
+    <Project Path="src/FraudInvestigation/BlueTusk.FraudInvestigation.Domain/BlueTusk.FraudInvestigation.Domain.csproj" />
+    <Project Path="src/FraudInvestigation/BlueTusk.FraudInvestigation.Application/BlueTusk.FraudInvestigation.Application.csproj" />
+    <Project Path="src/FraudInvestigation/BlueTusk.FraudInvestigation.Infrastructure/BlueTusk.FraudInvestigation.Infrastructure.csproj" />
+    <Project Path="src/FraudInvestigation/BlueTusk.FraudInvestigation.Api/BlueTusk.FraudInvestigation.Api.csproj" />
+    <Project Path="src/FraudInvestigation/BlueTusk.FraudInvestigation.Worker/BlueTusk.FraudInvestigation.Worker.csproj" />
+    <Project Path="tests/BlueTusk.FraudInvestigation.Tests/BlueTusk.FraudInvestigation.Tests.csproj" />
+  </Folder>
+  <Folder Name="/Tests/">
+    <Project Path="tests/BlueTusk.Applications.ArchitectureTests/BlueTusk.Applications.ArchitectureTests.csproj" />
+  </Folder>
+</Solution>

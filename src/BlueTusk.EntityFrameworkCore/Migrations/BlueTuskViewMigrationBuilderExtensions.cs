@@ -11,48 +11,48 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration-builder extensions for PostgreSQL views and materialized views.</summary>
 public static class BlueTuskViewMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskViewOperation> CreateBlueTuskView(
+    public static OperationBuilder<CreateViewOperation> CreateView(
         this MigrationBuilder migrationBuilder,
         BlueTuskViewDefinition definition)
     {
         BlueTuskViewMetadata.Validate(definition);
-        return Add(migrationBuilder, new CreateBlueTuskViewOperation
+        return Add(migrationBuilder, new CreateViewOperation
         {
             Definition = BlueTuskViewMetadata.Normalize(definition),
         });
     }
 
-    public static OperationBuilder<ReplaceBlueTuskViewOperation> ReplaceBlueTuskView(
+    public static OperationBuilder<ReplaceViewOperation> ReplaceView(
         this MigrationBuilder migrationBuilder,
         BlueTuskViewDefinition definition,
         BlueTuskViewDefinition oldDefinition)
     {
         BlueTuskViewAlterationPlanner.ValidateReplacement(oldDefinition, definition);
-        return Add(migrationBuilder, new ReplaceBlueTuskViewOperation
+        return Add(migrationBuilder, new ReplaceViewOperation
         {
             Definition = BlueTuskViewMetadata.Normalize(definition),
             OldDefinition = BlueTuskViewMetadata.Normalize(oldDefinition),
         });
     }
 
-    public static OperationBuilder<CreateBlueTuskMaterializedViewOperation> CreateBlueTuskMaterializedView(
+    public static OperationBuilder<CreateMaterializedViewOperation> CreateMaterializedView(
         this MigrationBuilder migrationBuilder,
         BlueTuskMaterializedViewDefinition definition)
     {
         BlueTuskViewMetadata.Validate(definition);
-        return Add(migrationBuilder, new CreateBlueTuskMaterializedViewOperation
+        return Add(migrationBuilder, new CreateMaterializedViewOperation
         {
             Definition = BlueTuskViewMetadata.Normalize(definition),
         });
     }
 
-    public static OperationBuilder<AlterBlueTuskMaterializedViewOperation> AlterBlueTuskMaterializedView(
+    public static OperationBuilder<AlterMaterializedViewOperation> AlterMaterializedView(
         this MigrationBuilder migrationBuilder,
         BlueTuskMaterializedViewDefinition definition,
         BlueTuskMaterializedViewDefinition oldDefinition)
     {
         BlueTuskViewAlterationPlanner.ValidateMaterializedAlteration(oldDefinition, definition);
-        return Add(migrationBuilder, new AlterBlueTuskMaterializedViewOperation
+        return Add(migrationBuilder, new AlterMaterializedViewOperation
         {
             Definition = BlueTuskViewMetadata.Normalize(definition),
             OldDefinition = BlueTuskViewMetadata.Normalize(oldDefinition),
@@ -60,14 +60,14 @@ public static class BlueTuskViewMigrationBuilderExtensions
         });
     }
 
-    public static OperationBuilder<DropBlueTuskViewOperation> DropBlueTuskView(
+    public static OperationBuilder<DropViewOperation> DropView(
         this MigrationBuilder migrationBuilder,
         BlueTuskViewKind kind,
         string name,
         string? schema = null)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        return Add(migrationBuilder, new DropBlueTuskViewOperation
+        return Add(migrationBuilder, new DropViewOperation
         {
             Kind = kind,
             Name = name,
@@ -76,7 +76,7 @@ public static class BlueTuskViewMigrationBuilderExtensions
         });
     }
 
-    public static OperationBuilder<RenameBlueTuskViewOperation> RenameBlueTuskView(
+    public static OperationBuilder<RenameViewOperation> RenameView(
         this MigrationBuilder migrationBuilder,
         BlueTuskViewKind kind,
         string name,
@@ -86,7 +86,7 @@ public static class BlueTuskViewMigrationBuilderExtensions
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        return Add(migrationBuilder, new RenameBlueTuskViewOperation
+        return Add(migrationBuilder, new RenameViewOperation
         {
             Kind = kind,
             Name = name,
@@ -96,7 +96,7 @@ public static class BlueTuskViewMigrationBuilderExtensions
         });
     }
 
-    public static OperationBuilder<RefreshBlueTuskMaterializedViewOperation> RefreshBlueTuskMaterializedView(
+    public static OperationBuilder<RefreshMaterializedViewOperation> RefreshMaterializedView(
         this MigrationBuilder migrationBuilder,
         string name,
         string? schema = null,
@@ -111,7 +111,7 @@ public static class BlueTuskViewMigrationBuilderExtensions
                 nameof(withData));
         }
 
-        return Add(migrationBuilder, new RefreshBlueTuskMaterializedViewOperation
+        return Add(migrationBuilder, new RefreshMaterializedViewOperation
         {
             Name = name,
             Schema = schema,
@@ -122,35 +122,35 @@ public static class BlueTuskViewMigrationBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskViewOperation> CreateBlueTuskView(
+    public static OperationBuilder<CreateViewOperation> CreateView(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskView(migrationBuilder, BlueTuskViewMetadata.DeserializeView(serializedDefinition));
+        CreateView(migrationBuilder, BlueTuskViewMetadata.DeserializeView(serializedDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<ReplaceBlueTuskViewOperation> ReplaceBlueTuskView(
+    public static OperationBuilder<ReplaceViewOperation> ReplaceView(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        ReplaceBlueTuskView(
+        ReplaceView(
             migrationBuilder,
             BlueTuskViewMetadata.DeserializeView(serializedDefinition),
             BlueTuskViewMetadata.DeserializeView(serializedOldDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskMaterializedViewOperation> CreateBlueTuskMaterializedView(
+    public static OperationBuilder<CreateMaterializedViewOperation> CreateMaterializedView(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskMaterializedView(
+        CreateMaterializedView(
             migrationBuilder,
             BlueTuskViewMetadata.DeserializeMaterializedView(serializedDefinition));
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskMaterializedViewOperation> AlterBlueTuskMaterializedView(
+    public static OperationBuilder<AlterMaterializedViewOperation> AlterMaterializedView(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition,
         string serializedOldDefinition) =>
-        AlterBlueTuskMaterializedView(
+        AlterMaterializedView(
             migrationBuilder,
             BlueTuskViewMetadata.DeserializeMaterializedView(serializedDefinition),
             BlueTuskViewMetadata.DeserializeMaterializedView(serializedOldDefinition));

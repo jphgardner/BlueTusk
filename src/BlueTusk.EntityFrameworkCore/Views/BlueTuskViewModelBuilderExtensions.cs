@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskViewModelBuilderExtensions
 {
     /// <summary>Adds or replaces a model-authored ordinary PostgreSQL view.</summary>
-    public static ModelBuilder HasBlueTuskView(
+    public static ModelBuilder HasView(
         this ModelBuilder modelBuilder,
         string name,
         string querySql,
@@ -19,11 +19,11 @@ public static class BlueTuskViewModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(modelBuilder);
         var builder = new BlueTuskViewBuilder(name, schema, querySql);
         buildAction?.Invoke(builder);
-        return HasBlueTuskView(modelBuilder, builder.Build());
+        return HasView(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a canonical provider-owned ordinary PostgreSQL view.</summary>
-    public static ModelBuilder HasBlueTuskView(
+    public static ModelBuilder HasView(
         this ModelBuilder modelBuilder,
         BlueTuskViewDefinition definition)
     {
@@ -45,7 +45,7 @@ public static class BlueTuskViewModelBuilderExtensions
     }
 
     /// <summary>Adds or replaces a model-authored PostgreSQL materialized view.</summary>
-    public static ModelBuilder HasBlueTuskMaterializedView(
+    public static ModelBuilder HasMaterializedView(
         this ModelBuilder modelBuilder,
         string name,
         string querySql,
@@ -55,11 +55,11 @@ public static class BlueTuskViewModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(modelBuilder);
         var builder = new BlueTuskMaterializedViewBuilder(name, schema, querySql);
         buildAction?.Invoke(builder);
-        return HasBlueTuskMaterializedView(modelBuilder, builder.Build());
+        return HasMaterializedView(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a canonical provider-owned PostgreSQL materialized view.</summary>
-    public static ModelBuilder HasBlueTuskMaterializedView(
+    public static ModelBuilder HasMaterializedView(
         this ModelBuilder modelBuilder,
         BlueTuskMaterializedViewDefinition definition)
     {
@@ -81,7 +81,7 @@ public static class BlueTuskViewModelBuilderExtensions
     }
 
     /// <summary>Removes an ordinary or materialized view from provider-owned metadata.</summary>
-    public static ModelBuilder HasNoBlueTuskView(
+    public static ModelBuilder HasNoView(
         this ModelBuilder modelBuilder,
         string name,
         string? schema = null)
@@ -96,14 +96,14 @@ public static class BlueTuskViewModelBuilderExtensions
     }
 
     /// <summary>Reads all provider-owned PostgreSQL view definitions from an EF model.</summary>
-    public static BlueTuskViewDefinitionSet GetBlueTuskViews(this IReadOnlyModel model)
+    public static BlueTuskViewDefinitionSet GetViews(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskViewMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskViews(
+    public static ModelBuilder HasViews(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

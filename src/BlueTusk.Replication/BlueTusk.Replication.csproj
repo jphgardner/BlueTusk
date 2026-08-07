@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <ProjectReference Include="..\BlueTusk.Client\BlueTusk.Client.csproj" />
@@ -9,8 +9,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <Description>Physical and logical PostgreSQL streaming replication for BlueTusk.</Description>
     <PackageTags>postgresql;replication;wal;logical-decoding;dotnet</PackageTags>
   </PropertyGroup>

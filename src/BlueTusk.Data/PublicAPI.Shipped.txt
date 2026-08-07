@@ -626,3 +626,67 @@ static BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.operator !=(Bl
 static BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType.operator ==(BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? left, BlueTusk.Data.Schema.BlueTuskPropertyGraphPropertyDataType? right) -> bool
 static BlueTusk.Data.Schema.BlueTuskSchemaObjectName.operator !=(BlueTusk.Data.Schema.BlueTuskSchemaObjectName? left, BlueTusk.Data.Schema.BlueTuskSchemaObjectName? right) -> bool
 static BlueTusk.Data.Schema.BlueTuskSchemaObjectName.operator ==(BlueTusk.Data.Schema.BlueTuskSchemaObjectName? left, BlueTusk.Data.Schema.BlueTuskSchemaObjectName? right) -> bool
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.ReadRaw() -> System.ReadOnlyMemory<byte>?
+BlueTusk.Data.Copy.BlueTuskBinaryExporter.ReadRawAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>?>
+~override BlueTusk.Data.BlueTuskMultiplexingStatistics.Equals(object obj) -> bool
+~override BlueTusk.Data.BlueTuskMultiplexingStatistics.ToString() -> string
+BlueTusk.Data.BlueTuskCommand.MultiplexingMode.get -> BlueTusk.Data.BlueTuskMultiplexingMode
+BlueTusk.Data.BlueTuskCommand.MultiplexingMode.set -> void
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Multiplexing.get -> bool
+BlueTusk.Data.BlueTuskConnectionStringBuilder.Multiplexing.set -> void
+BlueTusk.Data.BlueTuskDataSource.GetMultiplexingStatistics() -> BlueTusk.Data.BlueTuskMultiplexingStatistics
+BlueTusk.Data.BlueTuskDataSource.IsMultiplexingEnabled.get -> bool
+BlueTusk.Data.BlueTuskDataSourceBuilder.EnableMultiplexing(System.Action<BlueTusk.Data.BlueTuskMultiplexingOptions!>? configure = null) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+BlueTusk.Data.BlueTuskMultiplexingMode
+BlueTusk.Data.BlueTuskMultiplexingMode.Auto = 0 -> BlueTusk.Data.BlueTuskMultiplexingMode
+BlueTusk.Data.BlueTuskMultiplexingMode.Disable = 2 -> BlueTusk.Data.BlueTuskMultiplexingMode
+BlueTusk.Data.BlueTuskMultiplexingMode.Require = 1 -> BlueTusk.Data.BlueTuskMultiplexingMode
+BlueTusk.Data.BlueTuskMultiplexingOptions
+BlueTusk.Data.BlueTuskMultiplexingOptions.BlueTuskMultiplexingOptions() -> void
+BlueTusk.Data.BlueTuskMultiplexingOptions.MaxCommandsPerLease.get -> int
+BlueTusk.Data.BlueTuskMultiplexingOptions.MaxCommandsPerLease.set -> void
+BlueTusk.Data.BlueTuskMultiplexingOptions.MaxPipelineCommands.get -> int
+BlueTusk.Data.BlueTuskMultiplexingOptions.MaxPipelineCommands.set -> void
+BlueTusk.Data.BlueTuskMultiplexingOptions.QueueCapacity.get -> int
+BlueTusk.Data.BlueTuskMultiplexingOptions.QueueCapacity.set -> void
+BlueTusk.Data.BlueTuskMultiplexingOptions.ShutdownTimeout.get -> System.TimeSpan
+BlueTusk.Data.BlueTuskMultiplexingOptions.ShutdownTimeout.set -> void
+BlueTusk.Data.BlueTuskMultiplexingOptions.WorkerCount.get -> int
+BlueTusk.Data.BlueTuskMultiplexingOptions.WorkerCount.set -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Accepted.get -> long
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Accepted.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.BlueTuskMultiplexingStatistics() -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.BlueTuskMultiplexingStatistics(bool Enabled, int Workers, int Queued, int Executing, long Accepted, long Completed, long Canceled, long Faulted, long PipelineFlushes, long PipelinedCommands) -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Canceled.get -> long
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Canceled.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Completed.get -> long
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Completed.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Deconstruct(out bool Enabled, out int Workers, out int Queued, out int Executing, out long Accepted, out long Completed, out long Canceled, out long Faulted, out long PipelineFlushes, out long PipelinedCommands) -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Enabled.get -> bool
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Enabled.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Equals(BlueTusk.Data.BlueTuskMultiplexingStatistics other) -> bool
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Executing.get -> int
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Executing.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Faulted.get -> long
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Faulted.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.PipelineFlushes.get -> long
+BlueTusk.Data.BlueTuskMultiplexingStatistics.PipelineFlushes.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.PipelinedCommands.get -> long
+BlueTusk.Data.BlueTuskMultiplexingStatistics.PipelinedCommands.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Queued.get -> int
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Queued.init -> void
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Workers.get -> int
+BlueTusk.Data.BlueTuskMultiplexingStatistics.Workers.init -> void
+override BlueTusk.Data.BlueTuskMultiplexingStatistics.GetHashCode() -> int
+static BlueTusk.Data.BlueTuskMultiplexingStatistics.operator !=(BlueTusk.Data.BlueTuskMultiplexingStatistics left, BlueTusk.Data.BlueTuskMultiplexingStatistics right) -> bool
+static BlueTusk.Data.BlueTuskMultiplexingStatistics.operator ==(BlueTusk.Data.BlueTuskMultiplexingStatistics left, BlueTusk.Data.BlueTuskMultiplexingStatistics right) -> bool
+BlueTusk.Data.BlueTuskDataReader.GetColumnSchema() -> System.Collections.ObjectModel.ReadOnlyCollection<System.Data.Common.DbColumn!>!
+override BlueTusk.Data.BlueTuskConnection.GetSchema() -> System.Data.DataTable!
+override BlueTusk.Data.BlueTuskConnection.GetSchema(string! collectionName) -> System.Data.DataTable!
+override BlueTusk.Data.BlueTuskConnection.GetSchema(string! collectionName, string?[]? restrictionValues) -> System.Data.DataTable!
+override BlueTusk.Data.BlueTuskConnection.GetSchemaAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable!>!
+override BlueTusk.Data.BlueTuskConnection.GetSchemaAsync(string! collectionName, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable!>!
+override BlueTusk.Data.BlueTuskConnection.GetSchemaAsync(string! collectionName, string?[]? restrictionValues, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable!>!
+override BlueTusk.Data.BlueTuskDataReader.GetColumnSchemaAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.ObjectModel.ReadOnlyCollection<System.Data.Common.DbColumn!>!>!
+override BlueTusk.Data.BlueTuskDataReader.GetSchemaTableAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Data.DataTable?>!

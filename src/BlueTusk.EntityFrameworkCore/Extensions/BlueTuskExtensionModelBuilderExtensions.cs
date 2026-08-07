@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskExtensionModelBuilderExtensions
 {
     /// <summary>Adds or replaces a PostgreSQL extension installation in the model.</summary>
-    public static ModelBuilder HasBlueTuskExtension(
+    public static ModelBuilder HasExtension(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskExtensionBuilder>? buildAction = null)
@@ -17,11 +17,11 @@ public static class BlueTuskExtensionModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(modelBuilder);
         var builder = new BlueTuskExtensionBuilder(name);
         buildAction?.Invoke(builder);
-        return HasBlueTuskExtension(modelBuilder, builder.Build());
+        return HasExtension(modelBuilder, builder.Build());
     }
 
     /// <summary>Adds or replaces a canonical PostgreSQL extension definition.</summary>
-    public static ModelBuilder HasBlueTuskExtension(
+    public static ModelBuilder HasExtension(
         this ModelBuilder modelBuilder,
         BlueTuskExtensionDefinition definition)
     {
@@ -37,7 +37,7 @@ public static class BlueTuskExtensionModelBuilderExtensions
     }
 
     /// <summary>Removes a PostgreSQL extension installation from the model.</summary>
-    public static ModelBuilder HasNoBlueTuskExtension(this ModelBuilder modelBuilder, string name)
+    public static ModelBuilder HasNoExtension(this ModelBuilder modelBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -49,14 +49,14 @@ public static class BlueTuskExtensionModelBuilderExtensions
     }
 
     /// <summary>Reads provider-owned PostgreSQL extension definitions from an EF model.</summary>
-    public static BlueTuskExtensionDefinitionSet GetBlueTuskExtensions(this IReadOnlyModel model)
+    public static BlueTuskExtensionDefinitionSet GetExtensions(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskExtensionMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskExtensions(
+    public static ModelBuilder HasExtensions(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

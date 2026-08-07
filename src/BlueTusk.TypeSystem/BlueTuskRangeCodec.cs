@@ -5,6 +5,8 @@ namespace BlueTusk.TypeSystem;
 /// <summary>Composes a PostgreSQL range codec from its catalogue-discovered subtype codec.</summary>
 public sealed class BlueTuskRangeCodec<T> :
     BlueTuskCodec<BlueTuskRange<T>>,
+    IBlueTuskRangeCodecFactory,
+    IBlueTuskArrayRangeCodecFactory,
     IBlueTuskMultirangeCodecFactory
 {
     private const byte EmptyFlag = 0x01;
@@ -22,6 +24,7 @@ public sealed class BlueTuskRangeCodec<T> :
     private static readonly UTF8Encoding StrictUtf8 = new(false, true);
     private readonly BlueTuskTypeDescriptor _subtype;
     private readonly IBlueTuskCodec _subtypeCodec;
+    private readonly IBlueTuskCodec<T>? _typedSubtypeCodec;
 
     internal BlueTuskRangeCodec(
         BlueTuskTypeDescriptor subtype,
@@ -29,6 +32,7 @@ public sealed class BlueTuskRangeCodec<T> :
     {
         _subtype = subtype ?? throw new ArgumentNullException(nameof(subtype));
         _subtypeCodec = subtypeCodec ?? throw new ArgumentNullException(nameof(subtypeCodec));
+        _typedSubtypeCodec = subtypeCodec as IBlueTuskCodec<T>;
         if (_subtypeCodec.ClrType != typeof(T))
         {
             throw new ArgumentException(
@@ -69,6 +73,22 @@ public sealed class BlueTuskRangeCodec<T> :
     IBlueTuskCodec IBlueTuskMultirangeCodecFactory.CreateMultirangeCodec(
         BlueTuskTypeDescriptor rangeType) =>
         new BlueTuskMultirangeCodec<T>(rangeType, this);
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskDynamicRangeCodecFactory.Create(
+            typeof(BlueTuskRange<T>),
+            subtype,
+            subtypeCodec);
+
+    IBlueTuskCodec IBlueTuskArrayRangeCodecFactory.CreateArrayRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskDynamicRangeCodecFactory.Create(
+            typeof(BlueTuskRange<T>[]),
+            subtype,
+            subtypeCodec);
 
     private BlueTuskRange<T> ReadBinary(
         ref BlueTuskReader reader,
@@ -124,14 +144,8 @@ public sealed class BlueTuskRangeCodec<T> :
         }
 
         var boundReader = new BlueTuskReader(reader.ReadBytes(length));
-        var value = _subtypeCodec.Read(ref boundReader, BlueTuskDataFormat.Binary, _subtype);
+        var typedValue = ReadSubtype(ref boundReader, BlueTuskDataFormat.Binary, rangeType);
         EnsureBoundConsumed(boundReader.Remaining, rangeType);
-        if (value is not T typedValue)
-        {
-            throw new InvalidOperationException(
-                $"The {_subtype.QualifiedName} codec returned {value?.GetType().FullName ?? "null"}; " +
-                $"{typeof(T).FullName} was expected.");
-        }
 
         return inclusive
             ? BlueTuskRangeBound.Inclusive(typedValue)
@@ -164,14 +178,8 @@ public sealed class BlueTuskRangeCodec<T> :
     {
         var bytes = StrictUtf8.GetBytes(text);
         var boundReader = new BlueTuskReader(bytes);
-        var value = _subtypeCodec.Read(ref boundReader, BlueTuskDataFormat.Text, _subtype);
+        var typedValue = ReadSubtype(ref boundReader, BlueTuskDataFormat.Text, rangeType);
         EnsureBoundConsumed(boundReader.Remaining, rangeType);
-        if (value is not T typedValue)
-        {
-            throw new InvalidOperationException(
-                $"The {_subtype.QualifiedName} codec returned {value?.GetType().FullName ?? "null"}; " +
-                $"{typeof(T).FullName} was expected.");
-        }
 
         return inclusive
             ? BlueTuskRangeBound.Inclusive(typedValue)
@@ -212,7 +220,7 @@ public sealed class BlueTuskRangeCodec<T> :
         var lengthOffset = writer.WrittenCount;
         writer.WriteInt32BigEndian(0);
         var valueOffset = writer.WrittenCount;
-        _subtypeCodec.Write(ref writer, value, BlueTuskDataFormat.Binary, _subtype);
+        WriteSubtype(ref writer, value, BlueTuskDataFormat.Binary);
         writer.WriteInt32BigEndianAt(lengthOffset, writer.WrittenCount - valueOffset);
     }
 
@@ -250,7 +258,7 @@ public sealed class BlueTuskRangeCodec<T> :
             var writer = new BlueTuskWriter(bytes);
             try
             {
-                _subtypeCodec.Write(ref writer, value, BlueTuskDataFormat.Text, _subtype);
+                WriteSubtype(ref writer, value, BlueTuskDataFormat.Text);
                 return StrictUtf8.GetString(bytes, 0, writer.WrittenCount);
             }
             catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
@@ -258,6 +266,41 @@ public sealed class BlueTuskRangeCodec<T> :
                 length = length > Array.MaxLength / 2 ? Array.MaxLength : length * 2;
             }
         }
+    }
+
+    private T ReadSubtype(
+        ref BlueTuskReader reader,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor rangeType)
+    {
+        if (_typedSubtypeCodec is not null)
+        {
+            return _typedSubtypeCodec.ReadTyped(ref reader, format, _subtype);
+        }
+
+        var value = _subtypeCodec.Read(ref reader, format, _subtype);
+        if (value is T typed)
+        {
+            return typed;
+        }
+
+        throw new InvalidOperationException(
+            $"The {_subtype.QualifiedName} codec returned {value?.GetType().FullName ?? "null"}; " +
+            $"{typeof(T).FullName} was expected while reading {rangeType.QualifiedName}.");
+    }
+
+    private void WriteSubtype(
+        ref BlueTuskWriter writer,
+        T value,
+        BlueTuskDataFormat format)
+    {
+        if (_typedSubtypeCodec is not null)
+        {
+            _typedSubtypeCodec.WriteTyped(ref writer, value, format, _subtype);
+            return;
+        }
+
+        _subtypeCodec.Write(ref writer, value, format, _subtype);
     }
 
     private static void WriteTextBound(ref BlueTuskWriter writer, string text)

@@ -14,6 +14,29 @@ public sealed record BlueTuskReplicationSlotCreationResult(
     string? SnapshotName,
     string? OutputPlugin);
 
+/// <summary>Controls snapshot handling while a logical replication slot is created.</summary>
+public enum BlueTuskLogicalSlotSnapshotMode
+{
+    NoExport,
+    Export,
+    Use,
+}
+
+/// <summary>Options for creating a logical replication slot.</summary>
+public sealed record BlueTuskLogicalReplicationSlotCreationOptions
+{
+    public required string SlotName { get; init; }
+
+    public string OutputPlugin { get; init; } = "pgoutput";
+
+    public bool Temporary { get; init; }
+
+    public bool TwoPhase { get; init; }
+
+    public BlueTuskLogicalSlotSnapshotMode SnapshotMode { get; init; } =
+        BlueTuskLogicalSlotSnapshotMode.NoExport;
+}
+
 /// <summary>Information returned by READ_REPLICATION_SLOT for a physical slot.</summary>
 public sealed record BlueTuskPhysicalReplicationSlot(
     string? SlotType,

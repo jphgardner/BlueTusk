@@ -14,7 +14,7 @@ internal static class BlueTuskViewAlterationPlanner
         if (!SameName(oldDefinition.Name, oldDefinition.Schema, definition.Name, definition.Schema))
         {
             throw new InvalidOperationException(
-                "CREATE OR REPLACE VIEW cannot change a view's name or schema. Use RenameBlueTuskView first.");
+                "CREATE OR REPLACE VIEW cannot change a view's name or schema. Use RenameView first.");
         }
 
         if (oldDefinition.Columns.Count > 0 && definition.Columns.Count > 0 &&
@@ -40,7 +40,7 @@ internal static class BlueTuskViewAlterationPlanner
         {
             throw new InvalidOperationException(
                 "ALTER MATERIALIZED VIEW cannot use this operation to change a view's name or schema. " +
-                "Use RenameBlueTuskView first.");
+                "Use RenameView first.");
         }
 
         if (!string.Equals(oldDefinition.QuerySql, definition.QuerySql, StringComparison.Ordinal) ||

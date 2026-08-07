@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Live</BlueTuskProductFamily>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Live.props" />
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <PackageReference Include="Grpc.Net.Client" />
+    <PackageReference Include="Microsoft.AspNetCore.SignalR.Client" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit.v3" />
+    <PackageReference Include="xunit.runner.visualstudio" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <Using Include="Xunit" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live\BlueTusk.Live.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.AspNetCore\BlueTusk.Live.AspNetCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.DependencyInjection\BlueTusk.Live.DependencyInjection.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.EntityFrameworkCore\BlueTusk.Live.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Grpc\BlueTusk.Live.Grpc.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.ServerSentEvents\BlueTusk.Live.ServerSentEvents.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.SignalR\BlueTusk.Live.SignalR.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
+  </ItemGroup>
+</Project>

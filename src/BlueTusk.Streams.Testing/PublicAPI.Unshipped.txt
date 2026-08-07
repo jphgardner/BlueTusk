@@ -1,0 +1,37 @@
+#nullable enable
+BlueTusk.Streams.Testing.ChangeDeliveryTestFactory
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformance
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceException
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceException.ChangeStreamStateStoreConformanceException(string! message) -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.<Clone>$() -> BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions!
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.ChangeStreamStateStoreConformanceOptions() -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.Equals(BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions? other) -> bool
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.ExpirationWait.get -> System.TimeSpan
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.ExpirationWait.init -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.ExpiringLeaseDuration.get -> System.TimeSpan
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.ExpiringLeaseDuration.init -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.<Clone>$() -> BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport!
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.Assertions.get -> int
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.Assertions.init -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.ChangeStreamStateStoreConformanceReport(string! StoreName, int Assertions, System.TimeSpan Elapsed) -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.Deconstruct(out string! StoreName, out int Assertions, out System.TimeSpan Elapsed) -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.Elapsed.get -> System.TimeSpan
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.Elapsed.init -> void
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.Equals(BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport? other) -> bool
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.StoreName.get -> string!
+BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.StoreName.init -> void
+override BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.Equals(object? obj) -> bool
+override BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.GetHashCode() -> int
+override BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.ToString() -> string!
+override BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.Equals(object? obj) -> bool
+override BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.GetHashCode() -> int
+override BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.ToString() -> string!
+static BlueTusk.Streams.Testing.ChangeDeliveryTestFactory.CreateCommitted(BlueTusk.Streams.ChangeSourceIdentity! source, uint transactionId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber commitEndPosition, System.Collections.Generic.IEnumerable<BlueTusk.Streams.Change!>? changes = null, BlueTusk.Streams.IChangeDeliveryObserver? observer = null, System.DateTimeOffset? commitTimestamp = null) -> BlueTusk.Streams.ChangeTransactionDelivery!
+static BlueTusk.Streams.Testing.ChangeDeliveryTestFactory.CreateTwoPhase(BlueTusk.Streams.ChangeSourceIdentity! source, uint transactionId, BlueTusk.TypeSystem.BlueTuskLogSequenceNumber commitEndPosition, BlueTusk.Streams.ChangeTransactionOutcome outcome, string! globalTransactionId, System.Collections.Generic.IEnumerable<BlueTusk.Streams.Change!>? changes = null, BlueTusk.Streams.IChangeDeliveryObserver? observer = null, System.DateTimeOffset? commitTimestamp = null) -> BlueTusk.Streams.ChangeTransactionDelivery!
+static BlueTusk.Streams.Testing.ChangeStreamStateStoreConformance.RunAsync(BlueTusk.Streams.IChangeStreamStateStore! store, string! storeName, BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions? options = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport!>
+static BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.operator !=(BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions? left, BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions? right) -> bool
+static BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions.operator ==(BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions? left, BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceOptions? right) -> bool
+static BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.operator !=(BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport? left, BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport? right) -> bool
+static BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport.operator ==(BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport? left, BlueTusk.Streams.Testing.ChangeStreamStateStoreConformanceReport? right) -> bool

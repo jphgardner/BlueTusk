@@ -27,7 +27,7 @@ internal static class BlueTuskSubscriptionModelDiffer
                 unmatched.Remove(definition.Name);
                 if (!DefinitionEquals(oldDefinition, definition))
                 {
-                    after.Add(new AlterBlueTuskSubscriptionOperation
+                    after.Add(new AlterSubscriptionOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -41,7 +41,7 @@ internal static class BlueTuskSubscriptionModelDiffer
             if (candidates.Length == 1)
             {
                 var renamed = candidates[0];
-                after.Add(new RenameBlueTuskSubscriptionOperation
+                after.Add(new RenameSubscriptionOperation
                 {
                     Name = oldDefinition.Name,
                     NewName = renamed.Name,
@@ -50,7 +50,7 @@ internal static class BlueTuskSubscriptionModelDiffer
             }
             else
             {
-                before.Add(new DropBlueTuskSubscriptionOperation
+                before.Add(new DropSubscriptionOperation
                 {
                     Name = oldDefinition.Name,
                     HasSlot = oldDefinition.SlotName is not null,
@@ -61,7 +61,7 @@ internal static class BlueTuskSubscriptionModelDiffer
 
         foreach (var definition in unmatched.Values.OrderBy(item => item.Name, StringComparer.Ordinal))
         {
-            after.Add(new CreateBlueTuskSubscriptionOperation { Definition = definition });
+            after.Add(new CreateSubscriptionOperation { Definition = definition });
         }
     }
 

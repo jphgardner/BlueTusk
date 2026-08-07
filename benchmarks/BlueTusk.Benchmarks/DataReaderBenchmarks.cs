@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Data;
 using BenchmarkDotNet.Attributes;
 using BlueTusk.Client;
 using BlueTusk.Data;
@@ -58,9 +59,22 @@ public class DataReaderBenchmarks
     }
 
     [Benchmark]
+    public int ReadThousandGenericInt32Rows()
+    {
+        using var reader = CreateReader(_thousandInt32Rows);
+        var sum = 0;
+        while (reader.Read())
+        {
+            sum += reader.GetFieldValue<int>(0);
+        }
+
+        return sum;
+    }
+
+    [Benchmark]
     public int ReadOneMegabyteByteaStream()
     {
-        using var reader = CreateReader(_largeBytea);
+        using var reader = CreateReader(_largeBytea, CommandBehavior.SequentialAccess);
         _ = reader.Read();
         using var stream = reader.GetStream(0);
         var total = 0;
@@ -89,8 +103,10 @@ public class DataReaderBenchmarks
         return total;
     }
 
-    private BlueTuskDataReader CreateReader(BlueTuskQueryResult result) =>
-        new(result, connectionToClose: null, _types);
+    private BlueTuskDataReader CreateReader(
+        BlueTuskQueryResult result,
+        CommandBehavior behavior = CommandBehavior.Default) =>
+        new(result, connectionToClose: null, _types, behavior);
 
     private static BlueTuskQueryResult SingleValueResult(
         BlueTuskFieldDescription field,

@@ -1,0 +1,59 @@
+#nullable enable
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormatter
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormatter.ChangeTransactionCloudEventFormatter(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? options = null) -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormatter.Describe(BlueTusk.Streams.ChangeTransaction! transaction) -> BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormatter.ToStructuredJsonAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<System.ReadOnlyMemory<byte>>
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormatter.WriteStructuredAsync(BlueTusk.Streams.ChangeTransaction! transaction, System.IO.Stream! destination, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.<Clone>$() -> BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.ChangeCount.get -> int
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.ChangeCount.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.ChangeTransactionCloudEventMetadata(string! SpecVersion, string! Id, System.Uri! Source, string! Type, string! Subject, System.DateTimeOffset Time, string! DataContentType, string! CommitEndPosition, uint TransactionId, int ChangeCount, int EnvelopeFormatVersion) -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.CommitEndPosition.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.CommitEndPosition.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.DataContentType.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.DataContentType.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Deconstruct(out string! SpecVersion, out string! Id, out System.Uri! Source, out string! Type, out string! Subject, out System.DateTimeOffset Time, out string! DataContentType, out string! CommitEndPosition, out uint TransactionId, out int ChangeCount, out int EnvelopeFormatVersion) -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.EnvelopeFormatVersion.get -> int
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.EnvelopeFormatVersion.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Equals(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata? other) -> bool
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Id.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Id.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Source.get -> System.Uri!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Source.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.SpecVersion.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.SpecVersion.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Subject.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Subject.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Time.get -> System.DateTimeOffset
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Time.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.TransactionId.get -> uint
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.TransactionId.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Type.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Type.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.<Clone>$() -> BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.ChangeTransactionCloudEventOptions() -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.DataContentType.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.DataContentType.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.Envelope.get -> BlueTusk.Streams.ChangeTransactionEnvelopeOptions!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.Envelope.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.Equals(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? other) -> bool
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.EventType.get -> string!
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.EventType.init -> void
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.MaximumEventBytes.get -> int
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.MaximumEventBytes.init -> void
+override BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.Equals(object? obj) -> bool
+override BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.GetHashCode() -> int
+override BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.ToString() -> string!
+override BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.Equals(object? obj) -> bool
+override BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.GetHashCode() -> int
+override BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.ToString() -> string!
+static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.operator !=(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata? left, BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata? right) -> bool
+static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata.operator ==(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata? left, BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventMetadata? right) -> bool
+static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.operator !=(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? left, BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? right) -> bool
+static BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions.operator ==(BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? left, BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventOptions? right) -> bool
+BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat
+const BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat.CurrentVersion = 1 -> int
+const BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat.DataContentType = "application/vnd.bluetusk.change-transaction+binary;version=1" -> string!
+const BlueTusk.Streams.CloudEvents.ChangeTransactionCloudEventFormat.EventType = "io.bluetusk.streams.transaction.v1" -> string!

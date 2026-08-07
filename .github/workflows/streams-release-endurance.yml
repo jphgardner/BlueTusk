@@ -1,0 +1,87 @@
+name: Streams 72-hour release endurance
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type RUN-STREAMS-72-HOUR-ENDURANCE to start the release gate
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: streams-72-hour-release-endurance
+  cancel-in-progress: false
+
+jobs:
+  relay-endurance:
+    name: PostgreSQL 19 relay endurance
+    if: inputs.confirmation == 'RUN-STREAMS-72-HOUR-ENDURANCE'
+    runs-on: [self-hosted, linux, x64, bluetusk-endurance]
+    timeout-minutes: 4500
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Build exact Streams candidate and provenance
+        shell: pwsh
+        run: |
+          ./eng/pack-product-family.ps1 `
+            -Family Streams `
+            -Candidate `
+            -Output 'artifacts/test-results/streams-relay-endurance/candidate-packages'
+          ./eng/generate-sbom.ps1 `
+            -PackageDirectory 'artifacts/test-results/streams-relay-endurance/candidate-packages' `
+            -OutputDirectory 'artifacts/test-results/streams-relay-endurance/candidate-sbom' `
+            -Commit '${{ github.sha }}' `
+            -NoRestore
+
+      - name: Start PostgreSQL 19
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Run 72-hour fault-injected relay endurance
+        shell: pwsh
+        env:
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+        run: >-
+          ./eng/run-streams-endurance.ps1
+          -Duration '3.00:00:00'
+          -MinimumTransactions 100000
+          -IntervalMilliseconds 250
+          -ReportPath 'artifacts/test-results/streams-relay-endurance/report.json'
+          -CandidateProvenancePath 'artifacts/test-results/streams-relay-endurance/candidate-sbom/build-provenance.json'
+          -PostgreSqlImage 'postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e'
+          -Configuration Release
+
+      - name: Verify endurance evidence
+        shell: pwsh
+        run: >-
+          ./eng/verify-streams-endurance-report.ps1
+          -ReportPath 'artifacts/test-results/streams-relay-endurance/report.json'
+          -RequiredDuration '3.00:00:00'
+          -MinimumTransactions 100000
+          -ExpectedCommit '${{ github.sha }}'
+          -CandidateProvenancePath 'artifacts/test-results/streams-relay-endurance/candidate-sbom/build-provenance.json'
+          -ExpectedPostgreSqlImage 'postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e'
+
+      - name: Upload endurance evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: streams-relay-endurance-${{ github.run_id }}
+          path: artifacts/test-results/streams-relay-endurance
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes

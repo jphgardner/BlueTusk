@@ -7,7 +7,7 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class BlueTuskSubscriptionModelBuilderExtensions
 {
-    public static ModelBuilder HasBlueTuskSubscription(
+    public static ModelBuilder HasSubscription(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskSubscriptionBuilder> configure)
@@ -17,10 +17,10 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
         ArgumentNullException.ThrowIfNull(configure);
         var builder = new BlueTuskSubscriptionBuilder(name);
         configure(builder);
-        return HasBlueTuskSubscription(modelBuilder, builder.Build());
+        return HasSubscription(modelBuilder, builder.Build());
     }
 
-    public static ModelBuilder HasBlueTuskSubscription(
+    public static ModelBuilder HasSubscription(
         this ModelBuilder modelBuilder,
         BlueTuskSubscriptionDefinition definition)
     {
@@ -35,7 +35,7 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
                 .ToArray()));
     }
 
-    public static ModelBuilder HasNoBlueTuskSubscription(this ModelBuilder modelBuilder, string name)
+    public static ModelBuilder HasNoSubscription(this ModelBuilder modelBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -46,14 +46,14 @@ public static class BlueTuskSubscriptionModelBuilderExtensions
                 .ToArray()));
     }
 
-    public static BlueTuskSubscriptionDefinitionSet GetBlueTuskSubscriptions(this IReadOnlyModel model)
+    public static BlueTuskSubscriptionDefinitionSet GetSubscriptions(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskSubscriptionMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskSubscriptions(
+    public static ModelBuilder HasSubscriptions(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

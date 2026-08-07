@@ -1,0 +1,851 @@
+using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
+using System.Runtime.InteropServices;
+using System.Text;
+using System.Text.Json;
+using BlueTusk.Replication;
+using BlueTusk.Replication.PgOutput;
+using BlueTusk.Streams.CloudEvents;
+using BlueTusk.TypeSystem;
+
+namespace BlueTusk.Streams.Tests;
+
+public sealed class PgOutputChangeStreamTests
+{
+    private static readonly DateTimeOffset Timestamp =
+        new(2026, 8, 3, 12, 0, 0, TimeSpan.Zero);
+
+    [Fact]
+    public async Task Public_pgoutput_envelopes_defensively_copy_tuple_payloads()
+    {
+        var payload = new byte[] { 1, 2, 3, 4 };
+        var stream = new PgOutputChangeStream(MutableMessages(payload), SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var insert = Assert.IsType<InsertChange>(
+            Assert.Single(await delivery.Transaction.Changes.MaterializeAsync()));
+        Assert.Equal(new byte[] { 1, 2, 3, 4 }, insert.NewRow[0].Data.ToArray());
+        await delivery.AcknowledgeAsync();
+
+        static async IAsyncEnumerable<BlueTuskPgOutputEnvelope> MutableMessages(byte[] value)
+        {
+            await Task.CompletedTask.ConfigureAwait(false);
+            yield return Envelope(Relation(
+                new BlueTuskPgOutputRelationColumn(
+                    BlueTuskPgOutputRelationColumnOptions.Key,
+                    "id",
+                    17,
+                    -1)));
+            yield return Envelope(new BlueTuskPgOutputBegin(Lsn(10), Timestamp, 1));
+            yield return Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Binary(value))));
+            value[0] = 99;
+            yield return Envelope(new BlueTuskPgOutputCommit(Lsn(20), Lsn(21), Timestamp));
+        }
+    }
+
+    [Fact]
+    public async Task Ordinary_transaction_preserves_order_identity_and_explicit_row_states()
+    {
+        var sourceIdentity = SourceIdentity();
+        var messages = new[]
+        {
+            Envelope(Relation(
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "name", 25, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "description", 25, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "optional", 25, -1))),
+            Envelope(new BlueTuskPgOutputBegin(Lsn(150), Timestamp, 42)),
+            Envelope(new BlueTuskPgOutputInsert(
+                null,
+                7,
+                Tuple(Text("alpha"), Text("1"), Toast()))),
+            Envelope(new BlueTuskPgOutputUpdate(
+                null,
+                7,
+                null,
+                null,
+                Tuple(Text("beta"), Text("1"), Toast(), Null()))),
+            Envelope(new BlueTuskPgOutputDelete(
+                null,
+                7,
+                BlueTuskPgOutputOldRowKind.Key,
+                Tuple(Null(), Text("1"), Null(), Null()))),
+            Envelope(new BlueTuskPgOutputLogicalMessage(
+                null,
+                true,
+                Lsn(175),
+                "audit",
+                Encoding.UTF8.GetBytes("changed"))),
+            Envelope(new BlueTuskPgOutputCommit(Lsn(190), Lsn(200), Timestamp.AddSeconds(1))),
+        };
+        var stream = new PgOutputChangeStream(Messages(messages), sourceIdentity);
+
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var transaction = delivery.Transaction;
+        var changes = await transaction.Changes.MaterializeAsync();
+
+        Assert.Equal(42U, transaction.TransactionId);
+        Assert.Equal(Lsn(200), transaction.CommitEndPosition);
+        Assert.Equal(4, changes.Count);
+        Assert.All(changes, change =>
+        {
+            Assert.Equal(sourceIdentity, change.Id.Source);
+            Assert.Equal(Lsn(200), change.Id.CommitEndPosition);
+            Assert.Equal(42U, change.Id.TransactionId);
+        });
+        Assert.Equal([0, 1, 2, 3], changes.Select(change => change.Id.Ordinal));
+
+        var insert = Assert.IsType<InsertChange>(changes[0]);
+        Assert.Equal(ChangeColumnState.Value, insert.NewRow["name"].State);
+        Assert.Equal(ChangeColumnState.Value, insert.NewRow["id"].State);
+        Assert.Equal(ChangeColumnState.UnchangedToast, insert.NewRow["description"].State);
+        Assert.Equal(ChangeColumnState.NotPublished, insert.NewRow["optional"].State);
+
+        var update = Assert.IsType<UpdateChange>(changes[1]);
+        Assert.All(update.OldRow.Values, value => Assert.Equal(ChangeColumnState.OldValueUnavailable, value.State));
+        Assert.False(update.ChangedColumns.IsExact);
+        Assert.Empty(update.ChangedColumns.Ordinals);
+        Assert.Equal(ChangeColumnState.DatabaseNull, update.NewRow["optional"].State);
+
+        var delete = Assert.IsType<DeleteChange>(changes[2]);
+        Assert.Equal(ChangeColumnState.OldValueUnavailable, delete.OldRow["name"].State);
+        Assert.Equal("1", Encoding.UTF8.GetString(delete.OldRow["id"].Data.Span));
+
+        var logical = Assert.IsType<LogicalMessageChange>(changes[3]);
+        Assert.True(logical.IsTransactional);
+        Assert.Equal("audit", logical.Prefix);
+
+        await delivery.AcknowledgeAsync();
+        Assert.Equal(ChangeDeliveryState.Acknowledged, delivery.State);
+        Assert.False(await enumerator.MoveNextAsync());
+    }
+
+    [Fact]
+    public async Task Full_old_row_produces_an_exact_changed_column_set()
+    {
+        var messages = new[]
+        {
+            Envelope(Relation(
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "name", 25, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "payload", 25, -1))),
+            Envelope(new BlueTuskPgOutputBegin(Lsn(100), Timestamp, 12)),
+            Envelope(new BlueTuskPgOutputUpdate(
+                null,
+                7,
+                BlueTuskPgOutputOldRowKind.Full,
+                Tuple(Text("1"), Text("before"), Text("large")),
+                Tuple(Text("1"), Text("after"), Toast()))),
+            Envelope(new BlueTuskPgOutputCommit(Lsn(120), Lsn(125), Timestamp)),
+        };
+        var stream = new PgOutputChangeStream(Messages(messages), SourceIdentity());
+
+        await foreach (var delivery in stream.ReadTransactionsAsync())
+        {
+            var changes = await delivery.Transaction.Changes.MaterializeAsync();
+            var update = Assert.IsType<UpdateChange>(Assert.Single(changes));
+            Assert.True(update.ChangedColumns.IsExact);
+            Assert.Equal([1], update.ChangedColumns.Ordinals);
+            await delivery.AcknowledgeAsync();
+        }
+    }
+
+    [Fact]
+    public async Task Streamed_transaction_spills_and_is_removed_after_acknowledgement()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var messages = new[]
+            {
+                Envelope(Relation(
+                    new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1))),
+                Envelope(new BlueTuskPgOutputStreamStart(91, true)),
+                Envelope(new BlueTuskPgOutputInsert(91, 7, Tuple(Binary(new byte[4096])))),
+                Envelope(new BlueTuskPgOutputStreamStop()),
+                Envelope(new BlueTuskPgOutputStreamCommit(91, Lsn(400), Lsn(420), Timestamp)),
+            };
+            var options = new TransactionAssemblyOptions
+            {
+                MaxInMemoryTransactionBytes = 64,
+                MaxTransactionBytes = 16 * 1024,
+                MaxSpoolBytes = 32 * 1024,
+                SpoolDirectory = spoolDirectory,
+            };
+            var stream = new PgOutputChangeStream(Messages(messages), SourceIdentity(), options);
+
+            await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+            Assert.True(await enumerator.MoveNextAsync());
+            var delivery = enumerator.Current;
+            Assert.True(delivery.Transaction.Changes.IsSpooled);
+            Assert.Single(Directory.GetFiles(spoolDirectory, "*.ready"));
+            var change = Assert.IsType<InsertChange>(
+                Assert.Single(await delivery.Transaction.Changes.MaterializeAsync()));
+            Assert.Equal(4096, change.NewRow[0].Data.Length);
+
+            await delivery.AcknowledgeAsync();
+            Assert.Empty(Directory.GetFiles(spoolDirectory));
+            Assert.False(await enumerator.MoveNextAsync());
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Stream_abort_discards_spooled_changes_without_delivery()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var messages = new[]
+            {
+                Envelope(Relation(
+                    new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1))),
+                Envelope(new BlueTuskPgOutputStreamStart(92, true)),
+                Envelope(new BlueTuskPgOutputInsert(92, 7, Tuple(Binary(new byte[4096])))),
+                Envelope(new BlueTuskPgOutputStreamStop()),
+                Envelope(new BlueTuskPgOutputStreamAbort(92, 92, null, null)),
+            };
+            var stream = new PgOutputChangeStream(
+                Messages(messages),
+                SourceIdentity(),
+                new TransactionAssemblyOptions
+                {
+                    MaxInMemoryTransactionBytes = 1,
+                    MaxTransactionBytes = 16 * 1024,
+                    MaxSpoolBytes = 32 * 1024,
+                    SpoolDirectory = spoolDirectory,
+                });
+
+            await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+            Assert.False(await enumerator.MoveNextAsync());
+            Assert.Empty(Directory.GetFiles(spoolDirectory));
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Prepared_transactions_are_staged_then_finalized_as_ordered_deliveries()
+    {
+        const string globalTransactionId = "bluetusk:orders:201";
+        var stream = new PgOutputChangeStream(
+            Messages(
+                Envelope(Relation(
+                    new BlueTuskPgOutputRelationColumn(
+                        BlueTuskPgOutputRelationColumnOptions.Key,
+                        "id",
+                        23,
+                        -1))),
+                Envelope(new BlueTuskPgOutputBeginPrepare(
+                    Lsn(100),
+                    Lsn(110),
+                    Timestamp,
+                    201,
+                    globalTransactionId)),
+                Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Text("prepared")))),
+                Envelope(new BlueTuskPgOutputPrepare(
+                    Lsn(100),
+                    Lsn(110),
+                    Timestamp,
+                    201,
+                    globalTransactionId)),
+                Envelope(new BlueTuskPgOutputBegin(Lsn(120), Timestamp.AddSeconds(1), 202)),
+                Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Text("ordinary")))),
+                Envelope(new BlueTuskPgOutputCommit(Lsn(130), Lsn(140), Timestamp.AddSeconds(1))),
+                Envelope(new BlueTuskPgOutputCommitPrepared(
+                    Lsn(150),
+                    Lsn(160),
+                    Timestamp.AddSeconds(2),
+                    201,
+                    globalTransactionId))),
+            SourceIdentity(),
+            new TransactionAssemblyOptions
+            {
+                PreparedTransactionMode = PreparedTransactionMode.Stage,
+            });
+
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+
+        Assert.True(await enumerator.MoveNextAsync());
+        var prepared = enumerator.Current;
+        Assert.Equal(ChangeTransactionOutcome.Prepared, prepared.Transaction.Outcome);
+        Assert.Equal(globalTransactionId, prepared.Transaction.GlobalTransactionId);
+        Assert.True(prepared.Transaction.IsTwoPhase);
+        Assert.Equal(Lsn(110), prepared.Transaction.CommitEndPosition);
+        Assert.Single(await prepared.Transaction.Changes.MaterializeAsync());
+        await prepared.AcknowledgeAsync();
+
+        Assert.True(await enumerator.MoveNextAsync());
+        var ordinary = enumerator.Current;
+        Assert.Equal(ChangeTransactionOutcome.Committed, ordinary.Transaction.Outcome);
+        Assert.False(ordinary.Transaction.IsTwoPhase);
+        Assert.Single(await ordinary.Transaction.Changes.MaterializeAsync());
+        await ordinary.AcknowledgeAsync();
+
+        Assert.True(await enumerator.MoveNextAsync());
+        var committed = enumerator.Current;
+        Assert.Equal(ChangeTransactionOutcome.Committed, committed.Transaction.Outcome);
+        Assert.Equal(globalTransactionId, committed.Transaction.GlobalTransactionId);
+        Assert.True(committed.Transaction.IsTwoPhase);
+        Assert.Empty(await committed.Transaction.Changes.MaterializeAsync());
+        await committed.AcknowledgeAsync();
+
+        Assert.False(await enumerator.MoveNextAsync());
+    }
+
+    [Fact]
+    public async Task Streamed_prepared_transaction_spills_then_rollback_is_a_lifecycle_delivery()
+    {
+        const string globalTransactionId = "bluetusk:orders:203";
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var stream = new PgOutputChangeStream(
+                Messages(
+                    Envelope(Relation(
+                        new BlueTuskPgOutputRelationColumn(
+                            BlueTuskPgOutputRelationColumnOptions.Key,
+                            "id",
+                            23,
+                            -1))),
+                    Envelope(new BlueTuskPgOutputStreamStart(203, true)),
+                    Envelope(new BlueTuskPgOutputInsert(203, 7, Tuple(Binary(new byte[4096])))),
+                    Envelope(new BlueTuskPgOutputStreamStop()),
+                    Envelope(new BlueTuskPgOutputStreamPrepare(
+                        Lsn(200),
+                        Lsn(210),
+                        Timestamp,
+                        203,
+                        globalTransactionId)),
+                    Envelope(new BlueTuskPgOutputRollbackPrepared(
+                        Lsn(210),
+                        Lsn(220),
+                        Timestamp,
+                        Timestamp.AddSeconds(1),
+                        203,
+                        globalTransactionId))),
+                SourceIdentity(),
+                new TransactionAssemblyOptions
+                {
+                    MaxInMemoryTransactionBytes = 64,
+                    MaxTransactionBytes = 16 * 1024,
+                    MaxSpoolBytes = 32 * 1024,
+                    SpoolDirectory = spoolDirectory,
+                    PreparedTransactionMode = PreparedTransactionMode.Stage,
+                });
+
+            await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+            Assert.True(await enumerator.MoveNextAsync());
+            var prepared = enumerator.Current;
+            Assert.Equal(ChangeTransactionOutcome.Prepared, prepared.Transaction.Outcome);
+            Assert.True(prepared.Transaction.Changes.IsSpooled);
+            Assert.Single(Directory.GetFiles(spoolDirectory, "*.ready"));
+            await prepared.AcknowledgeAsync();
+            Assert.Empty(Directory.GetFiles(spoolDirectory));
+
+            Assert.True(await enumerator.MoveNextAsync());
+            var rolledBack = enumerator.Current;
+            Assert.Equal(ChangeTransactionOutcome.RolledBack, rolledBack.Transaction.Outcome);
+            Assert.Equal(globalTransactionId, rolledBack.Transaction.GlobalTransactionId);
+            Assert.Empty(await rolledBack.Transaction.Changes.MaterializeAsync());
+            await rolledBack.AcknowledgeAsync();
+            Assert.False(await enumerator.MoveNextAsync());
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Prepared_transactions_fail_fast_until_staging_is_explicitly_enabled()
+    {
+        var stream = new PgOutputChangeStream(
+            Messages(Envelope(new BlueTuskPgOutputBeginPrepare(
+                Lsn(100),
+                Lsn(110),
+                Timestamp,
+                204,
+                "bluetusk:orders:204"))),
+            SourceIdentity());
+
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        await Assert.ThrowsAsync<PreparedTransactionNotSupportedException>(
+            async () => await enumerator.MoveNextAsync().AsTask());
+    }
+
+    [Fact]
+    public async Task Source_disconnect_discards_the_incomplete_epoch_for_safe_redelivery()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var stream = new PgOutputChangeStream(
+                Messages(
+                    Envelope(Relation(
+                        new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1))),
+                    Envelope(new BlueTuskPgOutputStreamStart(93, true)),
+                    Envelope(new BlueTuskPgOutputInsert(93, 7, Tuple(Binary(new byte[4096])))),
+                    Envelope(new BlueTuskPgOutputStreamStop())),
+                SourceIdentity(),
+                new TransactionAssemblyOptions
+                {
+                    MaxInMemoryTransactionBytes = 1,
+                    MaxTransactionBytes = 16 * 1024,
+                    MaxSpoolBytes = 32 * 1024,
+                    SpoolDirectory = spoolDirectory,
+                });
+
+            await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+            Assert.False(await enumerator.MoveNextAsync());
+            Assert.Empty(Directory.GetFiles(spoolDirectory));
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Nontransactional_logical_message_uses_an_explicit_synthetic_transaction()
+    {
+        var message = new BlueTuskPgOutputLogicalMessage(
+            null,
+            false,
+            Lsn(300),
+            "signal",
+            Encoding.UTF8.GetBytes("ready"));
+        var stream = new PgOutputChangeStream(Messages(Envelope(message)), SourceIdentity());
+
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        Assert.True(delivery.Transaction.IsSynthetic);
+        Assert.Equal(0U, delivery.Transaction.TransactionId);
+        var logical = Assert.IsType<LogicalMessageChange>(
+            Assert.Single(await delivery.Transaction.Changes.MaterializeAsync()));
+        Assert.False(logical.IsTransactional);
+        Assert.Equal(Lsn(300), logical.Id.CommitEndPosition);
+        await delivery.AcknowledgeAsync();
+        Assert.False(await enumerator.MoveNextAsync());
+    }
+
+    [Fact]
+    public async Task Reading_past_an_unacknowledged_delivery_stops_the_stream()
+    {
+        var stream = new PgOutputChangeStream(
+            Messages(
+                Envelope(Relation(
+                    new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1))),
+                Envelope(new BlueTuskPgOutputBegin(Lsn(10), Timestamp, 1)),
+                Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Text("1")))),
+                Envelope(new BlueTuskPgOutputCommit(Lsn(20), Lsn(21), Timestamp))),
+            SourceIdentity());
+
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var exception = await Assert.ThrowsAsync<ChangeDeliveryNotAcknowledgedException>(
+            async () => await enumerator.MoveNextAsync().AsTask());
+        Assert.Equal(ChangeDeliveryState.Active, exception.State);
+        Assert.Equal(ChangeDeliveryState.Disposed, delivery.State);
+    }
+
+    [Fact]
+    public async Task File_spool_detects_record_tampering()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var spool = new FileTransactionSpool(
+                new FileTransactionSpoolOptions
+                {
+                    DirectoryPath = spoolDirectory,
+                    MaxStorageBytes = 4096,
+                    MaxRecordBytes = 1024,
+                });
+            await using var writer = await spool.CreateAsync(new TransactionSpoolKey("source", 1));
+            await writer.AppendAsync(Encoding.UTF8.GetBytes("integrity"));
+            await using var reader = await writer.CompleteAsync();
+            var path = Assert.Single(Directory.GetFiles(spoolDirectory, "*.ready"));
+            var bytes = await File.ReadAllBytesAsync(path);
+            bytes[^9] ^= 0xFF;
+            await File.WriteAllBytesAsync(path, bytes);
+
+            await Assert.ThrowsAsync<TransactionSpoolIntegrityException>(async () =>
+            {
+                await foreach (var _ in reader.ReadRecordsAsync())
+                {
+                }
+            });
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Large_pass_through_spool_records_remain_valid_after_reader_disposal()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var payload = new byte[128 * 1024];
+            for (var index = 0; index < payload.Length; index++)
+            {
+                payload[index] = unchecked((byte)index);
+            }
+
+            var spool = new FileTransactionSpool(
+                new FileTransactionSpoolOptions
+                {
+                    DirectoryPath = spoolDirectory,
+                    MaxStorageBytes = 512 * 1024,
+                    MaxRecordBytes = 256 * 1024,
+                });
+            await using var writer = await spool.CreateAsync(new TransactionSpoolKey("source", 1));
+            await writer.AppendAsync(payload);
+            var reader = await writer.CompleteAsync();
+            ReadOnlyMemory<byte> replayed;
+            await using (var enumerator = reader.ReadRecordsAsync().GetAsyncEnumerator())
+            {
+                Assert.True(await enumerator.MoveNextAsync());
+                replayed = enumerator.Current;
+                Assert.False(MemoryMarshal.TryGetArray(replayed, out _));
+                Assert.False(await enumerator.MoveNextAsync());
+            }
+
+            await reader.DisposeAsync();
+
+            Assert.Empty(Directory.GetFiles(spoolDirectory));
+            Assert.True(payload.AsSpan().SequenceEqual(replayed.Span));
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task File_spool_rejects_unknown_versions_and_accounts_restart_artifacts()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var spool = new FileTransactionSpool(
+                new FileTransactionSpoolOptions
+                {
+                    DirectoryPath = spoolDirectory,
+                    MaxStorageBytes = 4096,
+                    MaxRecordBytes = 1024,
+                });
+            await using (var writer = await spool.CreateAsync(new TransactionSpoolKey("source", 1)))
+            {
+                await writer.AppendAsync("format"u8.ToArray());
+                await using var reader = await writer.CompleteAsync();
+                var path = Assert.Single(Directory.GetFiles(spoolDirectory, "*.ready"));
+                var bytes = await File.ReadAllBytesAsync(path);
+                BinaryPrimitives.WriteInt32LittleEndian(bytes.AsSpan(4), TransactionSpoolFormat.CurrentVersion + 1);
+                await File.WriteAllBytesAsync(path, bytes);
+
+                await Assert.ThrowsAsync<TransactionSpoolIntegrityException>(async () =>
+                {
+                    await foreach (var _ in reader.ReadRecordsAsync())
+                    {
+                    }
+                });
+            }
+
+            var orphanPath = Path.Combine(spoolDirectory, "crashed.partial");
+            await File.WriteAllBytesAsync(orphanPath, new byte[128]);
+            var restarted = new FileTransactionSpool(
+                new FileTransactionSpoolOptions
+                {
+                    DirectoryPath = spoolDirectory,
+                    MaxStorageBytes = 150,
+                    MaxRecordBytes = 1024,
+                });
+
+            Assert.Equal(128, restarted.ReservedBytes);
+            await Assert.ThrowsAsync<TransactionSpoolLimitExceededException>(
+                () => restarted.CreateAsync(new TransactionSpoolKey("source", 2)).AsTask());
+            Assert.Equal(128, restarted.ReservedBytes);
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Transaction_size_limit_fails_before_unbounded_growth()
+    {
+        var spoolDirectory = CreateTemporaryDirectory();
+        try
+        {
+            var stream = new PgOutputChangeStream(
+                Messages(
+                    Envelope(Relation(
+                        new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1))),
+                    Envelope(new BlueTuskPgOutputBegin(Lsn(10), Timestamp, 1)),
+                    Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Binary(new byte[2048]))))),
+                SourceIdentity(),
+                new TransactionAssemblyOptions
+                {
+                    MaxInMemoryTransactionBytes = 128,
+                    MaxTransactionBytes = 1024,
+                    MaxSpoolBytes = 4096,
+                    SpoolDirectory = spoolDirectory,
+                });
+
+            await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+            await Assert.ThrowsAsync<TransactionAssemblyLimitExceededException>(
+                async () => await enumerator.MoveNextAsync().AsTask());
+            Assert.Empty(Directory.GetFiles(spoolDirectory));
+        }
+        finally
+        {
+            Directory.Delete(spoolDirectory, recursive: true);
+        }
+    }
+
+    [Fact]
+    public async Task Relay_envelope_round_trips_transaction_metadata_tables_and_row_states()
+    {
+        var messages = new[]
+        {
+            Envelope(Relation(
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.Key, "id", 23, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "payload", 25, -1),
+                new BlueTuskPgOutputRelationColumn(BlueTuskPgOutputRelationColumnOptions.None, "optional", 25, -1))),
+            Envelope(new BlueTuskPgOutputBegin(Lsn(100), Timestamp, 77)),
+            Envelope(new BlueTuskPgOutputInsert(
+                null,
+                7,
+                Tuple(Text("1"), Toast()))),
+            Envelope(new BlueTuskPgOutputUpdate(
+                null,
+                7,
+                BlueTuskPgOutputOldRowKind.Full,
+                Tuple(Text("1"), Text("before"), Null()),
+                Tuple(Text("1"), Text("after"), Null()))),
+            Envelope(new BlueTuskPgOutputLogicalMessage(
+                null,
+                true,
+                Lsn(115),
+                "audit",
+                "changed"u8.ToArray())),
+            Envelope(new BlueTuskPgOutputCommit(Lsn(120), Lsn(125), Timestamp.AddSeconds(1))),
+        };
+        var stream = new PgOutputChangeStream(Messages(messages), SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+
+        var envelope = await ChangeTransactionEnvelopeCodec.EncodeAsync(delivery.Transaction);
+        var decoded = ChangeTransactionEnvelopeCodec.Decode(envelope);
+        var changes = await decoded.Changes.MaterializeAsync();
+
+        Assert.Equal(ChangeTransactionEnvelope.CurrentFormatVersion, envelope.FormatVersion);
+        Assert.Equal(delivery.Transaction.Source, decoded.Source);
+        Assert.Equal(delivery.Transaction.TransactionId, decoded.TransactionId);
+        Assert.Equal(delivery.Transaction.CommitEndPosition, decoded.CommitEndPosition);
+        Assert.Equal(delivery.Transaction.CommitTimestamp, decoded.CommitTimestamp);
+        Assert.Equal(ChangeTransactionOutcome.Committed, decoded.Outcome);
+        Assert.False(decoded.IsTwoPhase);
+        Assert.Equal(3, changes.Count);
+        var insert = Assert.IsType<InsertChange>(changes[0]);
+        Assert.Equal(ChangeColumnState.UnchangedToast, insert.NewRow["payload"].State);
+        Assert.Equal(ChangeColumnState.NotPublished, insert.NewRow["optional"].State);
+        var update = Assert.IsType<UpdateChange>(changes[1]);
+        Assert.True(update.ChangedColumns.IsExact);
+        Assert.Equal([1], update.ChangedColumns.Ordinals);
+        var logical = Assert.IsType<LogicalMessageChange>(changes[2]);
+        Assert.Equal("audit", logical.Prefix);
+        Assert.Equal("changed"u8.ToArray(), logical.Content.ToArray());
+
+        await delivery.AcknowledgeAsync();
+    }
+
+    [Fact]
+    public async Task Relay_envelope_round_trips_prepared_lifecycle_metadata()
+    {
+        const string globalTransactionId = "bluetusk:orders:205";
+        var stream = new PgOutputChangeStream(
+            Messages(
+                Envelope(new BlueTuskPgOutputBeginPrepare(
+                    Lsn(500),
+                    Lsn(510),
+                    Timestamp,
+                    205,
+                    globalTransactionId)),
+                Envelope(new BlueTuskPgOutputPrepare(
+                    Lsn(500),
+                    Lsn(510),
+                    Timestamp,
+                    205,
+                    globalTransactionId))),
+            SourceIdentity(),
+            new TransactionAssemblyOptions
+            {
+                PreparedTransactionMode = PreparedTransactionMode.Stage,
+            });
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+
+        var envelope = await ChangeTransactionEnvelopeCodec.EncodeAsync(delivery.Transaction);
+        var decoded = ChangeTransactionEnvelopeCodec.Decode(
+            ChangeTransactionEnvelopeCodec.FromData(envelope.Data.Span));
+
+        Assert.Equal(2, envelope.FormatVersion);
+        Assert.Equal(ChangeTransactionOutcome.Prepared, decoded.Outcome);
+        Assert.Equal(globalTransactionId, decoded.GlobalTransactionId);
+        Assert.True(decoded.IsTwoPhase);
+        Assert.Empty(await decoded.Changes.MaterializeAsync());
+        await delivery.AcknowledgeAsync();
+    }
+
+    [Fact]
+    public async Task Legacy_v1_relay_envelope_decodes_as_a_committed_transaction()
+    {
+        const string legacyBase64 =
+            "QlRSTAEAAAAGNzM5NDYzA2FwcA1ibHVldHVza190ZXN0DXB1YmxpYzpvcmRlcnNNAAAAZAAAAAAAAAB4AAAAAAAAAH0A" +
+            "AAAAAAAAgPYrv1bx3ggAAAEAAAAHAAAABnB1YmxpYwZvcmRlcnNkAwAAAAAAAAACaWQXAAAA/////wEAAQAAAAdwYXlsb2Fk" +
+            "GQAAAP////8AAAIAAAAIb3B0aW9uYWwZAAAA/////wAAAwAAAAAAAAAAAAAAAAMAAAAAAQEAAAAxAAQAAAAAAAACAAAAAAAA" +
+            "AQEAAAAAAAAAAwAAAAABAQAAADEAAAEGAAAAYmVmb3JlAAEAAAAAAAAAAAAAAwAAAAABAQAAADEAAAEFAAAAYWZ0ZXIAAQAA" +
+            "AAAAAAEBAAAAAQAAAAQCAAAAAXMAAAAAAAAABWF1ZGl0BwAAAGNoYW5nZWRaeH4rUDGe8nnrf92BMpP96qwUKD4djQRTOrw3" +
+            "cYZm6Q==";
+        var envelope = ChangeTransactionEnvelopeCodec.FromData(Convert.FromBase64String(legacyBase64));
+
+        var decoded = ChangeTransactionEnvelopeCodec.Decode(envelope);
+
+        Assert.Equal(ChangeTransactionEnvelope.MinimumSupportedFormatVersion, envelope.FormatVersion);
+        Assert.Equal(ChangeTransactionOutcome.Committed, decoded.Outcome);
+        Assert.Null(decoded.GlobalTransactionId);
+        Assert.False(decoded.IsTwoPhase);
+        Assert.Equal(77U, decoded.TransactionId);
+        Assert.Equal(3, (await decoded.Changes.MaterializeAsync()).Count);
+    }
+
+    [Fact]
+    public async Task Relay_envelope_rejects_integrity_tampering()
+    {
+        var stream = new PgOutputChangeStream(
+            Messages(
+                Envelope(new BlueTuskPgOutputLogicalMessage(
+                    null,
+                    false,
+                    Lsn(300),
+                    "signal",
+                    "ready"u8.ToArray()))),
+            SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var envelope = await ChangeTransactionEnvelopeCodec.EncodeAsync(delivery.Transaction);
+        var bytes = envelope.Data.ToArray();
+        bytes[^1] ^= 0xFF;
+
+        Assert.Throws<ChangeTransactionEnvelopeException>(
+            () => ChangeTransactionEnvelopeCodec.FromData(bytes));
+
+        await delivery.AcknowledgeAsync();
+    }
+
+    [Fact]
+    public async Task CloudEvent_preserves_one_integrity_checked_source_transaction()
+    {
+        var stream = new PgOutputChangeStream(
+            Messages(
+                Envelope(Relation(
+                    new BlueTuskPgOutputRelationColumn(
+                        BlueTuskPgOutputRelationColumnOptions.Key,
+                        "id",
+                        23,
+                        -1))),
+                Envelope(new BlueTuskPgOutputBegin(Lsn(400), Timestamp, 99)),
+                Envelope(new BlueTuskPgOutputInsert(null, 7, Tuple(Text("42")))),
+                Envelope(new BlueTuskPgOutputCommit(Lsn(450), Lsn(460), Timestamp.AddSeconds(1)))),
+            SourceIdentity());
+        await using var enumerator = stream.ReadTransactionsAsync().GetAsyncEnumerator();
+        Assert.True(await enumerator.MoveNextAsync());
+        var delivery = enumerator.Current;
+        var formatter = new ChangeTransactionCloudEventFormatter();
+
+        var firstMetadata = formatter.Describe(delivery.Transaction);
+        var secondMetadata = formatter.Describe(delivery.Transaction);
+        var json = await formatter.ToStructuredJsonAsync(delivery.Transaction);
+        using var document = JsonDocument.Parse(json);
+        var root = document.RootElement;
+        var encoded = Convert.FromBase64String(root.GetProperty("data_base64").GetString()!);
+        var decoded = ChangeTransactionEnvelopeCodec.Decode(
+            ChangeTransactionEnvelopeCodec.FromData(encoded));
+
+        Assert.Equal(firstMetadata.Id, secondMetadata.Id);
+        Assert.Equal("1.0", root.GetProperty("specversion").GetString());
+        Assert.Equal("io.bluetusk.streams.transaction.v1", root.GetProperty("type").GetString());
+        Assert.Equal(1, root.GetProperty("bluetuskchanges").GetInt32());
+        Assert.Equal(delivery.Transaction.TransactionId, decoded.TransactionId);
+        Assert.Equal(delivery.Transaction.CommitEndPosition, decoded.CommitEndPosition);
+        Assert.Single(await decoded.Changes.MaterializeAsync());
+        await delivery.AcknowledgeAsync();
+    }
+
+    private static ChangeSourceIdentity SourceIdentity() =>
+        new("739463", "app", "bluetusk_test", "public:orders");
+
+    private static BlueTuskPgOutputRelation Relation(params BlueTuskPgOutputRelationColumn[] columns) =>
+        new(null, 7, "public", "orders", 'd', columns);
+
+    private static BlueTuskPgOutputEnvelope Envelope(BlueTuskPgOutputMessage message) =>
+        new(new BlueTuskXLogData(Lsn(1), Lsn(500), Timestamp, ReadOnlyMemory<byte>.Empty), message);
+
+    private static BlueTuskLogSequenceNumber Lsn(ulong value) => new(value);
+
+    private static BlueTuskPgOutputTuple Tuple(params BlueTuskPgOutputTupleValue[] values) => new(values);
+
+    private static BlueTuskPgOutputTupleValue Text(string value) =>
+        new(BlueTuskPgOutputTupleValueKind.Text, Encoding.UTF8.GetBytes(value));
+
+    private static BlueTuskPgOutputTupleValue Binary(byte[] value) =>
+        new(BlueTuskPgOutputTupleValueKind.Binary, value);
+
+    private static BlueTuskPgOutputTupleValue Null() =>
+        new(BlueTuskPgOutputTupleValueKind.Null, ReadOnlyMemory<byte>.Empty);
+
+    private static BlueTuskPgOutputTupleValue Toast() =>
+        new(BlueTuskPgOutputTupleValueKind.UnchangedToast, ReadOnlyMemory<byte>.Empty);
+
+    private static async IAsyncEnumerable<BlueTuskPgOutputEnvelope> Messages(
+        IEnumerable<BlueTuskPgOutputEnvelope> messages,
+        [EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        await Task.CompletedTask.ConfigureAwait(false);
+        foreach (var message in messages)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            yield return message;
+        }
+    }
+
+    private static IAsyncEnumerable<BlueTuskPgOutputEnvelope> Messages(
+        params BlueTuskPgOutputEnvelope[] messages) => Messages((IEnumerable<BlueTuskPgOutputEnvelope>)messages);
+
+    private static string CreateTemporaryDirectory()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "bluetusk-streams-tests", Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(path);
+        return path;
+    }
+}

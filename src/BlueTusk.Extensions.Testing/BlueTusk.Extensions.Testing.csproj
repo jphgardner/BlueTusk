@@ -8,8 +8,6 @@
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
     <PackageId>BlueTusk.Extensions.Testing</PackageId>
     <Description>Framework-neutral compatibility contracts for BlueTusk extension packages.</Description>
     <PackageTags>postgresql;database;dotnet;bluetusk;extensions;testing</PackageTags>

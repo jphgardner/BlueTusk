@@ -2,6 +2,112 @@
 
 This file tracks executable repository status. The product vision is broader; unchecked work is not implied by package names already present in the solution.
 
+The post-development V1 [hardening programme](hardening-programme.md) is
+implemented. The internal EF↔Data SPI, NativeAOT/trimming, multiplexing,
+coverage-guided parser fuzzing, ADO.NET compatibility, API budgets,
+supply-chain provenance and PostgreSQL 19 milestone programme all have code,
+tests, documentation and fail-closed verification.
+
+The release-critical path now contains only exact-candidate and external
+evidence: PostgreSQL 19 GA, the 72-hour Streams, 24-hour Sync, and 24-hour
+ContinuousGraph runs, the in-window operational disturbance recoveries,
+seven exact-SHA workflow records, independent review, two pilots covering all
+six families, the 28-day website field window, backup/restore and rollback
+rehearsal, and maintainer sign-off. Publication remains disabled during
+preparation; after GA a reviewed arming PR to `main` creates the immutable
+candidate.
+
+The three-application V1 RC suite, exact prerelease manifest and pack
+verification, GHCR image-evidence workflow, Kubernetes/Helm platform, fluent
+property-graph migration API, and local browser/PostgreSQL acceptance are
+implemented. Public RC publication and homelab rollout remain open external
+operations requiring protected credentials, operators, Secrets, and the
+reviewed immutable `main` commit. See the
+[V1 application suite](v1-applications.md).
+
+## Real-time platform release trains
+
+- [x] V1 RC application suite: Orders, Service Topology, and Fraud package-only consumers with migrations, workers, browser clients, tests, images, Helm, SLOs, and runbooks
+- [x] V1 RC release tooling: exact six-family prerelease manifest, dependency verification, protected prerelease tags, image SBOM/provenance evidence, and fail-closed mutation tests
+- [ ] V1 RC external gate: merge the reviewed applications PR, publish sequential immutable RC packages/images, provision staging prerequisites, and archive the verified homelab rollout
+
+- [x] Phase 0: accepted delivery, checkpoint, snapshot, spool, relay, Live security, and Sync connector decisions
+- [x] Phase 0: independent Provider, Streams, Sync, Live, Control Plane, and Continuous Graph version properties and release workflow
+- [x] Phase 0: machine-enforced application CDC boundary and family declarations
+- [x] Phase 0: public contracts, delivery gates, and operational defaults documented
+- [x] V1 release slice: fail-closed stable/preview channel policy, exact tag/version matching, exact-commit workflow evidence, candidate-only manual dispatch, protected publication environment, and build provenance
+- [x] Phase 1: Streams transaction kernel, explicit row states, streamed assembly, bounded spool, public API baseline, PostgreSQL 15–19 acceptance, and checked-in performance baseline
+- [x] Phase 2 slice: monotonic compare-and-swap checkpoint contract, exclusive leases, fencing tokens, and checkpoint-before-feedback crash boundaries
+- [x] Phase 2 slice: atomic checksummed single-node file state store and public custom-store conformance kit
+- [x] Phase 2 slice: PostgreSQL production state store, server-clock leases, and control-schema publication rejection across PostgreSQL 15–19
+- [x] Phase 2 slice: versioned binary relay envelopes, fenced source append, independent relay groups, replay, retention, capacity limits, and health signals across PostgreSQL 15–19
+- [x] Phase 2 slice: Redis server-clock checkpoint/lease store with atomic script conformance and a dedicated Redis 8 CI gate
+- [x] Phase 2: checkpoint stores, leases, direct groups, and durable PostgreSQL relay
+- [x] Phase 3 slice: typed core mappings, canonical schema/mapping fingerprints, explicit partial-row safety, decoding/drift policy, and snapshot/transaction consumer lifecycle
+- [x] Phase 3 slice: exported consistent snapshot, bounded parallel keyset binary COPY, explicit restart epochs, and matching-position no-gap acceptance across PostgreSQL 15–19
+- [x] Phase 3 slice: EF model-derived typed mappings with startup validation for table, key, publication-column, setter, and duplicate-binding safety
+- [x] Phase 3 slice: in-process hosted consumers, standard health checks, worker status registry, and exporter-neutral activities/metrics
+- [x] Phase 3 slice: CloudEvents 1.0 structured transaction events with stable IDs and versioned integrity-checked payloads
+- [x] Phase 3 slice: idempotent source/relay CLI provisioning, PostgreSQL compatibility validation, canonical publication fingerprints, control isolation, and secret-safe diagnostics
+- [x] Phase 3 slice: Aspire worker wiring with secret-preserving source/control references, relay-by-default configuration, and explicit direct-mode opt-out
+- [x] Phase 3 slice: fail-closed cross-process snapshot-slot recovery with explicit new epochs and PostgreSQL 15-19 acceptance
+- [x] Phase 3: typed mappings, safe snapshot bootstrap, hosted integration, and Streams 0.1.0-preview.1 release train
+- [x] Phase 4 slice: opt-in prepared/commit-prepared/rollback-prepared lifecycle delivery, streamed spooling, live acceptance, and relay envelope format 1-to-2 compatibility
+- [x] Phase 4 slice: transactional relay schema v1-to-v2 migration, envelope-protection/key-rotation hooks, confirmed consumer tombstones, bounded retention policies, and compaction
+- [x] Phase 4 slice: consistent framed relay backup, empty-schema atomic restore, protected-envelope validation, tombstone/fencing preservation, and corruption rollback across PostgreSQL 15–19
+- [x] Phase 4 slice: Control Plane source/slot/WAL/relay/snapshot/group/checkpoint inventory, authorised dashboard pages, confirmed command policies, and immutable PostgreSQL audit across PostgreSQL 15–19
+- [x] Phase 4 slice: Control Plane v1 agent APIs, legacy compatibility aliases, transactionally versioned audit migrations, legacy upgrade, and future-version rejection across PostgreSQL 15–19
+- [x] Phase 4 slice: Control Plane compiler API freeze, executable HTTP/audit format registry, and isolation of the optional Continuous Graph adapter from the stable core
+- [x] Phase 4 slice: version-bound format registry, upgrade evidence, Streams 1.0 candidate API freeze, and restart-safe spool storage accounting
+- [x] Phase 4 slice: isolated-source fault-injected relay endurance runner, immutable binary fingerprinting, fail-closed evidence verifier, local smoke gate, and confirmed self-hosted 72-hour release workflow
+- [ ] Phase 4 release gate: complete and archive one successful 72-hour relay endurance report with all seven content-addressed in-window operational disturbances (the harness is implemented; a short run is not equivalent)
+- [ ] Phase 4: Streams hardening, API freeze, and Control Plane foundation
+- [x] Phase 5 slice: transaction-preserving Sync pipeline state machine, transform fingerprinting, durable-position acknowledgement gate, and explicit poison policy
+- [x] Phase 5 slice: PostgreSQL atomic document mutation/checkpoint destination, guarded snapshot epochs, custom transactional writer, and durable quarantine
+- [x] Phase 5 slice: PostgreSQL, NATS JetStream, Redis, and OpenSearch destinations passing one snapshot/restart/redelivery conformance contract
+- [x] Phase 5 slice: bounded count/key/content-hash reconciliation, idempotent repair, and PostgreSQL, Redis, and OpenSearch native readers/sinks
+- [x] Phase 5 slice: destination-neutral zero-downtime rebuild coordinator, authoritative verification, cutover barrier, worker handoff, and OpenSearch alias swap
+- [x] Phase 5 slice: in-process hosted workers, restart-aware durable-relay snapshot source, lease fencing, health, telemetry, Aspire, retry, rate limiting, and backpressure
+- [x] Phase 5 slice: fingerprinted transform composition with filtering, bounded JSON redaction/enrichment/flattening, and tenant-safe routing
+- [x] Phase 5 slice: crash-safe quarantine-and-pause replay from retained relay transactions across PostgreSQL, NATS, Redis, and OpenSearch
+- [x] Phase 5 slice: redacted Sync control-plane read models plus separately authorized, confirmed, and audited retry/reconcile/rebuild dashboard controls
+- [x] Phase 5 slice: isolated-source four-destination 24-hour endurance runner, source/binary integrity report and fail-closed verifier, local smoke path, and confirmed self-hosted workflow
+- [x] Phase 5 slice: Sync 1.0 candidate API freeze, exact transform-fingerprint fixture, connector format registry, and PostgreSQL upgrade/future-version evidence
+- [ ] Phase 5 release gate: complete and archive one successful 24-hour Sync endurance report with all seven content-addressed in-window operational disturbances (a short orchestration smoke is not equivalent)
+- [ ] Phase 5: PostgreSQL, NATS, Redis, and OpenSearch Sync connectors through 1.0
+- [x] Phase 6 slice: trusted typed query registrations, security-partitioned identities, bounded keyed diffs, and signed rotating resume tokens
+- [x] Phase 6 slice: gap-free cursor reservation, concurrent-invalidation catch-up, coalesced authoritative requery, and fail-closed session bounds
+- [x] Phase 6 slice: durable PostgreSQL invalidation cursors, transaction deduplication, table dependency indexing, and persist-before-ack Streams consumption
+- [x] Phase 6 slice: startup EF query compilation for one keyed table, simple predicates, tenant isolation, deterministic ordering, and bounded Take
+- [x] Phase 6 slice: integrity-checked PostgreSQL replay events, sequence fencing, idempotent crash retry, expiry watermarks, and bounded retention pruning
+- [x] Phase 6 slice: security-scoped shared subscriptions, race-free replay attach, fan-out metrics, quotas, bounded client buffers, and explicit slow-client policy
+- [x] Phase 6 slice: authenticated ASP.NET transport sessions, signed per-event resume, SignalR streaming, and fetch-compatible SSE with explicit failure status
+- [x] Phase 6 slice: framework-neutral TypeScript client plus Angular signals and React concurrent-store adapters
+- [x] Phase 6 slice: authenticated gRPC server-streaming transport with versioned protocol and explicit failure status
+- [x] Phase 6 slice: Aspire topology configuration plus deterministic Live stores and custom replay-store conformance
+- [x] Phase 6 slice: allocation-free Live subscription, fan-out, replay, resume, quota, and disconnect telemetry
+- [x] Phase 6 slice: redacted Live control-plane projection and authorised dashboard/API visibility
+- [x] Phase 6 slice: model-derived one-to-many Include invalidation and PostgreSQL full-text Live queries
+- [x] Phase 6 slice: model-proven projected one-to-many joins, grouping, and aggregate query plans
+- [x] Phase 6 slice: adversarial reconnect sequencing plus checked-in diff, replay, coalescing, and 64-subscriber fan-out budgets
+- [x] Phase 6 release gate: PostgreSQL 15–19 production-store replay through SSE, SignalR, and gRPC plus verified NuGet/npm clients
+- [x] Phase 6 slice: Live 1.0 candidate API freeze, durable format registry, PostgreSQL schema upgrade/future-version rejection, and exact compatibility evidence
+- [ ] Phase 6: authorised Live query platform and clients through 1.0
+- [x] Phase 7 slice: PostgreSQL 19 capability-guarded typed SQL/PGQ registration, exact graph-element invalidation dependencies, bounded deterministic plans, and authoritative Live requery/diff
+- [x] Phase 7 slice: PostgreSQL 19 graph materialisation, affected-vertex requery/diff correctness, and in-flight lock cancellation acceptance
+- [x] Phase 7 slice: executable PostgreSQL 19 fraud-transfer and network-health Continuous Graph applications
+- [x] Phase 7 slice: result-free Continuous Graph registry projection plus authorised, HTML-safe dashboard and API inventory
+- [x] Phase 7 slice: live PostgreSQL registration, 999-path authoritative requery, and affected-invalidation/diff benchmarks with checked-in allocation budgets
+- [x] Phase 7 slice: inspected 0.1.0-preview.1 NuGet pack plus machine-enforced cross-family publication ordering
+- [x] Phase 7 release gate: enable Continuous Graph only after its Live release dependency passes
+- [x] Phase 7: Continuous Graph 0.1.0-preview.1 implementation and packaging gate
+- [x] ContinuousGraph V1 slice: stable 1.0.0 metadata, API freeze, package/SBOM provenance, 24-hour recovery-endurance workflow, fail-closed verifier, and mutation tests
+- [ ] ContinuousGraph V1 release gate: archive one exact-candidate 24-hour PostgreSQL 19 GA run with at least 100,000 evaluations, 99.9% committed outcomes, lifecycle P95 at or below one second, required repair/restart/cancellation/disconnect evidence, and zero ordering/reconciliation errors
+- [x] Control Plane implementation gate: versioned agent contract, PostgreSQL 15–19 upgrade acceptance, and inspected 0.1.0-preview.1 candidate packages
+- [ ] Control Plane publication gate: enable only after the Sync release dependency archives its successful 24-hour endurance report
+
+The detailed contracts and release gates are maintained in the [real-time platform plan](realtime-platform/delivery-plan.md).
+
 ## 0.0.1 — Foundation (complete)
 
 - [x] Repository and package structure
@@ -532,11 +638,11 @@ This file tracks executable repository status. The product vision is broader; un
 
 ## 1.0.0 engineering gate (Milestone 9, complete)
 
-This milestone tracks the repository's 1.0 engineering gates. It does not declare a
-stable or production-endorsed release: published packages remain `0.3.0-preview.1`
-while the provider accumulates external production experience and PostgreSQL 19
-syntax remains beta-sensitive. The product-spec audit is complete: every
-explicit environment and workload gate below is executable and checked.
+This milestone tracks the repository's 1.0 engineering gates. All six families
+are release-prepared at stable `1.0.0`, but no V1 package is published and this
+does not declare a production-endorsed release. PostgreSQL 19 syntax remains
+beta-sensitive until GA. The product-spec audit is complete: every explicit
+environment and workload gate below is executable and checked.
 
 - [x] Stable ADO.NET APIs
   - [x] Compiler-enforced shipped API/nullability baselines for Transport, Protocol, Security, Diagnostics, TypeSystem, Client, and Data
@@ -587,7 +693,9 @@ explicit environment and workload gate below is executable and checked.
 - [x] Complete documentation
   - [x] Data-source-first ADO.NET, EF, replication, extension, graph, security, observability, testing, versioning, and release-readiness guides match executable behavior
   - [x] Cross-platform CI gate validates every repository-local link across all tracked Markdown files
-  - [x] Preview claims retain explicit production, optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 beta boundaries
+  - [x] Stable-candidate claims retain explicit publication, production,
+    optional-credential, raw-SQL, ownership/grant, and PostgreSQL 19 GA
+    boundaries
 - [x] Supported-version CI
 - [x] Dedicated extension-image CI for pgvector, PostGIS, and TimescaleDB ADO.NET/EF gates
 - [x] PgBouncer session- and transaction-pooling CI with live prepared/transaction acceptance
@@ -597,3 +705,27 @@ explicit environment and workload gate below is executable and checked.
 - [x] Representative EF query compilation/materialisation/write and raw/typed SQL/PGQ traversal benchmarks with checked-in ShortRun allocation baselines
 
 Every milestone requires unit, fake-server, conformance, and real-server acceptance coverage appropriate to its surface before the corresponding version is published. The 1.0 gate additionally requires the full PostgreSQL version matrix, differential testing, security review, stress testing, performance baselines, and complete documentation described by the product specification.
+
+## V1 platform expansion
+
+- [x] Bounded statement multiplexing with session-affinity isolation, exact
+  parse/row-description reuse, persistent lanes, bounded queues, error
+  isolation, scheduler telemetry, forced shutdown, fairness, pool/queue
+  exhaustion, admission cancellation, PgBouncer session/transaction acceptance,
+  and a commit-bound MediumRun against non-multiplexed BlueTusk and Npgsql
+- [x] Provider-neutral managed-hosting reconciliation with versioned desired
+  state, canonical plan identity, resource quotas, secret references only,
+  generation/revision compare and swap, renewable fencing leases, deletion
+  protection, a durable PostgreSQL store, and provider conformance boundaries
+- [x] Capability-secured client SQL and remote LINQ with per-request
+  authorisation, immutable policy grants, RLS plus dedicated-role enforcement,
+  read-only/time-bounded execution, allowlisted relational documents,
+  conservative invalidation, stable keyed rows, transport sharing, and
+  TypeScript contracts
+- [x] Deterministic resource-bounded transformation sandbox with a finite JSON
+  instruction VM, stable fingerprinting, cancellation/time/operation/byte
+  budgets, tenant-safe routing, poison handling, and no code-loading or host-I/O
+  surface
+- [x] Incremental Continuous Graph evaluation with authorised affected-key
+  queries, bounded top-N maintenance, authoritative repair, proposal rollback,
+  idempotent replay, and replay-before-Streams-ack ordering

@@ -3,31 +3,31 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskViewOperation : MigrationOperation
+public sealed class CreateViewOperation : MigrationOperation
 {
     public required BlueTuskViewDefinition Definition { get; init; }
 }
 
-public sealed class ReplaceBlueTuskViewOperation : MigrationOperation
+public sealed class ReplaceViewOperation : MigrationOperation
 {
     public required BlueTuskViewDefinition OldDefinition { get; init; }
 
     public required BlueTuskViewDefinition Definition { get; init; }
 }
 
-public sealed class CreateBlueTuskMaterializedViewOperation : MigrationOperation
+public sealed class CreateMaterializedViewOperation : MigrationOperation
 {
     public required BlueTuskMaterializedViewDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskMaterializedViewOperation : MigrationOperation
+public sealed class AlterMaterializedViewOperation : MigrationOperation
 {
     public required BlueTuskMaterializedViewDefinition OldDefinition { get; init; }
 
     public required BlueTuskMaterializedViewDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskViewOperation : MigrationOperation
+public sealed class DropViewOperation : MigrationOperation
 {
     public required BlueTuskViewKind Kind { get; init; }
 
@@ -36,7 +36,7 @@ public sealed class DropBlueTuskViewOperation : MigrationOperation
     public string? Schema { get; init; }
 }
 
-public sealed class RenameBlueTuskViewOperation : MigrationOperation
+public sealed class RenameViewOperation : MigrationOperation
 {
     public required BlueTuskViewKind Kind { get; init; }
 
@@ -49,7 +49,7 @@ public sealed class RenameBlueTuskViewOperation : MigrationOperation
     public string? NewSchema { get; init; }
 }
 
-public sealed class RefreshBlueTuskMaterializedViewOperation : MigrationOperation
+public sealed class RefreshMaterializedViewOperation : MigrationOperation
 {
     public required string Name { get; init; }
 

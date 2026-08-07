@@ -34,8 +34,8 @@ public sealed class RoutineMigrationsTests
             .ToArray();
 
         Assert.IsType<EnsureSchemaOperation>(operations[0]);
-        Assert.Equal(4, operations.OfType<CreateBlueTuskRoutineOperation>().Count());
-        var definitions = model.GetBlueTuskRoutines();
+        Assert.Equal(4, operations.OfType<CreateRoutineOperation>().Count());
+        var definitions = model.GetRoutines();
         Assert.Equal(4, definitions.Routines.Count);
         Assert.Equal(
             2,
@@ -78,12 +78,12 @@ public sealed class RoutineMigrationsTests
             .GetDifferences(source, alteredModel.GetRelationalModel())
             .ToArray();
 
-        var replacements = operations.OfType<ReplaceBlueTuskRoutineOperation>().ToArray();
+        var replacements = operations.OfType<ReplaceRoutineOperation>().ToArray();
         Assert.Equal(2, replacements.Length);
         Assert.Contains(replacements, operation => operation.Definition.Name == "calculate_total");
         Assert.Contains(replacements, operation => operation.Definition.Name == "record_call");
-        Assert.Empty(operations.OfType<CreateBlueTuskRoutineOperation>());
-        Assert.Empty(operations.OfType<DropBlueTuskRoutineOperation>());
+        Assert.Empty(operations.OfType<CreateRoutineOperation>());
+        Assert.Empty(operations.OfType<DropRoutineOperation>());
         var sql = string.Concat(
             alteredContext.GetService<IMigrationsSqlGenerator>()
                 .Generate(operations, alteredModel)
@@ -133,9 +133,9 @@ public sealed class RoutineMigrationsTests
             initialContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             changedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
 
-        var create = Assert.Single(operations.OfType<CreateBlueTuskRoutineOperation>());
+        var create = Assert.Single(operations.OfType<CreateRoutineOperation>());
         Assert.Equal("bigint, numeric", create.Definition.InputArgumentTypesSql);
-        var drop = Assert.Single(operations.OfType<DropBlueTuskRoutineOperation>());
+        var drop = Assert.Single(operations.OfType<DropRoutineOperation>());
         Assert.Contains("numeric", drop.IdentityArgumentsSql, StringComparison.Ordinal);
         Assert.True(drop.IsDestructiveChange);
         Assert.True(Array.IndexOf(operations, create) < Array.IndexOf(operations, drop));
@@ -154,11 +154,11 @@ public sealed class RoutineMigrationsTests
             emptyContext.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
 
         Assert.True(
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskDomainTypeOperation) <
-            Array.FindIndex(creates, operation => operation is CreateBlueTuskRoutineOperation));
+            Array.FindIndex(creates, operation => operation is CreateDomainTypeOperation) <
+            Array.FindIndex(creates, operation => operation is CreateRoutineOperation));
         Assert.True(
-            Array.FindIndex(drops, operation => operation is DropBlueTuskRoutineOperation) <
-            Array.FindIndex(drops, operation => operation is DropBlueTuskDomainTypeOperation));
+            Array.FindIndex(drops, operation => operation is DropRoutineOperation) <
+            Array.FindIndex(drops, operation => operation is DropDomainTypeOperation));
     }
 
     [Fact]
@@ -174,11 +174,11 @@ public sealed class RoutineMigrationsTests
             emptyContext.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
 
         var createTableIndex = Array.FindIndex(creates, operation => operation is CreateTableOperation);
-        var createRoutineIndex = Array.FindIndex(creates, operation => operation is CreateBlueTuskRoutineOperation);
+        var createRoutineIndex = Array.FindIndex(creates, operation => operation is CreateRoutineOperation);
         Assert.True(
             createTableIndex >= 0 && createTableIndex < createRoutineIndex,
             string.Join(", ", creates.Select(operation => operation.GetType().Name)));
-        var dropRoutineIndex = Array.FindIndex(drops, operation => operation is DropBlueTuskRoutineOperation);
+        var dropRoutineIndex = Array.FindIndex(drops, operation => operation is DropRoutineOperation);
         var dropTableIndex = Array.FindIndex(drops, operation => operation is DropTableOperation);
         Assert.True(
             dropRoutineIndex >= 0 && dropRoutineIndex < dropTableIndex,
@@ -203,20 +203,20 @@ public sealed class RoutineMigrationsTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskRoutineOperation { Definition = oldFunction },
-                new ReplaceBlueTuskRoutineOperation
+                new CreateRoutineOperation { Definition = oldFunction },
+                new ReplaceRoutineOperation
                 {
                     OldDefinition = oldFunction,
                     Definition = function,
                 },
-                new DropBlueTuskRoutineOperation
+                new DropRoutineOperation
                 {
                     Kind = BlueTuskRoutineKind.Function,
                     Name = oldFunction.Name,
                     Schema = oldFunction.Schema,
                     IdentityArgumentsSql = oldFunction.IdentityArgumentsSql,
                 },
-                new RenameBlueTuskRoutineOperation
+                new RenameRoutineOperation
                 {
                     Kind = BlueTuskRoutineKind.Function,
                     Name = oldFunction.Name,
@@ -229,10 +229,10 @@ public sealed class RoutineMigrationsTests
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskRoutine", code, StringComparison.Ordinal);
-        Assert.Contains("ReplaceBlueTuskRoutine", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskRoutine", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskRoutine", code, StringComparison.Ordinal);
+        Assert.Contains("CreateRoutine", code, StringComparison.Ordinal);
+        Assert.Contains("ReplaceRoutine", code, StringComparison.Ordinal);
+        Assert.Contains("DropRoutine", code, StringComparison.Ordinal);
+        Assert.Contains("RenameRoutine", code, StringComparison.Ordinal);
         Assert.Contains("BlueTuskRoutineKind.Function", code, StringComparison.Ordinal);
     }
 
@@ -313,7 +313,7 @@ public sealed class RoutineMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskRoutines(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasRoutines(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.Single(scaffolded.AdditionalFiles);
             }
 
@@ -336,10 +336,10 @@ public sealed class RoutineMigrationsTests
                 connectionString,
                 "SELECT message FROM routine_tests.call_log ORDER BY id DESC LIMIT 1"));
 
-            var calculate = alteredModel.GetBlueTuskRoutines().Routines
+            var calculate = alteredModel.GetRoutines().Routines
                 .Single(definition => definition.Name == "calculate_total");
             var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            migration.RenameBlueTuskRoutine(
+            migration.RenameRoutine(
                 BlueTuskRoutineKind.Function,
                 calculate.Name,
                 calculate.IdentityArgumentsSql,
@@ -363,12 +363,12 @@ public sealed class RoutineMigrationsTests
     {
         var modelBuilder = new ModelBuilder();
         ConfigureRoutines(modelBuilder, altered);
-        return modelBuilder.Model.GetBlueTuskRoutines();
+        return modelBuilder.Model.GetRoutines();
     }
 
     private static void ConfigureRoutines(ModelBuilder modelBuilder, bool altered)
     {
-        modelBuilder.HasBlueTuskFunction(
+        modelBuilder.HasFunction(
             "calculate_total",
             "numeric",
             altered
@@ -382,7 +382,7 @@ public sealed class RoutineMigrationsTests
                 .HasParallelSafety(BlueTuskFunctionParallelSafety.Safe)
                 .HasCost(1),
             "routine_tests");
-        modelBuilder.HasBlueTuskFunction(
+        modelBuilder.HasFunction(
             "format_value",
             "text",
             "SELECT value::text",
@@ -392,7 +392,7 @@ public sealed class RoutineMigrationsTests
                 .IsStrict()
                 .HasParallelSafety(BlueTuskFunctionParallelSafety.Safe),
             "routine_tests");
-        modelBuilder.HasBlueTuskFunction(
+        modelBuilder.HasFunction(
             "format_value",
             "text",
             "SELECT upper(value)",
@@ -402,7 +402,7 @@ public sealed class RoutineMigrationsTests
                 .IsStrict()
                 .HasParallelSafety(BlueTuskFunctionParallelSafety.Safe),
             "routine_tests");
-        modelBuilder.HasBlueTuskProcedure(
+        modelBuilder.HasProcedure(
             "record_call",
             altered
                 ? "BEGIN INSERT INTO routine_tests.call_log(message) VALUES (upper(message)); END"
@@ -472,7 +472,7 @@ public sealed class RoutineMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureRoutines(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskFunction(
+            modelBuilder.HasFunction(
                 "calculate_total",
                 "integer",
                 "SELECT 1",
@@ -488,7 +488,7 @@ public sealed class RoutineMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureRoutines(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskFunction(
+            modelBuilder.HasFunction(
                 "calculate_total",
                 "numeric",
                 "SELECT subtotal * (1 + tax_rate)",
@@ -504,12 +504,12 @@ public sealed class RoutineMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureRoutines(modelBuilder, altered: false);
-            modelBuilder.HasNoBlueTuskRoutine(
+            modelBuilder.HasNoRoutine(
                     BlueTuskRoutineKind.Function,
                     "calculate_total",
                     "numeric, numeric",
                     "routine_tests")
-                .HasBlueTuskFunction(
+                .HasFunction(
                     "calculate_total",
                     "numeric",
                     "SELECT amount * (1 + tax_rate)",
@@ -523,7 +523,7 @@ public sealed class RoutineMigrationsTests
     private sealed class KindFunctionContext(DbContextOptions<KindFunctionContext> options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskFunction(
+            modelBuilder.HasFunction(
                 "kind_change",
                 "void",
                 "SELECT NULL",
@@ -533,7 +533,7 @@ public sealed class RoutineMigrationsTests
     private sealed class KindProcedureContext(DbContextOptions<KindProcedureContext> options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder) =>
-            modelBuilder.HasBlueTuskProcedure(
+            modelBuilder.HasProcedure(
                 "kind_change",
                 "SELECT NULL",
                 schema: "routine_tests");
@@ -543,12 +543,12 @@ public sealed class RoutineMigrationsTests
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
-            modelBuilder.HasBlueTuskDomain(
+            modelBuilder.HasDomain(
                 "positive_integer",
                 "integer",
                 domain => domain.HasCheckConstraint("positive", "VALUE > 0"),
                 "routine_tests");
-            modelBuilder.HasBlueTuskFunction(
+            modelBuilder.HasFunction(
                 "echo_positive",
                 "routine_tests.positive_integer",
                 "SELECT value",
@@ -566,7 +566,7 @@ public sealed class RoutineMigrationsTests
                 entity.ToTable("tracked_rows", "routine_tests");
                 entity.HasKey(row => row.Id);
             });
-            modelBuilder.HasBlueTuskRoutine(new BlueTuskRoutineDefinition(
+            modelBuilder.HasRoutine(new BlueTuskRoutineDefinition(
                 BlueTuskRoutineKind.Function,
                 "tracked_count",
                 "routine_tests",

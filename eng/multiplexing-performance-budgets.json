@@ -1,0 +1,37 @@
+{
+  "minimumResultSamples": 20,
+  "comparisons": [
+    {
+      "candidate": "BlueTuskConcurrentScalarBurstAsync",
+      "reference": "NpgsqlConcurrentScalarBurstAsync",
+      "maxMeanRatio": 1.05,
+      "maxP95Ratio": 1.05,
+      "maxP99Ratio": 1.05,
+      "maxAllocationRatio": 1.05
+    },
+    {
+      "candidate": "BlueTuskReusedScalarBurstAsync",
+      "reference": "NpgsqlReusedScalarBurstAsync",
+      "maxMeanRatio": 1.05,
+      "maxP95Ratio": 1.05,
+      "maxP99Ratio": 1.05,
+      "maxAllocationRatio": 1.55
+    },
+    {
+      "candidate": "BlueTuskConcurrentScalarBurstAsync",
+      "reference": "BlueTuskPooledConcurrentScalarBurstAsync",
+      "maxMeanRatio": 0.25,
+      "maxP95Ratio": 0.25,
+      "maxP99Ratio": 0.25,
+      "maxAllocationRatio": 0.60
+    },
+    {
+      "candidate": "BlueTuskReusedScalarBurstAsync",
+      "reference": "BlueTuskPooledReusedScalarBurstAsync",
+      "maxMeanRatio": 0.25,
+      "maxP95Ratio": 0.25,
+      "maxP99Ratio": 0.25,
+      "maxAllocationRatio": 0.60
+    }
+  ]
+}

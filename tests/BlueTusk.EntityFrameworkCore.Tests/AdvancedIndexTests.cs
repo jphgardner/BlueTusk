@@ -56,13 +56,13 @@ public sealed class AdvancedIndexTests
         var entity = modelBuilder.Entity<AdvancedDocument>();
         var index = entity.HasIndex(document => new { document.Title, document.CreatedAt });
 
-        Assert.Throws<ArgumentException>(() => index.UseBlueTuskIndexMethod("public.btree"));
-        Assert.Throws<ArgumentException>(() => index.UseBlueTuskOperatorClass("text_ops", null, "extra"));
-        Assert.Throws<ArgumentException>(() => index.HasBlueTuskStorageParameter("fillfactor;drop", "80"));
-        Assert.Throws<ArgumentException>(() => index.HasBlueTuskStorageParameter("fillfactor", "80;drop"));
-        Assert.Throws<ArgumentOutOfRangeException>(() => index.HasBlueTuskFillFactor(9));
+        Assert.Throws<ArgumentException>(() => index.UseIndexMethod("public.btree"));
+        Assert.Throws<ArgumentException>(() => index.UseOperatorClass("text_ops", null, "extra"));
+        Assert.Throws<ArgumentException>(() => index.HasStorageParameter("fillfactor;drop", "80"));
+        Assert.Throws<ArgumentException>(() => index.HasStorageParameter("fillfactor", "80;drop"));
+        Assert.Throws<ArgumentOutOfRangeException>(() => index.HasFillFactor(9));
         Assert.Throws<ArgumentException>(() => index.IncludeProperties(document => document.Title));
-        Assert.Throws<ArgumentException>(() => index.HasBlueTuskIndexExpressions(" "));
+        Assert.Throws<ArgumentException>(() => index.HasIndexExpressions(" "));
     }
 
     [Fact]
@@ -243,17 +243,17 @@ public sealed class AdvancedIndexTests
                 .IsUnique()
                 .IsDescending(false, true)
                 .HasFilter("\"title\" IS NOT NULL")
-                .UseBlueTuskIndexMethod("btree")
-                .UseBlueTuskOperatorClass("text_pattern_ops", null)
-                .UseBlueTuskCollation("C", null)
-                .HasBlueTuskNullSortOrder(
+                .UseIndexMethod("btree")
+                .UseOperatorClass("text_pattern_ops", null)
+                .UseCollation("C", null)
+                .HasNullSortOrder(
                     BlueTuskIndexNullSortOrder.NullsFirst,
                     BlueTuskIndexNullSortOrder.NullsLast)
                 .IncludeProperties(document => document.SearchVector)
-                .HasBlueTuskStorageParameter("fillfactor", "80")
-                .HasBlueTuskNullsDistinct(false)
-                .HasBlueTuskIndexExpressions("lower(\"title\")", null)
-                .IsBlueTuskConcurrent();
+                .HasStorageParameter("fillfactor", "80")
+                .HasNullsDistinct(false)
+                .HasIndexExpressions("lower(\"title\")", null)
+                .IsConcurrent();
         }
     }
 

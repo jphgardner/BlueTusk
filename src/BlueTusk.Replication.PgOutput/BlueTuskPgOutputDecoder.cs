@@ -3,6 +3,7 @@ namespace BlueTusk.Replication.PgOutput;
 /// <summary>Statefully decodes PostgreSQL pgoutput messages.</summary>
 public sealed class BlueTuskPgOutputDecoder
 {
+    private const int MaximumCollectionCount = 4096;
     private static readonly DateTimeOffset PostgreSqlEpoch =
         new(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
     private readonly BlueTuskPgOutputDecoderOptions _options;
@@ -28,7 +29,10 @@ public sealed class BlueTuskPgOutputDecoder
     public BlueTuskPgOutputEnvelope Decode(BlueTuskXLogData xLogData)
     {
         ArgumentNullException.ThrowIfNull(xLogData);
-        return new BlueTuskPgOutputEnvelope(xLogData, Decode(xLogData.Data));
+        var message = Decode(xLogData.Data);
+        return xLogData.OwnsData
+            ? BlueTuskPgOutputEnvelope.CreateOwned(xLogData, message)
+            : new BlueTuskPgOutputEnvelope(xLogData, message);
     }
 
     /// <summary>Decodes one complete pgoutput message payload.</summary>
@@ -111,10 +115,10 @@ public sealed class BlueTuskPgOutputDecoder
         var relationName = reader.ReadCString();
         var replicaIdentity = (char)reader.ReadByte();
         var count = ReadNonNegativeInt16(ref reader, "relation column");
-        if (count > reader.Remaining)
+        if (count > MaximumCollectionCount || count > reader.Remaining)
         {
             throw new BlueTuskPgOutputProtocolException(
-                "A relation column count exceeds the remaining message size.");
+                "A relation column count exceeds the bounded message capacity.");
         }
 
         var columns = new BlueTuskPgOutputRelationColumn[count];
@@ -224,10 +228,11 @@ public sealed class BlueTuskPgOutputDecoder
                 "A truncate message declared a negative relation count.");
         }
 
-        if (count > reader.Remaining / sizeof(uint))
+        if (count > MaximumCollectionCount ||
+            count > (reader.Remaining - sizeof(byte)) / sizeof(uint))
         {
             throw new BlueTuskPgOutputProtocolException(
-                "A truncate relation count exceeds the remaining message size.");
+                "A truncate relation count exceeds the bounded message capacity.");
         }
 
         var options = (BlueTuskPgOutputTruncateOptions)reader.ReadByte();
@@ -418,10 +423,10 @@ public sealed class BlueTuskPgOutputDecoder
         ref BlueTuskPgOutputPayloadReader reader)
     {
         var count = ReadNonNegativeInt16(ref reader, "tuple column");
-        if (count > reader.Remaining)
+        if (count > MaximumCollectionCount || count > reader.Remaining)
         {
             throw new BlueTuskPgOutputProtocolException(
-                "A tuple column count exceeds the remaining message size.");
+                "A tuple column count exceeds the bounded message capacity.");
         }
 
         var values = new BlueTuskPgOutputTupleValue[count];

@@ -2,9 +2,16 @@ using System.Globalization;
 
 namespace BlueTusk.TypeSystem;
 
-public sealed class BlueTuskDateCodec : BlueTuskCodec<DateOnly>
+public sealed class BlueTuskDateCodec :
+    BlueTuskCodec<DateOnly>,
+    IBlueTuskRangeCodecFactory
 {
     private static readonly DateOnly Epoch = new(2000, 1, 1);
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<DateOnly>.Create(subtype, subtypeCodec);
 
     public override DateOnly ReadTyped(
         ref BlueTuskReader reader,
@@ -153,9 +160,20 @@ public sealed class BlueTuskTimeCodec : BlueTuskCodec<TimeSpan>
         new($"PostgreSQL {type.QualifiedName} binary values must contain exactly {width} bytes.");
 }
 
-public sealed class BlueTuskTimestampCodec : BlueTuskCodec<DateTime>
+public sealed class BlueTuskTimestampCodec :
+    BlueTuskCodec<DateTime>,
+    IBlueTuskRangeCodecFactory
 {
     private static readonly DateTime Epoch = new(2000, 1, 1, 0, 0, 0, DateTimeKind.Unspecified);
+    private static readonly long MinimumMicroseconds =
+        (DateTime.MinValue.Ticks - Epoch.Ticks) / TimeSpan.TicksPerMicrosecond;
+    private static readonly long MaximumMicroseconds =
+        (DateTime.MaxValue.Ticks - Epoch.Ticks) / TimeSpan.TicksPerMicrosecond;
+
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<DateTime>.Create(subtype, subtypeCodec);
 
     public override DateTime ReadTyped(
         ref BlueTuskReader reader,
@@ -211,12 +229,24 @@ public sealed class BlueTuskTimestampCodec : BlueTuskCodec<DateTime>
                 $"PostgreSQL {type.QualifiedName} binary values must contain exactly {sizeof(long)} bytes.");
         }
 
-        return reader.ReadInt64BigEndian() switch
+        var microseconds = reader.ReadInt64BigEndian();
+        if (microseconds is long.MaxValue)
         {
-            long.MaxValue => DateTime.MaxValue,
-            long.MinValue => DateTime.MinValue,
-            var microseconds => Epoch.AddTicks(checked(microseconds * TimeSpan.TicksPerMicrosecond)),
-        };
+            return DateTime.MaxValue;
+        }
+
+        if (microseconds is long.MinValue)
+        {
+            return DateTime.MinValue;
+        }
+
+        if (microseconds < MinimumMicroseconds || microseconds > MaximumMicroseconds)
+        {
+            throw new InvalidOperationException(
+                $"PostgreSQL {type.QualifiedName} binary value is outside the supported DateTime range.");
+        }
+
+        return Epoch.AddTicks(microseconds * TimeSpan.TicksPerMicrosecond);
     }
 
     internal static void WriteBinary(ref BlueTuskWriter writer, DateTime value) =>
@@ -227,8 +257,15 @@ public sealed class BlueTuskTimestampCodec : BlueTuskCodec<DateTime>
                 : (value.Ticks - Epoch.Ticks) / TimeSpan.TicksPerMicrosecond);
 }
 
-public sealed class BlueTuskTimestampWithTimeZoneCodec : BlueTuskCodec<DateTimeOffset>
+public sealed class BlueTuskTimestampWithTimeZoneCodec :
+    BlueTuskCodec<DateTimeOffset>,
+    IBlueTuskRangeCodecFactory
 {
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<DateTimeOffset>.Create(subtype, subtypeCodec);
+
     public override DateTimeOffset ReadTyped(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,

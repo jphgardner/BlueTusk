@@ -74,7 +74,7 @@ using BlueTusk.TypeSystem;
 [BlueTuskComposite("app", "address")]
 public sealed partial record Address(int HouseNumber, string Street);
 
-Address.RegisterBlueTuskCodec(dataSourceBuilder.Types);
+Address.RegisterCodec(dataSourceBuilder.Types);
 ```
 
 The generator follows the runtime mapper's snake-case and `[BlueTuskName]`

@@ -183,6 +183,28 @@ public sealed class BlueTuskBackendMessageDecoderTests
             () => BlueTuskBackendMessageDecoder.DecodeDataRow(Message('D', payload)));
     }
 
+    [Fact]
+    public void Rejects_collection_counts_that_exceed_bounded_payload_capacity()
+    {
+        var rowDescription = new ArrayBufferWriter<byte>();
+        WriteInt16(rowDescription, 4097);
+        var dataRow = new ArrayBufferWriter<byte>();
+        WriteInt16(dataRow, 4097);
+        var copyResponse = new ArrayBufferWriter<byte>();
+        WriteByte(copyResponse, (byte)BlueTuskCopyFormat.Binary);
+        WriteInt16(copyResponse, 4097);
+
+        Assert.Throws<BlueTuskProtocolException>(
+            () => BlueTuskBackendMessageDecoder.DecodeRowDescription(
+                Message('T', rowDescription)));
+        Assert.Throws<BlueTuskProtocolException>(
+            () => BlueTuskBackendMessageDecoder.DecodeDataRow(
+                Message('D', dataRow)));
+        Assert.Throws<BlueTuskProtocolException>(
+            () => BlueTuskBackendMessageDecoder.DecodeCopyResponse(
+                Message('H', copyResponse)));
+    }
+
     private static BlueTuskBackendMessage Message(char code, ArrayBufferWriter<byte> payload) =>
         Message(code, payload.WrittenMemory);
 

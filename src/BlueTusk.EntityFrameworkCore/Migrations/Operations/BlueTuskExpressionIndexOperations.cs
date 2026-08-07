@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskExpressionIndexOperation : MigrationOperation
+public sealed class CreateExpressionIndexOperation : MigrationOperation
 {
     public required string Table { get; init; }
 
@@ -12,7 +12,7 @@ public sealed class CreateBlueTuskExpressionIndexOperation : MigrationOperation
     public required BlueTuskExpressionIndexDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskExpressionIndexOperation : MigrationOperation
+public sealed class DropExpressionIndexOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
@@ -21,7 +21,7 @@ public sealed class DropBlueTuskExpressionIndexOperation : MigrationOperation
     public bool Concurrently { get; init; }
 }
 
-public sealed class RenameBlueTuskExpressionIndexOperation : MigrationOperation
+public sealed class RenameExpressionIndexOperation : MigrationOperation
 {
     public required string Name { get; init; }
 

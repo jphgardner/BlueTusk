@@ -3,8 +3,15 @@ using System.Globalization;
 namespace BlueTusk.TypeSystem;
 
 /// <summary>Encodes and decodes PostgreSQL <c>int4</c> in text and binary formats.</summary>
-public sealed class BlueTuskInt32Codec : BlueTuskCodec<int>
+public sealed class BlueTuskInt32Codec :
+    BlueTuskCodec<int>,
+    IBlueTuskRangeCodecFactory
 {
+    IBlueTuskCodec? IBlueTuskRangeCodecFactory.CreateRangeCodec(
+        BlueTuskTypeDescriptor subtype,
+        IBlueTuskCodec subtypeCodec) =>
+        BlueTuskBuiltInRangeCodecFactory<int>.Create(subtype, subtypeCodec);
+
     public override int ReadTyped(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,

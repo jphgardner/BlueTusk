@@ -2,10 +2,23 @@
 
 **PostgreSQL, fully exposed to .NET.**
 
-BlueTusk is a ground-up PostgreSQL provider ecosystem for .NET. Its long-term scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, and PostgreSQL SQL/PGQ support—without a runtime dependency on Npgsql.
+BlueTusk is a ground-up PostgreSQL platform for .NET. Its scope includes a
+native wire-protocol engine, ADO.NET, replication, Entity Framework Core,
+extension packages, PostgreSQL SQL/PGQ support, and an independently versioned
+[real-time application platform](docs/realtime-platform/README.md)—without a
+runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is an experimental `0.3.0-preview.1` provider, not a production endorsement. The product-spec engineering gates are implemented and executable, including ADO.NET, EF Core, design tooling, PostgreSQL-native data paths, replication, extensions, security, stress, compatibility, documentation, and the PostgreSQL 15–19 matrix. The preview label remains while the project accumulates external production experience and PostgreSQL 19 syntax remains beta-sensitive. See the [roadmap](docs/roadmap.md), [release-readiness record](docs/release-readiness.md), and [support matrix](VERSIONING.md) for the exact evidence and boundaries.
+> BlueTusk is prepared as six stable `1.0.0` product families, but no V1
+> package has been published and this is not yet a production endorsement.
+> Publication remains disabled during preparation. The immutable candidate
+> cannot be armed on `main` until PostgreSQL 19 GA is recorded, and it cannot
+> be published until the seven exact-SHA workflows—including 72-hour Streams,
+> 24-hour Sync, and 24-hour ContinuousGraph endurance—plus the two independent
+> pilots, 28-day website field window, operational rehearsals, review, and
+> protected approvals pass. Start with the
+> [documentation handbook](docs/README.md), [V1 readiness record](docs/v1-release-readiness.md),
+> [roadmap](docs/roadmap.md), and [support matrix](VERSIONING.md).
 
 ## Build
 
@@ -19,6 +32,10 @@ dotnet restore BlueTusk.slnx
 dotnet build BlueTusk.slnx --no-restore
 dotnet test BlueTusk.slnx --no-build
 ```
+
+The root solution is grouped by product and role rather than physical folder.
+See [repository and solution layout](docs/contributing/repository-layout.md) for
+navigation, project-registration rules, and safe generated-output cleanup.
 
 The solution includes BlueTusk's native xUnit v3 tests and a separate xUnit v2
 assembly that consumes Microsoft's official EF Core relational specification
@@ -75,15 +92,37 @@ EntityFrameworkCore → Data → Client → Protocol → Transport
 Replication.PgOutput → Replication → Client
 ```
 
-See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [API compatibility](docs/api-compatibility.md), [runtime release readiness](docs/release-readiness.md), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [security review](docs/security.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+See [Architecture](docs/architecture/overview.md), [ADRs](docs/architecture/decisions), [API compatibility](docs/api-compatibility.md), [runtime release readiness](docs/release-readiness.md), [release process](docs/release-process.md), [type mappings](docs/types/README.md), [extension SDK](docs/extensions/README.md), [replication](docs/replication/README.md), [diagnostics and observability](docs/observability.md), [security review](docs/security.md), [PostgreSQL 19 SQL/PGQ](docs/graph/README.md), [protocol captures](docs/protocol/capture-format.md), [benchmarks](benchmarks/README.md), and [Contributing](CONTRIBUTING.md).
+
+The real-time platform is delivered in independently gated Streams, Sync, Live,
+Control Plane, and Continuous Graph release trains. Their V1 code, tests,
+package manifests and evidence verifiers are implemented. The remaining release
+work is deliberately operational: merge the final arming PR after PostgreSQL 19
+GA, archive the exact 72-hour Streams, 24-hour Sync, and 24-hour
+ContinuousGraph candidate runs, complete the content-addressed disturbance
+recoveries and external acceptance window, and obtain independent sign-off.
+Package names and successful local builds are not claims of public availability.
+
+Three package-consumer applications now exercise the release train end to end:
+Order Fulfilment Operations, Service Topology Centre, and Fraud Graph
+Investigator. Their exact-RC architecture, application workflows, PostgreSQL
+19 staging boundary, local verification, Kubernetes topology, and stable-pilot
+promotion rules are recorded in the
+[V1 application suite](docs/v1-applications.md). RC application evidence is
+deliberately separate from immutable stable-candidate and pilot evidence.
+
+Read the [platform contracts](docs/realtime-platform/contracts.md),
+[real-time operations guide](docs/realtime-platform/operations.md), and
+[release process](docs/release-process.md) before designing a production
+topology.
 
 ## Status
 
-The current `0.3.0-preview.1` implementation provides:
+The release-prepared `1.0.0` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
-- compiler-enforced shipped API/nullability baselines for the ADO.NET stack, replication packages, and extension-authoring seam;
+- a hash-locked V1 API/nullability baseline for every publishable Provider library, including EF Core, extensions, and identity adapters;
 - TCP and Unix-domain transports with deterministic DNS/address fallback, total connect
   deadlines, cancellation, TCP keepalive, bounded socket buffers, and classified connection
   failures;
@@ -134,10 +173,13 @@ The current `0.3.0-preview.1` implementation provides:
 - EF Core CRUD, transactions, generated values, core LINQ, physical database lifecycle, table CHECK and exclusion constraints, advanced column/expression PostgreSQL indexes, table/view/event-trigger, rewrite-rule, logical-publication/subscription, foreign-data-wrapper/server/user-mapping/foreign-table, tablespace, operator/operator-family/operator-class/cast/aggregate, declarative partition, row-level-security, direct table-inheritance, collation, installed-extension, enum/domain/composite/range/multirange-type, function/procedure, and ordinary/materialised-view migrations/scaffolding, typed PostgreSQL
   operator translations including `ANY`/`ALL`, row-value comparisons, array/range/multirange algebra, JSONB extraction/mutation, full-text composition, network arithmetic, bit strings, and complete built-in geometric forms, typed array/string/bytea/numeric/formatting/range/JSONB/regex/network/full-text/date-time/geometric scalar functions, complete built-in PostgreSQL aggregate families (including PostgreSQL 16 strict/unique variants), multidimensional array construction/subscripts/slices, lateral array element/subscript expansion, typed `generate_series`, scalar/key-value/model-derived JSONB roots, typed two- through four-array `unnest`, regex/delimiter table roots, runtime enum/domain predicates, catalogue-resolved nested composite/lossless-record field access, ordered `DISTINCT ON`, `TABLESAMPLE`, row locking, ranking/value window projections, recursive/materialized CTEs, `RETURNING`, `ON CONFLICT`, single-row `MERGE`, typed system columns with `xmin` concurrency, model-registered table-valued functions, initial migrations, and reverse engineering;
 - PostgreSQL-native EF scalar, array, range, multirange, enum, domain, composite, and record mappings.
+- readable fluent `CreatePropertyGraph` migrations with validated vertex,
+  edge, label, property, key, source, and destination builders; generated
+  migrations no longer embed serialized graph metadata strings.
 - a packaged `bluetusk scaffold` database-first tool with schema/table filters,
   PostgreSQL-specific metadata retention, and secure-by-default connection handling.
 - an immutable data-source feature registry plus independently packaged,
-  live-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF, `citext` ADO.NET/EF, `hstore`, `ltree`, `pg_trgm`, and pgvector ADO.NET/EF previews.
+  live-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF, `citext` ADO.NET/EF, `hstore`, `ltree`, `pg_trgm`, and pgvector ADO.NET/EF integrations.
 - a packaged extension-authoring template and framework-neutral live compatibility harness.
 - catalogue-probed PostgreSQL 19 SQL/PGQ capability detection, live raw-SQL property-graph coverage, typed information-schema discovery, text/JSON schema tooling, capability-guarded EF migrations/reverse engineering, and typed composable EF linear-path queries.
 - a benchmark-backed decision to retain the genuine sync/async ArrayPool/Span/Memory

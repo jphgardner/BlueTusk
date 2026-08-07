@@ -3,82 +3,82 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskOperatorOperation : MigrationOperation
+public sealed class CreateOperatorOperation : MigrationOperation
 {
     public required BlueTuskOperatorDefinition Definition { get; init; }
 }
 
-public sealed class ReplaceBlueTuskOperatorOperation : MigrationOperation
+public sealed class ReplaceOperatorOperation : MigrationOperation
 {
     public required BlueTuskOperatorDefinition OldDefinition { get; init; }
     public required BlueTuskOperatorDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskOperatorOperation : MigrationOperation
+public sealed class DropOperatorOperation : MigrationOperation
 {
     public required BlueTuskOperatorDefinition Definition { get; init; }
 }
 
-public sealed class CreateBlueTuskOperatorFamilyOperation : MigrationOperation
+public sealed class CreateOperatorFamilyOperation : MigrationOperation
 {
     public required BlueTuskOperatorFamilyDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskOperatorFamilyOperation : MigrationOperation
+public sealed class AlterOperatorFamilyOperation : MigrationOperation
 {
     public required BlueTuskOperatorFamilyDefinition OldDefinition { get; init; }
     public required BlueTuskOperatorFamilyDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskOperatorFamilyOperation : MigrationOperation
+public sealed class DropOperatorFamilyOperation : MigrationOperation
 {
     public required BlueTuskOperatorFamilyDefinition Definition { get; init; }
 }
 
-public sealed class CreateBlueTuskOperatorClassOperation : MigrationOperation
+public sealed class CreateOperatorClassOperation : MigrationOperation
 {
     public required BlueTuskOperatorClassDefinition Definition { get; init; }
 }
 
-public sealed class ReplaceBlueTuskOperatorClassOperation : MigrationOperation
+public sealed class ReplaceOperatorClassOperation : MigrationOperation
 {
     public required BlueTuskOperatorClassDefinition OldDefinition { get; init; }
     public required BlueTuskOperatorClassDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskOperatorClassOperation : MigrationOperation
+public sealed class DropOperatorClassOperation : MigrationOperation
 {
     public required BlueTuskOperatorClassDefinition Definition { get; init; }
 }
 
-public sealed class CreateBlueTuskCastOperation : MigrationOperation
+public sealed class CreateCastOperation : MigrationOperation
 {
     public required BlueTuskCastDefinition Definition { get; init; }
 }
 
-public sealed class ReplaceBlueTuskCastOperation : MigrationOperation
+public sealed class ReplaceCastOperation : MigrationOperation
 {
     public required BlueTuskCastDefinition OldDefinition { get; init; }
     public required BlueTuskCastDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskCastOperation : MigrationOperation
+public sealed class DropCastOperation : MigrationOperation
 {
     public required BlueTuskCastDefinition Definition { get; init; }
 }
 
-public sealed class CreateBlueTuskAggregateOperation : MigrationOperation
+public sealed class CreateAggregateOperation : MigrationOperation
 {
     public required BlueTuskAggregateDefinition Definition { get; init; }
 }
 
-public sealed class ReplaceBlueTuskAggregateOperation : MigrationOperation
+public sealed class ReplaceAggregateOperation : MigrationOperation
 {
     public required BlueTuskAggregateDefinition OldDefinition { get; init; }
     public required BlueTuskAggregateDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskAggregateOperation : MigrationOperation
+public sealed class DropAggregateOperation : MigrationOperation
 {
     public required BlueTuskAggregateDefinition Definition { get; init; }
 }

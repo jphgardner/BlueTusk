@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.TimescaleDB
 
-Preview TimescaleDB support for BlueTusk. TimescaleDB adds SQL behavior rather
+Stable TimescaleDB support for BlueTusk. TimescaleDB adds SQL behavior rather
 than an application wire type, so this package contributes an immutable feature
 plus parameterized ADO.NET operations for version discovery, converting an
 existing table to a range hypertable, approximate row counts, retention and
@@ -41,5 +41,5 @@ with `RefreshContinuousAggregateAsync`; add/remove policy helpers use finite
 compression-policy names. Typed EF queries and migration helpers are separately
 packaged in `BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore`.
 
-This package and the BlueTusk extension SDK are experimental `0.3.0-preview.1`
-APIs, not stable or production-ready contracts.
+This package and the BlueTusk extension SDK use the stable 1.0.0
+Provider-family contract.

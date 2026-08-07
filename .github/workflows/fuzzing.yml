@@ -1,0 +1,106 @@
+name: coverage-guided fuzzing
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  schedule:
+    - cron: "41 2 * * 0"
+  workflow_dispatch:
+    inputs:
+      duration_seconds:
+        description: Seconds to run each fuzz target (manual evidence requires at least 3600)
+        required: false
+        default: "3600"
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  fuzz:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - protocol-frames
+          - authentication
+          - pgoutput
+          - binary-copy
+          - array-codec
+          - range-codec
+          - composite-codec
+          - streams-envelope
+          - live-resume-token
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Install AFL++
+        run: |
+          sudo apt-get update
+          sudo apt-get install --yes afl++
+          sudo sysctl --write kernel.core_pattern=core
+
+      - name: Restore pinned tools and harness
+        run: |
+          dotnet tool restore
+          dotnet restore tests/BlueTusk.Fuzzing.Tests/BlueTusk.Fuzzing.Tests.csproj
+
+      - name: Replay deterministic corpus
+        run: >-
+          dotnet test tests/BlueTusk.Fuzzing.Tests/BlueTusk.Fuzzing.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/fuzz-corpus
+
+      - name: Run bounded coverage-guided target
+        shell: pwsh
+        env:
+          REQUESTED_DURATION: ${{ inputs.duration_seconds }}
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          $duration = 45
+          if ($env:EVENT_NAME -eq 'schedule') {
+            $duration = 3600
+          }
+          if ($env:EVENT_NAME -eq 'workflow_dispatch' -and
+              -not [string]::IsNullOrWhiteSpace($env:REQUESTED_DURATION)) {
+            $duration = [int]$env:REQUESTED_DURATION
+          }
+          if ($env:EVENT_NAME -eq 'workflow_dispatch' -and $duration -lt 3600) {
+            throw 'Manual coverage-guided evidence requires at least 3600 seconds per target.'
+          }
+          ./eng/run-fuzz.ps1 `
+            -Target '${{ matrix.target }}' `
+            -DurationSeconds $duration `
+            -ExecutionTimeoutMilliseconds 2000 `
+            -MemoryLimitMegabytes 1024 `
+            -MaximumInputBytes 65536 `
+            -NoRestore
+
+      - name: Package findings and fuzzer state
+        if: always()
+        shell: bash
+        env:
+          TARGET: ${{ matrix.target }}
+        run: >-
+          tar --create --gzip
+          --file "artifacts/fuzz-${TARGET}-${GITHUB_RUN_ID}.tar.gz"
+          --directory artifacts/fuzz
+          "$TARGET"
+
+      - name: Archive findings and fuzzer state
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: fuzz-${{ matrix.target }}-${{ github.run_id }}
+          path: artifacts/fuzz-${{ matrix.target }}-${{ github.run_id }}.tar.gz
+          if-no-files-found: error
+          retention-days: 30

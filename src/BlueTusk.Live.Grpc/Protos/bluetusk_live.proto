@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package bluetusk.live.v1;
+option csharp_namespace = "BlueTusk.Live.Grpc.Protocol";
+
+service BlueTuskLive {
+  rpc Subscribe (LiveGrpcSubscriptionRequest) returns (stream LiveGrpcTransportMessage);
+}
+
+message LiveGrpcSubscriptionRequest {
+  string query = 1;
+  string parameters_json = 2;
+  string resume_token = 3;
+}
+
+enum LiveGrpcMessageKind {
+  LIVE_GRPC_MESSAGE_KIND_UNSPECIFIED = 0;
+  LIVE_GRPC_MESSAGE_KIND_EVENT = 1;
+  LIVE_GRPC_MESSAGE_KIND_RESET_REQUIRED = 2;
+}
+
+message LiveGrpcTransportMessage {
+  LiveGrpcMessageKind kind = 1;
+  int64 sequence = 2;
+  string resume_token = 3;
+  string event_json = 4;
+}

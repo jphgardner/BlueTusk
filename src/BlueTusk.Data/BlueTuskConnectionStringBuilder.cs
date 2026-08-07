@@ -138,6 +138,16 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
     }
 
     /// <summary>
+    /// Gets or sets whether data-source-owned, session-neutral commands use bounded statement
+    /// multiplexing. The feature is opt-in.
+    /// </summary>
+    public bool Multiplexing
+    {
+        get => GetBoolean(nameof(Multiplexing), false);
+        set => this[nameof(Multiplexing)] = value;
+    }
+
+    /// <summary>
     /// Gets or sets whether security-sensitive connection information remains publicly visible
     /// after a connection has opened. The secure default is <see langword="false"/>.
     /// </summary>
@@ -282,6 +292,7 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         _ = TargetSessionAttributes;
         _ = LoadBalanceHosts;
         _ = PersistSecurityInfo;
+        _ = Multiplexing;
         _ = ConnectionIdleLifetime;
         _ = ConnectionLifetime;
         _ = MaxAutoPrepare;
@@ -297,6 +308,11 @@ public sealed class BlueTuskConnectionStringBuilder : DbConnectionStringBuilder
         if (MinimumPoolSize > MaximumPoolSize)
         {
             throw new ArgumentException("Minimum Pool Size cannot exceed Maximum Pool Size.");
+        }
+
+        if (Multiplexing && !Pooling)
+        {
+            throw new ArgumentException("Multiplexing requires connection pooling.");
         }
     }
 

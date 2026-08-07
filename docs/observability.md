@@ -5,6 +5,11 @@ without requiring an OpenTelemetry runtime dependency. Register the activity
 source and meter named `BlueTusk.Diagnostics` with the application's chosen
 exporter.
 
+This guide defines the Provider-level contract. The complete six-family meter
+inventory, reference SLOs, Collector configuration, alert rules, dashboard and
+incident procedures are in
+[Production observability and SLOs](operations/observability.md).
+
 ```csharp
 services.AddOpenTelemetry()
     .WithTracing(tracing => tracing.AddSource(BlueTuskDiagnostics.InstrumentationName))
@@ -49,6 +54,12 @@ The process-wide `BlueTusk.Diagnostics` meter publishes:
 | `bluetusk.connections.opened` / `failed` | `{connection}` | Physical connection outcomes |
 | `bluetusk.connections.retries` / `failovers` | `{attempt}` / `{connection}` | Multi-host retries and non-first-host selections |
 | `bluetusk.pool.*` | mixed | Physical connections, leases, waiters, reuse, resets, discards, and checkout duration |
+| `bluetusk.multiplexing.commands.pending` / `executing` | `{command}` | Process-wide scheduler backlog/admission waiters and active commands |
+| `bluetusk.multiplexing.admissions` | `{command}` | Accepted, caller-cancelled, and closed admissions |
+| `bluetusk.multiplexing.commands` | `{command}` | Completed, cancelled, and faulted accepted commands |
+| `bluetusk.multiplexing.queue.wait.duration` | `s` | Time from scheduling attempt to execution, cancellation, or closed admission |
+| `bluetusk.multiplexing.pipeline.size` | `{command}` | Independently synchronized commands written in one pipeline flush |
+| `bluetusk.multiplexing.forced_shutdowns` | `{shutdown}` | Graceful drains that reached the deadline and aborted worker transports |
 | `bluetusk.prepared_statements` | `{statement}` | Explicit, automatic, and batch prepare/reuse/evict/invalidate actions |
 | `bluetusk.protocol.message.size` | `By` | Backend protocol message size |
 | `bluetusk.copy.bytes` | `By` | COPY throughput with direction |
@@ -63,6 +74,13 @@ Prepared-statement metrics use `bluetusk.prepared.kind` (`explicit`,
 `automatic`, or `batch`) and `bluetusk.prepared.action` (`prepare`, `reuse`,
 `evict`, or `invalidate`). Retry reasons and endpoint dimensions contain no
 credentials.
+
+Multiplexing admission and command outcomes use the bounded
+`bluetusk.multiplexing.admission.outcome` and
+`bluetusk.multiplexing.command.outcome` dimensions. Scheduler instruments do
+not include SQL, parameters, connection strings, tenant identifiers, or
+endpoints. `GetMultiplexingStatistics()` supplies the corresponding
+per-data-source counters when a process-wide aggregate is insufficient.
 
 ## Slow-command events
 

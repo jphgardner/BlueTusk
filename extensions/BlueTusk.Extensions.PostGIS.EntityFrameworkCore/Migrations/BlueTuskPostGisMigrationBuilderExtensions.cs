@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 public static class BlueTuskPostGisMigrationBuilderExtensions
 {
     /// <summary>Creates the PostGIS extension if it is not installed.</summary>
-    public static OperationBuilder<SqlOperation> EnsureBlueTuskPostGis(
+    public static OperationBuilder<SqlOperation> EnsurePostGis(
         this MigrationBuilder migrationBuilder,
         string schema = "public")
     {
@@ -20,7 +20,7 @@ public static class BlueTuskPostGisMigrationBuilderExtensions
     }
 
     /// <summary>Drops the PostGIS extension if it is installed.</summary>
-    public static OperationBuilder<SqlOperation> DropBlueTuskPostGis(
+    public static OperationBuilder<SqlOperation> DropPostGis(
         this MigrationBuilder migrationBuilder,
         bool cascade = false)
     {

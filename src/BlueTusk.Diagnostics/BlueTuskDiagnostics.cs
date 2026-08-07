@@ -75,6 +75,41 @@ public static class BlueTuskDiagnostics
     public static Histogram<double> PoolCheckoutDuration { get; } =
         Meter.CreateHistogram<double>("bluetusk.pool.checkout.duration", unit: "s");
 
+    internal static UpDownCounter<long> MultiplexingPendingCommands { get; } =
+        Meter.CreateUpDownCounter<long>(
+            "bluetusk.multiplexing.commands.pending",
+            unit: "{command}");
+
+    internal static UpDownCounter<long> MultiplexingExecutingCommands { get; } =
+        Meter.CreateUpDownCounter<long>(
+            "bluetusk.multiplexing.commands.executing",
+            unit: "{command}");
+
+    internal static Counter<long> MultiplexingAdmissions { get; } =
+        Meter.CreateCounter<long>(
+            "bluetusk.multiplexing.admissions",
+            unit: "{command}");
+
+    internal static Counter<long> MultiplexingCommandOutcomes { get; } =
+        Meter.CreateCounter<long>(
+            "bluetusk.multiplexing.commands",
+            unit: "{command}");
+
+    internal static Histogram<double> MultiplexingQueueWaitDuration { get; } =
+        Meter.CreateHistogram<double>(
+            "bluetusk.multiplexing.queue.wait.duration",
+            unit: "s");
+
+    internal static Histogram<long> MultiplexingPipelineSize { get; } =
+        Meter.CreateHistogram<long>(
+            "bluetusk.multiplexing.pipeline.size",
+            unit: "{command}");
+
+    internal static Counter<long> MultiplexingForcedShutdowns { get; } =
+        Meter.CreateCounter<long>(
+            "bluetusk.multiplexing.forced_shutdowns",
+            unit: "{shutdown}");
+
     internal static BlueTuskCommandInstrumentation StartCommand(
         string sql,
         string database,
@@ -163,5 +198,75 @@ public static class BlueTuskDiagnostics
         };
         ReplicationReceiveLag.Record(receiveLagSeconds, tags);
         ReplicationWalLag.Record(checked((long)Math.Min(walLag, long.MaxValue)), tags);
+    }
+
+    internal static void RecordMultiplexingPendingDelta(long delta)
+    {
+        if (MultiplexingPendingCommands.Enabled)
+        {
+            MultiplexingPendingCommands.Add(delta);
+        }
+    }
+
+    internal static void RecordMultiplexingExecutingDelta(long delta)
+    {
+        if (MultiplexingExecutingCommands.Enabled)
+        {
+            MultiplexingExecutingCommands.Add(delta);
+        }
+    }
+
+    internal static void RecordMultiplexingAdmission(string outcome)
+    {
+        if (MultiplexingAdmissions.Enabled)
+        {
+            MultiplexingAdmissions.Add(
+                1,
+                new KeyValuePair<string, object?>(
+                    "bluetusk.multiplexing.admission.outcome",
+                    outcome));
+        }
+    }
+
+    internal static void RecordMultiplexingCommandOutcome(string outcome)
+    {
+        if (MultiplexingCommandOutcomes.Enabled)
+        {
+            MultiplexingCommandOutcomes.Add(
+                1,
+                new KeyValuePair<string, object?>(
+                    "bluetusk.multiplexing.command.outcome",
+                    outcome));
+        }
+    }
+
+    internal static long GetMultiplexingQueueTimestamp() =>
+        MultiplexingQueueWaitDuration.Enabled
+            ? Stopwatch.GetTimestamp()
+            : 0;
+
+    internal static void RecordMultiplexingQueueWait(long started)
+    {
+        if (started != 0 && MultiplexingQueueWaitDuration.Enabled)
+        {
+            MultiplexingQueueWaitDuration.Record(
+                Stopwatch.GetElapsedTime(started).TotalSeconds);
+        }
+    }
+
+    internal static void RecordMultiplexingPipelineSize(int commands)
+    {
+        if (MultiplexingPipelineSize.Enabled)
+        {
+            MultiplexingPipelineSize.Record(commands);
+        }
+    }
+
+    internal static void RecordMultiplexingForcedShutdown()
+    {
+        if (MultiplexingForcedShutdowns.Enabled)
+        {
+            MultiplexingForcedShutdowns.Add(1);
+        }
     }
 }

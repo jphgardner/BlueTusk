@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Sync</BlueTuskProductFamily>
+    <Description>Atomic Redis materialisation and checkpoint destination for BlueTusk Sync.</Description>
+    <PackageTags>postgresql;cdc;sync;redis;materialization</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Sync.props" />
+
+  <ItemGroup>
+    <PackageReference Include="StackExchange.Redis" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+  </ItemGroup>
+</Project>

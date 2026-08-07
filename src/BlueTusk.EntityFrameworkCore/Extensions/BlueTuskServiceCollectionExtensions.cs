@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 using BlueTusk.EntityFrameworkCore.Migrations.Internal;
 using BlueTusk.EntityFrameworkCore.Query.Internal;
@@ -23,6 +24,7 @@ public static class BlueTuskServiceCollectionExtensions
     {
         ArgumentNullException.ThrowIfNull(services);
 
+        services.TryAddSingleton(ProviderServices.Instance);
         services.TryAddEnumerable(
             ServiceDescriptor.Singleton<
                 IEvaluatableExpressionFilterPlugin,

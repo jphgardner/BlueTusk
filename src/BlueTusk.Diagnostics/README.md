@@ -2,7 +2,7 @@
 
 Dependency-free .NET `ActivitySource`, `Meter`, and redacted `EventSource`
 contracts for BlueTusk PostgreSQL connections, commands, pools, prepared
-statements, COPY, failover, and replication.
+statements, bounded multiplexing schedulers, COPY, failover, and replication.
 
 Register `BlueTusk.Diagnostics` with the application's OpenTelemetry tracing
 and metric pipeline. Command spans use stable database-client attributes and

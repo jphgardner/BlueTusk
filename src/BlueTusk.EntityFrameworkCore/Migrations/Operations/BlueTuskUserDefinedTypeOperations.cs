@@ -3,76 +3,76 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskEnumTypeOperation : MigrationOperation
+public sealed class CreateEnumTypeOperation : MigrationOperation
 {
     public required BlueTuskEnumTypeDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskEnumTypeOperation : MigrationOperation
+public sealed class AlterEnumTypeOperation : MigrationOperation
 {
     public required BlueTuskEnumTypeDefinition OldDefinition { get; init; }
 
     public required BlueTuskEnumTypeDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskEnumTypeOperation : MigrationOperation
+public sealed class DropEnumTypeOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
     public string? Schema { get; init; }
 }
 
-public sealed class CreateBlueTuskDomainTypeOperation : MigrationOperation
+public sealed class CreateDomainTypeOperation : MigrationOperation
 {
     public required BlueTuskDomainTypeDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskDomainTypeOperation : MigrationOperation
+public sealed class AlterDomainTypeOperation : MigrationOperation
 {
     public required BlueTuskDomainTypeDefinition OldDefinition { get; init; }
 
     public required BlueTuskDomainTypeDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskDomainTypeOperation : MigrationOperation
+public sealed class DropDomainTypeOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
     public string? Schema { get; init; }
 }
 
-public sealed class CreateBlueTuskCompositeTypeOperation : MigrationOperation
+public sealed class CreateCompositeTypeOperation : MigrationOperation
 {
     public required BlueTuskCompositeTypeDefinition Definition { get; init; }
 }
 
-public sealed class AlterBlueTuskCompositeTypeOperation : MigrationOperation
+public sealed class AlterCompositeTypeOperation : MigrationOperation
 {
     public required BlueTuskCompositeTypeDefinition OldDefinition { get; init; }
 
     public required BlueTuskCompositeTypeDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskCompositeTypeOperation : MigrationOperation
+public sealed class DropCompositeTypeOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
     public string? Schema { get; init; }
 }
 
-public sealed class CreateBlueTuskRangeTypeOperation : MigrationOperation
+public sealed class CreateRangeTypeOperation : MigrationOperation
 {
     public required BlueTuskRangeTypeDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskRangeTypeOperation : MigrationOperation
+public sealed class DropRangeTypeOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
     public string? Schema { get; init; }
 }
 
-public sealed class RenameBlueTuskRangeTypeOperation : MigrationOperation
+public sealed class RenameRangeTypeOperation : MigrationOperation
 {
     public required string Name { get; init; }
 
@@ -91,7 +91,7 @@ public sealed class RenameBlueTuskRangeTypeOperation : MigrationOperation
     public string? NewMultirangeSchema { get; init; }
 }
 
-public sealed class RenameBlueTuskUserDefinedTypeOperation : MigrationOperation
+public sealed class RenameUserDefinedTypeOperation : MigrationOperation
 {
     public required BlueTuskUserDefinedTypeKind Kind { get; init; }
 

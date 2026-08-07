@@ -1,0 +1,12 @@
+environment: rc
+nameOverride: fraud-investigation
+hostname: fraud.192.168.1.230.nip.io
+images:
+  api: { repository: ghcr.io/jphgardner/bluetusk-fraud-investigation, digest: "" }
+  worker: { repository: ghcr.io/jphgardner/bluetusk-fraud-investigation, digest: "" }
+  ui: { repository: ghcr.io/jphgardner/bluetusk-fraud-investigation, digest: "" }
+database: { ownerSecret: fraud-db-owner, storageSize: 10Gi }
+secrets: { runtime: fraud-runtime, liveTenant: fraud-live-tenant, oidc: fraud-oidc }
+authentication:
+  authority: https://auth.192.168.1.230.nip.io/realms/bluetusk
+  clientId: fraud-investigation-bff

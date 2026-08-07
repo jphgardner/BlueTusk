@@ -7,7 +7,7 @@ namespace Microsoft.EntityFrameworkCore;
 
 public static class BlueTuskPublicationModelBuilderExtensions
 {
-    public static ModelBuilder HasBlueTuskPublication(
+    public static ModelBuilder HasPublication(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskPublicationBuilder>? configure = null)
@@ -16,10 +16,10 @@ public static class BlueTuskPublicationModelBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         var builder = new BlueTuskPublicationBuilder(name);
         configure?.Invoke(builder);
-        return HasBlueTuskPublication(modelBuilder, builder.Build());
+        return HasPublication(modelBuilder, builder.Build());
     }
 
-    public static ModelBuilder HasBlueTuskPublication(
+    public static ModelBuilder HasPublication(
         this ModelBuilder modelBuilder,
         BlueTuskPublicationDefinition definition)
     {
@@ -34,7 +34,7 @@ public static class BlueTuskPublicationModelBuilderExtensions
                 .ToArray()));
     }
 
-    public static ModelBuilder HasNoBlueTuskPublication(this ModelBuilder modelBuilder, string name)
+    public static ModelBuilder HasNoPublication(this ModelBuilder modelBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(modelBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
@@ -45,14 +45,14 @@ public static class BlueTuskPublicationModelBuilderExtensions
                 .ToArray()));
     }
 
-    public static BlueTuskPublicationDefinitionSet GetBlueTuskPublications(this IReadOnlyModel model)
+    public static BlueTuskPublicationDefinitionSet GetPublications(this IReadOnlyModel model)
     {
         ArgumentNullException.ThrowIfNull(model);
         return BlueTuskPublicationMetadata.Get(model);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskPublications(
+    public static ModelBuilder HasPublications(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {

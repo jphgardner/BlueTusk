@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>ControlPlane</BlueTuskProductFamily>
+    <Description>Authorised operational dashboard endpoints for the BlueTusk control plane.</Description>
+    <PackageTags>postgresql;cdc;dashboard;control-plane;aspnetcore</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\ControlPlane.props" />
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+    <ProjectReference Include="..\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
+  </ItemGroup>
+</Project>

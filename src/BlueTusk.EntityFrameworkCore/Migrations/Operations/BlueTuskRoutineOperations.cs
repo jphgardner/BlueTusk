@@ -3,19 +3,19 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskRoutineOperation : MigrationOperation
+public sealed class CreateRoutineOperation : MigrationOperation
 {
     public required BlueTuskRoutineDefinition Definition { get; init; }
 }
 
-public sealed class ReplaceBlueTuskRoutineOperation : MigrationOperation
+public sealed class ReplaceRoutineOperation : MigrationOperation
 {
     public required BlueTuskRoutineDefinition OldDefinition { get; init; }
 
     public required BlueTuskRoutineDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskRoutineOperation : MigrationOperation
+public sealed class DropRoutineOperation : MigrationOperation
 {
     public required BlueTuskRoutineKind Kind { get; init; }
 
@@ -26,7 +26,7 @@ public sealed class DropBlueTuskRoutineOperation : MigrationOperation
     public required string IdentityArgumentsSql { get; init; }
 }
 
-public sealed class RenameBlueTuskRoutineOperation : MigrationOperation
+public sealed class RenameRoutineOperation : MigrationOperation
 {
     public required BlueTuskRoutineKind Kind { get; init; }
 

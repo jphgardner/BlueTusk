@@ -3,7 +3,7 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class AddBlueTuskExclusionConstraintOperation : MigrationOperation
+public sealed class AddExclusionConstraintOperation : MigrationOperation
 {
     public required string Table { get; init; }
 
@@ -12,7 +12,7 @@ public sealed class AddBlueTuskExclusionConstraintOperation : MigrationOperation
     public required BlueTuskExclusionConstraintDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskExclusionConstraintOperation : MigrationOperation
+public sealed class DropExclusionConstraintOperation : MigrationOperation
 {
     public required string Table { get; init; }
 
@@ -21,7 +21,7 @@ public sealed class DropBlueTuskExclusionConstraintOperation : MigrationOperatio
     public required string Name { get; init; }
 }
 
-public sealed class RenameBlueTuskExclusionConstraintOperation : MigrationOperation
+public sealed class RenameExclusionConstraintOperation : MigrationOperation
 {
     public required string Table { get; init; }
 

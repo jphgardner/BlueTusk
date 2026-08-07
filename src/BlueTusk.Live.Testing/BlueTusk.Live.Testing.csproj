@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Live</BlueTuskProductFamily>
+    <Description>Deterministic stores, fixtures, and conformance helpers for BlueTusk Live.</Description>
+    <PackageTags>postgresql;live-query;testing;conformance;realtime</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Live.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Live\BlueTusk.Live.csproj" />
+  </ItemGroup>
+</Project>

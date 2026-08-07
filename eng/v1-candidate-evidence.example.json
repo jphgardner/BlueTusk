@@ -1,0 +1,172 @@
+{
+  "schemaVersion": 3,
+  "candidateCommit": "0000000000000000000000000000000000000000",
+  "workflowRuns": [
+    {
+      "workflowFile": "build.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 1,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:01Z",
+      "url": "https://github.com/example/repository/actions/runs/1"
+    },
+    {
+      "workflowFile": "security.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 2,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:02Z",
+      "url": "https://github.com/example/repository/actions/runs/2"
+    },
+    {
+      "workflowFile": "fuzzing.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 3,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:03Z",
+      "url": "https://github.com/example/repository/actions/runs/3"
+    },
+    {
+      "workflowFile": "performance.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 4,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:04Z",
+      "url": "https://github.com/example/repository/actions/runs/4"
+    },
+    {
+      "workflowFile": "streams-release-endurance.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 5,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:05Z",
+      "url": "https://github.com/example/repository/actions/runs/5"
+    },
+    {
+      "workflowFile": "sync-release-endurance.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 6,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:06Z",
+      "url": "https://github.com/example/repository/actions/runs/6"
+    },
+    {
+      "workflowFile": "continuous-graph-release-endurance.yml",
+      "headSha": "0000000000000000000000000000000000000000",
+      "event": "workflow_dispatch",
+      "conclusion": "success",
+      "runId": 7,
+      "runAttempt": 1,
+      "completedUtc": "2026-01-01T00:00:07Z",
+      "url": "https://github.com/example/repository/actions/runs/7"
+    }
+  ],
+  "streams": {
+    "reportPath": "streams/report.json",
+    "reportSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "candidateProvenancePath": "streams/candidate-sbom/build-provenance.json",
+    "candidateProvenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "sync": {
+    "reportPath": "sync/report.json",
+    "reportSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "candidateProvenancePath": "sync/candidate-sbom/build-provenance.json",
+    "candidateProvenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "expectedDestinationImages": [
+      "redis:8-alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "nats:2-alpine@sha256:0000000000000000000000000000000000000000000000000000000000000000",
+      "opensearchproject/opensearch:3@sha256:0000000000000000000000000000000000000000000000000000000000000000"
+    ]
+  },
+  "continuousGraph": {
+    "reportPath": "continuous-graph/report.json",
+    "reportSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "candidateProvenancePath": "continuous-graph/candidate-sbom/build-provenance.json",
+    "candidateProvenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "performance": {
+    "resultsPath": "performance/results",
+    "multiplexingEvidencePath": "performance/multiplexing-evidence.json",
+    "multiplexingEvidenceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "website": {
+    "distributionPath": "website",
+    "productionMetricsPath": "website/production-metrics.json",
+    "productionMetricsSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "packages": {
+    "evidencePath": "packages",
+    "manifestPath": "packages/package-manifest.json",
+    "manifestSha256": "0000000000000000000000000000000000000000000000000000000000000000",
+    "provenancePath": "packages/sbom/build-provenance.json",
+    "provenanceSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "disturbances": {
+    "reportPath": "disturbances/operational-disturbance-evidence.json",
+    "reportSha256": "0000000000000000000000000000000000000000000000000000000000000000"
+  },
+  "approvals": [
+    {
+      "id": "independent-release-review",
+      "path": "approvals/independent-release-review.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "security-review",
+      "path": "approvals/security-review.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "application-pilot-a",
+      "path": "approvals/application-pilot-a.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "application-pilot-b",
+      "path": "approvals/application-pilot-b.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "website-deployment-acceptance",
+      "path": "approvals/website-deployment-acceptance.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "backup-restore-rehearsal",
+      "path": "approvals/backup-restore-rehearsal.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "rollback-rehearsal",
+      "path": "approvals/rollback-rehearsal.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "incident-response-game-day",
+      "path": "approvals/incident-response-game-day.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "slo-owner-approval",
+      "path": "approvals/slo-owner-approval.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    },
+    {
+      "id": "maintainer-signoff",
+      "path": "approvals/maintainer-signoff.json",
+      "sha256": "0000000000000000000000000000000000000000000000000000000000000000"
+    }
+  ]
+}

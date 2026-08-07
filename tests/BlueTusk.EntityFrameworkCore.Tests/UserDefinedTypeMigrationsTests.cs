@@ -34,10 +34,10 @@ public sealed class UserDefinedTypeMigrationsTests
             .ToArray();
 
         Assert.IsType<EnsureSchemaOperation>(operations[0]);
-        Assert.IsType<CreateBlueTuskEnumTypeOperation>(operations[1]);
-        Assert.IsType<CreateBlueTuskDomainTypeOperation>(operations[2]);
-        Assert.IsType<CreateBlueTuskCompositeTypeOperation>(operations[3]);
-        var definitions = model.GetBlueTuskUserDefinedTypes();
+        Assert.IsType<CreateEnumTypeOperation>(operations[1]);
+        Assert.IsType<CreateDomainTypeOperation>(operations[2]);
+        Assert.IsType<CreateCompositeTypeOperation>(operations[3]);
+        var definitions = model.GetUserDefinedTypes();
         Assert.Single(definitions.Enums);
         Assert.Single(definitions.Domains);
         Assert.Single(definitions.Composites);
@@ -75,14 +75,14 @@ public sealed class UserDefinedTypeMigrationsTests
         var alteredModel = alteredContext.GetService<IDesignTimeModel>().Model;
         var altered = differ.GetDifferences(source, alteredModel.GetRelationalModel()).ToArray();
 
-        Assert.Single(altered.OfType<AlterBlueTuskEnumTypeOperation>());
-        Assert.Single(altered.OfType<AlterBlueTuskDomainTypeOperation>());
-        Assert.Single(altered.OfType<AlterBlueTuskCompositeTypeOperation>());
-        var countryDomain = Assert.Single(altered.OfType<CreateBlueTuskDomainTypeOperation>());
+        Assert.Single(altered.OfType<AlterEnumTypeOperation>());
+        Assert.Single(altered.OfType<AlterDomainTypeOperation>());
+        Assert.Single(altered.OfType<AlterCompositeTypeOperation>());
+        var countryDomain = Assert.Single(altered.OfType<CreateDomainTypeOperation>());
         Assert.Equal("country_code", countryDomain.Definition.Name);
         Assert.True(
             Array.IndexOf(altered, countryDomain) <
-            Array.FindIndex(altered, operation => operation is AlterBlueTuskCompositeTypeOperation));
+            Array.FindIndex(altered, operation => operation is AlterCompositeTypeOperation));
         var commands = alteredContext.GetService<IMigrationsSqlGenerator>().Generate(altered, alteredModel);
         Assert.Contains(commands, command =>
             command.TransactionSuppressed &&
@@ -99,12 +99,12 @@ public sealed class UserDefinedTypeMigrationsTests
         var renamed = differ.GetDifferences(
             source,
             renamedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        var rename = Assert.Single(renamed.OfType<RenameBlueTuskUserDefinedTypeOperation>());
+        var rename = Assert.Single(renamed.OfType<RenameUserDefinedTypeOperation>());
         Assert.Equal(BlueTuskUserDefinedTypeKind.Enum, rename.Kind);
         Assert.Equal("mood", rename.Name);
         Assert.Equal("emotional_state", rename.NewName);
-        Assert.Empty(renamed.OfType<DropBlueTuskEnumTypeOperation>());
-        Assert.Empty(renamed.OfType<CreateBlueTuskEnumTypeOperation>());
+        Assert.Empty(renamed.OfType<DropEnumTypeOperation>());
+        Assert.Empty(renamed.OfType<CreateEnumTypeOperation>());
     }
 
     [Fact]
@@ -146,16 +146,16 @@ public sealed class UserDefinedTypeMigrationsTests
             initialContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             emptyContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
         var drops = operations.Where(operation => operation is
-                DropBlueTuskEnumTypeOperation or
-                DropBlueTuskDomainTypeOperation or
-                DropBlueTuskCompositeTypeOperation)
+                DropEnumTypeOperation or
+                DropDomainTypeOperation or
+                DropCompositeTypeOperation)
             .ToArray();
 
         Assert.Collection(
             drops,
-            operation => Assert.IsType<DropBlueTuskCompositeTypeOperation>(operation),
-            operation => Assert.IsType<DropBlueTuskDomainTypeOperation>(operation),
-            operation => Assert.IsType<DropBlueTuskEnumTypeOperation>(operation));
+            operation => Assert.IsType<DropCompositeTypeOperation>(operation),
+            operation => Assert.IsType<DropDomainTypeOperation>(operation),
+            operation => Assert.IsType<DropEnumTypeOperation>(operation));
         Assert.All(drops, operation => Assert.True(operation.IsDestructiveChange));
     }
 
@@ -177,28 +177,28 @@ public sealed class UserDefinedTypeMigrationsTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskEnumTypeOperation { Definition = initial.Enums[0] },
-                new AlterBlueTuskEnumTypeOperation
+                new CreateEnumTypeOperation { Definition = initial.Enums[0] },
+                new AlterEnumTypeOperation
                 {
                     OldDefinition = initial.Enums[0],
                     Definition = altered.Enums[0],
                 },
-                new DropBlueTuskEnumTypeOperation { Name = "mood", Schema = "udt_tests" },
-                new CreateBlueTuskDomainTypeOperation { Definition = initialDomain },
-                new AlterBlueTuskDomainTypeOperation
+                new DropEnumTypeOperation { Name = "mood", Schema = "udt_tests" },
+                new CreateDomainTypeOperation { Definition = initialDomain },
+                new AlterDomainTypeOperation
                 {
                     OldDefinition = initialDomain,
                     Definition = alteredDomain,
                 },
-                new DropBlueTuskDomainTypeOperation { Name = "positive_integer", Schema = "udt_tests" },
-                new CreateBlueTuskCompositeTypeOperation { Definition = initial.Composites[0] },
-                new AlterBlueTuskCompositeTypeOperation
+                new DropDomainTypeOperation { Name = "positive_integer", Schema = "udt_tests" },
+                new CreateCompositeTypeOperation { Definition = initial.Composites[0] },
+                new AlterCompositeTypeOperation
                 {
                     OldDefinition = initial.Composites[0],
                     Definition = altered.Composites[0],
                 },
-                new DropBlueTuskCompositeTypeOperation { Name = "address", Schema = "udt_tests" },
-                new RenameBlueTuskUserDefinedTypeOperation
+                new DropCompositeTypeOperation { Name = "address", Schema = "udt_tests" },
+                new RenameUserDefinedTypeOperation
                 {
                     Kind = BlueTuskUserDefinedTypeKind.Enum,
                     Name = "mood",
@@ -210,15 +210,15 @@ public sealed class UserDefinedTypeMigrationsTests
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskEnumType", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskEnumType", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskEnumType", code, StringComparison.Ordinal);
-        Assert.Contains("CreateBlueTuskDomainType", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskDomainType", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskDomainType", code, StringComparison.Ordinal);
-        Assert.Contains("CreateBlueTuskCompositeType", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskCompositeType", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskCompositeType", code, StringComparison.Ordinal);
+        Assert.Contains("CreateEnumType", code, StringComparison.Ordinal);
+        Assert.Contains("AlterEnumType", code, StringComparison.Ordinal);
+        Assert.Contains("DropEnumType", code, StringComparison.Ordinal);
+        Assert.Contains("CreateDomainType", code, StringComparison.Ordinal);
+        Assert.Contains("AlterDomainType", code, StringComparison.Ordinal);
+        Assert.Contains("DropDomainType", code, StringComparison.Ordinal);
+        Assert.Contains("CreateCompositeType", code, StringComparison.Ordinal);
+        Assert.Contains("AlterCompositeType", code, StringComparison.Ordinal);
+        Assert.Contains("DropCompositeType", code, StringComparison.Ordinal);
         Assert.Contains("BlueTuskUserDefinedTypeKind.Enum", code, StringComparison.Ordinal);
     }
 
@@ -293,7 +293,7 @@ public sealed class UserDefinedTypeMigrationsTests
                         UseNullableReferenceTypes = true,
                     });
                 Assert.Contains(
-                    "HasBlueTuskUserDefinedTypes(",
+                    "HasUserDefinedTypes(",
                     scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
                 Assert.Single(scaffolded.AdditionalFiles);
@@ -356,7 +356,7 @@ public sealed class UserDefinedTypeMigrationsTests
                 """));
 
             var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            migration.RenameBlueTuskUserDefinedType(
+            migration.RenameUserDefinedType(
                 BlueTuskUserDefinedTypeKind.Enum,
                 "mood",
                 "emotional_state",
@@ -379,16 +379,16 @@ public sealed class UserDefinedTypeMigrationsTests
     {
         var modelBuilder = new ModelBuilder();
         ConfigureTypes(modelBuilder, altered);
-        return modelBuilder.Model.GetBlueTuskUserDefinedTypes();
+        return modelBuilder.Model.GetUserDefinedTypes();
     }
 
     private static void ConfigureTypes(ModelBuilder modelBuilder, bool altered)
     {
-        modelBuilder.HasBlueTuskEnum(
+        modelBuilder.HasEnum(
             "mood",
             altered ? ["sad", "meh", "ok"] : ["sad", "ok"],
             "udt_tests");
-        modelBuilder.HasBlueTuskDomain(
+        modelBuilder.HasDomain(
             "positive_integer",
             "integer",
             domain =>
@@ -404,13 +404,13 @@ public sealed class UserDefinedTypeMigrationsTests
             "udt_tests");
         if (altered)
         {
-            modelBuilder.HasBlueTuskDomain(
+            modelBuilder.HasDomain(
                 "country_code",
                 "varchar(2)",
                 schema: "udt_tests");
         }
 
-        modelBuilder.HasBlueTuskComposite(
+        modelBuilder.HasComposite(
             "address",
             composite =>
             {
@@ -481,8 +481,8 @@ public sealed class UserDefinedTypeMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureTypes(modelBuilder, altered: false);
-            modelBuilder.HasNoBlueTuskUserDefinedType("mood", "udt_tests")
-                .HasBlueTuskEnum("emotional_state", ["sad", "ok"], "udt_tests");
+            modelBuilder.HasNoUserDefinedType("mood", "udt_tests")
+                .HasEnum("emotional_state", ["sad", "ok"], "udt_tests");
         }
     }
 
@@ -491,7 +491,7 @@ public sealed class UserDefinedTypeMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureTypes(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskEnum("mood", ["sad"], "udt_tests");
+            modelBuilder.HasEnum("mood", ["sad"], "udt_tests");
         }
     }
 
@@ -500,7 +500,7 @@ public sealed class UserDefinedTypeMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureTypes(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskDomain("positive_integer", "bigint", schema: "udt_tests");
+            modelBuilder.HasDomain("positive_integer", "bigint", schema: "udt_tests");
         }
     }
 
@@ -510,7 +510,7 @@ public sealed class UserDefinedTypeMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigureTypes(modelBuilder, altered: false);
-            modelBuilder.HasBlueTuskComposite(
+            modelBuilder.HasComposite(
                 "address",
                 composite => composite.HasAttribute("country", "text")
                     .HasAttribute("street", "text")

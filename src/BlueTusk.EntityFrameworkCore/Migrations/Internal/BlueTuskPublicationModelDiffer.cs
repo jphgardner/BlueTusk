@@ -37,11 +37,11 @@ internal static class BlueTuskPublicationModelDiffer
                     oldDefinition.AllSequences != definition.AllSequences)
                 {
                     before.Add(Drop(oldDefinition.Name));
-                    after.Add(new CreateBlueTuskPublicationOperation { Definition = definition });
+                    after.Add(new CreatePublicationOperation { Definition = definition });
                 }
                 else
                 {
-                    var operation = new AlterBlueTuskPublicationOperation
+                    var operation = new AlterPublicationOperation
                     {
                         OldDefinition = oldDefinition,
                         Definition = definition,
@@ -63,7 +63,7 @@ internal static class BlueTuskPublicationModelDiffer
             if (candidates.Length == 1)
             {
                 var renamed = candidates[0];
-                after.Add(new RenameBlueTuskPublicationOperation
+                after.Add(new RenamePublicationOperation
                 {
                     Name = oldDefinition.Name,
                     NewName = renamed.Name,
@@ -78,14 +78,14 @@ internal static class BlueTuskPublicationModelDiffer
 
         foreach (var definition in unmatched.Values.OrderBy(item => item.Name, StringComparer.Ordinal))
         {
-            after.Add(new CreateBlueTuskPublicationOperation { Definition = definition });
+            after.Add(new CreatePublicationOperation { Definition = definition });
         }
     }
 
     private static bool HasMembership(BlueTuskPublicationDefinition definition) =>
         definition.AllTables || definition.AllSequences || definition.Tables.Count > 0 || definition.Schemas.Count > 0;
 
-    private static DropBlueTuskPublicationOperation Drop(string name) =>
+    private static DropPublicationOperation Drop(string name) =>
         new() { Name = name, IsDestructiveChange = true };
 
     private static bool DefinitionEquals(

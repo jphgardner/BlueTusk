@@ -9,7 +9,7 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 /// <summary>Migration operations for PostgreSQL row-level security.</summary>
 public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskRowSecurityPolicyOperation> CreateBlueTuskRowSecurityPolicy(
+    public static OperationBuilder<CreateRowSecurityPolicyOperation> CreateRowSecurityPolicy(
         this MigrationBuilder migrationBuilder,
         string table,
         BlueTuskRowSecurityPolicyDefinition definition,
@@ -19,29 +19,29 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentNullException.ThrowIfNull(definition);
         BlueTuskRowLevelSecurityBuilder.ValidatePolicy(definition);
-        var operation = new CreateBlueTuskRowSecurityPolicyOperation
+        var operation = new CreateRowSecurityPolicyOperation
         {
             Table = table,
             Schema = schema,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskRowSecurityPolicyOperation>(operation);
+        return new OperationBuilder<CreateRowSecurityPolicyOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskRowSecurityPolicyOperation> CreateBlueTuskRowSecurityPolicy(
+    public static OperationBuilder<CreateRowSecurityPolicyOperation> CreateRowSecurityPolicy(
         this MigrationBuilder migrationBuilder,
         string table,
         string serializedDefinition,
         string? schema = null) =>
-        CreateBlueTuskRowSecurityPolicy(
+        CreateRowSecurityPolicy(
             migrationBuilder,
             table,
             BlueTuskRowLevelSecurityMetadata.DeserializePolicy(serializedDefinition),
             schema);
 
-    public static OperationBuilder<DropBlueTuskRowSecurityPolicyOperation> DropBlueTuskRowSecurityPolicy(
+    public static OperationBuilder<DropRowSecurityPolicyOperation> DropRowSecurityPolicy(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -50,17 +50,17 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskRowSecurityPolicyOperation
+        var operation = new DropRowSecurityPolicyOperation
         {
             Table = table,
             Schema = schema,
             Name = name,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskRowSecurityPolicyOperation>(operation);
+        return new OperationBuilder<DropRowSecurityPolicyOperation>(operation);
     }
 
-    public static OperationBuilder<AlterBlueTuskRowSecurityPolicyOperation> AlterBlueTuskRowSecurityPolicy(
+    public static OperationBuilder<AlterRowSecurityPolicyOperation> AlterRowSecurityPolicy(
         this MigrationBuilder migrationBuilder,
         string table,
         BlueTuskRowSecurityPolicyDefinition definition,
@@ -70,29 +70,29 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentNullException.ThrowIfNull(definition);
         BlueTuskRowLevelSecurityBuilder.ValidatePolicy(definition);
-        var operation = new AlterBlueTuskRowSecurityPolicyOperation
+        var operation = new AlterRowSecurityPolicyOperation
         {
             Table = table,
             Schema = schema,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskRowSecurityPolicyOperation>(operation);
+        return new OperationBuilder<AlterRowSecurityPolicyOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskRowSecurityPolicyOperation> AlterBlueTuskRowSecurityPolicy(
+    public static OperationBuilder<AlterRowSecurityPolicyOperation> AlterRowSecurityPolicy(
         this MigrationBuilder migrationBuilder,
         string table,
         string serializedDefinition,
         string? schema = null) =>
-        AlterBlueTuskRowSecurityPolicy(
+        AlterRowSecurityPolicy(
             migrationBuilder,
             table,
             BlueTuskRowLevelSecurityMetadata.DeserializePolicy(serializedDefinition),
             schema);
 
-    public static OperationBuilder<RenameBlueTuskRowSecurityPolicyOperation> RenameBlueTuskRowSecurityPolicy(
+    public static OperationBuilder<RenameRowSecurityPolicyOperation> RenameRowSecurityPolicy(
         this MigrationBuilder migrationBuilder,
         string table,
         string name,
@@ -103,7 +103,7 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
         ArgumentException.ThrowIfNullOrWhiteSpace(table);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskRowSecurityPolicyOperation
+        var operation = new RenameRowSecurityPolicyOperation
         {
             Table = table,
             Schema = schema,
@@ -111,10 +111,10 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
             NewName = newName,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskRowSecurityPolicyOperation>(operation);
+        return new OperationBuilder<RenameRowSecurityPolicyOperation>(operation);
     }
 
-    public static OperationBuilder<AlterBlueTuskRowLevelSecurityOperation> AlterBlueTuskRowLevelSecurity(
+    public static OperationBuilder<AlterRowLevelSecurityOperation> AlterRowLevelSecurity(
         this MigrationBuilder migrationBuilder,
         string table,
         bool? enabled = null,
@@ -128,7 +128,7 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
             throw new ArgumentException("At least one row-level security setting must be supplied.");
         }
 
-        var operation = new AlterBlueTuskRowLevelSecurityOperation
+        var operation = new AlterRowLevelSecurityOperation
         {
             Table = table,
             Schema = schema,
@@ -136,6 +136,6 @@ public static class BlueTuskRowLevelSecurityMigrationBuilderExtensions
             Forced = forced,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskRowLevelSecurityOperation>(operation);
+        return new OperationBuilder<AlterRowLevelSecurityOperation>(operation);
     }
 }

@@ -55,6 +55,25 @@ public sealed class BlueTuskConnectionPoolTests
     }
 
     [Fact]
+    public async Task Returning_a_session_satisfies_an_existing_waiter_before_a_new_checkout()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var firstLease = await pool.RentAsync(CancellationToken.None);
+        using var timeout = new CancellationTokenSource(TimeSpan.FromSeconds(5));
+        var waiting = pool.RentAsync(timeout.Token).AsTask();
+        await WaitUntilAsync(() => pool.Statistics.Waiting == 1);
+        await Task.Yield();
+
+        pool.Return(firstLease);
+
+        Assert.Null(pool.TryRent());
+        var waiterLease = await waiting;
+        Assert.Equal(0, pool.Statistics.Waiting);
+        Assert.Equal(1, pool.Statistics.Busy);
+        pool.Return(waiterLease);
+    }
+
+    [Fact]
     public async Task Warm_up_opens_the_configured_minimum()
     {
         await using var pool = CreatePool(minimumSize: 2, maximumSize: 3);

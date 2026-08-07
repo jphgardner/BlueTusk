@@ -26,7 +26,7 @@ public sealed class PropertyGraphMigrationIntegrationTests
         var createSql = Generate(
             generator,
             context.Model,
-            new CreateBlueTuskPropertyGraphOperation { Definition = definition });
+            new CreatePropertyGraphOperation { Definition = definition });
 
         await using var dataSource = BlueTuskDataSource.Create(connectionString);
         await using var capabilityConnection = await dataSource.OpenConnectionAsync(CancellationToken.None);
@@ -77,7 +77,7 @@ public sealed class PropertyGraphMigrationIntegrationTests
             var alterSql = Generate(
                 generator,
                 context.Model,
-                new AlterBlueTuskPropertyGraphOperation
+                new AlterPropertyGraphOperation
                 {
                     Name = "Social \"Graph",
                     Schema = Schema,
@@ -102,7 +102,7 @@ public sealed class PropertyGraphMigrationIntegrationTests
             var dropSql = Generate(
                 generator,
                 context.Model,
-                new DropBlueTuskPropertyGraphOperation
+                new DropPropertyGraphOperation
                 {
                     Name = renamed.Name.Name,
                     Schema = renamed.Name.Schema,

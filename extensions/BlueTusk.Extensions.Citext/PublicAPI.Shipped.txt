@@ -1,0 +1,36 @@
+#nullable enable
+BlueTusk.Extensions.Citext.BlueTuskCitext
+BlueTusk.Extensions.Citext.BlueTuskCitext.<Clone>$() -> BlueTusk.Extensions.Citext.BlueTuskCitext!
+BlueTusk.Extensions.Citext.BlueTuskCitext.BlueTuskCitext(string! value) -> void
+BlueTusk.Extensions.Citext.BlueTuskCitext.Equals(BlueTusk.Extensions.Citext.BlueTuskCitext? other) -> bool
+BlueTusk.Extensions.Citext.BlueTuskCitext.Value.get -> string!
+BlueTusk.Extensions.Citext.BlueTuskCitextCodec
+BlueTusk.Extensions.Citext.BlueTuskCitextCodec.BlueTuskCitextCodec() -> void
+BlueTusk.Extensions.Citext.BlueTuskCitextDataSourceBuilderExtensions
+BlueTusk.Extensions.Citext.BlueTuskCitextFeature
+BlueTusk.Extensions.Citext.BlueTuskCitextFeature.<Clone>$() -> BlueTusk.Extensions.Citext.BlueTuskCitextFeature!
+BlueTusk.Extensions.Citext.BlueTuskCitextFeature.BlueTuskCitextFeature(BlueTusk.TypeSystem.BlueTuskTypeName TypeName) -> void
+BlueTusk.Extensions.Citext.BlueTuskCitextFeature.Deconstruct(out BlueTusk.TypeSystem.BlueTuskTypeName TypeName) -> void
+BlueTusk.Extensions.Citext.BlueTuskCitextFeature.Equals(BlueTusk.Extensions.Citext.BlueTuskCitextFeature? other) -> bool
+BlueTusk.Extensions.Citext.BlueTuskCitextFeature.TypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+BlueTusk.Extensions.Citext.BlueTuskCitextFeature.TypeName.init -> void
+BlueTusk.Extensions.Citext.BlueTuskCitextPlugin
+BlueTusk.Extensions.Citext.BlueTuskCitextPlugin.BlueTuskCitextPlugin(string! schema = "public") -> void
+BlueTusk.Extensions.Citext.BlueTuskCitextPlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.Citext.BlueTuskCitextPlugin.TypeName.get -> BlueTusk.TypeSystem.BlueTuskTypeName
+const BlueTusk.Extensions.Citext.BlueTuskCitextFeature.RegistryName = "bluetusk.extensions.citext" -> string!
+override BlueTusk.Extensions.Citext.BlueTuskCitext.Equals(object? obj) -> bool
+override BlueTusk.Extensions.Citext.BlueTuskCitext.GetHashCode() -> int
+override BlueTusk.Extensions.Citext.BlueTuskCitext.ToString() -> string!
+override BlueTusk.Extensions.Citext.BlueTuskCitextCodec.ReadTyped(ref BlueTusk.TypeSystem.BlueTuskReader reader, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> BlueTusk.Extensions.Citext.BlueTuskCitext!
+override BlueTusk.Extensions.Citext.BlueTuskCitextCodec.WriteTyped(ref BlueTusk.TypeSystem.BlueTuskWriter writer, BlueTusk.Extensions.Citext.BlueTuskCitext! value, BlueTusk.TypeSystem.BlueTuskDataFormat format, BlueTusk.TypeSystem.BlueTuskTypeDescriptor! type) -> void
+override BlueTusk.Extensions.Citext.BlueTuskCitextFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.Citext.BlueTuskCitextFeature.GetHashCode() -> int
+override BlueTusk.Extensions.Citext.BlueTuskCitextFeature.ToString() -> string!
+static BlueTusk.Extensions.Citext.BlueTuskCitext.explicit operator string!(BlueTusk.Extensions.Citext.BlueTuskCitext! value) -> string!
+static BlueTusk.Extensions.Citext.BlueTuskCitext.implicit operator BlueTusk.Extensions.Citext.BlueTuskCitext!(string! value) -> BlueTusk.Extensions.Citext.BlueTuskCitext!
+static BlueTusk.Extensions.Citext.BlueTuskCitext.operator !=(BlueTusk.Extensions.Citext.BlueTuskCitext? left, BlueTusk.Extensions.Citext.BlueTuskCitext? right) -> bool
+static BlueTusk.Extensions.Citext.BlueTuskCitext.operator ==(BlueTusk.Extensions.Citext.BlueTuskCitext? left, BlueTusk.Extensions.Citext.BlueTuskCitext? right) -> bool
+static BlueTusk.Extensions.Citext.BlueTuskCitextDataSourceBuilderExtensions.UseCitext(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder, string! schema = "public") -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.Citext.BlueTuskCitextFeature.operator !=(BlueTusk.Extensions.Citext.BlueTuskCitextFeature? left, BlueTusk.Extensions.Citext.BlueTuskCitextFeature? right) -> bool
+static BlueTusk.Extensions.Citext.BlueTuskCitextFeature.operator ==(BlueTusk.Extensions.Citext.BlueTuskCitextFeature? left, BlueTusk.Extensions.Citext.BlueTuskCitextFeature? right) -> bool

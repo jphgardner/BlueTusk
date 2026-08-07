@@ -1,0 +1,4 @@
+#nullable enable
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService.GetContinuousGraphOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview!>
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService.HostedContinuousGraphControlPlaneQueryService(BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry! registry, System.TimeProvider? timeProvider = null) -> void

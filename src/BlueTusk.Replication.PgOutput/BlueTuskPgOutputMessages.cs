@@ -179,4 +179,12 @@ public sealed record BlueTuskPgOutputStreamPrepare(
 /// <summary>A decoded pgoutput message together with its WAL envelope.</summary>
 public sealed record BlueTuskPgOutputEnvelope(
     BlueTuskXLogData XLogData,
-    BlueTuskPgOutputMessage Message);
+    BlueTuskPgOutputMessage Message)
+{
+    internal bool OwnsPayload => XLogData.OwnsData;
+
+    internal static BlueTuskPgOutputEnvelope CreateOwned(
+        BlueTuskXLogData xLogData,
+        BlueTuskPgOutputMessage message) =>
+        new(xLogData.MarkDataOwned(), message);
+}

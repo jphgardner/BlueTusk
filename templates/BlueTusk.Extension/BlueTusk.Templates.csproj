@@ -7,6 +7,7 @@
     <Description>dotnet new templates for BlueTusk PostgreSQL extension packages.</Description>
     <PackageTags>dotnet-new;templates;postgresql;bluetusk;extensions</PackageTags>
     <IncludeBuildOutput>false</IncludeBuildOutput>
+    <IncludeSymbols>false</IncludeSymbols>
     <SuppressDependenciesWhenPacking>true</SuppressDependenciesWhenPacking>
     <NoDefaultExcludes>true</NoDefaultExcludes>
   </PropertyGroup>

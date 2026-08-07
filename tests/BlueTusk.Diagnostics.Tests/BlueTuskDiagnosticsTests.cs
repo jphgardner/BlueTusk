@@ -136,6 +136,74 @@ public sealed class BlueTuskDiagnosticsTests
     }
 
     [Fact]
+    public void Multiplexing_metrics_expose_bounded_scheduler_state_and_low_cardinality_outcomes()
+    {
+        var doubleMeasurements = new List<Measurement<double>>();
+        var longMeasurements = new List<Measurement<long>>();
+        using var listener = new MeterListener();
+        listener.InstrumentPublished = (instrument, meterListener) =>
+        {
+            if (instrument.Meter.Name == BlueTuskDiagnostics.InstrumentationName)
+            {
+                meterListener.EnableMeasurementEvents(instrument);
+            }
+        };
+        listener.SetMeasurementEventCallback<double>(
+            (instrument, value, tags, _) =>
+                doubleMeasurements.Add(new Measurement<double>(instrument.Name, value, tags.ToArray())));
+        listener.SetMeasurementEventCallback<long>(
+            (instrument, value, tags, _) =>
+                longMeasurements.Add(new Measurement<long>(instrument.Name, value, tags.ToArray())));
+        listener.Start();
+
+        BlueTuskDiagnostics.RecordMultiplexingPendingDelta(1);
+        BlueTuskDiagnostics.RecordMultiplexingExecutingDelta(1);
+        BlueTuskDiagnostics.RecordMultiplexingAdmission("accepted");
+        var queuedAt = BlueTuskDiagnostics.GetMultiplexingQueueTimestamp();
+        BlueTuskDiagnostics.RecordMultiplexingQueueWait(queuedAt);
+        BlueTuskDiagnostics.RecordMultiplexingPipelineSize(4);
+        BlueTuskDiagnostics.RecordMultiplexingCommandOutcome("completed");
+        BlueTuskDiagnostics.RecordMultiplexingExecutingDelta(-1);
+        BlueTuskDiagnostics.RecordMultiplexingPendingDelta(-1);
+        BlueTuskDiagnostics.RecordMultiplexingForcedShutdown();
+
+        Assert.Contains(
+            doubleMeasurements,
+            measurement => measurement.Name == "bluetusk.multiplexing.queue.wait.duration" &&
+                measurement.Value >= 0);
+        Assert.Contains(
+            longMeasurements,
+            measurement => measurement.Name == "bluetusk.multiplexing.commands.pending" &&
+                measurement.Value == 1);
+        Assert.Contains(
+            longMeasurements,
+            measurement => measurement.Name == "bluetusk.multiplexing.commands.executing" &&
+                measurement.Value == 1);
+        Assert.Contains(
+            longMeasurements,
+            measurement => measurement.Name == "bluetusk.multiplexing.pipeline.size" &&
+                measurement.Value == 4);
+        Assert.Contains(
+            longMeasurements,
+            measurement => measurement.Name == "bluetusk.multiplexing.admissions" &&
+                measurement.Tags.Contains(
+                    new KeyValuePair<string, object?>(
+                        "bluetusk.multiplexing.admission.outcome",
+                        "accepted")));
+        Assert.Contains(
+            longMeasurements,
+            measurement => measurement.Name == "bluetusk.multiplexing.commands" &&
+                measurement.Tags.Contains(
+                    new KeyValuePair<string, object?>(
+                        "bluetusk.multiplexing.command.outcome",
+                        "completed")));
+        Assert.Contains(
+            longMeasurements,
+            measurement => measurement.Name == "bluetusk.multiplexing.forced_shutdowns" &&
+                measurement.Value == 1);
+    }
+
+    [Fact]
     public void Slow_command_events_contain_summary_and_explicit_tags_but_not_SQL_or_errors()
     {
         using var listener = new RecordingEventListener();

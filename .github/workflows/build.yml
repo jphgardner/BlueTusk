@@ -12,6 +12,71 @@ permissions:
   contents: read
 
 jobs:
+  applications:
+    name: Package-only application suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+
+      - name: Verify application and deployment contracts
+        shell: pwsh
+        run: |
+          ./eng/verify-applications.ps1
+          ./eng/test-application-image-evidence-verifier.ps1
+          ./eng/test-prerelease-release-verifier.ps1
+
+      - name: Build exact local RC feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+
+      - name: Restore, format, build, and test applications
+        shell: pwsh
+        run: |
+          dotnet restore applications/BlueTusk.Applications.slnx `
+            -p:RestoreAdditionalProjectSources=$PWD/artifacts/prerelease/feed
+          dotnet format applications/BlueTusk.Applications.slnx --no-restore --verify-no-changes
+          dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
+          dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore
+
+      - name: Test applications against digest-pinned PostgreSQL 19 Beta 2
+        shell: pwsh
+        run: ./eng/test-applications-postgresql.ps1
+
+      - name: Build all browser clients from local RC npm artifacts
+        shell: pwsh
+        run: ./eng/build-application-web.ps1
+
+      - name: Exercise primary browser journeys
+        shell: pwsh
+        run: |
+          npm exec --yes playwright@1.62.1 install --with-deps chromium
+          Get-ChildItem artifacts/application-web -Directory | ForEach-Object {
+            Push-Location (Join-Path $_.FullName 'work')
+            try { npm run test:e2e }
+            finally { Pop-Location }
+          }
+
+      - name: Lint digest-only application chart
+        shell: bash
+        run: |
+          digest="sha256:$(printf '0%.0s' {1..64})"
+          helm lint applications/deploy/charts/bluetusk-application \
+            --set hostname=test.example.invalid \
+            --set images.api.repository=ghcr.io/test/api --set images.api.digest="$digest" \
+            --set images.worker.repository=ghcr.io/test/worker --set images.worker.digest="$digest" \
+            --set images.ui.repository=ghcr.io/test/ui --set images.ui.digest="$digest" \
+            --set database.ownerSecret=test-db-owner \
+            --set secrets.runtime=test-runtime --set secrets.liveTenant=test-live --set secrets.oidc=test-oidc \
+            --set authentication.authority=https://auth.example.invalid/realms/bluetusk \
+            --set authentication.clientId=test
+
   build-and-test:
     strategy:
       fail-fast: false
@@ -20,10 +85,14 @@ jobs:
     runs-on: ${{ matrix.os }}
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
+
+      - name: Verify solution layout
+        shell: pwsh
+        run: ./eng/verify-solution-layout.ps1
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
@@ -35,18 +104,177 @@ jobs:
         shell: pwsh
         run: ./eng/verify-documentation.ps1
 
+      - name: Verify supply-chain source gates
+        shell: pwsh
+        run: |
+          ./eng/verify-supply-chain.ps1
+          ./eng/verify-postgresql19-programme.ps1
+
+      - name: Verify independent release trains
+        shell: pwsh
+        run: |
+          'Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph' |
+            ForEach-Object {
+              ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
+              ./eng/pack-product-family.ps1 `
+                -Family $_ `
+                -ValidateOnly `
+                -Prerelease `
+                -VersionOverride 1.0.0-rc.1
+            }
+          ./eng/test-prerelease-release-verifier.ps1
+          ./eng/test-v1-approval-evidence-verifier.ps1
+
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore
 
       - name: Test
         run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
-      - name: Verify checked-in allocation budgets
+      - name: Verify V1 engineering production readiness
         shell: pwsh
-        run: ./eng/verify-allocation-budgets.ps1
+        run: ./eng/verify-v1-production-readiness.ps1
 
       - name: Pack
         run: dotnet pack BlueTusk.slnx --configuration Release --no-build --output artifacts/packages
+
+  website:
+    name: Angular website and complete documentation
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: website
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: website/package-lock.json
+
+      - name: Restore website dependencies
+        run: npm ci
+
+      - name: Verify generated documentation
+        run: npm run docs:check
+
+      - name: Test website
+        run: npm test -- --watch=false
+
+      - name: Build website
+        run: npm run build
+
+      - name: Audit website dependencies
+        run: npm audit --audit-level=moderate
+
+      - name: Archive static website
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: bluetusk-website
+          path: website/dist/website/browser
+          if-no-files-found: error
+
+  candidate-packages:
+    name: Immutable all-family V1 package evidence
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+      - uses: actions/setup-node@249970729cb0ef3589644e2896645e5dc5ba9c38 # v6
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: package-lock.json
+
+      - name: Build and verify canonical V1 packages, SBOMs, and provenance
+        shell: pwsh
+        run: >-
+          ./eng/build-v1-candidate-packages.ps1
+          -Commit ${{ github.sha }}
+
+      - name: Archive immutable V1 package evidence
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: v1-candidate-packages-${{ github.sha }}
+          path: |
+            artifacts/v1-candidate-packages/package-manifest.json
+            artifacts/v1-candidate-packages/packages
+            artifacts/v1-candidate-packages/sbom
+          if-no-files-found: error
+          retention-days: 90
+
+  observability-config:
+    name: Prometheus and OpenTelemetry production config
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+
+      - name: Verify telemetry, SLO, dashboard, and alert contracts
+        shell: pwsh
+        run: ./eng/verify-production-observability.ps1
+
+      - name: Validate Prometheus rules
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}/ops/observability:/work:ro"
+          --entrypoint /bin/promtool
+          prom/prometheus:v3.13.1@sha256:3c42b892cf723fa54d2f262c37a0e1f80aa8c8ddb1da7b9b0df9455a35a7f893
+          check rules /work/prometheus-rules.yml
+
+      - name: Validate OpenTelemetry Collector configuration
+        run: >-
+          docker run --rm
+          --volume "${{ github.workspace }}/ops/observability:/work:ro"
+          --env BLUETUSK_TRACES_ENDPOINT=https://traces.example.test:4317
+          otel/opentelemetry-collector-contrib:0.153.0@sha256:93aad750175cbf1a973ae1c5886c3371f4d800f61be25cdd26870b8441ffe9fa
+          validate --config=/work/otel-collector.yaml
+
+  provider-core-publish:
+    name: Provider core trimming and NativeAOT (${{ matrix.rid }})
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: windows-latest
+            rid: win-x64
+          - os: ubuntu-latest
+            rid: linux-x64
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore trimmed smoke
+        run: dotnet restore tests/BlueTusk.TrimSmoke/BlueTusk.TrimSmoke.csproj --runtime ${{ matrix.rid }}
+
+      - name: Restore NativeAOT smoke
+        run: dotnet restore tests/BlueTusk.NativeAotSmoke/BlueTusk.NativeAotSmoke.csproj --runtime ${{ matrix.rid }}
+
+      - name: Publish, execute, and measure provider core
+        shell: pwsh
+        run: ./eng/verify-provider-core-publish.ps1 -RuntimeIdentifier ${{ matrix.rid }} -NoRestore
+
+      - name: Archive publish measurements
+        if: always()
+        uses: actions/upload-artifact@b7c566a772e6b6bfb58ed0dc250532a479d7789f # v6
+        with:
+          name: provider-core-publish-${{ matrix.rid }}
+          path: artifacts/provider-core-smoke/${{ matrix.rid }}/report.json
+          if-no-files-found: error
 
   postgresql-integration:
     name: PostgreSQL ${{ matrix.major }} live matrix
@@ -57,8 +285,8 @@ jobs:
         major: [15, 16, 17, 18, 19]
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -80,6 +308,138 @@ jobs:
       - name: Stop PostgreSQL
         if: always()
         run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes
+
+  redis-streams-integration:
+    name: Redis Streams state-store conformance
+    runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Run Redis checkpoint and lease conformance
+        env:
+          BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
+        run: >-
+          dotnet test tests/BlueTusk.IntegrationTests/BlueTusk.IntegrationTests.csproj
+          --configuration Release
+          --no-restore
+          --filter FullyQualifiedName~BlueTuskStreamsRedisStateStoreIntegrationTests
+          --logger trx
+          --results-directory artifacts/test-results/redis-streams
+
+      - name: Run Redis Sync recovery and shared conformance
+        env:
+          BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
+        run: >-
+          dotnet test tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/redis-sync
+
+  nats-sync-integration:
+    name: NATS JetStream Sync recovery
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start NATS JetStream
+        run: |
+          docker run --detach --name bluetusk-nats --publish 4222:4222 nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66 -js
+          for attempt in $(seq 1 20); do
+            if nc -z 127.0.0.1 4222; then exit 0; fi
+            sleep 1
+          done
+          docker logs bluetusk-nats
+          exit 1
+
+      - name: Run NATS recovery and shared conformance
+        env:
+          BLUETUSK_NATS_URL: nats://localhost:4222
+        run: >-
+          dotnet test tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/nats-sync
+
+      - name: Capture NATS logs on failure
+        if: failure()
+        run: docker logs bluetusk-nats
+
+      - name: Stop NATS
+        if: always()
+        run: docker rm --force bluetusk-nats
+
+  opensearch-sync-integration:
+    name: OpenSearch Sync recovery and rebuild
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Restore
+        run: dotnet restore BlueTusk.slnx
+
+      - name: Start OpenSearch
+        run: |
+          docker run --detach --name bluetusk-opensearch \
+            --publish 9200:9200 \
+            --env discovery.type=single-node \
+            --env DISABLE_SECURITY_PLUGIN=true \
+            --env DISABLE_INSTALL_DEMO_CONFIG=true \
+            --env "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m" \
+            opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9
+          for attempt in $(seq 1 90); do
+            if curl --fail --silent http://127.0.0.1:9200 >/dev/null; then exit 0; fi
+            sleep 1
+          done
+          docker logs bluetusk-opensearch
+          exit 1
+
+      - name: Run OpenSearch recovery, rebuild, and shared conformance
+        env:
+          BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
+        run: >-
+          dotnet test tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj
+          --configuration Release
+          --no-restore
+          --logger trx
+          --results-directory artifacts/test-results/opensearch-sync
+
+      - name: Capture OpenSearch logs on failure
+        if: failure()
+        run: docker logs bluetusk-opensearch
+
+      - name: Stop OpenSearch
+        if: always()
+        run: docker rm --force bluetusk-opensearch
 
   extension-integration:
     name: ${{ matrix.name }} dedicated extension image
@@ -105,8 +465,8 @@ jobs:
             ef_project: tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -149,8 +509,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -204,8 +564,8 @@ jobs:
             timezone: America/New_York
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -247,8 +607,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -289,13 +649,17 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
       - name: Restore
         run: dotnet restore BlueTusk.slnx
+
+      - name: Verify recorded upstream milestone
+        shell: pwsh
+        run: ./eng/verify-postgresql19-programme.ps1 -VerifyOfficialCurrent
 
       - name: Build and start official PostgreSQL 19 snapshot
         run: >-
@@ -331,8 +695,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -368,8 +732,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -404,8 +768,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 
@@ -439,8 +803,8 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-dotnet@v6
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
         with:
           global-json-file: global.json
 

@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "formats": [
+    {
+      "id": "change-transaction-envelope",
+      "currentVersion": 2,
+      "minimumReadableVersion": 1,
+      "compatibility": "backward-readable",
+      "evidence": "tests/BlueTusk.Streams.Tests/PgOutputChangeStreamTests.cs::Legacy_v1_relay_envelope_decodes_as_a_committed_transaction"
+    },
+    {
+      "id": "change-stream-checkpoint",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "backward-readable",
+      "evidence": "tests/BlueTusk.Streams.Tests/StateStoreConformanceTests.cs::File_store_round_trips_state_across_instances"
+    },
+    {
+      "id": "file-state-store",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Streams.Tests/StateStoreConformanceTests.cs::File_store_passes_the_public_conformance_kit"
+    },
+    {
+      "id": "postgresql-relay-schema",
+      "currentVersion": 2,
+      "minimumReadableVersion": 1,
+      "compatibility": "migrated-in-place",
+      "evidence": "tests/BlueTusk.IntegrationTests/BlueTuskStreamsRelayIntegrationTests.cs::PostgreSql_relay_migrates_protects_removes_and_compacts_safely"
+    },
+    {
+      "id": "relay-backup",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.IntegrationTests/BlueTuskStreamsRelayIntegrationTests.cs::PostgreSql_relay_backup_restores_atomically_and_preserves_fencing_history"
+    },
+    {
+      "id": "relay-snapshot-run",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.IntegrationTests/BlueTuskSyncRelaySourceIntegrationTests.cs::Relay_snapshot_run_progress_rejects_corruption"
+    },
+    {
+      "id": "transaction-cloud-event",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Streams.Tests/PgOutputChangeStreamTests.cs::CloudEvent_preserves_one_integrity_checked_source_transaction"
+    },
+    {
+      "id": "transaction-spool",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "ephemeral-current-only",
+      "evidence": "tests/BlueTusk.Streams.Tests/PgOutputChangeStreamTests.cs::File_spool_rejects_unknown_versions_and_accounts_restart_artifacts"
+    }
+  ]
+}

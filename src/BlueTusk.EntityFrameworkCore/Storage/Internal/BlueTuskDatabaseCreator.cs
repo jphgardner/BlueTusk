@@ -1,10 +1,13 @@
-using BlueTusk.Data;
+using System.Data.Common;
+using BlueTusk.Data.Internal;
 using BlueTusk.EntityFrameworkCore.Infrastructure.Internal;
 using Microsoft.EntityFrameworkCore.Storage;
 
 namespace BlueTusk.EntityFrameworkCore.Storage.Internal;
 
-internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependencies dependencies)
+internal sealed class BlueTuskDatabaseCreator(
+    RelationalDatabaseCreatorDependencies dependencies,
+    IProviderServices providerServices)
     : RelationalDatabaseCreator(dependencies)
 {
     public override bool Exists()
@@ -133,44 +136,18 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
         }
     }
 
-    internal static BlueTuskDatabaseLifecycleSettings CreateLifecycleSettings(
-        string connectionString,
-        string? configuredAdminDatabase = null)
-    {
-        var settings = new BlueTuskConnectionStringBuilder(connectionString);
-        var targetDatabase = settings.Database;
-        ArgumentException.ThrowIfNullOrWhiteSpace(targetDatabase);
-        var adminDatabase = configuredAdminDatabase ??
-            (string.Equals(targetDatabase, "postgres", StringComparison.Ordinal)
-                ? "template1"
-                : "postgres");
-        ArgumentException.ThrowIfNullOrWhiteSpace(adminDatabase);
-        if (string.Equals(targetDatabase, adminDatabase, StringComparison.Ordinal))
-        {
-            throw new InvalidOperationException(
-                "The BlueTusk admin database must differ from the target database.");
-        }
-
-        settings.Database = adminDatabase;
-        settings.Pooling = false;
-        settings.TargetSessionAttributes = BlueTuskTargetSessionAttributes.ReadWrite;
-        return new BlueTuskDatabaseLifecycleSettings(targetDatabase, settings.ConnectionString);
-    }
-
-    private BlueTuskDatabaseLifecycleSettings CreateLifecycleSettings()
+    private DatabaseLifecycleSettings CreateLifecycleSettings()
     {
         var options = Dependencies.ContextOptions.FindExtension<BlueTuskOptionsExtension>();
-        return CreateLifecycleSettings(
-            GetConnection()?.UnredactedConnectionString
-                ?? Dependencies.Connection.ConnectionString
-                ?? string.Empty,
+        return providerServices.CreateDatabaseLifecycleSettings(
+            GetDataSource()?.UnredactedConnectionString
+                ?? GetConnection().UnredactedConnectionString,
             options?.AdminDatabase);
     }
 
-    private BlueTuskConnection CreateAdminConnection(string connectionString) =>
-        GetDataSource()?.CreateUnpooledConnection(connectionString)
-        ?? GetConnection()?.CreateUnpooledConnection(connectionString)
-        ?? new BlueTuskConnection(connectionString);
+    private DbConnection CreateAdminConnection(string connectionString) =>
+        GetDataSource()?.CreateAdminConnection(connectionString)
+        ?? GetConnection().CreateAdminConnection(connectionString);
 
     private string DelimitIdentifier(string identifier) =>
         Dependencies.SqlGenerationHelper.DelimitIdentifier(identifier);
@@ -195,7 +172,7 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
         Dependencies.Connection.Open();
         try
         {
-            ((BlueTuskConnection)Dependencies.Connection.DbConnection).ReloadTypes();
+            GetConnection().ReloadTypes();
         }
         finally
         {
@@ -208,7 +185,7 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
         await Dependencies.Connection.OpenAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            await ((BlueTuskConnection)Dependencies.Connection.DbConnection)
+            await GetConnection()
                 .ReloadTypesAsync(cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -217,13 +194,9 @@ internal sealed class BlueTuskDatabaseCreator(RelationalDatabaseCreatorDependenc
         }
     }
 
-    private BlueTuskDataSource? GetDataSource() =>
+    private IProviderDataSource? GetDataSource() =>
         (Dependencies.Connection as BlueTuskRelationalConnection)?.DataSource;
 
-    private BlueTuskConnection? GetConnection() =>
-        Dependencies.Connection.DbConnection as BlueTuskConnection;
+    private IProviderConnection GetConnection() =>
+        providerServices.GetConnection(Dependencies.Connection.DbConnection);
 }
-
-internal sealed record BlueTuskDatabaseLifecycleSettings(
-    string TargetDatabase,
-    string AdminConnectionString);

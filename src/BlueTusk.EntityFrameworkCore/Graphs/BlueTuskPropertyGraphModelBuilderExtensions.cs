@@ -8,7 +8,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskPropertyGraphModelBuilderExtensions
 {
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static ModelBuilder HasBlueTuskPropertyGraphs(
+    public static ModelBuilder HasPropertyGraphs(
         this ModelBuilder modelBuilder,
         string serializedDefinitions)
     {
@@ -20,7 +20,7 @@ public static class BlueTuskPropertyGraphModelBuilderExtensions
         return modelBuilder;
     }
 
-    public static ModelBuilder HasBlueTuskPropertyGraph(
+    public static ModelBuilder HasPropertyGraph(
         this ModelBuilder modelBuilder,
         string name,
         Action<BlueTuskPropertyGraphBuilder> configure,

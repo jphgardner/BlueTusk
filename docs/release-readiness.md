@@ -1,13 +1,33 @@
 # Runtime release readiness
 
 BlueTusk records production-readiness decisions as executable subsystem gates,
-not as synonyms for package version. The 2026-08-02 whole-product review closes
-the product-spec engineering gates for the ADO.NET provider, EF Core and design
-tooling, PostgreSQL-specific schema/query support, native data paths,
-replication, extensions, security, performance, stress, compatibility, and
-documentation. The repository and packages remain `0.3.0-preview.1`: completing
-an engineering gate does not substitute for external production experience or
-the maintainer's explicit decision to publish a stable release.
+not as synonyms for package version. The 2026-08-07 V1 hardening review closes
+the implementation gates for the ADO.NET provider, EF Core and design tooling,
+PostgreSQL-specific schema/query support, native data paths, replication,
+extensions, parser reliability, security, performance, API governance,
+supply-chain provenance, stress, compatibility and documentation.
+
+The repository is release-prepared as six stable `1.0.0` families, but no V1
+package is published. Completing an engineering gate does not substitute for
+exact-candidate endurance, PostgreSQL 19 GA, independent production experience,
+or protected publication approval. The concise current status is in
+[V1 release readiness](v1-release-readiness.md).
+
+## Publication gate
+
+All six product-family publication policies are disabled during preparation.
+Manual release-workflow dispatches create candidate artifacts only; they
+cannot publish. Provider, Streams, Sync, Live, Control Plane, and
+ContinuousGraph are all locked to stable `1.0.0` without prerelease suffixes.
+
+After PostgreSQL 19 GA, a reviewed final PR arms all six policies on `main`.
+That resulting SHA is the immutable candidate. It must have no V1 release tags
+or published candidate packages and must pass seven exact-SHA workflows:
+build, security, fuzzing, performance, Streams endurance, Sync endurance, and
+ContinuousGraph endurance. The release workflow verifies successful GitHub
+Actions runs by `head_sha`, rejects a mismatched version tag or checkout, and
+publishes only through the protected production environment. See the
+[release process](release-process.md).
 
 ## Connection pooling
 
@@ -26,8 +46,26 @@ the maintainer's explicit decision to publish a stable release.
 
 Deterministic failure tests also prove that failed creation and validation
 release capacity, clearing retires leased sessions on return, and data-source
-disposal rejects queued opens. Multiplexing remains deliberately out of scope;
-one logical checkout exclusively owns one physical session.
+disposal rejects queued opens.
+
+Opt-in statement multiplexing is now part of the V1 gate. It provides bounded
+queues, persistent worker lanes, conservative session-state fallback, one
+PostgreSQL synchronization group per command, per-group cancellation and error
+isolation, forced-shutdown transport abort, and scheduler statistics. Explicit
+connections, transactions, prepared commands, replication, notifications, and
+stateful SQL remain session-affine. Live PostgreSQL tests cover concurrent
+fan-in, FIFO fairness, pool exhaustion, queue admission cancellation, command
+timeouts, adjacent errors, reset isolation, lease rotation, and stuck-lane
+shutdown. PgBouncer session and transaction modes have separate live acceptance.
+
+The frozen V1 MediumRun from commit `9ba2c50` compares four physical lanes and
+64-command bursts against both Npgsql multiplexing and ordinary pooled
+BlueTusk/Npgsql. BlueTusk records lower mean, P95, and P99 latency than Npgsql
+for fresh and reused multiplexed commands in the named loopback environment,
+while its fresh-command allocation is also slightly lower. The full report,
+environment/image/commit manifest, SHA-256, and machine-readable budget are
+checked in and verified by CI. This is a regression gate, not a universal
+performance or production-readiness claim.
 
 ## Cancellation
 
@@ -138,14 +176,19 @@ server cannot implement their generated-column SQL.
 
 ## Release artifacts and documentation
 
-The reviewed Release build produces 30 `0.3.0-preview.1` NuGet/tool/template
-packages without warnings. Compiler-enforced public API/nullability baselines
-cover the stable core, replication, and extension-authoring seams. The final
-direct-and-transitive NuGet vulnerability audit covers all 66 solution projects
-and reports zero vulnerable package entries. All 24 checked-in allocation
+The reviewed Provider-family Release candidate produces 31
+`1.0.0` NuGet/tool/template packages and 29 symbol packages without
+warnings. Compiler-enforced public API/nullability baselines
+cover all 27 Provider-family library surfaces and are locked by the
+[V1 candidate hash manifest](../eng/provider-api-freeze.json). Package
+conformance also prevents embedded extension-template content projects from
+entering the release train. The final
+direct-and-transitive NuGet vulnerability audit covers the complete solution
+and reports zero vulnerable package entries. All 37 checked-in allocation
 budgets pass, including command, typed reader, protocol writer,
-structured-codec, large-value streaming, replication, EF Core application, and
-SQL/PGQ traversal paths.
+structured-codec, large-value streaming, replication, EF Core application,
+Live diff/replay/fan-out, SQL/PGQ traversal, and Continuous Graph registration,
+authoritative requery, and affected-invalidation paths.
 
 The live application benchmark gate adds fresh parameterized EF query
 compilation plus first execution, 100-entity materialization, normalized tracked
@@ -153,6 +196,61 @@ inserts and load/update paths, plus traversal of a 1,000-vertex/999-edge
 PostgreSQL 19 property graph through both a prepared raw command and the typed
 EF graph API. The checked-in ShortRun reports and allocation budgets are
 regression evidence, not universal latency or throughput claims.
+
+The provider core also publishes and executes full-trim and NativeAOT offline
+smokes on Windows and Linux. The first Windows x64 observation records a
+21,993,850-byte trimmed deployment at 248.994 ms cold wall-clock and 327,144 B
+second-pass managed allocation, plus a 5,783,552-byte NativeAOT executable at
+18.327 ms and 343,392 B. This covers the provider construction/type-system path
+without a database; it is regression evidence rather than production latency
+or Npgsql-comparison evidence. The documented AOT boundary keeps common
+built-in ranges and one-dimensional arrays static and fails explicitly for
+runtime-selected unsupported shapes.
+
+The in-memory Live application gate records a 76.4 µs/221,872 B keyed diff for
+one update in a bounded 1,000-row result, 881 ns/832 B versioned replay
+serialization, and a 92.3 µs/175,060 B lifecycle that coalesces 100 relevant
+invalidations and fans one update to 64 bounded subscribers. A deterministic
+race suite separately proves exactly-once observation through either replay or
+the live channel across 64 concurrent reconnect/publication boundaries. These
+figures exclude database and network time and are used only as checked-in
+regression budgets.
+
+The live PostgreSQL 19 Continuous Graph gate records 988 µs/103,446 B for
+capability-guarded registration, 2.827 ms/666,055 B for authoritative
+materialisation of 999 graph paths, and 4.225 ms/888,159 B for an affected
+invalidation through authoritative requery plus keyed diff. The invalidation
+source is constant-time and in-memory, but the `GRAPH_TABLE` query and provider
+work are included. These ShortRun values are checked-in regression evidence,
+not production latency objectives.
+
+The independently versioned `BlueTusk.ContinuousGraph 1.0.0` runtime and
+`BlueTusk.ContinuousGraph.ControlPlane` adapter pass a zero-warning repository
+Release build, the graph suite including PostgreSQL 19 acceptance, public API
+freeze, dependency-direction conformance, documentation-link and
+allocation-budget gates, and inspected NuGet packs. ContinuousGraph remains
+unpublished until PostgreSQL 19 GA, its dependencies, the exact 24-hour
+100,000-evaluation recovery-endurance report, and an independent pilot pass.
+The Live gate covers signed
+disconnect/resume replay from the PostgreSQL production store through SSE,
+SignalR/WebSockets, and HTTP/2 gRPC on PostgreSQL 15–19. The release script
+rejects any publishable family with a gated dependency. This does not mark the
+still-open Streams 72-hour, Sync 24-hour, ContinuousGraph 24-hour, pilot, or
+protected publication gates complete.
+
+The independently versioned Control Plane candidate now exposes discoverable
+v1 agent routes with versioned envelopes while retaining the original
+unversioned
+routes as compatibility aliases. Its audit store transactionally upgrades the
+legacy pre-metadata table to schema version 2, preserves and format-marks
+existing rows, rejects future schemas, and fences appends to the exact running
+schema version. Eleven unit tests, a hash-locked compiler API baseline, an
+executable format registry, and the live PostgreSQL 15–19 matrix cover route
+authorization, version negotiation, immutable audit, fresh initialization, and
+legacy upgrade. The `BlueTusk.ControlPlane` and `BlueTusk.Dashboard` 1.0.0
+candidates remain unpublished because the declared Sync
+release dependency has not yet archived its required 24-hour endurance
+evidence.
 
 The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and
 managed allocation on parameterized and explicitly prepared scalar execution,
@@ -165,10 +263,11 @@ provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
-in all tracked Markdown files; the 2026-08-02 review checked 159 local links
-across 79 files and separately resolved all 40 external Markdown references.
+in all tracked Markdown files. The Angular documentation build automatically
+discovers every repository guide, rewrites internal links to site routes,
+generates full-text search records and fails when generated content drifts.
 The support matrix identifies .NET 10, EF Core 10.0.10,
-PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 preview, including the
+PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 candidate evidence, including the
 remaining beta-syntax risk.
 
 ## Automated gates
@@ -191,6 +290,6 @@ contract.
 The [specification completion audit](completion-audit.md) maps every original
 product area and architecture-gap priority to its primary executable evidence.
 This evidence closes the repository's current product-spec engineering gates.
-It does not rename the packages to `1.0.0`, guarantee suitability for a
+It does not publish the `1.0.0` packages, guarantee suitability for a
 particular production deployment, validate optional cloud credentials that were
 not supplied, or expand the documented raw-SQL and ownership/grant boundaries.

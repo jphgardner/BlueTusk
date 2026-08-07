@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "baseline": "1.0.0-candidate",
+  "normalization": "utf8-lf",
+  "files": [
+    {
+      "path": "extensions/BlueTusk.Extensions.Citext.EntityFrameworkCore/PublicAPI.Shipped.txt",
+      "sha256": "b81562ca11696d3fe190b77d63ec5ee16c330a96b680d8c9e4006b1cf0c1a0e6"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.Citext/PublicAPI.Shipped.txt",
+      "sha256": "304a7f91f2ce23d378ba0ca4ce44ba197f73b1e8c7c757944ce175723dfe3be1"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.HStore/PublicAPI.Shipped.txt",
+      "sha256": "aebe46ed52e88776f6c72cd890ddcd5d51610a462b00c367720225f94cc48037"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.LTree/PublicAPI.Shipped.txt",
+      "sha256": "727a8de82e68a75989fc02ae627c8a377fa4a2c2e2e07e15ac0b56bcb716d29d"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.PgTrgm/PublicAPI.Shipped.txt",
+      "sha256": "07bc40f53a9cf569dfe1a8fea04d86597bbb93ac78c0478159f8d1e331008db8"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.PgVector.EntityFrameworkCore/PublicAPI.Shipped.txt",
+      "sha256": "42d1a164c7f54dbee48a9ad91912c04ab13368756ed09710a61ea2ff74e2ae4d"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.PgVector/PublicAPI.Shipped.txt",
+      "sha256": "6bb61b543f8a5aee42d754310fb182de44b60253e419d16720c5b145fe264c63"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.PostGIS.EntityFrameworkCore/PublicAPI.Shipped.txt",
+      "sha256": "c0fef257cb10d869f0b516f90cefb74fb1d775f0b3e0df5e249514fa21c500cc"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.PostGIS/PublicAPI.Shipped.txt",
+      "sha256": "baf7942b9afd55e7410c6424d88e67314c92dbedbfffe152bf3e80657f4cc20b"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore/PublicAPI.Shipped.txt",
+      "sha256": "a979a28bdbe55a6af6d0616c3e050a8f659598697880574a6fa29786b57ea1a4"
+    },
+    {
+      "path": "extensions/BlueTusk.Extensions.TimescaleDB/PublicAPI.Shipped.txt",
+      "sha256": "76b98f1f3f59aa7e69f82be1d394d061dbd56c752ae9f894b3afa07fb737aedb"
+    },
+    {
+      "path": "identity/BlueTusk.Identity.Aws/PublicAPI.Shipped.txt",
+      "sha256": "48ffea465d234ff042ca15fa152740a21aadc0bc0b93bbbf27f8150d6aa1240f"
+    },
+    {
+      "path": "identity/BlueTusk.Identity.Azure/PublicAPI.Shipped.txt",
+      "sha256": "08942b50826ff1048f64f1ce57db9768a26bd90451538d48a3baf54e6eebd476"
+    },
+    {
+      "path": "identity/BlueTusk.Identity.GoogleCloud/PublicAPI.Shipped.txt",
+      "sha256": "982c58fd8258b595da9a3d9206442827f25904cc5dd9c3ad0ea26f18e98dfa96"
+    },
+    {
+      "path": "src/BlueTusk.Client/PublicAPI.Shipped.txt",
+      "sha256": "dafe4c16fff49cde17f7db3892e26b43eecbd3239dc30acdb4dba5ac2eb6fe77"
+    },
+    {
+      "path": "src/BlueTusk.Data/PublicAPI.Shipped.txt",
+      "sha256": "08798bcace24623b00bbb4dd743fbf0403cf4845123a43562c76a36cbedf3821"
+    },
+    {
+      "path": "src/BlueTusk.Data.DependencyInjection/PublicAPI.Shipped.txt",
+      "sha256": "e5e86ff6f0905f5f96251b906f4b88d239e27ef3352b37fbe194dc8dee52857b"
+    },
+    {
+      "path": "src/BlueTusk.Diagnostics/PublicAPI.Shipped.txt",
+      "sha256": "fc6dd752eb9c8de297d7f4ad5a808cd81b0acd628404394181f6cc97286dda92"
+    },
+    {
+      "path": "src/BlueTusk.EntityFrameworkCore.Design/PublicAPI.Shipped.txt",
+      "sha256": "ead596e5162cc4e6f10aa65e18e6df195d5e2033b9c5e5ac5a9d5c5807537474"
+    },
+    {
+      "path": "src/BlueTusk.EntityFrameworkCore/PublicAPI.Shipped.txt",
+      "sha256": "52abffa6a0bb35d01e2e536d98d1e8cb2f64fdfd9e40bc404f2bedf94dce6d9c"
+    },
+    {
+      "path": "src/BlueTusk.Extensions.Abstractions/PublicAPI.Shipped.txt",
+      "sha256": "ea362d850eb527b516c32de0f27ad51643dc145e22d8d04328aca89625b18f80"
+    },
+    {
+      "path": "src/BlueTusk.Extensions.Testing/PublicAPI.Shipped.txt",
+      "sha256": "5352393532f353503c3876c46b550b902defb545955c17f25cea501b3b20f096"
+    },
+    {
+      "path": "src/BlueTusk.Protocol/PublicAPI.Shipped.txt",
+      "sha256": "a7d25dce64fa51d02f7f32a25ea107f500f66d195ee98cc5d8cfbbf1194d930d"
+    },
+    {
+      "path": "src/BlueTusk.Replication.PgOutput/PublicAPI.Shipped.txt",
+      "sha256": "6bd97c6a0b439918c325c57655a47d750b12d4428e8373ebc5fae350fa6e253c"
+    },
+    {
+      "path": "src/BlueTusk.Replication/PublicAPI.Shipped.txt",
+      "sha256": "c74d38e4a32b85480f87b76a76affac52a8593f1b80579a029c6ef254185766f"
+    },
+    {
+      "path": "src/BlueTusk.Security/PublicAPI.Shipped.txt",
+      "sha256": "69bb407f1adabeb895e57332805e3f01a16969f46f918e7c5e3506f31434321c"
+    },
+    {
+      "path": "src/BlueTusk.Transport/PublicAPI.Shipped.txt",
+      "sha256": "e37617d856c13166e304c077aef4e50dbe30128be355e897c8603489d42ea542"
+    },
+    {
+      "path": "src/BlueTusk.TypeSystem/PublicAPI.Shipped.txt",
+      "sha256": "9bf041ee7f142db9b90570f9be95726c38477bff3ddd5e10fd9240ea2cf45bf4"
+    }
+  ]
+}

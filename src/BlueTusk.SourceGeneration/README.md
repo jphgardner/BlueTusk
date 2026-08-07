@@ -19,7 +19,7 @@ using BlueTusk.TypeSystem;
 [BlueTuskComposite("app", "address")]
 public sealed partial record Address(int HouseNumber, string Street);
 
-Address.RegisterBlueTuskCodec(dataSourceBuilder.Types);
+Address.RegisterCodec(dataSourceBuilder.Types);
 ```
 
 The generator applies the same snake-case and `[BlueTuskName]` conventions as

@@ -1,7 +1,12 @@
-# PostgreSQL 19 SQL/PGQ preview
+# PostgreSQL 19 SQL/PGQ V1 candidate
 
-BlueTusk `0.3.0-preview.1` supports PostgreSQL 19 SQL/PGQ through raw ADO.NET
-SQL, a typed EF query subset, and read-only property-graph schema discovery. ADO.NET
+The cross-milestone test and publication cadence is documented in the
+[PostgreSQL 19 compatibility programme](../postgresql19-programme.md).
+
+BlueTusk's release-prepared `1.0.0` Provider family exposes PostgreSQL 19
+SQL/PGQ through raw ADO.NET SQL, a typed EF query subset, and read-only
+property-graph schema discovery. Stable support remains gated on PostgreSQL 19
+GA and the exact-candidate PostgreSQL 15–19 matrix. ADO.NET
 sessions enable `SupportsSqlPgq` only after probing the documented
 `information_schema.property_graphs` view; a major-version check alone is not
 used as evidence.
@@ -94,7 +99,7 @@ builder accepts only direct mapped-property selectors, so identifiers are
 resolved from EF metadata rather than caller-authored SQL:
 
 ```csharp
-modelBuilder.HasBlueTuskPropertyGraph(
+modelBuilder.HasPropertyGraph(
     "social",
     graph =>
     {
@@ -124,6 +129,13 @@ GRAPH`; changing an element definition emits drop/create because PostgreSQL's
 individual label/element alterations cannot represent every model change as
 one atomic command.
 
+Generated migration C# uses the public fluent graph builder rather than a
+serialized definition string. It describes vertices, edges, labels,
+properties, keys and endpoints directly and validates the definition before
+adding the operation. The strongly typed model builder above remains the
+preferred source of truth; the migration builder makes the generated schema
+change readable and reviewable.
+
 All generated graph DDL is executed inside a server-side guard. PostgreSQL
 15–18 receive SQLSTATE `0A000` with a BlueTusk-specific requirement message;
 the PostgreSQL 19 DDL is dynamic inside the guard so an older parser never sees
@@ -133,7 +145,7 @@ and embedded double quotes in every relevant identifier category.
 
 Database-first scaffolding reuses the same documented information-schema
 reader and retains discovered graphs in generated context code through
-`HasBlueTuskPropertyGraphs`. The retained metadata participates in subsequent
+`HasPropertyGraphs`. The retained metadata participates in subsequent
 migration diffs and typed query translation.
 
 ## Typed EF graph queries
@@ -177,7 +189,7 @@ applies its normal tracking behavior. The resulting `IQueryable` supports
 ordinary outer LINQ composition, including filters, joins, grouping, sorting,
 pagination, and further projections.
 
-## Exact preview boundary
+## Exact V1 typed-subset boundary
 
 Supported now:
 

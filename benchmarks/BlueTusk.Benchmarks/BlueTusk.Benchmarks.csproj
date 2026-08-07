@@ -1,21 +1,28 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
     <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="BenchmarkDotNet" />
     <PackageReference Include="Npgsql" />
+    <ProjectReference Include="..\..\src\BlueTusk.ContinuousGraph\BlueTusk.ContinuousGraph.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Live.Testing\BlueTusk.Live.Testing.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Protocol\BlueTusk.Protocol.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Replication\BlueTusk.Replication.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Replication.PgOutput\BlueTusk.Replication.PgOutput.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Streams.Testing\BlueTusk.Streams.Testing.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync.Nats\BlueTusk.Sync.Nats.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync.OpenSearch\BlueTusk.Sync.OpenSearch.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Sync.PostgreSql\BlueTusk.Sync.PostgreSql.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
     <IsPackable>false</IsPackable>
     <TargetFramework>net10.0</TargetFramework>
-    <ImplicitUsings>enable</ImplicitUsings>
-    <Nullable>enable</Nullable>
   </PropertyGroup>
 
 </Project>

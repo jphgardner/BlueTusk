@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "formats": [
+    {
+      "id": "grpc-contract",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "additive-protobuf",
+      "evidence": "tests/BlueTusk.Live.Tests/LiveGrpcTransportTests.cs::Mapper_preserves_sequence_token_and_versioned_json_event"
+    },
+    {
+      "id": "live-replay-json",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Live.Tests/LiveReplayTests.cs::Json_envelopes_are_integrity_checked_and_append_sequences_are_contiguous"
+    },
+    {
+      "id": "live-resume-token",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "compatibility": "current-only",
+      "evidence": "tests/BlueTusk.Live.Tests/LiveResumeTokenTests.cs::Token_is_signed_expiring_versioned_and_bound_to_subscription"
+    },
+    {
+      "id": "postgresql-live-schema",
+      "currentVersion": 2,
+      "minimumReadableVersion": 1,
+      "compatibility": "migrated-in-place",
+      "evidence": "tests/BlueTusk.Live.Tests/PostgreSqlLiveInvalidationStoreTests.cs::Store_migrates_v1_metadata_and_rejects_future_schema_versions"
+    }
+  ]
+}

@@ -8,24 +8,24 @@ namespace Microsoft.EntityFrameworkCore.Migrations;
 
 public static class BlueTuskSubscriptionMigrationBuilderExtensions
 {
-    public static OperationBuilder<CreateBlueTuskSubscriptionOperation> CreateBlueTuskSubscription(
+    public static OperationBuilder<CreateSubscriptionOperation> CreateSubscription(
         this MigrationBuilder migrationBuilder,
         BlueTuskSubscriptionDefinition definition)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskSubscriptionMetadata.ValidateForCreate(definition);
-        var operation = new CreateBlueTuskSubscriptionOperation { Definition = definition };
+        var operation = new CreateSubscriptionOperation { Definition = definition };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<CreateBlueTuskSubscriptionOperation>(operation);
+        return new OperationBuilder<CreateSubscriptionOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<CreateBlueTuskSubscriptionOperation> CreateBlueTuskSubscription(
+    public static OperationBuilder<CreateSubscriptionOperation> CreateSubscription(
         this MigrationBuilder migrationBuilder,
         string serializedDefinition) =>
-        CreateBlueTuskSubscription(migrationBuilder, BlueTuskSubscriptionMetadata.DeserializeDefinition(serializedDefinition));
+        CreateSubscription(migrationBuilder, BlueTuskSubscriptionMetadata.DeserializeDefinition(serializedDefinition));
 
-    public static OperationBuilder<AlterBlueTuskSubscriptionOperation> AlterBlueTuskSubscription(
+    public static OperationBuilder<AlterSubscriptionOperation> AlterSubscription(
         this MigrationBuilder migrationBuilder,
         BlueTuskSubscriptionDefinition oldDefinition,
         BlueTuskSubscriptionDefinition definition)
@@ -33,43 +33,43 @@ public static class BlueTuskSubscriptionMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         BlueTuskSubscriptionMetadata.Validate(oldDefinition);
         BlueTuskSubscriptionMetadata.Validate(definition);
-        var operation = new AlterBlueTuskSubscriptionOperation
+        var operation = new AlterSubscriptionOperation
         {
             OldDefinition = oldDefinition,
             Definition = definition,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<AlterBlueTuskSubscriptionOperation>(operation);
+        return new OperationBuilder<AlterSubscriptionOperation>(operation);
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static OperationBuilder<AlterBlueTuskSubscriptionOperation> AlterBlueTuskSubscription(
+    public static OperationBuilder<AlterSubscriptionOperation> AlterSubscription(
         this MigrationBuilder migrationBuilder,
         string serializedOldDefinition,
         string serializedDefinition) =>
-        AlterBlueTuskSubscription(
+        AlterSubscription(
             migrationBuilder,
             BlueTuskSubscriptionMetadata.DeserializeDefinition(serializedOldDefinition),
             BlueTuskSubscriptionMetadata.DeserializeDefinition(serializedDefinition));
 
-    public static OperationBuilder<DropBlueTuskSubscriptionOperation> DropBlueTuskSubscription(
+    public static OperationBuilder<DropSubscriptionOperation> DropSubscription(
         this MigrationBuilder migrationBuilder,
         string name,
         bool hasSlot = true)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new DropBlueTuskSubscriptionOperation
+        var operation = new DropSubscriptionOperation
         {
             Name = name,
             HasSlot = hasSlot,
             IsDestructiveChange = true,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<DropBlueTuskSubscriptionOperation>(operation);
+        return new OperationBuilder<DropSubscriptionOperation>(operation);
     }
 
-    public static OperationBuilder<RenameBlueTuskSubscriptionOperation> RenameBlueTuskSubscription(
+    public static OperationBuilder<RenameSubscriptionOperation> RenameSubscription(
         this MigrationBuilder migrationBuilder,
         string name,
         string newName)
@@ -77,34 +77,34 @@ public static class BlueTuskSubscriptionMigrationBuilderExtensions
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
         ArgumentException.ThrowIfNullOrWhiteSpace(newName);
-        var operation = new RenameBlueTuskSubscriptionOperation { Name = name, NewName = newName };
+        var operation = new RenameSubscriptionOperation { Name = name, NewName = newName };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RenameBlueTuskSubscriptionOperation>(operation);
+        return new OperationBuilder<RenameSubscriptionOperation>(operation);
     }
 
-    public static OperationBuilder<RefreshBlueTuskSubscriptionOperation> RefreshBlueTuskSubscription(
+    public static OperationBuilder<RefreshSubscriptionOperation> RefreshSubscription(
         this MigrationBuilder migrationBuilder,
         string name,
         bool copyData = true)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new RefreshBlueTuskSubscriptionOperation { Name = name, CopyData = copyData };
+        var operation = new RefreshSubscriptionOperation { Name = name, CopyData = copyData };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RefreshBlueTuskSubscriptionOperation>(operation);
+        return new OperationBuilder<RefreshSubscriptionOperation>(operation);
     }
 
-    public static OperationBuilder<RefreshBlueTuskSubscriptionSequencesOperation>
-        RefreshBlueTuskSubscriptionSequences(this MigrationBuilder migrationBuilder, string name)
+    public static OperationBuilder<RefreshSubscriptionSequencesOperation>
+        RefreshSubscriptionSequences(this MigrationBuilder migrationBuilder, string name)
     {
         ArgumentNullException.ThrowIfNull(migrationBuilder);
         ArgumentException.ThrowIfNullOrWhiteSpace(name);
-        var operation = new RefreshBlueTuskSubscriptionSequencesOperation { Name = name };
+        var operation = new RefreshSubscriptionSequencesOperation { Name = name };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<RefreshBlueTuskSubscriptionSequencesOperation>(operation);
+        return new OperationBuilder<RefreshSubscriptionSequencesOperation>(operation);
     }
 
-    public static OperationBuilder<SkipBlueTuskSubscriptionTransactionOperation> SkipBlueTuskSubscriptionTransaction(
+    public static OperationBuilder<SkipSubscriptionTransactionOperation> SkipSubscriptionTransaction(
         this MigrationBuilder migrationBuilder,
         string name,
         string? finishLsn = null)
@@ -116,12 +116,12 @@ public static class BlueTuskSubscriptionMigrationBuilderExtensions
             ArgumentException.ThrowIfNullOrWhiteSpace(finishLsn);
         }
 
-        var operation = new SkipBlueTuskSubscriptionTransactionOperation
+        var operation = new SkipSubscriptionTransactionOperation
         {
             Name = name,
             FinishLsn = finishLsn,
         };
         migrationBuilder.Operations.Add(operation);
-        return new OperationBuilder<SkipBlueTuskSubscriptionTransactionOperation>(operation);
+        return new OperationBuilder<SkipSubscriptionTransactionOperation>(operation);
     }
 }

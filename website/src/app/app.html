@@ -1,0 +1,133 @@
+<div class="site-shell">
+  <header class="topbar">
+    <div class="topbar-inner">
+      <a routerLink="/" class="brand" aria-label="BlueTusk home">
+        <img src="/favicon.ico" width="32" height="32" alt="" />
+        <span>BlueTusk</span>
+      </a>
+
+      <nav class="desktop-nav" aria-label="Primary navigation">
+        @for (item of navItems; track item.href) {
+          <a [routerLink]="item.href" routerLinkActive="active">{{ item.label }}</a>
+        }
+      </nav>
+
+      <div class="topbar-actions">
+        <button
+          #searchTrigger
+          mat-icon-button
+          type="button"
+          (click)="openSearch()"
+          matTooltip="Search BlueTusk"
+          aria-label="Search BlueTusk"
+        >
+          <mat-icon>search</mat-icon>
+        </button>
+        <a
+          class="github-link"
+          href="https://github.com/jphgardner/BlueTusk"
+          target="_blank"
+          rel="noreferrer"
+        >
+          <mat-icon>terminal</mat-icon>
+          <span>GitHub</span>
+        </a>
+        <a mat-flat-button routerLink="/documentation" class="topbar-cta">Get Started</a>
+        <button
+          mat-icon-button
+          [matMenuTriggerFor]="mobileMenu"
+          aria-label="Open navigation"
+          class="mobile-menu-trigger"
+        >
+          <mat-icon>menu</mat-icon>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <mat-menu #mobileMenu="matMenu" class="mobile-menu">
+    @for (item of navItems; track item.href) {
+      <a mat-menu-item [routerLink]="item.href">
+        <mat-icon>{{ item.icon }}</mat-icon>
+        <span>{{ item.label }}</span>
+      </a>
+    }
+  </mat-menu>
+
+  <main>
+    <router-outlet />
+  </main>
+
+  <footer class="site-footer">
+    <div class="footer-inner">
+      <div>
+        <a routerLink="/" class="footer-brand">BlueTusk</a>
+        <p>© 2026 BlueTusk Infrastructure. Built for .NET &amp; PostgreSQL.</p>
+      </div>
+      <div class="footer-links">
+        <a routerLink="/documentation">Documentation</a>
+        <a
+          href="https://github.com/jphgardner/BlueTusk/blob/main/docs/roadmap.md"
+          target="_blank"
+          rel="noreferrer"
+          >Roadmap</a
+        >
+        <a
+          href="https://github.com/jphgardner/BlueTusk/blob/main/SECURITY.md"
+          target="_blank"
+          rel="noreferrer"
+          >Security</a
+        >
+        <a routerLink="/evidence">Evidence</a>
+        <a href="https://github.com/jphgardner/BlueTusk" target="_blank" rel="noreferrer">GitHub</a>
+      </div>
+    </div>
+  </footer>
+
+  @if (searchOpen()) {
+    <div class="search-backdrop" role="presentation" (click)="closeSearch()">
+      <section
+        class="search-panel"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Search BlueTusk"
+        (click)="$event.stopPropagation()"
+      >
+        <div class="search-input-row">
+          <mat-icon>search</mat-icon>
+          <mat-form-field appearance="outline">
+            <mat-label>Search the platform</mat-label>
+            <input
+              #searchField
+              matInput
+              autofocus
+              [value]="searchQuery()"
+              (input)="updateSearch($event)"
+              placeholder="Provider, COPY, checkpoints, SQL/PGQ…"
+            />
+          </mat-form-field>
+          <button mat-icon-button type="button" (click)="closeSearch()" aria-label="Close search">
+            <mat-icon>close</mat-icon>
+          </button>
+        </div>
+
+        <div class="search-results">
+          @for (item of filteredSearchItems(); track item.route) {
+            <a [routerLink]="item.route" (click)="closeSearch()">
+              <mat-icon>{{ item.icon }}</mat-icon>
+              <span>
+                <small>{{ item.group }}</small>
+                <strong>{{ item.title }}</strong>
+                <small>{{ item.description }}</small>
+              </span>
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          } @empty {
+            <p class="empty-search">No section matches that search.</p>
+          }
+        </div>
+        <p class="search-hint">ESC TO CLOSE · CTRL K TO OPEN</p>
+      </section>
+    </div>
+  }
+</div>

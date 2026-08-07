@@ -32,11 +32,11 @@ public sealed class SchemaProgramMigrationsTests
         var model = initial.GetService<IDesignTimeModel>().Model;
         var differ = initial.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, model.GetRelationalModel()).ToArray();
-        var createOperator = Assert.Single(creates.OfType<CreateBlueTuskOperatorOperation>());
-        var createFamily = Assert.Single(creates.OfType<CreateBlueTuskOperatorFamilyOperation>());
-        var createClass = Assert.Single(creates.OfType<CreateBlueTuskOperatorClassOperation>());
-        var createCast = Assert.Single(creates.OfType<CreateBlueTuskCastOperation>());
-        var createAggregate = Assert.Single(creates.OfType<CreateBlueTuskAggregateOperation>());
+        var createOperator = Assert.Single(creates.OfType<CreateOperatorOperation>());
+        var createFamily = Assert.Single(creates.OfType<CreateOperatorFamilyOperation>());
+        var createClass = Assert.Single(creates.OfType<CreateOperatorClassOperation>());
+        var createCast = Assert.Single(creates.OfType<CreateCastOperation>());
+        var createAggregate = Assert.Single(creates.OfType<CreateAggregateOperation>());
         Assert.True(Array.IndexOf(creates, createOperator) < Array.IndexOf(creates, createFamily));
         Assert.True(Array.IndexOf(creates, createFamily) < Array.IndexOf(creates, createClass));
         Assert.True(Array.IndexOf(creates, createClass) < Array.IndexOf(creates, createCast));
@@ -72,11 +72,11 @@ public sealed class SchemaProgramMigrationsTests
 
         var changedModel = changed.GetService<IDesignTimeModel>().Model;
         var changes = differ.GetDifferences(model.GetRelationalModel(), changedModel.GetRelationalModel()).ToArray();
-        Assert.Single(changes.OfType<ReplaceBlueTuskOperatorOperation>());
-        Assert.Single(changes.OfType<AlterBlueTuskOperatorFamilyOperation>());
-        Assert.Single(changes.OfType<ReplaceBlueTuskOperatorClassOperation>());
-        Assert.Single(changes.OfType<ReplaceBlueTuskCastOperation>());
-        Assert.Single(changes.OfType<ReplaceBlueTuskAggregateOperation>());
+        Assert.Single(changes.OfType<ReplaceOperatorOperation>());
+        Assert.Single(changes.OfType<AlterOperatorFamilyOperation>());
+        Assert.Single(changes.OfType<ReplaceOperatorClassOperation>());
+        Assert.Single(changes.OfType<ReplaceCastOperation>());
+        Assert.Single(changes.OfType<ReplaceAggregateOperation>());
         var changedSql = string.Concat(generator.Generate(changes, changedModel)
             .Select(command => command.CommandText));
         Assert.Contains("ALTER OPERATOR FAMILY", changedSql, StringComparison.Ordinal);
@@ -85,58 +85,58 @@ public sealed class SchemaProgramMigrationsTests
         var removals = differ.GetDifferences(
             changedModel.GetRelationalModel(),
             removed.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
-        var dropAggregate = Assert.Single(removals.OfType<DropBlueTuskAggregateOperation>());
-        var dropCast = Assert.Single(removals.OfType<DropBlueTuskCastOperation>());
-        var dropClass = Assert.Single(removals.OfType<DropBlueTuskOperatorClassOperation>());
-        var dropFamily = Assert.Single(removals.OfType<DropBlueTuskOperatorFamilyOperation>());
-        var dropOperator = Assert.Single(removals.OfType<DropBlueTuskOperatorOperation>());
+        var dropAggregate = Assert.Single(removals.OfType<DropAggregateOperation>());
+        var dropCast = Assert.Single(removals.OfType<DropCastOperation>());
+        var dropClass = Assert.Single(removals.OfType<DropOperatorClassOperation>());
+        var dropFamily = Assert.Single(removals.OfType<DropOperatorFamilyOperation>());
+        var dropOperator = Assert.Single(removals.OfType<DropOperatorOperation>());
         Assert.True(Array.IndexOf(removals, dropAggregate) < Array.IndexOf(removals, dropCast));
         Assert.True(Array.IndexOf(removals, dropCast) < Array.IndexOf(removals, dropClass));
         Assert.True(Array.IndexOf(removals, dropClass) < Array.IndexOf(removals, dropFamily));
         Assert.True(Array.IndexOf(removals, dropFamily) < Array.IndexOf(removals, dropOperator));
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskOperator(createOperator.Definition);
-        migration.ReplaceBlueTuskOperator(createOperator.Definition, createOperator.Definition with
+        migration.CreateOperator(createOperator.Definition);
+        migration.ReplaceOperator(createOperator.Definition, createOperator.Definition with
         {
             SupportsHashJoins = false,
         });
-        migration.DropBlueTuskOperator(createOperator.Definition);
-        migration.CreateBlueTuskOperatorFamily(createFamily.Definition);
-        migration.AlterBlueTuskOperatorFamily(createFamily.Definition, createFamily.Definition with
+        migration.DropOperator(createOperator.Definition);
+        migration.CreateOperatorFamily(createFamily.Definition);
+        migration.AlterOperatorFamily(createFamily.Definition, createFamily.Definition with
         {
             Operators = [OperatorMember("=", "integer", "bigint")],
         });
-        migration.DropBlueTuskOperatorFamily(createFamily.Definition);
-        migration.CreateBlueTuskOperatorClass(createClass.Definition);
-        migration.ReplaceBlueTuskOperatorClass(createClass.Definition, createClass.Definition with
+        migration.DropOperatorFamily(createFamily.Definition);
+        migration.CreateOperatorClass(createClass.Definition);
+        migration.ReplaceOperatorClass(createClass.Definition, createClass.Definition with
         {
             IsDefault = false,
         });
-        migration.DropBlueTuskOperatorClass(createClass.Definition);
-        migration.CreateBlueTuskCast(createCast.Definition);
-        migration.ReplaceBlueTuskCast(createCast.Definition, createCast.Definition with
+        migration.DropOperatorClass(createClass.Definition);
+        migration.CreateCast(createCast.Definition);
+        migration.ReplaceCast(createCast.Definition, createCast.Definition with
         {
             Context = BlueTuskCastContext.Explicit,
         });
-        migration.DropBlueTuskCast(createCast.Definition);
-        migration.CreateBlueTuskAggregate(createAggregate.Definition);
-        migration.ReplaceBlueTuskAggregate(createAggregate.Definition, createAggregate.Definition with
+        migration.DropCast(createCast.Definition);
+        migration.CreateAggregate(createAggregate.Definition);
+        migration.ReplaceAggregate(createAggregate.Definition, createAggregate.Definition with
         {
             InitialCondition = "2",
         });
-        migration.DropBlueTuskAggregate(createAggregate.Definition);
+        migration.DropAggregate(createAggregate.Definition);
         using var provider = DesignServices();
         var codeBuilder = new IndentedStringBuilder();
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, codeBuilder);
         var code = codeBuilder.ToString();
-        Assert.Contains("CreateBlueTuskOperator(", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskOperatorFamily(", code, StringComparison.Ordinal);
-        Assert.Contains("ReplaceBlueTuskOperatorClass(", code, StringComparison.Ordinal);
-        Assert.Contains("ReplaceBlueTuskCast(", code, StringComparison.Ordinal);
-        Assert.Contains("ReplaceBlueTuskAggregate(", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskAggregate(", code, StringComparison.Ordinal);
+        Assert.Contains("CreateOperator(", code, StringComparison.Ordinal);
+        Assert.Contains("AlterOperatorFamily(", code, StringComparison.Ordinal);
+        Assert.Contains("ReplaceOperatorClass(", code, StringComparison.Ordinal);
+        Assert.Contains("ReplaceCast(", code, StringComparison.Ordinal);
+        Assert.Contains("ReplaceAggregate(", code, StringComparison.Ordinal);
+        Assert.Contains("DropAggregate(", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -230,12 +230,12 @@ public sealed class SchemaProgramMigrationsTests
 
         var sql = string.Concat(generator.Generate(
                 [
-                    new CreateBlueTuskOperatorOperation { Definition = unary },
-                    new CreateBlueTuskOperatorFamilyOperation { Definition = family },
-                    new CreateBlueTuskOperatorClassOperation { Definition = operatorClass },
-                    new CreateBlueTuskCastOperation { Definition = functionCast },
-                    new CreateBlueTuskCastOperation { Definition = binaryCast },
-                    new CreateBlueTuskAggregateOperation { Definition = aggregate },
+                    new CreateOperatorOperation { Definition = unary },
+                    new CreateOperatorFamilyOperation { Definition = family },
+                    new CreateOperatorClassOperation { Definition = operatorClass },
+                    new CreateCastOperation { Definition = functionCast },
+                    new CreateCastOperation { Definition = binaryCast },
+                    new CreateAggregateOperation { Definition = aggregate },
                 ])
             .Select(command => command.CommandText));
         Assert.Contains("RIGHTARG = boolean, RESTRICT = \"pg_catalog\".\"eqsel\", " +
@@ -270,14 +270,14 @@ public sealed class SchemaProgramMigrationsTests
     public void Schema_program_metadata_rejects_unsafe_or_incomplete_definitions()
     {
         var modelBuilder = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskOperator(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasOperator(
             "=>",
             value => value.HasRightType("integer").UsesFunction("int4eq", "pg_catalog"),
             Schema));
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskCast(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasCast(
             "integer; DROP TABLE data",
             "text"));
-        Assert.Throws<ArgumentException>(() => modelBuilder.HasBlueTuskAggregate(
+        Assert.Throws<ArgumentException>(() => modelBuilder.HasAggregate(
             "broken",
             "integer ORDER BY integer",
             value => value.UsesState("int4mul", "integer", "pg_catalog"),
@@ -330,7 +330,7 @@ public sealed class SchemaProgramMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskSchemaPrograms(", scaffolded.ContextFile.Code,
+                Assert.Contains("HasSchemaPrograms(", scaffolded.ContextFile.Code,
                     StringComparison.Ordinal);
             }
 
@@ -373,8 +373,8 @@ public sealed class SchemaProgramMigrationsTests
 
     private static void Configure(ModelBuilder modelBuilder, bool changed)
     {
-        modelBuilder.HasBlueTuskEnum("mood", ["calm", "busy"], Schema);
-        modelBuilder.HasBlueTuskOperator(
+        modelBuilder.HasEnum("mood", ["calm", "busy"], Schema);
+        modelBuilder.HasOperator(
             "===",
             value => value
                 .HasLeftType("integer")
@@ -384,12 +384,12 @@ public sealed class SchemaProgramMigrationsTests
                 .SupportsHashJoin(!changed)
                 .SupportsMergeJoin(),
             Schema);
-        modelBuilder.HasBlueTuskOperatorFamily(
+        modelBuilder.HasOperatorFamily(
             "int_family",
             "btree",
             changed ? value => value.HasOperator(3, "=", "integer", "bigint", "pg_catalog") : null,
             Schema);
-        modelBuilder.HasBlueTuskOperatorClass(
+        modelBuilder.HasOperatorClass(
             "int_ops",
             "integer",
             "btree",
@@ -405,7 +405,7 @@ public sealed class SchemaProgramMigrationsTests
                     .HasFunction(1, "btint4cmp", "integer", "integer", ["integer", "integer"], "pg_catalog");
             },
             Schema);
-        modelBuilder.HasBlueTuskCast(
+        modelBuilder.HasCast(
             "schema_program_tests.mood",
             "text",
             value =>
@@ -416,7 +416,7 @@ public sealed class SchemaProgramMigrationsTests
                     value.IsAssignment();
                 }
             });
-        modelBuilder.HasBlueTuskAggregate(
+        modelBuilder.HasAggregate(
             "product",
             "integer",
             value => value

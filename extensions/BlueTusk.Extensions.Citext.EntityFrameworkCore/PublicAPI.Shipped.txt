@@ -1,0 +1,6 @@
+#nullable enable
+Microsoft.EntityFrameworkCore.BlueTuskCitextDbContextOptionsBuilderExtensions
+Microsoft.EntityFrameworkCore.Migrations.BlueTuskCitextMigrationBuilderExtensions
+static Microsoft.EntityFrameworkCore.BlueTuskCitextDbContextOptionsBuilderExtensions.UseCitext(this BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder! optionsBuilder, string! schema = "public") -> BlueTusk.EntityFrameworkCore.Infrastructure.BlueTuskDbContextOptionsBuilder!
+static Microsoft.EntityFrameworkCore.Migrations.BlueTuskCitextMigrationBuilderExtensions.DropCitext(this Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder! migrationBuilder, bool cascade = false) -> Microsoft.EntityFrameworkCore.Migrations.Operations.Builders.OperationBuilder<Microsoft.EntityFrameworkCore.Migrations.Operations.SqlOperation!>!
+static Microsoft.EntityFrameworkCore.Migrations.BlueTuskCitextMigrationBuilderExtensions.EnsureCitext(this Microsoft.EntityFrameworkCore.Migrations.MigrationBuilder! migrationBuilder, string! schema = "public") -> Microsoft.EntityFrameworkCore.Migrations.Operations.Builders.OperationBuilder<Microsoft.EntityFrameworkCore.Migrations.Operations.SqlOperation!>!

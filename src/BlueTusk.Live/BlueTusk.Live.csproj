@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Live</BlueTuskProductFamily>
+    <Description>Secure authoritative live-query contracts, keyed diffs, and resumable delivery for BlueTusk.</Description>
+    <PackageTags>postgresql;cdc;live-query;realtime</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Live.props" />
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Streams\BlueTusk.Streams.csproj" />
+  </ItemGroup>
+</Project>

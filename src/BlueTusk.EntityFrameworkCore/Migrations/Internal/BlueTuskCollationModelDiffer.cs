@@ -26,7 +26,7 @@ internal static class BlueTuskCollationModelDiffer
         var unmatchedTargets = new Dictionary<CollationKey, BlueTuskCollationDefinition>(target);
         var creates = new List<BlueTuskCollationDefinition>();
         var drops = new List<BlueTuskCollationDefinition>();
-        var renames = new List<RenameBlueTuskCollationOperation>();
+        var renames = new List<RenameCollationOperation>();
         var unmatchedSources = source.Values
             .Where(definition => !target.ContainsKey(GetKey(definition)))
             .ToArray();
@@ -60,7 +60,7 @@ internal static class BlueTuskCollationModelDiffer
                         "Configure the target schema explicitly or stage a manual migration.");
                 }
 
-                renames.Add(new RenameBlueTuskCollationOperation
+                renames.Add(new RenameCollationOperation
                 {
                     Name = sourceDefinition.Name,
                     Schema = sourceDefinition.Schema,
@@ -102,14 +102,14 @@ internal static class BlueTuskCollationModelDiffer
                      .OrderBy(definition => definition.Schema, StringComparer.Ordinal)
                      .ThenBy(definition => definition.Name, StringComparer.Ordinal))
         {
-            beforeObjects.Add(new CreateBlueTuskCollationOperation { Definition = definition });
+            beforeObjects.Add(new CreateCollationOperation { Definition = definition });
         }
 
         foreach (var definition in drops
                      .OrderByDescending(definition => definition.Schema, StringComparer.Ordinal)
                      .ThenByDescending(definition => definition.Name, StringComparer.Ordinal))
         {
-            afterObjects.Add(new DropBlueTuskCollationOperation
+            afterObjects.Add(new DropCollationOperation
             {
                 Name = definition.Name,
                 Schema = definition.Schema,

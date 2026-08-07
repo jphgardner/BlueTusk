@@ -10,7 +10,7 @@ namespace Microsoft.EntityFrameworkCore;
 public static class BlueTuskExclusionConstraintBuilderExtensions
 {
     /// <summary>Adds or replaces a PostgreSQL exclusion constraint.</summary>
-    public static EntityTypeBuilder HasBlueTuskExclusionConstraint(
+    public static EntityTypeBuilder HasExclusionConstraint(
         this EntityTypeBuilder entityBuilder,
         string name,
         Action<BlueTuskExclusionConstraintBuilder> configure)
@@ -25,7 +25,7 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
     }
 
     /// <summary>Adds or replaces a PostgreSQL exclusion constraint using typed property selectors.</summary>
-    public static EntityTypeBuilder<TEntity> HasBlueTuskExclusionConstraint<TEntity>(
+    public static EntityTypeBuilder<TEntity> HasExclusionConstraint<TEntity>(
         this EntityTypeBuilder<TEntity> entityBuilder,
         string name,
         Action<BlueTuskExclusionConstraintBuilder<TEntity>> configure)
@@ -41,7 +41,7 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
     }
 
     /// <summary>Removes a PostgreSQL exclusion constraint by name.</summary>
-    public static EntityTypeBuilder HasNoBlueTuskExclusionConstraint(
+    public static EntityTypeBuilder HasNoExclusionConstraint(
         this EntityTypeBuilder entityBuilder,
         string name)
     {
@@ -56,7 +56,7 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
     }
 
     /// <summary>Reads provider-owned exclusion constraints from an EF entity type.</summary>
-    public static IReadOnlyList<BlueTuskExclusionConstraintDefinition> GetBlueTuskExclusionConstraints(
+    public static IReadOnlyList<BlueTuskExclusionConstraintDefinition> GetExclusionConstraints(
         this IReadOnlyEntityType entityType)
     {
         ArgumentNullException.ThrowIfNull(entityType);
@@ -64,7 +64,7 @@ public static class BlueTuskExclusionConstraintBuilderExtensions
     }
 
     [EditorBrowsable(EditorBrowsableState.Never)]
-    public static EntityTypeBuilder HasBlueTuskExclusionConstraints(
+    public static EntityTypeBuilder HasExclusionConstraints(
         this EntityTypeBuilder entityBuilder,
         string serializedDefinitions)
     {

@@ -1,6 +1,8 @@
 using BlueTusk.EntityFrameworkCore.Design.Internal;
 using BlueTusk.EntityFrameworkCore.Graphs;
 using BlueTusk.EntityFrameworkCore.Migrations.Operations;
+using Microsoft.CodeAnalysis;
+using Microsoft.CodeAnalysis.CSharp;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Design;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -23,7 +25,7 @@ public sealed class PropertyGraphMetadataTests
     {
         using var context = CreateContext<QuotedGraphContext>();
 
-        var graph = Assert.Single(context.Model.GetBlueTuskPropertyGraphs());
+        var graph = Assert.Single(context.Model.GetPropertyGraphs());
         Assert.Equal("Social \"Graph", graph.Name);
         Assert.Equal("Graph Schema", graph.Schema);
         var vertex = Assert.Single(
@@ -63,31 +65,31 @@ public sealed class PropertyGraphMetadataTests
 
         var rename = Assert.Single(
             differ.GetDifferences(oldModel, renamedModel)
-                .OfType<AlterBlueTuskPropertyGraphOperation>());
+                .OfType<AlterPropertyGraphOperation>());
         Assert.Equal("social", rename.Name);
         Assert.Equal("renamed_social", rename.NewName);
 
         var create = Assert.Single(
             differ.GetDifferences(null, oldModel)
-                .OfType<CreateBlueTuskPropertyGraphOperation>());
+                .OfType<CreatePropertyGraphOperation>());
         Assert.Equal("social", create.Definition.Name);
         var drop = Assert.Single(
             differ.GetDifferences(oldModel, null)
-                .OfType<DropBlueTuskPropertyGraphOperation>());
+                .OfType<DropPropertyGraphOperation>());
         Assert.Equal("social", drop.Name);
 
         using var changedContext = CreateContext<ChangedGraphContext>();
         var changedModel = changedContext.GetService<IDesignTimeModel>().Model.GetRelationalModel();
         var changes = differ.GetDifferences(oldModel, changedModel);
-        Assert.Single(changes.OfType<DropBlueTuskPropertyGraphOperation>());
-        Assert.Single(changes.OfType<CreateBlueTuskPropertyGraphOperation>());
+        Assert.Single(changes.OfType<DropPropertyGraphOperation>());
+        Assert.Single(changes.OfType<CreatePropertyGraphOperation>());
     }
 
     [Fact]
     public void Design_time_generator_scaffolds_property_graph_operations()
     {
         using var context = CreateContext<OldGraphContext>();
-        var definition = Assert.Single(context.Model.GetBlueTuskPropertyGraphs());
+        var definition = Assert.Single(context.Model.GetPropertyGraphs());
         var services = new ServiceCollection();
         services.AddEntityFrameworkDesignTimeServices();
         services.AddEntityFrameworkBlueTusk();
@@ -99,22 +101,95 @@ public sealed class PropertyGraphMetadataTests
         generator.Generate(
             "migrationBuilder",
             [
-                new CreateBlueTuskPropertyGraphOperation { Definition = definition },
-                new AlterBlueTuskPropertyGraphOperation
+                new CreatePropertyGraphOperation { Definition = definition },
+                new AlterPropertyGraphOperation
                 {
                     Name = "social",
                     Schema = "graphs",
                     NewName = "renamed_social",
                     NewSchema = "archive",
                 },
-                new DropBlueTuskPropertyGraphOperation { Name = "renamed_social", Schema = "archive" },
+                new DropPropertyGraphOperation { Name = "renamed_social", Schema = "archive" },
             ],
             builder);
 
         var code = builder.ToString();
-        Assert.Contains("migrationBuilder.CreateBlueTuskPropertyGraph(", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.AlterBlueTuskPropertyGraph(\"social\"", code, StringComparison.Ordinal);
-        Assert.Contains("migrationBuilder.DropBlueTuskPropertyGraph(\"renamed_social\"", code, StringComparison.Ordinal);
+        Assert.DoesNotContain("migrationBuildermigrationBuilder", code, StringComparison.Ordinal);
+        Assert.DoesNotContain("{\"name\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.CreatePropertyGraph(", code, StringComparison.Ordinal);
+        Assert.Contains(".Vertex(", code, StringComparison.Ordinal);
+        Assert.Contains(".Edge(", code, StringComparison.Ordinal);
+        Assert.Contains(".HasLabel(", code, StringComparison.Ordinal);
+        Assert.Contains(".HasSource(", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.AlterPropertyGraph(\"social\"", code, StringComparison.Ordinal);
+        Assert.Contains("migrationBuilder.DropPropertyGraph(\"renamed_social\"", code, StringComparison.Ordinal);
+
+        var source = $$"""
+            using Microsoft.EntityFrameworkCore.Migrations;
+
+            public sealed class GeneratedGraphMigration : Migration
+            {
+                protected override void Up(MigrationBuilder migrationBuilder)
+                {
+                    {{code}}
+                }
+
+                protected override void Down(MigrationBuilder migrationBuilder) { }
+            }
+            """;
+        var compilation = CSharpCompilation.Create(
+            "GeneratedGraphMigration",
+            [CSharpSyntaxTree.ParseText(source, new CSharpParseOptions(LanguageVersion.Latest))],
+            AppDomain.CurrentDomain.GetAssemblies()
+                .Where(assembly => !assembly.IsDynamic && !string.IsNullOrWhiteSpace(assembly.Location))
+                .Select(assembly => MetadataReference.CreateFromFile(assembly.Location)),
+            new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary));
+        var errors = compilation.GetDiagnostics()
+            .Where(diagnostic => diagnostic.Severity == DiagnosticSeverity.Error)
+            .ToArray();
+        Assert.True(
+            errors.Length == 0,
+            string.Join(Environment.NewLine, errors.Select(error => error.ToString())) +
+            Environment.NewLine + source);
+    }
+
+    [Fact]
+    public void Migration_builder_creates_typed_definition_without_serialized_metadata()
+    {
+        var migration = new MigrationBuilder("BlueTusk");
+
+        migration.CreatePropertyGraph(
+            "payments",
+            graph => graph
+                .Vertex(
+                    "accounts",
+                    "accounts",
+                    "finance",
+                    vertex => vertex
+                        .HasKey("Id")
+                        .HasLabel("account", label => label.Property("Id").Property("Name")))
+                .Edge(
+                    "transfers",
+                    "transfers",
+                    "finance",
+                    edge => edge
+                        .HasKey("Id")
+                        .HasLabel("transfer", label => label.Property("Amount"))
+                        .HasSource("accounts", ["SourceId"], ["Id"])
+                        .HasDestination("accounts", ["DestinationId"], ["Id"])),
+            "finance");
+
+        var operation = Assert.IsType<CreatePropertyGraphOperation>(
+            Assert.Single(migration.Operations));
+
+        Assert.Equal("payments", operation.Definition.Name);
+        Assert.Equal("finance", operation.Definition.Schema);
+        Assert.Equal(2, operation.Definition.ElementTables.Count);
+        var edge = Assert.Single(
+            operation.Definition.ElementTables,
+            element => element.Kind == BlueTuskGraphElementKind.Edge);
+        Assert.Equal(["SourceId"], edge.Source?.EdgeKeyColumns);
+        Assert.Equal(["Id"], edge.Destination?.VertexKeyColumns);
     }
 
     private static TContext CreateContext<TContext>()
@@ -141,7 +216,7 @@ public sealed class PropertyGraphMetadataTests
             entity.Property(friendship => friendship.FromPersonId).HasColumnName("from_id");
             entity.Property(friendship => friendship.ToPersonId).HasColumnName("to_id");
         });
-        modelBuilder.HasBlueTuskPropertyGraph(
+        modelBuilder.HasPropertyGraph(
             graphName,
             graph =>
             {
@@ -183,7 +258,7 @@ public sealed class PropertyGraphMetadataTests
                 entity.Property(friendship => friendship.FromPersonId).HasColumnName("From Id");
                 entity.Property(friendship => friendship.ToPersonId).HasColumnName("To Id");
             });
-            modelBuilder.HasBlueTuskPropertyGraph(
+            modelBuilder.HasPropertyGraph(
                 "Social \"Graph",
                 graph =>
                 {

@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Sync</BlueTuskProductFamily>
+    <Description>Hosted workers, cutover coordination, health checks, and dependency injection for BlueTusk Sync.</Description>
+    <PackageTags>postgresql;cdc;sync;dependency-injection;hosting;health-checks</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Sync.props" />
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.Extensions.DependencyInjection.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Diagnostics.HealthChecks" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <ProjectReference Include="..\BlueTusk.Streams.Storage.PostgreSql\BlueTusk.Streams.Storage.PostgreSql.csproj" />
+    <ProjectReference Include="..\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+  </ItemGroup>
+</Project>

@@ -68,8 +68,8 @@ public sealed class BlueTuskCitextEntityFrameworkCoreTests
     {
         var migrationBuilder = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
 
-        migrationBuilder.EnsureBlueTuskCitext("Application \"Types");
-        migrationBuilder.DropBlueTuskCitext(cascade: true);
+        migrationBuilder.EnsureCitext("Application \"Types");
+        migrationBuilder.DropCitext(cascade: true);
 
         var operations = migrationBuilder.Operations.Cast<SqlOperation>().ToArray();
         Assert.Equal(

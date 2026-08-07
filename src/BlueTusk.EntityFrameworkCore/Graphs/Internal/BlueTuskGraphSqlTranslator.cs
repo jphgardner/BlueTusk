@@ -1,7 +1,7 @@
 using System.Diagnostics;
 using System.Linq.Expressions;
 using System.Text;
-using BlueTusk.Data;
+using BlueTusk.Data.Internal;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
@@ -18,7 +18,10 @@ internal static class BlueTuskGraphSqlTranslator
         IReadOnlyList<BlueTuskGraphProjection> projections,
         Type resultType)
     {
-        if (context.Database.GetDbConnection() is BlueTuskConnection { SupportsSqlPgq: false })
+        var providerConnection = context
+            .GetService<IProviderServices>()
+            .GetConnection(context.Database.GetDbConnection());
+        if (providerConnection.Capabilities?.SupportsSqlPgq is false)
         {
             throw new BlueTuskGraphTranslationException(
                 "Typed property-graph queries require PostgreSQL 19 or later; " +

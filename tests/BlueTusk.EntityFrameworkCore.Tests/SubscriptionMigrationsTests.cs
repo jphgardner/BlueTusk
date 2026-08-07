@@ -36,9 +36,9 @@ public sealed class SubscriptionMigrationsTests
         var model = initial.GetService<IDesignTimeModel>().Model;
         var differ = initial.GetService<IMigrationsModelDiffer>();
         var creates = differ.GetDifferences(null, model.GetRelationalModel()).ToArray();
-        var create = Assert.Single(creates.OfType<CreateBlueTuskSubscriptionOperation>());
-        Assert.True(Array.FindIndex(creates, operation => operation is CreateBlueTuskPublicationOperation) <
-                    Array.FindIndex(creates, operation => operation is CreateBlueTuskSubscriptionOperation));
+        var create = Assert.Single(creates.OfType<CreateSubscriptionOperation>());
+        Assert.True(Array.FindIndex(creates, operation => operation is CreatePublicationOperation) <
+                    Array.FindIndex(creates, operation => operation is CreateSubscriptionOperation));
         var createCommand = Assert.Single(initial.GetService<IMigrationsSqlGenerator>().Generate([create], model));
         Assert.False(createCommand.TransactionSuppressed);
         Assert.Contains(
@@ -54,7 +54,7 @@ public sealed class SubscriptionMigrationsTests
         var alters = differ.GetDifferences(
             model.GetRelationalModel(),
             changed.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        var alter = Assert.Single(alters.OfType<AlterBlueTuskSubscriptionOperation>());
+        var alter = Assert.Single(alters.OfType<AlterSubscriptionOperation>());
         var alterSql = string.Concat(initial.GetService<IMigrationsSqlGenerator>().Generate([alter], model)
             .Select(command => command.CommandText));
         Assert.Contains(
@@ -80,16 +80,16 @@ public sealed class SubscriptionMigrationsTests
         var renameOperations = differ.GetDifferences(
             changed.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             renamed.GetService<IDesignTimeModel>().Model.GetRelationalModel());
-        Assert.Single(renameOperations.OfType<RenameBlueTuskSubscriptionOperation>());
-        Assert.Empty(renameOperations.OfType<CreateBlueTuskSubscriptionOperation>());
-        Assert.Empty(renameOperations.OfType<DropBlueTuskSubscriptionOperation>());
+        Assert.Single(renameOperations.OfType<RenameSubscriptionOperation>());
+        Assert.Empty(renameOperations.OfType<CreateSubscriptionOperation>());
+        Assert.Empty(renameOperations.OfType<DropSubscriptionOperation>());
 
         var removals = differ.GetDifferences(
             model.GetRelationalModel(),
             removed.GetService<IDesignTimeModel>().Model.GetRelationalModel()).ToArray();
-        Assert.True(Array.FindIndex(removals, operation => operation is DropBlueTuskSubscriptionOperation) <
-                    Array.FindIndex(removals, operation => operation is DropBlueTuskPublicationOperation));
-        var drop = Assert.Single(removals.OfType<DropBlueTuskSubscriptionOperation>());
+        Assert.True(Array.FindIndex(removals, operation => operation is DropSubscriptionOperation) <
+                    Array.FindIndex(removals, operation => operation is DropPublicationOperation));
+        var drop = Assert.Single(removals.OfType<DropSubscriptionOperation>());
         Assert.False(drop.HasSlot);
         Assert.True(drop.IsDestructiveChange);
         var dropCommand = Assert.Single(initial.GetService<IMigrationsSqlGenerator>().Generate([drop], model));
@@ -98,25 +98,25 @@ public sealed class SubscriptionMigrationsTests
             StringComparison.Ordinal);
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskSubscription(create.Definition);
-        migration.AlterBlueTuskSubscription(create.Definition, alter.Definition);
-        migration.RenameBlueTuskSubscription("application_subscription", "application_subscription_v2");
-        migration.RefreshBlueTuskSubscription("application_subscription_v2", copyData: false);
-        migration.RefreshBlueTuskSubscriptionSequences("application_subscription_v2");
-        migration.SkipBlueTuskSubscriptionTransaction("application_subscription_v2", "0/16B6C50");
-        migration.DropBlueTuskSubscription("application_subscription_v2", hasSlot: false);
+        migration.CreateSubscription(create.Definition);
+        migration.AlterSubscription(create.Definition, alter.Definition);
+        migration.RenameSubscription("application_subscription", "application_subscription_v2");
+        migration.RefreshSubscription("application_subscription_v2", copyData: false);
+        migration.RefreshSubscriptionSequences("application_subscription_v2");
+        migration.SkipSubscriptionTransaction("application_subscription_v2", "0/16B6C50");
+        migration.DropSubscription("application_subscription_v2", hasSlot: false);
         using var provider = DesignServices();
         var builder = new IndentedStringBuilder();
         provider.GetRequiredService<ICSharpMigrationOperationGenerator>()
             .Generate("migrationBuilder", migration.Operations, builder);
         var code = builder.ToString();
-        Assert.Contains("CreateBlueTuskSubscription", code, StringComparison.Ordinal);
-        Assert.Contains("AlterBlueTuskSubscription", code, StringComparison.Ordinal);
-        Assert.Contains("RenameBlueTuskSubscription", code, StringComparison.Ordinal);
-        Assert.Contains("RefreshBlueTuskSubscription", code, StringComparison.Ordinal);
-        Assert.Contains("RefreshBlueTuskSubscriptionSequences", code, StringComparison.Ordinal);
-        Assert.Contains("SkipBlueTuskSubscriptionTransaction", code, StringComparison.Ordinal);
-        Assert.Contains("DropBlueTuskSubscription", code, StringComparison.Ordinal);
+        Assert.Contains("CreateSubscription", code, StringComparison.Ordinal);
+        Assert.Contains("AlterSubscription", code, StringComparison.Ordinal);
+        Assert.Contains("RenameSubscription", code, StringComparison.Ordinal);
+        Assert.Contains("RefreshSubscription", code, StringComparison.Ordinal);
+        Assert.Contains("RefreshSubscriptionSequences", code, StringComparison.Ordinal);
+        Assert.Contains("SkipSubscriptionTransaction", code, StringComparison.Ordinal);
+        Assert.Contains("DropSubscription", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -127,13 +127,13 @@ public sealed class SubscriptionMigrationsTests
 
         var parallel = Definition() with { Streaming = BlueTuskSubscriptionStreamingMode.Parallel };
         var parallelCommands = generator.Generate(
-            [new CreateBlueTuskSubscriptionOperation { Definition = parallel }]);
+            [new CreateSubscriptionOperation { Definition = parallel }]);
         Assert.Contains("server_version_num')::integer < 160000", parallelCommands[0].CommandText,
             StringComparison.Ordinal);
 
         var failover = Definition() with { Failover = true, SlotName = "application_slot" };
         var failoverCommands = generator.Generate(
-            [new CreateBlueTuskSubscriptionOperation { Definition = failover }]);
+            [new CreateSubscriptionOperation { Definition = failover }]);
         Assert.Contains("server_version_num')::integer < 170000", failoverCommands[0].CommandText,
             StringComparison.Ordinal);
 
@@ -145,7 +145,7 @@ public sealed class SubscriptionMigrationsTests
             WalReceiverTimeout = "30s",
         };
         var version19Commands = generator.Generate(
-            [new CreateBlueTuskSubscriptionOperation { Definition = foreignServer }]);
+            [new CreateSubscriptionOperation { Definition = foreignServer }]);
         Assert.Contains("server_version_num')::integer < 190000", version19Commands[0].CommandText,
             StringComparison.Ordinal);
         Assert.Contains("SERVER \"publisher_server\"", version19Commands[1].CommandText,
@@ -160,15 +160,15 @@ public sealed class SubscriptionMigrationsTests
             CopyData = true,
         };
         Assert.True(Assert.Single(generator.Generate(
-            [new CreateBlueTuskSubscriptionOperation { Definition = connected }])).TransactionSuppressed);
+            [new CreateSubscriptionOperation { Definition = connected }])).TransactionSuppressed);
         Assert.True(Assert.Single(generator.Generate(
-            [new DropBlueTuskSubscriptionOperation { Name = "application_subscription", HasSlot = true }]))
+            [new DropSubscriptionOperation { Name = "application_subscription", HasSlot = true }]))
             .TransactionSuppressed);
         Assert.True(Assert.Single(generator.Generate(
-            [new RefreshBlueTuskSubscriptionOperation { Name = "application_subscription", CopyData = false }]))
+            [new RefreshSubscriptionOperation { Name = "application_subscription", CopyData = false }]))
             .TransactionSuppressed);
         var refreshSequences = generator.Generate(
-            [new RefreshBlueTuskSubscriptionSequencesOperation { Name = "application_subscription" }]);
+            [new RefreshSubscriptionSequencesOperation { Name = "application_subscription" }]);
         Assert.Contains("server_version_num')::integer < 190000", refreshSequences[0].CommandText,
             StringComparison.Ordinal);
         Assert.True(refreshSequences[1].TransactionSuppressed);
@@ -176,7 +176,7 @@ public sealed class SubscriptionMigrationsTests
         Assert.Contains(
             "SKIP (lsn = NONE)",
             Assert.Single(generator.Generate(
-                [new SkipBlueTuskSubscriptionTransactionOperation { Name = "application_subscription" }]))
+                [new SkipSubscriptionTransactionOperation { Name = "application_subscription" }]))
                 .CommandText,
             StringComparison.Ordinal);
     }
@@ -185,7 +185,7 @@ public sealed class SubscriptionMigrationsTests
     public void Sensitive_or_redacted_model_connections_cannot_leak_into_generated_migrations()
     {
         var passwordModel = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => passwordModel.HasBlueTuskSubscription(
+        Assert.Throws<ArgumentException>(() => passwordModel.HasSubscription(
             Definition() with
             {
                 Connection = BlueTuskSubscriptionConnection.FromConnectionString(
@@ -193,14 +193,14 @@ public sealed class SubscriptionMigrationsTests
             }));
 
         var uriModel = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => uriModel.HasBlueTuskSubscription(
+        Assert.Throws<ArgumentException>(() => uriModel.HasSubscription(
             Definition() with
             {
                 Connection = BlueTuskSubscriptionConnection.FromConnectionString(
                     "postgresql://replicator:do-not-store@publisher/app"),
             }));
         var queryModel = new ModelBuilder();
-        Assert.Throws<ArgumentException>(() => queryModel.HasBlueTuskSubscription(
+        Assert.Throws<ArgumentException>(() => queryModel.HasSubscription(
             Definition() with
             {
                 Connection = BlueTuskSubscriptionConnection.FromConnectionString(
@@ -208,18 +208,18 @@ public sealed class SubscriptionMigrationsTests
             }));
 
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        Assert.Throws<ArgumentException>(() => migration.CreateBlueTuskSubscription(
+        Assert.Throws<ArgumentException>(() => migration.CreateSubscription(
             Definition() with { Failover = true }));
 
         using var context = Create<SubscriptionContext>(Offline);
         Assert.Throws<InvalidOperationException>(() => context.GetService<IMigrationsSqlGenerator>().Generate(
-            [new CreateBlueTuskSubscriptionOperation
+            [new CreateSubscriptionOperation
             {
                 Definition = Definition() with { Connection = BlueTuskSubscriptionConnection.Redacted },
             }]));
 
         migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.CreateBlueTuskSubscription(Definition() with
+        migration.CreateSubscription(Definition() with
         {
             Connection = BlueTuskSubscriptionConnection.FromConnectionString(
                 "host=publisher user=replicator password=runtime-secret"),
@@ -268,7 +268,7 @@ public sealed class SubscriptionMigrationsTests
                     Origin = BlueTuskSubscriptionOrigin.None,
                 };
                 await ExecuteOperations(initial,
-                    [new AlterBlueTuskSubscriptionOperation
+                    [new AlterSubscriptionOperation
                     {
                         OldDefinition = Definition(),
                         Definition = version16Definition,
@@ -286,7 +286,7 @@ public sealed class SubscriptionMigrationsTests
                 Assert.True(version16RoundTrip.RunAsOwner);
                 Assert.Equal(BlueTuskSubscriptionOrigin.None, version16RoundTrip.Origin);
                 await ExecuteOperations(initial,
-                    [new AlterBlueTuskSubscriptionOperation
+                    [new AlterSubscriptionOperation
                     {
                         OldDefinition = version16Definition,
                         Definition = Definition(),
@@ -303,7 +303,7 @@ public sealed class SubscriptionMigrationsTests
                     Failover = true,
                 };
                 await ExecuteOperations(initial,
-                    [new CreateBlueTuskSubscriptionOperation { Definition = failover }],
+                    [new CreateSubscriptionOperation { Definition = failover }],
                     cs);
                 var failoverDatabase = new BlueTuskDatabaseModelFactory().Create(
                     cs,
@@ -314,7 +314,7 @@ public sealed class SubscriptionMigrationsTests
                     subscription => subscription.Name == failover.Name).Failover);
                 await Execute(cs, "ALTER SUBSCRIPTION failover_subscription SET (slot_name = NONE)");
                 await ExecuteOperations(initial,
-                    [new DropBlueTuskSubscriptionOperation { Name = failover.Name, HasSlot = false }],
+                    [new DropSubscriptionOperation { Name = failover.Name, HasSlot = false }],
                     cs);
             }
 
@@ -328,7 +328,7 @@ public sealed class SubscriptionMigrationsTests
                     WalReceiverTimeout = "30s",
                 };
                 await ExecuteOperations(initial,
-                    [new CreateBlueTuskSubscriptionOperation { Definition = retained }],
+                    [new CreateSubscriptionOperation { Definition = retained }],
                     cs);
                 var retainedDatabase = new BlueTuskDatabaseModelFactory().Create(
                     cs,
@@ -341,7 +341,7 @@ public sealed class SubscriptionMigrationsTests
                 Assert.Equal(60, retainedRoundTrip.MaxRetentionDuration);
                 Assert.Equal("30s", retainedRoundTrip.WalReceiverTimeout);
                 await ExecuteOperations(initial,
-                    [new DropBlueTuskSubscriptionOperation { Name = retained.Name, HasSlot = false }],
+                    [new DropSubscriptionOperation { Name = retained.Name, HasSlot = false }],
                     cs);
 
                 await VerifyForeignServerSubscription(initial, cs);
@@ -364,7 +364,7 @@ public sealed class SubscriptionMigrationsTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskSubscriptions(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasSubscriptions(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.DoesNotContain("host=publisher", scaffolded.ContextFile.Code, StringComparison.OrdinalIgnoreCase);
                 Assert.DoesNotContain("user=replicator", scaffolded.ContextFile.Code, StringComparison.OrdinalIgnoreCase);
             }
@@ -430,7 +430,7 @@ public sealed class SubscriptionMigrationsTests
         CopyData: false);
 
     private static void ConfigurePublication(ModelBuilder modelBuilder) =>
-        modelBuilder.HasBlueTuskPublication(
+        modelBuilder.HasPublication(
             "remote_publication",
             publication => publication.ForAllTables());
 
@@ -440,7 +440,7 @@ public sealed class SubscriptionMigrationsTests
         bool changed)
     {
         ConfigurePublication(modelBuilder);
-        modelBuilder.HasBlueTuskSubscription(name, subscription =>
+        modelBuilder.HasSubscription(name, subscription =>
         {
             subscription
                 .UseConnectionString(changed ? ChangedPublisherConnection : PublisherConnection)
@@ -518,7 +518,7 @@ public sealed class SubscriptionMigrationsTests
                 Connection = BlueTuskSubscriptionConnection.FromForeignServer("subscription_publisher_server"),
             };
             await ExecuteOperations(context,
-                [new CreateBlueTuskSubscriptionOperation { Definition = foreignServer }],
+                [new CreateSubscriptionOperation { Definition = foreignServer }],
                 cs);
             var database = new BlueTuskDatabaseModelFactory().Create(
                 cs,
@@ -635,7 +635,7 @@ public sealed class SubscriptionMigrationsTests
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             ConfigurePublication(modelBuilder);
-            modelBuilder.HasBlueTuskSubscription("application_subscription", subscription => subscription
+            modelBuilder.HasSubscription("application_subscription", subscription => subscription
                 .UseConnectionString(PublisherConnection)
                 .FromPublication("remote_publication")
                 .WithoutSlot()

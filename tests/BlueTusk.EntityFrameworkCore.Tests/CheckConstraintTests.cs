@@ -71,14 +71,14 @@ public sealed class CheckConstraintTests
     {
         using var context = CreateContext<EmptyContext>(OfflineConnectionString);
         var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-        migration.AddBlueTuskCheckConstraint(
+        migration.AddCheckConstraint(
             "measurements_positive",
             Table,
             "\"value\" > 0",
             Schema,
             notValid: true,
             noInherit: true);
-        migration.ValidateBlueTuskCheckConstraint("measurements_positive", Table, Schema);
+        migration.ValidateCheckConstraint("measurements_positive", Table, Schema);
 
         var commands = context.GetService<IMigrationsSqlGenerator>()
             .Generate(migration.Operations, context.GetService<IDesignTimeModel>().Model);
@@ -101,7 +101,7 @@ public sealed class CheckConstraintTests
         Assert.Contains("AddCheckConstraint(", code, StringComparison.Ordinal);
         Assert.Contains(BlueTuskCheckConstraintMetadata.NotValidAnnotationName, code, StringComparison.Ordinal);
         Assert.Contains(BlueTuskCheckConstraintMetadata.NoInheritAnnotationName, code, StringComparison.Ordinal);
-        Assert.Contains("ValidateBlueTuskCheckConstraint(", code, StringComparison.Ordinal);
+        Assert.Contains("ValidateCheckConstraint(", code, StringComparison.Ordinal);
     }
 
     [Fact]
@@ -114,7 +114,7 @@ public sealed class CheckConstraintTests
             sourceContext.GetService<IDesignTimeModel>().Model.GetRelationalModel(),
             targetModel.GetRelationalModel());
 
-        var validate = Assert.Single(operations.OfType<ValidateBlueTuskCheckConstraintOperation>());
+        var validate = Assert.Single(operations.OfType<ValidateCheckConstraintOperation>());
         Assert.Equal("measurements_positive", validate.Name);
         Assert.Empty(operations.OfType<AddCheckConstraintOperation>());
         Assert.Empty(operations.OfType<DropCheckConstraintOperation>());
@@ -140,7 +140,7 @@ public sealed class CheckConstraintTests
         var add = Assert.Single(operations.OfType<AddCheckConstraintOperation>());
         Assert.Equal("measurements_positive", add.Name);
         Assert.True(BlueTuskCheckConstraintMetadata.IsNotValid(add));
-        Assert.Empty(operations.OfType<ValidateBlueTuskCheckConstraintOperation>());
+        Assert.Empty(operations.OfType<ValidateCheckConstraintOperation>());
     }
 
     [Fact]
@@ -165,7 +165,7 @@ public sealed class CheckConstraintTests
             targetContext.GetService<IDesignTimeModel>().Model.GetRelationalModel());
         Assert.Single(changes.OfType<DropCheckConstraintOperation>());
         Assert.Single(changes.OfType<AddCheckConstraintOperation>());
-        Assert.Empty(changes.OfType<ValidateBlueTuskCheckConstraintOperation>());
+        Assert.Empty(changes.OfType<ValidateCheckConstraintOperation>());
     }
 
     [Fact]
@@ -204,7 +204,7 @@ public sealed class CheckConstraintTests
 
             using var context = CreateContext<EmptyContext>(connectionString);
             var migration = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            migration.AddBlueTuskCheckConstraint(
+            migration.AddCheckConstraint(
                 "measurements_positive",
                 Table,
                 "value > 0",
@@ -217,7 +217,7 @@ public sealed class CheckConstraintTests
                 "SELECT current_setting('server_version_num')"),
                 System.Globalization.CultureInfo.InvariantCulture);
             var notEnforced = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            notEnforced.AddBlueTuskCheckConstraint(
+            notEnforced.AddCheckConstraint(
                 "measurements_legacy_limit",
                 Table,
                 "value < 50",
@@ -304,7 +304,7 @@ public sealed class CheckConstraintTests
                         ProjectDir = AppContext.BaseDirectory,
                         UseNullableReferenceTypes = true,
                     });
-                Assert.Contains("HasBlueTuskCheckConstraints(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
+                Assert.Contains("HasCheckConstraints(", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.Contains("measurements_positive", scaffolded.ContextFile.Code, StringComparison.Ordinal);
                 Assert.Equal(
                     serverVersion >= 180000,
@@ -312,7 +312,7 @@ public sealed class CheckConstraintTests
             }
 
             var validate = new MigrationBuilder("BlueTusk.EntityFrameworkCore");
-            validate.ValidateBlueTuskCheckConstraint("measurements_positive", Table, Schema);
+            validate.ValidateCheckConstraint("measurements_positive", Table, Schema);
             var failedValidation = await Assert.ThrowsAsync<BlueTuskException>(() =>
                 ExecuteOperationsAsync(context, validate.Operations, connectionString));
             Assert.Contains("measurements_positive", failedValidation.Message, StringComparison.Ordinal);
@@ -407,9 +407,9 @@ public sealed class CheckConstraintTests
         entity.ToTable(Table, Schema, table =>
         {
             table.HasCheckConstraint("measurements_bounded", "\"value\" < 100")
-                .IsBlueTuskNoInherit();
+                .IsNoInherit();
             table.HasCheckConstraint("measurements_positive", "\"value\" > 0")
-                .IsBlueTuskNotValid();
+                .IsNotValid();
         });
     }
 
@@ -423,7 +423,7 @@ public sealed class CheckConstraintTests
         entity.ToTable(Table, Schema, table =>
         {
             table.HasCheckConstraint("measurements_bounded", "\"value\" < 100")
-                .IsBlueTuskNoInherit();
+                .IsNoInherit();
             table.HasCheckConstraint("measurements_positive", "\"value\" > 0");
         });
     }
@@ -440,7 +440,7 @@ public sealed class CheckConstraintTests
             var constraint = table.HasCheckConstraint("measurements_legacy_limit", "\"value\" < 50");
             if (notEnforced)
             {
-                constraint.IsBlueTuskNotValid().IsBlueTuskNotEnforced();
+                constraint.IsNotValid().IsNotEnforced();
             }
         });
     }

@@ -3,21 +3,21 @@ using Microsoft.EntityFrameworkCore.Migrations.Operations;
 
 namespace BlueTusk.EntityFrameworkCore.Migrations.Operations;
 
-public sealed class CreateBlueTuskExtensionOperation : MigrationOperation
+public sealed class CreateExtensionOperation : MigrationOperation
 {
     public required BlueTuskExtensionDefinition Definition { get; init; }
 
     public bool IfNotExists { get; init; }
 }
 
-public sealed class AlterBlueTuskExtensionOperation : MigrationOperation
+public sealed class AlterExtensionOperation : MigrationOperation
 {
     public required BlueTuskExtensionDefinition OldDefinition { get; init; }
 
     public required BlueTuskExtensionDefinition Definition { get; init; }
 }
 
-public sealed class DropBlueTuskExtensionOperation : MigrationOperation
+public sealed class DropExtensionOperation : MigrationOperation
 {
     public required string Name { get; init; }
 

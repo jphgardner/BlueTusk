@@ -1,6 +1,6 @@
 # BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore
 
-Preview TimescaleDB query and migration integration for BlueTusk Entity
+Stable TimescaleDB query and migration integration for BlueTusk Entity
 Framework Core. Register the feature on the long-lived data source and the
 query translators on the EF provider:
 
@@ -46,12 +46,12 @@ var buckets = await context.Metrics
     .ToListAsync();
 ```
 
-Migrations can call `EnsureBlueTuskTimescaleDb`,
-`ConvertToBlueTuskHypertable`, and `DropBlueTuskTimescaleDb`. Identifiers and
+Migrations can call `EnsureTimescaleDb`,
+`ConvertToHypertable`, and `DropTimescaleDb`. Identifiers and
 relation literals are quoted centrally; hypertable conversion is idempotent and
 does not migrate existing rows unless explicitly requested.
 
 The live PostgreSQL 17/TimescaleDB 2.29 gate covers scalar and aggregate query
 execution, compiled queries, current Hypercore columnstore policies, approximate
 row counts, and continuous-aggregate refresh and policy lifecycle. These APIs
-remain experimental `0.3.0-preview.1` contracts.
+use the stable 1.0.0 Provider-family contract.

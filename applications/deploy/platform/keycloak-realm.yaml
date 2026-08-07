@@ -1,0 +1,62 @@
+apiVersion: v1
+kind: ConfigMap
+metadata: { name: bluetusk-realm-provisioner, namespace: keycloak }
+data:
+  provision.sh: |
+    #!/usr/bin/env bash
+    set -euo pipefail
+    K="/opt/keycloak/bin/kcadm.sh"
+    "$K" config credentials --server http://keycloak-service.keycloak.svc.cluster.local:8080 \
+      --realm master --user "$KEYCLOAK_ADMIN" --password "$KEYCLOAK_ADMIN_PASSWORD"
+    "$K" get realms/bluetusk >/dev/null 2>&1 || \
+      "$K" create realms -s realm=bluetusk -s enabled=true -s registrationAllowed=false \
+        -s resetPasswordAllowed=true -s rememberMe=false -s sslRequired=external
+    for role in orders.viewer orders.operator orders.admin topology.viewer topology.operator \
+      topology.admin fraud.viewer fraud.operator fraud.admin; do
+      "$K" get "roles/$role" -r bluetusk >/dev/null 2>&1 || \
+        "$K" create roles -r bluetusk -s "name=$role"
+    done
+    configure_client() {
+      local client_id="$1" secret="$2" origin="$3" id
+      id=$("$K" get clients -r bluetusk -q "clientId=$client_id" --fields id --format csv --noquotes | tail -n 1)
+      if [[ -z "$id" ]]; then
+        "$K" create clients -r bluetusk -s "clientId=$client_id" -s enabled=true \
+          -s publicClient=false -s standardFlowEnabled=true -s clientAuthenticatorType=client-secret \
+          -s "secret=$secret" -s "redirectUris=[\"$origin/*\"]" -s "webOrigins=[\"$origin\"]"
+      else
+        "$K" update "clients/$id" -r bluetusk -s enabled=true -s publicClient=false \
+          -s standardFlowEnabled=true -s clientAuthenticatorType=client-secret -s "secret=$secret" \
+          -s "redirectUris=[\"$origin/*\"]" -s "webOrigins=[\"$origin\"]"
+      fi
+    }
+    configure_client order-operations-bff "$ORDERS_CLIENT_SECRET" https://orders.192.168.1.230.nip.io
+    configure_client service-topology-bff "$TOPOLOGY_CLIENT_SECRET" https://topology.192.168.1.230.nip.io
+    configure_client fraud-investigation-bff "$FRAUD_CLIENT_SECRET" https://fraud.192.168.1.230.nip.io
+---
+apiVersion: batch/v1
+kind: Job
+metadata: { name: bluetusk-realm-provisioner, namespace: keycloak }
+spec:
+  backoffLimit: 4
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 86400
+  template:
+    metadata: { labels: { app.kubernetes.io/name: bluetusk-realm-provisioner } }
+    spec:
+      restartPolicy: OnFailure
+      automountServiceAccountToken: false
+      securityContext: { runAsNonRoot: true, seccompProfile: { type: RuntimeDefault } }
+      containers:
+        - name: provisioner
+          image: quay.io/keycloak/keycloak:26.7.0@sha256:0f198be292568439d700cdbfb893e69a6009bb43a94a06a945b1d3d506c76b13
+          command: [/bin/bash, /provision/provision.sh]
+          env:
+            - { name: KEYCLOAK_ADMIN, valueFrom: { secretKeyRef: { name: keycloak-bootstrap-admin, key: username } } }
+            - { name: KEYCLOAK_ADMIN_PASSWORD, valueFrom: { secretKeyRef: { name: keycloak-bootstrap-admin, key: password } } }
+            - { name: ORDERS_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: order-operations-bff, key: clientSecret } } }
+            - { name: TOPOLOGY_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: service-topology-bff, key: clientSecret } } }
+            - { name: FRAUD_CLIENT_SECRET, valueFrom: { secretKeyRef: { name: fraud-investigation-bff, key: clientSecret } } }
+          resources: { requests: { cpu: 25m, memory: 96Mi }, limits: { cpu: 250m, memory: 256Mi } }
+          securityContext: { allowPrivilegeEscalation: false, capabilities: { drop: [ALL] }, readOnlyRootFilesystem: true, runAsNonRoot: true }
+          volumeMounts: [{ name: script, mountPath: /provision, readOnly: true }, { name: tmp, mountPath: /tmp }]
+      volumes: [{ name: script, configMap: { name: bluetusk-realm-provisioner, defaultMode: 365 } }, { name: tmp, emptyDir: { sizeLimit: 32Mi } }]

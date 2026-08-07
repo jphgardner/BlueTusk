@@ -1,0 +1,74 @@
+#nullable enable
+BlueTusk.Sync.Redis.RedisSyncDestination
+const BlueTusk.Sync.Redis.RedisSyncDestination.CurrentStorageFormatVersion = 2 -> int
+const BlueTusk.Sync.Redis.RedisSyncDestination.MinimumSupportedStorageFormatVersion = 2 -> int
+BlueTusk.Sync.Redis.RedisSyncDestination.ApplyRepairBatchAsync(BlueTusk.Sync.SyncRepairBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Redis.RedisSyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Redis.RedisSyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
+BlueTusk.Sync.Redis.RedisSyncDestination.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.Redis.RedisSyncDestination.CompleteSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotComplete! complete, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Redis.RedisSyncDestination.CountAsync(string! pipelineId, string! collection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<long>
+BlueTusk.Sync.Redis.RedisSyncDestination.Name.get -> string!
+BlueTusk.Sync.Redis.RedisSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.Redis.RedisSyncDestination.ReadAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineEntry?>
+BlueTusk.Sync.Redis.RedisSyncDestination.ReadPartitionAsync(string! pipelineId, string! collection, int partitionIndex, int partitionCount, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Collections.Generic.IAsyncEnumerable<BlueTusk.Sync.SyncReconciliationEntry!>!
+BlueTusk.Sync.Redis.RedisSyncDestination.ReadDocumentAsync(string! pipelineId, string! collection, string! key, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.Redis.RedisSyncDocument?>
+BlueTusk.Sync.Redis.RedisSyncDestination.RedisSyncDestination(BlueTusk.Sync.Redis.RedisSyncOptions! options) -> void
+BlueTusk.Sync.Redis.RedisSyncDestination.ReplayTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, string! operationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayApplyResult!>
+BlueTusk.Sync.Redis.RedisSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Redis.RedisSyncDestination.ResolveAsync(BlueTusk.Sync.SyncQuarantineIdentity! identity, string! expectedTransformFingerprint, string! operationId, System.DateTimeOffset resolvedAt, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineResolutionResult!>
+BlueTusk.Sync.Redis.RedisSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Redis.RedisSyncDestination.StoreAsync(BlueTusk.Sync.SyncQuarantineRecord! record, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<bool>
+BlueTusk.Sync.Redis.RedisSyncDocument
+BlueTusk.Sync.Redis.RedisSyncDocument.<Clone>$() -> BlueTusk.Sync.Redis.RedisSyncDocument!
+BlueTusk.Sync.Redis.RedisSyncDocument.Content.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Sync.Redis.RedisSyncDocument.Content.init -> void
+BlueTusk.Sync.Redis.RedisSyncDocument.ContentType.get -> string!
+BlueTusk.Sync.Redis.RedisSyncDocument.ContentType.init -> void
+BlueTusk.Sync.Redis.RedisSyncDocument.Deconstruct(out string! StableSourceId, out System.ReadOnlyMemory<byte> Content, out string! ContentType, out string? PartitionKey) -> void
+BlueTusk.Sync.Redis.RedisSyncDocument.Equals(BlueTusk.Sync.Redis.RedisSyncDocument? other) -> bool
+BlueTusk.Sync.Redis.RedisSyncDocument.PartitionKey.get -> string?
+BlueTusk.Sync.Redis.RedisSyncDocument.PartitionKey.init -> void
+BlueTusk.Sync.Redis.RedisSyncDocument.RedisSyncDocument(string! StableSourceId, System.ReadOnlyMemory<byte> Content, string! ContentType, string? PartitionKey) -> void
+BlueTusk.Sync.Redis.RedisSyncDocument.StableSourceId.get -> string!
+BlueTusk.Sync.Redis.RedisSyncDocument.StableSourceId.init -> void
+BlueTusk.Sync.Redis.RedisSyncDocumentException
+BlueTusk.Sync.Redis.RedisSyncDocumentException.RedisSyncDocumentException(string! message) -> void
+BlueTusk.Sync.Redis.RedisSyncDocumentException.RedisSyncDocumentException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Redis.RedisSyncDocumentReader
+const BlueTusk.Sync.Redis.RedisSyncDocumentReader.CurrentFormatVersion = 1 -> int
+const BlueTusk.Sync.Redis.RedisSyncDocumentReader.MinimumSupportedFormatVersion = 1 -> int
+BlueTusk.Sync.Redis.RedisSyncException
+BlueTusk.Sync.Redis.RedisSyncException.RedisSyncException(string! message) -> void
+BlueTusk.Sync.Redis.RedisSyncException.RedisSyncException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Redis.RedisSyncOptions
+BlueTusk.Sync.Redis.RedisSyncOptions.<Clone>$() -> BlueTusk.Sync.Redis.RedisSyncOptions!
+BlueTusk.Sync.Redis.RedisSyncOptions.Connection.get -> StackExchange.Redis.IConnectionMultiplexer!
+BlueTusk.Sync.Redis.RedisSyncOptions.Connection.init -> void
+BlueTusk.Sync.Redis.RedisSyncOptions.Database.get -> int
+BlueTusk.Sync.Redis.RedisSyncOptions.Database.init -> void
+BlueTusk.Sync.Redis.RedisSyncOptions.Equals(BlueTusk.Sync.Redis.RedisSyncOptions? other) -> bool
+BlueTusk.Sync.Redis.RedisSyncOptions.KeyPrefix.get -> string!
+BlueTusk.Sync.Redis.RedisSyncOptions.KeyPrefix.init -> void
+BlueTusk.Sync.Redis.RedisSyncOptions.MaxDocumentBytes.get -> int
+BlueTusk.Sync.Redis.RedisSyncOptions.MaxDocumentBytes.init -> void
+BlueTusk.Sync.Redis.RedisSyncOptions.MaxMutationsPerTransaction.get -> int
+BlueTusk.Sync.Redis.RedisSyncOptions.MaxMutationsPerTransaction.init -> void
+BlueTusk.Sync.Redis.RedisSyncOptions.MaxTransactionBytes.get -> long
+BlueTusk.Sync.Redis.RedisSyncOptions.MaxTransactionBytes.init -> void
+BlueTusk.Sync.Redis.RedisSyncOptions.RedisSyncOptions() -> void
+BlueTusk.Sync.Redis.RedisSyncSnapshotException
+BlueTusk.Sync.Redis.RedisSyncSnapshotException.RedisSyncSnapshotException(string! message) -> void
+BlueTusk.Sync.Redis.RedisSyncSourceMismatchException
+BlueTusk.Sync.Redis.RedisSyncSourceMismatchException.RedisSyncSourceMismatchException(string! message) -> void
+override BlueTusk.Sync.Redis.RedisSyncDocument.Equals(object? obj) -> bool
+override BlueTusk.Sync.Redis.RedisSyncDocument.GetHashCode() -> int
+override BlueTusk.Sync.Redis.RedisSyncDocument.ToString() -> string!
+override BlueTusk.Sync.Redis.RedisSyncOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.Redis.RedisSyncOptions.GetHashCode() -> int
+override BlueTusk.Sync.Redis.RedisSyncOptions.ToString() -> string!
+static BlueTusk.Sync.Redis.RedisSyncDocument.operator !=(BlueTusk.Sync.Redis.RedisSyncDocument? left, BlueTusk.Sync.Redis.RedisSyncDocument? right) -> bool
+static BlueTusk.Sync.Redis.RedisSyncDocument.operator ==(BlueTusk.Sync.Redis.RedisSyncDocument? left, BlueTusk.Sync.Redis.RedisSyncDocument? right) -> bool
+static BlueTusk.Sync.Redis.RedisSyncDocumentReader.Decode(System.ReadOnlySpan<byte> value) -> BlueTusk.Sync.Redis.RedisSyncDocument!
+static BlueTusk.Sync.Redis.RedisSyncOptions.operator !=(BlueTusk.Sync.Redis.RedisSyncOptions? left, BlueTusk.Sync.Redis.RedisSyncOptions? right) -> bool
+static BlueTusk.Sync.Redis.RedisSyncOptions.operator ==(BlueTusk.Sync.Redis.RedisSyncOptions? left, BlueTusk.Sync.Redis.RedisSyncOptions? right) -> bool

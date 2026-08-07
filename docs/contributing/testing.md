@@ -22,6 +22,7 @@ The normal local release gate mirrors CI:
 
 ```powershell
 dotnet restore BlueTusk.slnx
+./eng/verify-solution-layout.ps1
 dotnet format BlueTusk.slnx --verify-no-changes --no-restore
 ./eng/verify-documentation.ps1
 dotnet build BlueTusk.slnx -c Release --no-restore
@@ -29,6 +30,25 @@ dotnet test BlueTusk.slnx -c Release --no-build --no-restore
 ./eng/verify-allocation-budgets.ps1
 dotnet pack BlueTusk.slnx -c Release --no-build --no-restore --output artifacts/packages
 ```
+
+Provider-core trimming and NativeAOT are separate publish gates because an
+ordinary build does not run the linker or native compiler. On Windows x64:
+
+```powershell
+dotnet restore tests/BlueTusk.TrimSmoke/BlueTusk.TrimSmoke.csproj -r win-x64
+dotnet restore tests/BlueTusk.NativeAotSmoke/BlueTusk.NativeAotSmoke.csproj -r win-x64
+./eng/verify-provider-core-publish.ps1 -RuntimeIdentifier win-x64 -NoRestore
+```
+
+The verifier executes both published applications, applies the checked-in
+deployable-size, cold-start and second-pass managed-allocation budgets, and
+writes an evidence report under
+`artifacts/provider-core-smoke/win-x64/report.json`. Deployable size excludes
+optional PDB and XML documentation files while the report retains their bytes
+separately.
+Use `-SkipPublish` only to remeasure already published outputs; CI always
+publishes from source. The required CI matrix runs both `win-x64` and
+`linux-x64`.
 
 The documentation check validates every repository-local link in every tracked
 Markdown file on both Windows and Linux. External links remain a release-review
@@ -217,6 +237,19 @@ The scheduled and manually dispatched `replication-endurance` CI job runs this
 path for 1,000 PostgreSQL 19 reconnect epochs. Pull requests retain the fast
 default while still running the three-epoch test on every PostgreSQL major.
 
+The separate Streams relay release gate is documented in
+[Streams release endurance](../streams/release-endurance.md). Its normal test
+path is skipped unless `BLUETUSK_RELAY_ENDURANCE_DURATION` is explicit. Local
+short runs validate the harness; only the confirmed self-hosted workflow's
+successful 72-hour JSON report satisfies the Streams 1.0 gate.
+
+The Sync release gate is documented in
+[Sync release endurance](../sync/release-endurance.md). Its runner refuses
+implicit service endpoints and repeatedly executes the core, hosting, shared
+conformance, PostgreSQL, NATS, Redis, and OpenSearch projects. A one-cycle local
+smoke validates orchestration and report output; only the confirmed self-hosted
+workflow's successful 24-hour report satisfies the Sync 1.0 endurance gate.
+
 ```powershell
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests"
 $env:BLUETUSK_REPLICATION_DURABILITY_EPOCHS = "250"
@@ -259,3 +292,23 @@ Commit only the brief JSON and GitHub Markdown reports. Record the PostgreSQL
 major version, machine profile, SDK/runtime, date, and any material semantic
 difference between the provider pairs. Never turn a ShortRun ratio into a
 universal performance claim.
+
+The multiplexing comparison is the deliberate full-JSON exception: measured
+workload samples are required to reproduce P99. It compares both providers'
+multiplexed and ordinary four-session pools. Use the MediumRun and in-process
+toolchain so ignored archival worktrees cannot confuse BenchmarkDotNet project
+discovery:
+
+```powershell
+$env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
+$env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
+  --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
+./eng/verify-multiplexing-performance.ps1
+```
+
+Commit its full JSON and GitHub Markdown reports. The machine gate requires at
+least 20 measured samples and enforces relative mean, P95, P99, throughput, and
+managed-allocation budgets against Npgsql multiplexing and BlueTusk's ordinary
+pool. A budget change requires the report, rationale, and documentation in the
+same review.
