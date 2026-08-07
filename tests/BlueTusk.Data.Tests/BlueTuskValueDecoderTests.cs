@@ -130,6 +130,39 @@ public sealed class BlueTuskValueDecoderTests
     }
 
     [Fact]
+    public void Data_reader_integer_getters_use_typed_checked_width_conversion()
+    {
+        var type = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(80_002),
+            Schema = "public",
+            Name = "tracked_int8",
+            Kind = BlueTuskTypeKind.Base,
+        };
+        var codec = new TrackingInt64Codec();
+        var types = new BlueTuskTypeRegistryBuilder()
+            .Register(type, codec)
+            .Build();
+        byte[] bytes = [0, 0, 0, 0, 0, 0, 0, 42];
+        using var reader = CreateReader(Field(type.Id.Oid, formatCode: 1), bytes, types);
+
+        Assert.True(reader.Read());
+        Assert.Equal(42, reader.GetInt32(0));
+        Assert.Equal(1, codec.TypedReadCount);
+        Assert.Equal(0, codec.ObjectReadCount);
+
+        var overflowBytes = new byte[sizeof(long)];
+        System.Buffers.Binary.BinaryPrimitives.WriteInt64BigEndian(
+            overflowBytes,
+            (long)int.MaxValue + 1);
+        using var overflowReader = CreateReader(Field(type.Id.Oid, formatCode: 1), overflowBytes, types);
+        Assert.True(overflowReader.Read());
+        Assert.Throws<OverflowException>(() => overflowReader.GetInt32(0));
+        Assert.Equal(2, codec.TypedReadCount);
+        Assert.Equal(0, codec.ObjectReadCount);
+    }
+
+    [Fact]
     public void Buffered_streams_are_read_only_views_that_outlive_the_reader()
     {
         byte[] bytes = [0, 1, 2, 3];
@@ -232,5 +265,46 @@ public sealed class BlueTuskValueDecoderTests
             BlueTuskDataFormat format,
             BlueTuskTypeDescriptor type) =>
             WriteTyped(ref writer, (int)value!, format, type);
+    }
+
+    private sealed class TrackingInt64Codec : IBlueTuskCodec<long>
+    {
+        public int TypedReadCount { get; private set; }
+
+        public int ObjectReadCount { get; private set; }
+
+        public Type ClrType => typeof(long);
+
+        public long ReadTyped(
+            ref BlueTuskReader reader,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type)
+        {
+            TypedReadCount++;
+            return reader.ReadInt64BigEndian();
+        }
+
+        public object Read(
+            ref BlueTuskReader reader,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type)
+        {
+            ObjectReadCount++;
+            return ReadTyped(ref reader, format, type);
+        }
+
+        public void WriteTyped(
+            ref BlueTuskWriter writer,
+            long value,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type) =>
+            writer.WriteInt64BigEndian(value);
+
+        public void Write(
+            ref BlueTuskWriter writer,
+            object? value,
+            BlueTuskDataFormat format,
+            BlueTuskTypeDescriptor type)
+            => WriteTyped(ref writer, (long)value!, format, type);
     }
 }

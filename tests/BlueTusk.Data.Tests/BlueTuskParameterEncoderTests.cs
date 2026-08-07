@@ -100,6 +100,52 @@ public sealed class BlueTuskParameterEncoderTests
     }
 
     [Fact]
+    public void Typed_array_codec_delegates_multidimensional_parameter_shapes()
+    {
+        var arrayType = new BlueTuskTypeDescriptor
+        {
+            Id = new BlueTuskTypeId(1007),
+            Schema = "pg_catalog",
+            Name = "_int4",
+            Kind = BlueTuskTypeKind.Array,
+            ElementType = BlueTuskBuiltInTypes.Int4.Id,
+        };
+        var types = BlueTuskTypeCatalogue.BuildRegistry(
+        [
+            new BlueTuskCatalogueType
+            {
+                Id = BlueTuskBuiltInTypes.Int4.Id,
+                Schema = "pg_catalog",
+                Name = "int4",
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'N',
+                ArrayType = arrayType.Id,
+            },
+            new BlueTuskCatalogueType
+            {
+                Id = arrayType.Id,
+                Schema = arrayType.Schema,
+                Name = arrayType.Name,
+                PostgreSqlKind = 'b',
+                PostgreSqlCategory = 'A',
+                ElementType = BlueTuskBuiltInTypes.Int4.Id,
+            },
+        ]);
+        var value = new int[,] { { 1, 2 }, { 3, 4 } };
+
+        var encoded = BlueTuskParameterEncoder.Encode(
+            new BlueTuskParameter<int[,]>(value) { PostgreSqlTypeOid = arrayType.Id.Oid },
+            types);
+
+        Assert.Equal(1, encoded.FormatCode);
+        Assert.True(types.TryGetCodec(arrayType.Id, out var codec));
+        var reader = new BlueTuskReader(encoded.Value!.Value.Span);
+        var decoded = Assert.IsType<int[,]>(
+            codec!.Read(ref reader, BlueTuskDataFormat.Binary, arrayType));
+        Assert.Equal(value.Cast<int>(), decoded.Cast<int>());
+    }
+
+    [Fact]
     public void Rejects_a_named_parameter_type_missing_from_the_loaded_catalogue()
     {
         var types = new BlueTuskTypeRegistryBuilder().Build();

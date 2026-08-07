@@ -24,5 +24,9 @@
     "@angular/compiler-cli": "22.1.1",
     "@playwright/test": "1.62.1",
     "typescript": "6.0.3"
+  },
+  "overrides": {
+    "@hono/node-server": "2.1.0",
+    "@modelcontextprotocol/sdk": "1.30.0"
   }
 }
