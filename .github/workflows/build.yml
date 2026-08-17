@@ -45,7 +45,7 @@ jobs:
           dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
           dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore
 
-      - name: Test applications against digest-pinned PostgreSQL 19 Beta 2
+      - name: Test applications against digest-pinned PostgreSQL 19 Beta 3
         shell: pwsh
         run: ./eng/test-applications-postgresql.ps1
 
