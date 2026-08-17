@@ -175,6 +175,7 @@ jobs:
           name: bluetusk-website
           path: website/dist/website/browser
           if-no-files-found: error
+          include-hidden-files: true
 
   candidate-packages:
     name: Immutable all-family V1 package evidence

@@ -57,7 +57,8 @@ $buildWorkflowSource = Get-Content -LiteralPath (
 foreach ($requiredWorkflowSource in @(
         'run: npm run build',
         'name: bluetusk-website',
-        'path: website/dist/website/browser'))
+        'path: website/dist/website/browser',
+        'include-hidden-files: true'))
 {
     if (-not $buildWorkflowSource.Contains(
             $requiredWorkflowSource,
