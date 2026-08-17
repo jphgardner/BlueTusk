@@ -8,10 +8,11 @@ namespace BlueTusk.Benchmarks;
 
 [MemoryDiagnoser]
 [JsonExporterAttribute.Brief]
-public class ProtocolStreamingBenchmarks
+public class ProtocolStreamingBenchmarks : IDisposable
 {
     private readonly byte[] _frame;
     private readonly byte[] _destination = new byte[8192];
+    private readonly BlueTuskProtocolConnection _connection;
 
     public ProtocolStreamingBenchmarks()
     {
@@ -19,21 +20,28 @@ public class ProtocolStreamingBenchmarks
         _frame = new byte[payloadLength + 5];
         _frame[0] = (byte)'D';
         BinaryPrimitives.WriteInt32BigEndian(_frame.AsSpan(1), payloadLength + sizeof(int));
+        _connection = new BlueTuskProtocolConnection(new MemoryTransport(_frame));
     }
 
     [Benchmark]
     public int StreamOneMegabyteBackendPayload()
     {
-        using var connection = new BlueTuskProtocolConnection(new MemoryTransport(_frame));
-        var header = connection.ReadMessageHeader();
+        var header = _connection.ReadMessageHeader();
         var total = 0;
         int read;
-        while ((read = connection.ReadMessagePayload(_destination)) != 0)
+        while ((read = _connection.ReadMessagePayload(_destination)) != 0)
         {
             total += read;
         }
 
         return total + header.PayloadLength;
+    }
+
+    [GlobalCleanup]
+    public void Dispose()
+    {
+        _connection.Dispose();
+        GC.SuppressFinalize(this);
     }
 
     private sealed class MemoryTransport(byte[] input) : IBlueTuskTransport
@@ -53,6 +61,11 @@ public class ProtocolStreamingBenchmarks
 
         public int Read(Span<byte> buffer)
         {
+            if (_offset == input.Length)
+            {
+                _offset = 0;
+            }
+
             var count = Math.Min(buffer.Length, input.Length - _offset);
             input.AsSpan(_offset, count).CopyTo(buffer);
             _offset += count;

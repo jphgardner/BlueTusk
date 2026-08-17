@@ -17,7 +17,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     private const int MaximumRetainedWriteBufferSize = 64 * 1024;
     private readonly IBlueTuskTransport _transport;
     private readonly BlueTuskBackendMessageParser _parser;
-    private ArrayBufferWriter<byte>? _writeBuffer;
+    private ArrayBufferWriter<byte> _writeBuffer = new(InitialWriteBufferSize);
     private byte[] _buffer;
     private int _start;
     private int _count;
@@ -1088,33 +1088,24 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
                 "A protocol write is already active on this physical connection.");
         }
 
-        try
-        {
-            return _writeBuffer ??= new ArrayBufferWriter<byte>(InitialWriteBufferSize);
-        }
-        catch
-        {
-            Volatile.Write(ref _writeInProgress, 0);
-            throw;
-        }
+        return _writeBuffer;
     }
 
     private void EndWrite(bool clearBuffer)
     {
-        var writeBuffer = _writeBuffer!;
         if (clearBuffer
-            && MemoryMarshal.TryGetArray(writeBuffer.WrittenMemory, out var segment))
+            && MemoryMarshal.TryGetArray(_writeBuffer.WrittenMemory, out var segment))
         {
             CryptographicOperations.ZeroMemory(segment.AsSpan());
         }
 
-        if (writeBuffer.Capacity > MaximumRetainedWriteBufferSize)
+        if (_writeBuffer.Capacity > MaximumRetainedWriteBufferSize)
         {
             _writeBuffer = new ArrayBufferWriter<byte>(InitialWriteBufferSize);
         }
         else
         {
-            writeBuffer.Clear();
+            _writeBuffer.Clear();
         }
 
         Volatile.Write(ref _writeInProgress, 0);

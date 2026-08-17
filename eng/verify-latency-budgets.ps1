@@ -14,6 +14,7 @@ if ([int]$configuration.schemaVersion -ne 1) {
 $actual = @{}
 $reports = @(
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json"
+    Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-full.json"
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-hardening.json"
 )
 $reports | ForEach-Object {
