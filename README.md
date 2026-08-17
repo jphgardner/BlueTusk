@@ -24,7 +24,7 @@ runtime dependency on Npgsql.
 
 Prerequisites:
 
-- .NET SDK 10.0.110 or a compatible later feature band
+- .NET SDK 10.0.111 or a compatible later feature band
 - Docker, only for PostgreSQL integration tests
 
 ```powershell

@@ -11,7 +11,7 @@ RUN dotnet publish "applications/src/${PROJECT_FAMILY}/BlueTusk.${PROJECT_FAMILY
     cp "/app/BlueTusk.${PROJECT_FAMILY}.Api.deps.json" /app/BlueTusk.Application.Api.deps.json && \
     cp "/app/BlueTusk.${PROJECT_FAMILY}.Api.runtimeconfig.json" /app/BlueTusk.Application.Api.runtimeconfig.json
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.10-noble-chiseled@sha256:70d6f993bf715a031f027832a19cfb7f894df66c8b5eb40be0aaee820ad5d119
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.11-noble-chiseled@sha256:0839314d08bb65da369135389a5d8291f75ace587fbb0488f469eb92c62eef68
 ARG PROJECT_FAMILY
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_EnableDiagnostics=0 \

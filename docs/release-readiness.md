@@ -98,7 +98,7 @@ overload families with explicit no-token and required-token overloads.
 
 ## EF Core, design tooling, and extensions
 
-BlueTusk directly consumes Microsoft's EF Core 10.0.10 relational
+BlueTusk directly consumes Microsoft's EF Core 10.0.11 relational
 specification package. Its official assembly gate discovers 2,111 cases on
 PostgreSQL 18 and 19: 1,987 pass and 124 retain upstream EF skip declarations.
 PostgreSQL 15–17 run the same adopted suite with only unsupported
@@ -266,7 +266,7 @@ data-source-first usage. A cross-platform CI script validates every local link
 in all tracked Markdown files. The Angular documentation build automatically
 discovers every repository guide, rewrites internal links to site routes,
 generates full-text search records and fails when generated content drifts.
-The support matrix identifies .NET 10, EF Core 10.0.10,
+The support matrix identifies .NET 10, EF Core 10.0.11,
 PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 candidate evidence, including the
 remaining beta-syntax risk.
 

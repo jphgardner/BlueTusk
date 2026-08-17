@@ -1,7 +1,7 @@
 # EF Core relational specification tests
 
 BlueTusk consumes Microsoft's provider-facing EF Core relational specification
-package directly. The package is pinned to the same `10.0.10` version as the
+package directly. The package is pinned to the same `10.0.11` version as the
 provider's runtime and design dependencies, so an EF upgrade cannot silently
 move the contract suite independently of the provider.
 
@@ -135,5 +135,5 @@ upgrades must re-run both gates and explicitly review newly published official
 test bases rather than silently broadening or weakening this boundary.
 
 References: [Writing an EF Core database provider](https://learn.microsoft.com/ef/core/providers/writing-a-provider),
-the [EF Core 10.0.10 relational specification-test source](https://github.com/dotnet/efcore/tree/v10.0.10/test/EFCore.Relational.Specification.Tests),
+the [EF Core 10.0.11 relational specification-test source](https://github.com/dotnet/efcore/tree/v10.0.11/test/EFCore.Relational.Specification.Tests),
 and the [EF Core repository](https://github.com/dotnet/efcore).

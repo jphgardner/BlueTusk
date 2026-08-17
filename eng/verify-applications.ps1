@@ -72,8 +72,20 @@ foreach ($project in $projects)
     }
 }
 
-foreach ($webManifest in @(Get-ChildItem -LiteralPath (
-        Join-Path $applicationsRoot 'web') -Filter 'package.json' -File -Recurse))
+$webRoot = Join-Path $applicationsRoot 'web'
+$webManifests = @(Get-ChildItem -LiteralPath $webRoot -Directory | ForEach-Object {
+        $manifest = Join-Path $_.FullName 'package.json'
+        if (Test-Path -LiteralPath $manifest -PathType Leaf)
+        {
+            Get-Item -LiteralPath $manifest
+        }
+    })
+if ($webManifests.Count -ne 3)
+{
+    throw "Expected three browser-client manifests; found $($webManifests.Count)."
+}
+
+foreach ($webManifest in $webManifests)
 {
     $package = Get-Content -LiteralPath $webManifest.FullName -Raw | ConvertFrom-Json
     $lockPath = Join-Path $webManifest.DirectoryName 'package-lock.json'

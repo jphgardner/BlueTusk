@@ -291,7 +291,7 @@ The detailed contracts and release gates are maintained in the [real-time platfo
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
   - [x] Catalogue-only sequence discovery safe during concurrent schema changes
 - [x] Initial EF Core relational specification-suite coverage
-  - [x] Official EF Core 10.0.10 relational specification package pinned with an isolated, solution-level test assembly
+  - [x] Official EF Core 10.0.11 relational specification package pinned with an isolated, solution-level test assembly
   - [x] All official provider-service registration, idempotency, isolation, and lifetime contracts
   - [x] All official migrations SQL-generator cases with BlueTusk PostgreSQL golden baselines, including PostGIS seed literals
   - [x] Raw SQL composition, parameterization, compiled queries, and nullable projections

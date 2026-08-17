@@ -11,7 +11,7 @@ RUN dotnet publish "applications/src/${PROJECT_FAMILY}/BlueTusk.${PROJECT_FAMILY
     cp "/app/BlueTusk.${PROJECT_FAMILY}.Worker.deps.json" /app/BlueTusk.Application.Worker.deps.json && \
     cp "/app/BlueTusk.${PROJECT_FAMILY}.Worker.runtimeconfig.json" /app/BlueTusk.Application.Worker.runtimeconfig.json
 
-FROM mcr.microsoft.com/dotnet/runtime:10.0.10-noble-chiseled@sha256:4b12cfda4e6e0b3c855ae01dc4b22544d48d0d3b4aca74ce5f9c627b0ed030b2
+FROM mcr.microsoft.com/dotnet/runtime:10.0.11-noble-chiseled@sha256:faeea3edbaf9b13cc84dad62a5072cc96a888272087e3aa461268f612bdee702
 ARG PROJECT_FAMILY
 ENV DOTNET_EnableDiagnostics=0 PROJECT_FAMILY=${PROJECT_FAMILY}
 WORKDIR /app

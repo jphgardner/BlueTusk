@@ -4,7 +4,7 @@
 
 | BlueTusk package line | Target framework | EF Core | PostgreSQL |
 | --- | --- | --- | --- |
-| `1.0.0` (release-prepared, unpublished) | .NET 10 (`net10.0`) | 10.0.10 | 15, 16, 17, 18, and PostgreSQL 19 after its GA gate |
+| `1.0.0` (release-prepared, unpublished) | .NET 10 (`net10.0`) | 10.0.11 | 15, 16, 17, 18, and PostgreSQL 19 after its GA gate |
 
 PostgreSQL 15–18 are the released-server compatibility baseline. PostgreSQL 19
 is currently exercised with the pinned `postgres:19beta2-alpine` image and is

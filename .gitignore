@@ -16,3 +16,6 @@ coverage/
 .env
 node_modules/
 clients/*/dist/
+applications/web/*/dist/
+applications/web/*/.angular/
+applications/web/*/*.tsbuildinfo
