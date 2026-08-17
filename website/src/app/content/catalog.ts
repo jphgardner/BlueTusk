@@ -376,6 +376,15 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     sourcePath: 'docs/extensions/README.md',
   },
   {
+    surface: 'ADO.NET',
+    feature: 'pg_durable',
+    workload: 'Durable workflows',
+    postgres: '17 / 0.2.5 gate',
+    state: 'preview',
+    notes: 'Non-packable evaluation adapter; upstream preview is not approved for V1 production use.',
+    sourcePath: 'docs/extensions/README.md',
+  },
+  {
     surface: 'ADO.NET + EF',
     feature: 'PostGIS',
     workload: 'Spatial',
@@ -426,7 +435,7 @@ export const SITE_SEARCH: readonly SearchRecord[] = [
   },
   {
     title: 'Extensions',
-    description: 'PostGIS, pgvector, TimescaleDB, citext, hstore, ltree, and pg_trgm.',
+    description: 'PostGIS, pgvector, TimescaleDB, pg_durable, citext, hstore, ltree, and pg_trgm.',
     route: '/extensions',
     group: 'Products',
     keywords: 'spatial vector timeseries types',

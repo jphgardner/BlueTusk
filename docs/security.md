@@ -30,7 +30,7 @@ claim of independent penetration testing or a production support SLA.
 The repository contains three low-entropy values used only by disposable local
 PostgreSQL and MIT Kerberos test infrastructure. They are not credentials for
 GitHub, package registries, cloud services, deployed databases or any
-maintainer account. The current inventory covers 23 literal occurrences across
+maintainer account. The current inventory covers 24 literal occurrences across
 workflow and Compose inputs:
 
 - the PostgreSQL credential used by localhost Compose services, PgBouncer and

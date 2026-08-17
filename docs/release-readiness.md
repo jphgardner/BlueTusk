@@ -125,9 +125,10 @@ architecture gate. A live extension test first checks
 dynamic skip when the optional extension is absent, while each dedicated
 extension image requires the same test to pass. The dedicated-image gate reports
 23 pgvector, 10 PostGIS, and 9 TimescaleDB passes with no skips or failures.
-The checked-in workflow enforces these as three independent CI matrix entries,
-each running the extension's ADO.NET and EF Core projects against its dedicated
-image and retaining container logs on failure.
+The checked-in workflow enforces these stable integrations and separately runs
+four `pg_durable` adapter checks against its evaluation-only upstream image.
+That adapter is deliberately non-packable and is not stable V1 evidence while
+upstream remains preview. Every matrix entry retains container logs on failure.
 Cloud identity adapters have deterministic SDK contract tests; their
 real-account acceptance tests remain opt-in because CI does not hold customer
 cloud credentials.

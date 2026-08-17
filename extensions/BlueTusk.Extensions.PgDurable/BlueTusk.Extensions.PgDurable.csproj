@@ -1,0 +1,21 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.Extensions.Abstractions\BlueTusk.Extensions.Abstractions.csproj" />
+  </ItemGroup>
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <PackageId>BlueTusk.Extensions.PgDurable</PackageId>
+    <Description>Preview-only PostgreSQL pg_durable integration; excluded from BlueTusk V1 publication.</Description>
+    <PackageTags>postgresql;database;dotnet;bluetusk;pg_durable;durable-functions;workflows</PackageTags>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <None Remove="$(MSBuildThisFileDirectory)..\..\README.md" />
+    <None Include="README.md" Pack="true" PackagePath="\" />
+  </ItemGroup>
+
+</Project>

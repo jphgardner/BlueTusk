@@ -72,6 +72,9 @@
   <Folder Name="/Provider/Extensions/LTree/">
     <Project Path="extensions/BlueTusk.Extensions.LTree/BlueTusk.Extensions.LTree.csproj" />
   </Folder>
+  <Folder Name="/Provider/Extensions/PgDurable/">
+    <Project Path="extensions/BlueTusk.Extensions.PgDurable/BlueTusk.Extensions.PgDurable.csproj" />
+  </Folder>
   <Folder Name="/Provider/Extensions/PgTrgm/">
     <Project Path="extensions/BlueTusk.Extensions.PgTrgm/BlueTusk.Extensions.PgTrgm.csproj" />
   </Folder>
@@ -129,6 +132,7 @@
     <Project Path="tests/BlueTusk.Extensions.Citext.Tests/BlueTusk.Extensions.Citext.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.HStore.Tests/BlueTusk.Extensions.HStore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.LTree.Tests/BlueTusk.Extensions.LTree.Tests.csproj" />
+    <Project Path="tests/BlueTusk.Extensions.PgDurable.Tests/BlueTusk.Extensions.PgDurable.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.PgTrgm.Tests/BlueTusk.Extensions.PgTrgm.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj" />
     <Project Path="tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj" />

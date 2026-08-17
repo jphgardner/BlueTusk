@@ -64,9 +64,9 @@ database setup into misleading timeout failures.
 
 ## Dedicated extension-image gates
 
-The extension profile supplies the three images that are not available in a
+The extension profile supplies the four images that are not available in a
 plain PostgreSQL distribution. CI runs each image in its own required matrix
-entry and executes both its ADO.NET and EF Core project, so a dynamically
+entry and executes its applicable ADO.NET and EF Core projects, so a dynamically
 skipped plain-image test cannot satisfy the extension acceptance gate:
 
 ```powershell
@@ -80,6 +80,7 @@ Run both the ADO.NET and EF package projects against the corresponding port:
 | pgvector | 5518 | `BlueTusk.Extensions.PgVector.Tests`, `BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests` |
 | PostGIS | 5519 | `BlueTusk.Extensions.PostGIS.Tests`, `BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests` |
 | TimescaleDB | 5520 | `BlueTusk.Extensions.TimescaleDB.Tests`, `BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests` |
+| pg_durable | 5521 | `BlueTusk.Extensions.PgDurable.Tests` (connect to the required `postgres` database) |
 
 Set `BLUETUSK_TEST_CONNECTION_STRING` to the selected port before each pair.
 The live case must pass on its dedicated image. On a plain matrix image it

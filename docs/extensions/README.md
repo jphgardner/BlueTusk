@@ -2,6 +2,28 @@
 
 Extensions register types and immutable feature descriptors through `BlueTusk.Extensions.Abstractions`. `BlueTuskDataSourceBuilder.Build()` snapshots both registries into the resulting data source. Later builder changes do not mutate an existing data source, and optional packages remain independently deployable without extension-specific dependencies in BlueTusk core packages.
 
+## What “supports PostgreSQL extensions” means
+
+BlueTusk does not use a closed server-extension allowlist. Any extension
+installed on the connected PostgreSQL server can be called through normal,
+parameterized commands, and EF Core can own any extension's installation with
+`modelBuilder.HasExtension("extension_name")`. Runtime catalogue discovery
+loads extension-provided OIDs instead of assuming a compiled-in type list.
+
+The level of convenience depends on what an extension contributes:
+
+| Extension surface | BlueTusk behavior |
+| --- | --- |
+| Functions, procedures, operators, access methods, and background workers | Available through normal SQL without a BlueTusk-specific package. |
+| Domains, enums, composites, arrays, ranges, and multiranges over known types | Catalogue-discovered and composed automatically. |
+| A new base wire type | Preserved as `BlueTuskUnknownValue` until an extension package registers a semantic codec. |
+| Provider-specific CLR values, helpers, or LINQ translation | Supplied by an optional first-party or third-party BlueTusk package. |
+
+This makes “all extensions” an interoperability contract, not a promise that
+every PostgreSQL extension has a bespoke CLR API. Server installation, binary
+compatibility, preloading, privileges, and operational safety remain properties
+of PostgreSQL and the extension itself.
+
 The extension-authoring seam is compatibility-stable: the public surfaces of
 `BlueTusk.Extensions.Abstractions`, `BlueTusk.Extensions.Testing`,
 `BlueTusk.TypeSystem`, and the ADO.NET integration points have compiler-enforced
@@ -268,6 +290,58 @@ round trip. Both input strings are typed parameters. Functions and operators
 are schema-qualified, including quoted custom schemas. The live gate moves the
 extension into a spaced identifier, executes the same behavior, and restores
 it to `public`.
+
+## pg_durable
+
+`pg_durable` contributes a background worker and a SQL workflow DSL over
+PostgreSQL built-in types. `BlueTusk.Extensions.PgDurable` is a non-packable
+preview adapter: catalogue discovery already covers its `text`, `jsonb`,
+`regrole`, UUID, timestamp, and integer values. It is excluded from the V1
+Provider manifest and stable package/API counts.
+
+[Microsoft labels pg_durable as preview](https://github.com/microsoft/pg_durable/tree/v0.2.5)
+and its official container as evaluation-only. Its
+[published security review](https://github.com/microsoft/pg_durable/blob/v0.2.5/docs/security-review/security-review.md)
+records unresolved production resource-governance and default-exposure gaps.
+The checked-in adapter and live gate prove BlueTusk compatibility with exactly
+0.2.5; they do not approve the upstream extension or its container for
+production use.
+
+For evaluation, the PostgreSQL operator must install pg_durable 0.2.5, add it to
+`shared_preload_libraries`, create it in the database selected by
+`pg_durable.database` (the `postgres` database by default), and grant the
+application role explicitly:
+
+```sql
+CREATE EXTENSION pg_durable;
+SELECT df.grant_usage('app_role');
+```
+
+```csharp
+using BlueTusk.Data;
+using BlueTusk.Extensions.PgDurable;
+
+await using var dataSource = new BlueTuskDataSourceBuilder(connectionString)
+    .UsePgDurable()
+    .Build();
+
+var instanceId = await dataSource.StartPgDurableAsync(
+    "SELECT count(*) AS total FROM orders",
+    label: "count-orders");
+var status = await dataSource.AwaitPgDurableAsync(instanceId);
+var resultJson = await dataSource.GetPgDurableResultAsync(instanceId);
+```
+
+The helpers cover installed-version discovery, start, status, result, await,
+cancel, external signals, and restricted system-wide aggregate metrics. The
+metrics helper requires an explicit `df.metrics()` EXECUTE grant; the ordinary
+application-role grant intentionally omits it. Workflow SQL remains
+extension-owned; all non-workflow inputs are typed parameters, result JSON is
+preserved as text, and unknown future status values degrade to `Unknown`. The
+dedicated official pg_durable 0.2.5/PostgreSQL 17 evaluation-image gate verifies
+a complete parameterized workflow lifecycle. Promotion requires fresh upstream
+production guidance, a supported deployment artifact, closed security blockers,
+explicit resource limits, and a new compatibility review.
 
 ## PostGIS
 

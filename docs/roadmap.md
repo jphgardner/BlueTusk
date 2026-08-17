@@ -633,6 +633,8 @@ The detailed contracts and release gates are maintained in the [real-time platfo
 - [x] ltree ADO.NET package (live-tested `ltree`, `lquery`, `ltxtquery`, arrays, and operators)
 - [x] citext packages (tested ADO.NET and EF preview; stable extension-authoring seam)
 - [x] pg_trgm ADO.NET package (live-tested parameterized functions and operators, including quoted schemas)
+- [x] pg_durable preview source adapter and live evaluation gate (excluded from V1 stable publication while upstream remains preview and its official image is evaluation-only)
+- [ ] Promote pg_durable to a publishable package only after upstream production guidance, security blockers, resource limits, and a production-supported deployment artifact are independently verified
 - [x] TimescaleDB ADO.NET package (live-tested hypertable creation, approximate counts, retention, current Hypercore columnstore, and continuous-aggregate policy/refresh lifecycle)
 - [x] TimescaleDB query helpers and EF integration (schema-qualified temporal/integer `time_bucket`, typed `first`/`last`/`histogram` aggregates with modifiers, migrations, compiled queries, and PostgreSQL 17/TimescaleDB 2.29 acceptance)
 - [x] Extension-authoring template
