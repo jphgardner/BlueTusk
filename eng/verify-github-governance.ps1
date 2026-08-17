@@ -226,9 +226,8 @@ function Invoke-GitHubGet
     }
 }
 
-$rulesets = @(
-    Invoke-GitHubGet -Path 'rulesets?includes_parents=true&per_page=100'
-)
+$rulesetsResponse = Invoke-GitHubGet -Path 'rulesets?includes_parents=true&per_page=100'
+$rulesets = @($rulesetsResponse)
 
 $dependencyGraph = Invoke-GitHubGet -Path 'dependency-graph/sbom'
 if ([string]$dependencyGraph.sbom.spdxVersion -ne 'SPDX-2.3' -or

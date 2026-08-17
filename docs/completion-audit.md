@@ -94,7 +94,7 @@ API-governed Provider library surfaces, while package conformance excludes
 embedded template content projects. The current monorepo-wide gate covers 121
 solution projects, reports no vulnerable direct or transitive NuGet
 dependencies, validates every repository-local documentation link, and passes
-37 allocation budgets.
+46 allocation budgets.
 The final two-launch
 provider MediumRun records lower BlueTusk mean latency and managed allocation in
 all five paired workloads; parameterized scalar, warm checkout, and 1,000-row

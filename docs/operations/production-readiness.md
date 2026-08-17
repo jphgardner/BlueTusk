@@ -31,7 +31,7 @@ into one number.
 | Evidence | Question answered | Authority |
 | --- | --- | --- |
 | Correctness and compatibility | Does the implementation satisfy its declared contract? | Unit, integration, specification, fuzz, stress and package tests |
-| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 89 BenchmarkDotNet results, 37 allocation budgets, 18 latency budgets and locked multiplexing comparisons |
+| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 98 BenchmarkDotNet results, 46 allocation budgets, 19 latency budgets and locked multiplexing comparisons |
 | Website delivery | Is the documentation and evidence surface bounded and deployable? | Hashed production output, raw/Brotli bundle budgets, static metadata and the archived build report |
 | Production SLOs | Is one deployed application meeting its reliability objectives? | 60 runtime instruments, 14 SLOs, Prometheus rules and deployment telemetry |
 | Release acceptance | Is this exact immutable candidate safe to publish? | Manual workflows, endurance, GA evidence, rehearsals, pilots and named approvals |
@@ -110,12 +110,13 @@ Merely naming an environment in YAML is not protection: GitHub can create a
 referenced environment without reviewer rules, so both release workflows
 verify the live API state before accepting evidence or publishing.
 
-As of 2026-08-04 the live ruleset, both environments, all six tag policies and
-the repository security features satisfy their settings checks. The full
-remote contract remains fail closed until its declared environment secrets are
-provisioned. The repository also needs another eligible human reviewer: its
-only current collaborator is the owner, and prevent-self-review intentionally
-leaves owner-initiated deployments waiting for an independent approval.
+As of 2026-08-17 the active `main` ruleset, all three environments, all twelve
+RC/stable tag policies and the repository security features satisfy their
+structural settings checks. The full remote contract remains fail closed until
+its eight declared environment-secret bindings are provisioned. The repository
+also needs another eligible human reviewer: its only current collaborator is
+the owner, and prevent-self-review intentionally leaves owner-initiated
+deployments waiting for an independent approval.
 
 ## Reference performance gate
 
@@ -390,7 +391,7 @@ rollback/pinning, not replacing an already published archive.
 
 ## Current V1 boundary
 
-As of 2026-08-07, deterministic engineering work can be verified locally, but
+As of 2026-08-17, deterministic engineering work can be verified locally, but
 stable V1 remains blocked by external facts: PostgreSQL 19 GA is not yet the
 recorded milestone, the exact final candidate workflows have not run, the
 72-hour Streams, 24-hour Sync, and 24-hour ContinuousGraph endurance artifacts

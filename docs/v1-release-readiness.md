@@ -37,8 +37,8 @@ exact-candidate evidence below is complete.
 - A six-meter, 60-instrument telemetry contract; 14 reference production SLOs;
   a deployable OpenTelemetry Collector, Prometheus rules and Grafana dashboard;
   and metric lifecycle tests for every product family.
-- Complete checked-in BenchmarkDotNet coverage for 89 measured workloads across
-  21 fixtures, 37 allocation budgets, 18 reference-machine latency budgets and
+- Complete checked-in BenchmarkDotNet coverage for 98 measured workloads across
+  22 fixtures, 46 allocation budgets, 19 reference-machine latency budgets and
   a manual exact-candidate performance workflow.
 - A single fail-closed V1 verifier that distinguishes deterministic engineering
   readiness from PostgreSQL 19 GA, endurance, performance, pilot, recovery,
@@ -68,7 +68,7 @@ layout are in [V1 production readiness](operations/production-readiness.md).
 
 ## Verification snapshot
 
-The combined local verification record through 2026-08-07 produced:
+The combined local verification record through 2026-08-17 produced:
 
 | Gate | Result |
 | --- | --- |
@@ -82,7 +82,7 @@ The combined local verification record through 2026-08-07 produced:
 | Candidate SBOM/provenance smoke | 60 artifact hashes and 317 components/packages verified in both SBOM formats |
 | Angular website delivery | Initial raw/Brotli, largest lazy chunk and complete distribution are budgeted; hashed assets, metadata and no-source-map policy are verified after every production build |
 | Repository gates | Solution layout, documentation links, workflow YAML, PowerShell syntax, Action pins, supply chain and PostgreSQL 19 programme passed |
-| Live repository governance | Settings verified: 35 required checks, strict `main`, two protected environments, SPDX 2.3 dependency graph with 633 packages, alerts, automated fixes and private reporting; declared environment secrets remain to be provisioned |
+| Live repository governance | Active `main` ruleset with 35 required checks; three self-review-protected environments; twelve RC/stable tag policies; dependency graph, alerts, automated fixes and private reporting enabled. The candidate gate remains fail closed on eight missing secret bindings and the absence of an independent eligible reviewer. |
 
 This snapshot validates the tooling and current working tree. It is not
 immutable release evidence: the final candidate must be committed, clean, and
