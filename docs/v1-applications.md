@@ -95,6 +95,19 @@ use reduced replica counts while one worker is unavailable; production values
 retain the full availability topology. Secrets are pre-created and are never
 stored in Helm values or evidence artifacts.
 
+The container source contract pins the patched .NET 10.0.400 SDK build image,
+.NET 10.0.11 chiseled API/worker runtimes, Node.js 24.19.0 build image and
+unprivileged nginx 1.30.3 runtime by multi-platform OCI digest. Final containers
+run as non-root users with diagnostics/app-host reduction, and Kubernetes drops
+all capabilities, blocks privilege escalation, uses a read-only root filesystem
+and applies the runtime-default seccomp profile. The UI edge disables version
+tokens, emits CSP, HSTS, cross-origin, permissions and content-type controls,
+keeps the SPA entry point non-cacheable and gives only hashed assets an
+immutable one-year cache policy. `verify-applications.ps1` fails if these base
+images or hardening controls drift. The protected image workflow additionally
+produces SBOM/provenance attestations, scans every final image at high severity
+and records the nine exact deployable digests.
+
 Publication and deployment remain external operations. They require a
 reviewed immutable `main` SHA, protected `package-prerelease` approval,
 NuGet/npm/GHCR credentials, the declared Kubernetes Secrets, installed

@@ -124,6 +124,67 @@ foreach ($webManifest in $webManifests)
     }
 }
 
+$containerRoot = Join-Path $applicationsRoot 'containers'
+$expectedContainerBases = [ordered]@{
+    'Dockerfile.api' = @(
+        'FROM mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:e1fc6e423f543119c406d24e2e687d67c569f18f04a37a8b0005d80ad0dcee80 AS build',
+        'FROM mcr.microsoft.com/dotnet/aspnet:10.0.11-noble-chiseled@sha256:0839314d08bb65da369135389a5d8291f75ace587fbb0488f469eb92c62eef68'
+    )
+    'Dockerfile.worker' = @(
+        'FROM mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:e1fc6e423f543119c406d24e2e687d67c569f18f04a37a8b0005d80ad0dcee80 AS build',
+        'FROM mcr.microsoft.com/dotnet/runtime:10.0.11-noble-chiseled@sha256:faeea3edbaf9b13cc84dad62a5072cc96a888272087e3aa461268f612bdee702'
+    )
+    'Dockerfile.ui' = @(
+        'FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491f4857e25e35a36ba7995 AS build',
+        'FROM nginxinc/nginx-unprivileged:1.30.3-alpine3.23@sha256:b3f2436575bd5be7386518084d842dac414ab4962712afa31e99e0942a56e3b2'
+    )
+}
+$requiredContainerSnippets = [ordered]@{
+    'Dockerfile.api' = @('DOTNET_EnableDiagnostics=0', '/p:UseAppHost=false', 'USER 1654:1654')
+    'Dockerfile.worker' = @('DOTNET_EnableDiagnostics=0', '/p:UseAppHost=false', 'USER 1654:1654')
+    'Dockerfile.ui' = @('npm ci --ignore-scripts --no-audit --no-fund', 'USER 101:101')
+}
+foreach ($containerDefinition in $expectedContainerBases.GetEnumerator())
+{
+    $path = Join-Path $containerRoot $containerDefinition.Key
+    $content = Get-Content -LiteralPath $path -Raw
+    $actualBases = @(
+        Get-Content -LiteralPath $path |
+            Where-Object { $_ -match '^FROM\s' }
+    )
+    $expectedBases = @($containerDefinition.Value)
+    if ($actualBases.Count -ne $expectedBases.Count -or
+        @(Compare-Object -ReferenceObject $expectedBases -DifferenceObject $actualBases -SyncWindow 0).Count -ne 0)
+    {
+        throw "Container '$($containerDefinition.Key)' does not use the reviewed digest-pinned base sequence."
+    }
+
+    foreach ($snippet in @($requiredContainerSnippets[$containerDefinition.Key]))
+    {
+        if (-not $content.Contains($snippet, [StringComparison]::Ordinal))
+        {
+            throw "Container '$($containerDefinition.Key)' is missing hardening contract '$snippet'."
+        }
+    }
+}
+
+$nginxConfiguration = Get-Content -LiteralPath (Join-Path $containerRoot 'nginx.conf') -Raw
+foreach ($snippet in @(
+        'server_tokens off;',
+        'Content-Security-Policy',
+        'Strict-Transport-Security',
+        'X-Content-Type-Options',
+        'Permissions-Policy',
+        'Cross-Origin-Opener-Policy',
+        'Cache-Control "no-cache, no-store, must-revalidate"',
+        'Cache-Control "public, max-age=31536000, immutable"'))
+{
+    if (-not $nginxConfiguration.Contains($snippet, [StringComparison]::Ordinal))
+    {
+        throw "The UI edge configuration is missing '$snippet'."
+    }
+}
+
 if ($blueTuskReferences -lt 20)
 {
     throw "Expected broad BlueTusk package coverage; found only $blueTuskReferences references."
@@ -131,4 +192,5 @@ if ($blueTuskReferences -lt 20)
 
 Write-Output (
     "Verified 20 application projects, $blueTuskReferences BlueTusk package references, " +
-    "three browser clients, and the package-only $expectedVersion boundary.")
+    "three browser clients, three hardened digest-pinned container definitions, " +
+    "and the package-only $expectedVersion boundary.")

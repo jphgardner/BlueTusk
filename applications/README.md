@@ -20,3 +20,10 @@ The [RC release/support contract](docs/rc-release-and-support.md),
 [service-level objectives](docs/service-level-objectives.md), and application runbooks are
 checked in beside the source. Deterministic seed SQL is opt-in through
 `eng/seed-applications.ps1`; its default mode is a read-only PostgreSQL 19 Beta 3 preflight.
+
+Application containers use digest-pinned patched build/runtime images, non-root
+final stages and a source-verified browser security/cache policy. The Helm chart
+drops all Linux capabilities, prevents privilege escalation, makes root
+filesystems read-only and enables runtime-default seccomp. Published RC images
+are still gated on exact public RC packages, protected approval, high-severity
+scanning, SBOM/provenance attestations and immutable digest evidence.
