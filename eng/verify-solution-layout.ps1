@@ -189,6 +189,58 @@ $projectRoots = @(
     'tests',
     'tooling'
 )
+$templateContentRoot = Join-Path $repositoryRoot 'templates/BlueTusk.Extension/content'
+$embeddedTemplateProjects = @(
+    Get-ChildItem -LiteralPath $templateContentRoot `
+        -Filter '*.csproj' `
+        -Recurse `
+        -File
+)
+if ($embeddedTemplateProjects.Count -ne 0)
+{
+    $failures.Add(
+        'Embedded template projects must use the .csproj.template suffix so ' +
+        'repository-wide dependency discovery does not restore unpublished packages.')
+}
+
+$embeddedTemplateDescriptors = @(
+    Get-ChildItem -LiteralPath $templateContentRoot `
+        -Filter '*.csproj.template' `
+        -Recurse `
+        -File
+)
+if ($embeddedTemplateDescriptors.Count -ne 2)
+{
+    $failures.Add(
+        "Expected two embedded .csproj.template descriptors; found $($embeddedTemplateDescriptors.Count).")
+}
+
+$templateConfiguration = Get-Content -LiteralPath (
+    Join-Path $templateContentRoot '.template.config/template.json') -Raw |
+    ConvertFrom-Json
+$templateRenames = @($templateConfiguration.sources)[0].rename
+foreach ($descriptor in $embeddedTemplateDescriptors)
+{
+    $relativeDescriptor = ([IO.Path]::GetRelativePath(
+            $templateContentRoot,
+            $descriptor.FullName)).Replace(
+        [IO.Path]::DirectorySeparatorChar,
+        [char]'/')
+    $expectedProject = $relativeDescriptor.Substring(
+        0,
+        $relativeDescriptor.Length - '.template'.Length)
+    $rename = $templateRenames.PSObject.Properties[$relativeDescriptor]
+    if ($null -eq $rename -or
+        -not [string]::Equals(
+            [string]$rename.Value,
+            $expectedProject,
+            [StringComparison]::Ordinal))
+    {
+        $failures.Add(
+            "Template descriptor '$relativeDescriptor' is not renamed to '$expectedProject'.")
+    }
+}
+
 $diskProjects = @(
     foreach ($projectRoot in $projectRoots)
     {
@@ -278,4 +330,5 @@ if ($failures.Count -gt 0)
 
 Write-Output (
     "Verified $($registeredSet.Count) projects in $($folders.Count) " +
-    'ordered product-oriented solution folders; two embedded template projects are intentionally excluded.')
+    "ordered product-oriented solution folders; $($embeddedTemplateDescriptors.Count) " +
+    'dependency-isolated embedded template projects are intentionally excluded.')

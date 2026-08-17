@@ -11,6 +11,14 @@
   "shortName": "bluetusk-extension",
   "sourceName": "BlueTusk.Extensions.Sample",
   "preferNameDirectory": false,
+  "sources": [
+    {
+      "rename": {
+        "src/BlueTusk.Extensions.Sample/BlueTusk.Extensions.Sample.csproj.template": "src/BlueTusk.Extensions.Sample/BlueTusk.Extensions.Sample.csproj",
+        "tests/BlueTusk.Extensions.Sample.Tests/BlueTusk.Extensions.Sample.Tests.csproj.template": "tests/BlueTusk.Extensions.Sample.Tests/BlueTusk.Extensions.Sample.Tests.csproj"
+      }
+    }
+  ],
   "symbols": {
     "ExtensionName": {
       "type": "parameter",
