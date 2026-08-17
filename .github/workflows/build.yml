@@ -451,18 +451,27 @@ jobs:
           - name: pgvector
             service: pgvector18
             port: 5518
+            database: bluetusk_tests
             ado_project: tests/BlueTusk.Extensions.PgVector.Tests/BlueTusk.Extensions.PgVector.Tests.csproj
             ef_project: tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests.csproj
           - name: PostGIS
             service: postgis18
             port: 5519
+            database: bluetusk_tests
             ado_project: tests/BlueTusk.Extensions.PostGIS.Tests/BlueTusk.Extensions.PostGIS.Tests.csproj
             ef_project: tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests.csproj
           - name: TimescaleDB
             service: timescaledb17
             port: 5520
+            database: bluetusk_tests
             ado_project: tests/BlueTusk.Extensions.TimescaleDB.Tests/BlueTusk.Extensions.TimescaleDB.Tests.csproj
             ef_project: tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests.csproj
+          - name: pg_durable
+            service: pgdurable17
+            port: 5521
+            database: postgres
+            ado_project: tests/BlueTusk.Extensions.PgDurable.Tests/BlueTusk.Extensions.PgDurable.Tests.csproj
+            ef_project: ''
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -478,7 +487,7 @@ jobs:
 
       - name: Run ADO.NET extension acceptance
         env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=${{ matrix.database }};SSL Mode=Disable;Channel Binding=Disable
         run: >-
           dotnet test ${{ matrix.ado_project }}
           --configuration Release
@@ -487,8 +496,9 @@ jobs:
           --results-directory artifacts/test-results/extensions/${{ matrix.service }}/ado
 
       - name: Run EF Core extension acceptance
+        if: matrix.ef_project != ''
         env:
-          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=${{ matrix.database }};SSL Mode=Disable;Channel Binding=Disable
         run: >-
           dotnet test ${{ matrix.ef_project }}
           --configuration Release

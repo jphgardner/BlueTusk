@@ -15,7 +15,7 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
         <span class="eyebrow"><i class="live-dot"></i> OPTIONAL POSTGRESQL DEPTH</span>
         <h1>Extensions without <em>core bloat.</em></h1>
         <p>
-          Seven first-party families compose through a registry snapshot. Install only the
+          Eight first-party families compose through a registry snapshot. Install only the
           capabilities your application uses while preserving native ADO.NET and EF behavior.
         </p>
         <div class="hero-actions">
@@ -156,6 +156,7 @@ export class ExtensionsPage {
     'Key/value',
     'Hierarchy',
     'Search',
+    'Workflows',
     'Spatial',
     'Time series',
   ] as const;
@@ -198,6 +199,7 @@ export class ExtensionsPage {
       .replace('PostGIS', 'GIS')
       .replace('pgvector', 'VEC')
       .replace('pg_trgm', 'TRG')
+      .replace('pg_durable', 'DUR')
       .slice(0, 4)
       .toUpperCase();
   }
@@ -205,6 +207,7 @@ export class ExtensionsPage {
     .UseCitext()
     .UseVector()
     .UsePostGis()
+    .UsePgDurable()
     .Build();
 
 await using var command = dataSource.CreateCommand(

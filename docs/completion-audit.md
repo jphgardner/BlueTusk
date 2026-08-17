@@ -83,10 +83,10 @@ connection contract across all supported PostgreSQL versions:
 | 18 | 28 | 2,978 | 146 | 0 |
 | 19 Beta 2 | 28 | 2,978 | 146 | 0 |
 
-The provider audit produced a zero-warning Release build and 31 stable 1.0.0
-candidate packages. Its V1 candidate API budget locks 8,308 signatures across 28
+The provider audit produced a zero-warning Release build and 32 stable 1.0.0
+candidate packages. Its V1 candidate API budget locks 8,367 signatures across 29
 API-governed Provider library surfaces, while package conformance excludes
-embedded template content projects. The current monorepo-wide gate covers 121
+embedded template content projects. The current monorepo-wide gate covers 123
 solution projects, reports no vulnerable direct or transitive NuGet
 dependencies, validates every repository-local documentation link, and passes
 37 allocation budgets.

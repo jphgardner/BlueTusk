@@ -1,0 +1,60 @@
+#nullable enable
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceBuilderExtensions
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.<Clone>$() -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature!
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.BlueTuskPgDurableFeature() -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.Equals(BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature? other) -> bool
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.<Clone>$() -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics!
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.BlueTuskPgDurableMetrics(long TotalInstances, long RunningInstances, long CompletedInstances, long FailedInstances, long TotalExecutions, long TotalEvents) -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.CompletedInstances.get -> long
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.CompletedInstances.init -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.Deconstruct(out long TotalInstances, out long RunningInstances, out long CompletedInstances, out long FailedInstances, out long TotalExecutions, out long TotalEvents) -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.Equals(BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics? other) -> bool
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.FailedInstances.get -> long
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.FailedInstances.init -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.RunningInstances.get -> long
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.RunningInstances.init -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.TotalEvents.get -> long
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.TotalEvents.init -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.TotalExecutions.get -> long
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.TotalExecutions.init -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.TotalInstances.get -> long
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.TotalInstances.init -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurablePlugin
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurablePlugin.BlueTuskPgDurablePlugin() -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurablePlugin.Configure(BlueTusk.Extensions.IBlueTuskPluginContext! context) -> void
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus.Cancelled = 5 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus.Completed = 3 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus.Failed = 4 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus.Pending = 1 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus.Running = 2 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus.Unknown = 0 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableTransactionMode
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableTransactionMode.Caller = 0 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableTransactionMode
+BlueTusk.Extensions.PgDurable.BlueTuskPgDurableTransactionMode.New = 1 -> BlueTusk.Extensions.PgDurable.BlueTuskPgDurableTransactionMode
+const BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.ExtensionName = "pg_durable" -> string!
+const BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.MinimumSupportedVersion = "0.2.5" -> string!
+const BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.RegistryName = "bluetusk.extensions.pg_durable" -> string!
+const BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.Schema = "df" -> string!
+override BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.GetHashCode() -> int
+override BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.ToString() -> string!
+override BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.Equals(object? obj) -> bool
+override BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.GetHashCode() -> int
+override BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.ToString() -> string!
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceBuilderExtensions.UsePgDurable(this BlueTusk.Data.BlueTuskDataSourceBuilder! builder) -> BlueTusk.Data.BlueTuskDataSourceBuilder!
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.AwaitPgDurableAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! instanceId, int timeoutSeconds = 30, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.CancelPgDurableAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! instanceId, string! reason = "Cancelled by user", System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.GetPgDurableMetricsAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics!>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.GetPgDurableResultAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! instanceId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string?>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.GetPgDurableStatusAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! instanceId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Extensions.PgDurable.BlueTuskPgDurableStatus>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.GetPgDurableVersionAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.SignalPgDurableAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! instanceId, string! signalName, string! signalData = "{}", System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableDataSourceExtensions.StartPgDurableAsync(this BlueTusk.Data.BlueTuskDataSource! dataSource, string! workflow, string? label = null, string? database = null, BlueTusk.Extensions.PgDurable.BlueTuskPgDurableTransactionMode transactionMode = BlueTusk.Extensions.PgDurable.BlueTuskPgDurableTransactionMode.Caller, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<string!>
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.operator !=(BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature? left, BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature? right) -> bool
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature.operator ==(BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature? left, BlueTusk.Extensions.PgDurable.BlueTuskPgDurableFeature? right) -> bool
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.operator !=(BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics? left, BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics? right) -> bool
+static BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics.operator ==(BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics? left, BlueTusk.Extensions.PgDurable.BlueTuskPgDurableMetrics? right) -> bool

@@ -265,7 +265,7 @@
     "categoryLabel": "Extensions",
     "slug": "catalog",
     "source": "docs/extensions/README.md",
-    "summary": "Extension SDK plus seven first-party PostgreSQL extension families.",
+    "summary": "Extension SDK plus eight first-party PostgreSQL extension families.",
     "keywords": ["postgis", "pgvector", "timescaledb", "citext"],
     "order": 10
   },

@@ -50,7 +50,8 @@ $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5418;Username=postgr
 dotnet test tests/BlueTusk.IntegrationTests
 ```
 
-The extension packages have an opt-in PostgreSQL 18 service and live gates:
+The extension profile has opt-in dedicated services and live gates. pgvector
+and the bundled-contrib packages use PostgreSQL 18:
 
 ```powershell
 docker compose -f eng/compose/postgres.yml --profile extension-tests up -d pgvector18
@@ -78,6 +79,15 @@ docker compose -f eng/compose/postgres.yml --profile extension-tests up -d times
 $env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5520;Username=postgres;Password=postgres;Database=bluetusk_tests"
 dotnet test tests/BlueTusk.Extensions.TimescaleDB.Tests
 dotnet test tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests
+```
+
+pg_durable uses Microsoft's official PostgreSQL 17 image and runs in the
+extension's required `postgres` database:
+
+```powershell
+docker compose -f eng/compose/postgres.yml --profile extension-tests up -d pgdurable17
+$env:BLUETUSK_TEST_CONNECTION_STRING = "Host=localhost;Port=5521;Username=postgres;Password=postgres;Database=postgres"
+dotnet test tests/BlueTusk.Extensions.PgDurable.Tests
 ```
 
 ## Architecture
@@ -179,7 +189,9 @@ The release-prepared `1.0.0` implementation provides:
 - a packaged `bluetusk scaffold` database-first tool with schema/table filters,
   PostgreSQL-specific metadata retention, and secure-by-default connection handling.
 - an immutable data-source feature registry plus independently packaged,
-  live-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF, `citext` ADO.NET/EF, `hstore`, `ltree`, `pg_trgm`, and pgvector ADO.NET/EF integrations.
+  live-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF,
+  pg_durable, `citext` ADO.NET/EF, `hstore`, `ltree`, `pg_trgm`, and pgvector
+  ADO.NET/EF integrations.
 - a packaged extension-authoring template and framework-neutral live compatibility harness.
 - catalogue-probed PostgreSQL 19 SQL/PGQ capability detection, live raw-SQL property-graph coverage, typed information-schema discovery, text/JSON schema tooling, capability-guarded EF migrations/reverse engineering, and typed composable EF linear-path queries.
 - a benchmark-backed decision to retain the genuine sync/async ArrayPool/Span/Memory

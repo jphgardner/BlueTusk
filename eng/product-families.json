@@ -34,6 +34,7 @@
         "extensions/BlueTusk.Extensions.Citext/BlueTusk.Extensions.Citext.csproj",
         "extensions/BlueTusk.Extensions.HStore/BlueTusk.Extensions.HStore.csproj",
         "extensions/BlueTusk.Extensions.LTree/BlueTusk.Extensions.LTree.csproj",
+        "extensions/BlueTusk.Extensions.PgDurable/BlueTusk.Extensions.PgDurable.csproj",
         "extensions/BlueTusk.Extensions.PgTrgm/BlueTusk.Extensions.PgTrgm.csproj",
         "extensions/BlueTusk.Extensions.PgVector.EntityFrameworkCore/BlueTusk.Extensions.PgVector.EntityFrameworkCore.csproj",
         "extensions/BlueTusk.Extensions.PgVector/BlueTusk.Extensions.PgVector.csproj",

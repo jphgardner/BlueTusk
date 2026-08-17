@@ -99,7 +99,7 @@ health-check frequency and timeout.
 - Use [EF Core](../ef-core/README.md) for LINQ, migrations, scaffolding and
   model-driven PostgreSQL features.
 - Use [extensions](../extensions/README.md) for PostGIS, pgvector,
-  TimescaleDB, citext, hstore, ltree or pg_trgm.
+  TimescaleDB, pg_durable, citext, hstore, ltree or pg_trgm.
 - Use [Streams](../streams/README.md) when the source of truth is committed WAL
   and the consumer needs acknowledgement and checkpoints.
 

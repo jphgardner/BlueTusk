@@ -116,7 +116,7 @@ and capability-guarded PostgreSQL 19 SQL/PGQ. The exact official-suite boundary
 and upstream skip ownership are documented in the
 [EF specification-test record](ef-core/specification-tests.md).
 
-Optional PostGIS, pgvector, citext, hstore, ltree, pg_trgm, and TimescaleDB
+Optional PostGIS, pgvector, pg_durable, citext, hstore, ltree, pg_trgm, and TimescaleDB
 packages remain independently installable and do not add their types or SQL to
 the core packages. Their live extension-image gates, the immutable feature
 registry, extension template, and compatibility harness close the extension
@@ -124,10 +124,10 @@ architecture gate. A live extension test first checks
 `pg_available_extensions`: a plain PostgreSQL image reports an intentional
 dynamic skip when the optional extension is absent, while each dedicated
 extension image requires the same test to pass. The dedicated-image gate reports
-23 pgvector, 10 PostGIS, and 9 TimescaleDB passes with no skips or failures.
-The checked-in workflow enforces these as three independent CI matrix entries,
-each running the extension's ADO.NET and EF Core projects against its dedicated
-image and retaining container logs on failure.
+23 pgvector, 10 PostGIS, 9 TimescaleDB, and 4 pg_durable passes with no skips or
+failures. The checked-in workflow enforces these as four independent CI matrix
+entries, each running the extension's applicable ADO.NET and EF Core projects
+against its dedicated image and retaining container logs on failure.
 Cloud identity adapters have deterministic SDK contract tests; their
 real-account acceptance tests remain opt-in because CI does not hold customer
 cloud credentials.

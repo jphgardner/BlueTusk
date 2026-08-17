@@ -192,7 +192,7 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     value: '60 hashes',
     label: 'Candidate provenance smoke',
     detail:
-      '31 Provider packages and 29 symbol packages matched commit-bound hashes, CycloneDX and SPDX records.',
+      '32 Provider packages and 30 symbol packages matched commit-bound hashes, CycloneDX and SPDX records.',
     asOf: '2026-08-04',
     sourcePath: 'docs/release-process.md',
   },
@@ -376,6 +376,15 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     sourcePath: 'docs/extensions/README.md',
   },
   {
+    surface: 'ADO.NET',
+    feature: 'pg_durable',
+    workload: 'Durable workflows',
+    postgres: '17 / 0.2.5 gate',
+    state: 'preview',
+    notes: 'Parameterized workflow lifecycle, signals, cancellation, and metrics.',
+    sourcePath: 'docs/extensions/README.md',
+  },
+  {
     surface: 'ADO.NET + EF',
     feature: 'PostGIS',
     workload: 'Spatial',
@@ -426,7 +435,7 @@ export const SITE_SEARCH: readonly SearchRecord[] = [
   },
   {
     title: 'Extensions',
-    description: 'PostGIS, pgvector, TimescaleDB, citext, hstore, ltree, and pg_trgm.',
+    description: 'PostGIS, pgvector, TimescaleDB, pg_durable, citext, hstore, ltree, and pg_trgm.',
     route: '/extensions',
     group: 'Products',
     keywords: 'spatial vector timeseries types',

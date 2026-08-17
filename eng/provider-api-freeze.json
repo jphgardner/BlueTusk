@@ -20,6 +20,10 @@
       "sha256": "727a8de82e68a75989fc02ae627c8a377fa4a2c2e2e07e15ac0b56bcb716d29d"
     },
     {
+      "path": "extensions/BlueTusk.Extensions.PgDurable/PublicAPI.Shipped.txt",
+      "sha256": "2b56b975efcf9564b0918b0876c84ecef5e3d213358e991e3ca5e235d42045b8"
+    },
+    {
       "path": "extensions/BlueTusk.Extensions.PgTrgm/PublicAPI.Shipped.txt",
       "sha256": "07bc40f53a9cf569dfe1a8fea04d86597bbb93ac78c0478159f8d1e331008db8"
     },

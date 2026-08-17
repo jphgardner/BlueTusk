@@ -76,10 +76,10 @@ The combined local verification record through 2026-08-07 produced:
 | Formatting | No changes required |
 | PostgreSQL 19 full solution matrix | 3,289 passed, 158 environment-specific skips, zero failures across 45 test assemblies |
 | ADO.NET live compatibility suite | 11 passed, including function `IN`/`OUT`/`INOUT`, procedure `CALL`, Dapper, schema and DI health checks |
-| Public API budget | 12,991 signatures across six product families |
+| Public API budget | 13,050 signatures across six product families |
 | Dependency vulnerability audit | No advisory matched in any solution project |
-| Provider candidate packaging | 31 NuGet packages and 29 symbol packages verified |
-| Candidate SBOM/provenance smoke | 60 artifact hashes and 317 components/packages verified in both SBOM formats |
+| Provider candidate packaging | 32 NuGet packages and 30 symbol packages verified |
+| Candidate SBOM/provenance smoke | 62 artifact hashes with CycloneDX, SPDX and provenance verification |
 | Angular website delivery | Initial raw/Brotli, largest lazy chunk and complete distribution are budgeted; hashed assets, metadata and no-source-map policy are verified after every production build |
 | Repository gates | Solution layout, documentation links, workflow YAML, PowerShell syntax, Action pins, supply chain and PostgreSQL 19 programme passed |
 | Live repository governance | Settings verified: 35 required checks, strict `main`, two protected environments, SPDX 2.3 dependency graph with 633 packages, alerts, automated fixes and private reporting; declared environment secrets remain to be provisioned |

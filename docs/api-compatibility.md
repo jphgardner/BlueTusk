@@ -12,10 +12,10 @@ names inside the provider.
 
 ## Baseline scope
 
-The 2026-08-07 V1 candidate budget records 8,308 public and protected
-signatures across 28 Provider-family API-governed libraries, including nullable
+The V1 candidate budget records 8,367 public and protected signatures across
+29 Provider-family API-governed libraries, including nullable
 annotations and compiler-generated record members. Across all six product
-families, the exact machine-enforced budget is 12,991 signatures.
+families, the exact machine-enforced budget is 13,050 signatures.
 
 | Surface | Projects | Shipped signatures | Contract role |
 | --- | ---: | ---: | --- |
@@ -23,7 +23,7 @@ families, the exact machine-enforced budget is 12,991 signatures.
 | Replication and pgoutput | 2 | 847 | Physical/logical replication, decoding, slots, and feedback |
 | EF Core and design tooling | 2 | 3,890 | Runtime provider, PostgreSQL features, migrations, and scaffolding |
 | Extension SDK and testing | 2 | 62 | Immutable plug-in and compatibility seams |
-| Optional extension packages and EF adapters | 11 | 457 | Citext, hstore, ltree, pg_trgm, pgvector, PostGIS, and TimescaleDB |
+| Optional extension packages and EF adapters | 12 | 516 | Citext, hstore, ltree, pg_durable, pg_trgm, pgvector, PostGIS, and TimescaleDB |
 | Cloud identity adapters | 3 | 12 | AWS, Azure, and Google Cloud token contracts |
 
 The source generator is governed by Roslyn analyzer-release tracking. Executable
