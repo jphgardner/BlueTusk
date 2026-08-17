@@ -1,5 +1,3 @@
-using System.Runtime.CompilerServices;
-
 namespace BlueTusk.Replication;
 
 /// <summary>A message received from a PostgreSQL WAL sender.</summary>
@@ -12,19 +10,40 @@ public sealed record BlueTuskXLogData(
     DateTimeOffset ServerClock,
     ReadOnlyMemory<byte> Data) : BlueTuskReplicationMessage
 {
-    private static readonly ConditionalWeakTable<BlueTuskXLogData, object> OwnedData = new();
-    private static readonly object OwnedDataMarker = new();
+    private bool _ownsData;
 
     /// <summary>The position immediately after this message's data.</summary>
     public BlueTuskLogSequenceNumber WalEnd =>
         WalStart + checked((ulong)Data.Length);
 
-    internal bool OwnsData => OwnedData.TryGetValue(this, out _);
+    internal bool OwnsData => _ownsData;
 
     internal BlueTuskXLogData MarkDataOwned()
     {
-        _ = OwnedData.GetValue(this, static _ => OwnedDataMarker);
+        _ownsData = true;
         return this;
+    }
+
+    public bool Equals(BlueTuskXLogData? other) =>
+        ReferenceEquals(this, other) ||
+        other is not null &&
+        EqualityContract == other.EqualityContract &&
+        WalStart.Equals(other.WalStart) &&
+        ServerWalEnd.Equals(other.ServerWalEnd) &&
+        ServerClock.Equals(other.ServerClock) &&
+        Data.Equals(other.Data);
+
+    public override int GetHashCode()
+    {
+        var hashCode = EqualityComparer<Type>.Default.GetHashCode(EqualityContract);
+        hashCode = (hashCode * -1521134295) +
+            EqualityComparer<BlueTuskLogSequenceNumber>.Default.GetHashCode(WalStart);
+        hashCode = (hashCode * -1521134295) +
+            EqualityComparer<BlueTuskLogSequenceNumber>.Default.GetHashCode(ServerWalEnd);
+        hashCode = (hashCode * -1521134295) +
+            EqualityComparer<DateTimeOffset>.Default.GetHashCode(ServerClock);
+        return (hashCode * -1521134295) +
+            EqualityComparer<ReadOnlyMemory<byte>>.Default.GetHashCode(Data);
     }
 }
 
