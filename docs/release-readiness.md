@@ -148,7 +148,7 @@ role-incompatible endpoints, WAL replay visibility, and standby write
 rejection. This is distinct from the logical-replication decoder and endurance
 gates.
 
-For change detection beyond the pinned PostgreSQL 19 Beta 2 image, a
+For change detection beyond the pinned PostgreSQL 19 Beta 3 image, a
 scheduled/manual job verifies the checksum of the official nightly PostgreSQL
 19 branch snapshot, compiles it in a repository-owned multi-stage image, and
 runs the full solution against it. The 2026-08-02 scheduled snapshot run
@@ -267,7 +267,7 @@ in all tracked Markdown files. The Angular documentation build automatically
 discovers every repository guide, rewrites internal links to site routes,
 generates full-text search records and fails when generated content drifts.
 The support matrix identifies .NET 10, EF Core 10.0.11,
-PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 candidate evidence, including the
+PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 3 candidate evidence, including the
 remaining beta-syntax risk.
 
 ## Automated gates

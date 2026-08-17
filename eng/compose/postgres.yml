@@ -94,7 +94,7 @@ services:
 
   postgres19:
     <<: *postgres-common
-    image: postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e
+    image: postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc
     profiles: ["preview"]
     ports: ["5419:5432"]
 

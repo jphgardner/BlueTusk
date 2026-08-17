@@ -19,4 +19,4 @@ database and OIDC credentials.
 The [RC release/support contract](docs/rc-release-and-support.md),
 [service-level objectives](docs/service-level-objectives.md), and application runbooks are
 checked in beside the source. Deterministic seed SQL is opt-in through
-`eng/seed-applications.ps1`; its default mode is a read-only PostgreSQL 19 Beta 2 preflight.
+`eng/seed-applications.ps1`; its default mode is a read-only PostgreSQL 19 Beta 3 preflight.

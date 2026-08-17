@@ -299,7 +299,7 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     value: 'GA pending',
     label: 'PostgreSQL 19 SQL/PGQ',
     detail:
-      'Beta 2 is digest-pinned and capability-guarded; stable support waits for the GA programme.',
+      'Beta 3 is digest-pinned and capability-guarded; stable support waits for the GA programme.',
     asOf: '2026-08-04',
     sourcePath: 'docs/postgresql19-programme.md',
   },

@@ -41,9 +41,9 @@ foreach ($target in $targets.GetEnumerator())
     }
     $serverVersion = (& psql --dbname $connection --tuples-only --no-align `
         --set ON_ERROR_STOP=1 --command 'SHOW server_version').Trim()
-    if ($LASTEXITCODE -ne 0 -or $serverVersion -notmatch '^19beta2(?:\s|$)')
+    if ($LASTEXITCODE -ne 0 -or $serverVersion -notmatch '^19beta3(?:\s|$)')
     {
-        throw "$($target.Key) is not connected to the PostgreSQL 19 Beta 2 RC environment."
+        throw "$($target.Key) is not connected to the PostgreSQL 19 Beta 3 RC environment."
     }
 }
 

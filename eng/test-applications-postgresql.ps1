@@ -7,10 +7,17 @@ $ErrorActionPreference = 'Stop'
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
 $programme = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'postgresql19-programme.json') -Raw |
     ConvertFrom-Json
-$image = [string]$programme.milestones[0].image
-if ($image -notmatch '^postgres:19beta2-alpine@sha256:[a-f0-9]{64}$')
+$current = @($programme.milestones | Where-Object {
+        $_.version -eq $programme.currentOfficialMilestone
+    })
+if ($current.Count -ne 1)
 {
-    throw 'The application integration harness requires the programme-pinned PostgreSQL 19 Beta 2 image.'
+    throw "Expected one current PostgreSQL 19 milestone '$($programme.currentOfficialMilestone)'."
+}
+$image = [string]$current[0].image
+if ($image -notmatch '^postgres:19beta3-alpine@sha256:[a-f0-9]{64}$')
+{
+    throw 'The application integration harness requires the programme-pinned PostgreSQL 19 Beta 3 image.'
 }
 $containerName = "bluetusk-applications-test-$PID"
 $password = "bluetusk-test-$PID"

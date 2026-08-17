@@ -3,7 +3,7 @@ kind: Cluster
 metadata: { name: keycloak-postgresql, namespace: keycloak }
 spec:
   instances: 1
-  imageName: ghcr.io/cloudnative-pg/postgresql:19beta2-standard-trixie@sha256:28788af08b1c15b7b521c23ac970c8742e043ae57838fbc05373b6701f86c593
+  imageName: ghcr.io/cloudnative-pg/postgresql:19beta3-standard-trixie@sha256:066b9e2245e5c354a57b53d71a4517bfe203aabbe7286778981b98e177ee79c3
   enableSuperuserAccess: false
   bootstrap:
     initdb:

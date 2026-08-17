@@ -603,6 +603,8 @@ The detailed contracts and release gates are maintained in the [real-time platfo
   - [x] Populate and expose real server capabilities; remove unused capability-only claims
   - [x] Executable PostgreSQL 19 CI/integration job, beyond the compose profile
   - [x] Live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` and `GRAPH_TABLE` raw-SQL tests
+  - [x] Repeat the full solution and application integration suites against the
+    digest-pinned PostgreSQL 19 Beta 3 milestone
   - [x] Parameters, metadata, preparation, batches, cancellation, pooling, and mixed relational/graph coverage
   - [x] PostgreSQL 15–18 regression gate remains green
 - [x] Phase B: property-graph metadata and schema

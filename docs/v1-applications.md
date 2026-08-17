@@ -23,14 +23,14 @@ health endpoints, and OpenTelemetry.
 
 ## Local RC verification
 
-The 2026-08-07 working-tree verification restored the application solution
+The 2026-08-17 working-tree verification restored the application solution
 from locally packed exact `1.0.0-rc.1` artifacts and produced:
 
 | Gate | Result |
 | --- | --- |
 | Package-only architecture | 20 projects; 44 exact BlueTusk package references; no BlueTusk source project references |
 | Release build | Zero warnings and zero errors |
-| Application tests | 15 passed, including a disposable digest-pinned PostgreSQL 19 Beta 2 migration/integration test |
+| Application tests | 15 passed, including a disposable digest-pinned PostgreSQL 19 Beta 3 migration/integration test |
 | Browser journeys | Three passed in Chromium through Playwright |
 | Order UI | 203.83 kB JavaScript; 64.44 kB gzip |
 | Topology UI | 127.92 kB JavaScript; 38.58 kB estimated transfer |
@@ -99,7 +99,7 @@ Publication and deployment remain external operations. They require a
 reviewed immutable `main` SHA, protected `package-prerelease` approval,
 NuGet/npm/GHCR credentials, the declared Kubernetes Secrets, installed
 operators, registry hash/provenance verification, and digest-pinned rollout
-evidence. PostgreSQL 19 Beta 2 is staging-only and carries no production claim.
+evidence. PostgreSQL 19 Beta 3 is staging-only and carries no production claim.
 
 RC observations do not count as either formal V1 pilot. After PostgreSQL 19
 GA and sequential stable publication, Orders is intended as pilot A and Fraud

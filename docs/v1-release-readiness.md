@@ -89,7 +89,7 @@ immutable release evidence: the final candidate must be committed, clean, and
 rerun by the required workflows at that exact commit.
 
 The separately verified [V1 application suite](v1-applications.md) adds three
-package-only applications, PostgreSQL 19 Beta 2 migration/integration coverage,
+package-only applications, PostgreSQL 19 Beta 3 migration/integration coverage,
 three browser journeys, exact RC packaging contracts, image evidence, Helm
 deployments, and platform preflight tooling. It is RC staging evidence only:
 publication/deployment still require protected credentials and approvals, and

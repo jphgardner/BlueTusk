@@ -93,7 +93,7 @@ public sealed class PipelineConformanceTests
 
     private static byte[] StartupResponse() => Combine(
         Frame('R', Int32(0)),
-        Frame('S', CStrings("server_version", "19beta2")),
+        Frame('S', CStrings("server_version", "19beta3")),
         Frame('K', Combine(Int32(123), Int32(456))),
         Frame('Z', [(byte)'I']));
 

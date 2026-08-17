@@ -1,15 +1,22 @@
 # PostgreSQL 19 compatibility programme
 
-PostgreSQL 19 is currently at Beta 2. BlueTusk treats it as pre-GA evidence,
+PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence,
 not a production dependency. The official project warns that beta features and
 behaviour may still change and does not recommend beta releases for production.
 General availability is currently planned for September 2026.
 
 `eng/postgresql19-programme.json` is the machine-readable cadence. The checked
-Beta 2 container is pinned by OCI digest, the scheduled official-branch
+Beta 3 container is pinned by OCI digest, the scheduled official-branch
 snapshot detects catalogue and grammar drift, and
 `verify-postgresql19-programme.ps1 -VerifyOfficialCurrent` fails when the
 official documentation advances beyond the recorded milestone.
+
+BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official
+documentation moved on 2026-08-13. The full serial solution suite and the
+application migration/integration suite passed against
+`postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc`
+with zero failures. This is milestone-drift evidence only; it is neither the
+immutable GA matrix nor production approval.
 
 For every later beta and every release candidate:
 

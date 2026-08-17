@@ -11,7 +11,7 @@ sessions enable `SupportsSqlPgq` only after probing the documented
 `information_schema.property_graphs` view; a major-version check alone is not
 used as evidence.
 
-The live PostgreSQL 19 Beta 2 acceptance tests cover:
+The live PostgreSQL 19 Beta 3 acceptance tests cover:
 
 - `CREATE PROPERTY GRAPH`, `CREATE TEMP PROPERTY GRAPH`, `ALTER PROPERTY GRAPH`,
   and `DROP PROPERTY GRAPH`;

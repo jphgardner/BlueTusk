@@ -1,7 +1,7 @@
 # BlueTusk applications 1.0.0-rc.1
 
 The three applications exercise all six BlueTusk product families from exact package versions.
-This release is staging-only because PostgreSQL 19 is Beta 2. It is not production evidence,
+This release is staging-only because PostgreSQL 19 is Beta 3. It is not production evidence,
 does not count as a formal V1 pilot, and cannot substitute for the seven stable-candidate
 workflows.
 
