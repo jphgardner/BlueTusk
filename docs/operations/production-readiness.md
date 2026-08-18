@@ -46,22 +46,24 @@ owners, environments and failure actions.
 `verify-v1-production-readiness.ps1 -Mode Engineering` executes these gates:
 
 1. solution ownership and dependency layout;
-2. documentation links and generated-source contract;
-3. exact public-API budgets for all six product families;
-4. the synchronized nine-target fuzzing contract, encoded corpus coverage and
+2. the package-only Clean Architecture application suite, backend/UI container
+   runtime closure and fail-closed live deployment health contract;
+3. documentation links and generated-source contract;
+4. exact public-API budgets for all six product families;
+5. the synchronized nine-target fuzzing contract, encoded corpus coverage and
    bounded execution policy;
-5. the Angular website production contract, delivery budgets, metadata and
+6. the Angular website production contract, delivery budgets, metadata and
    automatic emitted-build verification;
-6. pinned workflow actions and supply-chain source controls;
-7. the declared protected-branch, required-check and deployment-environment
+7. pinned workflow actions and supply-chain source controls;
+8. the declared protected-branch, required-check and deployment-environment
    governance contract;
-8. the current digest-pinned PostgreSQL 19 programme record;
-9. complete, non-empty benchmark coverage for every `[Benchmark]` method;
-10. allocation, reference latency and multiplexing performance budgets;
-11. the six-meter, 60-instrument telemetry contract;
-12. all 14 reference SLOs, alerts, dashboard panels and Collector safety
+9. the current digest-pinned PostgreSQL 19 programme record;
+10. complete, non-empty benchmark coverage for every `[Benchmark]` method;
+11. allocation, reference latency and multiplexing performance budgets;
+12. the six-meter, 60-instrument telemetry contract;
+13. all 14 reference SLOs, alerts, dashboard panels and Collector safety
    controls; and
-13. fail-closed publication policy.
+14. fail-closed publication policy.
 
 The normal build still compiles, tests and packages the full solution. This
 gate validates the production contracts around those outputs.
@@ -331,6 +333,24 @@ The cross-run operational matrix and protected evidence layout are documented
 in [endurance disturbance evidence](endurance-disturbance-evidence.md).
 
 ## Operational acceptance
+
+### Pre-pilot platform acceptance
+
+No application observation counts toward a pilot while the deployment control
+plane is only reporting cached desired state. Run
+`./eng/verify-application-platform-health.ps1 -RequireApplications` against the
+selected cluster immediately after the digest-pinned rollout and retain its
+output. The verifier independently compares every non-terminal API pod with the
+Ready kubelet that must be running it, rejects node pressure, rejects any
+non-healthy Longhorn volume or CloudNativePG cluster, and requires the API,
+worker and UI deployments for all three reference applications to be fully
+observed, ready and available with no unready container or failed migration job.
+The protected image workflow must also have executed each backend image and
+proved the exact .NET and ASP.NET Core shared-framework closure. A green rollout
+status without both checks is not production evidence.
+
+The complete check matrix, safe failure interpretation and recovery sequence are
+in [application platform health and rollout acceptance](application-platform-health.md).
 
 ### Application pilots
 

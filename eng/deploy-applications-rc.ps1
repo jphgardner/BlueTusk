@@ -31,6 +31,7 @@ if ($readyNodes -lt 2)
 {
     throw "RC staging requires at least two Ready nodes; found $readyNodes."
 }
+& (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') -MinimumReadyNodes 2
 
 foreach ($crd in @('clusters.postgresql.cnpg.io', 'keycloaks.k8s.keycloak.org'))
 {
@@ -146,6 +147,13 @@ foreach ($application in $applications)
             if ($LASTEXITCODE -ne 0) { throw "Rollout failed for '$($application.Key)/$component'." }
         }
     }
+}
+
+if ($Apply)
+{
+    & (Join-Path $PSScriptRoot 'verify-application-platform-health.ps1') `
+        -MinimumReadyNodes 2 `
+        -RequireApplications
 }
 
 $mode = if ($Apply) { 'deployed' } else { 'validated without changing cluster state' }

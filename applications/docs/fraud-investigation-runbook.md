@@ -17,3 +17,10 @@ Restore to a new CloudNativePG cluster, run migrations, validate `fraud_graph`, 
 transfer, case, and decision counts, then rebuild graph state. Roll back API, worker, and UI by
 their recorded digests; keep the immutable evidence audit and restored database available for
 incident review.
+
+Before accepting a rollout, run
+`./eng/verify-application-platform-health.ps1 -RequireApplications`. Treat any
+API/kubelet mismatch, node pressure, degraded volume, unhealthy database,
+unready worker, or failed migration as a deployment failure even when cached
+Kubernetes status still says `Running`. Retain the command output with the image
+digest manifest and rollout record.

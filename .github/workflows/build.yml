@@ -40,7 +40,11 @@ jobs:
         shell: pwsh
         run: |
           dotnet restore applications/BlueTusk.Applications.slnx `
-            -p:RestoreAdditionalProjectSources=$PWD/artifacts/prerelease/feed
+            --configfile eng/nuget/applications-candidate.config `
+            --packages artifacts/application-nuget-cache `
+            --force-evaluate `
+            --no-http-cache
+          ./eng/verify-application-candidate-restore.ps1
           dotnet format applications/BlueTusk.Applications.slnx --no-restore --verify-no-changes
           dotnet build applications/BlueTusk.Applications.slnx -c Release --no-restore
           dotnet test applications/BlueTusk.Applications.slnx -c Release --no-build --no-restore

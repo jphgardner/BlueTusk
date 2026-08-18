@@ -108,6 +108,36 @@ jobs:
             WEB_DIRECTORY=${{ matrix.web }}
             WEB_OUTPUT=${{ matrix.output }}
 
+      - name: Verify runtime framework closure
+        if: matrix.component != 'ui'
+        shell: bash
+        run: |
+          runtimes="$(docker run --rm --entrypoint dotnet \
+            '${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}' \
+            --list-runtimes)"
+          printf '%s\n' "$runtimes"
+          grep -Fq 'Microsoft.NETCore.App 10.0.11 ' <<<"$runtimes"
+          grep -Fq 'Microsoft.AspNetCore.App 10.0.11 ' <<<"$runtimes"
+
+      - name: Verify worker outage startup
+        if: matrix.component == 'worker'
+        shell: bash
+        run: |
+          image='${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}'
+          container="$(docker run --detach --network none --read-only \
+            --tmpfs /tmp:rw,noexec,nosuid,size=64m \
+            --env 'ConnectionStrings__Primary=Host=127.0.0.1;Port=1;Username=smoke;Password=smoke;Database=smoke;Timeout=1;Command Timeout=1;SSL Mode=Disable;Channel Binding=Disable' \
+            "$image")"
+          cleanup() { docker rm --force "$container" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          sleep 20
+          state="$(docker inspect --format '{{.State.Running}} {{.State.ExitCode}}' "$container")"
+          if [[ "$state" != 'true 0' ]]; then
+            docker logs "$container"
+            echo "Worker did not remain alive during an isolated database outage: $state" >&2
+            exit 1
+          fi
+
       - name: Scan immutable image
         uses: anchore/scan-action@e1165082ffb1fe366ebaf02d8526e7c4989ea9d2 # v7
         with:

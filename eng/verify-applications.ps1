@@ -132,7 +132,7 @@ $expectedContainerBases = [ordered]@{
     )
     'Dockerfile.worker' = @(
         'FROM mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:e1fc6e423f543119c406d24e2e687d67c569f18f04a37a8b0005d80ad0dcee80 AS build',
-        'FROM mcr.microsoft.com/dotnet/runtime:10.0.11-noble-chiseled@sha256:faeea3edbaf9b13cc84dad62a5072cc96a888272087e3aa461268f612bdee702'
+        'FROM mcr.microsoft.com/dotnet/aspnet:10.0.11-noble-chiseled@sha256:0839314d08bb65da369135389a5d8291f75ace587fbb0488f469eb92c62eef68'
     )
     'Dockerfile.ui' = @(
         'FROM node:24.19.0-alpine3.23@sha256:244cc2b53f46f9e876304391d17682b0ddae9ac33491f4857e25e35a36ba7995 AS build',
@@ -168,6 +168,75 @@ foreach ($containerDefinition in $expectedContainerBases.GetEnumerator())
     }
 }
 
+$imageWorkflowPath = Join-Path $repositoryRoot '.github/workflows/applications-images.yml'
+$imageWorkflow = Get-Content -LiteralPath $imageWorkflowPath -Raw
+foreach ($snippet in @(
+        'name: Verify runtime framework closure',
+        "if: matrix.component != 'ui'",
+        'docker run --rm --entrypoint dotnet',
+        'Microsoft.NETCore.App 10.0.11',
+        'Microsoft.AspNetCore.App 10.0.11',
+        'name: Verify worker outage startup',
+        "if: matrix.component == 'worker'",
+        '--network none --read-only',
+        'docker inspect',
+        'sleep 20'))
+{
+    if (-not $imageWorkflow.Contains($snippet, [StringComparison]::Ordinal))
+    {
+        throw "Application image workflow is missing runtime-closure contract '$snippet'."
+    }
+}
+
+$candidateNuGetConfigurationPath = Join-Path (
+    Join-Path $repositoryRoot 'eng/nuget') 'applications-candidate.config'
+[xml]$candidateNuGetConfiguration = Get-Content -LiteralPath (
+    $candidateNuGetConfigurationPath) -Raw
+$candidateSource = @($candidateNuGetConfiguration.SelectNodes(
+        '/configuration/packageSources/add') | Where-Object {
+        [string]$_.key -eq 'BlueTuskCandidate'
+    })
+$candidateMapping = @($candidateNuGetConfiguration.SelectNodes(
+        '/configuration/packageSourceMapping/packageSource') | Where-Object {
+        [string]$_.key -eq 'BlueTuskCandidate'
+    })
+if ($candidateSource.Count -ne 1 -or
+    [string]$candidateSource[0].value -ne '../../artifacts/prerelease/feed' -or
+    $candidateMapping.Count -ne 1 -or
+    @($candidateMapping[0].package | Where-Object {
+        [string]$_.pattern -eq 'BlueTusk.*'
+    }).Count -ne 1)
+{
+    throw 'The application candidate restore must map BlueTusk.* only to the locally packed candidate feed.'
+}
+
+$buildWorkflow = Get-Content -LiteralPath (
+    Join-Path $repositoryRoot '.github/workflows/build.yml') -Raw
+foreach ($snippet in @(
+        '--configfile eng/nuget/applications-candidate.config',
+        '--packages artifacts/application-nuget-cache',
+        '--force-evaluate',
+        '--no-http-cache',
+        './eng/verify-application-candidate-restore.ps1'))
+{
+    if (-not $buildWorkflow.Contains($snippet, [StringComparison]::Ordinal))
+    {
+        throw "The application build workflow is missing deterministic candidate restore contract '$snippet'."
+    }
+}
+
+$deploymentScript = Get-Content -LiteralPath (
+    Join-Path $repositoryRoot 'eng/deploy-applications-rc.ps1') -Raw
+foreach ($snippet in @(
+        'verify-application-platform-health.ps1',
+        '-RequireApplications'))
+{
+    if (-not $deploymentScript.Contains($snippet, [StringComparison]::Ordinal))
+    {
+        throw "RC deployment script is missing live-platform health contract '$snippet'."
+    }
+}
+
 $nginxConfiguration = Get-Content -LiteralPath (Join-Path $containerRoot 'nginx.conf') -Raw
 foreach ($snippet in @(
         'server_tokens off;',
@@ -189,6 +258,8 @@ if ($blueTuskReferences -lt 20)
 {
     throw "Expected broad BlueTusk package coverage; found only $blueTuskReferences references."
 }
+
+& (Join-Path $PSScriptRoot 'test-application-platform-health-verifier.ps1')
 
 Write-Output (
     "Verified 20 application projects, $blueTuskReferences BlueTusk package references, " +

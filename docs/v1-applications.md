@@ -21,14 +21,24 @@ operator runbook. The shared BFF implements OIDC sessions, secure cookies,
 CSRF protection, CSP, rate limiting, tenant/role enforcement, RFC 9457 errors,
 health endpoints, and OpenTelemetry.
 
+Before RC publication, the application build uses
+`eng/nuget/applications-candidate.config` and an isolated package cache. NuGet
+source mapping permits `BlueTusk.*` only from the locally packed candidate feed;
+all third-party packages remain mapped to NuGet.org. This makes the local package
+boundary deterministic even if a developer machine contains an older package
+with the same prerelease version. The container-image workflow takes the other
+side of the boundary: it first requires every exact RC package to exist in the
+public registries and then restores only from those registries. No image can be
+published from an unpublished or locally substituted package set.
+
 ## Local RC verification
 
-The 2026-08-17 working-tree verification restored the application solution
+The 2026-08-18 working-tree verification restored the application solution
 from locally packed exact `1.0.0-rc.1` artifacts and produced:
 
 | Gate | Result |
 | --- | --- |
-| Package-only architecture | 20 projects; 44 exact BlueTusk package references; no BlueTusk source project references |
+| Package-only architecture | 20 projects; 44 exact BlueTusk package references; 28 unique packages content-hash verified from the source-mapped candidate feed; no BlueTusk source project references |
 | Release build | Zero warnings and zero errors |
 | Application tests | 15 passed, including a disposable digest-pinned PostgreSQL 19 Beta 3 migration/integration test |
 | Browser journeys | Three passed in Chromium through Playwright |
@@ -95,9 +105,23 @@ use reduced replica counts while one worker is unavailable; production values
 retain the full availability topology. Secrets are pre-created and are never
 stored in Helm values or evidence artifacts.
 
+The deployment command fails closed on live infrastructure. It cross-checks
+non-terminal API pods against each Ready kubelet (preventing stale control-plane
+status from masquerading as a running workload), rejects node pressure and
+unhealthy Longhorn or CloudNativePG state, and after an apply requires every API,
+worker and UI deployment to converge with no unready pod or failed migration job.
+See [application platform health](operations/application-platform-health.md) for
+the complete trust boundary, failure interpretation and recovery sequence.
+
 The container source contract pins the patched .NET 10.0.400 SDK build image,
-.NET 10.0.11 chiseled API/worker runtimes, Node.js 24.19.0 build image and
-unprivileged nginx 1.30.3 runtime by multi-platform OCI digest. Final containers
+.NET 10.0.11 ASP.NET Core chiseled API/worker runtimes, Node.js 24.19.0 build
+image and unprivileged nginx 1.30.3 runtime by multi-platform OCI digest. The
+image workflow executes every backend image and verifies that both the exact
+`Microsoft.NETCore.App` and `Microsoft.AspNetCore.App` 10.0.11 shared frameworks
+are present before scanning, attestation, or deployment evidence. Each worker
+must also remain alive for 20 seconds in a read-only, no-network container while
+its database is deliberately unreachable, proving startup and retry behavior
+before the digest is accepted. Final containers
 run as non-root users with diagnostics/app-host reduction, and Kubernetes drops
 all capabilities, blocks privilege escalation, uses a read-only root filesystem
 and applies the runtime-default seccomp profile. The UI edge disables version

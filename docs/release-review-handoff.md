@@ -31,7 +31,7 @@ ancestor-commit evidence does not pass.
 - [ ] `website-deployment-acceptance.json` records TLS, SPA fallback, cache and
       security-header policy, broken-link crawl, supported browsers and field
       Core Web Vitals for the exact archived website artifact.
-- [ ] All ten schema-2 operational approval files pass
+- [ ] All ten schema-4 operational approval files pass
       `verify-v1-approval-evidence.ps1`; generic narrative approvals, unknown
       fields, measurements outside budget and approvals older than the
       latest exact workflow are rejected. Independent review follows all
@@ -48,6 +48,14 @@ ancestor-commit evidence does not pass.
 - [ ] Package-content verification, exact byte lengths and SHA-256 values,
       CycloneDX, SPDX, provenance hashes and dependency versions are complete
       for all six families from the same build run.
+- [ ] The exact application-image workflow proves both .NET 10.0.11 shared
+      frameworks are present in every API and worker image before scanning and
+      attestation; all nine deployable image digests are bound to this commit.
+- [ ] `verify-application-platform-health.ps1 -RequireApplications` passes on
+      the selected deployment: API-assigned pods match the Ready kubelets,
+      nodes report no pressure, Longhorn and CloudNativePG are healthy, all nine
+      deployments are converged, every active container is ready, and no
+      migration job is failed.
 - [ ] The PostgreSQL 15–19 matrix and the required PostgreSQL 19 milestone
       evidence passed.
 - [ ] Streams has an exact 72-hour report when it is in the dependency chain.

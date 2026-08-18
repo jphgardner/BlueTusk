@@ -136,6 +136,7 @@ boundaries exist.
 Use these documents when the question is not “how do I call the API?”:
 
 - [Deployment and configuration](operations/deployment.md)
+- [Application platform health and rollout acceptance](operations/application-platform-health.md)
 - [Troubleshooting](operations/troubleshooting.md)
 - [Performance engineering](operations/performance.md)
 - [Production observability and SLOs](operations/observability.md)

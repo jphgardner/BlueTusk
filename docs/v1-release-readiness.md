@@ -95,28 +95,47 @@ deployments, and platform preflight tooling. It is RC staging evidence only:
 publication/deployment still require protected credentials and approvals, and
 the applications do not yet count as formal V1 pilots.
 
+The 2026-08-18 live RC audit rejected that deployment as evidence. Kubernetes
+API objects still described workloads as `Running`, but every Ready kubelet
+reported zero runtime pods and MicroK8s logged repeated node lookup plus
+Kine/Dqlite socket failures. All three worker images also exited immediately
+because their package-only hosts reference `Microsoft.AspNetCore.App` while the
+published worker base contained only `Microsoft.NETCore.App`. The source fix
+uses the digest-pinned ASP.NET Core chiseled runtime, the protected image
+workflow now executes every backend image and verifies both exact shared
+frameworks, and the RC deployment now cross-checks API state against kubelet,
+Longhorn, CloudNativePG, deployments, containers and migration jobs. Candidate
+`96b33c3` is retained for audit but superseded; none of its workflow results may
+be used as final V1 evidence. A replacement immutable candidate must be frozen
+after the cluster is repaired and the corrected images are deployed.
+
 ## Gates that must remain open
 
 1. Add at least one additional eligible human reviewer. The repository
    currently has one collaborator, and prevent-self-review correctly blocks
    owner-initiated candidate and publication deployments until another reviewer
    is available.
-2. Add a read-only `V1_GOVERNANCE_TOKEN` to both protected environments with
+2. Add a read-only `V1_GOVERNANCE_TOKEN` to all three protected environments with
    Administration read, Actions read, Contents read and Environments read so
    exact-candidate and pre-publication jobs can verify the live settings and
    required secret names.
-3. After PostgreSQL 19 GA, merge the reviewed final arming PR to `main`. All
+3. Repair the `proxmox-homelab` MicroK8s datastore/reconciliation failure,
+   build and attest all nine corrected application images from a reviewed
+   immutable commit, deploy them by digest, and retain a passing
+   `verify-application-platform-health.ps1 -RequireApplications` record before
+   starting either pilot.
+4. After PostgreSQL 19 GA, merge the reviewed final arming PR to `main`. All
    six policies must be stable `1.0.0` and armed in that immutable commit; no
    release tag or candidate package publication may exist yet.
-4. Run the complete manual `build.yml` evidence workflow at that commit,
+5. Run the complete manual `build.yml` evidence workflow at that commit,
    including PostgreSQL 15–19, PgBouncer, NativeAOT/trimming, connector,
    authentication, stress, website and canonical all-family packaging jobs.
-5. Run the manual `security.yml` CodeQL workflow and the manual `fuzzing.yml`
+6. Run the manual `security.yml` CodeQL workflow and the manual `fuzzing.yml`
    workflow for at least one hour per parser target at that exact commit. Every
    fuzz target must complete without a crash or hang finding.
-6. Run the complete manual `performance.yml` reference-machine workflow at that
+7. Run the complete manual `performance.yml` reference-machine workflow at that
    commit and archive its integrity-bound result set.
-7. Complete and archive the exact 72-hour Streams, 24-hour Sync, and 24-hour
+8. Complete and archive the exact 72-hour Streams, 24-hour Sync, and 24-hour
    ContinuousGraph endurance workflows at the same candidate commit.
    ContinuousGraph must complete at least 100,000 evaluations, commit at least
    99.9%, keep lifecycle P95 at or below one second, record repair, replay
@@ -124,17 +143,17 @@ the applications do not yet count as formal V1 pilots.
    report zero ordering or reconciliation errors. Perform and content-address
    all required operational disturbances. Any candidate change restarts the
    affected workflows.
-8. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
+9. Repeat PostgreSQL 19 testing for each later beta/RC and GA. Do not describe
    PostgreSQL 19 support as stable before the GA record passes.
-9. Complete the
+10. Complete the
    [independent release review](release-review-handoff.md), two independent
    24-hour application pilots that collectively cover all six families and
    include ContinuousGraph in at least one pilot,
    website deployment acceptance, backup/restore and rollback rehearsal,
    incident game day, security/SLO owner approval and maintainer sign-off.
-10. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
+11. Run `verify-v1-production-readiness.ps1 -Mode Candidate` against the complete
    SHA-256-bound evidence directory.
-11. Approve protected production publication and create tags one at a time:
+12. Approve protected production publication and create tags one at a time:
    Provider, Streams, Sync, Live, Control Plane, then ContinuousGraph. Verify
    registry availability, hashes, provenance, installation, and dependency
    resolution after each tag before creating the next.
