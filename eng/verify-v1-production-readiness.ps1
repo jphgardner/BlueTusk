@@ -825,7 +825,9 @@ $performanceArtifactPaths = [Collections.Generic.HashSet[string]]::new(
 foreach ($artifact in $performanceArtifacts)
 {
     $relativePath = ([string]$artifact.path).Replace('\', '/')
-    if ($relativePath -notmatch '^(?:benchmark\.log|results/[A-Za-z0-9_.-]+)$' -or
+    if ($relativePath -notmatch (
+            '^(?:benchmark\.log|multiplexing-paired-evidence\.json|' +
+            'BenchmarkRun-[0-9]{8}-[0-9]{6}\.log|results/[A-Za-z0-9_.-]+)$') -or
         -not $performanceArtifactPaths.Add($relativePath))
     {
         throw "Performance artifact path '$relativePath' is unsafe or duplicated."
@@ -855,6 +857,16 @@ foreach ($resultFile in Get-ChildItem -LiteralPath $performanceResults -File)
 $multiplexingReport = Resolve-EvidenceFile `
     -BasePath (Split-Path -Parent $multiplexingEvidence) `
     -Path ([string]$multiplexingManifest.report.path)
+$pairedMultiplexingReport = Resolve-EvidenceFile `
+    -BasePath (Split-Path -Parent $multiplexingEvidence) `
+    -Path ([string]$multiplexingManifest.pairedReport.path)
+$canonicalPairedReport = [IO.Path]::GetFullPath(
+    (Join-Path (Split-Path -Parent $multiplexingEvidence) 'multiplexing-paired-evidence.json'))
+if ($pairedMultiplexingReport -ne $canonicalPairedReport -or
+    -not $performanceArtifactPaths.Contains('multiplexing-paired-evidence.json'))
+{
+    throw 'The paired multiplexing report is not at its canonical integrity-bound path.'
+}
 & (Join-Path $PSScriptRoot 'verify-benchmark-coverage.ps1') `
     -BaselinePath $performanceResults `
     -MinimumFixtureCount ([int]$configuration.minimums.benchmarkFixtures) `
@@ -865,6 +877,7 @@ $multiplexingReport = Resolve-EvidenceFile `
     -BaselinePath $performanceResults
 & (Join-Path $PSScriptRoot 'verify-multiplexing-performance.ps1') `
     -ReportPath $multiplexingReport `
+    -PairedReportPath $pairedMultiplexingReport `
     -EvidencePath $multiplexingEvidence
 
 $approvalEntries = @($evidence.approvals)

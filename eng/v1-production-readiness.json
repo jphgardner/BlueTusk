@@ -18,6 +18,7 @@
     "verify-allocation-budgets.ps1",
     "verify-latency-budgets.ps1",
     "verify-multiplexing-performance.ps1",
+    "test-multiplexing-performance-verifier.ps1",
     "verify-production-observability.ps1"
   ],
   "requiredWorkflows": [
@@ -112,6 +113,7 @@
     "website/production-contract.json",
     "benchmarks/allocation-budgets.json",
     "benchmarks/latency-budgets.json",
+    "eng/test-multiplexing-performance-verifier.ps1",
     "ops/observability/otel-collector.yaml",
     "ops/observability/prometheus-rules.yml",
     "ops/observability/grafana/bluetusk-v1.json",

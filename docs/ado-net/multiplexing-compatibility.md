@@ -89,10 +89,14 @@ Run the release comparison and its machine gate:
 
 ```powershell
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $env:BLUETUSK_TEST_CONNECTION_STRING
-$env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
+$env:BLUETUSK_BENCHMARK_ARTIFACTS = "artifacts/benchmarks"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
   --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
-./eng/verify-multiplexing-performance.ps1
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-build -- `
+  --multiplexing-paired-evidence artifacts/benchmarks/multiplexing-paired-evidence.json
+./eng/verify-multiplexing-performance.ps1 `
+  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json `
+  -PairedReportPath artifacts/benchmarks/multiplexing-paired-evidence.json
 ```
 
 The checked-in MediumRun, not a development ShortRun, is the regression
@@ -101,3 +105,11 @@ allocation for BlueTusk multiplexed, BlueTusk ordinary pooled, Npgsql
 multiplexed, and Npgsql ordinary pooled paths. Results from one loopback
 machine are evidence for this workload, not a universal provider-performance
 claim.
+
+The exact-candidate workflow uses the full report for absolute latency,
+allocation and pooled-path comparisons. Provider-relative latency comes from
+five alternating paired trials: each trial records 31 blocks, each block
+contains 32 bursts per provider, and execution order reverses between blocks
+and trials. The verifier calculates each trial's mean/P95/P99 ratio from raw
+timings and gates the median trial ratio, avoiding a false decision caused by
+measuring all of one provider before all of the other.

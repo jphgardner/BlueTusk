@@ -52,6 +52,12 @@ uses less than 30% of the latency and 60% of the allocation allowed by the
 checked-in budgets. The full result measurements and environment manifest are
 stored under `benchmarks/baselines/windows-ryzen7-5800x-dotnet10`.
 
+An exact-candidate run keeps those BenchmarkDotNet rows as the absolute-latency
+and allocation authority, then records five alternating-provider trials for
+the cross-provider latency gate. This isolates provider order drift without
+changing the allocation ceilings or BlueTusk's absolute P95 budgets; the
+candidate manifest hashes both raw reports.
+
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session. Incremental field reads of at least 8 KiB pass the caller's buffer directly to the transport after consuming buffered bytes, avoiding both an intermediate copy and a transient large rental; smaller reads use adaptive bounded read-ahead. The socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 
 Warm command instances cache the structural named-parameter plan, but parameter

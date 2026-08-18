@@ -149,9 +149,30 @@ protocol costs are visible separately from command construction.
 ```powershell
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-build -- `
+  --multiplexing-paired-evidence artifacts/benchmarks/multiplexing-paired-evidence.json
 ./eng/verify-multiplexing-performance.ps1 `
-  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json
+  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json `
+  -PairedReportPath artifacts/benchmarks/multiplexing-paired-evidence.json
 ```
+
+The full BenchmarkDotNet report remains authoritative for BlueTusk's absolute
+latency budgets, all managed-allocation comparisons, and multiplexed versus
+ordinary pooled BlueTusk. A release-candidate provider latency comparison adds
+the paired report above because executing one provider's complete
+BenchmarkDotNet method before the other allows machine or server drift to be
+mistaken for a provider difference.
+
+The paired capture performs 64 untimed warm-up bursts per provider, then five
+trials of 31 paired blocks. Each block contains 32 real 64-command bursts per
+provider (2,048 logical commands), reverses provider order from the preceding
+block, and the first provider also reverses between trials. The verifier
+recomputes each trial's mean, P95 and P99 ratios from the raw block timings and
+applies the unchanged 1.05 provider caps to the median of the five trial
+ratios. It rejects missing samples, changed dimensions, invalid timings,
+incorrect order, future timestamps and duplicate workloads. Run
+`eng/test-multiplexing-performance-verifier.ps1` to exercise the positive
+fixture and fail-closed mutations.
 
 The 2026-08-04 Windows/Ryzen 7 5800X MediumRun from commit `9ba2c50`
 records BlueTusk/Npgsql at 19.83/20.57 µs mean, 20.93/22.26 µs P95,
@@ -262,10 +283,11 @@ Markdown and brief JSON reports are written below `artifacts/benchmarks` by defa
 
 For an exact V1 candidate, dispatch `.github/workflows/performance.yml`. It
 uses MediumRun, the in-process toolchain, the named self-hosted reference
-machine and digest-pinned PostgreSQL 19, then runs all coverage, allocation,
-latency and multiplexing gates. BenchmarkDotNet can return zero after producing
-an empty report or logging a cleanup exception; the V1 wrapper therefore
-validates the report inventory and scans the log instead of trusting only the
-process exit code.
+machine and digest-pinned PostgreSQL 19, captures the paired alternating-provider
+report, then runs all coverage, allocation, latency and multiplexing gates.
+Both reports and their SHA-256 hashes are bound into the candidate manifest.
+BenchmarkDotNet can return zero after producing an empty report or logging a
+cleanup exception; the V1 wrapper therefore validates the report inventory and
+scans the log instead of trusting only the process exit code.
 
 Allocation ownership, the current end-to-end numbers, and the machine-checked regression budgets are documented in [Allocation discipline](../docs/architecture/allocation-discipline.md).

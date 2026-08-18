@@ -261,7 +261,7 @@ dotnet test tests/BlueTusk.IntegrationTests --no-restore --filter FullyQualified
 BenchmarkDotNet reports are written below `artifacts/benchmarks` by default. The named reference environment under `benchmarks/baselines` checks in human-readable GitHub Markdown and brief JSON reports. Refresh a short baseline with:
 
 ```powershell
-$env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
+$env:BLUETUSK_BENCHMARK_ARTIFACTS = "artifacts/benchmarks"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*DataReaderBenchmarks*' '*ProtocolStreamingBenchmarks*'
 ```
 
@@ -304,7 +304,12 @@ $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=b
 $env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
   --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
-./eng/verify-multiplexing-performance.ps1
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-build -- `
+  --multiplexing-paired-evidence artifacts/benchmarks/multiplexing-paired-evidence.json
+./eng/verify-multiplexing-performance.ps1 `
+  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json `
+  -PairedReportPath artifacts/benchmarks/multiplexing-paired-evidence.json
+./eng/test-multiplexing-performance-verifier.ps1
 ```
 
 Commit its full JSON and GitHub Markdown reports. The machine gate requires at
@@ -312,3 +317,11 @@ least 20 measured samples and enforces relative mean, P95, P99, throughput, and
 managed-allocation budgets against Npgsql multiplexing and BlueTusk's ordinary
 pool. A budget change requires the report, rationale, and documentation in the
 same review.
+
+For a release candidate, commit or archive both reports. BenchmarkDotNet is the
+source for BlueTusk absolute latency and allocation; its provider latency rows
+remain descriptive because methods run sequentially. The paired report is the
+provider-relative latency authority: 64 warm-ups per provider, five trials, 31
+alternating blocks per trial, 32 bursts per block and 64 operations per burst.
+The gate recomputes each trial and uses the median ratio, so one transient block
+or provider execution order cannot decide the release.

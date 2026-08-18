@@ -138,10 +138,22 @@ worktree artifacts. A zero exit code alone is not accepted: the verifier rejects
 empty reports, missing statistics, stale methods, missing fixtures and known
 failure markers in the log.
 
+Provider-relative multiplexing latency is measured a second way to remove
+sequential-provider order drift from the release decision. After 64 warm-up
+bursts per provider, the runner records five trials of 31 alternating paired
+blocks; every block executes 32 real 64-command bursts for each provider and
+reverses order from the preceding block. The verifier recomputes mean, P95 and
+P99 ratios for each trial from raw per-operation block timings and applies the
+unchanged provider budgets to the median of the five trial ratios. BenchmarkDotNet
+remains authoritative for BlueTusk's absolute P95 limits and all allocation
+limits. The fail-closed self-test rejects truncated samples, invalid values,
+wrong order, duplicate workloads and a synthetic 6% regression.
+
 The artifact contains:
 
 - brief JSON and Markdown reports for the full fixture inventory;
 - the full multiplexing report with raw result measurements;
+- the raw alternating-provider multiplexing report;
 - the BenchmarkDotNet log;
 - a SHA-256-bound environment/evidence manifest; and
 - the exact source commit, SDK/runtime, OS, processor and PostgreSQL image.
@@ -210,6 +222,7 @@ v1-evidence/
 │   └── sync/*-injection.json and *-recovery.json
 ├── performance/
 │   ├── multiplexing-evidence.json
+│   ├── multiplexing-paired-evidence.json
 │   └── results/*.json
 └── approvals/
     ├── independent-release-review.json

@@ -54,6 +54,7 @@ $previousConnection = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING
 $env:BLUETUSK_BENCHMARK_ARTIFACTS = $fullOutputPath
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $ConnectionString
 $logPath = Join-Path $fullOutputPath 'benchmark.log'
+$pairedReport = Join-Path $fullOutputPath 'multiplexing-paired-evidence.json'
 
 try
 {
@@ -81,6 +82,30 @@ try
     if ($LASTEXITCODE -ne 0)
     {
         throw "BenchmarkDotNet exited with code $LASTEXITCODE."
+    }
+
+    $pairedArguments = @(
+        'run',
+        '--project',
+        'benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj',
+        '--configuration',
+        'Release'
+    )
+    if ($NoBuild)
+    {
+        $pairedArguments += '--no-build'
+    }
+    $pairedArguments += @(
+        '--',
+        '--multiplexing-paired-evidence',
+        $pairedReport
+    )
+
+    & dotnet @pairedArguments 2>&1 |
+        Tee-Object -LiteralPath $logPath -Append
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "Paired multiplexing evidence capture exited with code $LASTEXITCODE."
     }
 }
 finally
@@ -115,11 +140,15 @@ $resultsPath = Join-Path $fullOutputPath 'results'
 $multiplexingReport = Join-Path $resultsPath (
     'BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json')
 & (Join-Path $PSScriptRoot 'verify-multiplexing-performance.ps1') `
-    -ReportPath $multiplexingReport
+    -ReportPath $multiplexingReport `
+    -PairedReportPath $pairedReport
 
 $report = Get-Content -LiteralPath $multiplexingReport -Raw | ConvertFrom-Json
 $reportHash = (
     Get-FileHash -LiteralPath $multiplexingReport -Algorithm SHA256
+).Hash.ToLowerInvariant()
+$pairedReportHash = (
+    Get-FileHash -LiteralPath $pairedReport -Algorithm SHA256
 ).Hash.ToLowerInvariant()
 $artifactRecords = @(
     Get-ChildItem -LiteralPath $fullOutputPath -Recurse -File |
@@ -148,6 +177,10 @@ $evidence = [ordered]@{
         launchCount = 2
         warmupCount = 10
         iterationCount = 15
+        providerLatencyMethod = 'median of five alternating-provider trials'
+        pairedBlocksPerTrial = 31
+        burstsPerBlock = 32
+        operationsPerBurst = 64
     }
     environment = [ordered]@{
         os = [string]$report.HostEnvironmentInfo.OsVersion
@@ -170,6 +203,10 @@ $evidence = [ordered]@{
         path = 'results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json'
         sha256 = $reportHash
     }
+    pairedReport = [ordered]@{
+        path = 'multiplexing-paired-evidence.json'
+        sha256 = $pairedReportHash
+    }
     artifacts = $artifactRecords
     verification = [ordered]@{
         allocationBudgets = 'passed'
@@ -184,6 +221,7 @@ $evidence | ConvertTo-Json -Depth 8 |
 
 & (Join-Path $PSScriptRoot 'verify-multiplexing-performance.ps1') `
     -ReportPath $multiplexingReport `
+    -PairedReportPath $pairedReport `
     -EvidencePath $evidencePath
 
 Write-Output (
