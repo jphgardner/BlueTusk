@@ -35,6 +35,7 @@ jobs:
             -Family Sync `
             -Candidate `
             -Output 'artifacts/test-results/sync-endurance/candidate-packages'
+          dotnet restore BlueTusk.slnx --locked-mode
           ./eng/generate-sbom.ps1 `
             -PackageDirectory 'artifacts/test-results/sync-endurance/candidate-packages' `
             -OutputDirectory 'artifacts/test-results/sync-endurance/candidate-sbom' `
