@@ -1,4 +1,5 @@
-FROM mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:e1fc6e423f543119c406d24e2e687d67c569f18f04a37a8b0005d80ad0dcee80 AS build
+# Production builds and cluster nodes are linux/amd64; pin the pullable platform manifest.
+FROM mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:0e53453ccfc8ff2d51319fe80c678971c6d0f8008dff3565fa88e15840b69854 AS build
 ARG PROJECT_FAMILY
 WORKDIR /source
 COPY Directory.Build.props Directory.Packages.props README.md ./
@@ -11,7 +12,7 @@ RUN dotnet publish "applications/src/${PROJECT_FAMILY}/BlueTusk.${PROJECT_FAMILY
     cp "/app/BlueTusk.${PROJECT_FAMILY}.Api.deps.json" /app/BlueTusk.Application.Api.deps.json && \
     cp "/app/BlueTusk.${PROJECT_FAMILY}.Api.runtimeconfig.json" /app/BlueTusk.Application.Api.runtimeconfig.json
 
-FROM mcr.microsoft.com/dotnet/aspnet:10.0.11-noble-chiseled@sha256:0839314d08bb65da369135389a5d8291f75ace587fbb0488f469eb92c62eef68
+FROM mcr.microsoft.com/dotnet/aspnet:10.0.11-noble-chiseled@sha256:edec6ea65a92f432083a8f75fc3c18addd004015bbd4d523ce1d13e23b347008
 ARG PROJECT_FAMILY
 ENV ASPNETCORE_HTTP_PORTS=8080 \
     DOTNET_EnableDiagnostics=0 \
