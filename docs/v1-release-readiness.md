@@ -82,7 +82,7 @@ The combined local verification record through 2026-08-17 produced:
 | Candidate SBOM/provenance smoke | 60 artifact hashes and 317 components/packages verified in both SBOM formats |
 | Angular website delivery | Initial raw/Brotli, largest lazy chunk and complete distribution are budgeted; hashed assets, metadata and no-source-map policy are verified after every production build |
 | Repository gates | Solution layout, documentation links, workflow YAML, PowerShell syntax, Action pins, supply chain and PostgreSQL 19 programme passed |
-| Live repository governance | Active `main` ruleset with 35 required checks; three self-review-protected environments; twelve RC/stable tag policies; dependency graph, alerts, automated fixes and private reporting enabled. The candidate gate remains fail closed on eight missing secret bindings and the absence of an independent eligible reviewer. |
+| Live repository governance | Active `main` ruleset with 35 required checks; three non-bypassable, self-review-protected environments; twelve RC/stable tag policies; dependency graph, alerts, automated fixes and private reporting enabled. The candidate gate remains fail closed on eight missing secret bindings and the absence of an independent eligible reviewer. |
 
 This snapshot validates the tooling and current working tree. It is not
 immutable release evidence: the final candidate must be committed, clean, and

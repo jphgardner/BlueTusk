@@ -116,9 +116,10 @@ The exact live settings are not informal setup advice. They are declared in
 `verify-github-governance.ps1 -Mode Remote`. The same contract requires the
 `main` ruleset, all 35 V1 status checks, fresh independent review after the
 last push, resolved review threads, the protected
-`v1-candidate-readiness` environment, and the six allowed production tag
-patterns. It also requires the dependency graph, vulnerability alerts,
-automated security fixes and private vulnerability reporting. A missing or
+`v1-candidate-readiness` environment with administrator bypass disabled, and
+the six allowed production tag patterns. It also requires the dependency
+graph, vulnerability alerts, automated security fixes and private vulnerability
+reporting. A missing or
 unprotected environment, or a disabled repository security feature, makes both
 candidate acceptance and tagged publication fail.
 

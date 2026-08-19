@@ -101,9 +101,12 @@ if ($environments.Count -ne 3 -or
 foreach ($environment in $environments)
 {
     if ([int]$environment.minimumConfiguredReviewers -lt 1 -or
-        $environment.preventSelfReview -ne $true)
+        $environment.preventSelfReview -ne $true -or
+        $environment.canAdminsBypass -ne $false)
     {
-        throw "Environment '$($environment.name)' must require an independent reviewer."
+        throw (
+            "Environment '$($environment.name)' must require an independent reviewer " +
+            'and disable administrator bypass.')
     }
 
     $requiredSecrets = @(
@@ -173,10 +176,10 @@ $requiredEnvironmentSecretBindings = @(
 
 if ($Mode -eq 'Source')
 {
-    Write-Output (
-        "Verified source governance for $($requiredStatusChecks.Count) required checks, " +
-        "$($environments.Count) self-review-protected environments, " +
-        "$requiredEnvironmentSecretBindings required secret bindings, protected branch " +
+Write-Output (
+    "Verified source governance for $($requiredStatusChecks.Count) required checks, " +
+    "$($environments.Count) non-bypassable self-review-protected environments, " +
+    "$requiredEnvironmentSecretBindings required secret bindings, protected branch " +
         "'$($configuration.protectedBranch)', and mandatory repository security features. " +
         'Remote repository settings remain a candidate gate.')
     return
@@ -325,9 +328,13 @@ foreach ($environment in $environments)
     if ($reviewRule.Count -ne 1 -or
         @($reviewRule[0].reviewers).Count -lt
             [int]$environment.minimumConfiguredReviewers -or
-        $reviewRule[0].prevent_self_review -ne $true)
+        $reviewRule[0].prevent_self_review -ne $true -or
+        $remoteEnvironment.can_admins_bypass -ne
+            [bool]$environment.canAdminsBypass)
     {
-        throw "Environment '$($environment.name)' lacks independent required-reviewer protection."
+        throw (
+            "Environment '$($environment.name)' lacks non-bypassable independent " +
+            'required-reviewer protection.')
     }
 
     $expectedPolicy = $environment.deploymentBranchPolicy
@@ -388,5 +395,6 @@ if ($environmentSecretFailures.Count -ne 0)
 Write-Output (
     "Verified live GitHub governance for '$Repository': ruleset '$($ruleset.name)', " +
     "$($requiredStatusChecks.Count) required checks, and $($environments.Count) " +
-    "self-review-protected deployment environments with $requiredEnvironmentSecretBindings " +
+    "non-bypassable self-review-protected deployment environments with " +
+    "$requiredEnvironmentSecretBindings " +
     'required secret bindings, dependency controls, and vulnerability protections enabled.')

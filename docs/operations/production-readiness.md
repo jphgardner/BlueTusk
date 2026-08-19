@@ -100,10 +100,11 @@ evidence, vulnerability alerts, active automated security fixes, and private
 vulnerability reporting.
 
 Configure `v1-candidate-readiness` with at least one eligible reviewer,
-prevent self-review, and allow only protected branches. Configure
-`package-production` with the same reviewer protection and custom deployment
-patterns for the six release-tag prefixes. Repository administrators must
-create these settings before dispatching a candidate. Both environments must
+prevent self-review, disable administrator bypass, and allow only protected
+branches. Configure `package-production` and `package-prerelease` with the same
+non-bypassable reviewer protection and custom deployment patterns for the six
+release-tag prefixes. Repository administrators must create these settings
+before dispatching a candidate. All three environments must
 hold a `V1_GOVERNANCE_TOKEN` secret whose fine-grained repository permissions
 include Administration read, Actions read, Contents read and Environments
 read; the workflows use it only inside their protected environment to inspect
@@ -117,8 +118,8 @@ RC/stable tag policies and the repository security features satisfy their
 structural settings checks. The full remote contract remains fail closed until
 its eight declared environment-secret bindings are provisioned. The repository
 also needs another eligible human reviewer: its only current collaborator is
-the owner, and prevent-self-review intentionally leaves owner-initiated
-deployments waiting for an independent approval.
+the owner, and non-bypassable prevent-self-review intentionally leaves
+owner-initiated deployments waiting for an independent approval.
 
 ## Reference performance gate
 
