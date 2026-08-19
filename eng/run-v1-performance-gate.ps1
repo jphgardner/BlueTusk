@@ -102,7 +102,7 @@ try
     )
 
     & dotnet @pairedArguments 2>&1 |
-        Tee-Object -LiteralPath $logPath -Append
+        Tee-Object -FilePath $logPath -Append
     if ($LASTEXITCODE -ne 0)
     {
         throw "Paired multiplexing evidence capture exited with code $LASTEXITCODE."
