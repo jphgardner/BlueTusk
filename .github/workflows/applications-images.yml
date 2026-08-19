@@ -124,9 +124,11 @@ jobs:
         shell: bash
         run: |
           image='${{ steps.image.outputs.name }}@${{ steps.build.outputs.digest }}'
+          nonce="$(printf '%s' "$GITHUB_RUN_ID:$GITHUB_RUN_ATTEMPT:$GITHUB_JOB" | sha256sum | cut -c1-32)"
+          connection="Host=127.0.0.1;Port=1;Username=smoke_${nonce};Database=smoke_${nonce};Timeout=1;Command Timeout=1;SSL Mode=Disable;Channel Binding=Disable"
           container="$(docker run --detach --network none --read-only \
             --tmpfs /tmp:rw,noexec,nosuid,size=64m \
-            --env 'ConnectionStrings__Primary=Host=127.0.0.1;Port=1;Username=smoke;Password=smoke;Database=smoke;Timeout=1;Command Timeout=1;SSL Mode=Disable;Channel Binding=Disable' \
+            --env "ConnectionStrings__Primary=$connection" \
             "$image")"
           cleanup() { docker rm --force "$container" >/dev/null 2>&1 || true; }
           trap cleanup EXIT
