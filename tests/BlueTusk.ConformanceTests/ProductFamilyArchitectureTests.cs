@@ -258,7 +258,7 @@ public sealed class ProductFamilyArchitectureTests
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(
-            "actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3",
+            "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2",
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(
