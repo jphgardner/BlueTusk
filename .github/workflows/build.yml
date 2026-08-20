@@ -128,6 +128,7 @@ jobs:
             }
           ./eng/test-prerelease-release-verifier.ps1
           ./eng/test-v1-approval-evidence-verifier.ps1
+          ./eng/test-latency-budget-verifier.ps1
           ./eng/test-multiplexing-performance-verifier.ps1
           ./eng/test-v1-performance-gate-contract.ps1
           ./eng/test-endurance-workflow-sbom-contract.ps1

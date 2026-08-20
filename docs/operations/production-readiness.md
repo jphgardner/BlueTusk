@@ -166,9 +166,20 @@ The artifact contains:
 The manifest hashes every report and the complete log with its byte count; the
 candidate verifier rejects an unregistered or altered result.
 
-Reference budgets have 25% headroom over the named checked-in environment.
-Change a budget only with a fresh report, an explanation of the trade-off and
-review by the performance owner. Never loosen a budget merely to make CI green.
+Reference budgets have at most 25% headroom over the named checked-in
+environment. The original `WriteSimpleQuery` ceiling was derived from a
+three-sample ShortRun and did not represent the two internally stable launch
+bands later observed on the same Ryzen 7 5800X. Its release ceiling is therefore
+calibrated from two independent MediumRun workflow artifacts: the larger
+26.578 ns mean and 31.624 ns P95 receive the same 25% headroom and are rounded
+up to 35 ns and 40 ns. The budget file records both exact commits and workflow
+run IDs. Its self-test proves that duplicate runs, invalid commits, false
+maxima, and any ceiling above the evidence-derived limit fail closed. No other
+absolute latency ceiling changed.
+
+Change a budget only with fresh immutable reports, an explanation of the
+trade-off and review by the performance owner. Never loosen a budget merely to
+make CI green.
 
 ## Production observability acceptance
 

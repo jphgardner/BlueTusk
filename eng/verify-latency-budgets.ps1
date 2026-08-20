@@ -7,8 +7,26 @@ $ErrorActionPreference = "Stop"
 Set-StrictMode -Version Latest
 
 $configuration = Get-Content -LiteralPath $BudgetFile -Raw | ConvertFrom-Json
-if ([int]$configuration.schemaVersion -ne 1) {
+if ([int]$configuration.schemaVersion -ne 2) {
     throw "Unsupported latency budget schema version '$($configuration.schemaVersion)'."
+}
+
+$maximumMeanRegressionPercent = [double]$configuration.policy.maximumMeanRegressionPercent
+$maximumP95RegressionPercent = [double]$configuration.policy.maximumP95RegressionPercent
+$minimumSamples = [int]$configuration.policy.minimumSamples
+$minimumCalibrationObservations = [int]$configuration.policy.minimumCalibrationObservations
+$calibratedBudgetRoundingNanoseconds = [double]$configuration.policy.calibratedBudgetRoundingNanoseconds
+if (-not [double]::IsFinite($maximumMeanRegressionPercent) -or
+    $maximumMeanRegressionPercent -lt 0 -or
+    $maximumMeanRegressionPercent -gt 100 -or
+    -not [double]::IsFinite($maximumP95RegressionPercent) -or
+    $maximumP95RegressionPercent -lt 0 -or
+    $maximumP95RegressionPercent -gt 100 -or
+    $minimumSamples -lt 3 -or
+    $minimumCalibrationObservations -lt 2 -or
+    -not [double]::IsFinite($calibratedBudgetRoundingNanoseconds) -or
+    $calibratedBudgetRoundingNanoseconds -le 0) {
+    throw 'Latency budget policy contains invalid limits.'
 }
 
 $actual = @{}
@@ -39,6 +57,87 @@ foreach ($budget in @($configuration.budgets)) {
         continue
     }
 
+    if ([string]::IsNullOrWhiteSpace([string]$budget.reason)) {
+        $failures.Add("Latency budget for $benchmarkName has no reason.")
+    }
+
+    $maximumMean = [double]$budget.maximumMeanNanoseconds
+    $maximumP95 = [double]$budget.maximumP95Nanoseconds
+    if (-not [double]::IsFinite($maximumMean) -or $maximumMean -le 0 -or
+        -not [double]::IsFinite($maximumP95) -or $maximumP95 -le 0 -or
+        $maximumP95 -lt $maximumMean) {
+        $failures.Add("Latency budget for $benchmarkName has invalid mean/P95 ceilings.")
+    }
+
+    if ($null -ne $budget.PSObject.Properties['calibration']) {
+        $calibration = $budget.calibration
+        $observations = @($calibration.observations)
+        if ([string]::IsNullOrWhiteSpace([string]$calibration.method)) {
+            $failures.Add("Latency calibration for $benchmarkName has no method.")
+        }
+        if ($observations.Count -lt $minimumCalibrationObservations) {
+            $failures.Add(
+                "Latency calibration for $benchmarkName has $($observations.Count) observations; " +
+                "at least $minimumCalibrationObservations are required.")
+        }
+
+        $calibrationRuns = [System.Collections.Generic.HashSet[long]]::new()
+        $observedMeans = [System.Collections.Generic.List[double]]::new()
+        $observedP95s = [System.Collections.Generic.List[double]]::new()
+        foreach ($observation in $observations) {
+            $sourceCommit = [string]$observation.sourceCommit
+            $workflowRunId = [long]$observation.workflowRunId
+            $observedMean = [double]$observation.meanNanoseconds
+            $observedP95 = [double]$observation.p95Nanoseconds
+            if ($sourceCommit -notmatch '^[0-9a-f]{40}$') {
+                $failures.Add(
+                    "Latency calibration for $benchmarkName has invalid source commit '$sourceCommit'.")
+            }
+            if ($workflowRunId -le 0 -or -not $calibrationRuns.Add($workflowRunId)) {
+                $failures.Add(
+                    "Latency calibration for $benchmarkName has invalid or duplicate workflow run '$workflowRunId'.")
+            }
+            if (-not [double]::IsFinite($observedMean) -or $observedMean -le 0 -or
+                -not [double]::IsFinite($observedP95) -or $observedP95 -le 0 -or
+                $observedP95 -lt $observedMean) {
+                $failures.Add(
+                    "Latency calibration for $benchmarkName has invalid mean/P95 evidence in run '$workflowRunId'.")
+                continue
+            }
+            $observedMeans.Add($observedMean)
+            $observedP95s.Add($observedP95)
+        }
+
+        if ($observedMeans.Count -ne 0 -and $observedP95s.Count -ne 0) {
+            $maximumObservedMean = ($observedMeans | Measure-Object -Maximum).Maximum
+            $maximumObservedP95 = ($observedP95s | Measure-Object -Maximum).Maximum
+            $declaredMaximumMean = [double]$calibration.maximumObservedMeanNanoseconds
+            $declaredMaximumP95 = [double]$calibration.maximumObservedP95Nanoseconds
+            if ([math]::Abs($maximumObservedMean - $declaredMaximumMean) -gt 0.001 -or
+                [math]::Abs($maximumObservedP95 - $declaredMaximumP95) -gt 0.001) {
+                $failures.Add(
+                    "Latency calibration for $benchmarkName does not declare the maximum observed values.")
+            }
+
+            $meanHeadroom = 1 + ($maximumMeanRegressionPercent / 100)
+            $p95Headroom = 1 + ($maximumP95RegressionPercent / 100)
+            $maximumCalibratedMean = [math]::Ceiling(
+                ($maximumObservedMean * $meanHeadroom) / $calibratedBudgetRoundingNanoseconds) *
+                $calibratedBudgetRoundingNanoseconds
+            $maximumCalibratedP95 = [math]::Ceiling(
+                ($maximumObservedP95 * $p95Headroom) / $calibratedBudgetRoundingNanoseconds) *
+                $calibratedBudgetRoundingNanoseconds
+            if ($maximumMean -lt $maximumObservedMean -or
+                $maximumP95 -lt $maximumObservedP95 -or
+                $maximumMean -gt $maximumCalibratedMean -or
+                $maximumP95 -gt $maximumCalibratedP95) {
+                $failures.Add(
+                    "Latency budget for $benchmarkName is not within its evidence-derived ceilings " +
+                    "($maximumCalibratedMean ns mean, $maximumCalibratedP95 ns P95).")
+            }
+        }
+    }
+
     if (-not $actual.ContainsKey($benchmarkName)) {
         $failures.Add("Missing latency result for $benchmarkName.")
         continue
@@ -54,15 +153,12 @@ foreach ($budget in @($configuration.budgets)) {
     else {
         0
     }
-    $minimumSamples = [int]$configuration.policy.minimumSamples
     if ($samples -lt $minimumSamples) {
         $failures.Add("$benchmarkName has $samples samples; at least $minimumSamples are required.")
     }
 
     $mean = [double]$benchmark.Statistics.Mean
     $p95 = [double]$benchmark.Statistics.Percentiles.P95
-    $maximumMean = [double]$budget.maximumMeanNanoseconds
-    $maximumP95 = [double]$budget.maximumP95Nanoseconds
     if (-not [double]::IsFinite($mean) -or $mean -le 0) {
         $failures.Add("$benchmarkName has an invalid mean '$mean'.")
     }
