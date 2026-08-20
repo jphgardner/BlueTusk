@@ -61,3 +61,8 @@ discovery and built-in codecs cover its `text`, `jsonb`, `regrole`, UUID,
 timestamp, and integer values. EF migrations can use the provider's generic
 extension lifecycle with `modelBuilder.HasExtension("pg_durable")`; server
 preloading and role grants remain operator-owned deployment configuration.
+
+The live acceptance test requires both `BLUETUSK_PGDURABLE_LIVE_TESTS=true`
+and `BLUETUSK_TEST_CONNECTION_STRING`. CI enables that switch only for the
+digest-pinned pg_durable image job, so the general PostgreSQL 15–19 provider
+matrix cannot mistake an ordinary server for an extension-enabled target.

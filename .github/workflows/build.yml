@@ -496,6 +496,7 @@ jobs:
       - name: Run ADO.NET extension acceptance
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=${{ matrix.port }};Username=postgres;Password=postgres;Database=${{ matrix.database }};SSL Mode=Disable;Channel Binding=Disable
+          BLUETUSK_PGDURABLE_LIVE_TESTS: ${{ matrix.name == 'pg_durable' }}
         run: >-
           dotnet test ${{ matrix.ado_project }}
           --configuration Release

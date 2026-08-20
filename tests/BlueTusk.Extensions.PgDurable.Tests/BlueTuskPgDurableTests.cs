@@ -182,6 +182,14 @@ public sealed class BlueTuskPgDurableTests
 
     private static string GetConnectionString()
     {
+        var liveTestsEnabled = Environment.GetEnvironmentVariable(
+            "BLUETUSK_PGDURABLE_LIVE_TESTS");
+        if (!string.Equals(liveTestsEnabled, "true", StringComparison.OrdinalIgnoreCase))
+        {
+            throw SkipException.ForSkip(
+                "BLUETUSK_PGDURABLE_LIVE_TESTS is not enabled for this test target.");
+        }
+
         var connectionString = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
         if (string.IsNullOrWhiteSpace(connectionString))
         {
