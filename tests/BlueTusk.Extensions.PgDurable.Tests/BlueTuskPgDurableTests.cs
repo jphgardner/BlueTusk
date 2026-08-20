@@ -86,7 +86,7 @@ public sealed class BlueTuskPgDurableTests
         var result = await dataSource.GetPgDurableResultAsync(instanceId);
         Assert.Contains("42", result, StringComparison.Ordinal);
 
-        var metrics = await dataSource.GetPgDurableMetricsAsync();
+        var metrics = await WaitForCompletedInstanceMetricAsync(dataSource);
         Assert.True(metrics.TotalInstances > 0);
         Assert.True(metrics.CompletedInstances > 0);
 
@@ -133,6 +133,26 @@ public sealed class BlueTuskPgDurableTests
         Assert.Equal(
             BlueTuskPgDurableStatus.Cancelled,
             await dataSource.AwaitPgDurableAsync(cancelInstanceId, timeoutSeconds: 30));
+    }
+
+    private static async Task<BlueTuskPgDurableMetrics> WaitForCompletedInstanceMetricAsync(
+        BlueTuskDataSource dataSource)
+    {
+        BlueTuskPgDurableMetrics? metrics = null;
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            metrics = await dataSource.GetPgDurableMetricsAsync();
+            if (metrics.CompletedInstances > 0)
+            {
+                return metrics;
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(100));
+        }
+
+        Assert.Fail(
+            "pg_durable aggregate metrics did not observe the completed workflow within ten seconds.");
+        return metrics!;
     }
 
     private static async Task WaitForSignalNodeAsync(

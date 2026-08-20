@@ -49,10 +49,12 @@ IDs, cancellation reasons, signal names, signal data, database names, and
 transaction modes are sent as typed parameters. Results remain JSON text so the
 application can choose its own JSON model.
 
-`GetPgDurableMetricsAsync` reads the extension's system-wide aggregate and
-therefore requires an explicit `GRANT EXECUTE ON FUNCTION df.metrics()` (or the
-upstream delegated-admin grant). Ordinary application roles should not receive
-that permission merely to start and observe their own workflows.
+`GetPgDurableMetricsAsync` reads an eventually consistent snapshot of the
+extension's system-wide aggregate and therefore requires an explicit
+`GRANT EXECUTE ON FUNCTION df.metrics()` (or the upstream delegated-admin grant).
+Aggregate counts can briefly trail per-instance status, so readiness checks that
+correlate the two should use bounded polling. Ordinary application roles should
+not receive that permission merely to start and observe their own workflows.
 
 The extension contributes no PostgreSQL wire type. BlueTusk's normal catalogue
 discovery and built-in codecs cover its `text`, `jsonb`, `regrole`, UUID,

@@ -167,7 +167,8 @@ public static class BlueTuskPgDurableDataSourceExtensions
     }
 
     /// <summary>
-    /// Returns system-wide execution metrics. The caller needs explicit EXECUTE
+    /// Returns a system-wide execution-metrics snapshot. Aggregate values can
+    /// briefly trail per-instance status. The caller needs explicit EXECUTE
     /// permission on df.metrics(), which ordinary df.grant_usage grants omit.
     /// </summary>
     public static async ValueTask<BlueTuskPgDurableMetrics> GetPgDurableMetricsAsync(
