@@ -178,7 +178,7 @@ $evidence = [ordered]@{
         warmupCount = 10
         iterationCount = 15
         providerLatencyMethod = 'median of five alternating-provider trials'
-        pairedBlocksPerTrial = 31
+        pairedBlocksPerTrial = 101
         burstsPerBlock = 32
         operationsPerBurst = 64
     }

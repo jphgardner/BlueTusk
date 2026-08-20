@@ -185,11 +185,11 @@ function Get-PairedMetrics {
     if ([int]$PairedReport.operationsPerBurst -ne 64 -or
         [int]$PairedReport.warmupBurstsPerProvider -ne 64 -or
         [int]$PairedReport.trialCount -ne 5 -or
-        [int]$PairedReport.blocksPerTrial -ne 31 -or
+        [int]$PairedReport.blocksPerTrial -ne 101 -or
         [int]$PairedReport.burstsPerBlock -ne 32) {
         throw (
             'The paired multiplexing report must contain 64 operations per burst, ' +
-            '64 warmups per provider, five trials, 31 blocks per trial and 32 bursts per block.')
+            '64 warmups per provider, five trials, 101 blocks per trial and 32 bursts per block.')
     }
 
     $capturedUtc = [DateTimeOffset]::MinValue
