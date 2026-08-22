@@ -26,9 +26,6 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     private object? _sessionLease;
     private bool _hideSensitiveConnectionString;
     private bool _sessionTouched;
-    private IReadOnlyList<BlueTuskFieldDescription>? _resolvedRowDescription;
-    private BlueTuskTypeRegistry? _resolvedRowRegistry;
-    private BlueTuskResolvedField[]? _resolvedRowFields;
     private bool _disposed;
     private ConnectionState _state = ConnectionState.Closed;
 
@@ -296,9 +293,10 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     {
         ArgumentNullException.ThrowIfNull(fields);
         var types = TypeRegistry;
-        if (ReferenceEquals(_resolvedRowDescription, fields) &&
-            ReferenceEquals(_resolvedRowRegistry, types) &&
-            _resolvedRowFields is { } cached)
+        var optional = Volatile.Read(ref _optionalState) ?? Optional;
+        if (ReferenceEquals(optional.ResolvedRowDescription, fields) &&
+            ReferenceEquals(optional.ResolvedRowRegistry, types) &&
+            optional.ResolvedRowFields is { } cached)
         {
             return cached;
         }
@@ -309,9 +307,9 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             resolved[index] = BlueTuskValueDecoder.Resolve(types, fields[index]);
         }
 
-        _resolvedRowDescription = fields;
-        _resolvedRowRegistry = types;
-        _resolvedRowFields = resolved;
+        optional.ResolvedRowDescription = fields;
+        optional.ResolvedRowRegistry = types;
+        optional.ResolvedRowFields = resolved;
         return resolved;
     }
 
@@ -2339,6 +2337,12 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         internal BlueTuskTransaction? Current;
 
         internal BlueTuskTransaction? ImplicitLargeObject;
+
+        internal IReadOnlyList<BlueTuskFieldDescription>? ResolvedRowDescription;
+
+        internal BlueTuskTypeRegistry? ResolvedRowRegistry;
+
+        internal BlueTuskResolvedField[]? ResolvedRowFields;
 
         internal bool Starting;
     }
