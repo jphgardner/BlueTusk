@@ -163,6 +163,13 @@ the paired report above because executing one provider's complete
 BenchmarkDotNet method before the other allows machine or server drift to be
 mistaken for a provider difference.
 
+The fresh-command multiplexed allocation cap is 75% of BlueTusk's ordinary
+pooled path, while the reused-command cap remains 60%. The fresh cap preserves
+at least a 25% multiplexing allocation advantage without treating an allocation
+improvement in the ordinary pool as a multiplexing regression. Independent
+absolute caps (1,850 B/op fresh and 800 B/op reused) and the Npgsql-relative cap
+continue to fail closed if multiplexing itself regresses.
+
 The paired capture runs before the long BenchmarkDotNet suite, performs 64
 untimed warm-up bursts per provider, then five trials of 501 paired blocks. Each
 block contains 32 real 64-command bursts per

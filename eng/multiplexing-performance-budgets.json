@@ -23,7 +23,7 @@
       "maxMeanRatio": 0.25,
       "maxP95Ratio": 0.25,
       "maxP99Ratio": 0.25,
-      "maxAllocationRatio": 0.60
+      "maxAllocationRatio": 0.75
     },
     {
       "candidate": "BlueTuskReusedScalarBurstAsync",
