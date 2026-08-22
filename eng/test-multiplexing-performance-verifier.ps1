@@ -17,7 +17,7 @@ function New-Samples
 {
     param([double] $Value)
 
-    return [double[]]@(0..100 | ForEach-Object {
+    return [double[]]@(0..500 | ForEach-Object {
         $Value * (1 + ((($_ % 5) - 2) / 1000))
     })
 }
@@ -48,7 +48,7 @@ function New-Fixture
         operationsPerBurst = 64
         warmupBurstsPerProvider = 64
         trialCount = 5
-        blocksPerTrial = 101
+        blocksPerTrial = 501
         burstsPerBlock = 32
         workloads = @(
             [ordered]@{
@@ -138,7 +138,7 @@ try
     Assert-Rejected -Name 'sample-count' -Mutate {
         param($fixture)
         $fixture.workloads[0].trials[0].candidateNanosecondsPerOperation =
-            @($fixture.workloads[0].trials[0].candidateNanosecondsPerOperation)[0..99]
+            @($fixture.workloads[0].trials[0].candidateNanosecondsPerOperation)[0..499]
     }
     Assert-Rejected -Name 'non-positive-sample' -Mutate {
         param($fixture)

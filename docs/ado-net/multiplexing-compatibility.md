@@ -108,10 +108,11 @@ claim.
 
 The exact-candidate workflow uses the full report for absolute latency,
 allocation and pooled-path comparisons. Provider-relative latency comes from
-five alternating paired trials: each trial records 101 blocks, each block
+five alternating paired trials: each trial records 501 blocks, each block
 contains 32 bursts per provider, and execution order reverses between blocks
 and trials. The verifier calculates each trial's mean/P95/P99 ratio from raw
-timings and gates the median trial ratio. The 101 observations per trial keep
-the P99 decision from being dominated by one maximum, while alternation avoids
-a false decision caused by measuring all of one provider before all of the
-other.
+timings and gates the median trial ratio. The paired phase runs before the long
+BenchmarkDotNet suite so prior thread-pool, database and thermal state cannot
+contaminate it. With 501 observations per trial, P99 is the sixth-slowest block
+rather than a decision dominated by one or two scheduler spikes; alternation
+also avoids measuring all of one provider before all of the other.

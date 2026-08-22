@@ -163,14 +163,17 @@ the paired report above because executing one provider's complete
 BenchmarkDotNet method before the other allows machine or server drift to be
 mistaken for a provider difference.
 
-The paired capture performs 64 untimed warm-up bursts per provider, then five
-trials of 101 paired blocks. Each block contains 32 real 64-command bursts per
+The paired capture runs before the long BenchmarkDotNet suite, performs 64
+untimed warm-up bursts per provider, then five trials of 501 paired blocks. Each
+block contains 32 real 64-command bursts per
 provider (2,048 logical commands), reverses provider order from the preceding
 block, and the first provider also reverses between trials. The verifier
 recomputes each trial's mean, P95 and P99 ratios from the raw block timings and
 applies the unchanged 1.05 provider caps to the median of the five trial
-ratios. The 101 observations make P99 an empirical tail estimate rather than
-an interpolation dominated by one maximum. It rejects missing samples, changed
+ratios. With 501 observations, P99 is the sixth-slowest block in each trial
+rather than a statistic decided by one or two scheduler spikes. Running this
+phase first also prevents prior suite state from contaminating the paired tail.
+It rejects missing samples, changed
 dimensions, invalid timings, incorrect order, future timestamps and duplicate
 workloads. Run
 `eng/test-multiplexing-performance-verifier.ps1` to exercise the positive

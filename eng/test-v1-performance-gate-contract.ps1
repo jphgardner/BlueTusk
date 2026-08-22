@@ -57,12 +57,12 @@ $temporaryPath = Join-Path (
 
 try
 {
-    'benchmark' | Set-Content -LiteralPath $temporaryPath -Encoding utf8NoBOM
-    'paired' | Tee-Object -FilePath $temporaryPath -Append | Out-Null
+    'paired' | Set-Content -LiteralPath $temporaryPath -Encoding utf8NoBOM
+    'benchmark' | Tee-Object -FilePath $temporaryPath -Append | Out-Null
     $content = Get-Content -LiteralPath $temporaryPath
     if (@($content).Count -ne 2 -or
-        $content[0] -ne 'benchmark' -or
-        $content[1] -ne 'paired')
+        $content[0] -ne 'paired' -or
+        $content[1] -ne 'benchmark')
     {
         throw 'Append-mode performance logging did not preserve both phases.'
     }
@@ -73,5 +73,5 @@ finally
 }
 
 Write-Output (
-    'V1 performance gate contract self-test passed: benchmark and paired phases ' +
+    'V1 performance gate contract self-test passed: paired and benchmark phases ' +
     'use valid, append-safe PowerShell parameter sets.')

@@ -78,12 +78,6 @@ try
         '*'
     )
 
-    & dotnet @runArguments 2>&1 | Tee-Object -LiteralPath $logPath
-    if ($LASTEXITCODE -ne 0)
-    {
-        throw "BenchmarkDotNet exited with code $LASTEXITCODE."
-    }
-
     $pairedArguments = @(
         'run',
         '--project',
@@ -101,11 +95,18 @@ try
         $pairedReport
     )
 
-    & dotnet @pairedArguments 2>&1 |
-        Tee-Object -FilePath $logPath -Append
+    # Capture provider-relative latency before the long BenchmarkDotNet suite so
+    # its thread-pool, database and thermal state cannot contaminate paired tails.
+    & dotnet @pairedArguments 2>&1 | Tee-Object -LiteralPath $logPath
     if ($LASTEXITCODE -ne 0)
     {
         throw "Paired multiplexing evidence capture exited with code $LASTEXITCODE."
+    }
+
+    & dotnet @runArguments 2>&1 | Tee-Object -FilePath $logPath -Append
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "BenchmarkDotNet exited with code $LASTEXITCODE."
     }
 }
 finally
@@ -178,7 +179,7 @@ $evidence = [ordered]@{
         warmupCount = 10
         iterationCount = 15
         providerLatencyMethod = 'median of five alternating-provider trials'
-        pairedBlocksPerTrial = 101
+        pairedBlocksPerTrial = 501
         burstsPerBlock = 32
         operationsPerBurst = 64
     }

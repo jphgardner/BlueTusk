@@ -321,8 +321,9 @@ same review.
 
 For a release candidate, commit or archive both reports. BenchmarkDotNet is the
 source for BlueTusk absolute latency and allocation; its provider latency rows
-remain descriptive because methods run sequentially. The paired report is the
-provider-relative latency authority: 64 warm-ups per provider, five trials, 31
-alternating blocks per trial, 32 bursts per block and 64 operations per burst.
-The gate recomputes each trial and uses the median ratio, so one transient block
-or provider execution order cannot decide the release.
+remain descriptive because methods run sequentially. The paired report runs
+first and is the provider-relative latency authority: 64 warm-ups per provider,
+five trials, 501 alternating blocks per trial, 32 bursts per block and 64
+operations per burst. The gate recomputes each trial and uses the median ratio;
+P99 is therefore the sixth-slowest block rather than a statistic decided by one
+or two transient scheduler spikes.

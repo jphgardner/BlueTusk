@@ -122,9 +122,11 @@ independent production-validation gate.
 
 Exact-candidate runs retain that full BenchmarkDotNet evidence for absolute
 latency and allocation, and add five alternating-provider trials for the
-provider-relative latency decision. Each trial contains 101 paired blocks of 32
+provider-relative latency decision. Each trial contains 501 paired blocks of 32
 bursts per provider, with provider order reversed between blocks and trials.
 The gate recomputes mean, P95 and P99 from raw timings and evaluates the median
-trial ratio against the existing 5% ceiling. The 101 observations prevent a
-single maximum from dominating P99, while provider alternation prevents
-sequential machine or server drift from manufacturing a pass or a failure.
+trial ratio against the existing 5% ceiling. The paired phase runs before the
+long BenchmarkDotNet suite. With 501 observations, P99 is the sixth-slowest
+block rather than a statistic decided by one or two scheduler spikes, while
+provider alternation prevents sequential machine or server drift from
+manufacturing a pass or a failure.

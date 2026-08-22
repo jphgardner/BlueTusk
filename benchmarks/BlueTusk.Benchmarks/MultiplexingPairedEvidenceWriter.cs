@@ -15,7 +15,7 @@ internal static class MultiplexingPairedEvidenceWriter
     private const int OperationsPerBurst = 64;
     private const int WarmupBurstsPerProvider = 64;
     private const int TrialCount = 5;
-    private const int BlocksPerTrial = 101;
+    private const int BlocksPerTrial = 501;
     private const int BurstsPerBlock = 32;
 
     public static async Task CaptureAsync(string outputPath)
