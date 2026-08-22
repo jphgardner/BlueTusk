@@ -1,8 +1,11 @@
 # BlueTusk versus Npgsql V1 performance report
 
-**Report date:** 22 August 2026  
-**BlueTusk performance candidate:** `b04c686`  
-**Reference provider:** Npgsql 10.0.3  
+**Report date:** 22 August 2026
+
+**BlueTusk performance candidate:** `b04c686`
+
+**Reference provider:** Npgsql 10.0.3
+
 **Performance verdict:** pass for every direct, like-for-like workload in the V1 comparison harness
 
 ## Executive result
