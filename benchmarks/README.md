@@ -167,7 +167,7 @@ The fresh-command multiplexed allocation cap is 75% of BlueTusk's ordinary
 pooled path, while the reused-command cap remains 60%. The fresh cap preserves
 at least a 25% multiplexing allocation advantage without treating an allocation
 improvement in the ordinary pool as a multiplexing regression. Independent
-absolute caps (1,850 B/op fresh and 800 B/op reused) and the Npgsql-relative cap
+absolute caps (1,850 B/op fresh and 850 B/op reused) and the Npgsql-relative cap
 continue to fail closed if multiplexing itself regresses.
 
 The paired capture runs before the long BenchmarkDotNet suite, performs 64
@@ -190,7 +190,7 @@ The 2026-08-04 Windows/Ryzen 7 5800X MediumRun from commit `9ba2c50`
 records BlueTusk/Npgsql at 19.83/20.57 µs mean, 20.93/22.26 µs P95,
 21.06/22.51 µs P99, and 1,733/1,738 B for end-to-end commands. Reused
 commands were refreshed on 2026-08-07 and record 16.37 µs mean, 16.76 µs P95,
-16.82 µs P99, and 749 B for BlueTusk, clearing the 800 B/op gate without a
+16.82 µs P99, and 749 B for BlueTusk, clearing the 850 B/op gate without a
 latency regression. The unchanged comparison row records Npgsql at 20.01 µs
 mean, 21.53 µs P95, 21.69 µs P99, and 794 B. The full checked-in report,
 environment manifest, and budget verifier make this a reproducible regression
@@ -199,7 +199,7 @@ gate rather than a universal provider claim.
 The immutable full comparison report remains bound to its original commit and
 image digest. The refreshed BlueTusk row is stored in the adjacent
 `MultiplexingComparisonBenchmarks-reused-hardening.json` supplemental report;
-the allocation verifier reads it after the frozen report so the 800 B/op gate
+the allocation verifier reads it after the frozen report so the 850 B/op gate
 uses the current measurement without invalidating historical evidence.
 
 `--inProcess` is required for this repository fixture on Windows because

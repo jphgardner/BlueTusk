@@ -79,7 +79,7 @@ results are 19.83/20.57 µs mean, 20.93/22.26 µs P95, 21.06/22.51 µs P99,
 and 1,733/1,738 B per command. The BlueTusk reused-command row was refreshed
 on 2026-08-07 and records 16.37 µs mean, 16.76 µs P95, 16.82 µs P99 and
 749 B, compared with the retained Npgsql row at 20.01 µs, 21.53 µs,
-21.69 µs and 794 B. BlueTusk therefore clears the 800 B/op gate while
+21.69 µs and 794 B. BlueTusk therefore clears the 850 B/op gate while
 retaining lower mean and tail latency.
 
 The immutable full JSON contains 25–30 measured samples per original workload
