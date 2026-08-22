@@ -141,10 +141,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
                 if (!idleRemoved)
                 {
-                    lock (_stateSync)
-                    {
-                        Interlocked.Decrement(ref _idle);
-                    }
+                    Interlocked.Decrement(ref _idle);
                 }
 
                 if (IsCurrent(pooledSession) &&
@@ -166,18 +163,27 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         }
     }
 
-    internal override ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken)
+    internal override ValueTask<BlueTuskPooledSession> RentAsync(CancellationToken cancellationToken) =>
+        RentAsync(allowPendingReset: false, cancellationToken);
+
+    internal ValueTask<BlueTuskPooledSession> RentForCommandAsync(
+        CancellationToken cancellationToken) =>
+        RentAsync(allowPendingReset: true, cancellationToken);
+
+    private ValueTask<BlueTuskPooledSession> RentAsync(
+        bool allowPendingReset,
+        CancellationToken cancellationToken)
     {
         ThrowIfDisposed();
         if (_minimumSize > 0 && Volatile.Read(ref _total) < _minimumSize)
         {
-            return WarmUpAndRentAsync(cancellationToken);
+            return WarmUpAndRentAsync(allowPendingReset, cancellationToken);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
         var started = StartCheckoutMeasurement();
         var (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
-            TryAcquireAvailableOrReserveCreation();
+            TryAcquireAvailableOrReserveCreation(allowPendingReset);
         if (cleanLease && slot.Session is { } cleanSession)
         {
             RecordCleanReuse();
@@ -192,14 +198,16 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             creationReserved,
             cleanLease,
             idleRemoved,
+            allowPendingReset,
             cancellationToken);
     }
 
     private async ValueTask<BlueTuskPooledSession> WarmUpAndRentAsync(
+        bool allowPendingReset,
         CancellationToken cancellationToken)
     {
         await WarmUpAsync(cancellationToken).ConfigureAwait(false);
-        return await RentAsync(cancellationToken).ConfigureAwait(false);
+        return await RentAsync(allowPendingReset, cancellationToken).ConfigureAwait(false);
     }
 
     private async ValueTask<BlueTuskPooledSession> RentAsyncSlow(
@@ -209,6 +217,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         bool creationReserved,
         bool cleanLease,
         bool idleRemoved,
+        bool allowPendingReset,
         CancellationToken cancellationToken)
     {
         try
@@ -234,7 +243,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 {
                     cancellationToken.ThrowIfCancellationRequested();
                     (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
-                        TryAcquireAvailableOrReserveCreation();
+                        TryAcquireAvailableOrReserveCreation(allowPendingReset);
                     continue;
                 }
 
@@ -247,10 +256,19 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
                 if (!idleRemoved)
                 {
-                    lock (_stateSync)
-                    {
-                        Interlocked.Decrement(ref _idle);
-                    }
+                    Interlocked.Decrement(ref _idle);
+                }
+
+                if (allowPendingReset &&
+                    IsCurrent(pooledSession) &&
+                    !IsExpired(pooledSession, includeIdleLifetime: true) &&
+                    pooledSession.Session.IsOpen &&
+                    pooledSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle &&
+                    TryLeaseCurrent(pooledSession))
+                {
+                    BlueTuskDiagnostics.PoolLeases.Add(1);
+                    BlueTuskDiagnostics.PoolReuses.Add(1);
+                    return pooledSession;
                 }
 
                 try
@@ -275,7 +293,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 await DiscardAsync(pooledSession).ConfigureAwait(false);
                 cancellationToken.ThrowIfCancellationRequested();
                 (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
-                    TryAcquireAvailableOrReserveCreation();
+                    TryAcquireAvailableOrReserveCreation(allowPendingReset);
             }
         }
         finally
@@ -321,10 +339,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
                 if (!idleRemoved)
                 {
-                    lock (_stateSync)
-                    {
-                        Interlocked.Decrement(ref _idle);
-                    }
+                    Interlocked.Decrement(ref _idle);
                 }
 
                 try
@@ -388,10 +403,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
                 if (!idleRemoved)
                 {
-                    lock (_stateSync)
-                    {
-                        Interlocked.Decrement(ref _idle);
-                    }
+                    Interlocked.Decrement(ref _idle);
                 }
 
                 if (IsCurrent(pooledSession) &&
@@ -604,7 +616,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         bool CreationReserved,
         bool CleanLease,
         bool IdleRemoved)
-        TryAcquireAvailableOrReserveCreation()
+        TryAcquireAvailableOrReserveCreation(bool allowPendingReset = false)
     {
         var fastSession = Interlocked.Exchange(ref _fastSession, null);
         if (fastSession is not null)
@@ -614,7 +626,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 fastSession.Generation == Volatile.Read(ref _generation) &&
                 fastSession.Session.IsOpen &&
                 !IsExpired(fastSession, includeIdleLifetime: true) &&
-                !fastSession.RequiresReset &&
+                (allowPendingReset || !fastSession.RequiresReset) &&
                 fastSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
             {
                 Interlocked.Increment(ref _busy);
@@ -640,7 +652,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 if (pooledSession.Generation == _generation &&
                     pooledSession.Session.IsOpen &&
                     !IsExpired(pooledSession, includeIdleLifetime: true) &&
-                    !pooledSession.RequiresReset &&
+                    (allowPendingReset || !pooledSession.RequiresReset) &&
                     pooledSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle)
                 {
                     Interlocked.Increment(ref _busy);
@@ -719,9 +731,10 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
     private async ValueTask<BlueTuskPoolSlot> ReadAvailableAsync(CancellationToken cancellationToken)
     {
-        using var linkedCancellation = CancellationTokenSource.CreateLinkedTokenSource(
-            cancellationToken,
-            _shutdown.Token);
+        using var linkedCancellation = cancellationToken.CanBeCanceled
+            ? CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, _shutdown.Token)
+            : null;
+        var waitCancellationToken = linkedCancellation?.Token ?? _shutdown.Token;
         Interlocked.Increment(ref _waiting);
         if (Volatile.Read(ref _fastSession) is not null)
         {
@@ -731,7 +744,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
         BlueTuskDiagnostics.PoolWaiters.Add(1);
         try
         {
-            return await _available.Reader.ReadAsync(linkedCancellation.Token).ConfigureAwait(false);
+            return await _available.Reader.ReadAsync(waitCancellationToken).ConfigureAwait(false);
         }
         catch (OperationCanceledException)
         {
@@ -1004,17 +1017,15 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
     private bool TryLeaseCurrent(BlueTuskPooledSession session)
     {
-        lock (_stateSync)
+        if (Volatile.Read(ref _disposed) != 0 ||
+            session.Generation != Volatile.Read(ref _generation))
         {
-            if (Volatile.Read(ref _disposed) != 0 || session.Generation != _generation)
-            {
-                return false;
-            }
-
-            Interlocked.Increment(ref _busy);
-            Interlocked.Increment(ref _reused);
-            return true;
+            return false;
         }
+
+        Interlocked.Increment(ref _busy);
+        Interlocked.Increment(ref _reused);
+        return true;
     }
 
     private List<BlueTuskPooledSession> DrainIdleSessions(bool complete)
@@ -1201,9 +1212,19 @@ internal sealed class BlueTuskPooledSession(
 
     internal bool RequiresReset => Volatile.Read(ref _requiresReset) != 0;
 
+    internal Action ResetCompletedCallback =>
+        _resetCompletedCallback ??= ResetCompletedAndRecord;
+
     private int _requiresReset;
+    private Action? _resetCompletedCallback;
 
     internal void MarkDirty() => Volatile.Write(ref _requiresReset, 1);
 
     internal void ResetCompleted() => Volatile.Write(ref _requiresReset, 0);
+
+    internal void ResetCompletedAndRecord()
+    {
+        ResetCompleted();
+        BlueTuskDiagnostics.PoolResets.Add(1);
+    }
 }

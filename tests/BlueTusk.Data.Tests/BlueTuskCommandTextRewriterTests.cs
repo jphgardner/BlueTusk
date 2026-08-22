@@ -92,4 +92,21 @@ public sealed class BlueTuskCommandTextRewriterTests
         Assert.Equal([first, second], plan.Parameters);
         Assert.False(plan.UsesNamedParameters);
     }
+
+    [Fact]
+    public void Cached_positional_template_binds_each_parameter_collection_independently()
+    {
+        const string sql = "SELECT $1::int4";
+        var firstParameters = new BlueTuskParameterCollection();
+        var first = firstParameters.Add(new BlueTuskParameter<int>(41));
+        var secondParameters = new BlueTuskParameterCollection();
+        var second = secondParameters.Add(new BlueTuskParameter<int>(42));
+
+        var firstPlan = BlueTuskCommandTextRewriter.Rewrite(sql, firstParameters);
+        var secondPlan = BlueTuskCommandTextRewriter.Rewrite(sql, secondParameters);
+
+        Assert.Same(first, Assert.Single(firstPlan.Parameters));
+        Assert.Same(second, Assert.Single(secondPlan.Parameters));
+        Assert.NotSame(firstPlan.Parameters, secondPlan.Parameters);
+    }
 }

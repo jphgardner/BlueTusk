@@ -308,6 +308,27 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             completeState: CompleteExtendedScalarWriteState);
     }
 
+    internal ValueTask<BlueTuskScalarQueryResult> ExecuteResetAndExtendedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(resetCompleted);
+
+        return ExecuteScalarQueryAsync(
+            new ExtendedScalarWriteState(sql, sql, parameters, useBinaryResults),
+            WriteResetAndExtendedScalarMessages,
+            cancellationToken,
+            prepareState: PrepareResetAndExtendedScalarWriteState,
+            completeState: CompleteExtendedScalarWriteState,
+            prependedReadyForQueryCount: 1,
+            prependedCompleted: resetCompleted);
+    }
+
     /// <summary>Begins an incremental extended-query operation over a named portal.</summary>
     public BlueTuskPortal BeginPortal(
         string sql,
@@ -2857,7 +2878,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken,
         PreparedStatementDescription? preparedDescription = null,
         Func<BlueTuskSession, TState, TState>? prepareState = null,
-        Action<BlueTuskSession, TState>? completeState = null)
+        Action<BlueTuskSession, TState>? completeState = null,
+        int prependedReadyForQueryCount = 0,
+        Action? prependedCompleted = null)
     {
         ArgumentNullException.ThrowIfNull(writeMessages);
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -2877,7 +2900,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             {
                 var result = await ReadScalarResponseWithCancellationAsync(
                     preparedDescription,
-                    cancellationToken).ConfigureAwait(false);
+                    cancellationToken,
+                    prependedReadyForQueryCount,
+                    prependedCompleted).ConfigureAwait(false);
                 completeState?.Invoke(this, state);
                 return result;
             }
@@ -2886,6 +2911,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             BlueTuskFieldDescription? firstField = preparedDescription?.FirstField;
             ReadOnlyMemory<byte>? firstValue = null;
             BlueTuskServerException? deferredError = null;
+            BlueTuskServerException? prependedError = null;
             var fieldCount = preparedDescription?.FieldCount ?? 0;
             var hasValue = false;
             var firstResultComplete = false;
@@ -2917,18 +2943,18 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     case 'A':
                         EnqueueNotification(message);
                         break;
-                    case 'T' when !firstResultComplete:
+                    case 'T' when prependedReadyForQueryCount == 0 && !firstResultComplete:
                         fields = DecodeCachedRowDescription(message);
                         fieldCount = fields.Count;
                         firstField = fields.Count == 0 ? null : fields[0];
                         break;
-                    case 'D' when !firstResultComplete && !hasValue:
+                    case 'D' when prependedReadyForQueryCount == 0 && !firstResultComplete && !hasValue:
                         firstValue = BlueTuskBackendMessageDecoder.DecodeFirstDataRowValue(
                             message,
                             fieldCount);
                         hasValue = true;
                         break;
-                    case 'C' or 'I':
+                    case 'C' or 'I' when prependedReadyForQueryCount == 0:
                         firstResultComplete = true;
                         break;
                     case 'E':
@@ -2942,9 +2968,30 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
                         break;
                     case 'Z':
+                        var transactionStatus =
+                            BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message);
+                        if (prependedReadyForQueryCount > 0)
+                        {
+                            TransactionStatus = transactionStatus;
+                            prependedError ??= deferredError;
+                            deferredError = null;
+                            prependedReadyForQueryCount--;
+                            if (prependedReadyForQueryCount == 0 && prependedError is null)
+                            {
+                                prependedCompleted?.Invoke();
+                            }
+
+                            break;
+                        }
+
                         var cancellationCompletion = CompleteReadyForQuery(
-                            BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
+                            transactionStatus);
                         await cancellationCompletion.ConfigureAwait(false);
+                        if (prependedError is not null)
+                        {
+                            throw prependedError;
+                        }
+
                         if (deferredError is not null)
                         {
                             throw deferredError;
@@ -3007,6 +3054,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskFrontendMessageWriter.WriteSync(output);
     }
 
+    private static void WriteResetAndExtendedScalarMessages(
+        IBufferWriter<byte> output,
+        ExtendedScalarWriteState state)
+    {
+        BlueTuskFrontendMessageWriter.WriteDiscardAll(output);
+        WriteExtendedScalarMessages(output, state);
+    }
+
     private static ExtendedScalarWriteState PrepareExtendedScalarWriteState(
         BlueTuskSession session,
         ExtendedScalarWriteState state) =>
@@ -3017,6 +3072,15 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 state.OriginalSql,
                 state.Parameters),
         };
+
+    private static ExtendedScalarWriteState PrepareResetAndExtendedScalarWriteState(
+        BlueTuskSession session,
+        ExtendedScalarWriteState state)
+    {
+        session._preparedStatementDescriptions.Clear();
+        session.InvalidateUnnamedStatement();
+        return state with { ParseSql = state.OriginalSql };
+    }
 
     private static void CompleteExtendedScalarWriteState(
         BlueTuskSession session,
@@ -3840,21 +3904,35 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseWithCancellationAsync(
         PreparedStatementDescription? preparedDescription,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int prependedReadyForQueryCount = 0,
+        Action? prependedCompleted = null)
     {
         if (!cancellationToken.CanBeCanceled)
         {
-            return ReadScalarResponseAsync(preparedDescription);
+            return ReadScalarResponseAsync(
+                preparedDescription,
+                prependedReadyForQueryCount,
+                prependedCompleted);
         }
 
-        return ReadScalarResponseWithCancellationSlowAsync(preparedDescription, cancellationToken);
+        return ReadScalarResponseWithCancellationSlowAsync(
+            preparedDescription,
+            prependedReadyForQueryCount,
+            prependedCompleted,
+            cancellationToken);
     }
 
     private async ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseWithCancellationSlowAsync(
         PreparedStatementDescription? preparedDescription,
+        int prependedReadyForQueryCount,
+        Action? prependedCompleted,
         CancellationToken cancellationToken)
     {
-        var responseTask = ReadScalarResponseAsync(preparedDescription).AsTask();
+        var responseTask = ReadScalarResponseAsync(
+            preparedDescription,
+            prependedReadyForQueryCount,
+            prependedCompleted).AsTask();
         try
         {
             return await responseTask.WaitAsync(cancellationToken).ConfigureAwait(false);
@@ -3892,12 +3970,15 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     }
 
     private async ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseAsync(
-        PreparedStatementDescription? preparedDescription)
+        PreparedStatementDescription? preparedDescription,
+        int prependedReadyForQueryCount = 0,
+        Action? prependedCompleted = null)
     {
         IReadOnlyList<BlueTuskFieldDescription> fields = [];
         BlueTuskFieldDescription? firstField = preparedDescription?.FirstField;
         ReadOnlyMemory<byte>? firstValue = null;
         BlueTuskServerException? deferredError = null;
+        BlueTuskServerException? prependedError = null;
         var fieldCount = preparedDescription?.FieldCount ?? 0;
         var hasValue = false;
         var firstResultComplete = false;
@@ -3911,18 +3992,18 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 case 'A':
                     EnqueueNotification(message);
                     break;
-                case 'T' when !firstResultComplete:
+                case 'T' when prependedReadyForQueryCount == 0 && !firstResultComplete:
                     fields = DecodeCachedRowDescription(message);
                     fieldCount = fields.Count;
                     firstField = fields.Count == 0 ? null : fields[0];
                     break;
-                case 'D' when !firstResultComplete && !hasValue:
+                case 'D' when prependedReadyForQueryCount == 0 && !firstResultComplete && !hasValue:
                     firstValue = BlueTuskBackendMessageDecoder.DecodeFirstDataRowValue(
                         message,
                         fieldCount);
                     hasValue = true;
                     break;
-                case 'C' or 'I':
+                case 'C' or 'I' when prependedReadyForQueryCount == 0:
                     firstResultComplete = true;
                     break;
                 case 'E':
@@ -3936,9 +4017,30 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
                     break;
                 case 'Z':
+                    var transactionStatus =
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message);
+                    if (prependedReadyForQueryCount > 0)
+                    {
+                        TransactionStatus = transactionStatus;
+                        prependedError ??= deferredError;
+                        deferredError = null;
+                        prependedReadyForQueryCount--;
+                        if (prependedReadyForQueryCount == 0 && prependedError is null)
+                        {
+                            prependedCompleted?.Invoke();
+                        }
+
+                        break;
+                    }
+
                     var cancellationCompletion = CompleteReadyForQuery(
-                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
+                        transactionStatus);
                     await cancellationCompletion.ConfigureAwait(false);
+                    if (prependedError is not null)
+                    {
+                        throw prependedError;
+                    }
+
                     if (deferredError is not null)
                     {
                         throw deferredError;

@@ -60,6 +60,15 @@ Closing a logical connection makes its physical session available but does not b
 
 The reset round trip is also the health check for a touched lease. An untouched lease still verifies the locally observed open and idle state. A closed session, failed reset, expired session, or session from an earlier pool generation is discarded and replaced within the configured maximum. Logical connections reuse the data source's validated immutable connection settings, and optional notification/large-object coordination state is allocated only when those features are used.
 
+For an eligible parameterized scalar command created directly from a single-host
+data source, BlueTusk defers an idle session's `DISCARD ALL` until command
+execution. The reset and extended-query messages are written in one transport
+flush, while PostgreSQL still completes the reset before it processes the user
+query. This removes a separate checkout round trip without weakening isolation.
+Sessions in a transaction are reset before checkout, and explicit connections,
+prepared commands, simple-query execution, multi-host routing, and initial type
+metadata loading retain the conservative reset-before-lease path.
+
 ## Operations and diagnostics
 
 - `WarmUpAsync()` opens the configured minimum number of physical sessions.

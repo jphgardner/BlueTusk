@@ -151,6 +151,26 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         }
     }
 
+    internal ValueTask<BlueTuskConnection> OpenCommandConnectionAsync(
+        CancellationToken cancellationToken)
+    {
+        var connection = CreateConnection();
+        try
+        {
+            var opening = connection.OpenForCommandAsync(
+                allowPendingReset: _typeMetadata.IsLoaded,
+                cancellationToken);
+            return opening.IsCompletedSuccessfully
+                ? new ValueTask<BlueTuskConnection>(connection)
+                : CompleteOpenConnectionAsync(connection, opening);
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+    }
+
     public new BlueTuskCommand CreateCommand(string commandText) => (BlueTuskCommand)base.CreateCommand(commandText);
 
     public new BlueTuskBatch CreateBatch() => (BlueTuskBatch)base.CreateBatch();

@@ -45,6 +45,8 @@ internal sealed class BlueTuskTypeMetadataCache
 
     public BlueTuskTypeRegistry Registry => Volatile.Read(ref _registry);
 
+    internal bool IsLoaded => Volatile.Read(ref _loaded) != 0;
+
     public async ValueTask EnsureLoadedAsync(
         IBlueTuskPhysicalSession session,
         CancellationToken cancellationToken)

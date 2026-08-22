@@ -11,7 +11,7 @@ internal sealed record BlueTuskCommandPlan(
 internal static class BlueTuskCommandTextRewriter
 {
     private static readonly ConditionalWeakTable<string, NamedRewriteTemplate> NamedTemplates = new();
-    private static readonly ConditionalWeakTable<string, BlueTuskCommandPlan> ParameterlessPlans = new();
+    private static readonly ConditionalWeakTable<string, NoNamedRewriteTemplate> NoNamedTemplates = new();
 
     public static BlueTuskCommandPlan Rewrite(
         string sql,
@@ -22,6 +22,11 @@ internal static class BlueTuskCommandTextRewriter
         if (NamedTemplates.TryGetValue(sql, out var cachedTemplate))
         {
             return cachedTemplate.Bind(parameters);
+        }
+
+        if (NoNamedTemplates.TryGetValue(sql, out var noNamedTemplate))
+        {
+            return noNamedTemplate.Bind(parameters);
         }
 
         Dictionary<string, BlueTuskParameter>? namedParameters = null;
@@ -131,17 +136,9 @@ internal static class BlueTuskCommandTextRewriter
 
         if (rewritten is null)
         {
-            if (parameters.Count == 0)
-            {
-                return ParameterlessPlans.GetValue(
-                    sql,
-                    static commandText => new BlueTuskCommandPlan(
-                        commandText,
-                        Array.Empty<BlueTuskParameter>(),
-                        UsesNamedParameters: false));
-            }
-
-            return new BlueTuskCommandPlan(sql, parameters.Items, UsesNamedParameters: false);
+            return NoNamedTemplates.GetValue(
+                sql,
+                static commandText => new NoNamedRewriteTemplate(commandText)).Bind(parameters);
         }
 
         rewritten.Append(sql, segmentStart, sql.Length - segmentStart);
@@ -306,6 +303,22 @@ internal static class BlueTuskCommandTextRewriter
 
     private static bool IsParameterNamePart(char value) =>
         value == '_' || char.IsLetterOrDigit(value);
+
+    private sealed class NoNamedRewriteTemplate(string sql)
+    {
+        private BlueTuskCommandPlan? _parameterlessPlan;
+
+        public BlueTuskCommandPlan Bind(BlueTuskParameterCollection parameters) =>
+            parameters.Count == 0
+                ? _parameterlessPlan ??= new BlueTuskCommandPlan(
+                    sql,
+                    Array.Empty<BlueTuskParameter>(),
+                    UsesNamedParameters: false)
+                : new BlueTuskCommandPlan(
+                    sql,
+                    parameters.Items,
+                    UsesNamedParameters: false);
+    }
 
     private sealed record NamedRewriteTemplate(string Sql, string[] OrderedNames)
     {

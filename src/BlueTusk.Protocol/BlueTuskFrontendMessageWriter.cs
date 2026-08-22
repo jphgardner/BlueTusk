@@ -7,6 +7,7 @@ namespace BlueTusk.Protocol;
 /// <summary>Writes PostgreSQL frontend messages into caller-owned buffers.</summary>
 public static class BlueTuskFrontendMessageWriter
 {
+    private const int DiscardAllMessageLength = 17;
     public const int ProtocolVersion30 = 3 << 16;
     public const int SslRequestCode = 80877103;
     public const int CancelRequestCode = 80877102;
@@ -66,6 +67,19 @@ public static class BlueTuskFrontendMessageWriter
         WriteInt32(output, checked(sizeof(int) + sqlLength + 1));
         WriteUtf8(output, sql, sqlLength);
         WriteByte(output, 0);
+    }
+
+    internal static void WriteDiscardAll(IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ReadOnlySpan<byte> message =
+        [
+            (byte)'Q', 0, 0, 0, 16,
+            (byte)'D', (byte)'I', (byte)'S', (byte)'C', (byte)'A', (byte)'R', (byte)'D',
+            (byte)' ', (byte)'A', (byte)'L', (byte)'L', 0,
+        ];
+        message.CopyTo(output.GetSpan(DiscardAllMessageLength));
+        output.Advance(DiscardAllMessageLength);
     }
 
     public static void WriteSaslInitialResponse(IBufferWriter<byte> output, string mechanism, string response)
