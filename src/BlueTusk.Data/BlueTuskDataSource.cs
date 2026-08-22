@@ -123,7 +123,7 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         });
     }
 
-    public new BlueTuskConnection CreateConnection() => (BlueTuskConnection)base.CreateConnection();
+    public new BlueTuskConnection CreateConnection() => CreateBlueTuskConnection();
 
     internal BlueTuskConnection CreateUnpooledConnection(string connectionString) =>
         new(
@@ -246,7 +246,9 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
 
     ValueTask IProviderDataSource.ClearPoolAsync() => ClearPoolAsync();
 
-    protected override DbConnection CreateDbConnection() =>
+    protected override DbConnection CreateDbConnection() => CreateBlueTuskConnection();
+
+    private BlueTuskConnection CreateBlueTuskConnection() =>
         new BlueTuskConnection(
             _connectionString,
             _pool,
