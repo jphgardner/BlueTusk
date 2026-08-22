@@ -63,6 +63,8 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
 
     internal BlueTuskCommandMultiplexer? Multiplexer => _multiplexer;
 
+    internal bool HasPoolWaiters => _pool?.Statistics.Waiting > 0;
+
     /// <summary>Gets whether bounded statement multiplexing is enabled for this data source.</summary>
     public bool IsMultiplexingEnabled => _multiplexer is not null;
 

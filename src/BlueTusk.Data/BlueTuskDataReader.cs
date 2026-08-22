@@ -67,14 +67,15 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         BlueTuskTypeRegistry types,
         bool singleRow,
         BlueTuskCommand streamingCommand,
-        BlueTuskCommandTimeout? streamingTimeoutTimer)
+        BlueTuskCommandTimeout? streamingTimeoutTimer,
+        BlueTuskResolvedField[]? resolvedFields = null)
     {
         _portal = portal ?? throw new ArgumentNullException(nameof(portal));
         _executionConnection = executionConnection ?? throw new ArgumentNullException(nameof(executionConnection));
         _connectionToClose = connectionToClose;
         _types = types ?? throw new ArgumentNullException(nameof(types));
         _streamingFields = portal.Fields as BlueTuskFieldDescription[] ?? [.. portal.Fields];
-        _streamingResolvedFields = ResolveFields(_streamingFields);
+        _streamingResolvedFields = resolvedFields ?? ResolveFields(_streamingFields);
         _singleRow = singleRow;
         _streamingCommand = streamingCommand ?? throw new ArgumentNullException(nameof(streamingCommand));
         _streamingTimeoutTimer = streamingTimeoutTimer;

@@ -129,20 +129,88 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
         }
     }
 
-    public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken) =>
-        GetConnectedStream().ReadAsync(buffer, cancellationToken);
+    public ValueTask<int> ReadAsync(Memory<byte> buffer, CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _stream is NetworkStream && _socket is { } socket
+            ? socket.ReceiveAsync(buffer, SocketFlags.None, cancellationToken)
+            : GetConnectedStream().ReadAsync(buffer, cancellationToken);
+    }
 
-    public int Read(Span<byte> buffer) => GetConnectedStream().Read(buffer);
+    public int Read(Span<byte> buffer)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _stream is NetworkStream && _socket is { } socket
+            ? socket.Receive(buffer, SocketFlags.None)
+            : GetConnectedStream().Read(buffer);
+    }
 
-    public ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken) =>
-        GetConnectedStream().WriteAsync(buffer, cancellationToken);
+    public ValueTask WriteAsync(ReadOnlyMemory<byte> buffer, CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_stream is not NetworkStream || _socket is not { } socket)
+        {
+            return GetConnectedStream().WriteAsync(buffer, cancellationToken);
+        }
 
-    public void Write(ReadOnlySpan<byte> buffer) => GetConnectedStream().Write(buffer);
+        var pendingSend = socket.SendAsync(buffer, SocketFlags.None, cancellationToken);
+        if (!pendingSend.IsCompletedSuccessfully)
+        {
+            return CompleteSocketWriteAsync(socket, buffer, pendingSend, cancellationToken);
+        }
 
-    public ValueTask FlushAsync(CancellationToken cancellationToken) =>
-        new(GetConnectedStream().FlushAsync(cancellationToken));
+        var sent = pendingSend.Result;
+        if (sent == buffer.Length)
+        {
+            return ValueTask.CompletedTask;
+        }
 
-    public void Flush() => GetConnectedStream().Flush();
+        if (sent == 0)
+        {
+            return ValueTask.FromException(
+                new EndOfStreamException("The socket closed before the complete buffer was written."));
+        }
+
+        return CompleteSocketWriteAsync(socket, buffer[sent..], cancellationToken);
+    }
+
+    public void Write(ReadOnlySpan<byte> buffer)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_stream is not NetworkStream || _socket is not { } socket)
+        {
+            GetConnectedStream().Write(buffer);
+            return;
+        }
+
+        while (!buffer.IsEmpty)
+        {
+            var sent = socket.Send(buffer, SocketFlags.None);
+            if (sent == 0)
+            {
+                throw new EndOfStreamException("The socket closed before the complete buffer was written.");
+            }
+
+            buffer = buffer[sent..];
+        }
+    }
+
+    public ValueTask FlushAsync(CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        return _stream is NetworkStream
+            ? ValueTask.CompletedTask
+            : new ValueTask(GetConnectedStream().FlushAsync(cancellationToken));
+    }
+
+    public void Flush()
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_stream is not NetworkStream)
+        {
+            GetConnectedStream().Flush();
+        }
+    }
 
     public async ValueTask UpgradeToTlsAsync(BlueTuskTlsOptions options, CancellationToken cancellationToken)
     {
@@ -190,6 +258,39 @@ public sealed class BlueTuskSocketTransport : IBlueTuskTlsTransport
             await tlsStream.DisposeAsync().ConfigureAwait(false);
             DisposeSocket();
             throw;
+        }
+    }
+
+    private static async ValueTask CompleteSocketWriteAsync(
+        Socket socket,
+        ReadOnlyMemory<byte> buffer,
+        ValueTask<int> pendingSend,
+        CancellationToken cancellationToken)
+    {
+        var sent = await pendingSend.ConfigureAwait(false);
+        if (sent == 0 && !buffer.IsEmpty)
+        {
+            throw new EndOfStreamException("The socket closed before the complete buffer was written.");
+        }
+
+        buffer = buffer[sent..];
+        await CompleteSocketWriteAsync(socket, buffer, cancellationToken).ConfigureAwait(false);
+    }
+
+    private static async ValueTask CompleteSocketWriteAsync(
+        Socket socket,
+        ReadOnlyMemory<byte> buffer,
+        CancellationToken cancellationToken)
+    {
+        while (!buffer.IsEmpty)
+        {
+            var sent = await socket.SendAsync(buffer, SocketFlags.None, cancellationToken).ConfigureAwait(false);
+            if (sent == 0)
+            {
+                throw new EndOfStreamException("The socket closed before the complete buffer was written.");
+            }
+
+            buffer = buffer[sent..];
         }
     }
 

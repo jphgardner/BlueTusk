@@ -33,6 +33,7 @@ public sealed class BlueTuskCommand : DbCommand
     private string? _multiplexingClassificationText;
     private bool _multiplexingSessionNeutral;
     private ReusableCommandTimeout? _preparedCommandTimeout;
+    private BlueTuskCommandInstrumentation _multiplexedTelemetry;
 
     public BlueTuskCommand()
     {
@@ -614,7 +615,8 @@ public sealed class BlueTuskCommand : DbCommand
             connection.TypeRegistry,
             behavior.HasFlag(CommandBehavior.SingleRow),
             this,
-            timeoutTimer);
+            timeoutTimer,
+            connection.ResolveRowFields(portal.Fields));
     }
 
     private BlueTuskCommandTimeout? CreateTimeoutTimer() => CommandTimeout > 0
@@ -677,14 +679,15 @@ public sealed class BlueTuskCommand : DbCommand
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
         var telemetry = default(BlueTuskCommandInstrumentation);
+        var multiplexed = false;
         Exception? failure = null;
         try
         {
             if (ResolveMultiplexer() is { } multiplexer)
             {
+                multiplexed = true;
                 return await multiplexer.ExecuteAsync(
                     this,
-                    connection => telemetry = StartTelemetry(connection),
                     cancellationToken).ConfigureAwait(false);
             }
 
@@ -699,7 +702,15 @@ public sealed class BlueTuskCommand : DbCommand
         }
         finally
         {
-            telemetry.Complete(failure);
+            if (multiplexed)
+            {
+                CompleteMultiplexedTelemetry(failure);
+            }
+            else
+            {
+                telemetry.Complete(failure);
+            }
+
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
@@ -715,14 +726,15 @@ public sealed class BlueTuskCommand : DbCommand
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
         var telemetry = default(BlueTuskCommandInstrumentation);
+        var multiplexed = false;
         Exception? failure = null;
         try
         {
             if (ResolveMultiplexer() is { } multiplexer)
             {
+                multiplexed = true;
                 return multiplexer.ExecuteAsync(
                         this,
-                        connection => telemetry = StartTelemetry(connection),
                         CancellationToken.None)
                     .AsTask()
                     .GetAwaiter()
@@ -738,7 +750,15 @@ public sealed class BlueTuskCommand : DbCommand
         }
         finally
         {
-            telemetry.Complete(failure);
+            if (multiplexed)
+            {
+                CompleteMultiplexedTelemetry(failure);
+            }
+            else
+            {
+                telemetry.Complete(failure);
+            }
+
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
@@ -856,9 +876,10 @@ public sealed class BlueTuskCommand : DbCommand
     }
 
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreOnceAsync(
-        Action<BlueTuskConnection> startTelemetry,
+        Action<BlueTuskConnection>? startTelemetry,
         CancellationToken cancellationToken,
-        BlueTuskConnection? dispatchedConnection = null)
+        BlueTuskConnection? dispatchedConnection = null,
+        bool startMultiplexedTelemetry = false)
     {
         if (_connection is null && _dataSource is null && dispatchedConnection is null)
         {
@@ -884,7 +905,14 @@ public sealed class BlueTuskCommand : DbCommand
             throw new InvalidOperationException("CommandText is required.");
         }
 
-        startTelemetry(connection);
+        if (startMultiplexedTelemetry)
+        {
+            StartMultiplexedTelemetry(connection);
+        }
+        else
+        {
+            startTelemetry!(connection);
+        }
 
         using var timeoutTimer = CreateTimeoutTimer();
         Volatile.Write(ref _executingConnection, connection);
@@ -994,9 +1022,12 @@ public sealed class BlueTuskCommand : DbCommand
 
     internal ValueTask<BlueTuskQueryResult> ExecuteDispatchedAsync(
         BlueTuskConnection connection,
-        Action<BlueTuskConnection> startTelemetry,
         CancellationToken cancellationToken) =>
-        ExecuteCoreOnceAsync(startTelemetry, cancellationToken, connection);
+        ExecuteCoreOnceAsync(
+            startTelemetry: null,
+            cancellationToken: cancellationToken,
+            dispatchedConnection: connection,
+            startMultiplexedTelemetry: true);
 
     internal bool CanUseMultiplexedPipeline =>
         ExecutionMode != BlueTuskCommandExecutionMode.Simple &&
@@ -1024,6 +1055,9 @@ public sealed class BlueTuskCommand : DbCommand
     internal void SetMultiplexedPipelineActiveConnection(
         BlueTuskConnection connection) =>
         Volatile.Write(ref _executingConnection, connection);
+
+    internal void StartMultiplexedTelemetry(BlueTuskConnection connection) =>
+        _multiplexedTelemetry = StartTelemetry(connection);
 
     internal void CompleteMultiplexedPipelineExecution() =>
         Volatile.Write(ref _executingConnection, null);
@@ -1120,13 +1154,11 @@ public sealed class BlueTuskCommand : DbCommand
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
         Interlocked.Exchange(ref _timeoutRequested, 0);
-        var telemetry = default(BlueTuskCommandInstrumentation);
         Exception? failure = null;
         try
         {
             var result = await multiplexer.ExecuteScalarAsync(
                 this,
-                connection => telemetry = StartTelemetry(connection),
                 cancellationToken).ConfigureAwait(false);
             return DecodeScalar<T>(GetTypeRegistry(), result);
         }
@@ -1137,7 +1169,7 @@ public sealed class BlueTuskCommand : DbCommand
         }
         finally
         {
-            telemetry.Complete(failure);
+            CompleteMultiplexedTelemetry(failure);
             Volatile.Write(ref _executingConnection, null);
             Volatile.Write(ref _executing, 0);
         }
@@ -1223,17 +1255,19 @@ public sealed class BlueTuskCommand : DbCommand
                 }
 
                 var parameters = EncodeParameters(plan, connection.TypeRegistry);
-                var useBinaryResults = connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
+                var session = connection.Session;
+                var useBinaryResults = session.TransactionStatus == BlueTuskTransactionStatus.Idle;
                 try
                 {
                     BlueTuskScalarQueryResult result;
                     if (_prepareRequested)
                     {
-                        var prepared = await EnsurePreparedAsync(
-                            cancellationToken,
-                            plan,
-                            parameters).ConfigureAwait(false);
-                        result = await connection.Session.ExecutePreparedScalarAsync(
+                        var prepared = TryGetPreparedStatement(session, plan, parameters) ??
+                            await EnsurePreparedAsync(
+                                cancellationToken,
+                                plan,
+                                parameters).ConfigureAwait(false);
+                        result = await session.ExecutePreparedScalarAsync(
                             prepared.Name,
                             parameters,
                             useBinaryResults,
@@ -1247,7 +1281,7 @@ public sealed class BlueTuskCommand : DbCommand
                                 parameters,
                                 useBinaryResults,
                                 cancellationToken).ConfigureAwait(false)
-                            : await connection.Session.ExecuteExtendedScalarAsync(
+                            : await session.ExecuteExtendedScalarAsync(
                                 plan.Sql,
                                 parameters,
                                 useBinaryResults,
@@ -1262,11 +1296,12 @@ public sealed class BlueTuskCommand : DbCommand
                     BlueTuskScalarQueryResult result;
                     if (_prepareRequested)
                     {
-                        var prepared = await EnsurePreparedAsync(
-                            cancellationToken,
-                            plan,
-                            parameters).ConfigureAwait(false);
-                        result = await connection.Session.ExecutePreparedScalarAsync(
+                        var prepared = TryGetPreparedStatement(session, plan, parameters) ??
+                            await EnsurePreparedAsync(
+                                cancellationToken,
+                                plan,
+                                parameters).ConfigureAwait(false);
+                        result = await session.ExecutePreparedScalarAsync(
                             prepared.Name,
                             parameters,
                             useBinaryResults: false,
@@ -1274,7 +1309,7 @@ public sealed class BlueTuskCommand : DbCommand
                     }
                     else
                     {
-                        result = await connection.Session.ExecuteExtendedScalarAsync(
+                        result = await session.ExecuteExtendedScalarAsync(
                             plan.Sql,
                             parameters,
                             useBinaryResults: false,
@@ -1402,7 +1437,7 @@ public sealed class BlueTuskCommand : DbCommand
          exception.Error.Fields.TryGetValue('R', out var routine) &&
          string.Equals(routine, "getTypeBinaryOutputInfo", StringComparison.Ordinal));
 
-    private async ValueTask<PreparedStatementState> EnsurePreparedAsync(
+    private ValueTask<PreparedStatementState> EnsurePreparedAsync(
         CancellationToken cancellationToken,
         BlueTuskCommandPlan? plan = null,
         IReadOnlyList<BlueTuskExtendedQueryParameter>? encodedParameters = null)
@@ -1431,39 +1466,73 @@ public sealed class BlueTuskCommand : DbCommand
         plan ??= GetCommandPlan();
         encodedParameters ??= EncodeParameters(plan, connection.TypeRegistry);
         var session = connection.Session;
-        if (_preparedStatement is { } current &&
-            ReferenceEquals(current.Session, session) &&
-            string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) &&
-            ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters))
+        if (TryGetPreparedStatement(session, plan, encodedParameters) is { } current)
         {
-            BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "reuse");
-            return current;
+            return ValueTask.FromResult(current);
         }
 
         var typeOids = encodedParameters.Select(static parameter => parameter.TypeOid).ToArray();
 
         var statementName = _preparedStatement?.Name ??
             $"bluetusk_{Interlocked.Increment(ref s_preparedStatementSequence):x}";
-        if (_preparedStatement is { } existing && ReferenceEquals(existing.Session, session))
+        var existingStatementName =
+            _preparedStatement is { } existing && ReferenceEquals(existing.Session, session)
+                ? existing.Name
+                : null;
+        return PrepareStatementAsync(
+            session,
+            statementName,
+            plan.Sql,
+            typeOids,
+            existingStatementName,
+            cancellationToken);
+    }
+
+    private async ValueTask<PreparedStatementState> PrepareStatementAsync(
+        IBlueTuskPhysicalSession session,
+        string statementName,
+        string sql,
+        uint[] typeOids,
+        string? existingStatementName,
+        CancellationToken cancellationToken)
+    {
+        if (existingStatementName is not null)
         {
             await session.ClosePreparedStatementAsync(
-                existing.Name,
+                existingStatementName,
                 cancellationToken).ConfigureAwait(false);
         }
 
         await session.PrepareStatementAsync(
             statementName,
-            plan.Sql,
+            sql,
             typeOids,
             cancellationToken).ConfigureAwait(false);
         BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "prepare");
         var prepared = new PreparedStatementState(
             statementName,
-            plan.Sql,
+            sql,
             typeOids,
             session);
         _preparedStatement = prepared;
         return prepared;
+    }
+
+    private PreparedStatementState? TryGetPreparedStatement(
+        IBlueTuskPhysicalSession session,
+        BlueTuskCommandPlan plan,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> encodedParameters)
+    {
+        if (_preparedStatement is not { } current ||
+            !ReferenceEquals(current.Session, session) ||
+            !string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) ||
+            !ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters))
+        {
+            return null;
+        }
+
+        BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "reuse");
+        return current;
     }
 
     private PreparedStatementState EnsurePrepared(
@@ -1556,6 +1625,13 @@ public sealed class BlueTuskCommand : DbCommand
             endpoint.Host,
             endpoint.Port,
             connection.DiagnosticsOptions);
+    }
+
+    private void CompleteMultiplexedTelemetry(Exception? failure)
+    {
+        var telemetry = _multiplexedTelemetry;
+        _multiplexedTelemetry = default;
+        telemetry.Complete(failure);
     }
 
     private BlueTuskExtendedQueryParameter[] EncodeParameters(

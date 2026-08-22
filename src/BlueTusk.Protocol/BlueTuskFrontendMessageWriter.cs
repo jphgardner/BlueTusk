@@ -273,13 +273,18 @@ public static class BlueTuskFrontendMessageWriter
             length = checked(length + sizeof(int) + (parameters.GetValue(index)?.Length ?? 0));
         }
 
-        WriteByte(output, (byte)'B');
-        WriteInt32(output, length);
-        WriteUtf8(output, portalName, portalLength);
-        WriteByte(output, 0);
-        WriteUtf8(output, statementName, statementLength);
-        WriteByte(output, 0);
-        WriteInt16(output, checked((short)parameters.Count));
+        var messageLength = checked(1 + length);
+        var destination = output.GetSpan(messageLength)[..messageLength];
+        var offset = 0;
+        destination[offset++] = (byte)'B';
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], length);
+        offset += sizeof(int);
+        offset += Encoding.UTF8.GetBytes(portalName, destination[offset..]);
+        destination[offset++] = 0;
+        offset += Encoding.UTF8.GetBytes(statementName, destination[offset..]);
+        destination[offset++] = 0;
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], checked((short)parameters.Count));
+        offset += sizeof(short);
         for (var index = 0; index < parameters.Count; index++)
         {
             var formatCode = parameters.GetFormatCode(index);
@@ -288,23 +293,29 @@ public static class BlueTuskFrontendMessageWriter
                 throw new ArgumentOutOfRangeException(nameof(parameters), "Parameter format codes must be text (0) or binary (1).");
             }
 
-            WriteInt16(output, formatCode);
+            BinaryPrimitives.WriteInt16BigEndian(destination[offset..], formatCode);
+            offset += sizeof(short);
         }
 
-        WriteInt16(output, checked((short)parameters.Count));
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], checked((short)parameters.Count));
+        offset += sizeof(short);
         for (var index = 0; index < parameters.Count; index++)
         {
             if (parameters.GetValue(index) is not { } value)
             {
-                WriteInt32(output, -1);
+                BinaryPrimitives.WriteInt32BigEndian(destination[offset..], -1);
+                offset += sizeof(int);
                 continue;
             }
 
-            WriteInt32(output, value.Length);
-            WriteBytes(output, value.Span);
+            BinaryPrimitives.WriteInt32BigEndian(destination[offset..], value.Length);
+            offset += sizeof(int);
+            value.Span.CopyTo(destination[offset..]);
+            offset += value.Length;
         }
 
-        WriteInt16(output, checked((short)resultFormatCodes.Count));
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], checked((short)resultFormatCodes.Count));
+        offset += sizeof(short);
         for (var index = 0; index < resultFormatCodes.Count; index++)
         {
             var formatCode = resultFormatCodes[index];
@@ -313,8 +324,11 @@ public static class BlueTuskFrontendMessageWriter
                 throw new ArgumentOutOfRangeException(nameof(resultFormatCodes), "Result format codes must be text (0) or binary (1).");
             }
 
-            WriteInt16(output, formatCode);
+            BinaryPrimitives.WriteInt16BigEndian(destination[offset..], formatCode);
+            offset += sizeof(short);
         }
+
+        output.Advance(offset);
     }
 
     private readonly struct BindParameterListSource(

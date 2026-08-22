@@ -26,6 +26,9 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     private object? _sessionLease;
     private bool _hideSensitiveConnectionString;
     private bool _sessionTouched;
+    private IReadOnlyList<BlueTuskFieldDescription>? _resolvedRowDescription;
+    private BlueTuskTypeRegistry? _resolvedRowRegistry;
+    private BlueTuskResolvedField[]? _resolvedRowFields;
     private bool _disposed;
     private ConnectionState _state = ConnectionState.Closed;
 
@@ -287,6 +290,30 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         IBlueTuskPhysicalSession session => session,
         _ => null,
     };
+
+    internal BlueTuskResolvedField[] ResolveRowFields(
+        IReadOnlyList<BlueTuskFieldDescription> fields)
+    {
+        ArgumentNullException.ThrowIfNull(fields);
+        var types = TypeRegistry;
+        if (ReferenceEquals(_resolvedRowDescription, fields) &&
+            ReferenceEquals(_resolvedRowRegistry, types) &&
+            _resolvedRowFields is { } cached)
+        {
+            return cached;
+        }
+
+        var resolved = new BlueTuskResolvedField[fields.Count];
+        for (var index = 0; index < resolved.Length; index++)
+        {
+            resolved[index] = BlueTuskValueDecoder.Resolve(types, fields[index]);
+        }
+
+        _resolvedRowDescription = fields;
+        _resolvedRowRegistry = types;
+        _resolvedRowFields = resolved;
+        return resolved;
+    }
 
     private SemaphoreSlim LargeObjectGate =>
         LazyInitializer.EnsureInitialized(
