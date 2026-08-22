@@ -69,7 +69,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 837,
+    "wordCount": 844,
     "readMinutes": 4,
     "searchText": "BlueTusk documentation BlueTusk is a PostgreSQL-native .NET platform built as a set of independently versioned product families. The documentation follows the same boundaries as the code: start with the provider, add EF Core or an extension when the application needs it, and adopt Streams, Sync, Live, Control Plane or Continuous Graph only when their delivery contracts match the workload. The V1 implementation and release-hardening work are complete. Stable publication is still fail closed while exact-candidate endurance evidence, its 14 required in-window operational disturbance recoveries, PostgreSQL 19 GA evidence, independent review and operational rehearsals remain outstanding. Start with [V1 release readiness](v1-release-readiness.md) if you need to distinguish implemented code from release authorization. Choose a path You want to… Start here Then read Evaluate BlueTusk locally [Quickstart](getting-started/quickstart.md) [Core concepts](getting-started/concepts.md) Build with ADO.NET [Provider guide](ado-net/README.md) [Compatibility matrix](ado-net/compatibility.md) and [dependency injection](ado-net/dependency-injection.md) Build with EF Core [EF Core guide](ef-core/README.md) [Specification coverage](ef-core/specification-tests.md) Move committed changes [Real-time platform](realtime-platform/README.md) [Streams](streams/README.md) and [operations](realtime-platform/operations.md) Synchronize destinations [Sync](sync/README.md) [Delivery contracts](realtime-platform/contracts.md) Deliver authorized live data [Live](live/README.md) [Security](security.md) Use PostgreSQL extensions [Extensions](extensions/README.md) [Type system](types/README.md) Query or maintain graph data [SQL/PGQ](graph/README.md) [Continuous Graph](continuous-graph/README.md) Operate a deployment [Deployment](operations/deployment.md) [Troubleshooting](operations/troubleshooting.md), [production observability](operations/observability.md) and [V1 production readiness](operations/production-readiness.md) Contribute [Repository layout](contributing/repository-layout.md) [Testing](contributing/testing.md) Prepare a release [Release process](release-process.md) [Operational approval evidence](operations/approval-evidence.md) and [independent review handoff](release-review-handoff.md) Product families Provider The Provider family owns the PostgreSQL wire path: transport, protocol, authentication, pooling, ADO.NET, types, COPY, notifications, large objects, pipeline mode and replication. It does not wrap Npgsql at runtime. Read: [ADO.NET provider](ado-net/README.md) [Supported and intentionally excluded ADO.NET behavior](ado-net/compatibility.md) [Authentication](ado-net/authentication.md) and [cloud identity](ado-net/cloud-identity.md) [Pooling](ado-net/pooling.md), [multi-host routing](ado-net/multi-host.md) and [bounded multiplexing](ado-net/multiplexing-compatibility.md) [Type system](types/README.md), [COPY](ado-net/copy.md) and [replication](replication/README.md) EF Core The EF Core family adds PostgreSQL-native mappings, translations, migrations, scaffolding and design-time tooling on top of the provider-owned data source. It consumes an internal Provider SPI rather than taking ownership of the wire stack. Read: [EF Core provider](ef-core/README.md) [Official relational specification coverage](ef-core/specification-tests.md) [Internal EF↔Data boundary](architecture/decisions/0017-internal-ef-data-provider-spi.md) Streams, Sync and Live The real-time families share source identity, transaction and checkpoint concepts but deliberately keep different delivery semantics: **Streams** turns logical replication into acknowledged committed transactions and owns snapshot bootstrap, state stores and durable relay. **Sync** applies versioned transforms to PostgreSQL, Redis, NATS and OpenSearch destinations, with quarantine, reconciliation and rebuilds. **Live** performs authorized re-query and delivery over server-sent events, SignalR and gRPC/browser client surfaces. Read: [Platform contracts](realtime-platform/contracts.md) [Streams](streams/README.md), [Sync](sync/README.md) and [Live](live/README.md) [Production operations](realtime-platform/operations.md) [Streams 72-hour](streams/release-endurance.md) and [Sync 24-hour](sync/release-endurance.md) evidence contracts Control Plane and Continuous Graph Control Plane manages deployment state, operational queries, reconciliation, auditing and the dashboard boundary. Continuous Graph consumes acknowledged changes into checkpointed graph projections for workloads such as fraud and network topology. Read: [Control Plane](control-plane/README.md) [Continuous Graph](continuous-graph/README.md) [Managed-hosting reconciliation decision](architecture/decisions/0014-managed-hosting-reconciliation.md) [Incremental graph maintenance decision](architecture/decisions/0016-authoritative-incremental-graph-maintenance.md) Architectural foundations BlueTusk uses a strict downward dependency direction: The important cross-cutting rules are: PostgreSQL behavior is the specification. Capability discovery is stronger than version-string inference. Every untrusted length, count and collection is bounded before allocation. Logical connection ownership is distinct from physical pooled-session ownership. Acknowledgement, checkpointing and destination application are separate operations. Public API, persisted format and package changes are mechanically checked. A successful local build is evidence, not publication permission. The [architecture overview](architecture/overview.md) explains the layers and the [architecture decisions](architecture/decisions/) record why the important boundaries exist. Operations and release truth Use these documents when the question is not “how do I call the API?”: [Deployment and configuration](operations/deployment.md) [Application platform health and rollout acceptance](operations/application-platform-health.md) [Troubleshooting](operations/troubleshooting.md",
     "blocks": [
@@ -85,7 +85,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>The important cross-cutting rules are:</p>\n<ol>\n<li>PostgreSQL behavior is the specification.</li>\n<li>Capability discovery is stronger than version-string inference.</li>\n<li>Every untrusted length, count and collection is bounded before allocation.</li>\n<li>Logical connection ownership is distinct from physical pooled-session\nownership.</li>\n<li>Acknowledgement, checkpointing and destination application are separate\noperations.</li>\n<li>Public API, persisted format and package changes are mechanically checked.</li>\n<li>A successful local build is evidence, not publication permission.</li>\n</ol>\n<p>The <a href=\"/documentation/getting-started/architecture\">architecture overview</a> explains the layers and\nthe <a href=\"https://github.com/jphgardner/BlueTusk/tree/main/docs/architecture/decisions/\" target=\"_blank\" rel=\"noreferrer\">architecture decisions</a> record why the important\nboundaries exist.</p>\n<h2>Operations and release truth</h2>\n<p>Use these documents when the question is not “how do I call the API?”:</p>\n<ul>\n<li><a href=\"/documentation/operations/deployment\">Deployment and configuration</a></li>\n<li><a href=\"/documentation/operations/operations-application-platform-health\">Application platform health and rollout acceptance</a></li>\n<li><a href=\"/documentation/operations/troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/operations/performance\">Performance engineering</a></li>\n<li><a href=\"/documentation/operations/operations-observability\">Production observability and SLOs</a></li>\n<li><a href=\"/documentation/operations/operations-production-readiness\">V1 production-readiness gates and exact-candidate evidence</a></li>\n<li><a href=\"/documentation/operations/operations-package-evidence\">Canonical V1 package evidence</a></li>\n<li><a href=\"/documentation/operations/operations-approval-evidence\">V1 operational approval evidence</a></li>\n<li><a href=\"/documentation/operations/operations-website-production\">Angular website production contract</a></li>\n<li><a href=\"/documentation/operations/upgrade-guide\">Upgrade guide</a></li>\n<li><a href=\"/documentation/operations/observability\">Observability</a></li>\n<li><a href=\"/documentation/operations/security\">Security model</a></li>\n<li><a href=\"/documentation/operations/testing\">Testing profiles</a></li>\n<li><a href=\"/documentation/operations/release-process\">Release process</a></li>\n<li><a href=\"/documentation/operations/hardening-programme\">V1 hardening programme</a></li>\n<li><a href=\"/documentation/operations/postgresql19-programme\">PostgreSQL 19 programme</a></li>\n<li><a href=\"/documentation/operations/v1-applications\">V1 application suite and RC deployment</a></li>\n</ul>\n<h2>Documentation contract</h2>\n<p>Repository Markdown is canonical. The Angular website transforms the selected\nMarkdown files into searchable guides during its build and fails when generated\ncontent drifts. When behavior changes:</p>\n<ol>\n<li>update the implementation and focused tests;</li>\n<li>update the relevant public API or format baseline;</li>\n<li>update the canonical Markdown guide and examples;</li>\n<li>update release/readiness evidence if the claim changed; and</li>\n<li>regenerate and validate the website documentation.</li>\n</ol>\n<p>Examples must use parameterized SQL, explicit cancellation where useful and\nhonest package availability. Experimental-feature boundaries,\nstable-publication gates and\nexternal production validation must never be collapsed into one status.</p>\n"
+        "html": "<p>The important cross-cutting rules are:</p>\n<ol>\n<li>PostgreSQL behavior is the specification.</li>\n<li>Capability discovery is stronger than version-string inference.</li>\n<li>Every untrusted length, count and collection is bounded before allocation.</li>\n<li>Logical connection ownership is distinct from physical pooled-session\nownership.</li>\n<li>Acknowledgement, checkpointing and destination application are separate\noperations.</li>\n<li>Public API, persisted format and package changes are mechanically checked.</li>\n<li>A successful local build is evidence, not publication permission.</li>\n</ol>\n<p>The <a href=\"/documentation/getting-started/architecture\">architecture overview</a> explains the layers and\nthe <a href=\"https://github.com/jphgardner/BlueTusk/tree/main/docs/architecture/decisions/\" target=\"_blank\" rel=\"noreferrer\">architecture decisions</a> record why the important\nboundaries exist.</p>\n<h2>Operations and release truth</h2>\n<p>Use these documents when the question is not “how do I call the API?”:</p>\n<ul>\n<li><a href=\"/documentation/operations/deployment\">Deployment and configuration</a></li>\n<li><a href=\"/documentation/operations/operations-application-platform-health\">Application platform health and rollout acceptance</a></li>\n<li><a href=\"/documentation/operations/troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/operations/performance\">Performance engineering</a></li>\n<li><a href=\"/documentation/operations/npgsql-performance-comparison\">BlueTusk versus Npgsql V1 performance report</a></li>\n<li><a href=\"/documentation/operations/operations-observability\">Production observability and SLOs</a></li>\n<li><a href=\"/documentation/operations/operations-production-readiness\">V1 production-readiness gates and exact-candidate evidence</a></li>\n<li><a href=\"/documentation/operations/operations-package-evidence\">Canonical V1 package evidence</a></li>\n<li><a href=\"/documentation/operations/operations-approval-evidence\">V1 operational approval evidence</a></li>\n<li><a href=\"/documentation/operations/operations-website-production\">Angular website production contract</a></li>\n<li><a href=\"/documentation/operations/upgrade-guide\">Upgrade guide</a></li>\n<li><a href=\"/documentation/operations/observability\">Observability</a></li>\n<li><a href=\"/documentation/operations/security\">Security model</a></li>\n<li><a href=\"/documentation/operations/testing\">Testing profiles</a></li>\n<li><a href=\"/documentation/operations/release-process\">Release process</a></li>\n<li><a href=\"/documentation/operations/hardening-programme\">V1 hardening programme</a></li>\n<li><a href=\"/documentation/operations/postgresql19-programme\">PostgreSQL 19 programme</a></li>\n<li><a href=\"/documentation/operations/v1-applications\">V1 application suite and RC deployment</a></li>\n</ul>\n<h2>Documentation contract</h2>\n<p>Repository Markdown is canonical. The Angular website transforms the selected\nMarkdown files into searchable guides during its build and fails when generated\ncontent drifts. When behavior changes:</p>\n<ol>\n<li>update the implementation and focused tests;</li>\n<li>update the relevant public API or format baseline;</li>\n<li>update the canonical Markdown guide and examples;</li>\n<li>update release/readiness evidence if the claim changed; and</li>\n<li>regenerate and validate the website documentation.</li>\n</ol>\n<p>Examples must use parameterized SQL, explicit cancellation where useful and\nhonest package availability. Experimental-feature boundaries,\nstable-publication gates and\nexternal production validation must never be collapsed into one status.</p>\n"
       }
     ]
   },
@@ -1979,7 +1979,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -2016,7 +2016,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -4405,7 +4405,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1086,
+    "order": 1087,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -4442,7 +4442,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1095,
+    "order": 1096,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -4473,7 +4473,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1096,
+    "order": 1097,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -4524,7 +4524,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1097,
+    "order": 1098,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -4565,7 +4565,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1098,
+    "order": 1099,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -4607,7 +4607,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1100,
+    "order": 1101,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -4639,7 +4639,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -4706,7 +4706,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1104,
+    "order": 1105,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -4756,7 +4756,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -4787,7 +4787,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1106,
+    "order": 1107,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -4835,7 +4835,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1109,
+    "order": 1110,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -4907,7 +4907,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1111,
+    "order": 1112,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -4939,7 +4939,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1112,
+    "order": 1113,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -4974,7 +4974,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1114,
+    "order": 1115,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
@@ -6964,13 +6964,91 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 603,
+    "wordCount": 617,
     "readMinutes": 3,
-    "searchText": "Performance engineering BlueTusk performance work is evidence-driven. A benchmark result describes one named workload, machine, runtime, PostgreSQL image and source commit; it is not a universal claim about every application. Start with the workload Record: query and result shape; concurrency and request rate; connection/pool topology; transaction and session-affinity requirements; network distance; PostgreSQL plan and server time; payload sizes; latency percentiles; and allocation/GC behavior. Optimizing a loopback scalar query does not prove improvement for a remote analytical workload. Data-source and pool sizing Create long-lived data sources and size the pool against database capacity. More connections can reduce queueing until PostgreSQL begins spending more time on process, memory, lock and cache contention. Measure: pool wait duration; active versus idle sessions; connection creation rate; command latency excluding and including pool wait; and PostgreSQL backend saturation. Command preparation and reuse Parameterize SQL. Reuse stable command/query shapes when the application lifecycle permits it. Preparation can reduce repeated parse/plan overhead, but session-level prepared state affects PgBouncer and multiplexing compatibility. Compare cold and warm behavior separately. Multiplexing Bounded statement multiplexing can reduce physical-session demand for independent, non-session-affine commands. It is not appropriate for: explicit transactions; COPY; replication; notifications; temporary objects; session settings or advisory locks; and commands whose correctness depends on one server session. Measure fairness, queueing and tail latency, not only mean throughput. Readers and large values Default readers may buffer result data for convenient random access. `SequentialAccess` uses the incremental portal reader for bounded processing of large values. Choose it when payload size makes buffering undesirable, and follow its forward-only access rules. For bulk movement, prefer binary COPY over per-row commands when the workload fits COPY’s contract. Type codecs and allocations BlueTusk’s allocation budgets cover representative command, protocol, COPY, replication, EF and graph paths. The implementation uses spans, memory, ArrayPool ownership and bounded protocol windows where measurements justify them. Do not retain pooled buffers after their owner advances or disposes. Do not replace a clear bounded allocation with pooling without measuring lifetime, contention and retained-memory cost. Real-time throughput For Streams and Sync, observe: decoded transactions per second; transaction size and spool behavior; acknowledgement/checkpoint latency; relay append/read latency; destination batch size; reconciliation and quarantine rate; and WAL lag and retained bytes. Large transactions are correctness events as well as performance events. Bounded spooling prevents untrusted or unusually large transactions from turning into unbounded memory growth. Benchmark discipline Build Release binaries. Pin source commit, runtime and database/container identity. Warm up the measured path. Separate setup from the operation under test. Report mean and tail latency plus allocation. Preserve full machine-readable output and its hash. Compare against the previous BlueTusk baseline and a relevant external implementation where useful. Reject results with environmental instability or changed workloads. The multiplexing record follows this discipline and is explained in [multiplexing compatibility](../ado-net/multiplexing-compatibility.md). Production investigation Correlate client and server evidence: OpenTelemetry command spans; pool and transport metrics; PostgreSQL `pg_stat_activity`; `pg_stat_statements`; query plans; lock waits; checkpoint/WAL metrics; and host CPU, memory, network and storage. Avoid logging parameter values simply to diagnose performance. Prefer query shape identifiers, operation names and redacted structured dimensions. Performance gates Release gates include: zero-warning optimized build; allocation-budget verification; provider NativeAOT/trimming measurements; commit-bound multiplexing evidence; full tests against selected PostgreSQL versions; and exact-duration Streams/Sync endurance reports. See [allocation discipline](../architecture/allocation-discipline.md) and the [release process](../release-process.md).",
+    "searchText": "Performance engineering BlueTusk performance work is evidence-driven. A benchmark result describes one named workload, machine, runtime, PostgreSQL image and source commit; it is not a universal claim about every application. Start with the workload Record: query and result shape; concurrency and request rate; connection/pool topology; transaction and session-affinity requirements; network distance; PostgreSQL plan and server time; payload sizes; latency percentiles; and allocation/GC behavior. Optimizing a loopback scalar query does not prove improvement for a remote analytical workload. Data-source and pool sizing Create long-lived data sources and size the pool against database capacity. More connections can reduce queueing until PostgreSQL begins spending more time on process, memory, lock and cache contention. Measure: pool wait duration; active versus idle sessions; connection creation rate; command latency excluding and including pool wait; and PostgreSQL backend saturation. Command preparation and reuse Parameterize SQL. Reuse stable command/query shapes when the application lifecycle permits it. Preparation can reduce repeated parse/plan overhead, but session-level prepared state affects PgBouncer and multiplexing compatibility. Compare cold and warm behavior separately. Multiplexing Bounded statement multiplexing can reduce physical-session demand for independent, non-session-affine commands. It is not appropriate for: explicit transactions; COPY; replication; notifications; temporary objects; session settings or advisory locks; and commands whose correctness depends on one server session. Measure fairness, queueing and tail latency, not only mean throughput. Readers and large values Default readers may buffer result data for convenient random access. `SequentialAccess` uses the incremental portal reader for bounded processing of large values. Choose it when payload size makes buffering undesirable, and follow its forward-only access rules. For bulk movement, prefer binary COPY over per-row commands when the workload fits COPY’s contract. Type codecs and allocations BlueTusk’s allocation budgets cover representative command, protocol, COPY, replication, EF and graph paths. The implementation uses spans, memory, ArrayPool ownership and bounded protocol windows where measurements justify them. Do not retain pooled buffers after their owner advances or disposes. Do not replace a clear bounded allocation with pooling without measuring lifetime, contention and retained-memory cost. Real-time throughput For Streams and Sync, observe: decoded transactions per second; transaction size and spool behavior; acknowledgement/checkpoint latency; relay append/read latency; destination batch size; reconciliation and quarantine rate; and WAL lag and retained bytes. Large transactions are correctness events as well as performance events. Bounded spooling prevents untrusted or unusually large transactions from turning into unbounded memory growth. Benchmark discipline Build Release binaries. Pin source commit, runtime and database/container identity. Warm up the measured path. Separate setup from the operation under test. Report mean and tail latency plus allocation. Preserve full machine-readable output and its hash. Compare against the previous BlueTusk baseline and a relevant external implementation where useful. Reject results with environmental instability or changed workloads. The multiplexing record follows this discipline and is explained in [multiplexing compatibility](../ado-net/multiplexing-compatibility.md). The complete direct-provider result is published in the [BlueTusk versus Npgsql V1 performance report](npgsql-performance-comparison.md). Production investigation Correlate client and server evidence: OpenTelemetry command spans; pool and transport metrics; PostgreSQL `pg_stat_activity`; `pg_stat_statements`; query plans; lock waits; checkpoint/WAL metrics; and host CPU, memory, network and storage. Avoid logging parameter values simply to diagnose performance. Prefer query shape identifiers, operation names and redacted structured dimensions. Performance gates Release gates include: zero-warning optimized build; allocation-budget verification; provider NativeAOT/trimming measurements; commit-bound multiplexing evidence; full tests against selected PostgreSQL versions; and exact-duration Streams/Sync endurance reports. See [allocation discipline](../architecture/allocation-discipline.md) and the [release process](../release-process.md).",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Performance engineering</h1>\n<p>BlueTusk performance work is evidence-driven. A benchmark result describes one\nnamed workload, machine, runtime, PostgreSQL image and source commit; it is not\na universal claim about every application.</p>\n<h2>Start with the workload</h2>\n<p>Record:</p>\n<ul>\n<li>query and result shape;</li>\n<li>concurrency and request rate;</li>\n<li>connection/pool topology;</li>\n<li>transaction and session-affinity requirements;</li>\n<li>network distance;</li>\n<li>PostgreSQL plan and server time;</li>\n<li>payload sizes;</li>\n<li>latency percentiles; and</li>\n<li>allocation/GC behavior.</li>\n</ul>\n<p>Optimizing a loopback scalar query does not prove improvement for a remote\nanalytical workload.</p>\n<h2>Data-source and pool sizing</h2>\n<p>Create long-lived data sources and size the pool against database capacity.\nMore connections can reduce queueing until PostgreSQL begins spending more time\non process, memory, lock and cache contention.</p>\n<p>Measure:</p>\n<ul>\n<li>pool wait duration;</li>\n<li>active versus idle sessions;</li>\n<li>connection creation rate;</li>\n<li>command latency excluding and including pool wait; and</li>\n<li>PostgreSQL backend saturation.</li>\n</ul>\n<h2>Command preparation and reuse</h2>\n<p>Parameterize SQL. Reuse stable command/query shapes when the application\nlifecycle permits it. Preparation can reduce repeated parse/plan overhead, but\nsession-level prepared state affects PgBouncer and multiplexing compatibility.</p>\n<p>Compare cold and warm behavior separately.</p>\n<h2>Multiplexing</h2>\n<p>Bounded statement multiplexing can reduce physical-session demand for\nindependent, non-session-affine commands. It is not appropriate for:</p>\n<ul>\n<li>explicit transactions;</li>\n<li>COPY;</li>\n<li>replication;</li>\n<li>notifications;</li>\n<li>temporary objects;</li>\n<li>session settings or advisory locks; and</li>\n<li>commands whose correctness depends on one server session.</li>\n</ul>\n<p>Measure fairness, queueing and tail latency, not only mean throughput.</p>\n<h2>Readers and large values</h2>\n<p>Default readers may buffer result data for convenient random access.\n<code>SequentialAccess</code> uses the incremental portal reader for bounded processing of\nlarge values. Choose it when payload size makes buffering undesirable, and\nfollow its forward-only access rules.</p>\n<p>For bulk movement, prefer binary COPY over per-row commands when the workload\nfits COPY’s contract.</p>\n<h2>Type codecs and allocations</h2>\n<p>BlueTusk’s allocation budgets cover representative command, protocol, COPY,\nreplication, EF and graph paths. The implementation uses spans, memory,\nArrayPool ownership and bounded protocol windows where measurements justify\nthem.</p>\n<p>Do not retain pooled buffers after their owner advances or disposes. Do not\nreplace a clear bounded allocation with pooling without measuring lifetime,\ncontention and retained-memory cost.</p>\n<h2>Real-time throughput</h2>\n<p>For Streams and Sync, observe:</p>\n<ul>\n<li>decoded transactions per second;</li>\n<li>transaction size and spool behavior;</li>\n<li>acknowledgement/checkpoint latency;</li>\n<li>relay append/read latency;</li>\n<li>destination batch size;</li>\n<li>reconciliation and quarantine rate; and</li>\n<li>WAL lag and retained bytes.</li>\n</ul>\n<p>Large transactions are correctness events as well as performance events.\nBounded spooling prevents untrusted or unusually large transactions from\nturning into unbounded memory growth.</p>\n<h2>Benchmark discipline</h2>\n<ol>\n<li>Build Release binaries.</li>\n<li>Pin source commit, runtime and database/container identity.</li>\n<li>Warm up the measured path.</li>\n<li>Separate setup from the operation under test.</li>\n<li>Report mean and tail latency plus allocation.</li>\n<li>Preserve full machine-readable output and its hash.</li>\n<li>Compare against the previous BlueTusk baseline and a relevant external\nimplementation where useful.</li>\n<li>Reject results with environmental instability or changed workloads.</li>\n</ol>\n<p>The multiplexing record follows this discipline and is explained in\n<a href=\"/documentation/provider/ado-net-multiplexing-compatibility\">multiplexing compatibility</a>.</p>\n<h2>Production investigation</h2>\n<p>Correlate client and server evidence:</p>\n<ul>\n<li>OpenTelemetry command spans;</li>\n<li>pool and transport metrics;</li>\n<li>PostgreSQL <code>pg_stat_activity</code>;</li>\n<li><code>pg_stat_statements</code>;</li>\n<li>query plans;</li>\n<li>lock waits;</li>\n<li>checkpoint/WAL metrics; and</li>\n<li>host CPU, memory, network and storage.</li>\n</ul>\n<p>Avoid logging parameter values simply to diagnose performance. Prefer query\nshape identifiers, operation names and redacted structured dimensions.</p>\n<h2>Performance gates</h2>\n<p>Release gates include:</p>\n<ul>\n<li>zero-warning optimized build;</li>\n<li>allocation-budget verification;</li>\n<li>provider NativeAOT/trimming measurements;</li>\n<li>commit-bound multiplexing evidence;</li>\n<li>full tests against selected PostgreSQL versions; and</li>\n<li>exact-duration Streams/Sync endurance reports.</li>\n</ul>\n<p>See <a href=\"/documentation/architecture/architecture-allocation-discipline\">allocation discipline</a> and the\n<a href=\"/documentation/operations/release-process\">release process</a>.</p>\n"
+        "html": "<h1>Performance engineering</h1>\n<p>BlueTusk performance work is evidence-driven. A benchmark result describes one\nnamed workload, machine, runtime, PostgreSQL image and source commit; it is not\na universal claim about every application.</p>\n<h2>Start with the workload</h2>\n<p>Record:</p>\n<ul>\n<li>query and result shape;</li>\n<li>concurrency and request rate;</li>\n<li>connection/pool topology;</li>\n<li>transaction and session-affinity requirements;</li>\n<li>network distance;</li>\n<li>PostgreSQL plan and server time;</li>\n<li>payload sizes;</li>\n<li>latency percentiles; and</li>\n<li>allocation/GC behavior.</li>\n</ul>\n<p>Optimizing a loopback scalar query does not prove improvement for a remote\nanalytical workload.</p>\n<h2>Data-source and pool sizing</h2>\n<p>Create long-lived data sources and size the pool against database capacity.\nMore connections can reduce queueing until PostgreSQL begins spending more time\non process, memory, lock and cache contention.</p>\n<p>Measure:</p>\n<ul>\n<li>pool wait duration;</li>\n<li>active versus idle sessions;</li>\n<li>connection creation rate;</li>\n<li>command latency excluding and including pool wait; and</li>\n<li>PostgreSQL backend saturation.</li>\n</ul>\n<h2>Command preparation and reuse</h2>\n<p>Parameterize SQL. Reuse stable command/query shapes when the application\nlifecycle permits it. Preparation can reduce repeated parse/plan overhead, but\nsession-level prepared state affects PgBouncer and multiplexing compatibility.</p>\n<p>Compare cold and warm behavior separately.</p>\n<h2>Multiplexing</h2>\n<p>Bounded statement multiplexing can reduce physical-session demand for\nindependent, non-session-affine commands. It is not appropriate for:</p>\n<ul>\n<li>explicit transactions;</li>\n<li>COPY;</li>\n<li>replication;</li>\n<li>notifications;</li>\n<li>temporary objects;</li>\n<li>session settings or advisory locks; and</li>\n<li>commands whose correctness depends on one server session.</li>\n</ul>\n<p>Measure fairness, queueing and tail latency, not only mean throughput.</p>\n<h2>Readers and large values</h2>\n<p>Default readers may buffer result data for convenient random access.\n<code>SequentialAccess</code> uses the incremental portal reader for bounded processing of\nlarge values. Choose it when payload size makes buffering undesirable, and\nfollow its forward-only access rules.</p>\n<p>For bulk movement, prefer binary COPY over per-row commands when the workload\nfits COPY’s contract.</p>\n<h2>Type codecs and allocations</h2>\n<p>BlueTusk’s allocation budgets cover representative command, protocol, COPY,\nreplication, EF and graph paths. The implementation uses spans, memory,\nArrayPool ownership and bounded protocol windows where measurements justify\nthem.</p>\n<p>Do not retain pooled buffers after their owner advances or disposes. Do not\nreplace a clear bounded allocation with pooling without measuring lifetime,\ncontention and retained-memory cost.</p>\n<h2>Real-time throughput</h2>\n<p>For Streams and Sync, observe:</p>\n<ul>\n<li>decoded transactions per second;</li>\n<li>transaction size and spool behavior;</li>\n<li>acknowledgement/checkpoint latency;</li>\n<li>relay append/read latency;</li>\n<li>destination batch size;</li>\n<li>reconciliation and quarantine rate; and</li>\n<li>WAL lag and retained bytes.</li>\n</ul>\n<p>Large transactions are correctness events as well as performance events.\nBounded spooling prevents untrusted or unusually large transactions from\nturning into unbounded memory growth.</p>\n<h2>Benchmark discipline</h2>\n<ol>\n<li>Build Release binaries.</li>\n<li>Pin source commit, runtime and database/container identity.</li>\n<li>Warm up the measured path.</li>\n<li>Separate setup from the operation under test.</li>\n<li>Report mean and tail latency plus allocation.</li>\n<li>Preserve full machine-readable output and its hash.</li>\n<li>Compare against the previous BlueTusk baseline and a relevant external\nimplementation where useful.</li>\n<li>Reject results with environmental instability or changed workloads.</li>\n</ol>\n<p>The multiplexing record follows this discipline and is explained in\n<a href=\"/documentation/provider/ado-net-multiplexing-compatibility\">multiplexing compatibility</a>.\nThe complete direct-provider result is published in the\n<a href=\"/documentation/operations/npgsql-performance-comparison\">BlueTusk versus Npgsql V1 performance report</a>.</p>\n<h2>Production investigation</h2>\n<p>Correlate client and server evidence:</p>\n<ul>\n<li>OpenTelemetry command spans;</li>\n<li>pool and transport metrics;</li>\n<li>PostgreSQL <code>pg_stat_activity</code>;</li>\n<li><code>pg_stat_statements</code>;</li>\n<li>query plans;</li>\n<li>lock waits;</li>\n<li>checkpoint/WAL metrics; and</li>\n<li>host CPU, memory, network and storage.</li>\n</ul>\n<p>Avoid logging parameter values simply to diagnose performance. Prefer query\nshape identifiers, operation names and redacted structured dimensions.</p>\n<h2>Performance gates</h2>\n<p>Release gates include:</p>\n<ul>\n<li>zero-warning optimized build;</li>\n<li>allocation-budget verification;</li>\n<li>provider NativeAOT/trimming measurements;</li>\n<li>commit-bound multiplexing evidence;</li>\n<li>full tests against selected PostgreSQL versions; and</li>\n<li>exact-duration Streams/Sync endurance reports.</li>\n</ul>\n<p>See <a href=\"/documentation/architecture/architecture-allocation-discipline\">allocation discipline</a> and the\n<a href=\"/documentation/operations/release-process\">release process</a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "npgsql-performance-comparison",
+    "summary": "Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.",
+    "keywords": [
+      "npgsql",
+      "comparison",
+      "benchmark",
+      "multiplexing",
+      "pooling"
+    ],
+    "order": 26,
+    "title": "BlueTusk versus Npgsql V1 performance report",
+    "sourcePath": "docs/operations/npgsql-performance-comparison.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/npgsql-performance-comparison.md",
+    "headings": [
+      {
+        "id": "bluetusk-versus-npgsql-v1-performance-report",
+        "text": "BlueTusk versus Npgsql V1 performance report",
+        "level": 1
+      },
+      {
+        "id": "executive-result",
+        "text": "Executive result",
+        "level": 2
+      },
+      {
+        "id": "comparison-matrix",
+        "text": "Comparison matrix",
+        "level": 2
+      },
+      {
+        "id": "tail-latency",
+        "text": "Tail latency",
+        "level": 2
+      },
+      {
+        "id": "saturated-pooling-and-multiplexing",
+        "text": "Saturated pooling and multiplexing",
+        "level": 2
+      },
+      {
+        "id": "what-changed",
+        "text": "What changed",
+        "level": 2
+      },
+      {
+        "id": "test-environment-and-method",
+        "text": "Test environment and method",
+        "level": 2
+      },
+      {
+        "id": "correctness-evidence",
+        "text": "Correctness evidence",
+        "level": 2
+      },
+      {
+        "id": "evidence-and-integrity",
+        "text": "Evidence and integrity",
+        "level": 2
+      },
+      {
+        "id": "release-interpretation",
+        "text": "Release interpretation",
+        "level": 2
+      }
+    ],
+    "wordCount": 1490,
+    "readMinutes": 7,
+    "searchText": "BlueTusk versus Npgsql V1 performance report **Report date:** 22 August 2026 **BlueTusk performance candidate:** `b04c686` **Reference provider:** Npgsql 10.0.3 **Performance verdict:** pass for every direct, like-for-like workload in the V1 comparison harness Executive result BlueTusk is ahead of Npgsql in all nine measured V1 provider workloads on mean latency, P95 latency, operations per second and managed allocation. The comparison covers parameterized and prepared commands, warm pool checkout, sequential row and large-value reads, fresh multiplexed bursts, reused multiplexed bursts, and ordinary pooled controls for both burst shapes. The largest mean-latency lead is 17.53% for reused multiplexed bursts. The largest allocation lead is 54.21% for a sequential 1 MiB `bytea`. The former saturated non-multiplexed weakness is no longer present: BlueTusk's fresh ordinary pooled burst is 1.31% faster at the mean and allocates 18.24% less; the reused ordinary pooled burst is 0.37% faster at the mean and allocates 19.97% less. This is a measured claim, not a claim that BlueTusk will beat Npgsql for every possible SQL statement, server, network, concurrency level or application. The release claim is deliberately bounded to the named workloads, environment and source revisions in this report. Comparison matrix Lower latency and allocation are better. A positive lead means BlueTusk used less time or memory than Npgsql. Workload BlueTusk mean Npgsql mean Mean lead BlueTusk P95 Npgsql P95 P95 lead Allocation lead Parameterized scalar 291.19 µs 322.34 µs **9.67%** 298.66 µs 337.83 µs **11.60%** **18.13%** (1,748 B vs 2,135 B) Warm pool checkout 213.89 ns 224.10 ns **4.55%** 222.43 ns 232.32 ns **4.26%** **8.70%** (168 B vs 184 B) Prepared scalar 294.40 µs 298.85 µs **1.49%** 312.25 µs 316.04 µs **1.20%** **30.94%** (788 B vs 1,141 B) Sequential 1,000 rows 482.40 µs 509.17 µs **5.26%** 489.13 µs 526.85 µs **7.16%** **1.42%** (1,530 B vs 1,552 B) Sequential 1 MiB `bytea` 2.162 ms 2.215 ms **2.42%** 2.285 ms 2.302 ms **0.75%** **54.21%** (4,063 B vs 8,873 B) Fresh multiplexed burst 16.51 µs/op 18.83 µs/op **12.32%** 17.44 µs/op 19.99 µs/op **12.76%** **16.92%** (1,444 B vs 1,738 B) Fresh ordinary pooled burst 99.03 µs/op 100.34 µs/op **1.31%** 101.52 µs/op 104.13 µs/op **2.51%** **18.24%** (2,308 B vs 2,823 B) Reused multiplexed burst 15.67 µs/op 19.00 µs/op **17.53%** 16.81 µs/op 20.46 µs/op **17.84%** **22.04%** (619 B vs 794 B) Reused ordinary pooled burst 100.39 µs/op 100.76 µs/op **0.37%** 103.89 µs/op 105.68 µs/op **1.69%** **19.97%** (1,511 B vs 1,888 B) Throughput is the inverse of mean latency in these fixed-operation benchmarks, so every mean-latency win is also an operations-per-second win. For example, warm pool checkout reaches 4.675 million operations/second for BlueTusk versus 4.462 million for Npgsql; fresh multiplexed bursts reach 60,576 versus 53,114 operations/second. Tail latency BlueTusk also records the lower P99 in each category when the unrounded iteration measurements are compared. The strongest BenchmarkDotNet P99 improvements are 18.26% for reused multiplexing, 14.63% for fresh multiplexing and 12.42% for the parameterized scalar. The checkout exporter rounds both P99 values to 0.23 µs, but the underlying captured upper values are 226.14 ns for BlueTusk and 235.29 ns for Npgsql. Two wins are intentionally treated as narrow: the 1 MiB read P99 is 2.31125 ms versus 2.31129 ms, which is a 0.04 µs lead and is below a useful decision margin; its mean, P95 and allocation wins are the defensible result; and the reused ordinary pooled burst mean lead is 0.37%; its P95 and allocation leads are clearer at 1.69% and 19.97%. Neither narrow result should be used alone in marketing or capacity planning. Saturated pooling and multiplexing The multiplexing comparison uses bursts of 64 independent scalar operations. It includes ordinary pooled controls so the scheduler cannot look good merely because the reference path was omitted. The absolute MediumRun result shows BlueTusk ahead for all four burst workloads. A second paired capture alternated BlueTusk and Npgsql blocks to reduce provider ordering, thermal and server-drift bias. It ran five trials of 501 alternating blocks, 32 bursts per block and 64 operations per burst: 20,520,960 measured operations across the two providers and two multiplexed workloads. Paired workload Median mean ratio Mean lead Median P95 ratio P95 lead Median P99 ratio P99 lead Fresh multiplexed burst 0.8526 **14.74%** 0.8302 **16.98%** 0.8877 **11.23%** Reused multiplexed burst 0.7943 **20.57%** 0.8136 **18.64%** 0.8637 **13.63%** The commit-bound verifier passed the mean, P95, P99, throughput and allocation gates. This directly closes the earlier saturated-pool regression rather than masking it with an uncontended microbenchmark. What changed The performance candidate removes work from the provider's hot paths while keeping the same ADO.NET behavior: plaintext transport reads and writes now use the socket directly, with correct partial-send handling; exact-size bind messages use one buffer reservation and one linear write; primitive parameters use typed binary encoding paths; prepared execution, scalar result metadata and resolved row codecs are cached; multiplexed telemetry no longer allocates captured delegates per operation; SQL multiplexing classification is cached and a hot lane yields only when an affine pool waiter needs fairness; rarely used reader metadata moved to the connection's lazy optional state, reducing checkout allocation from 192 B to 168 B; and typed data-source connection creation avoids redundant framework dispatch and casting, giving the final checkout result a stable latency margin. The changes are contained in `d1102bf`, `fe49afd` and `b04c686` on the V1 candidate branch. Test environment and method Item Value Host AMD Ryzen 7 5800X, 8 physical/16 logical cores OS Windows 11 25H2, build 10.0.26200.9168 Runtime .NET 10.0.11, X64 RyuJIT x86-",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>BlueTusk versus Npgsql V1 performance report</h1>\n<p><strong>Report date:</strong> 22 August 2026<br>\n<strong>BlueTusk performance candidate:</strong> <code>b04c686</code><br>\n<strong>Reference provider:</strong> Npgsql 10.0.3<br>\n<strong>Performance verdict:</strong> pass for every direct, like-for-like workload in the V1 comparison harness</p>\n<h2>Executive result</h2>\n<p>BlueTusk is ahead of Npgsql in all nine measured V1 provider workloads on mean\nlatency, P95 latency, operations per second and managed allocation. The comparison\ncovers parameterized and prepared commands, warm pool checkout, sequential row and\nlarge-value reads, fresh multiplexed bursts, reused multiplexed bursts, and ordinary\npooled controls for both burst shapes.</p>\n<p>The largest mean-latency lead is 17.53% for reused multiplexed bursts. The largest\nallocation lead is 54.21% for a sequential 1 MiB <code>bytea</code>. The former saturated\nnon-multiplexed weakness is no longer present: BlueTusk’s fresh ordinary pooled\nburst is 1.31% faster at the mean and allocates 18.24% less; the reused ordinary\npooled burst is 0.37% faster at the mean and allocates 19.97% less.</p>\n<p>This is a measured claim, not a claim that BlueTusk will beat Npgsql for every\npossible SQL statement, server, network, concurrency level or application. The\nrelease claim is deliberately bounded to the named workloads, environment and\nsource revisions in this report.</p>\n<h2>Comparison matrix</h2>\n<p>Lower latency and allocation are better. A positive lead means BlueTusk used less\ntime or memory than Npgsql.</p>\n<table>\n<thead>\n<tr>\n<th>Workload</th>\n<th style=\"text-align:right\">BlueTusk mean</th>\n<th style=\"text-align:right\">Npgsql mean</th>\n<th style=\"text-align:right\">Mean lead</th>\n<th style=\"text-align:right\">BlueTusk P95</th>\n<th style=\"text-align:right\">Npgsql P95</th>\n<th style=\"text-align:right\">P95 lead</th>\n<th style=\"text-align:right\">Allocation lead</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Parameterized scalar</td>\n<td style=\"text-align:right\">291.19 µs</td>\n<td style=\"text-align:right\">322.34 µs</td>\n<td style=\"text-align:right\"><strong>9.67%</strong></td>\n<td style=\"text-align:right\">298.66 µs</td>\n<td style=\"text-align:right\">337.83 µs</td>\n<td style=\"text-align:right\"><strong>11.60%</strong></td>\n<td style=\"text-align:right\"><strong>18.13%</strong> (1,748 B vs 2,135 B)</td>\n</tr>\n<tr>\n<td>Warm pool checkout</td>\n<td style=\"text-align:right\">213.89 ns</td>\n<td style=\"text-align:right\">224.10 ns</td>\n<td style=\"text-align:right\"><strong>4.55%</strong></td>\n<td style=\"text-align:right\">222.43 ns</td>\n<td style=\"text-align:right\">232.32 ns</td>\n<td style=\"text-align:right\"><strong>4.26%</strong></td>\n<td style=\"text-align:right\"><strong>8.70%</strong> (168 B vs 184 B)</td>\n</tr>\n<tr>\n<td>Prepared scalar</td>\n<td style=\"text-align:right\">294.40 µs</td>\n<td style=\"text-align:right\">298.85 µs</td>\n<td style=\"text-align:right\"><strong>1.49%</strong></td>\n<td style=\"text-align:right\">312.25 µs</td>\n<td style=\"text-align:right\">316.04 µs</td>\n<td style=\"text-align:right\"><strong>1.20%</strong></td>\n<td style=\"text-align:right\"><strong>30.94%</strong> (788 B vs 1,141 B)</td>\n</tr>\n<tr>\n<td>Sequential 1,000 rows</td>\n<td style=\"text-align:right\">482.40 µs</td>\n<td style=\"text-align:right\">509.17 µs</td>\n<td style=\"text-align:right\"><strong>5.26%</strong></td>\n<td style=\"text-align:right\">489.13 µs</td>\n<td style=\"text-align:right\">526.85 µs</td>\n<td style=\"text-align:right\"><strong>7.16%</strong></td>\n<td style=\"text-align:right\"><strong>1.42%</strong> (1,530 B vs 1,552 B)</td>\n</tr>\n<tr>\n<td>Sequential 1 MiB <code>bytea</code></td>\n<td style=\"text-align:right\">2.162 ms</td>\n<td style=\"text-align:right\">2.215 ms</td>\n<td style=\"text-align:right\"><strong>2.42%</strong></td>\n<td style=\"text-align:right\">2.285 ms</td>\n<td style=\"text-align:right\">2.302 ms</td>\n<td style=\"text-align:right\"><strong>0.75%</strong></td>\n<td style=\"text-align:right\"><strong>54.21%</strong> (4,063 B vs 8,873 B)</td>\n</tr>\n<tr>\n<td>Fresh multiplexed burst</td>\n<td style=\"text-align:right\">16.51 µs/op</td>\n<td style=\"text-align:right\">18.83 µs/op</td>\n<td style=\"text-align:right\"><strong>12.32%</strong></td>\n<td style=\"text-align:right\">17.44 µs/op</td>\n<td style=\"text-align:right\">19.99 µs/op</td>\n<td style=\"text-align:right\"><strong>12.76%</strong></td>\n<td style=\"text-align:right\"><strong>16.92%</strong> (1,444 B vs 1,738 B)</td>\n</tr>\n<tr>\n<td>Fresh ordinary pooled burst</td>\n<td style=\"text-align:right\">99.03 µs/op</td>\n<td style=\"text-align:right\">100.34 µs/op</td>\n<td style=\"text-align:right\"><strong>1.31%</strong></td>\n<td style=\"text-align:right\">101.52 µs/op</td>\n<td style=\"text-align:right\">104.13 µs/op</td>\n<td style=\"text-align:right\"><strong>2.51%</strong></td>\n<td style=\"text-align:right\"><strong>18.24%</strong> (2,308 B vs 2,823 B)</td>\n</tr>\n<tr>\n<td>Reused multiplexed burst</td>\n<td style=\"text-align:right\">15.67 µs/op</td>\n<td style=\"text-align:right\">19.00 µs/op</td>\n<td style=\"text-align:right\"><strong>17.53%</strong></td>\n<td style=\"text-align:right\">16.81 µs/op</td>\n<td style=\"text-align:right\">20.46 µs/op</td>\n<td style=\"text-align:right\"><strong>17.84%</strong></td>\n<td style=\"text-align:right\"><strong>22.04%</strong> (619 B vs 794 B)</td>\n</tr>\n<tr>\n<td>Reused ordinary pooled burst</td>\n<td style=\"text-align:right\">100.39 µs/op</td>\n<td style=\"text-align:right\">100.76 µs/op</td>\n<td style=\"text-align:right\"><strong>0.37%</strong></td>\n<td style=\"text-align:right\">103.89 µs/op</td>\n<td style=\"text-align:right\">105.68 µs/op</td>\n<td style=\"text-align:right\"><strong>1.69%</strong></td>\n<td style=\"text-align:right\"><strong>19.97%</strong> (1,511 B vs 1,888 B)</td>\n</tr>\n</tbody>\n</table>\n<p>Throughput is the inverse of mean latency in these fixed-operation benchmarks, so\nevery mean-latency win is also an operations-per-second win. For example, warm pool\ncheckout reaches 4.675 million operations/second for BlueTusk versus 4.462 million\nfor Npgsql; fresh multiplexed bursts reach 60,576 versus 53,114 operations/second.</p>\n<h2>Tail latency</h2>\n<p>BlueTusk also records the lower P99 in each category when the unrounded iteration\nmeasurements are compared. The strongest BenchmarkDotNet P99 improvements are\n18.26% for reused multiplexing, 14.63% for fresh multiplexing and 12.42% for the\nparameterized scalar. The checkout exporter rounds both P99 values to 0.23 µs, but\nthe underlying captured upper values are 226.14 ns for BlueTusk and 235.29 ns for\nNpgsql.</p>\n<p>Two wins are intentionally treated as narrow:</p>\n<ul>\n<li>the 1 MiB read P99 is 2.31125 ms versus 2.31129 ms, which is a 0.04 µs lead and\nis below a useful decision margin; its mean, P95 and allocation wins are the\ndefensible result; and</li>\n<li>the reused ordinary pooled burst mean lead is 0.37%; its P95 and allocation\nleads are clearer at 1.69% and 19.97%.</li>\n</ul>\n<p>Neither narrow result should be used alone in marketing or capacity planning.</p>\n<h2>Saturated pooling and multiplexing</h2>\n<p>The multiplexing comparison uses bursts of 64 independent scalar operations. It\nincludes ordinary pooled controls so the scheduler cannot look good merely because\nthe reference path was omitted.</p>\n<p>The absolute MediumRun result shows BlueTusk ahead for all four burst workloads.\nA second paired capture alternated BlueTusk and Npgsql blocks to reduce provider\nordering, thermal and server-drift bias. It ran five trials of 501 alternating\nblocks, 32 bursts per block and 64 operations per burst: 20,520,960 measured\noperations across the two providers and two multiplexed workloads.</p>\n<table>\n<thead>\n<tr>\n<th>Paired workload</th>\n<th style=\"text-align:right\">Median mean ratio</th>\n<th style=\"text-align:right\">Mean lead</th>\n<th style=\"text-align:right\">Median P95 ratio</th>\n<th style=\"text-align:right\">P95 lead</th>\n<th style=\"text-align:right\">Median P99 ratio</th>\n<th style=\"text-align:right\">P99 lead</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Fresh multiplexed burst</td>\n<td style=\"text-align:right\">0.8526</td>\n<td style=\"text-align:right\"><strong>14.74%</strong></td>\n<td style=\"text-align:right\">0.8302</td>\n<td style=\"text-align:right\"><strong>16.98%</strong></td>\n<td style=\"text-align:right\">0.8877</td>\n<td style=\"text-align:right\"><strong>11.23%</strong></td>\n</tr>\n<tr>\n<td>Reused multiplexed burst</td>\n<td style=\"text-align:right\">0.7943</td>\n<td style=\"text-align:right\"><strong>20.57%</strong></td>\n<td style=\"text-align:right\">0.8136</td>\n<td style=\"text-align:right\"><strong>18.64%</strong></td>\n<td style=\"text-align:right\">0.8637</td>\n<td style=\"text-align:right\"><strong>13.63%</strong></td>\n</tr>\n</tbody>\n</table>\n<p>The commit-bound verifier passed the mean, P95, P99, throughput and allocation\ngates. This directly closes the earlier saturated-pool regression rather than\nmasking it with an uncontended microbenchmark.</p>\n<h2>What changed</h2>\n<p>The performance candidate removes work from the provider’s hot paths while keeping\nthe same ADO.NET behavior:</p>\n<ul>\n<li>plaintext transport reads and writes now use the socket directly, with correct\npartial-send handling;</li>\n<li>exact-size bind messages use one buffer reservation and one linear write;</li>\n<li>primitive parameters use typed binary encoding paths;</li>\n<li>prepared execution, scalar result metadata and resolved row codecs are cached;</li>\n<li>multiplexed telemetry no longer allocates captured delegates per operation;</li>\n<li>SQL multiplexing classification is cached and a hot lane yields only when an\naffine pool waiter needs fairness;</li>\n<li>rarely used reader metadata moved to the connection’s lazy optional state,\nreducing checkout allocation from 192 B to 168 B; and</li>\n<li>typed data-source connection creation avoids redundant framework dispatch and\ncasting, giving the final checkout result a stable latency margin.</li>\n</ul>\n<p>The changes are contained in <code>d1102bf</code>, <code>fe49afd</code> and <code>b04c686</code> on the V1 candidate\nbranch.</p>\n<h2>Test environment and method</h2>\n<table>\n<thead>\n<tr>\n<th>Item</th>\n<th>Value</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Host</td>\n<td>AMD Ryzen 7 5800X, 8 physical/16 logical cores</td>\n</tr>\n<tr>\n<td>OS</td>\n<td>Windows 11 25H2, build 10.0.26200.9168</td>\n</tr>\n<tr>\n<td>Runtime</td>\n<td>.NET 10.0.11, X64 RyuJIT x86-64-v3</td>\n</tr>\n<tr>\n<td>SDK</td>\n<td>10.0.303</td>\n</tr>\n<tr>\n<td>Benchmark harness</td>\n<td>BenchmarkDotNet 0.15.8, MediumRun</td>\n</tr>\n<tr>\n<td>Sampling</td>\n<td>2 launches, 10 warmups, 15 measurement iterations</td>\n</tr>\n<tr>\n<td>Database</td>\n<td>PostgreSQL 19 Beta 3 Alpine, loopback TCP on port 5419</td>\n</tr>\n<tr>\n<td>Image identity</td>\n<td><code>postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc</code></td>\n</tr>\n<tr>\n<td>Reference</td>\n<td>Npgsql 10.0.3 against the same server and workload shape</td>\n</tr>\n<tr>\n<td>Build</td>\n<td>Release, 0 warnings, 0 errors</td>\n</tr>\n</tbody>\n</table>\n<p>The comparison uses long-lived data sources and warmed physical pools. Command\nsetup that belongs to the operation is included symmetrically. Prepared commands\nand the 1 MiB temporary payload are created during benchmark setup. Allocation is\nmanaged memory reported per completed benchmark operation.</p>\n<p>The in-process BenchmarkDotNet toolchain was used because retained release\nworktrees below the ignored <code>artifacts</code> directory make generated-project discovery\nambiguous. This is the repository’s documented isolation path; the same toolchain,\nruntime, host and PostgreSQL instance were used for both providers in every pair.</p>\n<h2>Correctness evidence</h2>\n<p>Performance did not replace correctness validation. The final source revision has:</p>\n<ul>\n<li>a complete <code>BlueTusk.slnx</code> Release build with 0 warnings and 0 errors;</li>\n<li>150/150 <code>BlueTusk.Data.Tests</code> passing;</li>\n<li>46/46 <code>BlueTusk.Protocol.Tests</code> passing;</li>\n<li>25/25 <code>BlueTusk.Transport.Tests</code> passing; and</li>\n<li>61/61 selected live command, batch, diagnostics, multiplexing, sequential-reader,\nsession and synchronous integration tests passing against PostgreSQL 19 Beta 3.</li>\n</ul>\n<p>No coverage-guided fuzzing workflow was triggered or executed for this work.</p>\n<h2>Evidence and integrity</h2>\n<p>The raw evidence is retained in the local release <code>artifacts</code> tree, which is\ndeliberately excluded from source control. Hashes are SHA-256 over the named\nmachine-readable files.</p>\n<table>\n<thead>\n<tr>\n<th>Evidence</th>\n<th>Source revision</th>\n<th>Local path</th>\n<th>SHA-256</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Parameterized and prepared provider run</td>\n<td><code>d1102bf</code></td>\n<td><code>artifacts/perf-v1-d1102bf-provider/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json</code></td>\n<td><code>DD9A8ECEFCA26F81E4D6DCD260E7E8C9E230B0CEB890E386131B5E8182AF8AFA</code></td>\n</tr>\n<tr>\n<td>Sequential rows and 1 MiB read</td>\n<td><code>fe49afd</code></td>\n<td><code>artifacts/perf-v1-fe49afd-provider-targeted/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json</code></td>\n<td><code>B06F93F340FBBEC99FB7739F18F4F2E8975335626008F43ABD3F756C0AF8AF32</code></td>\n</tr>\n<tr>\n<td>Final warm checkout</td>\n<td><code>b04c686</code></td>\n<td><code>artifacts/perf-v1-checkout-direct-create-inproc/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json</code></td>\n<td><code>119135A97DDEBBA2B9663C5D7F566BA29F3A9821FDA0997EFD39E7FFFD869335</code></td>\n</tr>\n<tr>\n<td>Absolute multiplexing and pooled controls</td>\n<td><code>d1102bf</code></td>\n<td><code>artifacts/perf-weakness-fix-medium-final-multiplexing/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json</code></td>\n<td><code>D9E4EABB0D2E57AE4CCE6B583DC9D5271C5201B5CF2848950D9B31D8BF6E3AAC</code></td>\n</tr>\n<tr>\n<td>Alternating-provider multiplexing capture</td>\n<td><code>d1102bf</code></td>\n<td><code>artifacts/perf-weakness-fix-paired-final/multiplexing-paired-evidence.json</code></td>\n<td><code>F11F2BBEB71BF2FDDDCD2657AF2E4134F1FFE3654717598081270AF5D98788D4</code></td>\n</tr>\n</tbody>\n</table>\n<p>The two later source commits only relocate warmed row metadata and streamline typed\nconnection construction. Workloads are therefore reported from the latest capture\nthat includes the code capable of affecting that workload, rather than combining\nthe statistically unstable ordering of one long sequential suite into a false\nsingle-run narrative.</p>\n<h2>Release interpretation</h2>\n<p>The V1 provider performance gate is green for this reference environment. BlueTusk\nhas no known loss to Npgsql in the direct comparison harness, including the former\nsaturated non-multiplexed pool weakness. Application owners must still benchmark\ntheir real SQL, payload distribution, network, concurrency and PostgreSQL settings\nbefore deriving capacity targets.</p>\n<p>This performance verdict does not waive independent release gates such as supported\nPostgreSQL milestone evidence, supply-chain controls, endurance evidence or human\napproval.</p>\n"
       }
     ]
   },
@@ -8356,7 +8434,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1072,
+    "order": 1073,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -8483,7 +8561,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1073,
+    "order": 1074,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -8565,7 +8643,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1075,
+    "order": 1076,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -8722,7 +8800,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1078,
+    "order": 1079,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -8788,7 +8866,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1080,
+    "order": 1081,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -8823,7 +8901,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1083,
+    "order": 1084,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -8854,7 +8932,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1088,
+    "order": 1089,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -8901,7 +8979,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1090,
+    "order": 1091,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -8947,7 +9025,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1116,
+    "order": 1117,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -9004,7 +9082,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1117,
+    "order": 1118,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",

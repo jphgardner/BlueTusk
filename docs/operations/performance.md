@@ -109,6 +109,8 @@ turning into unbounded memory growth.
 
 The multiplexing record follows this discipline and is explained in
 [multiplexing compatibility](../ado-net/multiplexing-compatibility.md).
+The complete direct-provider result is published in the
+[BlueTusk versus Npgsql V1 performance report](npgsql-performance-comparison.md).
 
 ## Production investigation
 

@@ -443,6 +443,15 @@
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "slug": "npgsql-performance-comparison",
+    "source": "docs/operations/npgsql-performance-comparison.md",
+    "summary": "Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.",
+    "keywords": ["npgsql", "comparison", "benchmark", "multiplexing", "pooling"],
+    "order": 26
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
     "slug": "upgrade-guide",
     "source": "docs/operations/upgrade-guide.md",
     "summary": "Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.",
