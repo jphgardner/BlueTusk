@@ -6,7 +6,7 @@
   "authorizationSource": "Explicit repository-owner release instruction",
   "authorizedAtUtc": "2026-08-23T13:43:58Z",
   "expiresAtUtc": "2026-08-24T23:59:59Z",
-  "baseCommit": "d09ef5d419d0ecf304e32f23aeb8d20207f9d049",
+  "baseCommit": "70ba61fb9ed9f35a1f2871310ce558a85d28cb1c",
   "releaseReason": "The V1 packages are immediately required by downstream consumers.",
   "acceptedRisks": [
     "independent-approval-not-complete",
