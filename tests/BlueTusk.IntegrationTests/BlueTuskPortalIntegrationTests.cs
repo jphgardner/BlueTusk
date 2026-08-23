@@ -134,6 +134,47 @@ public sealed class BlueTuskPortalIntegrationTests
         }
     }
 
+    [Fact]
+    public async Task Repeated_unnamed_portals_cache_metadata_per_result_format()
+    {
+        await using var session = await BlueTuskSession.OpenAsync(
+            CreateOptions(),
+            CancellationToken.None);
+
+        await ReadAndAssertAsync(useBinaryResults: true);
+        await ReadAndAssertAsync(useBinaryResults: true);
+        await ReadAndAssertAsync(useBinaryResults: false);
+        await ReadAndAssertAsync(useBinaryResults: false);
+        await ReadAndAssertAsync(useBinaryResults: true);
+
+        async Task ReadAndAssertAsync(bool useBinaryResults)
+        {
+            await using var portal = await session.BeginPortalAsync(
+                "SELECT 42::int4 AS answer",
+                [],
+                useBinaryResults,
+                cancellationToken: CancellationToken.None);
+            var field = Assert.Single(portal.Fields);
+            Assert.Equal("answer", field.Name);
+            Assert.Equal(useBinaryResults ? 1 : 0, field.FormatCode);
+
+            var row = await portal.ReadAsync(CancellationToken.None);
+            Assert.NotNull(row);
+            var value = await row.ReadFieldAsync(0, CancellationToken.None);
+            Assert.True(value.HasValue);
+            if (useBinaryResults)
+            {
+                Assert.Equal(42, BinaryPrimitives.ReadInt32BigEndian(value.Value.Span));
+            }
+            else
+            {
+                Assert.Equal("42", System.Text.Encoding.UTF8.GetString(value.Value.Span));
+            }
+
+            Assert.Null(await portal.ReadAsync(CancellationToken.None));
+        }
+    }
+
     private static string ReadText(BlueTuskQueryResult result) =>
         System.Text.Encoding.UTF8.GetString(
             Assert.Single(Assert.Single(result.ResultSets).Rows).Values[0]!.Value.Span);

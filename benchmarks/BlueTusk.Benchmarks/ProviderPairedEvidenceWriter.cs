@@ -29,7 +29,7 @@ internal static class ProviderPairedEvidenceWriter
                     benchmark.BlueTuskPoolCheckoutAsync,
                     nameof(benchmark.NpgsqlPoolCheckoutAsync),
                     benchmark.NpgsqlPoolCheckoutAsync,
-                    warmupOperationsPerProvider: 64,
+                    warmupOperationsPerProvider: 4096,
                     operationsPerBlock: 256),
                 await CaptureWorkloadAsync(
                     nameof(benchmark.BlueTuskParameterizedScalarAsync),
@@ -37,7 +37,7 @@ internal static class ProviderPairedEvidenceWriter
                     nameof(benchmark.NpgsqlParameterizedScalarAsync),
                     benchmark.NpgsqlParameterizedScalarAsync,
                     expectedResult: 42,
-                    warmupOperationsPerProvider: 32,
+                    warmupOperationsPerProvider: 512,
                     operationsPerBlock: 32),
                 await CaptureWorkloadAsync(
                     nameof(benchmark.BlueTuskPreparedScalarAsync),
@@ -45,7 +45,7 @@ internal static class ProviderPairedEvidenceWriter
                     nameof(benchmark.NpgsqlPreparedScalarAsync),
                     benchmark.NpgsqlPreparedScalarAsync,
                     expectedResult: 42,
-                    warmupOperationsPerProvider: 32,
+                    warmupOperationsPerProvider: 512,
                     operationsPerBlock: 64),
                 await CaptureWorkloadAsync(
                     nameof(benchmark.BlueTuskSequential1000RowsAsync),
@@ -53,7 +53,7 @@ internal static class ProviderPairedEvidenceWriter
                     nameof(benchmark.NpgsqlSequential1000RowsAsync),
                     benchmark.NpgsqlSequential1000RowsAsync,
                     expectedResult: 500_500L,
-                    warmupOperationsPerProvider: 16,
+                    warmupOperationsPerProvider: 64,
                     operationsPerBlock: 16),
                 await CaptureWorkloadAsync(
                     nameof(benchmark.BlueTuskSequentialOneMegabyteByteaAsync),
@@ -61,7 +61,7 @@ internal static class ProviderPairedEvidenceWriter
                     nameof(benchmark.NpgsqlSequentialOneMegabyteByteaAsync),
                     benchmark.NpgsqlSequentialOneMegabyteByteaAsync,
                     expectedResult: 1_048_576L,
-                    warmupOperationsPerProvider: 16,
+                    warmupOperationsPerProvider: 32,
                     operationsPerBlock: 4),
             };
 

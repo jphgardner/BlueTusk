@@ -641,16 +641,34 @@ public sealed class BlueTuskPortalRow
         _activeStream = null;
     }
 
-    internal async ValueTask CompleteActiveStreamAsync(
+    internal ValueTask CompleteActiveStreamAsync(
         BlueTuskPortalFieldStream stream,
         CancellationToken cancellationToken)
     {
         if (!ReferenceEquals(_activeStream, stream))
         {
+            return ValueTask.CompletedTask;
+        }
+
+        if (_activePosition == _activeLength)
+        {
+            _activeStream = null;
+            return ValueTask.CompletedTask;
+        }
+
+        return CompleteActiveStreamSlowAsync(stream, cancellationToken);
+    }
+
+    private async ValueTask CompleteActiveStreamSlowAsync(
+        BlueTuskPortalFieldStream stream,
+        CancellationToken cancellationToken)
+    {
+        await SkipActiveFieldAsync(cancellationToken).ConfigureAwait(false);
+        if (!ReferenceEquals(_activeStream, stream))
+        {
             return;
         }
 
-        await SkipActiveFieldAsync(cancellationToken).ConfigureAwait(false);
         _activeStream = null;
     }
 
@@ -974,11 +992,29 @@ internal sealed class BlueTuskPortalFieldStream : Stream
         base.Dispose(disposing);
     }
 
-    public override async ValueTask DisposeAsync()
+    [SuppressMessage(
+        "Usage",
+        "CA2215:Dispose methods should call base class dispose",
+        Justification = "The completed fast path calls the base directly; the incomplete path calls it after asynchronous draining.")]
+    public override ValueTask DisposeAsync()
+    {
+        if (_remaining == 0)
+        {
+            CompleteFromOwner();
+            var completion = base.DisposeAsync();
+            GC.SuppressFinalize(this);
+            return completion;
+        }
+
+        var slowCompletion = DisposeSlowAsync();
+        GC.SuppressFinalize(this);
+        return slowCompletion;
+    }
+
+    private async ValueTask DisposeSlowAsync()
     {
         await CompleteFromOwnerAsync(CancellationToken.None).ConfigureAwait(false);
         await base.DisposeAsync().ConfigureAwait(false);
-        GC.SuppressFinalize(this);
     }
 
     public override void Flush()

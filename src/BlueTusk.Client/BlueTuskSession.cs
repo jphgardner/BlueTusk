@@ -30,9 +30,18 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private string? _lastPreparedStatementName;
     private PreparedStatementDescription _lastPreparedStatementDescription;
     private bool _hasLastPreparedStatementDescription;
+    private string? _lastPreparedScalarMessageStatementName;
+    private IReadOnlyList<BlueTuskExtendedQueryParameter>? _lastPreparedScalarMessageParameters;
+    private byte[]? _lastPreparedScalarMessages;
+    private bool _lastPreparedScalarMessageUseBinaryResults;
+    private bool _lastPreparedScalarMessageDescribesPortal;
     private string? _unnamedStatementSql;
     private uint[]? _unnamedStatementTypeOids;
     private int _unnamedStatementParameterCount;
+    private IReadOnlyList<BlueTuskFieldDescription>? _unnamedStatementFields;
+    private bool _unnamedStatementFieldsUseBinaryResults;
+    private byte[]? _unnamedPortalMessages;
+    private bool _unnamedPortalMessagesUseBinaryResults;
     private readonly byte[] _streamedControlPayload = new byte[256];
     private readonly byte[] _lastCommandTagBytes = new byte[64];
     private readonly byte[] _lastPortalDescriptionBytes = new byte[1024];
@@ -522,6 +531,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string statementName,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
+        bool parameterEncodingUnchanged,
         CancellationToken cancellationToken = default)
     {
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -552,10 +562,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 statementName,
                 parameters,
                 useBinaryResults,
-                DescribePortal: !hasDescription),
+                DescribePortal: !hasDescription,
+                ParametersUnchanged: parameterEncodingUnchanged,
+                CachedMessages: default),
             WritePreparedScalarMessages,
             cancellationToken,
-            hasDescription ? description : null);
+            hasDescription ? description : null,
+            prepareState: PreparePreparedScalarWriteState,
+            getPreEncodedMessages: static state => state.CachedMessages);
     }
 
     /// <summary>Executes a named PostgreSQL prepared statement.</summary>
@@ -1486,21 +1500,39 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         var started = Stopwatch.GetTimestamp();
         var requestWritten = false;
         var parseSql = GetUnnamedStatementParseSql(statementName, sql, parameters);
+        var cachedFields = parseSql is null &&
+            TryGetUnnamedStatementFields(
+                statementName,
+                sql,
+                parameters,
+                useBinaryResults,
+                out var unnamedStatementFields)
+                ? unnamedStatementFields
+                : null;
         try
         {
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-            _connection.Write(
+            var writeState = PreparePortalWriteState(
                 new PortalWriteState(
                     portalName,
                     statementName,
                     parseSql,
                     parameters,
                     useBinaryResults,
-                    fetchSize),
-                WritePortalStartAndExecute);
+                    fetchSize,
+                    DescribePortal: cachedFields is null,
+                    CachedMessages: default));
+            if (writeState.CachedMessages.IsEmpty)
+            {
+                _connection.Write(writeState, WritePortalStartAndExecute);
+            }
+            else
+            {
+                _connection.WritePreEncoded(writeState.CachedMessages.Span);
+            }
             requestWritten = true;
-            var fields = ReadPortalStart();
-            RememberUnnamedStatement(sql, parameters);
+            var fields = ReadPortalStart(cachedFields);
+            RememberUnnamedStatementFields(sql, parameters, useBinaryResults, fields);
             return new BlueTuskPortal(
                 this,
                 portalName,
@@ -1535,7 +1567,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         int fetchSize,
         CancellationToken cancellationToken)
     {
-        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_operationLock.Wait(0, CancellationToken.None))
+        {
+            await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
         try
         {
             _connection.BeginPortalReadLease();
@@ -1550,19 +1587,41 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         var started = Stopwatch.GetTimestamp();
         var requestWritten = false;
         var parseSql = GetUnnamedStatementParseSql(statementName, sql, parameters);
+        var cachedFields = parseSql is null &&
+            TryGetUnnamedStatementFields(
+                statementName,
+                sql,
+                parameters,
+                useBinaryResults,
+                out var unnamedStatementFields)
+                ? unnamedStatementFields
+                : null;
         try
         {
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-            await _connection.WriteAsync(
+            var writeState = PreparePortalWriteState(
                 new PortalWriteState(
                     portalName,
                     statementName,
                     parseSql,
                     parameters,
                     useBinaryResults,
-                    fetchSize),
-                WritePortalStartAndExecute,
-                cancellationToken).ConfigureAwait(false);
+                    fetchSize,
+                    DescribePortal: cachedFields is null,
+                    CachedMessages: default));
+            if (writeState.CachedMessages.IsEmpty)
+            {
+                await _connection.WriteAsync(
+                    writeState,
+                    WritePortalStartAndExecute,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await _connection.WritePreEncodedAsync(
+                    writeState.CachedMessages,
+                    cancellationToken).ConfigureAwait(false);
+            }
             requestWritten = true;
             IReadOnlyList<BlueTuskFieldDescription>? fields = null;
             while (fields is null)
@@ -1590,7 +1649,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 switch (message.Identifier)
                 {
                     case '1':
+                        break;
                     case '2':
+                        if (cachedFields is not null)
+                        {
+                            fields = cachedFields;
+                        }
+
                         break;
                     case 'T':
                         fields = DecodeCachedRowDescription(message);
@@ -1615,7 +1680,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 }
             }
 
-            RememberUnnamedStatement(sql, parameters);
+            RememberUnnamedStatementFields(sql, parameters, useBinaryResults, fields);
             return new BlueTuskPortal(
                 this,
                 portalName,
@@ -1646,6 +1711,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         IBufferWriter<byte> output,
         PortalWriteState state)
     {
+        if (!state.CachedMessages.IsEmpty)
+        {
+            output.Write(state.CachedMessages.Span);
+            return;
+        }
+
         if (state.Sql is not null)
         {
             BlueTuskFrontendMessageWriter.WriteParse(
@@ -1661,11 +1732,15 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             state.StatementName,
             new ExtendedQueryBindParameterSource(state.Parameters),
             state.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
-        BlueTuskFrontendMessageWriter.WriteDescribePortal(output, state.PortalName);
+        if (state.DescribePortal)
+        {
+            BlueTuskFrontendMessageWriter.WriteDescribePortal(output, state.PortalName);
+        }
+
         // Bounded portals return metadata before Execute completes so the reader
         // can be cancelled between fetches. Unlimited reads keep the complete
         // exchange in one server response and avoid a forced packet boundary.
-        if (state.FetchSize != 0)
+        if (state.DescribePortal && state.FetchSize != 0)
         {
             BlueTuskFrontendMessageWriter.WriteFlush(output);
         }
@@ -1679,6 +1754,32 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             BlueTuskFrontendMessageWriter.WriteFlush(output);
         }
+    }
+
+    private PortalWriteState PreparePortalWriteState(PortalWriteState state)
+    {
+        if (state.PortalName.Length != 0 ||
+            state.StatementName.Length != 0 ||
+            state.Sql is not null ||
+            state.Parameters.Count != 0 ||
+            state.FetchSize != 0 ||
+            state.DescribePortal)
+        {
+            return state;
+        }
+
+        if (_unnamedPortalMessages is { } cachedMessages &&
+            _unnamedPortalMessagesUseBinaryResults == state.UseBinaryResults)
+        {
+            return state with { CachedMessages = cachedMessages };
+        }
+
+        var output = new ArrayBufferWriter<byte>();
+        WritePortalStartAndExecute(output, state);
+        var messages = output.WrittenSpan.ToArray();
+        _unnamedPortalMessages = messages;
+        _unnamedPortalMessagesUseBinaryResults = state.UseBinaryResults;
+        return state with { CachedMessages = messages };
     }
 
     private string? GetUnnamedStatementParseSql(
@@ -1730,6 +1831,39 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             return;
         }
 
+        RememberUnnamedStatementIdentity(sql, parameters);
+        _unnamedStatementFields = null;
+        _unnamedPortalMessages = null;
+    }
+
+    private void RememberUnnamedStatementFields(
+        string? sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        IReadOnlyList<BlueTuskFieldDescription> fields)
+    {
+        if (sql is null)
+        {
+            return;
+        }
+
+        var preservePortalMessages =
+            ReferenceEquals(_unnamedStatementFields, fields) &&
+            _unnamedStatementFieldsUseBinaryResults == useBinaryResults;
+        RememberUnnamedStatementIdentity(sql, parameters);
+        if (!preservePortalMessages)
+        {
+            _unnamedPortalMessages = null;
+        }
+
+        _unnamedStatementFields = fields;
+        _unnamedStatementFieldsUseBinaryResults = useBinaryResults;
+    }
+
+    private void RememberUnnamedStatementIdentity(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters)
+    {
         _unnamedStatementSql = sql;
         _unnamedStatementParameterCount = parameters.Count;
         if (parameters.Count == 0)
@@ -1749,13 +1883,37 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    private bool TryGetUnnamedStatementFields(
+        string statementName,
+        string? sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        out IReadOnlyList<BlueTuskFieldDescription> fields)
+    {
+        if (statementName.Length == 0 &&
+            sql is not null &&
+            _unnamedStatementFields is { } cachedFields &&
+            _unnamedStatementFieldsUseBinaryResults == useBinaryResults &&
+            MatchesUnnamedStatement(sql, parameters))
+        {
+            fields = cachedFields;
+            return true;
+        }
+
+        fields = null!;
+        return false;
+    }
+
     private void InvalidateUnnamedStatement()
     {
         _unnamedStatementSql = null;
         _unnamedStatementParameterCount = 0;
+        _unnamedStatementFields = null;
+        _unnamedPortalMessages = null;
     }
 
-    private IReadOnlyList<BlueTuskFieldDescription> ReadPortalStart()
+    private IReadOnlyList<BlueTuskFieldDescription> ReadPortalStart(
+        IReadOnlyList<BlueTuskFieldDescription>? cachedFields)
     {
         while (true)
         {
@@ -1763,7 +1921,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             switch (message.Identifier)
             {
                 case '1':
+                    break;
                 case '2':
+                    if (cachedFields is not null)
+                    {
+                        return cachedFields;
+                    }
+
                     break;
                 case 'T':
                     return DecodeCachedRowDescription(message);
@@ -2881,6 +3045,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken,
         PreparedStatementDescription? preparedDescription = null,
         Func<BlueTuskSession, TState, TState>? prepareState = null,
+        Func<TState, ReadOnlyMemory<byte>>? getPreEncodedMessages = null,
         Action<BlueTuskSession, TState>? completeState = null,
         int prependedReadyForQueryCount = 0,
         Action? prependedCompleted = null)
@@ -2902,7 +3067,20 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             }
 
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-            await _connection.WriteAsync(state, writeMessages, cancellationToken).ConfigureAwait(false);
+            var preEncodedMessages = getPreEncodedMessages?.Invoke(state) ?? default;
+            if (preEncodedMessages.IsEmpty)
+            {
+                await _connection.WriteAsync(
+                    state,
+                    writeMessages,
+                    cancellationToken).ConfigureAwait(false);
+            }
+            else
+            {
+                await _connection.WritePreEncodedAsync(
+                    preEncodedMessages,
+                    cancellationToken).ConfigureAwait(false);
+            }
             if (cancellationToken.CanBeCanceled)
             {
                 var result = await ReadScalarResponseWithCancellationAsync(
@@ -3022,6 +3200,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         IBufferWriter<byte> output,
         PreparedScalarWriteState state)
     {
+        if (!state.CachedMessages.IsEmpty)
+        {
+            output.Write(state.CachedMessages.Span);
+            return;
+        }
+
         BlueTuskFrontendMessageWriter.WriteBind(
             output,
             string.Empty,
@@ -3035,6 +3219,39 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
         BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
         BlueTuskFrontendMessageWriter.WriteSync(output);
+    }
+
+    private static PreparedScalarWriteState PreparePreparedScalarWriteState(
+        BlueTuskSession session,
+        PreparedScalarWriteState state)
+    {
+        if (!state.ParametersUnchanged)
+        {
+            session.InvalidatePreparedScalarMessageCache();
+            return state;
+        }
+
+        if (string.Equals(
+                session._lastPreparedScalarMessageStatementName,
+                state.StatementName,
+                StringComparison.Ordinal) &&
+            ReferenceEquals(session._lastPreparedScalarMessageParameters, state.Parameters) &&
+            session._lastPreparedScalarMessageUseBinaryResults == state.UseBinaryResults &&
+            session._lastPreparedScalarMessageDescribesPortal == state.DescribePortal &&
+            session._lastPreparedScalarMessages is { } cachedMessages)
+        {
+            return state with { CachedMessages = cachedMessages };
+        }
+
+        var output = new ArrayBufferWriter<byte>();
+        WritePreparedScalarMessages(output, state);
+        var messages = output.WrittenSpan.ToArray();
+        session._lastPreparedScalarMessageStatementName = state.StatementName;
+        session._lastPreparedScalarMessageParameters = state.Parameters;
+        session._lastPreparedScalarMessageUseBinaryResults = state.UseBinaryResults;
+        session._lastPreparedScalarMessageDescribesPortal = state.DescribePortal;
+        session._lastPreparedScalarMessages = messages;
+        return state with { CachedMessages = messages };
     }
 
     private static void WriteExtendedScalarMessages(
@@ -3120,6 +3337,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string statementName,
         PreparedStatementDescription description)
     {
+        InvalidatePreparedScalarMessageCache(statementName);
         _preparedStatementDescriptions[statementName] = description;
         _lastPreparedStatementName = statementName;
         _lastPreparedStatementDescription = description;
@@ -3128,6 +3346,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void ForgetPreparedStatementDescription(string statementName)
     {
+        InvalidatePreparedScalarMessageCache(statementName);
         _preparedStatementDescriptions.Remove(statementName);
         if (string.Equals(_lastPreparedStatementName, statementName, StringComparison.Ordinal))
         {
@@ -3139,10 +3358,29 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void ClearPreparedStatementDescriptions()
     {
+        InvalidatePreparedScalarMessageCache();
         _preparedStatementDescriptions.Clear();
         _lastPreparedStatementName = null;
         _lastPreparedStatementDescription = default;
         _hasLastPreparedStatementDescription = false;
+    }
+
+    private void InvalidatePreparedScalarMessageCache(string? statementName = null)
+    {
+        if (statementName is not null &&
+            !string.Equals(
+                _lastPreparedScalarMessageStatementName,
+                statementName,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        _lastPreparedScalarMessageStatementName = null;
+        _lastPreparedScalarMessageParameters = null;
+        _lastPreparedScalarMessages = null;
+        _lastPreparedScalarMessageUseBinaryResults = false;
+        _lastPreparedScalarMessageDescribesPortal = false;
     }
 
     private BlueTuskCopyResult CopyInCore(
@@ -5196,7 +5434,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string StatementName,
         IReadOnlyList<BlueTuskExtendedQueryParameter> Parameters,
         bool UseBinaryResults,
-        bool DescribePortal);
+        bool DescribePortal,
+        bool ParametersUnchanged,
+        ReadOnlyMemory<byte> CachedMessages);
 
     private readonly record struct ExtendedScalarWriteState(
         string OriginalSql,
@@ -5210,7 +5450,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string? Sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> Parameters,
         bool UseBinaryResults,
-        int FetchSize);
+        int FetchSize,
+        bool DescribePortal,
+        ReadOnlyMemory<byte> CachedMessages);
 
     private readonly struct ExtendedQueryBindParameterSource(
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters) : IBlueTuskBindParameterSource

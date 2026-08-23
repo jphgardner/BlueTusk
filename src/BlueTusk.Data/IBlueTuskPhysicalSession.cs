@@ -116,6 +116,7 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         string statementName,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
+        bool parameterEncodingUnchanged,
         CancellationToken cancellationToken = default) =>
         BlueTuskScalarQueryResult.FromQueryResult(
             await ExecutePreparedStatementAsync(
@@ -728,11 +729,13 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         string statementName,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
+        bool parameterEncodingUnchanged,
         CancellationToken cancellationToken = default) =>
         _session.ExecutePreparedScalarAsync(
             statementName,
             parameters,
             useBinaryResults,
+            parameterEncodingUnchanged,
             cancellationToken);
 
     public BlueTuskPortal BeginPreparedPortal(

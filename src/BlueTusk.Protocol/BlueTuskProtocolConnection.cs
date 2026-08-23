@@ -10,9 +10,10 @@ namespace BlueTusk.Protocol;
 /// <summary>Owns transport buffering and PostgreSQL frame boundaries for one physical connection.</summary>
 public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 {
-    private const int InitialBufferSize = 64 * 1024;
+    private const int InitialBufferSize = 8 * 1024;
     private const int MaximumPayloadReadAhead = 1024 * 1024;
     private const int DirectPayloadReadThreshold = 8 * 1024;
+    private const int MinimumPayloadFillSize = 64 * 1024;
     private const int InitialWriteBufferSize = 4 * 1024;
     private const int MaximumRetainedWriteBufferSize = 64 * 1024;
     private readonly IBlueTuskTransport _transport;
@@ -512,6 +513,17 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         {
             var copied = CopyBufferedPayload(destination.Span);
             _activePayloadRemaining -= copied;
+            if (destination.Length >= MinimumPayloadFillSize &&
+                copied != destination.Length)
+            {
+                return FillPayloadReadAndCompleteAsync(
+                    destination[copied..],
+                    copied,
+                    state,
+                    complete,
+                    cancellationToken);
+            }
+
             return ValueTask.FromResult(complete(state, copied));
         }
 
@@ -520,12 +532,30 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             var pendingDirectRead = _transport.ReadAsync(destination, cancellationToken);
             if (!pendingDirectRead.IsCompletedSuccessfully)
             {
-                return AwaitPayloadReadAndCompleteAsync(pendingDirectRead, state, complete);
+                return destination.Length >= MinimumPayloadFillSize
+                    ? AwaitPayloadReadAndFillAndCompleteAsync(
+                        pendingDirectRead,
+                        destination,
+                        state,
+                        complete,
+                        cancellationToken)
+                    : AwaitPayloadReadAndCompleteAsync(pendingDirectRead, state, complete);
             }
 
             var directRead = ValidatePayloadRead(pendingDirectRead.Result);
             _activePayloadRemaining -= directRead;
-            return ValueTask.FromResult(complete(state, directRead));
+            if (directRead == destination.Length ||
+                destination.Length < MinimumPayloadFillSize)
+            {
+                return ValueTask.FromResult(complete(state, directRead));
+            }
+
+            return FillPayloadReadAndCompleteAsync(
+                destination[directRead..],
+                directRead,
+                state,
+                complete,
+                cancellationToken);
         }
 
         PrepareForRead();
@@ -592,6 +622,51 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     }
 
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> AwaitPayloadReadAndFillAndCompleteAsync<TState>(
+        ValueTask<int> pendingRead,
+        Memory<byte> destination,
+        TState state,
+        Func<TState, int, int> complete,
+        CancellationToken cancellationToken)
+    {
+        var totalRead = 0;
+        while (true)
+        {
+            var read = ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
+            _activePayloadRemaining -= read;
+            totalRead += read;
+            if (totalRead == destination.Length)
+            {
+                return complete(state, totalRead);
+            }
+
+            pendingRead = _transport.ReadAsync(destination[totalRead..], cancellationToken);
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> FillPayloadReadAndCompleteAsync<TState>(
+        Memory<byte> remainingDestination,
+        int totalRead,
+        TState state,
+        Func<TState, int, int> complete,
+        CancellationToken cancellationToken)
+    {
+        while (!remainingDestination.IsEmpty)
+        {
+            var read = ValidatePayloadRead(
+                await _transport.ReadAsync(
+                    remainingDestination,
+                    cancellationToken).ConfigureAwait(false));
+            _activePayloadRemaining -= read;
+            totalRead += read;
+            remainingDestination = remainingDestination[read..];
+        }
+
+        return complete(state, totalRead);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<int> AwaitPayloadReadAheadAndCompleteAsync<TState>(
         ValueTask<int> pendingRead,
         Memory<byte> destination,
@@ -615,6 +690,29 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         Action<IBufferWriter<byte>, TState> writeMessage,
         CancellationToken cancellationToken) =>
         WriteCoreAsync(state, writeMessage, cancellationToken);
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    internal async ValueTask WritePreEncodedAsync(
+        ReadOnlyMemory<byte> messages,
+        CancellationToken cancellationToken)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (messages.IsEmpty)
+        {
+            throw new ArgumentException("At least one encoded message is required.", nameof(messages));
+        }
+
+        BeginDirectWrite();
+        try
+        {
+            await _transport.WriteAsync(messages, cancellationToken).ConfigureAwait(false);
+            await _transport.FlushAsync(cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            EndDirectWrite();
+        }
+    }
 
     /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
     public ValueTask WriteSensitiveAsync(
@@ -673,6 +771,26 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         TState state,
         Action<IBufferWriter<byte>, TState> writeMessage) =>
         WriteCore(state, writeMessage);
+
+    internal void WritePreEncoded(ReadOnlySpan<byte> messages)
+    {
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (messages.IsEmpty)
+        {
+            throw new ArgumentException("At least one encoded message is required.", nameof(messages));
+        }
+
+        BeginDirectWrite();
+        try
+        {
+            _transport.Write(messages);
+            _transport.Flush();
+        }
+        finally
+        {
+            EndDirectWrite();
+        }
+    }
 
     /// <summary>Writes and flushes a message, then overwrites the reusable buffer that held it.</summary>
     public void WriteSensitive(Action<IBufferWriter<byte>> writeMessage)
@@ -1064,6 +1182,17 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
         return _writeBuffer;
     }
+
+    private void BeginDirectWrite()
+    {
+        if (Interlocked.CompareExchange(ref _writeInProgress, 1, 0) != 0)
+        {
+            throw new InvalidOperationException(
+                "A protocol write is already active on this physical connection.");
+        }
+    }
+
+    private void EndDirectWrite() => Volatile.Write(ref _writeInProgress, 0);
 
     private void EndWrite(bool clearBuffer)
     {

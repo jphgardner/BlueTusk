@@ -301,6 +301,11 @@ paired report is the provider-relative latency authority: five trials, 501
 alternating blocks per trial, and workload-specific block sizes (256 checkouts,
 32 parameterized commands, 64 prepared commands, 16 row-stream commands or 4
 large-value commands per block).
+Before measurement it completes 4,096 warm pool checkouts, 512 parameterized
+and prepared commands, 64 row streams, and 32 large-value streams per provider.
+The untimed warmups prevent tiered-JIT transitions from contaminating the
+sub-microsecond pool trials; every measured sample and the 1.00 limits remain
+unchanged.
 Every sample is normalized per completed operation. The verifier
 requires BlueTusk to remain at or below Npgsql for median-of-trials mean, P95,
 P99 and managed allocation in every listed provider workload. Record the

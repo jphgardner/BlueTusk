@@ -1278,6 +1278,7 @@ public sealed class BlueTuskCommand : DbCommand
                             prepared.Name,
                             parameters,
                             useBinaryResults,
+                            _preparedParameterEncodingUnchanged,
                             cancellationToken).ConfigureAwait(false);
                     }
                     else
@@ -1314,6 +1315,7 @@ public sealed class BlueTuskCommand : DbCommand
                             prepared.Name,
                             parameters,
                             useBinaryResults: false,
+                            _preparedParameterEncodingUnchanged,
                             cancellationToken).ConfigureAwait(false);
                     }
                     else

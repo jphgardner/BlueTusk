@@ -106,9 +106,10 @@ The paired workloads cover asynchronous warm-pool checkout, parameterized and
 explicitly prepared scalar commands, a sequential 1,000-row read, and a
 sequential 1 MiB `bytea` stream. Each pair uses identical SQL and connection
 lifetimes, long-lived data sources and physical connections, and reusable stream
-buffers. Each connection builds its one-row 1 MiB temporary payload during global
-setup, so the timed stream pair measures query, wire, and provider work without
-repeatedly charging either provider for PostgreSQL's payload-generation CPU cost.
+buffers. Both providers read the same uniquely named unlogged relation. Its
+`bytea` column uses PostgreSQL `STORAGE EXTERNAL`, so the timed stream pair
+measures query, wire, and provider work without charging either backend for
+payload generation or TOAST decompression.
 The broader BlueTusk-only suite continues to cover the remaining type,
 batch, pipeline, COPY, concurrency, EF, graph, and replication workloads from
 the performance strategy.
@@ -128,6 +129,12 @@ ShortRun measurements are useful iteration diagnostics but have wide confidence
 intervals. The checked-in provider comparison therefore uses `--job medium`
 (two launches, ten warmups, and fifteen measured iterations) and still does not
 claim that one provider is universally faster.
+
+The paired capture also completes workload-specific untimed warmups before its
+five trials: 4,096 operations per provider for pool checkout, 512 for each
+scalar path, 64 for the row stream, and 32 for the large-value stream. These
+counts keep tiered-JIT transitions out of the measured blocks; they do not
+remove samples or relax the 1.00 provider-relative limits.
 
 The refreshed 2026-08-07 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
 mean latency and managed allocation on all five paired workloads. BlueTusk/Npgsql

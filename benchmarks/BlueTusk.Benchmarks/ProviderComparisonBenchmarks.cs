@@ -23,12 +23,15 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
 
     private readonly byte[] _blueTuskBuffer = new byte[128 * 1024];
     private readonly byte[] _npgsqlBuffer = new byte[128 * 1024];
+    private readonly string _payloadTableName =
+        $"bluetusk_benchmark_payload_{Guid.NewGuid():N}";
     private BlueTuskDataSource _blueTuskDataSource = null!;
     private NpgsqlDataSource _npgsqlDataSource = null!;
     private BlueTuskConnection _blueTuskConnection = null!;
     private NpgsqlConnection _npgsqlConnection = null!;
     private BlueTuskCommand _blueTuskPreparedCommand = null!;
     private NpgsqlCommand _npgsqlPreparedCommand = null!;
+    private string _payloadQuery = null!;
     private int _disposed;
 
     [GlobalSetup]
@@ -47,18 +50,29 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
         _blueTuskConnection = await _blueTuskDataSource.OpenConnectionAsync();
         _npgsqlConnection = await _npgsqlDataSource.OpenConnectionAsync();
 
-        const string createPayloadTable =
-            "CREATE TEMP TABLE bluetusk_benchmark_payload ON COMMIT PRESERVE ROWS " +
-            "AS SELECT decode(repeat('ab', 1048576), 'hex') AS payload";
+        var quotedPayloadTable = $"\"{_payloadTableName}\"";
+        var createPayloadTable = $"CREATE UNLOGGED TABLE {quotedPayloadTable} (payload bytea)";
         await using (var command = new BlueTuskCommand(createPayloadTable, _blueTuskConnection))
         {
             _ = await command.ExecuteNonQueryAsync();
         }
 
-        await using (var command = new NpgsqlCommand(createPayloadTable, _npgsqlConnection))
+        await using (var command = new BlueTuskCommand(
+            $"ALTER TABLE {quotedPayloadTable} ALTER COLUMN payload SET STORAGE EXTERNAL",
+            _blueTuskConnection))
         {
             _ = await command.ExecuteNonQueryAsync();
         }
+
+        await using (var command = new BlueTuskCommand(
+            $"INSERT INTO {quotedPayloadTable} " +
+            "SELECT decode(repeat('ab', 1048576), 'hex')",
+            _blueTuskConnection))
+        {
+            _ = await command.ExecuteNonQueryAsync();
+        }
+
+        _payloadQuery = $"SELECT payload FROM {quotedPayloadTable}";
 
         _blueTuskPreparedCommand = new BlueTuskCommand(
             "SELECT @value::int4 + 1",
@@ -89,9 +103,17 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
             return;
         }
 
+        if (_blueTuskConnection is not null && _payloadQuery is not null)
+        {
+            await using var dropPayload = new BlueTuskCommand(
+                $"DROP TABLE IF EXISTS \"{_payloadTableName}\"",
+                _blueTuskConnection);
+            _ = await dropPayload.ExecuteNonQueryAsync();
+        }
+
         await _blueTuskPreparedCommand.DisposeAsync();
         await _npgsqlPreparedCommand.DisposeAsync();
-        await _blueTuskConnection.DisposeAsync();
+        await _blueTuskConnection!.DisposeAsync();
         await _npgsqlConnection.DisposeAsync();
         await _blueTuskDataSource.DisposeAsync();
         await _npgsqlDataSource.DisposeAsync();
@@ -185,7 +207,7 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
     public async Task<long> BlueTuskSequentialOneMegabyteByteaAsync()
     {
         await using var command = new BlueTuskCommand(
-            "SELECT payload FROM bluetusk_benchmark_payload",
+            _payloadQuery,
             _blueTuskConnection);
         await using var reader = await command.ExecuteReaderAsync(
             CommandBehavior.SequentialAccess);
@@ -199,7 +221,7 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
     public async Task<long> NpgsqlSequentialOneMegabyteByteaAsync()
     {
         await using var command = new NpgsqlCommand(
-            "SELECT payload FROM bluetusk_benchmark_payload",
+            _payloadQuery,
             _npgsqlConnection);
         await using var reader = await command.ExecuteReaderAsync(
             CommandBehavior.SequentialAccess);
