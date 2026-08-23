@@ -89,8 +89,10 @@ public issues.
   policy, KDC/keytab security, certificate issuance, secret storage, network
   isolation, PostgreSQL patching, backups, and server auditing are deployment
   responsibilities.
-- BlueTusk 1.0.0 is not published. Re-run this review for the exact immutable
-  candidate and before each stable release, after a new authentication mechanism, or after a material transport,
+- BlueTusk 1.0.0 was published under the owner exception recorded in the
+  [V1 publication record](releases/1.0.0-publication-record.md). Independent
+  security approval was not represented as complete. Re-run this review before
+  each later stable release, after a new authentication mechanism, or after a material transport,
   pooling, parser, dependency, or diagnostic change.
 
 ## Repeatable release checks

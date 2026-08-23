@@ -155,7 +155,7 @@ B. Machine-checked budgets cap those paths at 235,000 B, 900 B, and 185,000 B
 respectively. These are local regression baselines, not network latency or
 universal throughput claims.
 
-The stable `1.0.0` release-prepared family has passed its implementation audit. The
+The published stable `1.0.0` family has passed its implementation audit. The
 PostgreSQL 15–19 matrix persists initial and update replay in the production
 store and drives signed disconnect/resume delivery through real SSE,
 SignalR/WebSockets, and HTTP/2 gRPC endpoints. Live candidate packages are

@@ -1,7 +1,7 @@
 # BlueTusk Streams
 
 BlueTusk Streams is the transaction-preserving application CDC layer above
-`BlueTusk.Replication.PgOutput`. The stable `1.0.0` release-prepared family
+`BlueTusk.Replication.PgOutput`. The published stable `1.0.0` family
 contains the transaction kernel, typed core mappings, no-gap snapshot
 bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer
 lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and

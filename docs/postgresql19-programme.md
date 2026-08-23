@@ -37,5 +37,8 @@ without a string-concatenation fallback.
 Stable publication invokes
 `verify-postgresql19-programme.ps1 -RequireGeneralAvailability`. That gate
 cannot pass until PostgreSQL 19 GA has an official digest-pinned image and
-exact-commit evidence. Publication remains disabled independently in the
-product-family manifest.
+exact-commit evidence. BlueTusk `1.0.0` was published under the explicit owner
+exception recorded in the
+[V1 publication record](releases/1.0.0-publication-record.md); the PostgreSQL
+19 GA evidence itself remains deferred, and the standard gate remains in force
+for later releases.

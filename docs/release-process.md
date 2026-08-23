@@ -13,9 +13,10 @@ family:
 - the GitHub Actions workflows that must have succeeded for the exact release
   commit from an approved event.
 
-All six families are release-prepared at stable `1.0.0` without prerelease
-suffixes. During preparation every publication policy remains disabled. In the
-final immutable candidate, `enabled=true` means the family is armed; it does
+All six families are published at stable `1.0.0` without prerelease suffixes;
+the [V1 publication record](releases/1.0.0-publication-record.md) documents the
+owner exception used for that release. During preparation a publication policy
+may be disabled. In a final immutable candidate, `enabled=true` means the family is armed; it does
 not publish a package. Exact release tags and protected `package-production`
 approval remain the publication boundary.
 

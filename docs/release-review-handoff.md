@@ -79,5 +79,9 @@ ancestor-commit evidence does not pass.
 | Findings and accepted risk references | |
 | Reviewer signature or approval URL | |
 
-Publication remains disabled until this record and every applicable evidence
-item are complete for the same candidate commit.
+Under the standard policy, publication remains blocked until this record and
+every applicable evidence item are complete for the same candidate commit.
+Version `1.0.0` was published under the separate, explicit repository-owner
+exception recorded in the
+[V1 publication record](releases/1.0.0-publication-record.md); this handoff was
+not retroactively completed.

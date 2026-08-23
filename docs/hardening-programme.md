@@ -1,9 +1,10 @@
 # V1 hardening programme
 
 The Provider → Streams → Sync → Live → Continuous Graph development chain is
-feature-complete for the V1 candidate. Publication remains disabled while the
-evidence below is incomplete. Internal tests and candidate packages are not, by
-themselves, a production-readiness claim.
+feature-complete for V1. Version `1.0.0` was published on 2026-08-23 under the
+documented [repository-owner exception](releases/1.0.0-publication-record.md).
+The incomplete evidence below remains incomplete; publication and internal
+tests are not, by themselves, a production-readiness claim.
 
 ## Gap-to-evidence matrix
 

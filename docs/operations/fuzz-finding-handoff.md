@@ -82,4 +82,6 @@ The finding is closed only when all of the following are true:
 - the protected candidate-readiness workflow accepts the complete seven-run
   manifest.
 
-Until then, stable publication remains disabled.
+For later stable releases, publication remains blocked until these conditions
+hold. The V1 publication record documents the repository-owner exception under
+which `1.0.0` was published without exact-release fuzz evidence.

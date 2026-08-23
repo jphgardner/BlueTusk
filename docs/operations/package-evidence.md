@@ -106,11 +106,10 @@ workflow or source commit invalidates the candidate bundle.
 ## Publication separation
 
 The canonical package job never authenticates to a registry and cannot
-publish. Stable publication remains disabled in
-`eng/product-families.json`. After the protected V1 candidate gate, each family
-still uses its dedicated tag-triggered release path, dependency ordering,
-protected `package-production` environment, live governance verification and
-registry credentials.
+publish. Stable family policies are armed in `eng/product-families.json` after
+the `1.0.0` release, but each family still uses its dedicated tag-triggered
+release path, dependency ordering, protected `package-production` environment,
+live governance verification and registry credentials.
 
 The canonical artifact proves what was built and accepted. It does not prove
 that a registry received those exact bytes; registry-side verification remains

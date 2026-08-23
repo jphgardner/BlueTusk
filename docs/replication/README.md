@@ -61,8 +61,8 @@ BlueTusk supports PostgreSQL 15 through 19 and provides:
 The replication subsystem has passed its production-readiness gate: the live
 version matrix, compatibility baselines, durability and feedback checks,
 failure-recovery cases, allocation/backpressure benchmarks, cancellation stress,
-and scheduled endurance are all executable. The packages are release-prepared
-at stable 1.0.0; publication still requires the exact immutable candidate and
+and scheduled endurance are all executable. The packages are published at
+stable 1.0.0. Later releases still require the exact immutable candidate and
 protected release evidence.
 
 ## Server setup

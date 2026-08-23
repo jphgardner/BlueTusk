@@ -6,12 +6,13 @@ the code: start with the provider, add EF Core or an extension when the
 application needs it, and adopt Streams, Sync, Live, Control Plane or
 Continuous Graph only when their delivery contracts match the workload.
 
-The V1 implementation and release-hardening work are complete. Stable
-publication is still fail closed while exact-candidate endurance evidence,
-its 14 required in-window operational disturbance recoveries, PostgreSQL 19 GA
-evidence, independent review and operational rehearsals remain outstanding.
-Start with [V1 release readiness](v1-release-readiness.md) if you need to
-distinguish implemented code from release authorization.
+BlueTusk `1.0.0` was published on 2026-08-23 as 62 NuGet packages and three npm
+packages. The [V1 publication record](releases/1.0.0-publication-record.md)
+records the exact tags, commit, workflows, inventory, registry verification,
+and repository-owner exceptions. Exact-candidate endurance, PostgreSQL 19 GA,
+reference performance, independent review and operational rehearsals remain
+outstanding evidence rather than retroactively passed gates. Read
+[V1 release readiness](v1-release-readiness.md) for that distinction.
 
 ## Choose a path
 

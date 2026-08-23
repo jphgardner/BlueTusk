@@ -52,7 +52,7 @@ always run a clean locked install, vulnerability audit, client build, and
 client tests before any tarball is created. See the
 [release process](../release-process.md).
 
-Implementation status: all six families are release-prepared at stable
+Implementation status: all six families are published at stable
 `1.0.0`. [Streams](../streams/release-notes-1.0.0.md) has its complete CDC and
 relay contracts; [Sync](../sync/release-notes-1.0.0.md) has all four
 destinations on one conformance contract; [Live](../live/release-notes-1.0.0.md)

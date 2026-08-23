@@ -119,8 +119,10 @@ BlueTusk tracks three separate ideas:
 3. **Release authorization** — exact-candidate endurance, GA prerequisites,
    independent review and maintainer sign-off are complete.
 
-The V1 implementation is code-ready. Stable publication remains disabled until
-the third category is satisfied for one immutable commit.
+The V1 implementation was published as `1.0.0` under a documented owner
+exception before the third category was complete. See the
+[publication record](../releases/1.0.0-publication-record.md). Later releases
+remain subject to the normal fail-closed authorization policy.
 
 ## Where to continue
 

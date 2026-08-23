@@ -3,7 +3,7 @@
 The cross-milestone test and publication cadence is documented in the
 [PostgreSQL 19 compatibility programme](../postgresql19-programme.md).
 
-BlueTusk's release-prepared `1.0.0` Provider family exposes PostgreSQL 19
+BlueTusk's published `1.0.0` Provider family exposes PostgreSQL 19
 SQL/PGQ through raw ADO.NET SQL, a typed EF query subset, and read-only
 property-graph schema discovery. Stable support remains gated on PostgreSQL 19
 GA and the exact-candidate PostgreSQL 15–19 matrix. ADO.NET

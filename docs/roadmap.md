@@ -8,14 +8,12 @@ coverage-guided parser fuzzing, ADO.NET compatibility, API budgets,
 supply-chain provenance and PostgreSQL 19 milestone programme all have code,
 tests, documentation and fail-closed verification.
 
-The release-critical path now contains only exact-candidate and external
-evidence: PostgreSQL 19 GA, the 72-hour Streams, 24-hour Sync, and 24-hour
-ContinuousGraph runs, the in-window operational disturbance recoveries,
-seven exact-SHA workflow records, independent review, two pilots covering all
-six families, the 28-day website field window, backup/restore and rollback
-rehearsal, and maintainer sign-off. Publication remains disabled during
-preparation; after GA a reviewed arming PR to `main` creates the immutable
-candidate.
+Version `1.0.0` was published on 2026-08-23 under the documented repository-owner
+exception. The remaining hardening path still contains PostgreSQL 19 GA, the
+72-hour Streams, 24-hour Sync, and 24-hour ContinuousGraph runs, the in-window
+operational disturbance recoveries, exact-SHA fuzz and reference performance,
+independent review, two pilots covering all six families, the 28-day website
+field window, backup/restore and rollback rehearsal, and maintainer sign-off.
 
 The three-application V1 RC suite, exact prerelease manifest and pack
 verification, GHCR image-evidence workflow, Kubernetes/Helm platform, fluent
@@ -643,10 +641,12 @@ The detailed contracts and release gates are maintained in the [real-time platfo
 ## 1.0.0 engineering gate (Milestone 9, complete)
 
 This milestone tracks the repository's 1.0 engineering gates. All six families
-are release-prepared at stable `1.0.0`, but no V1 package is published and this
-does not declare a production-endorsed release. PostgreSQL 19 syntax remains
-beta-sensitive until GA. The product-spec audit is complete: every explicit
-environment and workload gate below is executable and checked.
+were published at stable `1.0.0` under the owner exception recorded in the
+[V1 publication record](releases/1.0.0-publication-record.md). This does not
+declare the incomplete external evidence complete or create a blanket
+production endorsement. PostgreSQL 19 syntax remains beta-sensitive until GA.
+The product-spec audit is complete: every explicit environment and workload
+gate below is executable and checked.
 
 - [x] Stable ADO.NET APIs
   - [x] Compiler-enforced shipped API/nullability baselines for Transport, Protocol, Security, Diagnostics, TypeSystem, Client, and Data

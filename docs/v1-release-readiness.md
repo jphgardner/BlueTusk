@@ -1,8 +1,11 @@
 # V1 release readiness
 
-BlueTusk is code-ready for an immutable V1 candidate. Stable publication is
-not yet authorised. The release process remains fail closed until the external,
-exact-candidate evidence below is complete.
+BlueTusk `1.0.0` was published on 2026-08-23 under the explicit repository-owner
+decision recorded in the
+[V1 publication record](releases/1.0.0-publication-record.md). Publication did
+not complete the external exact-candidate evidence below: independent approval,
+fuzz, reference performance, endurance, and PostgreSQL 19 GA remain open. The
+standard release process remains fail closed for later versions.
 
 ## Implemented V1 hardening
 

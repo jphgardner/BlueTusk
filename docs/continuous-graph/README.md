@@ -1,6 +1,6 @@
 # BlueTusk Continuous Graph
 
-`BlueTusk.ContinuousGraph` is the release-prepared stable graph family. Trusted
+`BlueTusk.ContinuousGraph` is the published stable graph family. Trusted
 server code registers bounded typed SQL/PGQ queries; the compiler validates the
 query against EF property-graph metadata and then delegates gap-free
 invalidation, authoritative requery, and keyed result diffs to BlueTusk Live.
@@ -185,7 +185,7 @@ Control Plane core does not reference ContinuousGraph.
 
 ## Release state
 
-The two packages are release-prepared at stable `1.0.0`.
+The two packages are published at stable `1.0.0`.
 `BlueTusk.ContinuousGraph` contains
 the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
 operations adapter. The family remains unpublished until PostgreSQL 19 GA,

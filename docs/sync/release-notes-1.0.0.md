@@ -1,6 +1,11 @@
 # BlueTusk Sync 1.0.0 release record
 
-Status: release-prepared, not published.
+Status: published on 2026-08-23 from `sync-v1.0.0` at release commit
+`7380d7b028c72b2aae348b778711d104d022a3f8`.
+
+The complete release evidence, registry inventory, and explicit owner-accepted
+exceptions are recorded in the
+[V1 publication record](../releases/1.0.0-publication-record.md).
 
 Sync 1.0.0 stabilises the mutation pipeline, transforms, quarantine and replay,
 reconciliation and repair, rebuild and cutover, hosting, telemetry, and the
@@ -9,15 +14,14 @@ durable formats are frozen by
 [`eng/sync-api-freeze.json`](../../eng/sync-api-freeze.json) and
 [`eng/sync-formats.json`](../../eng/sync-formats.json).
 
-Stable publication requires Provider and Streams 1.0.0 and an exact-candidate
-24-hour Sync endurance report against digest-pinned destination images,
-including disconnect, cancellation, replay, checkpoint, reconciliation, and
-corruption recovery evidence.
+The planned standard publication gate required Provider and Streams 1.0.0 plus
+an exact-candidate 24-hour Sync endurance report. The package dependencies were
+published first; the owner exception records the deferred endurance evidence.
 
-Support starts only after `sync-v1.0.0` is tagged from the immutable reviewed
-`main` candidate and registry availability, hashes, provenance, smoke tests,
-and dependency resolution pass. Published 1.0.0 artifacts are immutable;
-defects use rollback or pinning and a new fixed version.
+Support starts with the immutable `sync-v1.0.0` packages. Registry availability,
+contents, hashes, SBOMs, provenance, tests, and dependency resolution passed in
+the recorded release workflow. Defects use rollback or pinning and a new fixed
+version.
 
 Order Fulfilment Operations exercises the PostgreSQL read-model projection,
 reconciliation, rebuild, and cutover runbooks from exact `1.0.0-rc.1`

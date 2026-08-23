@@ -7,18 +7,20 @@ PostgreSQL-specific schema/query support, native data paths, replication,
 extensions, parser reliability, security, performance, API governance,
 supply-chain provenance, stress, compatibility and documentation.
 
-The repository is release-prepared as six stable `1.0.0` families, but no V1
-package is published. Completing an engineering gate does not substitute for
+The six stable `1.0.0` families were published on 2026-08-23 under an explicit
+repository-owner exception. Completing publication does not substitute for
 exact-candidate endurance, PostgreSQL 19 GA, independent production experience,
-or protected publication approval. The concise current status is in
-[V1 release readiness](v1-release-readiness.md).
+or reference-performance evidence. The exact release facts and accepted risks
+are in the [V1 publication record](releases/1.0.0-publication-record.md); the
+concise evidence status remains in [V1 release readiness](v1-release-readiness.md).
 
 ## Publication gate
 
-All six product-family publication policies are disabled during preparation.
-Manual release-workflow dispatches create candidate artifacts only; they
-cannot publish. Provider, Streams, Sync, Live, Control Plane, and
-ContinuousGraph are all locked to stable `1.0.0` without prerelease suffixes.
+All six product-family stable policies are armed after the `1.0.0` release.
+Manual workflow dispatches still create candidate artifacts only; stable
+publication requires the exact family tag and protected production environment.
+Provider, Streams, Sync, Live, Control Plane, and ContinuousGraph remain
+independently versioned.
 
 After PostgreSQL 19 GA, a reviewed final PR arms all six policies on `main`.
 That resulting SHA is the immutable candidate. It must have no V1 release tags

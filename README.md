@@ -9,14 +9,13 @@ extension packages, PostgreSQL SQL/PGQ support, and an independently versioned
 runtime dependency on Npgsql.
 
 > [!IMPORTANT]
-> BlueTusk is prepared as six stable `1.0.0` product families, but no V1
-> package has been published and this is not yet a production endorsement.
-> Publication remains disabled during preparation. The immutable candidate
-> cannot be armed on `main` until PostgreSQL 19 GA is recorded, and it cannot
-> be published until the seven exact-SHA workflows—including 72-hour Streams,
-> 24-hour Sync, and 24-hour ContinuousGraph endurance—plus the two independent
-> pilots, 28-day website field window, operational rehearsals, review, and
-> protected approvals pass. Start with the
+> BlueTusk `1.0.0` was published on 2026-08-23 as six product families: 62
+> NuGet packages and three npm packages. The repository owner authorised an
+> exception for the incomplete independent approval, exact-candidate fuzz,
+> reference-performance, endurance, and PostgreSQL 19 GA evidence; those gates
+> are not represented as passed. The strict release workflow was restored
+> immediately after publication. Start with the
+> [V1 publication record](docs/releases/1.0.0-publication-record.md),
 > [documentation handbook](docs/README.md), [V1 readiness record](docs/v1-release-readiness.md),
 > [roadmap](docs/roadmap.md), and [support matrix](VERSIONING.md).
 
@@ -129,7 +128,7 @@ topology.
 
 ## Status
 
-The release-prepared `1.0.0` implementation provides:
+The published `1.0.0` implementation provides:
 
 - the complete repository/package layout;
 - shared build, formatting, analyzer, and CI configuration;
