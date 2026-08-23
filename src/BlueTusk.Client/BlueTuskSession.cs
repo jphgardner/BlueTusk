@@ -1497,7 +1497,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         Volatile.Write(ref _portalOperationActive, 1);
-        var started = Stopwatch.GetTimestamp();
+        var started = BlueTuskDiagnostics.CommandDuration.Enabled
+            ? Stopwatch.GetTimestamp()
+            : 0;
         var requestWritten = false;
         var parseSql = GetUnnamedStatementParseSql(statementName, sql, parameters);
         var cachedFields = parseSql is null &&
@@ -1584,7 +1586,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         Volatile.Write(ref _portalOperationActive, 1);
-        var started = Stopwatch.GetTimestamp();
+        var started = BlueTuskDiagnostics.CommandDuration.Enabled
+            ? Stopwatch.GetTimestamp()
+            : 0;
         var requestWritten = false;
         var parseSql = GetUnnamedStatementParseSql(statementName, sql, parameters);
         var cachedFields = parseSql is null &&
@@ -1624,6 +1628,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             }
             requestWritten = true;
             IReadOnlyList<BlueTuskFieldDescription>? fields = null;
+            var recordProtocolMessageSize = BlueTuskDiagnostics.ProtocolMessageSize.Enabled;
             while (fields is null)
             {
                 BlueTuskBackendMessage message;
@@ -1645,7 +1650,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     _connection.CompleteReadMessage(read);
                 }
 
-                BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
+                if (recordProtocolMessageSize)
+                {
+                    BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
+                }
+
                 switch (message.Identifier)
                 {
                     case '1':
@@ -2027,7 +2036,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             return false;
         }
 
-        BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        if (BlueTuskDiagnostics.ProtocolMessageSize.Enabled)
+        {
+            BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        }
+
         if (portal.CurrentRow is { } reusableRow)
         {
             reusableRow.Reset(header.PayloadLength, portal.FieldCount);
@@ -2079,6 +2092,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskPortalRow?> ReadPortalRowSlowAsync(
         BlueTuskPortal portal,
         BlueTuskBackendMessageHeader header,
@@ -2086,9 +2100,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         try
         {
+            var recordProtocolMessageSize = BlueTuskDiagnostics.ProtocolMessageSize.Enabled;
             while (true)
             {
-                BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+                if (recordProtocolMessageSize)
+                {
+                    BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+                }
+
                 if (header.Identifier == 'D')
                 {
                     var row = await BlueTuskPortalRow.CreateAsync(
@@ -2236,6 +2255,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask ContinueReadPortalPayloadExactlyAsync(
         ValueTask<int> pendingRead,
         Memory<byte> destination,
@@ -2631,7 +2651,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private BlueTuskBackendMessageHeader ReadStreamedMessageHeader()
     {
         var header = _connection.ReadMessageHeader();
-        BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        if (BlueTuskDiagnostics.ProtocolMessageSize.Enabled)
+        {
+            BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        }
+
         return header;
     }
 
@@ -2639,7 +2663,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         CancellationToken cancellationToken)
     {
         var header = await _connection.ReadMessageHeaderAsync(cancellationToken).ConfigureAwait(false);
-        BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        if (BlueTuskDiagnostics.ProtocolMessageSize.Enabled)
+        {
+            BlueTuskDiagnostics.ProtocolMessageSize.Record(header.PayloadLength + 5);
+        }
+
         return header;
     }
 
@@ -2656,8 +2684,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         if (Interlocked.Exchange(ref _portalOperationActive, 0) != 0)
         {
-            BlueTuskDiagnostics.CommandDuration.Record(
-                Stopwatch.GetElapsedTime(startedTimestamp).TotalSeconds);
+            if (startedTimestamp != 0)
+            {
+                BlueTuskDiagnostics.CommandDuration.Record(
+                    Stopwatch.GetElapsedTime(startedTimestamp).TotalSeconds);
+            }
+
             _connection.EndPortalReadLease();
             _operationLock.Release();
         }
@@ -3058,7 +3090,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
         }
-        var started = Stopwatch.GetTimestamp();
+        var recordCommandDuration = BlueTuskDiagnostics.CommandDuration.Enabled;
+        var started = recordCommandDuration ? Stopwatch.GetTimestamp() : 0;
         try
         {
             if (prepareState is not null)
@@ -3100,6 +3133,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             var fieldCount = preparedDescription?.FieldCount ?? 0;
             var hasValue = false;
             var firstResultComplete = false;
+            var recordProtocolMessageSize = BlueTuskDiagnostics.ProtocolMessageSize.Enabled;
 
             while (true)
             {
@@ -3122,7 +3156,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     _connection.CompleteReadMessage(read);
                 }
 
-                BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
+                if (recordProtocolMessageSize)
+                {
+                    BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
+                }
+
                 switch (message.Identifier)
                 {
                     case 'A':
@@ -3191,7 +3229,12 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
         finally
         {
-            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            if (recordCommandDuration)
+            {
+                BlueTuskDiagnostics.CommandDuration.Record(
+                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+            }
+
             _operationLock.Release();
         }
     }

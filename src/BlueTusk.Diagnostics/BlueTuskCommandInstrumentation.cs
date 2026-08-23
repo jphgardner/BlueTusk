@@ -5,33 +5,11 @@ namespace BlueTusk.Diagnostics;
 
 internal readonly struct BlueTuskCommandInstrumentation
 {
-    private readonly long _started;
-    private readonly Activity? _activity;
-    private readonly string? _operation;
-    private readonly string? _database;
-    private readonly string? _host;
-    private readonly int _port;
-    private readonly string[]? _queryTags;
-    private readonly TimeSpan? _slowCommandThreshold;
+    private readonly InstrumentationState? _state;
 
-    private BlueTuskCommandInstrumentation(
-        long started,
-        Activity? activity,
-        string operation,
-        string database,
-        string host,
-        int port,
-        string[] queryTags,
-        TimeSpan? slowCommandThreshold)
+    private BlueTuskCommandInstrumentation(InstrumentationState state)
     {
-        _started = started;
-        _activity = activity;
-        _operation = operation;
-        _database = database;
-        _host = host;
-        _port = port;
-        _queryTags = queryTags;
-        _slowCommandThreshold = slowCommandThreshold;
+        _state = state;
     }
 
     internal static BlueTuskCommandInstrumentation Start(
@@ -92,7 +70,7 @@ internal readonly struct BlueTuskCommandInstrumentation
             }
         }
 
-        return new BlueTuskCommandInstrumentation(
+        return new BlueTuskCommandInstrumentation(new InstrumentationState(
             Stopwatch.GetTimestamp(),
             activity,
             operation,
@@ -100,7 +78,7 @@ internal readonly struct BlueTuskCommandInstrumentation
             host,
             port,
             queryTags,
-            options.SlowCommandThreshold);
+            options.SlowCommandThreshold));
     }
 
     private static bool IsEnabled(BlueTuskDiagnosticsOptions options)
@@ -114,44 +92,73 @@ internal readonly struct BlueTuskCommandInstrumentation
             BlueTuskSlowCommandEventSource.Log.IsEnabled();
     }
 
-    internal void Complete(Exception? exception)
+    internal void Complete(Exception? exception) => _state?.Complete(exception);
+
+    private sealed class InstrumentationState
     {
-        if (_operation is null)
+        private readonly long _started;
+        private readonly Activity? _activity;
+        private readonly string _operation;
+        private readonly string _database;
+        private readonly string _host;
+        private readonly int _port;
+        private readonly string[] _queryTags;
+        private readonly TimeSpan? _slowCommandThreshold;
+
+        internal InstrumentationState(
+            long started,
+            Activity? activity,
+            string operation,
+            string database,
+            string host,
+            int port,
+            string[] queryTags,
+            TimeSpan? slowCommandThreshold)
         {
-            return;
+            _started = started;
+            _activity = activity;
+            _operation = operation;
+            _database = database;
+            _host = host;
+            _port = port;
+            _queryTags = queryTags;
+            _slowCommandThreshold = slowCommandThreshold;
         }
 
-        var elapsed = Stopwatch.GetElapsedTime(_started);
-        var errorType = exception?.GetType().FullName;
-        var tags = new TagList
+        internal void Complete(Exception? exception)
         {
-            { "db.system.name", "postgresql" },
-            { "db.namespace", _database },
-            { "db.operation.name", _operation },
-            { "server.address", _host },
-            { "server.port", _port },
-        };
-        if (errorType is not null)
-        {
-            tags.Add("error.type", errorType);
-            _activity?.SetTag("error.type", errorType);
-            _activity?.SetStatus(ActivityStatusCode.Error);
-            BlueTuskDiagnostics.CommandsFailed.Add(1, tags);
+            var elapsed = Stopwatch.GetElapsedTime(_started);
+            var errorType = exception?.GetType().FullName;
+            var tags = new TagList
+            {
+                { "db.system.name", "postgresql" },
+                { "db.namespace", _database },
+                { "db.operation.name", _operation },
+                { "server.address", _host },
+                { "server.port", _port },
+            };
+            if (errorType is not null)
+            {
+                tags.Add("error.type", errorType);
+                _activity?.SetTag("error.type", errorType);
+                _activity?.SetStatus(ActivityStatusCode.Error);
+                BlueTuskDiagnostics.CommandsFailed.Add(1, tags);
+            }
+
+            BlueTuskDiagnostics.CommandsExecuted.Add(1, tags);
+            BlueTuskDiagnostics.DatabaseClientOperationDuration.Record(elapsed.TotalSeconds, tags);
+
+            if (_slowCommandThreshold is { } threshold && elapsed >= threshold)
+            {
+                BlueTuskSlowCommandEventSource.Log.SlowCommand(
+                    _operation,
+                    _database,
+                    elapsed.TotalSeconds,
+                    _queryTags.Length > 0 ? string.Join('|', _queryTags) : string.Empty);
+            }
+
+            _activity?.Dispose();
         }
-
-        BlueTuskDiagnostics.CommandsExecuted.Add(1, tags);
-        BlueTuskDiagnostics.DatabaseClientOperationDuration.Record(elapsed.TotalSeconds, tags);
-
-        if (_slowCommandThreshold is { } threshold && elapsed >= threshold)
-        {
-            BlueTuskSlowCommandEventSource.Log.SlowCommand(
-                _operation,
-                _database ?? string.Empty,
-                elapsed.TotalSeconds,
-                _queryTags is { Length: > 0 } ? string.Join('|', _queryTags) : string.Empty);
-        }
-
-        _activity?.Dispose();
     }
 }
 

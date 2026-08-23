@@ -175,6 +175,47 @@ public sealed class BlueTuskPortalIntegrationTests
         }
     }
 
+    [Fact]
+    public void Completed_synchronous_portal_returns_its_row_for_reuse()
+    {
+        using var session = BlueTuskSession.Open(CreateOptions());
+        BlueTuskPortalRow firstRow;
+        using (var portal = session.BeginPortal("SELECT 1", []))
+        {
+            firstRow = Assert.IsType<BlueTuskPortalRow>(portal.Read());
+            Assert.Null(portal.Read());
+        }
+
+        using var nextPortal = session.BeginPortal("SELECT 2", []);
+        Assert.Same(firstRow, nextPortal.Read());
+        Assert.Null(nextPortal.Read());
+    }
+
+    [Fact]
+    public async Task Completed_asynchronous_portal_returns_its_row_for_reuse()
+    {
+        await using var session = await BlueTuskSession.OpenAsync(
+            CreateOptions(),
+            CancellationToken.None);
+        BlueTuskPortalRow firstRow;
+        await using (var portal = await session.BeginPortalAsync(
+                         "SELECT 1",
+                         [],
+                         cancellationToken: CancellationToken.None))
+        {
+            firstRow = Assert.IsType<BlueTuskPortalRow>(
+                await portal.ReadAsync(CancellationToken.None));
+            Assert.Null(await portal.ReadAsync(CancellationToken.None));
+        }
+
+        await using var nextPortal = await session.BeginPortalAsync(
+            "SELECT 2",
+            [],
+            cancellationToken: CancellationToken.None);
+        Assert.Same(firstRow, await nextPortal.ReadAsync(CancellationToken.None));
+        Assert.Null(await nextPortal.ReadAsync(CancellationToken.None));
+    }
+
     private static string ReadText(BlueTuskQueryResult result) =>
         System.Text.Encoding.UTF8.GetString(
             Assert.Single(Assert.Single(result.ResultSets).Rows).Values[0]!.Value.Span);

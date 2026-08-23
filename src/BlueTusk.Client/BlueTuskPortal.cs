@@ -84,8 +84,14 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
         try
         {
-            _currentRow?.Finish();
+            var previousRow = _currentRow;
+            previousRow?.Finish();
             _currentRow = _session.ReadPortalRow(this);
+            if (_currentRow is null && previousRow is not null)
+            {
+                _session.ReturnPortalRow(previousRow);
+            }
+
             if (_currentRow is not null)
             {
                 RowsRead++;
@@ -163,10 +169,15 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     internal void SetAsyncReadResult(BlueTuskPortalRow? row)
     {
+        var previousRow = _currentRow;
         _currentRow = row;
         if (row is not null)
         {
             RowsRead++;
+        }
+        else if (previousRow is not null)
+        {
+            _session?.ReturnPortalRow(previousRow);
         }
     }
 
@@ -300,6 +311,7 @@ public sealed class BlueTuskPortalRow
 
     public int FieldCount { get; private set; }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     internal static async ValueTask<BlueTuskPortalRow> CreateAsync(
         BlueTuskSession session,
         BlueTuskPortal portal,
@@ -821,6 +833,7 @@ public sealed class BlueTuskPortalRow
         return AwaitReadExactlySlowAsync(pendingRead, destination.Length);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitReadExactlySlowAsync(ValueTask pendingRead, int length)
     {
         await pendingRead.ConfigureAwait(false);
