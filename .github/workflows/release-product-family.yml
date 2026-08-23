@@ -35,6 +35,7 @@ jobs:
       is_tag: ${{ steps.release.outputs.is_tag }}
       is_prerelease: ${{ steps.release.outputs.is_prerelease }}
       version: ${{ steps.release.outputs.version }}
+      owner_override: ${{ steps.release-validation.outputs.owner_override }}
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
@@ -82,11 +83,33 @@ jobs:
           "is_tag=$isTag" >> $env:GITHUB_OUTPUT
 
       - name: Validate release manifest
+        id: release-validation
         shell: pwsh
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
-          ./eng/verify-github-governance.ps1
+          $ownerOverride = $false
+          if ($env:GITHUB_REF_TYPE -eq 'tag' -and
+              '${{ steps.release.outputs.is_prerelease }}' -ne 'true' -and
+              (Test-Path -LiteralPath './eng/v1-owner-release-override.json')) {
+            $override = Get-Content -LiteralPath './eng/v1-owner-release-override.json' -Raw |
+              ConvertFrom-Json
+            $ownerOverride =
+              $override.enabled -eq $true -and
+              [string]$override.version -eq '${{ steps.release.outputs.version }}'
+          }
+          "owner_override=$($ownerOverride.ToString().ToLowerInvariant())" >> $env:GITHUB_OUTPUT
+
+          if ($ownerOverride) {
+            ./eng/verify-owner-release-override.ps1 `
+              -Family '${{ steps.release.outputs.family }}' `
+              -Version '${{ steps.release.outputs.version }}' `
+              -Commit '${{ github.sha }}' `
+              -Tag '${{ github.ref_name }}' `
+              -Stage Packaging
+          } else {
+            ./eng/verify-github-governance.ps1
+          }
           $packArguments = @{
             Family = '${{ steps.release.outputs.family }}'
             ValidateOnly = $true
@@ -103,7 +126,7 @@ jobs:
                 -Version '${{ steps.release.outputs.version }}' `
                 -Commit '${{ github.sha }}' `
                 -Tag '${{ github.ref_name }}'
-            } else {
+            } elseif (-not $ownerOverride) {
               ./eng/verify-release-gates.ps1 `
                 -Family '${{ steps.release.outputs.family }}' `
                 -Commit '${{ github.sha }}' `
@@ -194,8 +217,11 @@ jobs:
 
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          fetch-depth: 0
 
       - name: Verify protected repository and deployment governance
+        if: needs.verify-and-package.outputs.owner_override != 'true'
         shell: pwsh
         env:
           V1_GOVERNANCE_TOKEN: ${{ secrets.V1_GOVERNANCE_TOKEN }}
@@ -206,6 +232,17 @@ jobs:
           ./eng/verify-github-governance.ps1 `
             -Mode Remote `
             -Token $env:V1_GOVERNANCE_TOKEN
+
+      - name: Record exact owner-approved V1 release override
+        if: needs.verify-and-package.outputs.owner_override == 'true'
+        shell: pwsh
+        run: |
+          ./eng/verify-owner-release-override.ps1 `
+            -Family '${{ needs.verify-and-package.outputs.family }}' `
+            -Version '${{ needs.verify-and-package.outputs.version }}' `
+            -Commit '${{ github.sha }}' `
+            -Tag '${{ github.ref_name }}' `
+            -Stage Publication
 
       - uses: actions/download-artifact@3e5f45b2cfb9172054b4087a40e8e0b5a5461e7c # v8.0.1
         with:

@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "enabled": true,
+  "version": "1.0.0",
+  "authorizedByGitHubLogin": "jphgardner",
+  "authorizationSource": "Explicit repository-owner release instruction",
+  "authorizedAtUtc": "2026-08-23T13:43:58Z",
+  "expiresAtUtc": "2026-08-24T23:59:59Z",
+  "baseCommit": "e213af7f2af6fd90ec0d45959046ed1ab8873343",
+  "releaseReason": "The V1 packages are immediately required by downstream consumers.",
+  "acceptedRisks": [
+    "independent-approval-not-complete",
+    "coverage-guided-fuzz-evidence-not-produced",
+    "reference-performance-gate-not-passed",
+    "endurance-evidence-not-complete",
+    "postgresql-19-ga-deferred"
+  ]
+}
