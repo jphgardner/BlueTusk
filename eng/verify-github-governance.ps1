@@ -169,6 +169,29 @@ foreach ($environment in $environments)
     }
 }
 
+$releaseWorkflowPath = Join-Path $RepositoryRoot '.github/workflows/release-product-family.yml'
+$releaseWorkflow = Get-Content -LiteralPath $releaseWorkflowPath -Raw
+$nugetLoginAction = 'NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544'
+$nugetLoginCount = [regex]::Matches(
+    $releaseWorkflow,
+    [regex]::Escape($nugetLoginAction)).Count
+$nugetCredentialCount = [regex]::Matches(
+    $releaseWorkflow,
+    '\$\{\{\s*steps\.nuget-login\.outputs\.NUGET_API_KEY\s*\}\}').Count
+$oidcPermissionCount = [regex]::Matches(
+    $releaseWorkflow,
+    '(?m)^\s*id-token:\s*write\s*$').Count
+if ($nugetLoginCount -ne 2 -or
+    $nugetCredentialCount -ne 2 -or
+    $oidcPermissionCount -lt 2 -or
+    $releaseWorkflow -match '\$\{\{\s*secrets\.NUGET_API_KEY\s*\}\}')
+{
+    throw (
+        'Stable and prerelease publication must use the pinned NuGet trusted-' +
+        'publishing action with job-scoped OIDC and must not consume a long-lived ' +
+        'NUGET_API_KEY secret.')
+}
+
 $requiredEnvironmentSecretBindings = @(
     $environments |
         ForEach-Object { @($_.requiredSecrets) }

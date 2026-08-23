@@ -88,7 +88,6 @@
       "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
-        "NUGET_API_KEY",
         "NPM_TOKEN"
       ],
       "deploymentBranchPolicy": {
@@ -112,7 +111,6 @@
       "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
-        "NUGET_API_KEY",
         "NPM_TOKEN"
       ],
       "deploymentBranchPolicy": {

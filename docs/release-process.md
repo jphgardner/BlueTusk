@@ -103,13 +103,17 @@ GitHub build-provenance attestation, and runs in the `package-production`
 environment. That environment is configured with prevent-self-review and the
 six allowed release-tag patterns. Before the first candidate, add another
 eligible human reviewer; the repository currently has only its owner, so an
-owner-triggered deployment cannot self-approve. Scope `NUGET_API_KEY` and
-`NPM_TOKEN` only to `package-production`; they must not be available to
-pull-request or candidate jobs. Store a fine-grained
-`V1_GOVERNANCE_TOKEN` with Administration read, Actions read, Contents read
-and Environments read in both protected environments. It is used only for the
-fail-closed live settings and required-secret-name check; no workflow uses it
-to read secret values or change repository settings.
+owner-triggered deployment cannot self-approve. Configure NuGet trusted-
+publishing policies for `release-product-family.yml`, restricted to the
+`package-production` and `package-prerelease` environments and the
+`BlueTusk.*` package-ID glob. The publish jobs exchange their GitHub OIDC tokens
+for one-hour NuGet API keys immediately before publishing; no long-lived NuGet
+credential is stored in GitHub. Scope `NPM_TOKEN` only to the matching protected
+environment; it must not be available to pull-request or candidate jobs. Store
+a fine-grained `V1_GOVERNANCE_TOKEN` with Administration read, Actions read,
+Contents read and Environments read in both protected environments. It is used
+only for the fail-closed live settings and required-secret-name check; no
+workflow uses it to read secret values or change repository settings.
 
 The exact live settings are not informal setup advice. They are declared in
 `eng/v1-github-governance.json` and verified through the GitHub API by

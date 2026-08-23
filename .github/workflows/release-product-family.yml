@@ -219,12 +219,16 @@ jobs:
             artifacts/packages/*
             artifacts/sbom/*
 
+      - name: Exchange GitHub OIDC token for a short-lived NuGet API key
+        uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
+        id: nuget-login
+        with:
+          user: jphgardner
+
       - name: Publish NuGet packages
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: >-
           dotnet nuget push "artifacts/packages/*.nupkg"
-          --api-key "$NUGET_API_KEY"
+          --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
           --source https://api.nuget.org/v3/index.json
 
       - name: Publish npm packages
@@ -300,12 +304,16 @@ jobs:
             artifacts/packages/*
             artifacts/sbom/*
 
+      - name: Exchange GitHub OIDC token for a short-lived NuGet API key
+        uses: NuGet/login@d22cc5f58ff5b88bf9bd452535b4335137e24544 # v1.1.0
+        id: nuget-login
+        with:
+          user: jphgardner
+
       - name: Publish prerelease NuGet packages
-        env:
-          NUGET_API_KEY: ${{ secrets.NUGET_API_KEY }}
         run: >-
           dotnet nuget push "artifacts/packages/*.nupkg"
-          --api-key "$NUGET_API_KEY"
+          --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}"
           --source https://api.nuget.org/v3/index.json
 
       - name: Publish prerelease npm packages
