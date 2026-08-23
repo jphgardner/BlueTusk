@@ -287,6 +287,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         return true;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryReadBufferedDataRow(
         out ReadOnlyMemory<byte> payload,
         out BlueTuskBackendMessageHeader header)
@@ -768,6 +769,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     private const int HeaderSize = 5;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private void BeginNextMessage()
     {
         if (_activePayloadRemaining > 0)

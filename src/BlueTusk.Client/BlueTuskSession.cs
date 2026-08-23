@@ -1838,6 +1838,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryReadBufferedPortalRow(
         BlueTuskPortal portal,
         out BlueTuskPortalRow? row)

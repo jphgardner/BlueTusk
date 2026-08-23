@@ -49,6 +49,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     internal BlueTuskPortalRow? CurrentRow => _currentRow;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryReadBuffered(out BlueTuskPortalRow? row)
     {
         if (_completed)
@@ -328,15 +329,16 @@ public sealed class BlueTuskPortalRow
 
     internal void Rebind(BlueTuskPortal portal) => _portal = portal;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ResetBuffered(
         ReadOnlyMemory<byte> payload,
         int expectedFieldCount)
     {
         ResetState(payload.Length, payloadBuffered: true);
         _bufferedPayload = payload;
-        Span<byte> countBytes = stackalloc byte[sizeof(short)];
-        ReadExactly(countBytes);
-        FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
+        EnsurePayloadAvailable(sizeof(short));
+        FieldCount = BinaryPrimitives.ReadInt16BigEndian(payload.Span);
+        _payloadConsumed = sizeof(short);
         ValidateFieldCount(expectedFieldCount);
     }
 
@@ -445,7 +447,11 @@ public sealed class BlueTuskPortalRow
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryReadInt32(int ordinal, out int value)
     {
-        EnsureNoActiveStream();
+        if (_activeStream is not null)
+        {
+            EnsureNoActiveStream();
+        }
+
         if (!_payloadBuffered || ordinal != _activeOrdinal + 1 ||
             _payloadLength - _payloadConsumed < (sizeof(int) * 2))
         {
@@ -453,16 +459,17 @@ public sealed class BlueTuskPortalRow
             return false;
         }
 
-        var length = BinaryPrimitives.ReadInt32BigEndian(
-            _bufferedPayload.Span.Slice(_payloadConsumed, sizeof(int)));
-        if (length != sizeof(int))
+        var payload = _bufferedPayload.Span;
+        var payloadOffset = _payloadConsumed;
+        var encodedField = BinaryPrimitives.ReadInt64BigEndian(
+            payload.Slice(payloadOffset, sizeof(long)));
+        if ((int)(encodedField >> 32) != sizeof(int))
         {
             value = default;
             return false;
         }
 
-        value = BinaryPrimitives.ReadInt32BigEndian(
-            _bufferedPayload.Span.Slice(_payloadConsumed + sizeof(int), sizeof(int)));
+        value = unchecked((int)encodedField);
         _payloadConsumed += sizeof(int) * 2;
         _activeOrdinal++;
         _activeLength = sizeof(int);
