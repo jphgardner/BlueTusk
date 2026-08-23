@@ -57,11 +57,11 @@ MediumRun with two launches, ten warmups, and fifteen measured iterations. The
 large-field fixture creates the same one-row 1 MiB temporary payload on each
 provider connection during setup, keeping PostgreSQL payload-generation CPU
 outside the timed operations. BlueTusk/Npgsql absolute means and allocations
-are 295.274/320.809 µs and 1,773/2,138 B for a parameterized scalar,
-211.07/227.56 ns and 168/184 B for warm checkout, 291.129/290.880 µs and
-898/1,125 B for an explicitly prepared scalar, 480.223/508.495 µs and
-1,585/1,615 B for a sequential 1,000-row read, and 2.236/2.291 ms and
-1,585/8,906 B for a sequential 1 MiB `bytea` stream.
+are 297.687/328.195 µs and 1,652/2,140 B for a parameterized scalar,
+213.81/235.22 ns and 168/184 B for warm checkout, 291.523/297.467 µs and
+785/1,123 B for an explicitly prepared scalar, 487.348/528.428 µs and
+1,195/1,569 B for a sequential 1,000-row read, and 2.183/2.223 ms and
+1,466/9,031 B for a sequential 1 MiB `bytea` stream.
 
 Five 501-block alternating-provider trials are the cross-provider latency
 authority. They record BlueTusk mean/P95/P99 ratios at or below Npgsql for all
@@ -72,13 +72,13 @@ baseline, not a provider-wide superiority claim or release performance
 guarantee.
 
 The V1 concurrency MediumRun is bound to commit
-`b52068296e730a9060529261f9d558bf4a39258f`, .NET 10.0.11, and the
+`d09d2f654f6c5568fa1053d92aad819872afa348`, .NET 10.0.11, and the
 digest-pinned PostgreSQL 19 Beta 3 loopback server. Both providers use four
 physical lanes and 64-command bursts. BlueTusk/Npgsql results are
-15.94/18.73 µs and 1,497/1,738 B for fresh multiplexed commands,
-15.43/18.84 µs and 621/794 B for reused multiplexed commands,
-97.50/98.57 µs and 2,337/2,825 B for fresh ordinary pooled commands, and
-96.64/100.29 µs and 1,489/1,883 B for reused ordinary pooled commands.
+16.93/18.81 µs and 1,429/1,738 B for fresh multiplexed commands,
+15.49/19.06 µs and 622/794 B for reused multiplexed commands,
+95.98/101.55 µs and 2,127/2,830 B for fresh ordinary pooled commands, and
+95.10/100.72 µs and 1,343/1,873 B for reused ordinary pooled commands.
 
 Five alternating-provider trials with 501 blocks per workload are checked in
 beside the absolute report. They record lower BlueTusk median-of-trials mean,

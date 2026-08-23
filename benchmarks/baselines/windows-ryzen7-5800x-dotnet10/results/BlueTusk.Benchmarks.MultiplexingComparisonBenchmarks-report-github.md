@@ -11,12 +11,12 @@ LaunchCount=2  WarmupCount=10
 ```
 | Method                                   | Categories                  | Mean      | Error    | StdDev   | P95       | P99 (us) | Op/s     | Ratio | RatioSD | Gen0   | Allocated | Alloc Ratio |
 |----------------------------------------- |---------------------------- |----------:|---------:|---------:|----------:|---------:|---------:|------:|--------:|-------:|----------:|------------:|
-| BlueTuskConcurrentScalarBurstAsync       | ConcurrentMultiplexedScalar |  15.94 μs | 0.320 μs | 0.459 μs |  16.70 μs |    16.92 | 62,750.7 |  1.00 |    0.04 | 0.0610 |    1497 B |        1.00 |
-| NpgsqlConcurrentScalarBurstAsync         | ConcurrentMultiplexedScalar |  18.73 μs | 0.438 μs | 0.656 μs |  19.74 μs |    20.43 | 53,400.1 |  1.18 |    0.05 | 0.0916 |    1738 B |        1.16 |
-| BlueTuskPooledConcurrentScalarBurstAsync | ConcurrentMultiplexedScalar |  97.50 μs | 1.932 μs | 2.831 μs | 102.73 μs |   103.72 | 10,256.9 |  6.12 |    0.24 | 0.1221 |    2337 B |        1.56 |
-| NpgsqlPooledConcurrentScalarBurstAsync   | ConcurrentMultiplexedScalar |  98.57 μs | 1.066 μs | 1.459 μs | 101.14 μs |   102.79 | 10,145.3 |  6.19 |    0.19 | 0.1221 |    2825 B |        1.89 |
+| BlueTuskConcurrentScalarBurstAsync       | ConcurrentMultiplexedScalar |  16.93 μs | 0.466 μs | 0.668 μs |  18.06 μs |    18.65 | 59,061.1 |  1.00 |    0.05 | 0.0610 |    1429 B |        1.00 |
+| NpgsqlConcurrentScalarBurstAsync         | ConcurrentMultiplexedScalar |  18.81 μs | 0.486 μs | 0.728 μs |  20.06 μs |    20.21 | 53,156.2 |  1.11 |    0.06 | 0.0916 |    1738 B |        1.22 |
+| BlueTuskPooledConcurrentScalarBurstAsync | ConcurrentMultiplexedScalar |  95.98 μs | 1.655 μs | 2.477 μs |  99.07 μs |   100.53 | 10,419.3 |  5.68 |    0.26 | 0.1221 |    2127 B |        1.49 |
+| NpgsqlPooledConcurrentScalarBurstAsync   | ConcurrentMultiplexedScalar | 101.55 μs | 1.800 μs | 2.638 μs | 106.51 μs |   107.24 |  9,847.3 |  6.01 |    0.27 | 0.1221 |    2830 B |        1.98 |
 |                                          |                             |           |          |          |           |          |          |       |         |        |           |             |
-| BlueTuskReusedScalarBurstAsync           | ReusedMultiplexedScalar     |  15.43 μs | 0.439 μs | 0.644 μs |  16.34 μs |    16.47 | 64,806.0 |  1.00 |    0.06 | 0.0305 |     621 B |        1.00 |
-| NpgsqlReusedScalarBurstAsync             | ReusedMultiplexedScalar     |  18.84 μs | 0.393 μs | 0.577 μs |  19.58 μs |    19.98 | 53,077.0 |  1.22 |    0.06 | 0.0305 |     794 B |        1.28 |
-| BlueTuskPooledReusedScalarBurstAsync     | ReusedMultiplexedScalar     |  96.64 μs | 1.041 μs | 1.526 μs |  99.22 μs |    99.41 | 10,347.8 |  6.27 |    0.27 |      - |    1489 B |        2.40 |
-| NpgsqlPooledReusedScalarBurstAsync       | ReusedMultiplexedScalar     | 100.29 μs | 1.632 μs | 2.442 μs | 104.93 μs |   105.43 |  9,971.1 |  6.51 |    0.31 |      - |    1883 B |        3.03 |
+| BlueTuskReusedScalarBurstAsync           | ReusedMultiplexedScalar     |  15.49 μs | 0.327 μs | 0.469 μs |  16.52 μs |    16.64 | 64,542.8 |  1.00 |    0.04 | 0.0305 |     622 B |        1.00 |
+| NpgsqlReusedScalarBurstAsync             | ReusedMultiplexedScalar     |  19.06 μs | 0.523 μs | 0.766 μs |  20.32 μs |    20.34 | 52,459.6 |  1.23 |    0.06 | 0.0305 |     794 B |        1.28 |
+| BlueTuskPooledReusedScalarBurstAsync     | ReusedMultiplexedScalar     |  95.10 μs | 1.913 μs | 2.804 μs |  98.99 μs |   102.55 | 10,515.5 |  6.14 |    0.25 |      - |    1343 B |        2.16 |
+| NpgsqlPooledReusedScalarBurstAsync       | ReusedMultiplexedScalar     | 100.72 μs | 1.300 μs | 1.946 μs | 104.37 μs |   104.88 |  9,929.0 |  6.51 |    0.22 |      - |    1873 B |        3.01 |

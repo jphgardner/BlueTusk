@@ -2,7 +2,7 @@
 
 **Report date:** 23 August 2026
 
-**Candidate:** the V1 source revision containing this report
+**Performance source:** `d09d2f654f6c5568fa1053d92aad819872afa348`
 
 **Reference provider:** Npgsql 10.0.3
 
@@ -18,9 +18,9 @@ comparison. The result covers five direct provider operations and four saturated
 64-operation concurrency shapes.
 
 The former saturated non-multiplexed pooling weakness is closed. BlueTusk now
-reduces mean latency by 4.94% for fresh ordinary pooled bursts and by 4.76% when
-commands are reused. It also reduces allocation by 17.27% and 20.92%
-respectively. Multiplexed bursts lead by 17.01% to 20.78% at the mean.
+reduces mean latency by 5.17% for fresh ordinary pooled bursts and by 5.05% when
+commands are reused. It also reduces allocation by 24.84% and 28.30%
+respectively. Multiplexed bursts lead by 17.01% to 17.71% at the mean.
 
 This is a bounded, reproducible V1 result. It does not claim that BlueTusk beats
 Npgsql for every SQL statement, schema, payload, server, network or concurrency
@@ -34,15 +34,15 @@ the inverse of mean latency for these fixed-operation workloads.
 
 | Workload | Mean latency reduction | P95 reduction | P99 reduction | Throughput uplift | Managed allocation reduction |
 |---|---:|---:|---:|---:|---:|
-| Warm pool checkout | **15.20%** | **19.14%** | **30.91%** | **17.92%** | **8.70%** (168 B vs 184 B) |
-| Parameterized scalar | **8.97%** | **9.56%** | **13.08%** | **9.85%** | **17.07%** (1,773 B vs 2,138 B) |
-| Prepared scalar | **0.82%** | **0.52%** | **1.45%** | **0.82%** | **20.18%** (898 B vs 1,125 B) |
-| Sequential 1,000 rows | **5.26%** | **4.93%** | **6.10%** | **5.55%** | **1.86%** (1,585 B vs 1,615 B) |
-| Sequential 1 MiB `bytea` | **1.13%** | **0.77%** | **4.89%** | **1.15%** | **82.20%** (1,585 B vs 8,906 B) |
-| Fresh multiplexed burst | **17.01%** | **14.13%** | **13.02%** | **20.49%** | **13.87%** (1,497 B vs 1,738 B) |
-| Reused multiplexed burst | **20.78%** | **17.94%** | **12.68%** | **26.23%** | **21.79%** (621 B vs 794 B) |
-| Fresh ordinary pooled burst | **4.94%** | **3.81%** | **3.91%** | **5.19%** | **17.27%** (2,337 B vs 2,825 B) |
-| Reused ordinary pooled burst | **4.76%** | **3.52%** | **6.65%** | **5.00%** | **20.92%** (1,489 B vs 1,883 B) |
+| Warm pool checkout | **8.99%** | **36.91%** | **38.07%** | **9.88%** | **8.70%** (168 B vs 184 B) |
+| Parameterized scalar | **9.72%** | **10.10%** | **11.55%** | **10.76%** | **22.80%** (1,652 B vs 2,140 B) |
+| Prepared scalar | **1.66%** | **2.28%** | **0.16%** | **1.69%** | **30.10%** (785 B vs 1,123 B) |
+| Sequential 1,000 rows | **8.23%** | **8.04%** | **10.73%** | **8.97%** | **23.84%** (1,195 B vs 1,569 B) |
+| Sequential 1 MiB `bytea` | **1.20%** | **3.00%** | **3.04%** | **1.21%** | **83.77%** (1,466 B vs 9,031 B) |
+| Fresh multiplexed burst | **17.01%** | **15.53%** | **12.37%** | **20.49%** | **17.78%** (1,429 B vs 1,738 B) |
+| Reused multiplexed burst | **17.71%** | **13.33%** | **12.37%** | **21.52%** | **21.66%** (622 B vs 794 B) |
+| Fresh ordinary pooled burst | **5.17%** | **3.42%** | **1.59%** | **5.45%** | **24.84%** (2,127 B vs 2,830 B) |
+| Reused ordinary pooled burst | **5.05%** | **4.26%** | **4.53%** | **5.32%** | **28.30%** (1,343 B vs 1,873 B) |
 
 All 36 provider-relative decisions in the table pass a checked-in maximum ratio
 of `1.0`: five direct and four concurrency workloads, each evaluated for mean,
@@ -65,11 +65,11 @@ representative direct-provider captures are:
 
 | Workload | BlueTusk mean | Npgsql mean | BlueTusk allocation | Npgsql allocation |
 |---|---:|---:|---:|---:|
-| Warm pool checkout | 211.07 ns | 227.56 ns | 168 B | 184 B |
-| Parameterized scalar | 295.27 us | 320.81 us | 1,773 B | 2,138 B |
-| Prepared scalar | 291.13 us | 290.88 us | 898 B | 1,125 B |
-| Sequential 1,000 rows | 480.22 us | 508.49 us | 1,585 B | 1,615 B |
-| Sequential 1 MiB `bytea` | 2.236 ms | 2.291 ms | 1,585 B | 8,906 B |
+| Warm pool checkout | 213.81 ns | 235.22 ns | 168 B | 184 B |
+| Parameterized scalar | 297.69 us | 328.19 us | 1,652 B | 2,140 B |
+| Prepared scalar | 291.52 us | 297.47 us | 785 B | 1,123 B |
+| Sequential 1,000 rows | 487.35 us | 528.43 us | 1,195 B | 1,569 B |
+| Sequential 1 MiB `bytea` | 2.183 ms | 2.223 ms | 1,466 B | 9,031 B |
 
 The concurrency allocation capture records BlueTusk below Npgsql for fresh and
 reused multiplexing and for both ordinary pooled controls. Current latency
@@ -95,6 +95,10 @@ public ADO.NET contract:
   unnecessary `ValueTask`-to-`Task` adapter;
 - portal payload continuations use pooled builders and keep the existing read
   lease instead of acquiring a redundant nested lease;
+- completed synchronous and asynchronous portals return their last row object
+  to the session reuse slot instead of losing it at end-of-stream;
+- disabled duration/message-size instruments bypass timestamps and recorder
+  calls, while enabled command instrumentation retains its full diagnostics;
 - row descriptions and resolved codecs are reused when PostgreSQL returns the
   same result shape; and
 - the data reader uses one atomic closed/lifetime state, making disposal safer
@@ -167,10 +171,10 @@ downloadable artifact bound to the final candidate SHA.
 
 | Evidence | Repository path | SHA-256 |
 |---|---|---|
-| Five direct alternating-provider workloads | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/provider-paired-evidence.json` | `6CD2904293AFE8D3775BB0CFEEF646D3473DE69E3600068633C620FD3FABD20A` |
-| Four alternating concurrency workloads | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/multiplexing-paired-evidence.json` | `84F1BB3C91C3D7E724E1B34EFAAFA09354DEF66AEA48F94803017324D203EBE0` |
-| Final direct-provider MediumRun | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json` | `9EBFA21E448C9EAEC1A98155339BB465BD724FAFB8BB0CFA599A2983EC8BBD12` |
-| Concurrency MediumRun allocation capture | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json` | `51C4CA87489D3955AC79043AD889A1287A798984F44BC1EC5CA48389D7CF78ED` |
+| Five direct alternating-provider workloads | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/provider-paired-evidence.json` | `7CAFAC4BD636583D0B204AC0E8507F72A98AAB77618F7653371EDD8F2EC823F6` |
+| Four alternating concurrency workloads | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/multiplexing-paired-evidence.json` | `0ECED596A7CFFEBA7938C24E920162CBF48C5DA657381CAD990AE8AA4E3D3EDA` |
+| Final direct-provider MediumRun | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json` | `AC5259C51CEAF1E61D7F95776999AC3F9BCB338C8B52487ACB910A8A034F647B` |
+| Concurrency MediumRun allocation capture | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json` | `475FE658AE5EDD920BC09D4B8404DDA72E0ECE84B14CFDE7114C323187306CFA` |
 
 The repository verifies report shape, workload identity, sample counts, provider
 order, finite positive values and every ratio before accepting an artifact. Its

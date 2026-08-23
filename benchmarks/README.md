@@ -136,12 +136,12 @@ scalar path, 64 for the row stream, and 32 for the large-value stream. These
 counts keep tiered-JIT transitions out of the measured blocks; they do not
 remove samples or relax the 1.00 provider-relative limits.
 
-The refreshed 2026-08-07 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
+The refreshed 2026-08-23 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
 mean latency and managed allocation on all five paired workloads. BlueTusk/Npgsql
-measure 365/392 us and 1,634/2,079 B for the parameterized scalar, 195/209 ns and
-168/184 B for warm checkout, 356/358 us and 773/1,137 B for the prepared scalar,
-529/549 us and 1,413/1,418 B for the 1,000-row reader, and 2.279/2.305 ms and
-3,832/8,426 B for the isolated 1 MiB stream. The exact values and environment are checked in under
+measure 298/328 us and 1,652/2,140 B for the parameterized scalar, 214/235 ns and
+168/184 B for warm checkout, 292/297 us and 785/1,123 B for the prepared scalar,
+487/528 us and 1,195/1,569 B for the 1,000-row reader, and 2.183/2.223 ms and
+1,466/9,031 B for the isolated 1 MiB stream. The exact values and environment are checked in under
 `baselines/windows-ryzen7-5800x-dotnet10`; these paired results are not a
 provider-wide performance guarantee.
 
@@ -193,21 +193,14 @@ workloads. Run
 `eng/test-multiplexing-performance-verifier.ps1` to exercise the positive
 fixture and fail-closed mutations.
 
-The 2026-08-04 Windows/Ryzen 7 5800X MediumRun from commit `9ba2c50`
-records BlueTusk/Npgsql at 19.83/20.57 µs mean, 20.93/22.26 µs P95,
-21.06/22.51 µs P99, and 1,733/1,738 B for end-to-end commands. Reused
-commands were refreshed on 2026-08-07 and record 16.37 µs mean, 16.76 µs P95,
-16.82 µs P99, and 749 B for BlueTusk, clearing the 850 B/op gate without a
-latency regression. The unchanged comparison row records Npgsql at 20.01 µs
-mean, 21.53 µs P95, 21.69 µs P99, and 794 B. The full checked-in report,
-environment manifest, and budget verifier make this a reproducible regression
-gate rather than a universal provider claim.
-
-The immutable full comparison report remains bound to its original commit and
-image digest. The refreshed BlueTusk row is stored in the adjacent
-`MultiplexingComparisonBenchmarks-reused-hardening.json` supplemental report;
-the allocation verifier reads it after the frozen report so the 850 B/op gate
-uses the current measurement without invalidating historical evidence.
+The 2026-08-23 Windows/Ryzen 7 5800X MediumRun from commit `d09d2f6`
+records BlueTusk/Npgsql at 16.93/18.81 µs and 1,429/1,738 B for fresh
+multiplexed commands, and 15.49/19.06 µs and 622/794 B for reused multiplexed
+commands. The ordinary pooled controls record 95.98/101.55 µs and 2,127/2,830 B
+for fresh commands, and 95.10/100.72 µs and 1,343/1,873 B for reused commands.
+The full checked-in report, alternating-provider evidence, environment manifest,
+and budget verifier make this a reproducible regression gate rather than a
+universal provider claim.
 
 `--inProcess` is required for this repository fixture on Windows because
 archived worktrees below ignored artifact directories can otherwise be
