@@ -15,8 +15,8 @@ themselves, a production-readiness claim.
 | 4. Coverage-guided fuzzing | Nine bounded SharpFuzz/AFL++ targets cover protocol frames, authentication, pgoutput, binary COPY, arrays, ranges, composites, Streams envelopes and Live resume tokens. Replayable Base64 corpus cases, deterministic tests, CI smoke, scheduled runs, finding archival and minimisation tooling are checked in. | Keep minimized findings in the deterministic corpus and require a clean bounded run for the exact candidate. | Complete |
 | 5. Release evidence | Reproducible Streams 72-hour and Sync 24-hour harnesses and fail-closed report verifiers exist. Exact-candidate reports have not been completed and archived. | Reports tied to commit, package hashes, runtime, OS and image digests, including process, network, storage, credential, failover, clock and minor-upgrade faults. | Open |
 | 6. ADO.NET compatibility | The supported/excluded contract now covers routines, parameters, transactions, reader behaviours, schema APIs, Dapper, DI, health checks and the Npgsql migration path. Unsupported modes fail explicitly. | Unit and live acceptance coverage plus the published compatibility matrix. | Complete |
-| 7. API and supply chain | Exact per-family API budgets, CodeQL, dependency review, commit-pinned Actions, CycloneDX/SPDX generation, package-hash provenance verification, a fail-closed 22-occurrence intentional test-credential inventory and an independent-review handoff are enforced. | Run the gates, disposition the external scanner records and archive the generated evidence for the exact candidate. | Implemented; scanner disposition pending |
-| 8. PostgreSQL 19 programme | Beta 2 is digest-pinned; capability guards, raw-SQL escape hatches, the typed-subset record, upstream drift detection and the later beta/RC/GA cadence are machine-enforced. | Repeat the matrix at each future milestone; GA evidence is a fail-closed stable-publication prerequisite. | Implemented; GA pending |
+| 7. API and supply chain | Exact per-family API budgets, CodeQL, dependency review, commit-pinned Actions, CycloneDX/SPDX generation, package-hash provenance verification, a fail-closed 24-occurrence intentional test-credential inventory and an independent-review handoff are enforced. | Run the gates, disposition the external scanner records and archive the generated evidence for the exact candidate. | Implemented; scanner disposition pending |
+| 8. PostgreSQL 19 programme | Beta 3 is digest-pinned; capability guards, raw-SQL escape hatches, the typed-subset record, upstream drift detection and the later beta/RC/GA cadence are machine-enforced. | Repeat the matrix at each future milestone; GA evidence is a fail-closed stable-publication prerequisite. | Implemented; GA pending |
 
 ## Phased implementation
 
@@ -103,14 +103,30 @@ $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "<dedicated PostgreSQL connection st
 dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj `
   --configuration Release -- `
   --job medium --inProcess --filter "*MultiplexingComparisonBenchmarks*"
+dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj `
+  --configuration Release --no-build -- `
+  --multiplexing-paired-evidence artifacts/benchmarks/multiplexing-paired-evidence.json
 ./eng/verify-multiplexing-performance.ps1 `
-  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json
+  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json `
+  -PairedReportPath artifacts/benchmarks/multiplexing-paired-evidence.json
+./eng/test-multiplexing-performance-verifier.ps1
 ```
 
-The checked-in run is bound to source commit `9ba2c50`, PostgreSQL image digest
-`sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15`,
-and a SHA-256-protected full report. It records lower BlueTusk mean, P95 and
-P99 latency than Npgsql for fresh and reused multiplexed commands in this named
-loopback environment. It also records lower latency and allocation than
-non-multiplexed BlueTusk. This closes the regression-evidence gate, not the
-independent production-validation gate.
+The checked-in run is bound to source commit `b520682`, PostgreSQL 19 Beta 3
+image digest
+`sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc`,
+and SHA-256-protected absolute and alternating-provider reports. It records
+lower BlueTusk mean, P95, P99, and managed allocation than Npgsql for fresh and
+reused multiplexed commands and for both ordinary pooled controls in this named
+loopback environment. This closes the former saturated non-multiplexed
+regression gap; it does not replace independent production validation.
+
+Exact-candidate runs retain BenchmarkDotNet evidence for absolute latency and
+allocation and add five alternating-provider trials for provider-relative
+latency. Each trial contains 501 paired blocks, with provider order reversed
+between blocks and trials. Four bursts per block and 64 operations per burst are
+measured for fresh/reused multiplexed and fresh/reused ordinary pooled paths.
+The gate recomputes mean, P95, and P99 from raw timings and requires every median
+trial ratio, plus the BenchmarkDotNet allocation ratio, to remain at or below
+`1.0`. With 501 observations, P99 is not decided by one or two scheduler spikes,
+while provider alternation reduces sequential machine and server drift.

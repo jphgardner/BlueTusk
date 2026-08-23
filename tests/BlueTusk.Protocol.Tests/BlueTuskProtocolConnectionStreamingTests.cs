@@ -84,6 +84,54 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
     }
 
     [Fact]
+    public async Task Pre_encoded_messages_bypass_reusable_write_storage_sync_and_async()
+    {
+        await using var transport = new FragmentedTransport([], 16);
+        await using var connection = new BlueTuskProtocolConnection(transport);
+
+        connection.WritePreEncoded("cached-sync"u8);
+        await connection.WritePreEncodedAsync("cached-async"u8.ToArray(), CancellationToken.None);
+
+        Assert.Equal(
+            ["cached-sync", "cached-async"],
+            transport.Writes.Select(Encoding.UTF8.GetString));
+        Assert.Throws<ArgumentException>(() => connection.WritePreEncoded([]));
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => connection.WritePreEncodedAsync(
+                ReadOnlyMemory<byte>.Empty,
+                CancellationToken.None).AsTask());
+    }
+
+    [Fact]
+    public async Task Large_leased_payload_reads_coalesce_transport_fragments()
+    {
+        var payload = Enumerable.Range(0, 192 * 1024).Select(static value => (byte)value).ToArray();
+        await using var transport = new FragmentedTransport(Frame((byte)'D', payload), 32 * 1024);
+        await using var connection = new BlueTuskProtocolConnection(transport);
+        var header = await connection.ReadMessageHeaderAsync(CancellationToken.None);
+        Assert.Equal(payload.Length, header.PayloadLength);
+
+        var first = new byte[128 * 1024];
+        var firstRead = await connection.ReadLeasedMessagePayloadAsync(
+            first,
+            0,
+            static (_, read) => read,
+            CancellationToken.None);
+        Assert.Equal(first.Length, firstRead);
+        Assert.Equal(payload.AsSpan(0, first.Length).ToArray(), first);
+
+        var second = new byte[payload.Length - first.Length];
+        var secondRead = await connection.ReadLeasedMessagePayloadAsync(
+            second,
+            0,
+            static (_, read) => read,
+            CancellationToken.None);
+        Assert.Equal(second.Length, secondRead);
+        Assert.Equal(payload.AsSpan(first.Length).ToArray(), second);
+        Assert.Equal(0, connection.ActiveMessagePayloadRemaining);
+    }
+
+    [Fact]
     public async Task Sensitive_writes_overwrite_reusable_storage_after_sync_and_async_flushes()
     {
         await using var transport = new FragmentedTransport([], 16);

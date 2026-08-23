@@ -35,6 +35,7 @@ jobs:
             -Family Streams `
             -Candidate `
             -Output 'artifacts/test-results/streams-relay-endurance/candidate-packages'
+          dotnet restore BlueTusk.slnx --locked-mode
           ./eng/generate-sbom.ps1 `
             -PackageDirectory 'artifacts/test-results/streams-relay-endurance/candidate-packages' `
             -OutputDirectory 'artifacts/test-results/streams-relay-endurance/candidate-sbom' `
@@ -55,7 +56,7 @@ jobs:
           -IntervalMilliseconds 250
           -ReportPath 'artifacts/test-results/streams-relay-endurance/report.json'
           -CandidateProvenancePath 'artifacts/test-results/streams-relay-endurance/candidate-sbom/build-provenance.json'
-          -PostgreSqlImage 'postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e'
+          -PostgreSqlImage 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc'
           -Configuration Release
 
       - name: Verify endurance evidence
@@ -67,11 +68,11 @@ jobs:
           -MinimumTransactions 100000
           -ExpectedCommit '${{ github.sha }}'
           -CandidateProvenancePath 'artifacts/test-results/streams-relay-endurance/candidate-sbom/build-provenance.json'
-          -ExpectedPostgreSqlImage 'postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e'
+          -ExpectedPostgreSqlImage 'postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc'
 
       - name: Upload endurance evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: streams-relay-endurance-${{ github.run_id }}
           path: artifacts/test-results/streams-relay-endurance

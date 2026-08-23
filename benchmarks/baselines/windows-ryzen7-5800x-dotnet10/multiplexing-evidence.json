@@ -1,7 +1,7 @@
 {
-  "schemaVersion": 1,
-  "sourceCommit": "9ba2c50c05c9d995b3b78cf65f6d88ee207e835f",
-  "capturedUtc": "2026-08-04T03:23:11.2365171Z",
+  "schemaVersion": 2,
+  "sourceCommit": "d09d2f654f6c5568fa1053d92aad819872afa348",
+  "capturedUtc": "2026-08-23T11:01:08.842453+01:00",
   "benchmark": {
     "framework": "BenchmarkDotNet 0.15.8",
     "job": "MediumRun",
@@ -9,29 +9,45 @@
     "launchCount": 2,
     "warmupCount": 10,
     "iterationCount": 15,
-    "logicalOperationsPerBurst": 64,
-    "physicalLanes": 4,
-    "commandTimeout": "infinite"
+    "providerLatencyMethod": "median of five alternating-provider trials",
+    "providerPairedBlocksPerTrial": 501,
+    "pairedBlocksPerTrial": 501,
+    "burstsPerBlock": 4,
+    "operationsPerBurst": 64
   },
   "environment": {
-    "os": "Windows 11 10.0.26200.8973",
-    "architecture": "x64",
-    "processor": "AMD Ryzen 7 5800X 8-Core Processor",
-    "dotnetSdk": "10.0.302",
-    "dotnetRuntime": "10.0.10",
-    "postgresqlMajor": 18,
-    "postgresqlImage": "postgres:18-alpine",
-    "postgresqlImageDigest": "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
-    "topology": "Dedicated PostgreSQL loopback server; BlueTusk and Npgsql each use four physical lanes."
+    "os": "Windows 11 (10.0.26200.9168/25H2/2025Update/HudsonValley2)",
+    "architecture": "X64",
+    "processor": "AMD Ryzen 7 5800X",
+    "dotnetSdk": "10.0.303",
+    "dotnetRuntime": "10.0.11",
+    "postgresqlMajor": 19,
+    "postgresqlImage": "postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc",
+    "postgresqlImageDigest": "postgres@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc",
+    "topology": "Dedicated loopback PostgreSQL; four physical lanes for provider comparisons."
   },
-  "command": "dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj -c Release --no-build -- --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'",
+  "command": "dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj -c Release --no-build -- --job medium --inProcess --filter '*'",
   "report": {
     "path": "results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json",
-    "sha256": "befd48164bdb4db7cf6d21915ed552c1f8e52dd12803c73fdfc5711276a921db"
+    "sha256": "475fe658ae5edd920bc09d4b8404dda72e0ece84b14cfde7114c323187306cfa"
+  },
+  "pairedReport": {
+    "path": "multiplexing-paired-evidence.json",
+    "sha256": "0eced596a7cffeba7938c24e920162cbf48c5da657381cad990ae8aa4e3d3eda"
+  },
+  "providerReport": {
+    "path": "results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json",
+    "sha256": "ac5259c51ceaf1e61d7f95776999ac3f9bcb338c8b52487acb910a8a034f647b"
+  },
+  "providerPairedReport": {
+    "path": "provider-paired-evidence.json",
+    "sha256": "7cafac4bd636583d0b204ac0e8507f72a98aab77618f7653371edd8f2ec823f6"
   },
   "verification": {
-    "budgetPath": "../../../eng/multiplexing-performance-budgets.json",
-    "command": "./eng/verify-multiplexing-performance.ps1",
+    "multiplexingBudgetPath": "../../../eng/multiplexing-performance-budgets.json",
+    "providerBudgetPath": "../../../eng/provider-performance-budgets.json",
+    "multiplexingCommand": "./eng/verify-multiplexing-performance.ps1",
+    "providerCommand": "./eng/verify-provider-performance.ps1",
     "result": "passed"
   }
 }

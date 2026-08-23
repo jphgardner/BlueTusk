@@ -54,6 +54,8 @@ $previousConnection = $env:BLUETUSK_BENCHMARK_CONNECTION_STRING
 $env:BLUETUSK_BENCHMARK_ARTIFACTS = $fullOutputPath
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = $ConnectionString
 $logPath = Join-Path $fullOutputPath 'benchmark.log'
+$pairedReport = Join-Path $fullOutputPath 'multiplexing-paired-evidence.json'
+$providerPairedReport = Join-Path $fullOutputPath 'provider-paired-evidence.json'
 
 try
 {
@@ -77,7 +79,55 @@ try
         '*'
     )
 
-    & dotnet @runArguments 2>&1 | Tee-Object -LiteralPath $logPath
+    $pairedArguments = @(
+        'run',
+        '--project',
+        'benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj',
+        '--configuration',
+        'Release'
+    )
+    if ($NoBuild)
+    {
+        $pairedArguments += '--no-build'
+    }
+    $pairedArguments += @(
+        '--',
+        '--multiplexing-paired-evidence',
+        $pairedReport
+    )
+
+    $providerPairedArguments = @(
+        'run',
+        '--project',
+        'benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj',
+        '--configuration',
+        'Release'
+    )
+    if ($NoBuild)
+    {
+        $providerPairedArguments += '--no-build'
+    }
+    $providerPairedArguments += @(
+        '--',
+        '--provider-paired-evidence',
+        $providerPairedReport
+    )
+
+    # Capture provider-relative latency before the long BenchmarkDotNet suite so
+    # its thread-pool, database and thermal state cannot contaminate paired tails.
+    & dotnet @providerPairedArguments 2>&1 | Tee-Object -LiteralPath $logPath
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "Paired provider evidence capture exited with code $LASTEXITCODE."
+    }
+
+    & dotnet @pairedArguments 2>&1 | Tee-Object -FilePath $logPath -Append
+    if ($LASTEXITCODE -ne 0)
+    {
+        throw "Paired multiplexing evidence capture exited with code $LASTEXITCODE."
+    }
+
+    & dotnet @runArguments 2>&1 | Tee-Object -FilePath $logPath -Append
     if ($LASTEXITCODE -ne 0)
     {
         throw "BenchmarkDotNet exited with code $LASTEXITCODE."
@@ -114,12 +164,27 @@ $resultsPath = Join-Path $fullOutputPath 'results'
 
 $multiplexingReport = Join-Path $resultsPath (
     'BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json')
+$providerReport = Join-Path $resultsPath (
+    'BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json')
+& (Join-Path $PSScriptRoot 'verify-provider-performance.ps1') `
+    -ReportPath $providerReport `
+    -PairedReportPath $providerPairedReport
 & (Join-Path $PSScriptRoot 'verify-multiplexing-performance.ps1') `
-    -ReportPath $multiplexingReport
+    -ReportPath $multiplexingReport `
+    -PairedReportPath $pairedReport
 
 $report = Get-Content -LiteralPath $multiplexingReport -Raw | ConvertFrom-Json
 $reportHash = (
     Get-FileHash -LiteralPath $multiplexingReport -Algorithm SHA256
+).Hash.ToLowerInvariant()
+$pairedReportHash = (
+    Get-FileHash -LiteralPath $pairedReport -Algorithm SHA256
+).Hash.ToLowerInvariant()
+$providerReportHash = (
+    Get-FileHash -LiteralPath $providerReport -Algorithm SHA256
+).Hash.ToLowerInvariant()
+$providerPairedReportHash = (
+    Get-FileHash -LiteralPath $providerPairedReport -Algorithm SHA256
 ).Hash.ToLowerInvariant()
 $artifactRecords = @(
     Get-ChildItem -LiteralPath $fullOutputPath -Recurse -File |
@@ -138,7 +203,7 @@ $artifactRecords = @(
 $digest = ([regex]::Match($PostgreSqlImage, '@(?<digest>sha256:[0-9a-f]{64})$')).
     Groups['digest'].Value
 $evidence = [ordered]@{
-    schemaVersion = 1
+    schemaVersion = 2
     sourceCommit = $ExpectedCommit
     capturedUtc = [DateTimeOffset]::UtcNow.ToString('O')
     benchmark = [ordered]@{
@@ -148,6 +213,11 @@ $evidence = [ordered]@{
         launchCount = 2
         warmupCount = 10
         iterationCount = 15
+        providerLatencyMethod = 'median of five alternating-provider trials'
+        providerPairedBlocksPerTrial = 501
+        pairedBlocksPerTrial = 501
+        burstsPerBlock = 4
+        operationsPerBurst = 64
     }
     environment = [ordered]@{
         os = [string]$report.HostEnvironmentInfo.OsVersion
@@ -170,11 +240,24 @@ $evidence = [ordered]@{
         path = 'results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json'
         sha256 = $reportHash
     }
+    pairedReport = [ordered]@{
+        path = 'multiplexing-paired-evidence.json'
+        sha256 = $pairedReportHash
+    }
+    providerReport = [ordered]@{
+        path = 'results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json'
+        sha256 = $providerReportHash
+    }
+    providerPairedReport = [ordered]@{
+        path = 'provider-paired-evidence.json'
+        sha256 = $providerPairedReportHash
+    }
     artifacts = $artifactRecords
     verification = [ordered]@{
         allocationBudgets = 'passed'
         latencyBudgets = 'passed'
         coverage = 'passed'
+        providerComparison = 'passed'
         multiplexingComparison = 'passed'
     }
 }
@@ -184,6 +267,7 @@ $evidence | ConvertTo-Json -Depth 8 |
 
 & (Join-Path $PSScriptRoot 'verify-multiplexing-performance.ps1') `
     -ReportPath $multiplexingReport `
+    -PairedReportPath $pairedReport `
     -EvidencePath $evidencePath
 
 Write-Output (

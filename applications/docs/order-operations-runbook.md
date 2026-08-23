@@ -14,7 +14,19 @@ the read model/checkpoint, restart from the last committed checkpoint, and recon
 reopening mutations. Exercise one corrupted replay payload and one cancelled delivery in RC;
 both must quarantine or clean up without advancing the checkpoint.
 
+Database connection and update failures do not terminate the relay host. The
+worker records `StoreUnavailable`, backs off for five seconds, and retries from
+the durable unrelayed set. Alert on sustained failures and relay lag; do not
+restart repeatedly or mark rows relayed by hand.
+
 Restore into a new CloudNativePG cluster, run the migration Job, verify audit/order counts and
 the latest IDs, then switch the Gateway only after replay lag reaches zero. Roll back application
 images by digest; do not reverse a database migration unless its checked-in `Down` operation
 has been rehearsed against a restored copy.
+
+Before accepting a rollout, run
+`./eng/verify-application-platform-health.ps1 -RequireApplications`. Treat any
+API/kubelet mismatch, node pressure, degraded volume, unhealthy database,
+unready worker, or failed migration as a deployment failure even when cached
+Kubernetes status still says `Running`. Retain the command output with the image
+digest manifest and rollout record.

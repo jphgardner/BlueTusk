@@ -101,7 +101,7 @@ internal static class BlueTuskParameterEncoder
         return Encode(parameter, types, ref reusableBuffer);
     }
 
-    private static BlueTuskExtendedQueryParameter Encode(
+    internal static BlueTuskExtendedQueryParameter Encode(
         BlueTuskParameter parameter,
         BlueTuskTypeRegistry? types,
         ref byte[]? reusableBuffer)
@@ -246,14 +246,32 @@ internal static class BlueTuskParameterEncoder
         {
             BooleanOid => BinaryBoolean(
                 typeOid,
-                Convert.ToBoolean(value, CultureInfo.InvariantCulture),
+                value is bool typed ? typed : Convert.ToBoolean(value, CultureInfo.InvariantCulture),
                 ref reusableBuffer),
-            Int2Oid => BinaryInt16(typeOid, Convert.ToInt16(value, CultureInfo.InvariantCulture), ref reusableBuffer),
-            Int4Oid => BinaryInt32(typeOid, Convert.ToInt32(value, CultureInfo.InvariantCulture), ref reusableBuffer),
-            OidOid => BinaryUInt32(typeOid, Convert.ToUInt32(value, CultureInfo.InvariantCulture), ref reusableBuffer),
-            Int8Oid => BinaryInt64(typeOid, Convert.ToInt64(value, CultureInfo.InvariantCulture), ref reusableBuffer),
-            Float4Oid => BinarySingle(typeOid, Convert.ToSingle(value, CultureInfo.InvariantCulture), ref reusableBuffer),
-            Float8Oid => BinaryDouble(typeOid, Convert.ToDouble(value, CultureInfo.InvariantCulture), ref reusableBuffer),
+            Int2Oid => BinaryInt16(
+                typeOid,
+                value is short typed ? typed : Convert.ToInt16(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
+            Int4Oid => BinaryInt32(
+                typeOid,
+                value is int typed ? typed : Convert.ToInt32(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
+            OidOid => BinaryUInt32(
+                typeOid,
+                value is uint typed ? typed : Convert.ToUInt32(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
+            Int8Oid => BinaryInt64(
+                typeOid,
+                value is long typed ? typed : Convert.ToInt64(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
+            Float4Oid => BinarySingle(
+                typeOid,
+                value is float typed ? typed : Convert.ToSingle(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
+            Float8Oid => BinaryDouble(
+                typeOid,
+                value is double typed ? typed : Convert.ToDouble(value, CultureInfo.InvariantCulture),
+                ref reusableBuffer),
             PointOid => EncodeBinary(
                 typeOid,
                 new BlueTuskPointCodec(),

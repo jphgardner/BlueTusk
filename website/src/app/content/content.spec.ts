@@ -36,13 +36,14 @@ describe('website content integrity', () => {
     );
   });
 
-  it('publishes all seven first-party extension families', () => {
+  it('publishes seven V1 extension families and the isolated pg_durable preview', () => {
     expect(EXTENSION_CAPABILITIES.map((item) => item.feature)).toEqual([
       'citext',
       'pgvector',
       'hstore',
       'ltree',
       'pg_trgm',
+      'pg_durable',
       'PostGIS',
       'TimescaleDB',
     ]);

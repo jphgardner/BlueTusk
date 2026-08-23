@@ -24,33 +24,36 @@ The Windows/Ryzen 7 5800X/.NET 10 short baseline currently records:
 | Prepared raw / typed EF traversal of 999 edges | 187,936 B / 685,864 B | readers plus caller-owned typed graph results |
 
 The live PostgreSQL 19 comparison separates provider efficiency from the
-in-memory ownership budgets above. Its final 2026-08-02 MediumRun records:
+in-memory ownership budgets above. The final V1 candidate records:
 
 | Workload | BlueTusk | Npgsql | Current result |
 | --- | ---: | ---: | --- |
-| Parameterized scalar | 1,663 B | 2,094 B | BlueTusk 20.6% lower |
-| Explicitly prepared scalar | 796 B | 1,099 B | BlueTusk 27.6% lower |
+| Parameterized scalar | 1,773 B | 2,138 B | BlueTusk 17.1% lower |
+| Explicitly prepared scalar | 898 B | 1,125 B | BlueTusk 20.2% lower |
 | Untouched warm checkout | 168 B | 184 B | BlueTusk 8.7% lower |
-| Sequential 1,000-row read | 1,400 B | 1,529 B | BlueTusk 8.4% lower |
-| Sequential 1 MiB `bytea` | 3,900 B | 8,938 B | BlueTusk 56.4% lower |
+| Sequential 1,000-row read | 1,585 B | 1,615 B | BlueTusk 1.9% lower |
+| Sequential 1 MiB `bytea` | 1,585 B | 8,906 B | BlueTusk 82.2% lower |
 
-The same run measures BlueTusk/Npgsql at 446/487 us for parameterized scalar
-execution, 288/326 ns for warm checkout, 436/445 us for prepared scalar execution,
-672/743 us for the 1,000-row reader, and 4.390/4.482 ms for the isolated 1 MiB
-stream. Parameterized execution, warm checkout, and the row reader have
-non-overlapping latency intervals at this sample size; prepared and stream
-intervals overlap and are treated as parity despite lower BlueTusk means. These
-longer paired results are regression evidence, not a
-provider-wide latency guarantee.
+Five trials of 501 alternating-provider blocks are the cross-provider latency
+authority. BlueTusk records lower median-of-trials mean, P95, and P99 ratios for
+all five paths. Prepared-scalar and 1 MiB mean leads are narrow and are treated as
+measured parity rather than material capacity advantages. These results are
+regression evidence, not a provider-wide latency guarantee.
 
-The V1 multiplexing MediumRun uses four physical lanes and 64-command bursts.
-It records BlueTusk/Npgsql fresh-command allocation at 1,733/1,738 B and
-reused-command allocation at 1,143/794 B. Mean latency is 19.83/20.57 µs for
-fresh commands and 17.41/20.01 µs for reused commands; BlueTusk also records
-lower P95 and P99 in both pairs. Against ordinary pooled BlueTusk, multiplexing
-uses less than 30% of the latency and 60% of the allocation allowed by the
-checked-in budgets. The full result measurements and environment manifest are
-stored under `benchmarks/baselines/windows-ryzen7-5800x-dotnet10`.
+The V1 concurrency gate uses four physical lanes and 64-command bursts. It now
+compares both fresh and reused multiplexed paths and both fresh and reused
+ordinary pooled controls directly with Npgsql. BlueTusk records lower mean, P95,
+P99, and allocation in all four comparisons. Including the ordinary pooled
+controls closes the former saturated non-multiplexed gap instead of allowing a
+multiplex-only result to conceal it.
+
+An exact-candidate run keeps BenchmarkDotNet as the absolute-latency and
+allocation authority, then records five alternating-provider trials for both
+the direct and concurrency comparison gates. Both gates require BlueTusk's mean,
+P95, P99, and managed-allocation ratios to remain at or below `1.0`. The
+candidate manifest hashes every raw report. See the
+[V1 Npgsql performance report](../operations/npgsql-performance-comparison.md)
+for the complete method, results, evidence hashes, and claim boundary.
 
 `BlueTuskProtocolConnection` retains one writer per physical session, clears it after every successful or failed write, rejects overlapping writes, and replaces writer storage that grows beyond 64 KiB so an exceptional command does not permanently inflate every pooled session. Its receive side rents one 64 KiB protocol buffer per physical session. Incremental field reads of at least 8 KiB pass the caller's buffer directly to the transport after consuming buffered bytes, avoiding both an intermediate copy and a transient large rental; smaller reads use adaptive bounded read-ahead. The socket receive window defaults to 256 KiB and caller-visible streams still do not materialize the field. Runtime structured-codec encoding rents temporary sizing storage and copies only the exact payload into the caller-owned parameter value before returning the temporary buffer. Replication decodes one pulled frame at a time and retains its WAL body over the received memory; the 64-byte message object is measured and intentionally budgeted rather than described as allocation-free.
 

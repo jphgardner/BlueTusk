@@ -11,9 +11,9 @@ public sealed record BlueTuskTransportOptions
 
     public bool KeepAlive { get; init; } = true;
 
-    public int ReceiveBufferSize { get; init; } = 256 * 1024;
+    public int ReceiveBufferSize { get; init; } = 128 * 1024;
 
-    public int SendBufferSize { get; init; } = 32 * 1024;
+    public int SendBufferSize { get; init; } = 64 * 1024;
 
     internal void Validate()
     {

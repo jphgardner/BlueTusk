@@ -188,6 +188,36 @@ public sealed class BlueTuskMultiplexingIntegrationTests
     }
 
     [Fact]
+    public async Task Lease_rotation_keeps_the_lane_when_no_affine_work_is_waiting()
+    {
+        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        {
+            MaximumPoolSize = 1,
+        };
+        await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionString)
+            .EnableMultiplexing(options =>
+            {
+                options.WorkerCount = 1;
+                options.QueueCapacity = 32;
+                options.MaxCommandsPerLease = 2;
+                options.MaxPipelineCommands = 1;
+            })
+            .Build();
+
+        for (var value = 0; value < 12; value++)
+        {
+            await using var command = dataSource.CreateCommand("SELECT $1::int4");
+            command.Parameters.Add(new BlueTuskParameter<int>(value));
+            Assert.Equal(value, await command.ExecuteScalarAsync<int>());
+        }
+
+        var pool = dataSource.GetPoolStatistics();
+        Assert.Equal(1, pool.Opened);
+        Assert.Equal(0, pool.Reused);
+        Assert.Equal(12, dataSource.GetMultiplexingStatistics().Completed);
+    }
+
+    [Fact]
     public async Task Cancellation_recovers_the_lane_for_the_next_command()
     {
         await using var dataSource = CreateDataSource();

@@ -83,13 +83,22 @@ connection contract across all supported PostgreSQL versions:
 | 18 | 28 | 2,978 | 146 | 0 |
 | 19 Beta 2 | 28 | 2,978 | 146 | 0 |
 
+On 2026-08-17, after the official milestone advanced, the complete serial
+solution suite was rerun against the digest-pinned PostgreSQL 19 Beta 3 image
+with zero failures. The table above remains the exact dated 2026-08-02
+provider-only snapshot rather than retroactively relabelling that evidence.
+
 The provider audit produced a zero-warning Release build and 31 stable 1.0.0
 candidate packages. Its V1 candidate API budget locks 8,308 signatures across 28
 API-governed Provider library surfaces, while package conformance excludes
-embedded template content projects. The current monorepo-wide gate covers 121
+embedded template content projects. The current monorepo-wide gate covers 123
 solution projects, reports no vulnerable direct or transitive NuGet
 dependencies, validates every repository-local documentation link, and passes
-37 allocation budgets.
+46 allocation budgets.
+The two additional solution projects are the non-packable pg_durable preview
+adapter and its tests. They do not alter the stable Provider package or API
+totals and cannot be used as production-readiness evidence for upstream
+pg_durable.
 The final two-launch
 provider MediumRun records lower BlueTusk mean latency and managed allocation in
 all five paired workloads; parameterized scalar, warm checkout, and 1,000-row
@@ -103,7 +112,7 @@ the [checked-in provider report](../benchmarks/baselines/windows-ryzen7-5800x-do
 - Packages are release-prepared at stable `1.0.0`, but engineering-gate
   completion is not publication and does not substitute for external
   production experience or protected release approval.
-- PostgreSQL 19 coverage uses the official Beta 2 image plus a scheduled build of
+- PostgreSQL 19 coverage uses the official Beta 3 image plus a scheduled build of
   the upstream PostgreSQL 19 branch; beta syntax can still change before GA.
 - Real-account AWS, Azure, and Google Cloud identity acceptance remains opt-in
   because repository CI does not hold customer credentials; deterministic SDK

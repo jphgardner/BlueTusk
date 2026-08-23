@@ -258,7 +258,7 @@ public sealed class ProductFamilyArchitectureTests
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(
-            "actions/attest-build-provenance@977bb373ede98d70efdf65b84cb5f73e068dcc2a # v3",
+            "actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2",
             workflow,
             StringComparison.Ordinal);
         Assert.Contains(
@@ -270,7 +270,7 @@ public sealed class ProductFamilyArchitectureTests
             "./eng/verify-product-family-packages.ps1",
             StringComparison.Ordinal);
         var uploadIndex = workflow.IndexOf(
-            "actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4",
+            "actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1",
             StringComparison.Ordinal);
         Assert.True(
             verifyIndex >= 0 && uploadIndex > verifyIndex,

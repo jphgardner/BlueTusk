@@ -26,6 +26,7 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
     private BlueTuskCommand[] _blueTuskPooledCommands = null!;
     private NpgsqlCommand[] _npgsqlCommands = null!;
     private NpgsqlCommand[] _npgsqlPooledCommands = null!;
+    private Task<int>[] _blueTuskReusedTasks = null!;
     private int _disposed;
 
     [GlobalSetup]
@@ -68,6 +69,7 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
         _blueTuskPooledCommands = new BlueTuskCommand[BurstSize];
         _npgsqlCommands = new NpgsqlCommand[BurstSize];
         _npgsqlPooledCommands = new NpgsqlCommand[BurstSize];
+        _blueTuskReusedTasks = new Task<int>[BurstSize];
         for (var index = 0; index < BurstSize; index++)
         {
             var blueTuskCommand = _blueTusk.CreateCommand("SELECT $1::int4");
@@ -158,7 +160,7 @@ public class MultiplexingComparisonBenchmarks : IAsyncDisposable
     [BenchmarkCategory("ReusedMultiplexedScalar")]
     public async Task<int> BlueTuskReusedScalarBurstAsync()
     {
-        var tasks = new Task<int>[BurstSize];
+        var tasks = _blueTuskReusedTasks;
         for (var index = 0; index < tasks.Length; index++)
         {
             tasks[index] = _blueTuskCommands[index].ExecuteScalarAsync<int>();

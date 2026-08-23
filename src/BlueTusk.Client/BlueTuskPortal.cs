@@ -49,6 +49,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     internal BlueTuskPortalRow? CurrentRow => _currentRow;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryReadBuffered(out BlueTuskPortalRow? row)
     {
         if (_completed)
@@ -83,8 +84,14 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
         try
         {
-            _currentRow?.Finish();
+            var previousRow = _currentRow;
+            previousRow?.Finish();
             _currentRow = _session.ReadPortalRow(this);
+            if (_currentRow is null && previousRow is not null)
+            {
+                _session.ReturnPortalRow(previousRow);
+            }
+
             if (_currentRow is not null)
             {
                 RowsRead++;
@@ -162,10 +169,15 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
 
     internal void SetAsyncReadResult(BlueTuskPortalRow? row)
     {
+        var previousRow = _currentRow;
         _currentRow = row;
         if (row is not null)
         {
             RowsRead++;
+        }
+        else if (previousRow is not null)
+        {
+            _session?.ReturnPortalRow(previousRow);
         }
     }
 
@@ -299,6 +311,7 @@ public sealed class BlueTuskPortalRow
 
     public int FieldCount { get; private set; }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     internal static async ValueTask<BlueTuskPortalRow> CreateAsync(
         BlueTuskSession session,
         BlueTuskPortal portal,
@@ -328,15 +341,16 @@ public sealed class BlueTuskPortalRow
 
     internal void Rebind(BlueTuskPortal portal) => _portal = portal;
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal void ResetBuffered(
         ReadOnlyMemory<byte> payload,
         int expectedFieldCount)
     {
         ResetState(payload.Length, payloadBuffered: true);
         _bufferedPayload = payload;
-        Span<byte> countBytes = stackalloc byte[sizeof(short)];
-        ReadExactly(countBytes);
-        FieldCount = BinaryPrimitives.ReadInt16BigEndian(countBytes);
+        EnsurePayloadAvailable(sizeof(short));
+        FieldCount = BinaryPrimitives.ReadInt16BigEndian(payload.Span);
+        _payloadConsumed = sizeof(short);
         ValidateFieldCount(expectedFieldCount);
     }
 
@@ -445,7 +459,11 @@ public sealed class BlueTuskPortalRow
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal bool TryReadInt32(int ordinal, out int value)
     {
-        EnsureNoActiveStream();
+        if (_activeStream is not null)
+        {
+            EnsureNoActiveStream();
+        }
+
         if (!_payloadBuffered || ordinal != _activeOrdinal + 1 ||
             _payloadLength - _payloadConsumed < (sizeof(int) * 2))
         {
@@ -453,16 +471,17 @@ public sealed class BlueTuskPortalRow
             return false;
         }
 
-        var length = BinaryPrimitives.ReadInt32BigEndian(
-            _bufferedPayload.Span.Slice(_payloadConsumed, sizeof(int)));
-        if (length != sizeof(int))
+        var payload = _bufferedPayload.Span;
+        var payloadOffset = _payloadConsumed;
+        var encodedField = BinaryPrimitives.ReadInt64BigEndian(
+            payload.Slice(payloadOffset, sizeof(long)));
+        if ((int)(encodedField >> 32) != sizeof(int))
         {
             value = default;
             return false;
         }
 
-        value = BinaryPrimitives.ReadInt32BigEndian(
-            _bufferedPayload.Span.Slice(_payloadConsumed + sizeof(int), sizeof(int)));
+        value = unchecked((int)encodedField);
         _payloadConsumed += sizeof(int) * 2;
         _activeOrdinal++;
         _activeLength = sizeof(int);
@@ -634,16 +653,34 @@ public sealed class BlueTuskPortalRow
         _activeStream = null;
     }
 
-    internal async ValueTask CompleteActiveStreamAsync(
+    internal ValueTask CompleteActiveStreamAsync(
         BlueTuskPortalFieldStream stream,
         CancellationToken cancellationToken)
     {
         if (!ReferenceEquals(_activeStream, stream))
         {
+            return ValueTask.CompletedTask;
+        }
+
+        if (_activePosition == _activeLength)
+        {
+            _activeStream = null;
+            return ValueTask.CompletedTask;
+        }
+
+        return CompleteActiveStreamSlowAsync(stream, cancellationToken);
+    }
+
+    private async ValueTask CompleteActiveStreamSlowAsync(
+        BlueTuskPortalFieldStream stream,
+        CancellationToken cancellationToken)
+    {
+        await SkipActiveFieldAsync(cancellationToken).ConfigureAwait(false);
+        if (!ReferenceEquals(_activeStream, stream))
+        {
             return;
         }
 
-        await SkipActiveFieldAsync(cancellationToken).ConfigureAwait(false);
         _activeStream = null;
     }
 
@@ -796,6 +833,7 @@ public sealed class BlueTuskPortalRow
         return AwaitReadExactlySlowAsync(pendingRead, destination.Length);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitReadExactlySlowAsync(ValueTask pendingRead, int length)
     {
         await pendingRead.ConfigureAwait(false);
@@ -967,11 +1005,29 @@ internal sealed class BlueTuskPortalFieldStream : Stream
         base.Dispose(disposing);
     }
 
-    public override async ValueTask DisposeAsync()
+    [SuppressMessage(
+        "Usage",
+        "CA2215:Dispose methods should call base class dispose",
+        Justification = "The completed fast path calls the base directly; the incomplete path calls it after asynchronous draining.")]
+    public override ValueTask DisposeAsync()
+    {
+        if (_remaining == 0)
+        {
+            CompleteFromOwner();
+            var completion = base.DisposeAsync();
+            GC.SuppressFinalize(this);
+            return completion;
+        }
+
+        var slowCompletion = DisposeSlowAsync();
+        GC.SuppressFinalize(this);
+        return slowCompletion;
+    }
+
+    private async ValueTask DisposeSlowAsync()
     {
         await CompleteFromOwnerAsync(CancellationToken.None).ConfigureAwait(false);
         await base.DisposeAsync().ConfigureAwait(false);
-        GC.SuppressFinalize(this);
     }
 
     public override void Flush()

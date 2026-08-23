@@ -46,13 +46,13 @@ public sealed class BlueTuskBackendMessageDecoderTests
     {
         var parameter = new ArrayBufferWriter<byte>();
         WriteCString(parameter, "server_version");
-        WriteCString(parameter, "19beta2");
+        WriteCString(parameter, "19beta3");
         var keyData = new ArrayBufferWriter<byte>();
         WriteInt32(keyData, 123);
         WriteInt32(keyData, 456);
 
         Assert.Equal(
-            new BlueTuskParameterStatus("server_version", "19beta2"),
+            new BlueTuskParameterStatus("server_version", "19beta3"),
             BlueTuskBackendMessageDecoder.DecodeParameterStatus(Message('S', parameter)));
         Assert.Equal(
             new BlueTuskBackendKeyData(123, 456),

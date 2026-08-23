@@ -69,6 +69,7 @@
       "workflow": ".github/workflows/v1-candidate-readiness.yml",
       "minimumConfiguredReviewers": 1,
       "preventSelfReview": true,
+      "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
         "V1_APPROVAL_EVIDENCE_BASE64"
@@ -84,6 +85,7 @@
       "workflow": ".github/workflows/release-product-family.yml",
       "minimumConfiguredReviewers": 1,
       "preventSelfReview": true,
+      "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
         "NUGET_API_KEY",
@@ -107,6 +109,7 @@
       "workflow": ".github/workflows/release-product-family.yml",
       "minimumConfiguredReviewers": 1,
       "preventSelfReview": true,
+      "canAdminsBypass": false,
       "requiredSecrets": [
         "V1_GOVERNANCE_TOKEN",
         "NUGET_API_KEY",

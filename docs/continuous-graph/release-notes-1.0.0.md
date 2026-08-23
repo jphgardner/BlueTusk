@@ -25,5 +25,5 @@ version.
 Service Topology Centre and Fraud Graph Investigator exercise repair,
 checkpoint/restart, disconnect recovery, cancellation, path analysis, and
 ordered result handling from exact RC packages. They also use readable fluent
-property-graph migrations. This is PostgreSQL 19 Beta 2 staging coverage;
+property-graph migrations. This is PostgreSQL 19 Beta 3 staging coverage;
 neither application is yet an independent stable pilot.

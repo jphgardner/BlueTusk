@@ -98,8 +98,9 @@ health-check frequency and timeout.
   large-object or replication control.
 - Use [EF Core](../ef-core/README.md) for LINQ, migrations, scaffolding and
   model-driven PostgreSQL features.
-- Use [extensions](../extensions/README.md) for PostGIS, pgvector,
-  TimescaleDB, citext, hstore, ltree or pg_trgm.
+- Use the stable [extensions](../extensions/README.md) for PostGIS, pgvector,
+  TimescaleDB, citext, hstore, ltree or pg_trgm. The checked-in `pg_durable`
+  adapter is an upstream-preview evaluation surface and is not a V1 package.
 - Use [Streams](../streams/README.md) when the source of truth is committed WAL
   and the consumer needs acknowledgement and checkpoints.
 

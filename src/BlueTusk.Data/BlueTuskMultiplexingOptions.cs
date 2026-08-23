@@ -13,8 +13,8 @@ public sealed class BlueTuskMultiplexingOptions
     public int QueueCapacity { get; set; } = 1_024;
 
     /// <summary>
-    /// Gets or sets the maximum number of commands executed on one physical lease before the lease
-    /// is returned to the pool.
+    /// Gets or sets the maximum number of commands executed on one physical lease before a worker
+    /// checks whether the lease must be returned to admit waiting session-affine work.
     /// </summary>
     public int MaxCommandsPerLease { get; set; } = 65_536;
 

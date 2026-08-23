@@ -164,7 +164,7 @@ export class GraphPage {
       rows: [
         { label: 'Source', value: 'PostgreSQL property graphs' },
         { label: 'Execution', value: 'On-demand SQL query' },
-        { label: 'Availability', value: 'Beta 2 tested; GA gated' },
+        { label: 'Availability', value: 'Beta 3 tested; GA gated' },
       ],
     },
     {

@@ -88,10 +88,52 @@ foreach ($trackedPath in $trackedMarkdown)
     }
 }
 
+$readinessConfigurationPath = Join-Path $RepositoryRoot 'eng/v1-production-readiness.json'
+$websiteProductionGuidePath = Join-Path $RepositoryRoot 'docs/operations/website-production.md'
+$readinessConfiguration = Get-Content -LiteralPath $readinessConfigurationPath -Raw |
+    ConvertFrom-Json
+$requiredWorkflowCount = @($readinessConfiguration.requiredWorkflows).Count
+$websiteProductionGuide = Get-Content -LiteralPath $websiteProductionGuidePath -Raw
+$workflowCountPattern = (
+    'one of the\s+' +
+    [regex]::Escape([string]$requiredWorkflowCount) +
+    '\s+exact-SHA workflow records')
+if ($websiteProductionGuide -notmatch $workflowCountPattern)
+{
+    $failures.Add(
+        'docs/operations/website-production.md does not match the executable ' +
+        "$requiredWorkflowCount-workflow V1 evidence contract.")
+}
+
+$credentialInventoryPath = Join-Path $RepositoryRoot 'eng/test-credential-inventory.json'
+$hardeningProgrammePath = Join-Path $RepositoryRoot 'docs/hardening-programme.md'
+$credentialInventory = Get-Content -LiteralPath $credentialInventoryPath -Raw |
+    ConvertFrom-Json
+[int] $credentialOccurrenceCount = @(
+    $credentialInventory.credentials |
+        ForEach-Object { $_.occurrences } |
+        ForEach-Object { [int]$_.expectedCount } |
+        Measure-Object -Sum
+).Sum
+$hardeningProgramme = Get-Content -LiteralPath $hardeningProgrammePath -Raw
+$credentialCountPattern = (
+    'fail-closed\s+' +
+    [regex]::Escape([string]$credentialOccurrenceCount) +
+    '-occurrence intentional test-credential inventory')
+if ($hardeningProgramme -notmatch $credentialCountPattern)
+{
+    $failures.Add(
+        'docs/hardening-programme.md does not match the executable ' +
+        "$credentialOccurrenceCount-occurrence test-credential inventory.")
+}
+
 if ($failures.Count -gt 0)
 {
     $failures | ForEach-Object { Write-Error $_ }
-    throw "Documentation validation found $($failures.Count) broken local link(s)."
+    throw "Documentation validation found $($failures.Count) failure(s)."
 }
 
-Write-Output "Verified $checkedLinks local links across $($trackedMarkdown.Count) Markdown files."
+Write-Output (
+    "Verified $checkedLinks local links across $($trackedMarkdown.Count) Markdown files; " +
+    "release documentation matches $requiredWorkflowCount exact-SHA workflows and " +
+    "$credentialOccurrenceCount intentional test-credential occurrences.")

@@ -64,9 +64,9 @@ database setup into misleading timeout failures.
 
 ## Dedicated extension-image gates
 
-The extension profile supplies the three images that are not available in a
+The extension profile supplies the four images that are not available in a
 plain PostgreSQL distribution. CI runs each image in its own required matrix
-entry and executes both its ADO.NET and EF Core project, so a dynamically
+entry and executes its applicable ADO.NET and EF Core projects, so a dynamically
 skipped plain-image test cannot satisfy the extension acceptance gate:
 
 ```powershell
@@ -80,6 +80,7 @@ Run both the ADO.NET and EF package projects against the corresponding port:
 | pgvector | 5518 | `BlueTusk.Extensions.PgVector.Tests`, `BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests` |
 | PostGIS | 5519 | `BlueTusk.Extensions.PostGIS.Tests`, `BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests` |
 | TimescaleDB | 5520 | `BlueTusk.Extensions.TimescaleDB.Tests`, `BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests` |
+| pg_durable | 5521 | `BlueTusk.Extensions.PgDurable.Tests` (connect to the required `postgres` database) |
 
 Set `BLUETUSK_TEST_CONNECTION_STRING` to the selected port before each pair.
 The live case must pass on its dedicated image. On a plain matrix image it
@@ -261,7 +262,7 @@ dotnet test tests/BlueTusk.IntegrationTests --no-restore --filter FullyQualified
 BenchmarkDotNet reports are written below `artifacts/benchmarks` by default. The named reference environment under `benchmarks/baselines` checks in human-readable GitHub Markdown and brief JSON reports. Refresh a short baseline with:
 
 ```powershell
-$env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
+$env:BLUETUSK_BENCHMARK_ARTIFACTS = "artifacts/benchmarks"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*DataReaderBenchmarks*' '*ProtocolStreamingBenchmarks*'
 ```
 
@@ -277,7 +278,13 @@ suite remains server-independent:
 ```powershell
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
 $env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*ProviderComparisonBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
+  --job medium --inProcess --filter '*ProviderComparisonBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-build -- `
+  --provider-paired-evidence artifacts/benchmarks/provider-paired-evidence.json
+./eng/verify-provider-performance.ps1 `
+  -ReportPath benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json `
+  -PairedReportPath artifacts/benchmarks/provider-paired-evidence.json
 ```
 
 The same isolated database drives the EF application and SQL/PGQ traversal
@@ -288,10 +295,23 @@ not target a shared development database:
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*EntityFrameworkCoreBenchmarks*' '*SqlPgqBenchmarks*'
 ```
 
-Commit only the brief JSON and GitHub Markdown reports. Record the PostgreSQL
-major version, machine profile, SDK/runtime, date, and any material semantic
-difference between the provider pairs. Never turn a ShortRun ratio into a
-universal performance claim.
+Commit or archive the brief JSON, GitHub Markdown and paired provider report.
+BenchmarkDotNet remains the absolute-latency and managed-allocation source. The
+paired report is the provider-relative latency authority: five trials, 501
+alternating blocks per trial, and workload-specific block sizes (256 checkouts,
+32 parameterized commands, 64 prepared commands, 16 row-stream commands or 4
+large-value commands per block).
+Before measurement it completes 4,096 warm pool checkouts, 512 parameterized
+and prepared commands, 64 row streams, and 32 large-value streams per provider.
+The untimed warmups prevent tiered-JIT transitions from contaminating the
+sub-microsecond pool trials; every measured sample and the 1.00 limits remain
+unchanged.
+Every sample is normalized per completed operation. The verifier
+requires BlueTusk to remain at or below Npgsql for median-of-trials mean, P95,
+P99 and managed allocation in every listed provider workload. Record the
+PostgreSQL major version, machine profile, SDK/runtime, date, and any material
+semantic difference between provider pairs. Never turn a measured workload
+ratio into a universal performance claim.
 
 The multiplexing comparison is the deliberate full-JSON exception: measured
 workload samples are required to reproduce P99. It compares both providers'
@@ -304,7 +324,12 @@ $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5418;Database=b
 $env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
   --job medium --inProcess --filter '*MultiplexingComparisonBenchmarks*'
-./eng/verify-multiplexing-performance.ps1
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-build -- `
+  --multiplexing-paired-evidence artifacts/benchmarks/multiplexing-paired-evidence.json
+./eng/verify-multiplexing-performance.ps1 `
+  -ReportPath artifacts/benchmarks/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json `
+  -PairedReportPath artifacts/benchmarks/multiplexing-paired-evidence.json
+./eng/test-multiplexing-performance-verifier.ps1
 ```
 
 Commit its full JSON and GitHub Markdown reports. The machine gate requires at
@@ -312,3 +337,14 @@ least 20 measured samples and enforces relative mean, P95, P99, throughput, and
 managed-allocation budgets against Npgsql multiplexing and BlueTusk's ordinary
 pool. A budget change requires the report, rationale, and documentation in the
 same review.
+
+For a release candidate, commit or archive all BenchmarkDotNet and paired
+reports. BenchmarkDotNet is the source for absolute latency and allocation; its
+provider latency rows remain descriptive because methods run sequentially. The
+provider and multiplexing paired reports run first and are the relative-latency
+authority. The multiplexing capture uses 64 warm-ups per provider, five trials,
+501 alternating blocks per trial, 4 bursts per block and 64 operations per
+burst. The four paired concurrency workloads cover fresh and reused multiplexed
+bursts plus both ordinary pooled controls. Both gates recompute each trial and use the median ratio; with 501 blocks,
+P99 is the sixth-slowest block rather than a statistic decided by one or two
+transient scheduler spikes.

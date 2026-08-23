@@ -2,8 +2,8 @@
   "schemaVersion": 1,
   "majorVersion": 19,
   "officialDocumentationUrl": "https://www.postgresql.org/docs/19/",
-  "currentOfficialMilestone": "19beta2",
-  "currentDocumentationMarker": "PostgreSQL 19beta2 Documentation",
+  "currentOfficialMilestone": "19beta3",
+  "currentDocumentationMarker": "PostgreSQL 19beta3 Documentation",
   "targetGeneralAvailability": "September 2026",
   "milestones": [
     {
@@ -13,6 +13,14 @@
       "status": "verified",
       "image": "postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e",
       "evidence": "docs/release-readiness.md"
+    },
+    {
+      "version": "19beta3",
+      "channel": "beta",
+      "released": "2026-08-13",
+      "status": "verified",
+      "image": "postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc",
+      "evidence": "docs/postgresql19-programme.md"
     }
   ],
   "requiredFutureCadence": [

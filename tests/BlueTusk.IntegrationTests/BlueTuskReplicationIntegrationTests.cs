@@ -86,14 +86,28 @@ public sealed class BlueTuskReplicationIntegrationTests
                     .CreateChangeStream()
                     .ReadTransactionsAsync()
                     .GetAsyncEnumerator();
-                Assert.True(await changes.MoveNextAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
-                var delivery = changes.Current;
-                var transactionChanges = await delivery.Transaction.Changes.MaterializeAsync();
-                var insert = Assert.IsType<InsertChange>(Assert.Single(transactionChanges));
+                InsertChange? insert = null;
+                for (var deliveryCount = 0; insert is null && deliveryCount < 10; deliveryCount++)
+                {
+                    Assert.True(
+                        await changes.MoveNextAsync().AsTask().WaitAsync(TimeSpan.FromSeconds(10)));
+                    var delivery = changes.Current;
+                    var transactionChanges =
+                        await delivery.Transaction.Changes.MaterializeAsync();
+                    if (transactionChanges.Count != 0)
+                    {
+                        insert = Assert.IsType<InsertChange>(Assert.Single(transactionChanges));
+                    }
+
+                    // PostgreSQL may expose an empty lifecycle/checkpoint transaction before
+                    // the first publication change when other database work is concurrent.
+                    await delivery.AcknowledgeAsync();
+                }
+
+                Assert.NotNull(insert);
                 Assert.Equal(
                     "6",
                     System.Text.Encoding.UTF8.GetString(insert.NewRow["id"].Data.Span));
-                await delivery.AcknowledgeAsync();
             }
 
             await using var cleanup =

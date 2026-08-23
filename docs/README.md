@@ -136,8 +136,10 @@ boundaries exist.
 Use these documents when the question is not “how do I call the API?”:
 
 - [Deployment and configuration](operations/deployment.md)
+- [Application platform health and rollout acceptance](operations/application-platform-health.md)
 - [Troubleshooting](operations/troubleshooting.md)
 - [Performance engineering](operations/performance.md)
+- [BlueTusk versus Npgsql V1 performance report](operations/npgsql-performance-comparison.md)
 - [Production observability and SLOs](operations/observability.md)
 - [V1 production-readiness gates and exact-candidate evidence](operations/production-readiness.md)
 - [Canonical V1 package evidence](operations/package-evidence.md)

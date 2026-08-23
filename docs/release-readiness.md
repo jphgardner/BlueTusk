@@ -58,14 +58,15 @@ fan-in, FIFO fairness, pool exhaustion, queue admission cancellation, command
 timeouts, adjacent errors, reset isolation, lease rotation, and stuck-lane
 shutdown. PgBouncer session and transaction modes have separate live acceptance.
 
-The frozen V1 MediumRun from commit `9ba2c50` compares four physical lanes and
-64-command bursts against both Npgsql multiplexing and ordinary pooled
-BlueTusk/Npgsql. BlueTusk records lower mean, P95, and P99 latency than Npgsql
-for fresh and reused multiplexed commands in the named loopback environment,
-while its fresh-command allocation is also slightly lower. The full report,
-environment/image/commit manifest, SHA-256, and machine-readable budget are
-checked in and verified by CI. This is a regression gate, not a universal
-performance or production-readiness claim.
+The V1 performance programme compares four physical lanes and 64-command bursts
+for fresh and reused multiplexed commands and for fresh and reused ordinary
+pooled controls. A separate direct-provider matrix covers warm checkout,
+parameterized and prepared scalars, 1,000-row sequential reads, and 1 MiB
+streaming reads. The exact-candidate gate requires BlueTusk to remain at or below
+Npgsql for mean, P95, P99, and managed allocation in all nine named comparisons.
+The full report, environment/image/commit manifest, SHA-256 hashes, and
+machine-readable budgets are retained and verified. This is a regression gate,
+not a universal performance or production-readiness claim.
 
 ## Cancellation
 
@@ -98,7 +99,7 @@ overload families with explicit no-token and required-token overloads.
 
 ## EF Core, design tooling, and extensions
 
-BlueTusk directly consumes Microsoft's EF Core 10.0.10 relational
+BlueTusk directly consumes Microsoft's EF Core 10.0.11 relational
 specification package. Its official assembly gate discovers 2,111 cases on
 PostgreSQL 18 and 19: 1,987 pass and 124 retain upstream EF skip declarations.
 PostgreSQL 15–17 run the same adopted suite with only unsupported
@@ -125,9 +126,10 @@ architecture gate. A live extension test first checks
 dynamic skip when the optional extension is absent, while each dedicated
 extension image requires the same test to pass. The dedicated-image gate reports
 23 pgvector, 10 PostGIS, and 9 TimescaleDB passes with no skips or failures.
-The checked-in workflow enforces these as three independent CI matrix entries,
-each running the extension's ADO.NET and EF Core projects against its dedicated
-image and retaining container logs on failure.
+The checked-in workflow enforces these stable integrations and separately runs
+four `pg_durable` adapter checks against its evaluation-only upstream image.
+That adapter is deliberately non-packable and is not stable V1 evidence while
+upstream remains preview. Every matrix entry retains container logs on failure.
 Cloud identity adapters have deterministic SDK contract tests; their
 real-account acceptance tests remain opt-in because CI does not hold customer
 cloud credentials.
@@ -148,7 +150,7 @@ role-incompatible endpoints, WAL replay visibility, and standby write
 rejection. This is distinct from the logical-replication decoder and endurance
 gates.
 
-For change detection beyond the pinned PostgreSQL 19 Beta 2 image, a
+For change detection beyond the pinned PostgreSQL 19 Beta 3 image, a
 scheduled/manual job verifies the checksum of the official nightly PostgreSQL
 19 branch snapshot, compiles it in a repository-owned multi-stage image, and
 runs the full solution against it. The 2026-08-02 scheduled snapshot run
@@ -266,8 +268,8 @@ data-source-first usage. A cross-platform CI script validates every local link
 in all tracked Markdown files. The Angular documentation build automatically
 discovers every repository guide, rewrites internal links to site routes,
 generates full-text search records and fails when generated content drifts.
-The support matrix identifies .NET 10, EF Core 10.0.10,
-PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 2 candidate evidence, including the
+The support matrix identifies .NET 10, EF Core 10.0.11,
+PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 3 candidate evidence, including the
 remaining beta-syntax risk.
 
 ## Automated gates

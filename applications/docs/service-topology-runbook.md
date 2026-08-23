@@ -18,3 +18,10 @@ Restore to a new cluster, apply migrations, validate `service_topology_graph`, r
 repair, and expose the Gateway only after lifecycle P95 and reconciliation pass. Roll back by
 digest while retaining the database and checkpoint; never drop the property graph during an
 application rollback.
+
+Before accepting a rollout, run
+`./eng/verify-application-platform-health.ps1 -RequireApplications`. Treat any
+API/kubelet mismatch, node pressure, degraded volume, unhealthy database,
+unready worker, or failed migration as a deployment failure even when cached
+Kubernetes status still says `Running`. Retain the command output with the image
+digest manifest and rollout record.

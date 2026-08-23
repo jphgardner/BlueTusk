@@ -21,16 +21,26 @@ operator runbook. The shared BFF implements OIDC sessions, secure cookies,
 CSRF protection, CSP, rate limiting, tenant/role enforcement, RFC 9457 errors,
 health endpoints, and OpenTelemetry.
 
+Before RC publication, the application build uses
+`eng/nuget/applications-candidate.config` and an isolated package cache. NuGet
+source mapping permits `BlueTusk.*` only from the locally packed candidate feed;
+all third-party packages remain mapped to NuGet.org. This makes the local package
+boundary deterministic even if a developer machine contains an older package
+with the same prerelease version. The container-image workflow takes the other
+side of the boundary: it first requires every exact RC package to exist in the
+public registries and then restores only from those registries. No image can be
+published from an unpublished or locally substituted package set.
+
 ## Local RC verification
 
-The 2026-08-07 working-tree verification restored the application solution
+The 2026-08-18 working-tree verification restored the application solution
 from locally packed exact `1.0.0-rc.1` artifacts and produced:
 
 | Gate | Result |
 | --- | --- |
-| Package-only architecture | 20 projects; 44 exact BlueTusk package references; no BlueTusk source project references |
+| Package-only architecture | 20 projects; 44 exact BlueTusk package references; 28 unique packages content-hash verified from the source-mapped candidate feed; no BlueTusk source project references |
 | Release build | Zero warnings and zero errors |
-| Application tests | 15 passed, including a disposable digest-pinned PostgreSQL 19 Beta 2 migration/integration test |
+| Application tests | 15 passed, including a disposable digest-pinned PostgreSQL 19 Beta 3 migration/integration test |
 | Browser journeys | Three passed in Chromium through Playwright |
 | Order UI | 203.83 kB JavaScript; 64.44 kB gzip |
 | Topology UI | 127.92 kB JavaScript; 38.58 kB estimated transfer |
@@ -95,11 +105,38 @@ use reduced replica counts while one worker is unavailable; production values
 retain the full availability topology. Secrets are pre-created and are never
 stored in Helm values or evidence artifacts.
 
+The deployment command fails closed on live infrastructure. It cross-checks
+non-terminal API pods against each Ready kubelet (preventing stale control-plane
+status from masquerading as a running workload), rejects node pressure and
+unhealthy Longhorn or CloudNativePG state, and after an apply requires every API,
+worker and UI deployment to converge with no unready pod or failed migration job.
+See [application platform health](operations/application-platform-health.md) for
+the complete trust boundary, failure interpretation and recovery sequence.
+
+The container source contract pins the patched .NET 10.0.400 SDK build image,
+.NET 10.0.11 ASP.NET Core chiseled API/worker runtimes, Node.js 24.19.0 build
+image and unprivileged nginx 1.30.3 runtime by multi-platform OCI digest. The
+image workflow executes every backend image and verifies that both the exact
+`Microsoft.NETCore.App` and `Microsoft.AspNetCore.App` 10.0.11 shared frameworks
+are present before scanning, attestation, or deployment evidence. Each worker
+must also remain alive for 20 seconds in a read-only, no-network container while
+its database is deliberately unreachable, proving startup and retry behavior
+before the digest is accepted. Final containers
+run as non-root users with diagnostics/app-host reduction, and Kubernetes drops
+all capabilities, blocks privilege escalation, uses a read-only root filesystem
+and applies the runtime-default seccomp profile. The UI edge disables version
+tokens, emits CSP, HSTS, cross-origin, permissions and content-type controls,
+keeps the SPA entry point non-cacheable and gives only hashed assets an
+immutable one-year cache policy. `verify-applications.ps1` fails if these base
+images or hardening controls drift. The protected image workflow additionally
+produces SBOM/provenance attestations, scans every final image at high severity
+and records the nine exact deployable digests.
+
 Publication and deployment remain external operations. They require a
 reviewed immutable `main` SHA, protected `package-prerelease` approval,
 NuGet/npm/GHCR credentials, the declared Kubernetes Secrets, installed
 operators, registry hash/provenance verification, and digest-pinned rollout
-evidence. PostgreSQL 19 Beta 2 is staging-only and carries no production claim.
+evidence. PostgreSQL 19 Beta 3 is staging-only and carries no production claim.
 
 RC observations do not count as either formal V1 pilot. After PostgreSQL 19
 GA and sequential stable publication, Orders is intended as pilot A and Fraud

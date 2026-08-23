@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "trialCount": 5,
+  "blocksPerTrial": 501,
+  "workloads": [
+    {
+      "candidate": "BlueTuskPoolCheckoutAsync",
+      "reference": "NpgsqlPoolCheckoutAsync",
+      "warmupOperationsPerProvider": 4096,
+      "operationsPerBlock": 256,
+      "maximumMeanRatio": 1.0,
+      "maximumP95Ratio": 1.0,
+      "maximumP99Ratio": 1.0,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskParameterizedScalarAsync",
+      "reference": "NpgsqlParameterizedScalarAsync",
+      "warmupOperationsPerProvider": 512,
+      "operationsPerBlock": 32,
+      "maximumMeanRatio": 1.0,
+      "maximumP95Ratio": 1.0,
+      "maximumP99Ratio": 1.0,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskPreparedScalarAsync",
+      "reference": "NpgsqlPreparedScalarAsync",
+      "warmupOperationsPerProvider": 512,
+      "operationsPerBlock": 64,
+      "maximumMeanRatio": 1.0,
+      "maximumP95Ratio": 1.0,
+      "maximumP99Ratio": 1.0,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskSequential1000RowsAsync",
+      "reference": "NpgsqlSequential1000RowsAsync",
+      "warmupOperationsPerProvider": 64,
+      "operationsPerBlock": 16,
+      "maximumMeanRatio": 1.0,
+      "maximumP95Ratio": 1.0,
+      "maximumP99Ratio": 1.0,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskSequentialOneMegabyteByteaAsync",
+      "reference": "NpgsqlSequentialOneMegabyteByteaAsync",
+      "warmupOperationsPerProvider": 32,
+      "operationsPerBlock": 4,
+      "maximumMeanRatio": 1.0,
+      "maximumP95Ratio": 1.0,
+      "maximumP99Ratio": 1.0,
+      "maximumAllocationRatio": 1.0
+    }
+  ]
+}

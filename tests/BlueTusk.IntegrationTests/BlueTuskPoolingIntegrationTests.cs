@@ -64,6 +64,35 @@ public sealed class BlueTuskPoolingIntegrationTests
     }
 
     [Fact]
+    public async Task Data_source_scalar_prepends_pool_reset_without_leaking_session_state()
+    {
+        await using var dataSource = CreateDataSource(maximumPoolSize: 1);
+        await using (var warmup = dataSource.CreateCommand("SELECT $1::int4"))
+        {
+            warmup.Parameters.Add(new BlueTuskParameter<int>(42));
+            Assert.Equal(42, await warmup.ExecuteScalarAsync<int>(CancellationToken.None));
+        }
+
+        await using (var connection = await dataSource.OpenConnectionAsync(CancellationToken.None))
+        await using (var dirty = new BlueTuskCommand(
+                         "CREATE TEMP TABLE bluetusk_deferred_reset_leak (value int4); " +
+                         "SET application_name = 'bluetusk-deferred-reset-leak'",
+                         connection))
+        {
+            _ = await dirty.ExecuteNonQueryAsync(CancellationToken.None);
+        }
+
+        await using var verification = dataSource.CreateCommand(
+            "SELECT to_regclass('pg_temp.bluetusk_deferred_reset_leak') IS NULL " +
+            "AND current_setting('application_name') <> $1::text");
+        verification.Parameters.Add(new BlueTuskParameter<string>("bluetusk-deferred-reset-leak"));
+
+        Assert.True(await verification.ExecuteScalarAsync<bool>(CancellationToken.None));
+        Assert.Equal(1, dataSource.GetPoolStatistics().Total);
+        Assert.True(dataSource.GetPoolStatistics().Reused >= 2);
+    }
+
+    [Fact]
     public async Task Maximum_size_queues_until_a_connection_is_returned()
     {
         await using var dataSource = CreateDataSource(maximumPoolSize: 1);

@@ -291,7 +291,7 @@ The detailed contracts and release gates are maintained in the [real-time platfo
   - [x] Schema/table filtering, comments, store-type facets, and connection-ownership coverage
   - [x] Catalogue-only sequence discovery safe during concurrent schema changes
 - [x] Initial EF Core relational specification-suite coverage
-  - [x] Official EF Core 10.0.10 relational specification package pinned with an isolated, solution-level test assembly
+  - [x] Official EF Core 10.0.11 relational specification package pinned with an isolated, solution-level test assembly
   - [x] All official provider-service registration, idempotency, isolation, and lifetime contracts
   - [x] All official migrations SQL-generator cases with BlueTusk PostgreSQL golden baselines, including PostGIS seed literals
   - [x] Raw SQL composition, parameterization, compiled queries, and nullable projections
@@ -603,6 +603,8 @@ The detailed contracts and release gates are maintained in the [real-time platfo
   - [x] Populate and expose real server capabilities; remove unused capability-only claims
   - [x] Executable PostgreSQL 19 CI/integration job, beyond the compose profile
   - [x] Live `CREATE`/`ALTER`/`DROP PROPERTY GRAPH` and `GRAPH_TABLE` raw-SQL tests
+  - [x] Repeat the full solution and application integration suites against the
+    digest-pinned PostgreSQL 19 Beta 3 milestone
   - [x] Parameters, metadata, preparation, batches, cancellation, pooling, and mixed relational/graph coverage
   - [x] PostgreSQL 15–18 regression gate remains green
 - [x] Phase B: property-graph metadata and schema
@@ -631,6 +633,8 @@ The detailed contracts and release gates are maintained in the [real-time platfo
 - [x] ltree ADO.NET package (live-tested `ltree`, `lquery`, `ltxtquery`, arrays, and operators)
 - [x] citext packages (tested ADO.NET and EF preview; stable extension-authoring seam)
 - [x] pg_trgm ADO.NET package (live-tested parameterized functions and operators, including quoted schemas)
+- [x] pg_durable preview source adapter and live evaluation gate (excluded from V1 stable publication while upstream remains preview and its official image is evaluation-only)
+- [ ] Promote pg_durable to a publishable package only after upstream production guidance, security blockers, resource limits, and a production-supported deployment artifact are independently verified
 - [x] TimescaleDB ADO.NET package (live-tested hypertable creation, approximate counts, retention, current Hypercore columnstore, and continuous-aggregate policy/refresh lifecycle)
 - [x] TimescaleDB query helpers and EF integration (schema-qualified temporal/integer `time_bucket`, typed `first`/`last`/`histogram` aggregates with modifiers, migrations, compiled queries, and PostgreSQL 17/TimescaleDB 2.29 acceptance)
 - [x] Extension-authoring template

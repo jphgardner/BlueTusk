@@ -67,11 +67,11 @@ The manual `build.yml` exact-candidate run builds and tests the website, runs
 the production verifier, audits npm dependencies and archives the browser
 distribution together with `production-metrics.json`. The same run archives
 the canonical six-family package evidence, so the protected gate cannot combine
-a website from one build with packages from another. The run is one of the six
-exact-SHA records required by the protected V1 candidate gate. The aggregator
-downloads both artifacts, binds the metrics report by SHA-256, verifies its
-source commit and budgets, then re-hashes every emitted file before adding the
-complete distribution to the 90-day readiness bundle.
+a website from one build with packages from another. The run is one of the 7
+exact-SHA workflow records required by the protected V1 candidate gate.
+The aggregator downloads both artifacts, binds the metrics report by SHA-256,
+verifies its source commit and budgets, then re-hashes every emitted file
+before adding the complete distribution to the 90-day readiness bundle.
 
 These metrics are delivery regression budgets, not field Core Web Vitals.
 Production operators must still collect real-user LCP, INP and CLS for the

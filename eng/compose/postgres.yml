@@ -94,7 +94,7 @@ services:
 
   postgres19:
     <<: *postgres-common
-    image: postgres:19beta2-alpine@sha256:d37ce87b33b80bd76fb8d9bc9ff6ad2caaf6c4a50caf9ae25e393f247fc01d6e
+    image: postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc
     profiles: ["preview"]
     ports: ["5419:5432"]
 
@@ -115,6 +115,19 @@ services:
     image: timescale/timescaledb:latest-pg17
     profiles: ["extension-tests"]
     ports: ["5520:5432"]
+
+  pgdurable17:
+    image: ghcr.io/microsoft/pg_durable:0.2.5-pg17@sha256:a674e2725d4138fd0e7bc86e0c7069b74f8f07fab397bfb18d77f8c1bc2256db
+    profiles: ["extension-tests"]
+    environment:
+      POSTGRES_PASSWORD: postgres
+    ports: ["5521:5432"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d postgres"]
+      interval: 2s
+      timeout: 5s
+      retries: 30
+    restart: "no"
 
   pgbouncer-session18:
     image: bluetusk/pgbouncer-test:1.24.0

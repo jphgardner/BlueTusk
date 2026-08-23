@@ -7,6 +7,7 @@ namespace BlueTusk.Protocol;
 /// <summary>Writes PostgreSQL frontend messages into caller-owned buffers.</summary>
 public static class BlueTuskFrontendMessageWriter
 {
+    private const int DiscardAllMessageLength = 17;
     public const int ProtocolVersion30 = 3 << 16;
     public const int SslRequestCode = 80877103;
     public const int CancelRequestCode = 80877102;
@@ -66,6 +67,19 @@ public static class BlueTuskFrontendMessageWriter
         WriteInt32(output, checked(sizeof(int) + sqlLength + 1));
         WriteUtf8(output, sql, sqlLength);
         WriteByte(output, 0);
+    }
+
+    internal static void WriteDiscardAll(IBufferWriter<byte> output)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ReadOnlySpan<byte> message =
+        [
+            (byte)'Q', 0, 0, 0, 16,
+            (byte)'D', (byte)'I', (byte)'S', (byte)'C', (byte)'A', (byte)'R', (byte)'D',
+            (byte)' ', (byte)'A', (byte)'L', (byte)'L', 0,
+        ];
+        message.CopyTo(output.GetSpan(DiscardAllMessageLength));
+        output.Advance(DiscardAllMessageLength);
     }
 
     public static void WriteSaslInitialResponse(IBufferWriter<byte> output, string mechanism, string response)
@@ -259,13 +273,18 @@ public static class BlueTuskFrontendMessageWriter
             length = checked(length + sizeof(int) + (parameters.GetValue(index)?.Length ?? 0));
         }
 
-        WriteByte(output, (byte)'B');
-        WriteInt32(output, length);
-        WriteUtf8(output, portalName, portalLength);
-        WriteByte(output, 0);
-        WriteUtf8(output, statementName, statementLength);
-        WriteByte(output, 0);
-        WriteInt16(output, checked((short)parameters.Count));
+        var messageLength = checked(1 + length);
+        var destination = output.GetSpan(messageLength)[..messageLength];
+        var offset = 0;
+        destination[offset++] = (byte)'B';
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], length);
+        offset += sizeof(int);
+        offset += Encoding.UTF8.GetBytes(portalName, destination[offset..]);
+        destination[offset++] = 0;
+        offset += Encoding.UTF8.GetBytes(statementName, destination[offset..]);
+        destination[offset++] = 0;
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], checked((short)parameters.Count));
+        offset += sizeof(short);
         for (var index = 0; index < parameters.Count; index++)
         {
             var formatCode = parameters.GetFormatCode(index);
@@ -274,23 +293,29 @@ public static class BlueTuskFrontendMessageWriter
                 throw new ArgumentOutOfRangeException(nameof(parameters), "Parameter format codes must be text (0) or binary (1).");
             }
 
-            WriteInt16(output, formatCode);
+            BinaryPrimitives.WriteInt16BigEndian(destination[offset..], formatCode);
+            offset += sizeof(short);
         }
 
-        WriteInt16(output, checked((short)parameters.Count));
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], checked((short)parameters.Count));
+        offset += sizeof(short);
         for (var index = 0; index < parameters.Count; index++)
         {
             if (parameters.GetValue(index) is not { } value)
             {
-                WriteInt32(output, -1);
+                BinaryPrimitives.WriteInt32BigEndian(destination[offset..], -1);
+                offset += sizeof(int);
                 continue;
             }
 
-            WriteInt32(output, value.Length);
-            WriteBytes(output, value.Span);
+            BinaryPrimitives.WriteInt32BigEndian(destination[offset..], value.Length);
+            offset += sizeof(int);
+            value.Span.CopyTo(destination[offset..]);
+            offset += value.Length;
         }
 
-        WriteInt16(output, checked((short)resultFormatCodes.Count));
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], checked((short)resultFormatCodes.Count));
+        offset += sizeof(short);
         for (var index = 0; index < resultFormatCodes.Count; index++)
         {
             var formatCode = resultFormatCodes[index];
@@ -299,8 +324,11 @@ public static class BlueTuskFrontendMessageWriter
                 throw new ArgumentOutOfRangeException(nameof(resultFormatCodes), "Result format codes must be text (0) or binary (1).");
             }
 
-            WriteInt16(output, formatCode);
+            BinaryPrimitives.WriteInt16BigEndian(destination[offset..], formatCode);
+            offset += sizeof(short);
         }
+
+        output.Advance(offset);
     }
 
     private readonly struct BindParameterListSource(

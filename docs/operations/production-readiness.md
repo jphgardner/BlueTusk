@@ -31,7 +31,7 @@ into one number.
 | Evidence | Question answered | Authority |
 | --- | --- | --- |
 | Correctness and compatibility | Does the implementation satisfy its declared contract? | Unit, integration, specification, fuzz, stress and package tests |
-| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 89 BenchmarkDotNet results, 37 allocation budgets, 18 latency budgets and locked multiplexing comparisons |
+| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 98 BenchmarkDotNet results, 46 allocation budgets, 19 latency budgets and locked multiplexing comparisons |
 | Website delivery | Is the documentation and evidence surface bounded and deployable? | Hashed production output, raw/Brotli bundle budgets, static metadata and the archived build report |
 | Production SLOs | Is one deployed application meeting its reliability objectives? | 60 runtime instruments, 14 SLOs, Prometheus rules and deployment telemetry |
 | Release acceptance | Is this exact immutable candidate safe to publish? | Manual workflows, endurance, GA evidence, rehearsals, pilots and named approvals |
@@ -46,22 +46,25 @@ owners, environments and failure actions.
 `verify-v1-production-readiness.ps1 -Mode Engineering` executes these gates:
 
 1. solution ownership and dependency layout;
-2. documentation links and generated-source contract;
-3. exact public-API budgets for all six product families;
-4. the synchronized nine-target fuzzing contract, encoded corpus coverage and
+2. the package-only Clean Architecture application suite, backend/UI container
+   runtime closure and fail-closed live deployment health contract;
+3. documentation links and generated-source contract;
+4. exact public-API budgets for all six product families;
+5. the synchronized nine-target fuzzing contract, encoded corpus coverage and
    bounded execution policy;
-5. the Angular website production contract, delivery budgets, metadata and
+6. the Angular website production contract, delivery budgets, metadata and
    automatic emitted-build verification;
-6. pinned workflow actions and supply-chain source controls;
-7. the declared protected-branch, required-check and deployment-environment
+7. pinned workflow actions and supply-chain source controls;
+8. the declared protected-branch, required-check and deployment-environment
    governance contract;
-8. the current digest-pinned PostgreSQL 19 programme record;
-9. complete, non-empty benchmark coverage for every `[Benchmark]` method;
-10. allocation, reference latency and multiplexing performance budgets;
-11. the six-meter, 60-instrument telemetry contract;
-12. all 14 reference SLOs, alerts, dashboard panels and Collector safety
+9. the current digest-pinned PostgreSQL 19 programme record;
+10. complete, non-empty benchmark coverage for every `[Benchmark]` method;
+11. allocation, reference latency, direct provider-comparison and multiplexing
+    performance budgets;
+12. the six-meter, 60-instrument telemetry contract;
+13. all 14 reference SLOs, alerts, dashboard panels and Collector safety
    controls; and
-13. fail-closed publication policy.
+14. fail-closed publication policy.
 
 The normal build still compiles, tests and packages the full solution. This
 gate validates the production contracts around those outputs.
@@ -98,10 +101,11 @@ evidence, vulnerability alerts, active automated security fixes, and private
 vulnerability reporting.
 
 Configure `v1-candidate-readiness` with at least one eligible reviewer,
-prevent self-review, and allow only protected branches. Configure
-`package-production` with the same reviewer protection and custom deployment
-patterns for the six release-tag prefixes. Repository administrators must
-create these settings before dispatching a candidate. Both environments must
+prevent self-review, disable administrator bypass, and allow only protected
+branches. Configure `package-production` and `package-prerelease` with the same
+non-bypassable reviewer protection and custom deployment patterns for the six
+release-tag prefixes. Repository administrators must create these settings
+before dispatching a candidate. All three environments must
 hold a `V1_GOVERNANCE_TOKEN` secret whose fine-grained repository permissions
 include Administration read, Actions read, Contents read and Environments
 read; the workflows use it only inside their protected environment to inspect
@@ -110,12 +114,13 @@ Merely naming an environment in YAML is not protection: GitHub can create a
 referenced environment without reviewer rules, so both release workflows
 verify the live API state before accepting evidence or publishing.
 
-As of 2026-08-04 the live ruleset, both environments, all six tag policies and
-the repository security features satisfy their settings checks. The full
-remote contract remains fail closed until its declared environment secrets are
-provisioned. The repository also needs another eligible human reviewer: its
-only current collaborator is the owner, and prevent-self-review intentionally
-leaves owner-initiated deployments waiting for an independent approval.
+As of 2026-08-17 the active `main` ruleset, all three environments, all twelve
+RC/stable tag policies and the repository security features satisfy their
+structural settings checks. The full remote contract remains fail closed until
+its eight declared environment-secret bindings are provisioned. The repository
+also needs another eligible human reviewer: its only current collaborator is
+the owner, and non-bypassable prevent-self-review intentionally leaves
+owner-initiated deployments waiting for an independent approval.
 
 ## Reference performance gate
 
@@ -137,10 +142,25 @@ worktree artifacts. A zero exit code alone is not accepted: the verifier rejects
 empty reports, missing statistics, stale methods, missing fixtures and known
 failure markers in the log.
 
+Provider-relative multiplexing latency is measured a second way to remove
+sequential-provider order drift from the release decision. After 64 warm-up
+bursts per provider, the runner records five trials of 501 alternating paired
+blocks; every block executes 32 real 64-command bursts for each provider and
+reverses order from the preceding block. The verifier recomputes mean, P95 and
+P99 ratios for each trial from raw per-operation block timings and applies the
+unchanged provider budgets to the median of the five trial ratios. This paired
+phase runs before the long BenchmarkDotNet suite. With 501 observations,
+each trial's P99 is the sixth-slowest block rather than a statistic decided by
+one or two scheduler spikes. BenchmarkDotNet
+remains authoritative for BlueTusk's absolute P95 limits and all allocation
+limits. The fail-closed self-test rejects truncated samples, invalid values,
+wrong order, duplicate workloads and a synthetic 6% regression.
+
 The artifact contains:
 
 - brief JSON and Markdown reports for the full fixture inventory;
 - the full multiplexing report with raw result measurements;
+- the raw alternating-provider multiplexing report;
 - the BenchmarkDotNet log;
 - a SHA-256-bound environment/evidence manifest; and
 - the exact source commit, SDK/runtime, OS, processor and PostgreSQL image.
@@ -148,9 +168,20 @@ The artifact contains:
 The manifest hashes every report and the complete log with its byte count; the
 candidate verifier rejects an unregistered or altered result.
 
-Reference budgets have 25% headroom over the named checked-in environment.
-Change a budget only with a fresh report, an explanation of the trade-off and
-review by the performance owner. Never loosen a budget merely to make CI green.
+Reference budgets have at most 25% headroom over the named checked-in
+environment. The original `WriteSimpleQuery` ceiling was derived from a
+three-sample ShortRun and did not represent the two internally stable launch
+bands later observed on the same Ryzen 7 5800X. Its release ceiling is therefore
+calibrated from two independent MediumRun workflow artifacts: the larger
+26.578 ns mean and 31.624 ns P95 receive the same 25% headroom and are rounded
+up to 35 ns and 40 ns. The budget file records both exact commits and workflow
+run IDs. Its self-test proves that duplicate runs, invalid commits, false
+maxima, and any ceiling above the evidence-derived limit fail closed. No other
+absolute latency ceiling changed.
+
+Change a budget only with fresh immutable reports, an explanation of the
+trade-off and review by the performance owner. Never loosen a budget merely to
+make CI green.
 
 ## Production observability acceptance
 
@@ -209,6 +240,8 @@ v1-evidence/
 │   └── sync/*-injection.json and *-recovery.json
 ├── performance/
 │   ├── multiplexing-evidence.json
+│   ├── multiplexing-paired-evidence.json
+│   ├── provider-paired-evidence.json
 │   └── results/*.json
 └── approvals/
     ├── independent-release-review.json
@@ -318,6 +351,24 @@ in [endurance disturbance evidence](endurance-disturbance-evidence.md).
 
 ## Operational acceptance
 
+### Pre-pilot platform acceptance
+
+No application observation counts toward a pilot while the deployment control
+plane is only reporting cached desired state. Run
+`./eng/verify-application-platform-health.ps1 -RequireApplications` against the
+selected cluster immediately after the digest-pinned rollout and retain its
+output. The verifier independently compares every non-terminal API pod with the
+Ready kubelet that must be running it, rejects node pressure, rejects any
+non-healthy Longhorn volume or CloudNativePG cluster, and requires the API,
+worker and UI deployments for all three reference applications to be fully
+observed, ready and available with no unready container or failed migration job.
+The protected image workflow must also have executed each backend image and
+proved the exact .NET and ASP.NET Core shared-framework closure. A green rollout
+status without both checks is not production evidence.
+
+The complete check matrix, safe failure interpretation and recovery sequence are
+in [application platform health and rollout acceptance](application-platform-health.md).
+
 ### Application pilots
 
 Run at least two independently operated, representative applications. Each
@@ -390,7 +441,7 @@ rollback/pinning, not replacing an already published archive.
 
 ## Current V1 boundary
 
-As of 2026-08-07, deterministic engineering work can be verified locally, but
+As of 2026-08-17, deterministic engineering work can be verified locally, but
 stable V1 remains blocked by external facts: PostgreSQL 19 GA is not yet the
 recorded milestone, the exact final candidate workflows have not run, the
 72-hour Streams, 24-hour Sync, and 24-hour ContinuousGraph endurance artifacts

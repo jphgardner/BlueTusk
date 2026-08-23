@@ -226,6 +226,33 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     internal bool HasOpenSession => PhysicalSession is { IsOpen: true };
 
+    internal bool HasPendingPoolReset =>
+        _sessionLease is BlueTuskPooledSession { RequiresReset: true };
+
+    internal ValueTask<BlueTuskScalarQueryResult> ExecuteResetAndExtendedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            return Session.ExecuteExtendedScalarAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken);
+        }
+
+        _sessionTouched = true;
+        return pooledSession.Session.ExecuteResetAndExtendedScalarAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            pooledSession.ResetCompletedCallback,
+            cancellationToken);
+    }
+
     internal void AbortPhysicalSession()
     {
         var lease = Interlocked.Exchange(ref _sessionLease, null);
@@ -260,6 +287,31 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         IBlueTuskPhysicalSession session => session,
         _ => null,
     };
+
+    internal BlueTuskResolvedField[] ResolveRowFields(
+        IReadOnlyList<BlueTuskFieldDescription> fields)
+    {
+        ArgumentNullException.ThrowIfNull(fields);
+        var types = TypeRegistry;
+        var optional = Volatile.Read(ref _optionalState) ?? Optional;
+        if (ReferenceEquals(optional.ResolvedRowDescription, fields) &&
+            ReferenceEquals(optional.ResolvedRowRegistry, types) &&
+            optional.ResolvedRowFields is { } cached)
+        {
+            return cached;
+        }
+
+        var resolved = new BlueTuskResolvedField[fields.Count];
+        for (var index = 0; index < resolved.Length; index++)
+        {
+            resolved[index] = BlueTuskValueDecoder.Resolve(types, fields[index]);
+        }
+
+        optional.ResolvedRowDescription = fields;
+        optional.ResolvedRowRegistry = types;
+        optional.ResolvedRowFields = resolved;
+        return resolved;
+    }
 
     private SemaphoreSlim LargeObjectGate =>
         LazyInitializer.EnsureInitialized(
@@ -452,6 +504,52 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             }
 
             var renting = _pool.RentAsync(cancellationToken);
+            if (!renting.IsCompletedSuccessfully)
+            {
+                return CompletePooledOpenAsync(renting, cancellationToken);
+            }
+
+            _sessionLease = renting.Result;
+            var loadingTypes = _typeMetadata.EnsureLoadedAsync(PhysicalSession!, cancellationToken);
+            if (!loadingTypes.IsCompletedSuccessfully)
+            {
+                return CompleteOpenAsync(loadingTypes);
+            }
+
+            CompleteOpen();
+            return Task.CompletedTask;
+        }
+        catch
+        {
+            CleanupFailedOpen();
+            throw;
+        }
+    }
+
+    internal Task OpenForCommandAsync(
+        bool allowPendingReset,
+        CancellationToken cancellationToken)
+    {
+        if (!allowPendingReset || _pool is not BlueTuskConnectionPool singleHostPool)
+        {
+            return OpenAsync(cancellationToken);
+        }
+
+        ObjectDisposedException.ThrowIf(_disposed, this);
+        if (_state != ConnectionState.Closed)
+        {
+            throw new InvalidOperationException("The connection is already open or opening.");
+        }
+
+        if (string.IsNullOrWhiteSpace(_settings.ConnectionString))
+        {
+            throw new InvalidOperationException("A connection string is required.");
+        }
+
+        SetState(ConnectionState.Connecting);
+        try
+        {
+            var renting = singleHostPool.RentForCommandAsync(cancellationToken);
             if (!renting.IsCompletedSuccessfully)
             {
                 return CompletePooledOpenAsync(renting, cancellationToken);
@@ -2239,6 +2337,12 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         internal BlueTuskTransaction? Current;
 
         internal BlueTuskTransaction? ImplicitLargeObject;
+
+        internal IReadOnlyList<BlueTuskFieldDescription>? ResolvedRowDescription;
+
+        internal BlueTuskTypeRegistry? ResolvedRowRegistry;
+
+        internal BlueTuskResolvedField[]? ResolvedRowFields;
 
         internal bool Starting;
     }

@@ -29,6 +29,15 @@ exact RC version. Exact `*-v1.0.0-rc.1` tags publish through the protected
 `package-prerelease` environment, and npm packages use the `rc` dist-tag,
 never `latest`. A correction is `rc.2`; an RC is never overwritten.
 
+Before registry publication, the package-consumer solution restores through
+`eng/nuget/applications-candidate.config` into an isolated cache. Its source
+mapping resolves `BlueTusk.*` only from `artifacts/prerelease/feed`, which is
+rebuilt from the current candidate; it cannot silently consume an older
+same-version package from a machine cache or registry. Deployable application
+images reverse that trust boundary: their workflow first verifies the complete
+public RC inventory, then restores from the public registries and records image
+digests, scans and attestations.
+
 RC tags, packages, images, deployments, and observations cannot satisfy a
 stable exact-SHA gate. The three package-consumer applications and the
 staging/production boundary are documented in the
@@ -107,9 +116,10 @@ The exact live settings are not informal setup advice. They are declared in
 `verify-github-governance.ps1 -Mode Remote`. The same contract requires the
 `main` ruleset, all 35 V1 status checks, fresh independent review after the
 last push, resolved review threads, the protected
-`v1-candidate-readiness` environment, and the six allowed production tag
-patterns. It also requires the dependency graph, vulnerability alerts,
-automated security fixes and private vulnerability reporting. A missing or
+`v1-candidate-readiness` environment with administrator bypass disabled, and
+the six allowed production tag patterns. It also requires the dependency
+graph, vulnerability alerts, automated security fixes and private vulnerability
+reporting. A missing or
 unprotected environment, or a disabled repository security feature, makes both
 candidate acceptance and tagged publication fail.
 

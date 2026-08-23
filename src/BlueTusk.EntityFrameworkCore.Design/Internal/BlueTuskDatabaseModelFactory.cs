@@ -842,6 +842,14 @@ public sealed class BlueTuskDatabaseModelFactory : DatabaseModelFactory
                 continue;
             }
 
+            // Catalog reads are intentionally not held in a long-running transaction.
+            // Concurrent DDL can therefore leave a constraint row without a readable
+            // name or expression between the table and constraint snapshots.
+            if (reader.IsDBNull(2) || reader.IsDBNull(3))
+            {
+                continue;
+            }
+
             if (!definitions.TryGetValue(tableKey, out var constraints))
             {
                 constraints = [];

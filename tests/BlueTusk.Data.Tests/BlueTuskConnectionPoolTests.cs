@@ -182,6 +182,42 @@ public sealed class BlueTuskConnectionPoolTests
     }
 
     [Fact]
+    public async Task Command_checkout_defers_reset_for_an_idle_dirty_session()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var firstLease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(firstLease.Session);
+        firstLease.MarkDirty();
+        pool.Return(firstLease);
+
+        var commandLease = await pool.RentForCommandAsync(CancellationToken.None);
+
+        Assert.Same(firstLease, commandLease);
+        Assert.True(commandLease.RequiresReset);
+        Assert.Empty(session.Commands);
+        Assert.Equal(1, pool.Statistics.Busy);
+        Assert.Equal(0, pool.Statistics.Idle);
+        pool.Return(commandLease);
+    }
+
+    [Fact]
+    public async Task Command_checkout_still_resets_a_dirty_transaction()
+    {
+        await using var pool = CreatePool(maximumSize: 1);
+        var firstLease = await pool.RentAsync(CancellationToken.None);
+        var session = Assert.IsType<FakePhysicalSession>(firstLease.Session);
+        session.TransactionStatus = BlueTuskTransactionStatus.InTransaction;
+        firstLease.MarkDirty();
+        pool.Return(firstLease);
+
+        var commandLease = await pool.RentForCommandAsync(CancellationToken.None);
+
+        Assert.False(commandLease.RequiresReset);
+        Assert.Equal(["ROLLBACK", "DISCARD ALL"], session.Commands);
+        pool.Return(commandLease);
+    }
+
+    [Fact]
     public async Task Failed_creation_releases_capacity_for_the_next_checkout()
     {
         var attempts = 0;

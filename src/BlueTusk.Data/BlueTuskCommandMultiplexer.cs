@@ -58,21 +58,17 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
     internal ValueTask<BlueTuskQueryResult> ExecuteAsync(
         BlueTuskCommand command,
-        Action<BlueTuskConnection> startTelemetry,
         CancellationToken cancellationToken)
         => EnqueueAsync(new MultiplexedCommandRequest<BlueTuskQueryResult>(
             command,
-            startTelemetry,
             scalar: false,
             cancellationToken), cancellationToken);
 
     internal ValueTask<BlueTuskScalarQueryResult> ExecuteScalarAsync(
         BlueTuskCommand command,
-        Action<BlueTuskConnection> startTelemetry,
         CancellationToken cancellationToken)
         => EnqueueAsync(new MultiplexedCommandRequest<BlueTuskScalarQueryResult>(
             command,
-            startTelemetry,
             scalar: true,
             cancellationToken), cancellationToken);
 
@@ -183,7 +179,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 processedOnLease += result.Processed;
                 if (processedOnLease >= _options.MaxCommandsPerLease)
                 {
-                    if (connection is not null)
+                    if (connection is not null && _dataSource.HasPoolWaiters)
                     {
                         Volatile.Write(ref _workerConnections[workerIndex], null);
                         await connection.DisposeAsync().ConfigureAwait(false);
@@ -337,7 +333,6 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         {
             var result = await request.Command.ExecuteDispatchedAsync(
                         connection,
-                        request.StartTelemetry,
                         execution.Token).ConfigureAwait(false);
             request.TrySetResult(
                 request.Scalar
@@ -389,7 +384,7 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
                 var request = buffers.Requests[requestIndex];
                 try
                 {
-                    request.StartTelemetry(connection);
+                    request.Command.StartMultiplexedTelemetry(connection);
                     buffers.Commands[activeCount] = request.Command.CreateMultiplexedPipelineCommand(
                         connection,
                         request.Scalar);
@@ -628,8 +623,6 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
     {
         BlueTuskCommand Command { get; }
 
-        Action<BlueTuskConnection> StartTelemetry { get; }
-
         bool Scalar { get; }
 
         CancellationToken CancellationToken { get; }
@@ -658,12 +651,10 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
         internal MultiplexedCommandRequest(
             BlueTuskCommand command,
-            Action<BlueTuskConnection> startTelemetry,
             bool scalar,
             CancellationToken cancellationToken)
         {
             Command = command;
-            StartTelemetry = startTelemetry;
             Scalar = scalar;
             CancellationToken = cancellationToken;
             _completion.RunContinuationsAsynchronously = true;
@@ -676,8 +667,6 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
         }
 
         public BlueTuskCommand Command { get; }
-
-        public Action<BlueTuskConnection> StartTelemetry { get; }
 
         public bool Scalar { get; }
 
@@ -835,6 +824,8 @@ internal sealed class BlueTuskCommandMultiplexer : IDisposable, IAsyncDisposable
 
 internal static class BlueTuskMultiplexingClassifier
 {
+    private static readonly ConditionalWeakTable<string, Classification> Classifications = new();
+
     private static readonly string[] SessionStateTokens =
     [
         "ABORT",
@@ -911,6 +902,13 @@ internal static class BlueTuskMultiplexingClassifier
     internal static bool IsSessionNeutral(string sql)
     {
         ArgumentNullException.ThrowIfNull(sql);
+        return Classifications.GetValue(
+            sql,
+            static commandText => new Classification(Scan(commandText))).IsSessionNeutral;
+    }
+
+    private static bool Scan(string sql)
+    {
         var text = sql.AsSpan();
         var index = 0;
         var hasToken = false;
@@ -1044,6 +1042,8 @@ internal static class BlueTuskMultiplexingClassifier
 
         return hasToken;
     }
+
+    private sealed record Classification(bool IsSessionNeutral);
 
     private static bool IsSessionStateToken(ReadOnlySpan<char> token) =>
         Contains(SessionStateTokens, token) ||

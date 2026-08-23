@@ -50,50 +50,47 @@ until the last materialised memory reference is collected.
 
 The transport-pipeline decision reports were added on 2026-08-01. The bounded `System.IO.Pipelines` prototype improves the adversarial fragmented async batch and tiny cancellation-drain cases, but is approximately 2x slower for a 1 MiB field, 42% slower for synchronous COPY, effectively tied for asynchronous COPY and TLS, and 76% slower for asynchronous raw TCP. Both warm loopback readers report zero measured managed allocation; the prototype reports 96 B for the large-field batch. These short-run measurements support retaining the current transport, as recorded in ADR 0005.
 
-The live PostgreSQL provider-comparison report was refreshed again on 2026-08-07
-against the local server on this machine after the command, pool, transport, and
-streaming hot-path work. Unlike the short iteration runs used during profiling,
-the checked-in report is a MediumRun with two launches, ten warmups, and fifteen
-measured iterations. The large-field fixture creates the same one-row 1 MiB
-temporary payload on each provider connection during setup, keeping PostgreSQL
-payload-generation CPU outside the timed operations. BlueTusk/Npgsql means are
-365/392 µs and 1,634/2,079 B for a parameterized scalar, 356/358 µs and
-773/1,137 B for an explicitly prepared scalar, 195/209 ns and 168/184 B for an
-untouched warm pool checkout, 529/549 µs and 1,413/1,418 B for a sequential
-1,000-row read, and 2.279/2.305 ms and 3,832/8,426 B for a sequential 1 MiB
-`bytea` stream.
+The live PostgreSQL provider-comparison report was refreshed on 2026-08-23
+against digest-pinned PostgreSQL 19 Beta 3 after the command, pool, transport,
+reader, timeout, and saturated-handoff work. The checked-in report is a
+MediumRun with two launches, ten warmups, and fifteen measured iterations. The
+large-field fixture creates the same one-row 1 MiB temporary payload on each
+provider connection during setup, keeping PostgreSQL payload-generation CPU
+outside the timed operations. BlueTusk/Npgsql absolute means and allocations
+are 297.687/328.195 µs and 1,652/2,140 B for a parameterized scalar,
+213.81/235.22 ns and 168/184 B for warm checkout, 291.523/297.467 µs and
+785/1,123 B for an explicitly prepared scalar, 487.348/528.428 µs and
+1,195/1,569 B for a sequential 1,000-row read, and 2.183/2.223 ms and
+1,466/9,031 B for a sequential 1 MiB `bytea` stream.
 
-The current MediumRun therefore records lower BlueTusk mean latency and managed
-allocation on all five pairs. Parameterized scalar execution, warm checkout, and
-the 1,000-row reader have non-overlapping latency intervals; prepared scalar and
-large-stream intervals overlap and are treated as parity despite lower BlueTusk
-means. These results are an optimization and regression baseline, not a
-provider-wide superiority claim or release performance guarantee.
+Five 501-block alternating-provider trials are the cross-provider latency
+authority. They record BlueTusk mean/P95/P99 ratios at or below Npgsql for all
+five workloads; the prepared and large-value leads remain narrow and are
+treated as measured parity. BenchmarkDotNet remains the managed-allocation and
+absolute-latency source. These results are an optimization and regression
+baseline, not a provider-wide superiority claim or release performance
+guarantee.
 
-The V1 multiplexing MediumRun was captured from commit
-`9ba2c50c05c9d995b3b78cf65f6d88ee207e835f` on 2026-08-04 on the
-same processor and a PostgreSQL 18 loopback server. Both providers use four
-physical lanes, 64 concurrent parameterized scalar commands, no command
-timeout, and one logical command per operation. End-to-end BlueTusk/Npgsql
-results are 19.83/20.57 µs mean, 20.93/22.26 µs P95, 21.06/22.51 µs P99,
-and 1,733/1,738 B per command. The BlueTusk reused-command row was refreshed
-on 2026-08-07 and records 16.37 µs mean, 16.76 µs P95, 16.82 µs P99 and
-749 B, compared with the retained Npgsql row at 20.01 µs, 21.53 µs,
-21.69 µs and 794 B. BlueTusk therefore clears the 800 B/op gate while
-retaining lower mean and tail latency.
+The V1 concurrency MediumRun is bound to commit
+`d09d2f654f6c5568fa1053d92aad819872afa348`, .NET 10.0.11, and the
+digest-pinned PostgreSQL 19 Beta 3 loopback server. Both providers use four
+physical lanes and 64-command bursts. BlueTusk/Npgsql results are
+16.93/18.81 µs and 1,429/1,738 B for fresh multiplexed commands,
+15.49/19.06 µs and 622/794 B for reused multiplexed commands,
+95.98/101.55 µs and 2,127/2,830 B for fresh ordinary pooled commands, and
+95.10/100.72 µs and 1,343/1,873 B for reused ordinary pooled commands.
 
-The immutable full JSON contains 25–30 measured samples per original workload
-and remains hash-bound to its source commit. The adjacent
-`MultiplexingComparisonBenchmarks-reused-hardening.json` report contains the
-out-of-process 2026-08-07 BlueTusk refresh and supersedes that one row for the
-allocation gate without altering the frozen evidence.
+Five alternating-provider trials with 501 blocks per workload are checked in
+beside the absolute report. They record lower BlueTusk median-of-trials mean,
+P95, and P99 latency for fresh/reused multiplexed and fresh/reused ordinary
+pooled comparisons. This closes the former saturated non-multiplexed gap
+without allowing a multiplex-only result to conceal it.
 
-The checked-in comparison evidence
-passes the machine-readable mean, P95, P99, throughput-derived, and allocation
-budgets. The adjacent evidence manifest binds the report hash to the source
-commit, runtime, operating system, and PostgreSQL image digest. This is a
-named-environment regression baseline, not a universal provider superiority
-claim.
+The checked-in provider and concurrency evidence passes the machine-readable
+mean, P95, P99, throughput-derived, and managed-allocation budgets. The schema-2
+manifest binds all four reports to their SHA-256 values, source commit, runtime,
+operating system, and PostgreSQL image digest. This is a named-environment
+regression baseline, not a universal provider superiority claim.
 
 The live EF Core and SQL/PGQ application reports were added on 2026-08-02
 against PostgreSQL 19 Beta 2. Fresh parameterized query compilation plus first

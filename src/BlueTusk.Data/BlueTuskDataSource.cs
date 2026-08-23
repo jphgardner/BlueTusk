@@ -63,6 +63,8 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
 
     internal BlueTuskCommandMultiplexer? Multiplexer => _multiplexer;
 
+    internal bool HasPoolWaiters => _pool?.Statistics.Waiting > 0;
+
     /// <summary>Gets whether bounded statement multiplexing is enabled for this data source.</summary>
     public bool IsMultiplexingEnabled => _multiplexer is not null;
 
@@ -121,7 +123,7 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         });
     }
 
-    public new BlueTuskConnection CreateConnection() => (BlueTuskConnection)base.CreateConnection();
+    public new BlueTuskConnection CreateConnection() => CreateBlueTuskConnection();
 
     internal BlueTuskConnection CreateUnpooledConnection(string connectionString) =>
         new(
@@ -151,7 +153,28 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         }
     }
 
-    public new BlueTuskCommand CreateCommand(string commandText) => (BlueTuskCommand)base.CreateCommand(commandText);
+    internal ValueTask<BlueTuskConnection> OpenCommandConnectionAsync(
+        CancellationToken cancellationToken)
+    {
+        var connection = CreateConnection();
+        try
+        {
+            var opening = connection.OpenForCommandAsync(
+                allowPendingReset: _typeMetadata.IsLoaded,
+                cancellationToken);
+            return opening.IsCompletedSuccessfully
+                ? new ValueTask<BlueTuskConnection>(connection)
+                : CompleteOpenConnectionAsync(connection, opening);
+        }
+        catch
+        {
+            connection.Dispose();
+            throw;
+        }
+    }
+
+    public new BlueTuskCommand CreateCommand(string commandText) =>
+        new(commandText ?? string.Empty, this);
 
     public new BlueTuskBatch CreateBatch() => (BlueTuskBatch)base.CreateBatch();
 
@@ -224,7 +247,9 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
 
     ValueTask IProviderDataSource.ClearPoolAsync() => ClearPoolAsync();
 
-    protected override DbConnection CreateDbConnection() =>
+    protected override DbConnection CreateDbConnection() => CreateBlueTuskConnection();
+
+    private BlueTuskConnection CreateBlueTuskConnection() =>
         new BlueTuskConnection(
             _connectionString,
             _pool,

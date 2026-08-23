@@ -60,6 +60,14 @@ public sealed class ProviderApiFreezeTests
             .EnumerateFiles(Path.GetDirectoryName(path)!, "*.csproj", SearchOption.TopDirectoryOnly)
             .Single();
         var document = XDocument.Load(project);
+        var explicitlyNonPackable = document.Descendants("IsPackable")
+            .Select(element => element.Value)
+            .LastOrDefault();
+        if (string.Equals(explicitlyNonPackable, "false", StringComparison.OrdinalIgnoreCase))
+        {
+            return false;
+        }
+
         var declaredFamily = document.Descendants("BlueTuskProductFamily")
             .Select(element => element.Value)
             .FirstOrDefault();
