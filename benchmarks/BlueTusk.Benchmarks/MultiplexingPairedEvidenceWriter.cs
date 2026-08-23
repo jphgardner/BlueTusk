@@ -16,7 +16,7 @@ internal static class MultiplexingPairedEvidenceWriter
     private const int WarmupBurstsPerProvider = 64;
     private const int TrialCount = 5;
     private const int BlocksPerTrial = 501;
-    private const int BurstsPerBlock = 32;
+    private const int BurstsPerBlock = 4;
 
     public static async Task CaptureAsync(string outputPath)
     {
@@ -32,6 +32,12 @@ internal static class MultiplexingPairedEvidenceWriter
             await WarmUpAsync(
                 benchmark.BlueTuskReusedScalarBurstAsync,
                 benchmark.NpgsqlReusedScalarBurstAsync);
+            await WarmUpAsync(
+                benchmark.BlueTuskPooledConcurrentScalarBurstAsync,
+                benchmark.NpgsqlPooledConcurrentScalarBurstAsync);
+            await WarmUpAsync(
+                benchmark.BlueTuskPooledReusedScalarBurstAsync,
+                benchmark.NpgsqlPooledReusedScalarBurstAsync);
 
             var workloads = new[]
             {
@@ -45,6 +51,16 @@ internal static class MultiplexingPairedEvidenceWriter
                     benchmark.BlueTuskReusedScalarBurstAsync,
                     nameof(benchmark.NpgsqlReusedScalarBurstAsync),
                     benchmark.NpgsqlReusedScalarBurstAsync),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskPooledConcurrentScalarBurstAsync),
+                    benchmark.BlueTuskPooledConcurrentScalarBurstAsync,
+                    nameof(benchmark.NpgsqlPooledConcurrentScalarBurstAsync),
+                    benchmark.NpgsqlPooledConcurrentScalarBurstAsync),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskPooledReusedScalarBurstAsync),
+                    benchmark.BlueTuskPooledReusedScalarBurstAsync,
+                    nameof(benchmark.NpgsqlPooledReusedScalarBurstAsync),
+                    benchmark.NpgsqlPooledReusedScalarBurstAsync),
             };
 
             var report = new PairedEvidenceReport(

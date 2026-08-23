@@ -5,9 +5,6 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $verifier = Join-Path $PSScriptRoot 'verify-multiplexing-performance.ps1'
-$reportPath = Join-Path $PSScriptRoot (
-    '..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\results\' +
-    'BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json')
 $temporaryRoot = Join-Path (
     [IO.Path]::GetTempPath()
 ) "bluetusk-multiplexing-self-test-$([Guid]::NewGuid().ToString('N'))"
@@ -38,6 +35,46 @@ function New-Trials
     })
 }
 
+function New-Benchmark
+{
+    param(
+        [string] $Method,
+        [double] $Nanoseconds,
+        [double] $AllocatedBytes
+    )
+
+    return [ordered] @{
+        Type = 'MultiplexingComparisonBenchmarks'
+        Method = $Method
+        Measurements = @(0..19 | ForEach-Object {
+            [ordered] @{
+                IterationMode = 'Workload'
+                IterationStage = 'Result'
+                Nanoseconds = $Nanoseconds * (1 + ((($_ % 5) - 2) / 1000))
+                Operations = 1
+            }
+        })
+        Statistics = [ordered] @{ Mean = $Nanoseconds }
+        Memory = [ordered] @{ BytesAllocatedPerOperation = $AllocatedBytes }
+    }
+}
+
+function New-BenchmarkFixture
+{
+    return [ordered] @{
+        Benchmarks = @(
+            New-Benchmark 'BlueTuskConcurrentScalarBurstAsync' 20 50
+            New-Benchmark 'NpgsqlConcurrentScalarBurstAsync' 25 100
+            New-Benchmark 'BlueTuskPooledConcurrentScalarBurstAsync' 100 90
+            New-Benchmark 'NpgsqlPooledConcurrentScalarBurstAsync' 105 100
+            New-Benchmark 'BlueTuskReusedScalarBurstAsync' 15 40
+            New-Benchmark 'NpgsqlReusedScalarBurstAsync' 20 100
+            New-Benchmark 'BlueTuskPooledReusedScalarBurstAsync' 100 90
+            New-Benchmark 'NpgsqlPooledReusedScalarBurstAsync' 105 100
+        )
+    }
+}
+
 function New-Fixture
 {
     return [ordered]@{
@@ -49,7 +86,7 @@ function New-Fixture
         warmupBurstsPerProvider = 64
         trialCount = 5
         blocksPerTrial = 501
-        burstsPerBlock = 32
+        burstsPerBlock = 4
         workloads = @(
             [ordered]@{
                 candidate = 'BlueTuskConcurrentScalarBurstAsync'
@@ -60,6 +97,16 @@ function New-Fixture
                 candidate = 'BlueTuskReusedScalarBurstAsync'
                 reference = 'NpgsqlReusedScalarBurstAsync'
                 trials = New-Trials 80 100
+            },
+            [ordered]@{
+                candidate = 'BlueTuskPooledConcurrentScalarBurstAsync'
+                reference = 'NpgsqlPooledConcurrentScalarBurstAsync'
+                trials = New-Trials 99 100
+            },
+            [ordered]@{
+                candidate = 'BlueTuskPooledReusedScalarBurstAsync'
+                reference = 'NpgsqlPooledReusedScalarBurstAsync'
+                trials = New-Trials 95 100
             }
         )
     }
@@ -112,6 +159,7 @@ function Assert-Rejected
 
 try
 {
+    $reportPath = Write-Fixture (New-BenchmarkFixture) 'benchmark-report'
     $positivePath = Write-Fixture (New-Fixture) 'positive'
     & $verifier -ReportPath $reportPath -PairedReportPath $positivePath *> $null
 

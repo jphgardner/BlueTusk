@@ -58,14 +58,15 @@ fan-in, FIFO fairness, pool exhaustion, queue admission cancellation, command
 timeouts, adjacent errors, reset isolation, lease rotation, and stuck-lane
 shutdown. PgBouncer session and transaction modes have separate live acceptance.
 
-The frozen V1 MediumRun from commit `9ba2c50` compares four physical lanes and
-64-command bursts against both Npgsql multiplexing and ordinary pooled
-BlueTusk/Npgsql. BlueTusk records lower mean, P95, and P99 latency than Npgsql
-for fresh and reused multiplexed commands in the named loopback environment,
-while its fresh-command allocation is also slightly lower. The full report,
-environment/image/commit manifest, SHA-256, and machine-readable budget are
-checked in and verified by CI. This is a regression gate, not a universal
-performance or production-readiness claim.
+The V1 performance programme compares four physical lanes and 64-command bursts
+for fresh and reused multiplexed commands and for fresh and reused ordinary
+pooled controls. A separate direct-provider matrix covers warm checkout,
+parameterized and prepared scalars, 1,000-row sequential reads, and 1 MiB
+streaming reads. The exact-candidate gate requires BlueTusk to remain at or below
+Npgsql for mean, P95, P99, and managed allocation in all nine named comparisons.
+The full report, environment/image/commit manifest, SHA-256 hashes, and
+machine-readable budgets are retained and verified. This is a regression gate,
+not a universal performance or production-readiness claim.
 
 ## Cancellation
 

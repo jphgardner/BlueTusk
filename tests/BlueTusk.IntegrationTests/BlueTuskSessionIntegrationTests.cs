@@ -320,6 +320,22 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task AdoNet_prepared_commands_reencode_mutable_payloads()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        var payload = new byte[] { 1, 2, 3 };
+        await using var command = new BlueTuskCommand("SELECT $1::bytea", connection);
+        command.Parameters.Add(new BlueTuskParameter<byte[]>(payload));
+        await command.PrepareAsync(CancellationToken.None);
+
+        Assert.Equal(payload, await command.ExecuteScalarAsync<byte[]>(CancellationToken.None));
+
+        payload[0] = 9;
+        Assert.Equal(payload, await command.ExecuteScalarAsync<byte[]>(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task AdoNet_automatically_prepares_evicts_and_invalidates_statements()
     {
         var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())

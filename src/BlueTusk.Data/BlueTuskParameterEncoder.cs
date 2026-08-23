@@ -101,7 +101,7 @@ internal static class BlueTuskParameterEncoder
         return Encode(parameter, types, ref reusableBuffer);
     }
 
-    private static BlueTuskExtendedQueryParameter Encode(
+    internal static BlueTuskExtendedQueryParameter Encode(
         BlueTuskParameter parameter,
         BlueTuskTypeRegistry? types,
         ref byte[]? reusableBuffer)

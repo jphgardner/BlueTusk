@@ -41,8 +41,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
     private int _resultIndex;
     private int _rowIndex = -1;
     private long _streamingRowsReturned;
-    private int _lifetimeCompleted;
-    private bool _closed;
+    private int _closed;
 
     internal BlueTuskDataReader(
         BlueTuskQueryResult result,
@@ -87,7 +86,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
         ? _streamingRowsReturned != 0 || PrefetchStreamingRow() is not null
         : CurrentResultSet?.Rows.Count > 0;
 
-    public override bool IsClosed => _closed;
+    public override bool IsClosed => Volatile.Read(ref _closed) != 0;
 
     public override int RecordsAffected => GetRecordsAffected();
 
@@ -819,12 +818,11 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     public override void Close()
     {
-        if (_closed)
+        if (Interlocked.Exchange(ref _closed, 1) != 0)
         {
             return;
         }
 
-        _closed = true;
         try
         {
             _portal?.Dispose();
@@ -850,12 +848,11 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     public override async Task CloseAsync()
     {
-        if (_closed)
+        if (Interlocked.Exchange(ref _closed, 1) != 0)
         {
             return;
         }
 
-        _closed = true;
         try
         {
             if (_portal is not null)
@@ -1061,7 +1058,7 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     private void EnsureOpen()
     {
-        if (_closed)
+        if (Volatile.Read(ref _closed) != 0)
         {
             throw new InvalidOperationException("The data reader is closed.");
         }
@@ -1181,18 +1178,12 @@ public sealed class BlueTuskDataReader : DbDataReader, IDbColumnSchemaGenerator
 
     private void CompleteReaderLifetime()
     {
-        if (Interlocked.Exchange(ref _lifetimeCompleted, 1) == 0)
-        {
-            _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
-        }
+        _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
     }
 
     private ValueTask CompleteReaderLifetimeAsync()
     {
-        if (Interlocked.Exchange(ref _lifetimeCompleted, 1) == 0)
-        {
-            _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
-        }
+        _streamingCommand?.CompleteStreamingExecution(_streamingTimeoutTimer);
 
         return ValueTask.CompletedTask;
     }

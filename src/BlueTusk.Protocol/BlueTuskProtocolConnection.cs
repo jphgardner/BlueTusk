@@ -493,96 +493,78 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
-    internal ValueTask<int> ReadMessagePayloadAsync<TState>(
+    internal ValueTask<int> ReadLeasedMessagePayloadAsync<TState>(
         Memory<byte> destination,
         TState state,
         Func<TState, int, int> complete,
         CancellationToken cancellationToken)
     {
-        BeginRead();
-        try
+        EnsureActivePayload();
+        if (destination.IsEmpty || _activePayloadRemaining == 0)
         {
-            EnsureActivePayload();
-            if (destination.IsEmpty || _activePayloadRemaining == 0)
-            {
-                var completed = complete(state, 0);
-                EndRead();
-                return ValueTask.FromResult(completed);
-            }
-
-            var requested = Math.Min(destination.Length, _activePayloadRemaining);
-            destination = destination[..requested];
-            if (_count != 0)
-            {
-                var copied = CopyBufferedPayload(destination.Span);
-                _activePayloadRemaining -= copied;
-                var completed = complete(state, copied);
-                EndRead();
-                return ValueTask.FromResult(completed);
-            }
-
-            if (destination.Length >= DirectPayloadReadThreshold)
-            {
-                var pendingDirectRead = _transport.ReadAsync(destination, cancellationToken);
-                if (!pendingDirectRead.IsCompletedSuccessfully)
-                {
-                    return AwaitPayloadReadAndCompleteAsync(pendingDirectRead, state, complete);
-                }
-
-                var directRead = ValidatePayloadRead(pendingDirectRead.Result);
-                _activePayloadRemaining -= directRead;
-                var directResult = complete(state, directRead);
-                EndRead();
-                return ValueTask.FromResult(directResult);
-            }
-
-            PrepareForRead();
-            GrowReadBufferForPayload();
-            var readAheadLength = Math.Min(
-                _buffer.Length - (_start + _count),
-                MaximumPayloadReadAhead);
-            if (destination.Length < readAheadLength)
-            {
-                var pendingReadAhead = _transport.ReadAsync(
-                    _buffer.AsMemory(_start + _count, readAheadLength),
-                    cancellationToken);
-                if (!pendingReadAhead.IsCompletedSuccessfully)
-                {
-                    return AwaitPayloadReadAheadAndCompleteAsync(
-                        pendingReadAhead,
-                        destination,
-                        state,
-                        complete);
-                }
-
-                var copied = CompletePayloadReadAhead(
-                    pendingReadAhead.Result,
-                    destination.Span);
-                _activePayloadRemaining -= copied;
-                var completed = complete(state, copied);
-                EndRead();
-                return ValueTask.FromResult(completed);
-            }
-
-            var pendingRead = _transport.ReadAsync(destination, cancellationToken);
-            if (!pendingRead.IsCompletedSuccessfully)
-            {
-                return AwaitPayloadReadAndCompleteAsync(pendingRead, state, complete);
-            }
-
-            var read = ValidatePayloadRead(pendingRead.Result);
-            _activePayloadRemaining -= read;
-            var result = complete(state, read);
-            EndRead();
-            return ValueTask.FromResult(result);
+            return ValueTask.FromResult(complete(state, 0));
         }
-        catch
+
+        var requested = Math.Min(destination.Length, _activePayloadRemaining);
+        destination = destination[..requested];
+        if (_count != 0)
         {
-            EndRead();
-            throw;
+            var copied = CopyBufferedPayload(destination.Span);
+            _activePayloadRemaining -= copied;
+            return ValueTask.FromResult(complete(state, copied));
         }
+
+        if (destination.Length >= DirectPayloadReadThreshold)
+        {
+            var pendingDirectRead = _transport.ReadAsync(destination, cancellationToken);
+            if (!pendingDirectRead.IsCompletedSuccessfully)
+            {
+                return AwaitPayloadReadAndCompleteAsync(pendingDirectRead, state, complete);
+            }
+
+            var directRead = ValidatePayloadRead(pendingDirectRead.Result);
+            _activePayloadRemaining -= directRead;
+            return ValueTask.FromResult(complete(state, directRead));
+        }
+
+        PrepareForRead();
+        GrowReadBufferForPayload();
+        var readAheadLength = Math.Min(
+            _buffer.Length - (_start + _count),
+            MaximumPayloadReadAhead);
+        if (destination.Length < readAheadLength)
+        {
+            var pendingReadAhead = _transport.ReadAsync(
+                _buffer.AsMemory(_start + _count, readAheadLength),
+                cancellationToken);
+            if (!pendingReadAhead.IsCompletedSuccessfully)
+            {
+                return AwaitPayloadReadAheadAndCompleteAsync(
+                    pendingReadAhead,
+                    destination,
+                    state,
+                    complete);
+            }
+
+            var copied = CompletePayloadReadAhead(
+                pendingReadAhead.Result,
+                destination.Span);
+            _activePayloadRemaining -= copied;
+            return ValueTask.FromResult(complete(state, copied));
+        }
+
+        var pendingRead = _transport.ReadAsync(destination, cancellationToken);
+        if (!pendingRead.IsCompletedSuccessfully)
+        {
+            return AwaitPayloadReadAndCompleteAsync(pendingRead, state, complete);
+        }
+
+        var read = ValidatePayloadRead(pendingRead.Result);
+        _activePayloadRemaining -= read;
+        return ValueTask.FromResult(complete(state, read));
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<int> AwaitMessagePayloadAsync(ValueTask<int> pendingRead)
     {
         try
@@ -597,41 +579,29 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<int> AwaitPayloadReadAndCompleteAsync<TState>(
         ValueTask<int> pendingRead,
         TState state,
         Func<TState, int, int> complete)
     {
-        try
-        {
-            var read = ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
-            _activePayloadRemaining -= read;
-            return complete(state, read);
-        }
-        finally
-        {
-            EndRead();
-        }
+        var read = ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
+        _activePayloadRemaining -= read;
+        return complete(state, read);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<int> AwaitPayloadReadAheadAndCompleteAsync<TState>(
         ValueTask<int> pendingRead,
         Memory<byte> destination,
         TState state,
         Func<TState, int, int> complete)
     {
-        try
-        {
-            var copied = CompletePayloadReadAhead(
-                await pendingRead.ConfigureAwait(false),
-                destination.Span);
-            _activePayloadRemaining -= copied;
-            return complete(state, copied);
-        }
-        finally
-        {
-            EndRead();
-        }
+        var copied = CompletePayloadReadAhead(
+            await pendingRead.ConfigureAwait(false),
+            destination.Span);
+        _activePayloadRemaining -= copied;
+        return complete(state, copied);
     }
 
     public ValueTask WriteAsync(
@@ -920,9 +890,11 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             : AwaitPayloadBytesAsync(pendingRead);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private static async ValueTask<int> AwaitPayloadBytesAsync(ValueTask<int> pendingRead) =>
         ValidatePayloadRead(await pendingRead.ConfigureAwait(false));
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<int> AwaitPayloadReadAheadAsync(
         ValueTask<int> pendingRead,
         Memory<byte> destination) =>

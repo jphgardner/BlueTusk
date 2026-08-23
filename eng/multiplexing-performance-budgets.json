@@ -4,18 +4,34 @@
     {
       "candidate": "BlueTuskConcurrentScalarBurstAsync",
       "reference": "NpgsqlConcurrentScalarBurstAsync",
-      "maxMeanRatio": 1.05,
-      "maxP95Ratio": 1.05,
-      "maxP99Ratio": 1.05,
-      "maxAllocationRatio": 1.05
+      "maxMeanRatio": 1.0,
+      "maxP95Ratio": 1.0,
+      "maxP99Ratio": 1.0,
+      "maxAllocationRatio": 1.0
     },
     {
       "candidate": "BlueTuskReusedScalarBurstAsync",
       "reference": "NpgsqlReusedScalarBurstAsync",
-      "maxMeanRatio": 1.05,
-      "maxP95Ratio": 1.05,
-      "maxP99Ratio": 1.05,
-      "maxAllocationRatio": 1.55
+      "maxMeanRatio": 1.0,
+      "maxP95Ratio": 1.0,
+      "maxP99Ratio": 1.0,
+      "maxAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskPooledConcurrentScalarBurstAsync",
+      "reference": "NpgsqlPooledConcurrentScalarBurstAsync",
+      "maxMeanRatio": 1.0,
+      "maxP95Ratio": 1.0,
+      "maxP99Ratio": 1.0,
+      "maxAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskPooledReusedScalarBurstAsync",
+      "reference": "NpgsqlPooledReusedScalarBurstAsync",
+      "maxMeanRatio": 1.0,
+      "maxP95Ratio": 1.0,
+      "maxP99Ratio": 1.0,
+      "maxAllocationRatio": 1.0
     },
     {
       "candidate": "BlueTuskConcurrentScalarBurstAsync",

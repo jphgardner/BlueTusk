@@ -278,7 +278,13 @@ suite remains server-independent:
 ```powershell
 $env:BLUETUSK_BENCHMARK_CONNECTION_STRING = "Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable"
 $env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-dotnet10"
-dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*ProviderComparisonBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- `
+  --job medium --inProcess --filter '*ProviderComparisonBenchmarks*'
+dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release --no-build -- `
+  --provider-paired-evidence artifacts/benchmarks/provider-paired-evidence.json
+./eng/verify-provider-performance.ps1 `
+  -ReportPath benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json `
+  -PairedReportPath artifacts/benchmarks/provider-paired-evidence.json
 ```
 
 The same isolated database drives the EF application and SQL/PGQ traversal
@@ -289,10 +295,18 @@ not target a shared development database:
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*EntityFrameworkCoreBenchmarks*' '*SqlPgqBenchmarks*'
 ```
 
-Commit only the brief JSON and GitHub Markdown reports. Record the PostgreSQL
-major version, machine profile, SDK/runtime, date, and any material semantic
-difference between the provider pairs. Never turn a ShortRun ratio into a
-universal performance claim.
+Commit or archive the brief JSON, GitHub Markdown and paired provider report.
+BenchmarkDotNet remains the absolute-latency and managed-allocation source. The
+paired report is the provider-relative latency authority: five trials, 501
+alternating blocks per trial, and workload-specific block sizes (256 checkouts,
+32 parameterized commands, 64 prepared commands, 16 row-stream commands or 4
+large-value commands per block).
+Every sample is normalized per completed operation. The verifier
+requires BlueTusk to remain at or below Npgsql for median-of-trials mean, P95,
+P99 and managed allocation in every listed provider workload. Record the
+PostgreSQL major version, machine profile, SDK/runtime, date, and any material
+semantic difference between provider pairs. Never turn a measured workload
+ratio into a universal performance claim.
 
 The multiplexing comparison is the deliberate full-JSON exception: measured
 workload samples are required to reproduce P99. It compares both providers'
@@ -319,11 +333,13 @@ managed-allocation budgets against Npgsql multiplexing and BlueTusk's ordinary
 pool. A budget change requires the report, rationale, and documentation in the
 same review.
 
-For a release candidate, commit or archive both reports. BenchmarkDotNet is the
-source for BlueTusk absolute latency and allocation; its provider latency rows
-remain descriptive because methods run sequentially. The paired report runs
-first and is the provider-relative latency authority: 64 warm-ups per provider,
-five trials, 501 alternating blocks per trial, 32 bursts per block and 64
-operations per burst. The gate recomputes each trial and uses the median ratio;
-P99 is therefore the sixth-slowest block rather than a statistic decided by one
-or two transient scheduler spikes.
+For a release candidate, commit or archive all BenchmarkDotNet and paired
+reports. BenchmarkDotNet is the source for absolute latency and allocation; its
+provider latency rows remain descriptive because methods run sequentially. The
+provider and multiplexing paired reports run first and are the relative-latency
+authority. The multiplexing capture uses 64 warm-ups per provider, five trials,
+501 alternating blocks per trial, 4 bursts per block and 64 operations per
+burst. The four paired concurrency workloads cover fresh and reused multiplexed
+bursts plus both ordinary pooled controls. Both gates recompute each trial and use the median ratio; with 501 blocks,
+P99 is the sixth-slowest block rather than a statistic decided by one or two
+transient scheduler spikes.

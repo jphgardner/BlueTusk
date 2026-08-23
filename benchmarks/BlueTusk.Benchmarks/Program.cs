@@ -24,6 +24,12 @@ if (args is ["--multiplexing-paired-evidence", var pairedEvidencePath])
     return;
 }
 
+if (args is ["--provider-paired-evidence", var providerPairedEvidencePath])
+{
+    await ProviderPairedEvidenceWriter.CaptureAsync(providerPairedEvidencePath);
+    return;
+}
+
 var artifactsPath = Environment.GetEnvironmentVariable("BLUETUSK_BENCHMARK_ARTIFACTS");
 if (string.IsNullOrWhiteSpace(artifactsPath))
 {

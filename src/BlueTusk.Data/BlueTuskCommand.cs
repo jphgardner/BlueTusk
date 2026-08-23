@@ -30,6 +30,11 @@ public sealed class BlueTuskCommand : DbCommand
     private int _commandPlanParameterVersion = -1;
     private BlueTuskExtendedQueryParameter[]? _encodedParameters;
     private byte[]?[]? _parameterBuffers;
+    private PreparedParameterEncodingSnapshot[]? _preparedParameterSnapshots;
+    private bool _preparedParameterEncodingUnchanged;
+    private BlueTusk.TypeSystem.BlueTuskTypeRegistry? _preparedScalarTypeRegistry;
+    private BlueTuskFieldDescription? _preparedScalarField;
+    private BlueTuskResolvedField _preparedScalarResolvedField;
     private string? _multiplexingClassificationText;
     private bool _multiplexingSessionNeutral;
     private ReusableCommandTimeout? _preparedCommandTimeout;
@@ -125,6 +130,8 @@ public sealed class BlueTuskCommand : DbCommand
             if (!ReferenceEquals(_connection, value))
             {
                 _preparedStatement = null;
+                _preparedParameterSnapshots = null;
+                _preparedParameterEncodingUnchanged = false;
             }
 
             _connection = value;
@@ -662,12 +669,12 @@ public sealed class BlueTuskCommand : DbCommand
     public override Task<object?> ExecuteScalarAsync(CancellationToken cancellationToken) =>
         ShouldUseMultiplexingScalarPath()
             ? ExecuteMultiplexedScalarAsync<object?>(cancellationToken)
-            : ExecuteScalarCoreAsync<object?>(cancellationToken).AsTask();
+            : ExecuteScalarCoreAsync<object?>(cancellationToken);
 
     public Task<T?> ExecuteScalarAsync<T>(CancellationToken cancellationToken = default) =>
         ShouldUseMultiplexingScalarPath()
             ? ExecuteMultiplexedScalarAsync<T>(cancellationToken)
-            : ExecuteScalarCoreAsync<T>(cancellationToken).AsTask();
+            : ExecuteScalarCoreAsync<T>(cancellationToken);
 
     private async ValueTask<BlueTuskQueryResult> ExecuteCoreAsync(CancellationToken cancellationToken)
     {
@@ -1175,7 +1182,7 @@ public sealed class BlueTuskCommand : DbCommand
         }
     }
 
-    private async ValueTask<T?> ExecuteScalarCoreAsync<T>(CancellationToken cancellationToken)
+    private async Task<T?> ExecuteScalarCoreAsync<T>(CancellationToken cancellationToken)
     {
         if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
         {
@@ -1288,7 +1295,9 @@ public sealed class BlueTuskCommand : DbCommand
                                 cancellationToken).ConfigureAwait(false);
                     }
 
-                    return DecodeScalar<T>(connection, result);
+                    return _prepareRequested
+                        ? DecodePreparedScalar<T>(connection, result)
+                        : DecodeScalar<T>(connection, result);
                 }
                 catch (BlueTuskServerException exception) when (
                     useBinaryResults && IsMissingBinaryOutputFunction(exception))
@@ -1316,7 +1325,9 @@ public sealed class BlueTuskCommand : DbCommand
                             cancellationToken).ConfigureAwait(false);
                     }
 
-                    return DecodeScalar<T>(connection, result);
+                    return _prepareRequested
+                        ? DecodePreparedScalar<T>(connection, result)
+                        : DecodeScalar<T>(connection, result);
                 }
             }
             catch (BlueTuskServerException exception)
@@ -1390,6 +1401,34 @@ public sealed class BlueTuskCommand : DbCommand
         }
 
         var resolved = BlueTuskValueDecoder.Resolve(types, result.Field);
+        return DecodeScalar<T>(resolved, result);
+    }
+
+    private T? DecodePreparedScalar<T>(
+        BlueTuskConnection connection,
+        BlueTuskScalarQueryResult result)
+    {
+        if (result is not { HasValue: true, Field: not null })
+        {
+            return default;
+        }
+
+        var types = connection.TypeRegistry;
+        if (!ReferenceEquals(_preparedScalarTypeRegistry, types) ||
+            !ReferenceEquals(_preparedScalarField, result.Field))
+        {
+            _preparedScalarTypeRegistry = types;
+            _preparedScalarField = result.Field;
+            _preparedScalarResolvedField = BlueTuskValueDecoder.Resolve(types, result.Field);
+        }
+
+        return DecodeScalar<T>(_preparedScalarResolvedField, result);
+    }
+
+    private static T? DecodeScalar<T>(
+        in BlueTuskResolvedField resolved,
+        BlueTuskScalarQueryResult result)
+    {
         if (result.Value is not null &&
             resolved.Type is not null &&
             resolved.Codec is BlueTusk.TypeSystem.IBlueTuskCodec<T>)
@@ -1482,7 +1521,7 @@ public sealed class BlueTuskCommand : DbCommand
         return PrepareStatementAsync(
             session,
             statementName,
-            plan.Sql,
+            plan,
             typeOids,
             existingStatementName,
             cancellationToken);
@@ -1491,7 +1530,7 @@ public sealed class BlueTuskCommand : DbCommand
     private async ValueTask<PreparedStatementState> PrepareStatementAsync(
         IBlueTuskPhysicalSession session,
         string statementName,
-        string sql,
+        BlueTuskCommandPlan plan,
         uint[] typeOids,
         string? existingStatementName,
         CancellationToken cancellationToken)
@@ -1505,13 +1544,13 @@ public sealed class BlueTuskCommand : DbCommand
 
         await session.PrepareStatementAsync(
             statementName,
-            sql,
+            plan.Sql,
             typeOids,
             cancellationToken).ConfigureAwait(false);
         BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "prepare");
         var prepared = new PreparedStatementState(
             statementName,
-            sql,
+            plan,
             typeOids,
             session);
         _preparedStatement = prepared;
@@ -1525,8 +1564,9 @@ public sealed class BlueTuskCommand : DbCommand
     {
         if (_preparedStatement is not { } current ||
             !ReferenceEquals(current.Session, session) ||
-            !string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) ||
-            !ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters))
+            !ReferenceEquals(current.Plan, plan) ||
+            (!_preparedParameterEncodingUnchanged &&
+                !ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters)))
         {
             return null;
         }
@@ -1565,8 +1605,9 @@ public sealed class BlueTuskCommand : DbCommand
         var session = connection.Session;
         if (_preparedStatement is { } current &&
             ReferenceEquals(current.Session, session) &&
-            string.Equals(current.Sql, plan.Sql, StringComparison.Ordinal) &&
-            ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters))
+            ReferenceEquals(current.Plan, plan) &&
+            (_preparedParameterEncodingUnchanged ||
+                ParameterTypeOidsMatch(current.ParameterTypeOids, encodedParameters)))
         {
             BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "reuse");
             return current;
@@ -1583,7 +1624,7 @@ public sealed class BlueTuskCommand : DbCommand
 
         session.PrepareStatement(statementName, plan.Sql, typeOids);
         BlueTuskDiagnostics.RecordPreparedStatements(1, "explicit", "prepare");
-        var prepared = new PreparedStatementState(statementName, plan.Sql, typeOids, session);
+        var prepared = new PreparedStatementState(statementName, plan, typeOids, session);
         _preparedStatement = prepared;
         return prepared;
     }
@@ -1638,9 +1679,11 @@ public sealed class BlueTuskCommand : DbCommand
         BlueTuskCommandPlan plan,
         BlueTusk.TypeSystem.BlueTuskTypeRegistry types)
     {
+        _preparedParameterEncodingUnchanged = false;
         var count = plan.Parameters.Count;
         if (count == 0)
         {
+            _preparedParameterEncodingUnchanged = _prepareRequested;
             return Array.Empty<BlueTuskExtendedQueryParameter>();
         }
 
@@ -1650,11 +1693,40 @@ public sealed class BlueTuskCommand : DbCommand
             _parameterBuffers = new byte[]?[count];
         }
 
-        BlueTuskParameterEncoder.Encode(
-            plan.Parameters,
-            types,
-            _encodedParameters,
-            _parameterBuffers!);
+        if (!_prepareRequested)
+        {
+            BlueTuskParameterEncoder.Encode(
+                plan.Parameters,
+                types,
+                _encodedParameters,
+                _parameterBuffers!);
+            return _encodedParameters;
+        }
+
+        if (_preparedParameterSnapshots is null ||
+            _preparedParameterSnapshots.Length != count)
+        {
+            _preparedParameterSnapshots = new PreparedParameterEncodingSnapshot[count];
+        }
+
+        var unchanged = true;
+        for (var index = 0; index < count; index++)
+        {
+            var parameter = plan.Parameters[index];
+            if (_preparedParameterSnapshots[index].Matches(parameter))
+            {
+                continue;
+            }
+
+            _encodedParameters[index] = BlueTuskParameterEncoder.Encode(
+                parameter,
+                types,
+                ref _parameterBuffers![index]);
+            _preparedParameterSnapshots[index] = new PreparedParameterEncodingSnapshot(parameter);
+            unchanged = false;
+        }
+
+        _preparedParameterEncodingUnchanged = unchanged;
         return _encodedParameters;
     }
 
@@ -1696,6 +1768,7 @@ public sealed class BlueTuskCommand : DbCommand
         private readonly BlueTuskCommand _command;
         private readonly Timer _timer;
         private long _dueTimestamp;
+        private int _callbackExecuting;
         private bool _active;
         private bool _scheduled;
         private bool _disposed;
@@ -1719,31 +1792,26 @@ public sealed class BlueTuskCommand : DbCommand
 
         public void Start(TimeSpan dueTime)
         {
-            lock (this)
-            {
-                ObjectDisposedException.ThrowIf(_disposed, this);
-                _dueTimestamp = checked(
+            ObjectDisposedException.ThrowIf(Volatile.Read(ref _disposed), this);
+            Volatile.Write(
+                ref _dueTimestamp,
+                checked(
                     Stopwatch.GetTimestamp() +
-                    (long)(dueTime.TotalSeconds * Stopwatch.Frequency));
-                _active = true;
-                if (!_scheduled)
-                {
-                    _scheduled = true;
-                    _timer.Change(dueTime, Timeout.InfiniteTimeSpan);
-                }
+                    (long)(dueTime.TotalSeconds * Stopwatch.Frequency)));
+            Volatile.Write(ref _active, true);
+            if (!Volatile.Read(ref _scheduled))
+            {
+                ScheduleActiveTimeout();
             }
         }
 
         public void Stop()
         {
-            lock (this)
+            Volatile.Write(ref _active, false);
+            var spinner = new SpinWait();
+            while (Volatile.Read(ref _callbackExecuting) != 0)
             {
-                if (_disposed)
-                {
-                    return;
-                }
-
-                _active = false;
+                spinner.SpinOnce();
             }
         }
 
@@ -1756,42 +1824,132 @@ public sealed class BlueTuskCommand : DbCommand
                     return;
                 }
 
-                _disposed = true;
-                _active = false;
-                _scheduled = false;
+                Volatile.Write(ref _disposed, true);
+                Volatile.Write(ref _active, false);
+                Volatile.Write(ref _scheduled, false);
                 _timer.Dispose();
             }
         }
 
-        private void OnTimeout()
+        private void ScheduleActiveTimeout()
         {
             lock (this)
             {
-                if (_disposed || !_active)
+                if (_disposed || !_active || _scheduled)
                 {
-                    _scheduled = false;
                     return;
                 }
 
-                var remainingTicks = _dueTimestamp - Stopwatch.GetTimestamp();
-                if (remainingTicks > 0)
-                {
-                    _timer.Change(
-                        TimeSpan.FromSeconds((double)remainingTicks / Stopwatch.Frequency),
-                        Timeout.InfiniteTimeSpan);
-                    return;
-                }
+                ScheduleActiveTimeoutUnderLock();
+            }
+        }
 
-                _active = false;
-                _scheduled = false;
-                _command.CancelForTimeout();
+        private void ScheduleActiveTimeoutUnderLock()
+        {
+            var remainingTicks = Volatile.Read(ref _dueTimestamp) - Stopwatch.GetTimestamp();
+            var dueTime = remainingTicks > 0
+                ? TimeSpan.FromSeconds((double)remainingTicks / Stopwatch.Frequency)
+                : TimeSpan.Zero;
+            Volatile.Write(ref _scheduled, true);
+            _timer.Change(dueTime, Timeout.InfiniteTimeSpan);
+        }
+
+        private void OnTimeout()
+        {
+            Interlocked.Increment(ref _callbackExecuting);
+            try
+            {
+                lock (this)
+                {
+                    if (_disposed)
+                    {
+                        return;
+                    }
+
+                    if (!Volatile.Read(ref _active))
+                    {
+                        Volatile.Write(ref _scheduled, false);
+                        if (Volatile.Read(ref _active))
+                        {
+                            ScheduleActiveTimeoutUnderLock();
+                        }
+
+                        return;
+                    }
+
+                    var remainingTicks =
+                        Volatile.Read(ref _dueTimestamp) - Stopwatch.GetTimestamp();
+                    if (remainingTicks > 0)
+                    {
+                        _timer.Change(
+                            TimeSpan.FromSeconds((double)remainingTicks / Stopwatch.Frequency),
+                            Timeout.InfiniteTimeSpan);
+                        return;
+                    }
+
+                    // Stop can race the callback after the first active check. Its
+                    // callback barrier prevents the command from being reused until
+                    // this second check and any resulting cancellation are complete.
+                    if (!Volatile.Read(ref _active))
+                    {
+                        Volatile.Write(ref _scheduled, false);
+                        return;
+                    }
+
+                    Volatile.Write(ref _active, false);
+                    Volatile.Write(ref _scheduled, false);
+                    _command.CancelForTimeout();
+                }
+            }
+            finally
+            {
+                Interlocked.Decrement(ref _callbackExecuting);
             }
         }
     }
 
+    private readonly struct PreparedParameterEncodingSnapshot
+    {
+        private readonly BlueTuskParameter? _parameter;
+        private readonly object? _value;
+        private readonly DbType _dbType;
+        private readonly uint? _postgreSqlTypeOid;
+        private readonly string? _postgreSqlTypeName;
+
+        public PreparedParameterEncodingSnapshot(BlueTuskParameter parameter)
+        {
+            _parameter = parameter;
+            _value = parameter.Value;
+            _dbType = parameter.DbType;
+            _postgreSqlTypeOid = parameter.PostgreSqlTypeOid;
+            _postgreSqlTypeName = parameter.PostgreSqlTypeName;
+        }
+
+        public bool Matches(BlueTuskParameter parameter)
+        {
+            var value = parameter.Value;
+            return ReferenceEquals(_parameter, parameter) &&
+                ReferenceEquals(_value, value) &&
+                parameter.PostgreSqlTypeName is null &&
+                IsStableBuiltInValue(value) &&
+                _dbType == parameter.DbType &&
+                _postgreSqlTypeOid == parameter.PostgreSqlTypeOid &&
+                string.Equals(
+                    _postgreSqlTypeName,
+                    parameter.PostgreSqlTypeName,
+                    StringComparison.Ordinal);
+        }
+
+        private static bool IsStableBuiltInValue(object? value) => value is
+            null or DBNull or string or char or bool or
+            sbyte or byte or short or ushort or int or uint or long or ulong or
+            float or double or decimal or Guid or
+            DateOnly or TimeOnly or TimeSpan or DateTime or DateTimeOffset;
+    }
+
     private sealed record PreparedStatementState(
         string Name,
-        string Sql,
+        BlueTuskCommandPlan Plan,
         uint[] ParameterTypeOids,
         IBlueTuskPhysicalSession Session);
 }

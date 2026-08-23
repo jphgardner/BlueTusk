@@ -21,8 +21,8 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
     public const string ConnectionStringEnvironmentVariable =
         "BLUETUSK_BENCHMARK_CONNECTION_STRING";
 
-    private readonly byte[] _blueTuskBuffer = new byte[16 * 1024];
-    private readonly byte[] _npgsqlBuffer = new byte[16 * 1024];
+    private readonly byte[] _blueTuskBuffer = new byte[128 * 1024];
+    private readonly byte[] _npgsqlBuffer = new byte[128 * 1024];
     private BlueTuskDataSource _blueTuskDataSource = null!;
     private NpgsqlDataSource _npgsqlDataSource = null!;
     private BlueTuskConnection _blueTuskConnection = null!;
@@ -63,6 +63,7 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
         _blueTuskPreparedCommand = new BlueTuskCommand(
             "SELECT @value::int4 + 1",
             _blueTuskConnection);
+        _blueTuskPreparedCommand.CommandTimeout = 0;
         _blueTuskPreparedCommand.Parameters.Add(
             new BlueTuskParameter<int>(41) { ParameterName = "value" });
         await _blueTuskPreparedCommand.PrepareAsync();
@@ -70,6 +71,7 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
         _npgsqlPreparedCommand = new NpgsqlCommand(
             "SELECT @value::int4 + 1",
             _npgsqlConnection);
+        _npgsqlPreparedCommand.CommandTimeout = 0;
         _npgsqlPreparedCommand.Parameters.AddWithValue("value", 41);
         await _npgsqlPreparedCommand.PrepareAsync();
 

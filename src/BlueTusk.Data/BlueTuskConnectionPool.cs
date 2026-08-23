@@ -36,7 +36,11 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
     private readonly Channel<BlueTuskPoolSlot> _available = Channel.CreateUnbounded<BlueTuskPoolSlot>(
         new UnboundedChannelOptions
         {
-            AllowSynchronousContinuations = false,
+            // A returned physical session normally completes one pool waiter.
+            // Continuing that waiter inline avoids a ThreadPool dispatch at every
+            // step of a saturated burst; database I/O provides the asynchronous
+            // boundary before the session can be returned again.
+            AllowSynchronousContinuations = true,
             SingleReader = false,
             SingleWriter = false,
         });

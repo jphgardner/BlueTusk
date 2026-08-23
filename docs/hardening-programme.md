@@ -120,13 +120,12 @@ loopback environment. It also records lower latency and allocation than
 non-multiplexed BlueTusk. This closes the regression-evidence gate, not the
 independent production-validation gate.
 
-Exact-candidate runs retain that full BenchmarkDotNet evidence for absolute
-latency and allocation, and add five alternating-provider trials for the
-provider-relative latency decision. Each trial contains 501 paired blocks of 32
-bursts per provider, with provider order reversed between blocks and trials.
-The gate recomputes mean, P95 and P99 from raw timings and evaluates the median
-trial ratio against the existing 5% ceiling. The paired phase runs before the
-long BenchmarkDotNet suite. With 501 observations, P99 is the sixth-slowest
-block rather than a statistic decided by one or two scheduler spikes, while
-provider alternation prevents sequential machine or server drift from
-manufacturing a pass or a failure.
+Exact-candidate runs retain BenchmarkDotNet evidence for absolute latency and
+allocation and add five alternating-provider trials for provider-relative
+latency. Each trial contains 501 paired blocks, with provider order reversed
+between blocks and trials. Four bursts per block and 64 operations per burst are
+measured for fresh/reused multiplexed and fresh/reused ordinary pooled paths.
+The gate recomputes mean, P95, and P99 from raw timings and requires every median
+trial ratio, plus the BenchmarkDotNet allocation ratio, to remain at or below
+`1.0`. With 501 observations, P99 is not decided by one or two scheduler spikes,
+while provider alternation reduces sequential machine and server drift.

@@ -27,6 +27,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     private readonly Queue<BlueTuskNotificationResponse> _pendingNotifications = [];
     private readonly Dictionary<string, PreparedStatementDescription> _preparedStatementDescriptions =
         new(StringComparer.Ordinal);
+    private string? _lastPreparedStatementName;
+    private PreparedStatementDescription _lastPreparedStatementDescription;
+    private bool _hasLastPreparedStatementDescription;
     private string? _unnamedStatementSql;
     private uint[]? _unnamedStatementTypeOids;
     private int _unnamedStatementParameterCount;
@@ -445,9 +448,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             },
             cancellationToken).ConfigureAwait(false);
         var fields = result.FirstOrDefault?.Fields ?? [];
-        _preparedStatementDescriptions[statementName] = new PreparedStatementDescription(
+        RememberPreparedStatementDescription(statementName, new PreparedStatementDescription(
             fields.Count == 0 ? null : fields[0],
-            fields.Count);
+            fields.Count));
     }
 
     /// <summary>Creates a named PostgreSQL prepared statement.</summary>
@@ -472,9 +475,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 BlueTuskFrontendMessageWriter.WriteSync(output);
             });
         var fields = result.FirstOrDefault?.Fields ?? [];
-        _preparedStatementDescriptions[statementName] = new PreparedStatementDescription(
+        RememberPreparedStatementDescription(statementName, new PreparedStatementDescription(
             fields.Count == 0 ? null : fields[0],
-            fields.Count);
+            fields.Count));
     }
 
     /// <summary>Executes a named PostgreSQL prepared statement.</summary>
@@ -521,7 +524,6 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         bool useBinaryResults,
         CancellationToken cancellationToken = default)
     {
-        ValidatePreparedStatementName(statementName);
         ObjectDisposedException.ThrowIf(_disposed, this);
         if (!_open)
         {
@@ -529,7 +531,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         ArgumentNullException.ThrowIfNull(parameters);
-        var hasDescription = _preparedStatementDescriptions.TryGetValue(
+        var hasDescription = TryGetPreparedStatementDescription(
             statementName,
             out var description);
         if (hasDescription && description.FirstField is { } firstField)
@@ -541,7 +543,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 {
                     FirstField = firstField with { FormatCode = formatCode },
                 };
-                _preparedStatementDescriptions[statementName] = description;
+                RememberPreparedStatementDescription(statementName, description);
             }
         }
 
@@ -611,7 +613,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 BlueTuskFrontendMessageWriter.WriteSync(output);
             },
             cancellationToken).ConfigureAwait(false);
-        _preparedStatementDescriptions.Remove(statementName);
+        ForgetPreparedStatementDescription(statementName);
     }
 
     /// <summary>Closes a named PostgreSQL prepared statement.</summary>
@@ -630,7 +632,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 BlueTuskFrontendMessageWriter.WriteCloseStatement(output, statementName);
                 BlueTuskFrontendMessageWriter.WriteSync(output);
             });
-        _preparedStatementDescriptions.Remove(statementName);
+        ForgetPreparedStatementDescription(statementName);
     }
 
     /// <summary>Executes multiple unnamed extended-query statements in one protocol cycle.</summary>
@@ -2038,7 +2040,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         TState state,
         Func<TState, int, int> complete,
         CancellationToken cancellationToken) =>
-        _connection.ReadMessagePayloadAsync(destination, state, complete, cancellationToken);
+        _connection.ReadLeasedMessagePayloadAsync(destination, state, complete, cancellationToken);
 
     internal ValueTask ReadPortalPayloadExactlyAsync(
         Memory<byte> destination,
@@ -2885,7 +2887,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ArgumentNullException.ThrowIfNull(writeMessages);
         ObjectDisposedException.ThrowIf(_disposed, this);
 
-        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_operationLock.Wait(0))
+        {
+            await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
         var started = Stopwatch.GetTimestamp();
         try
         {
@@ -3077,7 +3083,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskSession session,
         ExtendedScalarWriteState state)
     {
-        session._preparedStatementDescriptions.Clear();
+        session.ClearPreparedStatementDescriptions();
         session.InvalidateUnnamedStatement();
         return state with { ParseSql = state.OriginalSql };
     }
@@ -3086,6 +3092,57 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskSession session,
         ExtendedScalarWriteState state) =>
         session.RememberUnnamedStatement(state.OriginalSql, state.Parameters);
+
+    private bool TryGetPreparedStatementDescription(
+        string statementName,
+        out PreparedStatementDescription description)
+    {
+        if (_hasLastPreparedStatementDescription &&
+            ReferenceEquals(_lastPreparedStatementName, statementName))
+        {
+            description = _lastPreparedStatementDescription;
+            return true;
+        }
+
+        if (!_preparedStatementDescriptions.TryGetValue(statementName, out description))
+        {
+            return false;
+        }
+
+        _lastPreparedStatementName = statementName;
+        _lastPreparedStatementDescription = description;
+        _hasLastPreparedStatementDescription = true;
+        return true;
+    }
+
+    private void RememberPreparedStatementDescription(
+        string statementName,
+        PreparedStatementDescription description)
+    {
+        _preparedStatementDescriptions[statementName] = description;
+        _lastPreparedStatementName = statementName;
+        _lastPreparedStatementDescription = description;
+        _hasLastPreparedStatementDescription = true;
+    }
+
+    private void ForgetPreparedStatementDescription(string statementName)
+    {
+        _preparedStatementDescriptions.Remove(statementName);
+        if (string.Equals(_lastPreparedStatementName, statementName, StringComparison.Ordinal))
+        {
+            _lastPreparedStatementName = null;
+            _lastPreparedStatementDescription = default;
+            _hasLastPreparedStatementDescription = false;
+        }
+    }
+
+    private void ClearPreparedStatementDescriptions()
+    {
+        _preparedStatementDescriptions.Clear();
+        _lastPreparedStatementName = null;
+        _lastPreparedStatementDescription = default;
+        _hasLastPreparedStatementDescription = false;
+    }
 
     private BlueTuskCopyResult CopyInCore(
         string sql,

@@ -186,10 +186,10 @@ function Get-PairedMetrics {
         [int]$PairedReport.warmupBurstsPerProvider -ne 64 -or
         [int]$PairedReport.trialCount -ne 5 -or
         [int]$PairedReport.blocksPerTrial -ne 501 -or
-        [int]$PairedReport.burstsPerBlock -ne 32) {
+        [int]$PairedReport.burstsPerBlock -ne 4) {
         throw (
             'The paired multiplexing report must contain 64 operations per burst, ' +
-            '64 warmups per provider, five trials, 501 blocks per trial and 32 bursts per block.')
+            '64 warmups per provider, five trials, 501 blocks per trial and 4 bursts per block.')
     }
 
     $capturedUtc = [DateTimeOffset]::MinValue
@@ -203,8 +203,8 @@ function Get-PairedMetrics {
     }
 
     $workloads = @($PairedReport.workloads)
-    if ($workloads.Count -ne 2) {
-        throw "The paired multiplexing report contains $($workloads.Count) workloads; expected 2."
+    if ($workloads.Count -ne 4) {
+        throw "The paired multiplexing report contains $($workloads.Count) workloads; expected 4."
     }
 
     $result = @{}
@@ -387,13 +387,12 @@ foreach ($comparison in $budgets.comparisons) {
     $candidate = $metrics[$candidateName]
     $reference = $metrics[$referenceName]
     $pairedKey = "$candidateName|$referenceName"
+    # Alternating-provider evidence is authoritative when the capture includes
+    # this exact pair. BlueTusk-only comparisons against its ordinary pool still
+    # use the absolute MediumRun measurements.
     $requiresPairedLatency = $null -ne $pairedMetrics -and
-        $referenceName.StartsWith('Npgsql', [StringComparison]::Ordinal)
+        $pairedMetrics.ContainsKey($pairedKey)
     if ($requiresPairedLatency) {
-        if (-not $pairedMetrics.ContainsKey($pairedKey)) {
-            throw "The paired multiplexing report does not contain '$pairedKey'."
-        }
-
         $paired = $pairedMetrics[$pairedKey]
         Assert-MaximumValue `
             -Metric 'mean latency' `

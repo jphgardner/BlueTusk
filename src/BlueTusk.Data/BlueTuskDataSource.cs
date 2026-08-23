@@ -173,7 +173,8 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         }
     }
 
-    public new BlueTuskCommand CreateCommand(string commandText) => (BlueTuskCommand)base.CreateCommand(commandText);
+    public new BlueTuskCommand CreateCommand(string commandText) =>
+        new(commandText ?? string.Empty, this);
 
     public new BlueTuskBatch CreateBatch() => (BlueTuskBatch)base.CreateBatch();
 

@@ -23,9 +23,9 @@ $teeCommands = @($ast.FindAll({
         $node.GetCommandName() -eq 'Tee-Object'
 }, $true))
 
-if ($teeCommands.Count -ne 2)
+if ($teeCommands.Count -ne 3)
 {
-    throw "Expected two Tee-Object calls in the V1 performance gate; found $($teeCommands.Count)."
+    throw "Expected three Tee-Object calls in the V1 performance gate; found $($teeCommands.Count)."
 }
 
 $appendCommands = @($teeCommands | Where-Object {
@@ -34,21 +34,24 @@ $appendCommands = @($teeCommands | Where-Object {
     } | ForEach-Object ParameterName) -contains 'Append'
 })
 
-if ($appendCommands.Count -ne 1)
+if ($appendCommands.Count -ne 2)
 {
-    throw "Expected one append-mode Tee-Object call; found $($appendCommands.Count)."
+    throw "Expected two append-mode Tee-Object calls; found $($appendCommands.Count)."
 }
 
-$appendParameters = @($appendCommands[0].CommandElements | Where-Object {
-    $_ -is [Management.Automation.Language.CommandParameterAst]
-} | ForEach-Object ParameterName)
-
-if ($appendParameters -notcontains 'FilePath' -or
-    $appendParameters -contains 'LiteralPath')
+foreach ($appendCommand in $appendCommands)
 {
-    throw (
-        'Append-mode Tee-Object must use the compatible FilePath parameter set; ' +
-        "found: $($appendParameters -join ', ').")
+    $appendParameters = @($appendCommand.CommandElements | Where-Object {
+        $_ -is [Management.Automation.Language.CommandParameterAst]
+    } | ForEach-Object ParameterName)
+
+    if ($appendParameters -notcontains 'FilePath' -or
+        $appendParameters -contains 'LiteralPath')
+    {
+        throw (
+            'Append-mode Tee-Object must use the compatible FilePath parameter set; ' +
+            "found: $($appendParameters -join ', ').")
+    }
 }
 
 $temporaryPath = Join-Path (
@@ -58,11 +61,13 @@ $temporaryPath = Join-Path (
 try
 {
     'paired' | Set-Content -LiteralPath $temporaryPath -Encoding utf8NoBOM
+    'multiplexing-paired' | Tee-Object -FilePath $temporaryPath -Append | Out-Null
     'benchmark' | Tee-Object -FilePath $temporaryPath -Append | Out-Null
     $content = Get-Content -LiteralPath $temporaryPath
-    if (@($content).Count -ne 2 -or
+    if (@($content).Count -ne 3 -or
         $content[0] -ne 'paired' -or
-        $content[1] -ne 'benchmark')
+        $content[1] -ne 'multiplexing-paired' -or
+        $content[2] -ne 'benchmark')
     {
         throw 'Append-mode performance logging did not preserve both phases.'
     }
@@ -73,5 +78,5 @@ finally
 }
 
 Write-Output (
-    'V1 performance gate contract self-test passed: paired and benchmark phases ' +
+    'V1 performance gate contract self-test passed: both paired phases and the benchmark phase ' +
     'use valid, append-safe PowerShell parameter sets.')
