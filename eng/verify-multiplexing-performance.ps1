@@ -5,7 +5,10 @@ param(
             "BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json")),
     [string]$BudgetPath = (
         Join-Path $PSScriptRoot "multiplexing-performance-budgets.json"),
-    [string]$PairedReportPath,
+    [string]$PairedReportPath = (
+        Join-Path $PSScriptRoot (
+            "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\" +
+            "multiplexing-paired-evidence.json")),
     [string]$EvidencePath = (
         Join-Path $PSScriptRoot (
             "..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\" +
@@ -281,7 +284,8 @@ $resolvedBudgets = (Resolve-Path -LiteralPath $BudgetPath).Path
 $report = Get-Content -LiteralPath $resolvedReport -Raw | ConvertFrom-Json
 $budgets = Get-Content -LiteralPath $resolvedBudgets -Raw | ConvertFrom-Json
 $pairedMetrics = $null
-if ($PSBoundParameters.ContainsKey('PairedReportPath')) {
+$hasPairedReport = -not [string]::IsNullOrWhiteSpace($PairedReportPath)
+if ($hasPairedReport) {
     $resolvedPairedReport = (Resolve-Path -LiteralPath $PairedReportPath).Path
     $pairedReport = Get-Content -LiteralPath $resolvedPairedReport -Raw | ConvertFrom-Json
     $pairedMetrics = Get-PairedMetrics $pairedReport
@@ -297,6 +301,9 @@ $validateEvidence = (
 if ($validateEvidence) {
     $resolvedEvidence = (Resolve-Path -LiteralPath $EvidencePath).Path
     $evidence = Get-Content -LiteralPath $resolvedEvidence -Raw | ConvertFrom-Json
+    if ([int]$evidence.schemaVersion -ne 2) {
+        throw 'The multiplexing evidence manifest schemaVersion must be 2.'
+    }
     $manifestReport = (
         Resolve-Path -LiteralPath (
             Join-Path (Split-Path -Parent $resolvedEvidence) ([string]$evidence.report.path))
@@ -332,7 +339,7 @@ if ($validateEvidence) {
         throw "The report runtime does not match the evidence manifest."
     }
 
-    if ($PSBoundParameters.ContainsKey('PairedReportPath')) {
+    if ($hasPairedReport) {
         if ($null -eq $evidence.pairedReport) {
             throw 'The evidence manifest does not reference the paired multiplexing report.'
         }

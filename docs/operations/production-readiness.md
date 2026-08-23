@@ -59,7 +59,8 @@ owners, environments and failure actions.
    governance contract;
 9. the current digest-pinned PostgreSQL 19 programme record;
 10. complete, non-empty benchmark coverage for every `[Benchmark]` method;
-11. allocation, reference latency and multiplexing performance budgets;
+11. allocation, reference latency, direct provider-comparison and multiplexing
+    performance budgets;
 12. the six-meter, 60-instrument telemetry contract;
 13. all 14 reference SLOs, alerts, dashboard panels and Collector safety
    controls; and
@@ -240,6 +241,7 @@ v1-evidence/
 ├── performance/
 │   ├── multiplexing-evidence.json
 │   ├── multiplexing-paired-evidence.json
+│   ├── provider-paired-evidence.json
 │   └── results/*.json
 └── approvals/
     ├── independent-release-review.json

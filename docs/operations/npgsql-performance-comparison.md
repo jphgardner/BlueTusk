@@ -160,16 +160,17 @@ result.
 
 ## Evidence and integrity
 
-Raw benchmark output is retained below the ignored local `artifacts` tree. The
-exact-candidate performance workflow records the candidate commit, environment,
-image identity and SHA-256 hashes in its downloadable manifest.
+The canonical reports are checked in beside a schema-2 manifest that binds the
+source commit, environment, PostgreSQL image identity and SHA-256 values. The
+exact-candidate workflow produces the same four report roles in a separate
+downloadable artifact bound to the final candidate SHA.
 
-| Evidence | Local path | SHA-256 |
+| Evidence | Repository path | SHA-256 |
 |---|---|---|
-| Five direct alternating-provider workloads | `artifacts/perf-iteration/final-provider-paired-prepared64/provider-paired-evidence.json` | `FE4F18DD717F627EA228B6E932D6AA3F0BE9F08CEBDE4F10922419FC8A3C2216` |
-| Four alternating concurrency workloads | `artifacts/perf-iteration/final-multiplex-paired-inline/multiplexing-paired-evidence.json` | `0DE7F86D41DC5A6EB3B2A13FEC17F5BB8B265A825E60AED2BE25A89C402F2BC4` |
-| Final direct-provider MediumRun | `artifacts/perf-iteration/final-provider-medium-v1-frozen/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json` | `264C43125362E904E4412E38314A927F906DBF9C08D4EC20E4992C61B3443726` |
-| Concurrency MediumRun allocation capture | `artifacts/perf-iteration/final-multiplex-medium/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json` | `55615736ED6B3FAF70B46B16BC4C8029A8BE53021903272794CB0CAAEE240B66` |
+| Five direct alternating-provider workloads | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/provider-paired-evidence.json` | `6CD2904293AFE8D3775BB0CFEEF646D3473DE69E3600068633C620FD3FABD20A` |
+| Four alternating concurrency workloads | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/multiplexing-paired-evidence.json` | `84F1BB3C91C3D7E724E1B34EFAAFA09354DEF66AEA48F94803017324D203EBE0` |
+| Final direct-provider MediumRun | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json` | `9EBFA21E448C9EAEC1A98155339BB465BD724FAFB8BB0CFA599A2983EC8BBD12` |
+| Concurrency MediumRun allocation capture | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.MultiplexingComparisonBenchmarks-report-full.json` | `51C4CA87489D3955AC79043AD889A1287A798984F44BC1EC5CA48389D7CF78ED` |
 
 The repository verifies report shape, workload identity, sample counts, provider
 order, finite positive values and every ratio before accepting an artifact. Its
@@ -189,5 +190,6 @@ explicitly deferred by the current release decision; the product must continue
 to identify PostgreSQL 19 support as preview until the official GA milestone is
 verified.
 
-No coverage-guided fuzzing workflow was triggered or executed while producing
-this report.
+No coverage-guided fuzzing payload was executed while producing or publishing
+this report. Automatically queued PR runs were cancelled under the release
+constraint and were not retried.

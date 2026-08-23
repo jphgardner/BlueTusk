@@ -19,6 +19,7 @@
     "verify-allocation-budgets.ps1",
     "verify-latency-budgets.ps1",
     "test-latency-budget-verifier.ps1",
+    "verify-provider-performance.ps1",
     "verify-multiplexing-performance.ps1",
     "test-multiplexing-performance-verifier.ps1",
     "verify-production-observability.ps1"

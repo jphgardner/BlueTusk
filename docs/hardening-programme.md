@@ -112,13 +112,14 @@ dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj `
 ./eng/test-multiplexing-performance-verifier.ps1
 ```
 
-The checked-in run is bound to source commit `9ba2c50`, PostgreSQL image digest
-`sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15`,
-and a SHA-256-protected full report. It records lower BlueTusk mean, P95 and
-P99 latency than Npgsql for fresh and reused multiplexed commands in this named
-loopback environment. It also records lower latency and allocation than
-non-multiplexed BlueTusk. This closes the regression-evidence gate, not the
-independent production-validation gate.
+The checked-in run is bound to source commit `b520682`, PostgreSQL 19 Beta 3
+image digest
+`sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc`,
+and SHA-256-protected absolute and alternating-provider reports. It records
+lower BlueTusk mean, P95, P99, and managed allocation than Npgsql for fresh and
+reused multiplexed commands and for both ordinary pooled controls in this named
+loopback environment. This closes the former saturated non-multiplexed
+regression gap; it does not replace independent production validation.
 
 Exact-candidate runs retain BenchmarkDotNet evidence for absolute latency and
 allocation and add five alternating-provider trials for provider-relative
