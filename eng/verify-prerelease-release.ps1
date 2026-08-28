@@ -14,13 +14,26 @@ param(
     [Parameter(Mandatory)]
     [string] $Tag,
 
-    [string] $GitEvidencePath
+    [string] $GitEvidencePath,
+
+    [string] $SourceRoot
 )
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
-$repositoryRoot = Split-Path $PSScriptRoot -Parent
+$repositoryRoot = if ([string]::IsNullOrWhiteSpace($SourceRoot))
+{
+    Split-Path $PSScriptRoot -Parent
+}
+else
+{
+    [IO.Path]::GetFullPath($SourceRoot)
+}
+if (-not (Test-Path -LiteralPath $repositoryRoot -PathType Container))
+{
+    throw "Prerelease source root '$repositoryRoot' does not exist."
+}
 $train = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
     ConvertFrom-Json
