@@ -10,6 +10,62 @@ using Microsoft.EntityFrameworkCore;
 
 namespace BlueTusk.ContinuousGraph;
 
+[Flags]
+public enum ContinuousGraphMaintenanceCapabilities
+{
+    None = 0,
+    AuthoritativeRepair = 1,
+    AuthoritativeDelta = 2,
+    TrustedCdcProjection = 4,
+}
+
+/// <summary>Immutable compiler evidence used to classify graph changes safely.</summary>
+public sealed class ContinuousGraphImpactPlan
+{
+    private readonly ReadOnlyCollection<string> _patternElements;
+    private readonly ReadOnlyCollection<string> _projections;
+
+    internal ContinuousGraphImpactPlan(
+        string graphName,
+        string? graphSchema,
+        string fingerprint,
+        string resultKeyProperty,
+        string? resultKeyElementAlias,
+        string? resultKeyColumn,
+        IEnumerable<string> patternElements,
+        IEnumerable<string> projections,
+        string canonicalQuery)
+    {
+        GraphName = graphName;
+        GraphSchema = graphSchema;
+        Fingerprint = fingerprint;
+        ResultKeyProperty = resultKeyProperty;
+        ResultKeyElementAlias = resultKeyElementAlias;
+        ResultKeyColumn = resultKeyColumn;
+        _patternElements = Array.AsReadOnly(patternElements.ToArray());
+        _projections = Array.AsReadOnly(projections.ToArray());
+        CanonicalQuery = canonicalQuery;
+    }
+
+    public string GraphName { get; }
+
+    public string? GraphSchema { get; }
+
+    public string Fingerprint { get; }
+
+    public string ResultKeyProperty { get; }
+
+    public string? ResultKeyElementAlias { get; }
+
+    public string? ResultKeyColumn { get; }
+
+    public IReadOnlyList<string> PatternElements => _patternElements;
+
+    public IReadOnlyList<string> Projections => _projections;
+
+    public string CanonicalQuery { get; }
+}
+
 /// <summary>Raised when a registered continuous graph query is invalid or cannot be translated.</summary>
 public class ContinuousGraphQueryRegistrationException : Exception
 {
@@ -170,17 +226,57 @@ public sealed class ContinuousGraphQueryPlan<TResult, TKey>
     where TKey : notnull
 {
     private readonly ReadOnlyCollection<string> _elementTableAliases;
+    private readonly Func<
+        IContinuousGraphCdcProjector<TResult, TKey>?,
+        ContinuousGraphIncrementalOptions<TResult, TKey>,
+        IContinuousGraphIncrementalEvaluator<TResult, TKey>>?
+        _automaticEvaluatorFactory;
 
     internal ContinuousGraphQueryPlan(
         string graphName,
         string? graphSchema,
         IEnumerable<string> elementTableAliases,
         LiveQueryPlan<TResult, TKey> livePlan)
+        : this(
+            graphName,
+            graphSchema,
+            elementTableAliases,
+            livePlan,
+            ContinuousGraphMaintenanceCapabilities.AuthoritativeRepair,
+            new ContinuousGraphImpactPlan(
+                graphName,
+                graphSchema,
+                livePlan.Fingerprint,
+                string.Empty,
+                null,
+                null,
+                elementTableAliases,
+                [],
+                string.Empty),
+            null)
+    {
+    }
+
+    internal ContinuousGraphQueryPlan(
+        string graphName,
+        string? graphSchema,
+        IEnumerable<string> elementTableAliases,
+        LiveQueryPlan<TResult, TKey> livePlan,
+        ContinuousGraphMaintenanceCapabilities maintenanceCapabilities,
+        ContinuousGraphImpactPlan impactPlan,
+        Func<
+            IContinuousGraphCdcProjector<TResult, TKey>?,
+            ContinuousGraphIncrementalOptions<TResult, TKey>,
+            IContinuousGraphIncrementalEvaluator<TResult, TKey>>?
+            automaticEvaluatorFactory)
     {
         GraphName = graphName;
         GraphSchema = graphSchema;
         _elementTableAliases = Array.AsReadOnly(elementTableAliases.ToArray());
         LivePlan = livePlan;
+        MaintenanceCapabilities = maintenanceCapabilities;
+        ImpactPlan = impactPlan;
+        _automaticEvaluatorFactory = automaticEvaluatorFactory;
     }
 
     public string GraphName { get; }
@@ -190,6 +286,10 @@ public sealed class ContinuousGraphQueryPlan<TResult, TKey>
     public IReadOnlyList<string> ElementTableAliases => _elementTableAliases;
 
     public LiveQueryPlan<TResult, TKey> LivePlan { get; }
+
+    public ContinuousGraphMaintenanceCapabilities MaintenanceCapabilities { get; }
+
+    public ContinuousGraphImpactPlan ImpactPlan { get; }
 
     public string Name => LivePlan.Name;
 
@@ -222,6 +322,45 @@ public sealed class ContinuousGraphQueryPlan<TResult, TKey>
             evaluator,
             options,
             resultLimit);
+
+    /// <summary>
+    /// Creates an automatic three-tier session. Direct CDC projection is used only
+    /// when an explicit projector supplies a complete, matching trust contract.
+    /// </summary>
+    public ContinuousGraphIncrementalSession<TResult, TKey>
+        CreateIncrementalSession(
+            LiveQueryArguments arguments,
+            LiveSecurityScope securityScope,
+            ContinuousGraphIncrementalOptions<TResult, TKey> options) =>
+        CreateAutomaticIncrementalSession(
+            arguments,
+            securityScope,
+            options,
+            resultLimit: null,
+            trustedProjector: null);
+
+    public ContinuousGraphIncrementalSession<TResult, TKey>
+        CreateAutomaticIncrementalSession(
+            LiveQueryArguments arguments,
+            LiveSecurityScope securityScope,
+            ContinuousGraphIncrementalOptions<TResult, TKey> options,
+            int? resultLimit,
+            IContinuousGraphCdcProjector<TResult, TKey>? trustedProjector)
+    {
+        if (_automaticEvaluatorFactory is null)
+        {
+            throw new NotSupportedException(
+                "This graph plan cannot prove an automatic affected-key mapping. Use the custom evaluator overload or full authoritative sessions.");
+        }
+
+        return new ContinuousGraphIncrementalSession<TResult, TKey>(
+            this,
+            arguments,
+            securityScope,
+            _automaticEvaluatorFactory(trustedProjector, options),
+            options,
+            resultLimit);
+    }
 }
 
 /// <summary>Compiles registered typed SQL/PGQ queries into bounded authoritative Live plans.</summary>
@@ -250,6 +389,7 @@ public static class ContinuousGraphQueryCompiler
         var query = definition.QueryFactory(context, definition.ValidationArguments) ??
             throw new ContinuousGraphQueryRegistrationException(
                 $"Continuous graph query '{definition.Name}' returned null during registration.");
+        var capturedImpact = BlueTuskGraphQueryCapture.Consume(context);
         var shape = ContinuousGraphQueryShape.Validate(
             query.Expression,
             keyProperty,
@@ -324,11 +464,188 @@ public static class ContinuousGraphQueryCompiler
             },
             definition.KeySelector.Compile(),
             definition.RowComparer);
+
+        var automaticImpacts = TryBuildAutomaticImpacts(
+            capturedImpact,
+            keyProperty,
+            graph.Schema ?? context.Model.GetDefaultSchema() ?? "public",
+            out var keyProjection);
+        var impactPlan = new ContinuousGraphImpactPlan(
+            graph.Name,
+            graph.Schema,
+            fingerprint,
+            keyProperty,
+            keyProjection?.ElementAlias,
+            keyProjection?.ColumnName,
+            capturedImpact?.Elements.Select(element => string.Join(
+                ':',
+                element.Variable,
+                element.Alias,
+                element.Kind,
+                element.Schema ?? graph.Schema ?? context.Model.GetDefaultSchema() ?? "public",
+                element.Table,
+                string.Join(',', element.KeyColumns))) ?? definition.ElementTableAliases,
+            capturedImpact?.Projections.Select(projection => string.Join(
+                ':',
+                projection.ResultProperty,
+                projection.Variable,
+                projection.GraphProperty,
+                projection.ColumnName ?? "<expression>")) ?? [],
+            shape.CanonicalExpression);
+        Func<
+            IContinuousGraphCdcProjector<TResult, TKey>?,
+            ContinuousGraphIncrementalOptions<TResult, TKey>,
+            IContinuousGraphIncrementalEvaluator<TResult, TKey>>?
+            automaticEvaluatorFactory = null;
+        var maintenanceCapabilities =
+            ContinuousGraphMaintenanceCapabilities.AuthoritativeRepair;
+        if (automaticImpacts is not null)
+        {
+            maintenanceCapabilities |=
+                ContinuousGraphMaintenanceCapabilities.AuthoritativeDelta |
+                ContinuousGraphMaintenanceCapabilities.TrustedCdcProjection;
+            automaticEvaluatorFactory = (projector, options) =>
+                new ContinuousGraphTieredEvaluator<TResult, TKey>(
+                    fingerprint,
+                    automaticImpacts,
+                    async (keys, execution, token) =>
+                    {
+                        await using var scopedContext =
+                            await contextFactory.CreateDbContextAsync(token)
+                                .ConfigureAwait(false);
+                        var scopedQuery = definition.QueryFactory(
+                            scopedContext,
+                            execution.Arguments) ??
+                            throw new ContinuousGraphQueryRegistrationException(
+                                $"Continuous graph query '{definition.Name}' returned null during scoped execution.");
+                        return await ContinuousGraphKeyScope.Apply(
+                                scopedQuery,
+                                definition.KeySelector,
+                                keys)
+                            .AsNoTracking()
+                            .ToListAsync(token)
+                            .ConfigureAwait(false);
+                    },
+                    options.MaximumAffectedKeys,
+                    livePlan.KeyComparer,
+                    projector);
+        }
+
         return new ContinuousGraphQueryPlan<TResult, TKey>(
             graph.Name,
             graph.Schema,
             definition.ElementTableAliases,
-            livePlan);
+            livePlan,
+            maintenanceCapabilities,
+            impactPlan,
+            automaticEvaluatorFactory);
+    }
+
+    private static ReadOnlyCollection<ContinuousGraphAutomaticTableImpact>?
+        TryBuildAutomaticImpacts(
+            BlueTuskGraphQueryImpactPlan? capturedImpact,
+            string keyProperty,
+            string defaultSchema,
+            out BlueTuskGraphQueryImpactProjection? keyProjection)
+    {
+        var projectionForKey = capturedImpact?.Projections.SingleOrDefault(projection =>
+            string.Equals(
+                projection.ResultProperty,
+                keyProperty,
+                StringComparison.Ordinal));
+        keyProjection = projectionForKey;
+        if (capturedImpact is null || projectionForKey?.ColumnName is null)
+        {
+            return null;
+        }
+
+        var keyElement = capturedImpact.Elements.SingleOrDefault(element =>
+            string.Equals(
+                element.Variable,
+                projectionForKey.Variable,
+                StringComparison.Ordinal));
+        if (keyElement is null ||
+            keyElement.KeyColumns.Count != 1 ||
+            !string.Equals(
+                keyElement.KeyColumns[0],
+                projectionForKey.ColumnName,
+                StringComparison.Ordinal))
+        {
+            return null;
+        }
+
+        var impacts = new List<ContinuousGraphAutomaticTableImpact>(
+            capturedImpact.Elements.Count);
+        foreach (var element in capturedImpact.Elements)
+        {
+            IReadOnlyList<string>? columns = null;
+            if (string.Equals(
+                    element.Variable,
+                    keyElement.Variable,
+                    StringComparison.Ordinal))
+            {
+                columns = [projectionForKey.ColumnName];
+            }
+            else if (element.Kind is BlueTuskGraphElementKind.Edge)
+            {
+                var mapped = new List<string>(2);
+                if (string.Equals(
+                        element.SourceVariable,
+                        keyElement.Variable,
+                        StringComparison.Ordinal))
+                {
+                    AddEndpointColumn(element.Source, keyElement.Alias, projectionForKey.ColumnName, mapped);
+                }
+
+                if (string.Equals(
+                        element.DestinationVariable,
+                        keyElement.Variable,
+                        StringComparison.Ordinal))
+                {
+                    AddEndpointColumn(element.Destination, keyElement.Alias, projectionForKey.ColumnName, mapped);
+                }
+                if (mapped.Count > 0)
+                {
+                    columns = mapped;
+                }
+            }
+
+            impacts.Add(new ContinuousGraphAutomaticTableImpact(
+                element.Schema ?? capturedImpact.GraphSchema ?? defaultSchema,
+                element.Table,
+                columns ?? [],
+                columns is not null));
+        }
+
+        return impacts.AsReadOnly();
+    }
+
+    private static void AddEndpointColumn(
+        BlueTuskGraphEndpointDefinition? endpoint,
+        string keyElementAlias,
+        string keyColumn,
+        List<string> mapped)
+    {
+        if (endpoint is null ||
+            !string.Equals(
+                endpoint.VertexTableAlias,
+                keyElementAlias,
+                StringComparison.Ordinal))
+        {
+            return;
+        }
+
+        for (var index = 0; index < endpoint.VertexKeyColumns.Count; index++)
+        {
+            if (string.Equals(
+                    endpoint.VertexKeyColumns[index],
+                    keyColumn,
+                    StringComparison.Ordinal) &&
+                index < endpoint.EdgeKeyColumns.Count)
+            {
+                mapped.Add(endpoint.EdgeKeyColumns[index]);
+            }
+        }
     }
 
     private static BlueTuskPropertyGraphDefinition FindGraph<TContext, TResult, TKey>(

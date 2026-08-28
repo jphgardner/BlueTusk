@@ -291,6 +291,41 @@ public sealed class BlueTuskCopyIntegrationTests
     }
 
     [Fact]
+    public async Task Cancelled_binary_copy_start_aborts_and_leaves_the_connection_reusable()
+    {
+        var tableName = $"bluetusk_cancelled_copy_start_{Guid.NewGuid():N}";
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await using var blocker = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await blocker.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(connection, $"CREATE TABLE {tableName} (id int4)");
+
+        await using (var transaction = await blocker.BeginTransactionAsync(CancellationToken.None))
+        {
+            await using var lockCommand = new BlueTuskCommand(
+                $"LOCK TABLE {tableName} IN ACCESS EXCLUSIVE MODE",
+                blocker)
+            {
+                Transaction = transaction,
+            };
+            _ = await lockCommand.ExecuteNonQueryAsync(CancellationToken.None);
+            using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => connection.BeginBinaryImportAsync(
+                    $"COPY {tableName} FROM STDIN WITH (FORMAT BINARY)",
+                    cancellation.Token).AsTask());
+
+            await using var verify = new BlueTuskCommand("SELECT $1::int4", connection);
+            verify.Parameters.Add(new BlueTuskParameter<int>(42));
+            Assert.Equal(42, await verify.ExecuteScalarAsync<int>(CancellationToken.None));
+            await transaction.RollbackAsync(CancellationToken.None);
+        }
+
+        await ExecuteAsync(connection, $"DROP TABLE {tableName}");
+    }
+
+    [Fact]
     public async Task Cancelled_copy_from_aborts_and_leaves_the_connection_reusable()
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());

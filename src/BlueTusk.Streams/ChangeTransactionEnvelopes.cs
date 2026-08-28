@@ -28,11 +28,12 @@ public sealed record ChangeTransactionEnvelopeOptions
 
 public sealed class ChangeTransactionEnvelope
 {
+    private readonly byte[] _data;
     private readonly int _formatVersion;
 
     internal ChangeTransactionEnvelope(byte[] data, int formatVersion)
     {
-        Data = data;
+        _data = data;
         _formatVersion = formatVersion;
     }
 
@@ -42,7 +43,9 @@ public sealed class ChangeTransactionEnvelope
 
     public int FormatVersion => _formatVersion;
 
-    public ReadOnlyMemory<byte> Data { get; }
+    public ReadOnlyMemory<byte> Data => _data;
+
+    internal byte[] OwnedData => _data;
 }
 
 public static class ChangeTransactionEnvelopeCodec
@@ -141,7 +144,12 @@ public static class ChangeTransactionEnvelopeCodec
 
         try
         {
-            using var stream = new MemoryStream(content.ToArray(), writable: false);
+            using var stream = new MemoryStream(
+                envelope.OwnedData,
+                index: 0,
+                count: content.Length,
+                writable: false,
+                publiclyVisible: false);
             using var reader = new BinaryReader(stream, Encoding.UTF8, leaveOpen: true);
             if (reader.ReadUInt32() != Magic)
             {

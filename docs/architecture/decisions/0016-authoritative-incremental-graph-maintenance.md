@@ -1,7 +1,7 @@
 # ADR 0016: Use bounded incremental graph maintenance with authoritative repair
 
 - Status: Accepted
-- Date: 2026-08-04
+- Date: 2026-08-04; extended for 1.1 on 2026-08-28
 
 ## Context
 
@@ -18,12 +18,18 @@ transaction would create an unrecoverable loss window.
 
 ## Decision
 
-A compiled graph plan may create an incremental session with a trusted
-`IContinuousGraphIncrementalEvaluator<TResult,TKey>`. For each Streams
-transaction, the evaluator derives a complete bounded affected-key set and
-executes the registered, authorised key-scoped database query. It returns rows
-from that query, never client-visible values projected directly from CDC
-tuples.
+A compiled graph plan retains an immutable impact plan and uses three ordered
+maintenance tiers: explicitly trusted CDC delta, compiler-generated
+authoritative scoped delta, then complete authoritative repair. The scoped
+query is the automatic incremental default. The existing custom
+`IContinuousGraphIncrementalEvaluator<TResult,TKey>` remains supported.
+
+A CDC projector is eligible only when it is explicitly registered and presents
+a matching schema/impact fingerprint plus complete old/new values, exact
+changed-column knowledge, sufficient replica identity, and enforcement of the
+original Live security scope. Otherwise it is not invoked. Scoped and complete
+queries execute the registered `GRAPH_TABLE` query under the original
+permissions and RLS boundary.
 
 The session can update its materialised result without a full query only when
 the evaluator declares exact coverage and all of these conditions hold:
@@ -39,7 +45,9 @@ session performs an authoritative full query when a visible row disappears,
 leaves the predicate, or worsens in rank because an unobserved row may need to
 enter the result. It also repairs when the evaluator reports uncertainty, the
 affected-key budget is exceeded, a committed two-phase transaction arrives, or
-the transaction/time repair interval expires.
+the transaction/time repair interval expires. Incomplete tuples, unknown
+schemas, truncation, unsafe deletes, rank-boundary uncertainty, and projector
+uncertainty also force repair.
 
 Prepared and rolled-back two-phase lifecycle records do not change the visible
 result. Commit-prepared forces a full repair. Every proposal holds the session
@@ -63,7 +71,9 @@ Small, exact changes avoid a full graph query while retaining authoritative
 database reads and security-scoped subscription identity. Operators can bound
 affected keys and force periodic repair. Status counters distinguish
 incremental transactions, unrelated transactions, duplicates, authoritative
-repairs, and safety fallbacks.
+repairs, and safety fallbacks. When result membership and order remain stable,
+only affected rows are replaced and the immutable key index is shared with the
+next snapshot.
 
 An evaluator that cannot prove complete affected-key coverage must request
 repair. This contract deliberately favors a full query over an incorrect

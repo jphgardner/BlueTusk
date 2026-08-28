@@ -89,9 +89,29 @@ public sealed class BlueTuskCopyBothChannel : IAsyncDisposable
             return;
         }
 
-        _ = await CompleteAsync().ConfigureAwait(false);
-        _writeLock.Dispose();
+        try
+        {
+            _ = await CompleteAsync().ConfigureAwait(false);
+        }
+        finally
+        {
+            _writeLock.Dispose();
+        }
+
         GC.SuppressFinalize(this);
+    }
+
+    internal async ValueTask AbortAsync()
+    {
+        if (Interlocked.Exchange(ref _disposed, 1) != 0)
+        {
+            return;
+        }
+
+        Interlocked.Exchange(ref _completed, 1);
+        await _writeLock.WaitAsync(CancellationToken.None).ConfigureAwait(false);
+        _writeLock.Release();
+        _writeLock.Dispose();
     }
 }
 

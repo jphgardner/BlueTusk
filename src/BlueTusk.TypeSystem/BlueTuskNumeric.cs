@@ -14,6 +14,39 @@ public enum BlueTuskNumericKind
 /// <summary>Represents PostgreSQL arbitrary-precision <c>numeric</c>, including special values.</summary>
 public readonly record struct BlueTuskNumeric
 {
+    private static readonly decimal[] DecimalScaleFactors =
+    [
+        1m,
+        10m,
+        100m,
+        1_000m,
+        10_000m,
+        100_000m,
+        1_000_000m,
+        10_000_000m,
+        100_000_000m,
+        1_000_000_000m,
+        10_000_000_000m,
+        100_000_000_000m,
+        1_000_000_000_000m,
+        10_000_000_000_000m,
+        100_000_000_000_000m,
+        1_000_000_000_000_000m,
+        10_000_000_000_000_000m,
+        100_000_000_000_000_000m,
+        1_000_000_000_000_000_000m,
+        10_000_000_000_000_000_000m,
+        100_000_000_000_000_000_000m,
+        1_000_000_000_000_000_000_000m,
+        10_000_000_000_000_000_000_000m,
+        100_000_000_000_000_000_000_000m,
+        1_000_000_000_000_000_000_000_000m,
+        10_000_000_000_000_000_000_000_000m,
+        100_000_000_000_000_000_000_000_000m,
+        1_000_000_000_000_000_000_000_000_000m,
+        10_000_000_000_000_000_000_000_000_000m,
+    ];
+
     public const int MaximumScale = 16_383;
 
     public BlueTuskNumeric(BigInteger unscaledValue, int scale)
@@ -156,6 +189,19 @@ public readonly record struct BlueTuskNumeric
         if (!IsFinite)
         {
             throw new InvalidCastException($"PostgreSQL numeric {Kind} cannot be represented as System.Decimal.");
+        }
+
+        if ((uint)Scale < (uint)DecimalScaleFactors.Length)
+        {
+            try
+            {
+                return (decimal)UnscaledValue / DecimalScaleFactors[Scale];
+            }
+            catch (OverflowException)
+            {
+                // Preserve the parser's rounding behavior when the unscaled value exceeds
+                // Decimal.MaxValue but the scaled PostgreSQL numeric can still fit.
+            }
         }
 
         return decimal.Parse(ToString(), NumberStyles.Number, CultureInfo.InvariantCulture);

@@ -23,6 +23,31 @@ public enum ContinuousGraphEvaluationMode
     Duplicate,
 }
 
+/// <summary>Identifies the correctness tier used to maintain a graph result.</summary>
+public enum ContinuousGraphMaintenanceTier
+{
+    None,
+    TrustedCdcDelta,
+    AuthoritativeDelta,
+    AuthoritativeRepair,
+}
+
+/// <summary>Evidence required before direct CDC projection is enabled.</summary>
+public sealed record ContinuousGraphCdcTrustContract(
+    string SchemaFingerprint,
+    bool HasCompleteOldAndNewValues,
+    bool HasExactChangedColumns,
+    bool HasSufficientReplicaIdentity,
+    bool EnforcesSecurityScope)
+{
+    public bool IsComplete =>
+        !string.IsNullOrWhiteSpace(SchemaFingerprint) &&
+        HasCompleteOldAndNewValues &&
+        HasExactChangedColumns &&
+        HasSufficientReplicaIdentity &&
+        EnforcesSecurityScope;
+}
+
 /// <summary>
 /// Authoritative affected-key rows produced by a registered incremental evaluator.
 /// </summary>
@@ -41,7 +66,9 @@ public sealed class ContinuousGraphIncrementalResult<TResult, TKey>
         ContinuousGraphIncrementalDisposition disposition,
         IEnumerable<TKey> affectedKeys,
         IEnumerable<TResult> rows,
-        string? detail)
+        string? detail,
+        ContinuousGraphMaintenanceTier maintenanceTier =
+            ContinuousGraphMaintenanceTier.AuthoritativeDelta)
     {
         Disposition = disposition;
         _affectedKeys = Array.AsReadOnly(affectedKeys.ToArray());
@@ -61,6 +88,7 @@ public sealed class ContinuousGraphIncrementalResult<TResult, TKey>
         }
 
         Detail = detail;
+        MaintenanceTier = maintenanceTier;
     }
 
     public ContinuousGraphIncrementalDisposition Disposition { get; }
@@ -71,13 +99,16 @@ public sealed class ContinuousGraphIncrementalResult<TResult, TKey>
 
     public string? Detail { get; }
 
+    public ContinuousGraphMaintenanceTier MaintenanceTier { get; }
+
     public static ContinuousGraphIncrementalResult<TResult, TKey> Unrelated(
         string? detail = null) =>
         new(
             ContinuousGraphIncrementalDisposition.Unrelated,
             [],
             [],
-            detail);
+            detail,
+            ContinuousGraphMaintenanceTier.None);
 
     public static ContinuousGraphIncrementalResult<TResult, TKey> Exact(
         IEnumerable<TKey> affectedKeys,
@@ -101,8 +132,13 @@ public sealed class ContinuousGraphIncrementalResult<TResult, TKey>
             ContinuousGraphIncrementalDisposition.RequiresRepair,
             [],
             [],
-            detail);
+            detail,
+            ContinuousGraphMaintenanceTier.None);
     }
+
+    internal ContinuousGraphIncrementalResult<TResult, TKey> WithMaintenanceTier(
+        ContinuousGraphMaintenanceTier maintenanceTier) =>
+        new(Disposition, _affectedKeys, _rows, Detail, maintenanceTier);
 }
 
 /// <summary>
@@ -113,6 +149,22 @@ public interface IContinuousGraphIncrementalEvaluator<TResult, TKey>
     where TKey : notnull
 {
     ValueTask<ContinuousGraphIncrementalResult<TResult, TKey>> EvaluateAsync(
+        ChangeTransaction transaction,
+        LiveQueryExecutionContext context,
+        CancellationToken cancellationToken = default);
+}
+
+/// <summary>
+/// Explicit opt-in projector for mathematically exact in-memory CDC maintenance.
+/// Implementations must request repair whenever they cannot prove their result.
+/// </summary>
+public interface IContinuousGraphCdcProjector<TResult, TKey>
+    where TResult : class
+    where TKey : notnull
+{
+    ContinuousGraphCdcTrustContract TrustContract { get; }
+
+    ValueTask<ContinuousGraphIncrementalResult<TResult, TKey>> ProjectAsync(
         ChangeTransaction transaction,
         LiveQueryExecutionContext context,
         CancellationToken cancellationToken = default);
@@ -157,23 +209,35 @@ public sealed class ContinuousGraphEvaluation<TResult, TKey>
 {
     internal ContinuousGraphEvaluation(
         ContinuousGraphEvaluationMode mode,
+        ContinuousGraphMaintenanceTier maintenanceTier,
         LiveDiffBatch<TResult, TKey>? batch,
         BlueTuskLogSequenceNumber? sourcePosition,
-        string? detail)
+        string? detail,
+        int affectedKeyCount,
+        int queryCount)
     {
         Mode = mode;
+        MaintenanceTier = maintenanceTier;
         Batch = batch;
         SourcePosition = sourcePosition;
         Detail = detail;
+        AffectedKeyCount = affectedKeyCount;
+        QueryCount = queryCount;
     }
 
     public ContinuousGraphEvaluationMode Mode { get; }
+
+    public ContinuousGraphMaintenanceTier MaintenanceTier { get; }
 
     public LiveDiffBatch<TResult, TKey>? Batch { get; }
 
     public BlueTuskLogSequenceNumber? SourcePosition { get; }
 
     public string? Detail { get; }
+
+    public int AffectedKeyCount { get; }
+
+    public int QueryCount { get; }
 }
 
 /// <summary>
@@ -195,7 +259,9 @@ public sealed class ContinuousGraphEvaluationDelivery<TResult, TKey> : IAsyncDis
         Evaluation = evaluation;
         _settle = settle;
         (_telemetryStarted, _telemetryActivity) =
-            ContinuousGraphDiagnostics.StartEvaluation(evaluation.Mode);
+            ContinuousGraphDiagnostics.StartEvaluation(
+                evaluation.Mode,
+                evaluation.MaintenanceTier);
     }
 
     public ContinuousGraphEvaluation<TResult, TKey> Evaluation { get; }
@@ -242,8 +308,12 @@ public sealed class ContinuousGraphEvaluationDelivery<TResult, TKey> : IAsyncDis
     private void RecordTelemetry(string outcome) =>
         ContinuousGraphDiagnostics.RecordEvaluation(
             Evaluation.Mode,
+            Evaluation.MaintenanceTier,
             outcome,
             Evaluation.Batch?.Events.Count ?? 0,
+            Evaluation.AffectedKeyCount,
+            Evaluation.QueryCount,
+            Evaluation.Detail,
             _telemetryStarted,
             _telemetryActivity);
 }
@@ -255,23 +325,33 @@ public sealed class ContinuousGraphIncrementalStatus
         BlueTuskLogSequenceNumber? sourcePosition,
         long nextSequence,
         long incrementalTransactions,
+        long trustedCdcTransactions,
+        long authoritativeDeltaTransactions,
         long authoritativeRepairs,
         long unrelatedTransactions,
         long duplicateTransactions,
         long fallbackRepairs,
+        long affectedKeys,
+        long queryCount,
         int transactionsSinceRepair,
-        DateTimeOffset? lastRepairAt)
+        DateTimeOffset? lastRepairAt,
+        string? lastFallbackReason)
     {
         IsInitialized = isInitialized;
         SourcePosition = sourcePosition;
         NextSequence = nextSequence;
         IncrementalTransactions = incrementalTransactions;
+        TrustedCdcTransactions = trustedCdcTransactions;
+        AuthoritativeDeltaTransactions = authoritativeDeltaTransactions;
         AuthoritativeRepairs = authoritativeRepairs;
         UnrelatedTransactions = unrelatedTransactions;
         DuplicateTransactions = duplicateTransactions;
         FallbackRepairs = fallbackRepairs;
+        AffectedKeys = affectedKeys;
+        QueryCount = queryCount;
         TransactionsSinceRepair = transactionsSinceRepair;
         LastRepairAt = lastRepairAt;
+        LastFallbackReason = lastFallbackReason;
     }
 
     public bool IsInitialized { get; }
@@ -282,6 +362,10 @@ public sealed class ContinuousGraphIncrementalStatus
 
     public long IncrementalTransactions { get; }
 
+    public long TrustedCdcTransactions { get; }
+
+    public long AuthoritativeDeltaTransactions { get; }
+
     public long AuthoritativeRepairs { get; }
 
     public long UnrelatedTransactions { get; }
@@ -290,9 +374,15 @@ public sealed class ContinuousGraphIncrementalStatus
 
     public long FallbackRepairs { get; }
 
+    public long AffectedKeys { get; }
+
+    public long QueryCount { get; }
+
     public int TransactionsSinceRepair { get; }
 
     public DateTimeOffset? LastRepairAt { get; }
+
+    public string? LastFallbackReason { get; }
 }
 
 /// <summary>
@@ -315,12 +405,17 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
     private uint? _lastTransactionId;
     private long _nextSequence = 1;
     private long _incrementalTransactions;
+    private long _trustedCdcTransactions;
+    private long _authoritativeDeltaTransactions;
     private long _authoritativeRepairs;
     private long _unrelatedTransactions;
     private long _duplicateTransactions;
     private long _fallbackRepairs;
+    private long _affectedKeys;
+    private long _queryCount;
     private int _transactionsSinceRepair;
     private DateTimeOffset? _lastRepairAt;
+    private string? _lastFallbackReason;
     private int _disposed;
 
     internal ContinuousGraphIncrementalSession(
@@ -368,12 +463,17 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                     _lastPosition,
                     _nextSequence,
                     _incrementalTransactions,
+                    _trustedCdcTransactions,
+                    _authoritativeDeltaTransactions,
                     _authoritativeRepairs,
                     _unrelatedTransactions,
                     _duplicateTransactions,
                     _fallbackRepairs,
+                    _affectedKeys,
+                    _queryCount,
                     _transactionsSinceRepair,
-                    _lastRepairAt);
+                    _lastRepairAt,
+                    _lastFallbackReason);
             }
         }
     }
@@ -408,10 +508,13 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                 null,
                 checked(batch.LastSequence + 1),
                 ContinuousGraphEvaluationMode.Initial,
+                ContinuousGraphMaintenanceTier.AuthoritativeRepair,
                 batch,
                 "authoritative-initial",
                 IsRepair: true,
-                IsFallback: false);
+                IsFallback: false,
+                AffectedKeyCount: 0,
+                QueryCount: 1);
             return CreateDelivery(proposal);
         }
         catch
@@ -444,10 +547,13 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                         _lastTransactionId,
                         _nextSequence,
                         ContinuousGraphEvaluationMode.Duplicate,
+                        ContinuousGraphMaintenanceTier.None,
                         null,
                         "at-least-once-redelivery",
                         IsRepair: false,
-                        IsFallback: false));
+                        IsFallback: false,
+                        AffectedKeyCount: 0,
+                        QueryCount: 0));
                 }
 
                 if (transaction.CommitEndPosition <= lastPosition)
@@ -476,10 +582,13 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                     transaction.TransactionId,
                     _nextSequence,
                     ContinuousGraphEvaluationMode.Unrelated,
+                    ContinuousGraphMaintenanceTier.None,
                     null,
                     $"two-phase-{transaction.Outcome.ToString().ToLowerInvariant()}",
                     IsRepair: false,
-                    IsFallback: false));
+                    IsFallback: false,
+                    AffectedKeyCount: 0,
+                    QueryCount: 0));
             }
 
             if (transaction.IsTwoPhase)
@@ -507,10 +616,13 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                         transaction.TransactionId,
                         _nextSequence,
                         ContinuousGraphEvaluationMode.Unrelated,
+                        ContinuousGraphMaintenanceTier.None,
                         null,
                         result.Detail,
                         IsRepair: false,
-                        IsFallback: false)),
+                        IsFallback: false,
+                        AffectedKeyCount: 0,
+                        QueryCount: 0)),
                 ContinuousGraphIncrementalDisposition.RequiresRepair =>
                     await PrepareRepairCoreAsync(
                         transaction.CommitEndPosition,
@@ -599,14 +711,18 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
         }
 
         var affectedSet = affected.ToHashSet(_plan.LivePlan.KeyComparer);
-        var currentRows = _snapshot!.Rows
-            .Select((row, index) => new KeyValuePair<TKey, TResult>(
-                _snapshot.Keys[index],
-                row))
-            .ToDictionary(
-                static pair => pair.Key,
-                static pair => pair.Value,
-                _plan.LivePlan.KeyComparer);
+        var visibleAffected = new Dictionary<TKey, TResult>(
+            Math.Min(affected.Length, _snapshot!.Rows.Count),
+            _plan.LivePlan.KeyComparer);
+        for (var index = 0; index < _snapshot.Rows.Count; index++)
+        {
+            var key = _snapshot.Keys[index];
+            if (affectedSet.Contains(key))
+            {
+                visibleAffected.Add(key, _snapshot.Rows[index]);
+            }
+        }
+
         var authoritative = new Dictionary<TKey, TResult>(
             _plan.LivePlan.KeyComparer);
         foreach (var row in result.Rows)
@@ -628,7 +744,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
 
         foreach (var key in affected)
         {
-            var wasVisible = currentRows.TryGetValue(key, out var previous);
+            var wasVisible = visibleAffected.TryGetValue(key, out var previous);
             var isVisible = authoritative.TryGetValue(key, out var current);
             if (wasVisible && !isVisible)
             {
@@ -653,27 +769,80 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             }
         }
 
-        foreach (var (key, row) in authoritative)
+        var comparer = new ResultComparer(
+            _plan.LivePlan.KeySelector,
+            _options.ResultOrdering,
+            _options.KeyOrdering);
+        var candidates = authoritative.Values.ToArray();
+        Array.Sort(candidates, comparer);
+        var unaffected = new List<TResult>(_snapshot.Rows.Count);
+        for (var index = 0; index < _snapshot.Rows.Count; index++)
         {
-            currentRows[key] = row;
+            if (!affectedSet.Contains(_snapshot.Keys[index]))
+            {
+                unaffected.Add(_snapshot.Rows[index]);
+            }
         }
 
-        var ordered = currentRows
-            .Select(static pair => pair.Value)
-            .Order(new ResultComparer(
+        var ordered = new TResult[Math.Min(
+            _resultLimit,
+            unaffected.Count + candidates.Length)];
+        for (int target = 0, left = 0, right = 0;
+             target < ordered.Length;
+             target++)
+        {
+            if (right >= candidates.Length ||
+                (left < unaffected.Count && comparer.Compare(
+                    unaffected[left],
+                    candidates[right]) <= 0))
+            {
+                ordered[target] = unaffected[left++];
+            }
+            else
+            {
+                ordered[target] = candidates[right++];
+            }
+        }
+        var membershipAndOrderUnchanged = ordered.Length == _snapshot.Rows.Count;
+        if (membershipAndOrderUnchanged)
+        {
+            for (var index = 0; index < ordered.Length; index++)
+            {
+                if (!_plan.LivePlan.KeyComparer.Equals(
+                    _snapshot.Keys[index],
+                    _plan.LivePlan.KeySelector(ordered[index])))
+                {
+                    membershipAndOrderUnchanged = false;
+                    break;
+                }
+            }
+        }
+
+        LiveDiffBatch<TResult, TKey> batch;
+        if (membershipAndOrderUnchanged)
+        {
+            var affectedRows = ordered
+                .Where(row => affectedSet.Contains(_plan.LivePlan.KeySelector(row)))
+                .ToArray();
+            batch = LiveResultDiffer.DiffAffected(
+                _snapshot,
+                affectedRows,
                 _plan.LivePlan.KeySelector,
-                _options.ResultOrdering,
-                _options.KeyOrdering))
-            .Take(_resultLimit)
-            .ToArray();
-        var batch = LiveResultDiffer.Diff(
-            _snapshot,
-            ordered,
-            _plan.LivePlan.KeySelector,
-            _plan.LivePlan.RowComparer,
-            _plan.LivePlan.KeyComparer,
-            _options.DiffOptions,
-            _nextSequence);
+                _plan.LivePlan.RowComparer,
+                _options.DiffOptions,
+                _nextSequence);
+        }
+        else
+        {
+            batch = LiveResultDiffer.Diff(
+                _snapshot,
+                ordered,
+                _plan.LivePlan.KeySelector,
+                _plan.LivePlan.RowComparer,
+                _plan.LivePlan.KeyComparer,
+                _options.DiffOptions,
+                _nextSequence);
+        }
         var nextSequence = batch.Events.Count == 0
             ? _nextSequence
             : checked(batch.LastSequence + 1);
@@ -683,10 +852,14 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             transaction.TransactionId,
             nextSequence,
             ContinuousGraphEvaluationMode.Incremental,
+            result.MaintenanceTier,
             batch.Events.Count == 0 ? null : batch,
             result.Detail,
             IsRepair: false,
-            IsFallback: false));
+            IsFallback: false,
+            AffectedKeyCount: affected.Length,
+            QueryCount: result.MaintenanceTier is
+                ContinuousGraphMaintenanceTier.AuthoritativeDelta ? 1 : 0));
     }
 
     private async ValueTask<ContinuousGraphEvaluationDelivery<TResult, TKey>>
@@ -716,10 +889,13 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
             transactionId,
             nextSequence,
             ContinuousGraphEvaluationMode.AuthoritativeRepair,
+            ContinuousGraphMaintenanceTier.AuthoritativeRepair,
             batch.Events.Count == 0 ? null : batch,
             detail,
             IsRepair: true,
-            isFallback));
+            isFallback,
+            AffectedKeyCount: 0,
+            QueryCount: 1));
     }
 
     private async ValueTask<IReadOnlyList<TResult>> ExecuteAuthoritativeAsync(
@@ -744,9 +920,12 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
     {
         var evaluation = new ContinuousGraphEvaluation<TResult, TKey>(
             proposal.Mode,
+            proposal.MaintenanceTier,
             proposal.Batch,
             proposal.SourcePosition,
-            proposal.Detail);
+            proposal.Detail,
+            proposal.AffectedKeyCount,
+            proposal.QueryCount);
         return new ContinuousGraphEvaluationDelivery<TResult, TKey>(
             evaluation,
             commit =>
@@ -763,6 +942,19 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                             ContinuousGraphEvaluationMode.Incremental)
                         {
                             _incrementalTransactions++;
+                            if (proposal.MaintenanceTier is
+                                ContinuousGraphMaintenanceTier.TrustedCdcDelta)
+                            {
+                                _trustedCdcTransactions++;
+                            }
+                            else if (proposal.MaintenanceTier is
+                                ContinuousGraphMaintenanceTier.AuthoritativeDelta)
+                            {
+                                _authoritativeDeltaTransactions++;
+                            }
+
+                            _affectedKeys += proposal.AffectedKeyCount;
+                            _queryCount += proposal.QueryCount;
                             _transactionsSinceRepair++;
                         }
                         else if (proposal.Mode is
@@ -779,6 +971,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
 
                         if (proposal.IsRepair)
                         {
+                            _queryCount += proposal.QueryCount;
                             if (proposal.Mode is
                                 ContinuousGraphEvaluationMode.AuthoritativeRepair)
                             {
@@ -786,6 +979,7 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
                                 if (proposal.IsFallback)
                                 {
                                     _fallbackRepairs++;
+                                    _lastFallbackReason = proposal.Detail;
                                 }
                             }
 
@@ -832,10 +1026,13 @@ public sealed class ContinuousGraphIncrementalSession<TResult, TKey> :
         uint? TransactionId,
         long NextSequence,
         ContinuousGraphEvaluationMode Mode,
+        ContinuousGraphMaintenanceTier MaintenanceTier,
         LiveDiffBatch<TResult, TKey>? Batch,
         string? Detail,
         bool IsRepair,
-        bool IsFallback);
+        bool IsFallback,
+        int AffectedKeyCount,
+        int QueryCount);
 
     private sealed class ResultComparer(
         Func<TResult, TKey> keySelector,

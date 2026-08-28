@@ -263,6 +263,12 @@ BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.ReleaseAsync(BlueTusk.Con
 BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.RenewAsync(BlueTusk.ControlPlane.ManagedDeploymentLease! lease, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease!>
 BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.TryAcquireAsync(string! deploymentId, string! owner, System.TimeSpan duration, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeploymentLease?>
 BlueTusk.ControlPlane.PostgreSqlManagedDeploymentStore.UpdateStatusAsync(string! deploymentId, BlueTusk.ControlPlane.ManagedDeploymentStatus! status, long expectedRevision, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ManagedDeployment!>
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.MaximumParallelInstances.get -> int
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.MaximumParallelInstances.init -> void
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.PostgreSqlControlPlaneQueryOptions() -> void
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.SnapshotCacheDuration.get -> System.TimeSpan
+BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions.SnapshotCacheDuration.init -> void
 const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumLabels = 128 -> int
 const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumReplicasPerWorkload = 256 -> int
 const BlueTusk.ControlPlane.ManagedDeploymentValidation.MaximumSecretReferencesPerWorkload = 128 -> int
@@ -339,3 +345,4 @@ static BlueTusk.ControlPlane.ManagedTenantUsage.operator !=(BlueTusk.ControlPlan
 static BlueTusk.ControlPlane.ManagedTenantUsage.operator ==(BlueTusk.ControlPlane.ManagedTenantUsage? left, BlueTusk.ControlPlane.ManagedTenantUsage? right) -> bool
 static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator !=(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
 static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator ==(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
+static BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService.Create(System.Collections.Generic.IEnumerable<BlueTusk.ControlPlane.ControlPlanePostgreSqlSource!>! instances, BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions! options, System.TimeProvider? timeProvider = null) -> BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService!

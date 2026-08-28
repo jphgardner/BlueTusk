@@ -6,6 +6,22 @@ namespace BlueTusk.Data.Tests;
 public sealed class BlueTuskLargeObjectStreamTests
 {
     [Fact]
+    public void Resolves_an_unknown_length_lazily_without_changing_position()
+    {
+        using var operations = new FakeLargeObjectOperations("abcdef"u8.ToArray());
+        using var stream = new BlueTuskLargeObjectStream(
+            42,
+            FileAccess.Read,
+            length: -1,
+            position: 0,
+            operations);
+
+        Assert.Equal(6, stream.Length);
+        Assert.Equal(0, stream.Position);
+        Assert.Equal(6, stream.Length);
+    }
+
+    [Fact]
     public async Task Reads_writes_seeks_and_truncates_asynchronously()
     {
         using var operations = new FakeLargeObjectOperations("abcdef"u8.ToArray());

@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "baseline": "1.0.0-candidate",
+  "baseline": "1.1.0-candidate",
   "normalization": "utf8-lf",
   "files": [
     {
@@ -17,7 +17,7 @@
     },
     {
       "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Unshipped.txt",
-      "sha256": "9ec383da03783717ccc38f90eda746b31bb4ea4273ecf175c8502fb3388017a0"
+      "sha256": "d94f6d1a156e0dc64bb777ec2dabf4e0ac6166c7102bb672155c208fda54cb24"
     }
   ]
 }

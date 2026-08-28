@@ -27,6 +27,22 @@ if (Test-Path -LiteralPath $testRoot)
     Remove-Item -LiteralPath $testRoot -Recurse -Force
 }
 New-Item -ItemType Directory -Path $testRoot -Force | Out-Null
+$sourceRoot = Join-Path $testRoot 'source-root'
+foreach ($family in @($train.families))
+{
+    $definition = $families.families.$family
+    $versionPath = Join-Path $sourceRoot $definition.versionFile
+    New-Item -ItemType Directory -Path (Split-Path $versionPath -Parent) `
+        -Force | Out-Null
+    @'
+<Project>
+  <PropertyGroup>
+    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionSuffix></VersionSuffix>
+  </PropertyGroup>
+</Project>
+'@ | Set-Content -LiteralPath $versionPath -Encoding utf8NoBOM
+}
 
 function Write-Evidence
 {
@@ -80,7 +96,8 @@ foreach ($family in @($train.families))
         -Version ([string]$train.version) `
         -Commit $commit `
         -Tag $tag `
-        -GitEvidencePath $path *> $null
+        -GitEvidencePath $path `
+        -SourceRoot $sourceRoot *> $null
 }
 
 $lastFamily = [string]@($train.families)[-1]
@@ -96,7 +113,8 @@ $wrongMain = [ordered]@{
 $wrongMainPath = Write-Evidence -Name 'wrong-main' -Value $wrongMain
 Assert-Rejected -Name 'wrong-main' -Action {
     & $verifier -Family $lastFamily -Version $train.version -Commit $commit `
-        -Tag $lastTag -GitEvidencePath $wrongMainPath *> $null
+        -Tag $lastTag -GitEvidencePath $wrongMainPath `
+        -SourceRoot $sourceRoot *> $null
 }
 
 $missingDependencyTags = [ordered]@{}
@@ -110,7 +128,8 @@ $missingDependency = [ordered]@{
 $missingDependencyPath = Write-Evidence -Name 'missing-dependency' -Value $missingDependency
 Assert-Rejected -Name 'missing-dependency' -Action {
     & $verifier -Family $lastFamily -Version $train.version -Commit $commit `
-        -Tag $lastTag -GitEvidencePath $missingDependencyPath *> $null
+        -Tag $lastTag -GitEvidencePath $missingDependencyPath `
+        -SourceRoot $sourceRoot *> $null
 }
 
 $stableTag = [ordered]@{
@@ -122,15 +141,30 @@ $stableTag = [ordered]@{
 $stableTagPath = Write-Evidence -Name 'stable-tag' -Value $stableTag
 Assert-Rejected -Name 'stable-tag' -Action {
     & $verifier -Family $lastFamily -Version $train.version -Commit $commit `
-        -Tag $lastTag -GitEvidencePath $stableTagPath *> $null
+        -Tag $lastTag -GitEvidencePath $stableTagPath `
+        -SourceRoot $sourceRoot *> $null
 }
 
 Assert-Rejected -Name 'wrong-version' -Action {
     & $verifier -Family Provider -Version '1.0.0-rc.2' -Commit $commit `
         -Tag 'provider-v1.0.0-rc.2' `
-        -GitEvidencePath (Join-Path $testRoot 'valid-Provider.json') *> $null
+        -GitEvidencePath (Join-Path $testRoot 'valid-Provider.json') `
+        -SourceRoot $sourceRoot *> $null
+}
+
+$providerVersionPath = Join-Path $sourceRoot $families.families.Provider.versionFile
+(Get-Content -LiteralPath $providerVersionPath -Raw).Replace(
+    '<VersionPrefix>1.0.0</VersionPrefix>',
+    '<VersionPrefix>1.1.0</VersionPrefix>') |
+    Set-Content -LiteralPath $providerVersionPath -Encoding utf8NoBOM
+Assert-Rejected -Name 'wrong-source-version' -Action {
+    & $verifier -Family Provider -Version $train.version -Commit $commit `
+        -Tag "provider-v$($train.version)" `
+        -GitEvidencePath (Join-Path $testRoot 'valid-Provider.json') `
+        -SourceRoot $sourceRoot *> $null
 }
 
 Write-Output (
     "Prerelease verifier accepted all $(@($train.families).Count) ordered families " +
-    'and rejected wrong-main, missing-dependency, stable-tag, and wrong-version mutations.')
+    'and rejected wrong-main, missing-dependency, stable-tag, wrong-version, ' +
+    'and wrong-source-version mutations.')

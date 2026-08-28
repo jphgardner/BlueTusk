@@ -208,6 +208,7 @@ public sealed class BlueTuskGraphMatch
         configure(projection);
         var translation = BlueTuskGraphSqlTranslator.Translate(
             _context, _graph, _pattern.Steps, projection.Projections, typeof(TResult));
+        BlueTuskGraphQueryCapture.Record(_context, translation.ImpactPlan);
         return _context.Model.FindEntityType(typeof(TResult)) is null
             ? _context.Database.SqlQueryRaw<TResult>(translation.Sql, translation.Parameters)
             : _context.Set<TResult>().FromSqlRaw(translation.Sql, translation.Parameters);

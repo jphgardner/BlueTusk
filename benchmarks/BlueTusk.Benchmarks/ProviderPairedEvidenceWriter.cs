@@ -14,7 +14,7 @@ internal static class ProviderPairedEvidenceWriter
     private const int TrialCount = 5;
     private const int BlocksPerTrial = 501;
 
-    public static async Task CaptureAsync(string outputPath)
+    public static async Task CaptureCriticalAsync(string outputPath)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
 
@@ -22,7 +22,89 @@ internal static class ProviderPairedEvidenceWriter
         await benchmark.Setup();
         try
         {
-            var workloads = new[]
+            PairedWorkloadEvidence[] workloads =
+            [
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskPreparedScalarAsync),
+                    benchmark.BlueTuskPreparedScalarAsync,
+                    nameof(benchmark.NpgsqlPreparedScalarAsync),
+                    benchmark.NpgsqlPreparedScalarAsync,
+                    expectedResult: 42,
+                    warmupOperationsPerProvider: 512,
+                    operationsPerBlock: 64),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskSequentialOneMegabyteByteaAsync),
+                    benchmark.BlueTuskSequentialOneMegabyteByteaAsync,
+                    nameof(benchmark.NpgsqlSequentialOneMegabyteByteaAsync),
+                    benchmark.NpgsqlSequentialOneMegabyteByteaAsync,
+                    expectedResult: 1_048_576L,
+                    warmupOperationsPerProvider: 32,
+                    operationsPerBlock: 4),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskBinaryCopyExport1000RowsAsync),
+                    benchmark.BlueTuskBinaryCopyExport1000RowsAsync,
+                    nameof(benchmark.NpgsqlBinaryCopyExport1000RowsAsync),
+                    benchmark.NpgsqlBinaryCopyExport1000RowsAsync,
+                    expectedResult: 499_500L,
+                    warmupOperationsPerProvider: 8,
+                    operationsPerBlock: 1),
+            ];
+
+            await WriteReportAsync(outputPath, workloads);
+        }
+        finally
+        {
+            await benchmark.DisposeAsync();
+        }
+    }
+
+    public static async Task CaptureCopyAsync(string outputPath)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+
+        var benchmark = new ProviderComparisonBenchmarks();
+        await benchmark.Setup();
+        try
+        {
+            PairedWorkloadEvidence[] workloads =
+            [
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskBinaryCopyImport1000RowsAsync),
+                    benchmark.BlueTuskBinaryCopyImport1000RowsAsync,
+                    nameof(benchmark.NpgsqlBinaryCopyImport1000RowsAsync),
+                    benchmark.NpgsqlBinaryCopyImport1000RowsAsync,
+                    expectedResult: 1_000L,
+                    warmupOperationsPerProvider: 8,
+                    operationsPerBlock: 1),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskBinaryCopyExport1000RowsAsync),
+                    benchmark.BlueTuskBinaryCopyExport1000RowsAsync,
+                    nameof(benchmark.NpgsqlBinaryCopyExport1000RowsAsync),
+                    benchmark.NpgsqlBinaryCopyExport1000RowsAsync,
+                    expectedResult: 499_500L,
+                    warmupOperationsPerProvider: 8,
+                    operationsPerBlock: 1),
+            ];
+
+            await WriteReportAsync(outputPath, workloads);
+        }
+        finally
+        {
+            await benchmark.DisposeAsync();
+        }
+    }
+
+    public static async Task CaptureAsync(
+        string outputPath,
+        bool includeExtendedWorkloads = false)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(outputPath);
+
+        var benchmark = new ProviderComparisonBenchmarks();
+        await benchmark.Setup();
+        try
+        {
+            var workloads = new List<PairedWorkloadEvidence>
             {
                 await CaptureWorkloadAsync(
                     nameof(benchmark.BlueTuskPoolCheckoutAsync),
@@ -65,29 +147,131 @@ internal static class ProviderPairedEvidenceWriter
                     operationsPerBlock: 4),
             };
 
-            var report = new PairedEvidenceReport(
-                SchemaVersion: 1,
-                Method: "alternating-provider-blocks",
-                CapturedUtc: DateTimeOffset.UtcNow,
-                StopwatchFrequency: Stopwatch.Frequency,
-                TrialCount,
-                BlocksPerTrial,
-                Workloads: workloads);
+            if (includeExtendedWorkloads)
+            {
+                workloads.AddRange(
+                [
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskBeginRollbackTransactionAsync),
+                    benchmark.BlueTuskBeginRollbackTransactionAsync,
+                    nameof(benchmark.NpgsqlBeginRollbackTransactionAsync),
+                    benchmark.NpgsqlBeginRollbackTransactionAsync,
+                    expectedResult: 1,
+                    warmupOperationsPerProvider: 256,
+                    operationsPerBlock: 32),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskBatch16ParameterizedScalarsAsync),
+                    benchmark.BlueTuskBatch16ParameterizedScalarsAsync,
+                    nameof(benchmark.NpgsqlBatch16ParameterizedScalarsAsync),
+                    benchmark.NpgsqlBatch16ParameterizedScalarsAsync,
+                    expectedResult: 136,
+                    warmupOperationsPerProvider: 64,
+                    operationsPerBlock: 8),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskBinaryCopyImport1000RowsAsync),
+                    benchmark.BlueTuskBinaryCopyImport1000RowsAsync,
+                    nameof(benchmark.NpgsqlBinaryCopyImport1000RowsAsync),
+                    benchmark.NpgsqlBinaryCopyImport1000RowsAsync,
+                    expectedResult: 1_000L,
+                    warmupOperationsPerProvider: 8,
+                    operationsPerBlock: 1),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskBinaryCopyExport1000RowsAsync),
+                    benchmark.BlueTuskBinaryCopyExport1000RowsAsync,
+                    nameof(benchmark.NpgsqlBinaryCopyExport1000RowsAsync),
+                    benchmark.NpgsqlBinaryCopyExport1000RowsAsync,
+                    expectedResult: 499_500L,
+                    warmupOperationsPerProvider: 8,
+                    operationsPerBlock: 1),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskPreparedTypedRowRoundTripAsync),
+                    benchmark.BlueTuskPreparedTypedRowRoundTripAsync,
+                    nameof(benchmark.NpgsqlPreparedTypedRowRoundTripAsync),
+                    benchmark.NpgsqlPreparedTypedRowRoundTripAsync,
+                    expectedResult: 12_534,
+                    warmupOperationsPerProvider: 128,
+                    operationsPerBlock: 16),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskNotificationDeliveryAsync),
+                    benchmark.BlueTuskNotificationDeliveryAsync,
+                    nameof(benchmark.NpgsqlNotificationDeliveryAsync),
+                    benchmark.NpgsqlNotificationDeliveryAsync,
+                    expectedResult: 5,
+                    warmupOperationsPerProvider: 64,
+                    operationsPerBlock: 8),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskLargeObjectReadOneMegabyteAsync),
+                    benchmark.BlueTuskLargeObjectReadOneMegabyteAsync,
+                    nameof(benchmark.NpgsqlLargeObjectReadOneMegabyteAsync),
+                    benchmark.NpgsqlLargeObjectReadOneMegabyteAsync,
+                    expectedResult: 1_048_576L,
+                    warmupOperationsPerProvider: 4,
+                    operationsPerBlock: 1),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskEfCompiledQueryAsync),
+                    benchmark.BlueTuskEfCompiledQueryAsync,
+                    nameof(benchmark.NpgsqlEfCompiledQueryAsync),
+                    benchmark.NpgsqlEfCompiledQueryAsync,
+                    expectedResult: 450,
+                    warmupOperationsPerProvider: 64,
+                    operationsPerBlock: 8),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskEfMaterialize100RowsAsync),
+                    benchmark.BlueTuskEfMaterialize100RowsAsync,
+                    nameof(benchmark.NpgsqlEfMaterialize100RowsAsync),
+                    benchmark.NpgsqlEfMaterialize100RowsAsync,
+                    expectedResult: 100,
+                    warmupOperationsPerProvider: 16,
+                    operationsPerBlock: 2),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskEfInsertOneAsync),
+                    benchmark.BlueTuskEfInsertOneAsync,
+                    nameof(benchmark.NpgsqlEfInsertOneAsync),
+                    benchmark.NpgsqlEfInsertOneAsync,
+                    expectedResult: 1,
+                    warmupOperationsPerProvider: 16,
+                    operationsPerBlock: 2),
+                await CaptureWorkloadAsync(
+                    nameof(benchmark.BlueTuskEfUpdateOneAsync),
+                    benchmark.BlueTuskEfUpdateOneAsync,
+                    nameof(benchmark.NpgsqlEfUpdateOneAsync),
+                    benchmark.NpgsqlEfUpdateOneAsync,
+                    expectedResult: 1,
+                    warmupOperationsPerProvider: 16,
+                    operationsPerBlock: 2),
+                ]);
+            }
 
-            var fullOutputPath = Path.GetFullPath(outputPath);
-            Directory.CreateDirectory(Path.GetDirectoryName(fullOutputPath)!);
-            await using var stream = File.Create(fullOutputPath);
-            await JsonSerializer.SerializeAsync(stream, report, JsonOptions);
-            await stream.WriteAsync("\n"u8.ToArray());
-
-            Console.WriteLine(
-                $"Captured {TrialCount} paired trials for {workloads.Length} provider " +
-                $"workloads at '{fullOutputPath}'.");
+            await WriteReportAsync(outputPath, workloads);
         }
         finally
         {
             await benchmark.DisposeAsync();
         }
+    }
+
+    private static async Task WriteReportAsync(
+        string outputPath,
+        IReadOnlyList<PairedWorkloadEvidence> workloads)
+    {
+        var report = new PairedEvidenceReport(
+            SchemaVersion: 1,
+            Method: "alternating-provider-blocks",
+            CapturedUtc: DateTimeOffset.UtcNow,
+            StopwatchFrequency: Stopwatch.Frequency,
+            TrialCount,
+            BlocksPerTrial,
+            Workloads: workloads);
+
+        var fullOutputPath = Path.GetFullPath(outputPath);
+        Directory.CreateDirectory(Path.GetDirectoryName(fullOutputPath)!);
+        await using var stream = File.Create(fullOutputPath);
+        await JsonSerializer.SerializeAsync(stream, report, JsonOptions);
+        await stream.WriteAsync("\n"u8.ToArray());
+
+        Console.WriteLine(
+            $"Captured {TrialCount} paired trials for {workloads.Count} provider " +
+            $"workloads at '{fullOutputPath}'.");
     }
 
     private static async Task<PairedWorkloadEvidence> CaptureWorkloadAsync(

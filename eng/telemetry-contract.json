@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "minimumInstrumentCount": 60,
+  "minimumInstrumentCount": 62,
   "cardinalityClasses": {
     "none": "No attributes create additional time series.",
     "bounded": "Every attribute value comes from a closed enum or fixed operation set.",
@@ -91,7 +91,9 @@
         { "name": "bluetusk.graph.evaluations.active", "type": "UpDownCounter", "unit": "{evaluation}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode"] },
         { "name": "bluetusk.graph.evaluations", "type": "Counter", "unit": "{evaluation}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.evaluation.outcome"] },
         { "name": "bluetusk.graph.evaluation.duration", "type": "Histogram", "unit": "s", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.evaluation.outcome"] },
-        { "name": "bluetusk.graph.evaluation.events", "type": "Histogram", "unit": "{event}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.evaluation.outcome"] }
+        { "name": "bluetusk.graph.evaluation.events", "type": "Histogram", "unit": "{event}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.evaluation.outcome"] },
+        { "name": "bluetusk.graph.affected_keys", "type": "Histogram", "unit": "{key}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.maintenance.tier", "bluetusk.graph.evaluation.outcome"] },
+        { "name": "bluetusk.graph.queries", "type": "Histogram", "unit": "{query}", "cardinality": "bounded", "tags": ["bluetusk.graph.evaluation.mode", "bluetusk.graph.maintenance.tier", "bluetusk.graph.evaluation.outcome"] }
       ]
     },
     {

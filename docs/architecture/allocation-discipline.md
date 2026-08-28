@@ -23,22 +23,23 @@ The Windows/Ryzen 7 5800X/.NET 10 short baseline currently records:
 | EF insert / load-and-update | 27,462 B / 37,665 B | normalized tracked write and `SaveChanges` paths |
 | Prepared raw / typed EF traversal of 999 edges | 187,936 B / 685,864 B | readers plus caller-owned typed graph results |
 
-The live PostgreSQL 19 comparison separates provider efficiency from the
-in-memory ownership budgets above. The final V1 candidate records:
+The live PostgreSQL 18 comparison separates provider efficiency from the
+in-memory ownership budgets above. The final V1 matrix covers 16 matched
+BlueTusk/Npgsql features: pool checkout, parameterized and prepared scalars,
+row and large-value streaming, empty transactions, batching, COPY import/export,
+typed rows, notifications, large objects, and four EF query/write paths.
 
-| Workload | BlueTusk | Npgsql | Current result |
-| --- | ---: | ---: | --- |
-| Parameterized scalar | 1,773 B | 2,138 B | BlueTusk 17.1% lower |
-| Explicitly prepared scalar | 898 B | 1,125 B | BlueTusk 20.2% lower |
-| Untouched warm checkout | 168 B | 184 B | BlueTusk 8.7% lower |
-| Sequential 1,000-row read | 1,585 B | 1,615 B | BlueTusk 1.9% lower |
-| Sequential 1 MiB `bytea` | 1,585 B | 8,906 B | BlueTusk 82.2% lower |
+The final-source BenchmarkDotNet report records less BlueTusk managed allocation
+in all 16 pairs. Ratios range from 0.9888 for COPY export to 0.0465 for an empty
+begin/rollback transaction. COPY import is 0.5557, the 1 MiB sequential `bytea`
+read is 0.0861, and all four EF ratios are between 0.9357 and 0.9803. Returned
+values still own memory where the API contract requires them; the comparison is
+not described as universally allocation-free.
 
 Five trials of 501 alternating-provider blocks are the cross-provider latency
-authority. BlueTusk records lower median-of-trials mean, P95, and P99 ratios for
-all five paths. Prepared-scalar and 1 MiB mean leads are narrow and are treated as
-measured parity rather than material capacity advantages. These results are
-regression evidence, not a provider-wide latency guarantee.
+authority. All 48 mean, P95 and P99 checks pass. BlueTusk has the lower paired
+mean in 14 of 16 workloads; COPY import and EF update are within 0.8% of Npgsql.
+These results are regression evidence, not a provider-wide latency guarantee.
 
 The V1 concurrency gate uses four physical lanes and 64-command bursts. It now
 compares both fresh and reused multiplexed paths and both fresh and reused
@@ -49,9 +50,11 @@ multiplex-only result to conceal it.
 
 An exact-candidate run keeps BenchmarkDotNet as the absolute-latency and
 allocation authority, then records five alternating-provider trials for both
-the direct and concurrency comparison gates. Both gates require BlueTusk's mean,
-P95, P99, and managed-allocation ratios to remain at or below `1.0`. The
-candidate manifest hashes every raw report. See the
+the direct and concurrency comparison gates. Managed allocation must remain at
+or below `1.0` in every direct-provider pair. The five established hot paths use
+a strict `1.0` latency ceiling; eleven extended features use a `1.05` parity
+ceiling. The concurrency gate remains strict. The candidate manifest hashes
+every raw report. See the
 [V1 Npgsql performance report](../operations/npgsql-performance-comparison.md)
 for the complete method, results, evidence hashes, and claim boundary.
 

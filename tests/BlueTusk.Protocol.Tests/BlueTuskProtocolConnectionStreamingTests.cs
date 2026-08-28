@@ -70,6 +70,23 @@ public sealed class BlueTuskProtocolConnectionStreamingTests
     }
 
     [Fact]
+    public void Leases_an_entirely_buffered_payload_without_copying_it()
+    {
+        byte[] expected = [1, 2, 3, 4, 5, 6];
+        using var transport = new FragmentedTransport(Frame((byte)'D', expected), 64);
+        using var connection = new BlueTuskProtocolConnection(transport);
+
+        var header = connection.ReadMessageHeader();
+        var leased = connection.TryLeaseBufferedMessagePayload(
+            header.PayloadLength,
+            out var payload);
+
+        Assert.True(leased);
+        Assert.Equal(expected, payload.ToArray());
+        Assert.Equal(0, connection.ActiveMessagePayloadRemaining);
+    }
+
+    [Fact]
     public async Task Reused_write_storage_is_reset_between_sync_and_async_flushes()
     {
         await using var transport = new FragmentedTransport([], 16);

@@ -298,17 +298,19 @@ dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --
 Commit or archive the brief JSON, GitHub Markdown and paired provider report.
 BenchmarkDotNet remains the absolute-latency and managed-allocation source. The
 paired report is the provider-relative latency authority: five trials, 501
-alternating blocks per trial, and workload-specific block sizes (256 checkouts,
-32 parameterized commands, 64 prepared commands, 16 row-stream commands or 4
-large-value commands per block).
+alternating blocks per trial, and workload-specific block sizes. The complete
+matrix covers 16 matched pool, command, streaming, transaction, batch, COPY,
+typed-row, notification, large-object and EF workloads.
 Before measurement it completes 4,096 warm pool checkouts, 512 parameterized
 and prepared commands, 64 row streams, and 32 large-value streams per provider.
 The untimed warmups prevent tiered-JIT transitions from contaminating the
 sub-microsecond pool trials; every measured sample and the 1.00 limits remain
 unchanged.
-Every sample is normalized per completed operation. The verifier
-requires BlueTusk to remain at or below Npgsql for median-of-trials mean, P95,
-P99 and managed allocation in every listed provider workload. Record the
+Every sample is normalized per completed operation. The verifier requires
+managed allocation at or below Npgsql in every listed provider workload. Its
+five established latency paths use a strict 1.0 ceiling; the eleven extended
+paths use the checked-in 1.05 parity ceiling for median-of-trials mean, P95 and
+P99. Record the
 PostgreSQL major version, machine profile, SDK/runtime, date, and any material
 semantic difference between provider pairs. Never turn a measured workload
 ratio into a universal performance claim.

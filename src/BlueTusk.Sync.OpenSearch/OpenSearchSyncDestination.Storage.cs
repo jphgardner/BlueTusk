@@ -417,19 +417,23 @@ public sealed partial class OpenSearchSyncDestination
 
         var bulkOperations = await BuildBulkOperationsAsync(operations, cancellationToken)
             .ConfigureAwait(false);
-        var payload = BuildBulkPayload(bulkOperations, externalVersion);
-        if (payload.Length > _options.MaxBulkBytes)
+        var payloadLength = CountBulkPayload(bulkOperations, externalVersion);
+        if (payloadLength > _options.MaxBulkBytes)
         {
             throw new OpenSearchSyncBulkException(
-                $"The encoded OpenSearch bulk request contains {payload.Length} bytes; the configured maximum is {_options.MaxBulkBytes}.");
+                $"The encoded OpenSearch bulk request contains {payloadLength} bytes; the configured maximum is {_options.MaxBulkBytes}.");
         }
 
         var refresh = _options.RefreshAfterWrite ? "wait_for" : "false";
+        using var content = new BulkOperationsContent(
+            bulkOperations,
+            externalVersion,
+            payloadLength);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-ndjson");
         var response = await SendAsync(
             HttpMethod.Post,
             $"_bulk?wait_for_active_shards={Uri.EscapeDataString(_options.WaitForActiveShards)}&refresh={refresh}",
-            payload,
-            "application/x-ndjson",
+            content,
             cancellationToken,
             HttpStatusCode.OK).ConfigureAwait(false);
         using var document = JsonDocument.Parse(response.Content);
@@ -476,46 +480,50 @@ public sealed partial class OpenSearchSyncDestination
         }
     }
 
-    private static byte[] BuildBulkPayload(
+    private static long CountBulkPayload(
         IReadOnlyList<BulkOperation> operations,
         long? externalVersion)
     {
-        var buffer = new ArrayBufferWriter<byte>();
+        var counter = new CountingBufferWriter();
         foreach (var operation in operations)
         {
-            using (var writer = new Utf8JsonWriter(buffer))
-            {
-                writer.WriteStartObject();
-                writer.WritePropertyName(
-                    operation.Kind is SyncMutationKind.Upsert ? "index" : "delete");
-                writer.WriteStartObject();
-                writer.WriteString("_index", operation.Index);
-                writer.WriteString("_id", operation.DocumentId);
-                if (!string.IsNullOrWhiteSpace(operation.Routing))
-                {
-                    writer.WriteString("routing", operation.Routing);
-                }
-
-                if (externalVersion is not null)
-                {
-                    writer.WriteNumber("version", externalVersion.Value);
-                    writer.WriteString("version_type", "external_gte");
-                }
-
-                writer.WriteEndObject();
-                writer.WriteEndObject();
-                writer.Flush();
-            }
-
-            AppendNewLine(buffer);
+            WriteBulkMetadata(counter, operation, externalVersion);
+            counter.Advance(1);
             if (operation.Kind is SyncMutationKind.Upsert)
             {
-                Append(buffer, operation.Content.Span);
-                AppendNewLine(buffer);
+                counter.Advance(operation.Content.Length + 1);
             }
         }
 
-        return buffer.WrittenSpan.ToArray();
+        return counter.Count;
+    }
+
+    private static void WriteBulkMetadata(
+        IBufferWriter<byte> destination,
+        BulkOperation operation,
+        long? externalVersion)
+    {
+        using var writer = new Utf8JsonWriter(destination);
+        writer.WriteStartObject();
+        writer.WritePropertyName(
+            operation.Kind is SyncMutationKind.Upsert ? "index" : "delete");
+        writer.WriteStartObject();
+        writer.WriteString("_index", operation.Index);
+        writer.WriteString("_id", operation.DocumentId);
+        if (!string.IsNullOrWhiteSpace(operation.Routing))
+        {
+            writer.WriteString("routing", operation.Routing);
+        }
+
+        if (externalVersion is not null)
+        {
+            writer.WriteNumber("version", externalVersion.Value);
+            writer.WriteString("version_type", "external_gte");
+        }
+
+        writer.WriteEndObject();
+        writer.WriteEndObject();
+        writer.Flush();
     }
 
     private async ValueTask<IReadOnlyList<BulkOperation>> BuildBulkOperationsAsync(
@@ -768,12 +776,32 @@ public sealed partial class OpenSearchSyncDestination
         CancellationToken cancellationToken,
         params HttpStatusCode[] expectedStatusCodes)
     {
-        using var request = new HttpRequestMessage(method, path);
+        HttpContent? requestContent = null;
         if (content is not null)
         {
-            request.Content = new ByteArrayContent(content);
-            request.Content.Headers.ContentType = new MediaTypeHeaderValue(mediaType!);
+            requestContent = new ByteArrayContent(content);
+            requestContent.Headers.ContentType = new MediaTypeHeaderValue(mediaType!);
         }
+
+        return await SendAsync(
+            method,
+            path,
+            requestContent,
+            cancellationToken,
+            expectedStatusCodes).ConfigureAwait(false);
+    }
+
+    private async ValueTask<ResponsePayload> SendAsync(
+        HttpMethod method,
+        string path,
+        HttpContent? content,
+        CancellationToken cancellationToken,
+        params HttpStatusCode[] expectedStatusCodes)
+    {
+        using var request = new HttpRequestMessage(method, path)
+        {
+            Content = content,
+        };
 
         using var response = await _options.Client.SendAsync(
             request,
@@ -788,6 +816,104 @@ public sealed partial class OpenSearchSyncDestination
         }
 
         return result;
+    }
+
+    private sealed class BulkOperationsContent(
+        IReadOnlyList<BulkOperation> operations,
+        long? externalVersion,
+        long contentLength) : HttpContent
+    {
+        private static ReadOnlyMemory<byte> NewLine => "\n"u8.ToArray();
+
+        protected override bool TryComputeLength(out long length)
+        {
+            length = contentLength;
+            return true;
+        }
+
+        protected override async Task SerializeToStreamAsync(
+            Stream stream,
+            TransportContext? context)
+        {
+            await SerializeToStreamAsync(
+                stream,
+                context,
+                CancellationToken.None).ConfigureAwait(false);
+        }
+
+        protected override async Task SerializeToStreamAsync(
+            Stream stream,
+            TransportContext? context,
+            CancellationToken cancellationToken)
+        {
+            foreach (var operation in operations)
+            {
+                using (var writer = new Utf8JsonWriter(stream))
+                {
+                    writer.WriteStartObject();
+                    writer.WritePropertyName(
+                        operation.Kind is SyncMutationKind.Upsert ? "index" : "delete");
+                    writer.WriteStartObject();
+                    writer.WriteString("_index", operation.Index);
+                    writer.WriteString("_id", operation.DocumentId);
+                    if (!string.IsNullOrWhiteSpace(operation.Routing))
+                    {
+                        writer.WriteString("routing", operation.Routing);
+                    }
+
+                    if (externalVersion is not null)
+                    {
+                        writer.WriteNumber("version", externalVersion.Value);
+                        writer.WriteString("version_type", "external_gte");
+                    }
+
+                    writer.WriteEndObject();
+                    writer.WriteEndObject();
+                    await writer.FlushAsync(cancellationToken).ConfigureAwait(false);
+                }
+
+                await stream.WriteAsync(NewLine, cancellationToken).ConfigureAwait(false);
+                if (operation.Kind is SyncMutationKind.Upsert)
+                {
+                    await stream.WriteAsync(operation.Content, cancellationToken)
+                        .ConfigureAwait(false);
+                    await stream.WriteAsync(NewLine, cancellationToken).ConfigureAwait(false);
+                }
+            }
+        }
+    }
+
+    private sealed class CountingBufferWriter : IBufferWriter<byte>
+    {
+        private byte[] _scratch = new byte[256];
+
+        public long Count { get; private set; }
+
+        public void Advance(int count)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(count);
+            Count = checked(Count + count);
+        }
+
+        public Memory<byte> GetMemory(int sizeHint = 0)
+        {
+            Ensure(sizeHint);
+            return _scratch;
+        }
+
+        public Span<byte> GetSpan(int sizeHint = 0)
+        {
+            Ensure(sizeHint);
+            return _scratch;
+        }
+
+        private void Ensure(int sizeHint)
+        {
+            if (sizeHint > _scratch.Length)
+            {
+                _scratch = new byte[sizeHint];
+            }
+        }
     }
 
     private static OpenSearchSyncException CreateResponseException(

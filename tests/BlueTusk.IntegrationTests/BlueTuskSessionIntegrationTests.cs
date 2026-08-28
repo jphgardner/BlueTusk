@@ -691,6 +691,43 @@ public sealed class BlueTuskSessionIntegrationTests
     }
 
     [Fact]
+    public async Task Default_single_statement_reader_supports_random_access_and_stream_views()
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await using var transaction = await connection.BeginTransactionAsync(CancellationToken.None);
+        await using var command = new BlueTuskCommand(
+            "SELECT NULL::int4, 42::int4, decode('01020304', 'hex')::bytea, " +
+            "'hello'::text, '{\"answer\":42}'::jsonb, repeat('x', 128)::text",
+            connection)
+        {
+            Transaction = transaction,
+        };
+        await using var reader = await command.ExecuteReaderAsync(CancellationToken.None);
+
+        Assert.True(await reader.ReadAsync(CancellationToken.None));
+        Assert.True(reader.IsDBNull(0));
+        using (var text = reader.GetTextReader(4))
+        {
+            Assert.Equal("{\"answer\": 42}", await text.ReadToEndAsync(CancellationToken.None));
+        }
+
+        Assert.Equal(4, reader.GetBytes(2, 0, null, 0, 0));
+        var bytes = new byte[4];
+        Assert.Equal(4, reader.GetBytes(2, 0, bytes, 0, bytes.Length));
+        Assert.Equal([1, 2, 3, 4], bytes);
+        Assert.Equal(42, reader.GetInt32(1));
+        Assert.Equal("hello", reader.GetString(3));
+        Assert.Equal(new string('x', 128), reader.GetString(5));
+
+        await using var stream = reader.GetStream(2);
+        using var payload = new MemoryStream();
+        await stream.CopyToAsync(payload, CancellationToken.None);
+        Assert.Equal(bytes, payload.ToArray());
+        Assert.False(await reader.ReadAsync(CancellationToken.None));
+    }
+
+    [Fact]
     public async Task AdoNet_typed_scalar_decodes_int4()
     {
         await using var connection = new BlueTuskConnection(GetConnectionString());

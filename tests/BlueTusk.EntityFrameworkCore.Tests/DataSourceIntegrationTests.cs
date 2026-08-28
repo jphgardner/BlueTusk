@@ -19,12 +19,21 @@ public sealed class DataSourceIntegrationTests
             .UseBlueTusk(dataSource)
             .Options;
         int firstBackend;
+        string baselineApplicationName;
 
         await using (var context = new TestContext(options))
         {
             await context.Database.OpenConnectionAsync();
+            var connection = (BlueTuskConnection)context.Database.GetDbConnection();
             firstBackend = await GetBackendProcessIdAsync(
-                (BlueTuskConnection)context.Database.GetDbConnection());
+                connection);
+            baselineApplicationName = await ExecuteStringAsync(
+                connection,
+                "SELECT current_setting('application_name')");
+            await using var mutateSession = new BlueTuskCommand(
+                "SET application_name = 'bluetusk_deferred_reset_probe'",
+                connection);
+            _ = await mutateSession.ExecuteNonQueryAsync();
         }
 
         await using (var context = new TestContext(options))
@@ -33,6 +42,11 @@ public sealed class DataSourceIntegrationTests
             Assert.Equal(
                 firstBackend,
                 await GetBackendProcessIdAsync((BlueTuskConnection)context.Database.GetDbConnection()));
+            Assert.Equal(
+                baselineApplicationName,
+                await ExecuteStringAsync(
+                    (BlueTuskConnection)context.Database.GetDbConnection(),
+                    "SELECT current_setting('application_name')"));
         }
 
         var statistics = dataSource.GetPoolStatistics();
@@ -84,6 +98,12 @@ public sealed class DataSourceIntegrationTests
     {
         await using var command = new BlueTuskCommand(sql, connection);
         return await command.ExecuteScalarAsync<int>();
+    }
+
+    private static async Task<string> ExecuteStringAsync(BlueTuskConnection connection, string sql)
+    {
+        await using var command = new BlueTuskCommand(sql, connection);
+        return await command.ExecuteScalarAsync<string>() ?? string.Empty;
     }
 
     private static string GetConnectionString()

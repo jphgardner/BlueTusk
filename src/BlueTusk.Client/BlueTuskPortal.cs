@@ -147,6 +147,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskPortalRow?> FinishAndReadAsync(
         ValueTask finish,
         CancellationToken cancellationToken)
@@ -228,6 +229,7 @@ public sealed class BlueTuskPortal : IDisposable, IAsyncDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask DisposeAsync()
     {
         var session = Interlocked.Exchange(ref _session, null);
@@ -274,7 +276,7 @@ public sealed class BlueTuskPortalRow
     private const int InlinePayloadCapacity = 64;
     private readonly BlueTuskSession _session;
     private BlueTuskPortal _portal;
-    private readonly byte[] _inlinePayload = new byte[InlinePayloadCapacity];
+    private byte[] _inlinePayload = new byte[InlinePayloadCapacity];
     private int _payloadLength;
     private bool _payloadBuffered;
     private ReadOnlyMemory<byte> _bufferedPayload;
@@ -311,6 +313,93 @@ public sealed class BlueTuskPortalRow
 
     public int FieldCount { get; private set; }
 
+    internal void EnsureBuffered()
+    {
+        if (_payloadBuffered)
+        {
+            return;
+        }
+
+        if (_activeOrdinal != -1 || _activeStream is not null)
+        {
+            throw new InvalidOperationException(
+                "A partially consumed sequential row cannot switch to random access.");
+        }
+
+        var payload = EnsurePayloadBuffer();
+        BinaryPrimitives.WriteInt16BigEndian(payload, checked((short)FieldCount));
+        var consumed = _payloadConsumed;
+        ReadExactly(payload.AsSpan(consumed, _payloadLength - consumed));
+        _bufferedPayload = payload.AsMemory(0, _payloadLength);
+        _payloadBuffered = true;
+        _payloadConsumed = sizeof(short);
+    }
+
+    internal async ValueTask EnsureBufferedAsync(CancellationToken cancellationToken)
+    {
+        if (_payloadBuffered)
+        {
+            return;
+        }
+
+        if (_activeOrdinal != -1 || _activeStream is not null)
+        {
+            throw new InvalidOperationException(
+                "A partially consumed sequential row cannot switch to random access.");
+        }
+
+        var payload = EnsurePayloadBuffer();
+        BinaryPrimitives.WriteInt16BigEndian(payload, checked((short)FieldCount));
+        var consumed = _payloadConsumed;
+        await ReadExactlyAsync(
+            payload.AsMemory(consumed, _payloadLength - consumed),
+            cancellationToken).ConfigureAwait(false);
+        _bufferedPayload = payload.AsMemory(0, _payloadLength);
+        _payloadBuffered = true;
+        _payloadConsumed = sizeof(short);
+    }
+
+    internal ReadOnlyMemory<byte>? ReadBufferedField(int ordinal)
+    {
+        ValidateOrdinal(ordinal);
+        EnsureBuffered();
+        var offset = sizeof(short);
+        for (var index = 0; index < FieldCount; index++)
+        {
+            if (offset > _bufferedPayload.Length - sizeof(int))
+            {
+                throw new BlueTuskProtocolException(
+                    "DataRow field length exceeds the buffered message payload.");
+            }
+
+            var length = BinaryPrimitives.ReadInt32BigEndian(
+                _bufferedPayload.Span.Slice(offset, sizeof(int)));
+            offset += sizeof(int);
+            if (length < -1 || length > _bufferedPayload.Length - offset)
+            {
+                throw new BlueTuskProtocolException(
+                    "DataRow field length exceeds the buffered message payload.");
+            }
+
+            if (index == ordinal)
+            {
+                if (length == -1)
+                {
+                    return null;
+                }
+
+                return _bufferedPayload.Slice(offset, length);
+            }
+
+            if (length != -1)
+            {
+                offset += length;
+            }
+        }
+
+        throw new BlueTuskProtocolException("DataRow did not contain the requested field.");
+    }
+
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     internal static async ValueTask<BlueTuskPortalRow> CreateAsync(
         BlueTuskSession session,
@@ -321,6 +410,12 @@ public sealed class BlueTuskPortalRow
         CancellationToken cancellationToken)
     {
         var row = reusableRow ?? new BlueTuskPortalRow(session, portal);
+        if (session.TryLeaseBufferedPortalPayload(payloadLength, out var bufferedPayload))
+        {
+            row.ResetBuffered(bufferedPayload, expectedFieldCount);
+            return row;
+        }
+
         row.Reset(payloadLength);
         await row.ReadExactlyAsync(
             row._inlinePayload.AsMemory(0, sizeof(short)),
@@ -328,6 +423,16 @@ public sealed class BlueTuskPortalRow
         row.FieldCount = BinaryPrimitives.ReadInt16BigEndian(row._inlinePayload);
         row.ValidateFieldCount(expectedFieldCount);
         return row;
+    }
+
+    private byte[] EnsurePayloadBuffer()
+    {
+        if (_inlinePayload.Length < _payloadLength)
+        {
+            _inlinePayload = GC.AllocateUninitializedArray<byte>(_payloadLength);
+        }
+
+        return _inlinePayload;
     }
 
     internal void Reset(int payloadLength, int expectedFieldCount)
@@ -560,8 +665,10 @@ public sealed class BlueTuskPortalRow
             return ValueTask.CompletedTask;
         }
 
-        if (_activeStream is null && _payloadConsumed == _payloadLength)
+        if (_activeStream is null &&
+            (_payloadBuffered || _payloadConsumed == _payloadLength))
         {
+            _payloadConsumed = _payloadLength;
             _finished = true;
             return ValueTask.CompletedTask;
         }
@@ -576,15 +683,18 @@ public sealed class BlueTuskPortalRow
             return true;
         }
 
-        if (_activeStream is not null || _payloadConsumed != _payloadLength)
+        if (_activeStream is not null ||
+            !_payloadBuffered && _payloadConsumed != _payloadLength)
         {
             return false;
         }
 
+        _payloadConsumed = _payloadLength;
         _finished = true;
         return true;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask FinishSlowAsync(CancellationToken cancellationToken)
     {
 
@@ -618,6 +728,17 @@ public sealed class BlueTuskPortalRow
         CancellationToken cancellationToken)
     {
         var count = Math.Min(destination.Length, _activeLength - _activePosition);
+        if (count == 0)
+        {
+            return ValueTask.FromResult(0);
+        }
+
+        if (_payloadBuffered)
+        {
+            _bufferedPayload.Slice(_payloadConsumed, count).CopyTo(destination);
+            return ValueTask.FromResult(CompleteActiveFieldRead(count, stream));
+        }
+
         return _session.ReadPortalPayloadAsync(
             destination[..count],
             new ActiveFieldReadState(this, stream),
@@ -629,7 +750,11 @@ public sealed class BlueTuskPortalRow
     {
         if (read == 0)
         {
-            throw new BlueTuskProtocolException("A backend message payload ended unexpectedly.");
+            throw new BlueTuskProtocolException(
+                $"A backend message payload ended unexpectedly while reading field " +
+                $"{_activeOrdinal}: field length {_activeLength}, field position " +
+                $"{_activePosition}, row payload length {_payloadLength}, and row payload " +
+                $"position {_payloadConsumed}.");
         }
 
         _payloadConsumed += read;

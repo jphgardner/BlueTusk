@@ -14,6 +14,7 @@ namespace BlueTusk.Client;
 /// <summary>A single authenticated PostgreSQL protocol session.</summary>
 public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 {
+    private static readonly BlueTuskBufferedRows EmptyBufferedRows = CreateEmptyBufferedRows();
     private const int CopyBufferSize = 81_920;
     private const string OptionalCapabilityProbeSql =
         "SELECT (to_regclass('information_schema.property_graphs') IS NOT NULL)::text";
@@ -214,12 +215,350 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             invalidatesUnnamedStatement: true);
     }
 
+    internal ValueTask<int> ExecuteSimpleNonQueryAsync(
+        string sql,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        return ExecuteNonQueryAsync(
+            sql,
+            static (output, state) =>
+                BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, state),
+            cancellationToken,
+            invalidatesUnnamedStatement: true);
+    }
+
     public BlueTuskQueryResult ExecuteSimpleQuery(string sql)
     {
         ValidateQuery(sql);
         return ExecuteQuery(
             output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
             invalidatesUnnamedStatement: true);
+    }
+
+    internal BlueTuskQueryResult ExecuteBeginAndSimpleQuery(
+        string beginStatement,
+        string sql)
+    {
+        ValidateQuery(beginStatement);
+        ValidateQuery(sql);
+        return RemovePrependedResultSet(
+            ExecuteSimpleQuery(string.Concat(beginStatement, ";", sql)));
+    }
+
+    internal async ValueTask<BlueTuskQueryResult> ExecuteBeginAndSimpleQueryAsync(
+        string beginStatement,
+        string sql,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(beginStatement);
+        ValidateQuery(sql);
+        return RemovePrependedResultSet(
+            await ExecuteSimpleQueryAsync(
+                string.Concat(beginStatement, ";", sql),
+                cancellationToken).ConfigureAwait(false));
+    }
+
+    internal BlueTuskQueryResult ExecuteResetAndSimpleQuery(
+        string sql,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(resetCompleted);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
+        _operationLock.Wait();
+        var started = BlueTuskDiagnostics.CommandDuration.Enabled
+            ? Stopwatch.GetTimestamp()
+            : 0;
+        try
+        {
+            ClearPreparedStatementDescriptions();
+            InvalidateUnnamedStatement();
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            _connection.Write(
+                output =>
+                {
+                    BlueTuskFrontendMessageWriter.WriteDiscardAll(output);
+                    BlueTuskFrontendMessageWriter.WriteSimpleQuery(
+                        output,
+                        beginStatement is null
+                            ? sql
+                            : string.Concat(beginStatement, ";", sql));
+                });
+
+            var reset = ReadPipelineGroupResponse();
+            if (reset.Error is null)
+            {
+                resetCompleted();
+            }
+
+            BeginNextPipelineGroup();
+            var result = ReadPipelineGroupResponse();
+            if (reset.Error is not null)
+            {
+                throw reset.Error;
+            }
+
+            if (result.Error is not null)
+            {
+                throw result.Error;
+            }
+
+            return beginStatement is null
+                ? result.Result
+                : RemovePrependedResultSet(result.Result);
+        }
+        finally
+        {
+            if (started != 0)
+            {
+                BlueTuskDiagnostics.CommandDuration.Record(
+                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+            }
+
+            _operationLock.Release();
+        }
+    }
+
+    internal async ValueTask<BlueTuskQueryResult> ExecuteResetAndSimpleQueryAsync(
+        string sql,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(resetCompleted);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var started = BlueTuskDiagnostics.CommandDuration.Enabled
+            ? Stopwatch.GetTimestamp()
+            : 0;
+        try
+        {
+            ClearPreparedStatementDescriptions();
+            InvalidateUnnamedStatement();
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                output =>
+                {
+                    BlueTuskFrontendMessageWriter.WriteDiscardAll(output);
+                    BlueTuskFrontendMessageWriter.WriteSimpleQuery(
+                        output,
+                        beginStatement is null
+                            ? sql
+                            : string.Concat(beginStatement, ";", sql));
+                },
+                cancellationToken).ConfigureAwait(false);
+
+            BlueTuskPipelineGroupResult reset;
+            try
+            {
+                reset = await ReadPipelineGroupResponseWithCancellationAsync(
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                if (_open)
+                {
+                    await DrainRemainingPipelineGroupsAsync(1).ConfigureAwait(false);
+                }
+
+                throw;
+            }
+
+            if (reset.Error is null)
+            {
+                resetCompleted();
+            }
+
+            BeginNextPipelineGroup();
+            var result = await ReadPipelineGroupResponseWithCancellationAsync(
+                cancellationToken).ConfigureAwait(false);
+            if (reset.Error is not null)
+            {
+                throw reset.Error;
+            }
+
+            if (result.Error is not null)
+            {
+                throw result.Error;
+            }
+
+            return beginStatement is null
+                ? result.Result
+                : RemovePrependedResultSet(result.Result);
+        }
+        finally
+        {
+            if (started != 0)
+            {
+                BlueTuskDiagnostics.CommandDuration.Record(
+                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+            }
+
+            _operationLock.Release();
+        }
+    }
+
+    internal BlueTuskQueryResult ExecuteResetAndExtendedQuery(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(resetCompleted);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
+        _operationLock.Wait();
+        var started = BlueTuskDiagnostics.CommandDuration.Enabled
+            ? Stopwatch.GetTimestamp()
+            : 0;
+        try
+        {
+            ClearPreparedStatementDescriptions();
+            InvalidateUnnamedStatement();
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            _connection.Write(
+                output => WriteResetAndExtendedQueryMessages(
+                    output,
+                    sql,
+                    parameters,
+                    useBinaryResults,
+                    beginStatement));
+
+            var reset = ReadPipelineGroupResponse();
+            if (reset.Error is null)
+            {
+                resetCompleted();
+            }
+
+            BeginNextPipelineGroup();
+            var result = ReadPipelineGroupResponse();
+            if (reset.Error is not null)
+            {
+                throw reset.Error;
+            }
+
+            if (result.Error is not null)
+            {
+                throw result.Error;
+            }
+
+            return beginStatement is null
+                ? result.Result
+                : RemovePrependedResultSet(result.Result);
+        }
+        finally
+        {
+            if (started != 0)
+            {
+                BlueTuskDiagnostics.CommandDuration.Record(
+                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+            }
+
+            _operationLock.Release();
+        }
+    }
+
+    internal async ValueTask<BlueTuskQueryResult> ExecuteResetAndExtendedQueryAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(resetCompleted);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
+        cancellationToken.ThrowIfCancellationRequested();
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var started = BlueTuskDiagnostics.CommandDuration.Enabled
+            ? Stopwatch.GetTimestamp()
+            : 0;
+        try
+        {
+            ClearPreparedStatementDescriptions();
+            InvalidateUnnamedStatement();
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                output => WriteResetAndExtendedQueryMessages(
+                    output,
+                    sql,
+                    parameters,
+                    useBinaryResults,
+                    beginStatement),
+                cancellationToken).ConfigureAwait(false);
+
+            BlueTuskPipelineGroupResult reset;
+            try
+            {
+                reset = await ReadPipelineGroupResponseWithCancellationAsync(
+                    cancellationToken).ConfigureAwait(false);
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                if (_open)
+                {
+                    await DrainRemainingPipelineGroupsAsync(1).ConfigureAwait(false);
+                }
+
+                throw;
+            }
+
+            if (reset.Error is null)
+            {
+                resetCompleted();
+            }
+
+            BeginNextPipelineGroup();
+            var result = await ReadPipelineGroupResponseWithCancellationAsync(
+                cancellationToken).ConfigureAwait(false);
+            if (reset.Error is not null)
+            {
+                throw reset.Error;
+            }
+
+            if (result.Error is not null)
+            {
+                throw result.Error;
+            }
+
+            return beginStatement is null
+                ? result.Result
+                : RemovePrependedResultSet(result.Result);
+        }
+        finally
+        {
+            if (started != 0)
+            {
+                BlueTuskDiagnostics.CommandDuration.Record(
+                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+            }
+
+            _operationLock.Release();
+        }
     }
 
     public BlueTuskQueryResult ExecuteExtendedQuery(
@@ -235,24 +574,19 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ValidateQuery(sql);
         ArgumentNullException.ThrowIfNull(parameters);
 
-        var typeOids = new uint[parameters.Count];
-        var bindParameters = new BlueTuskBindParameter[parameters.Count];
-        for (var index = 0; index < parameters.Count; index++)
-        {
-            var parameter = parameters[index];
-            typeOids[index] = parameter.TypeOid;
-            bindParameters[index] = new BlueTuskBindParameter(parameter.FormatCode, parameter.Value);
-        }
-
         return ExecuteQuery(
             output =>
             {
-                BlueTuskFrontendMessageWriter.WriteParse(output, string.Empty, sql, typeOids);
+                BlueTuskFrontendMessageWriter.WriteParse(
+                    output,
+                    string.Empty,
+                    sql,
+                    new ExtendedQueryTypeOidSource(parameters));
                 BlueTuskFrontendMessageWriter.WriteBind(
                     output,
                     string.Empty,
                     string.Empty,
-                    bindParameters,
+                    new ExtendedQueryBindParameterSource(parameters),
                     useBinaryResults ? BinaryResultFormat : TextResultFormat);
                 BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
                 BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
@@ -276,24 +610,19 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ValidateQuery(sql);
         ArgumentNullException.ThrowIfNull(parameters);
 
-        var typeOids = new uint[parameters.Count];
-        var bindParameters = new BlueTuskBindParameter[parameters.Count];
-        for (var index = 0; index < parameters.Count; index++)
-        {
-            var parameter = parameters[index];
-            typeOids[index] = parameter.TypeOid;
-            bindParameters[index] = new BlueTuskBindParameter(parameter.FormatCode, parameter.Value);
-        }
-
         return ExecuteQueryAsync(
             output =>
             {
-                BlueTuskFrontendMessageWriter.WriteParse(output, string.Empty, sql, typeOids);
+                BlueTuskFrontendMessageWriter.WriteParse(
+                    output,
+                    string.Empty,
+                    sql,
+                    new ExtendedQueryTypeOidSource(parameters));
                 BlueTuskFrontendMessageWriter.WriteBind(
                     output,
                     string.Empty,
                     string.Empty,
-                    bindParameters,
+                    new ExtendedQueryBindParameterSource(parameters),
                     useBinaryResults ? BinaryResultFormat : TextResultFormat);
                 BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
                 BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
@@ -301,6 +630,58 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             },
             cancellationToken,
             invalidatesUnnamedStatement: true);
+    }
+
+    internal async ValueTask<BlueTuskQueryResult> ExecuteBeginAndExtendedQueryAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(beginStatement);
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+
+        var result = await ExecuteQueryAsync(
+            output =>
+            {
+                WriteDeferredBegin(output, beginStatement);
+                BlueTuskFrontendMessageWriter.WriteParse(
+                    output,
+                    string.Empty,
+                    sql,
+                    new ExtendedQueryTypeOidSource(parameters));
+                BlueTuskFrontendMessageWriter.WriteBind(
+                    output,
+                    string.Empty,
+                    string.Empty,
+                    new ExtendedQueryBindParameterSource(parameters),
+                    useBinaryResults ? BinaryResultFormat : TextResultFormat);
+                BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+                BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+                BlueTuskFrontendMessageWriter.WriteSync(output);
+            },
+            cancellationToken,
+            invalidatesUnnamedStatement: true).ConfigureAwait(false);
+
+        return RemovePrependedResultSet(result);
+    }
+
+    private static BlueTuskQueryResult RemovePrependedResultSet(BlueTuskQueryResult result)
+    {
+        if (result.ResultSets.Count <= 1)
+        {
+            return new BlueTuskQueryResult([]);
+        }
+
+        var resultSets = new BlueTuskResultSet[result.ResultSets.Count - 1];
+        for (var index = 0; index < resultSets.Length; index++)
+        {
+            resultSets[index] = result.ResultSets[index + 1];
+        }
+
+        return new BlueTuskQueryResult(resultSets);
     }
 
     internal ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
@@ -320,23 +701,59 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             completeState: CompleteExtendedScalarWriteState);
     }
 
+    internal ValueTask<BlueTuskScalarQueryResult> ExecuteBeginAndExtendedScalarAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(beginStatement);
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+
+        return ExecuteScalarQueryAsync(
+            new ExtendedScalarWriteState(
+                sql,
+                sql,
+                parameters,
+                useBinaryResults,
+                beginStatement),
+            WriteExtendedScalarMessages,
+            cancellationToken,
+            prepareState: PrepareBeginAndExtendedScalarWriteState,
+            completeState: CompleteExtendedScalarWriteState,
+            prependedResultSetCount: 1);
+    }
+
     internal ValueTask<BlueTuskScalarQueryResult> ExecuteResetAndExtendedScalarAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         Action resetCompleted,
+        string? beginStatement = null,
         CancellationToken cancellationToken = default)
     {
         ValidateQuery(sql);
         ArgumentNullException.ThrowIfNull(parameters);
         ArgumentNullException.ThrowIfNull(resetCompleted);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
 
         return ExecuteScalarQueryAsync(
-            new ExtendedScalarWriteState(sql, sql, parameters, useBinaryResults),
+            new ExtendedScalarWriteState(
+                sql,
+                sql,
+                parameters,
+                useBinaryResults,
+                beginStatement),
             WriteResetAndExtendedScalarMessages,
             cancellationToken,
             prepareState: PrepareResetAndExtendedScalarWriteState,
             completeState: CompleteExtendedScalarWriteState,
+            prependedResultSetCount: beginStatement is null ? 0 : 1,
             prependedReadyForQueryCount: 1,
             prependedCompleted: resetCompleted);
     }
@@ -379,6 +796,96 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             useBinaryResults,
             fetchSize,
             cancellationToken);
+    }
+
+    internal ValueTask<BlueTuskPortal> BeginTransactionPortalAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(beginStatement);
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        var portalName = fetchSize == 0
+            ? string.Empty
+            : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
+        return BeginPortalCoreAsync(
+            portalName,
+            string.Empty,
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            cancellationToken,
+            beginStatement);
+    }
+
+    internal BlueTuskPortal BeginResetPortal(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(resetCompleted);
+        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
+        var portalName = fetchSize == 0
+            ? string.Empty
+            : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
+        return BeginPortalCore(
+            portalName,
+            string.Empty,
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            beginStatement,
+            resetCompleted);
+    }
+
+    internal ValueTask<BlueTuskPortal> BeginResetPortalAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        ArgumentNullException.ThrowIfNull(parameters);
+        ArgumentNullException.ThrowIfNull(resetCompleted);
+        ArgumentOutOfRangeException.ThrowIfNegative(fetchSize);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
+        var portalName = fetchSize == 0
+            ? string.Empty
+            : $"bluetusk_portal_{Interlocked.Increment(ref _portalSequence):x}";
+        return BeginPortalCoreAsync(
+            portalName,
+            string.Empty,
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            cancellationToken,
+            beginStatement,
+            resetCompleted);
     }
 
     /// <summary>Begins an incremental execution of a named prepared statement.</summary>
@@ -557,6 +1064,30 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             }
         }
 
+        if (parameterEncodingUnchanged &&
+            string.Equals(
+                _lastPreparedScalarMessageStatementName,
+                statementName,
+                StringComparison.Ordinal) &&
+            ReferenceEquals(_lastPreparedScalarMessageParameters, parameters) &&
+            _lastPreparedScalarMessageUseBinaryResults == useBinaryResults &&
+            _lastPreparedScalarMessageDescribesPortal == !hasDescription &&
+            _lastPreparedScalarMessages is { } cachedMessages)
+        {
+            return ExecuteScalarQueryAsync(
+                new PreparedScalarWriteState(
+                    statementName,
+                    parameters,
+                    useBinaryResults,
+                    DescribePortal: !hasDescription,
+                    ParametersUnchanged: true,
+                    CachedMessages: cachedMessages),
+                WritePreparedScalarMessages,
+                cancellationToken,
+                hasDescription ? description : null,
+                preEncodedMessages: cachedMessages);
+        }
+
         return ExecuteScalarQueryAsync(
             new PreparedScalarWriteState(
                 statementName,
@@ -668,36 +1199,120 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         return ExecuteQueryAsync(
-            output =>
-            {
-                foreach (var query in queries)
-                {
-                    var typeOids = query.Parameters
-                        .Select(static parameter => parameter.TypeOid)
-                        .ToArray();
-                    var bindParameters = query.Parameters
-                        .Select(static parameter =>
-                            new BlueTuskBindParameter(parameter.FormatCode, parameter.Value))
-                        .ToArray();
-                    BlueTuskFrontendMessageWriter.WriteParse(
-                        output,
-                        string.Empty,
-                        query.Sql,
-                        typeOids);
-                    BlueTuskFrontendMessageWriter.WriteBind(
-                        output,
-                        string.Empty,
-                        string.Empty,
-                        bindParameters,
-                        query.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
-                    BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
-                    BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
-                }
-
-                BlueTuskFrontendMessageWriter.WriteSync(output);
-            },
+            queries,
+            static (output, state) => WriteBatchMessages(output, state),
             cancellationToken,
-            invalidatesUnnamedStatement: true);
+            invalidatesUnnamedStatement: true,
+            expectedResultSetCount: queries.Count);
+    }
+
+    private static void WriteBatchMessages(
+        IBufferWriter<byte> output,
+        IReadOnlyList<BlueTuskBatchQuery> queries)
+    {
+        BlueTuskBatchQuery? previous = null;
+        foreach (var query in queries)
+        {
+            BlueTuskFrontendMessageWriter.WriteUnnamedExtendedQuery(
+                output,
+                query.Sql,
+                new ExtendedQueryTypeOidSource(query.Parameters),
+                new ExtendedQueryBindParameterSource(query.Parameters),
+                query.UseBinaryResults ? (short)1 : (short)0,
+                writeParse: previous is null ||
+                    !CanReuseUnnamedStatement(previous, query));
+            previous = query;
+        }
+
+        BlueTuskFrontendMessageWriter.WriteSync(output);
+    }
+
+    private static void WriteBatchMessages(
+        IBufferWriter<byte> output,
+        BatchWriteState state)
+    {
+        var hasPrevious = false;
+        var previous = default(BlueTuskBatchCommandExecution);
+        for (var index = 0; index < state.QueryCount; index++)
+        {
+            var query = state.Queries[index];
+            BlueTuskFrontendMessageWriter.WriteUnnamedExtendedQuery(
+                output,
+                query.Sql,
+                new BatchExecutionTypeOidSource(query),
+                new BatchExecutionBindParameterSource(query),
+                state.UseBinaryResults ? (short)1 : (short)0,
+                writeParse: !hasPrevious ||
+                    !CanReuseUnnamedStatement(previous, query));
+            previous = query;
+            hasPrevious = true;
+        }
+
+        BlueTuskFrontendMessageWriter.WriteSync(output);
+    }
+
+    private static bool CanReuseUnnamedStatement(
+        BlueTuskBatchQuery previous,
+        BlueTuskBatchQuery current)
+    {
+        if (!string.Equals(previous.Sql, current.Sql, StringComparison.Ordinal) ||
+            previous.Parameters.Count != current.Parameters.Count)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < previous.Parameters.Count; index++)
+        {
+            if (previous.Parameters[index].TypeOid != current.Parameters[index].TypeOid)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    private static bool CanReuseUnnamedStatement(
+        BlueTuskBatchCommandExecution previous,
+        BlueTuskBatchCommandExecution current)
+    {
+        if (!string.Equals(previous.Sql, current.Sql, StringComparison.Ordinal) ||
+            previous.ParameterCount != current.ParameterCount)
+        {
+            return false;
+        }
+
+        for (var index = 0; index < previous.ParameterCount; index++)
+        {
+            if (previous.GetParameter(index).TypeOid != current.GetParameter(index).TypeOid)
+            {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    internal ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
+        BlueTuskBatchCommandExecution[] queries,
+        int queryCount,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default)
+    {
+        ArgumentNullException.ThrowIfNull(queries);
+        if (queryCount <= 0 || queryCount > queries.Length)
+        {
+            throw new ArgumentOutOfRangeException(nameof(queryCount));
+        }
+
+        var state = new BatchWriteState(queries, queryCount, useBinaryResults);
+        return ExecuteQueryAsync(
+            state,
+            static (output, value) => WriteBatchMessages(output, value),
+            cancellationToken,
+            invalidatesUnnamedStatement: true,
+            expectedResultSetCount: queryCount,
+            poolBufferedRows: true);
     }
 
     /// <summary>Executes multiple unnamed extended-query statements in one protocol cycle.</summary>
@@ -721,23 +1336,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             {
                 foreach (var query in queries)
                 {
-                    var typeOids = query.Parameters
-                        .Select(static parameter => parameter.TypeOid)
-                        .ToArray();
-                    var bindParameters = query.Parameters
-                        .Select(static parameter =>
-                            new BlueTuskBindParameter(parameter.FormatCode, parameter.Value))
-                        .ToArray();
                     BlueTuskFrontendMessageWriter.WriteParse(
                         output,
                         string.Empty,
                         query.Sql,
-                        typeOids);
+                        new ExtendedQueryTypeOidSource(query.Parameters));
                     BlueTuskFrontendMessageWriter.WriteBind(
                         output,
                         string.Empty,
                         string.Empty,
-                        bindParameters,
+                        new ExtendedQueryBindParameterSource(query.Parameters),
                         query.UseBinaryResults ? BinaryResultFormat : TextResultFormat);
                     BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
                     BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
@@ -745,7 +1353,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
                 BlueTuskFrontendMessageWriter.WriteSync(output);
             },
-            invalidatesUnnamedStatement: true);
+            invalidatesUnnamedStatement: true,
+            expectedResultSetCount: queries.Count);
     }
 
     /// <summary>
@@ -1068,8 +1677,57 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             InvalidateUnnamedStatement();
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-            _connection.Write(output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql));
+            _connection.Write(
+                sql,
+                static (output, query) =>
+                    BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, query));
             var response = ReadCopyStart('G');
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyIn);
+            Volatile.Write(ref _synchronousCopyOperationActive, 1);
+            return new BlueTuskCopyInOperation(this, response);
+        }
+        catch
+        {
+            _operationLock.Release();
+            throw;
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    internal async ValueTask<BlueTuskCopyInOperation> BeginCopyInAsync(
+        string sql,
+        string? beginStatement,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            InvalidateUnnamedStatement();
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                (Sql: sql, BeginStatement: beginStatement),
+                static (output, state) =>
+                {
+                    if (state.BeginStatement is null)
+                    {
+                        BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, state.Sql);
+                    }
+                    else
+                    {
+                        BlueTuskFrontendMessageWriter.WriteSimpleQuery(
+                            output,
+                            state.BeginStatement,
+                            state.Sql);
+                    }
+                },
+                CancellationToken.None).ConfigureAwait(false);
+            var response = await ReadCopyStartAsync('G').ConfigureAwait(false);
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyIn);
             Volatile.Write(ref _synchronousCopyOperationActive, 1);
             return new BlueTuskCopyInOperation(this, response);
@@ -1089,8 +1747,39 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             InvalidateUnnamedStatement();
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-            _connection.Write(output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql));
+            _connection.Write(
+                sql,
+                static (output, query) =>
+                    BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, query));
             var response = ReadCopyStart('H');
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyOut);
+            Volatile.Write(ref _synchronousCopyOperationActive, 1);
+            return new BlueTuskCopyOutOperation(this, response);
+        }
+        catch
+        {
+            _operationLock.Release();
+            throw;
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    internal async ValueTask<BlueTuskCopyOutOperation> BeginCopyOutAsync(
+        string sql,
+        CancellationToken cancellationToken = default)
+    {
+        ValidateQuery(sql);
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            InvalidateUnnamedStatement();
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(
+                sql,
+                static (output, query) =>
+                    BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, query),
+                CancellationToken.None).ConfigureAwait(false);
+            var response = await ReadCopyStartAsync('H').ConfigureAwait(false);
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyOut);
             Volatile.Write(ref _synchronousCopyOperationActive, 1);
             return new BlueTuskCopyOutOperation(this, response);
@@ -1178,7 +1867,27 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default)
     {
+        return await CopyInWithDeferredBeginAsync(
+            sql,
+            source,
+            copyStarted,
+            beginStatement: null,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    internal async ValueTask<BlueTuskCopyResult> CopyInWithDeferredBeginAsync(
+        string sql,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
+        string? beginStatement,
+        CancellationToken cancellationToken = default)
+    {
         ValidateQuery(sql);
+        if (beginStatement is not null)
+        {
+            ValidateQuery(beginStatement);
+        }
+
         ArgumentNullException.ThrowIfNull(source);
         if (!source.CanRead)
         {
@@ -1194,6 +1903,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 sql,
                 source,
                 copyStarted,
+                beginStatement,
                 cancellationToken).ConfigureAwait(false);
         }
         finally
@@ -1483,7 +2193,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string? sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
-        int fetchSize)
+        int fetchSize,
+        string? beginStatement = null,
+        Action? resetCompleted = null)
     {
         _operationLock.Wait();
         try
@@ -1501,6 +2213,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             ? Stopwatch.GetTimestamp()
             : 0;
         var requestWritten = false;
+        if (resetCompleted is not null)
+        {
+            ClearPreparedStatementDescriptions();
+            InvalidateUnnamedStatement();
+        }
+        else if (beginStatement is not null)
+        {
+            InvalidateUnnamedStatement();
+        }
+
         var parseSql = GetUnnamedStatementParseSql(statementName, sql, parameters);
         var cachedFields = parseSql is null &&
             TryGetUnnamedStatementFields(
@@ -1523,7 +2245,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     useBinaryResults,
                     fetchSize,
                     DescribePortal: cachedFields is null,
-                    CachedMessages: default));
+                    CachedMessages: default,
+                    BeginStatement: beginStatement,
+                    ResetSession: resetCompleted is not null));
             if (writeState.CachedMessages.IsEmpty)
             {
                 _connection.Write(writeState, WritePortalStartAndExecute);
@@ -1533,7 +2257,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 _connection.WritePreEncoded(writeState.CachedMessages.Span);
             }
             requestWritten = true;
-            var fields = ReadPortalStart(cachedFields);
+            var fields = ReadPortalStart(cachedFields, resetCompleted);
             RememberUnnamedStatementFields(sql, parameters, useBinaryResults, fields);
             return new BlueTuskPortal(
                 this,
@@ -1567,7 +2291,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         int fetchSize,
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        string? beginStatement = null,
+        Action? resetCompleted = null)
     {
         cancellationToken.ThrowIfCancellationRequested();
         if (!_operationLock.Wait(0, CancellationToken.None))
@@ -1590,6 +2316,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             ? Stopwatch.GetTimestamp()
             : 0;
         var requestWritten = false;
+        if (resetCompleted is not null)
+        {
+            ClearPreparedStatementDescriptions();
+            InvalidateUnnamedStatement();
+        }
+        else if (beginStatement is not null)
+        {
+            InvalidateUnnamedStatement();
+        }
+
         var parseSql = GetUnnamedStatementParseSql(statementName, sql, parameters);
         var cachedFields = parseSql is null &&
             TryGetUnnamedStatementFields(
@@ -1612,7 +2348,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     useBinaryResults,
                     fetchSize,
                     DescribePortal: cachedFields is null,
-                    CachedMessages: default));
+                    CachedMessages: default,
+                    BeginStatement: beginStatement,
+                    ResetSession: resetCompleted is not null));
             if (writeState.CachedMessages.IsEmpty)
             {
                 await _connection.WriteAsync(
@@ -1657,6 +2395,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
                 switch (message.Identifier)
                 {
+                    case 'Z' when resetCompleted is not null:
+                        resetCompleted();
+                        resetCompleted = null;
+                        break;
                     case '1':
                         break;
                     case '2':
@@ -1726,6 +2468,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             return;
         }
 
+        if (state.ResetSession)
+        {
+            BlueTuskFrontendMessageWriter.WriteDiscardAll(output);
+        }
+
+        if (state.BeginStatement is not null)
+        {
+            WriteDeferredBegin(output, state.BeginStatement);
+        }
+
         if (state.Sql is not null)
         {
             BlueTuskFrontendMessageWriter.WriteParse(
@@ -1767,7 +2519,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private PortalWriteState PreparePortalWriteState(PortalWriteState state)
     {
-        if (state.PortalName.Length != 0 ||
+        if (state.BeginStatement is not null ||
+            state.ResetSession ||
+            state.PortalName.Length != 0 ||
             state.StatementName.Length != 0 ||
             state.Sql is not null ||
             state.Parameters.Count != 0 ||
@@ -1922,13 +2676,18 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     }
 
     private IReadOnlyList<BlueTuskFieldDescription> ReadPortalStart(
-        IReadOnlyList<BlueTuskFieldDescription>? cachedFields)
+        IReadOnlyList<BlueTuskFieldDescription>? cachedFields,
+        Action? resetCompleted = null)
     {
         while (true)
         {
             var message = ReadMessage();
             switch (message.Identifier)
             {
+                case 'Z' when resetCompleted is not null:
+                    resetCompleted();
+                    resetCompleted = null;
+                    break;
                 case '1':
                     break;
                 case '2':
@@ -2219,6 +2978,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     internal bool TryReadBufferedPortalPayloadExactly(Span<byte> destination) =>
         _connection.TryReadBufferedMessagePayloadExactly(destination);
 
+    internal bool TryLeaseBufferedPortalPayload(
+        int length,
+        out ReadOnlyMemory<byte> payload) =>
+        _connection.TryLeaseBufferedMessagePayload(length, out payload);
+
     internal ValueTask<int> ReadPortalPayloadAsync<TState>(
         Memory<byte> destination,
         TState state,
@@ -2292,9 +3056,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (!portal.SyncSent)
             {
                 _connection.Write(
-                    output =>
+                    portal.Name,
+                    static (output, portalName) =>
                     {
-                        BlueTuskFrontendMessageWriter.WriteClosePortal(output, portal.Name);
+                        BlueTuskFrontendMessageWriter.WriteClosePortal(output, portalName);
                         BlueTuskFrontendMessageWriter.WriteSync(output);
                     });
             }
@@ -2311,6 +3076,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     internal async ValueTask AbortPortalAsync(BlueTuskPortal portal)
     {
         if (Volatile.Read(ref _portalOperationActive) == 0)
@@ -2324,9 +3090,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             if (!portal.SyncSent)
             {
                 await _connection.WriteAsync(
-                    output =>
+                    portal.Name,
+                    static (output, portalName) =>
                     {
-                        BlueTuskFrontendMessageWriter.WriteClosePortal(output, portal.Name);
+                        BlueTuskFrontendMessageWriter.WriteClosePortal(output, portalName);
                         BlueTuskFrontendMessageWriter.WriteSync(output);
                     },
                     CancellationToken.None).ConfigureAwait(false);
@@ -2346,9 +3113,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private void RequestMorePortalRows(BlueTuskPortal portal) =>
         _connection.Write(
-            output =>
+            (portal.Name, portal.FetchSize),
+            static (output, state) =>
             {
-                BlueTuskFrontendMessageWriter.WriteExecute(output, portal.Name, portal.FetchSize);
+                BlueTuskFrontendMessageWriter.WriteExecute(output, state.Name, state.FetchSize);
                 BlueTuskFrontendMessageWriter.WriteFlush(output);
             });
 
@@ -2356,9 +3124,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskPortal portal,
         CancellationToken cancellationToken) =>
         _connection.WriteAsync(
-            output =>
+            (portal.Name, portal.FetchSize),
+            static (output, state) =>
             {
-                BlueTuskFrontendMessageWriter.WriteExecute(output, portal.Name, portal.FetchSize);
+                BlueTuskFrontendMessageWriter.WriteExecute(output, state.Name, state.FetchSize);
                 BlueTuskFrontendMessageWriter.WriteFlush(output);
             },
             cancellationToken);
@@ -2374,6 +3143,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         ReleasePortalOperation(portal.StartedTimestamp);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask CompletePortalAsync(BlueTuskPortal portal)
     {
         if (!portal.SyncSent)
@@ -2485,6 +3255,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask DrainPortalToReadyAsync()
     {
         while (true)
@@ -2630,6 +3401,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return BlueTuskBackendMessageDecoder.DecodeRowDescription(message);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskBackendMessage> ReadStreamedMessageAsync(
         CancellationToken cancellationToken)
     {
@@ -2637,6 +3409,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return await ReadStreamedMessageAsync(header, cancellationToken).ConfigureAwait(false);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskBackendMessage> ReadStreamedMessageAsync(
         BlueTuskBackendMessageHeader header,
         CancellationToken cancellationToken)
@@ -2659,6 +3432,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return header;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskBackendMessageHeader> ReadStreamedMessageHeaderAsync(
         CancellationToken cancellationToken)
     {
@@ -2863,7 +3637,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private BlueTuskQueryResult ExecuteQuery(
         Action<IBufferWriter<byte>> writeMessages,
-        bool invalidatesUnnamedStatement = false)
+        bool invalidatesUnnamedStatement = false,
+        int expectedResultSetCount = 0)
     {
         ArgumentNullException.ThrowIfNull(writeMessages);
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -2879,7 +3654,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
             _connection.Write(writeMessages);
-            return ReadQueryResponse();
+            return ReadQueryResponse(expectedResultSetCount);
         }
         finally
         {
@@ -2892,7 +3667,32 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         EnsureSynchronousCopyState(BlueTuskConnectionState.CopyIn);
         var payload = data.ToArray();
-        _connection.Write(output => BlueTuskFrontendMessageWriter.WriteCopyData(output, payload));
+        _connection.Write(
+            payload,
+            static (output, value) =>
+                BlueTuskFrontendMessageWriter.WriteCopyData(output, value));
+        BlueTuskDiagnostics.CopyBytes.Add(
+            data.Length,
+            new KeyValuePair<string, object?>("direction", "in"));
+    }
+
+    internal ValueTask WriteCopyInAsync(
+        ReadOnlyMemory<byte> data,
+        CancellationToken cancellationToken)
+    {
+        EnsureSynchronousCopyState(BlueTuskConnectionState.CopyIn);
+        cancellationToken.ThrowIfCancellationRequested();
+        return WriteCopyInCoreAsync(data);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private async ValueTask WriteCopyInCoreAsync(ReadOnlyMemory<byte> data)
+    {
+        await _connection.WriteAsync(
+            data,
+            static (output, value) =>
+                BlueTuskFrontendMessageWriter.WriteCopyData(output, value.Span),
+            CancellationToken.None).ConfigureAwait(false);
         BlueTuskDiagnostics.CopyBytes.Add(
             data.Length,
             new KeyValuePair<string, object?>("direction", "in"));
@@ -2920,6 +3720,39 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    internal async ValueTask<BlueTuskCopyResult> CompleteCopyInAsync(
+        BlueTuskCopyResponse response,
+        long bytesTransferred,
+        CancellationToken cancellationToken)
+    {
+        EnsureSynchronousCopyState(BlueTuskConnectionState.CopyIn);
+        try
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            await _connection.WriteAsync(
+                BlueTuskFrontendMessageWriter.WriteCopyDone,
+                CancellationToken.None).ConfigureAwait(false);
+            var commandTag = await ReadCopyCompletionAsync(suppressServerError: false)
+                .ConfigureAwait(false);
+            return new BlueTuskCopyResult(response, commandTag, bytesTransferred);
+        }
+        catch (Exception) when (_connection.StateMachine.State == BlueTuskConnectionState.CopyIn)
+        {
+            await AbortCopyInAsync().ConfigureAwait(false);
+            throw;
+        }
+        catch
+        {
+            _open = false;
+            throw;
+        }
+        finally
+        {
+            ReleaseSynchronousCopyOperation();
+        }
+    }
+
     internal void AbortCopyInOperation()
     {
         if (Volatile.Read(ref _synchronousCopyOperationActive) == 0)
@@ -2930,6 +3763,23 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         try
         {
             AbortCopyIn();
+        }
+        finally
+        {
+            ReleaseSynchronousCopyOperation();
+        }
+    }
+
+    internal async ValueTask AbortCopyInOperationAsync()
+    {
+        if (Volatile.Read(ref _synchronousCopyOperationActive) == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await AbortCopyInAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -2982,6 +3832,104 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    internal ValueTask<BlueTuskCopyOutBufferEvent> ReadCopyOutBufferEventAsync(
+        CancellationToken cancellationToken = default)
+    {
+        EnsureSynchronousCopyState(BlueTuskConnectionState.CopyOut);
+        return ReadCopyOutBufferEventCore(cancellationToken);
+    }
+
+    private ValueTask<BlueTuskCopyOutBufferEvent> ReadCopyOutBufferEventCore(
+        CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            if (!_connection.TryBeginReadMessage(out var message, out var destination))
+            {
+                return ReadCopyOutBufferEventAfterTransportReadAsync(
+                    destination,
+                    cancellationToken);
+            }
+
+            if (BlueTuskDiagnostics.ProtocolMessageSize.Enabled)
+            {
+                BlueTuskDiagnostics.ProtocolMessageSize.Record(message.Length + 5);
+            }
+
+            switch (message.Identifier)
+            {
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'd':
+                    BlueTuskDiagnostics.CopyBytes.Add(
+                        message.Payload.Length,
+                        new KeyValuePair<string, object?>("direction", "out"));
+                    return ValueTask.FromResult(
+                        new BlueTuskCopyOutBufferEvent(
+                            BlueTuskCopyOutEventKind.Data,
+                            Data: message.Payload));
+                case 'c':
+                    break;
+                case 'C':
+                    return ValueTask.FromResult(
+                        new BlueTuskCopyOutBufferEvent(
+                            BlueTuskCopyOutEventKind.CommandComplete,
+                            CommandTag: BlueTuskBackendMessageDecoder.DecodeCommandComplete(message)));
+                case 'E':
+                    return ValueTask.FromResult(
+                        new BlueTuskCopyOutBufferEvent(
+                            BlueTuskCopyOutEventKind.Error,
+                            Error: new BlueTuskServerException(
+                                BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message))));
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'Z':
+                    return CompleteCopyOutBufferReadyAsync(
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
+                default:
+                    break;
+            }
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskCopyOutBufferEvent>
+        ReadCopyOutBufferEventAfterTransportReadAsync(
+            Memory<byte> destination,
+            CancellationToken cancellationToken)
+    {
+        int read;
+        try
+        {
+            read = await _connection.ReadTransportAsync(
+                destination,
+                CancellationToken.None).ConfigureAwait(false);
+        }
+        catch
+        {
+            _connection.AbortReadMessage();
+            throw;
+        }
+
+        _connection.CompleteReadMessage(read);
+        return await ReadCopyOutBufferEventCore(cancellationToken).ConfigureAwait(false);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskCopyOutBufferEvent> CompleteCopyOutBufferReadyAsync(
+        BlueTuskTransactionStatus transactionStatus)
+    {
+        await CompleteReadyForQuery(transactionStatus).ConfigureAwait(false);
+        ReleaseSynchronousCopyOperation();
+        return new BlueTuskCopyOutBufferEvent(BlueTuskCopyOutEventKind.Completed);
+    }
+
     internal void AbortCopyOutOperation()
     {
         if (Volatile.Read(ref _synchronousCopyOperationActive) == 0)
@@ -2992,6 +3940,23 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         try
         {
             AbortCopyOut();
+        }
+        finally
+        {
+            ReleaseSynchronousCopyOperation();
+        }
+    }
+
+    internal async ValueTask AbortCopyOutOperationAsync()
+    {
+        if (Volatile.Read(ref _synchronousCopyOperationActive) == 0)
+        {
+            return;
+        }
+
+        try
+        {
+            await AbortCopyOutAsync().ConfigureAwait(false);
         }
         finally
         {
@@ -3017,10 +3982,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskQueryResult> ExecuteQueryAsync(
         Action<IBufferWriter<byte>> writeMessages,
         CancellationToken cancellationToken,
-        bool invalidatesUnnamedStatement = false)
+        bool invalidatesUnnamedStatement = false,
+        int expectedResultSetCount = 0,
+        bool poolBufferedRows = false)
     {
         ArgumentNullException.ThrowIfNull(writeMessages);
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -3036,11 +4004,91 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
             await _connection.WriteAsync(writeMessages, cancellationToken).ConfigureAwait(false);
-            return await ReadQueryResponseWithCancellationAsync(cancellationToken).ConfigureAwait(false);
+            return await ReadQueryResponseWithCancellationAsync(
+                cancellationToken,
+                expectedResultSetCount,
+                poolBufferedRows).ConfigureAwait(false);
         }
         finally
         {
             BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskQueryResult> ExecuteQueryAsync<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessages,
+        CancellationToken cancellationToken,
+        bool invalidatesUnnamedStatement = false,
+        int expectedResultSetCount = 0,
+        bool poolBufferedRows = false)
+    {
+        ArgumentNullException.ThrowIfNull(writeMessages);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        var started = Stopwatch.GetTimestamp();
+        try
+        {
+            if (invalidatesUnnamedStatement)
+            {
+                InvalidateUnnamedStatement();
+            }
+
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(state, writeMessages, cancellationToken).ConfigureAwait(false);
+            return await ReadQueryResponseWithCancellationAsync(
+                cancellationToken,
+                expectedResultSetCount,
+                poolBufferedRows).ConfigureAwait(false);
+        }
+        finally
+        {
+            BlueTuskDiagnostics.CommandDuration.Record(Stopwatch.GetElapsedTime(started).TotalSeconds);
+            _operationLock.Release();
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> ExecuteNonQueryAsync<TState>(
+        TState state,
+        Action<IBufferWriter<byte>, TState> writeMessages,
+        CancellationToken cancellationToken,
+        bool invalidatesUnnamedStatement = false)
+    {
+        ArgumentNullException.ThrowIfNull(writeMessages);
+        ObjectDisposedException.ThrowIf(_disposed, this);
+
+        cancellationToken.ThrowIfCancellationRequested();
+        if (!_operationLock.Wait(0))
+        {
+            await _operationLock.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+
+        var recordCommandDuration = BlueTuskDiagnostics.CommandDuration.Enabled;
+        var started = recordCommandDuration ? Stopwatch.GetTimestamp() : 0;
+        try
+        {
+            if (invalidatesUnnamedStatement)
+            {
+                InvalidateUnnamedStatement();
+            }
+
+            _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
+            await _connection.WriteAsync(state, writeMessages, cancellationToken).ConfigureAwait(false);
+            return await ReadNonQueryResponseWithCancellationAsync(cancellationToken)
+                .ConfigureAwait(false);
+        }
+        finally
+        {
+            if (recordCommandDuration)
+            {
+                BlueTuskDiagnostics.CommandDuration.Record(
+                    Stopwatch.GetElapsedTime(started).TotalSeconds);
+            }
+
             _operationLock.Release();
         }
     }
@@ -3079,8 +4127,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         Func<BlueTuskSession, TState, TState>? prepareState = null,
         Func<TState, ReadOnlyMemory<byte>>? getPreEncodedMessages = null,
         Action<BlueTuskSession, TState>? completeState = null,
+        int prependedResultSetCount = 0,
         int prependedReadyForQueryCount = 0,
-        Action? prependedCompleted = null)
+        Action? prependedCompleted = null,
+        ReadOnlyMemory<byte> preEncodedMessages = default)
     {
         ArgumentNullException.ThrowIfNull(writeMessages);
         ObjectDisposedException.ThrowIf(_disposed, this);
@@ -3100,8 +4150,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             }
 
             _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-            var preEncodedMessages = getPreEncodedMessages?.Invoke(state) ?? default;
-            if (preEncodedMessages.IsEmpty)
+            var encodedMessages = preEncodedMessages.IsEmpty
+                ? getPreEncodedMessages?.Invoke(state) ?? default
+                : preEncodedMessages;
+            if (encodedMessages.IsEmpty)
             {
                 await _connection.WriteAsync(
                     state,
@@ -3111,7 +4163,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             else
             {
                 await _connection.WritePreEncodedAsync(
-                    preEncodedMessages,
+                    encodedMessages,
                     cancellationToken).ConfigureAwait(false);
             }
             if (cancellationToken.CanBeCanceled)
@@ -3119,6 +4171,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 var result = await ReadScalarResponseWithCancellationAsync(
                     preparedDescription,
                     cancellationToken,
+                    prependedResultSetCount,
                     prependedReadyForQueryCount,
                     prependedCompleted).ConfigureAwait(false);
                 completeState?.Invoke(this, state);
@@ -3166,19 +4219,32 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     case 'A':
                         EnqueueNotification(message);
                         break;
-                    case 'T' when prependedReadyForQueryCount == 0 && !firstResultComplete:
+                    case 'T' when prependedReadyForQueryCount == 0 &&
+                        prependedResultSetCount == 0 &&
+                        !firstResultComplete:
                         fields = DecodeCachedRowDescription(message);
                         fieldCount = fields.Count;
                         firstField = fields.Count == 0 ? null : fields[0];
                         break;
-                    case 'D' when prependedReadyForQueryCount == 0 && !firstResultComplete && !hasValue:
+                    case 'D' when prependedReadyForQueryCount == 0 &&
+                        prependedResultSetCount == 0 &&
+                        !firstResultComplete &&
+                        !hasValue:
                         firstValue = BlueTuskBackendMessageDecoder.DecodeFirstDataRowValue(
                             message,
                             fieldCount);
                         hasValue = true;
                         break;
                     case 'C' or 'I' when prependedReadyForQueryCount == 0:
-                        firstResultComplete = true;
+                        if (prependedResultSetCount > 0)
+                        {
+                            prependedResultSetCount--;
+                        }
+                        else
+                        {
+                            firstResultComplete = true;
+                        }
+
                         break;
                     case 'E':
                         deferredError = new BlueTuskServerException(
@@ -3301,6 +4367,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         IBufferWriter<byte> output,
         ExtendedScalarWriteState state)
     {
+        if (state.BeginStatement is not null)
+        {
+            WriteDeferredBegin(output, state.BeginStatement);
+        }
+
         if (state.ParseSql is not null)
         {
             BlueTuskFrontendMessageWriter.WriteParse(
@@ -3329,6 +4400,35 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         WriteExtendedScalarMessages(output, state);
     }
 
+    private static void WriteResetAndExtendedQueryMessages(
+        IBufferWriter<byte> output,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        string? beginStatement)
+    {
+        BlueTuskFrontendMessageWriter.WriteDiscardAll(output);
+        if (beginStatement is not null)
+        {
+            WriteDeferredBegin(output, beginStatement);
+        }
+
+        BlueTuskFrontendMessageWriter.WriteParse(
+            output,
+            string.Empty,
+            sql,
+            new ExtendedQueryTypeOidSource(parameters));
+        BlueTuskFrontendMessageWriter.WriteBind(
+            output,
+            string.Empty,
+            string.Empty,
+            new ExtendedQueryBindParameterSource(parameters),
+            useBinaryResults ? BinaryResultFormat : TextResultFormat);
+        BlueTuskFrontendMessageWriter.WriteDescribePortal(output, string.Empty);
+        BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+        BlueTuskFrontendMessageWriter.WriteSync(output);
+    }
+
     private static ExtendedScalarWriteState PrepareExtendedScalarWriteState(
         BlueTuskSession session,
         ExtendedScalarWriteState state) =>
@@ -3339,6 +4439,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 state.OriginalSql,
                 state.Parameters),
         };
+
+    private static ExtendedScalarWriteState PrepareBeginAndExtendedScalarWriteState(
+        BlueTuskSession session,
+        ExtendedScalarWriteState state)
+    {
+        session.InvalidateUnnamedStatement();
+        return state with { ParseSql = state.OriginalSql };
+    }
 
     private static ExtendedScalarWriteState PrepareResetAndExtendedScalarWriteState(
         BlueTuskSession session,
@@ -3353,6 +4461,21 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         BlueTuskSession session,
         ExtendedScalarWriteState state) =>
         session.RememberUnnamedStatement(state.OriginalSql, state.Parameters);
+
+    private static void WriteDeferredBegin(IBufferWriter<byte> output, string beginStatement)
+    {
+        BlueTuskFrontendMessageWriter.WriteParse(
+            output,
+            string.Empty,
+            beginStatement,
+            Array.Empty<uint>());
+        BlueTuskFrontendMessageWriter.WriteBind(
+            output,
+            string.Empty,
+            string.Empty,
+            Array.Empty<BlueTuskBindParameter>());
+        BlueTuskFrontendMessageWriter.WriteExecute(output, string.Empty);
+    }
 
     private bool TryGetPreparedStatementDescription(
         string statementName,
@@ -3433,7 +4556,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         InvalidateUnnamedStatement();
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-        _connection.Write(output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql));
+        _connection.Write(
+            sql,
+            static (output, query) =>
+                BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, query));
         var response = ReadCopyStart('G');
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyIn);
         copyStarted?.Invoke(response);
@@ -3451,9 +4577,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 }
 
                 _connection.Write(
-                    output => BlueTuskFrontendMessageWriter.WriteCopyData(
-                        output,
-                        buffer.AsSpan(0, read)));
+                    (Buffer: buffer, Count: read),
+                    static (output, state) =>
+                        BlueTuskFrontendMessageWriter.WriteCopyData(
+                            output,
+                            state.Buffer.AsSpan(0, state.Count)));
                 bytesTransferred = checked(bytesTransferred + read);
                 BlueTuskDiagnostics.CopyBytes.Add(read, new KeyValuePair<string, object?>("direction", "in"));
             }
@@ -3480,7 +4608,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     {
         InvalidateUnnamedStatement();
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
-        _connection.Write(output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql));
+        _connection.Write(
+            sql,
+            static (output, query) =>
+                BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, query));
         var response = ReadCopyStart('H');
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyOut);
         copyStarted?.Invoke(response);
@@ -3499,11 +4630,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         EnqueueNotification(message);
                         break;
                     case 'd':
-                        var data = BlueTuskBackendMessageDecoder.DecodeCopyData(message);
-                        destination.Write(data);
-                        bytesTransferred = checked(bytesTransferred + data.Length);
+                        WriteCopyData(destination, message.Payload);
+                        bytesTransferred = checked(bytesTransferred + message.Payload.Length);
                         BlueTuskDiagnostics.CopyBytes.Add(
-                            data.Length,
+                            message.Payload.Length,
                             new KeyValuePair<string, object?>("direction", "out"));
                         break;
                     case 'c':
@@ -3548,17 +4678,33 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskCopyResult> CopyInCoreAsync(
         string sql,
         Stream source,
         Action<BlueTuskCopyResponse>? copyStarted,
+        string? beginStatement,
         CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
         InvalidateUnnamedStatement();
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
         await _connection.WriteAsync(
-            output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
+            (Sql: sql, BeginStatement: beginStatement),
+            static (output, state) =>
+            {
+                if (state.BeginStatement is null)
+                {
+                    BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, state.Sql);
+                }
+                else
+                {
+                    BlueTuskFrontendMessageWriter.WriteSimpleQuery(
+                        output,
+                        state.BeginStatement,
+                        state.Sql);
+                }
+            },
             CancellationToken.None).ConfigureAwait(false);
         var response = await ReadCopyStartAsync('G').ConfigureAwait(false);
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyIn);
@@ -3579,9 +4725,11 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 }
 
                 await _connection.WriteAsync(
-                    output => BlueTuskFrontendMessageWriter.WriteCopyData(
-                        output,
-                        buffer.AsSpan(0, read)),
+                    (Buffer: buffer, Count: read),
+                    static (output, state) =>
+                        BlueTuskFrontendMessageWriter.WriteCopyData(
+                            output,
+                            state.Buffer.AsSpan(0, state.Count)),
                     CancellationToken.None).ConfigureAwait(false);
                 bytesTransferred = checked(bytesTransferred + read);
                 BlueTuskDiagnostics.CopyBytes.Add(read, new KeyValuePair<string, object?>("direction", "in"));
@@ -3605,6 +4753,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskCopyResult> CopyOutCoreAsync(
         string sql,
         Stream destination,
@@ -3615,7 +4764,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         InvalidateUnnamedStatement();
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.Executing);
         await _connection.WriteAsync(
-            output => BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, sql),
+            sql,
+            static (output, query) =>
+                BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, query),
             CancellationToken.None).ConfigureAwait(false);
         var response = await ReadCopyStartAsync('H').ConfigureAwait(false);
         _connection.StateMachine.TransitionTo(BlueTuskConnectionState.CopyOut);
@@ -3636,11 +4787,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         EnqueueNotification(message);
                         break;
                     case 'd':
-                        var data = BlueTuskBackendMessageDecoder.DecodeCopyData(message);
-                        await destination.WriteAsync(data, cancellationToken).ConfigureAwait(false);
-                        bytesTransferred = checked(bytesTransferred + data.Length);
+                        await WriteCopyDataAsync(
+                            destination,
+                            message.Payload,
+                            cancellationToken).ConfigureAwait(false);
+                        bytesTransferred = checked(bytesTransferred + message.Payload.Length);
                         BlueTuskDiagnostics.CopyBytes.Add(
-                            data.Length,
+                            message.Payload.Length,
                             new KeyValuePair<string, object?>("direction", "out"));
                         break;
                     case 'c':
@@ -3682,6 +4835,27 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             await AbortCopyOutAsync().ConfigureAwait(false);
             throw;
+        }
+    }
+
+    private static void WriteCopyData(Stream destination, ReadOnlySequence<byte> payload)
+    {
+        foreach (var segment in payload)
+        {
+            destination.Write(segment.Span);
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private static async ValueTask WriteCopyDataAsync(
+        Stream destination,
+        ReadOnlySequence<byte> payload,
+        CancellationToken cancellationToken)
+    {
+        var position = payload.Start;
+        while (payload.TryGet(ref position, out var segment))
+        {
+            await destination.WriteAsync(segment, cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -3766,6 +4940,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskCopyResponse> ReadCopyStartAsync(char expectedIdentifier)
     {
         BlueTuskServerException? deferredError = null;
@@ -3805,6 +4980,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<string> ReadCopyCompletionAsync(bool suppressServerError)
     {
         string? commandTag = null;
@@ -3927,7 +5103,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
 
         await _connection.WriteAsync(
-            output => BlueTuskFrontendMessageWriter.WriteCopyData(output, data.Span),
+            data,
+            static (output, value) =>
+                BlueTuskFrontendMessageWriter.WriteCopyData(output, value.Span),
             cancellationToken).ConfigureAwait(false);
         BlueTuskDiagnostics.CopyBytes.Add(
             data.Length,
@@ -3974,9 +5152,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         try
         {
             _connection.Write(
-                output => BlueTuskFrontendMessageWriter.WriteCopyFail(
-                    output,
-                    "The client COPY source failed."));
+                "The client COPY source failed.",
+                static (output, message) =>
+                    BlueTuskFrontendMessageWriter.WriteCopyFail(output, message));
             _ = ReadCopyCompletion(suppressServerError: true);
         }
         catch
@@ -4016,9 +5194,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         try
         {
             await _connection.WriteAsync(
-                output => BlueTuskFrontendMessageWriter.WriteCopyFail(
-                    output,
-                    "The client COPY source failed."),
+                "The client COPY source failed.",
+                static (output, message) =>
+                    BlueTuskFrontendMessageWriter.WriteCopyFail(output, message),
                 CancellationToken.None).ConfigureAwait(false);
             _ = await ReadCopyCompletionAsync(suppressServerError: true).ConfigureAwait(false);
         }
@@ -4098,6 +5276,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             "PostgreSQL continued to cancel synchronization queries after COPY cleanup.");
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskBackendMessage> ReadMessageAsync(
         CancellationToken cancellationToken)
     {
@@ -4113,9 +5292,9 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return message;
     }
 
-    private BlueTuskQueryResult ReadQueryResponse()
+    private BlueTuskQueryResult ReadQueryResponse(int expectedResultSetCount = 0)
     {
-        var response = ReadPipelineGroupResponse();
+        var response = ReadPipelineGroupResponse(expectedResultSetCount);
         if (response.Error is not null)
         {
             throw response.Error;
@@ -4124,11 +5303,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return response.Result;
     }
 
-    private BlueTuskPipelineGroupResult ReadPipelineGroupResponse()
+    private BlueTuskPipelineGroupResult ReadPipelineGroupResponse(int expectedResultSetCount = 0)
     {
-        var resultSets = new List<BlueTuskResultSet>();
+        var resultSets = expectedResultSetCount == 0
+            ? new List<BlueTuskResultSet>()
+            : new List<BlueTuskResultSet>(expectedResultSetCount);
         IReadOnlyList<BlueTuskFieldDescription> fields = [];
-        List<BlueTuskDataRow> rows = [];
+        BlueTuskBufferedRows? rows = null;
         BlueTuskServerException? deferredError = null;
 
         while (true)
@@ -4141,18 +5322,18 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     break;
                 case 'T':
                     fields = DecodeCachedRowDescription(message);
-                    rows = [];
+                    rows = null;
                     break;
                 case 'D':
-                    rows.Add(BlueTuskBackendMessageDecoder.DecodeDataRow(message, fields.Count));
+                    (rows ??= new BlueTuskBufferedRows()).Add(message, fields.Count);
                     break;
                 case 'C':
                     resultSets.Add(new BlueTuskResultSet(
                         fields,
-                        rows,
+                        CompleteBufferedRows(rows),
                         BlueTuskBackendMessageDecoder.DecodeCommandComplete(message)));
                     fields = [];
-                    rows = [];
+                    rows = null;
                     break;
                 case 'I':
                     resultSets.Add(new BlueTuskResultSet([], [], string.Empty));
@@ -4172,7 +5353,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
                     if (fields.Count != 0)
                     {
-                        resultSets.Add(new BlueTuskResultSet(fields, rows, string.Empty));
+                        resultSets.Add(new BlueTuskResultSet(
+                            fields,
+                            CompleteBufferedRows(rows),
+                            string.Empty));
                     }
 
                     return new BlueTuskPipelineGroupResult(
@@ -4184,15 +5368,22 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskQueryResult> ReadQueryResponseWithCancellationAsync(
-        CancellationToken cancellationToken)
+        CancellationToken cancellationToken,
+        int expectedResultSetCount = 0,
+        bool poolBufferedRows = false)
     {
         if (!cancellationToken.CanBeCanceled)
         {
-            return await ReadQueryResponseAsync().ConfigureAwait(false);
+            return await ReadQueryResponseAsync(
+                expectedResultSetCount,
+                poolBufferedRows).ConfigureAwait(false);
         }
 
-        var responseTask = ReadQueryResponseAsync().AsTask();
+        var responseTask = ReadQueryResponseAsync(
+            expectedResultSetCount,
+            poolBufferedRows).AsTask();
 
         try
         {
@@ -4230,9 +5421,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    private async ValueTask<BlueTuskQueryResult> ReadQueryResponseAsync()
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskQueryResult> ReadQueryResponseAsync(
+        int expectedResultSetCount = 0,
+        bool poolBufferedRows = false)
     {
-        var response = await ReadPipelineGroupResponseAsync().ConfigureAwait(false);
+        var response = await ReadPipelineGroupResponseAsync(
+            expectedResultSetCount,
+            poolBufferedRows).ConfigureAwait(false);
         if (response.Error is not null)
         {
             throw response.Error;
@@ -4241,9 +5437,107 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         return response.Result;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> ReadNonQueryResponseWithCancellationAsync(
+        CancellationToken cancellationToken)
+    {
+        if (!cancellationToken.CanBeCanceled)
+        {
+            return await ReadNonQueryResponseAsync().ConfigureAwait(false);
+        }
+
+        var responseTask = ReadNonQueryResponseAsync().AsTask();
+        try
+        {
+            return await responseTask.WaitAsync(cancellationToken).ConfigureAwait(false);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            if (responseTask.IsCompleted)
+            {
+                return await responseTask.ConfigureAwait(false);
+            }
+
+            try
+            {
+                await CancelAsync(CancellationToken.None).ConfigureAwait(false);
+            }
+            catch
+            {
+                ObserveFault(responseTask);
+                _open = false;
+                await _connection.DisposeAsync().ConfigureAwait(false);
+                throw;
+            }
+
+            try
+            {
+                _ = await responseTask.ConfigureAwait(false);
+            }
+            catch (BlueTuskServerException exception) when (exception.SqlState == "57014")
+            {
+                // PostgreSQL confirmed cancellation after ReadyForQuery was consumed.
+            }
+
+            throw new OperationCanceledException(
+                "The PostgreSQL operation was cancelled.",
+                cancellationToken);
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> ReadNonQueryResponseAsync()
+    {
+        var affected = 0;
+        var found = false;
+        BlueTuskServerException? deferredError = null;
+        while (true)
+        {
+            var message = await ReadMessageAsync(CancellationToken.None).ConfigureAwait(false);
+            switch (message.Identifier)
+            {
+                case 'A':
+                    EnqueueNotification(message);
+                    break;
+                case 'C':
+                    if (BlueTuskBackendMessageDecoder.TryDecodeRecordsAffected(
+                            message,
+                            out var count))
+                    {
+                        affected = checked(affected + count);
+                        found = true;
+                    }
+                    break;
+                case 'E':
+                    deferredError = new BlueTuskServerException(
+                        BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'N':
+                    _notices.Add(BlueTuskBackendMessageDecoder.DecodeErrorOrNotice(message));
+                    break;
+                case 'S':
+                    StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
+                    break;
+                case 'Z':
+                    await CompleteReadyForQuery(
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message))
+                        .ConfigureAwait(false);
+                    if (deferredError is not null)
+                    {
+                        throw deferredError;
+                    }
+
+                    return found ? affected : -1;
+                default:
+                    break;
+            }
+        }
+    }
+
     private ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseWithCancellationAsync(
         PreparedStatementDescription? preparedDescription,
         CancellationToken cancellationToken,
+        int prependedResultSetCount = 0,
         int prependedReadyForQueryCount = 0,
         Action? prependedCompleted = null)
     {
@@ -4251,12 +5545,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         {
             return ReadScalarResponseAsync(
                 preparedDescription,
+                prependedResultSetCount,
                 prependedReadyForQueryCount,
                 prependedCompleted);
         }
 
         return ReadScalarResponseWithCancellationSlowAsync(
             preparedDescription,
+            prependedResultSetCount,
             prependedReadyForQueryCount,
             prependedCompleted,
             cancellationToken);
@@ -4264,12 +5560,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private async ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseWithCancellationSlowAsync(
         PreparedStatementDescription? preparedDescription,
+        int prependedResultSetCount,
         int prependedReadyForQueryCount,
         Action? prependedCompleted,
         CancellationToken cancellationToken)
     {
         var responseTask = ReadScalarResponseAsync(
             preparedDescription,
+            prependedResultSetCount,
             prependedReadyForQueryCount,
             prependedCompleted).AsTask();
         try
@@ -4310,6 +5608,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
 
     private async ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseAsync(
         PreparedStatementDescription? preparedDescription,
+        int prependedResultSetCount = 0,
         int prependedReadyForQueryCount = 0,
         Action? prependedCompleted = null)
     {
@@ -4331,19 +5630,32 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 case 'A':
                     EnqueueNotification(message);
                     break;
-                case 'T' when prependedReadyForQueryCount == 0 && !firstResultComplete:
+                case 'T' when prependedReadyForQueryCount == 0 &&
+                    prependedResultSetCount == 0 &&
+                    !firstResultComplete:
                     fields = DecodeCachedRowDescription(message);
                     fieldCount = fields.Count;
                     firstField = fields.Count == 0 ? null : fields[0];
                     break;
-                case 'D' when prependedReadyForQueryCount == 0 && !firstResultComplete && !hasValue:
+                case 'D' when prependedReadyForQueryCount == 0 &&
+                    prependedResultSetCount == 0 &&
+                    !firstResultComplete &&
+                    !hasValue:
                     firstValue = BlueTuskBackendMessageDecoder.DecodeFirstDataRowValue(
                         message,
                         fieldCount);
                     hasValue = true;
                     break;
                 case 'C' or 'I' when prependedReadyForQueryCount == 0:
-                    firstResultComplete = true;
+                    if (prependedResultSetCount > 0)
+                    {
+                        prependedResultSetCount--;
+                    }
+                    else
+                    {
+                        firstResultComplete = true;
+                    }
+
                     break;
                 case 'E':
                     deferredError = new BlueTuskServerException(
@@ -4392,11 +5704,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
-    private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseAsync()
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseAsync(
+        int expectedResultSetCount = 0,
+        bool poolBufferedRows = false)
     {
-        var resultSets = new List<BlueTuskResultSet>();
+        var resultSets = expectedResultSetCount == 0
+            ? new List<BlueTuskResultSet>()
+            : new List<BlueTuskResultSet>(expectedResultSetCount);
         IReadOnlyList<BlueTuskFieldDescription> fields = [];
-        List<BlueTuskDataRow> rows = [];
+        BlueTuskBufferedRows? rows = null;
         BlueTuskServerException? deferredError = null;
 
         while (true)
@@ -4410,18 +5727,20 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     break;
                 case 'T':
                     fields = DecodeCachedRowDescription(message);
-                    rows = [];
+                    rows = null;
                     break;
                 case 'D':
-                    rows.Add(BlueTuskBackendMessageDecoder.DecodeDataRow(message, fields.Count));
+                    (rows ??= poolBufferedRows
+                        ? BlueTuskBufferedRows.Rent()
+                        : new BlueTuskBufferedRows()).Add(message, fields.Count);
                     break;
                 case 'C':
                     resultSets.Add(new BlueTuskResultSet(
                         fields,
-                        rows,
+                        CompleteBufferedRows(rows),
                         BlueTuskBackendMessageDecoder.DecodeCommandComplete(message)));
                     fields = [];
-                    rows = [];
+                    rows = null;
                     break;
                 case 'I':
                     resultSets.Add(new BlueTuskResultSet([], [], string.Empty));
@@ -4442,7 +5761,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     await cancellationCompletion.ConfigureAwait(false);
                     if (fields.Count != 0)
                     {
-                        resultSets.Add(new BlueTuskResultSet(fields, rows, string.Empty));
+                        resultSets.Add(new BlueTuskResultSet(
+                            fields,
+                            CompleteBufferedRows(rows),
+                            string.Empty));
                     }
 
                     return new BlueTuskPipelineGroupResult(
@@ -4454,6 +5776,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseWithCancellationAsync(
         CancellationToken cancellationToken)
     {
@@ -4489,6 +5812,25 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
             _ = await responseTask.ConfigureAwait(false);
             throw new OperationCanceledException("The PostgreSQL pipeline was cancelled.", cancellationToken);
         }
+    }
+
+    private static BlueTuskBufferedRows CompleteBufferedRows(
+        BlueTuskBufferedRows? rows)
+    {
+        if (rows is null)
+        {
+            return EmptyBufferedRows;
+        }
+
+        rows.Complete();
+        return rows;
+    }
+
+    private static BlueTuskBufferedRows CreateEmptyBufferedRows()
+    {
+        var rows = new BlueTuskBufferedRows();
+        rows.Complete();
+        return rows;
     }
 
     private Task CompleteReadyForQuery(BlueTuskTransactionStatus transactionStatus)
@@ -5485,7 +6827,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         string OriginalSql,
         string? ParseSql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> Parameters,
-        bool UseBinaryResults);
+        bool UseBinaryResults,
+        string? BeginStatement = null);
 
     private readonly record struct PortalWriteState(
         string PortalName,
@@ -5495,7 +6838,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         bool UseBinaryResults,
         int FetchSize,
         bool DescribePortal,
-        ReadOnlyMemory<byte> CachedMessages);
+        ReadOnlyMemory<byte> CachedMessages,
+        string? BeginStatement,
+        bool ResetSession);
+
+    private readonly record struct BatchWriteState(
+        BlueTuskBatchCommandExecution[] Queries,
+        int QueryCount,
+        bool UseBinaryResults);
 
     private readonly struct ExtendedQueryBindParameterSource(
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters) : IBlueTuskBindParameterSource
@@ -5513,5 +6863,23 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         public int Count => parameters.Count;
 
         public uint GetTypeOid(int index) => parameters[index].TypeOid;
+    }
+
+    private readonly struct BatchExecutionBindParameterSource(
+        BlueTuskBatchCommandExecution command) : IBlueTuskBindParameterSource
+    {
+        public int Count => command.ParameterCount;
+
+        public short GetFormatCode(int index) => command.GetParameter(index).FormatCode;
+
+        public ReadOnlyMemory<byte>? GetValue(int index) => command.GetParameter(index).Value;
+    }
+
+    private readonly struct BatchExecutionTypeOidSource(
+        BlueTuskBatchCommandExecution command) : IBlueTuskTypeOidSource
+    {
+        public int Count => command.ParameterCount;
+
+        public uint GetTypeOid(int index) => command.GetParameter(index).TypeOid;
     }
 }

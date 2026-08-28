@@ -37,10 +37,10 @@ standard release process remains fail closed for later versions.
   primary failover, backward/forward clock movement and PostgreSQL minor
   upgrade during both exact endurance windows: 14 recoveries and 28 hashed
   injection/recovery summaries.
-- A six-meter, 60-instrument telemetry contract; 14 reference production SLOs;
+- A six-meter, 62-instrument telemetry contract; 14 reference production SLOs;
   a deployable OpenTelemetry Collector, Prometheus rules and Grafana dashboard;
   and metric lifecycle tests for every product family.
-- Complete checked-in BenchmarkDotNet coverage for 98 measured workloads across
+- Complete checked-in BenchmarkDotNet coverage for 120 measured workloads across
   22 fixtures, 46 allocation budgets, 19 reference-machine latency budgets and
   a manual exact-candidate performance workflow.
 - A single fail-closed V1 verifier that distinguishes deterministic engineering

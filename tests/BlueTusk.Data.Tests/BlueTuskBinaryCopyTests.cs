@@ -91,6 +91,35 @@ public sealed class BlueTuskBinaryCopyTests
     }
 
     [Fact]
+    public void Decoder_cache_refreshes_when_requested_type_changes()
+    {
+        var registry = BlueTuskBuiltInTypes.CreateRegistry();
+        var decoder = default(BlueTuskBinaryCopyDecoder);
+        ReadOnlyMemory<byte> payload = Convert.FromHexString("0000002A");
+
+        Assert.Equal(
+            42,
+            BlueTuskBinaryCopyCodec.Decode<int>(payload, null, registry, ref decoder));
+        Assert.Equal(
+            42,
+            BlueTuskBinaryCopyCodec.Decode<int>(payload, null, registry, ref decoder));
+        Assert.Equal(
+            42U,
+            BlueTuskBinaryCopyCodec.Decode<uint>(
+                payload,
+                BlueTuskBuiltInTypes.Oid.Id.Oid,
+                registry,
+                ref decoder));
+        Assert.Equal(
+            42,
+            BlueTuskBinaryCopyCodec.Decode<int>(
+                payload,
+                BlueTuskBuiltInTypes.Int4.Id.Oid,
+                registry,
+                ref decoder));
+    }
+
+    [Fact]
     public async Task Importer_rejects_incomplete_rows()
     {
         var pipe = new BlueTuskCopyPipe();

@@ -11,12 +11,14 @@ namespace BlueTusk.Benchmarks;
 [JsonExporterAttribute.Brief]
 public class StreamsTransactionBenchmarks
 {
-    private const int ChangeCount = 1000;
     private readonly ChangeSourceIdentity _sourceIdentity =
         new("benchmark-system", "benchmark", "benchmark_slot", "public:benchmark");
     private BlueTuskPgOutputEnvelope[] _ordinaryTransaction = null!;
     private BlueTuskPgOutputEnvelope[] _largeStreamedTransaction = null!;
     private string _spoolDirectory = null!;
+
+    [Params(1, 1_000)]
+    public int TransactionChangeCount { get; set; }
 
     [GlobalSetup]
     public void Setup()
@@ -39,7 +41,7 @@ public class StreamsTransactionBenchmarks
         }
     }
 
-    [Benchmark(OperationsPerInvoke = ChangeCount)]
+    [Benchmark]
     public async Task<int> AssembleAndMaterializeOneThousandInserts()
     {
         var stream = new PgOutputChangeStream(Messages(_ordinaryTransaction), _sourceIdentity);
@@ -85,12 +87,12 @@ public class StreamsTransactionBenchmarks
         return checksum;
     }
 
-    private static BlueTuskPgOutputEnvelope[] CreateOrdinaryTransaction()
+    private BlueTuskPgOutputEnvelope[] CreateOrdinaryTransaction()
     {
-        var messages = new BlueTuskPgOutputEnvelope[ChangeCount + 3];
+        var messages = new BlueTuskPgOutputEnvelope[TransactionChangeCount + 3];
         messages[0] = Envelope(Relation(streamingTransactionId: null));
         messages[1] = Envelope(new BlueTuskPgOutputBegin(Lsn(10), DateTimeOffset.UnixEpoch, 1));
-        for (var index = 0; index < ChangeCount; index++)
+        for (var index = 0; index < TransactionChangeCount; index++)
         {
             messages[index + 2] = Envelope(
                 new BlueTuskPgOutputInsert(

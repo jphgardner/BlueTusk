@@ -18,11 +18,27 @@ internal static class NatsSyncEnvelopeCodec
     internal static byte[] EncodeTransaction(SyncTransactionBatch batch)
     {
         ArgumentNullException.ThrowIfNull(batch);
+        var contentLength = checked(
+            GetHeaderLength(batch.PipelineId, batch.Transform, batch.Transaction.Source) +
+            sizeof(uint) + sizeof(ulong) + sizeof(long) + sizeof(byte) +
+            GetStringLength(batch.Transaction.GlobalTransactionId) + sizeof(int));
+        foreach (var mutation in batch.Mutations)
+        {
+            contentLength = checked(contentLength + GetMutationLength(
+                GetStableChangeIdByteCount(mutation.ChangeId),
+                mutation.Collection,
+                mutation.Key,
+                mutation.Content,
+                mutation.ContentType,
+                mutation.PartitionKey));
+        }
+
         var writer = Start(
             NatsSyncEnvelopeKind.Transaction,
             batch.PipelineId,
             batch.Transform,
-            batch.Transaction.Source);
+            batch.Transaction.Source,
+            contentLength);
         WriteUInt32(writer, batch.Transaction.TransactionId);
         WriteUInt64(writer, batch.Transaction.CommitEndPosition.Value);
         WriteInt64(writer, batch.Transaction.CommitTimestamp.UtcTicks);
@@ -51,11 +67,17 @@ internal static class NatsSyncEnvelopeCodec
         SnapshotReset reset)
     {
         ArgumentNullException.ThrowIfNull(reset);
+        var contentLength = checked(
+            GetHeaderLength(pipelineId, transform, reset.Epoch.Source) +
+            GetSnapshotIdentityLength() + sizeof(byte) +
+            (reset.AbandonedEpoch.HasValue ? 16 : 0) +
+            GetStringLength(reset.Reason));
         var writer = Start(
             NatsSyncEnvelopeKind.SnapshotReset,
             pipelineId,
             transform,
-            reset.Epoch.Source);
+            reset.Epoch.Source,
+            contentLength);
         WriteSnapshotIdentity(writer, reset.Epoch);
         WriteNullableGuid(writer, reset.AbandonedEpoch);
         WriteString(writer, reset.Reason);
@@ -68,11 +90,15 @@ internal static class NatsSyncEnvelopeCodec
         SnapshotStart start)
     {
         ArgumentNullException.ThrowIfNull(start);
+        var contentLength = checked(
+            GetHeaderLength(pipelineId, transform, start.Epoch.Source) +
+            GetSnapshotIdentityLength() + sizeof(int));
         var writer = Start(
             NatsSyncEnvelopeKind.SnapshotStart,
             pipelineId,
             transform,
-            start.Epoch.Source);
+            start.Epoch.Source,
+            contentLength);
         WriteSnapshotIdentity(writer, start.Epoch);
         WriteInt32(writer, start.TableCount);
         return Finish(writer);
@@ -82,13 +108,30 @@ internal static class NatsSyncEnvelopeCodec
     {
         ArgumentNullException.ThrowIfNull(batch);
         var sourceBatch = batch.SourceBatch;
+        var tableIdentity = sourceBatch.Table.Schema + "." + sourceBatch.Table.Name;
+        var contentLength = checked(
+            GetHeaderLength(batch.PipelineId, batch.Transform, sourceBatch.Epoch.Source) +
+            GetSnapshotIdentityLength() + GetStringLength(tableIdentity) +
+            sizeof(long) + sizeof(byte) + sizeof(int));
+        foreach (var mutation in batch.Mutations)
+        {
+            contentLength = checked(contentLength + GetMutationLength(
+                GetStableSnapshotIdByteCount(mutation.RowId),
+                mutation.Collection,
+                mutation.Key,
+                mutation.Content,
+                mutation.ContentType,
+                mutation.PartitionKey));
+        }
+
         var writer = Start(
             NatsSyncEnvelopeKind.SnapshotBatch,
             batch.PipelineId,
             batch.Transform,
-            sourceBatch.Epoch.Source);
+            sourceBatch.Epoch.Source,
+            contentLength);
         WriteSnapshotIdentity(writer, sourceBatch.Epoch);
-        WriteString(writer, sourceBatch.Table.Schema + "." + sourceBatch.Table.Name);
+        WriteString(writer, tableIdentity);
         WriteInt64(writer, sourceBatch.Sequence);
         WriteByte(writer, sourceBatch.IsLastForTable ? (byte)1 : (byte)0);
         WriteInt32(writer, batch.Mutations.Count);
@@ -114,11 +157,15 @@ internal static class NatsSyncEnvelopeCodec
         SnapshotComplete complete)
     {
         ArgumentNullException.ThrowIfNull(complete);
+        var contentLength = checked(
+            GetHeaderLength(pipelineId, transform, complete.Epoch.Source) +
+            GetSnapshotIdentityLength() + sizeof(long) + sizeof(int));
         var writer = Start(
             NatsSyncEnvelopeKind.SnapshotComplete,
             pipelineId,
             transform,
-            complete.Epoch.Source);
+            complete.Epoch.Source,
+            contentLength);
         WriteSnapshotIdentity(writer, complete.Epoch);
         WriteInt64(writer, complete.RowCount);
         WriteInt32(writer, complete.TableCount);
@@ -281,13 +328,14 @@ internal static class NatsSyncEnvelopeCodec
         }
     }
 
-    private static ArrayBufferWriter<byte> Start(
+    private static FixedBufferWriter Start(
         NatsSyncEnvelopeKind kind,
         string pipelineId,
         SyncTransformVersion transform,
-        ChangeSourceIdentity source)
+        ChangeSourceIdentity source,
+        int contentLength)
     {
-        var writer = new ArrayBufferWriter<byte>();
+        var writer = new FixedBufferWriter(checked(contentLength + IntegrityLength));
         WriteBytes(writer, Magic);
         WriteUInt16(writer, CurrentFormatVersion);
         WriteByte(writer, (byte)kind);
@@ -302,15 +350,15 @@ internal static class NatsSyncEnvelopeCodec
         return writer;
     }
 
-    private static byte[] Finish(ArrayBufferWriter<byte> writer)
+    private static byte[] Finish(FixedBufferWriter writer)
     {
         Span<byte> integrity = stackalloc byte[IntegrityLength];
         _ = SHA256.HashData(writer.WrittenSpan, integrity);
         WriteBytes(writer, integrity);
-        return writer.WrittenSpan.ToArray();
+        return writer.DetachCompletedBuffer();
     }
 
-    private static void WriteSnapshotIdentity(ArrayBufferWriter<byte> writer, SnapshotEpoch epoch)
+    private static void WriteSnapshotIdentity(IBufferWriter<byte> writer, SnapshotEpoch epoch)
     {
         WriteGuid(writer, epoch.Value);
         WriteUInt64(writer, epoch.ConsistentPosition.Value);
@@ -370,7 +418,7 @@ internal static class NatsSyncEnvelopeCodec
     }
 
     private static void WriteMutation(
-        ArrayBufferWriter<byte> writer,
+        IBufferWriter<byte> writer,
         string stableId,
         SyncMutationKind kind,
         string collection,
@@ -394,7 +442,45 @@ internal static class NatsSyncEnvelopeCodec
     private static string StableSnapshotId(SnapshotRowId id) =>
         $"{id.Epoch:N}:{id.TableIdentity}:{id.KeyIdentity}";
 
-    private static void WriteString(ArrayBufferWriter<byte> writer, string? value)
+    private static int GetHeaderLength(
+        string pipelineId,
+        SyncTransformVersion transform,
+        ChangeSourceIdentity source) =>
+        checked(Magic.Length + sizeof(ushort) + 2 +
+            GetStringLength(pipelineId) +
+            GetStringLength(transform.Name) +
+            GetStringLength(transform.Fingerprint) +
+            GetStringLength(source.SystemIdentifier) +
+            GetStringLength(source.DatabaseName) +
+            GetStringLength(source.SlotName) +
+            GetStringLength(source.PublicationFingerprint));
+
+    private static int GetSnapshotIdentityLength() => 16 + sizeof(ulong) + sizeof(long);
+
+    private static int GetMutationLength(
+        int stableIdByteCount,
+        string collection,
+        string? key,
+        ReadOnlyMemory<byte> content,
+        string? contentType,
+        string? partitionKey) =>
+        checked(sizeof(int) + stableIdByteCount + sizeof(byte) +
+            GetStringLength(collection) +
+            GetStringLength(key) + sizeof(int) + content.Length +
+            GetStringLength(contentType) +
+            GetStringLength(partitionKey));
+
+    private static int GetStableChangeIdByteCount(ChangeId id) =>
+        checked(Encoding.UTF8.GetByteCount(id.Source.Fingerprint) + 35);
+
+    private static int GetStableSnapshotIdByteCount(SnapshotRowId id) =>
+        checked(34 + Encoding.UTF8.GetByteCount(id.TableIdentity) +
+            Encoding.UTF8.GetByteCount(id.KeyIdentity));
+
+    private static int GetStringLength(string? value) =>
+        checked(sizeof(int) + (value is null ? 0 : Encoding.UTF8.GetByteCount(value)));
+
+    private static void WriteString(IBufferWriter<byte> writer, string? value)
     {
         if (value is null)
         {
@@ -409,13 +495,13 @@ internal static class NatsSyncEnvelopeCodec
         writer.Advance(byteCount);
     }
 
-    private static void WriteMemory(ArrayBufferWriter<byte> writer, ReadOnlyMemory<byte> value)
+    private static void WriteMemory(IBufferWriter<byte> writer, ReadOnlyMemory<byte> value)
     {
         WriteInt32(writer, value.Length);
         WriteBytes(writer, value.Span);
     }
 
-    private static void WriteNullableGuid(ArrayBufferWriter<byte> writer, Guid? value)
+    private static void WriteNullableGuid(IBufferWriter<byte> writer, Guid? value)
     {
         WriteByte(writer, value.HasValue ? (byte)1 : (byte)0);
         if (value.HasValue)
@@ -424,7 +510,7 @@ internal static class NatsSyncEnvelopeCodec
         }
     }
 
-    private static void WriteGuid(ArrayBufferWriter<byte> writer, Guid value)
+    private static void WriteGuid(IBufferWriter<byte> writer, Guid value)
     {
         var destination = writer.GetSpan(16);
         if (!value.TryWriteBytes(destination, bigEndian: true, out var bytesWritten) || bytesWritten != 16)
@@ -435,51 +521,108 @@ internal static class NatsSyncEnvelopeCodec
         writer.Advance(bytesWritten);
     }
 
-    private static void WriteByte(ArrayBufferWriter<byte> writer, byte value)
+    private static void WriteByte(IBufferWriter<byte> writer, byte value)
     {
         writer.GetSpan(1)[0] = value;
         writer.Advance(1);
     }
 
-    private static void WriteUInt16(ArrayBufferWriter<byte> writer, int value)
+    private static void WriteUInt16(IBufferWriter<byte> writer, int value)
     {
         var destination = writer.GetSpan(sizeof(ushort));
         BinaryPrimitives.WriteUInt16LittleEndian(destination, checked((ushort)value));
         writer.Advance(sizeof(ushort));
     }
 
-    private static void WriteInt32(ArrayBufferWriter<byte> writer, int value)
+    private static void WriteInt32(IBufferWriter<byte> writer, int value)
     {
         var destination = writer.GetSpan(sizeof(int));
         BinaryPrimitives.WriteInt32LittleEndian(destination, value);
         writer.Advance(sizeof(int));
     }
 
-    private static void WriteUInt32(ArrayBufferWriter<byte> writer, uint value)
+    private static void WriteUInt32(IBufferWriter<byte> writer, uint value)
     {
         var destination = writer.GetSpan(sizeof(uint));
         BinaryPrimitives.WriteUInt32LittleEndian(destination, value);
         writer.Advance(sizeof(uint));
     }
 
-    private static void WriteInt64(ArrayBufferWriter<byte> writer, long value)
+    private static void WriteInt64(IBufferWriter<byte> writer, long value)
     {
         var destination = writer.GetSpan(sizeof(long));
         BinaryPrimitives.WriteInt64LittleEndian(destination, value);
         writer.Advance(sizeof(long));
     }
 
-    private static void WriteUInt64(ArrayBufferWriter<byte> writer, ulong value)
+    private static void WriteUInt64(IBufferWriter<byte> writer, ulong value)
     {
         var destination = writer.GetSpan(sizeof(ulong));
         BinaryPrimitives.WriteUInt64LittleEndian(destination, value);
         writer.Advance(sizeof(ulong));
     }
 
-    private static void WriteBytes(ArrayBufferWriter<byte> writer, ReadOnlySpan<byte> value)
+    private static void WriteBytes(IBufferWriter<byte> writer, ReadOnlySpan<byte> value)
     {
         value.CopyTo(writer.GetSpan(value.Length));
         writer.Advance(value.Length);
+    }
+
+    private sealed class FixedBufferWriter : IBufferWriter<byte>
+    {
+        private readonly byte[] _buffer;
+        private int _written;
+
+        internal FixedBufferWriter(int length)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(length);
+            _buffer = new byte[length];
+        }
+
+        internal ReadOnlySpan<byte> WrittenSpan => _buffer.AsSpan(0, _written);
+
+        public void Advance(int count)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(count);
+            if (count > _buffer.Length - _written)
+            {
+                throw new InvalidOperationException("The NATS envelope exceeded its computed length.");
+            }
+
+            _written += count;
+        }
+
+        public Memory<byte> GetMemory(int sizeHint = 0)
+        {
+            ValidateSizeHint(sizeHint);
+            return _buffer.AsMemory(_written);
+        }
+
+        public Span<byte> GetSpan(int sizeHint = 0)
+        {
+            ValidateSizeHint(sizeHint);
+            return _buffer.AsSpan(_written);
+        }
+
+        internal byte[] DetachCompletedBuffer()
+        {
+            if (_written != _buffer.Length)
+            {
+                throw new InvalidOperationException(
+                    $"The NATS envelope wrote {_written} bytes into an exact {_buffer.Length}-byte buffer.");
+            }
+
+            return _buffer;
+        }
+
+        private void ValidateSizeHint(int sizeHint)
+        {
+            ArgumentOutOfRangeException.ThrowIfNegative(sizeHint);
+            if (sizeHint > _buffer.Length - _written)
+            {
+                throw new InvalidOperationException("The NATS envelope exceeded its computed length.");
+            }
+        }
     }
 
     private ref struct EnvelopeReader

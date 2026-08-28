@@ -31,9 +31,9 @@ into one number.
 | Evidence | Question answered | Authority |
 | --- | --- | --- |
 | Correctness and compatibility | Does the implementation satisfy its declared contract? | Unit, integration, specification, fuzz, stress and package tests |
-| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 98 BenchmarkDotNet results, 46 allocation budgets, 19 latency budgets and locked multiplexing comparisons |
+| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 120 BenchmarkDotNet results, 46 allocation budgets, 19 latency budgets and locked multiplexing comparisons |
 | Website delivery | Is the documentation and evidence surface bounded and deployable? | Hashed production output, raw/Brotli bundle budgets, static metadata and the archived build report |
-| Production SLOs | Is one deployed application meeting its reliability objectives? | 60 runtime instruments, 14 SLOs, Prometheus rules and deployment telemetry |
+| Production SLOs | Is one deployed application meeting its reliability objectives? | 62 runtime instruments, 14 SLOs, Prometheus rules and deployment telemetry |
 | Release acceptance | Is this exact immutable candidate safe to publish? | Manual workflows, endurance, GA evidence, rehearsals, pilots and named approvals |
 
 Benchmark latency is not a production SLO. A 53 ns in-memory codec result says
@@ -61,7 +61,7 @@ owners, environments and failure actions.
 10. complete, non-empty benchmark coverage for every `[Benchmark]` method;
 11. allocation, reference latency, direct provider-comparison and multiplexing
     performance budgets;
-12. the six-meter, 60-instrument telemetry contract;
+12. the six-meter, 62-instrument telemetry contract;
 13. all 14 reference SLOs, alerts, dashboard panels and Collector safety
    controls; and
 14. fail-closed publication policy.
@@ -193,7 +193,7 @@ versioned Grafana dashboard. The complete setup and alert runbooks are in
 Before sign-off, the SLO owner must demonstrate:
 
 1. actual OTLP-to-Prometheus name translation matches every rule;
-2. all 60 expected instruments appear under controlled exercise;
+2. all 62 expected instruments appear under controlled exercise;
 3. metric dimensions remain within the reviewed cardinality classes;
 4. every alert routes to an owned destination and links to a usable runbook;
 5. Collector loss, queue saturation and dropped telemetry are themselves

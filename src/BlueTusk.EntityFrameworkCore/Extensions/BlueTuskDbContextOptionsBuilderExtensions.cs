@@ -19,6 +19,7 @@ public static class BlueTuskDbContextOptionsBuilderExtensions
             .WithDataSource(null)
             .WithConnectionString(connectionString);
         ((IDbContextOptionsBuilderInfrastructure)optionsBuilder).AddOrUpdateExtension(extension);
+        ConfigureWarnings(optionsBuilder);
         blueTuskOptionsAction?.Invoke(new BlueTuskDbContextOptionsBuilder(optionsBuilder));
         return optionsBuilder;
     }
@@ -46,6 +47,7 @@ public static class BlueTuskDbContextOptionsBuilderExtensions
             .WithDataSource(null)
             .WithConnection(connection, contextOwnsConnection);
         ((IDbContextOptionsBuilderInfrastructure)optionsBuilder).AddOrUpdateExtension(extension);
+        ConfigureWarnings(optionsBuilder);
         blueTuskOptionsAction?.Invoke(new BlueTuskDbContextOptionsBuilder(optionsBuilder));
         return optionsBuilder;
     }
@@ -78,6 +80,7 @@ public static class BlueTuskDbContextOptionsBuilderExtensions
             .WithDataSource(dataSource)
             .WithConnectionString(dataSource.ConnectionString);
         ((IDbContextOptionsBuilderInfrastructure)optionsBuilder).AddOrUpdateExtension(extension);
+        ConfigureWarnings(optionsBuilder);
         blueTuskOptionsAction?.Invoke(new BlueTuskDbContextOptionsBuilder(optionsBuilder));
         return optionsBuilder;
     }
@@ -95,4 +98,12 @@ public static class BlueTuskDbContextOptionsBuilderExtensions
     private static BlueTuskOptionsExtension GetOrCreateExtension(DbContextOptionsBuilder optionsBuilder)
         => optionsBuilder.Options.FindExtension<BlueTuskOptionsExtension>()
             ?? new BlueTuskOptionsExtension();
+
+    private static void ConfigureWarnings(DbContextOptionsBuilder optionsBuilder)
+    {
+        var coreOptions = optionsBuilder.Options.FindExtension<CoreOptionsExtension>()
+            ?? new CoreOptionsExtension();
+        coreOptions = RelationalOptionsExtension.WithDefaultWarningConfiguration(coreOptions);
+        ((IDbContextOptionsBuilderInfrastructure)optionsBuilder).AddOrUpdateExtension(coreOptions);
+    }
 }

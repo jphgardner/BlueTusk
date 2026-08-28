@@ -24,17 +24,17 @@
       "apiExemptProjects": []
     },
     "Live": {
-      "maximumSignatures": 783,
+      "maximumSignatures": 784,
       "baselineProjects": 9,
       "apiExemptProjects": []
     },
     "ControlPlane": {
-      "maximumSignatures": 861,
+      "maximumSignatures": 868,
       "baselineProjects": 2,
       "apiExemptProjects": []
     },
     "ContinuousGraph": {
-      "maximumSignatures": 134,
+      "maximumSignatures": 191,
       "baselineProjects": 2,
       "apiExemptProjects": []
     }

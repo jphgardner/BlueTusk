@@ -27,6 +27,12 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
     private LiveQuerySession<GraphPath, int> _session = null!;
     private int _disposed;
 
+    [Params(1_000, 100_000, 1_000_000)]
+    public int EdgeCount { get; set; }
+
+    [Params(10, 100, 1_000)]
+    public int TopN { get; set; }
+
     [GlobalSetup]
     public async Task Setup()
     {
@@ -51,10 +57,10 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
                 to_id int4 NOT NULL REFERENCES {PeopleTable} (id));
             INSERT INTO {PeopleTable}
             SELECT value, 'person-' || value::text
-            FROM generate_series(1, 1000) AS value;
+            FROM generate_series(1, {EdgeCount + 1}) AS value;
             INSERT INTO {FriendshipsTable}
             SELECT value - 1, 1, value
-            FROM generate_series(2, 1000) AS value;
+            FROM generate_series(2, {EdgeCount + 1}) AS value;
             CREATE PROPERTY GRAPH {GraphName}
                 VERTEX TABLES (
                     {PeopleTable} AS people
@@ -153,7 +159,7 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
         GC.SuppressFinalize(this);
     }
 
-    private static ContinuousGraphQueryDefinition<GraphContext, GraphPath, int>
+    private ContinuousGraphQueryDefinition<GraphContext, GraphPath, int>
         CreateDefinition() =>
         new(
             "continuous-graph-benchmark",
@@ -164,7 +170,7 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
             ["people", "friendships"],
             [new LiveQueryParameter("sourceId", typeof(int))],
             new Dictionary<string, object?> { ["sourceId"] = 1 },
-            1_000,
+            TopN,
             (context, arguments) =>
             {
                 var sourceId = arguments.Get<int>("sourceId");
@@ -187,7 +193,7 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
                             person => person.Name,
                             result => result.DestinationName))
                     .OrderBy(result => result.DestinationId)
-                    .Take(1_000);
+                    .Take(TopN);
             },
             result => result.DestinationId,
             GraphPathComparer.Instance);

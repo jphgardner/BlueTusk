@@ -42,6 +42,9 @@ export class AngularLiveQuery<
   readonly #query: LiveQuery<TRow, TKey, TParameters>;
   readonly #state: WritableSignal<LiveQueryState<TRow>>;
   readonly #unsubscribe: () => void;
+  #pendingState: LiveQueryState<TRow> | null = null;
+  #notificationQueued = false;
+  #destroyed = false;
 
   readonly state: Signal<LiveQueryState<TRow>>;
   readonly rows: Signal<readonly TRow[]>;
@@ -55,7 +58,7 @@ export class AngularLiveQuery<
     this.rows = computed(() => this.#state().rows);
     this.phase = computed(() => this.#state().phase);
     this.error = computed(() => this.#state().error);
-    this.#unsubscribe = query.subscribe((state) => this.#state.set(state));
+    this.#unsubscribe = query.subscribe((state) => this.#scheduleState(state));
   }
 
   start(): void {
@@ -67,8 +70,27 @@ export class AngularLiveQuery<
   }
 
   destroy(): void {
+    this.#destroyed = true;
+    this.#pendingState = null;
     this.#unsubscribe();
     this.#query.stop();
+  }
+
+  #scheduleState(state: LiveQueryState<TRow>): void {
+    this.#pendingState = state;
+    if (this.#notificationQueued) {
+      return;
+    }
+
+    this.#notificationQueued = true;
+    queueMicrotask(() => {
+      this.#notificationQueued = false;
+      const pending = this.#pendingState;
+      this.#pendingState = null;
+      if (!this.#destroyed && pending !== null) {
+        this.#state.set(pending);
+      }
+    });
   }
 }
 

@@ -1,0 +1,115 @@
+name: 1.1 exact-candidate performance capture
+
+on:
+  workflow_dispatch:
+    inputs:
+      candidate_sha:
+        description: Full 40-character commit SHA to measure
+        required: true
+        type: string
+      confirmation:
+        description: Type CAPTURE-1.1-PERFORMANCE-EVIDENCE to start both dedicated runners
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: performance-leadership-${{ inputs.candidate_sha }}
+  cancel-in-progress: false
+
+jobs:
+  capture:
+    name: ${{ matrix.environment }} x64 evidence
+    if: inputs.confirmation == 'CAPTURE-1.1-PERFORMANCE-EVIDENCE'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - environment: windows
+            runner: '["self-hosted","windows","x64","bluetusk-benchmark"]'
+          - environment: linux
+            runner: '["self-hosted","linux","x64","bluetusk-benchmark"]'
+    runs-on: ${{ fromJSON(matrix.runner) }}
+    timeout-minutes: 480
+
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+        with:
+          ref: ${{ inputs.candidate_sha }}
+          fetch-depth: 0
+      - uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6
+        with:
+          global-json-file: global.json
+
+      - name: Verify immutable candidate and leadership contract
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          EXPECTED_ENVIRONMENT: ${{ matrix.environment }}
+        run: |
+          if ($env:CANDIDATE_SHA -notmatch '^[0-9a-fA-F]{40}$') {
+            throw 'candidate_sha must be a full Git SHA.'
+          }
+          $head = (git rev-parse HEAD).Trim()
+          if (-not [string]::Equals($head, $env:CANDIDATE_SHA, [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Checked out '$head', expected '$env:CANDIDATE_SHA'."
+          }
+          if (-not [string]::Equals(
+              [System.Runtime.InteropServices.RuntimeInformation]::OSDescription.Contains('Windows').ToString(),
+              ($env:EXPECTED_ENVIRONMENT -eq 'windows').ToString(),
+              [StringComparison]::OrdinalIgnoreCase)) {
+            throw "Runner operating system does not match '$env:EXPECTED_ENVIRONMENT'."
+          }
+          ./eng/verify-performance-leadership-contract.ps1
+
+      - name: Restore and build the benchmark candidate
+        shell: pwsh
+        run: |
+          dotnet restore BlueTusk.slnx
+          dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-restore
+
+      - name: Start digest-pinned PostgreSQL 19 development milestone
+        shell: pwsh
+        run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
+
+      - name: Capture raw application and provider evidence
+        shell: pwsh
+        env:
+          CANDIDATE_SHA: ${{ inputs.candidate_sha }}
+          CAPTURE_ENVIRONMENT: ${{ matrix.environment }}
+          # Ephemeral localhost-only test credential from eng/compose/postgres.yml.
+          BLUETUSK_BENCHMARK_CONNECTION_STRING: Host=localhost;Port=5419;Database=bluetusk_tests;Username=postgres;Password=postgres;SSL Mode=Disable;Channel Binding=Disable # ggignore
+        run: |
+          $programme = Get-Content -Raw eng/postgresql19-programme.json | ConvertFrom-Json
+          $milestone = @($programme.milestones | Where-Object {
+            $_.version -eq $programme.currentOfficialMilestone
+          })
+          if ($milestone.Count -ne 1) {
+            throw 'The current PostgreSQL 19 milestone is ambiguous.'
+          }
+          ./eng/run-v1-performance-gate.ps1 `
+            -OutputPath "artifacts/performance-leadership/$env:CAPTURE_ENVIRONMENT" `
+            -ExpectedCommit $env:CANDIDATE_SHA `
+            -PostgreSqlImage $milestone[0].image `
+            -NoBuild
+
+      - name: Upload immutable raw evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: performance-leadership-${{ matrix.environment }}-${{ inputs.candidate_sha }}-${{ github.run_id }}
+          path: artifacts/performance-leadership/${{ matrix.environment }}
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Capture PostgreSQL logs on failure
+        if: failure()
+        shell: pwsh
+        run: docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
+
+      - name: Stop PostgreSQL 19
+        if: always()
+        shell: pwsh
+        run: docker compose -f eng/compose/postgres.yml --profile preview down --volumes

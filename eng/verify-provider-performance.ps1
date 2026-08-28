@@ -15,7 +15,7 @@ param(
     [string] $EvidencePath = (
         Join-Path $PSScriptRoot (
             '..\benchmarks\baselines\windows-ryzen7-5800x-dotnet10\' +
-            'multiplexing-evidence.json'))
+            'provider-evidence.json'))
 )
 
 Set-StrictMode -Version Latest

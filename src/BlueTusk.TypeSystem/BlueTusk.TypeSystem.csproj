@@ -7,4 +7,9 @@
     <Description>PostgreSQL type metadata, codecs, catalogue discovery, and CLR mapping primitives.</Description>
   </PropertyGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="BlueTusk.Data" />
+    <InternalsVisibleTo Include="BlueTusk.TypeSystem.Tests" />
+  </ItemGroup>
+
 </Project>

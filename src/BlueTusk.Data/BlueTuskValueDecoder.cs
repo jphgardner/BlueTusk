@@ -96,6 +96,28 @@ internal static class BlueTuskValueDecoder
         return decoded;
     }
 
+    internal static decimal DecodeDecimal(
+        in BlueTuskResolvedField resolved,
+        ReadOnlyMemory<byte>? value)
+    {
+        if (value is null)
+        {
+            throw new InvalidCastException("A database NULL cannot be read as a non-null value.");
+        }
+
+        if (resolved.Type is not { } type ||
+            resolved.Codec is not BlueTuskNumericCodec codec)
+        {
+            throw new InvalidCastException(
+                $"PostgreSQL field '{resolved.Field.Name}' does not have the built-in numeric codec.");
+        }
+
+        var reader = new BlueTuskReader(value.Value.Span);
+        var decoded = codec.ReadDecimal(ref reader, GetFormat(resolved), type);
+        EnsureFullyRead(type, reader.Remaining);
+        return decoded;
+    }
+
     public static Type GetFieldType(BlueTuskFieldDescription field)
         => GetFieldType(BuiltInTypes, field);
 

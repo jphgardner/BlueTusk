@@ -19,7 +19,27 @@ export function useBlueTuskLiveQuery<
     [client, request]
   );
   const state = useSyncExternalStore(
-    (onStoreChange) => query.subscribe(() => onStoreChange()),
+    (onStoreChange) => {
+      let queued = false;
+      let active = true;
+      const unsubscribe = query.subscribe(() => {
+        if (queued) {
+          return;
+        }
+
+        queued = true;
+        queueMicrotask(() => {
+          queued = false;
+          if (active) {
+            onStoreChange();
+          }
+        });
+      });
+      return () => {
+        active = false;
+        unsubscribe();
+      };
+    },
     () => query.state,
     () => query.state
   );

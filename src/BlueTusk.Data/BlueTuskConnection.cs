@@ -2,6 +2,7 @@ using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 using BlueTusk.Client;
 using BlueTusk.Data.Copy;
@@ -26,6 +27,10 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     private object? _sessionLease;
     private bool _hideSensitiveConnectionString;
     private bool _sessionTouched;
+    private bool _allowPendingPoolResetOnOpen;
+    private bool _bufferDataReaders;
+    private bool _preferExtendedQueryProtocol;
+    private bool _preferBinaryResults;
     private bool _disposed;
     private ConnectionState _state = ConnectionState.Closed;
 
@@ -229,19 +234,29 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     internal bool HasPendingPoolReset =>
         _sessionLease is BlueTuskPooledSession { RequiresReset: true };
 
+    internal bool BufferDataReaders => _bufferDataReaders;
+
+    internal bool PreferExtendedQueryProtocol => _preferExtendedQueryProtocol;
+
+    internal void AllowPendingPoolResetOnOpen() =>
+        _allowPendingPoolResetOnOpen = true;
+
+    internal void UseBufferedDataReaders() => _bufferDataReaders = true;
+
+    internal void PreferBinaryResults() => _preferBinaryResults = true;
+
+    internal void PreferExtendedProtocol() => _preferExtendedQueryProtocol = true;
+
     internal ValueTask<BlueTuskScalarQueryResult> ExecuteResetAndExtendedScalarAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
+        string? beginStatement,
         CancellationToken cancellationToken)
     {
         if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
         {
-            return Session.ExecuteExtendedScalarAsync(
-                sql,
-                parameters,
-                useBinaryResults,
-                cancellationToken);
+            throw new InvalidOperationException("The connection does not have a pending pool reset.");
         }
 
         _sessionTouched = true;
@@ -250,7 +265,156 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             parameters,
             useBinaryResults,
             pooledSession.ResetCompletedCallback,
+            beginStatement,
             cancellationToken);
+    }
+
+    internal BlueTuskQueryResult ExecuteResetAndExtendedQuery(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        string? beginStatement)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            throw new InvalidOperationException("The connection does not have a pending pool reset.");
+        }
+
+        _sessionTouched = true;
+        return pooledSession.Session.ExecuteResetAndExtendedQuery(
+            sql,
+            parameters,
+            useBinaryResults,
+            pooledSession.ResetCompletedCallback,
+            beginStatement);
+    }
+
+    internal ValueTask<BlueTuskQueryResult> ExecuteResetAndExtendedQueryAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        string? beginStatement,
+        CancellationToken cancellationToken)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            throw new InvalidOperationException("The connection does not have a pending pool reset.");
+        }
+
+        _sessionTouched = true;
+        return pooledSession.Session.ExecuteResetAndExtendedQueryAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            pooledSession.ResetCompletedCallback,
+            beginStatement,
+            cancellationToken);
+    }
+
+    internal BlueTuskQueryResult ExecuteResetAndSimpleQuery(
+        string sql,
+        string? beginStatement)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            throw new InvalidOperationException("The connection does not have a pending pool reset.");
+        }
+
+        _sessionTouched = true;
+        return pooledSession.Session.ExecuteResetAndSimpleQuery(
+            sql,
+            pooledSession.ResetCompletedCallback,
+            beginStatement);
+    }
+
+    internal ValueTask<BlueTuskQueryResult> ExecuteResetAndSimpleQueryAsync(
+        string sql,
+        string? beginStatement,
+        CancellationToken cancellationToken)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            throw new InvalidOperationException("The connection does not have a pending pool reset.");
+        }
+
+        _sessionTouched = true;
+        return pooledSession.Session.ExecuteResetAndSimpleQueryAsync(
+            sql,
+            pooledSession.ResetCompletedCallback,
+            beginStatement,
+            cancellationToken);
+    }
+
+    internal BlueTuskPortal BeginResetPortal(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        string? beginStatement)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            throw new InvalidOperationException("The connection does not have a pending pool reset.");
+        }
+
+        _sessionTouched = true;
+        return pooledSession.Session.BeginResetPortal(
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            pooledSession.ResetCompletedCallback,
+            beginStatement);
+    }
+
+    internal ValueTask<BlueTuskPortal> BeginResetPortalAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        string? beginStatement,
+        CancellationToken cancellationToken)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            throw new InvalidOperationException("The connection does not have a pending pool reset.");
+        }
+
+        _sessionTouched = true;
+        return pooledSession.Session.BeginResetPortalAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            pooledSession.ResetCompletedCallback,
+            beginStatement,
+            cancellationToken);
+    }
+
+    internal void CompletePendingPoolReset()
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            return;
+        }
+
+        _sessionTouched = true;
+        _ = pooledSession.Session.ExecuteSimpleQuery("DISCARD ALL");
+        pooledSession.ResetCompleted();
+    }
+
+    internal async ValueTask CompletePendingPoolResetAsync(CancellationToken cancellationToken)
+    {
+        if (_sessionLease is not BlueTuskPooledSession { RequiresReset: true } pooledSession)
+        {
+            return;
+        }
+
+        _sessionTouched = true;
+        _ = await pooledSession.Session.ExecuteSimpleQueryAsync(
+            "DISCARD ALL",
+            cancellationToken).ConfigureAwait(false);
+        pooledSession.ResetCompleted();
     }
 
     internal void AbortPhysicalSession()
@@ -413,6 +577,14 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     DbConnection IProviderConnection.CreateAdminConnection(string connectionString) =>
         CreateUnpooledConnection(connectionString);
 
+    void IProviderConnection.AllowPendingPoolResetOnOpen() => AllowPendingPoolResetOnOpen();
+
+    void IProviderConnection.UseBufferedDataReaders() => UseBufferedDataReaders();
+
+    void IProviderConnection.PreferExtendedProtocol() => PreferExtendedProtocol();
+
+    void IProviderConnection.PreferBinaryResults() => PreferBinaryResults();
+
     void IProviderConnection.ReloadTypes() => ReloadTypes();
 
     ValueTask IProviderConnection.ReloadTypesAsync(CancellationToken cancellationToken) =>
@@ -457,7 +629,11 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             }
             else
             {
-                _sessionLease = _pool.Rent();
+                _sessionLease = _allowPendingPoolResetOnOpen &&
+                    _typeMetadata.IsLoaded &&
+                    _pool is BlueTuskConnectionPool singleHostPool
+                    ? singleHostPool.RentForCommand()
+                    : _pool.Rent();
             }
 
             _typeMetadata.EnsureLoaded(PhysicalSession!);
@@ -503,7 +679,11 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
                 return OpenUnpooledAsync(cancellationToken);
             }
 
-            var renting = _pool.RentAsync(cancellationToken);
+            var renting = _allowPendingPoolResetOnOpen &&
+                _typeMetadata.IsLoaded &&
+                _pool is BlueTuskConnectionPool singleHostPool
+                ? singleHostPool.RentForCommandAsync(cancellationToken)
+                : _pool.RentAsync(cancellationToken);
             if (!renting.IsCompletedSuccessfully)
             {
                 return CompletePooledOpenAsync(renting, cancellationToken);
@@ -1033,13 +1213,11 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
                     transaction,
                     descriptor,
                     ownsTransaction);
-                var length = operations.Seek(0, SeekOrigin.End);
-                var position = operations.Seek(0, SeekOrigin.Begin);
                 return new BlueTuskLargeObjectStream(
                     objectId,
                     access,
-                    length,
-                    position,
+                    length: -1,
+                    position: 0,
                     operations);
             }
             catch
@@ -1154,19 +1332,11 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
                     transaction,
                     descriptor,
                     ownsTransaction);
-                var length = await operations.SeekAsync(
-                    0,
-                    SeekOrigin.End,
-                    cancellationToken).ConfigureAwait(false);
-                var position = await operations.SeekAsync(
-                    0,
-                    SeekOrigin.Begin,
-                    cancellationToken).ConfigureAwait(false);
                 return new BlueTuskLargeObjectStream(
                     objectId,
                     access,
-                    length,
-                    position,
+                    length: -1,
+                    position: 0,
                     operations);
             }
             catch
@@ -1205,12 +1375,14 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     public BlueTuskRawCopyResult CopyFrom(string copyCommand, Stream source)
     {
         EnsureCopyAvailable();
+        EnsureCurrentTransactionStarted();
         return CopyFromCore(copyCommand, source, copyStarted: null);
     }
 
     public BlueTuskRawCopyResult CopyTo(string copyCommand, Stream destination)
     {
         EnsureCopyAvailable();
+        EnsureCurrentTransactionStarted();
         return CopyToCore(copyCommand, destination, copyStarted: null);
     }
 
@@ -1220,10 +1392,12 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         CancellationToken cancellationToken = default)
     {
         EnsureCopyAvailable();
+        await EnsureCurrentTransactionStartedAsync(cancellationToken).ConfigureAwait(false);
         return await CopyFromCoreAsync(
             copyCommand,
             source,
             copyStarted: null,
+            beginStatement: null,
             cancellationToken).ConfigureAwait(false);
     }
 
@@ -1233,6 +1407,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         CancellationToken cancellationToken = default)
     {
         EnsureCopyAvailable();
+        await EnsureCurrentTransactionStartedAsync(cancellationToken).ConfigureAwait(false);
         return await CopyToCoreAsync(
             copyCommand,
             destination,
@@ -1243,6 +1418,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     public BlueTuskBinaryImporter BeginBinaryImport(string copyCommand)
     {
         EnsureCopyAvailable();
+        EnsureCurrentTransactionStarted();
         BlueTuskCopyInOperation? operation = null;
         try
         {
@@ -1269,6 +1445,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     public BlueTuskBinaryExporter BeginBinaryExport(string copyCommand)
     {
         EnsureCopyAvailable();
+        EnsureCurrentTransactionStarted();
         BlueTuskCopyOutOperation? operation = null;
         try
         {
@@ -1292,11 +1469,56 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     public async ValueTask<BlueTuskBinaryImporter> BeginBinaryImportAsync(
         string copyCommand,
         CancellationToken cancellationToken = default)
     {
         EnsureCopyAvailable();
+        await CompletePendingPoolResetAsync(cancellationToken).ConfigureAwait(false);
+        var beginStatement = PrepareCommandTransaction(CurrentTransaction);
+        if (cancellationToken.CanBeCanceled)
+        {
+            return await BeginCancelableBinaryImportAsync(
+                copyCommand,
+                beginStatement,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        BlueTuskCopyInOperation? operation = null;
+        try
+        {
+            operation = await Session.BeginCopyInAsync(
+                copyCommand,
+                beginStatement,
+                cancellationToken).ConfigureAwait(false);
+            ValidateBinaryCopyResponse(operation.Response);
+            var importer = new BlueTuskBinaryImporter(
+                operation,
+                TypeRegistry,
+                operation.Response.ColumnFormats.Count,
+                asynchronous: true);
+            await importer.InitializeAsync(cancellationToken).ConfigureAwait(false);
+            operation = null;
+            return importer;
+        }
+        catch
+        {
+            if (operation is not null)
+            {
+                await operation.DisposeAsync().ConfigureAwait(false);
+            }
+
+            throw;
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskBinaryImporter> BeginCancelableBinaryImportAsync(
+        string copyCommand,
+        string? beginStatement,
+        CancellationToken cancellationToken)
+    {
         var pipe = new BlueTuskCopyPipe();
         var started = new TaskCompletionSource<BlueTuskCopyResponse>(
             TaskCreationOptions.RunContinuationsAsynchronously);
@@ -1304,6 +1526,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             copyCommand,
             pipe,
             response => started.TrySetResult(response),
+            beginStatement,
             CancellationToken.None).AsTask();
         var response = await AwaitCopyStartAsync(
             started.Task,
@@ -1339,49 +1562,46 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     public async ValueTask<BlueTuskBinaryExporter> BeginBinaryExportAsync(
         string copyCommand,
         CancellationToken cancellationToken = default)
     {
         EnsureCopyAvailable();
-        var pipe = new BlueTuskCopyPipe();
-        var started = new TaskCompletionSource<BlueTuskCopyResponse>(
-            TaskCreationOptions.RunContinuationsAsynchronously);
-        var copyTask = CopyToPipeAsync(
-            copyCommand,
-            pipe,
-            response => started.TrySetResult(response)).AsTask();
-        var response = await AwaitCopyStartAsync(
-            started.Task,
-            copyTask,
-            pipe,
-            cancellationToken).ConfigureAwait(false);
+        await EnsureCurrentTransactionStartedAsync(cancellationToken).ConfigureAwait(false);
+        BlueTuskCopyOutOperation? operation = null;
         try
         {
-            ValidateBinaryCopyResponse(response);
+            operation = await Session.BeginCopyOutAsync(copyCommand, cancellationToken)
+                .ConfigureAwait(false);
+            ValidateBinaryCopyResponse(operation.Response);
             var exporter = new BlueTuskBinaryExporter(
-                pipe,
-                copyTask,
+                operation,
                 TypeRegistry,
-                response.ColumnFormats.Count);
+                operation.Response.ColumnFormats.Count,
+                asynchronous: true);
             await exporter.InitializeAsync(cancellationToken).ConfigureAwait(false);
+            operation = null;
             return exporter;
+        }
+        catch (BlueTuskServerException exception)
+        {
+            throw new BlueTuskException(exception);
         }
         catch
         {
-            pipe.CompleteWriting(
-                new IOException("Binary COPY export could not be initialized."));
-            try
+            if (!HasOpenSession)
             {
-                _ = await copyTask.ConfigureAwait(false);
+                Close();
             }
-            catch
-            {
-                // The initialization exception remains authoritative.
-            }
-
-            await pipe.DisposeAsync().ConfigureAwait(false);
             throw;
+        }
+        finally
+        {
+            if (operation is not null)
+            {
+                await operation.DisposeAsync().ConfigureAwait(false);
+            }
         }
     }
 
@@ -1429,15 +1649,23 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         string copyCommand,
         Stream source,
         Action<BlueTuskCopyResponse>? copyStarted,
+        string? beginStatement,
         CancellationToken cancellationToken)
     {
         try
         {
-            var result = await Session.CopyInAsync(
-                copyCommand,
-                source,
-                copyStarted,
-                cancellationToken).ConfigureAwait(false);
+            var result = beginStatement is null
+                ? await Session.CopyInAsync(
+                    copyCommand,
+                    source,
+                    copyStarted,
+                    cancellationToken).ConfigureAwait(false)
+                : await Session.CopyInWithDeferredBeginAsync(
+                    copyCommand,
+                    source,
+                    copyStarted,
+                    beginStatement,
+                    cancellationToken).ConfigureAwait(false);
             return CreateRawCopyResult(result);
         }
         catch (BlueTuskServerException exception)
@@ -1489,7 +1717,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
                 pipe,
                 copyStarted,
                 CancellationToken.None).ConfigureAwait(false);
-            pipe.CompleteWriting();
+            await pipe.CompleteWritingAsync(CancellationToken.None).ConfigureAwait(false);
             return result;
         }
         catch (Exception exception)
@@ -1550,111 +1778,51 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             throw new InvalidOperationException("The connection must be open to begin a transaction.");
         }
 
+        var beginStatement = BlueTuskTransaction.GetBeginStatement(isolationLevel);
         var transactions = Transactions;
         lock (transactions.Sync)
         {
-            if (transactions.Current is not null || transactions.Starting)
+            if (transactions.Current is not null)
             {
                 throw new InvalidOperationException("The connection already has an active transaction.");
             }
 
-            transactions.Starting = true;
-        }
-
-        try
-        {
-            try
-            {
-                _ = Session.ExecuteSimpleQuery(BlueTuskTransaction.GetBeginStatement(isolationLevel));
-            }
-            catch (BlueTuskServerException exception)
-            {
-                throw new BlueTuskException(exception);
-            }
-
-            if (Session.TransactionStatus != BlueTuskTransactionStatus.InTransaction)
-            {
-                throw new BlueTuskException("PostgreSQL did not enter a transaction after BEGIN.");
-            }
-
-            var transaction = new BlueTuskTransaction(this, isolationLevel);
-            lock (transactions.Sync)
-            {
-                transactions.Current = transaction;
-            }
-
+            var transaction = new BlueTuskTransaction(this, isolationLevel, beginStatement);
+            transactions.Current = transaction;
             return transaction;
-        }
-        finally
-        {
-            lock (transactions.Sync)
-            {
-                transactions.Starting = false;
-            }
         }
     }
 
-    protected override async ValueTask<DbTransaction> BeginDbTransactionAsync(
+    protected override ValueTask<DbTransaction> BeginDbTransactionAsync(
         IsolationLevel isolationLevel,
         CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         if (_state != ConnectionState.Open)
         {
             throw new InvalidOperationException("The connection must be open to begin a transaction.");
         }
 
+        var beginStatement = BlueTuskTransaction.GetBeginStatement(isolationLevel);
         var transactions = Transactions;
         lock (transactions.Sync)
         {
-            if (transactions.Current is not null || transactions.Starting)
+            if (transactions.Current is not null)
             {
                 throw new InvalidOperationException("The connection already has an active transaction.");
             }
 
-            transactions.Starting = true;
-        }
-
-        try
-        {
-            try
-            {
-                _ = await Session.ExecuteSimpleQueryAsync(
-                    BlueTuskTransaction.GetBeginStatement(isolationLevel),
-                    cancellationToken).ConfigureAwait(false);
-            }
-            catch (BlueTuskServerException exception)
-            {
-                throw new BlueTuskException(exception);
-            }
-            catch (OperationCanceledException)
-            {
-                await RecoverCancelledBeginAsync().ConfigureAwait(false);
-                throw;
-            }
-
-            if (Session.TransactionStatus != BlueTuskTransactionStatus.InTransaction)
-            {
-                throw new BlueTuskException("PostgreSQL did not enter a transaction after BEGIN.");
-            }
-
-            var transaction = new BlueTuskTransaction(this, isolationLevel);
-            lock (transactions.Sync)
-            {
-                transactions.Current = transaction;
-            }
-
-            return transaction;
-        }
-        finally
-        {
-            lock (transactions.Sync)
-            {
-                transactions.Starting = false;
-            }
+            var transaction = new BlueTuskTransaction(this, isolationLevel, beginStatement);
+            transactions.Current = transaction;
+            return ValueTask.FromResult<DbTransaction>(transaction);
         }
     }
 
-    protected override DbCommand CreateDbCommand() => new BlueTuskCommand { Connection = this };
+    protected override DbCommand CreateDbCommand() => new BlueTuskCommand
+    {
+        Connection = this,
+        ForceBinaryResultsInTransaction = _preferBinaryResults,
+    };
 
     protected override DbBatch CreateDbBatch() => new BlueTuskBatch(this);
 
@@ -1764,6 +1932,14 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+    internal string? PrepareCommandTransaction(BlueTuskTransaction? transaction)
+    {
+        ValidateCommandTransaction(transaction);
+        return transaction is not null && transaction.TryStartServerTransaction()
+            ? transaction.BeginStatement
+            : null;
+    }
+
     private BlueTuskTransaction? DetachTransaction()
     {
         var transactions = Volatile.Read(ref _optionalState);
@@ -1776,7 +1952,6 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         {
             var transaction = transactions.Current;
             transactions.Current = null;
-            transactions.Starting = false;
             return transaction;
         }
     }
@@ -2191,19 +2366,30 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             throw new InvalidOperationException("The connection must be open to start COPY.");
         }
 
-        var transactions = Volatile.Read(ref _optionalState);
-        if (transactions is null)
-        {
-            return;
-        }
+    }
 
-        lock (transactions.Sync)
+    private void EnsureCurrentTransactionStarted()
+    {
+        CompletePendingPoolReset();
+        var transaction = CurrentTransaction;
+        var beginStatement = PrepareCommandTransaction(transaction);
+        if (beginStatement is not null)
         {
-            if (transactions.Starting)
-            {
-                throw new InvalidOperationException(
-                    "COPY cannot start while a transaction is being opened.");
-            }
+            _ = Session.ExecuteSimpleQuery(beginStatement);
+        }
+    }
+
+    private async ValueTask EnsureCurrentTransactionStartedAsync(
+        CancellationToken cancellationToken)
+    {
+        await CompletePendingPoolResetAsync(cancellationToken).ConfigureAwait(false);
+        var transaction = CurrentTransaction;
+        var beginStatement = PrepareCommandTransaction(transaction);
+        if (beginStatement is not null)
+        {
+            _ = await Session.ExecuteSimpleQueryAsync(
+                beginStatement,
+                cancellationToken).ConfigureAwait(false);
         }
     }
 
@@ -2294,28 +2480,6 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
-    [SuppressMessage(
-        "Design",
-        "CA1031:Do not catch general exception types",
-        Justification = "A failed cleanup closes the physical connection; the original cancellation remains authoritative.")]
-    private async ValueTask RecoverCancelledBeginAsync()
-    {
-        if (PhysicalSession is not { IsOpen: true } session ||
-            session.TransactionStatus == BlueTuskTransactionStatus.Idle)
-        {
-            return;
-        }
-
-        try
-        {
-            _ = await session.ExecuteSimpleQueryAsync("ROLLBACK", CancellationToken.None).ConfigureAwait(false);
-        }
-        catch
-        {
-            await CloseAsync().ConfigureAwait(false);
-        }
-    }
-
     private void SetState(ConnectionState state)
     {
         var previous = _state;
@@ -2328,7 +2492,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
 
     private sealed class OptionalState
     {
-        internal object Sync { get; } = new();
+        internal object Sync => this;
 
         internal SemaphoreSlim? LargeObjectGate;
 
@@ -2343,8 +2507,6 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         internal BlueTuskTypeRegistry? ResolvedRowRegistry;
 
         internal BlueTuskResolvedField[]? ResolvedRowFields;
-
-        internal bool Starting;
     }
 
     private sealed class NotificationState

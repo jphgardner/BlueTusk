@@ -132,6 +132,8 @@ jobs:
           ./eng/test-multiplexing-performance-verifier.ps1
           ./eng/test-provider-performance-verifier.ps1
           ./eng/test-v1-performance-gate-contract.ps1
+          ./eng/verify-performance-leadership-contract.ps1
+          ./eng/test-performance-leadership-evidence-verifier.ps1
           ./eng/test-endurance-workflow-sbom-contract.ps1
 
       - name: Build

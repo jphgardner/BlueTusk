@@ -8,14 +8,18 @@ namespace BlueTusk.Benchmarks;
 [JsonExporterAttribute.Brief]
 public class LiveQueryBenchmarks
 {
-    private const int ResultCount = 1_000;
-    private const int SubscriberCount = 64;
     private const int InvalidationCount = 100;
     private static readonly LiveTableDependency Orders = new("sales", "orders");
     private static readonly Func<Row, int> KeySelector = static row => row.Id;
     private Row[] _updatedRows = null!;
     private LiveResultSnapshot<Row, int> _snapshot = null!;
     private LiveResultEvent<Row, int> _updatedEvent = null!;
+
+    [Params(10, 1_000, 100_000)]
+    public int ResultCount { get; set; }
+
+    [Params(1, 64, 1_000, 10_000)]
+    public int SubscriberCount { get; set; }
 
     [GlobalSetup]
     public void Setup()

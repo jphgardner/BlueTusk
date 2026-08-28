@@ -22,6 +22,9 @@ public class SyncConnectorBenchmarks
     private SyncTransactionBatch _batch = null!;
     private byte[] _json = null!;
 
+    [Params(1, 100, 1_000)]
+    public int MutationCount { get; set; }
+
     [GlobalSetup]
     public void Setup()
     {
@@ -33,20 +36,19 @@ public class SyncConnectorBenchmarks
         _transform = SyncTransformVersion.Create("orders", "benchmark-v1");
         _json = Encoding.UTF8.GetBytes(
             "{\"id\":\"42\",\"payload\":\"" + new string('x', 32 * 1024) + "\"}");
-        _mutations =
-        [
-            new SyncMutation(
+        _mutations = Enumerable.Range(0, MutationCount)
+            .Select(ordinal => new SyncMutation(
                 new ChangeId(
                     _source,
                     new BlueTuskLogSequenceNumber(105),
                     42,
-                    0),
+                    ordinal),
                 SyncMutationKind.Upsert,
                 "orders",
-                "42",
+                $"order-{ordinal}",
                 _json,
-                "application/json"),
-        ];
+                "application/json"))
+            .ToArray();
         _batch = new SyncTransactionBatch(
             "orders",
             _transform,
@@ -70,8 +72,8 @@ public class SyncConnectorBenchmarks
     }
 
     [Benchmark]
-    public byte[] CopyPostgreSqlParameterPayload() =>
-        PostgreSqlDocumentMutationWriter.CopyParameterPayload(_json);
+    public ReadOnlyMemory<byte> CopyPostgreSqlParameterPayload() =>
+        PostgreSqlDocumentMutationWriter.GetParameterPayload(_json);
 
     [GlobalCleanup]
     public void Cleanup() =>

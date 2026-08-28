@@ -1,5 +1,6 @@
 using System.Buffers;
 using System.Buffers.Binary;
+using System.Collections.Concurrent;
 using System.Text;
 using BlueTusk.Replication.PgOutput;
 
@@ -7,13 +8,17 @@ namespace BlueTusk.Streams;
 
 internal sealed class PendingTransaction
 {
+    private const int MaximumPooledAssemblyStates = 256;
+    private static readonly ConcurrentBag<AssemblyState> AssemblyStatePool = [];
     private readonly ChangeSourceIdentity _source;
     private readonly TransactionAssemblyOptions _options;
     private readonly ITransactionSpool _spool;
-    private readonly List<PendingChange> _changes = [];
-    private readonly List<ChangeTable> _tables = [];
-    private readonly Dictionary<ChangeTable, int> _tableTokens = new(ReferenceEqualityComparer.Instance);
+    private readonly AssemblyState _assemblyState;
+    private readonly List<PendingChange> _changes;
+    private readonly List<ChangeTable> _tables;
+    private readonly Dictionary<ChangeTable, int> _tableTokens;
     private ITransactionSpoolWriter? _spoolWriter;
+    private int _assemblyStateReturned;
 
     public PendingTransaction(
         ChangeSourceIdentity source,
@@ -29,6 +34,12 @@ internal sealed class PendingTransaction
         BeginTimestamp = beginTimestamp;
         _options = options;
         _spool = spool;
+        _assemblyState = AssemblyStatePool.TryTake(out var state)
+            ? state
+            : new AssemblyState();
+        _changes = _assemblyState.Changes;
+        _tables = _assemblyState.Tables;
+        _tableTokens = _assemblyState.TableTokens;
     }
 
     public uint TransactionId { get; }
@@ -129,12 +140,14 @@ internal sealed class PendingTransaction
             _spoolWriter = null;
         }
 
-        return new CompletedPendingTransaction(
+        var completed = new CompletedPendingTransaction(
             _changes.ToArray(),
             reader,
             _tables.ToArray(),
             ChangeCount,
             EstimatedBytes);
+        ReturnAssemblyState();
+        return completed;
     }
 
     public async ValueTask AbortAsync(CancellationToken cancellationToken)
@@ -147,6 +160,33 @@ internal sealed class PendingTransaction
         }
 
         _changes.Clear();
+        ReturnAssemblyState();
+    }
+
+    private void ReturnAssemblyState()
+    {
+        if (Interlocked.Exchange(ref _assemblyStateReturned, 1) != 0)
+        {
+            return;
+        }
+
+        _changes.Clear();
+        _tables.Clear();
+        _tableTokens.Clear();
+        if (AssemblyStatePool.Count < MaximumPooledAssemblyStates)
+        {
+            AssemblyStatePool.Add(_assemblyState);
+        }
+    }
+
+    private sealed class AssemblyState
+    {
+        internal List<PendingChange> Changes { get; } = [];
+
+        internal List<ChangeTable> Tables { get; } = [];
+
+        internal Dictionary<ChangeTable, int> TableTokens { get; } =
+            new(ReferenceEqualityComparer.Instance);
     }
 }
 

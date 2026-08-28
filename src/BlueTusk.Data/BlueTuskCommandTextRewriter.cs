@@ -1,17 +1,22 @@
+using System.Collections.Concurrent;
 using System.Runtime.CompilerServices;
 using System.Text;
 
 namespace BlueTusk.Data;
 
-internal sealed record BlueTuskCommandPlan(
+internal readonly record struct BlueTuskCommandPlan(
     string Sql,
     IReadOnlyList<BlueTuskParameter> Parameters,
     bool UsesNamedParameters);
 
 internal static class BlueTuskCommandTextRewriter
 {
+    private const int MaximumValueCachedTemplateCount = 1024;
+    private const int MaximumValueCachedSqlLength = 16 * 1024;
     private static readonly ConditionalWeakTable<string, NamedRewriteTemplate> NamedTemplates = new();
     private static readonly ConditionalWeakTable<string, NoNamedRewriteTemplate> NoNamedTemplates = new();
+    private static readonly ConcurrentDictionary<string, NamedRewriteTemplate> NamedTemplatesByValue =
+        new(StringComparer.Ordinal);
 
     public static BlueTuskCommandPlan Rewrite(
         string sql,
@@ -20,6 +25,12 @@ internal static class BlueTuskCommandTextRewriter
         ArgumentNullException.ThrowIfNull(sql);
         ArgumentNullException.ThrowIfNull(parameters);
         if (NamedTemplates.TryGetValue(sql, out var cachedTemplate))
+        {
+            return cachedTemplate.Bind(parameters);
+        }
+
+        if (sql.Length <= MaximumValueCachedSqlLength &&
+            NamedTemplatesByValue.TryGetValue(sql, out cachedTemplate))
         {
             return cachedTemplate.Bind(parameters);
         }
@@ -145,7 +156,101 @@ internal static class BlueTuskCommandTextRewriter
         var template = new NamedRewriteTemplate(
             rewritten.ToString(),
             orderedNames!.ToArray());
-        return NamedTemplates.GetValue(sql, _ => template).Bind(parameters);
+        if (sql.Length <= MaximumValueCachedSqlLength &&
+            NamedTemplatesByValue.Count < MaximumValueCachedTemplateCount)
+        {
+            template = NamedTemplatesByValue.GetOrAdd(sql, template);
+        }
+        else
+        {
+            template = NamedTemplates.GetValue(sql, _ => template);
+        }
+
+        return template.Bind(parameters);
+    }
+
+    internal static bool MightContainNamedParameters(string sql)
+    {
+        ArgumentNullException.ThrowIfNull(sql);
+        for (var index = 0; index + 1 < sql.Length; index++)
+        {
+            var current = sql[index];
+            if (current is not ('@' or ':') || !IsParameterNameStart(sql[index + 1]))
+            {
+                continue;
+            }
+
+            // PostgreSQL casts use a double colon. Treat every other plausible marker as
+            // requiring the complete SQL-aware rewriter. This deliberately permits false
+            // positives in comments and literals so the fast path can never change semantics.
+            if (current != ':' || index == 0 || sql[index - 1] != ':')
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static bool CanUseExtendedProtocol(string sql)
+    {
+        ArgumentNullException.ThrowIfNull(sql);
+        var sawStatementSeparator = false;
+        for (var index = 0; index < sql.Length;)
+        {
+            var current = sql[index];
+            if (char.IsWhiteSpace(current))
+            {
+                index++;
+                continue;
+            }
+
+            if (current == '-' && index + 1 < sql.Length && sql[index + 1] == '-')
+            {
+                index = SkipLineComment(sql, index + 2);
+                continue;
+            }
+
+            if (current == '/' && index + 1 < sql.Length && sql[index + 1] == '*')
+            {
+                index = SkipBlockComment(sql, index);
+                continue;
+            }
+
+            if (current == ';')
+            {
+                sawStatementSeparator = true;
+                index++;
+                continue;
+            }
+
+            if (sawStatementSeparator)
+            {
+                return false;
+            }
+
+            if (current == '\'')
+            {
+                index = SkipSingleQuotedString(sql, index);
+                continue;
+            }
+
+            if (current == '"')
+            {
+                index = SkipDoubleQuotedIdentifier(sql, index);
+                continue;
+            }
+
+            if (current == '$' && TryReadDollarQuoteDelimiter(sql, index, out var delimiter))
+            {
+                index = SkipDollarQuotedString(sql, index, delimiter);
+                continue;
+            }
+
+            index++;
+        }
+
+        return true;
     }
 
     private static Dictionary<string, BlueTuskParameter> BuildNamedParameterMap(
@@ -325,6 +430,29 @@ internal static class BlueTuskCommandTextRewriter
         public BlueTuskCommandPlan Bind(BlueTuskParameterCollection parameters)
         {
             ValidateUniqueNames(parameters.Items);
+            if (parameters.Count == OrderedNames.Length)
+            {
+                var alreadyOrdered = true;
+                for (var index = 0; index < OrderedNames.Length; index++)
+                {
+                    if (!NormalizedNameEquals(
+                            parameters[index].ParameterName,
+                            OrderedNames[index]))
+                    {
+                        alreadyOrdered = false;
+                        break;
+                    }
+                }
+
+                if (alreadyOrdered)
+                {
+                    return new BlueTuskCommandPlan(
+                        Sql,
+                        parameters.Items,
+                        UsesNamedParameters: true);
+                }
+            }
+
             var ordered = new BlueTuskParameter[OrderedNames.Length];
             for (var nameIndex = 0; nameIndex < OrderedNames.Length; nameIndex++)
             {

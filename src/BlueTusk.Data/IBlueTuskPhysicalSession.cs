@@ -33,6 +33,70 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         string sql,
         CancellationToken cancellationToken = default);
 
+    async ValueTask<int> ExecuteSimpleNonQueryAsync(
+        string sql,
+        CancellationToken cancellationToken = default)
+    {
+        var result = await ExecuteSimpleQueryAsync(sql, cancellationToken).ConfigureAwait(false);
+        var affected = 0;
+        var found = false;
+        foreach (var resultSet in result.ResultSets)
+        {
+            if (BlueTuskCommandTagParser.TryGetRecordsAffected(resultSet.CommandTag, out var count))
+            {
+                affected = checked(affected + count);
+                found = true;
+            }
+        }
+
+        return found ? affected : -1;
+    }
+
+    BlueTuskQueryResult ExecuteBeginAndSimpleQuery(
+        string beginStatement,
+        string sql)
+    {
+        _ = ExecuteSimpleQuery(beginStatement);
+        return ExecuteSimpleQuery(sql);
+    }
+
+    async ValueTask<BlueTuskQueryResult> ExecuteBeginAndSimpleQueryAsync(
+        string beginStatement,
+        string sql,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync(beginStatement, cancellationToken).ConfigureAwait(false);
+        return await ExecuteSimpleQueryAsync(sql, cancellationToken).ConfigureAwait(false);
+    }
+
+    BlueTuskQueryResult ExecuteResetAndSimpleQuery(
+        string sql,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        _ = ExecuteSimpleQuery("DISCARD ALL");
+        resetCompleted();
+        return beginStatement is null
+            ? ExecuteSimpleQuery(sql)
+            : ExecuteBeginAndSimpleQuery(beginStatement, sql);
+    }
+
+    async ValueTask<BlueTuskQueryResult> ExecuteResetAndSimpleQueryAsync(
+        string sql,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync("DISCARD ALL", cancellationToken).ConfigureAwait(false);
+        resetCompleted();
+        return beginStatement is null
+            ? await ExecuteSimpleQueryAsync(sql, cancellationToken).ConfigureAwait(false)
+            : await ExecuteBeginAndSimpleQueryAsync(
+                beginStatement,
+                sql,
+                cancellationToken).ConfigureAwait(false);
+    }
+
     BlueTuskQueryResult ExecuteExtendedQuery(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -44,6 +108,62 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         CancellationToken cancellationToken = default);
+
+    BlueTuskQueryResult ExecuteResetAndExtendedQuery(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        _ = ExecuteSimpleQuery("DISCARD ALL");
+        resetCompleted();
+        if (beginStatement is not null)
+        {
+            _ = ExecuteSimpleQuery(beginStatement);
+        }
+
+        return ExecuteExtendedQuery(sql, parameters, useBinaryResults);
+    }
+
+    async ValueTask<BlueTuskQueryResult> ExecuteResetAndExtendedQueryAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync("DISCARD ALL", cancellationToken).ConfigureAwait(false);
+        resetCompleted();
+        return beginStatement is null
+            ? await ExecuteExtendedQueryAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false)
+            : await ExecuteBeginAndExtendedQueryAsync(
+                beginStatement,
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false);
+    }
+
+    async ValueTask<BlueTuskQueryResult> ExecuteBeginAndExtendedQueryAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync(beginStatement, cancellationToken).ConfigureAwait(false);
+        return await ExecuteExtendedQueryAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            cancellationToken).ConfigureAwait(false);
+    }
 
     async ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
         string sql,
@@ -57,20 +177,43 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
                 useBinaryResults,
                 cancellationToken).ConfigureAwait(false));
 
-    async ValueTask<BlueTuskScalarQueryResult> ExecuteResetAndExtendedScalarAsync(
+    async ValueTask<BlueTuskScalarQueryResult> ExecuteBeginAndExtendedScalarAsync(
+        string beginStatement,
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
-        Action resetCompleted,
         CancellationToken cancellationToken = default)
     {
-        _ = await ExecuteSimpleQueryAsync("DISCARD ALL", cancellationToken).ConfigureAwait(false);
-        resetCompleted();
+        _ = await ExecuteSimpleQueryAsync(beginStatement, cancellationToken).ConfigureAwait(false);
         return await ExecuteExtendedScalarAsync(
             sql,
             parameters,
             useBinaryResults,
             cancellationToken).ConfigureAwait(false);
+    }
+
+    async ValueTask<BlueTuskScalarQueryResult> ExecuteResetAndExtendedScalarAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync("DISCARD ALL", cancellationToken).ConfigureAwait(false);
+        resetCompleted();
+        return beginStatement is null
+            ? await ExecuteExtendedScalarAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false)
+            : await ExecuteBeginAndExtendedScalarAsync(
+                beginStatement,
+                sql,
+                parameters,
+                useBinaryResults,
+                cancellationToken).ConfigureAwait(false);
     }
 
     BlueTuskPortal BeginPortal(
@@ -87,6 +230,68 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         int fetchSize,
         CancellationToken cancellationToken = default) =>
         throw new NotSupportedException("This physical-session implementation does not provide streaming portals.");
+
+    async ValueTask<BlueTuskPortal> BeginTransactionPortalAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync(beginStatement, cancellationToken).ConfigureAwait(false);
+        return await BeginPortalAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    BlueTuskPortal BeginResetPortal(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        _ = ExecuteSimpleQuery("DISCARD ALL");
+        resetCompleted();
+        if (beginStatement is not null)
+        {
+            _ = ExecuteSimpleQuery(beginStatement);
+        }
+
+        return BeginPortal(sql, parameters, useBinaryResults, fetchSize);
+    }
+
+    async ValueTask<BlueTuskPortal> BeginResetPortalAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync("DISCARD ALL", cancellationToken).ConfigureAwait(false);
+        resetCompleted();
+        return beginStatement is null
+            ? await BeginPortalAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                fetchSize,
+                cancellationToken).ConfigureAwait(false)
+            : await BeginTransactionPortalAsync(
+                beginStatement,
+                sql,
+                parameters,
+                useBinaryResults,
+                fetchSize,
+                cancellationToken).ConfigureAwait(false);
+    }
 
     ValueTask PrepareStatementAsync(
         string statementName,
@@ -154,6 +359,24 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
         IReadOnlyList<BlueTuskBatchQuery> queries,
         CancellationToken cancellationToken = default);
 
+    ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
+        BlueTuskBatchCommandExecution[] queries,
+        int queryCount,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default)
+    {
+        var publicQueries = new BlueTuskBatchQuery[queryCount];
+        for (var index = 0; index < queryCount; index++)
+        {
+            publicQueries[index] = new BlueTuskBatchQuery(
+                queries[index].Sql,
+                queries[index].MaterializeParameters(),
+                useBinaryResults);
+        }
+
+        return ExecuteBatchAsync(publicQueries, cancellationToken);
+    }
+
     ValueTask ExecuteMultiplexedPipelineAsync(
         IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands,
         IReadOnlyList<CancellationToken>? groupCancellationTokens,
@@ -180,11 +403,32 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
     BlueTuskCopyInOperation BeginCopyIn(string sql) =>
         throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
 
+    ValueTask<BlueTuskCopyInOperation> BeginCopyInAsync(
+        string sql,
+        string? beginStatement,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This physical-session implementation does not provide streaming COPY I/O.");
+
     ValueTask<BlueTuskCopyResult> CopyInAsync(
         string sql,
         Stream source,
         Action<BlueTuskCopyResponse>? copyStarted,
         CancellationToken cancellationToken = default);
+
+    async ValueTask<BlueTuskCopyResult> CopyInWithDeferredBeginAsync(
+        string sql,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
+        string beginStatement,
+        CancellationToken cancellationToken = default)
+    {
+        _ = await ExecuteSimpleQueryAsync(beginStatement, cancellationToken).ConfigureAwait(false);
+        return await CopyInAsync(
+            sql,
+            source,
+            copyStarted,
+            cancellationToken).ConfigureAwait(false);
+    }
 
     ValueTask<BlueTuskCopyResult> CopyOutAsync(
         string sql,
@@ -200,6 +444,11 @@ internal interface IBlueTuskPhysicalSession : IDisposable, IAsyncDisposable
 
     BlueTuskCopyOutOperation BeginCopyOut(string sql) =>
         throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
+
+    ValueTask<BlueTuskCopyOutOperation> BeginCopyOutAsync(
+        string sql,
+        CancellationToken cancellationToken = default) =>
+        throw new NotSupportedException("This physical-session implementation does not provide streaming COPY I/O.");
 
     BlueTuskNotificationResponse WaitForNotification() =>
         throw new NotSupportedException("This physical-session implementation does not provide synchronous I/O.");
@@ -535,6 +784,104 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
     }
 
+    public ValueTask<int> ExecuteSimpleNonQueryAsync(
+        string sql,
+        CancellationToken cancellationToken = default)
+    {
+        if (!ResetsPreparedStatements(sql))
+        {
+            return _session.ExecuteSimpleNonQueryAsync(sql, cancellationToken);
+        }
+
+        return ExecuteResetSimpleNonQueryAsync(sql, cancellationToken);
+    }
+
+    private async ValueTask<int> ExecuteResetSimpleNonQueryAsync(
+        string sql,
+        CancellationToken cancellationToken)
+    {
+        await _autoPrepareGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            var affected = await _session.ExecuteSimpleNonQueryAsync(
+                sql,
+                cancellationToken).ConfigureAwait(false);
+            InvalidateAutoPreparedStatements();
+            return affected;
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
+    public BlueTuskQueryResult ExecuteBeginAndSimpleQuery(
+        string beginStatement,
+        string sql) =>
+        _session.ExecuteBeginAndSimpleQuery(beginStatement, sql);
+
+    public ValueTask<BlueTuskQueryResult> ExecuteBeginAndSimpleQueryAsync(
+        string beginStatement,
+        string sql,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecuteBeginAndSimpleQueryAsync(
+            beginStatement,
+            sql,
+            cancellationToken);
+
+    public BlueTuskQueryResult ExecuteResetAndSimpleQuery(
+        string sql,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return _session.ExecuteResetAndSimpleQuery(sql, resetCompleted, beginStatement);
+        }
+
+        _autoPrepareGate.Wait();
+        try
+        {
+            InvalidateAutoPreparedStatements();
+            return _session.ExecuteResetAndSimpleQuery(sql, resetCompleted, beginStatement);
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
+    public async ValueTask<BlueTuskQueryResult> ExecuteResetAndSimpleQueryAsync(
+        string sql,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return await _session.ExecuteResetAndSimpleQueryAsync(
+                sql,
+                resetCompleted,
+                beginStatement,
+                cancellationToken).ConfigureAwait(false);
+        }
+
+        await _autoPrepareGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            InvalidateAutoPreparedStatements();
+            return await _session.ExecuteResetAndSimpleQueryAsync(
+                sql,
+                resetCompleted,
+                beginStatement,
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
     public async ValueTask<BlueTuskQueryResult> ExecuteExtendedQueryAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -565,6 +912,107 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         }
     }
 
+    public BlueTuskQueryResult ExecuteResetAndExtendedQuery(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return _session.ExecuteResetAndExtendedQuery(
+                sql,
+                parameters,
+                useBinaryResults,
+                resetCompleted,
+                beginStatement);
+        }
+
+        _autoPrepareGate.Wait();
+        try
+        {
+            InvalidateAutoPreparedStatements();
+            return _session.ExecuteResetAndExtendedQuery(
+                sql,
+                parameters,
+                useBinaryResults,
+                resetCompleted,
+                beginStatement);
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
+    public ValueTask<BlueTuskQueryResult> ExecuteResetAndExtendedQueryAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return _session.ExecuteResetAndExtendedQueryAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                resetCompleted,
+                beginStatement,
+                cancellationToken);
+        }
+
+        return ExecuteResetAndExtendedQueryCoreAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            resetCompleted,
+            beginStatement,
+            cancellationToken);
+    }
+
+    private async ValueTask<BlueTuskQueryResult> ExecuteResetAndExtendedQueryCoreAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        Action resetCompleted,
+        string? beginStatement,
+        CancellationToken cancellationToken)
+    {
+        await _autoPrepareGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            InvalidateAutoPreparedStatements();
+            return await _session.ExecuteResetAndExtendedQueryAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                resetCompleted,
+                beginStatement,
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
+    public ValueTask<BlueTuskQueryResult> ExecuteBeginAndExtendedQueryAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecuteBeginAndExtendedQueryAsync(
+            beginStatement,
+            sql,
+            parameters,
+            useBinaryResults,
+            cancellationToken);
+
     public ValueTask<BlueTuskScalarQueryResult> ExecuteExtendedScalarAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
@@ -587,11 +1035,25 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             cancellationToken);
     }
 
+    public ValueTask<BlueTuskScalarQueryResult> ExecuteBeginAndExtendedScalarAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecuteBeginAndExtendedScalarAsync(
+            beginStatement,
+            sql,
+            parameters,
+            useBinaryResults,
+            cancellationToken);
+
     public ValueTask<BlueTuskScalarQueryResult> ExecuteResetAndExtendedScalarAsync(
         string sql,
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         Action resetCompleted,
+        string? beginStatement = null,
         CancellationToken cancellationToken = default)
     {
         if (_maximumAutoPreparedStatements == 0)
@@ -601,6 +1063,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
                 parameters,
                 useBinaryResults,
                 resetCompleted,
+                beginStatement,
                 cancellationToken);
         }
 
@@ -609,6 +1072,7 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             parameters,
             useBinaryResults,
             resetCompleted,
+            beginStatement,
             cancellationToken);
     }
 
@@ -617,27 +1081,34 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
         bool useBinaryResults,
         Action resetCompleted,
+        string? beginStatement,
         CancellationToken cancellationToken)
     {
         await _autoPrepareGate.WaitAsync(cancellationToken).ConfigureAwait(false);
         try
         {
-            BlueTuskDiagnostics.RecordPreparedStatements(
-                _autoPrepareEntries.Count(static pair => pair.Value.PreparedStatementName is not null),
-                "automatic",
-                "invalidate");
-            _autoPrepareEntries.Clear();
+            InvalidateAutoPreparedStatements();
             return await _session.ExecuteResetAndExtendedScalarAsync(
                 sql,
                 parameters,
                 useBinaryResults,
                 resetCompleted,
+                beginStatement,
                 cancellationToken).ConfigureAwait(false);
         }
         finally
         {
             _autoPrepareGate.Release();
         }
+    }
+
+    private void InvalidateAutoPreparedStatements()
+    {
+        BlueTuskDiagnostics.RecordPreparedStatements(
+            _autoPrepareEntries.Count(static pair => pair.Value.PreparedStatementName is not null),
+            "automatic",
+            "invalidate");
+        _autoPrepareEntries.Clear();
     }
 
     private async ValueTask<BlueTuskScalarQueryResult> ExecuteAutoPreparedScalarAsync(
@@ -673,6 +1144,117 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
             useBinaryResults,
             fetchSize,
             cancellationToken);
+
+    public ValueTask<BlueTuskPortal> BeginTransactionPortalAsync(
+        string beginStatement,
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        CancellationToken cancellationToken = default) =>
+        _session.BeginTransactionPortalAsync(
+            beginStatement,
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            cancellationToken);
+
+    public BlueTuskPortal BeginResetPortal(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        Action resetCompleted,
+        string? beginStatement = null)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return _session.BeginResetPortal(
+                sql,
+                parameters,
+                useBinaryResults,
+                fetchSize,
+                resetCompleted,
+                beginStatement);
+        }
+
+        _autoPrepareGate.Wait();
+        try
+        {
+            InvalidateAutoPreparedStatements();
+            return _session.BeginResetPortal(
+                sql,
+                parameters,
+                useBinaryResults,
+                fetchSize,
+                resetCompleted,
+                beginStatement);
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
+
+    public ValueTask<BlueTuskPortal> BeginResetPortalAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        Action resetCompleted,
+        string? beginStatement = null,
+        CancellationToken cancellationToken = default)
+    {
+        if (_maximumAutoPreparedStatements == 0)
+        {
+            return _session.BeginResetPortalAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                fetchSize,
+                resetCompleted,
+                beginStatement,
+                cancellationToken);
+        }
+
+        return BeginResetPortalCoreAsync(
+            sql,
+            parameters,
+            useBinaryResults,
+            fetchSize,
+            resetCompleted,
+            beginStatement,
+            cancellationToken);
+    }
+
+    private async ValueTask<BlueTuskPortal> BeginResetPortalCoreAsync(
+        string sql,
+        IReadOnlyList<BlueTuskExtendedQueryParameter> parameters,
+        bool useBinaryResults,
+        int fetchSize,
+        Action resetCompleted,
+        string? beginStatement,
+        CancellationToken cancellationToken)
+    {
+        await _autoPrepareGate.WaitAsync(cancellationToken).ConfigureAwait(false);
+        try
+        {
+            InvalidateAutoPreparedStatements();
+            return await _session.BeginResetPortalAsync(
+                sql,
+                parameters,
+                useBinaryResults,
+                fetchSize,
+                resetCompleted,
+                beginStatement,
+                cancellationToken).ConfigureAwait(false);
+        }
+        finally
+        {
+            _autoPrepareGate.Release();
+        }
+    }
 
     public BlueTuskQueryResult ExecuteExtendedQuery(
         string sql,
@@ -774,6 +1356,13 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         CancellationToken cancellationToken = default) =>
         _session.ExecuteBatchAsync(queries, cancellationToken);
 
+    public ValueTask<BlueTuskQueryResult> ExecuteBatchAsync(
+        BlueTuskBatchCommandExecution[] queries,
+        int queryCount,
+        bool useBinaryResults,
+        CancellationToken cancellationToken = default) =>
+        _session.ExecuteBatchAsync(queries, queryCount, useBinaryResults, cancellationToken);
+
     public ValueTask ExecuteMultiplexedPipelineAsync(
             IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands,
             IReadOnlyList<CancellationToken>? groupCancellationTokens,
@@ -804,6 +1393,19 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         CancellationToken cancellationToken = default) =>
         _session.CopyInAsync(sql, source, copyStarted, cancellationToken);
 
+    public ValueTask<BlueTuskCopyResult> CopyInWithDeferredBeginAsync(
+        string sql,
+        Stream source,
+        Action<BlueTuskCopyResponse>? copyStarted,
+        string beginStatement,
+        CancellationToken cancellationToken = default) =>
+        _session.CopyInWithDeferredBeginAsync(
+            sql,
+            source,
+            copyStarted,
+            beginStatement,
+            cancellationToken);
+
     public BlueTuskCopyResult CopyIn(
         string sql,
         Stream source,
@@ -811,6 +1413,12 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         _session.CopyIn(sql, source, copyStarted);
 
     public BlueTuskCopyInOperation BeginCopyIn(string sql) => _session.BeginCopyIn(sql);
+
+    public ValueTask<BlueTuskCopyInOperation> BeginCopyInAsync(
+        string sql,
+        string? beginStatement,
+        CancellationToken cancellationToken = default) =>
+        _session.BeginCopyInAsync(sql, beginStatement, cancellationToken);
 
     public ValueTask<BlueTuskCopyResult> CopyOutAsync(
         string sql,
@@ -826,6 +1434,11 @@ internal sealed class BlueTuskPhysicalSession : IBlueTuskPhysicalSession
         _session.CopyOut(sql, destination, copyStarted);
 
     public BlueTuskCopyOutOperation BeginCopyOut(string sql) => _session.BeginCopyOut(sql);
+
+    public ValueTask<BlueTuskCopyOutOperation> BeginCopyOutAsync(
+        string sql,
+        CancellationToken cancellationToken = default) =>
+        _session.BeginCopyOutAsync(sql, cancellationToken);
 
     public BlueTuskNotificationResponse WaitForNotification() =>
         _session.WaitForNotification();

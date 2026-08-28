@@ -269,7 +269,14 @@ public abstract class BlueTuskReplicationConnection : IAsyncDisposable
             Interlocked.CompareExchange(ref _activeChannel, null, channel);
             if (channel is not null)
             {
-                await channel.DisposeAsync().ConfigureAwait(false);
+                if (_disposeCancellation.IsCancellationRequested)
+                {
+                    await channel.AbortAsync().ConfigureAwait(false);
+                }
+                else
+                {
+                    await channel.DisposeAsync().ConfigureAwait(false);
+                }
             }
 
             Interlocked.Exchange(ref _streaming, 0);

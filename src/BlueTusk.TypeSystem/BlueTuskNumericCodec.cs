@@ -33,6 +33,157 @@ public sealed class BlueTuskNumericCodec :
         return checked(8 + (sizeof(short) * (integerGroups + fractionalGroups)));
     }
 
+    /// <summary>Decodes a PostgreSQL numeric directly into a CLR decimal.</summary>
+    /// <remarks>
+    /// The binary path avoids constructing the arbitrary-precision intermediary used by
+    /// <see cref="ReadTyped"/>. Values outside the CLR decimal range throw
+    /// <see cref="OverflowException"/>.
+    /// </remarks>
+    internal decimal ReadDecimal(
+        ref BlueTuskReader reader,
+        BlueTuskDataFormat format,
+        BlueTuskTypeDescriptor type)
+    {
+        ArgumentNullException.ThrowIfNull(type);
+        if (format == BlueTuskDataFormat.Text)
+        {
+            return ReadTyped(ref reader, format, type).ToDecimal();
+        }
+
+        if (format != BlueTuskDataFormat.Binary)
+        {
+            throw new ArgumentOutOfRangeException(nameof(format));
+        }
+
+        if (reader.Remaining < 8)
+        {
+            throw new InvalidOperationException("PostgreSQL numeric binary values require an eight-byte header.");
+        }
+
+        var originalReader = reader;
+        var digitCount = reader.ReadInt16BigEndian();
+        var weight = reader.ReadInt16BigEndian();
+        var sign = reader.ReadUInt16BigEndian();
+        var displayScale = reader.ReadUInt16BigEndian();
+        if (digitCount < 0 || reader.Remaining != digitCount * sizeof(short))
+        {
+            throw new InvalidOperationException("PostgreSQL numeric binary digit count does not match its payload.");
+        }
+
+        if (sign is NaNSign or PositiveInfinitySign or NegativeInfinitySign)
+        {
+            if (digitCount != 0)
+            {
+                throw new InvalidOperationException("A special PostgreSQL numeric value cannot contain digits.");
+            }
+
+            throw new InvalidCastException("A special PostgreSQL numeric cannot be represented as System.Decimal.");
+        }
+
+        if (sign is not (PositiveSign or NegativeSign))
+        {
+            throw new InvalidOperationException($"PostgreSQL numeric contains unknown sign 0x{sign:X4}.");
+        }
+
+        if (displayScale > 28)
+        {
+            reader = originalReader;
+            return ReadTyped(ref reader, format, type).ToDecimal();
+        }
+
+        var value = 0m;
+        try
+        {
+            for (var index = 0; index < digitCount; index++)
+            {
+                var digit = reader.ReadUInt16BigEndian();
+                if (digit >= 10_000)
+                {
+                    throw new InvalidOperationException($"PostgreSQL numeric base-10000 digit {digit} is invalid.");
+                }
+
+                if (digit == 0)
+                {
+                    continue;
+                }
+
+                var exponent = weight - index;
+                if (exponent < -7)
+                {
+                    continue;
+                }
+
+                var group = (decimal)digit;
+                checked
+                {
+                    if (exponent >= 0)
+                    {
+                        for (var power = 0; power < exponent; power++)
+                        {
+                            group *= 10_000m;
+                        }
+                    }
+                    else
+                    {
+                        for (var power = exponent; power < 0; power++)
+                        {
+                            group /= 10_000m;
+                        }
+                    }
+
+                    value += group;
+                }
+            }
+
+            return WithScale(value, checked((byte)displayScale), sign == NegativeSign);
+        }
+        catch (OverflowException)
+        {
+            reader = originalReader;
+            return ReadTyped(ref reader, format, type).ToDecimal();
+        }
+    }
+
+    private static decimal WithScale(decimal value, byte targetScale, bool negative)
+    {
+        Span<int> bits = stackalloc int[4];
+        _ = decimal.GetBits(value, bits);
+        var coefficient =
+            (UInt128)(uint)bits[0] |
+            ((UInt128)(uint)bits[1] << 32) |
+            ((UInt128)(uint)bits[2] << 64);
+        var currentScale = (byte)((uint)bits[3] >> 16);
+        var maximumCoefficient = (UInt128.One << 96) - UInt128.One;
+        while (currentScale < targetScale)
+        {
+            coefficient = checked(coefficient * 10);
+            if (coefficient > maximumCoefficient)
+            {
+                throw new OverflowException();
+            }
+
+            currentScale++;
+        }
+
+        while (currentScale > targetScale)
+        {
+            if (coefficient % 10 != 0)
+            {
+                throw new OverflowException();
+            }
+
+            coefficient /= 10;
+            currentScale--;
+        }
+
+        return new decimal(
+            (int)(uint)coefficient,
+            (int)(uint)(coefficient >> 32),
+            (int)(uint)(coefficient >> 64),
+            negative,
+            targetScale);
+    }
+
     public override BlueTuskNumeric ReadTyped(
         ref BlueTuskReader reader,
         BlueTuskDataFormat format,

@@ -1,4 +1,6 @@
+using System.Buffers;
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 using BlueTusk.Client;
 using BlueTusk.Protocol;
 using BlueTusk.TypeSystem;
@@ -17,14 +19,18 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
     private readonly BlueTuskCopyPipe _pipe;
     private readonly Task<BlueTuskRawCopyResult> _copyTask;
     private readonly BlueTuskCopyOutOperation? _synchronousOperation;
+    private readonly BlueTuskCopyOutOperation? _asynchronousOperation;
     private readonly BlueTuskTypeRegistry _registry;
     private readonly short _expectedColumnCount;
+    private readonly byte[] _scratch = new byte[19];
+    private readonly BlueTuskBinaryCopyFieldState[] _fieldStates;
     private short _fieldCount;
     private int _fieldIndex;
     private long _rowsRead;
     private bool _rowStarted;
     private bool _completed;
     private bool _disposed;
+    private bool _fieldStatesReturned;
 
     internal BlueTuskBinaryExporter(
         BlueTuskCopyPipe pipe,
@@ -37,61 +43,88 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         _copyTask = copyTask;
         _registry = registry;
         _expectedColumnCount = checked((short)columnCount);
+        _fieldStates = ArrayPool<BlueTuskBinaryCopyFieldState>.Shared.Rent(columnCount);
+        Array.Clear(_fieldStates);
     }
 
     internal BlueTuskBinaryExporter(
         BlueTuskCopyOutOperation operation,
         BlueTuskTypeRegistry registry,
-        int columnCount)
+        int columnCount,
+        bool asynchronous = false)
     {
         ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
         _pipe = null!;
         _copyTask = null!;
-        _synchronousOperation = operation ?? throw new ArgumentNullException(nameof(operation));
+        if (asynchronous)
+        {
+            _asynchronousOperation = operation ?? throw new ArgumentNullException(nameof(operation));
+        }
+        else
+        {
+            _synchronousOperation = operation ?? throw new ArgumentNullException(nameof(operation));
+        }
         _registry = registry;
         _expectedColumnCount = checked((short)columnCount);
+        _fieldStates = ArrayPool<BlueTuskBinaryCopyFieldState>.Shared.Rent(columnCount);
+        Array.Clear(_fieldStates);
     }
 
     internal void Initialize()
     {
-        var header = new byte[19];
-        ReadExactly(header);
-        ValidateHeader(header);
+        try
+        {
+            ReadExactly(_scratch);
+            ValidateHeader(_scratch);
+        }
+        catch
+        {
+            ReturnFieldStates();
+            throw;
+        }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     internal async ValueTask InitializeAsync(CancellationToken cancellationToken)
     {
-        var header = new byte[19];
-        await ReadExactlyAsync(header, cancellationToken).ConfigureAwait(false);
-        if (!header.AsSpan(0, Signature.Length).SequenceEqual(Signature))
+        try
         {
-            throw new InvalidOperationException("PostgreSQL binary COPY signature is invalid.");
-        }
+            await ReadExactlyAsync(_scratch, cancellationToken).ConfigureAwait(false);
+            if (!_scratch.AsSpan(0, Signature.Length).SequenceEqual(Signature))
+            {
+                throw new InvalidOperationException("PostgreSQL binary COPY signature is invalid.");
+            }
 
-        var flags = BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(11));
-        if (flags != 0)
-        {
-            throw new NotSupportedException(
-                $"PostgreSQL binary COPY flags 0x{flags:X8} are not supported.");
-        }
+            var flags = BinaryPrimitives.ReadInt32BigEndian(_scratch.AsSpan(11));
+            if (flags != 0)
+            {
+                throw new NotSupportedException(
+                    $"PostgreSQL binary COPY flags 0x{flags:X8} are not supported.");
+            }
 
-        var extensionLength = BinaryPrimitives.ReadInt32BigEndian(header.AsSpan(15));
-        if (extensionLength < 0)
-        {
-            throw new InvalidOperationException(
-                "PostgreSQL binary COPY declared a negative header extension length.");
-        }
+            var extensionLength = BinaryPrimitives.ReadInt32BigEndian(_scratch.AsSpan(15));
+            if (extensionLength < 0)
+            {
+                throw new InvalidOperationException(
+                    "PostgreSQL binary COPY declared a negative header extension length.");
+            }
 
-        if (extensionLength > MaximumHeaderExtensionLength)
-        {
-            throw new InvalidOperationException(
-                $"PostgreSQL binary COPY header extension exceeds {MaximumHeaderExtensionLength} bytes.");
-        }
+            if (extensionLength > MaximumHeaderExtensionLength)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL binary COPY header extension exceeds {MaximumHeaderExtensionLength} bytes.");
+            }
 
-        if (extensionLength > 0)
+            if (extensionLength > 0)
+            {
+                await ReadExactlyAsync(new byte[extensionLength], cancellationToken)
+                    .ConfigureAwait(false);
+            }
+        }
+        catch
         {
-            await ReadExactlyAsync(new byte[extensionLength], cancellationToken)
-                .ConfigureAwait(false);
+            ReturnFieldStates();
+            throw;
         }
     }
 
@@ -134,7 +167,7 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return _fieldCount;
     }
 
-    public async ValueTask<int> StartRowAsync(
+    public ValueTask<int> StartRowAsync(
         CancellationToken cancellationToken = default)
     {
         EnsureReadable();
@@ -144,25 +177,30 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
                 $"The current binary COPY row has {_fieldCount - _fieldIndex} unread fields.");
         }
 
-        var bytes = new byte[sizeof(short)];
-        await ReadExactlyAsync(bytes, cancellationToken).ConfigureAwait(false);
-        _fieldCount = BinaryPrimitives.ReadInt16BigEndian(bytes);
+        if (_asynchronousOperation?.TryReadExactly(_scratch.AsMemory(0, sizeof(short))) == true)
+        {
+            return ProcessRowHeaderAsync(cancellationToken);
+        }
+
+        return StartRowSlowAsync(cancellationToken);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> StartRowSlowAsync(CancellationToken cancellationToken)
+    {
+        await ReadExactlyAsync(
+            _scratch.AsMemory(0, sizeof(short)),
+            cancellationToken).ConfigureAwait(false);
+        return await ProcessRowHeaderAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private ValueTask<int> ProcessRowHeaderAsync(CancellationToken cancellationToken)
+    {
+        _fieldCount = BinaryPrimitives.ReadInt16BigEndian(_scratch);
         if (_fieldCount == -1)
         {
             _completed = true;
-            var result = await _copyTask.ConfigureAwait(false);
-            if (result.Format != BlueTuskCopyDataFormat.Binary)
-            {
-                throw new InvalidOperationException("PostgreSQL did not execute binary COPY.");
-            }
-
-            if (result.RowsAffected != _rowsRead)
-            {
-                throw new InvalidOperationException(
-                    $"PostgreSQL reported {result.RowsAffected} copied rows; {_rowsRead} were read.");
-            }
-
-            return -1;
+            return CompleteExportAsync(cancellationToken);
         }
 
         if (_fieldCount < 0 || _fieldCount != _expectedColumnCount)
@@ -174,7 +212,52 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         _rowStarted = true;
         _fieldIndex = 0;
         _rowsRead = checked(_rowsRead + 1);
-        return _fieldCount;
+        return ValueTask.FromResult((int)_fieldCount);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> CompleteExportAsync(CancellationToken cancellationToken)
+    {
+        if (_asynchronousOperation is not null)
+        {
+            while (await _asynchronousOperation.ReadAsync(
+                _scratch.AsMemory(0, 1),
+                cancellationToken).ConfigureAwait(false) != 0)
+            {
+            }
+
+            var result = _asynchronousOperation.Result ?? throw new InvalidOperationException(
+                "PostgreSQL did not complete binary COPY after its trailer.");
+            if (result.Response.Format != BlueTuskCopyFormat.Binary)
+            {
+                throw new InvalidOperationException("PostgreSQL did not execute binary COPY.");
+            }
+
+            if (!BlueTuskCommandTagParser.TryGetRowsAffected(
+                    result.CommandTag,
+                    out var rowsAffected) ||
+                rowsAffected != _rowsRead)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL reported an invalid binary COPY row count for {_rowsRead} rows read.");
+            }
+        }
+        else
+        {
+            var result = await _copyTask.ConfigureAwait(false);
+            if (result.Format != BlueTuskCopyDataFormat.Binary)
+            {
+                throw new InvalidOperationException("PostgreSQL did not execute binary COPY.");
+            }
+
+            if (result.RowsAffected != _rowsRead)
+            {
+                throw new InvalidOperationException(
+                    $"PostgreSQL reported {result.RowsAffected} copied rows; {_rowsRead} were read.");
+            }
+        }
+
+        return -1;
     }
 
     public ValueTask<T?> ReadAsync<T>(
@@ -208,7 +291,11 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
 
         var payload = new byte[length];
         ReadExactly(payload);
-        return BlueTuskBinaryCopyCodec.Decode<T>(payload, postgreSqlTypeOid, _registry);
+        return BlueTuskBinaryCopyCodec.Decode<T>(
+            payload,
+            postgreSqlTypeOid,
+            _registry,
+            ref _fieldStates[_fieldIndex - 1].Decoder);
     }
 
     /// <summary>Reads the current field without decoding its PostgreSQL binary payload.</summary>
@@ -236,7 +323,7 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return payload;
     }
 
-    public async ValueTask<T?> ReadAsync<T>(
+    public ValueTask<T?> ReadAsync<T>(
         uint? postgreSqlTypeOid,
         CancellationToken cancellationToken = default)
     {
@@ -247,10 +334,37 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
                 "StartRowAsync must identify a row with an unread field before ReadAsync is called.");
         }
 
-        var lengthBytes = new byte[sizeof(int)];
-        await ReadExactlyAsync(lengthBytes, cancellationToken).ConfigureAwait(false);
-        var length = BinaryPrimitives.ReadInt32BigEndian(lengthBytes);
+        if (_asynchronousOperation?.TryReadExactly(_scratch.AsMemory(0, sizeof(int))) != true)
+        {
+            return ReadFieldSlowAsync<T>(postgreSqlTypeOid, cancellationToken);
+        }
+
+        var length = BinaryPrimitives.ReadInt32BigEndian(_scratch);
         _fieldIndex++;
+        return DecodeFieldAsync<T>(length, postgreSqlTypeOid, cancellationToken);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<T?> ReadFieldSlowAsync<T>(
+        uint? postgreSqlTypeOid,
+        CancellationToken cancellationToken)
+    {
+        await ReadExactlyAsync(
+            _scratch.AsMemory(0, sizeof(int)),
+            cancellationToken).ConfigureAwait(false);
+        var length = BinaryPrimitives.ReadInt32BigEndian(_scratch);
+        _fieldIndex++;
+        return await DecodeFieldAsync<T>(
+            length,
+            postgreSqlTypeOid,
+            cancellationToken).ConfigureAwait(false);
+    }
+
+    private ValueTask<T?> DecodeFieldAsync<T>(
+        int length,
+        uint? postgreSqlTypeOid,
+        CancellationToken cancellationToken)
+    {
         if (length == -1)
         {
             if (default(T) is not null)
@@ -259,7 +373,7 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
                     $"A null binary COPY field cannot be read as non-nullable {typeof(T).FullName}.");
             }
 
-            return default;
+            return ValueTask.FromResult<T?>(default);
         }
 
         if (length < -1)
@@ -268,15 +382,43 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
                 $"PostgreSQL binary COPY field declared invalid length {length}.");
         }
 
-        var payload = new byte[length];
+        if (_asynchronousOperation?.TryReadMemory(length, out var value) == true)
+        {
+            return ValueTask.FromResult<T?>(
+                BlueTuskBinaryCopyCodec.Decode<T>(
+                    value,
+                    postgreSqlTypeOid,
+                    _registry,
+                    ref _fieldStates[_fieldIndex - 1].Decoder));
+        }
+
+        return ReadAndDecodeFieldAsync<T>(length, postgreSqlTypeOid, cancellationToken);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<T?> ReadAndDecodeFieldAsync<T>(
+        int length,
+        uint? postgreSqlTypeOid,
+        CancellationToken cancellationToken)
+    {
+        var fieldIndex = _fieldIndex - 1;
+        var payload = _fieldStates[fieldIndex].Buffer;
+        if (payload is null || payload.Length != length)
+        {
+            payload = new byte[length];
+            _fieldStates[fieldIndex].Buffer = payload;
+        }
+
         await ReadExactlyAsync(payload, cancellationToken).ConfigureAwait(false);
         return BlueTuskBinaryCopyCodec.Decode<T>(
             payload,
             postgreSqlTypeOid,
-            _registry);
+            _registry,
+            ref _fieldStates[fieldIndex].Decoder);
     }
 
     /// <summary>Reads the current field without decoding its PostgreSQL binary payload.</summary>
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     public async ValueTask<ReadOnlyMemory<byte>?> ReadRawAsync(
         CancellationToken cancellationToken = default)
     {
@@ -307,6 +449,7 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         return payload;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask DisposeAsync()
     {
         if (_disposed)
@@ -315,27 +458,40 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         }
 
         _disposed = true;
-        if (_synchronousOperation is not null)
+        try
         {
-            _synchronousOperation.Dispose();
-            return;
-        }
+            if (_synchronousOperation is not null)
+            {
+                _synchronousOperation.Dispose();
+                return;
+            }
 
-        if (!_completed)
+            if (_asynchronousOperation is not null)
+            {
+                await _asynchronousOperation.DisposeAsync().ConfigureAwait(false);
+                return;
+            }
+
+            if (!_completed)
+            {
+                _pipe.CompleteWriting(
+                    new IOException("The binary COPY exporter was disposed before completion."));
+                try
+                {
+                    _ = await _copyTask.ConfigureAwait(false);
+                }
+                catch
+                {
+                    // Disposal aborts and drains the COPY operation; its expected server error is suppressed.
+                }
+            }
+
+            await _pipe.DisposeAsync().ConfigureAwait(false);
+        }
+        finally
         {
-            _pipe.CompleteWriting(
-                new IOException("The binary COPY exporter was disposed before completion."));
-            try
-            {
-                _ = await _copyTask.ConfigureAwait(false);
-            }
-            catch
-            {
-                // Disposal aborts and drains the COPY operation; its expected server error is suppressed.
-            }
+            ReturnFieldStates();
         }
-
-        await _pipe.DisposeAsync().ConfigureAwait(false);
     }
 
     public void Dispose()
@@ -352,7 +508,14 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         }
 
         _disposed = true;
-        _synchronousOperation.Dispose();
+        try
+        {
+            _synchronousOperation.Dispose();
+        }
+        finally
+        {
+            ReturnFieldStates();
+        }
     }
 
     private void ReadExactly(Span<byte> destination)
@@ -371,16 +534,33 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
         }
     }
 
-    private async ValueTask ReadExactlyAsync(
+    private ValueTask ReadExactlyAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken)
+    {
+        if (_asynchronousOperation?.TryReadExactly(destination) == true)
+        {
+            return ValueTask.CompletedTask;
+        }
+
+        return ReadExactlySlowAsync(destination, cancellationToken);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private async ValueTask ReadExactlySlowAsync(
         Memory<byte> destination,
         CancellationToken cancellationToken)
     {
         var offset = 0;
         while (offset < destination.Length)
         {
-            var read = await _pipe.ReadAsync(
-                destination[offset..],
-                cancellationToken).ConfigureAwait(false);
+            var read = _asynchronousOperation is null
+                ? await _pipe.ReadAsync(
+                    destination[offset..],
+                    cancellationToken).ConfigureAwait(false)
+                : await _asynchronousOperation.ReadAsync(
+                    destination[offset..],
+                    cancellationToken).ConfigureAwait(false);
             if (read == 0)
             {
                 throw new EndOfStreamException(
@@ -469,5 +649,18 @@ public sealed class BlueTuskBinaryExporter : IDisposable, IAsyncDisposable
             throw new InvalidOperationException(
                 $"PostgreSQL binary COPY row contains {_fieldCount} fields; {_expectedColumnCount} were expected.");
         }
+    }
+
+    private void ReturnFieldStates()
+    {
+        if (_fieldStatesReturned)
+        {
+            return;
+        }
+
+        _fieldStatesReturned = true;
+        ArrayPool<BlueTuskBinaryCopyFieldState>.Shared.Return(
+            _fieldStates,
+            clearArray: true);
     }
 }

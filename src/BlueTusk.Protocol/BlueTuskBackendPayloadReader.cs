@@ -17,6 +17,8 @@ internal ref struct BlueTuskBackendPayloadReader
 
     public readonly int Remaining => _payload.Length - _offset;
 
+    public readonly int Offset => _offset;
+
     public byte ReadByte()
     {
         EnsureRemaining(1);
@@ -97,4 +99,3 @@ internal ref struct BlueTuskBackendPayloadReader
         }
     }
 }
-

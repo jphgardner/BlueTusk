@@ -9,16 +9,41 @@ internal static class BlueTuskBinaryCopyCodec
         uint? postgreSqlTypeOid,
         BlueTuskTypeRegistry registry)
     {
+        byte[]? reusableBuffer = null;
+        return Encode(value, postgreSqlTypeOid, registry, ref reusableBuffer).ToArray();
+    }
+
+    public static ReadOnlyMemory<byte> Encode(
+        object value,
+        uint? postgreSqlTypeOid,
+        BlueTuskTypeRegistry registry,
+        ref byte[]? reusableBuffer)
+    {
+        var parameter = new BlueTuskParameter();
+        return Encode(
+            value,
+            postgreSqlTypeOid,
+            registry,
+            parameter,
+            ref reusableBuffer);
+    }
+
+    public static ReadOnlyMemory<byte> Encode(
+        object value,
+        uint? postgreSqlTypeOid,
+        BlueTuskTypeRegistry registry,
+        BlueTuskParameter parameter,
+        ref byte[]? reusableBuffer)
+    {
         ArgumentNullException.ThrowIfNull(value);
         ArgumentNullException.ThrowIfNull(registry);
-        var parameter = new BlueTuskParameter(value)
-        {
-            PostgreSqlTypeOid = postgreSqlTypeOid,
-        };
-        var encoded = BlueTuskParameterEncoder.Encode(parameter, registry);
+        ArgumentNullException.ThrowIfNull(parameter);
+        parameter.Value = value;
+        parameter.PostgreSqlTypeOid = postgreSqlTypeOid;
+        var encoded = BlueTuskParameterEncoder.Encode(parameter, registry, ref reusableBuffer);
         if (encoded.FormatCode == (short)BlueTuskDataFormat.Binary)
         {
-            return encoded.Value?.ToArray() ??
+            return encoded.Value ??
                 throw new InvalidOperationException("A non-null COPY value encoded as null.");
         }
 
@@ -45,6 +70,7 @@ internal static class BlueTuskBinaryCopyCodec
                     BlueTuskDataFormat.Binary,
                     type);
                 Array.Resize(ref bytes, writer.WrittenCount);
+                reusableBuffer = bytes;
                 return bytes;
             }
             catch (BlueTuskWriteBufferTooSmallException) when (length < Array.MaxLength)
@@ -59,33 +85,71 @@ internal static class BlueTuskBinaryCopyCodec
         uint? postgreSqlTypeOid,
         BlueTuskTypeRegistry registry)
     {
+        var decoder = default(BlueTuskBinaryCopyDecoder);
+        return Decode<T>(data, postgreSqlTypeOid, registry, ref decoder);
+    }
+
+    public static T Decode<T>(
+        ReadOnlyMemory<byte> data,
+        uint? postgreSqlTypeOid,
+        BlueTuskTypeRegistry registry,
+        ref BlueTuskBinaryCopyDecoder decoder)
+    {
         ArgumentNullException.ThrowIfNull(registry);
-        var typeId = new BlueTuskTypeId(
-            postgreSqlTypeOid ?? ResolveTypeOid(typeof(T), registry));
-        if (!registry.TryGetType(typeId, out var type) ||
-            type is null ||
-            !registry.TryGetCodec(typeId, out var codec) ||
-            codec is null)
+        var clrType = typeof(T);
+        if (!ReferenceEquals(decoder.ClrType, clrType) ||
+            decoder.RequestedTypeOid != postgreSqlTypeOid ||
+            decoder.Type is null ||
+            decoder.Codec is null)
         {
-            throw new NotSupportedException(
-                $"PostgreSQL type OID {typeId} has no binary COPY codec.");
+            var typeId = new BlueTuskTypeId(
+                postgreSqlTypeOid ?? ResolveTypeOid(clrType, registry));
+            if (!registry.TryGetType(typeId, out var resolvedType) ||
+                resolvedType is null ||
+                !registry.TryGetCodec(typeId, out var resolvedCodec) ||
+                resolvedCodec is null)
+            {
+                throw new NotSupportedException(
+                    $"PostgreSQL type OID {typeId} has no binary COPY codec.");
+            }
+
+            decoder.ClrType = clrType;
+            decoder.RequestedTypeOid = postgreSqlTypeOid;
+            decoder.Type = resolvedType;
+            decoder.Codec = resolvedCodec;
         }
 
+        var type = decoder.Type;
+        var codec = decoder.Codec;
         var reader = new BlueTuskReader(data.Span);
-        var value = codec.Read(
-            ref reader,
-            BlueTuskDataFormat.Binary,
-            type);
+        T? typedValue;
+        if (codec is BlueTuskCodec<T> typedCodec)
+        {
+            typedValue = typedCodec.ReadTyped(
+                ref reader,
+                BlueTuskDataFormat.Binary,
+                type);
+        }
+        else
+        {
+            var value = codec.Read(
+                ref reader,
+                BlueTuskDataFormat.Binary,
+                type);
+            typedValue = value is T typed
+                ? typed
+                : throw new InvalidCastException(
+                    $"The {type.QualifiedName} codec returned " +
+                    $"{value?.GetType().FullName ?? "null"}, not {typeof(T).FullName}.");
+        }
+
         if (reader.Remaining != 0)
         {
             throw new InvalidOperationException(
                 $"The {type.QualifiedName} codec left {reader.Remaining} unread COPY field bytes.");
         }
 
-        return value is T typed
-            ? typed
-            : throw new InvalidCastException(
-                $"The {type.QualifiedName} codec returned {value?.GetType().FullName ?? "null"}, not {typeof(T).FullName}.");
+        return typedValue;
     }
 
     private static uint ResolveTypeOid(
@@ -171,4 +235,22 @@ internal static class BlueTuskBinaryCopyCodec
         throw new NotSupportedException(
             $"CLR type {clrType.FullName} does not have an unambiguous binary COPY mapping. Supply PostgreSqlTypeOid explicitly.");
     }
+}
+
+internal struct BlueTuskBinaryCopyFieldState
+{
+    public byte[]? Buffer;
+
+    public BlueTuskBinaryCopyDecoder Decoder;
+}
+
+internal struct BlueTuskBinaryCopyDecoder
+{
+    public Type? ClrType;
+
+    public uint? RequestedTypeOid;
+
+    public BlueTuskTypeDescriptor? Type;
+
+    public IBlueTuskCodec? Codec;
 }
