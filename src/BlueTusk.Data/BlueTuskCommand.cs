@@ -1,9 +1,9 @@
+using System.Buffers;
 using System.Data;
 using System.Data.Common;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using System.Runtime.CompilerServices;
-using System.Buffers;
 using BlueTusk.Client;
 using BlueTusk.Diagnostics;
 using BlueTusk.Protocol;

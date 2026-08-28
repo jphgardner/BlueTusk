@@ -20,10 +20,10 @@ tag is not emitted, or a new metric has no cardinality review.
 | `BlueTusk.Streams` | 9 | Transaction volume, snapshot rows, spooling, active deliveries, settlement outcome and duration |
 | `BlueTusk.Sync` | 6 | Transactions, errors, retries, throttling, snapshot rows and destination duration |
 | `BlueTusk.Live` | 11 | Authoritative query and refresh duration, rows/events, connections, active clients, fan-out, replay, resume validation and slow clients |
-| `BlueTusk.ContinuousGraph` | 4 | Active/prepared evaluations, settlement outcome, event count and lifecycle duration |
+| `BlueTusk.ContinuousGraph` | 6 | Active/prepared evaluations, settlement outcome, event count, affected keys, authoritative query count and lifecycle duration |
 | `BlueTusk.ControlPlane` | 3 | Active operations, reconcile/delete outcomes and operation duration |
 
-The 60-instrument count is a minimum gate, not an invitation to add arbitrary
+The 62-instrument count is a minimum gate, not an invitation to add arbitrary
 metrics. Every new series consumes memory, storage and query cost.
 
 ## Application registration

@@ -429,6 +429,7 @@ public sealed partial class OpenSearchSyncDestination
             bulkOperations,
             externalVersion,
             payloadLength);
+        content.Headers.ContentType = new MediaTypeHeaderValue("application/x-ndjson");
         var response = await SendAsync(
             HttpMethod.Post,
             $"_bulk?wait_for_active_shards={Uri.EscapeDataString(_options.WaitForActiveShards)}&refresh={refresh}",

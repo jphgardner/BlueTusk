@@ -1,5 +1,5 @@
-using System.Data;
 using System.Buffers;
+using System.Data;
 using System.Data.Common;
 using System.Runtime.CompilerServices;
 using BlueTusk.Client;
@@ -653,7 +653,7 @@ public sealed class BlueTuskBatch : DbBatch
         var preparedCount = 0;
         try
         {
-        for (var index = 0; index < commandCount; index++)
+            for (var index = 0; index < commandCount; index++)
             {
                 var statementName =
                     $"bluetusk_batch_{Interlocked.Increment(ref s_preparedStatementSequence):x}";
