@@ -282,12 +282,26 @@ public sealed class BlueTuskCommand : DbCommand
         return ExecuteBufferedDataReaderAsync(behavior, cancellationToken);
     }
 
-    private bool ShouldUseStreamingReader(CommandBehavior behavior) =>
-        behavior.HasFlag(CommandBehavior.SequentialAccess) ||
-        _connection is not { BufferDataReaders: true } &&
-        ExecutionMode != BlueTuskCommandExecutionMode.Simple &&
-        !string.IsNullOrWhiteSpace(CommandText) &&
-        BlueTuskCommandTextRewriter.CanUseExtendedProtocol(CommandText);
+    private bool ShouldUseStreamingReader(CommandBehavior behavior)
+    {
+        if (behavior.HasFlag(CommandBehavior.SequentialAccess))
+        {
+            return true;
+        }
+
+        if (_connection is { BufferDataReaders: true } ||
+            ExecutionMode == BlueTuskCommandExecutionMode.Simple ||
+            string.IsNullOrWhiteSpace(CommandText) ||
+            !BlueTuskCommandTextRewriter.CanUseExtendedProtocol(CommandText))
+        {
+            return false;
+        }
+
+        return ExecutionMode == BlueTuskCommandExecutionMode.Extended ||
+            _prepareRequested ||
+            Parameters.Count != 0 ||
+            _connection is { PreferExtendedQueryProtocol: true };
+    }
 
     private static CommandBehavior ValidateCommandBehavior(CommandBehavior behavior)
     {
