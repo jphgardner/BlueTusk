@@ -16,7 +16,7 @@ namespace BlueTusk.Benchmarks;
 [CategoriesColumn]
 [GroupBenchmarksBy(BenchmarkLogicalGroupRule.ByCategory)]
 [Orderer(SummaryOrderPolicy.Declared)]
-public class ProviderComparisonBenchmarks : IAsyncDisposable
+public partial class ProviderComparisonBenchmarks : IAsyncDisposable
 {
     public const string ConnectionStringEnvironmentVariable =
         "BLUETUSK_BENCHMARK_CONNECTION_STRING";
@@ -91,6 +91,8 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
 
         _ = await _blueTuskPreparedCommand.ExecuteScalarAsync<int>();
         _ = await _npgsqlPreparedCommand.ExecuteScalarAsync();
+
+        await SetupExtendedAsync(connectionString);
     }
 
     [GlobalCleanup]
@@ -105,6 +107,8 @@ public class ProviderComparisonBenchmarks : IAsyncDisposable
 
         if (_blueTuskConnection is not null && _payloadQuery is not null)
         {
+            await CleanupExtendedAsync();
+
             await using var dropPayload = new BlueTuskCommand(
                 $"DROP TABLE IF EXISTS \"{_payloadTableName}\"",
                 _blueTuskConnection);

@@ -1,11 +1,18 @@
+using System.Data;
+
 namespace BlueTusk.Data.LargeObjects;
 
-internal sealed class BlueTuskLargeObjectOperations : IBlueTuskLargeObjectOperations
+internal sealed class BlueTuskLargeObjectOperations :
+    IBlueTuskLargeObjectOperations,
+    IDisposable,
+    IAsyncDisposable
 {
     private readonly BlueTuskConnection _connection;
     private readonly BlueTuskTransaction _transaction;
     private readonly int _descriptor;
     private readonly bool _ownsTransaction;
+    private readonly BlueTuskCommand _readCommand;
+    private readonly BlueTuskParameter<int> _readCountParameter;
 
     public BlueTuskLargeObjectOperations(
         BlueTuskConnection connection,
@@ -17,6 +24,16 @@ internal sealed class BlueTuskLargeObjectOperations : IBlueTuskLargeObjectOperat
         _transaction = transaction;
         _descriptor = descriptor;
         _ownsTransaction = ownsTransaction;
+        _readCountParameter = new BlueTuskParameter<int>();
+        _readCommand = new BlueTuskCommand(
+            "SELECT pg_catalog.loread($1, $2)",
+            connection)
+        {
+            Transaction = transaction,
+            ForceBinaryResultsInTransaction = true,
+        };
+        _readCommand.Parameters.Add(new BlueTuskParameter<int>(descriptor));
+        _readCommand.Parameters.Add(_readCountParameter);
     }
 
     public byte[] Read(int count) =>
@@ -33,6 +50,37 @@ internal sealed class BlueTuskLargeObjectOperations : IBlueTuskLargeObjectOperat
             "SELECT pg_catalog.loread($1, $2)",
             [new BlueTuskParameter<int>(_descriptor), new BlueTuskParameter<int>(count)],
             cancellationToken);
+
+    public int Read(Span<byte> buffer)
+    {
+        _readCountParameter.TypedValue = buffer.Length;
+        using var reader = _readCommand.ExecuteReader(
+            CommandBehavior.SequentialAccess | CommandBehavior.SingleRow);
+        if (!reader.Read())
+        {
+            throw new BlueTuskException("PostgreSQL returned no row from a large-object read.");
+        }
+
+        using var stream = reader.GetStream(0);
+        return ReadInto(stream, buffer);
+    }
+
+    public async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken)
+    {
+        _readCountParameter.TypedValue = buffer.Length;
+        await using var reader = await _readCommand.ExecuteReaderAsync(
+            CommandBehavior.SequentialAccess | CommandBehavior.SingleRow,
+            cancellationToken).ConfigureAwait(false);
+        if (!await reader.ReadAsync(cancellationToken).ConfigureAwait(false))
+        {
+            throw new BlueTuskException("PostgreSQL returned no row from a large-object read.");
+        }
+
+        await using var stream = reader.GetStream(0);
+        return await ReadIntoAsync(stream, buffer, cancellationToken).ConfigureAwait(false);
+    }
 
     public int Write(ReadOnlySpan<byte> buffer) =>
         ExecuteScalar<int>(
@@ -131,6 +179,7 @@ internal sealed class BlueTuskLargeObjectOperations : IBlueTuskLargeObjectOperat
         }
         finally
         {
+            await DisposeAsync().ConfigureAwait(false);
             if (_ownsTransaction)
             {
                 await _connection.CompleteImplicitLargeObjectTransactionAsync(
@@ -163,6 +212,7 @@ internal sealed class BlueTuskLargeObjectOperations : IBlueTuskLargeObjectOperat
         }
         finally
         {
+            Dispose();
             if (_ownsTransaction)
             {
                 _connection.CompleteImplicitLargeObjectTransaction(_transaction, commit);
@@ -177,6 +227,10 @@ internal sealed class BlueTuskLargeObjectOperations : IBlueTuskLargeObjectOperat
             _connection.Close();
         }
     }
+
+    public void Dispose() => _readCommand.Dispose();
+
+    public ValueTask DisposeAsync() => _readCommand.DisposeAsync();
 
     internal static async ValueTask<T> ExecuteScalarAsync<T>(
         BlueTuskConnection connection,
@@ -224,5 +278,44 @@ internal sealed class BlueTuskLargeObjectOperations : IBlueTuskLargeObjectOperat
                     result,
                     typeof(T),
                     System.Globalization.CultureInfo.InvariantCulture);
+    }
+
+    private static int ReadInto(Stream stream, Span<byte> destination)
+    {
+        var total = 0;
+        while (total < destination.Length)
+        {
+            var read = stream.Read(destination[total..]);
+            if (read == 0)
+            {
+                break;
+            }
+
+            total += read;
+        }
+
+        return total;
+    }
+
+    private static async ValueTask<int> ReadIntoAsync(
+        Stream stream,
+        Memory<byte> destination,
+        CancellationToken cancellationToken)
+    {
+        var total = 0;
+        while (total < destination.Length)
+        {
+            var read = await stream.ReadAsync(
+                destination[total..],
+                cancellationToken).ConfigureAwait(false);
+            if (read == 0)
+            {
+                break;
+            }
+
+            total += read;
+        }
+
+        return total;
     }
 }

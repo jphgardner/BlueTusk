@@ -762,7 +762,8 @@ public sealed class PostgreSqlSyncDestination :
             AddParameter(
                 upsert,
                 $"content{index}",
-                PostgreSqlDocumentMutationWriter.CopyParameterPayload(document.Content));
+                PostgreSqlDocumentMutationWriter.GetParameterPayload(document.Content));
+            upsert.Parameters[$"content{index}"]!.DbType = DbType.Binary;
             AddParameter(
                 upsert,
                 $"repair_id{index}",

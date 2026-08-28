@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "release": "1.1.0",
+  "comparisonRules": {
+    "sameRuntimeMaximumRatio": 0.98,
+    "crossRuntimeMinimumThroughputRatio": 1.05,
+    "crossRuntimeMaximumCostRatio": 0.95,
+    "confidenceLevel": 0.95,
+    "statisticalTiesPass": false,
+    "uniqueWorkloadMaximumRegressionRatio": 1.02,
+    "primaryHotPathMaximumP95Ratio": 0.8,
+    "primaryHotPathMaximumAllocationRatio": 0.8,
+    "trustedCdcMaximumFullRequeryRatio": 0.1,
+    "authoritativeDeltaMaximumFullRequeryRatio": 0.35
+  },
+  "environments": [
+    {
+      "os": "windows",
+      "architecture": "x64",
+      "runnerLabels": ["self-hosted", "windows", "x64", "bluetusk-benchmark"]
+    },
+    {
+      "os": "linux",
+      "architecture": "x64",
+      "runnerLabels": ["self-hosted", "linux", "x64", "bluetusk-benchmark"]
+    }
+  ],
+  "references": {
+    "Provider": "Npgsql 10.0.3",
+    "Streams": "Debezium Server 3.6.1.Final",
+    "Sync": "Debezium Server 3.6.1.Final plus native destination clients",
+    "Live": "ASP.NET Core SignalR 10",
+    "ControlPlane": "BlueTusk 1.0.0 plus absolute scaling budgets",
+    "ContinuousGraph": "prepared PostgreSQL GRAPH_TABLE plus BlueTusk 1.0.0 full requery"
+  },
+  "workloads": {
+    "Provider": {
+      "featureCount": 16,
+      "features": [
+        "warm-pool-checkout",
+        "parameterized-scalar",
+        "prepared-scalar",
+        "sequential-1000-rows",
+        "sequential-1mib-bytea",
+        "empty-begin-rollback",
+        "batch-16-scalars",
+        "copy-import-1000",
+        "copy-export-1000",
+        "prepared-typed-row",
+        "notification-delivery",
+        "large-object-read-1mib",
+        "ef-compiled-query",
+        "ef-materialize-100",
+        "ef-insert",
+        "ef-update"
+      ],
+      "concurrency": [1, 64, 256],
+      "variants": ["windows", "linux", "tls", "constrained-network"]
+    },
+    "Streams": {
+      "transactionChanges": [1, 1000],
+      "spoolBytes": [4194304],
+      "scenarios": ["snapshot", "catch-up", "commit-to-delivery"]
+    },
+    "Sync": {
+      "mutationCounts": [1, 100, 1000],
+      "destinations": ["nats", "redis", "opensearch", "postgresql"]
+    },
+    "Live": {
+      "resultCounts": [10, 1000, 100000],
+      "subscriberCounts": [1, 64, 1000, 10000],
+      "scenarios": ["churn", "slow-client", "affected-key-update"]
+    },
+    "ControlPlane": {
+      "sourceCounts": [1, 100, 1000],
+      "apiClientCounts": [32, 256]
+    },
+    "ContinuousGraph": {
+      "edgeCounts": [1000, 100000, 1000000],
+      "topN": [10, 100, 1000],
+      "tiers": ["trusted-cdc", "authoritative-delta", "authoritative-repair"],
+      "scenarios": [
+        "insert",
+        "update",
+        "delete",
+        "rank-change",
+        "truncate",
+        "two-phase",
+        "schema-drift"
+      ]
+    }
+  },
+  "requiredMetrics": [
+    "throughput",
+    "mean",
+    "p95",
+    "p99",
+    "allocatedBytes",
+    "cpuPerEvent",
+    "peakRss",
+    "gcCounters"
+  ],
+  "requiredEvidence": [
+    "rawSamples",
+    "environmentManifest",
+    "containerImageDigests",
+    "sourceCommit",
+    "verifierSelfTests",
+    "consolidatedReport"
+  ],
+  "enduranceHours": {
+    "Streams": 72,
+    "Sync": 24,
+    "Live": 24,
+    "ControlPlane": 24,
+    "ContinuousGraph": 24
+  },
+  "stablePublicationRequiresPostgreSql19Ga": true
+}

@@ -80,6 +80,8 @@ public sealed class LiveResultEvent<T, TKey>
 public sealed class LiveResultSnapshot<T, TKey>
     where TKey : notnull
 {
+    private readonly T[] _ownedRows;
+    private readonly TKey[] _ownedKeys;
     private readonly ReadOnlyCollection<T> _rows;
     private readonly ReadOnlyCollection<TKey> _keys;
     private readonly Dictionary<TKey, int> _keyIndexes;
@@ -89,6 +91,8 @@ public sealed class LiveResultSnapshot<T, TKey>
         TKey[] keys,
         Dictionary<TKey, int> keyIndexes)
     {
+        _ownedRows = rows;
+        _ownedKeys = keys;
         _rows = Array.AsReadOnly(rows);
         _keys = Array.AsReadOnly(keys);
         _keyIndexes = keyIndexes;
@@ -99,6 +103,10 @@ public sealed class LiveResultSnapshot<T, TKey>
     public IReadOnlyList<TKey> Keys => _keys;
 
     internal Dictionary<TKey, int> KeyIndexes => _keyIndexes;
+
+    internal T[] OwnedRows => _ownedRows;
+
+    internal TKey[] OwnedKeys => _ownedKeys;
 
     internal IEqualityComparer<TKey> KeyComparer => _keyIndexes.Comparer;
 
@@ -280,6 +288,88 @@ public static class LiveResultDiffer
         }
 
         return LiveDiffBatch<T, TKey>.CreateOwned(current, events.ToArray());
+    }
+
+    /// <summary>
+    /// Applies replacements for an explicitly affected set whose result membership and order are unchanged.
+    /// The existing immutable key index is shared with the next snapshot, avoiding a complete key-map rebuild.
+    /// </summary>
+    public static LiveDiffBatch<T, TKey> DiffAffected<T, TKey>(
+        LiveResultSnapshot<T, TKey> previous,
+        IReadOnlyList<T> affectedRows,
+        Func<T, TKey> keySelector,
+        IEqualityComparer<T>? rowComparer = null,
+        LiveDiffOptions? options = null,
+        long nextSequence = 1)
+        where TKey : notnull
+    {
+        ArgumentNullException.ThrowIfNull(previous);
+        ArgumentNullException.ThrowIfNull(affectedRows);
+        ArgumentNullException.ThrowIfNull(keySelector);
+        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(nextSequence);
+        options ??= new LiveDiffOptions();
+        options.Validate();
+        rowComparer ??= EqualityComparer<T>.Default;
+
+        var rows = (T[])previous.OwnedRows.Clone();
+        var events = new List<LiveResultEvent<T, TKey>>(
+            Math.Min(affectedRows.Count, options.MaximumEventsPerRefresh + 1));
+        var seen = new HashSet<TKey>(previous.KeyComparer);
+        var sequence = nextSequence;
+        foreach (var row in affectedRows)
+        {
+            ArgumentNullException.ThrowIfNull(row);
+            var key = keySelector(row) ??
+                throw new InvalidOperationException("A live query key selector returned null.");
+            if (!seen.Add(key))
+            {
+                throw new InvalidOperationException($"An affected live result contained duplicate key '{key}'.");
+            }
+
+            if (!previous.KeyIndexes.TryGetValue(key, out var index))
+            {
+                throw new InvalidOperationException(
+                    $"Affected-key snapshot mutation cannot add result key '{key}' or change result order.");
+            }
+
+            if (rowComparer.Equals(previous.Rows[index], row))
+            {
+                continue;
+            }
+
+            rows[index] = row;
+            events.Add(new LiveResultEvent<T, TKey>(
+                sequence++,
+                LiveEventKind.RowUpdated,
+                key,
+                row,
+                index,
+                index,
+                null,
+                null,
+                null));
+        }
+
+        var snapshot = LiveResultSnapshot<T, TKey>.CreateOwned(
+            rows,
+            previous.OwnedKeys,
+            previous.KeyIndexes);
+        if (events.Count > options.MaximumEventsPerRefresh)
+        {
+            var reset = new LiveResultEvent<T, TKey>(
+                nextSequence,
+                LiveEventKind.ResultReset,
+                default,
+                default,
+                null,
+                null,
+                snapshot.Rows,
+                snapshot.Keys,
+                LiveResetReason.DiffLimitExceeded);
+            return LiveDiffBatch<T, TKey>.CreateOwned(snapshot, [reset]);
+        }
+
+        return LiveDiffBatch<T, TKey>.CreateOwned(snapshot, events.ToArray());
     }
 
     private static LiveResultSnapshot<T, TKey> CreateSnapshot<T, TKey>(

@@ -62,10 +62,12 @@ shutdown. PgBouncer session and transaction modes have separate live acceptance.
 
 The V1 performance programme compares four physical lanes and 64-command bursts
 for fresh and reused multiplexed commands and for fresh and reused ordinary
-pooled controls. A separate direct-provider matrix covers warm checkout,
-parameterized and prepared scalars, 1,000-row sequential reads, and 1 MiB
-streaming reads. The exact-candidate gate requires BlueTusk to remain at or below
-Npgsql for mean, P95, P99, and managed allocation in all nine named comparisons.
+pooled controls. A separate 16-feature direct-provider matrix covers pool,
+command, streaming, transaction, batch, COPY, typed-row, notification,
+large-object and EF paths. Managed allocation must remain at or below Npgsql in
+all 16 direct pairs. The five established latency paths use a strict 1.0 ceiling;
+the eleven extended paths use the declared 1.05 parity ceiling. The four
+saturated concurrency shapes remain strict for latency and allocation.
 The full report, environment/image/commit manifest, SHA-256 hashes, and
 machine-readable budgets are retained and verified. This is a regression gate,
 not a universal performance or production-readiness claim.

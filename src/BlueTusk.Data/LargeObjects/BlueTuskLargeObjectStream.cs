@@ -19,7 +19,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
         IBlueTuskLargeObjectOperations operations)
     {
         ArgumentNullException.ThrowIfNull(operations);
-        ArgumentOutOfRangeException.ThrowIfNegative(length);
+        ArgumentOutOfRangeException.ThrowIfLessThan(length, -1);
         ArgumentOutOfRangeException.ThrowIfNegative(position);
 
         ObjectId = objectId;
@@ -43,7 +43,31 @@ public sealed class BlueTuskLargeObjectStream : Stream
         get
         {
             ThrowIfDisposed();
-            return _length;
+            if (_length >= 0)
+            {
+                return _length;
+            }
+
+            try
+            {
+                var position = _position;
+                var length = _operations.Seek(0, SeekOrigin.End);
+                var restored = _operations.Seek(position, SeekOrigin.Begin);
+                if (restored != position)
+                {
+                    throw new IOException(
+                        $"PostgreSQL restored large-object position {restored} instead of {position}.");
+                }
+
+                _position = restored;
+                _length = length;
+                return length;
+            }
+            catch
+            {
+                Interlocked.Exchange(ref _faulted, 1);
+                throw;
+            }
         }
     }
 
@@ -88,16 +112,14 @@ public sealed class BlueTuskLargeObjectStream : Stream
         try
         {
             var requested = Math.Min(count, MaximumTransferSize);
-            var data = _operations.Read(requested);
-            if (data.Length > requested)
+            var read = _operations.Read(buffer.AsSpan(offset, requested));
+            _position = checked(_position + read);
+            if (read < requested)
             {
-                throw new IOException(
-                    $"PostgreSQL returned {data.Length} large-object bytes when {requested} were requested.");
+                _length = _position;
             }
 
-            data.CopyTo(buffer, offset);
-            _position = checked(_position + data.Length);
-            return data.Length;
+            return read;
         }
         catch
         {
@@ -124,16 +146,16 @@ public sealed class BlueTuskLargeObjectStream : Stream
         try
         {
             var requested = Math.Min(buffer.Length, MaximumTransferSize);
-            var data = await _operations.ReadAsync(requested, cancellationToken).ConfigureAwait(false);
-            if (data.Length > requested)
+            var read = await _operations.ReadAsync(
+                buffer[..requested],
+                cancellationToken).ConfigureAwait(false);
+            _position = checked(_position + read);
+            if (read < requested)
             {
-                throw new IOException(
-                    $"PostgreSQL returned {data.Length} large-object bytes when {requested} were requested.");
+                _length = _position;
             }
 
-            data.CopyTo(buffer);
-            _position = checked(_position + data.Length);
-            return data.Length;
+            return read;
         }
         catch
         {
@@ -165,7 +187,11 @@ public sealed class BlueTuskLargeObjectStream : Stream
                 }
 
                 _position = checked(_position + written);
-                _length = Math.Max(_length, _position);
+                if (_length >= 0)
+                {
+                    _length = Math.Max(_length, _position);
+                }
+
                 remaining = remaining[transferCount..];
             }
         }
@@ -201,7 +227,11 @@ public sealed class BlueTuskLargeObjectStream : Stream
                 }
 
                 _position = checked(_position + written);
-                _length = Math.Max(_length, _position);
+                if (_length >= 0)
+                {
+                    _length = Math.Max(_length, _position);
+                }
+
                 buffer = buffer[count..];
             }
         }
@@ -229,6 +259,11 @@ public sealed class BlueTuskLargeObjectStream : Stream
             }
 
             _position = position;
+            if (origin == SeekOrigin.End)
+            {
+                _length = checked(position - offset);
+            }
+
             return position;
         }
         catch
@@ -262,6 +297,11 @@ public sealed class BlueTuskLargeObjectStream : Stream
             }
 
             _position = position;
+            if (origin == SeekOrigin.End)
+            {
+                _length = checked(position - offset);
+            }
+
             return position;
         }
         catch

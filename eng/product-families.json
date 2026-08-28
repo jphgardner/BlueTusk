@@ -4,7 +4,7 @@
     "Provider": {
       "versionFile": "eng/versions/Provider.props",
       "publication": {
-        "enabled": true,
+        "enabled": false,
         "channel": "stable",
         "tagPrefix": "provider",
         "requiredWorkflowEvidence": [
@@ -66,7 +66,7 @@
     "Streams": {
       "versionFile": "eng/versions/Streams.props",
       "publication": {
-        "enabled": true,
+        "enabled": false,
         "channel": "stable",
         "tagPrefix": "streams",
         "requiredWorkflowEvidence": [
@@ -115,7 +115,7 @@
     "Sync": {
       "versionFile": "eng/versions/Sync.props",
       "publication": {
-        "enabled": true,
+        "enabled": false,
         "channel": "stable",
         "tagPrefix": "sync",
         "requiredWorkflowEvidence": [
@@ -163,7 +163,7 @@
     "Live": {
       "versionFile": "eng/versions/Live.props",
       "publication": {
-        "enabled": true,
+        "enabled": false,
         "channel": "stable",
         "tagPrefix": "live",
         "requiredWorkflowEvidence": [
@@ -211,7 +211,7 @@
     "ControlPlane": {
       "versionFile": "eng/versions/ControlPlane.props",
       "publication": {
-        "enabled": true,
+        "enabled": false,
         "channel": "stable",
         "tagPrefix": "control-plane",
         "requiredWorkflowEvidence": [
@@ -249,7 +249,7 @@
     "ContinuousGraph": {
       "versionFile": "eng/versions/ContinuousGraph.props",
       "publication": {
-        "enabled": true,
+        "enabled": false,
         "channel": "stable",
         "tagPrefix": "continuous-graph",
         "requiredWorkflowEvidence": [

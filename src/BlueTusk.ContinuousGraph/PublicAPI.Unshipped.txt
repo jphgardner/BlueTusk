@@ -130,3 +130,60 @@ static BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.
 static BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.RequiresRepair(string! detail) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult!, TKey>!
 static BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.Unrelated(string? detail = null) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult!, TKey>!
 static BlueTusk.ContinuousGraph.ContinuousGraphQueryCompiler.CompileAsync<TContext, TResult, TKey>(Microsoft.EntityFrameworkCore.IDbContextFactory<TContext!>! contextFactory, BlueTusk.ContinuousGraph.ContinuousGraphQueryDefinition<TContext!, TResult!, TKey>! definition, BlueTusk.ContinuousGraph.IContinuousGraphCapabilityProbe? capabilityProbe = null, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult!, TKey>!>
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.<Clone>$() -> BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract!
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.ContinuousGraphCdcTrustContract(string! SchemaFingerprint, bool HasCompleteOldAndNewValues, bool HasExactChangedColumns, bool HasSufficientReplicaIdentity, bool EnforcesSecurityScope) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.Deconstruct(out string! SchemaFingerprint, out bool HasCompleteOldAndNewValues, out bool HasExactChangedColumns, out bool HasSufficientReplicaIdentity, out bool EnforcesSecurityScope) -> void
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.EnforcesSecurityScope.get -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.EnforcesSecurityScope.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.Equals(BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? other) -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.HasCompleteOldAndNewValues.get -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.HasCompleteOldAndNewValues.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.HasExactChangedColumns.get -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.HasExactChangedColumns.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.HasSufficientReplicaIdentity.get -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.HasSufficientReplicaIdentity.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.IsComplete.get -> bool
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.SchemaFingerprint.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.SchemaFingerprint.init -> void
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>.AffectedKeyCount.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>.MaintenanceTier.get -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier
+BlueTusk.ContinuousGraph.ContinuousGraphEvaluation<TResult, TKey>.QueryCount.get -> int
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.CanonicalQuery.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.Fingerprint.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.GraphName.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.GraphSchema.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.PatternElements.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.Projections.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.ResultKeyColumn.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.ResultKeyElementAlias.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan.ResultKeyProperty.get -> string!
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult, TKey>.MaintenanceTier.get -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.AffectedKeys.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.AuthoritativeDeltaTransactions.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.LastFallbackReason.get -> string?
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.QueryCount.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphIncrementalStatus.TrustedCdcTransactions.get -> long
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities.AuthoritativeDelta = 2 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities.AuthoritativeRepair = 1 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities.None = 0 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities.TrustedCdcProjection = 4 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier.AuthoritativeDelta = 2 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier.AuthoritativeRepair = 3 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier.None = 0 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier
+BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier.TrustedCdcDelta = 1 -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceTier
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.CreateAutomaticIncrementalSession(BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult!, TKey>! options, int? resultLimit, BlueTusk.ContinuousGraph.IContinuousGraphCdcProjector<TResult!, TKey>? trustedProjector) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult!, TKey>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.CreateIncrementalSession(BlueTusk.Live.LiveQueryArguments! arguments, BlueTusk.Live.LiveSecurityScope! securityScope, BlueTusk.ContinuousGraph.ContinuousGraphIncrementalOptions<TResult!, TKey>! options) -> BlueTusk.ContinuousGraph.ContinuousGraphIncrementalSession<TResult!, TKey>!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.ImpactPlan.get -> BlueTusk.ContinuousGraph.ContinuousGraphImpactPlan!
+BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult, TKey>.MaintenanceCapabilities.get -> BlueTusk.ContinuousGraph.ContinuousGraphMaintenanceCapabilities
+BlueTusk.ContinuousGraph.IContinuousGraphCdcProjector<TResult, TKey>
+BlueTusk.ContinuousGraph.IContinuousGraphCdcProjector<TResult, TKey>.ProjectAsync(BlueTusk.Streams.ChangeTransaction! transaction, BlueTusk.Live.LiveQueryExecutionContext! context, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ContinuousGraph.ContinuousGraphIncrementalResult<TResult!, TKey>!>
+BlueTusk.ContinuousGraph.IContinuousGraphCdcProjector<TResult, TKey>.TrustContract.get -> BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract!
+override BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.Equals(object? obj) -> bool
+override BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.GetHashCode() -> int
+override BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.ToString() -> string!
+static BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.operator !=(BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? left, BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? right) -> bool
+static BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract.operator ==(BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? left, BlueTusk.ContinuousGraph.ContinuousGraphCdcTrustContract? right) -> bool

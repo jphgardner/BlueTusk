@@ -8,7 +8,7 @@ namespace BlueTusk.ContinuousGraph.Tests;
 public sealed class ContinuousGraphApiFreezeTests
 {
     [Fact]
-    public void Every_continuous_graph_public_api_baseline_matches_the_v1_candidate_freeze()
+    public void Every_continuous_graph_public_api_baseline_matches_the_v1_1_candidate_freeze()
     {
         var repositoryRoot = FindRepositoryRoot();
         var manifestPath = Path.Combine(
@@ -19,7 +19,7 @@ public sealed class ContinuousGraphApiFreezeTests
         var root = document.RootElement;
 
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
-        Assert.Equal("1.0.0-candidate", root.GetProperty("baseline").GetString());
+        Assert.Equal("1.1.0-candidate", root.GetProperty("baseline").GetString());
         Assert.Equal("utf8-lf", root.GetProperty("normalization").GetString());
 
         var registered = root.GetProperty("files")

@@ -81,7 +81,7 @@
     "productionSlos": 14,
     "recoveryObjectives": 5,
     "benchmarkFixtures": 22,
-    "benchmarkResults": 98,
+    "benchmarkResults": 120,
     "performanceArtifacts": 42,
     "fuzzTargetSeconds": 3600,
     "allocationBudgets": 46,

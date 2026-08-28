@@ -106,17 +106,28 @@ Security scopes participate in Live subscription identity and are never shared.
 Cancellation flows through context creation and EF execution. Unbounded paths
 and dependency inference from caller-authored raw SQL remain unsupported.
 
-## Incremental maintenance
+## Three-tier incremental maintenance in 1.1
 
-For high-change workloads, a compiled plan can maintain its bounded result from
-authorised affected-key queries and use a full `GRAPH_TABLE` query only when
-correctness cannot be proved:
+The 1.1 compiler retains an immutable impact plan alongside the executable
+query. The plan contains the resolved graph pattern, physical element tables,
+vertex and edge keys, edge endpoints, projected columns, predicates, ordering,
+result key, and bounded result limit. That metadata drives three maintenance
+tiers; it is not inferred again from a replication message.
+
+1. **Trusted CDC delta.** An explicitly registered projector can update affected
+   rows directly from complete old/new tuples.
+2. **Authoritative scoped delta.** The automatic default extracts affected
+   element keys and runs the compiler-generated, prepared key-scoped
+   `GRAPH_TABLE` query.
+3. **Authoritative repair.** The original complete query is rerun whenever
+   correctness of either delta path cannot be proven.
+
+The simple automatic overload selects tiers two and three:
 
 ```csharp
 var incremental = plan.CreateIncrementalSession(
     arguments,
     new LiveSecurityScope("tenant:acme:user:17", "fraud-policy-v4"),
-    affectedKeyEvaluator,
     new ContinuousGraphIncrementalOptions<FraudPath, long>
     {
         ResultOrdering = FraudPathOrdering.Instance,
@@ -131,19 +142,53 @@ var consumer = new ContinuousGraphIncrementalConsumer<FraudPath, long>(
     replayStore);
 ```
 
-`IContinuousGraphIncrementalEvaluator<TResult,TKey>` receives one immutable
-Streams transaction and the bound Live security context. It must derive the
-complete affected result-key set and run a registered, authorised key-scoped
-database query. Return `Exact` only when that set is complete, `Unrelated` when
-the transaction cannot affect the plan, or `RequiresRepair` when coverage is
-uncertain. CDC tuple values are never suitable as the returned rows.
+The scoped query executes under the original `LiveSecurityScope`; PostgreSQL
+permissions, RLS, tenant settings, and the registered query remain the
+authority. The engine never constructs client-visible authoritative rows from
+untrusted tuple bytes.
 
-The engine safely applies new candidates, in-place changes, and rank
-improvements. It performs an authoritative full query when a visible row is
-removed, leaves the predicate, worsens in rank, exceeds the affected-key
-budget, comes through commit-prepared, or reaches a transaction/time repair
-interval. These fallbacks recover rows outside the currently visible top-N.
-Malformed evaluator output fails closed.
+### Opting in to direct CDC projection
+
+Tier one is intentionally explicit. Implement
+`IContinuousGraphCdcProjector<TResult,TKey>` and provide a
+`ContinuousGraphCdcTrustContract` whose impact-plan fingerprint matches the
+compiled plan. All four trust facts must be true: complete required old/new
+values, exact changed columns, sufficient replica identity, and enforcement of
+the original security scope. A mismatch or incomplete fact bypasses the
+projector and continues through the authoritative tiers.
+
+```csharp
+var incremental = plan.CreateAutomaticIncrementalSession(
+    arguments,
+    securityScope,
+    options,
+    resultLimit: 100,
+    trustedProjector: projector);
+```
+
+Treat projector registration as privileged application code. Schema
+fingerprints must be regenerated after graph or projection changes. Do not
+claim the trusted tier merely because a publication happens to include the
+columns in one observed transaction.
+
+### Ordered mutation and fallbacks
+
+The session indexes visible result keys and retains the ordered top-N. For a
+small exact change it sorts only affected candidates, merges them with the
+already ordered unaffected sequence, and uses Live's affected-key mutation path
+when membership and order are unchanged. The latter clones only the row array
+and shares the immutable key/index structure.
+
+The session forces authoritative repair for incomplete or undecodable tuples,
+unknown schemas, truncation, commit-prepared, unsafe deletes, affected-key
+overflow, rank-boundary uncertainty, unsupported query shapes, projector
+uncertainty, visible rows leaving the predicate, rank worsening, and periodic
+drift detection. Repairs recover candidates outside the visible top-N.
+Malformed projector or scoped-query output fails closed.
+
+The custom `IContinuousGraphIncrementalEvaluator<TResult,TKey>` overload remains
+available and source/binary compatible for applications with an existing
+authoritative affected-key implementation.
 
 Each evaluation is a prepared transition. Disposing it rolls back; committing
 it advances the source position and event sequence. The supplied Streams
@@ -183,16 +228,25 @@ exposes the same inventory at `/graphs` and `/api/graphs`; every application
 value is HTML encoded. The optional adapter owns the graph dependency; the
 Control Plane core does not reference ContinuousGraph.
 
+`ContinuousGraphIncrementalSession.Status` exposes counts for trusted CDC,
+authoritative delta, and authoritative repair evaluations, plus affected-key
+and query totals and the last fallback reason. OpenTelemetry instruments add
+maintenance tier, affected-key count, query count, evaluation latency,
+repair/fallback counters, and a redacted detail code. Alert on sustained repair
+rate, affected-key-limit fallbacks, schema mismatch, or drift-repair differences
+rather than attempting to suppress repair.
+
 ## Release state
 
-The two packages are published at stable `1.0.0`.
-`BlueTusk.ContinuousGraph` contains
+The two 1.0.0 packages remain immutable. `BlueTusk.ContinuousGraph` contains
 the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
-operations adapter. The family remains unpublished until PostgreSQL 19 GA,
-Provider, Streams, Live, and Control Plane 1.0.0, the exact 24-hour endurance
-report, and at least one independent ContinuousGraph pilot pass. The release
-script machine-enforces dependency readiness and protected tag ordering. The
-V1 public surface is hash-locked by the
+operations adapter. The coordinated 1.1.0 candidate remains non-publishable
+until PostgreSQL 19 GA is digest-pinned, every lower product family has passed
+its exact-candidate gates, the 24-hour Continuous Graph endurance run is
+archived, and the performance-leadership evidence passes. The release script
+machine-enforces dependency readiness and protected tag ordering. The 1.0
+public surface remains a compatible subset of the hash-locked 1.1 candidate
+surface; see the
 [API compatibility contract](api-compatibility.md). See the
 [1.0.0 release record](release-notes-1.0.0.md) for the exact support and
 publication boundary.

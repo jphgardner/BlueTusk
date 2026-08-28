@@ -15,7 +15,7 @@ public sealed class LiveApiFreezeTests
         var root = document.RootElement;
 
         Assert.Equal(1, root.GetProperty("schemaVersion").GetInt32());
-        Assert.Equal("1.0.0-candidate", root.GetProperty("baseline").GetString());
+        Assert.Equal("1.1.0-candidate", root.GetProperty("baseline").GetString());
         Assert.Equal("utf8-lf", root.GetProperty("normalization").GetString());
 
         var registered = root.GetProperty("files")

@@ -106,7 +106,11 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             [_endpoint] = Statistics,
         };
 
-    internal override BlueTuskPooledSession Rent()
+    internal override BlueTuskPooledSession Rent() => Rent(allowPendingReset: false);
+
+    internal BlueTuskPooledSession RentForCommand() => Rent(allowPendingReset: true);
+
+    private BlueTuskPooledSession Rent(bool allowPendingReset)
     {
         ThrowIfDisposed();
         if (_minimumSize > 0 && Volatile.Read(ref _total) < _minimumSize)
@@ -120,7 +124,7 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
             while (true)
             {
                 var (hasSlot, slot, creationReserved, cleanLease, idleRemoved) =
-                    TryAcquireAvailableOrReserveCreation();
+                    TryAcquireAvailableOrReserveCreation(allowPendingReset);
                 if (!hasSlot && !creationReserved)
                 {
                     slot = ReadAvailable();
@@ -146,6 +150,18 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
                 if (!idleRemoved)
                 {
                     Interlocked.Decrement(ref _idle);
+                }
+
+                if (allowPendingReset &&
+                    IsCurrent(pooledSession) &&
+                    !IsExpired(pooledSession, includeIdleLifetime: true) &&
+                    pooledSession.Session.IsOpen &&
+                    pooledSession.Session.TransactionStatus == BlueTuskTransactionStatus.Idle &&
+                    TryLeaseCurrent(pooledSession))
+                {
+                    BlueTuskDiagnostics.PoolLeases.Add(1);
+                    BlueTuskDiagnostics.PoolReuses.Add(1);
+                    return pooledSession;
                 }
 
                 if (IsCurrent(pooledSession) &&

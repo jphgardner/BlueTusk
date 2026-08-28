@@ -11,6 +11,7 @@ namespace BlueTusk.Protocol;
 public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 {
     private const int InitialBufferSize = 8 * 1024;
+    private const int MaximumRetainedReadBufferSize = 64 * 1024;
     private const int MaximumPayloadReadAhead = 1024 * 1024;
     private const int DirectPayloadReadThreshold = 8 * 1024;
     private const int MinimumPayloadFillSize = 64 * 1024;
@@ -112,38 +113,35 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
     }
 
     /// <remarks>The returned payload remains valid only until the next read from this connection.</remarks>
-    public async ValueTask<BlueTuskBackendMessage> ReadMessageAsync(CancellationToken cancellationToken)
+    public ValueTask<BlueTuskBackendMessage> ReadMessageAsync(
+        CancellationToken cancellationToken)
     {
-        BeginRead();
+        if (TryBeginReadMessage(out var message, out var destination))
+        {
+            return new ValueTask<BlueTuskBackendMessage>(message);
+        }
+
+        return ReadMessageSlowAsync(destination, cancellationToken);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskBackendMessage> ReadMessageSlowAsync(
+        Memory<byte> destination,
+        CancellationToken cancellationToken)
+    {
+        int read;
         try
         {
-            EnsureNoActivePayload();
-            while (true)
-            {
-                if (TryParseBufferedMessage(out var message))
-                {
-                    return message;
-                }
-
-                PrepareForRead();
-                var read = await _transport.ReadAsync(
-                    _buffer.AsMemory(_start + _count),
-                    cancellationToken).ConfigureAwait(false);
-                if (read == 0)
-                {
-                    throw new EndOfStreamException(
-                        _count == 0
-                            ? "PostgreSQL closed the connection."
-                            : "PostgreSQL disconnected in the middle of a protocol message.");
-                }
-
-                _count += read;
-            }
+            read = await ReadTransportAsync(destination, cancellationToken).ConfigureAwait(false);
         }
-        finally
+        catch
         {
-            EndRead();
+            AbortReadMessage();
+            throw;
         }
+
+        CompleteReadMessage(read);
+        return await ReadMessageAsync(cancellationToken).ConfigureAwait(false);
     }
 
     internal bool TryBeginReadMessage(
@@ -453,6 +451,40 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
             _start += destination.Length;
             _count -= destination.Length;
             _activePayloadRemaining -= destination.Length;
+            return true;
+        }
+        finally
+        {
+            EndRead();
+        }
+    }
+
+    internal bool TryLeaseBufferedMessagePayload(
+        int length,
+        out ReadOnlyMemory<byte> payload)
+    {
+        BeginRead();
+        try
+        {
+            EnsureActivePayload();
+            ArgumentOutOfRangeException.ThrowIfNegative(length);
+            if (length > _activePayloadRemaining)
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(length),
+                    "The requested lease exceeds the active backend message payload.");
+            }
+
+            if (_count < length)
+            {
+                payload = default;
+                return false;
+            }
+
+            payload = _buffer.AsMemory(_start, length);
+            _start += length;
+            _count -= length;
+            _activePayloadRemaining -= length;
             return true;
         }
         finally
@@ -1063,7 +1095,7 @@ public sealed class BlueTuskProtocolConnection : IAsyncDisposable, IDisposable
 
     private void ShrinkReadBufferIfPossible()
     {
-        if (_buffer.Length <= InitialBufferSize || _count > InitialBufferSize)
+        if (_buffer.Length <= MaximumRetainedReadBufferSize || _count > InitialBufferSize)
         {
             return;
         }

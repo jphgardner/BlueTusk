@@ -40,7 +40,7 @@ standard release process remains fail closed for later versions.
 - A six-meter, 60-instrument telemetry contract; 14 reference production SLOs;
   a deployable OpenTelemetry Collector, Prometheus rules and Grafana dashboard;
   and metric lifecycle tests for every product family.
-- Complete checked-in BenchmarkDotNet coverage for 98 measured workloads across
+- Complete checked-in BenchmarkDotNet coverage for 120 measured workloads across
   22 fixtures, 46 allocation budgets, 19 reference-machine latency budgets and
   a manual exact-candidate performance workflow.
 - A single fail-closed V1 verifier that distinguishes deterministic engineering

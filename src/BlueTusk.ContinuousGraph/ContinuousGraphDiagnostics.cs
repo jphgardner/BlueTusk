@@ -31,8 +31,19 @@ internal static class ContinuousGraphDiagnostics
             "bluetusk.graph.evaluation.events",
             unit: "{event}");
 
+    private static readonly Histogram<long> AffectedKeys =
+        Meter.CreateHistogram<long>(
+            "bluetusk.graph.affected_keys",
+            unit: "{key}");
+
+    private static readonly Histogram<long> QueryCount =
+        Meter.CreateHistogram<long>(
+            "bluetusk.graph.queries",
+            unit: "{query}");
+
     internal static (long Started, Activity? Activity) StartEvaluation(
-        ContinuousGraphEvaluationMode mode)
+        ContinuousGraphEvaluationMode mode,
+        ContinuousGraphMaintenanceTier tier)
     {
         if (ActiveEvaluations.Enabled)
         {
@@ -47,6 +58,9 @@ internal static class ContinuousGraphDiagnostics
         activity?.SetTag(
             "bluetusk.graph.evaluation.mode",
             mode.ToString().ToLowerInvariant());
+        activity?.SetTag(
+            "bluetusk.graph.maintenance.tier",
+            tier.ToString().ToLowerInvariant());
         return (
             EvaluationDuration.Enabled ? Stopwatch.GetTimestamp() : 0,
             activity);
@@ -54,8 +68,12 @@ internal static class ContinuousGraphDiagnostics
 
     internal static void RecordEvaluation(
         ContinuousGraphEvaluationMode mode,
+        ContinuousGraphMaintenanceTier tier,
         string outcome,
         int eventCount,
+        int affectedKeyCount,
+        int queryCount,
+        string? detail,
         long started,
         Activity? activity)
     {
@@ -64,6 +82,10 @@ internal static class ContinuousGraphDiagnostics
             {
                 "bluetusk.graph.evaluation.mode",
                 mode.ToString().ToLowerInvariant()
+            },
+            {
+                "bluetusk.graph.maintenance.tier",
+                tier.ToString().ToLowerInvariant()
             },
             { "bluetusk.graph.evaluation.outcome", outcome },
         };
@@ -82,6 +104,16 @@ internal static class ContinuousGraphDiagnostics
             EvaluationEvents.Record(eventCount, tags);
         }
 
+        if (AffectedKeys.Enabled)
+        {
+            AffectedKeys.Record(affectedKeyCount, tags);
+        }
+
+        if (QueryCount.Enabled)
+        {
+            QueryCount.Record(queryCount, tags);
+        }
+
         if (started != 0 && EvaluationDuration.Enabled)
         {
             EvaluationDuration.Record(
@@ -90,6 +122,9 @@ internal static class ContinuousGraphDiagnostics
         }
 
         activity?.SetTag("bluetusk.graph.evaluation.events", eventCount);
+        activity?.SetTag("bluetusk.graph.affected_keys", affectedKeyCount);
+        activity?.SetTag("bluetusk.graph.queries", queryCount);
+        activity?.SetTag("bluetusk.graph.fallback.reason", detail);
         activity?.SetTag("bluetusk.graph.evaluation.outcome", outcome);
         activity?.SetStatus(
             outcome is "committed" or "abandoned"

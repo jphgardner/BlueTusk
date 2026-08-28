@@ -59,6 +59,18 @@ public sealed class BlueTuskFrontendMessageWriterTests
     }
 
     [Fact]
+    public void Writes_two_simple_query_statements_without_concatenating_them()
+    {
+        var output = new ArrayBufferWriter<byte>();
+
+        BlueTuskFrontendMessageWriter.WriteSimpleQuery(output, "BEGIN", "SELECT 1");
+
+        Assert.Equal((byte)'Q', output.WrittenSpan[0]);
+        Assert.Equal(19, BinaryPrimitives.ReadInt32BigEndian(output.WrittenSpan[1..]));
+        Assert.Equal("BEGIN;SELECT 1\0", Encoding.UTF8.GetString(output.WrittenSpan[5..]));
+    }
+
+    [Fact]
     public void Rejects_embedded_nulls()
     {
         Assert.Throws<ArgumentException>(

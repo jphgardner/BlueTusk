@@ -17,6 +17,7 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
     private readonly BlueTuskClientConfiguration _clientConfiguration;
     private readonly string _connectionString;
     private readonly BlueTuskCommandMultiplexer? _multiplexer;
+    private MultiplexingClassification? _lastMultiplexingClassification;
 
     internal BlueTuskDataSource(
         string connectionString,
@@ -173,10 +174,32 @@ public sealed class BlueTuskDataSource : DbDataSource, IProviderDataSource
         }
     }
 
-    public new BlueTuskCommand CreateCommand(string commandText) =>
-        new(commandText ?? string.Empty, this);
+    public new BlueTuskCommand CreateCommand(string commandText)
+    {
+        commandText ??= string.Empty;
+        if (_multiplexer is null)
+        {
+            return new BlueTuskCommand(commandText, this);
+        }
+
+        var cached = Volatile.Read(ref _lastMultiplexingClassification);
+        if (cached is null ||
+            !string.Equals(cached.CommandText, commandText, StringComparison.Ordinal))
+        {
+            cached = new MultiplexingClassification(
+                commandText,
+                BlueTuskMultiplexingClassifier.IsSessionNeutral(commandText));
+            Volatile.Write(ref _lastMultiplexingClassification, cached);
+        }
+
+        return new BlueTuskCommand(commandText, this, cached.IsSessionNeutral);
+    }
 
     public new BlueTuskBatch CreateBatch() => (BlueTuskBatch)base.CreateBatch();
+
+    private sealed record MultiplexingClassification(
+        string CommandText,
+        bool IsSessionNeutral);
 
     public BlueTuskPoolStatistics GetPoolStatistics() =>
         _pool?.Statistics ?? new BlueTuskPoolStatistics(

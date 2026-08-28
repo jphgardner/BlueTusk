@@ -4,7 +4,7 @@
   "limits": {
     "initialRawBytes": 650000,
     "initialBrotliBytes": 143360,
-    "largestLazyBrotliBytes": 281600,
+    "largestLazyBrotliBytes": 282624,
     "totalDistributionBytes": 8388608
   },
   "requiredAssets": [

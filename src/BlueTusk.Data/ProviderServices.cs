@@ -37,6 +37,14 @@ internal interface IProviderConnection
 
     DbConnection CreateAdminConnection(string connectionString);
 
+    void AllowPendingPoolResetOnOpen();
+
+    void UseBufferedDataReaders();
+
+    void PreferExtendedProtocol();
+
+    void PreferBinaryResults();
+
     void ReloadTypes();
 
     ValueTask ReloadTypesAsync(CancellationToken cancellationToken = default);

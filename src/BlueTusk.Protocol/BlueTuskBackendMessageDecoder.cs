@@ -1,3 +1,4 @@
+using System.Buffers.Text;
 using System.Text;
 
 namespace BlueTusk.Protocol;
@@ -112,8 +113,35 @@ public static class BlueTuskBackendMessageDecoder
 
     public static BlueTuskDataRow DecodeDataRow(BlueTuskBackendMessage message, int? expectedFieldCount = null)
     {
+        var payload = DecodeDataRowPayload(message, expectedFieldCount, out var count);
+        return new BlueTuskDataRow(new BlueTuskDataRowValues(payload, count));
+    }
+
+    internal static byte[] DecodeDataRowPayload(
+        BlueTuskBackendMessage message,
+        int? expectedFieldCount,
+        out int count)
+    {
+        RequireCode(message, 'D');
+        var payload = message.ToPayloadArray();
+        var reader = new BlueTuskBackendPayloadReader(payload);
+        count = ValidateDataRowPayload(ref reader, expectedFieldCount);
+        return payload;
+    }
+
+    internal static int ValidateDataRowPayload(
+        BlueTuskBackendMessage message,
+        int? expectedFieldCount)
+    {
         RequireCode(message, 'D');
         var reader = CreateReader(message, out _);
+        return ValidateDataRowPayload(ref reader, expectedFieldCount);
+    }
+
+    private static int ValidateDataRowPayload(
+        ref BlueTuskBackendPayloadReader reader,
+        int? expectedFieldCount)
+    {
         var count = reader.ReadInt16();
         if (count < 0 || expectedFieldCount is { } expected && count != expected)
         {
@@ -121,26 +149,22 @@ public static class BlueTuskBackendMessageDecoder
         }
 
         ValidateCollectionCount(count, reader.Remaining, sizeof(int), "DataRow field");
-        var values = new ReadOnlyMemory<byte>?[count];
-        for (var index = 0; index < values.Length; index++)
+        for (var index = 0; index < count; index++)
         {
             var length = reader.ReadInt32();
-            if (length == -1)
-            {
-                values[index] = null;
-            }
-            else if (length < -1)
+            if (length < -1)
             {
                 throw new BlueTuskProtocolException("DataRow declared an invalid negative field length.");
             }
-            else
+
+            if (length >= 0)
             {
-                values[index] = reader.ReadBytes(length).ToArray();
+                _ = reader.ReadBytes(length);
             }
         }
 
         reader.EnsureConsumed();
-        return new BlueTuskDataRow(values);
+        return count;
     }
 
     internal static ReadOnlyMemory<byte>? DecodeFirstDataRowValue(
@@ -184,11 +208,110 @@ public static class BlueTuskBackendMessageDecoder
     public static string DecodeCommandComplete(BlueTuskBackendMessage message)
     {
         RequireCode(message, 'C');
+        if (message.Payload.IsSingleSegment)
+        {
+            var payload = message.Payload.FirstSpan;
+            if (payload.SequenceEqual("SELECT 1\0"u8))
+            {
+                return "SELECT 1";
+            }
+
+            if (payload.SequenceEqual("INSERT 0 1\0"u8))
+            {
+                return "INSERT 0 1";
+            }
+
+            if (payload.SequenceEqual("UPDATE 1\0"u8))
+            {
+                return "UPDATE 1";
+            }
+
+            if (payload.SequenceEqual("DELETE 1\0"u8))
+            {
+                return "DELETE 1";
+            }
+        }
+
         var reader = CreateReader(message, out _);
         var tag = reader.ReadCString();
         reader.EnsureConsumed();
         return tag;
     }
+
+    /// <summary>
+    /// Reads the affected-row count from a command-complete message without
+    /// materializing its command tag.
+    /// </summary>
+    internal static bool TryDecodeRecordsAffected(
+        BlueTuskBackendMessage message,
+        out int count)
+    {
+        RequireCode(message, 'C');
+        count = 0;
+        if (!message.Payload.IsSingleSegment)
+        {
+            return TryDecodeRecordsAffected(DecodeCommandComplete(message), out count);
+        }
+
+        var payload = message.Payload.FirstSpan;
+        if (payload.Length == 0 || payload[^1] != 0)
+        {
+            throw new BlueTuskProtocolException(
+                "CommandComplete did not contain a terminated command tag.");
+        }
+
+        var tag = payload[..^1];
+        if (!IsCountedCommand(tag))
+        {
+            return false;
+        }
+
+        var separator = tag.LastIndexOf((byte)' ');
+        if (separator < 0)
+        {
+            return false;
+        }
+
+        var value = tag[(separator + 1)..];
+        return Utf8Parser.TryParse(value, out count, out var consumed) &&
+            consumed == value.Length;
+    }
+
+    private static bool TryDecodeRecordsAffected(string commandTag, out int count)
+    {
+        count = 0;
+        var tag = commandTag.AsSpan();
+        if (!IsCountedCommand(tag))
+        {
+            return false;
+        }
+
+        var separator = tag.LastIndexOf(' ');
+        return separator >= 0 &&
+            int.TryParse(
+                tag[(separator + 1)..],
+                System.Globalization.NumberStyles.None,
+                System.Globalization.CultureInfo.InvariantCulture,
+                out count);
+    }
+
+    private static bool IsCountedCommand(ReadOnlySpan<byte> tag) =>
+        tag.StartsWith("INSERT "u8) ||
+        tag.StartsWith("UPDATE "u8) ||
+        tag.StartsWith("DELETE "u8) ||
+        tag.StartsWith("MERGE "u8) ||
+        tag.StartsWith("MOVE "u8) ||
+        tag.StartsWith("FETCH "u8) ||
+        tag.StartsWith("COPY "u8);
+
+    private static bool IsCountedCommand(ReadOnlySpan<char> tag) =>
+        tag.StartsWith("INSERT ", StringComparison.Ordinal) ||
+        tag.StartsWith("UPDATE ", StringComparison.Ordinal) ||
+        tag.StartsWith("DELETE ", StringComparison.Ordinal) ||
+        tag.StartsWith("MERGE ", StringComparison.Ordinal) ||
+        tag.StartsWith("MOVE ", StringComparison.Ordinal) ||
+        tag.StartsWith("FETCH ", StringComparison.Ordinal) ||
+        tag.StartsWith("COPY ", StringComparison.Ordinal);
 
     public static BlueTuskCopyResponse DecodeCopyResponse(BlueTuskBackendMessage message)
     {

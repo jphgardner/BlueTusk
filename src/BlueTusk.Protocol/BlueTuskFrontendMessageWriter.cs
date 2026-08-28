@@ -69,6 +69,26 @@ public static class BlueTuskFrontendMessageWriter
         WriteByte(output, 0);
     }
 
+    internal static void WriteSimpleQuery(
+        IBufferWriter<byte> output,
+        string firstStatement,
+        string secondStatement)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(firstStatement, nameof(firstStatement));
+        ValidateCString(secondStatement, nameof(secondStatement));
+
+        var firstLength = Encoding.UTF8.GetByteCount(firstStatement);
+        var secondLength = Encoding.UTF8.GetByteCount(secondStatement);
+        var sqlLength = checked(firstLength + 1 + secondLength);
+        WriteByte(output, (byte)'Q');
+        WriteInt32(output, checked(sizeof(int) + sqlLength + 1));
+        WriteUtf8(output, firstStatement, firstLength);
+        WriteByte(output, (byte)';');
+        WriteUtf8(output, secondStatement, secondLength);
+        WriteByte(output, 0);
+    }
+
     internal static void WriteDiscardAll(IBufferWriter<byte> output)
     {
         ArgumentNullException.ThrowIfNull(output);
@@ -327,6 +347,139 @@ public static class BlueTuskFrontendMessageWriter
             BinaryPrimitives.WriteInt16BigEndian(destination[offset..], formatCode);
             offset += sizeof(short);
         }
+
+        output.Advance(offset);
+    }
+
+    internal static void WriteUnnamedExtendedQuery<TTypeOids, TParameters>(
+        IBufferWriter<byte> output,
+        string sql,
+        TTypeOids parameterTypeOids,
+        TParameters parameters,
+        short resultFormatCode,
+        bool writeParse = true)
+        where TTypeOids : struct, IBlueTuskTypeOidSource
+        where TParameters : struct, IBlueTuskBindParameterSource
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        ValidateCString(sql, nameof(sql));
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameterTypeOids.Count, short.MaxValue);
+        ArgumentOutOfRangeException.ThrowIfGreaterThan(parameters.Count, short.MaxValue);
+        if (resultFormatCode is not (0 or 1))
+        {
+            throw new ArgumentOutOfRangeException(
+                nameof(resultFormatCode),
+                "Result format codes must be text (0) or binary (1).");
+        }
+
+        var sqlLength = Encoding.UTF8.GetByteCount(sql);
+        var parameterPayloadLength = 0;
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            var formatCode = parameters.GetFormatCode(index);
+            if (formatCode is not (0 or 1))
+            {
+                throw new ArgumentOutOfRangeException(
+                    nameof(parameters),
+                    "Parameter format codes must be text (0) or binary (1).");
+            }
+
+            parameterPayloadLength = checked(
+                parameterPayloadLength + sizeof(int) +
+                (parameters.GetValue(index)?.Length ?? 0));
+        }
+
+        var parseLength = checked(
+            sizeof(int) + 1 + sqlLength + 1 + sizeof(short) +
+            sizeof(int) * parameterTypeOids.Count);
+        var bindLength = checked(
+            sizeof(int) + 1 + 1 + sizeof(short) +
+            sizeof(short) * parameters.Count + sizeof(short) +
+            parameterPayloadLength + sizeof(short) + sizeof(short));
+        const int describeLength = sizeof(int) + 1 + 1;
+        const int executeLength = sizeof(int) + 1 + sizeof(int);
+        var totalLength = checked(
+            (writeParse ? 1 + parseLength : 0) +
+            1 + bindLength +
+            1 + describeLength +
+            1 + executeLength);
+        var destination = output.GetSpan(totalLength)[..totalLength];
+        var offset = 0;
+
+        if (writeParse)
+        {
+            destination[offset++] = (byte)'P';
+            BinaryPrimitives.WriteInt32BigEndian(destination[offset..], parseLength);
+            offset += sizeof(int);
+            destination[offset++] = 0;
+            offset += Encoding.UTF8.GetBytes(sql, destination[offset..]);
+            destination[offset++] = 0;
+            BinaryPrimitives.WriteInt16BigEndian(
+                destination[offset..],
+                checked((short)parameterTypeOids.Count));
+            offset += sizeof(short);
+            for (var index = 0; index < parameterTypeOids.Count; index++)
+            {
+                BinaryPrimitives.WriteInt32BigEndian(
+                    destination[offset..],
+                    unchecked((int)parameterTypeOids.GetTypeOid(index)));
+                offset += sizeof(int);
+            }
+        }
+
+        destination[offset++] = (byte)'B';
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], bindLength);
+        offset += sizeof(int);
+        destination[offset++] = 0;
+        destination[offset++] = 0;
+        BinaryPrimitives.WriteInt16BigEndian(
+            destination[offset..],
+            checked((short)parameters.Count));
+        offset += sizeof(short);
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            BinaryPrimitives.WriteInt16BigEndian(
+                destination[offset..],
+                parameters.GetFormatCode(index));
+            offset += sizeof(short);
+        }
+
+        BinaryPrimitives.WriteInt16BigEndian(
+            destination[offset..],
+            checked((short)parameters.Count));
+        offset += sizeof(short);
+        for (var index = 0; index < parameters.Count; index++)
+        {
+            if (parameters.GetValue(index) is not { } value)
+            {
+                BinaryPrimitives.WriteInt32BigEndian(destination[offset..], -1);
+                offset += sizeof(int);
+                continue;
+            }
+
+            BinaryPrimitives.WriteInt32BigEndian(destination[offset..], value.Length);
+            offset += sizeof(int);
+            value.Span.CopyTo(destination[offset..]);
+            offset += value.Length;
+        }
+
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], 1);
+        offset += sizeof(short);
+        BinaryPrimitives.WriteInt16BigEndian(destination[offset..], resultFormatCode);
+        offset += sizeof(short);
+
+        destination[offset++] = (byte)'D';
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], describeLength);
+        offset += sizeof(int);
+        destination[offset++] = (byte)'P';
+        destination[offset++] = 0;
+
+        destination[offset++] = (byte)'E';
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], executeLength);
+        offset += sizeof(int);
+        destination[offset++] = 0;
+        BinaryPrimitives.WriteInt32BigEndian(destination[offset..], 0);
+        offset += sizeof(int);
 
         output.Advance(offset);
     }

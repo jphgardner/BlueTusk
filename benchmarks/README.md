@@ -1,7 +1,7 @@
 # BlueTusk benchmarks
 
 Every public `[Benchmark]` method must have a non-empty checked-in result.
-`eng/verify-benchmark-coverage.ps1` currently binds 98 measured results to all
+`eng/verify-benchmark-coverage.ps1` currently binds 120 measured results to all
 methods across 22 fixtures and rejects empty, stale, duplicate or statistically
 invalid reports. `eng/verify-allocation-budgets.ps1` enforces 46 managed
 allocation budgets, while `eng/verify-latency-budgets.ps1` enforces 19
@@ -102,17 +102,19 @@ does not flow into any BlueTusk runtime package. PostgreSQL remains the
 correctness authority; Npgsql is used only as a mature-provider performance
 reference.
 
-The paired workloads cover asynchronous warm-pool checkout, parameterized and
-explicitly prepared scalar commands, a sequential 1,000-row read, and a
-sequential 1 MiB `bytea` stream. Each pair uses identical SQL and connection
-lifetimes, long-lived data sources and physical connections, and reusable stream
-buffers. Both providers read the same uniquely named unlogged relation. Its
+The paired programme covers 16 provider features: asynchronous warm-pool
+checkout; parameterized and explicitly prepared scalars; sequential 1,000-row
+and 1 MiB `bytea` reads; empty begin/rollback; 16-command parameterized batch;
+binary COPY import and export; a prepared typed-row round trip; notification
+delivery; a 1 MiB large-object read; and EF compiled-query, materialization,
+insert, and update paths. Each pair uses identical SQL and ownership shape,
+long-lived data sources, the same PostgreSQL process, and matching connection
+lifetimes. Both providers read the same uniquely named unlogged relation. Its
 `bytea` column uses PostgreSQL `STORAGE EXTERNAL`, so the timed stream pair
 measures query, wire, and provider work without charging either backend for
-payload generation or TOAST decompression.
-The broader BlueTusk-only suite continues to cover the remaining type,
-batch, pipeline, COPY, concurrency, EF, graph, and replication workloads from
-the performance strategy.
+payload generation or TOAST decompression. The broader BlueTusk-only suite
+continues to cover codec, transport, graph, replication, Streams, Sync, and
+Live-specific work from the performance strategy.
 
 Set a dedicated live connection string and run the comparison explicitly:
 
@@ -125,25 +127,26 @@ All live fixtures are excluded from an unfiltered benchmark run when the
 environment variable is absent. Supplying a live fixture filter without a
 connection string fails immediately instead of silently producing a
 server-free result.
-ShortRun measurements are useful iteration diagnostics but have wide confidence
-intervals. The checked-in provider comparison therefore uses `--job medium`
-(two launches, ten warmups, and fifteen measured iterations) and still does not
-claim that one provider is universally faster.
+The checked-in BenchmarkDotNet ShortRun supplies managed-allocation evidence
+for all 32 provider methods. Latency authority comes from five independent
+paired trials of 501 alternating-provider blocks per workload, which reduces
+provider-order and transient server bias. The result still does not claim that
+one provider is universally faster.
 
-The paired capture also completes workload-specific untimed warmups before its
-five trials: 4,096 operations per provider for pool checkout, 512 for each
-scalar path, 64 for the row stream, and 32 for the large-value stream. These
-counts keep tiered-JIT transitions out of the measured blocks; they do not
-remove samples or relax the 1.00 provider-relative limits.
+The paired capture completes workload-specific untimed warmups before its five
+trials. Counts range from 4,096 operations per provider for pool checkout to
+four for the largest transfer paths and are integrity-bound in
+`provider-paired-evidence.json`. These warmups keep tiered-JIT transitions out
+of measured blocks; they do not remove samples or relax the configured limits.
 
-The refreshed 2026-08-23 Windows/Ryzen 7 5800X MediumRun records lower BlueTusk
-mean latency and managed allocation on all five paired workloads. BlueTusk/Npgsql
-measure 298/328 us and 1,652/2,140 B for the parameterized scalar, 214/235 ns and
-168/184 B for warm checkout, 292/297 us and 785/1,123 B for the prepared scalar,
-487/528 us and 1,195/1,569 B for the 1,000-row reader, and 2.183/2.223 ms and
-1,466/9,031 B for the isolated 1 MiB stream. The exact values and environment are checked in under
-`baselines/windows-ryzen7-5800x-dotnet10`; these paired results are not a
-provider-wide performance guarantee.
+The refreshed 2026-08-24 Windows/Ryzen 7 5800X run passes all 16 workload
+ceilings and all 48 mean/P95/P99 comparisons; the highest observed latency
+ratio is 1.0447. Managed allocation is lower for BlueTusk in 7 features and for
+Npgsql in 9, so allocation ceilings protect the measured improvements without
+claiming universal superiority. The exact report, 16-workload paired samples,
+environment manifest, and SHA-256 bindings are checked in under
+`baselines/windows-ryzen7-5800x-dotnet10`. The complete interpretation is in
+the [BlueTusk versus Npgsql report](../docs/operations/npgsql-performance-comparison.md).
 
 `MultiplexingComparisonBenchmarks` is a separate fairness fixture for 64
 concurrent parameterized scalar commands. Both providers use four physical

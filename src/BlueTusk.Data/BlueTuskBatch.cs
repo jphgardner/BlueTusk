@@ -1,5 +1,7 @@
 using System.Data;
+using System.Buffers;
 using System.Data.Common;
+using System.Runtime.CompilerServices;
 using BlueTusk.Client;
 using BlueTusk.Diagnostics;
 
@@ -158,8 +160,8 @@ public sealed class BlueTuskBatch : DbBatch
         {
             _prepareRequested = true;
             var connection = GetOpenConnectionForPreparation();
-            var commands = BuildExecutions(connection);
-            _ = EnsurePrepared(connection, commands);
+            using var commands = BuildExecutions(connection);
+            _ = EnsurePrepared(connection, commands.Items, commands.Count);
         }
         catch (BlueTuskServerException exception)
         {
@@ -182,8 +184,12 @@ public sealed class BlueTuskBatch : DbBatch
         {
             _prepareRequested = true;
             var connection = GetOpenConnectionForPreparation();
-            var commands = BuildExecutions(connection);
-            _ = await EnsurePreparedAsync(connection, commands, cancellationToken).ConfigureAwait(false);
+            using var commands = BuildExecutions(connection);
+            _ = await EnsurePreparedAsync(
+                connection,
+                commands.Items,
+                commands.Count,
+                cancellationToken).ConfigureAwait(false);
         }
         catch (BlueTuskServerException exception)
         {
@@ -246,6 +252,7 @@ public sealed class BlueTuskBatch : DbBatch
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BatchResult> ExecuteCoreAsync(CancellationToken cancellationToken)
     {
         if (Interlocked.CompareExchange(ref _executing, 1, 0) != 0)
@@ -254,6 +261,7 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         Interlocked.Exchange(ref _cancellationRequested, 0);
+        Interlocked.Exchange(ref _timeoutRequested, 0);
         var telemetry = default(BlueTuskCommandInstrumentation);
         Exception? failure = null;
         try
@@ -323,29 +331,40 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         connection.ValidateCommandTransaction(_transaction);
-        var commands = BuildExecutions(connection);
+        using var commands = BuildExecutions(connection);
+        connection.CompletePendingPoolReset();
+        var beginStatement = connection.PrepareCommandTransaction(_transaction);
         startTelemetry(connection);
         Volatile.Write(ref _executingConnection, connection);
         using var timeoutTimer = Timeout > 0
-            ? new Timer(
-                static state => ((BlueTuskBatch)state!).CancelForTimeout(),
-                this,
-                TimeSpan.FromSeconds(Timeout),
-                System.Threading.Timeout.InfiniteTimeSpan)
+            ? BatchTimeout.Rent(this, TimeSpan.FromSeconds(Timeout))
             : null;
         try
         {
+            if (beginStatement is not null)
+            {
+                _ = connection.Session.ExecuteSimpleQuery(beginStatement);
+            }
+
             var useBinaryResults = connection.Session.TransactionStatus ==
                 BlueTusk.Protocol.BlueTuskTransactionStatus.Idle;
             BlueTuskQueryResult result;
             try
             {
-                result = ExecuteCommands(connection, commands, useBinaryResults);
+                result = ExecuteCommands(
+                    connection,
+                    commands.Items,
+                    commands.Count,
+                    useBinaryResults);
             }
             catch (BlueTuskServerException exception) when (
                 useBinaryResults && IsMissingBinaryOutputFunction(exception))
             {
-                result = ExecuteCommands(connection, commands, useBinaryResults: false);
+                result = ExecuteCommands(
+                    connection,
+                    commands.Items,
+                    commands.Count,
+                    useBinaryResults: false);
             }
 
             ApplyRecordsAffected(result);
@@ -376,6 +395,7 @@ public sealed class BlueTuskBatch : DbBatch
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BatchResult> ExecuteCoreOnceAsync(
         Action<BlueTuskConnection> startTelemetry,
         CancellationToken cancellationToken)
@@ -398,18 +418,24 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         connection.ValidateCommandTransaction(_transaction);
-        var commands = BuildExecutions(connection);
+        using var commands = BuildExecutions(connection);
         startTelemetry(connection);
-        using var timeoutSource = Timeout > 0
-            ? new CancellationTokenSource(TimeSpan.FromSeconds(Timeout))
+        using var timeoutTimer = Timeout > 0
+            ? BatchTimeout.Rent(this, TimeSpan.FromSeconds(Timeout))
             : null;
-        using var linkedSource = timeoutSource is null
-            ? null
-            : CancellationTokenSource.CreateLinkedTokenSource(cancellationToken, timeoutSource.Token);
         Volatile.Write(ref _executingConnection, connection);
         try
         {
-            var effectiveToken = linkedSource?.Token ?? cancellationToken;
+            var effectiveToken = cancellationToken;
+            await connection.CompletePendingPoolResetAsync(effectiveToken).ConfigureAwait(false);
+            var beginStatement = connection.PrepareCommandTransaction(_transaction);
+            if (beginStatement is not null)
+            {
+                _ = await connection.Session.ExecuteSimpleQueryAsync(
+                    beginStatement,
+                    effectiveToken).ConfigureAwait(false);
+            }
+
             var useBinaryResults = connection.Session.TransactionStatus ==
                 BlueTusk.Protocol.BlueTuskTransactionStatus.Idle;
             BlueTuskQueryResult result;
@@ -417,7 +443,8 @@ public sealed class BlueTuskBatch : DbBatch
             {
                 result = await ExecuteCommandsAsync(
                     connection,
-                    commands,
+                    commands.Items,
+                    commands.Count,
                     useBinaryResults,
                     effectiveToken).ConfigureAwait(false);
             }
@@ -426,7 +453,8 @@ public sealed class BlueTuskBatch : DbBatch
             {
                 result = await ExecuteCommandsAsync(
                     connection,
-                    commands,
+                    commands.Items,
+                    commands.Count,
                     useBinaryResults: false,
                     effectiveToken).ConfigureAwait(false);
             }
@@ -436,17 +464,17 @@ public sealed class BlueTuskBatch : DbBatch
         }
         catch (BlueTuskServerException exception)
         {
+            if (exception.SqlState == "57014" && Volatile.Read(ref _timeoutRequested) != 0)
+            {
+                throw new TimeoutException($"The batch exceeded its {Timeout}-second timeout.", exception);
+            }
+
             if (exception.SqlState == "57014" && Volatile.Read(ref _cancellationRequested) != 0)
             {
                 throw new OperationCanceledException("The PostgreSQL batch was cancelled.", exception);
             }
 
             throw new BlueTuskException(exception);
-        }
-        catch (OperationCanceledException exception) when (
-            timeoutSource?.IsCancellationRequested == true && !cancellationToken.IsCancellationRequested)
-        {
-            throw new TimeoutException($"The batch exceeded its {Timeout}-second timeout.", exception);
         }
         catch (Exception) when (!connection.HasOpenSession)
         {
@@ -462,9 +490,11 @@ public sealed class BlueTuskBatch : DbBatch
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskQueryResult> ExecuteCommandsAsync(
         BlueTuskConnection connection,
-        IReadOnlyList<BatchCommandExecution> commands,
+        BlueTuskBatchCommandExecution[] commands,
+        int commandCount,
         bool useBinaryResults,
         CancellationToken cancellationToken)
     {
@@ -473,13 +503,14 @@ public sealed class BlueTuskBatch : DbBatch
             var prepared = await EnsurePreparedAsync(
                 connection,
                 commands,
+                commandCount,
                 cancellationToken).ConfigureAwait(false);
-            var queries = new BlueTuskPreparedBatchQuery[commands.Count];
-            for (var index = 0; index < commands.Count; index++)
+            var queries = new BlueTuskPreparedBatchQuery[commandCount];
+            for (var index = 0; index < commandCount; index++)
             {
                 queries[index] = new BlueTuskPreparedBatchQuery(
                     prepared.StatementNames[index],
-                    commands[index].Parameters,
+                    commands[index].MaterializeParameters(),
                     useBinaryResults);
             }
 
@@ -489,73 +520,97 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         return await connection.Session.ExecuteBatchAsync(
-            commands.Select(command => new BlueTuskBatchQuery(
-                    command.Sql,
-                    command.Parameters,
-                    useBinaryResults))
-                .ToArray(),
+            commands,
+            commandCount,
+            useBinaryResults,
             cancellationToken).ConfigureAwait(false);
     }
 
     private BlueTuskQueryResult ExecuteCommands(
         BlueTuskConnection connection,
-        IReadOnlyList<BatchCommandExecution> commands,
+        BlueTuskBatchCommandExecution[] commands,
+        int commandCount,
         bool useBinaryResults)
     {
         if (_prepareRequested)
         {
-            var prepared = EnsurePrepared(connection, commands);
-            var queries = new BlueTuskPreparedBatchQuery[commands.Count];
-            for (var index = 0; index < commands.Count; index++)
+            var prepared = EnsurePrepared(connection, commands, commandCount);
+            var queries = new BlueTuskPreparedBatchQuery[commandCount];
+            for (var index = 0; index < commandCount; index++)
             {
                 queries[index] = new BlueTuskPreparedBatchQuery(
                     prepared.StatementNames[index],
-                    commands[index].Parameters,
+                    commands[index].MaterializeParameters(),
                     useBinaryResults);
             }
 
             return connection.Session.ExecutePreparedBatch(queries);
         }
 
-        return connection.Session.ExecuteBatch(
-            commands.Select(command => new BlueTuskBatchQuery(
-                    command.Sql,
-                    command.Parameters,
-                    useBinaryResults))
-                .ToArray());
+        var batchQueries = new BlueTuskBatchQuery[commandCount];
+        for (var index = 0; index < commandCount; index++)
+        {
+            batchQueries[index] = new BlueTuskBatchQuery(
+                commands[index].Sql,
+                commands[index].MaterializeParameters(),
+                useBinaryResults);
+        }
+
+        return connection.Session.ExecuteBatch(batchQueries);
     }
 
-    private BatchCommandExecution[] BuildExecutions(BlueTuskConnection connection)
+    private PooledBatchCommandExecutions BuildExecutions(BlueTuskConnection connection)
     {
         if (_commands.Count == 0)
         {
             throw new InvalidOperationException("A batch requires at least one command.");
         }
 
-        var result = new BatchCommandExecution[_commands.Count];
-        for (var index = 0; index < _commands.Count; index++)
+        var count = _commands.Count;
+        var result = ArrayPool<BlueTuskBatchCommandExecution>.Shared.Rent(count);
+        try
         {
-            var command = _commands.Items[index];
-            command.SetRecordsAffected(-1);
-            if (string.IsNullOrWhiteSpace(command.CommandText))
+            for (var index = 0; index < count; index++)
             {
-                throw new InvalidOperationException($"Batch command {index} requires CommandText.");
+                var command = _commands.Items[index];
+                command.SetRecordsAffected(-1);
+                if (string.IsNullOrWhiteSpace(command.CommandText))
+                {
+                    throw new InvalidOperationException($"Batch command {index} requires CommandText.");
+                }
+
+                var sql = command.CommandText;
+                IReadOnlyList<BlueTuskParameter> parameters = command.Parameters.Items;
+                if (BlueTuskCommandTextRewriter.MightContainNamedParameters(sql))
+                {
+                    var plan = BlueTuskCommandTextRewriter.Rewrite(sql, command.Parameters);
+                    sql = plan.Sql;
+                    parameters = plan.Parameters;
+                }
+
+                result[index] = parameters.Count == 1
+                    ? new BlueTuskBatchCommandExecution(
+                        sql,
+                        BlueTuskParameterEncoder.Encode(parameters[0], connection.TypeRegistry))
+                    : new BlueTuskBatchCommandExecution(
+                        sql,
+                        BlueTuskParameterEncoder.Encode(parameters, connection.TypeRegistry));
             }
 
-            var plan = BlueTuskCommandTextRewriter.Rewrite(
-                command.CommandText,
-                command.Parameters);
-            result[index] = new BatchCommandExecution(
-                plan.Sql,
-                BlueTuskParameterEncoder.Encode(plan.Parameters, connection.TypeRegistry));
+            return new PooledBatchCommandExecutions(result, count);
         }
-
-        return result;
+        catch
+        {
+            Array.Clear(result, 0, count);
+            ArrayPool<BlueTuskBatchCommandExecution>.Shared.Return(result);
+            throw;
+        }
     }
 
     private async ValueTask<PreparedBatchState> EnsurePreparedAsync(
         BlueTuskConnection connection,
-        IReadOnlyList<BatchCommandExecution> commands,
+        BlueTuskBatchCommandExecution[] commands,
+        int commandCount,
         CancellationToken cancellationToken)
     {
         if (_dataSource is not null)
@@ -565,11 +620,13 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         var session = connection.Session;
-        var sql = commands.Select(static command => command.Sql).ToArray();
-        var typeOids = commands
-            .Select(static command =>
-                command.Parameters.Select(static parameter => parameter.TypeOid).ToArray())
-            .ToArray();
+        var sql = new string[commandCount];
+        var typeOids = new uint[commandCount][];
+        for (var index = 0; index < commandCount; index++)
+        {
+            sql[index] = commands[index].Sql;
+            typeOids[index] = CreateParameterTypeOids(commands[index]);
+        }
         if (_preparedBatch is { } current &&
             ReferenceEquals(current.Session, session) &&
             current.Sql.SequenceEqual(sql, StringComparer.Ordinal) &&
@@ -592,11 +649,11 @@ public sealed class BlueTuskBatch : DbBatch
             }
         }
 
-        var statementNames = new string[commands.Count];
+        var statementNames = new string[commandCount];
         var preparedCount = 0;
         try
         {
-            for (var index = 0; index < commands.Count; index++)
+        for (var index = 0; index < commandCount; index++)
             {
                 var statementName =
                     $"bluetusk_batch_{Interlocked.Increment(ref s_preparedStatementSequence):x}";
@@ -640,7 +697,8 @@ public sealed class BlueTuskBatch : DbBatch
 
     private PreparedBatchState EnsurePrepared(
         BlueTuskConnection connection,
-        IReadOnlyList<BatchCommandExecution> commands)
+        BlueTuskBatchCommandExecution[] commands,
+        int commandCount)
     {
         if (_dataSource is not null)
         {
@@ -649,11 +707,13 @@ public sealed class BlueTuskBatch : DbBatch
         }
 
         var session = connection.Session;
-        var sql = commands.Select(static command => command.Sql).ToArray();
-        var typeOids = commands
-            .Select(static command =>
-                command.Parameters.Select(static parameter => parameter.TypeOid).ToArray())
-            .ToArray();
+        var sql = new string[commandCount];
+        var typeOids = new uint[commandCount][];
+        for (var index = 0; index < commandCount; index++)
+        {
+            sql[index] = commands[index].Sql;
+            typeOids[index] = CreateParameterTypeOids(commands[index]);
+        }
         if (_preparedBatch is { } current &&
             ReferenceEquals(current.Session, session) &&
             current.Sql.SequenceEqual(sql, StringComparer.Ordinal) &&
@@ -674,11 +734,11 @@ public sealed class BlueTuskBatch : DbBatch
             }
         }
 
-        var statementNames = new string[commands.Count];
+        var statementNames = new string[commandCount];
         var preparedCount = 0;
         try
         {
-            for (var index = 0; index < commands.Count; index++)
+            for (var index = 0; index < commandCount; index++)
             {
                 var statementName =
                     $"bluetusk_batch_{Interlocked.Increment(ref s_preparedStatementSequence):x}";
@@ -797,6 +857,22 @@ public sealed class BlueTuskBatch : DbBatch
         return true;
     }
 
+    private static uint[] CreateParameterTypeOids(BlueTuskBatchCommandExecution command)
+    {
+        if (command.ParameterCount == 0)
+        {
+            return [];
+        }
+
+        var result = new uint[command.ParameterCount];
+        for (var index = 0; index < result.Length; index++)
+        {
+            result[index] = command.GetParameter(index).TypeOid;
+        }
+
+        return result;
+    }
+
     private static bool IsMissingBinaryOutputFunction(BlueTuskServerException exception) =>
         exception.SqlState == "42883" &&
         (exception.Message.StartsWith(
@@ -804,10 +880,6 @@ public sealed class BlueTuskBatch : DbBatch
              StringComparison.Ordinal) ||
          exception.Error.Fields.TryGetValue('R', out var routine) &&
          string.Equals(routine, "getTypeBinaryOutputInfo", StringComparison.Ordinal));
-
-    private sealed record BatchCommandExecution(
-        string Sql,
-        IReadOnlyList<BlueTuskExtendedQueryParameter> Parameters);
 
     private sealed record PreparedBatchState(
         IBlueTuskPhysicalSession Session,
@@ -818,4 +890,97 @@ public sealed class BlueTuskBatch : DbBatch
     private sealed record BatchResult(
         BlueTuskQueryResult Result,
         BlueTusk.TypeSystem.BlueTuskTypeRegistry Types);
+
+    private readonly struct PooledBatchCommandExecutions(
+        BlueTuskBatchCommandExecution[] items,
+        int count) : IDisposable
+    {
+        internal BlueTuskBatchCommandExecution[] Items { get; } = items;
+
+        internal int Count { get; } = count;
+
+        public void Dispose()
+        {
+            Array.Clear(Items, 0, Count);
+            ArrayPool<BlueTuskBatchCommandExecution>.Shared.Return(Items);
+        }
+    }
+
+    private sealed class BatchTimeout : IDisposable
+    {
+        private static readonly System.Collections.Concurrent.ConcurrentBag<BatchTimeout> Pool = [];
+        private readonly Timer _timer;
+        private BlueTuskBatch? _batch;
+        private TimeSpan _dueTime;
+        private long _startedTimestamp;
+        private bool _leased;
+
+        private BatchTimeout()
+        {
+            _timer = new Timer(
+                static state => ((BatchTimeout)state!).OnTimeout(),
+                this,
+                System.Threading.Timeout.InfiniteTimeSpan,
+                System.Threading.Timeout.InfiniteTimeSpan);
+        }
+
+        public static BatchTimeout Rent(BlueTuskBatch batch, TimeSpan dueTime)
+        {
+            if (!Pool.TryTake(out var timeout))
+            {
+                timeout = new BatchTimeout();
+            }
+
+            timeout.Start(batch, dueTime);
+            return timeout;
+        }
+
+        public void Dispose()
+        {
+            lock (this)
+            {
+                if (!_leased)
+                {
+                    return;
+                }
+
+                _timer.Change(
+                    System.Threading.Timeout.InfiniteTimeSpan,
+                    System.Threading.Timeout.InfiniteTimeSpan);
+                _batch = null;
+                _leased = false;
+            }
+
+            Pool.Add(this);
+        }
+
+        private void Start(BlueTuskBatch batch, TimeSpan dueTime)
+        {
+            lock (this)
+            {
+                if (_leased)
+                {
+                    throw new InvalidOperationException("A batch timeout registration is already in use.");
+                }
+
+                _batch = batch;
+                _dueTime = dueTime;
+                _startedTimestamp = System.Diagnostics.Stopwatch.GetTimestamp();
+                _leased = true;
+                _timer.Change(dueTime, System.Threading.Timeout.InfiniteTimeSpan);
+            }
+        }
+
+        private void OnTimeout()
+        {
+            lock (this)
+            {
+                if (_leased &&
+                    System.Diagnostics.Stopwatch.GetElapsedTime(_startedTimestamp) >= _dueTime)
+                {
+                    _batch!.CancelForTimeout();
+                }
+            }
+        }
+    }
 }

@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Security.Claims;
 using System.Text;
 using System.Text.Encodings.Web;
+using System.Text.Json.Serialization.Metadata;
 using BlueTusk.ControlPlane;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
@@ -64,42 +65,42 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         group.MapGet("/", () => Results.Redirect(options.RoutePrefix + "/sources"));
         group.MapGet(
             "/api/overview",
-            (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                queries.GetOverviewAsync(cancellationToken));
+            async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
+                Json(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false)));
         group.MapGet(
             "/api/sync",
-            (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
-                queries.GetSyncOverviewAsync(cancellationToken));
+            async (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
+                Json(await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false)));
         group.MapGet(
             "/api/live",
-            (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
-                queries.GetLiveOverviewAsync(cancellationToken));
+            async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
+                Json(await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false)));
         group.MapGet(
             "/api/graphs",
-            (IControlPlaneContinuousGraphQueryService queries, CancellationToken cancellationToken) =>
-                queries.GetContinuousGraphOverviewAsync(cancellationToken));
+            async (IControlPlaneContinuousGraphQueryService queries, CancellationToken cancellationToken) =>
+                Json(await queries.GetContinuousGraphOverviewAsync(cancellationToken).ConfigureAwait(false)));
         group.MapGet(
             "/api/capabilities",
-            () => ControlPlaneApiContract.Capabilities);
+            () => Json(ControlPlaneApiContract.Capabilities));
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/overview",
             async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
-                Versioned(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false)));
+                Json(Versioned(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false))));
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/sync",
             async (IControlPlaneSyncQueryService queries, CancellationToken cancellationToken) =>
-                Versioned(await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false)));
+                Json(Versioned(await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false))));
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/live",
             async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
-                Versioned(await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false)));
+                Json(Versioned(await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false))));
         group.MapGet(
             ControlPlaneApiContract.VersionedRoutePrefix + "/graphs",
             async (IControlPlaneContinuousGraphQueryService queries,
                     CancellationToken cancellationToken) =>
-                Versioned(
+                Json(Versioned(
                     await queries.GetContinuousGraphOverviewAsync(cancellationToken)
-                        .ConfigureAwait(false)));
+                        .ConfigureAwait(false))));
         group.MapGet(
             "/assets/dashboard.js",
             () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
@@ -207,6 +208,7 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         try
         {
             request = await context.Request.ReadFromJsonAsync<ControlPlaneOperationRequest>(
+                BlueTuskDashboardJsonContext.Default.ControlPlaneOperationRequest,
                 cancellationToken).ConfigureAwait(false);
         }
         catch (Exception exception) when (exception is System.Text.Json.JsonException or
@@ -258,10 +260,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 new ControlPlaneActor(actorId, roles),
                 request,
                 cancellationToken).ConfigureAwait(false);
-            var response = new { request.OperationId, Status = "succeeded" };
+            var response = new OperationSucceededResponse(request.OperationId, "succeeded");
             return versionedResponse
-                ? Results.Ok(Versioned(response))
-                : Results.Ok(response);
+                ? Json(Versioned(response))
+                : Json(response);
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {
@@ -306,6 +308,16 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
 
     private static ControlPlaneApiResponse<T> Versioned<T>(T data) =>
         new(ControlPlaneApiContract.CurrentVersion, data);
+
+    private static IResult Json<T>(T value)
+    {
+        var typeInfo = BlueTuskDashboardJsonContext.Default.GetTypeInfo(typeof(T)) as JsonTypeInfo<T> ??
+            throw new InvalidOperationException(
+                $"No source-generated dashboard JSON contract is registered for '{typeof(T)}'.");
+        return Results.Json(value, typeInfo);
+    }
+
+    internal sealed record OperationSucceededResponse(Guid OperationId, string Status);
 
     private static string RenderSources(
         ControlPlaneOverview overview,

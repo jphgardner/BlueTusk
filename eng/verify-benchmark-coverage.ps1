@@ -16,7 +16,7 @@ Get-ChildItem -LiteralPath $BenchmarkSourcePath -Filter "*Benchmarks.cs" | ForEa
     $source = Get-Content -LiteralPath $_.FullName -Raw
     $classMatch = [regex]::Match(
         $source,
-        '(?m)^public\s+(?:sealed\s+)?class\s+(?<class>[A-Za-z_][A-Za-z0-9_]*Benchmarks)\b')
+        '(?m)^public\s+(?:(?:sealed|partial)\s+)*class\s+(?<class>[A-Za-z_][A-Za-z0-9_]*Benchmarks)\b')
     if (-not $classMatch.Success) {
         throw "Could not find a public benchmark fixture in '$($_.FullName)'."
     }

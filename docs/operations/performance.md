@@ -111,6 +111,8 @@ The multiplexing record follows this discipline and is explained in
 [multiplexing compatibility](../ado-net/multiplexing-compatibility.md).
 The complete direct-provider result is published in the
 [BlueTusk versus Npgsql V1 performance report](npgsql-performance-comparison.md).
+The coordinated cross-product 1.1 contract and current evidence boundary are
+published in the [1.1 performance leadership report](performance-leadership-1.1.md).
 
 ## Production investigation
 

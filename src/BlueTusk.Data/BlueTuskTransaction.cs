@@ -1,5 +1,6 @@
 using System.Data;
 using System.Data.Common;
+using System.Runtime.CompilerServices;
 using BlueTusk.Client;
 using BlueTusk.Protocol;
 
@@ -9,12 +10,17 @@ namespace BlueTusk.Data;
 public sealed class BlueTuskTransaction : DbTransaction
 {
     private BlueTuskConnection? _connection;
+    private int _serverStarted;
     private int _completed;
 
-    internal BlueTuskTransaction(BlueTuskConnection connection, IsolationLevel isolationLevel)
+    internal BlueTuskTransaction(
+        BlueTuskConnection connection,
+        IsolationLevel isolationLevel,
+        string beginStatement)
     {
         _connection = connection;
         IsolationLevel = isolationLevel;
+        BeginStatement = beginStatement;
     }
 
     public override IsolationLevel IsolationLevel { get; }
@@ -25,19 +31,29 @@ public sealed class BlueTuskTransaction : DbTransaction
 
     internal bool IsCompleted => Volatile.Read(ref _completed) != 0;
 
+    internal bool IsServerStarted => Volatile.Read(ref _serverStarted) != 0;
+
+    internal string BeginStatement { get; }
+
+    internal bool TryStartServerTransaction() =>
+        Interlocked.CompareExchange(ref _serverStarted, 1, 0) == 0;
+
     public override void Commit() => Complete("COMMIT");
 
     public override Task CommitAsync(CancellationToken cancellationToken = default) =>
-        CompleteAsync("COMMIT", cancellationToken);
+        CompleteValueTaskAsync("COMMIT", cancellationToken).AsTask();
 
     public override void Rollback() => Complete("ROLLBACK");
 
     public override Task RollbackAsync(CancellationToken cancellationToken = default) =>
-        CompleteAsync("ROLLBACK", cancellationToken);
+        CompleteValueTaskAsync("ROLLBACK", cancellationToken).AsTask();
 
     protected override void Dispose(bool disposing)
     {
-        if (disposing && !IsCompleted && _connection is { State: ConnectionState.Open } connection)
+        if (disposing &&
+            !IsCompleted &&
+            IsServerStarted &&
+            _connection is { State: ConnectionState.Open } connection)
         {
             // Closing is a genuine synchronous operation and PostgreSQL rolls the transaction back on disconnect.
             connection.Close();
@@ -82,12 +98,22 @@ public sealed class BlueTuskTransaction : DbTransaction
         _ => throw new ArgumentOutOfRangeException(nameof(isolationLevel), isolationLevel, "Unknown isolation level."),
     };
 
-    private async Task CompleteAsync(string sql, CancellationToken cancellationToken)
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
+    private async ValueTask CompleteValueTaskAsync(
+        string sql,
+        CancellationToken cancellationToken)
     {
         var connection = GetActiveConnection();
+        if (!IsServerStarted)
+        {
+            MarkCompleted();
+            return;
+        }
+
         try
         {
-            _ = await connection.Session.ExecuteSimpleQueryAsync(sql, cancellationToken).ConfigureAwait(false);
+            _ = await connection.Session.ExecuteSimpleNonQueryAsync(sql, cancellationToken)
+                .ConfigureAwait(false);
         }
         catch (BlueTuskServerException exception)
         {
@@ -105,6 +131,12 @@ public sealed class BlueTuskTransaction : DbTransaction
     private void Complete(string sql)
     {
         var connection = GetActiveConnection();
+        if (!IsServerStarted)
+        {
+            MarkCompleted();
+            return;
+        }
+
         try
         {
             _ = connection.Session.ExecuteSimpleQuery(sql);

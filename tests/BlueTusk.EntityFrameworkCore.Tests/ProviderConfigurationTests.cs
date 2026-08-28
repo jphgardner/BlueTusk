@@ -1,6 +1,8 @@
 using System.Data.Common;
 using BlueTusk.Data;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Diagnostics;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Storage;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -23,6 +25,30 @@ public sealed class ProviderConfigurationTests
         Assert.Equal(BlueTuskEntityFrameworkCoreInfo.ProviderName, context.Database.ProviderName);
         Assert.Equal(ConnectionString, context.Database.GetConnectionString());
         Assert.IsType<BlueTuskConnection>(context.Database.GetDbConnection());
+    }
+
+    [Fact]
+    public void UseBlueTusk_configures_relational_warning_defaults_without_overriding_the_caller()
+    {
+        var defaults = new DbContextOptionsBuilder<TestContext>()
+            .UseBlueTusk(ConnectionString)
+            .Options
+            .FindExtension<CoreOptionsExtension>()!;
+        var customized = new DbContextOptionsBuilder<TestContext>()
+            .ConfigureWarnings(warnings =>
+                warnings.Ignore(RelationalEventId.AmbientTransactionWarning))
+            .UseBlueTusk(ConnectionString)
+            .Options
+            .FindExtension<CoreOptionsExtension>()!;
+
+        Assert.Equal(
+            WarningBehavior.Throw,
+            defaults.WarningsConfiguration.GetBehavior(
+                RelationalEventId.AmbientTransactionWarning));
+        Assert.Equal(
+            WarningBehavior.Ignore,
+            customized.WarningsConfiguration.GetBehavior(
+                RelationalEventId.AmbientTransactionWarning));
     }
 
     [Fact]

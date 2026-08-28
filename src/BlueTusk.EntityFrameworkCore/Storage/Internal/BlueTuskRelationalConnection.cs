@@ -22,6 +22,14 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
     internal IProviderDataSource? DataSource => _dataSource;
 
     protected override DbConnection CreateDbConnection()
-        => _dataSource?.CreateConnection()
+    {
+        var connection = _dataSource?.CreateConnection()
             ?? _providerServices.CreateConnection(ConnectionString ?? string.Empty);
+        var providerConnection = _providerServices.GetConnection(connection);
+        providerConnection.AllowPendingPoolResetOnOpen();
+        providerConnection.PreferExtendedProtocol();
+        providerConnection.PreferBinaryResults();
+
+        return connection;
+    }
 }

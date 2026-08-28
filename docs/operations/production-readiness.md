@@ -31,7 +31,7 @@ into one number.
 | Evidence | Question answered | Authority |
 | --- | --- | --- |
 | Correctness and compatibility | Does the implementation satisfy its declared contract? | Unit, integration, specification, fuzz, stress and package tests |
-| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 98 BenchmarkDotNet results, 46 allocation budgets, 19 latency budgets and locked multiplexing comparisons |
+| Reference-machine benchmarks | Did a known code path regress on the controlled machine? | 120 BenchmarkDotNet results, 46 allocation budgets, 19 latency budgets and locked multiplexing comparisons |
 | Website delivery | Is the documentation and evidence surface bounded and deployable? | Hashed production output, raw/Brotli bundle budgets, static metadata and the archived build report |
 | Production SLOs | Is one deployed application meeting its reliability objectives? | 60 runtime instruments, 14 SLOs, Prometheus rules and deployment telemetry |
 | Release acceptance | Is this exact immutable candidate safe to publish? | Manual workflows, endurance, GA evidence, rehearsals, pilots and named approvals |

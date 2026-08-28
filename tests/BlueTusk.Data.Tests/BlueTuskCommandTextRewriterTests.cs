@@ -2,6 +2,19 @@ namespace BlueTusk.Data.Tests;
 
 public sealed class BlueTuskCommandTextRewriterTests
 {
+    [Theory]
+    [InlineData("SELECT $1::int4", false)]
+    [InlineData("SELECT value::text", false)]
+    [InlineData("SELECT @value", true)]
+    [InlineData("SELECT :value", true)]
+    [InlineData("SELECT ':conservative'", true)]
+    public void MightContainNamedParametersConservativelyIdentifiesMarkers(
+        string sql,
+        bool expected)
+    {
+        Assert.Equal(expected, BlueTuskCommandTextRewriter.MightContainNamedParameters(sql));
+    }
+
     [Fact]
     public void Reuses_parameterless_plans_for_the_same_command_text()
     {
@@ -10,7 +23,7 @@ public sealed class BlueTuskCommandTextRewriterTests
         var first = BlueTuskCommandTextRewriter.Rewrite(sql, new BlueTuskParameterCollection());
         var second = BlueTuskCommandTextRewriter.Rewrite(sql, new BlueTuskParameterCollection());
 
-        Assert.Same(first, second);
+        Assert.Equal(first, second);
         Assert.Empty(first.Parameters);
     }
 
@@ -28,6 +41,28 @@ public sealed class BlueTuskCommandTextRewriterTests
         Assert.Equal("SELECT $1 + $2 + $1", plan.Sql);
         Assert.Equal([left, right], plan.Parameters);
         Assert.True(plan.UsesNamedParameters);
+    }
+
+    [Fact]
+    public void Reuses_named_templates_for_equal_command_text_instances()
+    {
+        const string commandText = "SELECT @left + @right";
+        var firstText = new string(commandText.ToCharArray());
+        var secondText = new string(commandText.ToCharArray());
+        var firstParameters = new BlueTuskParameterCollection();
+        firstParameters.Add(new BlueTuskParameter<int>(20) { ParameterName = "left" });
+        firstParameters.Add(new BlueTuskParameter<int>(22) { ParameterName = "right" });
+        var secondParameters = new BlueTuskParameterCollection();
+        var secondLeft = secondParameters.Add(
+            new BlueTuskParameter<int>(40) { ParameterName = "left" });
+        var secondRight = secondParameters.Add(
+            new BlueTuskParameter<int>(2) { ParameterName = "right" });
+
+        var firstPlan = BlueTuskCommandTextRewriter.Rewrite(firstText, firstParameters);
+        var secondPlan = BlueTuskCommandTextRewriter.Rewrite(secondText, secondParameters);
+
+        Assert.Same(firstPlan.Sql, secondPlan.Sql);
+        Assert.Equal([secondLeft, secondRight], secondPlan.Parameters);
     }
 
     [Fact]
@@ -109,4 +144,20 @@ public sealed class BlueTuskCommandTextRewriterTests
         Assert.Same(second, Assert.Single(secondPlan.Parameters));
         Assert.NotSame(firstPlan.Parameters, secondPlan.Parameters);
     }
+
+    [Theory]
+    [InlineData("SELECT 1")]
+    [InlineData("SELECT 1;")]
+    [InlineData("SELECT ';'::text")]
+    [InlineData("SELECT $$;$$::text")]
+    [InlineData("SELECT 1 /* ; SELECT 2 */; -- trailing comment")]
+    public void Single_statements_can_use_the_extended_protocol(string sql) =>
+        Assert.True(BlueTuskCommandTextRewriter.CanUseExtendedProtocol(sql));
+
+    [Theory]
+    [InlineData("SELECT 1; SELECT 2")]
+    [InlineData("SELECT 1; /* separator */ SELECT 2")]
+    [InlineData("; SELECT 1")]
+    public void Multiple_statements_stay_on_the_buffered_simple_query_path(string sql) =>
+        Assert.False(BlueTuskCommandTextRewriter.CanUseExtendedProtocol(sql));
 }

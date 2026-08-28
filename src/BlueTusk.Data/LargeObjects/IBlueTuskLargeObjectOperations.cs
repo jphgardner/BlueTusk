@@ -7,6 +7,34 @@ internal interface IBlueTuskLargeObjectOperations
 
     ValueTask<byte[]> ReadAsync(int count, CancellationToken cancellationToken);
 
+    int Read(Span<byte> buffer)
+    {
+        var data = Read(buffer.Length);
+        if (data.Length > buffer.Length)
+        {
+            throw new IOException(
+                $"PostgreSQL returned {data.Length} large-object bytes when {buffer.Length} were requested.");
+        }
+
+        data.CopyTo(buffer);
+        return data.Length;
+    }
+
+    async ValueTask<int> ReadAsync(
+        Memory<byte> buffer,
+        CancellationToken cancellationToken)
+    {
+        var data = await ReadAsync(buffer.Length, cancellationToken).ConfigureAwait(false);
+        if (data.Length > buffer.Length)
+        {
+            throw new IOException(
+                $"PostgreSQL returned {data.Length} large-object bytes when {buffer.Length} were requested.");
+        }
+
+        data.CopyTo(buffer);
+        return data.Length;
+    }
+
     int Write(ReadOnlySpan<byte> buffer) =>
         throw new NotSupportedException("This large-object implementation does not provide synchronous I/O.");
 

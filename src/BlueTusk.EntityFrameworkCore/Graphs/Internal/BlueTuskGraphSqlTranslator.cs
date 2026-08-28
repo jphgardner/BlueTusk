@@ -96,7 +96,55 @@ internal static class BlueTuskGraphSqlTranslator
             sql.Append(" WHERE ").Append(string.Join(" AND ", predicates));
         }
 
-        return new GraphTranslation(sql.ToString(), parameters.ToArray());
+        var impactPlan = new BlueTuskGraphQueryImpactPlan(
+            graph.Name,
+            graph.Schema,
+            Array.AsReadOnly(resolved.Select((step, index) =>
+            {
+                string? sourceVariable = null;
+                string? destinationVariable = null;
+                if (step is ResolvedEdge edge)
+                {
+                    var left = resolved[index - 1].Variable;
+                    var right = resolved[index + 1].Variable;
+                    sourceVariable = edge.Direction is BlueTuskGraphEdgeDirection.Outgoing
+                        ? left
+                        : right;
+                    destinationVariable = edge.Direction is BlueTuskGraphEdgeDirection.Outgoing
+                        ? right
+                        : left;
+                }
+
+                return new BlueTuskGraphQueryImpactElement(
+                    step.Variable,
+                    step.Element.Alias,
+                    step.Element.Kind,
+                    step.Element.Table,
+                    step.Element.Schema,
+                    step.Element.KeyColumns,
+                    step.Element.Source,
+                    step.Element.Destination,
+                    sourceVariable,
+                    destinationVariable);
+            }).ToArray()),
+            Array.AsReadOnly(projections.Select(projection =>
+            {
+                var variable = variables[projection.Variable];
+                var propertyName = ResolveGraphProperty(variable, projection.GraphProperty);
+                var property = variable.Element.Labels
+                    .SelectMany(static label => label.Properties)
+                    .Single(candidate => string.Equals(
+                        candidate.Name,
+                        propertyName,
+                        StringComparison.Ordinal));
+                return new BlueTuskGraphQueryImpactProjection(
+                    projection.Variable,
+                    variable.Element.Alias,
+                    projection.ResultProperty,
+                    propertyName,
+                    property.IsColumn ? property.Expression : null);
+            }).ToArray()));
+        return new GraphTranslation(sql.ToString(), parameters.ToArray(), impactPlan);
     }
 
     private static ResolvedStep ResolveStep(
@@ -406,7 +454,10 @@ internal static class BlueTuskGraphSqlTranslator
         }
     }
 
-    internal sealed record GraphTranslation(string Sql, object[] Parameters);
+    internal sealed record GraphTranslation(
+        string Sql,
+        object[] Parameters,
+        BlueTuskGraphQueryImpactPlan ImpactPlan);
 
     private abstract record ResolvedStep(
         string Variable,
@@ -436,3 +487,28 @@ internal static class BlueTuskGraphSqlTranslator
         string OutputName,
         bool IsHidden);
 }
+
+internal sealed record BlueTuskGraphQueryImpactPlan(
+    string GraphName,
+    string? GraphSchema,
+    IReadOnlyList<BlueTuskGraphQueryImpactElement> Elements,
+    IReadOnlyList<BlueTuskGraphQueryImpactProjection> Projections);
+
+internal sealed record BlueTuskGraphQueryImpactElement(
+    string Variable,
+    string Alias,
+    BlueTuskGraphElementKind Kind,
+    string Table,
+    string? Schema,
+    IReadOnlyList<string> KeyColumns,
+    BlueTuskGraphEndpointDefinition? Source,
+    BlueTuskGraphEndpointDefinition? Destination,
+    string? SourceVariable,
+    string? DestinationVariable);
+
+internal sealed record BlueTuskGraphQueryImpactProjection(
+    string Variable,
+    string ElementAlias,
+    string ResultProperty,
+    string GraphProperty,
+    string? ColumnName);

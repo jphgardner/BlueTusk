@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "baseline": "1.0.0-candidate",
+  "baseline": "1.1.0-candidate",
   "normalization": "utf8-lf",
   "files": [
     {
@@ -37,7 +37,7 @@
     },
     {
       "path": "src/BlueTusk.Live/PublicAPI.Unshipped.txt",
-      "sha256": "864e991f357bce57715649f24e1f57fd40a46c5f3bf0b84ed378fd752a1136e0"
+      "sha256": "f7fee5347ae0530a3d6c6a4e09bf8eeb8da7710c81c28da62d90060d5aed5e5b"
     }
   ]
 }

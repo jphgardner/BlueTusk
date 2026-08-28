@@ -1,0 +1,36 @@
+{
+  "schemaVersion": 2,
+  "sourceCommit": "058830a84c5deeadf36f2adf947eb55b674af612",
+  "capturedUtc": "2026-08-24T17:46:20.1181126+01:00",
+  "benchmark": {
+    "framework": "BenchmarkDotNet 0.15.8",
+    "job": "ShortRun",
+    "providerLatencyMethod": "median of five alternating-provider trials",
+    "providerPairedBlocksPerTrial": 501,
+    "workloadCount": 16
+  },
+  "environment": {
+    "os": "Windows 11 (10.0.26200.9168/25H2/2025Update/HudsonValley2)",
+    "architecture": "X64",
+    "processor": "AMD Ryzen 7 5800X",
+    "dotnetSdk": "10.0.303",
+    "dotnetRuntime": "10.0.11",
+    "postgresqlMajor": 18,
+    "postgresqlImage": "postgres:18-alpine@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "postgresqlImageDigest": "postgres@sha256:9a8afca54e7861fd90fab5fdf4c42477a6b1cb7d293595148e674e0a3181de15",
+    "topology": "Dedicated loopback PostgreSQL 18 on TCP port 5418."
+  },
+  "providerReport": {
+    "path": "results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json",
+    "sha256": "46d7b2f422eaf5304b9d349b8a17421c04c7b84c39546666d22489115b5fb744"
+  },
+  "providerPairedReport": {
+    "path": "provider-paired-evidence.json",
+    "sha256": "f4edce74bb387308eacca1f5db8bbce10c6d41ab05dc3e832070396d488ccda2"
+  },
+  "verification": {
+    "budgetPath": "../../../eng/provider-performance-budgets.json",
+    "command": "./eng/verify-provider-performance.ps1",
+    "result": "passed"
+  }
+}

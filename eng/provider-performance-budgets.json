@@ -52,6 +52,116 @@
       "maximumP95Ratio": 1.0,
       "maximumP99Ratio": 1.0,
       "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskBeginRollbackTransactionAsync",
+      "reference": "NpgsqlBeginRollbackTransactionAsync",
+      "warmupOperationsPerProvider": 256,
+      "operationsPerBlock": 32,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskBatch16ParameterizedScalarsAsync",
+      "reference": "NpgsqlBatch16ParameterizedScalarsAsync",
+      "warmupOperationsPerProvider": 64,
+      "operationsPerBlock": 8,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskBinaryCopyImport1000RowsAsync",
+      "reference": "NpgsqlBinaryCopyImport1000RowsAsync",
+      "warmupOperationsPerProvider": 8,
+      "operationsPerBlock": 1,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskBinaryCopyExport1000RowsAsync",
+      "reference": "NpgsqlBinaryCopyExport1000RowsAsync",
+      "warmupOperationsPerProvider": 8,
+      "operationsPerBlock": 1,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskPreparedTypedRowRoundTripAsync",
+      "reference": "NpgsqlPreparedTypedRowRoundTripAsync",
+      "warmupOperationsPerProvider": 128,
+      "operationsPerBlock": 16,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskNotificationDeliveryAsync",
+      "reference": "NpgsqlNotificationDeliveryAsync",
+      "warmupOperationsPerProvider": 64,
+      "operationsPerBlock": 8,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskLargeObjectReadOneMegabyteAsync",
+      "reference": "NpgsqlLargeObjectReadOneMegabyteAsync",
+      "warmupOperationsPerProvider": 4,
+      "operationsPerBlock": 1,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskEfCompiledQueryAsync",
+      "reference": "NpgsqlEfCompiledQueryAsync",
+      "warmupOperationsPerProvider": 64,
+      "operationsPerBlock": 8,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskEfMaterialize100RowsAsync",
+      "reference": "NpgsqlEfMaterialize100RowsAsync",
+      "warmupOperationsPerProvider": 16,
+      "operationsPerBlock": 2,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskEfInsertOneAsync",
+      "reference": "NpgsqlEfInsertOneAsync",
+      "warmupOperationsPerProvider": 16,
+      "operationsPerBlock": 2,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
+    },
+    {
+      "candidate": "BlueTuskEfUpdateOneAsync",
+      "reference": "NpgsqlEfUpdateOneAsync",
+      "warmupOperationsPerProvider": 16,
+      "operationsPerBlock": 2,
+      "maximumMeanRatio": 1.05,
+      "maximumP95Ratio": 1.05,
+      "maximumP99Ratio": 1.05,
+      "maximumAllocationRatio": 1.0
     }
   ]
 }
