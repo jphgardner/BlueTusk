@@ -172,7 +172,7 @@ also pass. Coverage-guided fuzzing was not triggered, executed or inspected.
 | Evidence | SHA-256 |
 |---|---|
 | `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json` | `11a2f247ae5e9f65f07ce5bc7827a5bcc386a637cd4752a24165804747ab7fca` |
-| `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/provider-paired-evidence.json` | `e5736af0c74b758391682e782129465a40cbc1e786d651c6baee6a9413eede72` |
+| `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/provider-paired-evidence.json` | `6a8f3285acd99cbb85f5cdaf28f46232ff1cccc8c6a1c75bdc86223090f7318e` |
 | `artifacts/benchmarks/copy-paired-before-buffer-tuning/provider-copy-paired-evidence.json` | `e0fd0809e125854e7be3a2a34336e0f6388e9a58e970e11db57130f851d57abf` |
 
 The raw artifacts are local engineering evidence and are intentionally outside

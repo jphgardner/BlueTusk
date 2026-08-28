@@ -26,7 +26,7 @@
   },
   "providerPairedReport": {
     "path": "provider-paired-evidence.json",
-    "sha256": "e5736af0c74b758391682e782129465a40cbc1e786d651c6baee6a9413eede72"
+    "sha256": "6a8f3285acd99cbb85f5cdaf28f46232ff1cccc8c6a1c75bdc86223090f7318e"
   },
   "verification": {
     "budgetPath": "../../../eng/provider-performance-budgets.json",
