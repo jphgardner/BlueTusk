@@ -27,6 +27,7 @@ internal sealed class BlueTuskRelationalConnection : RelationalConnection
             ?? _providerServices.CreateConnection(ConnectionString ?? string.Empty);
         var providerConnection = _providerServices.GetConnection(connection);
         providerConnection.AllowPendingPoolResetOnOpen();
+        providerConnection.UseBufferedDataReaders();
         providerConnection.PreferExtendedProtocol();
         providerConnection.PreferBinaryResults();
 
