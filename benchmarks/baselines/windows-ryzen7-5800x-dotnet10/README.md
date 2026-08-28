@@ -15,7 +15,7 @@ $env:BLUETUSK_BENCHMARK_ARTIFACTS = "benchmarks/baselines/windows-ryzen7-5800x-d
 dotnet run --project benchmarks/BlueTusk.Benchmarks -c Release -- --job short --filter '*'
 ```
 
-The checked-in GitHub Markdown reports are human-readable; the brief JSON reports support automated comparison. Most fixtures use a short job with only three measured iterations and are development references, not universal performance guarantees or substitutes for release-grade runs. The live provider comparison is the documented MediumRun exception.
+The checked-in GitHub Markdown reports are human-readable; the brief JSON reports support automated comparison. Most fixtures use a short job with only three measured iterations and are development references, not universal performance guarantees or substitutes for release-grade runs. The live provider comparison combines a ShortRun for absolute latency/allocation with five 501-block alternating-provider trials as its comparison authority.
 
 The frontend-writer report was regenerated after removing interface-enumerator allocations from extended Bind messages. Both simple and extended writer workloads report zero managed allocation per operation.
 
@@ -50,26 +50,21 @@ until the last materialised memory reference is collected.
 
 The transport-pipeline decision reports were added on 2026-08-01. The bounded `System.IO.Pipelines` prototype improves the adversarial fragmented async batch and tiny cancellation-drain cases, but is approximately 2x slower for a 1 MiB field, 42% slower for synchronous COPY, effectively tied for asynchronous COPY and TLS, and 76% slower for asynchronous raw TCP. Both warm loopback readers report zero measured managed allocation; the prototype reports 96 B for the large-field batch. These short-run measurements support retaining the current transport, as recorded in ADR 0005.
 
-The live PostgreSQL provider-comparison report was refreshed on 2026-08-23
-against digest-pinned PostgreSQL 19 Beta 3 after the command, pool, transport,
-reader, timeout, and saturated-handoff work. The checked-in report is a
-MediumRun with two launches, ten warmups, and fifteen measured iterations. The
-large-field fixture creates the same one-row 1 MiB temporary payload on each
-provider connection during setup, keeping PostgreSQL payload-generation CPU
-outside the timed operations. BlueTusk/Npgsql absolute means and allocations
-are 297.687/328.195 µs and 1,652/2,140 B for a parameterized scalar,
-213.81/235.22 ns and 168/184 B for warm checkout, 291.523/297.467 µs and
-785/1,123 B for an explicitly prepared scalar, 487.348/528.428 µs and
-1,195/1,569 B for a sequential 1,000-row read, and 2.183/2.223 ms and
-1,466/9,031 B for a sequential 1 MiB `bytea` stream.
+The live PostgreSQL provider-comparison evidence was refreshed on 2026-08-25
+against digest-pinned PostgreSQL 18 after the complete command, pool, transport,
+reader, batch, COPY, notification, large-object, and EF allocation programme.
+The checked-in BenchmarkDotNet ShortRun is the absolute-latency and
+managed-allocation authority. Five 501-block alternating-provider trials are
+the comparison-latency authority for all 16 matched workloads.
 
-Five 501-block alternating-provider trials are the cross-provider latency
-authority. They record BlueTusk mean/P95/P99 ratios at or below Npgsql for all
-five workloads; the prepared and large-value leads remain narrow and are
-treated as measured parity. BenchmarkDotNet remains the managed-allocation and
-absolute-latency source. These results are an optimization and regression
-baseline, not a provider-wide superiority claim or release performance
-guarantee.
+All 16 managed-allocation ratios are below Npgsql, ranging from 0.9888 for COPY
+export to 0.0465 for an empty deferred begin/rollback. All 48 paired mean, P95,
+and P99 checks pass their declared ceilings. BlueTusk has the lower paired mean
+in 14 workloads; COPY import and EF update remain within the declared 5% parity
+band. The integrity manifest binds both raw reports to validated source commit
+`ac702d7c74d984faf375367016b77f9155695679`. These results are an optimization
+and regression baseline, not a provider-wide superiority claim or release
+performance guarantee.
 
 The V1 concurrency MediumRun is bound to commit
 `d09d2f654f6c5568fa1053d92aad819872afa348`, .NET 10.0.11, and the

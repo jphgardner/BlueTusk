@@ -4,8 +4,7 @@
 
 **Candidate branch:** `codex/v1-owner-release`
 
-**Measured source base:** `d94529be26cc26ba9b5647f8f3899126656d6305`,
-plus the performance changes described in this report
+**Measured source commit:** `ac702d7c74d984faf375367016b77f9155695679`
 
 **Reference provider:** Npgsql 10.0.3
 
@@ -172,8 +171,8 @@ also pass. Coverage-guided fuzzing was not triggered, executed or inspected.
 
 | Evidence | SHA-256 |
 |---|---|
-| `artifacts/benchmarks/provider-final-all-features-v5/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json` | `d4476f760f356ebaa3d6ab00d7aced67d5c6e648a8fc2cd60730c75e1b631afe` |
-| `artifacts/benchmarks/provider-final-all-features-v5/provider-extended-paired-evidence.json` | `e5736af0c74b758391682e782129465a40cbc1e786d651c6baee6a9413eede72` |
+| `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json` | `11a2f247ae5e9f65f07ce5bc7827a5bcc386a637cd4752a24165804747ab7fca` |
+| `benchmarks/baselines/windows-ryzen7-5800x-dotnet10/provider-paired-evidence.json` | `e5736af0c74b758391682e782129465a40cbc1e786d651c6baee6a9413eede72` |
 | `artifacts/benchmarks/copy-paired-before-buffer-tuning/provider-copy-paired-evidence.json` | `e0fd0809e125854e7be3a2a34336e0f6388e9a58e970e11db57130f851d57abf` |
 
 The raw artifacts are local engineering evidence and are intentionally outside

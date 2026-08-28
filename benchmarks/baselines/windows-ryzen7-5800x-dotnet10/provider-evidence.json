@@ -1,7 +1,7 @@
 {
   "schemaVersion": 2,
-  "sourceCommit": "058830a84c5deeadf36f2adf947eb55b674af612",
-  "capturedUtc": "2026-08-24T17:46:20.1181126+01:00",
+  "sourceCommit": "ac702d7c74d984faf375367016b77f9155695679",
+  "capturedUtc": "2026-08-25T13:50:47.8329032+01:00",
   "benchmark": {
     "framework": "BenchmarkDotNet 0.15.8",
     "job": "ShortRun",
@@ -22,11 +22,11 @@
   },
   "providerReport": {
     "path": "results/BlueTusk.Benchmarks.ProviderComparisonBenchmarks-report-brief.json",
-    "sha256": "46d7b2f422eaf5304b9d349b8a17421c04c7b84c39546666d22489115b5fb744"
+    "sha256": "11a2f247ae5e9f65f07ce5bc7827a5bcc386a637cd4752a24165804747ab7fca"
   },
   "providerPairedReport": {
     "path": "provider-paired-evidence.json",
-    "sha256": "f4edce74bb387308eacca1f5db8bbce10c6d41ab05dc3e832070396d488ccda2"
+    "sha256": "e5736af0c74b758391682e782129465a40cbc1e786d651c6baee6a9413eede72"
   },
   "verification": {
     "budgetPath": "../../../eng/provider-performance-budgets.json",

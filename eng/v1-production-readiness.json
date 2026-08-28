@@ -77,7 +77,7 @@
   ],
   "minimums": {
     "runtimeMeters": 6,
-    "runtimeInstruments": 60,
+    "runtimeInstruments": 62,
     "productionSlos": 14,
     "recoveryObjectives": 5,
     "benchmarkFixtures": 22,
