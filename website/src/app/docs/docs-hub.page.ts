@@ -11,7 +11,7 @@ import { GUIDES } from '../../generated/guides.generated';
   template: `
     <section class="page-hero docs-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> 1.1.0-RC.1 · SOURCE-SYNCHRONIZED</span>
+        <span class="eyebrow"><i class="live-dot"></i> 1.2.0-RC.1 · SOURCE-SYNCHRONIZED</span>
         <h1>Production documentation, from <em>first install to incident.</em></h1>
         <p>
           Choose an outcome, follow the steps, and keep the operational detail close at hand. Every
