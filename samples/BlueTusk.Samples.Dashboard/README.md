@@ -18,6 +18,14 @@ dotnet run --project samples/BlueTusk.Samples.Dashboard `
   --urls http://127.0.0.1:5217
 ```
 
-Open `http://127.0.0.1:5217/bluetusk/sources`. The `/preview` endpoint reports
-the non-production data mode, and both health endpoints are unauthenticated for
-container probes. Public search indexing and response caching are disabled.
+Open `http://127.0.0.1:5217/bluetusk/overview`. The preview contains several
+representative sources, pipelines, Live subscriptions, Continuous Graph queries,
+and deployments in healthy, catching-up, and degraded states. Every inventory
+row is linked to its complete redacted detail view, including nested consumer
+groups, snapshots, and checkpoints. Search and health filters make the larger
+inventories easy to inspect, and the layout adapts down to phone widths.
+
+The `/preview` endpoint reports the non-production data mode, and both health
+endpoints are unauthenticated for container probes. Public search indexing and
+response caching are disabled. The preview identity remains viewer-only and its
+operation authorizer denies every mutation independently of the UI.

@@ -97,7 +97,7 @@ if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($sourceCommit))
     throw 'Sync endurance could not resolve the source commit.'
 }
 
-$sourceBranch = (& git -C $RepositoryRoot branch --show-current).Trim()
+$sourceBranch = ([string](& git -C $RepositoryRoot branch --show-current)).Trim()
 if ($LASTEXITCODE -ne 0)
 {
     throw 'Sync endurance could not resolve the source branch.'

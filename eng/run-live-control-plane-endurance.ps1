@@ -91,7 +91,7 @@ if ($LASTEXITCODE -ne 0 -or $sourceCommit -notmatch '^[0-9a-f]{40}$')
 {
     throw 'Live/Control Plane endurance could not resolve the source commit.'
 }
-$sourceBranch = (& git -C $RepositoryRoot branch --show-current).Trim()
+$sourceBranch = ([string](& git -C $RepositoryRoot branch --show-current)).Trim()
 $trackedStatus = (& git -C $RepositoryRoot status --porcelain --untracked-files=no)
 if ($LASTEXITCODE -ne 0 -or
     -not [string]::IsNullOrWhiteSpace(($trackedStatus -join [Environment]::NewLine)))

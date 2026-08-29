@@ -69,7 +69,7 @@ app.Use(async (context, next) =>
 app.UseAuthentication();
 app.UseAuthorization();
 
-app.MapGet("/", () => Results.Redirect("/bluetusk/sources"));
+app.MapGet("/", () => Results.Redirect("/bluetusk/overview"));
 app.MapGet("/health/live", () => Results.Ok(new { status = "healthy" }));
 app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
 app.MapGet("/preview", () => Results.Ok(new
@@ -119,6 +119,10 @@ internal sealed class DashboardPreviewQueries :
 {
     private const string SourceFingerprint =
         "7a886a68eb289b44bd63f100bb56f2a3ffbff2f393b819b4c806bd2485a1da11";
+    private const string PaymentsFingerprint =
+        "28cb9c981247f9128d06840948593592e661d595dd270341b195dc702540042e";
+    private const string AnalyticsFingerprint =
+        "f5af2dd84266f0fcae48e15021a6bf891bdb6bb56ab4311ec7b77cfe73fc5343";
 
     public ValueTask<ControlPlaneOverview> GetOverviewAsync(
         CancellationToken cancellationToken = default)
@@ -181,7 +185,119 @@ internal sealed class DashboardPreviewQueries :
                     8,
                     true,
                     observedAt.AddSeconds(20),
-                    94)])]));
+                    94)]),
+             new ControlPlaneSourceSnapshot(
+                 "production-eu/payments",
+                 "payments-primary",
+                 PaymentsFingerprint,
+                 "7584930762130849662",
+                 "payments",
+                 "bluetusk_payments_relay",
+                 "56f47fb80e4d",
+                 6,
+                 8_772_120,
+                 "2A1/7B1139C0",
+                 new ControlPlaneSlotSnapshot(
+                     SourceReachable: true,
+                     Exists: true,
+                     Active: true,
+                     OutputPlugin: "pgoutput",
+                     RestartPosition: "2A1/7A91A020",
+                     ConfirmedFlushPosition: "2A1/7B1139C0",
+                     WalStatus: "reserved",
+                     WalLagBytes: 8_388_608,
+                     DiagnosticCode: "consumer-catching-up"),
+                 new ControlPlaneRelaySnapshot(
+                     TransactionCount: 8_772_120,
+                     StorageBytes: 392_167_424,
+                     FirstSequence: 8_751_882,
+                     LastSequence: 8_772_120,
+                     MinimumCheckpointSequence: 8_768_420,
+                     OldestUnacknowledgedAge: TimeSpan.FromMinutes(4.2)),
+                 [new ControlPlaneConsumerGroupSnapshot(
+                     "payment-search",
+                     8_751_882,
+                     8_768_420,
+                     4,
+                     true,
+                     true,
+                     observedAt.AddSeconds(18),
+                     38,
+                     null,
+                     null),
+                  new ControlPlaneConsumerGroupSnapshot(
+                     "payment-audit",
+                     8_751_882,
+                     8_771_998,
+                     7,
+                     true,
+                     true,
+                     observedAt.AddSeconds(24),
+                     71,
+                     null,
+                     null)],
+                 [new ControlPlaneSnapshotRunSnapshot(
+                     "f70df6a8-1c4f-4cc8-8bf7-0d32c24f3a8d",
+                     "Copying",
+                     48_229_632,
+                     observedAt.AddSeconds(-12))],
+                 [new ControlPlaneCheckpointSnapshot(
+                     "payment-search",
+                     2,
+                     "bluetusk_payments_relay",
+                     "pgoutput",
+                     "39d92068c4bb",
+                     "2A1/7AF11210",
+                     4,
+                     true,
+                     observedAt.AddSeconds(18),
+                     38),
+                  new ControlPlaneCheckpointSnapshot(
+                     "payment-audit",
+                     2,
+                     "bluetusk_payments_relay",
+                     "pgoutput",
+                     "d54ff7849a1e",
+                     "2A1/7B111CC0",
+                     7,
+                     true,
+                     observedAt.AddSeconds(24),
+                     71)]),
+             new ControlPlaneSourceSnapshot(
+                 "analytics-dr/events",
+                 "analytics-dr",
+                 AnalyticsFingerprint,
+                 "7584930762130849701",
+                 "analytics",
+                 "bluetusk_analytics_relay",
+                 "af69ed47dd12",
+                 3,
+                 1_320_514,
+                 "81/04A12280",
+                 new ControlPlaneSlotSnapshot(
+                     SourceReachable: true,
+                     Exists: true,
+                     Active: false,
+                     OutputPlugin: "pgoutput",
+                     RestartPosition: "81/04A12280",
+                     ConfirmedFlushPosition: "81/04A12280",
+                     WalStatus: "reserved",
+                     WalLagBytes: 1_048_576,
+                     DiagnosticCode: "standby-slot-inactive"),
+                 new ControlPlaneRelaySnapshot(
+                     TransactionCount: 1_320_514,
+                     StorageBytes: 96_468_992,
+                     FirstSequence: 1_310_002,
+                     LastSequence: 1_320_514,
+                     MinimumCheckpointSequence: 1_320_514,
+                     OldestUnacknowledgedAge: TimeSpan.Zero),
+                 [],
+                 [new ControlPlaneSnapshotRunSnapshot(
+                     "278f26a6-c32d-4e55-a638-54df90555130",
+                     "Complete",
+                     1_024,
+                     observedAt.AddDays(-2))],
+                 [])]));
     }
 
     public ValueTask<ControlPlaneSyncOverview> GetSyncOverviewAsync(
@@ -225,10 +341,29 @@ internal sealed class DashboardPreviewQueries :
                 TimeSpan.FromMilliseconds(22),
                 "4D2/9A77D970",
                 20_040,
-                null,
-                null,
-                true,
-                null)]));
+                 null,
+                 null,
+                 true,
+                 null),
+             new ControlPlaneSyncPipelineSnapshot(
+                 "payments-to-opensearch",
+                 PaymentsFingerprint,
+                 "Throttled",
+                 observedAt.AddMinutes(-11),
+                 8_768_420,
+                 428.7,
+                 12,
+                 741_882,
+                 1,
+                 2,
+                 36,
+                 TimeSpan.FromMilliseconds(420),
+                 "2A1/7AF11210",
+                 8_388_608,
+                 null,
+                 null,
+                 true,
+                 "destination-backpressure") ]));
     }
 
     public ValueTask<ControlPlaneLiveOverview> GetLiveOverviewAsync(
@@ -263,11 +398,71 @@ internal sealed class DashboardPreviewQueries :
                 "slow-client-timeout",
                 18_424_899,
                 18_424_901,
-                2,
-                null,
-                8_412,
-                276_028,
-                342)]));
+                 2,
+                 null,
+                 8_412,
+                 276_028,
+                 342),
+             new ControlPlaneLiveSubscriptionSnapshot(
+                 "1c47e2c81e4cbd20562fd57aaac9a26c579704f8335346f6739477d2a7d83a5c",
+                 "19815ed476172b1f68e342c35b7ea2f3397369c8839671406117481c13f52c6c",
+                 "62478ca67af73d163347f6b41e387f91fcb22d6a36f64f67ac241aa47193854e",
+                 "tenant:pilot#2d17a2b3",
+                 "inventory-live:v1",
+                 250,
+                 true,
+                 18,
+                 17.7,
+                 1_000,
+                 17_700,
+                 1_000,
+                 1_048_576,
+                 6,
+                 22,
+                 18,
+                 3,
+                 0,
+                 0,
+                 0,
+                 0,
+                 null,
+                 8_772_120,
+                 8_772_120,
+                 0,
+                 null,
+                 445,
+                 555,
+                 128),
+             new ControlPlaneLiveSubscriptionSnapshot(
+                 "3925a07a14edc04a34894841dc046919ece2fd1cb11abf0a4c34e29ba7dc8a04",
+                 "b36c727ff6b8cd5e2232b075fda08506f69c2d85bd356a5c4af96cc949fc2ed5",
+                 "f45aa29872da2c7899f7ec4f40b00ce548b00ce0171b0bd45b87156c305ac4c1",
+                 "tenant:risk#915ffd12",
+                 "risk-live:v2",
+                 100,
+                 false,
+                 0,
+                 0,
+                 4_820,
+                 61_442,
+                 4_820,
+                 4_194_304,
+                 44,
+                 31,
+                 0,
+                 7,
+                 1,
+                 0,
+                 0,
+                 1,
+                 "maintenance-drain",
+                 18_424_896,
+                 18_424_901,
+                 5,
+                 "maintenance-paused",
+                 781,
+                 4_039,
+                 100)]));
     }
 
     public ValueTask<ControlPlaneContinuousGraphOverview>
@@ -282,10 +477,30 @@ internal sealed class DashboardPreviewQueries :
                 "52af299250cff0989985389299dd0f667fd67db598614eba82006735dc6dcd65",
                 "fraud_network",
                 "risk",
-                ["account", "transfer"],
-                ["risk.accounts", "risk.transfers"],
-                100,
-                "TrustedCdcDelta, AuthoritativeScopedDelta, FullRepair") ]));
+                 ["account", "transfer"],
+                 ["risk.accounts", "risk.transfers"],
+                 100,
+                 "TrustedCdcDelta, AuthoritativeScopedDelta, FullRepair"),
+             new ControlPlaneContinuousGraphQuerySnapshot(
+                 "merchant-payment-ring",
+                 "payments-primary",
+                 "7cb5fcfb0d31d053031e586099412753b3f4b6ad5ebf847d958ccfd1168c0870",
+                 "payment_network",
+                 "risk",
+                 ["merchant", "payment", "account"],
+                 ["risk.merchants", "risk.payments", "risk.accounts"],
+                 500,
+                 "AuthoritativeScopedDelta, FullRepair"),
+             new ControlPlaneContinuousGraphQuerySnapshot(
+                 "customer-connections",
+                 "orders-primary",
+                 "ae963a11dc8e8db6828f4d231676a6f038f224c0b46e899aa6b8544399fc2c5e",
+                 "customer_graph",
+                 "crm",
+                 ["customer", "order", "address"],
+                 ["crm.customers", "orders.orders", "crm.addresses"],
+                 1_000,
+                 "TrustedCdcDelta, AuthoritativeScopedDelta, FullRepair") ]));
     }
 
     public ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(
@@ -314,10 +529,53 @@ internal sealed class DashboardPreviewQueries :
                  ManagedWorkloadKind.ContinuousGraph],
                 11,
                 6_400,
-                12L * 1024 * 1024 * 1024,
-                120L * 1024 * 1024 * 1024,
-                null,
-                DateTimeOffset.UtcNow.AddSeconds(-8))]));
+                 12L * 1024 * 1024 * 1024,
+                 120L * 1024 * 1024 * 1024,
+                 null,
+                 DateTimeOffset.UtcNow.AddSeconds(-8)),
+             new ControlPlaneManagedDeploymentSnapshot(
+                 "payments-production-eu",
+                 "pilot",
+                 "kubernetes",
+                 "lon1",
+                 18,
+                 17,
+                 57,
+                 ManagedDeploymentState.Applying,
+                 false,
+                 true,
+                 4,
+                 [ManagedWorkloadKind.Streams,
+                  ManagedWorkloadKind.Sync,
+                  ManagedWorkloadKind.ControlPlane,
+                  ManagedWorkloadKind.Dashboard],
+                 7,
+                 3_600,
+                 8L * 1024 * 1024 * 1024,
+                 80L * 1024 * 1024 * 1024,
+                 null,
+                 DateTimeOffset.UtcNow.AddSeconds(-22)),
+             new ControlPlaneManagedDeploymentSnapshot(
+                 "analytics-dr",
+                 "pilot",
+                 "kubernetes",
+                 "ams3",
+                 9,
+                 9,
+                 31,
+                 ManagedDeploymentState.Degraded,
+                 false,
+                 true,
+                 3,
+                 [ManagedWorkloadKind.Streams,
+                  ManagedWorkloadKind.Sync,
+                  ManagedWorkloadKind.ControlPlane],
+                 4,
+                 1_800,
+                 4L * 1024 * 1024 * 1024,
+                 48L * 1024 * 1024 * 1024,
+                 "persistent-volume-pressure",
+                 DateTimeOffset.UtcNow.AddMinutes(-3))]));
     }
 }
 

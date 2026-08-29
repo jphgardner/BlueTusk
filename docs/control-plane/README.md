@@ -50,7 +50,35 @@ var queries = new PostgreSqlControlPlaneQueryService(
 
 ## Dashboard
 
-`MapBlueTuskDashboard` adds an HTML dashboard and a JSON overview API. The initial pages cover sources, slots and WAL lag, relay storage, snapshots, consumer groups, and direct checkpoints. All values rendered into HTML are encoded.
+`MapBlueTuskDashboard` adds a complete, server-rendered operational dashboard and
+versioned JSON APIs. Its `/overview` page assesses the whole BlueTusk estate and
+links directly to anything that needs attention. Inventory pages cover sources,
+slots and WAL lag, relay storage, snapshots, consumer groups, direct checkpoints,
+Sync pipelines, Live subscriptions, Continuous Graph queries, and managed
+deployments. Every inventory row opens a detail page containing the complete
+redacted control-plane projection for that resource.
+
+The dashboard remains useful without JavaScript. Its same-origin script adds
+mobile navigation, inventory search and health filtering, copy helpers, refresh,
+and authorised operation confirmations. Tables scroll safely on narrow screens,
+detail grids collapse to one column, and navigation becomes an explicit mobile
+menu. All application-provided values, URLs, and attribute values are HTML
+encoded; route keys containing reserved characters are encoded and decoded as
+single opaque identifiers.
+
+The HTML routes below are available under the configured `RoutePrefix` (which is
+`/bluetusk` by default):
+
+- `/overview`
+- `/sources` and `/sources/{sourceKey}`
+- `/sources/{sourceKey}/consumer-groups/{groupName}`
+- `/sources/{sourceKey}/snapshots/{snapshotEpoch}`
+- `/sources/{sourceKey}/checkpoints/{consumerGroup}`
+- `/pipelines` and `/pipelines/{pipelineId}`
+- `/live` and `/live/{subscriptionFingerprint}`
+- `/graphs` and `/graphs/{queryFingerprint}`
+- `/deployments` and `/deployments/{deploymentId}`
+- `/snapshots`, `/consumer-groups`, and `/checkpoints` for fleet-wide views
 
 ```csharp
 builder.Services.AddSingleton<IControlPlaneQueryService>(queries);
