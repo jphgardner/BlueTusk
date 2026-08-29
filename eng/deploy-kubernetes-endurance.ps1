@@ -262,6 +262,11 @@ switch ($Action)
             throw "Evidence output '$fullOutput' must be beneath '$artifactsRoot'."
         }
         [IO.Directory]::CreateDirectory($fullOutput) | Out-Null
+        $relativeOutput = [IO.Path]::GetRelativePath(
+            $repositoryRoot,
+            $fullOutput).Replace(
+                [IO.Path]::DirectorySeparatorChar,
+                [IO.Path]::AltDirectorySeparatorChar)
 
         $helper = @'
 apiVersion: v1
@@ -272,6 +277,11 @@ metadata:
 spec:
   automountServiceAccountToken: false
   restartPolicy: Never
+  securityContext:
+    runAsNonRoot: true
+    runAsUser: 1654
+    seccompProfile:
+      type: RuntimeDefault
   containers:
     - name: reader
       image: mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:0e53453ccfc8ff2d51319fe80c678971c6d0f8008dff3565fa88e15840b69854
@@ -291,16 +301,35 @@ spec:
         claimName: endurance-evidence
 '@
         & kubectl delete pod evidence-reader -n $namespace --ignore-not-found *> $null
-        Invoke-Kubectl -Arguments @('apply', '-f', '-') -InputText $helper
-        Invoke-Kubectl -Arguments @(
-            'wait', '--for=condition=Ready', 'pod/evidence-reader', '-n', $namespace,
-            '--timeout=5m')
-        & kubectl cp "$namespace/evidence-reader:/evidence/endurance/." $fullOutput
-        if ($LASTEXITCODE -ne 0)
+        try
         {
-            throw 'Could not copy endurance evidence from the retained volume.'
+            Invoke-Kubectl -Arguments @('apply', '-f', '-') -InputText $helper
+            Invoke-Kubectl -Arguments @(
+                'wait', '--for=condition=Ready', 'pod/evidence-reader', '-n', $namespace,
+                '--timeout=5m')
+            Push-Location $repositoryRoot
+            try
+            {
+                & kubectl cp `
+                    "$namespace/evidence-reader:/evidence/endurance/." `
+                    $relativeOutput
+                if ($LASTEXITCODE -ne 0)
+                {
+                    throw (
+                        'Could not copy endurance evidence from the retained ' +
+                        'volume.')
+                }
+            }
+            finally
+            {
+                Pop-Location
+            }
         }
-        & kubectl delete pod evidence-reader -n $namespace --wait=true *> $null
+        finally
+        {
+            & kubectl delete pod evidence-reader -n $namespace `
+                --ignore-not-found --wait=true *> $null
+        }
         Write-Output "Downloaded Kubernetes endurance evidence to '$fullOutput'."
     }
     'Cleanup'
