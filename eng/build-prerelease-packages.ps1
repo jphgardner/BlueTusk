@@ -2,6 +2,8 @@
 param(
     [string] $Configuration = 'Release',
     [string] $Output = 'artifacts/prerelease',
+    [string] $PrereleaseTrainPath = (
+        Join-Path $PSScriptRoot 'prerelease-train.json'),
     [switch] $NoRestore
 )
 
@@ -9,7 +11,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
-$manifest = Get-Content -LiteralPath (Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
+$manifest = Get-Content -LiteralPath $PrereleaseTrainPath -Raw |
     ConvertFrom-Json
 if ([int]$manifest.schemaVersion -ne 1 -or $manifest.publicationEnabled -ne $true)
 {
@@ -41,6 +43,7 @@ foreach ($family in @($manifest.families))
         Output = $familyPath
         Prerelease = $true
         VersionOverride = [string]$manifest.version
+        PrereleaseTrainPath = $PrereleaseTrainPath
     }
     if ($NoRestore)
     {
@@ -51,7 +54,8 @@ foreach ($family in @($manifest.families))
     & (Join-Path $PSScriptRoot 'verify-product-family-packages.ps1') `
         -Family ([string]$family) `
         -PackageDirectory $familyPath `
-        -ExpectedVersion ([string]$manifest.version)
+        -ExpectedVersion ([string]$manifest.version) `
+        -PrereleaseTrainPath $PrereleaseTrainPath
     Get-ChildItem -LiteralPath $familyPath -Filter '*.nupkg' -File |
         Copy-Item -Destination $feedPath
 }

@@ -16,7 +16,10 @@ param(
 
     [string] $GitEvidencePath,
 
-    [string] $SourceRoot
+    [string] $SourceRoot,
+
+    [string] $PrereleaseTrainPath = (
+        Join-Path $PSScriptRoot 'prerelease-train.json')
 )
 
 Set-StrictMode -Version Latest
@@ -34,8 +37,7 @@ if (-not (Test-Path -LiteralPath $repositoryRoot -PathType Container))
 {
     throw "Prerelease source root '$repositoryRoot' does not exist."
 }
-$train = Get-Content -LiteralPath (
-    Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
+$train = Get-Content -LiteralPath $PrereleaseTrainPath -Raw |
     ConvertFrom-Json
 $families = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'product-families.json') -Raw |

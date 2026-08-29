@@ -1,12 +1,14 @@
 [CmdletBinding()]
-param()
+param(
+    [string] $PrereleaseTrainPath = (
+        Join-Path $PSScriptRoot 'prerelease-train.json')
+)
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
-$train = Get-Content -LiteralPath (
-    Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
+$train = Get-Content -LiteralPath $PrereleaseTrainPath -Raw |
     ConvertFrom-Json
 $families = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'product-families.json') -Raw |
@@ -102,7 +104,8 @@ foreach ($family in @($train.families))
         -Commit $commit `
         -Tag $tag `
         -GitEvidencePath $path `
-        -SourceRoot $sourceRoot *> $null
+        -SourceRoot $sourceRoot `
+        -PrereleaseTrainPath $PrereleaseTrainPath *> $null
 }
 
 $lastFamily = [string]@($train.families)[-1]
@@ -119,7 +122,8 @@ $wrongMainPath = Write-Evidence -Name 'wrong-main' -Value $wrongMain
 Assert-Rejected -Name 'wrong-main' -Action {
     & $verifier -Family $lastFamily -Version $train.version -Commit $commit `
         -Tag $lastTag -GitEvidencePath $wrongMainPath `
-        -SourceRoot $sourceRoot *> $null
+        -SourceRoot $sourceRoot `
+        -PrereleaseTrainPath $PrereleaseTrainPath *> $null
 }
 
 $missingDependencyTags = [ordered]@{}
@@ -134,7 +138,8 @@ $missingDependencyPath = Write-Evidence -Name 'missing-dependency' -Value $missi
 Assert-Rejected -Name 'missing-dependency' -Action {
     & $verifier -Family $lastFamily -Version $train.version -Commit $commit `
         -Tag $lastTag -GitEvidencePath $missingDependencyPath `
-        -SourceRoot $sourceRoot *> $null
+        -SourceRoot $sourceRoot `
+        -PrereleaseTrainPath $PrereleaseTrainPath *> $null
 }
 
 $stableTag = [ordered]@{
@@ -147,14 +152,16 @@ $stableTagPath = Write-Evidence -Name 'stable-tag' -Value $stableTag
 Assert-Rejected -Name 'stable-tag' -Action {
     & $verifier -Family $lastFamily -Version $train.version -Commit $commit `
         -Tag $lastTag -GitEvidencePath $stableTagPath `
-        -SourceRoot $sourceRoot *> $null
+        -SourceRoot $sourceRoot `
+        -PrereleaseTrainPath $PrereleaseTrainPath *> $null
 }
 
 Assert-Rejected -Name 'wrong-version' -Action {
     & $verifier -Family Provider -Version $wrongVersion -Commit $commit `
         -Tag "provider-v$wrongVersion" `
         -GitEvidencePath (Join-Path $testRoot 'valid-Provider.json') `
-        -SourceRoot $sourceRoot *> $null
+        -SourceRoot $sourceRoot `
+        -PrereleaseTrainPath $PrereleaseTrainPath *> $null
 }
 
 $providerVersionPath = Join-Path $sourceRoot $families.families.Provider.versionFile
@@ -166,7 +173,8 @@ Assert-Rejected -Name 'wrong-source-version' -Action {
     & $verifier -Family Provider -Version $train.version -Commit $commit `
         -Tag "provider-v$($train.version)" `
         -GitEvidencePath (Join-Path $testRoot 'valid-Provider.json') `
-        -SourceRoot $sourceRoot *> $null
+        -SourceRoot $sourceRoot `
+        -PrereleaseTrainPath $PrereleaseTrainPath *> $null
 }
 
 Write-Output (

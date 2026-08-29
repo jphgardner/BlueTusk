@@ -8,7 +8,10 @@ param(
 
     [string] $ExpectedCommit,
 
-    [string] $ExpectedVersion
+    [string] $ExpectedVersion,
+
+    [string] $PrereleaseTrainPath = (
+        Join-Path $PSScriptRoot 'prerelease-train.json')
 )
 
 Set-StrictMode -Version Latest
@@ -125,8 +128,7 @@ if ($manifest.schemaVersion -ne 2)
 $prereleaseManifest = $null
 if (-not [string]::IsNullOrWhiteSpace($ExpectedVersion))
 {
-    $prereleaseManifest = Get-Content -LiteralPath (
-        Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
+    $prereleaseManifest = Get-Content -LiteralPath $PrereleaseTrainPath -Raw |
         ConvertFrom-Json
     if ([int]$prereleaseManifest.schemaVersion -ne 1 -or
         $prereleaseManifest.publicationEnabled -ne $true -or

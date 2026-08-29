@@ -22,7 +22,7 @@ approval remain the publication boundary.
 
 ## Current package RC train
 
-`eng/prerelease-train.json` defines the immutable `1.1.0-rc.1` package train
+`eng/package-prerelease-train.json` defines the immutable `1.1.0-rc.1` package train
 for all six families in stable dependency order. RC packing uses version
 overrides and temporary npm artifact copies; it does not rewrite the stable
 family manifests. Every internal NuGet/npm dependency must resolve to the same
@@ -30,9 +30,10 @@ exact RC version. Exact `*-v1.1.0-rc.1` tags publish through the protected
 `package-prerelease` environment, and npm packages use the `rc` dist-tag,
 never `latest`. A correction is `rc.2`; an RC is never overwritten.
 
-The three V1 package-consumer applications remain an immutable historical
-`1.0.0-rc.1` validation train. Their recorded package locks, image evidence,
-and staging observations are not rewritten by the 1.1 package RC.
+The separate `eng/prerelease-train.json` manifest keeps the three V1
+package-consumer applications on their immutable historical `1.0.0-rc.1`
+validation train. Their recorded package locks, image evidence, and staging
+observations are not rewritten by the 1.1 package RC.
 
 Before registry publication, the package-consumer solution restores through
 `eng/nuget/applications-candidate.config` into an isolated cache. Its source

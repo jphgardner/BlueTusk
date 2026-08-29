@@ -13,6 +13,9 @@ param(
 
     [string] $NpmRegistryUrl = 'https://registry.npmjs.org',
 
+    [string] $PrereleaseTrainPath = (
+        Join-Path $PSScriptRoot 'prerelease-train.json'),
+
     [int] $Attempts = 6,
 
     [int] $RetryDelaySeconds = 10
@@ -27,8 +30,7 @@ if ($Attempts -lt 1 -or $RetryDelaySeconds -lt 0)
 }
 
 $repositoryRoot = Split-Path $PSScriptRoot -Parent
-$train = Get-Content -LiteralPath (
-    Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
+$train = Get-Content -LiteralPath $PrereleaseTrainPath -Raw |
     ConvertFrom-Json
 $manifest = Get-Content -LiteralPath (
     Join-Path $PSScriptRoot 'product-families.json') -Raw |

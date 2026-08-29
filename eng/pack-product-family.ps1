@@ -10,6 +10,8 @@ param(
     [switch] $Candidate,
     [switch] $Prerelease,
     [string] $VersionOverride,
+    [string] $PrereleaseTrainPath = (
+        Join-Path $PSScriptRoot 'prerelease-train.json'),
     [switch] $NoRestore
 )
 
@@ -32,8 +34,7 @@ if ($Candidate -and $Prerelease)
 $prereleaseManifest = $null
 if ($Prerelease)
 {
-    $prereleaseManifestPath = Join-Path $PSScriptRoot 'prerelease-train.json'
-    $prereleaseManifest = Get-Content -LiteralPath $prereleaseManifestPath -Raw |
+    $prereleaseManifest = Get-Content -LiteralPath $PrereleaseTrainPath -Raw |
         ConvertFrom-Json
     if ([int]$prereleaseManifest.schemaVersion -ne 1 -or
         $prereleaseManifest.publicationEnabled -ne $true)
