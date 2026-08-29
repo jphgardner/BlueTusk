@@ -42,6 +42,8 @@ spec:
           args:
             - |
               Set-Location /workspace
+              New-Item -Path $env:HOME -ItemType Directory -Force | Out-Null
+              git config --global --add safe.directory /workspace
               git init --quiet
               git remote add origin https://github.com/jphgardner/BlueTusk.git
               git fetch --quiet --depth 1 origin $env:CANDIDATE_SHA
@@ -52,6 +54,8 @@ spec:
             - configMapRef:
                 name: endurance-candidate
           env:
+            - name: HOME
+              value: /workspace/.home
             - name: DOTNET_CLI_HOME
               value: /workspace/.dotnet
             - name: NUGET_PACKAGES
