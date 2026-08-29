@@ -13,6 +13,11 @@ $families = Get-Content -LiteralPath (
     ConvertFrom-Json
 $verifier = Join-Path $PSScriptRoot 'verify-prerelease-release.ps1'
 $commit = '0' * 40
+$stableVersion = ([string]$train.version -replace '-rc\.\d+$', '')
+$currentIteration = [int]([regex]::Match(
+    [string]$train.version,
+    '-rc\.(?<iteration>\d+)$').Groups['iteration'].Value)
+$wrongVersion = "$stableVersion-rc.$($currentIteration + 1)"
 $testRoot = [IO.Path]::GetFullPath((
     Join-Path $repositoryRoot 'artifacts/test-results/prerelease-verifier'))
 $artifactsRoot = [IO.Path]::GetFullPath((Join-Path $repositoryRoot 'artifacts'))
@@ -34,14 +39,14 @@ foreach ($family in @($train.families))
     $versionPath = Join-Path $sourceRoot $definition.versionFile
     New-Item -ItemType Directory -Path (Split-Path $versionPath -Parent) `
         -Force | Out-Null
-    @'
+    @"
 <Project>
   <PropertyGroup>
-    <VersionPrefix>1.0.0</VersionPrefix>
+    <VersionPrefix>$stableVersion</VersionPrefix>
     <VersionSuffix></VersionSuffix>
   </PropertyGroup>
 </Project>
-'@ | Set-Content -LiteralPath $versionPath -Encoding utf8NoBOM
+"@ | Set-Content -LiteralPath $versionPath -Encoding utf8NoBOM
 }
 
 function Write-Evidence
@@ -136,7 +141,7 @@ $stableTag = [ordered]@{
     schemaVersion = 1
     mainCommit = $commit
     tags = $tags
-    stableTags = @('provider-v1.0.0')
+    stableTags = @("provider-v$stableVersion")
 }
 $stableTagPath = Write-Evidence -Name 'stable-tag' -Value $stableTag
 Assert-Rejected -Name 'stable-tag' -Action {
@@ -146,16 +151,16 @@ Assert-Rejected -Name 'stable-tag' -Action {
 }
 
 Assert-Rejected -Name 'wrong-version' -Action {
-    & $verifier -Family Provider -Version '1.0.0-rc.2' -Commit $commit `
-        -Tag 'provider-v1.0.0-rc.2' `
+    & $verifier -Family Provider -Version $wrongVersion -Commit $commit `
+        -Tag "provider-v$wrongVersion" `
         -GitEvidencePath (Join-Path $testRoot 'valid-Provider.json') `
         -SourceRoot $sourceRoot *> $null
 }
 
 $providerVersionPath = Join-Path $sourceRoot $families.families.Provider.versionFile
 (Get-Content -LiteralPath $providerVersionPath -Raw).Replace(
-    '<VersionPrefix>1.0.0</VersionPrefix>',
-    '<VersionPrefix>1.1.0</VersionPrefix>') |
+    "<VersionPrefix>$stableVersion</VersionPrefix>",
+    '<VersionPrefix>9.9.9</VersionPrefix>') |
     Set-Content -LiteralPath $providerVersionPath -Encoding utf8NoBOM
 Assert-Rejected -Name 'wrong-source-version' -Action {
     & $verifier -Family Provider -Version $train.version -Commit $commit `

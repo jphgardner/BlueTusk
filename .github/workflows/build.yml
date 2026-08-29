@@ -117,6 +117,10 @@ jobs:
       - name: Verify independent release trains
         shell: pwsh
         run: |
+          $prereleaseVersion = [string](
+            Get-Content ./eng/prerelease-train.json -Raw |
+              ConvertFrom-Json
+          ).version
           'Provider', 'Streams', 'Sync', 'Live', 'ControlPlane', 'ContinuousGraph' |
             ForEach-Object {
               ./eng/pack-product-family.ps1 -Family $_ -ValidateOnly
@@ -124,7 +128,7 @@ jobs:
                 -Family $_ `
                 -ValidateOnly `
                 -Prerelease `
-                -VersionOverride 1.0.0-rc.1
+                -VersionOverride $prereleaseVersion
             }
           ./eng/test-prerelease-release-verifier.ps1
           ./eng/test-v1-approval-evidence-verifier.ps1

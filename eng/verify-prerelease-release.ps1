@@ -57,10 +57,14 @@ if (-not [string]::Equals(
 {
     throw "Prerelease version '$Version' does not match '$($train.version)'."
 }
-if ($Version -notmatch '^1\.0\.0-rc\.\d+$')
+$versionMatch = [regex]::Match(
+    $Version,
+    '^(?<base>\d+\.\d+\.\d+)-rc\.(?<iteration>[1-9]\d*)$')
+if (-not $versionMatch.Success)
 {
-    throw "Prerelease version '$Version' is not an allowed V1 RC version."
+    throw "Prerelease version '$Version' is not an allowed RC version."
 }
+$stableVersion = $versionMatch.Groups['base'].Value
 
 $orderedFamilies = @($train.families | ForEach-Object { [string]$_ })
 $familyIndex = [Array]::IndexOf($orderedFamilies, $Family)
@@ -89,11 +93,13 @@ if ($definition.publication.enabled -eq $true -or
 
 [xml]$versionDocument = Get-Content -LiteralPath (
     Join-Path $repositoryRoot $definition.versionFile) -Raw
-if ([string]$versionDocument.Project.PropertyGroup.VersionPrefix -ne '1.0.0' -or
+if ([string]$versionDocument.Project.PropertyGroup.VersionPrefix -ne $stableVersion -or
     -not [string]::IsNullOrWhiteSpace(
         [string]$versionDocument.Project.PropertyGroup.VersionSuffix))
 {
-    throw "Stable source version for '$Family' must remain exact 1.0.0."
+    throw (
+        "Stable source version for '$Family' must remain exact " +
+        "'$stableVersion'.")
 }
 
 $expectedTag = "$($definition.publication.tagPrefix)-v$Version"
@@ -185,20 +191,23 @@ for ($index = 0; $index -lt $familyIndex; $index++)
     }
 }
 
+$stableTagPattern = "*-v$stableVersion"
 $stableTags = @(
     if ($null -ne $gitEvidence)
     {
-        @($gitEvidence.stableTags)
+        @($gitEvidence.stableTags | Where-Object {
+            [string]$_ -like $stableTagPattern
+        })
     }
     else
     {
-        @(& git -C $repositoryRoot tag --list '*-v1.0.0')
+        @(& git -C $repositoryRoot tag --list $stableTagPattern)
     }
 )
 if ($stableTags.Count -ne 0)
 {
     throw (
-        'Stable V1 tags already exist while the prerelease train is active: ' +
+        "Stable '$stableVersion' tags already exist while the prerelease train is active: " +
         ($stableTags -join ', '))
 }
 

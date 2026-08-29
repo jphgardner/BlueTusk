@@ -94,12 +94,12 @@
         "protectedBranches": false,
         "customBranchPolicies": true,
         "requiredPatterns": [
-          "provider-v1.0.0-rc.*",
-          "streams-v1.0.0-rc.*",
-          "sync-v1.0.0-rc.*",
-          "live-v1.0.0-rc.*",
-          "control-plane-v1.0.0-rc.*",
-          "continuous-graph-v1.0.0-rc.*"
+          "provider-v1.1.0-rc.*",
+          "streams-v1.1.0-rc.*",
+          "sync-v1.1.0-rc.*",
+          "live-v1.1.0-rc.*",
+          "control-plane-v1.1.0-rc.*",
+          "continuous-graph-v1.1.0-rc.*"
         ]
       }
     },
@@ -117,12 +117,12 @@
         "protectedBranches": false,
         "customBranchPolicies": true,
         "requiredPatterns": [
-          "provider-v1.0.0",
-          "streams-v1.0.0",
-          "sync-v1.0.0",
-          "live-v1.0.0",
-          "control-plane-v1.0.0",
-          "continuous-graph-v1.0.0"
+          "provider-v1.1.0",
+          "streams-v1.1.0",
+          "sync-v1.1.0",
+          "live-v1.1.0",
+          "control-plane-v1.1.0",
+          "continuous-graph-v1.1.0"
         ]
       }
     }
