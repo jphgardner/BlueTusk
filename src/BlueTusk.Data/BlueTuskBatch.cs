@@ -975,11 +975,22 @@ public sealed class BlueTuskBatch : DbBatch
         {
             lock (this)
             {
-                if (_leased &&
-                    System.Diagnostics.Stopwatch.GetElapsedTime(_startedTimestamp) >= _dueTime)
+                if (!_leased)
                 {
-                    _batch!.CancelForTimeout();
+                    return;
                 }
+
+                var elapsed = System.Diagnostics.Stopwatch.GetElapsedTime(_startedTimestamp);
+                if (elapsed < _dueTime)
+                {
+                    // Timer callbacks may be delivered slightly before their requested due time.
+                    // This check also protects a newly pooled lease from a stale callback, but the
+                    // current lease must be re-armed rather than silently losing its timeout.
+                    _timer.Change(_dueTime - elapsed, System.Threading.Timeout.InfiniteTimeSpan);
+                    return;
+                }
+
+                _batch!.CancelForTimeout();
             }
         }
     }
