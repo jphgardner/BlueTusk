@@ -18,6 +18,8 @@ has an official digest-pinned image; Beta 3 must never satisfy that stable gate.
 
 # Optional preliminary run from any exact commit available on origin.
 # This is PostgreSQL 19 Beta 3 evidence and never satisfies a release gate.
+# Its four-hour pod safety bound includes cold checkout, restore, package/SBOM
+# generation, and the exact one-hour measured Continuous Graph workload.
 ./eng/deploy-kubernetes-endurance.ps1 `
   -Action StartContinuousGraphPreview `
   -CandidateSha <full-remote-sha> `

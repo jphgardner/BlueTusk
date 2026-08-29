@@ -11,7 +11,9 @@ metadata:
     bluetusk.io/evidence-classification: non-gating-postgresql-19-beta3-preview
 spec:
   backoffLimit: 0
-  activeDeadlineSeconds: 5400
+  # Includes a cold source checkout, package/SBOM build, and the exact one-hour
+  # measured preview. The workload duration remains fixed in the runner script.
+  activeDeadlineSeconds: 14400
   ttlSecondsAfterFinished: 604800
   template:
     metadata:
