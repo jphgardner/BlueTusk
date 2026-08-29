@@ -60,7 +60,7 @@ spec:
               app.kubernetes.io/name: bluetusk-dashboard-preview
       containers:
         - name: dashboard
-          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:5079a07e36338eb173f471b1977ff841fd094a0b36d1e4a6b755b8de2e2fcc99
+          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:cac1eff74e353ce83ee7b5a8debf333ad6e98a489828e27f630a33ea0035c383
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
