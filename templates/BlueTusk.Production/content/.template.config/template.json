@@ -52,7 +52,7 @@
       "datatype": "text",
       "defaultValue": "1.2.0",
       "description": "Exact coordinated BlueTusk NuGet and npm version.",
-      "replaces": "1.1.0-rc.1"
+      "replaces": "1.2.0-rc.1"
     },
     "KubernetesPostgreSqlImage": {
       "type": "parameter",

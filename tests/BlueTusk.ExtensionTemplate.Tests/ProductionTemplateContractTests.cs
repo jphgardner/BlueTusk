@@ -22,7 +22,7 @@ public sealed class ProductionTemplateContractTests
         var symbols = root.GetProperty("symbols");
         var version = symbols.GetProperty("BlueTuskVersion");
         Assert.Equal("1.2.0", version.GetProperty("defaultValue").GetString());
-        Assert.Equal("1.1.0-rc.1", version.GetProperty("replaces").GetString());
+        Assert.Equal("1.2.0-rc.1", version.GetProperty("replaces").GetString());
         var databaseImage = symbols.GetProperty("KubernetesPostgreSqlImage")
             .GetProperty("defaultValue")
             .GetString()!;
@@ -59,10 +59,10 @@ public sealed class ProductionTemplateContractTests
             "angular-package.json")));
 
         Assert.Equal(
-            "1.1.0-rc.1",
+            "1.2.0-rc.1",
             react.RootElement.GetProperty("dependencies").GetProperty("@bluetusk/live").GetString());
         Assert.Equal(
-            "1.1.0-rc.1",
+            "1.2.0-rc.1",
             angular.RootElement.GetProperty("dependencies").GetProperty("@bluetusk/live").GetString());
         Assert.True(react.RootElement.GetProperty("dependencies").TryGetProperty(
             "@bluetusk/live-react",
