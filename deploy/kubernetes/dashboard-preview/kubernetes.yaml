@@ -62,6 +62,14 @@ spec:
         - name: dashboard
           image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:cac1eff74e353ce83ee7b5a8debf333ad6e98a489828e27f630a33ea0035c383
           imagePullPolicy: IfNotPresent
+          env:
+            - name: BLUETUSK_GRAPH_REQUIRED
+              value: "true"
+            - name: BLUETUSK_GRAPH_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: bluetusk-dashboard-graph
+                  key: connection-string
           ports:
             - name: http
               containerPort: 8080
@@ -164,7 +172,26 @@ spec:
       ports:
         - protocol: TCP
           port: 8080
-  egress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bluetusk-endurance
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
 ---
 apiVersion: cert-manager.io/v1
 kind: Certificate

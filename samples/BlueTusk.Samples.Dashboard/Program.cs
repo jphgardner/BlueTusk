@@ -44,12 +44,35 @@ builder.Services.AddSingleton<IControlPlaneSyncQueryService>(
     services => services.GetRequiredService<DashboardPreviewQueries>());
 builder.Services.AddSingleton<IControlPlaneLiveQueryService>(
     services => services.GetRequiredService<DashboardPreviewQueries>());
-builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
-    services => services.GetRequiredService<DashboardPreviewQueries>());
-builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
-    services => services.GetRequiredService<DashboardPreviewQueries>());
 builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
     services => services.GetRequiredService<DashboardPreviewQueries>());
+
+var graphConnectionString = builder.Configuration["BlueTusk:Dashboard:GraphConnectionString"] ??
+    Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_CONNECTION_STRING");
+var graphRequired = builder.Configuration.GetValue<bool>("BlueTusk:Dashboard:GraphRequired") ||
+    string.Equals(
+        Environment.GetEnvironmentVariable("BLUETUSK_GRAPH_REQUIRED"),
+        "true",
+        StringComparison.OrdinalIgnoreCase);
+var graphRuntime = await PostgreSqlDashboardGraphRuntime.CreateAsync(
+    graphConnectionString,
+    graphRequired);
+builder.Services.AddSingleton(graphRuntime.QueryRegistry);
+builder.Services.AddSingleton(graphRuntime.ExecutionRegistry);
+builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(services =>
+    new ExecutableContinuousGraphControlPlaneQueryService(
+        services.GetRequiredService<BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry>(),
+        services.GetRequiredService<ContinuousGraphControlPlaneExecutionRegistry>()));
+builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(services =>
+    new HostedContinuousGraphControlPlaneExecutionService(
+        services.GetRequiredService<ContinuousGraphControlPlaneExecutionRegistry>(),
+        new ContinuousGraphControlPlaneExecutionOptions
+        {
+            ExecutionTimeout = TimeSpan.FromSeconds(10),
+            MaximumConcurrentExecutions = 4,
+            MaximumNodes = 1_000,
+            MaximumEdges = 2_000,
+        }));
 builder.Services.AddSingleton(
     new ControlPlaneOperationExecutor(
         new DenyAllControlPlaneAuthorizer(),
@@ -87,8 +110,15 @@ app.MapGet("/health/ready", () => Results.Ok(new { status = "ready" }));
 app.MapGet("/preview", () => Results.Ok(new
 {
     release = "1.2.0-rc.1",
-    mode = "read-only representative data",
+    mode = "read-only public preview",
     mutationsEnabled = false,
+    graph = new
+    {
+        graphRuntime.Mode,
+        graphRuntime.DatabaseIdentity,
+        graphRuntime.DataClassification,
+        graphRuntime.QueryFingerprint,
+    },
 }));
 app.MapBlueTuskDashboard(options =>
 {
@@ -128,8 +158,6 @@ internal sealed class DashboardPreviewQueries :
     IControlPlaneQueryService,
     IControlPlaneSyncQueryService,
     IControlPlaneLiveQueryService,
-    IControlPlaneContinuousGraphQueryService,
-    IControlPlaneContinuousGraphExecutionService,
     IControlPlaneFleetQueryService
 {
     private const string SourceFingerprint =
@@ -479,352 +507,6 @@ internal sealed class DashboardPreviewQueries :
                  4_039,
                  100)]));
     }
-
-    public ValueTask<ControlPlaneContinuousGraphOverview>
-        GetContinuousGraphOverviewAsync(CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        return ValueTask.FromResult(new ControlPlaneContinuousGraphOverview(
-            DateTimeOffset.UtcNow,
-            [new ControlPlaneContinuousGraphQuerySnapshot(
-                "account-risk-top-100",
-                "risk-primary",
-                "52af299250cff0989985389299dd0f667fd67db598614eba82006735dc6dcd65",
-                "fraud_network",
-                "risk",
-                 ["account", "transfer"],
-                 ["risk.accounts", "risk.transfers"],
-                 100,
-                 "TrustedCdcDelta, AuthoritativeScopedDelta, FullRepair",
-                 [new ControlPlaneContinuousGraphParameterSnapshot(
-                     "minimumRisk", "Decimal", false, true, "0.72"),
-                  new ControlPlaneContinuousGraphParameterSnapshot(
-                      "tenantId", "String", false, false, null)],
-                 true),
-             new ControlPlaneContinuousGraphQuerySnapshot(
-                 "merchant-payment-ring",
-                 "payments-primary",
-                 "7cb5fcfb0d31d053031e586099412753b3f4b6ad5ebf847d958ccfd1168c0870",
-                 "payment_network",
-                 "risk",
-                 ["merchant", "payment", "account"],
-                 ["risk.merchants", "risk.payments", "risk.accounts"],
-                 500,
-                 "AuthoritativeScopedDelta, FullRepair",
-                 [new ControlPlaneContinuousGraphParameterSnapshot(
-                     "minimumPayments", "Int32", false, true, "4")],
-                 true),
-             new ControlPlaneContinuousGraphQuerySnapshot(
-                 "customer-connections",
-                 "orders-primary",
-                 "ae963a11dc8e8db6828f4d231676a6f038f224c0b46e899aa6b8544399fc2c5e",
-                 "customer_graph",
-                 "crm",
-                 ["customer", "order", "address"],
-                 ["crm.customers", "orders.orders", "crm.addresses"],
-                 1_000,
-                 "TrustedCdcDelta, AuthoritativeScopedDelta, FullRepair",
-                 [new ControlPlaneContinuousGraphParameterSnapshot(
-                     "maximumHops", "Int32", false, true, "3")],
-                 true) ]));
-    }
-
-    public ValueTask<ControlPlaneContinuousGraphRunResult> ExecuteAsync(
-        string queryFingerprint,
-        ControlPlaneActor actor,
-        ControlPlaneContinuousGraphRunRequest request,
-        CancellationToken cancellationToken = default)
-    {
-        cancellationToken.ThrowIfCancellationRequested();
-        ArgumentNullException.ThrowIfNull(actor);
-        ArgumentNullException.ThrowIfNull(request);
-        if (!actor.Roles.Contains(ControlPlaneRole.Viewer))
-        {
-            throw new ControlPlaneContinuousGraphExecutionException(
-                "graph-execution-denied",
-                "The representative graph requires dashboard viewer access.");
-        }
-
-        var graph = queryFingerprint switch
-        {
-            "52af299250cff0989985389299dd0f667fd67db598614eba82006735dc6dcd65" =>
-                CreateRiskGraph(),
-            "7cb5fcfb0d31d053031e586099412753b3f4b6ad5ebf847d958ccfd1168c0870" =>
-                CreatePaymentGraph(),
-            "ae963a11dc8e8db6828f4d231676a6f038f224c0b46e899aa6b8544399fc2c5e" =>
-                CreateCustomerGraph(),
-            _ => throw new ControlPlaneContinuousGraphExecutionException(
-                "graph-query-not-executable",
-                "The representative graph query is not registered."),
-        };
-        return ValueTask.FromResult(graph);
-    }
-
-    private static ControlPlaneContinuousGraphRunResult CreateRiskGraph()
-    {
-        var nodes = new List<ControlPlaneContinuousGraphNode>();
-        for (var index = 1; index <= 12; index++)
-        {
-            nodes.Add(Node(
-                $"account:{index}",
-                $"Account {index:00}",
-                "Account",
-                ("riskScore", (0.54 + index * 0.035).ToString("0.000", System.Globalization.CultureInfo.InvariantCulture)),
-                ("country", index % 3 == 0 ? "GB" : index % 3 == 1 ? "DE" : "NL"),
-                ("status", index % 5 == 0 ? "review" : "active")));
-        }
-
-        for (var index = 1; index <= 6; index++)
-        {
-            nodes.Add(Node(
-                $"device:{index}",
-                $"Device {index:00}",
-                "Device",
-                ("fingerprint", $"fp-{index:0000}"),
-                ("trusted", index % 3 == 0 ? "true" : "false")));
-        }
-
-        for (var index = 1; index <= 4; index++)
-        {
-            nodes.Add(Node(
-                $"merchant:{index}",
-                $"Merchant {index:00}",
-                "Merchant",
-                ("category", index % 2 == 0 ? "marketplace" : "travel"),
-                ("country", index == 4 ? "US" : "GB")));
-        }
-
-        var edges = new List<ControlPlaneContinuousGraphEdge>();
-        for (var index = 1; index <= 18; index++)
-        {
-            var source = index % 12 + 1;
-            var target = (index * 5) % 12 + 1;
-            edges.Add(Edge(
-                $"transfer:{index}",
-                $"account:{source}",
-                $"account:{target}",
-                "TRANSFERRED_TO",
-                "Transfer",
-                ("amount", (120 + index * 83).ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                ("currency", "GBP"),
-                ("riskReason", index % 4 == 0 ? "velocity" : "network")));
-        }
-
-        for (var index = 1; index <= 12; index++)
-        {
-            edges.Add(Edge(
-                $"access:{index}",
-                $"account:{index}",
-                $"device:{index % 6 + 1}",
-                "USED_DEVICE",
-                "Device access",
-                ("lastSeen", $"2026-08-{10 + index:00}T12:00:00Z")));
-        }
-
-        for (var index = 1; index <= 8; index++)
-        {
-            edges.Add(Edge(
-                $"payment:{index}",
-                $"account:{index}",
-                $"merchant:{index % 4 + 1}",
-                "PAID",
-                "Payment",
-                ("amount", (75 + index * 41).ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                ("currency", "GBP")));
-        }
-
-        return Result(
-            "52af299250cff0989985389299dd0f667fd67db598614eba82006735dc6dcd65",
-            "account-risk-top-100",
-            "risk-primary",
-            "fraud_network",
-            "risk",
-            nodes,
-            edges);
-    }
-
-    private static ControlPlaneContinuousGraphRunResult CreatePaymentGraph()
-    {
-        var nodes = new List<ControlPlaneContinuousGraphNode>();
-        for (var index = 1; index <= 8; index++)
-        {
-            nodes.Add(Node(
-                $"payer:{index}",
-                $"Account {index:00}",
-                "Account",
-                ("segment", index % 2 == 0 ? "business" : "consumer"),
-                ("opened", $"202{index % 5}-0{index % 9 + 1}-15")));
-        }
-
-        for (var index = 1; index <= 6; index++)
-        {
-            nodes.Add(Node(
-                $"merchant:{index}",
-                $"Merchant {index:00}",
-                "Merchant",
-                ("riskBand", index % 3 == 0 ? "high" : "normal"),
-                ("processor", index % 2 == 0 ? "north" : "south")));
-        }
-
-        var edges = new List<ControlPlaneContinuousGraphEdge>();
-        for (var index = 1; index <= 24; index++)
-        {
-            edges.Add(Edge(
-                $"payment-ring:{index}",
-                $"payer:{index % 8 + 1}",
-                $"merchant:{index % 6 + 1}",
-                "PAID",
-                "Payment",
-                ("amount", (900 + index * 117).ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                ("occurredAt", $"2026-08-{index:00}T{index % 20:00}:14:00Z"),
-                ("flag", index % 5 == 0 ? "circular-pattern" : "shared-counterparty")));
-        }
-
-        return Result(
-            "7cb5fcfb0d31d053031e586099412753b3f4b6ad5ebf847d958ccfd1168c0870",
-            "merchant-payment-ring",
-            "payments-primary",
-            "payment_network",
-            "risk",
-            nodes,
-            edges);
-    }
-
-    private static ControlPlaneContinuousGraphRunResult CreateCustomerGraph()
-    {
-        var nodes = new List<ControlPlaneContinuousGraphNode>();
-        for (var index = 1; index <= 10; index++)
-        {
-            nodes.Add(Node(
-                $"customer:{index}",
-                $"Customer {index:00}",
-                "Customer",
-                ("tier", index % 4 == 0 ? "gold" : "standard"),
-                ("region", index % 2 == 0 ? "London" : "Manchester")));
-        }
-
-        for (var index = 1; index <= 18; index++)
-        {
-            nodes.Add(Node(
-                $"order:{index}",
-                $"Order BT-{2400 + index}",
-                "Order",
-                ("total", (35 + index * 19).ToString(System.Globalization.CultureInfo.InvariantCulture)),
-                ("state", index % 6 == 0 ? "returned" : "complete")));
-        }
-
-        for (var index = 1; index <= 5; index++)
-        {
-            nodes.Add(Node(
-                $"address:{index}",
-                $"Address {index:00}",
-                "Address",
-                ("postcodeArea", index % 2 == 0 ? "M1" : "EC1"),
-                ("households", (index + 1).ToString(System.Globalization.CultureInfo.InvariantCulture))));
-        }
-
-        var edges = new List<ControlPlaneContinuousGraphEdge>();
-        for (var index = 1; index <= 18; index++)
-        {
-            edges.Add(Edge(
-                $"placed:{index}",
-                $"customer:{index % 10 + 1}",
-                $"order:{index}",
-                "PLACED",
-                "Order ownership",
-                ("channel", index % 3 == 0 ? "mobile" : "web")));
-        }
-
-        for (var index = 1; index <= 10; index++)
-        {
-            edges.Add(Edge(
-                $"lives:{index}",
-                $"customer:{index}",
-                $"address:{index % 5 + 1}",
-                "LIVES_AT",
-                "Residence",
-                ("since", $"202{index % 5}-01-01")));
-        }
-
-        for (var index = 1; index <= 18; index++)
-        {
-            edges.Add(Edge(
-                $"shipped:{index}",
-                $"order:{index}",
-                $"address:{index % 5 + 1}",
-                "SHIPPED_TO",
-                "Fulfilment",
-                ("carrier", index % 2 == 0 ? "BluePost" : "ParcelJet")));
-        }
-
-        return Result(
-            "ae963a11dc8e8db6828f4d231676a6f038f224c0b46e899aa6b8544399fc2c5e",
-            "customer-connections",
-            "orders-primary",
-            "customer_graph",
-            "crm",
-            nodes,
-            edges);
-    }
-
-    private static ControlPlaneContinuousGraphNode Node(
-        string id,
-        string label,
-        string category,
-        params (string Name, string Value)[] properties) =>
-        new(
-            id,
-            label,
-            category,
-            properties.Select(static property =>
-                new ControlPlaneContinuousGraphProperty(property.Name, property.Value)).ToArray());
-
-    private static ControlPlaneContinuousGraphEdge Edge(
-        string id,
-        string source,
-        string target,
-        string label,
-        string category,
-        params (string Name, string Value)[] properties) =>
-        new(
-            id,
-            source,
-            target,
-            label,
-            category,
-            true,
-            properties.Select(static property =>
-                new ControlPlaneContinuousGraphProperty(property.Name, property.Value)).ToArray());
-
-    private static ControlPlaneContinuousGraphRunResult Result(
-        string fingerprint,
-        string name,
-        string databaseIdentity,
-        string graphName,
-        string graphSchema,
-        List<ControlPlaneContinuousGraphNode> nodes,
-        List<ControlPlaneContinuousGraphEdge> edges) =>
-        new(
-            Guid.NewGuid(),
-            DateTimeOffset.UtcNow,
-            TimeSpan.FromMilliseconds(18.7 + nodes.Count * 0.31 + edges.Count * 0.19),
-            fingerprint,
-            name,
-            databaseIdentity,
-            graphName,
-            graphSchema,
-            Math.Max(nodes.Count, edges.Count),
-            nodes,
-            edges,
-            Composition(nodes.Select(static node => node.Category)),
-            Composition(edges.Select(static edge => edge.Category)));
-
-    private static ControlPlaneContinuousGraphComposition[] Composition(
-        IEnumerable<string> categories) => categories
-        .GroupBy(static category => category, StringComparer.Ordinal)
-        .OrderBy(static group => group.Key, StringComparer.Ordinal)
-        .Select(static group => new ControlPlaneContinuousGraphComposition(group.Key, group.Count()))
-        .ToArray();
 
     public ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(
         CancellationToken cancellationToken = default)

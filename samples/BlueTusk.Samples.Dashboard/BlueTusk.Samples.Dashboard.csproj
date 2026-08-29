@@ -7,5 +7,6 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.Dashboard\BlueTusk.Dashboard.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.ContinuousGraph.ControlPlane\BlueTusk.ContinuousGraph.ControlPlane.csproj" />
   </ItemGroup>
 </Project>

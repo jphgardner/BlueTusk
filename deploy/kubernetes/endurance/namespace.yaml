@@ -85,6 +85,16 @@ spec:
   ingress:
     - from:
         - podSelector: {}
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bluetusk-web
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: bluetusk-dashboard-preview
+      ports:
+        - protocol: TCP
+          port: 5432
   egress:
     - to:
         - podSelector: {}

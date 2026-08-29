@@ -1,9 +1,11 @@
 # BlueTusk Dashboard preview host
 
-This sample hosts the real `BlueTusk.Dashboard` endpoint renderer with
-representative, redacted 1.2 control-plane data. It exists so the dashboard UI
-can be reviewed without exposing a production database or Kubernetes control
-plane.
+This sample hosts the real `BlueTusk.Dashboard` endpoint renderer. Most
+control-plane inventories remain representative and redacted so the public UI
+does not expose a production database or Kubernetes control plane. Continuous
+Graph is different: when `BLUETUSK_GRAPH_CONNECTION_STRING` is configured, the
+host compiles and executes a registered, read-only PostgreSQL 19 `GRAPH_TABLE`
+query and renders its complete bounded result.
 
 The preview has two independent mutation barriers:
 
@@ -19,13 +21,25 @@ dotnet run --project samples/BlueTusk.Samples.Dashboard `
 ```
 
 Open `http://127.0.0.1:5217/bluetusk/overview`. The preview contains several
-representative sources, pipelines, Live subscriptions, Continuous Graph queries,
-and deployments in healthy, catching-up, and degraded states. Every inventory
+representative sources, pipelines, Live subscriptions, and deployments in
+healthy, catching-up, and degraded states. Every inventory
 row is linked to its complete redacted detail view, including nested consumer
 groups, snapshots, and checkpoints. Search and health filters make the larger
 inventories easy to inspect, and the layout adapts down to phone widths.
 
-The `/preview` endpoint reports the non-production data mode, and both health
+The public Kubernetes deployment requires `BLUETUSK_GRAPH_CONNECTION_STRING`
+and fails startup when the PostgreSQL registration cannot be compiled. The
+digest-pinned PostgreSQL 19 Beta 3 preview stores a captured BlueTusk deployment
+topology in `bluetusk_dashboard.release_topology`. A dedicated login has only
+schema usage, table `SELECT`, and property-graph `SELECT`; no browser-supplied
+SQL or security scope is accepted. The graph database initializer and network
+policies are in
+`deploy/kubernetes/dashboard-preview/graph-database.yaml` and
+`deploy/kubernetes/dashboard-preview/kubernetes.yaml`. This remains explicit
+non-gating preview evidence until PostgreSQL 19 GA is available.
+
+The `/preview` endpoint reports the graph execution mode, database identity,
+data classification, and registered fingerprint. Both health
 endpoints are unauthenticated for container probes. Public search indexing and
 response caching are disabled. The preview identity remains viewer-only and its
 operation authorizer denies every mutation independently of the UI.
