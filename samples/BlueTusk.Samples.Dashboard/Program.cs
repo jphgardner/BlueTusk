@@ -54,6 +54,12 @@ var app = builder.Build();
 app.UseForwardedHeaders();
 app.Use(async (context, next) =>
 {
+    if (context.Request.IsHttps)
+    {
+        context.Response.Headers.StrictTransportSecurity =
+            "max-age=63072000; includeSubDomains";
+    }
+
     context.Response.Headers.ContentSecurityPolicy =
         "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self'; " +
         "img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'";
