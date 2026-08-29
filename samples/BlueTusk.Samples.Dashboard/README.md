@@ -29,6 +29,7 @@ The `/preview` endpoint reports the non-production data mode, and both health
 endpoints are unauthenticated for container probes. Public search indexing and
 response caching are disabled. The preview identity remains viewer-only and its
 operation authorizer denies every mutation independently of the UI.
-The public host also emits HSTS after forwarded-header validation, alongside its
-same-origin Content Security Policy and anti-framing, MIME-sniffing, referrer,
-permissions, cache, and indexing protections.
+The public ingress enforces HSTS at the TLS boundary. The host also emits HSTS
+when it observes a validated HTTPS request, alongside its same-origin Content
+Security Policy and anti-framing, MIME-sniffing, referrer, permissions, cache,
+and indexing protections.
