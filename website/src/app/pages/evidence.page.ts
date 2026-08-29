@@ -12,11 +12,12 @@ import { StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero evidence-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> 1.1 RC EVIDENCE · 29 AUG 2026</span>
-        <h1>See what is tested—and <em>what is still pending.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> EVIDENCE SNAPSHOT · 29 AUG 2026</span>
+        <h1>Separate what passed from <em>what remains open.</em></h1>
         <p>
-          Every release claim links to evidence. Passed checks, open work, package history,
-          security, and performance results are shown separately and without hidden assumptions.
+          This page records package publication, compatibility, tests, security, performance, and
+          release gates. Each result has a date, a state, and a source; an RC package is never
+          presented as a stable approval.
         </p>
       </div>
       <div class="evidence-totals">
@@ -28,15 +29,18 @@ import { StatusPill } from '../shared/technical-ui';
           <strong>{{ pendingCount() }}</strong
           ><span>explicitly pending</span>
         </article>
-        <article><strong>13,056</strong><span>public APIs checked</span></article>
+        <article>
+          <strong>{{ guardedCount() }}</strong
+          ><span>capability guarded</span>
+        </article>
       </div>
     </section>
 
     <section class="page-section evidence-dashboard">
       <header class="section-head">
         <div>
-          <span>TEST AND RELEASE RECORDS</span>
-          <h2>Explore the current results.</h2>
+          <span>FILTERABLE RECORD</span>
+          <h2>Inspect one claim at a time.</h2>
         </div>
         <button
           type="button"
@@ -108,11 +112,11 @@ import { StatusPill } from '../shared/technical-ui';
       <header class="section-head">
         <div>
           <span>PRODUCT STATUS</span>
-          <h2>See what is available and what comes next.</h2>
+          <h2>Package availability and stable approval are different.</h2>
         </div>
         <p>
-          Public RC packages are available now. Stable release still requires the remaining tests
-          and approvals shown here.
+          Every product is available as the coordinated 1.1 RC. Stable promotion depends on the
+          remaining product-specific and platform-wide gates.
         </p>
       </header>
       <div class="release-ledger">
@@ -140,32 +144,19 @@ import { StatusPill } from '../shared/technical-ui';
       <div>
         <mat-icon>warning_amber</mat-icon>
         <div>
-          <span class="section-kicker">KNOWN LIMITS</span>
-          <h2>What this page does not claim.</h2>
+          <span class="section-kicker">INTERPRETATION</span>
+          <h2>Read the boundary with the result.</h2>
         </div>
       </div>
       <ul>
+        <li><code>1.1.0-rc.1</code> is public; it is not stable <code>1.1.0</code>.</li>
+        <li>A repository or package test does not approve an application’s production topology.</li>
         <li>
-          <code>1.1.0-rc.1</code> is public on NuGet and npm; this page does not represent it as
-          stable <code>1.1.0</code>.
-        </li>
-        <li>Passing the code checks does not mean every production environment has been tested.</li>
-        <li>
-          Recovery can resend the final unconfirmed transaction. PostgreSQL and Redis commit state
-          with the checkpoint, OpenSearch uses replay-safe versions, and NATS consumers keep the
-          stable transaction ID beyond the broker's deduplication window.
+          Streams and Sync stable promotion still require their exact long-running recovery gates.
         </li>
         <li>
-          Stable Streams still needs its exact 72-hour run, and Sync still needs its exact 24-hour
-          run, including the planned failure-and-recovery checks.
-        </li>
-        <li>
-          SQL/PGQ turns on only when the server supports it, and stable PostgreSQL 19 support waits
-          for the final GA release and its test results.
-        </li>
-        <li>
-          Stable release still requires an independent review, real application trials, and tested
-          backup, restore, and rollback procedures.
+          SQL/PGQ remains capability guarded until PostgreSQL 19 GA and exact-candidate evidence
+          pass.
         </li>
       </ul>
     </section>
@@ -192,6 +183,9 @@ export class EvidencePage {
   );
   protected readonly pendingCount = computed(
     () => this.records.filter((x) => x.status === 'pending').length,
+  );
+  protected readonly guardedCount = computed(
+    () => this.records.filter((x) => x.status === 'guarded').length,
   );
   constructor(
     private route: ActivatedRoute,

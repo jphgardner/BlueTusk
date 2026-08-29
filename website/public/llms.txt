@@ -2,7 +2,7 @@
 
 > BlueTusk is a PostgreSQL-native platform for .NET covering ADO.NET, EF Core, replication, real-time delivery, extensions, and graph workloads.
 
-Use this index to find the canonical HTML documentation. The complete source-synchronised handbook is available at [llms-full.txt](https://bluetusk.io/llms-full.txt).
+Use this index to find the canonical HTML documentation. The complete curated guide set is available at [llms-full.txt](https://bluetusk.io/llms-full.txt).
 
 ## Start here
 
@@ -14,14 +14,11 @@ Use this index to find the canonical HTML documentation. The complete source-syn
 
 ## Getting started
 
-- [BlueTusk documentation](https://bluetusk.io/documentation/getting-started/handbook): Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.
 - [Install BlueTusk](https://bluetusk.io/documentation/getting-started/install): Choose the stable or RC channel, install the smallest NuGet/npm package set, pin exact versions, and verify the resolved dependency graph.
-- [BlueTusk 1.1.0-rc.1 release record](https://bluetusk.io/documentation/getting-started/release-1-1-rc1): Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.
-- [Quickstart: run BlueTusk locally](https://bluetusk.io/documentation/getting-started/quickstart): Build the repository, start PostgreSQL, run the provider, register dependency injection, and choose the right next layer.
+- [Quickstart: run the first query](https://bluetusk.io/documentation/getting-started/quickstart): Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.
 - [Core concepts](https://bluetusk.io/documentation/getting-started/concepts): Learn data-source ownership, sessions, capabilities, type identity, checkpoints, source identity, and release-state vocabulary.
 - [Architecture](https://bluetusk.io/documentation/getting-started/architecture): Understand the layers, dependency direction, ownership, and async boundaries.
 - [ADO.NET](https://bluetusk.io/documentation/getting-started/provider-overview): Build and run the native ADO.NET provider.
-- [BlueTusk](https://bluetusk.io/documentation/getting-started/project-overview): PostgreSQL, fully exposed to .NET.
 
 ## Provider
 
@@ -39,11 +36,6 @@ Use this index to find the canonical HTML documentation. The complete source-syn
 - [Core type mappings](https://bluetusk.io/documentation/provider/types): Catalogue-driven PostgreSQL type mappings and extension points.
 - [PostgreSQL pipeline mode](https://bluetusk.io/documentation/provider/pipeline-mode): Pipeline groups, protocol Sync boundaries, and ordered failures.
 - [Replication](https://bluetusk.io/documentation/provider/replication): Physical and logical replication, pgoutput, and WAL feedback.
-- [ADO.NET V1 compatibility](https://bluetusk.io/documentation/provider/ado-net-compatibility): This matrix is the V1 contract for provider-neutral ADO.NET consumers. A capability marked excluded fails explicitly; it is not silently approximated. The live acceptance suite is tests/BlueTusk.CompatibilityTests/Ado…
-- [Multiplexing compatibility](https://bluetusk.io/documentation/provider/ado-net-multiplexing-compatibility): BlueTusk multiplexing is an opt-in throughput path for independent, session-neutral commands created directly from a BlueTuskDataSource. It does not turn PostgreSQL sessions into logical connections and never moves an…
-- [NativeAOT and trimming](https://bluetusk.io/documentation/provider/ado-net-nativeaot): The provider core supports trimmed and NativeAOT applications across BlueTusk.Transport, BlueTusk.Protocol, BlueTusk.Security, BlueTusk.TypeSystem, BlueTusk.Client, BlueTusk.Diagnostics, and
-- [Protocol notes](https://bluetusk.io/documentation/provider/protocol): PostgreSQL backend frames begin with a one-byte identifier followed by a big-endian 32-bit length. The length includes itself and excludes the identifier. Startup messages are exceptional: they have no identifier byte.
-- [Protocol capture format](https://bluetusk.io/documentation/provider/protocol-capture-format): BlueTusk protocol captures use the .btpc extension. The format is a streamable, big-endian container intended for conformance debugging and packet-laboratory fixtures; it is not a general network-capture replacement.
 
 ## EF Core
 
@@ -59,34 +51,11 @@ Use this index to find the canonical HTML documentation. The complete source-syn
 - [PostgreSQL durable relay](https://bluetusk.io/documentation/real-time/durable-relay): Storage, backup, groups, retention, and relay fan-out.
 - [Streams checkpoint and lease stores](https://bluetusk.io/documentation/real-time/state-stores): State-store contracts and supported persistence behavior.
 - [Hosting and observability](https://bluetusk.io/documentation/real-time/streams-hosting): Hosted services, health checks, metrics, and operational behavior.
-- [Streams release endurance](https://bluetusk.io/documentation/real-time/streams-endurance): The 72-hour endurance gate and evidence contract.
 - [BlueTusk Sync](https://bluetusk.io/documentation/real-time/sync): Versioned destination synchronization, quarantine, reconciliation, and rebuilds.
-- [Sync release endurance](https://bluetusk.io/documentation/real-time/sync-endurance): The 24-hour Sync release gate and evidence contract.
 - [BlueTusk Live](https://bluetusk.io/documentation/real-time/live): Authorized live delivery, replay, subscriptions, transports, and browser clients.
 - [BlueTusk Control Plane and Dashboard](https://bluetusk.io/documentation/real-time/control-plane): Operational queries, dashboard boundaries, authorization, and audit.
 - [Real-time operations](https://bluetusk.io/documentation/real-time/operations): Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.
 - [BlueTusk Continuous Graph](https://bluetusk.io/documentation/real-time/continuous-graph): Checkpointed graph projections for fraud and network workloads.
-- [Control Plane API and format compatibility](https://bluetusk.io/documentation/real-time/control-plane-api-compatibility): The Control Plane V1 candidate has two independently enforced compatibility surfaces:
-- [BlueTusk Control Plane 0.1.0-preview.1 release notes](https://bluetusk.io/documentation/real-time/control-plane-release-notes-0-1-0-preview-1): This preview contains the independently versioned BlueTusk.ControlPlane and BlueTusk.Dashboard packages. Its implementation and compatibility gates are complete. The product-family manifest remains non-publishable unt…
-- [BlueTusk Control Plane 1.0.0 release record](https://bluetusk.io/documentation/real-time/control-plane-release-notes-1-0-0): Status: published on 2026-08-23 from control-plane-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.
-- [Live public API compatibility](https://bluetusk.io/documentation/real-time/live-api-compatibility): The current Live 1.0 candidate surface is locked by two independent gates:
-- [Live format compatibility](https://bluetusk.io/documentation/real-time/live-format-compatibility): Every durable or externally visible Live format is registered in eng/live-formats.json. A test binds the registry to implementation constants, the versioned protobuf package, and named compatibility evidence.
-- [BlueTusk Live 0.1.0-preview.1](https://bluetusk.io/documentation/real-time/live-release-notes-0-1-0-preview-1): This is the first packaging-ready BlueTusk Live preview. It provides trusted, authorised, resumable real-time queries over BlueTusk Streams while preserving PostgreSQL/EF as the source of every client-visible row.
-- [BlueTusk Live 1.0.0 release record](https://bluetusk.io/documentation/real-time/live-release-notes-1-0-0): Status: published on 2026-08-23 from live-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.
-- [Real-time platform delivery plan](https://bluetusk.io/documentation/real-time/realtime-platform-delivery-plan): The implementation uses two-week iterations and lands only passing vertical slices. Each slice updates documentation and is committed and pushed on an AI-neutral feature/... branch.
-- [Streams public API compatibility](https://bluetusk.io/documentation/real-time/streams-api-compatibility): The current Streams 1.0 candidate surface is locked by two independent gates:
-- [Aspire integration](https://bluetusk.io/documentation/real-time/streams-aspire): BlueTusk.Streams.Aspire wires Streams workers to Aspire connection-string resources without resolving or copying secrets in the AppHost. It targets the Aspire application model and supports both relay and explicit dir…
-- [Streams validation and provisioning CLI](https://bluetusk.io/documentation/real-time/streams-cli): BlueTusk.Streams.Tool provides the bluetusk-streams .NET tool. It validates the PostgreSQL version, wallevel, publications, table selection, logical slot, source/control isolation, relay-schema exclusion, and canonica…
-- [CloudEvents](https://bluetusk.io/documentation/real-time/streams-cloudevents): BlueTusk.Streams.CloudEvents writes CloudEvents 1.0 structured JSON without changing the source transaction delivery unit. One committed PostgreSQL transaction becomes one event with one versioned BlueTusk transaction…
-- [Streams format compatibility](https://bluetusk.io/documentation/real-time/streams-format-compatibility): BlueTusk records every durable or externally visible Streams format in eng/streams-formats.json. A test binds that registry to the constants used by the implementation and verifies that its named compatibility evidenc…
-- [Prepared and two-phase transactions](https://bluetusk.io/documentation/real-time/streams-prepared-transactions): Prepared-transaction delivery is an opt-in Streams preview feature. The default PreparedTransactionMode.Fail behavior rejects every two-phase pgoutput message before changing assembler state. Enable PreparedTransactio…
-- [BlueTusk Streams 0.1.0-preview.1](https://bluetusk.io/documentation/real-time/streams-release-notes-0-1-0-preview-1): This is the first packaging-ready Streams preview. It establishes the public transaction, checkpoint, lease, snapshot, typed-mapping, hosting, and relay contracts needed by the later Sync and Live product families.
-- [BlueTusk Streams 1.0.0 release record](https://bluetusk.io/documentation/real-time/streams-release-notes-1-0-0): Status: published on 2026-08-23 from streams-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.
-- [Snapshot-then-stream sample](https://bluetusk.io/documentation/real-time/streams-sample): The BlueTusk.Samples.Streams worker demonstrates the complete first-run path: an exported PostgreSQL snapshot, bounded binary COPY batches, transition to the matching pgoutput position, and transaction acknowledgement…
-- [Typed change mappings](https://bluetusk.io/documentation/real-time/streams-typed-mappings): Streams always retains the dynamic ChangeRow and its explicit per-column states. Typed mapping is an optional projection over that lossless row; it does not replace it and never manufactures a complete CLR object from…
-- [Sync public API compatibility](https://bluetusk.io/documentation/real-time/sync-api-compatibility): The current Sync 1.0 candidate surface is locked by two independent gates:
-- [Sync format compatibility](https://bluetusk.io/documentation/real-time/sync-format-compatibility): Every durable or externally visible Sync format is registered in eng/sync-formats.json. A test binds the registry to implementation constants and named compatibility evidence.
-- [BlueTusk Sync 1.0.0 release record](https://bluetusk.io/documentation/real-time/sync-release-notes-1-0-0): Status: published on 2026-08-23 from sync-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.
 
 ## Extensions
 
@@ -95,31 +64,6 @@ Use this index to find the canonical HTML documentation. The complete source-syn
 ## Graph
 
 - [PostgreSQL 19 SQL/PGQ V1 candidate](https://bluetusk.io/documentation/graph/sql-pgq): PostgreSQL 19 SQL/PGQ, discovery, migrations, and typed EF queries.
-- [ContinuousGraph public API compatibility](https://bluetusk.io/documentation/graph/continuous-graph-api-compatibility): The immutable 1.0 surface and additive 1.1 candidate surface are locked by two independent gates:
-- [BlueTusk Continuous Graph 0.1.0-preview.1](https://bluetusk.io/documentation/graph/continuous-graph-release-notes-0-1-0-preview-1): This is the first package-verified Continuous Graph preview candidate. It builds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk property-graph, Live, and Control Plane foundations without exp…
-- [BlueTusk ContinuousGraph 1.0.0 release record](https://bluetusk.io/documentation/graph/continuous-graph-release-notes-1-0-0): Status: published on 2026-08-23 from continuous-graph-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.
-
-## Architecture
-
-- [Allocation discipline](https://bluetusk.io/documentation/architecture/architecture-allocation-discipline): BlueTusk treats low allocation as a measured engineering constraint, not as a blanket “allocation-free” claim. Returned strings, arrays, records, and buffered large fields own managed memory by design. The provider in…
-- [ADR 0001: Enforce layered dependency direction](https://bluetusk.io/documentation/architecture/architecture-decisions-0001-layered-dependency-direction): - Status: Accepted - Date: 2026-07-21
-- [ADR 0002: Treat PostgreSQL as the specification](https://bluetusk.io/documentation/architecture/architecture-decisions-0002-postgresql-is-the-specification): - Status: Accepted - Date: 2026-07-21
-- [ADR 0003: Discover types from catalogues](https://bluetusk.io/documentation/architecture/architecture-decisions-0003-catalogue-driven-types): - Status: Accepted - Date: 2026-07-21
-- [ADR 0004: Test protocol framing independently](https://bluetusk.io/documentation/architecture/architecture-decisions-0004-protocol-conformance-testing): - Status: Accepted - Date: 2026-07-21
-- [ADR 0005: Separate PostgreSQL pipeline mode from transport pipelines](https://bluetusk.io/documentation/architecture/architecture-decisions-0005-postgresql-pipeline-mode-and-transport-pipelines): - Status: Accepted; retain the ArrayPool/Span/Memory transport - Date: 2026-08-01
-- [ADR 0006: Make Streams the application CDC boundary](https://bluetusk.io/documentation/architecture/architecture-decisions-0006-streams-delivery-semantics): - Status: Accepted - Date: 2026-08-03
-- [ADR 0007: Persist checkpoints before replication feedback](https://bluetusk.io/documentation/architecture/architecture-decisions-0007-checkpoint-ordering-and-fencing): - Status: Accepted - Date: 2026-08-03
-- [ADR 0008: Bootstrap with an exported consistent snapshot](https://bluetusk.io/documentation/architecture/architecture-decisions-0008-snapshot-then-stream-protocol): - Status: Accepted - Date: 2026-08-03
-- [ADR 0009: Bound transaction memory and spill to a versioned spool](https://bluetusk.io/documentation/architecture/architecture-decisions-0009-bounded-transaction-spooling): - Status: Accepted - Date: 2026-08-03
-- [ADR 0010: Use PostgreSQL for the first durable relay](https://bluetusk.io/documentation/architecture/architecture-decisions-0010-postgresql-durable-relay): - Status: Accepted - Date: 2026-08-03
-- [ADR 0011: Treat CDC as Live invalidation, not client-visible truth](https://bluetusk.io/documentation/architecture/architecture-decisions-0011-live-authoritative-requery-security): - Status: Accepted - Date: 2026-08-03
-- [ADR 0012: Keep source transactions as the Sync delivery unit](https://bluetusk.io/documentation/architecture/architecture-decisions-0012-sync-connector-delivery-contract): - Status: Accepted - Date: 2026-08-03
-- [ADR 0013: Use bounded, session-neutral statement multiplexing](https://bluetusk.io/documentation/architecture/architecture-decisions-0013-bounded-statement-multiplexing): - Status: Accepted - Date: 2026-08-04
-- [ADR 0014: managed hosting uses fenced desired-state reconciliation](https://bluetusk.io/documentation/architecture/architecture-decisions-0014-managed-hosting-reconciliation): - Status: accepted - Date: 2026-08-03
-- [ADR 0015: Gate client-authored queries with database capabilities](https://bluetusk.io/documentation/architecture/architecture-decisions-0015-capability-secured-client-queries): - Status: Accepted - Date: 2026-08-03
-- [ADR 0016: Use bounded incremental graph maintenance with authoritative repair](https://bluetusk.io/documentation/architecture/architecture-decisions-0016-authoritative-incremental-graph-maintenance): - Status: Accepted - Date: 2026-08-04; extended for 1.1 on 2026-08-28
-- [ADR 0017: Keep the EF-to-Data provider SPI internal and minimal](https://bluetusk.io/documentation/architecture/architecture-decisions-0017-internal-ef-data-provider-spi): - Status: accepted - Date: 2026-08-04
-- [Transport contract](https://bluetusk.io/documentation/architecture/architecture-transport): BlueTusk.Transport owns byte movement and connection establishment. It has no PostgreSQL authentication, SQL, type-system, pooling, or ADO.NET knowledge.
 
 ## Operations
 
@@ -129,35 +73,4 @@ Use this index to find the canonical HTML documentation. The complete source-syn
 - [Troubleshooting](https://bluetusk.io/documentation/operations/troubleshooting): Diagnose connection, TLS, authentication, pool, command, type, EF, replication, and destination failures from the lowest boundary upward.
 - [Security review](https://bluetusk.io/documentation/operations/security): Threat model, closed findings, application boundaries, and checks.
 - [Performance engineering](https://bluetusk.io/documentation/operations/performance): Measure pool pressure, command paths, multiplexing, allocation, readers, COPY, and real-time throughput with reproducible evidence.
-- [BlueTusk V1 performance report: BlueTusk versus Npgsql](https://bluetusk.io/documentation/operations/npgsql-performance-comparison): Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.
-- [Runtime release readiness](https://bluetusk.io/documentation/operations/release-readiness): Executable gates for provider, EF, extensions, artifacts, and documentation.
 - [Upgrade guide](https://bluetusk.io/documentation/operations/upgrade-guide): Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.
-- [API compatibility](https://bluetusk.io/documentation/operations/api-compatibility): Public API baselines and compatibility expectations.
-- [Testing](https://bluetusk.io/documentation/operations/testing): Unit, live, topology, security, stress, and endurance test profiles.
-- [Repository and solution layout](https://bluetusk.io/documentation/operations/repository-layout): Repository projects and dependency boundaries.
-- [Roadmap](https://bluetusk.io/documentation/operations/roadmap): Provider, EF, graph, extension, real-time, and 1.0 milestones.
-- [Contributing to BlueTusk](https://bluetusk.io/documentation/operations/contributing): Issue-first contribution flow, tests, compatibility, and secrets policy.
-- [Security policy](https://bluetusk.io/documentation/operations/report-security): Report vulnerabilities privately through the repository hosting platform.
-- [Compatibility and versioning](https://bluetusk.io/documentation/operations/versioning): PostgreSQL 15–18 are the released-server compatibility baseline. PostgreSQL 19 is currently exercised with the pinned postgres:19beta3-alpine image and is explicitly beta-sensitive: SQL/PGQ syntax, catalogues, and cap…
-- [Public API naming](https://bluetusk.io/documentation/operations/api-naming): BlueTusk names should read naturally after the caller has already selected a BlueTusk package or entered a PostgreSQL-specific domain. Repeating the product name in every fluent member obscures the operation without a…
-- [Specification completion audit](https://bluetusk.io/documentation/operations/completion-audit): This record maps the original BlueTusk product specification and the subsequent architecture-gap review to concrete repository evidence. “Complete” here means the engineering surface is implemented, documented, and co…
-- [Parser reliability and coverage-guided fuzzing](https://bluetusk.io/documentation/operations/fuzzing): BlueTusk fuzzes every externally controlled parser boundary used by the V1 product chain:
-- [V1 hardening programme](https://bluetusk.io/documentation/operations/hardening-programme): The Provider → Streams → Sync → Live → Continuous Graph development chain is feature-complete for V1. Version 1.0.0 was published on 2026-08-23 under the documented repository-owner exception.
-- [Application platform health and rollout acceptance](https://bluetusk.io/documentation/operations/operations-application-platform-health): BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show Runnin…
-- [V1 operational approval evidence](https://bluetusk.io/documentation/operations/operations-approval-evidence): BlueTusk treats operational acceptance as measured release evidence, not a collection of unchecked signatures. The protected candidate workflow requires ten JSON records for one immutable commit. Every record is SHA-2…
-- [Endurance disturbance evidence](https://bluetusk.io/documentation/operations/operations-endurance-disturbance-evidence): V1 requires more than a long-running green test process. The exact 72-hour Streams run and exact 24-hour Sync run must each survive the seven operational disturbances in eng/v1-endurance-disturbance-contract.json. Tha…
-- [V1 fuzz-finding review handoff](https://bluetusk.io/documentation/operations/operations-fuzz-finding-handoff): This record preserves the release-relevant outcome of the 2026-08-04 coverage-guided run without placing triggering inputs in public documentation. It is a defensive review handoff, not approval to publish.
-- [Production observability and SLOs](https://bluetusk.io/documentation/operations/operations-observability): BlueTusk V1 exposes one OpenTelemetry meter per product area and treats telemetry as a versioned operational contract. Metrics are low-overhead when no listener is attached, exporter-neutral, and deliberately avoid SQ…
-- [Canonical V1 package evidence](https://bluetusk.io/documentation/operations/operations-package-evidence): The manual build.yml candidate run produces one canonical, evidence-only package set for all six BlueTusk product families. The set is the package input to release review. It is not a publication path and receives no…
-- [BlueTusk 1.1 performance leadership report](https://bluetusk.io/documentation/operations/operations-performance-leadership-1-1): Public RC basis: 2e735ed46aec11d5009158a00ca7b862f9ec12af
-- [V1 production readiness](https://bluetusk.io/documentation/operations/operations-production-readiness): BlueTusk has two deliberately different readiness states:
-- [Website production contract](https://bluetusk.io/documentation/operations/operations-website-production): The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes the source-synchronized handbook, and exposes the current benchmark, compatibility and operational records. A suc…
-- [PostgreSQL 19 compatibility programme](https://bluetusk.io/documentation/operations/postgresql19-programme): PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence, not a production dependency. The official project warns that beta features and behaviour may still change and does not recommend beta releas…
-- [BlueTusk Provider 1.0.0 release record](https://bluetusk.io/documentation/operations/provider-release-notes-1-0-0): Status: published on 2026-08-23 from provider-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.
-- [Release process](https://bluetusk.io/documentation/operations/release-process): BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish.
-- [Independent V1 release review handoff](https://bluetusk.io/documentation/operations/release-review-handoff): Use one copy of this record for each exact candidate commit. Reviewers must be independent of the person who prepared the release. Blank, inherited or ancestor-commit evidence does not pass.
-- [BlueTusk 1.0.0 publication record](https://bluetusk.io/documentation/operations/releases-1-0-0-publication-record): Status: published on 2026-08-23.
-- [BlueTusk 1.1.0 coordinated release line](https://bluetusk.io/documentation/operations/releases-1-1-0-candidate): BlueTusk 1.1.0 is one coordinated, API-compatible performance release across all six product families and the three Live browser clients. The existing 1.0 artifacts are immutable; 1.1 adds optimised paths and observab…
-- [BlueTusk 1.2 release contract](https://bluetusk.io/documentation/operations/releases-1-2-0-plan): BlueTusk 1.2 is a coordinated expansion release, not six unrelated package updates. Every BlueTusk dependency in one application remains on the same exact version. The machine-readable authority is
-- [V1 application suite and RC deployment](https://bluetusk.io/documentation/operations/v1-applications): BlueTusk V1 is exercised by three independently deployable applications in applications/BlueTusk.Applications.slnx:
-- [V1 release readiness](https://bluetusk.io/documentation/operations/v1-release-readiness): BlueTusk 1.0.0 was published on 2026-08-23 under the explicit repository-owner decision recorded in the V1 publication record. Publication did

@@ -275,9 +275,11 @@ provider superiority.
 
 Documentation covers every public subsystem and is led by long-lived,
 data-source-first usage. A cross-platform CI script validates every local link
-in all tracked Markdown files. The Angular documentation build automatically
-discovers every repository guide, rewrites internal links to site routes,
-generates full-text search records and fails when generated content drifts.
+in all tracked Markdown files. The Angular documentation build preserves a
+generated route for every repository guide while a reviewed manifest selects
+the task-oriented guides exposed by navigation, search, and the machine-readable
+guide set. Internal links are rewritten to site routes, and the build fails
+when generated content drifts.
 The support matrix identifies .NET 10, EF Core 10.0.11,
 PostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 3 candidate evidence, including the
 remaining beta-syntax risk.

@@ -1,8 +1,8 @@
 # Website production contract
 
 The Angular website is part of the V1 release evidence surface. It explains
-product maturity, publishes the source-synchronized handbook, and exposes the
-current benchmark, compatibility and operational records. A successful
+product maturity, publishes a curated source-synchronized guide set, and keeps
+benchmark, compatibility, and operational records available at stable routes. A successful
 application build alone is not enough: the shipped static output must also meet
 the checked-in delivery contract.
 
@@ -16,7 +16,7 @@ defines the maximum production output:
 | Initial JavaScript and CSS, raw | 950 kB | Prevent unbounded startup growth |
 | Initial JavaScript and CSS, Brotli | 220 KiB | Bound the expected compressed transfer |
 | Largest lazy JavaScript or CSS asset, Brotli | 275 KiB | Bound documentation-route payload growth |
-| Complete static distribution | 20 MiB | Bound 135 prerendered routes and the machine-readable handbook |
+| Complete static distribution | 20 MiB | Bound 135 prerendered routes and the machine-readable guide set |
 
 Angular independently enforces its configured initial bundle ceiling. The
 post-build verifier measures the emitted files, compresses JavaScript and CSS
@@ -51,7 +51,7 @@ The production contract also requires:
 - no unresolved deployment-origin placeholder;
 - 135 prerendered routes so crawlers receive complete page text without running JavaScript;
 - explicit `OAI-SearchBot`, `ChatGPT-User`, and `GPTBot` access in `robots.txt`;
-- a sitemap, `llms.txt` documentation index, complete `llms-full.txt` handbook, and standard
+- a sitemap, `llms.txt` documentation index, curated `llms-full.txt` guide set, and standard
   `.well-known/security.txt` contact;
 - guide-specific descriptions, canonical URLs, Open Graph URLs, and crawler directives;
 - hashed JavaScript and CSS with no production source maps;

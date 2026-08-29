@@ -77,22 +77,10 @@ export class App {
       icon: 'share',
     },
     {
-      label: 'Evidence',
-      href: '/evidence',
-      description: 'Review test results, performance, and open release work.',
-      icon: 'verified_user',
-    },
-    {
       label: 'Documentation',
       href: '/documentation',
       description: 'Find tutorials, guides, and production help.',
       icon: 'menu_book',
-    },
-    {
-      label: 'Community',
-      href: '/community',
-      description: 'Contribute, report issues, and become a design partner.',
-      icon: 'groups',
     },
   ];
 

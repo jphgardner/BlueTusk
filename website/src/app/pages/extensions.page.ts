@@ -3,7 +3,6 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { MatButtonModule } from '@angular/material/button';
 import { MatIconModule } from '@angular/material/icon';
 import { EXTENSION_CAPABILITIES, sourceUrl } from '../content/catalog';
-import { CapabilityRecord } from '../content/models';
 import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
 
 @Component({
@@ -12,32 +11,32 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero split-hero extensions-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> OPTIONAL POSTGRESQL FEATURES</span>
-        <h1>Add the database features <em>you need.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> OPTIONAL POSTGRESQL PACKAGES</span>
+        <h1>Install the feature.<br /><em>Keep the core provider focused.</em></h1>
         <p>
-          Add PostGIS, pgvector, TimescaleDB, or another supported extension without making every
-          application carry features it never uses.
+          Extension packages add the codecs, mappings, migrations, and query translations for one
+          PostgreSQL capability. Applications pay for only the features they select.
         </p>
         <div class="hero-actions">
           <a mat-flat-button routerLink="/documentation/extensions/catalog" class="primary-action"
-            >Extension guide</a
-          ><a mat-stroked-button href="#catalog" class="secondary-action">Browse catalog</a>
+            >Read the extension guide</a
+          ><a mat-stroked-button href="#catalog" class="secondary-action">Browse packages</a>
         </div>
       </div>
       <aside class="registry-diagram">
         <div>
-          <mat-icon>extension</mat-icon><strong>Extension package</strong
-          ><span>Adds only the feature you selected</span>
+          <mat-icon>extension</mat-icon><strong>Focused package</strong
+          ><span>Owns one PostgreSQL capability</span>
         </div>
         <mat-icon>south</mat-icon>
         <div>
-          <mat-icon>inventory_2</mat-icon><strong>Data source setup</strong
-          ><span>Configure extensions before startup</span>
+          <mat-icon>inventory_2</mat-icon><strong>Data source registration</strong
+          ><span>Adds codecs before the pool starts</span>
         </div>
         <mat-icon>south</mat-icon>
         <div>
-          <mat-icon>lock</mat-icon><strong>Running application</strong
-          ><span>Uses one safe, fixed configuration</span>
+          <mat-icon>data_object</mat-icon><strong>Optional EF package</strong
+          ><span>Adds mappings and LINQ only when needed</span>
         </div>
       </aside>
     </section>
@@ -45,14 +44,14 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
     <section id="catalog" class="page-section">
       <header class="section-head">
         <div>
-          <span>EXTENSION CATALOG</span>
-          <h2>Find the feature your application needs.</h2>
+          <span>SUPPORTED CAPABILITIES</span>
+          <h2>Choose by workload.</h2>
         </div>
-        <p>Filter by .NET API or task. Every support claim links to its technical guide.</p>
+        <p>Filter the current package set by .NET surface or database job.</p>
       </header>
       <div class="filter-bar" role="group" aria-label="Filter extensions">
         <div>
-          <small>.NET API</small>
+          <small>.NET SURFACE</small>
           @for (option of surfaces; track option) {
             <button
               type="button"
@@ -82,7 +81,7 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
             <div>
               <span class="extension-mark">{{ mark(item.feature) }}</span
               ><bt-status
-                [label]="item.state === 'supported' ? '1.1 RC public' : 'Preview'"
+                [label]="item.state === 'supported' ? 'Public RC' : 'Source preview'"
                 [stage]="item.state === 'supported' ? 'gate-passed' : 'preview'"
               />
             </div>
@@ -91,16 +90,16 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
             <p>{{ item.notes }}</p>
             <dl>
               <div>
-                <dt>Works with</dt>
+                <dt>.NET surface</dt>
                 <dd>{{ item.surface }}</dd>
               </div>
               <div>
-                <dt>PostgreSQL support</dt>
+                <dt>Tested server</dt>
                 <dd>{{ item.postgres }}</dd>
               </div>
             </dl>
-            <a [href]="source(item.sourcePath)" target="_blank" rel="noreferrer"
-              >Read technical evidence <mat-icon>open_in_new</mat-icon></a
+            <a routerLink="/documentation/extensions/catalog"
+              >Read setup and boundaries <mat-icon>arrow_forward</mat-icon></a
             >
           </article>
         } @empty {
@@ -111,40 +110,27 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
 
     <section class="page-section code-split">
       <div>
-        <span class="section-kicker">SIMPLE SETUP</span>
-        <h2>Choose extensions when your application starts.</h2>
+        <span class="section-kicker">STARTUP CONFIGURATION</span>
+        <h2>Register capabilities before building the data source.</h2>
         <p>
-          Add the extension packages you need before creating the data source. The configuration is
-          then fixed for safe, consistent use, and unused extensions add nothing to the core
-          provider.
+          The resulting configuration is immutable. Pools, commands, and EF contexts then share the
+          same catalogue and exact PostgreSQL type identities.
         </p>
-        <bt-source-link [href]="source('docs/extensions/README.md')" />
+        <bt-source-link [href]="source('docs/extensions/README.md')" label="Extension reference" />
       </div>
       <bt-code-panel file="Extensions.cs" [code]="code" />
     </section>
 
-    <section class="page-section">
-      <header class="section-head">
-        <div>
-          <span>BUILD AN EXTENSION</span>
-          <h2>Add support once for ADO.NET and EF Core.</h2>
-        </div>
-        <p>
-          One extension package can define its .NET values, PostgreSQL conversion, feature details,
-          and optional EF Core support.
-        </p>
-      </header>
-      <div class="timeline-flow">
-        @for (step of authoring; track step.title; let i = $index) {
-          <article>
-            <span>0{{ i + 1 }}</span
-            ><mat-icon>{{ step.icon }}</mat-icon>
-            <h3>{{ step.title }}</h3>
-            <p>{{ step.body }}</p>
-          </article>
-        }
-      </div>
-    </section>
+    <aside class="truth-note">
+      <mat-icon>info</mat-icon>
+      <p>
+        <strong>Extension support is feature-specific.</strong> A package records its server image,
+        extension version, ADO.NET surface, EF surface, and live tests. The checked-in
+        <code>pg_durable</code> adapter is an upstream-preview evaluation surface, not a production
+        package.
+      </p>
+      <a routerLink="/documentation/extensions/catalog">Review the support matrix</a>
+    </aside>
   `,
 })
 export class ExtensionsPage {
@@ -180,10 +166,12 @@ export class ExtensionsPage {
     const params = route.snapshot.queryParamMap;
     const surface = params.get('surface');
     const workload = params.get('workload');
-    if (surface && this.surfaces.includes(surface as (typeof this.surfaces)[number]))
+    if (surface && this.surfaces.includes(surface as (typeof this.surfaces)[number])) {
       this.surface.set(surface);
-    if (workload && this.workloads.includes(workload as (typeof this.workloads)[number]))
+    }
+    if (workload && this.workloads.includes(workload as (typeof this.workloads)[number])) {
       this.workload.set(workload);
+    }
   }
   protected setFilter(key: 'surface' | 'workload', value: string): void {
     if (key === 'surface') this.surface.set(value);
@@ -213,31 +201,10 @@ export class ExtensionsPage {
     .UsePostGis()
     .Build();
 
-await using var command = dataSource.CreateCommand(
-    "SELECT embedding <-> $1 FROM catalog ORDER BY 1 LIMIT 10");
-
-command.Parameters.Add(
-    new BlueTuskParameter<BlueTuskVector>(embedding));`;
-  protected readonly authoring = [
-    {
-      icon: 'data_object',
-      title: 'Define values',
-      body: 'Create .NET values that keep the meaning of the PostgreSQL type.',
-    },
-    {
-      icon: 'conversion_path',
-      title: 'Convert values',
-      body: 'Define how values move between .NET and PostgreSQL in text or binary form.',
-    },
-    {
-      icon: 'flag',
-      title: 'Describe the extension',
-      body: 'Tell BlueTusk which features the package provides and requires.',
-    },
-    {
-      icon: 'functions',
-      title: 'Add EF translation',
-      body: 'Add optional LINQ and model support without changing the core provider.',
-    },
-  ] as const;
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource, provider =>
+        provider
+            .UseCitext()
+            .UsePgVector()
+            .UsePostGis()));`;
 }

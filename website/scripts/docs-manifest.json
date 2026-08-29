@@ -211,6 +211,7 @@
     "categoryLabel": "Real time",
     "slug": "streams-endurance",
     "source": "docs/streams/release-endurance.md",
+    "listed": false,
     "summary": "The 72-hour endurance gate and evidence contract.",
     "keywords": ["72h", "endurance", "release"],
     "order": 80
@@ -229,6 +230,7 @@
     "categoryLabel": "Real time",
     "slug": "sync-endurance",
     "source": "docs/sync/release-endurance.md",
+    "listed": false,
     "summary": "The 24-hour Sync release gate and evidence contract.",
     "keywords": ["24h", "endurance", "release"],
     "order": 100
@@ -301,6 +303,7 @@
     "categoryLabel": "Operations",
     "slug": "release-readiness",
     "source": "docs/release-readiness.md",
+    "listed": false,
     "summary": "Executable gates for provider, EF, extensions, artifacts, and documentation.",
     "keywords": ["release", "gates", "artifacts"],
     "order": 30
@@ -310,6 +313,7 @@
     "categoryLabel": "Operations",
     "slug": "api-compatibility",
     "source": "docs/api-compatibility.md",
+    "listed": false,
     "summary": "Public API baselines and compatibility expectations.",
     "keywords": ["api", "compatibility", "freeze"],
     "order": 40
@@ -319,6 +323,7 @@
     "categoryLabel": "Operations",
     "slug": "testing",
     "source": "docs/contributing/testing.md",
+    "listed": false,
     "summary": "Unit, live, topology, security, stress, and endurance test profiles.",
     "keywords": ["testing", "postgresql", "docker"],
     "order": 50
@@ -328,6 +333,7 @@
     "categoryLabel": "Operations",
     "slug": "repository-layout",
     "source": "docs/contributing/repository-layout.md",
+    "listed": false,
     "summary": "Repository projects and dependency boundaries.",
     "keywords": ["repository", "projects", "dependencies"],
     "order": 60
@@ -337,6 +343,7 @@
     "categoryLabel": "Operations",
     "slug": "roadmap",
     "source": "docs/roadmap.md",
+    "listed": false,
     "summary": "Provider, EF, graph, extension, real-time, and 1.0 milestones.",
     "keywords": ["roadmap", "milestone"],
     "order": 70
@@ -346,6 +353,7 @@
     "categoryLabel": "Operations",
     "slug": "contributing",
     "source": "CONTRIBUTING.md",
+    "listed": false,
     "summary": "Issue-first contribution flow, tests, compatibility, and secrets policy.",
     "keywords": ["contribute", "issues", "pull request"],
     "order": 80
@@ -355,6 +363,7 @@
     "categoryLabel": "Operations",
     "slug": "report-security",
     "source": "SECURITY.md",
+    "listed": false,
     "summary": "Report vulnerabilities privately through the repository hosting platform.",
     "keywords": ["vulnerability", "reporting"],
     "order": 90
@@ -364,6 +373,7 @@
     "categoryLabel": "Getting started",
     "slug": "handbook",
     "source": "docs/README.md",
+    "listed": false,
     "summary": "Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.",
     "keywords": ["documentation", "handbook", "navigation", "v1"],
     "order": 1
@@ -373,8 +383,8 @@
     "categoryLabel": "Getting started",
     "slug": "quickstart",
     "source": "docs/getting-started/quickstart.md",
-    "summary": "Build the repository, start PostgreSQL, run the provider, register dependency injection, and choose the right next layer.",
-    "keywords": ["quickstart", "install", "build", "sample", "docker"],
+    "summary": "Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.",
+    "keywords": ["quickstart", "install", "query", "connection", "sample"],
     "order": 5
   },
   {
@@ -445,6 +455,7 @@
     "categoryLabel": "Operations",
     "slug": "npgsql-performance-comparison",
     "source": "docs/operations/npgsql-performance-comparison.md",
+    "listed": false,
     "summary": "Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.",
     "keywords": ["npgsql", "comparison", "benchmark", "multiplexing", "pooling"],
     "order": 26
@@ -472,6 +483,7 @@
     "categoryLabel": "Getting started",
     "slug": "release-1-1-rc1",
     "source": "docs/releases/1.1.0-rc.1.md",
+    "listed": false,
     "summary": "Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.",
     "keywords": ["release", "rc", "1.1.0-rc.1", "nuget", "npm", "verification"],
     "order": 3

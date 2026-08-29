@@ -89,13 +89,14 @@ if (
   !llmsIndex.includes('https://bluetusk.io/documentation/getting-started/quickstart') ||
   !llmsIndex.includes('https://bluetusk.io/llms-full.txt')
 ) {
-  throw new Error('llms.txt does not advertise the quickstart and complete handbook.');
+  throw new Error('llms.txt does not advertise the quickstart and curated guide set.');
 }
 if (
-  !llmsFull.includes('# BlueTusk complete documentation') ||
-  !llmsFull.includes('# Quickstart: run BlueTusk locally')
+  !llmsFull.includes('# BlueTusk curated documentation') ||
+  !llmsFull.includes('# Quickstart: run the first query') ||
+  llmsFull.includes('# Independent V1 release review handoff')
 ) {
-  throw new Error('llms-full.txt does not contain the complete BlueTusk handbook.');
+  throw new Error('llms-full.txt does not contain the curated BlueTusk guide set.');
 }
 
 for (const route of contract.requiredPrerenderedRoutes ?? []) {

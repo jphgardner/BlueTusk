@@ -6,6 +6,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "getting-started",
     "categoryLabel": "Getting started",
     "slug": "handbook",
+    "listed": false,
     "summary": "Navigate the complete BlueTusk V1 engineering handbook by workload, product family, architecture, operations, and release responsibility.",
     "keywords": [
       "documentation",
@@ -24,68 +25,68 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       },
       {
-        "id": "choose-a-path",
-        "text": "Choose a path",
+        "id": "start-here",
+        "text": "Start here",
         "level": 2
       },
       {
-        "id": "product-families",
-        "text": "Product families",
+        "id": "find-a-guide-by-task",
+        "text": "Find a guide by task",
         "level": 2
       },
       {
-        "id": "provider",
-        "text": "Provider",
-        "level": 3
-      },
-      {
-        "id": "ef-core",
-        "text": "EF Core",
-        "level": 3
-      },
-      {
-        "id": "streams-sync-and-live",
-        "text": "Streams, Sync and Live",
-        "level": 3
-      },
-      {
-        "id": "control-plane-and-continuous-graph",
-        "text": "Control Plane and Continuous Graph",
-        "level": 3
-      },
-      {
-        "id": "architectural-foundations",
-        "text": "Architectural foundations",
+        "id": "product-guides",
+        "text": "Product guides",
         "level": 2
       },
       {
-        "id": "operations-and-release-truth",
-        "text": "Operations and release truth",
+        "id": "data-access",
+        "text": "Data access",
+        "level": 3
+      },
+      {
+        "id": "ef-core-and-postgresql-features",
+        "text": "EF Core and PostgreSQL features",
+        "level": 3
+      },
+      {
+        "id": "real-time-platform",
+        "text": "Real-time platform",
+        "level": 3
+      },
+      {
+        "id": "operations",
+        "text": "Operations",
         "level": 2
       },
       {
-        "id": "documentation-contract",
-        "text": "Documentation contract",
+        "id": "architecture-and-maintenance",
+        "text": "Architecture and maintenance",
+        "level": 2
+      },
+      {
+        "id": "documentation-conventions",
+        "text": "Documentation conventions",
         "level": 2
       }
     ],
-    "wordCount": 885,
-    "readMinutes": 5,
-    "searchText": "BlueTusk documentation BlueTusk is a PostgreSQL-native .NET platform built as a set of independently versioned product families. The documentation follows the same boundaries as the code: start with the provider, add EF Core or an extension when the application needs it, and adopt Streams, Sync, Live, Control Plane or Continuous Graph only when their delivery contracts match the workload. The stable `1.0.0` line and public `1.1.0-rc.1` train each contain 62 NuGet packages and three npm packages. The RC was published from exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`, and registry availability plus clean package-consumer installs were verified. Read the [1.1 RC release record](releases/1.1.0-rc.1.md), [installation guide](getting-started/install.md), and [support matrix](../VERSIONING.md) before choosing a channel. Stable `1.1.0` remains gated on PostgreSQL 19 GA and the exact stable-candidate endurance, performance, security, and external-acceptance record. Choose a path You want to… Start here Then read Install published packages [Installation and package selection](getting-started/install.md) [Quickstart](getting-started/quickstart.md) and [1.1 RC release record](releases/1.1.0-rc.1.md) Evaluate BlueTusk from source [Quickstart](getting-started/quickstart.md) [Core concepts](getting-started/concepts.md) Build with ADO.NET [Provider guide](ado-net/README.md) [Compatibility matrix](ado-net/compatibility.md) and [dependency injection](ado-net/dependency-injection.md) Build with EF Core [EF Core guide](ef-core/README.md) [Specification coverage](ef-core/specification-tests.md) Move committed changes [Real-time platform](realtime-platform/README.md) [Streams](streams/README.md) and [operations](realtime-platform/operations.md) Synchronize destinations [Sync](sync/README.md) [Delivery contracts](realtime-platform/contracts.md) Deliver authorized live data [Live](live/README.md) [Security](security.md) Use PostgreSQL extensions [Extensions](extensions/README.md",
+    "wordCount": 526,
+    "readMinutes": 3,
+    "searchText": "BlueTusk documentation Use this page to find the shortest path from a goal to the relevant guide. BlueTusk is split into independently versioned product families, so most applications need only a small part of the documentation. Start here [Choose and install packages](getting-started/install.md). [Run the local quickstart](getting-started/quickstart.md). Read the [core concepts](getting-started/concepts.md) before adding replication or real-time delivery. Use the [production checklist](operations/production-checklist.md) before sending production traffic. BlueTusk `1.0.0` is the stable line. `1.1.0-rc.1` is the current published prerelease. The [support matrix](../VERSIONING.md) is the authority for .NET, EF Core, and PostgreSQL compatibility. Find a guide by task I want to… Read Open connections and run commands [ADO.NET provider](ado-net/README.md) Configure dependency injection and health checks [Dependency injection](ado-net/dependency-injection.md) Authenticate securely [Authentication](ado-net/authentication.md) and [cloud identity](ado-net/cloud-identity.md) Tune connection use [Pooling](ado-net/pooling.md), [multi-host routing](ado-net/multi-host.md), and [multiplexing](ado-net/multiplexing-compatibility.md) Move bulk data [COPY](ado-net/copy.md) Decode PostgreSQL changes [Replication](replication/README.md) Use LINQ, migrations, or scaffolding [EF Core](ef-core/README.md) Add PostGIS, pgvector, or TimescaleDB [Extensions](extensions/README.md) Create a recoverable change stream [Streams](streams/README.md) Synchronize another system [Sync](sync/README.md) Push authorized updates to clients [Live](live/README.md) Query or maintain graph data [Graph](graph/README.md) and [Continuous Graph](continuous-graph/README.md) Deploy and operate BlueTusk [Deployment](operations/deployment.md), [observability](operations/observability.md), and [troubleshooting](operations/troubleshooting.md) Upgrade safely [Upgrade guide](operations/upgrade-guide.md) Contribute to the ",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk documentation</h1>\n<p>BlueTusk is a PostgreSQL-native .NET platform built as a set of independently\nversioned product families. The documentation follows the same boundaries as\nthe code: start with the provider, add EF Core or an extension when the\napplication needs it, and adopt Streams, Sync, Live, Control Plane or\nContinuous Graph only when their delivery contracts match the workload.</p>\n<p>The stable <code>1.0.0</code> line and public <code>1.1.0-rc.1</code> train each contain 62 NuGet\npackages and three npm packages. The RC was published from exact commit\n<code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code>, and registry availability plus\nclean package-consumer installs were verified. Read the\n<a href=\"/documentation/getting-started/release-1-1-rc1\">1.1 RC release record</a>,\n<a href=\"/documentation/getting-started/install\">installation guide</a>, and\n<a href=\"/documentation/operations/versioning\">support matrix</a> before choosing a channel. Stable <code>1.1.0</code>\nremains gated on PostgreSQL 19 GA and the exact stable-candidate endurance,\nperformance, security, and external-acceptance record.</p>\n<h2>Choose a path</h2>\n<table>\n<thead>\n<tr>\n<th>You want to…</th>\n<th>Start here</th>\n<th>Then read</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Install published packages</td>\n<td><a href=\"/documentation/getting-started/install\">Installation and package selection</a></td>\n<td><a href=\"/documentation/getting-started/quickstart\">Quickstart</a> and <a href=\"/documentation/getting-started/release-1-1-rc1\">1.1 RC release record</a></td>\n</tr>\n<tr>\n<td>Evaluate BlueTusk from source</td>\n<td><a href=\"/documentation/getting-started/quickstart\">Quickstart</a></td>\n<td><a href=\"/documentation/getting-started/concepts\">Core concepts</a></td>\n</tr>\n<tr>\n<td>Build with ADO.NET</td>\n<td><a href=\"/documentation/getting-started/provider-overview\">Provider guide</a></td>\n<td><a href=\"/documentation/provider/ado-net-compatibility\">Compatibility matrix</a> and <a href=\"/documentation/provider/dependency-injection\">dependency injection</a></td>\n</tr>\n<tr>\n<td>Build with EF Core</td>\n<td><a href=\"/documentation/ef-core/overview\">EF Core guide</a></td>\n<td><a href=\"/documentation/ef-core/specification-tests\">Specification coverage</a></td>\n</tr>\n<tr>\n<td>Move committed changes</td>\n<td><a href=\"/documentation/real-time/platform\">Real-time platform</a></td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a> and <a href=\"/documentation/real-time/operations\">operations</a></td>\n</tr>\n<tr>\n<td>Synchronize destinations</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n<td><a href=\"/documentation/real-time/contracts\">Delivery contracts</a></td>\n</tr>\n<tr>\n<td>Deliver authorized live data</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n<td><a href=\"/documentation/operations/security\">Security</a></td>\n</tr>\n<tr>\n<td>Use PostgreSQL extensions</td>\n<td><a href=\"/documentation/extensions/catalog\">Extensions</a></td>\n<td><a href=\"/documentation/provider/types\">Type system</a></td>\n</tr>\n<tr>\n<td>Query or maintain graph data</td>\n<td><a href=\"/documentation/graph/sql-pgq\">SQL/PGQ</a></td>\n<td><a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></td>\n</tr>\n<tr>\n<td>Operate a deployment</td>\n<td><a href=\"/documentation/operations/production-checklist\">Production checklist</a></td>\n<td><a href=\"/documentation/operations/deployment\">Deployment</a>, <a href=\"/documentation/operations/troubleshooting\">troubleshooting</a>, and <a href=\"/documentation/operations/operations-observability\">production observability</a></td>\n</tr>\n<tr>\n<td>Contribute</td>\n<td><a href=\"/documentation/operations/repository-layout\">Repository layout</a></td>\n<td><a href=\"/documentation/operations/testing\">Testing</a></td>\n</tr>\n<tr>\n<td>Prepare a release</td>\n<td><a href=\"/documentation/operations/release-process\">Release process</a></td>\n<td><a href=\"/documentation/operations/operations-approval-evidence\">Operational approval evidence</a> and <a href=\"/documentation/operations/release-review-handoff\">independent review handoff</a></td>\n</tr>\n</tbody>\n</table>\n<h2>Product families</h2>\n<h3>Provider</h3>\n<p>The Provider family owns the PostgreSQL wire path: transport, protocol,\nauthentication, pooling, ADO.NET, types, COPY, notifications, large objects,\npipeline mode and replication. It does not wrap Npgsql at runtime.</p>\n<p>Read:</p>\n<ul>\n<li><a href=\"/documentation/getting-started/provider-overview\">ADO.NET provider</a></li>\n<li><a href=\"/documentation/provider/ado-net-compatibility\">Supported and intentionally excluded ADO.NET behavior</a></li>\n<li><a href=\"/documentation/provider/authentication\">Authentication</a> and\n<a href=\"/documentation/provider/cloud-identity\">cloud identity</a></li>\n<li><a href=\"/documentation/provider/pooling\">Pooling</a>, <a href=\"/documentation/provider/multi-host\">multi-host routing</a> and\n<a href=\"/documentation/provider/ado-net-multiplexing-compatibility\">bounded multiplexing</a></li>\n<li><a href=\"/documentation/provider/types\">Type system</a>, <a href=\"/documentation/provider/copy\">COPY</a> and\n<a href=\"/documentation/provider/replication\">replication</a></li>\n</ul>\n<h3>EF Core</h3>\n<p>The EF Core family adds PostgreSQL-native mappings, translations, migrations,\nscaffolding and design-time tooling on top of the provider-owned data source.\nIt consumes an internal Provider SPI rather than taking ownership of the wire\nstack.</p>\n<p>Read:</p>\n<ul>\n<li><a href=\"/documentation/ef-core/overview\">EF Core provider</a></li>\n<li><a href=\"/documentation/ef-core/specification-tests\">Official relational specification coverage</a></li>\n<li><a href=\"/documentation/architecture/architecture-decisions-0017-internal-ef-data-provider-spi\">Internal EF↔Data boundary</a></li>\n</ul>\n<h3>Streams, Sync and Live</h3>\n<p>The real-time families share source identity, transaction and checkpoint\nconcepts but deliberately keep different delivery semantics:</p>\n<ul>\n<li><strong>Streams</strong> turns logical replication into acknowledged committed\ntransactions and owns snapshot bootstrap, state stores and durable relay.</li>\n<li><strong>Sync</strong> applies versioned transforms to PostgreSQL, Redis, NATS and\nOpenSearch destinations, with quarantine, reconciliation and rebuilds.</li>\n<li><strong>Live</strong> performs authorized re-query and delivery over server-sent events,\nSignalR and gRPC/browser client surfaces.</li>\n</ul>\n<p>Read:</p>\n<ul>\n<li><a href=\"/documentation/real-time/contracts\">Platform contracts</a></li>\n<li><a href=\"/documentation/real-time/streams\">Streams</a>, <a href=\"/documentation/real-time/sync\">Sync</a> and\n<a href=\"/documentation/real-time/live\">Live</a></li>\n<li><a href=\"/documentation/real-time/operations\">Production operations</a></li>\n<li><a href=\"/documentation/real-time/streams-endurance\">Streams 72-hour</a> and\n<a href=\"/documentation/real-time/sync-endurance\">Sync 24-hour</a> evidence contracts</li>\n</ul>\n<h3>Control Plane and Continuous Graph</h3>\n<p>Control Plane manages deployment state, operational queries, reconciliation,\nauditing and the dashboard boundary. Continuous Graph consumes acknowledged\nchanges into checkpointed graph projections for workloads such as fraud and\nnetwork topology.</p>\n<p>Read:</p>\n<ul>\n<li><a href=\"/documentation/real-time/control-plane\">Control Plane</a></li>\n<li><a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></li>\n<li><a href=\"/documentation/architecture/architecture-decisions-0014-managed-hosting-reconciliation\">Managed-hosting reconciliation decision</a></li>\n<li><a href=\"/documentation/architecture/architecture-decisions-0016-authoritative-incremental-graph-maintenance\">Incremental graph maintenance decision</a></li>\n</ul>\n<h2>Architectural foundations</h2>\n<p>BlueTusk uses a strict downward dependency direction:</p>\n"
+        "html": "<h1>BlueTusk documentation</h1>\n<p>Use this page to find the shortest path from a goal to the relevant guide.\nBlueTusk is split into independently versioned product families, so most\napplications need only a small part of the documentation.</p>\n<h2>Start here</h2>\n<ol>\n<li><a href=\"/documentation/getting-started/install\">Choose and install packages</a>.</li>\n<li><a href=\"/documentation/getting-started/quickstart\">Run the local quickstart</a>.</li>\n<li>Read the <a href=\"/documentation/getting-started/concepts\">core concepts</a> before adding\nreplication or real-time delivery.</li>\n<li>Use the <a href=\"/documentation/operations/production-checklist\">production checklist</a> before\nsending production traffic.</li>\n</ol>\n<p>BlueTusk <code>1.0.0</code> is the stable line. <code>1.1.0-rc.1</code> is the current published\nprerelease. The <a href=\"/documentation/operations/versioning\">support matrix</a> is the authority for .NET,\nEF Core, and PostgreSQL compatibility.</p>\n<h2>Find a guide by task</h2>\n<table>\n<thead>\n<tr>\n<th>I want to…</th>\n<th>Read</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Open connections and run commands</td>\n<td><a href=\"/documentation/getting-started/provider-overview\">ADO.NET provider</a></td>\n</tr>\n<tr>\n<td>Configure dependency injection and health checks</td>\n<td><a href=\"/documentation/provider/dependency-injection\">Dependency injection</a></td>\n</tr>\n<tr>\n<td>Authenticate securely</td>\n<td><a href=\"/documentation/provider/authentication\">Authentication</a> and <a href=\"/documentation/provider/cloud-identity\">cloud identity</a></td>\n</tr>\n<tr>\n<td>Tune connection use</td>\n<td><a href=\"/documentation/provider/pooling\">Pooling</a>, <a href=\"/documentation/provider/multi-host\">multi-host routing</a>, and <a href=\"/documentation/provider/ado-net-multiplexing-compatibility\">multiplexing</a></td>\n</tr>\n<tr>\n<td>Move bulk data</td>\n<td><a href=\"/documentation/provider/copy\">COPY</a></td>\n</tr>\n<tr>\n<td>Decode PostgreSQL changes</td>\n<td><a href=\"/documentation/provider/replication\">Replication</a></td>\n</tr>\n<tr>\n<td>Use LINQ, migrations, or scaffolding</td>\n<td><a href=\"/documentation/ef-core/overview\">EF Core</a></td>\n</tr>\n<tr>\n<td>Add PostGIS, pgvector, or TimescaleDB</td>\n<td><a href=\"/documentation/extensions/catalog\">Extensions</a></td>\n</tr>\n<tr>\n<td>Create a recoverable change stream</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n</tr>\n<tr>\n<td>Synchronize another system</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n</tr>\n<tr>\n<td>Push authorized updates to clients</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n</tr>\n<tr>\n<td>Query or maintain graph data</td>\n<td><a href=\"/documentation/graph/sql-pgq\">Graph</a> and <a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></td>\n</tr>\n<tr>\n<td>Deploy and operate BlueTusk</td>\n<td><a href=\"/documentation/operations/deployment\">Deployment</a>, <a href=\"/documentation/operations/operations-observability\">observability</a>, and <a href=\"/documentation/operations/troubleshooting\">troubleshooting</a></td>\n</tr>\n<tr>\n<td>Upgrade safely</td>\n<td><a href=\"/documentation/operations/upgrade-guide\">Upgrade guide</a></td>\n</tr>\n<tr>\n<td>Contribute to the repository</td>\n<td><a href=\"/documentation/operations/repository-layout\">Repository layout</a> and <a href=\"/documentation/operations/testing\">testing</a></td>\n</tr>\n</tbody>\n</table>\n<h2>Product guides</h2>\n<h3>Data access</h3>\n<ul>\n<li><a href=\"/documentation/getting-started/provider-overview\">ADO.NET provider</a></li>\n<li><a href=\"/documentation/provider/types\">PostgreSQL type system</a></li>\n<li><a href=\"/documentation/provider/pipeline-mode\">Pipeline mode</a></li>\n<li><a href=\"/documentation/provider/replication\">Replication</a></li>\n<li><a href=\"/documentation/provider/ado-net-compatibility\">ADO.NET compatibility</a></li>\n</ul>\n<h3>EF Core and PostgreSQL features</h3>\n<ul>\n<li><a href=\"/documentation/ef-core/overview\">EF Core provider</a></li>\n<li><a href=\"/documentation/ef-core/specification-tests\">EF Core specification coverage</a></li>\n<li><a href=\"/documentation/extensions/catalog\">Extension SDK and catalogue</a></li>\n<li><a href=\"/documentation/graph/sql-pgq\">PostgreSQL 19 SQL/PGQ</a></li>\n</ul>\n<h3>Real-time platform</h3>\n<p>Use the products in this order only when the workload requires them:</p>\n"
       },
       {
         "kind": "code",
-        "code": "Application\n  ├─ EF Core / extensions\n  ├─ ADO.NET Provider\n  ├─ Client / protocol / transport\n  └─ PostgreSQL\n\nLogical replication\n  └─ Streams\n      ├─ Sync\n      ├─ Live\n      ├─ Control Plane\n      └─ Continuous Graph\n",
-        "highlighted": "Application\n  ├─ EF Core / extensions\n  ├─ ADO.NET Provider\n  ├─ Client / protocol / transport\n  └─ PostgreSQL\n\nLogical replication\n  └─ Streams\n      ├─ Sync\n      ├─ Live\n      ├─ Control Plane\n      └─ Continuous Graph\n",
+        "code": "PostgreSQL → Streams → Sync / Live / Continuous Graph\n                         ↑\n                    Control Plane\n",
+        "highlighted": "PostgreSQL → Streams → Sync / Live / Continuous Graph\n                         ↑\n                    Control Plane\n",
         "language": "text"
       },
       {
         "kind": "html",
-        "html": "<p>The important cross-cutting rules are:</p>\n<ol>\n<li>PostgreSQL behavior is the specification.</li>\n<li>Capability discovery is stronger than version-string inference.</li>\n<li>Every untrusted length, count and collection is bounded before allocation.</li>\n<li>Logical connection ownership is distinct from physical pooled-session\nownership.</li>\n<li>Acknowledgement, checkpointing and destination application are separate\noperations.</li>\n<li>Public API, persisted format and package changes are mechanically checked.</li>\n<li>A successful local build is evidence, not publication permission.</li>\n</ol>\n<p>The <a href=\"/documentation/getting-started/architecture\">architecture overview</a> explains the layers and\nthe <a href=\"https://github.com/jphgardner/BlueTusk/tree/main/docs/architecture/decisions/\" target=\"_blank\" rel=\"noreferrer\">architecture decisions</a> record why the important\nboundaries exist.</p>\n<h2>Operations and release truth</h2>\n<p>Use these documents when the question is not “how do I call the API?”:</p>\n<ul>\n<li><a href=\"/documentation/operations/deployment\">Deployment and configuration</a></li>\n<li><a href=\"/documentation/operations/production-checklist\">Production checklist</a></li>\n<li><a href=\"/documentation/operations/operations-application-platform-health\">Application platform health and rollout acceptance</a></li>\n<li><a href=\"/documentation/operations/troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/operations/performance\">Performance engineering</a></li>\n<li><a href=\"/documentation/operations/npgsql-performance-comparison\">BlueTusk versus Npgsql V1 performance report</a></li>\n<li><a href=\"/documentation/operations/operations-observability\">Production observability and SLOs</a></li>\n<li><a href=\"/documentation/operations/operations-production-readiness\">V1 production-readiness gates and exact-candidate evidence</a></li>\n<li><a href=\"/documentation/operations/operations-package-evidence\">Canonical V1 package evidence</a></li>\n<li><a href=\"/documentation/operations/operations-approval-evidence\">V1 operational approval evidence</a></li>\n<li><a href=\"/documentation/operations/operations-website-production\">Angular website production contract</a></li>\n<li><a href=\"/documentation/operations/upgrade-guide\">Upgrade guide</a></li>\n<li><a href=\"/documentation/operations/observability\">Observability</a></li>\n<li><a href=\"/documentation/operations/security\">Security model</a></li>\n<li><a href=\"/documentation/operations/testing\">Testing profiles</a></li>\n<li><a href=\"/documentation/operations/release-process\">Release process</a></li>\n<li><a href=\"/documentation/operations/hardening-programme\">V1 hardening programme</a></li>\n<li><a href=\"/documentation/operations/postgresql19-programme\">PostgreSQL 19 programme</a></li>\n<li><a href=\"/documentation/operations/v1-applications\">V1 application suite and RC deployment</a></li>\n<li><a href=\"/documentation/getting-started/release-1-1-rc1\">BlueTusk 1.1.0-rc.1 release record</a></li>\n</ul>\n<h2>Documentation contract</h2>\n<p>Repository Markdown is canonical. The Angular website transforms the selected\nMarkdown files into searchable guides during its build and fails when generated\ncontent drifts. When behavior changes:</p>\n<ol>\n<li>update the implementation and focused tests;</li>\n<li>update the relevant public API or format baseline;</li>\n<li>update the canonical Markdown guide and examples;</li>\n<li>update release/readiness evidence if the claim changed; and</li>\n<li>regenerate and validate the website documentation.</li>\n</ol>\n<p>Examples must use parameterized SQL, explicit cancellation where useful and\nhonest package availability. Experimental-feature boundaries,\nstable-publication gates and\nexternal production validation must never be collapsed into one status.</p>\n"
+        "html": "<ul>\n<li><a href=\"/documentation/real-time/platform\">Platform overview</a></li>\n<li><a href=\"/documentation/real-time/contracts\">Delivery contracts</a></li>\n<li><a href=\"/documentation/real-time/streams\">Streams</a></li>\n<li><a href=\"/documentation/real-time/sync\">Sync</a></li>\n<li><a href=\"/documentation/real-time/live\">Live</a></li>\n<li><a href=\"/documentation/real-time/control-plane\">Control Plane</a></li>\n<li><a href=\"/documentation/real-time/continuous-graph\">Continuous Graph</a></li>\n<li><a href=\"/documentation/real-time/operations\">Real-time operations</a></li>\n</ul>\n<h2>Operations</h2>\n<p>Start with these documents when preparing or running a deployment:</p>\n<ul>\n<li><a href=\"/documentation/operations/production-checklist\">Production checklist</a></li>\n<li><a href=\"/documentation/operations/deployment\">Deployment</a></li>\n<li><a href=\"/documentation/operations/operations-observability\">Observability</a></li>\n<li><a href=\"/documentation/operations/troubleshooting\">Troubleshooting</a></li>\n<li><a href=\"/documentation/operations/performance\">Performance</a></li>\n<li><a href=\"/documentation/operations/upgrade-guide\">Upgrade guide</a></li>\n<li><a href=\"/documentation/operations/security\">Security model</a></li>\n</ul>\n<p>The release evidence, endurance plans, approval records, and historical release\nnotes elsewhere in this directory are project records. They support review and\nreproducibility, but they are not required reading for normal application\ndevelopment.</p>\n<h2>Architecture and maintenance</h2>\n<ul>\n<li><a href=\"/documentation/getting-started/architecture\">Architecture overview</a></li>\n<li><a href=\"https://github.com/jphgardner/BlueTusk/tree/main/docs/architecture/decisions/\" target=\"_blank\" rel=\"noreferrer\">Architecture decisions</a></li>\n<li><a href=\"/documentation/architecture/architecture-allocation-discipline\">Allocation discipline</a></li>\n<li><a href=\"/documentation/operations/api-compatibility\">API compatibility</a></li>\n<li><a href=\"/documentation/operations/release-process\">Release process</a></li>\n<li><a href=\"/documentation/getting-started/release-1-1-rc1\">1.1.0-rc.1 release record</a></li>\n</ul>\n<h2>Documentation conventions</h2>\n<ul>\n<li>Examples use parameterized SQL and explicit resource ownership.</li>\n<li>Product availability, test evidence, and production approval are stated\nseparately.</li>\n<li>Version-sensitive claims link to the support matrix or a release record.</li>\n<li>Repository paths and commands are written from the repository root unless a\nguide says otherwise.</li>\n<li>Public website guides are curated from these Markdown sources; project\nrecords remain available in GitHub without crowding the task-oriented index.</li>\n</ul>\n<p>If documentation and behavior disagree, open an issue with the affected\nversion, PostgreSQL version, smallest reproducer, and the guide URL.</p>\n"
       }
     ]
   },
@@ -103,6 +104,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "versions"
     ],
     "order": 2,
+    "listed": true,
     "title": "Install BlueTusk",
     "sourcePath": "docs/getting-started/install.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/install.md",
@@ -257,6 +259,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "getting-started",
     "categoryLabel": "Getting started",
     "slug": "release-1-1-rc1",
+    "listed": false,
     "summary": "Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.",
     "keywords": [
       "release",
@@ -356,28 +359,24 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "getting-started",
     "categoryLabel": "Getting started",
     "slug": "quickstart",
-    "summary": "Build the repository, start PostgreSQL, run the provider, register dependency injection, and choose the right next layer.",
+    "summary": "Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.",
     "keywords": [
       "quickstart",
       "install",
-      "build",
-      "sample",
-      "docker"
+      "query",
+      "connection",
+      "sample"
     ],
     "order": 5,
-    "title": "Quickstart: run BlueTusk locally",
+    "listed": true,
+    "title": "Quickstart: run the first query",
     "sourcePath": "docs/getting-started/quickstart.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/quickstart.md",
     "headings": [
       {
-        "id": "quickstart-run-bluetusk-locally",
-        "text": "Quickstart: run BlueTusk locally",
+        "id": "quickstart-run-the-first-query",
+        "text": "Quickstart: run the first query",
         "level": 1
-      },
-      {
-        "id": "fastest-package-path",
-        "text": "Fastest package path",
-        "level": 2
       },
       {
         "id": "prerequisites",
@@ -385,58 +384,48 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       },
       {
-        "id": "clone-and-build-from-source",
-        "text": "Clone and build from source",
+        "id": "1-create-the-application",
+        "text": "1. Create the application",
         "level": 2
       },
       {
-        "id": "start-postgresql",
-        "text": "Start PostgreSQL",
+        "id": "2-set-the-connection-string",
+        "text": "2. Set the connection string",
         "level": 2
       },
       {
-        "id": "run-the-ado-net-sample",
-        "text": "Run the ADO.NET sample",
+        "id": "3-replace-program-cs",
+        "text": "3. Replace `Program.cs`",
         "level": 2
       },
       {
-        "id": "write-the-smallest-application",
-        "text": "Write the smallest application",
+        "id": "4-run-it",
+        "text": "4. Run it",
         "level": 2
       },
       {
-        "id": "use-dependency-injection",
-        "text": "Use dependency injection",
+        "id": "understand-the-ownership-model",
+        "text": "Understand the ownership model",
         "level": 2
       },
       {
-        "id": "choose-the-next-layer",
-        "text": "Choose the next layer",
+        "id": "choose-the-next-guide",
+        "text": "Choose the next guide",
         "level": 2
       },
       {
-        "id": "run-focused-verification",
-        "text": "Run focused verification",
-        "level": 2
-      },
-      {
-        "id": "shut-down",
-        "text": "Shut down",
-        "level": 2
-      },
-      {
-        "id": "common-first-run-failures",
-        "text": "Common first-run failures",
+        "id": "build-the-repository-instead",
+        "text": "Build the repository instead",
         "level": 2
       }
     ],
-    "wordCount": 703,
-    "readMinutes": 4,
-    "searchText": "Quickstart: run BlueTusk locally This guide takes a developer from a clean environment to a live, parameterized PostgreSQL query. Published `1.0.0` stable and `1.1.0-rc.1` packages are available; use the [installation guide](install.md) to choose and pin a channel. The source-checkout path below is intended for contributors and repository validation. Fastest package path Use `1.0.0` instead when the application requires the stable channel. Do not mix package trains. Continue at [Write the smallest application](#write-the-smallest-application) after provisioning a PostgreSQL database. Prerequisites .NET SDK selected by `global.json` Docker Desktop or another Docker Compose-compatible runtime Git PowerShell 7 for the repository engineering scripts Node.js is required only when building the Angular documentation website. Clone and build from source A successful Release build has zero warnings. The solution contains product projects, tests, samples, smoke applications and tooling; the two embedded template projects are intentionally outside the main solution build. Start PostgreSQL The repository compose file exposes PostgreSQL versions on predictable local ports. Start PostgreSQL 18 for a general evaluation: These credentials belong only to the isolated local test container. Do not copy them into an application deployment. Run the ADO.NET sample The sample exercises the provider owned by this repository. BlueTusk does not delegate connections or command execution to Npgsql. Write the smallest application Reference the Provider projects from a local application or work inside a repository sample. Prefer a long-lived data source and short-lived logical connections: The data source owns pooling and provider-wide type configuration. Disposing a logical connection returns its healthy physical session to the pool. Do not create one data source per request. Use dependency injection The `BlueTusk.Data.DependencyInjection` package registers the same long-lived data source as bo",
+    "wordCount": 482,
+    "readMinutes": 3,
+    "searchText": "Quickstart: run the first query This guide creates a .NET console application, connects it to PostgreSQL, and runs one parameterized query. It uses the published `1.1.0-rc.1` package; use `1.0.0` instead if you require the stable channel. Prerequisites .NET 10 SDK PostgreSQL 15, 16, 17, or 18 a database and credentials you may use for this test See [Install BlueTusk](install.md) for the complete compatibility and package selection guidance. 1. Create the application Keep all BlueTusk dependencies on the same exact version. Do not mix stable and release-candidate packages. 2. Set the connection string Use an environment variable so credentials do not enter source control: That example disables TLS only for an isolated local PostgreSQL instance. Use TLS and appropriately scoped credentials outside local development. 3. Replace `Program.cs` The parameters travel through PostgreSQL protocol binding; their values are not interpolated into SQL. 4. Run it The application should print: Understand the ownership model `BlueTuskDataSource` owns configuration, PostgreSQL type metadata, and the physical connection pool. Create one long-lived data source for each distinct connection configuration. Open and dispose short-lived logical connections as work arrives; healthy physical sessions return to the pool. Do not create a data source per request. Choose the next guide [ADO.NET provider](../ado-net/README.md): commands, transactions, batches, COPY, notifications, large objects, and replication. [Dependency injection](../ado-net/dependency-injection.md): register the data source and a readiness check in a hosted application. [EF Core](../ef-core/README.md): use LINQ, migrations, scaffolding, and PostgreSQL-native mappings. [Extensions](../extensions/README.md): add PostGIS, pgvector, TimescaleDB, and other focused packages. [Streams](../streams/README.md): consume committed PostgreSQL changes with acknowledgement and checkpoints. [Production checklist](../operations/production-che",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Quickstart: run BlueTusk locally</h1>\n<p>This guide takes a developer from a clean environment to a live, parameterized\nPostgreSQL query. Published <code>1.0.0</code> stable and <code>1.1.0-rc.1</code> packages are\navailable; use the <a href=\"/documentation/getting-started/install\">installation guide</a> to choose and pin a channel.\nThe source-checkout path below is intended for contributors and repository\nvalidation.</p>\n<h2>Fastest package path</h2>\n"
+        "html": "<h1>Quickstart: run the first query</h1>\n<p>This guide creates a .NET console application, connects it to PostgreSQL, and\nruns one parameterized query. It uses the published <code>1.1.0-rc.1</code> package; use\n<code>1.0.0</code> instead if you require the stable channel.</p>\n<h2>Prerequisites</h2>\n<ul>\n<li>.NET 10 SDK</li>\n<li>PostgreSQL 15, 16, 17, or 18</li>\n<li>a database and credentials you may use for this test</li>\n</ul>\n<p>See <a href=\"/documentation/getting-started/install\">Install BlueTusk</a> for the complete compatibility and package\nselection guidance.</p>\n<h2>1. Create the application</h2>\n"
       },
       {
         "kind": "code",
@@ -446,67 +435,57 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Use <code>1.0.0</code> instead when the application requires the stable channel. Do not\nmix package trains. Continue at <a href=\"#write-the-smallest-application\">Write the smallest application</a>\nafter provisioning a PostgreSQL database.</p>\n<h2>Prerequisites</h2>\n<ul>\n<li>.NET SDK selected by <code>global.json</code></li>\n<li>Docker Desktop or another Docker Compose-compatible runtime</li>\n<li>Git</li>\n<li>PowerShell 7 for the repository engineering scripts</li>\n</ul>\n<p>Node.js is required only when building the Angular documentation website.</p>\n<h2>Clone and build from source</h2>\n"
+        "html": "<p>Keep all BlueTusk dependencies on the same exact version. Do not mix stable\nand release-candidate packages.</p>\n<h2>2. Set the connection string</h2>\n<p>Use an environment variable so credentials do not enter source control:</p>\n"
       },
       {
         "kind": "code",
-        "code": "git clone https://github.com/jphgardner/BlueTusk.git\ncd BlueTusk\ndotnet restore BlueTusk.slnx\ndotnet build BlueTusk.slnx --configuration Release --no-restore\n",
-        "highlighted": "git clone https://github.com/jphgardner/BlueTusk.git\n<span class=\"hljs-built_in\">cd</span> BlueTusk\ndotnet restore BlueTusk.slnx\ndotnet build BlueTusk.slnx <span class=\"hljs-literal\">--configuration</span> Release <span class=\"hljs-literal\">--no-restore</span>\n",
+        "code": "$env:BLUETUSK_CONNECTION_STRING =\n  \"Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk;SSL Mode=Disable;Channel Binding=Disable\"\n",
+        "highlighted": "<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> =\n  <span class=\"hljs-string\">&quot;Host=localhost;Port=5432;Username=postgres;Password=postgres;Database=bluetusk;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>A successful Release build has zero warnings. The solution contains product\nprojects, tests, samples, smoke applications and tooling; the two embedded\ntemplate projects are intentionally outside the main solution build.</p>\n<h2>Start PostgreSQL</h2>\n<p>The repository compose file exposes PostgreSQL versions on predictable local\nports. Start PostgreSQL 18 for a general evaluation:</p>\n"
+        "html": "<p>That example disables TLS only for an isolated local PostgreSQL instance. Use\nTLS and appropriately scoped credentials outside local development.</p>\n<h2>3. Replace <code>Program.cs</code></h2>\n"
       },
       {
         "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml up -d --wait postgres18\n$env:BLUETUSK_TEST_CONNECTION_STRING =\n  \"Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable\"\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml up <span class=\"hljs-literal\">-d</span> <span class=\"hljs-literal\">--wait</span> postgres18\n<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> =\n  <span class=\"hljs-string\">&quot;Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>These credentials belong only to the isolated local test container. Do not\ncopy them into an application deployment.</p>\n<h2>Run the ADO.NET sample</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet run `\n  --project samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj `\n  --configuration Release\n",
-        "highlighted": "dotnet run `\n  <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj `\n  <span class=\"hljs-literal\">--configuration</span> Release\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The sample exercises the provider owned by this repository. BlueTusk does not\ndelegate connections or command execution to Npgsql.</p>\n<h2>Write the smallest application</h2>\n<p>Reference the Provider projects from a local application or work inside a\nrepository sample. Prefer a long-lived data source and short-lived logical\nconnections:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "await using var dataSource =\n    new BlueTuskDataSourceBuilder(connectionString).Build();\n\nawait using var connection = await dataSource.OpenConnectionAsync();\nawait using var command = connection.CreateCommand();\ncommand.CommandText = \"SELECT @left::int4 + @right::int4\";\ncommand.Parameters.Add(new BlueTuskParameter<int>(\"left\", 20));\ncommand.Parameters.Add(new BlueTuskParameter<int>(\"right\", 22));\n\nvar answer = await command.ExecuteScalarAsync<int>();\nConsole.WriteLine(answer);\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource =\n    <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = connection.CreateCommand();\ncommand.CommandText = <span class=\"hljs-string\">&quot;SELECT @left::int4 + @right::int4&quot;</span>;\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-string\">&quot;left&quot;</span>, <span class=\"hljs-number\">20</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-string\">&quot;right&quot;</span>, <span class=\"hljs-number\">22</span>));\n\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\nConsole.WriteLine(answer);\n",
+        "code": "using BlueTusk.Data;\n\nvar connectionString =\n    Environment.GetEnvironmentVariable(\"BLUETUSK_CONNECTION_STRING\")\n    ?? throw new InvalidOperationException(\n        \"Set BLUETUSK_CONNECTION_STRING before running the application.\");\n\nawait using var dataSource =\n    new BlueTuskDataSourceBuilder(connectionString).Build();\n\nawait using var connection = await dataSource.OpenConnectionAsync();\nawait using var command = connection.CreateCommand();\n\ncommand.CommandText = \"SELECT @left::int4 + @right::int4\";\ncommand.Parameters.Add(new BlueTuskParameter<int>(\"left\", 20));\ncommand.Parameters.Add(new BlueTuskParameter<int>(\"right\", 22));\n\nvar answer = await command.ExecuteScalarAsync<int>();\nConsole.WriteLine(answer);\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n\n<span class=\"hljs-keyword\">var</span> connectionString =\n    Environment.GetEnvironmentVariable(<span class=\"hljs-string\">&quot;BLUETUSK_CONNECTION_STRING&quot;</span>)\n    ?? <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(\n        <span class=\"hljs-string\">&quot;Set BLUETUSK_CONNECTION_STRING before running the application.&quot;</span>);\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource =\n    <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = connection.CreateCommand();\n\ncommand.CommandText = <span class=\"hljs-string\">&quot;SELECT @left::int4 + @right::int4&quot;</span>;\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-string\">&quot;left&quot;</span>, <span class=\"hljs-number\">20</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-string\">&quot;right&quot;</span>, <span class=\"hljs-number\">22</span>));\n\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\nConsole.WriteLine(answer);\n",
         "language": "csharp"
       },
       {
         "kind": "html",
-        "html": "<p>The data source owns pooling and provider-wide type configuration. Disposing a\nlogical connection returns its healthy physical session to the pool. Do not\ncreate one data source per request.</p>\n<h2>Use dependency injection</h2>\n<p>The <code>BlueTusk.Data.DependencyInjection</code> package registers the same long-lived\ndata source as both <code>BlueTuskDataSource</code> and provider-neutral <code>DbDataSource</code>:</p>\n"
+        "html": "<p>The parameters travel through PostgreSQL protocol binding; their values are\nnot interpolated into SQL.</p>\n<h2>4. Run it</h2>\n"
       },
       {
         "kind": "code",
-        "code": "services.AddDataSource(\n    configuration.GetConnectionString(\"PostgreSQL\")!,\n    builder => builder.ConfigureDiagnostics(diagnostics),\n    healthCheckName: \"postgresql\");\n",
-        "highlighted": "services.AddDataSource(\n    configuration.GetConnectionString(<span class=\"hljs-string\">&quot;PostgreSQL&quot;</span>)!,\n    builder =&gt; builder.ConfigureDiagnostics(diagnostics),\n    healthCheckName: <span class=\"hljs-string\">&quot;postgresql&quot;</span>);\n",
-        "language": "csharp"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The optional readiness check opens a connection and executes <code>SELECT 1</code>. Read\n<a href=\"/documentation/provider/dependency-injection\">dependency injection</a> before selecting\nhealth-check frequency and timeout.</p>\n<h2>Choose the next layer</h2>\n<ul>\n<li>Use <a href=\"/documentation/getting-started/provider-overview\">ADO.NET</a> for direct command, COPY, notification,\nlarge-object or replication control.</li>\n<li>Use <a href=\"/documentation/ef-core/overview\">EF Core</a> for LINQ, migrations, scaffolding and\nmodel-driven PostgreSQL features.</li>\n<li>Use the stable <a href=\"/documentation/extensions/catalog\">extensions</a> for PostGIS, pgvector,\nTimescaleDB, citext, hstore, ltree or pg_trgm. The checked-in <code>pg_durable</code>\nadapter is an upstream-preview evaluation surface and is not a V1 package.</li>\n<li>Use <a href=\"/documentation/real-time/streams\">Streams</a> when the source of truth is committed WAL\nand the consumer needs acknowledgement and checkpoints.</li>\n</ul>\n<h2>Run focused verification</h2>\n"
-      },
-      {
-        "kind": "code",
-        "code": "dotnet test tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj `\n  --configuration Release `\n  --no-build\n\ndotnet test tests/BlueTusk.CompatibilityTests/BlueTusk.CompatibilityTests.csproj `\n  --configuration Release `\n  --no-build\n",
-        "highlighted": "dotnet test tests/BlueTusk.Data.Tests/BlueTusk.Data.Tests.csproj `\n  <span class=\"hljs-literal\">--configuration</span> Release `\n  <span class=\"hljs-literal\">--no-build</span>\n\ndotnet test tests/BlueTusk.CompatibilityTests/BlueTusk.CompatibilityTests.csproj `\n  <span class=\"hljs-literal\">--configuration</span> Release `\n  <span class=\"hljs-literal\">--no-build</span>\n",
+        "code": "dotnet run\n",
+        "highlighted": "dotnet run\n",
         "language": "powershell"
       },
       {
         "kind": "html",
-        "html": "<p>Live tests read <code>BLUETUSK_TEST_CONNECTION_STRING</code>. A missing optional service\ncauses its specifically scoped test to skip; that skip does not satisfy the\nservice’s dedicated CI gate.</p>\n<h2>Shut down</h2>\n"
+        "html": "<p>The application should print:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "42\n",
+        "highlighted": "42\n",
+        "language": "text"
+      },
+      {
+        "kind": "html",
+        "html": "<h2>Understand the ownership model</h2>\n<p><code>BlueTuskDataSource</code> owns configuration, PostgreSQL type metadata, and the\nphysical connection pool. Create one long-lived data source for each distinct\nconnection configuration. Open and dispose short-lived logical connections as\nwork arrives; healthy physical sessions return to the pool.</p>\n<p>Do not create a data source per request.</p>\n<h2>Choose the next guide</h2>\n<ul>\n<li><a href=\"/documentation/getting-started/provider-overview\">ADO.NET provider</a>: commands, transactions, batches,\nCOPY, notifications, large objects, and replication.</li>\n<li><a href=\"/documentation/provider/dependency-injection\">Dependency injection</a>: register the data\nsource and a readiness check in a hosted application.</li>\n<li><a href=\"/documentation/ef-core/overview\">EF Core</a>: use LINQ, migrations, scaffolding, and\nPostgreSQL-native mappings.</li>\n<li><a href=\"/documentation/extensions/catalog\">Extensions</a>: add PostGIS, pgvector, TimescaleDB,\nand other focused packages.</li>\n<li><a href=\"/documentation/real-time/streams\">Streams</a>: consume committed PostgreSQL changes with\nacknowledgement and checkpoints.</li>\n<li><a href=\"/documentation/operations/production-checklist\">Production checklist</a>: prepare a\nsecure, bounded, observable, and recoverable deployment.</li>\n</ul>\n<h2>Build the repository instead</h2>\n<p>The package quickstart above is the normal application path. Contributors can\nbuild and run the repository sample directly:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "git clone https://github.com/jphgardner/BlueTusk.git\nSet-Location BlueTusk\ndotnet restore BlueTusk.slnx\ndotnet build BlueTusk.slnx --configuration Release --no-restore\n\ndocker compose -f eng/compose/postgres.yml up -d --wait postgres18\n$env:BLUETUSK_CONNECTION_STRING =\n  \"Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable\"\n\ndotnet run `\n  --project samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj `\n  --configuration Release\n",
+        "highlighted": "git clone https://github.com/jphgardner/BlueTusk.git\n<span class=\"hljs-built_in\">Set-Location</span> BlueTusk\ndotnet restore BlueTusk.slnx\ndotnet build BlueTusk.slnx <span class=\"hljs-literal\">--configuration</span> Release <span class=\"hljs-literal\">--no-restore</span>\n\ndocker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml up <span class=\"hljs-literal\">-d</span> <span class=\"hljs-literal\">--wait</span> postgres18\n<span class=\"hljs-variable\">$env:BLUETUSK_CONNECTION_STRING</span> =\n  <span class=\"hljs-string\">&quot;Host=localhost;Port=5418;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable&quot;</span>\n\ndotnet run `\n  <span class=\"hljs-literal\">--project</span> samples/BlueTusk.Samples.AdoNet/BlueTusk.Samples.AdoNet.csproj `\n  <span class=\"hljs-literal\">--configuration</span> Release\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The repository credentials are restricted to the disposable local test\ndatabase. Stop it with:</p>\n"
       },
       {
         "kind": "code",
@@ -516,7 +495,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Add <code>--volumes</code> only when you intentionally want to remove the compose\nenvironment’s test data.</p>\n<h2>Common first-run failures</h2>\n<table>\n<thead>\n<tr>\n<th>Symptom</th>\n<th>Meaning</th>\n<th>Action</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>SDK selection failure</td>\n<td><code>global.json</code> SDK is not installed</td>\n<td>Install the selected .NET SDK</td>\n</tr>\n<tr>\n<td>Connection refused on <code>5418</code></td>\n<td>PostgreSQL container is not healthy or port is occupied</td>\n<td>Inspect <code>docker compose ps</code> and container logs</td>\n</tr>\n<tr>\n<td>Live tests skip</td>\n<td>Connection environment variable is absent</td>\n<td>Set it in the same shell that launches <code>dotnet test</code></td>\n</tr>\n<tr>\n<td>TLS or channel-binding error</td>\n<td>Local connection string inherited production security settings</td>\n<td>Use the explicit local test connection string above</td>\n</tr>\n<tr>\n<td>Package restore audit failure</td>\n<td>A dependency advisory matched</td>\n<td>Treat it as a release blocker; do not suppress it casually</td>\n</tr>\n</tbody>\n</table>\n<p>Continue with <a href=\"/documentation/getting-started/concepts\">core concepts</a> before designing application\nlifetimes or a real-time topology.</p>\n"
+        "html": "<p>Add <code>--volumes</code> only when you intentionally want to remove its test data.</p>\n<p>If the first run fails, use the <a href=\"/documentation/operations/troubleshooting\">troubleshooting guide</a>\nand include the BlueTusk version, PostgreSQL version, and smallest reproducer\nwhen reporting a defect.</p>\n"
       }
     ]
   },
@@ -533,6 +512,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "capability"
     ],
     "order": 8,
+    "listed": true,
     "title": "Core concepts",
     "sourcePath": "docs/getting-started/concepts.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/getting-started/concepts.md",
@@ -614,6 +594,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "ownership"
     ],
     "order": 10,
+    "listed": true,
     "title": "Architecture",
     "sourcePath": "docs/architecture/overview.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/overview.md",
@@ -675,6 +656,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "connection"
     ],
     "order": 20,
+    "listed": true,
     "title": "ADO.NET",
     "sourcePath": "docs/ado-net/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/README.md",
@@ -774,6 +756,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "getting-started",
     "categoryLabel": "Getting started",
+    "listed": false,
     "slug": "project-overview",
     "summary": "PostgreSQL, fully exposed to .NET.",
     "keywords": [
@@ -790,8 +773,18 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 1
       },
       {
-        "id": "build",
-        "text": "Build",
+        "id": "choose-what-you-need",
+        "text": "Choose what you need",
+        "level": 2
+      },
+      {
+        "id": "install-and-run-a-query",
+        "text": "Install and run a query",
+        "level": 2
+      },
+      {
+        "id": "build-the-repository",
+        "text": "Build the repository",
         "level": 2
       },
       {
@@ -800,23 +793,39 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       },
       {
-        "id": "status",
-        "text": "Status",
+        "id": "release-status-and-evidence",
+        "text": "Release status and evidence",
         "level": 2
       },
       {
-        "id": "license",
-        "text": "License",
+        "id": "contributing-and-security",
+        "text": "Contributing and security",
         "level": 2
       }
     ],
-    "wordCount": 1586,
-    "readMinutes": 8,
-    "searchText": "BlueTusk **PostgreSQL, fully exposed to .NET.** [Website](https://bluetusk.io/) · [Quickstart](https://bluetusk.io/documentation/getting-started/quickstart) · [Documentation](https://bluetusk.io/documentation) · [Release evidence](https://bluetusk.io/evidence) BlueTusk is a ground-up PostgreSQL platform for .NET. Its scope includes a native wire-protocol engine, ADO.NET, replication, Entity Framework Core, extension packages, PostgreSQL SQL/PGQ support, and an independently versioned [real-time application platform](docs/realtime-platform/README.md)—without a runtime dependency on Npgsql. [!IMPORTANT] BlueTusk `1.0.0` was published on 2026-08-23 as six product families: 62 NuGet packages and three npm packages. BlueTusk `1.1.0-rc.1` is also public from exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`; all 65 registry artifacts and clean .NET/npm consumer installs were verified. Stable `1.1.0` remains gated on PostgreSQL 19 GA and the exact stable-candidate endurance, performance, security, and external-acceptance record. Start with [installation](docs/getting-started/install.md), the [1.1 RC release record](docs/releases/1.1.0-rc.1.md), the [documentation handbook](docs/README.md), and the [support matrix](VERSIONING.md). The [1.0 publication record](docs/releases/1.0.0-publication-record.md) preserves the explicit owner exceptions used by that historical release. Build Prerequisites: .NET SDK 10.0.111 or a compatible later feature band Docker, only for PostgreSQL integration tests The root solution is grouped by product and role rather than physical folder. See [repository and solution layout](docs/contributing/repository-layout.md) for navigation, project-registration rules, and safe generated-output cleanup. The solution includes BlueTusk's native xUnit v3 tests and a separate xUnit v2 assembly that consumes Microsoft's official EF Core relational specification package. See the [EF specification-test coverage](docs/ef-core/specification-tests.md) for the e",
+    "wordCount": 547,
+    "readMinutes": 3,
+    "searchText": "BlueTusk **PostgreSQL, fully exposed to .NET.** [Website](https://bluetusk.io/) · [Quickstart](https://bluetusk.io/documentation/getting-started/quickstart) · [Documentation](https://bluetusk.io/documentation) · [GitHub](https://github.com/jphgardner/BlueTusk) BlueTusk is a PostgreSQL-native .NET platform. It provides a direct ADO.NET provider, EF Core integration, replication, real-time delivery, extension packages, and PostgreSQL SQL/PGQ support without an Npgsql runtime dependency. Choose what you need Need Start with Add when required Connect a .NET application [`BlueTusk.Data`](docs/ado-net/README.md) Pooling, authentication, COPY, notifications, or replication Use EF Core [`BlueTusk.EntityFrameworkCore`](docs/ef-core/README.md) PostgreSQL-native mappings, migrations, and scaffolding Consume committed changes [Streams](docs/streams/README.md) Snapshot bootstrap, replay, and durable relay Update other systems [Sync](docs/sync/README.md) Redis, NATS, OpenSearch, Kafka, webhooks, or object storage Push authorized live data [Live](docs/live/README.md) ASP.NET transports and browser clients Work with specialized PostgreSQL features [Extensions](docs/extensions/README.md) PostGIS, pgvector, TimescaleDB, and other focused packages Query connected data [Graph](docs/graph/README.md) SQL/PGQ and Continuous Graph The [documentation index](docs/README.md) organizes the complete guide set by task and audience. Install and run a query BlueTusk `1.0.0` is the current stable line. `1.1.0-rc.1` is available for prerelease evaluation. Use one exact BlueTusk version throughout an application; see the [support matrix](VERSIONING.md) before choosing a line. Create one long-lived data source for each distinct configuration. It owns the connection pool, PostgreSQL type catalogue, and runtime codecs. Replication uses dedicated unpooled sessions derived from the same configuration. For a runnable local setup, follow the [quickstart](docs/getting-started/quickstart.md). For package sele",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk</h1>\n<p><strong>PostgreSQL, fully exposed to .NET.</strong></p>\n<p><a href=\"https://bluetusk.io/\" target=\"_blank\" rel=\"noreferrer\">Website</a> · <a href=\"https://bluetusk.io/documentation/getting-started/quickstart\" target=\"_blank\" rel=\"noreferrer\">Quickstart</a> · <a href=\"https://bluetusk.io/documentation\" target=\"_blank\" rel=\"noreferrer\">Documentation</a> · <a href=\"https://bluetusk.io/evidence\" target=\"_blank\" rel=\"noreferrer\">Release evidence</a></p>\n<p>BlueTusk is a ground-up PostgreSQL platform for .NET. Its scope includes a\nnative wire-protocol engine, ADO.NET, replication, Entity Framework Core,\nextension packages, PostgreSQL SQL/PGQ support, and an independently versioned\n<a href=\"/documentation/real-time/platform\">real-time application platform</a>—without a\nruntime dependency on Npgsql.</p>\n<blockquote>\n<p>[!IMPORTANT]\nBlueTusk <code>1.0.0</code> was published on 2026-08-23 as six product families: 62\nNuGet packages and three npm packages. BlueTusk <code>1.1.0-rc.1</code> is also public\nfrom exact commit <code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code>; all 65 registry\nartifacts and clean .NET/npm consumer installs were verified. Stable\n<code>1.1.0</code> remains gated on PostgreSQL 19 GA and the exact stable-candidate\nendurance, performance, security, and external-acceptance record. Start with\n<a href=\"/documentation/getting-started/install\">installation</a>, the\n<a href=\"/documentation/getting-started/release-1-1-rc1\">1.1 RC release record</a>, the\n<a href=\"/documentation/getting-started/handbook\">documentation handbook</a>, and the\n<a href=\"/documentation/operations/versioning\">support matrix</a>. The\n<a href=\"/documentation/operations/releases-1-0-0-publication-record\">1.0 publication record</a> preserves\nthe explicit owner exceptions used by that historical release.</p>\n</blockquote>\n<h2>Build</h2>\n<p>Prerequisites:</p>\n<ul>\n<li>.NET SDK 10.0.111 or a compatible later feature band</li>\n<li>Docker, only for PostgreSQL integration tests</li>\n</ul>\n"
+        "html": "<h1>BlueTusk</h1>\n<p><strong>PostgreSQL, fully exposed to .NET.</strong></p>\n<p><a href=\"https://bluetusk.io/\" target=\"_blank\" rel=\"noreferrer\">Website</a> ·\n<a href=\"https://bluetusk.io/documentation/getting-started/quickstart\" target=\"_blank\" rel=\"noreferrer\">Quickstart</a> ·\n<a href=\"https://bluetusk.io/documentation\" target=\"_blank\" rel=\"noreferrer\">Documentation</a> ·\n<a href=\"https://github.com/jphgardner/BlueTusk\" target=\"_blank\" rel=\"noreferrer\">GitHub</a></p>\n<p>BlueTusk is a PostgreSQL-native .NET platform. It provides a direct ADO.NET\nprovider, EF Core integration, replication, real-time delivery, extension\npackages, and PostgreSQL SQL/PGQ support without an Npgsql runtime dependency.</p>\n<h2>Choose what you need</h2>\n<table>\n<thead>\n<tr>\n<th>Need</th>\n<th>Start with</th>\n<th>Add when required</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Connect a .NET application</td>\n<td><a href=\"/documentation/getting-started/provider-overview\"><code>BlueTusk.Data</code></a></td>\n<td>Pooling, authentication, COPY, notifications, or replication</td>\n</tr>\n<tr>\n<td>Use EF Core</td>\n<td><a href=\"/documentation/ef-core/overview\"><code>BlueTusk.EntityFrameworkCore</code></a></td>\n<td>PostgreSQL-native mappings, migrations, and scaffolding</td>\n</tr>\n<tr>\n<td>Consume committed changes</td>\n<td><a href=\"/documentation/real-time/streams\">Streams</a></td>\n<td>Snapshot bootstrap, replay, and durable relay</td>\n</tr>\n<tr>\n<td>Update other systems</td>\n<td><a href=\"/documentation/real-time/sync\">Sync</a></td>\n<td>Redis, NATS, OpenSearch, Kafka, webhooks, or object storage</td>\n</tr>\n<tr>\n<td>Push authorized live data</td>\n<td><a href=\"/documentation/real-time/live\">Live</a></td>\n<td>ASP.NET transports and browser clients</td>\n</tr>\n<tr>\n<td>Work with specialized PostgreSQL features</td>\n<td><a href=\"/documentation/extensions/catalog\">Extensions</a></td>\n<td>PostGIS, pgvector, TimescaleDB, and other focused packages</td>\n</tr>\n<tr>\n<td>Query connected data</td>\n<td><a href=\"/documentation/graph/sql-pgq\">Graph</a></td>\n<td>SQL/PGQ and Continuous Graph</td>\n</tr>\n</tbody>\n</table>\n<p>The <a href=\"/documentation/getting-started/handbook\">documentation index</a> organizes the complete guide set by\ntask and audience.</p>\n<h2>Install and run a query</h2>\n<p>BlueTusk <code>1.0.0</code> is the current stable line. <code>1.1.0-rc.1</code> is available for\nprerelease evaluation. Use one exact BlueTusk version throughout an\napplication; see the <a href=\"/documentation/operations/versioning\">support matrix</a> before choosing a line.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet add package BlueTusk.Data --version 1.1.0-rc.1\n",
+        "highlighted": "dotnet add package BlueTusk.Data <span class=\"hljs-literal\">--version</span> <span class=\"hljs-number\">1.1</span>.<span class=\"hljs-number\">0</span><span class=\"hljs-literal\">-rc</span>.<span class=\"hljs-number\">1</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "code",
+        "code": "await using var dataSource =\n    new BlueTuskDataSourceBuilder(connectionString).Build();\n\nawait using var command = dataSource.CreateCommand(\n    \"SELECT $1::int4 + $2::int4\");\n\ncommand.Parameters.Add(new BlueTuskParameter<int>(20));\ncommand.Parameters.Add(new BlueTuskParameter<int>(22));\n\nvar answer = await command.ExecuteScalarAsync<int>();\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource =\n    <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(\n    <span class=\"hljs-string\">&quot;SELECT $1::int4 + $2::int4&quot;</span>);\n\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">20</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">22</span>));\n\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>Create one long-lived data source for each distinct configuration. It owns the\nconnection pool, PostgreSQL type catalogue, and runtime codecs. Replication\nuses dedicated unpooled sessions derived from the same configuration.</p>\n<p>For a runnable local setup, follow the\n<a href=\"/documentation/getting-started/quickstart\">quickstart</a>. For package selection and\nstable-versus-RC guidance, use the\n<a href=\"/documentation/getting-started/install\">installation guide</a>.</p>\n<h2>Build the repository</h2>\n<p>Prerequisites:</p>\n<ul>\n<li>.NET SDK 10.0.111 or a compatible later feature band</li>\n<li>Docker for PostgreSQL integration tests</li>\n</ul>\n"
       },
       {
         "kind": "code",
@@ -826,7 +835,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>The root solution is grouped by product and role rather than physical folder.\nSee <a href=\"/documentation/operations/repository-layout\">repository and solution layout</a> for\nnavigation, project-registration rules, and safe generated-output cleanup.</p>\n<p>The solution includes BlueTusk’s native xUnit v3 tests and a separate xUnit v2\nassembly that consumes Microsoft’s official EF Core relational specification\npackage. See the <a href=\"/documentation/ef-core/specification-tests\">EF specification-test coverage</a>\nfor the exact adopted suites, counts, upstream skips, and scope boundary.</p>\n<p>Integration tests are opt-in. Start one of the test databases and set <code>BLUETUSK_TEST_CONNECTION_STRING</code> before running the integration suite.</p>\n"
+        "html": "<p>Integration tests are opt-in:</p>\n"
       },
       {
         "kind": "code",
@@ -836,47 +845,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>The extension profile has opt-in dedicated services and live gates. pgvector\nand the bundled-contrib packages use PostgreSQL 18:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml --profile extension-tests up -d pgvector18\n$env:BLUETUSK_TEST_CONNECTION_STRING = \"Host=localhost;Port=5518;Username=postgres;Password=postgres;Database=bluetusk_tests\"\ndotnet test tests/BlueTusk.Extensions.PgVector.Tests\ndotnet test tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests\ndotnet test tests/BlueTusk.Extensions.HStore.Tests\ndotnet test tests/BlueTusk.Extensions.LTree.Tests\ndotnet test tests/BlueTusk.Extensions.PgTrgm.Tests\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml <span class=\"hljs-literal\">--profile</span> extension<span class=\"hljs-literal\">-tests</span> up <span class=\"hljs-literal\">-d</span> pgvector18\n<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5518;Username=postgres;Password=postgres;Database=bluetusk_tests&quot;</span>\ndotnet test tests/BlueTusk.Extensions.PgVector.Tests\ndotnet test tests/BlueTusk.Extensions.PgVector.EntityFrameworkCore.Tests\ndotnet test tests/BlueTusk.Extensions.HStore.Tests\ndotnet test tests/BlueTusk.Extensions.LTree.Tests\ndotnet test tests/BlueTusk.Extensions.PgTrgm.Tests\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>PostGIS uses its official PostgreSQL 18/PostGIS 3.6 image:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml --profile extension-tests up -d postgis18\n$env:BLUETUSK_TEST_CONNECTION_STRING = \"Host=localhost;Port=5519;Username=postgres;Password=postgres;Database=bluetusk_tests\"\ndotnet test tests/BlueTusk.Extensions.PostGIS.Tests\ndotnet test tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml <span class=\"hljs-literal\">--profile</span> extension<span class=\"hljs-literal\">-tests</span> up <span class=\"hljs-literal\">-d</span> postgis18\n<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5519;Username=postgres;Password=postgres;Database=bluetusk_tests&quot;</span>\ndotnet test tests/BlueTusk.Extensions.PostGIS.Tests\ndotnet test tests/BlueTusk.Extensions.PostGIS.EntityFrameworkCore.Tests\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>TimescaleDB uses its PostgreSQL 17 image and a separate live gate:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml --profile extension-tests up -d timescaledb17\n$env:BLUETUSK_TEST_CONNECTION_STRING = \"Host=localhost;Port=5520;Username=postgres;Password=postgres;Database=bluetusk_tests\"\ndotnet test tests/BlueTusk.Extensions.TimescaleDB.Tests\ndotnet test tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml <span class=\"hljs-literal\">--profile</span> extension<span class=\"hljs-literal\">-tests</span> up <span class=\"hljs-literal\">-d</span> timescaledb17\n<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5520;Username=postgres;Password=postgres;Database=bluetusk_tests&quot;</span>\ndotnet test tests/BlueTusk.Extensions.TimescaleDB.Tests\ndotnet test tests/BlueTusk.Extensions.TimescaleDB.EntityFrameworkCore.Tests\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<p>The non-packable <code>pg_durable</code> preview adapter uses Microsoft’s official\nPostgreSQL 17 evaluation image and runs in the extension’s required <code>postgres</code>\ndatabase. This is compatibility testing, not production deployment guidance:</p>\n"
-      },
-      {
-        "kind": "code",
-        "code": "docker compose -f eng/compose/postgres.yml --profile extension-tests up -d pgdurable17\n$env:BLUETUSK_TEST_CONNECTION_STRING = \"Host=localhost;Port=5521;Username=postgres;Password=postgres;Database=postgres\"\ndotnet test tests/BlueTusk.Extensions.PgDurable.Tests\n",
-        "highlighted": "docker compose <span class=\"hljs-operator\">-f</span> eng/compose/postgres.yml <span class=\"hljs-literal\">--profile</span> extension<span class=\"hljs-literal\">-tests</span> up <span class=\"hljs-literal\">-d</span> pgdurable17\n<span class=\"hljs-variable\">$env:BLUETUSK_TEST_CONNECTION_STRING</span> = <span class=\"hljs-string\">&quot;Host=localhost;Port=5521;Username=postgres;Password=postgres;Database=postgres&quot;</span>\ndotnet test tests/BlueTusk.Extensions.PgDurable.Tests\n",
-        "language": "powershell"
-      },
-      {
-        "kind": "html",
-        "html": "<h2>Architecture</h2>\n<p>The dependency direction is deliberately one-way:</p>\n"
+        "html": "<p>Extension-specific databases and test commands are documented in\n<a href=\"/documentation/operations/testing\">Testing</a>. The\n<a href=\"/documentation/operations/repository-layout\">repository layout</a> explains solution\ngroups, project-registration rules, and generated output.</p>\n<h2>Architecture</h2>\n<p>Dependencies flow toward the protocol and transport layers:</p>\n"
       },
       {
         "kind": "code",
@@ -886,17 +855,17 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>See <a href=\"/documentation/getting-started/architecture\">Architecture</a>, <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions\" target=\"_blank\" rel=\"noreferrer\">ADRs</a>, <a href=\"/documentation/operations/api-compatibility\">API compatibility</a>, <a href=\"/documentation/operations/release-readiness\">runtime release readiness</a>, <a href=\"/documentation/operations/release-process\">release process</a>, <a href=\"/documentation/provider/types\">type mappings</a>, <a href=\"/documentation/extensions/catalog\">extension SDK</a>, <a href=\"/documentation/provider/replication\">replication</a>, <a href=\"/documentation/operations/observability\">diagnostics and observability</a>, <a href=\"/documentation/operations/security\">security review</a>, <a href=\"/documentation/graph/sql-pgq\">PostgreSQL 19 SQL/PGQ</a>, <a href=\"/documentation/provider/protocol-capture-format\">protocol captures</a>, <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/benchmarks/README.md\" target=\"_blank\" rel=\"noreferrer\">benchmarks</a>, and <a href=\"/documentation/operations/contributing\">Contributing</a>.</p>\n<p>The real-time platform is delivered in independently gated Streams, Sync, Live,\nControl Plane, and Continuous Graph release trains. Their V1 code, tests,\npackage manifests and evidence verifiers are implemented. The remaining release\nwork is deliberately operational: merge the final arming PR after PostgreSQL 19\nGA, archive the exact 72-hour Streams, 24-hour Sync, and 24-hour\nContinuousGraph candidate runs, complete the content-addressed disturbance\nrecoveries and external acceptance window, and obtain independent sign-off.\nPackage names and successful local builds are not claims of public availability.</p>\n<p>Three package-consumer applications now exercise the release train end to end:\nOrder Fulfilment Operations, Service Topology Centre, and Fraud Graph\nInvestigator. Their exact-RC architecture, application workflows, PostgreSQL\n19 staging boundary, local verification, Kubernetes topology, and stable-pilot\npromotion rules are recorded in the\n<a href=\"/documentation/operations/v1-applications\">V1 application suite</a>. RC application evidence is\ndeliberately separate from immutable stable-candidate and pilot evidence.</p>\n<p>Read the <a href=\"/documentation/real-time/contracts\">platform contracts</a>,\n<a href=\"/documentation/real-time/operations\">real-time operations guide</a>, and\n<a href=\"/documentation/operations/release-process\">release process</a> before designing a production\ntopology.</p>\n<h2>Status</h2>\n<p>The published <code>1.0.0</code> implementation provides:</p>\n<ul>\n<li>the complete repository/package layout;</li>\n<li>shared build, formatting, analyzer, and CI configuration;</li>\n<li>a hash-locked V1 API/nullability baseline for every publishable Provider library, including EF Core, extensions, and identity adapters;</li>\n<li>TCP and Unix-domain transports with deterministic DNS/address fallback, total connect\ndeadlines, cancellation, TCP keepalive, bounded socket buffers, and classified connection\nfailures;</li>\n<li>PostgreSQL backend-frame parsing and startup/query message writing;</li>\n<li>an explicit protocol connection state machine;</li>\n<li>catalogue-friendly type descriptors and unknown-value preservation;</li>\n<li>text and binary codecs for core scalar boolean, integer, floating-point, numeric, character, binary, UUID, temporal, JSON, and XML values;</li>\n<li>advanced temporal, bit-string, transaction, object-identifier (including PostgreSQL 19 <code>oid8</code> and <code>regdatabase</code>), network, geometric, money, full-text, JSONPath, and system-catalogue values;</li>\n<li>per-data-source catalogue discovery with explicit reload and unknown-value preservation;</li>\n<li>catalogue-composed arrays, enums, domains, named and anonymous records, ranges, and multiranges;</li>\n<li>convention- and attribute-based CLR enum and composite mappings, optional source-generated\ncomposite member access/construction, and public runtime codec registration;</li>\n<li>arbitrary-precision PostgreSQL <code>numeric</code>, including NaN and infinities, plus temporal infinity and 24:00 handling;</li>\n<li>security redaction and observability primitives;</li>\n<li>OpenTelemetry-compatible connection/command activities and metrics, redacted slow-command events, prepared-statement/retry/failover metrics, query tags, COPY throughput, and replication lag;</li>\n<li>a fake backend message stream for conformance testing;</li>\n<li>a Docker-based PostgreSQL version matrix;</li>\n<li>a versioned, bounded protocol-capture format and redaction-aware inspector;</li>\n<li>executable BenchmarkDotNet protocol/type workloads with checked-in reference baselines,\nincluding equivalent live PostgreSQL 19 BlueTusk/Npgsql hot-path comparisons;</li>\n<li>PostgreSQL 15–19 live stress coverage plus scheduled elevated-concurrency provider and replication-endurance gates;</li>\n<li>TLS negotiation with safe platform certificate validation by default;</li>\n<li>secure-by-default <code>Persist Security Info=false</code> connection/data-source properties and enforced direct/transitive NuGet vulnerability auditing;</li>\n<li>SCRAM-SHA-256 and SCRAM-SHA-256-PLUS authentication, PostgreSQL 18+ native OAUTHBEARER, GSSAPI/Kerberos and SSPI with mutual authentication and a live KDC gate, PostgreSQL password files, per-physical-connection password/access-token callbacks, TLS client certificates, and PostgreSQL 15–19-tested legacy MD5 and gated cleartext compatibility;</li>\n<li>optional AWS RDS/Aurora, Azure Database for PostgreSQL, and Google Cloud SQL identity packages with TLS-enforced per-physical-connection token acquisition;</li>\n<li>startup metadata, structured errors/notices, and backend key data;</li>\n<li>buffered simple-query execution with multiple results;</li>\n<li>extended-query execution through Parse, Bind, Describe, Execute, and Sync;</li>\n<li>typed binary and text parameter encoding without SQL interpolation;</li>\n<li>binary result negotiation for extended queries and registry-driven field decoding;</li>\n<li>buffer-backed stream and text-reader accessors for <code>bytea</code>, text, and JSON values;</li>\n<li>ADO.NET transactions with PostgreSQL isolation levels, commit, rollback, and rollback-on-disposal;</li>\n<li><a href=\"/documentation/provider/pipeline-mode\">PostgreSQL pipeline mode</a> with explicit synchronization groups, ordered results, cancellation draining, and safe session reuse;</li>\n<li>cancellation tokens, command timeouts, and explicit sync/async cancellation over PostgreSQL’s dedicated channel;</li>\n<li>bounded per-data-source connection pooling with cancellable waiters;</li>\n<li>transaction rollback, <code>DISCARD ALL</code> session reset, health validation, and connection lifetime enforcement;</li>\n<li>pool warm-up, clear/drain controls, statistics, metrics, live concurrency tests, and a checkout benchmark;</li>\n<li>streaming raw text, CSV, and binary COPY plus typed binary import and export;</li>\n<li>asynchronous <code>LISTEN</code>/<code>NOTIFY</code> delivery with quoted subscriptions and bounded backpressure;</li>\n<li>transactional large-object creation, deletion, streaming, 64-bit seek, and truncation;</li>\n<li>physical and logical <code>COPY BOTH</code> replication sessions with WAL and keepalive framing;</li>\n<li>replication-slot and publication discovery plus standby and hot-standby feedback;</li>\n<li>monotonic feedback, exact pgoutput transaction checkpoints, and guarded persistent-slot resume validation;</li>\n<li>protocol-version-aware <code>pgoutput</code> decoding for DML, streamed transactions, and two-phase metadata;</li>\n<li>raw logical decoding output for custom plugins;</li>\n<li>initial <code>BlueTuskConnection</code>, <code>BlueTuskCommand</code>, <code>BlueTuskDataReader</code>, and <code>BlueTuskDataSource</code> APIs.</li>\n<li>explicit and automatic prepared statements, <code>DbBatch</code>, named parameters, and multi-host pools;</li>\n<li>EF Core CRUD, transactions, generated values, core LINQ, physical database lifecycle, table CHECK and exclusion constraints, advanced column/expression PostgreSQL indexes, table/view/event-trigger, rewrite-rule, logical-publication/subscription, foreign-data-wrapper/server/user-mapping/foreign-table, tablespace, operator/operator-family/operator-class/cast/aggregate, declarative partition, row-level-security, direct table-inheritance, collation, installed-extension, enum/domain/composite/range/multirange-type, function/procedure, and ordinary/materialised-view migrations/scaffolding, typed PostgreSQL\noperator translations including <code>ANY</code>/<code>ALL</code>, row-value comparisons, array/range/multirange algebra, JSONB extraction/mutation, full-text composition, network arithmetic, bit strings, and complete built-in geometric forms, typed array/string/bytea/numeric/formatting/range/JSONB/regex/network/full-text/date-time/geometric scalar functions, complete built-in PostgreSQL aggregate families (including PostgreSQL 16 strict/unique variants), multidimensional array construction/subscripts/slices, lateral array element/subscript expansion, typed <code>generate_series</code>, scalar/key-value/model-derived JSONB roots, typed two- through four-array <code>unnest</code>, regex/delimiter table roots, runtime enum/domain predicates, catalogue-resolved nested composite/lossless-record field access, ordered <code>DISTINCT ON</code>, <code>TABLESAMPLE</code>, row locking, ranking/value window projections, recursive/materialized CTEs, <code>RETURNING</code>, <code>ON CONFLICT</code>, single-row <code>MERGE</code>, typed system columns with <code>xmin</code> concurrency, model-registered table-valued functions, initial migrations, and reverse engineering;</li>\n<li>PostgreSQL-native EF scalar, array, range, multirange, enum, domain, composite, and record mappings.</li>\n<li>readable fluent <code>CreatePropertyGraph</code> migrations with validated vertex,\nedge, label, property, key, source, and destination builders; generated\nmigrations no longer embed serialized graph metadata strings.</li>\n<li>a packaged <code>bluetusk scaffold</code> database-first tool with schema/table filters,\nPostgreSQL-specific metadata retention, and secure-by-default connection handling.</li>\n<li>an immutable data-source feature registry plus independently packaged,\nlive-tested PostGIS ADO.NET/NetTopologySuite EF, TimescaleDB ADO.NET/EF,\n<code>citext</code> ADO.NET/EF, <code>hstore</code>, <code>ltree</code>, <code>pg_trgm</code>, and pgvector ADO.NET/EF\nintegrations, with a separate non-packable <code>pg_durable</code> preview adapter.</li>\n<li>a packaged extension-authoring template and framework-neutral live compatibility harness.</li>\n<li>catalogue-probed PostgreSQL 19 SQL/PGQ capability detection, live raw-SQL property-graph coverage, typed information-schema discovery, text/JSON schema tooling, capability-guarded EF migrations/reverse engineering, and typed composable EF linear-path queries.</li>\n<li>a benchmark-backed decision to retain the genuine sync/async ArrayPool/Span/Memory\n<a href=\"/documentation/architecture/architecture-transport\">transport</a>.</li>\n</ul>\n<p>Applications should build one long-lived data source per distinct configuration. It owns pooling, runtime codecs, and the PostgreSQL type catalogue:</p>\n"
+        "html": "<p>The real-time products build on committed PostgreSQL changes:</p>\n"
       },
       {
         "kind": "code",
-        "code": "await using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var command = dataSource.CreateCommand(\"SELECT $1::int4 + $2::int4\");\ncommand.Parameters.Add(new BlueTuskParameter<int>(20));\ncommand.Parameters.Add(new BlueTuskParameter<int>(22));\n\nvar answer = await command.ExecuteScalarAsync<int>();\n",
-        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> command = dataSource.CreateCommand(<span class=\"hljs-string\">&quot;SELECT $1::int4 + $2::int4&quot;</span>);\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">20</span>));\ncommand.Parameters.Add(<span class=\"hljs-keyword\">new</span> BlueTuskParameter&lt;<span class=\"hljs-built_in\">int</span>&gt;(<span class=\"hljs-number\">22</span>));\n\n<span class=\"hljs-keyword\">var</span> answer = <span class=\"hljs-keyword\">await</span> command.ExecuteScalarAsync&lt;<span class=\"hljs-built_in\">int</span>&gt;();\n",
-        "language": "csharp"
+        "code": "PostgreSQL → Streams → Sync / Live / Continuous Graph\n                         ↑\n                    Control Plane\n",
+        "highlighted": "PostgreSQL → Streams → Sync / Live / Continuous Graph\n                         ↑\n                    Control Plane\n",
+        "language": "text"
       },
       {
         "kind": "html",
-        "html": "<p>Directly constructing <code>BlueTuskConnection</code> is supported for compatibility and dedicated ownership scenarios, but those connections are unpooled. Replication uses separate, dedicated unpooled sessions; derive their connection options from the long-lived data source so authentication and transport settings stay aligned without borrowing from its pool.</p>\n<h2>License</h2>\n<p>BlueTusk is licensed under the <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/LICENSE\" target=\"_blank\" rel=\"noreferrer\">MIT License</a>.</p>\n"
+        "html": "<p>Read the <a href=\"/documentation/getting-started/architecture\">architecture overview</a> for ownership\nand dependency rules, or the\n<a href=\"/documentation/real-time/contracts\">real-time contracts</a> for delivery,\ncheckpoint, and recovery semantics.</p>\n<h2>Release status and evidence</h2>\n<p>The published <code>1.1.0-rc.1</code> train contains 62 NuGet packages and three npm\npackages from one immutable commit. Stable <code>1.1.0</code> remains gated on the exact\ncandidate’s long-running, security, performance, PostgreSQL 19, and external\nacceptance evidence.</p>\n<ul>\n<li><a href=\"/documentation/operations/versioning\">Compatibility and versioning</a></li>\n<li><a href=\"/documentation/getting-started/release-1-1-rc1\">1.1.0-rc.1 release record</a></li>\n<li><a href=\"https://bluetusk.io/evidence\" target=\"_blank\" rel=\"noreferrer\">Engineering evidence</a></li>\n<li><a href=\"/documentation/operations/release-process\">Release process</a></li>\n</ul>\n<p>Package availability, a successful local build, and stable production approval\nare separate claims. BlueTusk records them separately.</p>\n<h2>Contributing and security</h2>\n<p>Read <a href=\"/documentation/operations/contributing\">CONTRIBUTING.md</a> before opening a change. Report\nsecurity issues using the private process in <a href=\"/documentation/operations/report-security\">SECURITY.md</a>; do not\nopen a public issue for a suspected vulnerability.</p>\n<p>BlueTusk is licensed under the <a href=\"https://github.com/jphgardner/BlueTusk/blob/main/LICENSE\" target=\"_blank\" rel=\"noreferrer\">MIT License</a>.</p>\n"
       }
     ]
   },
@@ -912,6 +881,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "gssapi"
     ],
     "order": 10,
+    "listed": true,
     "title": "Authentication",
     "sourcePath": "docs/ado-net/authentication.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/authentication.md",
@@ -1024,6 +994,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "oauth"
     ],
     "order": 20,
+    "listed": true,
     "title": "Cloud identity",
     "sourcePath": "docs/ado-net/cloud-identity.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/cloud-identity.md",
@@ -1126,6 +1097,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "hosting"
     ],
     "order": 25,
+    "listed": true,
     "title": "Dependency injection and health checks",
     "sourcePath": "docs/ado-net/dependency-injection.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/dependency-injection.md",
@@ -1212,6 +1184,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "pgbouncer"
     ],
     "order": 30,
+    "listed": true,
     "title": "Connection pooling",
     "sourcePath": "docs/ado-net/pooling.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/pooling.md",
@@ -1283,6 +1256,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "topology"
     ],
     "order": 40,
+    "listed": true,
     "title": "Multi-host connections",
     "sourcePath": "docs/ado-net/multi-host.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/multi-host.md",
@@ -1323,6 +1297,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "command"
     ],
     "order": 50,
+    "listed": true,
     "title": "Batches",
     "sourcePath": "docs/ado-net/batches.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/batches.md",
@@ -1365,6 +1340,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "binary"
     ],
     "order": 60,
+    "listed": true,
     "title": "COPY",
     "sourcePath": "docs/ado-net/copy.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/copy.md",
@@ -1456,6 +1432,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "stream"
     ],
     "order": 70,
+    "listed": true,
     "title": "Large objects",
     "sourcePath": "docs/ado-net/large-objects.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/large-objects.md",
@@ -1506,6 +1483,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "notify"
     ],
     "order": 80,
+    "listed": true,
     "title": "Asynchronous notifications",
     "sourcePath": "docs/ado-net/notifications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/notifications.md",
@@ -1567,6 +1545,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "memory"
     ],
     "order": 90,
+    "listed": true,
     "title": "Sequential readers",
     "sourcePath": "docs/ado-net/sequential-readers.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/sequential-readers.md",
@@ -1610,6 +1589,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "catalogue"
     ],
     "order": 95,
+    "listed": true,
     "title": "Schema discovery",
     "sourcePath": "docs/ado-net/schema-discovery.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/schema-discovery.md",
@@ -1707,6 +1687,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "json"
     ],
     "order": 100,
+    "listed": true,
     "title": "Core type mappings",
     "sourcePath": "docs/types/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/README.md",
@@ -1823,6 +1804,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "protocol"
     ],
     "order": 110,
+    "listed": true,
     "title": "PostgreSQL pipeline mode",
     "sourcePath": "docs/pipeline-mode.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/pipeline-mode.md",
@@ -1865,6 +1847,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "pgoutput"
     ],
     "order": 120,
+    "listed": true,
     "title": "Replication",
     "sourcePath": "docs/replication/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/README.md",
@@ -2033,6 +2016,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "listed": false,
     "slug": "ado-net-compatibility",
     "summary": "This matrix is the V1 contract for provider-neutral ADO.NET consumers. A capability marked excluded fails explicitly; it is not silently approximated. The live acceptance suite is tests/BlueTusk.CompatibilityTests/Ado…",
     "keywords": [
@@ -2095,6 +2079,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "listed": false,
     "slug": "ado-net-multiplexing-compatibility",
     "summary": "BlueTusk multiplexing is an opt-in throughput path for independent, session-neutral commands created directly from a BlueTuskDataSource. It does not turn PostgreSQL sessions into logical connections and never moves an…",
     "keywords": [
@@ -2178,6 +2163,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "listed": false,
     "slug": "ado-net-nativeaot",
     "summary": "The provider core supports trimmed and NativeAOT applications across BlueTusk.Transport, BlueTusk.Protocol, BlueTusk.Security, BlueTusk.TypeSystem, BlueTusk.Client, BlueTusk.Diagnostics, and",
     "keywords": [
@@ -2250,6 +2236,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "listed": false,
     "slug": "protocol",
     "summary": "PostgreSQL backend frames begin with a one-byte identifier followed by a big-endian 32-bit length. The length includes itself and excludes the identifier. Startup messages are exceptional: they have no identifier byte.",
     "keywords": [
@@ -2286,6 +2273,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "listed": false,
     "slug": "protocol-capture-format",
     "summary": "BlueTusk protocol captures use the .btpc extension. The format is a streamable, big-endian container intended for conformance debugging and packet-laboratory fixtures; it is not a general network-capture replacement.",
     "keywords": [
@@ -2343,6 +2331,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "mapping"
     ],
     "order": 10,
+    "listed": true,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/README.md",
@@ -3209,6 +3198,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "2111"
     ],
     "order": 20,
+    "listed": true,
     "title": "EF Core relational specification tests",
     "sourcePath": "docs/ef-core/specification-tests.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/specification-tests.md",
@@ -3261,6 +3251,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "contracts"
     ],
     "order": 10,
+    "listed": true,
     "title": "BlueTusk real-time platform",
     "sourcePath": "docs/realtime-platform/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/README.md",
@@ -3312,6 +3303,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "checkpoint"
     ],
     "order": 20,
+    "listed": true,
     "title": "Real-time platform contracts",
     "sourcePath": "docs/realtime-platform/contracts.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/contracts.md",
@@ -3368,6 +3360,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "transaction"
     ],
     "order": 30,
+    "listed": true,
     "title": "BlueTusk Streams",
     "sourcePath": "docs/streams/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/README.md",
@@ -3439,6 +3432,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "fence"
     ],
     "order": 40,
+    "listed": true,
     "title": "Consistent snapshot bootstrap",
     "sourcePath": "docs/streams/snapshot-bootstrap.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/snapshot-bootstrap.md",
@@ -3500,6 +3494,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "backup"
     ],
     "order": 50,
+    "listed": true,
     "title": "PostgreSQL durable relay",
     "sourcePath": "docs/streams/durable-relay.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/durable-relay.md",
@@ -3570,6 +3565,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "store"
     ],
     "order": 60,
+    "listed": true,
     "title": "Streams checkpoint and lease stores",
     "sourcePath": "docs/streams/state-stores.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/state-stores.md",
@@ -3666,6 +3662,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "metrics"
     ],
     "order": 70,
+    "listed": true,
     "title": "Hosting and observability",
     "sourcePath": "docs/streams/hosting-observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/hosting-observability.md",
@@ -3710,6 +3707,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "real-time",
     "categoryLabel": "Real time",
     "slug": "streams-endurance",
+    "listed": false,
     "summary": "The 72-hour endurance gate and evidence contract.",
     "keywords": [
       "72h",
@@ -3779,6 +3777,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "destination"
     ],
     "order": 90,
+    "listed": true,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/README.md",
@@ -3948,6 +3947,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "real-time",
     "categoryLabel": "Real time",
     "slug": "sync-endurance",
+    "listed": false,
     "summary": "The 24-hour Sync release gate and evidence contract.",
     "keywords": [
       "24h",
@@ -4017,6 +4017,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "security"
     ],
     "order": 110,
+    "listed": true,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/README.md",
@@ -4128,6 +4129,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "audit"
     ],
     "order": 120,
+    "listed": true,
     "title": "BlueTusk Control Plane and Dashboard",
     "sourcePath": "docs/control-plane/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/README.md",
@@ -4231,6 +4233,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "rebuild"
     ],
     "order": 125,
+    "listed": true,
     "title": "Real-time operations",
     "sourcePath": "docs/realtime-platform/operations.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/operations.md",
@@ -4337,6 +4340,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "checkpoint"
     ],
     "order": 130,
+    "listed": true,
     "title": "BlueTusk Continuous Graph",
     "sourcePath": "docs/continuous-graph/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/README.md",
@@ -4501,6 +4505,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "control-plane-api-compatibility",
     "summary": "The Control Plane V1 candidate has two independently enforced compatibility surfaces:",
     "keywords": [
@@ -4534,6 +4539,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "control-plane-release-notes-0-1-0-preview-1",
     "summary": "This preview contains the independently versioned BlueTusk.ControlPlane and BlueTusk.Dashboard packages. Its implementation and compatibility gates are complete. The product-family manifest remains non-publishable unt…",
     "keywords": [
@@ -4587,6 +4593,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "control-plane-release-notes-1-0-0",
     "summary": "Status: published on 2026-08-23 from control-plane-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
     "keywords": [
@@ -4623,6 +4630,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "live-api-compatibility",
     "summary": "The current Live 1.0 candidate surface is locked by two independent gates:",
     "keywords": [
@@ -4655,6 +4663,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "live-format-compatibility",
     "summary": "Every durable or externally visible Live format is registered in eng/live-formats.json. A test binds the registry to implementation constants, the versioned protobuf package, and named compatibility evidence.",
     "keywords": [
@@ -4687,6 +4696,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "live-release-notes-0-1-0-preview-1",
     "summary": "This is the first packaging-ready BlueTusk Live preview. It provides trusted, authorised, resumable real-time queries over BlueTusk Streams while preserving PostgreSQL/EF as the source of every client-visible row.",
     "keywords": [
@@ -4744,6 +4754,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "live-release-notes-1-0-0",
     "summary": "Status: published on 2026-08-23 from live-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
     "keywords": [
@@ -4779,6 +4790,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "realtime-platform-delivery-plan",
     "summary": "The implementation uses two-week iterations and lands only passing vertical slices. Each slice updates documentation and is committed and pushed on an AI-neutral feature/... branch.",
     "keywords": [
@@ -4817,6 +4829,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-api-compatibility",
     "summary": "The current Streams 1.0 candidate surface is locked by two independent gates:",
     "keywords": [
@@ -4849,6 +4862,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-aspire",
     "summary": "BlueTusk.Streams.Aspire wires Streams workers to Aspire connection-string resources without resolving or copying secrets in the AppHost. It targets the Aspire application model and supports both relay and explicit dir…",
     "keywords": [
@@ -4900,6 +4914,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-cli",
     "summary": "BlueTusk.Streams.Tool provides the bluetusk-streams .NET tool. It validates the PostgreSQL version, wallevel, publications, table selection, logical slot, source/control isolation, relay-schema exclusion, and canonica…",
     "keywords": [
@@ -4941,6 +4956,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-cloudevents",
     "summary": "BlueTusk.Streams.CloudEvents writes CloudEvents 1.0 structured JSON without changing the source transaction delivery unit. One committed PostgreSQL transaction becomes one event with one versioned BlueTusk transaction…",
     "keywords": [
@@ -4982,6 +4998,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-format-compatibility",
     "summary": "BlueTusk records every durable or externally visible Streams format in eng/streams-formats.json. A test binds that registry to the constants used by the implementation and verifies that its named compatibility evidenc…",
     "keywords": [
@@ -5014,6 +5031,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-prepared-transactions",
     "summary": "Prepared-transaction delivery is an opt-in Streams preview feature. The default PreparedTransactionMode.Fail behavior rejects every two-phase pgoutput message before changing assembler state. Enable PreparedTransactio…",
     "keywords": [
@@ -5076,6 +5094,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-release-notes-0-1-0-preview-1",
     "summary": "This is the first packaging-ready Streams preview. It establishes the public transaction, checkpoint, lease, snapshot, typed-mapping, hosting, and relay contracts needed by the later Sync and Live product families.",
     "keywords": [
@@ -5128,6 +5147,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-release-notes-1-0-0",
     "summary": "Status: published on 2026-08-23 from streams-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
     "keywords": [
@@ -5163,6 +5183,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-sample",
     "summary": "The BlueTusk.Samples.Streams worker demonstrates the complete first-run path: an exported PostgreSQL snapshot, bounded binary COPY batches, transition to the matching pgoutput position, and transaction acknowledgement…",
     "keywords": [
@@ -5210,6 +5231,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "streams-typed-mappings",
     "summary": "Streams always retains the dynamic ChangeRow and its explicit per-column states. Typed mapping is an optional projection over that lossless row; it does not replace it and never manufactures a complete CLR object from…",
     "keywords": [
@@ -5282,6 +5304,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "sync-api-compatibility",
     "summary": "The current Sync 1.0 candidate surface is locked by two independent gates:",
     "keywords": [
@@ -5314,6 +5337,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "sync-format-compatibility",
     "summary": "Every durable or externally visible Sync format is registered in eng/sync-formats.json. A test binds the registry to implementation constants and named compatibility evidence.",
     "keywords": [
@@ -5346,6 +5370,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "real-time",
     "categoryLabel": "Real time",
+    "listed": false,
     "slug": "sync-release-notes-1-0-0",
     "summary": "Status: published on 2026-08-23 from sync-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
     "keywords": [
@@ -5390,6 +5415,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "citext"
     ],
     "order": 10,
+    "listed": true,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/README.md",
@@ -5679,6 +5705,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql 19"
     ],
     "order": 10,
+    "listed": true,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/README.md",
@@ -5777,6 +5804,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "graph",
     "categoryLabel": "Graph",
+    "listed": false,
     "slug": "continuous-graph-api-compatibility",
     "summary": "The immutable 1.0 surface and additive 1.1 candidate surface are locked by two independent gates:",
     "keywords": [
@@ -5810,6 +5838,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "graph",
     "categoryLabel": "Graph",
+    "listed": false,
     "slug": "continuous-graph-release-notes-0-1-0-preview-1",
     "summary": "This is the first package-verified Continuous Graph preview candidate. It builds trusted, registered PostgreSQL 19 SQL/PGQ plans on the existing BlueTusk property-graph, Live, and Control Plane foundations without exp…",
     "keywords": [
@@ -5863,6 +5892,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "graph",
     "categoryLabel": "Graph",
+    "listed": false,
     "slug": "continuous-graph-release-notes-1-0-0",
     "summary": "Status: published on 2026-08-23 from continuous-graph-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
     "keywords": [
@@ -5899,6 +5929,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-allocation-discipline",
     "summary": "BlueTusk treats low allocation as a measured engineering constraint, not as a blanket “allocation-free” claim. Returned strings, arrays, records, and buffered large fields own managed memory by design. The provider in…",
     "keywords": [
@@ -5941,6 +5972,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0001-layered-dependency-direction",
     "summary": "- Status: Accepted - Date: 2026-07-21",
     "keywords": [
@@ -5991,6 +6023,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0002-postgresql-is-the-specification",
     "summary": "- Status: Accepted - Date: 2026-07-21",
     "keywords": [
@@ -6032,6 +6065,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0003-catalogue-driven-types",
     "summary": "- Status: Accepted - Date: 2026-07-21",
     "keywords": [
@@ -6082,6 +6116,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0004-protocol-conformance-testing",
     "summary": "- Status: Accepted - Date: 2026-07-21",
     "keywords": [
@@ -6122,6 +6157,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0005-postgresql-pipeline-mode-and-transport-pipelines",
     "summary": "- Status: Accepted; retain the ArrayPool/Span/Memory transport - Date: 2026-08-01",
     "keywords": [
@@ -6195,6 +6231,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0006-streams-delivery-semantics",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6245,6 +6282,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0007-checkpoint-ordering-and-fencing",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6296,6 +6334,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0008-snapshot-then-stream-protocol",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6347,6 +6386,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0009-bounded-transaction-spooling",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6397,6 +6437,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0010-postgresql-durable-relay",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6447,6 +6488,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0011-live-authoritative-requery-security",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6498,6 +6540,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0012-sync-connector-delivery-contract",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6549,6 +6592,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0013-bounded-statement-multiplexing",
     "summary": "- Status: Accepted - Date: 2026-08-04",
     "keywords": [
@@ -6599,6 +6643,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0014-managed-hosting-reconciliation",
     "summary": "- Status: accepted - Date: 2026-08-03",
     "keywords": [
@@ -6649,6 +6694,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0015-capability-secured-client-queries",
     "summary": "- Status: Accepted - Date: 2026-08-03",
     "keywords": [
@@ -6700,6 +6746,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0016-authoritative-incremental-graph-maintenance",
     "summary": "- Status: Accepted - Date: 2026-08-04; extended for 1.1 on 2026-08-28",
     "keywords": [
@@ -6761,6 +6808,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-decisions-0017-internal-ef-data-provider-spi",
     "summary": "- Status: accepted - Date: 2026-08-04",
     "keywords": [
@@ -6813,6 +6861,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "architecture",
     "categoryLabel": "Architecture",
+    "listed": false,
     "slug": "architecture-transport",
     "summary": "BlueTusk.Transport owns byte movement and connection establishment. It has no PostgreSQL authentication, SQL, type-system, pooling, or ADO.NET knowledge.",
     "keywords": [
@@ -6876,6 +6925,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "runbook"
     ],
     "order": 2,
+    "listed": true,
     "title": "Production checklist",
     "sourcePath": "docs/operations/production-checklist.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-checklist.md",
@@ -6979,6 +7029,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "rolling"
     ],
     "order": 5,
+    "listed": true,
     "title": "Deployment and configuration",
     "sourcePath": "docs/operations/deployment.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/deployment.md",
@@ -7095,6 +7146,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "opentelemetry"
     ],
     "order": 10,
+    "listed": true,
     "title": "Diagnostics and observability",
     "sourcePath": "docs/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/observability.md",
@@ -7158,6 +7210,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "replication"
     ],
     "order": 15,
+    "listed": true,
     "title": "Troubleshooting",
     "sourcePath": "docs/operations/troubleshooting.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/troubleshooting.md",
@@ -7324,6 +7377,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "secrets"
     ],
     "order": 20,
+    "listed": true,
     "title": "Security review",
     "sourcePath": "docs/security.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/security.md",
@@ -7392,6 +7446,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "throughput"
     ],
     "order": 25,
+    "listed": true,
     "title": "Performance engineering",
     "sourcePath": "docs/operations/performance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance.md",
@@ -7466,6 +7521,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "npgsql-performance-comparison",
+    "listed": false,
     "summary": "Review the V1 BlueTusk versus Npgsql benchmark matrix, tail latency, allocation, saturated pooling evidence, methodology, and integrity hashes.",
     "keywords": [
       "npgsql",
@@ -7534,6 +7590,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "release-readiness",
+    "listed": false,
     "summary": "Executable gates for provider, EF, extensions, artifacts, and documentation.",
     "keywords": [
       "release",
@@ -7586,13 +7643,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2429,
+    "wordCount": 2448,
     "readMinutes": 12,
     "searchText": "Runtime release readiness BlueTusk records production-readiness decisions as executable subsystem gates, not as synonyms for package version. The 2026-08-07 V1 hardening review closes the implementation gates for the ADO.NET provider, EF Core and design tooling, PostgreSQL-specific schema/query support, native data paths, replication, extensions, parser reliability, security, performance, API governance, supply-chain provenance, stress, compatibility and documentation. The six stable `1.0.0` families were published on 2026-08-23 under an explicit repository-owner exception. Completing publication does not substitute for exact-candidate endurance, PostgreSQL 19 GA, independent production experience, or reference-performance evidence. The exact release facts and accepted risks are in the [V1 publication record](releases/1.0.0-publication-record.md); the concise evidence status remains in [V1 release readiness](v1-release-readiness.md). The coordinated `1.1.0-rc.1` package train is now public from exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`; its 65 registry artifacts and clean consumers were verified. Stable `1.1.0` remains a separate fail-closed candidate. See the [RC release record](releases/1.1.0-rc.1.md). Publication gate All six product-family stable policies are disabled while `1.1.0` is prepared. Manual workflow dispatches still create candidate artifacts only; stable publication requires the exact family tag and protected production environment. Provider, Streams, Sync, Live, Control Plane, and ContinuousGraph remain independently versioned. After PostgreSQL 19 GA, a reviewed final PR arms all six policies on `main`. That resulting SHA is the immutable candidate. It must have no stable `1.1.0` release tags or stable packages and must pass seven exact-SHA workflows. A manifest-bound public RC does not satisfy any stable gate. The workflows are: build, security, fuzzing, performance, Streams endurance, Sync endurance, and ContinuousGraph endurance. Th",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Runtime release readiness</h1>\n<p>BlueTusk records production-readiness decisions as executable subsystem gates,\nnot as synonyms for package version. The 2026-08-07 V1 hardening review closes\nthe implementation gates for the ADO.NET provider, EF Core and design tooling,\nPostgreSQL-specific schema/query support, native data paths, replication,\nextensions, parser reliability, security, performance, API governance,\nsupply-chain provenance, stress, compatibility and documentation.</p>\n<p>The six stable <code>1.0.0</code> families were published on 2026-08-23 under an explicit\nrepository-owner exception. Completing publication does not substitute for\nexact-candidate endurance, PostgreSQL 19 GA, independent production experience,\nor reference-performance evidence. The exact release facts and accepted risks\nare in the <a href=\"/documentation/operations/releases-1-0-0-publication-record\">V1 publication record</a>; the\nconcise evidence status remains in <a href=\"/documentation/operations/v1-release-readiness\">V1 release readiness</a>.</p>\n<p>The coordinated <code>1.1.0-rc.1</code> package train is now public from exact commit\n<code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code>; its 65 registry artifacts and\nclean consumers were verified. Stable <code>1.1.0</code> remains a separate fail-closed\ncandidate. See the <a href=\"/documentation/getting-started/release-1-1-rc1\">RC release record</a>.</p>\n<h2>Publication gate</h2>\n<p>All six product-family stable policies are disabled while <code>1.1.0</code> is prepared.\nManual workflow dispatches still create candidate artifacts only; stable\npublication requires the exact family tag and protected production environment.\nProvider, Streams, Sync, Live, Control Plane, and ContinuousGraph remain\nindependently versioned.</p>\n<p>After PostgreSQL 19 GA, a reviewed final PR arms all six policies on <code>main</code>.\nThat resulting SHA is the immutable candidate. It must have no stable <code>1.1.0</code>\nrelease tags or stable packages and must pass seven exact-SHA workflows. A\nmanifest-bound public RC does not satisfy any stable gate. The workflows are:\nbuild, security, fuzzing, performance, Streams endurance, Sync endurance, and\nContinuousGraph endurance. The release workflow verifies successful GitHub\nActions runs by <code>head_sha</code>, rejects a mismatched version tag or checkout, and\npublishes only through the protected production environment. See the\n<a href=\"/documentation/operations/release-process\">release process</a>.</p>\n<h2>Connection pooling</h2>\n<p><code>BlueTuskDataSource</code> owns bounded per-endpoint pools. The completed gate covers:</p>\n<ul>\n<li>minimum and maximum sizes, warm-up, cancellable waiters, idle and maximum\nphysical-connection lifetimes, health validation, clear/drain, and disposal;</li>\n<li>rollback plus <code>DISCARD ALL</code> before reuse, preventing transaction, temporary\nobject, prepared statement, advisory-lock, and session-setting leakage;</li>\n<li>independent multi-host capacity/statistics, primary/standby selection, and\nfailover without pooling dedicated replication or notification sessions;</li>\n<li>password and access-token callbacks on every newly created physical session,\nso clearing/expiry rotates credentials without changing a data source; and</li>\n<li>per-data-source statistics, OpenTelemetry metrics, a checkout benchmark,\nPostgreSQL 15–19 live acceptance, and scheduled elevated-concurrency churn.</li>\n</ul>\n<p>Deterministic failure tests also prove that failed creation and validation\nrelease capacity, clearing retires leased sessions on return, and data-source\ndisposal rejects queued opens.</p>\n<p>Opt-in statement multiplexing is now part of the V1 gate. It provides bounded\nqueues, persistent worker lanes, conservative session-state fallback, one\nPostgreSQL synchronization group per command, per-group cancellation and error\nisolation, forced-shutdown transport abort, and scheduler statistics. Explicit\nconnections, transactions, prepared commands, replication, notifications, and\nstateful SQL remain session-affine. Live PostgreSQL tests cover concurrent\nfan-in, FIFO fairness, pool exhaustion, queue admission cancellation, command\ntimeouts, adjacent errors, reset isolation, lease rotation, and stuck-lane\nshutdown. PgBouncer session and transaction modes have separate live acceptance.</p>\n<p>The V1 performance programme compares four physical lanes and 64-command bursts\nfor fresh and reused multiplexed commands and for fresh and reused ordinary\npooled controls. A separate 16-feature direct-provider matrix covers pool,\ncommand, streaming, transaction, batch, COPY, typed-row, notification,\nlarge-object and EF paths. Managed allocation must remain at or below Npgsql in\nall 16 direct pairs. The five established latency paths use a strict 1.0 ceiling;\nthe eleven extended paths use the declared 1.05 parity ceiling. The four\nsaturated concurrency shapes remain strict for latency and allocation.\nThe full report, environment/image/commit manifest, SHA-256 hashes, and\nmachine-readable budgets are retained and verified. This is a regression gate,\nnot a universal performance or production-readiness claim.</p>\n<h2>Cancellation</h2>\n<p>Commands use PostgreSQL’s one-shot cancellation connection and the backend key\nfrom the active physical session. Cancellation does not interrupt the normal\nsocket directly. BlueTusk then drains the original operation through\n<code>ReadyForQuery</code> before it can be reused; inside a transaction, PostgreSQL’s\nfailed-transaction state is preserved until caller rollback.</p>\n<p>The gate covers caller tokens, command and batch timeouts, explicit synchronous\nand asynchronous cancellation, sequential readers, portal cleanup, pipeline\nsynchronization groups, COPY abort/recovery, notification waits, and replication\nstream disposal. Protocol encoding and the separate cancellation channel have\nunit coverage. PostgreSQL 15–19 acceptance verifies server-side cancellation\nand subsequent reuse, while the scheduled stress gate runs cancellation storms\nagainst a bounded pool.</p>\n<h2>PostgreSQL-native data paths</h2>\n<table>\n<thead>\n<tr>\n<th>Surface</th>\n<th>Production invariant</th>\n<th>Executable evidence</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>COPY</td>\n<td>Raw text/CSV/binary and typed binary transfers stream incrementally with bounded backpressure; failure, cancellation, early disposal, and malformed input abort and recover the session.</td>\n<td>Binary framing and fragmented UTF-8 unit tests; sync/async PostgreSQL 15–19 round trips and recovery tests.</td>\n</tr>\n<tr>\n<td>Notifications</td>\n<td>Identifier-safe <code>LISTEN</code>/<code>UNLISTEN</code>, bounded delivery, explicit lifetime completion, and no listener state in an ADO.NET pool.</td>\n<td>Live concurrent command/notification, unsubscribe, close, and invalid-lifetime tests across the server matrix.</td>\n</tr>\n<tr>\n<td>Large objects</td>\n<td>Transaction-owned descriptors, sync/async streaming, access checks, 64-bit seek/truncate, chunked writes, commit/rollback, and deterministic exclusivity.</td>\n<td>Stream unit tests plus implicit/explicit transaction lifecycle tests across PostgreSQL 15–19.</td>\n</tr>\n<tr>\n<td>Replication</td>\n<td>Dedicated unpooled physical/logical <code>COPY BOTH</code>, slot/publication discovery, monotonic feedback, exact transaction checkpoints, reconnect safety, streamed transactions, two-phase metadata, pgoutput, and custom plug-ins.</td>\n<td>Wire/decoder tests, full PostgreSQL 15–19 acceptance, allocation/backpressure benchmarks, cancellation/disposal stress, and the scheduled PostgreSQL 19 1,000-epoch persistent-slot endurance gate.</td>\n</tr>\n</tbody>\n</table>\n<p>The replication packages add 822 compiler-enforced shipped API/nullability\nsignatures. Their pre-freeze review replaced ambiguous optional-parameter\noverload families with explicit no-token and required-token overloads.</p>\n<h2>EF Core, design tooling, and extensions</h2>\n<p>BlueTusk directly consumes Microsoft’s EF Core 10.0.11 relational\nspecification package. Its official assembly gate discovers 2,111 cases on\nPostgreSQL 18 and 19: 1,987 pass and 124 retain upstream EF skip declarations.\nPostgreSQL 15–17 run the same adopted suite with only unsupported\ngenerated-column rows excluded by explicit server-version conditions. The\nportable complex-type/JSON query slice runs unchanged across PostgreSQL 15–19.\nBlueTusk’s native provider project runs 301 cases per supported server;\nPostgreSQL 15 passes 299 with two inapplicable cases and PostgreSQL 16–19 each\npass 300 with only the filesystem-dependent tablespace case skipped when no\nserver-owned directory is configured.</p>\n<p>Together those gates cover CRUD, tracking, relational model building, queries,\nupdates, physical database lifecycle, migrations, reverse engineering,\ngenerated code, PostgreSQL-specific types/operators/functions/schema objects,\nand capability-guarded PostgreSQL 19 SQL/PGQ. The exact official-suite boundary\nand upstream skip ownership are documented in the\n<a href=\"/documentation/ef-core/specification-tests\">EF specification-test record</a>.</p>\n<p>Optional PostGIS, pgvector, citext, hstore, ltree, pg_trgm, and TimescaleDB\npackages remain independently installable and do not add their types or SQL to\nthe core packages. Their live extension-image gates, the immutable feature\nregistry, extension template, and compatibility harness close the extension\narchitecture gate. A live extension test first checks\n<code>pg_available_extensions</code>: a plain PostgreSQL image reports an intentional\ndynamic skip when the optional extension is absent, while each dedicated\nextension image requires the same test to pass. The dedicated-image gate reports\n23 pgvector, 10 PostGIS, and 9 TimescaleDB passes with no skips or failures.\nThe checked-in workflow enforces these stable integrations and separately runs\nfour <code>pg_durable</code> adapter checks against its evaluation-only upstream image.\nThat adapter is deliberately non-packable and is not stable V1 evidence while\nupstream remains preview. Every matrix entry retains container logs on failure.\nCloud identity adapters have deterministic SDK contract tests; their\nreal-account acceptance tests remain opt-in because CI does not hold customer\ncloud credentials.</p>\n<p>The compatibility environment matrix also builds pinned, repository-owned\nPgBouncer session/transaction configurations and PostgreSQL 18 images for\n<code>en_GB.UTF-8</code>/<code>Europe/London</code> and <code>de_DE.UTF-8</code>/<code>America/New_York</code>. Live gates\ncover session-affine temporary/prepared state, transaction-pool-safe explicit\ntransactions and prepared commands, locale-aware money text, and time-zone-safe\ntimestamp decoding. PgBouncer’s cleartext test authentication is confined to\nthe isolated Docker network and requires the provider’s explicit insecure-test\nopt-in.</p>\n<p>A separate PostgreSQL 18 streaming-replication topology takes a fresh physical\nbase backup for every CI run. Its live tests prove strict and preferred\nprimary/read-write/standby/read-only selection after unavailable and\nrole-incompatible endpoints, WAL replay visibility, and standby write\nrejection. This is distinct from the logical-replication decoder and endurance\ngates.</p>\n<p>For change detection beyond the pinned PostgreSQL 19 Beta 3 image, a\nscheduled/manual job verifies the checksum of the official nightly PostgreSQL\n19 branch snapshot, compiles it in a repository-owned multi-stage image, and\nruns the full solution against it. The 2026-08-02 scheduled snapshot run\nidentified itself as PostgreSQL 19beta2 and passed 2,967 cases with 146\nintentional environment or\nupstream skips and no failures across 28 test assemblies. No unofficial\nPostgreSQL binary image enters the release gate.</p>\n<p>The complete serial solution matrix currently reports:</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL</th>\n<th class=\"align-right\">Passed</th>\n<th class=\"align-right\">Intentional skips</th>\n<th class=\"align-right\">Failed</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>15</td>\n<td class=\"align-right\">2,963</td>\n<td class=\"align-right\">147</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>16</td>\n<td class=\"align-right\">2,964</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>17</td>\n<td class=\"align-right\">2,966</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>18</td>\n<td class=\"align-right\">2,978</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>19</td>\n<td class=\"align-right\">2,978</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n</tbody>\n</table>\n<p>Each total includes the native and official EF projects, all core and extension\nprojects, source generation, compatibility, conformance, security, stress, and\nreplication. The server-free run reports 1,538 passes, 318 intentional skips,\nand no failures across the same 28 test assemblies.\nVersion-specific official migration methods are excluded at discovery when the\nserver cannot implement their generated-column SQL.</p>\n<h2>Release artifacts and documentation</h2>\n<p>The reviewed Provider-family Release candidate produces 31\n<code>1.0.0</code> NuGet/tool/template packages and 29 symbol packages without\nwarnings. Compiler-enforced public API/nullability baselines\ncover all 27 Provider-family library surfaces and are locked by the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/provider-api-freeze.json\" target=\"_blank\" rel=\"noreferrer\">V1 candidate hash manifest</a>. Package\nconformance also prevents embedded extension-template content projects from\nentering the release train. The final\ndirect-and-transitive NuGet vulnerability audit covers the complete solution\nand reports zero vulnerable package entries. All 37 checked-in allocation\nbudgets pass, including command, typed reader, protocol writer,\nstructured-codec, large-value streaming, replication, EF Core application,\nLive diff/replay/fan-out, SQL/PGQ traversal, and Continuous Graph registration,\nauthoritative requery, and affected-invalidation paths.</p>\n<p>The live application benchmark gate adds fresh parameterized EF query\ncompilation plus first execution, 100-entity materialization, normalized tracked\ninserts and load/update paths, plus traversal of a 1,000-vertex/999-edge\nPostgreSQL 19 property graph through both a prepared raw command and the typed\nEF graph API. The checked-in ShortRun reports and allocation budgets are\nregression evidence, not universal latency or throughput claims.</p>\n<p>The provider core also publishes and executes full-trim and NativeAOT offline\nsmokes on Windows and Linux. The first Windows x64 observation records a\n21,993,850-byte trimmed deployment at 248.994 ms cold wall-clock and 327,144 B\nsecond-pass managed allocation, plus a 5,783,552-byte NativeAOT executable at\n18.327 ms and 343,392 B. This covers the provider construction/type-system path\nwithout a database; it is regression evidence rather than production latency\nor Npgsql-comparison evidence. The documented AOT boundary keeps common\nbuilt-in ranges and one-dimensional arrays static and fails explicitly for\nruntime-selected unsupported shapes.</p>\n<p>The in-memory Live application gate records a 76.4 µs/221,872 B keyed diff for\none update in a bounded 1,000-row result, 881 ns/832 B versioned replay\nserialization, and a 92.3 µs/175,060 B lifecycle that coalesces 100 relevant\ninvalidations and fans one update to 64 bounded subscribers. A deterministic\nrace suite separately proves exactly-once observation through either replay or\nthe live channel across 64 concurrent reconnect/publication boundaries. These\nfigures exclude database and network time and are used only as checked-in\nregression budgets.</p>\n<p>The live PostgreSQL 19 Continuous Graph gate records 988 µs/103,446 B for\ncapability-guarded registration, 2.827 ms/666,055 B for authoritative\nmaterialisation of 999 graph paths, and 4.225 ms/888,159 B for an affected\ninvalidation through authoritative requery plus keyed diff. The invalidation\nsource is constant-time and in-memory, but the <code>GRAPH_TABLE</code> query and provider\nwork are included. These ShortRun values are checked-in regression evidence,\nnot production latency objectives.</p>\n<p>The independently versioned <code>BlueTusk.ContinuousGraph 1.0.0</code> runtime and\n<code>BlueTusk.ContinuousGraph.ControlPlane</code> adapter pass a zero-warning repository\nRelease build, the graph suite including PostgreSQL 19 acceptance, public API\nfreeze, dependency-direction conformance, documentation-link and\nallocation-budget gates, and inspected NuGet packs. ContinuousGraph remains\nunpublished until PostgreSQL 19 GA, its dependencies, the exact 24-hour\n100,000-evaluation recovery-endurance report, and an independent pilot pass.\nThe Live gate covers signed\ndisconnect/resume replay from the PostgreSQL production store through SSE,\nSignalR/WebSockets, and HTTP/2 gRPC on PostgreSQL 15–19. The release script\nrejects any publishable family with a gated dependency. This does not mark the\nstill-open Streams 72-hour, Sync 24-hour, ContinuousGraph 24-hour, pilot, or\nprotected publication gates complete.</p>\n<p>The independently versioned Control Plane candidate now exposes discoverable\nv1 agent routes with versioned envelopes while retaining the original\nunversioned\nroutes as compatibility aliases. Its audit store transactionally upgrades the\nlegacy pre-metadata table to schema version 2, preserves and format-marks\nexisting rows, rejects future schemas, and fences appends to the exact running\nschema version. Eleven unit tests, a hash-locked compiler API baseline, an\nexecutable format registry, and the live PostgreSQL 15–19 matrix cover route\nauthorization, version negotiation, immutable audit, fresh initialization, and\nlegacy upgrade. The <code>BlueTusk.ControlPlane</code> and <code>BlueTusk.Dashboard</code> 1.0.0\ncandidates remain unpublished because the declared Sync\nrelease dependency has not yet archived its required 24-hour endurance\nevidence.</p>\n<p>The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and\nmanaged allocation on parameterized and explicitly prepared scalar execution,\nuntouched warm checkout, sequential 1,000-row reads, and isolated 1 MiB\nstreaming. The MediumRun confidence intervals establish clear latency wins for\nparameterized execution, checkout, and row streaming; prepared and large-stream\nlatency remain statistical parity despite lower BlueTusk means. Release\nreadiness does not reinterpret these environment-specific results as blanket\nprovider superiority.</p>\n<p>Documentation covers every public subsystem and is led by long-lived,\ndata-source-first usage. A cross-platform CI script validates every local link\nin all tracked Markdown files. The Angular documentation build automatically\ndiscovers every repository guide, rewrites internal links to site routes,\ngenerates full-text search records and fails when generated content drifts.\nThe support matrix identifies .NET 10, EF Core 10.0.11,\nPostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 3 candidate evidence, including the\nremaining beta-syntax risk.</p>\n<h2>Automated gates</h2>\n<p>The normal CI build runs formatting, documentation-link validation,\nwarnings-as-errors compilation, all offline tests, allocation budgets,\npackaging, and public API analysis on Windows and Linux. Live matrices run the\nsolution against PostgreSQL 15, 16, 17, 18, and 19 and run pgvector, PostGIS,\nand TimescaleDB ADO.NET/EF acceptance on their dedicated images. Additional\nlive jobs enforce PgBouncer session/transaction pooling and two locale/time-zone\ncombinations. A physical primary/standby job adds target-session selection and\nWAL-replay acceptance. Scheduled/manual CI also builds the official PostgreSQL\n19 branch snapshot and runs the complete solution against that moving target.\nScheduled/manual jobs add elevated provider concurrency and a separate\nreplication endurance run. See the\nchecked-in workflow and\n<a href=\"/documentation/operations/testing\">testing guide</a> for the exact commands and environment\ncontract.</p>\n<p>The <a href=\"/documentation/operations/completion-audit\">specification completion audit</a> maps every original\nproduct area and architecture-gap priority to its primary executable evidence.\nThis evidence closes the repository’s current product-spec engineering gates.\nIt does not publish the <code>1.0.0</code> packages, guarantee suitability for a\nparticular production deployment, validate optional cloud credentials that were\nnot supplied, or expand the documented raw-SQL and ownership/grant boundaries.</p>\n"
+        "html": "<h1>Runtime release readiness</h1>\n<p>BlueTusk records production-readiness decisions as executable subsystem gates,\nnot as synonyms for package version. The 2026-08-07 V1 hardening review closes\nthe implementation gates for the ADO.NET provider, EF Core and design tooling,\nPostgreSQL-specific schema/query support, native data paths, replication,\nextensions, parser reliability, security, performance, API governance,\nsupply-chain provenance, stress, compatibility and documentation.</p>\n<p>The six stable <code>1.0.0</code> families were published on 2026-08-23 under an explicit\nrepository-owner exception. Completing publication does not substitute for\nexact-candidate endurance, PostgreSQL 19 GA, independent production experience,\nor reference-performance evidence. The exact release facts and accepted risks\nare in the <a href=\"/documentation/operations/releases-1-0-0-publication-record\">V1 publication record</a>; the\nconcise evidence status remains in <a href=\"/documentation/operations/v1-release-readiness\">V1 release readiness</a>.</p>\n<p>The coordinated <code>1.1.0-rc.1</code> package train is now public from exact commit\n<code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code>; its 65 registry artifacts and\nclean consumers were verified. Stable <code>1.1.0</code> remains a separate fail-closed\ncandidate. See the <a href=\"/documentation/getting-started/release-1-1-rc1\">RC release record</a>.</p>\n<h2>Publication gate</h2>\n<p>All six product-family stable policies are disabled while <code>1.1.0</code> is prepared.\nManual workflow dispatches still create candidate artifacts only; stable\npublication requires the exact family tag and protected production environment.\nProvider, Streams, Sync, Live, Control Plane, and ContinuousGraph remain\nindependently versioned.</p>\n<p>After PostgreSQL 19 GA, a reviewed final PR arms all six policies on <code>main</code>.\nThat resulting SHA is the immutable candidate. It must have no stable <code>1.1.0</code>\nrelease tags or stable packages and must pass seven exact-SHA workflows. A\nmanifest-bound public RC does not satisfy any stable gate. The workflows are:\nbuild, security, fuzzing, performance, Streams endurance, Sync endurance, and\nContinuousGraph endurance. The release workflow verifies successful GitHub\nActions runs by <code>head_sha</code>, rejects a mismatched version tag or checkout, and\npublishes only through the protected production environment. See the\n<a href=\"/documentation/operations/release-process\">release process</a>.</p>\n<h2>Connection pooling</h2>\n<p><code>BlueTuskDataSource</code> owns bounded per-endpoint pools. The completed gate covers:</p>\n<ul>\n<li>minimum and maximum sizes, warm-up, cancellable waiters, idle and maximum\nphysical-connection lifetimes, health validation, clear/drain, and disposal;</li>\n<li>rollback plus <code>DISCARD ALL</code> before reuse, preventing transaction, temporary\nobject, prepared statement, advisory-lock, and session-setting leakage;</li>\n<li>independent multi-host capacity/statistics, primary/standby selection, and\nfailover without pooling dedicated replication or notification sessions;</li>\n<li>password and access-token callbacks on every newly created physical session,\nso clearing/expiry rotates credentials without changing a data source; and</li>\n<li>per-data-source statistics, OpenTelemetry metrics, a checkout benchmark,\nPostgreSQL 15–19 live acceptance, and scheduled elevated-concurrency churn.</li>\n</ul>\n<p>Deterministic failure tests also prove that failed creation and validation\nrelease capacity, clearing retires leased sessions on return, and data-source\ndisposal rejects queued opens.</p>\n<p>Opt-in statement multiplexing is now part of the V1 gate. It provides bounded\nqueues, persistent worker lanes, conservative session-state fallback, one\nPostgreSQL synchronization group per command, per-group cancellation and error\nisolation, forced-shutdown transport abort, and scheduler statistics. Explicit\nconnections, transactions, prepared commands, replication, notifications, and\nstateful SQL remain session-affine. Live PostgreSQL tests cover concurrent\nfan-in, FIFO fairness, pool exhaustion, queue admission cancellation, command\ntimeouts, adjacent errors, reset isolation, lease rotation, and stuck-lane\nshutdown. PgBouncer session and transaction modes have separate live acceptance.</p>\n<p>The V1 performance programme compares four physical lanes and 64-command bursts\nfor fresh and reused multiplexed commands and for fresh and reused ordinary\npooled controls. A separate 16-feature direct-provider matrix covers pool,\ncommand, streaming, transaction, batch, COPY, typed-row, notification,\nlarge-object and EF paths. Managed allocation must remain at or below Npgsql in\nall 16 direct pairs. The five established latency paths use a strict 1.0 ceiling;\nthe eleven extended paths use the declared 1.05 parity ceiling. The four\nsaturated concurrency shapes remain strict for latency and allocation.\nThe full report, environment/image/commit manifest, SHA-256 hashes, and\nmachine-readable budgets are retained and verified. This is a regression gate,\nnot a universal performance or production-readiness claim.</p>\n<h2>Cancellation</h2>\n<p>Commands use PostgreSQL’s one-shot cancellation connection and the backend key\nfrom the active physical session. Cancellation does not interrupt the normal\nsocket directly. BlueTusk then drains the original operation through\n<code>ReadyForQuery</code> before it can be reused; inside a transaction, PostgreSQL’s\nfailed-transaction state is preserved until caller rollback.</p>\n<p>The gate covers caller tokens, command and batch timeouts, explicit synchronous\nand asynchronous cancellation, sequential readers, portal cleanup, pipeline\nsynchronization groups, COPY abort/recovery, notification waits, and replication\nstream disposal. Protocol encoding and the separate cancellation channel have\nunit coverage. PostgreSQL 15–19 acceptance verifies server-side cancellation\nand subsequent reuse, while the scheduled stress gate runs cancellation storms\nagainst a bounded pool.</p>\n<h2>PostgreSQL-native data paths</h2>\n<table>\n<thead>\n<tr>\n<th>Surface</th>\n<th>Production invariant</th>\n<th>Executable evidence</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>COPY</td>\n<td>Raw text/CSV/binary and typed binary transfers stream incrementally with bounded backpressure; failure, cancellation, early disposal, and malformed input abort and recover the session.</td>\n<td>Binary framing and fragmented UTF-8 unit tests; sync/async PostgreSQL 15–19 round trips and recovery tests.</td>\n</tr>\n<tr>\n<td>Notifications</td>\n<td>Identifier-safe <code>LISTEN</code>/<code>UNLISTEN</code>, bounded delivery, explicit lifetime completion, and no listener state in an ADO.NET pool.</td>\n<td>Live concurrent command/notification, unsubscribe, close, and invalid-lifetime tests across the server matrix.</td>\n</tr>\n<tr>\n<td>Large objects</td>\n<td>Transaction-owned descriptors, sync/async streaming, access checks, 64-bit seek/truncate, chunked writes, commit/rollback, and deterministic exclusivity.</td>\n<td>Stream unit tests plus implicit/explicit transaction lifecycle tests across PostgreSQL 15–19.</td>\n</tr>\n<tr>\n<td>Replication</td>\n<td>Dedicated unpooled physical/logical <code>COPY BOTH</code>, slot/publication discovery, monotonic feedback, exact transaction checkpoints, reconnect safety, streamed transactions, two-phase metadata, pgoutput, and custom plug-ins.</td>\n<td>Wire/decoder tests, full PostgreSQL 15–19 acceptance, allocation/backpressure benchmarks, cancellation/disposal stress, and the scheduled PostgreSQL 19 1,000-epoch persistent-slot endurance gate.</td>\n</tr>\n</tbody>\n</table>\n<p>The replication packages add 822 compiler-enforced shipped API/nullability\nsignatures. Their pre-freeze review replaced ambiguous optional-parameter\noverload families with explicit no-token and required-token overloads.</p>\n<h2>EF Core, design tooling, and extensions</h2>\n<p>BlueTusk directly consumes Microsoft’s EF Core 10.0.11 relational\nspecification package. Its official assembly gate discovers 2,111 cases on\nPostgreSQL 18 and 19: 1,987 pass and 124 retain upstream EF skip declarations.\nPostgreSQL 15–17 run the same adopted suite with only unsupported\ngenerated-column rows excluded by explicit server-version conditions. The\nportable complex-type/JSON query slice runs unchanged across PostgreSQL 15–19.\nBlueTusk’s native provider project runs 301 cases per supported server;\nPostgreSQL 15 passes 299 with two inapplicable cases and PostgreSQL 16–19 each\npass 300 with only the filesystem-dependent tablespace case skipped when no\nserver-owned directory is configured.</p>\n<p>Together those gates cover CRUD, tracking, relational model building, queries,\nupdates, physical database lifecycle, migrations, reverse engineering,\ngenerated code, PostgreSQL-specific types/operators/functions/schema objects,\nand capability-guarded PostgreSQL 19 SQL/PGQ. The exact official-suite boundary\nand upstream skip ownership are documented in the\n<a href=\"/documentation/ef-core/specification-tests\">EF specification-test record</a>.</p>\n<p>Optional PostGIS, pgvector, citext, hstore, ltree, pg_trgm, and TimescaleDB\npackages remain independently installable and do not add their types or SQL to\nthe core packages. Their live extension-image gates, the immutable feature\nregistry, extension template, and compatibility harness close the extension\narchitecture gate. A live extension test first checks\n<code>pg_available_extensions</code>: a plain PostgreSQL image reports an intentional\ndynamic skip when the optional extension is absent, while each dedicated\nextension image requires the same test to pass. The dedicated-image gate reports\n23 pgvector, 10 PostGIS, and 9 TimescaleDB passes with no skips or failures.\nThe checked-in workflow enforces these stable integrations and separately runs\nfour <code>pg_durable</code> adapter checks against its evaluation-only upstream image.\nThat adapter is deliberately non-packable and is not stable V1 evidence while\nupstream remains preview. Every matrix entry retains container logs on failure.\nCloud identity adapters have deterministic SDK contract tests; their\nreal-account acceptance tests remain opt-in because CI does not hold customer\ncloud credentials.</p>\n<p>The compatibility environment matrix also builds pinned, repository-owned\nPgBouncer session/transaction configurations and PostgreSQL 18 images for\n<code>en_GB.UTF-8</code>/<code>Europe/London</code> and <code>de_DE.UTF-8</code>/<code>America/New_York</code>. Live gates\ncover session-affine temporary/prepared state, transaction-pool-safe explicit\ntransactions and prepared commands, locale-aware money text, and time-zone-safe\ntimestamp decoding. PgBouncer’s cleartext test authentication is confined to\nthe isolated Docker network and requires the provider’s explicit insecure-test\nopt-in.</p>\n<p>A separate PostgreSQL 18 streaming-replication topology takes a fresh physical\nbase backup for every CI run. Its live tests prove strict and preferred\nprimary/read-write/standby/read-only selection after unavailable and\nrole-incompatible endpoints, WAL replay visibility, and standby write\nrejection. This is distinct from the logical-replication decoder and endurance\ngates.</p>\n<p>For change detection beyond the pinned PostgreSQL 19 Beta 3 image, a\nscheduled/manual job verifies the checksum of the official nightly PostgreSQL\n19 branch snapshot, compiles it in a repository-owned multi-stage image, and\nruns the full solution against it. The 2026-08-02 scheduled snapshot run\nidentified itself as PostgreSQL 19beta2 and passed 2,967 cases with 146\nintentional environment or\nupstream skips and no failures across 28 test assemblies. No unofficial\nPostgreSQL binary image enters the release gate.</p>\n<p>The complete serial solution matrix currently reports:</p>\n<table>\n<thead>\n<tr>\n<th>PostgreSQL</th>\n<th class=\"align-right\">Passed</th>\n<th class=\"align-right\">Intentional skips</th>\n<th class=\"align-right\">Failed</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>15</td>\n<td class=\"align-right\">2,963</td>\n<td class=\"align-right\">147</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>16</td>\n<td class=\"align-right\">2,964</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>17</td>\n<td class=\"align-right\">2,966</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>18</td>\n<td class=\"align-right\">2,978</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n<tr>\n<td>19</td>\n<td class=\"align-right\">2,978</td>\n<td class=\"align-right\">146</td>\n<td class=\"align-right\">0</td>\n</tr>\n</tbody>\n</table>\n<p>Each total includes the native and official EF projects, all core and extension\nprojects, source generation, compatibility, conformance, security, stress, and\nreplication. The server-free run reports 1,538 passes, 318 intentional skips,\nand no failures across the same 28 test assemblies.\nVersion-specific official migration methods are excluded at discovery when the\nserver cannot implement their generated-column SQL.</p>\n<h2>Release artifacts and documentation</h2>\n<p>The reviewed Provider-family Release candidate produces 31\n<code>1.0.0</code> NuGet/tool/template packages and 29 symbol packages without\nwarnings. Compiler-enforced public API/nullability baselines\ncover all 27 Provider-family library surfaces and are locked by the\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/provider-api-freeze.json\" target=\"_blank\" rel=\"noreferrer\">V1 candidate hash manifest</a>. Package\nconformance also prevents embedded extension-template content projects from\nentering the release train. The final\ndirect-and-transitive NuGet vulnerability audit covers the complete solution\nand reports zero vulnerable package entries. All 37 checked-in allocation\nbudgets pass, including command, typed reader, protocol writer,\nstructured-codec, large-value streaming, replication, EF Core application,\nLive diff/replay/fan-out, SQL/PGQ traversal, and Continuous Graph registration,\nauthoritative requery, and affected-invalidation paths.</p>\n<p>The live application benchmark gate adds fresh parameterized EF query\ncompilation plus first execution, 100-entity materialization, normalized tracked\ninserts and load/update paths, plus traversal of a 1,000-vertex/999-edge\nPostgreSQL 19 property graph through both a prepared raw command and the typed\nEF graph API. The checked-in ShortRun reports and allocation budgets are\nregression evidence, not universal latency or throughput claims.</p>\n<p>The provider core also publishes and executes full-trim and NativeAOT offline\nsmokes on Windows and Linux. The first Windows x64 observation records a\n21,993,850-byte trimmed deployment at 248.994 ms cold wall-clock and 327,144 B\nsecond-pass managed allocation, plus a 5,783,552-byte NativeAOT executable at\n18.327 ms and 343,392 B. This covers the provider construction/type-system path\nwithout a database; it is regression evidence rather than production latency\nor Npgsql-comparison evidence. The documented AOT boundary keeps common\nbuilt-in ranges and one-dimensional arrays static and fails explicitly for\nruntime-selected unsupported shapes.</p>\n<p>The in-memory Live application gate records a 76.4 µs/221,872 B keyed diff for\none update in a bounded 1,000-row result, 881 ns/832 B versioned replay\nserialization, and a 92.3 µs/175,060 B lifecycle that coalesces 100 relevant\ninvalidations and fans one update to 64 bounded subscribers. A deterministic\nrace suite separately proves exactly-once observation through either replay or\nthe live channel across 64 concurrent reconnect/publication boundaries. These\nfigures exclude database and network time and are used only as checked-in\nregression budgets.</p>\n<p>The live PostgreSQL 19 Continuous Graph gate records 988 µs/103,446 B for\ncapability-guarded registration, 2.827 ms/666,055 B for authoritative\nmaterialisation of 999 graph paths, and 4.225 ms/888,159 B for an affected\ninvalidation through authoritative requery plus keyed diff. The invalidation\nsource is constant-time and in-memory, but the <code>GRAPH_TABLE</code> query and provider\nwork are included. These ShortRun values are checked-in regression evidence,\nnot production latency objectives.</p>\n<p>The independently versioned <code>BlueTusk.ContinuousGraph 1.0.0</code> runtime and\n<code>BlueTusk.ContinuousGraph.ControlPlane</code> adapter pass a zero-warning repository\nRelease build, the graph suite including PostgreSQL 19 acceptance, public API\nfreeze, dependency-direction conformance, documentation-link and\nallocation-budget gates, and inspected NuGet packs. ContinuousGraph remains\nunpublished until PostgreSQL 19 GA, its dependencies, the exact 24-hour\n100,000-evaluation recovery-endurance report, and an independent pilot pass.\nThe Live gate covers signed\ndisconnect/resume replay from the PostgreSQL production store through SSE,\nSignalR/WebSockets, and HTTP/2 gRPC on PostgreSQL 15–19. The release script\nrejects any publishable family with a gated dependency. This does not mark the\nstill-open Streams 72-hour, Sync 24-hour, ContinuousGraph 24-hour, pilot, or\nprotected publication gates complete.</p>\n<p>The independently versioned Control Plane candidate now exposes discoverable\nv1 agent routes with versioned envelopes while retaining the original\nunversioned\nroutes as compatibility aliases. Its audit store transactionally upgrades the\nlegacy pre-metadata table to schema version 2, preserves and format-marks\nexisting rows, rejects future schemas, and fences appends to the exact running\nschema version. Eleven unit tests, a hash-locked compiler API baseline, an\nexecutable format registry, and the live PostgreSQL 15–19 matrix cover route\nauthorization, version negotiation, immutable audit, fresh initialization, and\nlegacy upgrade. The <code>BlueTusk.ControlPlane</code> and <code>BlueTusk.Dashboard</code> 1.0.0\ncandidates remain unpublished because the declared Sync\nrelease dependency has not yet archived its required 24-hour endurance\nevidence.</p>\n<p>The paired PostgreSQL 19 provider gate records lower BlueTusk mean latency and\nmanaged allocation on parameterized and explicitly prepared scalar execution,\nuntouched warm checkout, sequential 1,000-row reads, and isolated 1 MiB\nstreaming. The MediumRun confidence intervals establish clear latency wins for\nparameterized execution, checkout, and row streaming; prepared and large-stream\nlatency remain statistical parity despite lower BlueTusk means. Release\nreadiness does not reinterpret these environment-specific results as blanket\nprovider superiority.</p>\n<p>Documentation covers every public subsystem and is led by long-lived,\ndata-source-first usage. A cross-platform CI script validates every local link\nin all tracked Markdown files. The Angular documentation build preserves a\ngenerated route for every repository guide while a reviewed manifest selects\nthe task-oriented guides exposed by navigation, search, and the machine-readable\nguide set. Internal links are rewritten to site routes, and the build fails\nwhen generated content drifts.\nThe support matrix identifies .NET 10, EF Core 10.0.11,\nPostgreSQL 15–18, and the pinned PostgreSQL 19 Beta 3 candidate evidence, including the\nremaining beta-syntax risk.</p>\n<h2>Automated gates</h2>\n<p>The normal CI build runs formatting, documentation-link validation,\nwarnings-as-errors compilation, all offline tests, allocation budgets,\npackaging, and public API analysis on Windows and Linux. Live matrices run the\nsolution against PostgreSQL 15, 16, 17, 18, and 19 and run pgvector, PostGIS,\nand TimescaleDB ADO.NET/EF acceptance on their dedicated images. Additional\nlive jobs enforce PgBouncer session/transaction pooling and two locale/time-zone\ncombinations. A physical primary/standby job adds target-session selection and\nWAL-replay acceptance. Scheduled/manual CI also builds the official PostgreSQL\n19 branch snapshot and runs the complete solution against that moving target.\nScheduled/manual jobs add elevated provider concurrency and a separate\nreplication endurance run. See the\nchecked-in workflow and\n<a href=\"/documentation/operations/testing\">testing guide</a> for the exact commands and environment\ncontract.</p>\n<p>The <a href=\"/documentation/operations/completion-audit\">specification completion audit</a> maps every original\nproduct area and architecture-gap priority to its primary executable evidence.\nThis evidence closes the repository’s current product-spec engineering gates.\nIt does not publish the <code>1.0.0</code> packages, guarantee suitability for a\nparticular production deployment, validate optional cloud credentials that were\nnot supplied, or expand the documented raw-SQL and ownership/grant boundaries.</p>\n"
       }
     ]
   },
@@ -7609,6 +7666,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "version"
     ],
     "order": 35,
+    "listed": true,
     "title": "Upgrade guide",
     "sourcePath": "docs/operations/upgrade-guide.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/upgrade-guide.md",
@@ -7693,6 +7751,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "api-compatibility",
+    "listed": false,
     "summary": "Public API baselines and compatibility expectations.",
     "keywords": [
       "api",
@@ -7755,6 +7814,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "testing",
+    "listed": false,
     "summary": "Unit, live, topology, security, stress, and endurance test profiles.",
     "keywords": [
       "testing",
@@ -7971,6 +8031,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "repository-layout",
+    "listed": false,
     "summary": "Repository projects and dependency boundaries.",
     "keywords": [
       "repository",
@@ -8037,6 +8098,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "roadmap",
+    "listed": false,
     "summary": "Provider, EF, graph, extension, real-time, and 1.0 milestones.",
     "keywords": [
       "roadmap",
@@ -8207,6 +8269,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "contributing",
+    "listed": false,
     "summary": "Issue-first contribution flow, tests, compatibility, and secrets policy.",
     "keywords": [
       "contribute",
@@ -8243,6 +8306,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "slug": "report-security",
+    "listed": false,
     "summary": "Report vulnerabilities privately through the repository hosting platform.",
     "keywords": [
       "vulnerability",
@@ -8272,6 +8336,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "versioning",
     "summary": "PostgreSQL 15–18 are the released-server compatibility baseline. PostgreSQL 19 is currently exercised with the pinned postgres:19beta3-alpine image and is explicitly beta-sensitive: SQL/PGQ syntax, catalogues, and cap…",
     "keywords": [
@@ -8311,6 +8376,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "api-naming",
     "summary": "BlueTusk names should read naturally after the caller has already selected a BlueTusk package or entered a PostgreSQL-specific domain. Repeating the product name in every fluent member obscures the operation without a…",
     "keywords": [
@@ -8347,6 +8413,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "completion-audit",
     "summary": "This record maps the original BlueTusk product specification and the subsequent architecture-gap review to concrete repository evidence. “Complete” here means the engineering surface is implemented, documented, and co…",
     "keywords": [
@@ -8403,6 +8470,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "fuzzing",
     "summary": "BlueTusk fuzzes every externally controlled parser boundary used by the V1 product chain:",
     "keywords": [
@@ -8493,6 +8561,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "hardening-programme",
     "summary": "The Provider → Streams → Sync → Live → Continuous Graph development chain is feature-complete for V1. Version 1.0.0 was published on 2026-08-23 under the documented repository-owner exception.",
     "keywords": [
@@ -8569,6 +8638,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-application-platform-health",
     "summary": "BlueTusk's three Clean Architecture reference applications are production-shaped workloads, but Kubernetes desired state is not proof that a workload is actually running. A stale Pod object can continue to show Runnin…",
     "keywords": [
@@ -8667,6 +8737,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-approval-evidence",
     "summary": "BlueTusk treats operational acceptance as measured release evidence, not a collection of unchecked signatures. The protected candidate workflow requires ten JSON records for one immutable commit. Every record is SHA-2…",
     "keywords": [
@@ -8774,6 +8845,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-endurance-disturbance-evidence",
     "summary": "V1 requires more than a long-running green test process. The exact 72-hour Streams run and exact 24-hour Sync run must each survive the seven operational disturbances in eng/v1-endurance-disturbance-contract.json. Tha…",
     "keywords": [
@@ -8847,6 +8919,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-fuzz-finding-handoff",
     "summary": "This record preserves the release-relevant outcome of the 2026-08-04 coverage-guided run without placing triggering inputs in public documentation. It is a defensive review handoff, not approval to publish.",
     "keywords": [
@@ -8905,6 +8978,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-observability",
     "summary": "BlueTusk V1 exposes one OpenTelemetry meter per product area and treats telemetry as a versioned operational contract. Metrics are low-overhead when no listener is attached, exporter-neutral, and deliberately avoid SQ…",
     "keywords": [
@@ -9031,6 +9105,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-package-evidence",
     "summary": "The manual build.yml candidate run produces one canonical, evidence-only package set for all six BlueTusk product families. The set is the package input to release review. It is not a publication path and receives no…",
     "keywords": [
@@ -9113,6 +9188,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-performance-leadership-1-1",
     "summary": "Public RC basis: 2e735ed46aec11d5009158a00ca7b862f9ec12af",
     "keywords": [
@@ -9172,6 +9248,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-production-readiness",
     "summary": "BlueTusk has two deliberately different readiness states:",
     "keywords": [
@@ -9329,8 +9406,9 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-website-production",
-    "summary": "The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes the source-synchronized handbook, and exposes the current benchmark, compatibility and operational records. A suc…",
+    "summary": "The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes a curated source-synchronized guide set, and keeps benchmark, compatibility, and operational records available at…",
     "keywords": [
       "docs",
       "operations",
@@ -9363,13 +9441,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 530,
+    "wordCount": 536,
     "readMinutes": 3,
-    "searchText": "Website production contract The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes the source-synchronized handbook, and exposes the current benchmark, compatibility and operational records. A successful application build alone is not enough: the shipped static output must also meet the checked-in delivery contract. Deterministic build budgets [`website/production-contract.json`](../../website/production-contract.json) defines the maximum production output: Measurement V1 ceiling Purpose Initial JavaScript and CSS, raw 950 kB Prevent unbounded startup growth Initial JavaScript and CSS, Brotli 220 KiB Bound the expected compressed transfer Largest lazy JavaScript or CSS asset, Brotli 275 KiB Bound documentation-route payload growth Complete static distribution 20 MiB Bound 135 prerendered routes and the machine-readable handbook Angular independently enforces its configured initial bundle ceiling. The post-build verifier measures the emitted files, compresses JavaScript and CSS with Brotli, records the byte length and SHA-256 of every deployed file, confirms content-hashed initial assets, rejects source maps and writes `production-metrics.json` into the archived static distribution: `npm run build` invokes `verify-production-build.mjs` automatically. Run `npm run verify:production` to recheck an existing build. Independently verify the emitted report and every recorded asset with: Delivery and discoverability The production contract also requires: a language, viewport, description, theme colour, Open Graph and Twitter metadata record; no unresolved deployment-origin placeholder; 135 prerendered routes so crawlers receive complete page text without running JavaScript; explicit `OAI-SearchBot`, `ChatGPT-User`, and `GPTBot` access in `robots.txt`; a sitemap, `llms.txt` documentation index, complete `llms-full.txt` handbook, and standard `.well-known/security.txt` contact; guide-specific descriptions, canonical URLs, Open ",
+    "searchText": "Website production contract The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes a curated source-synchronized guide set, and keeps benchmark, compatibility, and operational records available at stable routes. A successful application build alone is not enough: the shipped static output must also meet the checked-in delivery contract. Deterministic build budgets [`website/production-contract.json`](../../website/production-contract.json) defines the maximum production output: Measurement V1 ceiling Purpose Initial JavaScript and CSS, raw 950 kB Prevent unbounded startup growth Initial JavaScript and CSS, Brotli 220 KiB Bound the expected compressed transfer Largest lazy JavaScript or CSS asset, Brotli 275 KiB Bound documentation-route payload growth Complete static distribution 20 MiB Bound 135 prerendered routes and the machine-readable guide set Angular independently enforces its configured initial bundle ceiling. The post-build verifier measures the emitted files, compresses JavaScript and CSS with Brotli, records the byte length and SHA-256 of every deployed file, confirms content-hashed initial assets, rejects source maps and writes `production-metrics.json` into the archived static distribution: `npm run build` invokes `verify-production-build.mjs` automatically. Run `npm run verify:production` to recheck an existing build. Independently verify the emitted report and every recorded asset with: Delivery and discoverability The production contract also requires: a language, viewport, description, theme colour, Open Graph and Twitter metadata record; no unresolved deployment-origin placeholder; 135 prerendered routes so crawlers receive complete page text without running JavaScript; explicit `OAI-SearchBot`, `ChatGPT-User`, and `GPTBot` access in `robots.txt`; a sitemap, `llms.txt` documentation index, curated `llms-full.txt` guide set, and standard `.well-known/security.txt` contact; guide-specific descriptions,",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>Website production contract</h1>\n<p>The Angular website is part of the V1 release evidence surface. It explains\nproduct maturity, publishes the source-synchronized handbook, and exposes the\ncurrent benchmark, compatibility and operational records. A successful\napplication build alone is not enough: the shipped static output must also meet\nthe checked-in delivery contract.</p>\n<h2>Deterministic build budgets</h2>\n<p><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/website/production-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>website/production-contract.json</code></a>\ndefines the maximum production output:</p>\n<table>\n<thead>\n<tr>\n<th>Measurement</th>\n<th class=\"align-right\">V1 ceiling</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Initial JavaScript and CSS, raw</td>\n<td class=\"align-right\">950 kB</td>\n<td>Prevent unbounded startup growth</td>\n</tr>\n<tr>\n<td>Initial JavaScript and CSS, Brotli</td>\n<td class=\"align-right\">220 KiB</td>\n<td>Bound the expected compressed transfer</td>\n</tr>\n<tr>\n<td>Largest lazy JavaScript or CSS asset, Brotli</td>\n<td class=\"align-right\">275 KiB</td>\n<td>Bound documentation-route payload growth</td>\n</tr>\n<tr>\n<td>Complete static distribution</td>\n<td class=\"align-right\">20 MiB</td>\n<td>Bound 135 prerendered routes and the machine-readable handbook</td>\n</tr>\n</tbody>\n</table>\n<p>Angular independently enforces its configured initial bundle ceiling. The\npost-build verifier measures the emitted files, compresses JavaScript and CSS\nwith Brotli, records the byte length and SHA-256 of every deployed file,\nconfirms content-hashed initial assets, rejects source maps and writes\n<code>production-metrics.json</code> into the archived static distribution:</p>\n"
+        "html": "<h1>Website production contract</h1>\n<p>The Angular website is part of the V1 release evidence surface. It explains\nproduct maturity, publishes a curated source-synchronized guide set, and keeps\nbenchmark, compatibility, and operational records available at stable routes. A successful\napplication build alone is not enough: the shipped static output must also meet\nthe checked-in delivery contract.</p>\n<h2>Deterministic build budgets</h2>\n<p><a href=\"https://github.com/jphgardner/BlueTusk/blob/main/website/production-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>website/production-contract.json</code></a>\ndefines the maximum production output:</p>\n<table>\n<thead>\n<tr>\n<th>Measurement</th>\n<th class=\"align-right\">V1 ceiling</th>\n<th>Purpose</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Initial JavaScript and CSS, raw</td>\n<td class=\"align-right\">950 kB</td>\n<td>Prevent unbounded startup growth</td>\n</tr>\n<tr>\n<td>Initial JavaScript and CSS, Brotli</td>\n<td class=\"align-right\">220 KiB</td>\n<td>Bound the expected compressed transfer</td>\n</tr>\n<tr>\n<td>Largest lazy JavaScript or CSS asset, Brotli</td>\n<td class=\"align-right\">275 KiB</td>\n<td>Bound documentation-route payload growth</td>\n</tr>\n<tr>\n<td>Complete static distribution</td>\n<td class=\"align-right\">20 MiB</td>\n<td>Bound 135 prerendered routes and the machine-readable guide set</td>\n</tr>\n</tbody>\n</table>\n<p>Angular independently enforces its configured initial bundle ceiling. The\npost-build verifier measures the emitted files, compresses JavaScript and CSS\nwith Brotli, records the byte length and SHA-256 of every deployed file,\nconfirms content-hashed initial assets, rejects source maps and writes\n<code>production-metrics.json</code> into the archived static distribution:</p>\n"
       },
       {
         "kind": "code",
@@ -9389,13 +9467,14 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<h2>Delivery and discoverability</h2>\n<p>The production contract also requires:</p>\n<ul>\n<li>a language, viewport, description, theme colour, Open Graph and Twitter\nmetadata record;</li>\n<li>no unresolved deployment-origin placeholder;</li>\n<li>135 prerendered routes so crawlers receive complete page text without running JavaScript;</li>\n<li>explicit <code>OAI-SearchBot</code>, <code>ChatGPT-User</code>, and <code>GPTBot</code> access in <code>robots.txt</code>;</li>\n<li>a sitemap, <code>llms.txt</code> documentation index, complete <code>llms-full.txt</code> handbook, and standard\n<code>.well-known/security.txt</code> contact;</li>\n<li>guide-specific descriptions, canonical URLs, Open Graph URLs, and crawler directives;</li>\n<li>hashed JavaScript and CSS with no production source maps;</li>\n<li>explicit image dimensions to prevent layout shift;</li>\n<li>a bounded persistent-navigation logo; and</li>\n<li>eager loading for the above-fold architecture image with fixed dimensions.</li>\n</ul>\n<p>The host remains responsible for TLS, SPA fallback to <code>index.html</code>, Brotli or\ngzip content encoding, immutable caching for hashed assets, short-lived caching\nfor <code>index.html</code>, and security headers appropriate to the selected deployment\norigin. Those host-specific facts belong in deployment evidence rather than in\nan Angular source claim.</p>\n<h2>Release evidence</h2>\n<p>The manual <code>build.yml</code> exact-candidate run builds and tests the website, runs\nthe production verifier, audits npm dependencies and archives the browser\ndistribution together with <code>production-metrics.json</code>. The same run archives\nthe canonical six-family package evidence, so the protected gate cannot combine\na website from one build with packages from another. The run is one of the 7\nexact-SHA workflow records required by the protected V1 candidate gate.\nThe aggregator downloads both artifacts, binds the metrics report by SHA-256,\nverifies its source commit and budgets, then re-hashes every emitted file\nbefore adding the complete distribution to the 90-day readiness bundle.</p>\n<p>These metrics are delivery regression budgets, not field Core Web Vitals.\nProduction operators must still collect real-user LCP, INP and CLS for the\nchosen host, geography and traffic profile and attach the results to the\n<code>website-deployment-acceptance</code> record.</p>\n"
+        "html": "<h2>Delivery and discoverability</h2>\n<p>The production contract also requires:</p>\n<ul>\n<li>a language, viewport, description, theme colour, Open Graph and Twitter\nmetadata record;</li>\n<li>no unresolved deployment-origin placeholder;</li>\n<li>135 prerendered routes so crawlers receive complete page text without running JavaScript;</li>\n<li>explicit <code>OAI-SearchBot</code>, <code>ChatGPT-User</code>, and <code>GPTBot</code> access in <code>robots.txt</code>;</li>\n<li>a sitemap, <code>llms.txt</code> documentation index, curated <code>llms-full.txt</code> guide set, and standard\n<code>.well-known/security.txt</code> contact;</li>\n<li>guide-specific descriptions, canonical URLs, Open Graph URLs, and crawler directives;</li>\n<li>hashed JavaScript and CSS with no production source maps;</li>\n<li>explicit image dimensions to prevent layout shift;</li>\n<li>a bounded persistent-navigation logo; and</li>\n<li>eager loading for the above-fold architecture image with fixed dimensions.</li>\n</ul>\n<p>The host remains responsible for TLS, SPA fallback to <code>index.html</code>, Brotli or\ngzip content encoding, immutable caching for hashed assets, short-lived caching\nfor <code>index.html</code>, and security headers appropriate to the selected deployment\norigin. Those host-specific facts belong in deployment evidence rather than in\nan Angular source claim.</p>\n<h2>Release evidence</h2>\n<p>The manual <code>build.yml</code> exact-candidate run builds and tests the website, runs\nthe production verifier, audits npm dependencies and archives the browser\ndistribution together with <code>production-metrics.json</code>. The same run archives\nthe canonical six-family package evidence, so the protected gate cannot combine\na website from one build with packages from another. The run is one of the 7\nexact-SHA workflow records required by the protected V1 candidate gate.\nThe aggregator downloads both artifacts, binds the metrics report by SHA-256,\nverifies its source commit and budgets, then re-hashes every emitted file\nbefore adding the complete distribution to the 90-day readiness bundle.</p>\n<p>These metrics are delivery regression budgets, not field Core Web Vitals.\nProduction operators must still collect real-user LCP, INP and CLS for the\nchosen host, geography and traffic profile and attach the results to the\n<code>website-deployment-acceptance</code> record.</p>\n"
       }
     ]
   },
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "postgresql19-programme",
     "summary": "PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence, not a production dependency. The official project warns that beta features and behaviour may still change and does not recommend beta releas…",
     "keywords": [
@@ -9427,6 +9506,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "provider-release-notes-1-0-0",
     "summary": "Status: published on 2026-08-23 from provider-v1.0.0 at release commit 7380d7b028c72b2aae348b778711d104d022a3f8.",
     "keywords": [
@@ -9462,6 +9542,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "release-process",
     "summary": "BlueTusk release publication is fail closed. A successful build or candidate package is evidence, not permission to publish.",
     "keywords": [
@@ -9508,6 +9589,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "release-review-handoff",
     "summary": "Use one copy of this record for each exact candidate commit. Reviewers must be independent of the person who prepared the release. Blank, inherited or ancestor-commit evidence does not pass.",
     "keywords": [
@@ -9555,6 +9637,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "releases-1-0-0-publication-record",
     "summary": "Status: published on 2026-08-23.",
     "keywords": [
@@ -9640,6 +9723,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "releases-1-1-0-candidate",
     "summary": "BlueTusk 1.1.0 is one coordinated, API-compatible performance release across all six product families and the three Live browser clients. The existing 1.0 artifacts are immutable; 1.1 adds optimised paths and observab…",
     "keywords": [
@@ -9684,6 +9768,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "releases-1-2-0-plan",
     "summary": "BlueTusk 1.2 is a coordinated expansion release, not six unrelated package updates. Every BlueTusk dependency in one application remains on the same exact version. The machine-readable authority is",
     "keywords": [
@@ -9733,6 +9818,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "v1-applications",
     "summary": "BlueTusk V1 is exercised by three independently deployable applications in applications/BlueTusk.Applications.slnx:",
     "keywords": [
@@ -9789,6 +9875,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "operations",
     "categoryLabel": "Operations",
+    "listed": false,
     "slug": "v1-release-readiness",
     "summary": "BlueTusk 1.0.0 was published on 2026-08-23 under the explicit repository-owner decision recorded in the V1 publication record. Publication did",
     "keywords": [

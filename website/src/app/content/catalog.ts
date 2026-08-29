@@ -443,7 +443,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
 export const SITE_SEARCH: readonly SearchRecord[] = [
   {
     title: 'Platform architecture',
-    description: 'How the BlueTusk products fit together and what is ready now.',
+    description: 'Choose the smallest BlueTusk layer for your workload.',
     route: '/platform',
     group: 'Platform',
     keywords: 'architecture dependencies security observability',
@@ -457,14 +457,14 @@ export const SITE_SEARCH: readonly SearchRecord[] = [
   },
   {
     title: 'EF Core',
-    description: 'Queries, mappings, migrations, scaffolding, and graph.',
+    description: 'LINQ, PostgreSQL mappings, migrations, and database-first workflows.',
     route: '/ef-core',
     group: 'Products',
     keywords: 'linq json array range schema database first',
   },
   {
     title: 'Real Time',
-    description: 'Streams, Sync, Live, and Control Plane.',
+    description: 'Capture committed changes, deliver them, and operate the pipeline.',
     route: '/real-time',
     group: 'Products',
     keywords: 'cdc snapshot relay replay checkpoint destinations',
@@ -478,21 +478,21 @@ export const SITE_SEARCH: readonly SearchRecord[] = [
   },
   {
     title: 'Graph',
-    description: 'PostgreSQL 19 SQL/PGQ and Continuous Graph.',
+    description: 'Capability-guarded SQL/PGQ and incremental graph results.',
     route: '/graph',
     group: 'Products',
     keywords: 'property graph fraud network reactive',
   },
   {
     title: 'Engineering evidence',
-    description: 'Passed tests, open work, security, performance, and release status.',
+    description: 'Verified results, guarded capabilities, and work still open.',
     route: '/evidence',
     group: 'Trust',
     keywords: '1987 2111 allocation 72h 24h',
   },
   {
     title: 'Documentation',
-    description: 'Build-time synchronized technical guides.',
+    description: 'Task-oriented guides generated from the repository documentation.',
     route: '/documentation',
     group: 'Learn',
     keywords: 'guides getting started api',

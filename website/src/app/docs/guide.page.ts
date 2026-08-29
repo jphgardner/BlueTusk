@@ -55,13 +55,12 @@ import { GUIDES } from '../../generated/guides.generated';
         </aside>
         <main class="guide-main">
           <header>
-            <span>{{ current.categoryLabel }} · {{ current.sourcePath }}</span>
+            <span>{{ current.categoryLabel }}</span>
             <h1>{{ current.title }}</h1>
             <p>{{ current.summary }}</p>
             <div class="guide-meta">
               <span>{{ current.readMinutes }} min read</span
-              ><span>{{ current.wordCount.toLocaleString() }} words</span
-              ><span>Source synchronized</span>
+              ><span>Maintained in the repository</span>
             </div>
             <a [href]="current.sourceUrl" target="_blank" rel="noreferrer"
               ><mat-icon>code</mat-icon>View source on GitHub<mat-icon>open_in_new</mat-icon></a
@@ -151,7 +150,9 @@ export class GuidePage implements AfterViewChecked {
     GUIDES.find((x) => x.category === this.category() && x.slug === this.slug()),
   );
   protected readonly categoryGuides = computed(() =>
-    GUIDES.filter((x) => x.category === this.category()).sort((a, b) => a.order - b.order),
+    GUIDES.filter(
+      (x) => x.category === this.category() && (this.guide()?.listed ? x.listed : true),
+    ).sort((a, b) => a.order - b.order),
   );
   protected readonly currentIndex = computed(() =>
     this.categoryGuides().findIndex((x) => x.slug === this.slug()),

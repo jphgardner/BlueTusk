@@ -1767,6 +1767,10 @@ a {
   gap: 16px;
 }
 
+.journey-grid-two {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .journey-grid article,
 .extension-grid article,
 .schema-grid article {

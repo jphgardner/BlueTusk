@@ -1,7 +1,7 @@
 <section class="hero">
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="hero-inner">
-    <div class="release-label"><span></span> BLUETUSK 1.2.0-RC.1 · IN VALIDATION</div>
+    <div class="release-label"><span></span> BLUETUSK 1.1.0-RC.1 · PUBLIC</div>
     <h1>The PostgreSQL platform for <em>.NET</em></h1>
     <p>
       Use one PostgreSQL-native stack for ADO.NET, EF Core, replication, real-time delivery,
@@ -15,10 +15,9 @@
         class="primary-action"
         >Get Started</a
       >
-      <a mat-stroked-button href="#ecosystem" class="secondary-action">Explore BlueTusk</a>
       <a
         mat-stroked-button
-        routerLink="/documentation/operations/releases-1-2-0-plan"
+        routerLink="/documentation/getting-started/release-1-1-rc1"
         class="secondary-action"
         >Release Notes</a
       >
@@ -116,8 +115,8 @@
 <section id="ecosystem" class="content-section">
   <div class="section-heading-center">
     <span>THE ECOSYSTEM</span>
-    <h2>Engineered for the modern PostgreSQL stack</h2>
-    <p>Six product areas that work together.</p>
+    <h2>Choose the part your workload needs</h2>
+    <p>Six focused product areas, designed to compose without hiding PostgreSQL.</p>
   </div>
 
   <div class="ecosystem-grid">
@@ -179,34 +178,6 @@
   </div>
 </section>
 
-<section class="content-section capability-section">
-  <div class="section-heading-split">
-    <div>
-      <span>USE MORE OF POSTGRESQL</span>
-      <h2>The database stays powerful.</h2>
-    </div>
-    <p>
-      Use PostgreSQL types, database design features, extensions, and SQL directly through ADO.NET
-      and EF Core.
-    </p>
-  </div>
-
-  <div class="capability-grid">
-    @for (group of capabilityGroups; track group.title; let index = $index) {
-      <article>
-        <span class="capability-index">0{{ index + 1 }}</span>
-        <small>{{ group.eyebrow }}</small>
-        <h3>{{ group.title }}</h3>
-        <div>
-          @for (item of group.items; track item) {
-            <span>{{ item }}</span>
-          }
-        </div>
-      </article>
-    }
-  </div>
-</section>
-
 <section class="content-section evidence-section">
   <div class="evidence-header">
     <div>
@@ -238,29 +209,10 @@
   </div>
 </section>
 
-<section class="content-section roadmap-section">
-  <div class="section-heading-center">
-    <span>RELEASE STATUS</span>
-    <h2>Try the public RC today. See what stable still needs.</h2>
-    <p>Every product uses the same version, and the remaining checks are listed openly.</p>
-  </div>
-
-  <div class="roadmap">
-    @for (stage of roadmap; track stage.name; let index = $index) {
-      <article [attr.data-kind]="stage.kind">
-        <div class="roadmap-line"><i></i></div>
-        <small>0{{ index + 1 }}</small>
-        <h3>{{ stage.name }}</h3>
-        <p>{{ stage.status }}</p>
-      </article>
-    }
-  </div>
-</section>
-
 <section class="community-section">
   <div>
     <span>BUILD WITH BLUETUSK</span>
-    <h2>Put the 1.1 release candidate under a real workload.</h2>
+    <h2>Try the release candidate with a real workload.</h2>
     <p>
       Install the public packages, try them with a real workload, report anything you can reproduce,
       and help make the stable 1.1 release stronger.

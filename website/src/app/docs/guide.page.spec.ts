@@ -61,7 +61,7 @@ describe('GuidePage', () => {
     harness.fixture.detectChanges();
     await harness.fixture.whenStable();
 
-    expect(document.title).toBe('Quickstart: run BlueTusk locally — BlueTusk');
+    expect(document.title).toBe('Quickstart: run the first query — BlueTusk');
     expect(document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
       'https://bluetusk.io/documentation/getting-started/quickstart',
     );

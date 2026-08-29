@@ -1,5 +1,6 @@
 import { EVIDENCE, EXTENSION_CAPABILITIES, PRODUCT_STATUSES, SITE_SEARCH } from './catalog';
 import { GUIDES } from '../../generated/guides.generated';
+import { GUIDE_SEARCH } from '../../generated/guide-search.generated';
 
 describe('website content integrity', () => {
   it('keeps product maturity and pending gates explicit', () => {
@@ -67,6 +68,21 @@ describe('website content integrity', () => {
           .toLowerCase(),
       ).not.toContain('<script');
     }
+  });
+
+  it('keeps the task-oriented guide index separate from project records', () => {
+    const listed = GUIDES.filter((guide) => guide.listed);
+    expect(listed.length).toBeGreaterThan(35);
+    expect(listed.length).toBeLessThan(60);
+    expect(GUIDES.find((guide) => guide.sourcePath === 'docs/release-readiness.md')?.listed).toBe(
+      false,
+    );
+    expect(GUIDES.find((guide) => guide.sourcePath === 'docs/ado-net/README.md')?.listed).toBe(
+      true,
+    );
+    expect(GUIDE_SEARCH.map((guide) => guide.route).sort()).toEqual(
+      listed.map((guide) => `/documentation/${guide.category}/${guide.slug}`).sort(),
+    );
   });
 
   it('keeps every flagship page in global search', () => {

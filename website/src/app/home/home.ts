@@ -269,64 +269,6 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
     },
   ] as const;
 
-  protected readonly capabilityGroups = [
-    {
-      eyebrow: 'Types',
-      title: 'Use PostgreSQL types directly',
-      items: [
-        'Arrays',
-        'Ranges',
-        'Multiranges',
-        'Composites',
-        'Enums',
-        'JSONB',
-        'Network',
-        'Full text',
-      ],
-      tone: 'blue',
-    },
-    {
-      eyebrow: 'Database design',
-      title: 'Keep your PostgreSQL database design',
-      items: [
-        'Partitioning',
-        'Row-level security',
-        'Publications',
-        'Subscriptions',
-        'Scaffolding',
-        'Migrations',
-      ],
-      tone: 'cyan',
-    },
-    {
-      eyebrow: 'Specialized workloads',
-      title: 'Add advanced features when needed',
-      items: [
-        'PostGIS',
-        'pgvector',
-        'TimescaleDB',
-        'pg_durable',
-        'SQL/PGQ',
-        'Logical replication',
-        'Pipeline mode',
-      ],
-      tone: 'purple',
-    },
-  ] as const;
-
-  protected readonly roadmap = [
-    { name: 'Provider', status: '1.1.0-rc.1 public', kind: 'complete' },
-    { name: 'Streams', status: 'RC public · 72-hour stable test pending', kind: 'complete' },
-    { name: 'Sync', status: 'RC public · 24-hour stable test pending', kind: 'complete' },
-    { name: 'Live', status: '1.1.0-rc.1 public', kind: 'complete' },
-    { name: 'Control Plane', status: '1.1.0-rc.1 public', kind: 'complete' },
-    {
-      name: 'Continuous Graph',
-      status: 'RC public · waits for PostgreSQL 19 GA',
-      kind: 'complete',
-    },
-  ] as const;
-
   protected selectExample(value: string): void {
     this.selectedExample.set(value);
     this.copyState.set('Copy');

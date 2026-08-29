@@ -11,11 +11,12 @@ import { SourceLink } from '../shared/technical-ui';
   template: `
     <section class="page-hero split-hero community-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> BUILD IN THE OPEN</span>
-        <h1>Help shape BlueTusk with <em>real-world use.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> CONTRIBUTE</span>
+        <h1>Bring a reproducer.<br /><em>Leave the project clearer.</em></h1>
         <p>
-          Report what you tried, what happened, and what you expected. Issues, samples, missing
-          PostgreSQL behavior, and production feedback all make the platform better.
+          Start with observable PostgreSQL behavior: what you ran, what happened, what you expected,
+          and the smallest case that shows the difference. Discuss substantial changes before
+          implementation.
         </p>
         <div class="hero-actions">
           <a
@@ -27,9 +28,11 @@ import { SourceLink } from '../shared/technical-ui';
             >Open GitHub Issues</a
           ><a
             mat-stroked-button
-            routerLink="/documentation/operations/contributing"
+            href="https://github.com/jphgardner/BlueTusk/blob/main/CONTRIBUTING.md"
+            target="_blank"
+            rel="noreferrer"
             class="secondary-action"
-            >Contribution guide</a
+            >Read CONTRIBUTING.md</a
           >
         </div>
       </div>
@@ -48,8 +51,8 @@ import { SourceLink } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>HOW TO CONTRIBUTE</span>
-          <h2>Turn what you found into a useful change.</h2>
+          <span>CONTRIBUTOR LOOP</span>
+          <h2>Make the change easy to review.</h2>
         </div>
         <bt-source-link [href]="source('CONTRIBUTING.md')" label="CONTRIBUTING.md" />
       </header>
@@ -68,10 +71,10 @@ import { SourceLink } from '../shared/technical-ui';
     <section class="page-section contribution-areas">
       <header class="section-head">
         <div>
-          <span>WHERE WORK HELPS</span>
-          <h2>Choose an area where your experience helps.</h2>
+          <span>START FROM EXPERIENCE</span>
+          <h2>Work where you can prove behavior.</h2>
         </div>
-        <p>Each area links to working code, tests, documentation, and planned improvements.</p>
+        <p>Each area leads to its current product boundary and technical documentation.</p>
       </header>
       <div>
         @for (area of areas; track area.title) {
@@ -88,8 +91,8 @@ import { SourceLink } from '../shared/technical-ui';
 
     <section class="page-section contributor-contract">
       <div>
-        <span class="section-kicker">WHAT A GOOD CHANGE INCLUDES</span>
-        <h2>Show that the change works.</h2>
+        <span class="section-kicker">REVIEW CONTRACT</span>
+        <h2>Evidence travels with the change.</h2>
         <p>
           Keep the architecture clear, protect existing APIs, follow PostgreSQL behavior, and add
           tests that match the risk of the change.
