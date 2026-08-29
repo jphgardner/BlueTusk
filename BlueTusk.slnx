@@ -41,6 +41,9 @@
     <Project Path="src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj" />
     <Project Path="src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj" />
   </Folder>
+  <Folder Name="/Operations/Samples/">
+    <Project Path="samples/BlueTusk.Samples.Dashboard/BlueTusk.Samples.Dashboard.csproj" />
+  </Folder>
   <Folder Name="/Operations/Tests/">
     <Project Path="tests/BlueTusk.ControlPlane.Kubernetes.Tests/BlueTusk.ControlPlane.Kubernetes.Tests.csproj" />
     <Project Path="tests/BlueTusk.ControlPlane.Tests/BlueTusk.ControlPlane.Tests.csproj" />
