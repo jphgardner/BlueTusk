@@ -11,6 +11,10 @@ $expectedVersion = [string](
         ConvertFrom-Json).version
 $localNpmPackageRoot = Join-Path $repositoryRoot 'artifacts/prerelease/live'
 $hasLocalNpmCandidate = Test-Path -LiteralPath $localNpmPackageRoot -PathType Container
+$canVerifyLocalNpmIntegrity =
+    $hasLocalNpmCandidate -and
+    [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+        [Runtime.InteropServices.OSPlatform]::Linux)
 $verifiedLocalNpmPackages = [Collections.Generic.HashSet[string]]::new(
     [StringComparer]::Ordinal)
 
@@ -143,7 +147,9 @@ foreach ($webManifest in $webManifests)
             throw "Web app '$($package.name)' lock entry for '$($dependency.Name)' is not the exact public RC artifact."
         }
 
-        if ($hasLocalNpmCandidate)
+        # npm's tar archive bytes include platform-specific metadata. The Linux
+        # package lane is authoritative because it is also the publishing lane.
+        if ($canVerifyLocalNpmIntegrity)
         {
             $candidatePath = Join-Path $localNpmPackageRoot (
                 "bluetusk-$leaf-$expectedVersion.tgz")
