@@ -92,6 +92,8 @@ builder.Services.AddAuthorization(options =>
         policy.RequireRole("BlueTuskViewer", "BlueTuskOperator", "BlueTuskAdministrator"));
     options.AddPolicy("BlueTusk.ControlPlane.Mutate", policy =>
         policy.RequireRole("BlueTuskOperator", "BlueTuskAdministrator"));
+    options.AddPolicy("BlueTusk.ControlPlane.GraphExecute", policy =>
+        policy.RequireRole("BlueTuskOperator", "BlueTuskAdministrator"));
 });
 
 app.MapBlueTuskDashboard();
@@ -110,13 +112,28 @@ clients, fan-out ratio, redacted scopes, invalidation lag, replay usage, resume
 rejections, quotas, and slow-client disconnect causes. Both routes use the same
 mandatory read policy as the rest of the dashboard.
 
-The optional `BlueTusk.ContinuousGraph.ControlPlane` adapter supplies
-`HostedContinuousGraphControlPlaneQueryService`, which projects registered graph query
-fingerprints, graph/database identities, explicit element aliases, exact
-relational dependencies, result bounds, and capabilities. It does not expose
-bound parameters or graph result rows. The authorised `/graphs` and
-`/api/graphs` endpoints HTML-encode every application-provided value.
-The Control Plane core does not reference the optional ContinuousGraph adapter.
+The optional `BlueTusk.ContinuousGraph.ControlPlane` adapter supplies two modes.
+`HostedContinuousGraphControlPlaneQueryService` remains metadata-only.
+`ExecutableContinuousGraphControlPlaneQueryService` adds explicitly registered,
+bounded execution metadata and `HostedContinuousGraphControlPlaneExecutionService`
+executes those exact fingerprints. The browser cannot submit SQL, choose a graph,
+or supply a security scope. A registration binds server-owned values and the
+original `LiveSecurityScope`; only parameters on its editable allowlist can be
+changed by an authorised operator.
+
+The graph detail page renders the complete bounded projection as an interactive
+directed graph with pan, zoom, fit, search, composition counts, selection details,
+and complete accessible node and edge tables. The projector must return stable
+element IDs, labels, categories, properties, and endpoints. Conflicting duplicate
+IDs, dangling endpoints, query-row overflow, node/edge overflow, timeout, or an
+incomplete projection fail closed. Result data is never silently truncated.
+
+`POST /api/v1/graphs/{queryFingerprint}/run` has a separate graph-execution
+authorization policy and a 16 KiB request limit. The legacy unversioned route is
+available for the stable 1.x compatibility line. The authorised `/graphs` and
+`/api/graphs` endpoints HTML-encode every application-provided value. The Control
+Plane core contains only the execution contracts and does not reference the
+optional ContinuousGraph adapter.
 
 ## Managed deployment fleet
 
@@ -149,6 +166,7 @@ Automation and operational agents should use the explicitly versioned routes:
 - `GET /api/v1/sync`
 - `GET /api/v1/live`
 - `GET /api/v1/graphs`
+- `POST /api/v1/graphs/{queryFingerprint}/run`
 - `GET /api/v1/fleet`
 - `POST /api/v1/operations`
 

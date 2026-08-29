@@ -1,1 +1,5 @@
 #nullable enable
+BlueTusk.Dashboard.BlueTuskDashboardOptions.GraphExecutionAuthorizationPolicy.get -> string!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.GraphExecutionAuthorizationPolicy.set -> void
+BlueTusk.Dashboard.BlueTuskDashboardOptions.GraphExecutorRole.get -> string!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.GraphExecutorRole.set -> void

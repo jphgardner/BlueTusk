@@ -20,6 +20,11 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             LogLevel.Error,
             new EventId(1, "ControlPlaneOperationFailed"),
             "BlueTusk control-plane operation {OperationId} failed.");
+    private static readonly Action<ILogger, Guid, string, Exception?> GraphExecutionFailed =
+        LoggerMessage.Define<Guid, string>(
+            LogLevel.Error,
+            new EventId(2, "ContinuousGraphExecutionFailed"),
+            "BlueTusk Continuous Graph execution {ExecutionId} for {QueryFingerprint} failed.");
     private const string DashboardScript = """
         (() => {
           const operationUrl = new URL('../api/v1/operations', document.currentScript.src);
@@ -78,6 +83,355 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
 
           document.querySelectorAll('[data-refresh]').forEach(button =>
             button.addEventListener('click', () => window.location.reload()));
+
+          const graphPalette = [
+            '#48b9ff', '#4ade9a', '#f6c85f', '#b79cff', '#ff7f91',
+            '#4fe0d4', '#ffad66', '#8fc7ff', '#c6e56f', '#f49ddd'
+          ];
+          const appendText = (parent, tag, text, className) => {
+            const element = document.createElement(tag);
+            if (className) element.className = className;
+            element.textContent = text;
+            parent.append(element);
+            return element;
+          };
+          const propertyText = properties =>
+            (properties ?? []).map(property =>
+              `${property.name}=${property.value ?? 'null'}`).join(' · ') || 'No properties';
+
+          document.querySelectorAll('[data-graph-runner]').forEach(runner => {
+            const form = runner.querySelector('[data-graph-form]');
+            const resultPanel = runner.querySelector('[data-graph-result]');
+            const status = runner.querySelector('[data-graph-status]');
+            const message = runner.querySelector('[data-graph-message]');
+            const canvas = runner.querySelector('[data-graph-canvas]');
+            const inspector = runner.querySelector('[data-graph-inspector]');
+            const search = runner.querySelector('[data-graph-search]');
+            const state = {
+              result: null,
+              nodes: [],
+              edges: [],
+              positions: new Map(),
+              colors: new Map(),
+              selected: null,
+              query: '',
+              camera: { x: 0, y: 0, scale: 1 },
+              drag: null
+            };
+
+            const resizeCanvas = () => {
+              const rect = canvas.getBoundingClientRect();
+              const ratio = Math.min(window.devicePixelRatio || 1, 2);
+              const width = Math.max(320, Math.round(rect.width * ratio));
+              const height = Math.max(360, Math.round(rect.height * ratio));
+              if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width;
+                canvas.height = height;
+              }
+              draw();
+            };
+
+            const layout = () => {
+              state.positions.clear();
+              const groups = new Map();
+              state.nodes.forEach(node => {
+                if (!groups.has(node.category)) groups.set(node.category, []);
+                groups.get(node.category).push(node);
+              });
+              const categories = [...groups.keys()].sort();
+              categories.forEach((category, groupIndex) => {
+                const nodes = groups.get(category);
+                const groupAngle = (Math.PI * 2 * groupIndex) / Math.max(1, categories.length) - Math.PI / 2;
+                const centreRadius = categories.length === 1 ? 0 : 300;
+                const centreX = Math.cos(groupAngle) * centreRadius;
+                const centreY = Math.sin(groupAngle) * centreRadius;
+                nodes.forEach((node, index) => {
+                  const ring = Math.floor(Math.sqrt(index));
+                  const radius = ring === 0 ? 0 : 55 + ring * 34;
+                  const angle = index * 2.399963229728653 + groupAngle;
+                  state.positions.set(node.id, {
+                    x: centreX + Math.cos(angle) * radius,
+                    y: centreY + Math.sin(angle) * radius
+                  });
+                });
+              });
+            };
+
+            const fit = () => {
+              if (!state.positions.size) return;
+              const points = [...state.positions.values()];
+              const minX = Math.min(...points.map(point => point.x));
+              const maxX = Math.max(...points.map(point => point.x));
+              const minY = Math.min(...points.map(point => point.y));
+              const maxY = Math.max(...points.map(point => point.y));
+              const padding = 90;
+              const width = Math.max(180, maxX - minX + padding * 2);
+              const height = Math.max(180, maxY - minY + padding * 2);
+              state.camera.scale = Math.min(canvas.width / width, canvas.height / height);
+              state.camera.x = canvas.width / 2 - ((minX + maxX) / 2) * state.camera.scale;
+              state.camera.y = canvas.height / 2 - ((minY + maxY) / 2) * state.camera.scale;
+              draw();
+            };
+
+            const matches = element => {
+              if (!state.query) return true;
+              return `${element.id} ${element.label} ${element.category} ${propertyText(element.properties)}`
+                .toLocaleLowerCase().includes(state.query);
+            };
+
+            const worldToScreen = point => ({
+              x: point.x * state.camera.scale + state.camera.x,
+              y: point.y * state.camera.scale + state.camera.y
+            });
+
+            const drawArrow = (context, source, target, color, strong, directed) => {
+              const dx = target.x - source.x;
+              const dy = target.y - source.y;
+              const distance = Math.hypot(dx, dy) || 1;
+              const ux = dx / distance;
+              const uy = dy / distance;
+              const start = { x: source.x + ux * 13, y: source.y + uy * 13 };
+              const end = { x: target.x - ux * 15, y: target.y - uy * 15 };
+              context.strokeStyle = color;
+              context.globalAlpha = strong ? .92 : .22;
+              context.lineWidth = strong ? 2.2 : 1;
+              context.beginPath();
+              context.moveTo(start.x, start.y);
+              context.lineTo(end.x, end.y);
+              context.stroke();
+              if (directed) {
+                context.fillStyle = color;
+                context.beginPath();
+                context.moveTo(end.x, end.y);
+                context.lineTo(end.x - ux * 10 - uy * 5, end.y - uy * 10 + ux * 5);
+                context.lineTo(end.x - ux * 10 + uy * 5, end.y - uy * 10 - ux * 5);
+                context.closePath();
+                context.fill();
+              }
+            };
+
+            const draw = () => {
+              const context = canvas.getContext('2d');
+              if (!context) return;
+              context.clearRect(0, 0, canvas.width, canvas.height);
+              context.fillStyle = '#07131f';
+              context.fillRect(0, 0, canvas.width, canvas.height);
+              state.edges.forEach(edge => {
+                const sourcePosition = state.positions.get(edge.sourceNodeId);
+                const targetPosition = state.positions.get(edge.targetNodeId);
+                if (!sourcePosition || !targetPosition) return;
+                const source = worldToScreen(sourcePosition);
+                const target = worldToScreen(targetPosition);
+                const selected = state.selected?.kind === 'edge' && state.selected.value.id === edge.id;
+                const highlighted = matches(edge);
+                drawArrow(context, source, target, selected ? '#ffffff' : '#52718a', selected || highlighted && !!state.query, edge.directed);
+              });
+              state.nodes.forEach(node => {
+                const position = state.positions.get(node.id);
+                if (!position) return;
+                const point = worldToScreen(position);
+                const selected = state.selected?.kind === 'node' && state.selected.value.id === node.id;
+                const highlighted = matches(node);
+                const radius = selected ? 16 : highlighted || !state.query ? 11 : 6;
+                context.globalAlpha = highlighted || !state.query ? 1 : .18;
+                context.fillStyle = state.colors.get(node.category) ?? graphPalette[0];
+                context.beginPath();
+                context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                context.fill();
+                context.strokeStyle = selected ? '#ffffff' : '#09223a';
+                context.lineWidth = selected ? 3 : 2;
+                context.stroke();
+                if (selected || highlighted && (state.query || state.nodes.length <= 60)) {
+                  context.globalAlpha = 1;
+                  context.fillStyle = '#eaf7ff';
+                  context.font = '600 12px system-ui, sans-serif';
+                  context.fillText(node.label, point.x + radius + 5, point.y + 4);
+                }
+              });
+              context.globalAlpha = 1;
+            };
+
+            const select = (kind, value) => {
+              state.selected = { kind, value };
+              inspector.replaceChildren();
+              appendText(inspector, 'p', kind === 'node' ? 'Node' : 'Edge', 'eyebrow');
+              appendText(inspector, 'h3', value.label);
+              appendText(inspector, 'p', `${value.category} · ${value.id}`, 'muted');
+              if (kind === 'edge') {
+                appendText(inspector, 'p', `${value.sourceNodeId} ${value.directed ? '→' : '—'} ${value.targetNodeId}`);
+              }
+              const list = document.createElement('dl');
+              list.className = 'graph-property-list';
+              (value.properties ?? []).forEach(property => {
+                appendText(list, 'dt', property.name);
+                appendText(list, 'dd', property.value ?? 'null');
+              });
+              if (!value.properties?.length) appendText(inspector, 'p', 'No properties', 'muted');
+              else inspector.append(list);
+              draw();
+            };
+
+            const createComposition = (target, composition) => {
+              target.replaceChildren();
+              composition.forEach((item, index) => {
+                const tag = appendText(target, 'span', `${item.category} · ${item.count}`);
+                tag.style.setProperty('--category-color', graphPalette[index % graphPalette.length]);
+              });
+            };
+
+            const createRows = (target, values, kind) => {
+              target.replaceChildren();
+              const fragment = document.createDocumentFragment();
+              values.forEach(value => {
+                const row = document.createElement('tr');
+                row.dataset.graphText = `${value.id} ${value.label} ${value.category} ${propertyText(value.properties)}`.toLocaleLowerCase();
+                const identity = document.createElement('td');
+                const button = appendText(identity, 'button', value.label, 'graph-element-button');
+                button.type = 'button';
+                button.addEventListener('click', () => select(kind, value));
+                appendText(identity, 'small', value.id);
+                row.append(identity);
+                if (kind === 'node') {
+                  appendText(row, 'td', value.category);
+                } else {
+                  appendText(row, 'td', `${value.sourceNodeId} ${value.directed ? '→' : '—'} ${value.targetNodeId}`);
+                }
+                appendText(row, 'td', propertyText(value.properties));
+                fragment.append(row);
+              });
+              target.append(fragment);
+            };
+
+            const applySearch = () => {
+              state.query = search.value.trim().toLocaleLowerCase();
+              runner.querySelectorAll('[data-graph-text]').forEach(row => {
+                row.hidden = !!state.query && !row.dataset.graphText.includes(state.query);
+              });
+              draw();
+            };
+
+            const render = result => {
+              state.result = result;
+              state.nodes = result.nodes ?? [];
+              state.edges = result.edges ?? [];
+              state.colors.clear();
+              (result.nodeComposition ?? []).forEach((item, index) =>
+                state.colors.set(item.category, graphPalette[index % graphPalette.length]));
+              layout();
+              const durationParts = String(result.duration).split(':');
+              const durationMilliseconds = durationParts.length === 3
+                ? (Number(durationParts[0]) * 3600 + Number(durationParts[1]) * 60 + Number(durationParts[2])) * 1000
+                : Number(result.duration) / 10000;
+              const summary = runner.querySelector('[data-graph-summary]');
+              summary.replaceChildren();
+              [
+                ['Result rows', String(result.resultRowCount)],
+                ['Nodes', String(state.nodes.length)],
+                ['Edges', String(state.edges.length)],
+                ['Execution', `${durationMilliseconds.toFixed(2)} ms`]
+              ].forEach(([label, value]) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                appendText(card, 'span', label);
+                appendText(card, 'strong', value);
+                summary.append(card);
+              });
+              createComposition(runner.querySelector('[data-node-composition]'), result.nodeComposition ?? []);
+              createComposition(runner.querySelector('[data-edge-composition]'), result.edgeComposition ?? []);
+              createRows(runner.querySelector('[data-node-list]'), state.nodes, 'node');
+              createRows(runner.querySelector('[data-edge-list]'), state.edges, 'edge');
+              runner.querySelector('[data-node-count]').textContent = `(${state.nodes.length})`;
+              runner.querySelector('[data-edge-count]').textContent = `(${state.edges.length})`;
+              resultPanel.hidden = false;
+              requestAnimationFrame(() => { resizeCanvas(); fit(); });
+            };
+
+            form.addEventListener('submit', async event => {
+              event.preventDefault();
+              const runButton = runner.querySelector('[data-graph-run]');
+              const parameters = {};
+              runner.querySelectorAll('[data-graph-parameter]').forEach(input => {
+                parameters[input.name] = input.value;
+              });
+              runButton.disabled = true;
+              status.textContent = 'Running';
+              message.textContent = 'Executing the registered authoritative query…';
+              try {
+                const response = await fetch(runner.dataset.runUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ parameters })
+                });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.title || 'Graph execution was rejected.');
+                render(payload.data);
+                status.textContent = 'Complete';
+                message.textContent = `Complete result loaded: ${payload.data.nodes.length} nodes and ${payload.data.edges.length} edges.`;
+              } catch (error) {
+                status.textContent = 'Failed';
+                message.textContent = error instanceof Error ? error.message : 'Graph execution failed.';
+              } finally {
+                runButton.disabled = false;
+              }
+            });
+
+            search?.addEventListener('input', applySearch);
+            runner.querySelector('[data-graph-fit]')?.addEventListener('click', fit);
+            runner.querySelector('[data-graph-reset]')?.addEventListener('click', () => {
+              state.query = '';
+              search.value = '';
+              state.selected = null;
+              applySearch();
+              fit();
+            });
+            canvas.addEventListener('wheel', event => {
+              event.preventDefault();
+              const rect = canvas.getBoundingClientRect();
+              const ratioX = canvas.width / rect.width;
+              const ratioY = canvas.height / rect.height;
+              const pointer = { x: (event.clientX - rect.left) * ratioX, y: (event.clientY - rect.top) * ratioY };
+              const world = {
+                x: (pointer.x - state.camera.x) / state.camera.scale,
+                y: (pointer.y - state.camera.y) / state.camera.scale
+              };
+              const factor = Math.exp(-event.deltaY * .001);
+              state.camera.scale = Math.min(4, Math.max(.08, state.camera.scale * factor));
+              state.camera.x = pointer.x - world.x * state.camera.scale;
+              state.camera.y = pointer.y - world.y * state.camera.scale;
+              draw();
+            }, { passive: false });
+            canvas.addEventListener('pointerdown', event => {
+              canvas.setPointerCapture(event.pointerId);
+              state.drag = { x: event.clientX, y: event.clientY, moved: false };
+            });
+            canvas.addEventListener('pointermove', event => {
+              if (!state.drag) return;
+              const dx = event.clientX - state.drag.x;
+              const dy = event.clientY - state.drag.y;
+              if (Math.abs(dx) + Math.abs(dy) > 2) state.drag.moved = true;
+              const rect = canvas.getBoundingClientRect();
+              state.camera.x += dx * canvas.width / rect.width;
+              state.camera.y += dy * canvas.height / rect.height;
+              state.drag.x = event.clientX;
+              state.drag.y = event.clientY;
+              draw();
+            });
+            canvas.addEventListener('pointerup', event => {
+              const drag = state.drag;
+              state.drag = null;
+              if (!drag?.moved) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (event.clientX - rect.left) * canvas.width / rect.width;
+                const y = (event.clientY - rect.top) * canvas.height / rect.height;
+                const closest = state.nodes
+                  .map(node => ({ node, point: worldToScreen(state.positions.get(node.id)) }))
+                  .map(item => ({ ...item, distance: Math.hypot(item.point.x - x, item.point.y - y) }))
+                  .sort((left, right) => left.distance - right.distance)[0];
+                if (closest?.distance <= 24) select('node', closest.node);
+              }
+            });
+            new ResizeObserver(resizeCanvas).observe(canvas);
+          });
 
           document.querySelectorAll('button[data-operation-kind]').forEach(button =>
             button.addEventListener('click', async () => {
@@ -167,6 +521,38 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 Json(Versioned(
                     await queries.GetFleetOverviewAsync(cancellationToken)
                         .ConfigureAwait(false))));
+        group.MapPost(
+                "/api/graphs/{queryFingerprint}/run",
+                (string queryFingerprint,
+                        HttpContext context,
+                        IControlPlaneContinuousGraphExecutionService executions,
+                        ILoggerFactory loggerFactory,
+                        CancellationToken cancellationToken) =>
+                    ExecuteGraphAsync(
+                        queryFingerprint,
+                        context,
+                        executions,
+                        loggerFactory.CreateLogger("BlueTusk.Dashboard.ContinuousGraph"),
+                        options,
+                        versionedResponse: false,
+                        cancellationToken))
+            .RequireAuthorization(options.GraphExecutionAuthorizationPolicy);
+        group.MapPost(
+                ControlPlaneApiContract.VersionedRoutePrefix + "/graphs/{queryFingerprint}/run",
+                (string queryFingerprint,
+                        HttpContext context,
+                        IControlPlaneContinuousGraphExecutionService executions,
+                        ILoggerFactory loggerFactory,
+                        CancellationToken cancellationToken) =>
+                    ExecuteGraphAsync(
+                        queryFingerprint,
+                        context,
+                        executions,
+                        loggerFactory.CreateLogger("BlueTusk.Dashboard.ContinuousGraph"),
+                        options,
+                        versionedResponse: true,
+                        cancellationToken))
+            .RequireAuthorization(options.GraphExecutionAuthorizationPolicy);
         group.MapGet(
             "/assets/dashboard.js",
             () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
@@ -351,6 +737,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         group.MapGet(
             "/graphs/{queryFingerprint}",
             async (string queryFingerprint,
+                    HttpContext context,
                     IControlPlaneContinuousGraphQueryService queries,
                     CancellationToken cancellationToken) =>
             {
@@ -363,7 +750,11 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                         StringComparison.Ordinal));
                 return query is null
                     ? Results.NotFound()
-                    : Html(RenderContinuousGraphQuery(overview.ObservedAt, query, options));
+                    : Html(RenderContinuousGraphQuery(
+                        overview.ObservedAt,
+                        query,
+                        options,
+                        CanExecuteGraph(context.User, options)));
             });
         group.MapGet(
             "/deployments",
@@ -514,6 +905,121 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 extensions: new Dictionary<string, object?> { ["code"] = "operation-failed" });
         }
     }
+
+    private static async Task<IResult> ExecuteGraphAsync(
+        string queryFingerprint,
+        HttpContext context,
+        IControlPlaneContinuousGraphExecutionService executions,
+        ILogger logger,
+        BlueTuskDashboardOptions options,
+        bool versionedResponse,
+        CancellationToken cancellationToken)
+    {
+        if (context.User.Identity?.IsAuthenticated is not true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (string.IsNullOrWhiteSpace(queryFingerprint) ||
+            !context.Request.HasJsonContentType() ||
+            context.Request.ContentLength is not (> 0 and <= MaximumOperationRequestBytes))
+        {
+            return GraphProblem(
+                "invalid-graph-execution-request",
+                "The graph execution request is invalid.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        ControlPlaneContinuousGraphRunRequest? request;
+        try
+        {
+            request = await context.Request
+                .ReadFromJsonAsync<ControlPlaneContinuousGraphRunRequest>(
+                    BlueTuskDashboardJsonContext.Default.ControlPlaneContinuousGraphRunRequest,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is System.Text.Json.JsonException or
+                                          NotSupportedException or
+                                          BadHttpRequestException)
+        {
+            return GraphProblem(
+                "invalid-graph-execution-request",
+                "The graph execution request is invalid.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        if (request?.Parameters is null || request.Parameters.Count > 64)
+        {
+            return GraphProblem(
+                "invalid-graph-execution-request",
+                "The graph execution request is invalid.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        var actor = CreateActor(context.User, options);
+        if (actor is null)
+        {
+            return Results.Forbid();
+        }
+
+        var executionId = Guid.NewGuid();
+        try
+        {
+            var result = await executions.ExecuteAsync(
+                    queryFingerprint,
+                    actor,
+                    request,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return versionedResponse ? Json(Versioned(result)) : Json(result);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (ControlPlaneContinuousGraphExecutionException exception)
+        {
+            var statusCode = exception.Code switch
+            {
+                "graph-query-not-executable" => StatusCodes.Status404NotFound,
+                "graph-parameter-not-editable" or
+                "graph-parameter-invalid" => StatusCodes.Status400BadRequest,
+                "graph-execution-timeout" => StatusCodes.Status504GatewayTimeout,
+                "graph-visualization-limit-exceeded" or
+                "graph-result-row-limit-exceeded" => StatusCodes.Status422UnprocessableEntity,
+                _ => StatusCodes.Status500InternalServerError,
+            };
+            if (statusCode >= StatusCodes.Status500InternalServerError)
+            {
+                GraphExecutionFailed(logger, executionId, queryFingerprint, exception);
+            }
+
+            return GraphProblem(exception.Code, exception.Message, statusCode, executionId);
+        }
+        catch (Exception exception)
+        {
+            GraphExecutionFailed(logger, executionId, queryFingerprint, exception);
+            return GraphProblem(
+                "graph-execution-failed",
+                "The graph query could not be executed. Use the execution ID to inspect server logs.",
+                StatusCodes.Status500InternalServerError,
+                executionId);
+        }
+    }
+
+    private static IResult GraphProblem(
+        string code,
+        string title,
+        int statusCode,
+        Guid? executionId = null) => Results.Problem(
+        title: title,
+        statusCode: statusCode,
+        extensions: new Dictionary<string, object?>
+        {
+            ["code"] = code,
+            ["executionId"] = executionId,
+        });
 
     private static IResult Html(string content) => Results.Content(
         content,
@@ -1041,9 +1547,10 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         .skip-link{position:fixed;left:1rem;top:-5rem;z-index:100;padding:.65rem 1rem;background:var(--blue);color:#00111d;border-radius:.5rem}.skip-link:focus{top:1rem}.app-shell{min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;border-bottom:1px solid var(--border-soft);background:rgba(7,16,29,.88);backdrop-filter:blur(18px);position:sticky;top:0;z-index:30}.brand{display:inline-flex;align-items:center;gap:.72rem;color:var(--text);font-weight:750;font-size:1.12rem;letter-spacing:-.02em}.brand:hover{text-decoration:none}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,var(--blue),var(--cyan));color:#05121d;box-shadow:0 8px 25px rgba(45,183,244,.28);font-weight:900}.brand small{display:inline;color:var(--muted);font-weight:500;margin-left:.22rem}.nav-toggle{display:none}.app-body{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100vh - 72px)}.sidebar{border-right:1px solid var(--border-soft);background:rgba(9,20,34,.76);padding:1.35rem 1rem;position:sticky;top:72px;height:calc(100vh - 72px);overflow:auto}.nav-section{margin-bottom:1.3rem}.nav-label{display:block;padding:0 .7rem .45rem;color:#647f97;text-transform:uppercase;letter-spacing:.12em;font-size:.68rem;font-weight:750}.side-nav{display:grid;gap:.18rem}.side-nav a{display:flex;align-items:center;gap:.62rem;color:#a9bed0;padding:.58rem .7rem;border-radius:.55rem;font-weight:550}.side-nav a::before{content:"";width:7px;height:7px;border:1px solid #59748b;border-radius:50%}.side-nav a:hover{background:var(--surface-2);color:var(--text);text-decoration:none}.side-nav a[aria-current=page]{background:linear-gradient(90deg,rgba(41,169,237,.18),rgba(41,169,237,.06));color:#eaf8ff}.side-nav a[aria-current=page]::before{border-color:var(--blue);background:var(--blue);box-shadow:0 0 0 4px rgba(72,185,255,.1)}.security-note{margin-top:2rem;padding:.8rem;border:1px solid var(--border);border-radius:.7rem;background:rgba(15,31,50,.7);color:var(--muted);font-size:.78rem}.security-note strong{display:block;color:var(--text);margin-bottom:.2rem}
         main{width:100%;max-width:1500px;margin:0 auto;padding:2rem clamp(1.1rem,3vw,3.2rem) 3rem;min-width:0}.breadcrumbs{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.82rem;margin-bottom:1.55rem;overflow:auto;white-space:nowrap}.breadcrumbs a{color:var(--muted)}.page-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;margin-bottom:1.8rem}.page-heading>div:first-child{max-width:760px}.page-heading p:not(.eyebrow){color:var(--muted);font-size:1.02rem;margin-bottom:0}.page-actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;justify-content:flex-end}.eyebrow{color:var(--cyan);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;font-weight:800;margin-bottom:.45rem}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.8rem;margin-bottom:1.4rem}.cards--wide{grid-template-columns:repeat(auto-fit,minmax(195px,1fr))}.card{min-height:124px;background:linear-gradient(145deg,rgba(16,34,55,.96),rgba(11,25,42,.96));border:1px solid var(--border);border-radius:.8rem;padding:1rem;box-shadow:0 10px 28px rgba(0,0,0,.12)}.card>span{display:block;color:var(--muted);font-size:.78rem;font-weight:650}.card strong{display:block;font-size:1.62rem;letter-spacing:-.04em;margin:.32rem 0 .15rem;overflow-wrap:anywhere}.card small{font-size:.75rem}.panel{background:linear-gradient(155deg,rgba(13,29,47,.98),rgba(9,22,38,.98));border:1px solid var(--border);border-radius:.85rem;padding:1.15rem;margin:0 0 1.2rem;box-shadow:var(--shadow)}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.9rem}.section-heading h2{margin:0}.muted{color:var(--muted)}.status-badge{display:inline-flex;align-items:center;gap:.42rem;width:max-content;max-width:100%;padding:.28rem .58rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:#c5d5e2;font-size:.75rem;font-weight:700;white-space:nowrap}.status-dot,.product-icon{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px rgba(144,167,187,.1)}[data-tone=ok]{--tone:var(--ok)}[data-tone=warn]{--tone:var(--warn)}[data-tone=critical]{--tone:var(--critical)}.status-dot[data-tone],.product-icon[data-tone]{background:var(--tone);box-shadow:0 0 0 3px color-mix(in srgb,var(--tone) 16%,transparent)}.status-badge[data-tone=ok]{border-color:rgba(74,222,154,.25);color:#9af1c6;background:rgba(74,222,154,.08)}.status-badge[data-tone=warn]{border-color:rgba(246,200,95,.26);color:#ffe09a;background:rgba(246,200,95,.08)}.status-badge[data-tone=critical]{border-color:rgba(255,111,125,.3);color:#ffabb3;background:rgba(255,111,125,.08)}
         .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.8rem}.product-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.85rem;padding:1rem;border:1px solid var(--border);border-radius:.8rem;background:var(--surface);color:var(--text)}.product-card:hover{border-color:#366c91;background:var(--surface-2);text-decoration:none}.product-card .product-icon{width:10px;height:10px}.product-card strong,.related-link strong{display:block;margin-bottom:.2rem}.product-card small,.related-link small{font-size:.78rem}.product-count{color:var(--blue);font-size:.8rem;white-space:nowrap}.attention-list{display:grid;gap:.45rem}.attention-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.8rem;padding:.72rem;border-radius:.6rem;color:var(--text);background:rgba(14,32,52,.7)}.attention-item:hover{background:var(--surface-3);text-decoration:none}.attention-item small{font-size:.78rem}.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.6rem;color:var(--muted)}.empty-state strong{color:var(--text);margin-bottom:.3rem}.table-panel{padding-bottom:.35rem}.table-tools{display:flex;align-items:end;gap:.8rem;flex-wrap:wrap;margin-bottom:.85rem}.table-tools label{display:grid;gap:.3rem;color:var(--muted);font-size:.72rem;font-weight:650}.table-tools label:first-child{flex:1 1 280px}.table-tools input,.table-tools select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:.52rem;background:#081624;color:var(--text);padding:.48rem .65rem;outline:none}.table-tools input:focus,.table-tools select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.table-wrap{overflow:auto;margin:0 -1.15rem}.table-wrap table{min-width:760px}table{width:100%;border-collapse:collapse}th,td{padding:.75rem .82rem;text-align:left;border-bottom:1px solid var(--border-soft);vertical-align:middle}th{color:#7892a8;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800;background:rgba(8,20,34,.7);white-space:nowrap}td{font-size:.84rem;color:#c7d6e3}tbody tr:hover{background:rgba(31,73,102,.12)}tbody tr:last-child td{border-bottom:0}td small{margin-top:.18rem;font-size:.7rem}.primary-link{color:#e7f7ff;font-weight:720}.row-action{white-space:nowrap;font-size:.78rem;font-weight:700}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:0}.detail-grid>div{padding:.75rem;border-bottom:1px solid var(--border-soft);min-width:0}.detail-grid>div:nth-last-child(-n+2){border-bottom:0}.detail-grid dt{color:var(--muted);font-size:.72rem;margin-bottom:.18rem}.detail-grid dd{margin:0;color:#dce8f1;overflow-wrap:anywhere}.tag-list{display:flex;flex-wrap:wrap;gap:.5rem}.tag-list code{padding:.35rem .55rem;border:1px solid var(--border);border-radius:.45rem;background:#081624}.copy-value{display:inline-flex;align-items:center;gap:.45rem;max-width:100%}.copy-button{padding:.18rem .42rem;font-size:.67rem}.related-link{display:flex;align-items:center;justify-content:space-between;color:var(--text)}.related-link:hover{text-decoration:none;border-color:#366c91}.steps{display:grid;gap:.7rem;margin:1rem 0 0;padding:0;list-style:none;counter-reset:steps}.steps li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;color:var(--muted);counter-increment:steps}.steps li::before{content:counter(steps);display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:rgba(72,185,255,.12);color:var(--blue);font-weight:800}.steps strong,.steps span{display:block}.steps strong{color:var(--text)}.button-row{display:flex;flex-wrap:wrap;gap:.45rem}.read-only{border-color:rgba(72,185,255,.22)}.danger-zone{border-color:rgba(246,200,95,.25)}
-        button{appearance:none;border:1px solid #365773;border-radius:.5rem;background:var(--surface-3);color:var(--text);padding:.45rem .7rem;cursor:pointer;font-weight:650}button:hover{border-color:var(--blue);background:#193853}button.secondary{background:transparent}.footer{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:#637e94;font-size:.75rem;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border-soft)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
+        button{appearance:none;border:1px solid #365773;border-radius:.5rem;background:var(--surface-3);color:var(--text);padding:.45rem .7rem;cursor:pointer;font-weight:650}button:hover{border-color:var(--blue);background:#193853}button.secondary{background:transparent}button:disabled{cursor:wait;opacity:.6}.graph-query-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.8rem;margin-top:1rem;padding:1rem;border:1px solid var(--border-soft);border-radius:.7rem;background:rgba(7,20,33,.65)}.graph-query-form label,.graph-toolbar label{display:grid;gap:.35rem;color:var(--muted);font-size:.75rem;font-weight:700}.graph-query-form input,.graph-toolbar input{min-height:42px;border:1px solid var(--border);border-radius:.52rem;background:#06131f;color:var(--text);padding:.5rem .65rem;outline:none}.graph-query-form input:focus,.graph-toolbar input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.graph-query-form>.button-row{grid-column:1/-1;align-items:center}.server-bound{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;color:var(--muted);font-size:.78rem}.server-bound strong{color:var(--text)}.graph-result{margin-top:1.2rem}.graph-summary{margin-bottom:.8rem}.graph-summary .card{min-height:92px}.graph-summary .card strong{font-size:1.3rem}.graph-composition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin:.8rem 0}.graph-composition section{padding:.85rem;border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.68)}.graph-composition h3{font-size:.85rem;margin-bottom:.6rem}.graph-composition .tag-list span{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .55rem;border:1px solid var(--border);border-radius:999px;color:#d9e7f0;font-size:.76rem}.graph-composition .tag-list span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--category-color)}.graph-toolbar{display:flex;align-items:end;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin:1rem 0 .65rem}.graph-toolbar label{flex:1 1 300px}.graph-workspace{display:grid;grid-template-columns:minmax(0,3fr) minmax(245px,1fr);gap:.8rem;min-height:580px}.graph-canvas-shell{position:relative;min-width:0;border:1px solid var(--border);border-radius:.75rem;overflow:hidden;background:#07131f}.graph-canvas-shell canvas{display:block;width:100%;height:580px;touch-action:none;cursor:grab}.graph-canvas-shell canvas:active{cursor:grabbing}.graph-canvas-help{position:absolute;left:.7rem;bottom:.7rem;padding:.35rem .5rem;border-radius:.4rem;background:rgba(3,12,20,.82);color:#88a1b5;font-size:.69rem;pointer-events:none}.graph-inspector{padding:1rem;border:1px solid var(--border);border-radius:.75rem;background:rgba(8,22,36,.8);overflow:auto}.graph-inspector h3{overflow-wrap:anywhere}.graph-property-list{display:grid;grid-template-columns:minmax(80px,.7fr) minmax(0,1.3fr);margin-top:1rem}.graph-property-list dt,.graph-property-list dd{padding:.48rem;border-bottom:1px solid var(--border-soft);overflow-wrap:anywhere}.graph-property-list dt{color:var(--muted);font-size:.72rem}.graph-property-list dd{margin:0;color:var(--text);font-size:.78rem}.graph-element-lists{display:grid;gap:.7rem;margin-top:.8rem}.graph-element-lists details{border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.55);overflow:hidden}.graph-element-lists summary{padding:.8rem 1rem;cursor:pointer}.graph-element-lists .table-wrap{margin:0}.graph-element-lists table{min-width:720px}.graph-element-button{border:0;background:transparent;padding:0;color:#e7f7ff;text-align:left}.graph-element-button:hover{border:0;background:transparent;color:var(--blue);text-decoration:underline}.footer{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:#637e94;font-size:.75rem;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border-soft)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
         @media(max-width:980px){.topbar{height:64px;padding:0 1rem}.brand small{display:none}.nav-toggle{display:inline-flex}.app-body{display:block;min-height:calc(100vh - 64px)}.sidebar{display:none;position:sticky;top:64px;width:100%;height:auto;max-height:calc(100vh - 64px);z-index:25;border-right:0;border-bottom:1px solid var(--border);padding:.8rem 1rem;background:#081421}.sidebar[data-open]{display:block}.side-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.security-note{display:none}main{padding-top:1.35rem}}
-        @media(max-width:680px){h1{font-size:2rem}.page-heading{display:block}.page-actions{justify-content:flex-start;margin-top:1rem}.cards,.cards--wide,.product-grid{grid-template-columns:1fr}.card{min-height:0}.product-card{grid-template-columns:auto 1fr}.product-count{grid-column:2}.section-heading{align-items:flex-start}.table-tools{display:grid}.detail-grid{grid-template-columns:1fr}.detail-grid>div:nth-last-child(2){border-bottom:1px solid var(--border-soft)}.side-nav{grid-template-columns:1fr}.topbar{position:sticky}.panel{padding:1rem}.table-wrap{margin:0 -1rem}.footer{display:block}.footer span{display:block;margin-bottom:.25rem}}
+        @media(max-width:850px){.graph-workspace{grid-template-columns:1fr;min-height:0}.graph-canvas-shell canvas{height:460px}.graph-inspector{max-height:340px}.graph-composition{grid-template-columns:1fr}}
+        @media(max-width:680px){h1{font-size:2rem}.page-heading{display:block}.page-actions{justify-content:flex-start;margin-top:1rem}.cards,.cards--wide,.product-grid{grid-template-columns:1fr}.card{min-height:0}.product-card{grid-template-columns:auto 1fr}.product-count{grid-column:2}.section-heading{align-items:flex-start}.table-tools{display:grid}.detail-grid{grid-template-columns:1fr}.detail-grid>div:nth-last-child(2){border-bottom:1px solid var(--border-soft)}.side-nav{grid-template-columns:1fr}.topbar{position:sticky}.panel{padding:1rem}.table-wrap{margin:0 -1rem}.graph-query-form{grid-template-columns:1fr;padding:.8rem}.graph-canvas-shell canvas{height:390px}.graph-canvas-help{display:none}.footer{display:block}.footer span{display:block;margin-bottom:.25rem}}
         @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
         </style>
         </head>
@@ -1130,4 +1637,26 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
 
     private static bool CanMutate(ClaimsPrincipal user, BlueTuskDashboardOptions options) =>
         user.IsInRole(options.OperatorRole) || user.IsInRole(options.AdministratorRole);
+
+    private static bool CanExecuteGraph(
+        ClaimsPrincipal user,
+        BlueTuskDashboardOptions options) =>
+        user.IsInRole(options.GraphExecutorRole) || user.IsInRole(options.AdministratorRole);
+
+    private static ControlPlaneActor? CreateActor(
+        ClaimsPrincipal user,
+        BlueTuskDashboardOptions options)
+    {
+        var actorId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(actorId))
+        {
+            return null;
+        }
+
+        var roles = new HashSet<ControlPlaneRole>();
+        if (user.IsInRole(options.ViewerRole)) roles.Add(ControlPlaneRole.Viewer);
+        if (user.IsInRole(options.OperatorRole)) roles.Add(ControlPlaneRole.Operator);
+        if (user.IsInRole(options.AdministratorRole)) roles.Add(ControlPlaneRole.Administrator);
+        return new ControlPlaneActor(actorId, roles);
+    }
 }

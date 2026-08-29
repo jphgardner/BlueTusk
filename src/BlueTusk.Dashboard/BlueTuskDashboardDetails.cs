@@ -353,7 +353,8 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
     private static string RenderContinuousGraphQuery(
         DateTimeOffset observedAt,
         ControlPlaneContinuousGraphQuerySnapshot query,
-        BlueTuskDashboardOptions options)
+        BlueTuskDashboardOptions options,
+        bool canExecute)
     {
         var qualifiedGraph = string.IsNullOrWhiteSpace(query.GraphSchema)
             ? query.GraphName
@@ -385,8 +386,63 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             .Append(ListPanel(
                 "Maintenance capabilities",
                 query.Capabilities.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries)))
+            .Append(RenderGraphExplorer(query, options, canExecute))
             .Append("<section class=\"panel explainer\"><p class=\"eyebrow\">Correctness boundary</p><h2>How this query stays current</h2><ol class=\"steps\"><li><strong>Trusted CDC delta</strong><span>Apply a proven row-level change directly when the projector and change tuple are complete.</span></li><li><strong>Authoritative scoped delta</strong><span>Re-run a prepared, key-scoped GRAPH_TABLE query under the original security scope.</span></li><li><strong>Full repair</strong><span>Re-run PostgreSQL's authoritative query whenever correctness cannot be proven.</span></li></ol></section>");
         return Layout(query.Name, observedAt, body.ToString(), options);
+    }
+
+    private static string RenderGraphExplorer(
+        ControlPlaneContinuousGraphQuerySnapshot query,
+        BlueTuskDashboardOptions options,
+        bool canExecute)
+    {
+        if (!query.CanExecute)
+        {
+            return "<section class=\"panel read-only\"><p class=\"eyebrow\">Graph explorer</p><h2>Execution is not registered</h2><p class=\"muted\">This query currently exposes operational metadata only. Register its server-side execution plan and result projector to inspect its graph.</p></section>";
+        }
+
+        if (!canExecute)
+        {
+            return "<section class=\"panel read-only\"><p class=\"eyebrow\">Graph explorer</p><h2>Execution permission required</h2><p class=\"muted\">The graph is registered, but your dashboard role cannot execute database-backed queries.</p></section>";
+        }
+
+        var runUrl = DashboardPath(options, "api", "v1", "graphs", query.QueryFingerprint, "run");
+        var explorer = new StringBuilder()
+            .Append("<section class=\"panel graph-explorer\" data-graph-runner data-run-url=\"")
+            .Append(E(runUrl))
+            .Append("\"><div class=\"section-heading\"><div><p class=\"eyebrow\">Interactive graph explorer</p><h2>Run and inspect the complete result</h2><p class=\"muted\">BlueTusk executes this registered query under its server-controlled security scope. No SQL or security context comes from the browser.</p></div><span class=\"status-badge\" data-graph-status>Ready</span></div><form class=\"graph-query-form\" data-graph-form>");
+        var editable = query.Parameters.Where(static parameter => parameter.Editable).ToArray();
+        foreach (var parameter in editable)
+        {
+            explorer.Append("<label><span>").Append(E(parameter.Name)).Append(" <small>")
+                .Append(E(parameter.Type)).Append(parameter.AllowNull ? ", optional" : string.Empty)
+                .Append("</small></span><input name=\"").Append(E(parameter.Name))
+                .Append("\" value=\"").Append(E(parameter.SuggestedValue ?? string.Empty))
+                .Append("\" autocomplete=\"off\" data-graph-parameter")
+                .Append(parameter.AllowNull ? string.Empty : " required")
+                .Append("></label>");
+        }
+
+        if (editable.Length == 0)
+        {
+            explorer.Append("<p class=\"muted\">This query has no user-editable parameters.</p>");
+        }
+
+        var serverBound = query.Parameters.Where(static parameter => !parameter.Editable).ToArray();
+        if (serverBound.Length > 0)
+        {
+            explorer.Append("<div class=\"server-bound\"><strong>Server-bound</strong><span>")
+                .Append(E(string.Join(", ", serverBound.Select(static parameter => parameter.Name))))
+                .Append("</span></div>");
+        }
+
+        return explorer
+            .Append("<div class=\"button-row\"><button type=\"submit\" data-graph-run>Run graph query</button><span class=\"muted\" data-graph-message aria-live=\"polite\">The full bounded result will appear below.</span></div></form>")
+            .Append("<div class=\"graph-result\" data-graph-result hidden><div class=\"cards graph-summary\" data-graph-summary></div><div class=\"graph-composition\"><section><h3>Node composition</h3><div class=\"tag-list\" data-node-composition></div></section><section><h3>Edge composition</h3><div class=\"tag-list\" data-edge-composition></div></section></div>")
+            .Append("<div class=\"graph-toolbar\"><label><span>Find an element</span><input type=\"search\" placeholder=\"Node, edge, label or property\" data-graph-search></label><div class=\"button-row\"><button type=\"button\" class=\"secondary\" data-graph-fit>Fit graph</button><button type=\"button\" class=\"secondary\" data-graph-reset>Reset view</button></div></div>")
+            .Append("<div class=\"graph-workspace\"><div class=\"graph-canvas-shell\"><canvas data-graph-canvas tabindex=\"0\" role=\"img\" aria-label=\"Interactive directed graph. Use the element lists below for a complete accessible representation.\"></canvas><div class=\"graph-canvas-help\">Drag to pan · wheel or pinch to zoom · select a node to inspect it</div></div><aside class=\"graph-inspector\" data-graph-inspector><p class=\"eyebrow\">Selection</p><h3>Nothing selected</h3><p class=\"muted\">Select a node or edge, or search the complete result.</p></aside></div>")
+            .Append("<div class=\"graph-element-lists\"><details open><summary><strong>All nodes</strong> <span data-node-count></span></summary><div class=\"table-wrap\"><table><thead><tr><th>Node</th><th>Category</th><th>Properties</th></tr></thead><tbody data-node-list></tbody></table></div></details><details><summary><strong>All edges</strong> <span data-edge-count></span></summary><div class=\"table-wrap\"><table><thead><tr><th>Edge</th><th>Connection</th><th>Properties</th></tr></thead><tbody data-edge-list></tbody></table></div></details></div></div></section>")
+            .ToString();
     }
 
     private static string RenderDeployment(

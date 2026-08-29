@@ -9,7 +9,7 @@
     },
     {
       "path": "src/BlueTusk.ContinuousGraph.ControlPlane/PublicAPI.Unshipped.txt",
-      "sha256": "d732e50de209ea8ed32f53d0040fc096951a7eea034da8a8b37b24e59fb627d4"
+      "sha256": "59c4e48400ce4ac32a5d86e73a06ab210a947939b1a843109d40e4f289e9ab5a"
     },
     {
       "path": "src/BlueTusk.ContinuousGraph/PublicAPI.Shipped.txt",

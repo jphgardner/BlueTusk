@@ -27,6 +27,8 @@ public sealed class DashboardEndpointTests
         builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
         builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
             new FakeContinuousGraphQueryService());
+        builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
+            new FakeContinuousGraphExecutionService());
         builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
             new FakeFleetQueryService());
         builder.Services.AddSingleton(
@@ -40,13 +42,14 @@ public sealed class DashboardEndpointTests
             options.RoutePrefix = "/operations";
             options.ReadAuthorizationPolicy = "ops-read";
             options.MutationAuthorizationPolicy = "ops-mutate";
+            options.GraphExecutionAuthorizationPolicy = "ops-graph-execute";
         });
 
         var endpoints = ((IEndpointRouteBuilder)application).DataSources
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(32, endpoints.Length);
+        Assert.Equal(34, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -218,6 +221,44 @@ public sealed class DashboardEndpointTests
         Assert.Contains("How this query stays current", graphDetailHtml, StringComparison.Ordinal);
         Assert.Contains("Authoritative scoped delta", graphDetailHtml, StringComparison.Ordinal);
         Assert.Contains("risk.&lt;transfers&gt;", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("Run and inspect the complete result", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("data-graph-canvas", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("All nodes", graphDetailHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("tenant-value", graphDetailHtml, StringComparison.Ordinal);
+
+        var graphExecution = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText ==
+                "/operations/api/v1/graphs/{queryFingerprint}/run");
+        Assert.Contains(
+            graphExecution.Metadata.GetOrderedMetadata<IAuthorizeData>(),
+            metadata => metadata.Policy == "ops-graph-execute");
+        var graphRequest = new ControlPlaneContinuousGraphRunRequest(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["minimumRisk"] = "0.80",
+            });
+        var graphRequestBody = JsonSerializer.SerializeToUtf8Bytes(graphRequest, WebJson);
+        context.Request.Method = HttpMethods.Post;
+        context.Request.ContentType = "application/json";
+        context.Request.ContentLength = graphRequestBody.Length;
+        context.Request.Body = new MemoryStream(graphRequestBody);
+        context.Request.RouteValues = new RouteValueDictionary
+        {
+            ["queryFingerprint"] = new string('d', 64),
+        };
+        context.Response.Body = new MemoryStream();
+        await graphExecution.RequestDelegate!(context);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        context.Response.Body.Position = 0;
+        var graphResponse = await JsonSerializer.DeserializeAsync<
+            ControlPlaneApiResponse<ControlPlaneContinuousGraphRunResult>>(
+                context.Response.Body,
+                WebJson);
+        Assert.NotNull(graphResponse);
+        Assert.Equal(ControlPlaneApiContract.CurrentVersion, graphResponse.ContractVersion);
+        Assert.Equal("account:1", Assert.Single(graphResponse.Data.Nodes).Id);
+        Assert.Equal("transfer:1", Assert.Single(graphResponse.Data.Edges).Id);
 
         var deployments = Assert.Single(
             endpoints,
@@ -533,7 +574,53 @@ public sealed class DashboardEndpointTests
                         ["accounts", "<edges>"],
                         ["risk.accounts", "risk.<transfers>"],
                         100,
-                        "TenantFilter, DeterministicOrdering, BoundedTake")]));
+                        "TenantFilter, DeterministicOrdering, BoundedTake",
+                        [new ControlPlaneContinuousGraphParameterSnapshot(
+                            "minimumRisk", "Decimal", false, true, "0.72"),
+                         new ControlPlaneContinuousGraphParameterSnapshot(
+                             "tenantId", "String", false, false, null)],
+                        true)]));
+        }
+    }
+
+    private sealed class FakeContinuousGraphExecutionService :
+        IControlPlaneContinuousGraphExecutionService
+    {
+        public ValueTask<ControlPlaneContinuousGraphRunResult> ExecuteAsync(
+            string queryFingerprint,
+            ControlPlaneActor actor,
+            ControlPlaneContinuousGraphRunRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Assert.Equal(new string('d', 64), queryFingerprint);
+            Assert.Equal("operator@example.invalid", actor.ActorId);
+            Assert.Equal("0.80", request.Parameters["minimumRisk"]);
+            return ValueTask.FromResult(new ControlPlaneContinuousGraphRunResult(
+                Guid.Parse("5fa80f3e-b759-4c89-bc70-77c70812ff68"),
+                new DateTimeOffset(2026, 8, 29, 10, 0, 0, TimeSpan.Zero),
+                TimeSpan.FromMilliseconds(12.4),
+                queryFingerprint,
+                "risk-query",
+                "risk-primary",
+                "transfers",
+                "risk",
+                1,
+                [new ControlPlaneContinuousGraphNode(
+                    "account:1",
+                    "Account <script>",
+                    "Account",
+                    [new ControlPlaneContinuousGraphProperty("risk", "0.91")])],
+                [new ControlPlaneContinuousGraphEdge(
+                    "transfer:1",
+                    "account:1",
+                    "account:1",
+                    "TRANSFERRED_TO",
+                    "Transfer",
+                    true,
+                    [new ControlPlaneContinuousGraphProperty("amount", "100")])],
+                [new ControlPlaneContinuousGraphComposition("Account", 1)],
+                [new ControlPlaneContinuousGraphComposition("Transfer", 1)]));
         }
     }
 

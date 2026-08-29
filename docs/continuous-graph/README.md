@@ -265,13 +265,44 @@ dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network
 `ContinuousGraphQueryRegistry` stores non-generic registration descriptors
 without retaining bound parameter values or result rows. Register each compiled
 plan with the application registry. Install the optional
-`BlueTusk.ContinuousGraph.ControlPlane` package to add
-`HostedContinuousGraphControlPlaneQueryService`. It projects query
-fingerprints, graph names, databases, element aliases, exact table
-dependencies, result limits, and capabilities. The authorised dashboard
-exposes the same inventory at `/graphs` and `/api/graphs`; every application
-value is HTML encoded. The optional adapter owns the graph dependency; the
-Control Plane core does not reference ContinuousGraph.
+`BlueTusk.ContinuousGraph.ControlPlane` package to add the metadata-only
+`HostedContinuousGraphControlPlaneQueryService` or the executable explorer.
+
+The explorer uses a separate `ContinuousGraphControlPlaneExecutionRegistry`.
+Registration is deliberately explicit: provide the compiled plan, all bound
+arguments, the small allowlist of parameters an operator may edit, a server-side
+security-scope resolver, and a result projector. Never mark a tenant, role,
+permission, or RLS binding editable.
+
+```csharp
+var executions = new ContinuousGraphControlPlaneExecutionRegistry();
+executions.Register(
+    compiledPlan,
+    new Dictionary<string, object?>
+    {
+        ["minimumRisk"] = 0.75m,
+        ["tenantId"] = tenantId,
+    },
+    editableParameters: ["minimumRisk"],
+    securityScopeFactory: actor => scopes.Resolve(actor.ActorId),
+    projector: row => new ControlPlaneContinuousGraphFragment(
+        Nodes: ProjectNodes(row),
+        Edges: ProjectEdges(row)));
+
+builder.Services.AddSingleton(executions);
+builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
+    new ExecutableContinuousGraphControlPlaneQueryService(metadata, executions));
+builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
+    new HostedContinuousGraphControlPlaneExecutionService(executions));
+```
+
+The authorised detail page can then execute only the registered fingerprint and
+show every projected node, edge, category, label, endpoint, and property in the
+bounded result. The canvas provides pan, zoom, search, fit, and selection while
+the node and edge tables preserve a complete accessible representation. Limits,
+timeouts, conflicting element IDs, and dangling endpoints fail visibly; BlueTusk
+does not return a partial graph and call it complete. The optional adapter owns
+the graph dependency; the Control Plane core does not reference ContinuousGraph.
 
 `ContinuousGraphIncrementalSession.Status` exposes counts for trusted CDC,
 authoritative delta, and authoritative repair evaluations, plus affected-key

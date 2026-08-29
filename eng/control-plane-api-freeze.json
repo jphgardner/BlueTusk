@@ -9,7 +9,7 @@
     },
     {
       "path": "src/BlueTusk.ControlPlane/PublicAPI.Unshipped.txt",
-      "sha256": "81ec081645a9aca57331ffc4999d042cc08a4c5024564862a36aa7d56bad2da0"
+      "sha256": "120651d7d55abc77e2776b030fcb559e69e0d1d64ae986a4faf95f4d5372afca"
     },
     {
       "path": "src/BlueTusk.ControlPlane.Kubernetes/PublicAPI.Shipped.txt",
@@ -25,7 +25,7 @@
     },
     {
       "path": "src/BlueTusk.Dashboard/PublicAPI.Unshipped.txt",
-      "sha256": "3c3b422dddb1efeb0fc5b228608fd8682452b2a9507d4031894bce3c4dedadbd"
+      "sha256": "8c61d009d7096f29f8e64923f4278233c05b2d34ac217d30acb52bed2dc69990"
     }
   ]
 }
