@@ -3,8 +3,8 @@ import { GUIDES } from '../../generated/guides.generated';
 
 describe('website content integrity', () => {
   it('keeps product maturity and pending gates explicit', () => {
-    expect(PRODUCT_STATUSES.find((item) => item.id === 'provider')?.version).toBe('0.3.0 preview');
-    expect(PRODUCT_STATUSES.find((item) => item.id === 'ef-core')?.version).toBe('0.3.0 preview');
+    expect(PRODUCT_STATUSES.find((item) => item.id === 'provider')?.version).toBe('1.1.0-rc.1');
+    expect(PRODUCT_STATUSES.find((item) => item.id === 'ef-core')?.version).toBe('1.1.0-rc.1');
     expect(PRODUCT_STATUSES.find((item) => item.id === 'streams')?.limitations.join(' ')).toContain(
       '72-hour',
     );
@@ -19,7 +19,6 @@ describe('website content integrity', () => {
     expect(EVIDENCE.filter((item) => item.status === 'pending').map((item) => item.id)).toEqual(
       expect.arrayContaining([
         'fuzzing',
-        'canonical-package-set',
         'website-field-vitals',
         'streams-endurance',
         'sync-endurance',
@@ -28,9 +27,10 @@ describe('website content integrity', () => {
         'operational-approvals',
       ]),
     );
-    expect(EVIDENCE.find((item) => item.id === 'allocations')?.value).toBe('37');
+    expect(EVIDENCE.find((item) => item.id === 'allocations')?.value).toBe('46');
     expect(EVIDENCE.find((item) => item.id === 'website-delivery')?.status).toBe('passed');
-    expect(EVIDENCE.find((item) => item.id === 'canonical-package-set')?.status).toBe('pending');
+    expect(EVIDENCE.find((item) => item.id === 'canonical-package-set')?.status).toBe('passed');
+    expect(EVIDENCE.find((item) => item.id === 'rc-publication')?.value).toBe('65 / 65');
     expect(EVIDENCE.find((item) => item.id === 'test-credential-boundary')?.value).toBe(
       '22 scoped',
     );

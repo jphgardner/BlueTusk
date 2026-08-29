@@ -12,11 +12,11 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero split-hero extensions-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> OPTIONAL POSTGRESQL DEPTH</span>
-        <h1>Extensions without <em>core bloat.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> OPTIONAL POSTGRESQL FEATURES</span>
+        <h1>Add the database features <em>you need.</em></h1>
         <p>
-          Seven V1 families and one isolated preview adapter compose through a registry
-          snapshot. Install only the capabilities your application uses.
+          Add PostGIS, pgvector, TimescaleDB, or another supported extension without making every
+          application carry features it never uses.
         </p>
         <div class="hero-actions">
           <a mat-flat-button routerLink="/documentation/extensions/catalog" class="primary-action"
@@ -27,17 +27,17 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
       <aside class="registry-diagram">
         <div>
           <mat-icon>extension</mat-icon><strong>Extension package</strong
-          ><span>Types · features · translations</span>
+          ><span>Adds only the feature you selected</span>
         </div>
         <mat-icon>south</mat-icon>
         <div>
-          <mat-icon>inventory_2</mat-icon><strong>Builder registry</strong
-          ><span>Mutable during configuration</span>
+          <mat-icon>inventory_2</mat-icon><strong>Data source setup</strong
+          ><span>Configure extensions before startup</span>
         </div>
         <mat-icon>south</mat-icon>
         <div>
-          <mat-icon>lock</mat-icon><strong>Data source snapshot</strong
-          ><span>Immutable at runtime</span>
+          <mat-icon>lock</mat-icon><strong>Running application</strong
+          ><span>Uses one safe, fixed configuration</span>
         </div>
       </aside>
     </section>
@@ -45,14 +45,14 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
     <section id="catalog" class="page-section">
       <header class="section-head">
         <div>
-          <span>CAPABILITY CATALOG</span>
-          <h2>Choose the workload, then the surface.</h2>
+          <span>EXTENSION CATALOG</span>
+          <h2>Find the feature your application needs.</h2>
         </div>
-        <p>Filters are local and shareable; support claims link to the repository guide.</p>
+        <p>Filter by .NET API or task. Every support claim links to its technical guide.</p>
       </header>
       <div class="filter-bar" role="group" aria-label="Filter extensions">
         <div>
-          <small>SURFACE</small>
+          <small>.NET API</small>
           @for (option of surfaces; track option) {
             <button
               type="button"
@@ -81,23 +81,26 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
           <article>
             <div>
               <span class="extension-mark">{{ mark(item.feature) }}</span
-              ><bt-status label="Preview" />
+              ><bt-status
+                [label]="item.state === 'supported' ? '1.1 RC public' : 'Preview'"
+                [stage]="item.state === 'supported' ? 'gate-passed' : 'preview'"
+              />
             </div>
             <small>{{ item.workload }}</small>
             <h3>{{ item.feature }}</h3>
             <p>{{ item.notes }}</p>
             <dl>
               <div>
-                <dt>Surface</dt>
+                <dt>Works with</dt>
                 <dd>{{ item.surface }}</dd>
               </div>
               <div>
-                <dt>Gate</dt>
+                <dt>PostgreSQL support</dt>
                 <dd>{{ item.postgres }}</dd>
               </div>
             </dl>
             <a [href]="source(item.sourcePath)" target="_blank" rel="noreferrer"
-              >Source evidence <mat-icon>open_in_new</mat-icon></a
+              >Read technical evidence <mat-icon>open_in_new</mat-icon></a
             >
           </article>
         } @empty {
@@ -108,11 +111,12 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
 
     <section class="page-section code-split">
       <div>
-        <span class="section-kicker">COMPOSITION MODEL</span>
-        <h2>Register before the data source is built.</h2>
+        <span class="section-kicker">SIMPLE SETUP</span>
+        <h2>Choose extensions when your application starts.</h2>
         <p>
-          Builder changes are snapshotted into the resulting data source. Optional packages remain
-          independently deployable and the core provider takes no extension-specific dependency.
+          Add the extension packages you need before creating the data source. The configuration is
+          then fixed for safe, consistent use, and unused extensions add nothing to the core
+          provider.
         </p>
         <bt-source-link [href]="source('docs/extensions/README.md')" />
       </div>
@@ -122,12 +126,12 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>AUTHORING FLOW</span>
-          <h2>Add a capability without fragmenting the platform.</h2>
+          <span>BUILD AN EXTENSION</span>
+          <h2>Add support once for ADO.NET and EF Core.</h2>
         </div>
         <p>
-          The same extension abstractions connect provider codecs, immutable descriptors, and EF
-          translation.
+          One extension package can define its .NET values, PostgreSQL conversion, feature details,
+          and optional EF Core support.
         </p>
       </header>
       <div class="timeline-flow">
@@ -218,22 +222,22 @@ command.Parameters.Add(
     {
       icon: 'data_object',
       title: 'Define values',
-      body: 'Use immutable CLR values that preserve PostgreSQL semantics.',
+      body: 'Create .NET values that keep the meaning of the PostgreSQL type.',
     },
     {
       icon: 'conversion_path',
-      title: 'Register codecs',
-      body: 'Add text/binary mappings through the type registry.',
+      title: 'Convert values',
+      body: 'Define how values move between .NET and PostgreSQL in text or binary form.',
     },
     {
       icon: 'flag',
-      title: 'Describe features',
-      body: 'Publish immutable descriptors for capability discovery.',
+      title: 'Describe the extension',
+      body: 'Tell BlueTusk which features the package provides and requires.',
     },
     {
       icon: 'functions',
       title: 'Add EF translation',
-      body: 'Compose optional query and mapping support without a core dependency.',
+      body: 'Add optional LINQ and model support without changing the core provider.',
     },
   ] as const;
 }

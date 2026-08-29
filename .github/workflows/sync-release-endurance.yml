@@ -17,7 +17,7 @@ concurrency:
 
 jobs:
   connector-endurance:
-    name: Four-destination recovery endurance
+    name: Seven-destination recovery endurance
     if: inputs.confirmation == 'RUN-SYNC-24-HOUR-ENDURANCE'
     runs-on: [self-hosted, linux, x64, bluetusk-endurance]
     timeout-minutes: 1530
@@ -45,10 +45,30 @@ jobs:
       - name: Start PostgreSQL 19
         run: docker compose -f eng/compose/postgres.yml --profile preview up -d --wait postgres19
 
-      - name: Start Redis, NATS JetStream, and OpenSearch
+      - name: Start Redis, NATS JetStream, Kafka, MinIO, and OpenSearch
         run: |
           docker run --detach --name bluetusk-sync-endurance-redis --publish 6379:6379 redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241
           docker run --detach --name bluetusk-sync-endurance-nats --publish 4222:4222 nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66 -js
+          docker run --detach --name bluetusk-sync-endurance-kafka \
+            --publish 9092:9092 \
+            --env KAFKA_NODE_ID=1 \
+            --env KAFKA_PROCESS_ROLES=broker,controller \
+            --env KAFKA_LISTENERS=PLAINTEXT://:9092,CONTROLLER://:9093 \
+            --env KAFKA_ADVERTISED_LISTENERS=PLAINTEXT://localhost:9092 \
+            --env KAFKA_CONTROLLER_LISTENER_NAMES=CONTROLLER \
+            --env KAFKA_LISTENER_SECURITY_PROTOCOL_MAP=CONTROLLER:PLAINTEXT,PLAINTEXT:PLAINTEXT \
+            --env KAFKA_CONTROLLER_QUORUM_VOTERS=1@localhost:9093 \
+            --env KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR=1 \
+            --env KAFKA_TRANSACTION_STATE_LOG_REPLICATION_FACTOR=1 \
+            --env KAFKA_TRANSACTION_STATE_LOG_MIN_ISR=1 \
+            --env KAFKA_GROUP_INITIAL_REBALANCE_DELAY_MS=0 \
+            --env KAFKA_AUTO_CREATE_TOPICS_ENABLE=false \
+            apache/kafka:4.1.1@sha256:7240ff4534bd23dac2f215ba03a2d0aa9d041b45b830804bbdec3b81c2bdf479
+          docker run --detach --name bluetusk-sync-endurance-minio \
+            --publish 9000:9000 \
+            --env MINIO_ROOT_USER=bluetusk_endurance \
+            --env MINIO_ROOT_PASSWORD=bluetusk_endurance_secret \
+            minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2 server /data
           docker run --detach --name bluetusk-sync-endurance-opensearch \
             --publish 9200:9200 \
             --env discovery.type=single-node \
@@ -59,17 +79,23 @@ jobs:
           for attempt in $(seq 1 120); do
             if docker exec bluetusk-sync-endurance-redis redis-cli ping | grep -q PONG && \
                nc -z 127.0.0.1 4222 && \
+               nc -z 127.0.0.1 9092 && \
+               curl --fail --silent http://127.0.0.1:9000/minio/health/ready >/dev/null && \
                curl --fail --silent http://127.0.0.1:9200 >/dev/null; then exit 0; fi
             sleep 2
           done
           docker logs bluetusk-sync-endurance-opensearch
           exit 1
 
-      - name: Run 24-hour four-destination endurance
+      - name: Run 24-hour seven-destination endurance
         shell: pwsh
         env:
           BLUETUSK_TEST_CONNECTION_STRING: Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable
           BLUETUSK_NATS_URL: nats://localhost:4222
+          BLUETUSK_KAFKA_BOOTSTRAP_SERVERS: localhost:9092
+          BLUETUSK_S3_ENDPOINT: http://127.0.0.1:9000
+          BLUETUSK_S3_ACCESS_KEY: bluetusk_endurance
+          BLUETUSK_S3_SECRET_KEY: bluetusk_endurance_secret
           BLUETUSK_TEST_REDIS_CONNECTION_STRING: localhost:6379,abortConnect=false
           BLUETUSK_OPENSEARCH_URL: http://127.0.0.1:9200
         run: |
@@ -82,6 +108,8 @@ jobs:
             -DestinationImages @(
               'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
               'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
+              'apache/kafka:4.1.1@sha256:7240ff4534bd23dac2f215ba03a2d0aa9d041b45b830804bbdec3b81c2bdf479',
+              'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2',
               'opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9'
             ) `
             -Configuration Release
@@ -99,6 +127,8 @@ jobs:
             -ExpectedDestinationImages @(
               'redis:8-alpine@sha256:978f0e01593e65eed801f2402944efcd936d43b5027e4908a7897baf88ed6241',
               'nats:2.14-alpine@sha256:f2123f533c2b0cada0a5c5ec434fb2b8cfe1cf220215ef9d7517e1372917ad66',
+              'apache/kafka:4.1.1@sha256:7240ff4534bd23dac2f215ba03a2d0aa9d041b45b830804bbdec3b81c2bdf479',
+              'minio/minio:RELEASE.2025-09-07T16-13-09Z@sha256:a1a8bd4ac40ad7881a245bab97323e18f971e4d4cba2c2007ec1bedd21cbaba2',
               'opensearchproject/opensearch:3.7.0@sha256:44ba7ea58a319adf61c33ab16873f9ef5dbb30b291a832d375172f0b2d24e3c9'
             )
 
@@ -117,10 +147,12 @@ jobs:
           docker compose -f eng/compose/postgres.yml --profile preview logs postgres19
           docker logs bluetusk-sync-endurance-redis
           docker logs bluetusk-sync-endurance-nats
+          docker logs bluetusk-sync-endurance-kafka
+          docker logs bluetusk-sync-endurance-minio
           docker logs bluetusk-sync-endurance-opensearch
 
       - name: Stop endurance services
         if: always()
         run: |
-          docker rm --force bluetusk-sync-endurance-redis bluetusk-sync-endurance-nats bluetusk-sync-endurance-opensearch || true
+          docker rm --force bluetusk-sync-endurance-redis bluetusk-sync-endurance-nats bluetusk-sync-endurance-kafka bluetusk-sync-endurance-minio bluetusk-sync-endurance-opensearch || true
           docker compose -f eng/compose/postgres.yml --profile preview down --volumes

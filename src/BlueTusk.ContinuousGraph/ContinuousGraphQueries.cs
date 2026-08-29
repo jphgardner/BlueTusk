@@ -413,6 +413,18 @@ public static class ContinuousGraphQueryCompiler
                 $"Continuous graph query '{definition.Name}' must translate through GRAPH_TABLE.");
         }
 
+        var canonicalImpact = capturedImpact is null
+            ? "<uncaptured>"
+            : string.Join(';', capturedImpact.Elements.Select(element => string.Join(
+                ':',
+                element.Variable,
+                element.Alias,
+                element.Kind,
+                string.Join('|', element.Labels),
+                element.Direction?.ToString() ?? "vertex",
+                element.MinimumHops,
+                element.MaximumHops)));
+
         var canonicalPlan = string.Join(
             '\n',
             typeof(TContext).AssemblyQualifiedName,
@@ -424,6 +436,7 @@ public static class ContinuousGraphQueryCompiler
             string.Join(',', dependencies.Select(static dependency => dependency.ToString())),
             keyProperty,
             definition.MaximumResultCount.ToString(CultureInfo.InvariantCulture),
+            canonicalImpact,
             shape.CanonicalExpression,
             definition.RowComparer.GetType().AssemblyQualifiedName);
         var fingerprint = LiveQueryFingerprint.Create(
@@ -482,6 +495,9 @@ public static class ContinuousGraphQueryCompiler
                 element.Variable,
                 element.Alias,
                 element.Kind,
+                string.Join('|', element.Labels),
+                element.Direction?.ToString() ?? "vertex",
+                $"{element.MinimumHops}..{element.MaximumHops}",
                 element.Schema ?? graph.Schema ?? context.Model.GetDefaultSchema() ?? "public",
                 element.Table,
                 string.Join(',', element.KeyColumns))) ?? definition.ElementTableAliases,
@@ -555,6 +571,13 @@ public static class ContinuousGraphQueryCompiler
                 StringComparison.Ordinal));
         keyProjection = projectionForKey;
         if (capturedImpact is null || projectionForKey?.ColumnName is null)
+        {
+            return null;
+        }
+
+        if (capturedImpact.Elements.Any(element =>
+                element.Direction is BlueTuskGraphEdgeDirection.Undirected ||
+                element.MaximumHops > 1))
         {
             return null;
         }

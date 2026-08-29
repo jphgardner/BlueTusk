@@ -12,12 +12,11 @@ import { StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero evidence-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> V1 EVIDENCE · 04 AUG 2026</span>
-        <h1>Candidate-ready, with <em>receipts.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> 1.1 RC EVIDENCE · 29 AUG 2026</span>
+        <h1>See what is tested—and <em>what is still pending.</em></h1>
         <p>
-          Compatibility, parser reliability, API governance, security, provenance, performance and
-          release gates are separated so implemented hardening is never confused with pending
-          external authorization.
+          Every release claim links to evidence. Passed checks, open work, package history,
+          security, and performance results are shown separately and without hidden assumptions.
         </p>
       </div>
       <div class="evidence-totals">
@@ -29,15 +28,15 @@ import { StatusPill } from '../shared/technical-ui';
           <strong>{{ pendingCount() }}</strong
           ><span>explicitly pending</span>
         </article>
-        <article><strong>12,975</strong><span>budgeted API signatures</span></article>
+        <article><strong>13,056</strong><span>public APIs checked</span></article>
       </div>
     </section>
 
     <section class="page-section evidence-dashboard">
       <header class="section-head">
         <div>
-          <span>FILTERABLE RECORD</span>
-          <h2>Interrogate the current snapshot.</h2>
+          <span>TEST AND RELEASE RECORDS</span>
+          <h2>Explore the current results.</h2>
         </div>
         <button
           type="button"
@@ -108,12 +107,12 @@ import { StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>PRODUCT GATES</span>
-          <h2>Code state and release authority are separate.</h2>
+          <span>PRODUCT STATUS</span>
+          <h2>See what is available and what comes next.</h2>
         </div>
         <p>
-          Package availability is not inferred from a built project, a local candidate, or an
-          implementation gate.
+          Public RC packages are available now. Stable release still requires the remaining tests
+          and approvals shown here.
         </p>
       </header>
       <div class="release-ledger">
@@ -127,10 +126,10 @@ import { StatusPill } from '../shared/technical-ui';
               <small>PACKAGE</small><strong>{{ product.packageState }}</strong>
             </div>
             <div>
-              <small>GATE</small><strong>{{ product.gateState }}</strong>
+              <small>REMAINING CHECK</small><strong>{{ product.gateState }}</strong>
             </div>
             <div>
-              <small>LIMIT</small><span>{{ product.limitations[0] }}</span>
+              <small>WHAT TO KNOW</small><span>{{ product.limitations[0] }}</span>
             </div>
           </article>
         }
@@ -147,25 +146,26 @@ import { StatusPill } from '../shared/technical-ui';
       </div>
       <ul>
         <li>
-          No stable public package availability is asserted; the documented evaluation path remains
-          a source build.
+          <code>1.1.0-rc.1</code> is public on NuGet and npm; this page does not represent it as
+          stable <code>1.1.0</code>.
         </li>
-        <li>V1 code readiness is not presented as broad production validation.</li>
+        <li>Passing the code checks does not mean every production environment has been tested.</li>
         <li>
-          No delivery path is labelled exactly-once; destination contracts and acknowledgement rules
-          remain separate.
-        </li>
-        <li>
-          Streams 72-hour and Sync 24-hour evidence remains pending until archived exact-candidate
-          runs satisfy their contracts, including all seven in-window operational disturbances for
-          each run.
+          Recovery can resend the final unconfirmed transaction. PostgreSQL and Redis commit state
+          with the checkpoint, OpenSearch uses replay-safe versions, and NATS consumers keep the
+          stable transaction ID beyond the broker's deduplication window.
         </li>
         <li>
-          SQL/PGQ is capability-guarded and stable PostgreSQL 19 support waits for GA evidence.
+          Stable Streams still needs its exact 72-hour run, and Sync still needs its exact 24-hour
+          run, including the planned failure-and-recovery checks.
         </li>
         <li>
-          Independent review, application pilots, backup/restore and rollback rehearsal remain
-          mandatory.
+          SQL/PGQ turns on only when the server supports it, and stable PostgreSQL 19 support waits
+          for the final GA release and its test results.
+        </li>
+        <li>
+          Stable release still requires an independent review, real application trials, and tested
+          backup, restore, and rollback procedures.
         </li>
       </ul>
     </section>

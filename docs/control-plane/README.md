@@ -1,6 +1,11 @@
 # BlueTusk Control Plane and Dashboard
 
-`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph projections. They are independently versioned under the Control Plane release train. The Control Plane implementation and upgrade gates are complete, but the release manifest remains non-publishable until the Sync release dependency has archived its required 24-hour endurance evidence.
+`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational
+foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph
+projections. They are independently versioned under the Control Plane release
+train. The coordinated `1.1.0-rc.1` packages are public. Stable `1.1.0` remains
+blocked until the Sync dependency has archived its required 24-hour endurance
+evidence and the exact stable-candidate release chain passes.
 
 ## Read-only inventory
 
@@ -85,6 +90,28 @@ bound parameters or graph result rows. The authorised `/graphs` and
 `/api/graphs` endpoints HTML-encode every application-provided value.
 The Control Plane core does not reference the optional ContinuousGraph adapter.
 
+## Managed deployment fleet
+
+`ManagedDeploymentFleetQueryService` exposes the durable managed-hosting store
+as a redacted fleet inventory. The `/deployments`, `/api/fleet`, and
+`/api/v1/fleet` routes show placement, desired and observed generations,
+workload families, aggregate resource requests, protection state, and stable
+diagnostic codes. Workload settings, secret-reference names, provider plans,
+credentials, and provider exception text are not part of this projection.
+
+Fleet controls reuse the same separate mutation policy, exact typed
+confirmation, audit-before-mutation sequence, and immutable audit store as the
+existing pipeline controls. Operators can pause, resume, reconcile, or rebuild
+a deployment. Deletion is an Administrator operation and still cannot bypass a
+deployment's delete-protection check.
+
+`ManagedDeploymentControlPlaneOperationHandler` supplies the concrete fleet
+command path. Pause and resume are desired-state compare-and-swap updates;
+reconcile and delete use the fenced controller; rebuild first invokes the
+host's `IManagedDeploymentRebuildHandler` and then performs a normal
+reconciliation. A fallback handler can continue to own non-fleet commands, so
+hosts keep one audited `IControlPlaneOperationHandler` boundary.
+
 ## Versioned agent API
 
 Automation and operational agents should use the explicitly versioned routes:
@@ -94,6 +121,7 @@ Automation and operational agents should use the explicitly versioned routes:
 - `GET /api/v1/sync`
 - `GET /api/v1/live`
 - `GET /api/v1/graphs`
+- `GET /api/v1/fleet`
 - `POST /api/v1/operations`
 
 The capability response declares the current, minimum, and complete supported
@@ -205,6 +233,29 @@ late. Delete protection additionally requires the exact expected desired
 generation and an explicit override. See
 [ADR 0014](../architecture/decisions/0014-managed-hosting-reconciliation.md)
 for the complete failure and security contract.
+
+### Kubernetes custom resources
+
+`BlueTusk.ControlPlane.Kubernetes` supplies the namespaced
+`controlplane.bluetusk.io/v1alpha1` `BlueTuskDeployment` CRD, minimum RBAC, a
+source-generated Kubernetes REST client, and a bounded-concurrency reconciler.
+The installable manifests live under [`deploy/kubernetes/operator`](../../deploy/kubernetes/operator/)
+and are also carried in the NuGet package's `contentFiles` directory.
+
+The reconciler persists its finalizer before provider mutation. Kubernetes
+resource generations are observations, not durable Control Plane generations:
+if several Kubernetes updates are coalesced, one changed desired fingerprint
+advances the managed generation by exactly one. An unchanged fingerprint is
+idempotent. Each provider apply still runs under the PostgreSQL-backed lease and
+monotonic fencing token, and status updates use a JSON Patch resource-version
+test so a stale operator cannot overwrite newer status.
+
+Deletion retains the finalizer until the fenced provider deletion is complete.
+Delete protection produces the stable `delete-protection-enabled` status and
+leaves the finalizer in place. The shipped ClusterRole can list, watch, and
+patch only `BlueTuskDeployment` resources and their status; it has no Secret
+read permission. The provider adapter resolves secret references under a
+separate identity if its workload needs them.
 
 ## Verification status
 

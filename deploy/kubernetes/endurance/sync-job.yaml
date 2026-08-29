@@ -1,0 +1,71 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: sync-24h
+  namespace: bluetusk-endurance
+  labels:
+    app.kubernetes.io/name: sync-24h
+    app.kubernetes.io/part-of: bluetusk-endurance
+spec:
+  backoffLimit: 0
+  activeDeadlineSeconds: 97200
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: sync-24h
+        app.kubernetes.io/part-of: bluetusk-endurance
+    spec:
+      serviceAccountName: endurance-runner
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 120
+      securityContext:
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: runner
+          image: mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:0e53453ccfc8ff2d51319fe80c678971c6d0f8008dff3565fa88e15840b69854
+          imagePullPolicy: IfNotPresent
+          command: [pwsh, -NoLogo, -NoProfile, -Command]
+          args:
+            - |
+              Set-Location /workspace
+              git init --quiet
+              git remote add origin https://github.com/jphgardner/BlueTusk.git
+              git fetch --quiet --depth 1 origin $env:CANDIDATE_SHA
+              git checkout --quiet --detach $env:CANDIDATE_SHA
+              if ($LASTEXITCODE -ne 0) { throw 'Candidate checkout failed.' }
+              & ./deploy/kubernetes/endurance/run-sync.ps1
+          envFrom:
+            - configMapRef:
+                name: endurance-candidate
+          env:
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: endurance-runtime
+                  key: postgres-password
+            - name: BLUETUSK_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: endurance-runtime
+                  key: s3-access-key
+            - name: BLUETUSK_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: endurance-runtime
+                  key: s3-secret-key
+          resources:
+            requests: {cpu: "1", memory: 1024Mi}
+            limits: {cpu: "2", memory: 2048Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: evidence, mountPath: /workspace/artifacts}
+      volumes:
+        - name: evidence
+          persistentVolumeClaim:
+            claimName: endurance-evidence

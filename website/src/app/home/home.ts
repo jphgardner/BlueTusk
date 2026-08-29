@@ -27,9 +27,8 @@ export class Home {
     {
       name: 'Provider',
       icon: 'storage',
-      description:
-        'Native ADO.NET, pooling, commands, types, COPY, notifications, large objects, and replication.',
-      status: 'V1 code-ready',
+      description: 'Connect .NET applications directly to PostgreSQL with familiar ADO.NET APIs.',
+      status: '1.1 RC public',
       statusKind: 'complete',
       tone: 'blue',
       route: '/provider',
@@ -39,8 +38,8 @@ export class Home {
       name: 'EF Core',
       icon: 'data_object',
       description:
-        'Queries, migrations, scaffolding, PostgreSQL-specific mappings, and SQL/PGQ support.',
-      status: 'V1 code-ready',
+        'Use LINQ, migrations, and tooling without giving up PostgreSQL-specific features.',
+      status: '1.1 RC public',
       statusKind: 'complete',
       tone: 'cyan',
       route: '/ef-core',
@@ -49,10 +48,9 @@ export class Home {
     {
       name: 'Streams',
       icon: 'stream',
-      description:
-        'CDC, snapshot bootstrap, durable checkpoints, relay fan-out, and replayable pipelines.',
-      status: '72h evidence pending',
-      statusKind: 'preview',
+      description: 'Turn committed database changes into reliable, recoverable event streams.',
+      status: 'RC public · stable test pending',
+      statusKind: 'complete',
       tone: 'teal',
       route: '/real-time',
       kicker: 'Change data',
@@ -60,10 +58,9 @@ export class Home {
     {
       name: 'Sync',
       icon: 'sync_alt',
-      description:
-        'Versioned synchronization for PostgreSQL, Redis, OpenSearch, and NATS destinations.',
-      status: '24h evidence pending',
-      statusKind: 'preview',
+      description: 'Keep PostgreSQL, Redis, OpenSearch, and NATS destinations up to date.',
+      status: 'RC public · stable test pending',
+      statusKind: 'complete',
       tone: 'green',
       route: '/real-time',
       kicker: 'Data movement',
@@ -71,9 +68,8 @@ export class Home {
     {
       name: 'Extensions',
       icon: 'extension',
-      description:
-        'Seven V1 package families plus a non-packable pg_durable preview adapter.',
-      status: 'V1 packages · preview isolated',
+      description: 'Add PostGIS, pgvector, TimescaleDB, and other features only when needed.',
+      status: '1.1 RC public',
       statusKind: 'complete',
       tone: 'amber',
       route: '/extensions',
@@ -82,9 +78,8 @@ export class Home {
     {
       name: 'Graph',
       icon: 'share',
-      description:
-        'PostgreSQL 19 SQL/PGQ today, with Continuous Graph for reactive graph workloads.',
-      status: 'PG 19 GA pending',
+      description: 'Query connected data and keep graph results updated as PostgreSQL changes.',
+      status: 'RC public · waits for PG 19',
       statusKind: 'graph',
       tone: 'purple',
       route: '/graph',
@@ -98,17 +93,17 @@ export class Home {
       icon: 'storage',
       label: 'Own the connection',
       title: 'Start with ADO.NET',
-      body: 'Build the provider sample, register one long-lived data source, and exercise PostgreSQL types without another provider underneath.',
+      body: 'Connect a .NET application, run a parameterized query, and use PostgreSQL types through familiar ADO.NET APIs.',
       route: '/provider',
       action: 'Explore Provider',
-      proof: '11/11 live compatibility',
+      proof: '11/11 live checks passed',
     },
     {
       id: 'ef-core',
       icon: 'data_object',
       label: 'Model an application',
       title: 'Start with EF Core',
-      body: 'Reuse the provider data source inside DbContext and retain PostgreSQL queries, mappings, migrations, and scaffolding.',
+      body: 'Use a DbContext, LINQ, and migrations while keeping access to PostgreSQL-specific features.',
       route: '/ef-core',
       action: 'Explore EF Core',
       proof: '1,987 official passes',
@@ -116,19 +111,19 @@ export class Home {
     {
       id: 'real-time',
       icon: 'stream',
-      label: 'React to committed data',
+      label: 'Build real-time features',
       title: 'Start with Streams',
-      body: 'Turn pgoutput transactions into acknowledged deliveries, then add snapshots, relay, Sync, or Live as separate contracts.',
+      body: 'Capture committed database changes, then sync other systems or update connected users.',
       route: '/real-time',
       action: 'Explore Real Time',
-      proof: 'Exact endurance gated',
+      proof: 'Long-running test pending',
     },
     {
       id: 'extensions',
       icon: 'extension',
-      label: 'Use a specialized workload',
+      label: 'Add database features',
       title: 'Start with an extension',
-      body: 'Register a stable extension before building the data source; pg_durable remains evaluation-only.',
+      body: 'Install PostGIS, pgvector, TimescaleDB, or another supported extension only when your app needs it.',
       route: '/extensions',
       action: 'Browse Extensions',
       proof: '7 V1 + 1 preview',
@@ -138,10 +133,10 @@ export class Home {
       icon: 'share',
       label: 'Connect the data',
       title: 'Start with Graph',
-      body: 'Use capability-guarded PostgreSQL 19 SQL/PGQ or a checkpointed Continuous Graph projection.',
+      body: 'Query relationships inside PostgreSQL or keep graph results updated as data changes.',
       route: '/graph',
       action: 'Explore Graph',
-      proof: 'PG 19 guarded',
+      proof: 'Waits for PostgreSQL 19 GA',
     },
   ] as const;
 
@@ -248,35 +243,36 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
   protected readonly evidence = [
     {
       value: '3,289',
-      label: 'PostgreSQL 19 passes',
-      detail: 'Zero failures across the complete 45-assembly solution matrix.',
+      label: 'PostgreSQL 19 tests passed',
+      detail: 'Zero failures across all 45 tested projects.',
       icon: 'fact_check',
     },
     {
-      value: '12,975',
-      label: 'Budgeted API signatures',
-      detail: 'Exact public surface across all six product families.',
+      value: '13,056',
+      label: 'Public APIs checked',
+      detail: '13,056 API signatures checked across all six product families.',
       icon: 'account_tree',
     },
     {
-      value: '37',
-      label: 'Allocation budgets',
-      detail: 'Machine-checked command, COPY, replication, EF, Live, Sync, and graph budgets.',
+      value: '46',
+      label: 'Memory limits checked',
+      detail:
+        'Automated memory checks cover commands, COPY, replication, EF, Live, Sync, and graph.',
       icon: 'verified',
     },
     {
-      value: '72h / 24h',
-      label: 'Evidence still pending',
+      value: '65 / 65',
+      label: 'Public RC packages',
       detail:
-        'Exact runs plus 14 in-window disturbance recoveries and 28 hashed observations remain open.',
-      icon: 'monitor_heart',
+        'Every NuGet and npm artifact is public at 1.1.0-rc.1 and passed clean consumer verification.',
+      icon: 'inventory_2',
     },
   ] as const;
 
   protected readonly capabilityGroups = [
     {
       eyebrow: 'Types',
-      title: 'PostgreSQL’s type system, without flattening it',
+      title: 'Use PostgreSQL types directly',
       items: [
         'Arrays',
         'Ranges',
@@ -291,7 +287,7 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
     },
     {
       eyebrow: 'Database design',
-      title: 'Schema features that stay PostgreSQL-native',
+      title: 'Keep your PostgreSQL database design',
       items: [
         'Partitioning',
         'Row-level security',
@@ -304,7 +300,7 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
     },
     {
       eyebrow: 'Specialized workloads',
-      title: 'One provider, deeper capabilities',
+      title: 'Add advanced features when needed',
       items: [
         'PostGIS',
         'pgvector',
@@ -319,12 +315,16 @@ await foreach (var delivery in changes.ReadTransactionsAsync())
   ] as const;
 
   protected readonly roadmap = [
-    { name: 'Provider', status: 'V1 code and hardening complete', kind: 'complete' },
-    { name: 'Streams', status: 'Exact 72-hour + 7 disturbances pending', kind: 'pending' },
-    { name: 'Sync', status: 'Exact 24-hour + 7 disturbances pending', kind: 'pending' },
-    { name: 'Live', status: 'V1 code and package gates complete', kind: 'complete' },
-    { name: 'Control Plane', status: 'Dependency release chain pending', kind: 'pending' },
-    { name: 'Continuous Graph', status: 'Preview candidate code-ready', kind: 'complete' },
+    { name: 'Provider', status: '1.1.0-rc.1 public', kind: 'complete' },
+    { name: 'Streams', status: 'RC public · 72-hour stable test pending', kind: 'complete' },
+    { name: 'Sync', status: 'RC public · 24-hour stable test pending', kind: 'complete' },
+    { name: 'Live', status: '1.1.0-rc.1 public', kind: 'complete' },
+    { name: 'Control Plane', status: '1.1.0-rc.1 public', kind: 'complete' },
+    {
+      name: 'Continuous Graph',
+      status: 'RC public · waits for PostgreSQL 19 GA',
+      kind: 'complete',
+    },
   ] as const;
 
   protected selectExample(value: string): void {

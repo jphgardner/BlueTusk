@@ -457,5 +457,32 @@
     "summary": "Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.",
     "keywords": ["upgrade", "migration", "rollback", "format", "version"],
     "order": 35
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "install",
+    "source": "docs/getting-started/install.md",
+    "summary": "Choose the stable or RC channel, install the smallest NuGet/npm package set, pin exact versions, and verify the resolved dependency graph.",
+    "keywords": ["install", "nuget", "npm", "packages", "1.1.0-rc.1", "versions"],
+    "order": 2
+  },
+  {
+    "category": "getting-started",
+    "categoryLabel": "Getting started",
+    "slug": "release-1-1-rc1",
+    "source": "docs/releases/1.1.0-rc.1.md",
+    "summary": "Review the immutable 1.1.0-rc.1 tags, workflow runs, 65 public packages, verification record, product changes, and stable-release boundary.",
+    "keywords": ["release", "rc", "1.1.0-rc.1", "nuget", "npm", "verification"],
+    "order": 3
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "slug": "production-checklist",
+    "source": "docs/operations/production-checklist.md",
+    "summary": "Take a BlueTusk application from package selection to a secure, bounded, observable, recoverable, and operator-owned production deployment.",
+    "keywords": ["production", "checklist", "deployment", "security", "slo", "rollback", "runbook"],
+    "order": 2
   }
 ]

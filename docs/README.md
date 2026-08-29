@@ -6,19 +6,22 @@ the code: start with the provider, add EF Core or an extension when the
 application needs it, and adopt Streams, Sync, Live, Control Plane or
 Continuous Graph only when their delivery contracts match the workload.
 
-BlueTusk `1.0.0` was published on 2026-08-23 as 62 NuGet packages and three npm
-packages. The [V1 publication record](releases/1.0.0-publication-record.md)
-records the exact tags, commit, workflows, inventory, registry verification,
-and repository-owner exceptions. Exact-candidate endurance, PostgreSQL 19 GA,
-reference performance, independent review and operational rehearsals remain
-outstanding evidence rather than retroactively passed gates. Read
-[V1 release readiness](v1-release-readiness.md) for that distinction.
+The stable `1.0.0` line and public `1.1.0-rc.1` train each contain 62 NuGet
+packages and three npm packages. The RC was published from exact commit
+`2e735ed46aec11d5009158a00ca7b862f9ec12af`, and registry availability plus
+clean package-consumer installs were verified. Read the
+[1.1 RC release record](releases/1.1.0-rc.1.md),
+[installation guide](getting-started/install.md), and
+[support matrix](../VERSIONING.md) before choosing a channel. Stable `1.1.0`
+remains gated on PostgreSQL 19 GA and the exact stable-candidate endurance,
+performance, security, and external-acceptance record.
 
 ## Choose a path
 
 | You want to… | Start here | Then read |
 | --- | --- | --- |
-| Evaluate BlueTusk locally | [Quickstart](getting-started/quickstart.md) | [Core concepts](getting-started/concepts.md) |
+| Install published packages | [Installation and package selection](getting-started/install.md) | [Quickstart](getting-started/quickstart.md) and [1.1 RC release record](releases/1.1.0-rc.1.md) |
+| Evaluate BlueTusk from source | [Quickstart](getting-started/quickstart.md) | [Core concepts](getting-started/concepts.md) |
 | Build with ADO.NET | [Provider guide](ado-net/README.md) | [Compatibility matrix](ado-net/compatibility.md) and [dependency injection](ado-net/dependency-injection.md) |
 | Build with EF Core | [EF Core guide](ef-core/README.md) | [Specification coverage](ef-core/specification-tests.md) |
 | Move committed changes | [Real-time platform](realtime-platform/README.md) | [Streams](streams/README.md) and [operations](realtime-platform/operations.md) |
@@ -26,7 +29,7 @@ outstanding evidence rather than retroactively passed gates. Read
 | Deliver authorized live data | [Live](live/README.md) | [Security](security.md) |
 | Use PostgreSQL extensions | [Extensions](extensions/README.md) | [Type system](types/README.md) |
 | Query or maintain graph data | [SQL/PGQ](graph/README.md) | [Continuous Graph](continuous-graph/README.md) |
-| Operate a deployment | [Deployment](operations/deployment.md) | [Troubleshooting](operations/troubleshooting.md), [production observability](operations/observability.md) and [V1 production readiness](operations/production-readiness.md) |
+| Operate a deployment | [Production checklist](operations/production-checklist.md) | [Deployment](operations/deployment.md), [troubleshooting](operations/troubleshooting.md), and [production observability](operations/observability.md) |
 | Contribute | [Repository layout](contributing/repository-layout.md) | [Testing](contributing/testing.md) |
 | Prepare a release | [Release process](release-process.md) | [Operational approval evidence](operations/approval-evidence.md) and [independent review handoff](release-review-handoff.md) |
 
@@ -137,6 +140,7 @@ boundaries exist.
 Use these documents when the question is not “how do I call the API?”:
 
 - [Deployment and configuration](operations/deployment.md)
+- [Production checklist](operations/production-checklist.md)
 - [Application platform health and rollout acceptance](operations/application-platform-health.md)
 - [Troubleshooting](operations/troubleshooting.md)
 - [Performance engineering](operations/performance.md)
@@ -154,6 +158,7 @@ Use these documents when the question is not “how do I call the API?”:
 - [V1 hardening programme](hardening-programme.md)
 - [PostgreSQL 19 programme](postgresql19-programme.md)
 - [V1 application suite and RC deployment](v1-applications.md)
+- [BlueTusk 1.1.0-rc.1 release record](releases/1.1.0-rc.1.md)
 
 ## Documentation contract
 

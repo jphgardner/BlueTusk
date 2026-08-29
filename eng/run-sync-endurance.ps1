@@ -75,6 +75,10 @@ if ($Duration -lt [TimeSpan]::FromSeconds(1))
 $requiredEnvironment = @(
     'BLUETUSK_TEST_CONNECTION_STRING',
     'BLUETUSK_NATS_URL',
+    'BLUETUSK_KAFKA_BOOTSTRAP_SERVERS',
+    'BLUETUSK_S3_ENDPOINT',
+    'BLUETUSK_S3_ACCESS_KEY',
+    'BLUETUSK_S3_SECRET_KEY',
     'BLUETUSK_TEST_REDIS_CONNECTION_STRING',
     'BLUETUSK_OPENSEARCH_URL'
 )
@@ -137,14 +141,14 @@ if (-not [string]::IsNullOrWhiteSpace($CandidateProvenancePath))
 if ($Duration -ge [TimeSpan]::FromHours(24) -and
     ([string]::IsNullOrWhiteSpace($candidateProvenanceSha256) -or
      [string]$PostgreSqlImage -notmatch '@sha256:[0-9a-f]{64}$' -or
-     @($DestinationImages).Count -ne 3 -or
+     @($DestinationImages).Count -ne 5 -or
      @($DestinationImages | Where-Object {
          [string]$_ -notmatch '@sha256:[0-9a-f]{64}$'
      }).Count -ne 0))
 {
     throw (
         'The 24-hour Sync gate requires clean candidate-package provenance ' +
-        'and digest-pinned PostgreSQL, Redis, NATS, and OpenSearch images.')
+        'and digest-pinned PostgreSQL, Redis, NATS, Kafka, MinIO, and OpenSearch images.')
 }
 
 $fullReportPath = if ([IO.Path]::IsPathRooted($ReportPath))
@@ -180,9 +184,12 @@ $projects = @(
     'tests/BlueTusk.Sync.Tests/BlueTusk.Sync.Tests.csproj',
     'tests/BlueTusk.Sync.DependencyInjection.Tests/BlueTusk.Sync.DependencyInjection.Tests.csproj',
     'tests/BlueTusk.Sync.Testing.Tests/BlueTusk.Sync.Testing.Tests.csproj',
+    'tests/BlueTusk.Sync.Kafka.Tests/BlueTusk.Sync.Kafka.Tests.csproj',
     'tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj',
     'tests/BlueTusk.Sync.Redis.Tests/BlueTusk.Sync.Redis.Tests.csproj',
-    'tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj'
+    'tests/BlueTusk.Sync.OpenSearch.Tests/BlueTusk.Sync.OpenSearch.Tests.csproj',
+    'tests/BlueTusk.Sync.S3.Tests/BlueTusk.Sync.S3.Tests.csproj',
+    'tests/BlueTusk.Sync.Webhooks.Tests/BlueTusk.Sync.Webhooks.Tests.csproj'
 )
 
 $startedAt = [DateTimeOffset]::UtcNow
@@ -412,7 +419,7 @@ finally
     }
 
     $report = [ordered]@{
-        formatVersion = 3
+        formatVersion = 4
         sourceCommit = $sourceCommit
         sourceBranch = $sourceBranch
         candidateProvenanceSha256 = $candidateProvenanceSha256

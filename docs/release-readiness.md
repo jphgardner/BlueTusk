@@ -14,17 +14,23 @@ or reference-performance evidence. The exact release facts and accepted risks
 are in the [V1 publication record](releases/1.0.0-publication-record.md); the
 concise evidence status remains in [V1 release readiness](v1-release-readiness.md).
 
+The coordinated `1.1.0-rc.1` package train is now public from exact commit
+`2e735ed46aec11d5009158a00ca7b862f9ec12af`; its 65 registry artifacts and
+clean consumers were verified. Stable `1.1.0` remains a separate fail-closed
+candidate. See the [RC release record](releases/1.1.0-rc.1.md).
+
 ## Publication gate
 
-All six product-family stable policies are armed after the `1.0.0` release.
+All six product-family stable policies are disabled while `1.1.0` is prepared.
 Manual workflow dispatches still create candidate artifacts only; stable
 publication requires the exact family tag and protected production environment.
 Provider, Streams, Sync, Live, Control Plane, and ContinuousGraph remain
 independently versioned.
 
 After PostgreSQL 19 GA, a reviewed final PR arms all six policies on `main`.
-That resulting SHA is the immutable candidate. It must have no V1 release tags
-or published candidate packages and must pass seven exact-SHA workflows:
+That resulting SHA is the immutable candidate. It must have no stable `1.1.0`
+release tags or stable packages and must pass seven exact-SHA workflows. A
+manifest-bound public RC does not satisfy any stable gate. The workflows are:
 build, security, fuzzing, performance, Streams endurance, Sync endurance, and
 ContinuousGraph endurance. The release workflow verifies successful GitHub
 Actions runs by `head_sha`, rejects a mismatched version tag or checkout, and

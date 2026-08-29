@@ -80,6 +80,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             async (IControlPlaneContinuousGraphQueryService queries, CancellationToken cancellationToken) =>
                 Json(await queries.GetContinuousGraphOverviewAsync(cancellationToken).ConfigureAwait(false)));
         group.MapGet(
+            "/api/fleet",
+            async (IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
+                Json(await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false)));
+        group.MapGet(
             "/api/capabilities",
             () => Json(ControlPlaneApiContract.Capabilities));
         group.MapGet(
@@ -100,6 +104,12 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                     CancellationToken cancellationToken) =>
                 Json(Versioned(
                     await queries.GetContinuousGraphOverviewAsync(cancellationToken)
+                        .ConfigureAwait(false))));
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/fleet",
+            async (IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
+                Json(Versioned(
+                    await queries.GetFleetOverviewAsync(cancellationToken)
                         .ConfigureAwait(false))));
         group.MapGet(
             "/assets/dashboard.js",
@@ -182,6 +192,16 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                     await queries.GetContinuousGraphOverviewAsync(cancellationToken)
                         .ConfigureAwait(false),
                     options)));
+        group.MapGet(
+            "/deployments",
+            async (HttpContext context,
+                    IControlPlaneFleetQueryService queries,
+                    CancellationToken cancellationToken) =>
+                Html(RenderFleet(
+                    await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    options,
+                    CanMutate(context.User, options),
+                    context.User.IsInRole(options.AdministratorRole))));
         return endpoints;
     }
 
@@ -572,6 +592,63 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         return Layout("Continuous Graph queries", overview.ObservedAt, body.ToString(), options);
     }
 
+    private static string RenderFleet(
+        ControlPlaneFleetOverview overview,
+        BlueTuskDashboardOptions options,
+        bool canMutate,
+        bool canAdminister)
+    {
+        var body = new StringBuilder("<h1>Managed deployments</h1><div class=\"cards\">")
+            .Append(Card(
+                "Deployments",
+                overview.Deployments.Count.ToString(CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Ready",
+                overview.Deployments.Count(static deployment =>
+                        deployment.State == ManagedDeploymentState.Ready &&
+                        deployment.ObservedGeneration == deployment.DesiredGeneration)
+                    .ToString(CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Replicas",
+                overview.Deployments.Sum(static deployment => deployment.Replicas)
+                    .ToString("N0", CultureInfo.InvariantCulture)))
+            .Append(Card(
+                "Requested CPU",
+                overview.Deployments.Sum(static deployment => deployment.CpuMillicores)
+                    .ToString("N0", CultureInfo.InvariantCulture) + "m"))
+            .Append(Card(
+                "Requested memory",
+                Bytes(overview.Deployments.Sum(static deployment => deployment.MemoryBytes))))
+            .Append("</div><table><thead><tr><th>Deployment</th><th>Tenant</th><th>Placement</th>")
+            .Append("<th>State</th><th>Generation</th><th>Workloads</th><th>Replicas</th>")
+            .Append("<th>Storage</th><th>Protection</th><th>Diagnostic</th><th>Controls</th></tr></thead><tbody>");
+        foreach (var deployment in overview.Deployments)
+        {
+            body.Append("<tr><td>").Append(E(deployment.DeploymentId)).Append("</td><td>")
+                .Append(E(deployment.TenantId)).Append("</td><td>")
+                .Append(E(deployment.Provider)).Append(" / ").Append(E(deployment.Region))
+                .Append("</td><td>").Append(E(deployment.State.ToString())).Append("</td><td>")
+                .Append(deployment.ObservedGeneration.ToString(CultureInfo.InvariantCulture))
+                .Append(" / ")
+                .Append(deployment.DesiredGeneration.ToString(CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(E(string.Join(", ", deployment.WorkloadKinds)))
+                .Append("</td><td>")
+                .Append(deployment.Replicas.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>").Append(Bytes(deployment.StorageBytes)).Append("</td><td>")
+                .Append(deployment.DeleteProtection ? "delete protected" : "unprotected")
+                .Append(deployment.Paused ? " / paused" : string.Empty)
+                .Append("</td><td>").Append(E(deployment.DiagnosticCode ?? "—")).Append("</td><td>")
+                .Append(canMutate
+                    ? DeploymentControls(deployment, canAdminister)
+                    : "—")
+                .Append("</td></tr>");
+        }
+
+        body.Append("</tbody></table>");
+        return Layout("Managed deployments", overview.ObservedAt, body.ToString(), options);
+    }
+
     private static string RenderGroupTable(ControlPlaneSourceSnapshot source)
     {
         var body = new StringBuilder("<h2>Relay groups — ")
@@ -652,6 +729,7 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         <a href="{{{E(options.RoutePrefix)}}}/consumer-groups">Consumer groups</a>
         <a href="{{{E(options.RoutePrefix)}}}/checkpoints">Checkpoints</a>
         <a href="{{{E(options.RoutePrefix)}}}/pipelines">Sync pipelines</a>
+        <a href="{{{E(options.RoutePrefix)}}}/deployments">Deployments</a>
         <a href="{{{E(options.RoutePrefix)}}}/live">Live subscriptions</a>
         <a href="{{{E(options.RoutePrefix)}}}/graphs">Continuous Graph</a></nav>
         <main>{{{body}}}<footer>Observed {{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}</footer></main>
@@ -669,6 +747,23 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                OperationButton(ControlPlaneOperationKind.ReconcilePipeline, target, "Reconcile") +
                OperationButton(ControlPlaneOperationKind.RebuildPipeline, target, "Rebuild") +
                replay;
+    }
+
+    private static string DeploymentControls(
+        ControlPlaneManagedDeploymentSnapshot deployment,
+        bool canAdminister)
+    {
+        var target = E("deployment:" + deployment.DeploymentId);
+        var pause = deployment.Paused
+            ? OperationButton(ControlPlaneOperationKind.ResumeDeployment, target, "Resume")
+            : OperationButton(ControlPlaneOperationKind.PauseDeployment, target, "Pause");
+        var delete = canAdminister
+            ? OperationButton(ControlPlaneOperationKind.DeleteDeployment, target, "Delete")
+            : string.Empty;
+        return pause +
+               OperationButton(ControlPlaneOperationKind.ReconcileDeployment, target, "Reconcile") +
+               OperationButton(ControlPlaneOperationKind.RebuildDeployment, target, "Rebuild") +
+               delete;
     }
 
     private static string OperationButton(

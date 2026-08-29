@@ -6,7 +6,7 @@ This directory contains three independently deployable package-consumer applicat
 - Service Topology Centre; and
 - Fraud Graph Investigator.
 
-They deliberately consume exact `1.0.0-rc.1` NuGet and npm packages. No application
+They deliberately consume exact `1.2.0-rc.1` NuGet and npm packages. No application
 project references BlueTusk production source. Before public RC publication, run
 `eng/build-prerelease-packages.ps1` and restore with
 `eng/nuget/applications-candidate.config` into an isolated package cache. That

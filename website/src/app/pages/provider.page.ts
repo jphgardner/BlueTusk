@@ -20,18 +20,18 @@ import { sourceUrl } from '../content/catalog';
   template: `
     <section class="page-hero split-hero provider-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> NATIVE ADO.NET PROVIDER</span>
-        <h1>PostgreSQL from the <em>wire up.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> DATA ACCESS FOR .NET</span>
+        <h1>Fast, direct PostgreSQL access.<br /><em>Built for .NET.</em></h1>
         <p>
-          Own connections, pools, commands, types, COPY, notifications, large objects, and
-          replication through one protocol-aware implementation.
+          Use familiar ADO.NET connections and commands with pooling, PostgreSQL types, bulk COPY,
+          notifications, and replication built into one provider.
         </p>
         <div class="hero-actions">
           <a
             mat-flat-button
-            routerLink="/documentation/getting-started/provider-overview"
+            routerLink="/documentation/getting-started/install"
             class="primary-action"
-            >Build from source</a
+            >Install 1.1 RC</a
           ><a
             mat-stroked-button
             href="https://github.com/jphgardner/BlueTusk/tree/main/samples/BlueTusk.Samples.AdoNet"
@@ -43,22 +43,22 @@ import { sourceUrl } from '../content/catalog';
         </div>
       </div>
       <aside class="terminal-card">
-        <header><i></i><i></i><i></i><span>local · source checkout</span></header>
+        <header><i></i><i></i><i></i><span>NuGet · exact prerelease</span></header>
         <code
-          >git clone https://github.com/jphgardner/BlueTusk.git<br />cd BlueTusk<br />dotnet build
-          BlueTusk.slnx<br /><br /><b>$env:BLUETUSK_TEST_CONNECTION_STRING</b><br />dotnet run
-          --project samples/BlueTusk.Samples.AdoNet</code
-        ><bt-status label="V1 code-ready · source preview" stage="gate-passed" />
+          >dotnet new console -f net10.0<br />dotnet add package BlueTusk.Data --version
+          1.1.0-rc.1<br /><br />dotnet restore --force-evaluate<br />dotnet build --configuration
+          Release</code
+        ><bt-status label="1.1.0-rc.1 · public" stage="gate-passed" />
       </aside>
     </section>
 
     <section class="page-section protocol-stack">
       <header class="section-head">
         <div>
-          <span>OWNED DATA PATH</span>
-          <h2>One stack. No hidden provider underneath.</h2>
+          <span>DIRECT TO POSTGRESQL</span>
+          <h2>Everything works together.</h2>
         </div>
-        <p>The provider has no runtime dependency on Npgsql; each layer owns a focused contract.</p>
+        <p>BlueTusk talks directly to PostgreSQL and does not hide another provider underneath.</p>
       </header>
       <div class="stack-flow">
         @for (item of stack; track item.name; let index = $index) {
@@ -75,8 +75,8 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>CONNECTION MATRIX</span>
-          <h2>Security and topology stay explicit.</h2>
+          <span>CONNECT YOUR WAY</span>
+          <h2>Secure connections, clearly configured.</h2>
         </div>
         <bt-source-link
           [href]="source('docs/ado-net/authentication.md')"
@@ -85,7 +85,8 @@ import { sourceUrl } from '../content/catalog';
       </header>
       <div class="matrix-table connection-matrix">
         <div class="matrix-head">
-          <span>Capability</span><span>Provider behavior</span><span>Operational boundary</span>
+          <span>Connection feature</span><span>What BlueTusk supports</span
+          ><span>What you control</span>
         </div>
         @for (row of connectionMatrix; track row.name) {
           <div>
@@ -100,8 +101,8 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section type-explorer">
       <header class="section-head">
         <div>
-          <span>TYPE CATALOGUE</span>
-          <h2>Find the PostgreSQL shape you need.</h2>
+          <span>POSTGRESQL TYPES</span>
+          <h2>Use the database types you already rely on.</h2>
         </div>
         <label class="filter-input"
           ><mat-icon>search</mat-icon
@@ -129,13 +130,10 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>NATIVE OPERATIONS</span>
-          <h2>Specialized paths remain first class.</h2>
+          <span>MORE THAN QUERIES</span>
+          <h2>Bulk data, notifications, and replication are built in.</h2>
         </div>
-        <p>
-          These are provider-owned APIs with dedicated behavior and tests—not helper libraries
-          layered over generic SQL.
-        </p>
+        <p>Use dedicated, tested APIs for high-volume and real-time database work.</p>
       </header>
       <div class="feature-rail">
         @for (feature of features; track feature.title) {
@@ -146,7 +144,7 @@ import { sourceUrl } from '../content/catalog';
               <h3>{{ feature.title }}</h3>
               <p>{{ feature.body }}</p>
               <a [href]="source(feature.source)" target="_blank" rel="noreferrer"
-                >Read contract <mat-icon>arrow_forward</mat-icon></a
+                >Read the technical guide <mat-icon>arrow_forward</mat-icon></a
               >
             </div>
           </article>
@@ -156,11 +154,11 @@ import { sourceUrl } from '../content/catalog';
 
     <section class="page-section code-split">
       <div>
-        <span class="section-kicker">FAMILIAR ADO.NET SHAPE</span>
-        <h2>A long-lived data source is the entry point.</h2>
+        <span class="section-kicker">FAMILIAR ADO.NET</span>
+        <h2>Create one data source and reuse it.</h2>
         <p>
-          The sample uses the repository’s current public surface. API names remain synchronized
-          with the source as the pre-V1 naming cleanup lands.
+          This is the public 1.x API. Automated checks keep the packages, API reference, examples,
+          and compatibility promises in sync.
         </p>
       </div>
       <bt-code-panel file="Program.cs" [code]="quickstart" />
@@ -171,37 +169,37 @@ export class ProviderPage {
   protected readonly source = sourceUrl;
   protected readonly typeQuery = signal('');
   protected readonly stack = [
-    { name: 'Transport', icon: 'cable', detail: 'Sockets, TLS, bounded reads' },
-    { name: 'Protocol', icon: 'lan', detail: 'Frames, portals, cancellation' },
-    { name: 'Client', icon: 'terminal', detail: 'Sessions, replication, pipeline' },
-    { name: 'ADO.NET', icon: 'storage', detail: 'Pools, commands, readers' },
-    { name: 'Data', icon: 'data_object', detail: 'Types, COPY, notifications' },
+    { name: 'Network', icon: 'cable', detail: 'Sockets, TLS, controlled memory use' },
+    { name: 'PostgreSQL', icon: 'lan', detail: 'Database messages and cancellation' },
+    { name: 'BlueTusk client', icon: 'terminal', detail: 'Sessions, replication, batching' },
+    { name: 'ADO.NET', icon: 'storage', detail: 'Connection pools, commands, readers' },
+    { name: 'Your data', icon: 'data_object', detail: 'Types, bulk COPY, notifications' },
   ] as const;
   protected readonly connectionMatrix = [
     {
       name: 'Credentials',
       behavior: 'Static values, callbacks, password files, and cloud token providers',
-      boundary: 'Secrets are never written to diagnostic output',
+      boundary: 'Choose where credentials come from; BlueTusk keeps them out of logs',
     },
     {
       name: 'TLS',
-      behavior: 'Certificate validation and client certificate support',
-      boundary: 'Application chooses trust policy explicitly',
+      behavior: 'Server certificate checks and client certificates',
+      boundary: 'Choose which certificates your application trusts',
     },
     {
       name: 'Multi-host',
-      behavior: 'Target-session selection and failover across configured hosts',
-      boundary: 'Server role is verified, not inferred from ordering',
+      behavior: 'Connect to the right server and fail over between configured hosts',
+      boundary: 'Choose the required server role; BlueTusk verifies it',
     },
     {
       name: 'Pooling',
-      behavior: 'Bounded per-key pools with reset and health behavior',
-      boundary: 'Session and transaction pooling modes are tested',
+      behavior: 'Reusable connection pools with limits, reset, and health checks',
+      boundary: 'Choose pool size and whether session state can be retained',
     },
     {
       name: 'Authentication',
-      behavior: 'SCRAM, native OAuth, GSSAPI/Kerberos/SSPI, and legacy paths',
-      boundary: 'Availability follows negotiated server capability',
+      behavior: 'Password, OAuth, Kerberos/SSPI, and supported legacy methods',
+      boundary: 'The server and selected login method determine what is available',
     },
   ] as const;
   protected readonly types = [
@@ -209,19 +207,19 @@ export class ProviderPage {
       group: 'Scalar',
       name: 'Numeric + money',
       clr: 'int · long · decimal',
-      detail: 'Binary and text codecs preserve PostgreSQL semantics.',
+      detail: 'Values keep PostgreSQL precision and behavior.',
     },
     {
       group: 'Structured',
       name: 'Arrays',
       clr: 'T[]',
-      detail: 'Multidimensional bounds and extension arrays are catalogue-driven.',
+      detail: 'Supports one-dimensional and multidimensional PostgreSQL arrays.',
     },
     {
       group: 'Structured',
       name: 'Ranges + multiranges',
       clr: 'Range<T>',
-      detail: 'Inclusive, exclusive, empty, and infinite bounds remain explicit.',
+      detail: 'Keeps inclusive, exclusive, empty, and unbounded ranges intact.',
     },
     {
       group: 'Document',
@@ -233,19 +231,19 @@ export class ProviderPage {
       group: 'Network',
       name: 'inet / cidr / macaddr',
       clr: 'IPAddress + values',
-      detail: 'Network-specific PostgreSQL values are not flattened.',
+      detail: 'Works with PostgreSQL network addresses as typed values.',
     },
     {
       group: 'Search',
       name: 'tsvector / tsquery',
       clr: 'typed values',
-      detail: 'Full-text values and EF operators share the same catalogue.',
+      detail: 'Use PostgreSQL full-text search values in ADO.NET and EF Core.',
     },
     {
       group: 'User-defined',
       name: 'Enums + composites',
       clr: 'registered CLR types',
-      detail: 'Registration is snapshotted when the data source is built.',
+      detail: 'Register your .NET types once when the data source is created.',
     },
     {
       group: 'Temporal',
@@ -267,42 +265,42 @@ export class ProviderPage {
       icon: 'file_upload',
       kicker: 'BULK DATA',
       title: 'COPY',
-      body: 'Text and binary import/export with typed writes, cancellation, and explicit completion.',
+      body: 'Import or export large amounts of data efficiently, with typed values and cancellation.',
       source: 'docs/ado-net/copy.md',
     },
     {
       icon: 'bolt',
-      kicker: 'LATENCY',
+      kicker: 'FASTER BATCHES',
       title: 'Pipeline mode',
-      body: 'Ordered groups with protocol Sync boundaries and deterministic error attachment.',
+      body: 'Send groups of commands with fewer network waits while keeping results and errors in order.',
       source: 'docs/pipeline-mode.md',
     },
     {
       icon: 'notifications',
       kicker: 'MESSAGING',
       title: 'LISTEN / NOTIFY',
-      body: 'Notification dispatch respects connection lifecycle and asynchronous consumption.',
+      body: 'Receive PostgreSQL notifications asynchronously while the connection stays healthy.',
       source: 'docs/ado-net/notifications.md',
     },
     {
       icon: 'dataset',
       kicker: 'LARGE VALUES',
       title: 'Sequential + large objects',
-      body: 'Bounded streaming prevents large fields and objects from forcing full buffering.',
+      body: 'Stream large fields and objects without loading the entire value into memory.',
       source: 'docs/ado-net/sequential-readers.md',
     },
     {
       icon: 'stream',
-      kicker: 'WAL',
+      kicker: 'DATABASE CHANGES',
       title: 'Logical replication',
-      body: 'COPY BOTH, pgoutput decoding, slots, and standby feedback expose committed changes.',
+      body: 'Read committed PostgreSQL changes for Streams, Sync, Live, or your own processing.',
       source: 'docs/replication/README.md',
     },
     {
       icon: 'cloud',
       kicker: 'IDENTITY',
       title: 'Cloud credentials',
-      body: 'AWS, Azure, and Google Cloud providers retain explicit live-test boundaries.',
+      body: 'Use short-lived AWS, Azure, or Google Cloud login tokens instead of stored passwords.',
       source: 'docs/ado-net/cloud-identity.md',
     },
   ] as const;

@@ -346,3 +346,42 @@ static BlueTusk.ControlPlane.ManagedTenantUsage.operator ==(BlueTusk.ControlPlan
 static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator !=(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
 static BlueTusk.ControlPlane.ManagedWorkloadSpec.operator ==(BlueTusk.ControlPlane.ManagedWorkloadSpec? left, BlueTusk.ControlPlane.ManagedWorkloadSpec? right) -> bool
 static BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService.Create(System.Collections.Generic.IEnumerable<BlueTusk.ControlPlane.ControlPlanePostgreSqlSource!>! instances, BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryOptions! options, System.TimeProvider? timeProvider = null) -> BlueTusk.ControlPlane.PostgreSqlControlPlaneQueryService!
+BlueTusk.ControlPlane.ControlPlaneFleetOverview
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.ControlPlaneFleetOverview(System.DateTimeOffset observedAt, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot!>! deployments) -> void
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.Deployments.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot!>!
+BlueTusk.ControlPlane.ControlPlaneFleetOverview.ObservedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.ControlPlaneManagedDeploymentSnapshot(string! deploymentId, string! tenantId, string! provider, string! region, long desiredGeneration, long observedGeneration, long statusRevision, BlueTusk.ControlPlane.ManagedDeploymentState state, bool paused, bool deleteProtection, int workloadCount, System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedWorkloadKind>! workloadKinds, int replicas, long cpuMillicores, long memoryBytes, long storageBytes, string? diagnosticCode, System.DateTimeOffset updatedAt) -> void
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.CpuMillicores.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DeleteProtection.get -> bool
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DeploymentId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DesiredGeneration.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.DiagnosticCode.get -> string?
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.MemoryBytes.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.ObservedGeneration.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Paused.get -> bool
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Provider.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Region.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.Replicas.get -> int
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.State.get -> BlueTusk.ControlPlane.ManagedDeploymentState
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.StatusRevision.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.StorageBytes.get -> long
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.TenantId.get -> string!
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.UpdatedAt.get -> System.DateTimeOffset
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.WorkloadCount.get -> int
+BlueTusk.ControlPlane.ControlPlaneManagedDeploymentSnapshot.WorkloadKinds.get -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ManagedWorkloadKind>!
+BlueTusk.ControlPlane.IControlPlaneFleetQueryService
+BlueTusk.ControlPlane.IControlPlaneFleetQueryService.GetFleetOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneFleetOverview!>
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService.GetFleetOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneFleetOverview!>
+BlueTusk.ControlPlane.ManagedDeploymentFleetQueryService.ManagedDeploymentFleetQueryService(BlueTusk.ControlPlane.IManagedDeploymentStore! store, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.ControlPlaneOperationKind.DeleteDeployment = 15 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.PauseDeployment = 11 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.RebuildDeployment = 14 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ReconcileDeployment = 13 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.ControlPlaneOperationKind.ResumeDeployment = 12 -> BlueTusk.ControlPlane.ControlPlaneOperationKind
+BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler
+BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler.RebuildAsync(BlueTusk.ControlPlane.ManagedDeployment! deployment, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler
+BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler.ExecuteAsync(BlueTusk.ControlPlane.ControlPlaneOperationRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.ControlPlane.ManagedDeploymentControlPlaneOperationHandler.ManagedDeploymentControlPlaneOperationHandler(BlueTusk.ControlPlane.IManagedDeploymentStore! store, BlueTusk.ControlPlane.ManagedDeploymentController! controller, BlueTusk.ControlPlane.IManagedDeploymentRebuildHandler! rebuilds, BlueTusk.ControlPlane.IControlPlaneOperationHandler? fallback = null) -> void

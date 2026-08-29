@@ -1,9 +1,22 @@
 # Quickstart: run BlueTusk locally
 
-This guide takes a new contributor from a clean checkout to a live,
-parameterized PostgreSQL query. BlueTusk packages are not presented as publicly
-available stable packages yet, so the supported evaluation path is a source
-checkout.
+This guide takes a developer from a clean environment to a live, parameterized
+PostgreSQL query. Published `1.0.0` stable and `1.1.0-rc.1` packages are
+available; use the [installation guide](install.md) to choose and pin a channel.
+The source-checkout path below is intended for contributors and repository
+validation.
+
+## Fastest package path
+
+```powershell
+dotnet new console --framework net10.0 --name BlueTuskQuickstart
+Set-Location BlueTuskQuickstart
+dotnet add package BlueTusk.Data --version 1.1.0-rc.1
+```
+
+Use `1.0.0` instead when the application requires the stable channel. Do not
+mix package trains. Continue at [Write the smallest application](#write-the-smallest-application)
+after provisioning a PostgreSQL database.
 
 ## Prerequisites
 
@@ -14,7 +27,7 @@ checkout.
 
 Node.js is required only when building the Angular documentation website.
 
-## Clone and build
+## Clone and build from source
 
 ```powershell
 git clone https://github.com/jphgardner/BlueTusk.git

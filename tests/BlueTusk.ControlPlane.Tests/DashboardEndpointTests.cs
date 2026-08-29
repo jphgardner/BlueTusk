@@ -27,6 +27,8 @@ public sealed class DashboardEndpointTests
         builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
         builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
             new FakeContinuousGraphQueryService());
+        builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
+            new FakeFleetQueryService());
         builder.Services.AddSingleton(
             new ControlPlaneOperationExecutor(
                 new RoleControlPlaneAuthorizer(),
@@ -44,7 +46,7 @@ public sealed class DashboardEndpointTests
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(21, endpoints.Length);
+        Assert.Equal(24, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -109,6 +111,20 @@ public sealed class DashboardEndpointTests
         Assert.Contains("&lt;graph&gt;", graphHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("<graph>", graphHtml, StringComparison.Ordinal);
         Assert.Contains("risk.&lt;transfers&gt;", graphHtml, StringComparison.Ordinal);
+
+        var deployments = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/deployments");
+        context.Response.Body = new MemoryStream();
+        await deployments.RequestDelegate!(context);
+        context.Response.Body.Position = 0;
+        using var fleetReader = new StreamReader(context.Response.Body, Encoding.UTF8);
+        var fleetHtml = await fleetReader.ReadToEndAsync();
+        Assert.Contains("&lt;deployment&gt;", fleetHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<deployment>", fleetHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("secret-name", fleetHtml, StringComparison.Ordinal);
+        Assert.Contains("data-operation-name=\"ReconcileDeployment\"", fleetHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-operation-name=\"DeleteDeployment\"", fleetHtml, StringComparison.Ordinal);
 
         var legacyOperations = Assert.Single(
             endpoints,
@@ -354,6 +370,37 @@ public sealed class DashboardEndpointTests
                         ["risk.accounts", "risk.<transfers>"],
                         100,
                         "TenantFilter, DeterministicOrdering, BoundedTake")]));
+        }
+    }
+
+    private sealed class FakeFleetQueryService : IControlPlaneFleetQueryService
+    {
+        public ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(
+                new ControlPlaneFleetOverview(
+                    new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
+                    [new ControlPlaneManagedDeploymentSnapshot(
+                        "<deployment>",
+                        "tenant-a",
+                        "kubernetes",
+                        "uk-south",
+                        2,
+                        2,
+                        4,
+                        ManagedDeploymentState.Ready,
+                        false,
+                        true,
+                        2,
+                        [ManagedWorkloadKind.Streams, ManagedWorkloadKind.Sync],
+                        4,
+                        2000,
+                        4L * 1024 * 1024 * 1024,
+                        20L * 1024 * 1024 * 1024,
+                        null,
+                        new DateTimeOffset(2026, 8, 3, 15, 59, 0, TimeSpan.Zero))]));
         }
     }
 

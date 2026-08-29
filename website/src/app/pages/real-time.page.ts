@@ -11,17 +11,21 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero realtime-hero">
       <div class="realtime-copy">
-        <span class="eyebrow"><i class="live-dot"></i> COMMITTED CHANGE DATA</span>
-        <h1>From WAL to a live experience.<br /><em>With the contract visible.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> REAL-TIME DATA</span>
+        <h1>Turn database changes into <em>live products.</em></h1>
         <p>
-          Streams, Sync, Live, and the Control Plane advance independently. Acknowledgements,
-          checkpoints, replay, and destinations keep distinct responsibilities.
+          Capture committed PostgreSQL changes, send them to other systems, and update connected
+          users—without losing track of delivery or recovery.
         </p>
         <div class="hero-actions">
           <a mat-flat-button routerLink="/documentation/real-time/platform" class="primary-action"
-            >Read the correctness contract</a
-          ><a mat-stroked-button routerLink="/evidence?subsystem=Streams" class="secondary-action"
-            >View release evidence</a
+            >See how real-time works</a
+          ><a
+            mat-stroked-button
+            routerLink="/evidence"
+            [queryParams]="{ subsystem: 'Streams' }"
+            class="secondary-action"
+            >View proof</a
           >
         </div>
       </div>
@@ -43,12 +47,12 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>DELIVERY CONTRACT</span>
-          <h2>Acknowledge only what became durable.</h2>
+          <span>SAFE DELIVERY</span>
+          <h2>Save progress only after the work is safe.</h2>
         </div>
         <p>
-          Select a stage to inspect the boundary between committed PostgreSQL state and downstream
-          progress.
+          Select a step to see how BlueTusk moves from a committed database change to a recoverable
+          update.
         </p>
       </header>
       <div class="sequence-explorer">
@@ -80,12 +84,12 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
     <section class="page-section snapshot-section">
       <header class="section-head">
         <div>
-          <span>SNAPSHOT → STREAM</span>
-          <h2>Bootstrap without a change gap.</h2>
+          <span>EXISTING DATA → LIVE CHANGES</span>
+          <h2>Start live updates without missing anything.</h2>
         </div>
         <bt-source-link
           [href]="source('docs/streams/snapshot-bootstrap.md')"
-          label="Snapshot protocol"
+          label="How the initial load works"
         />
       </header>
       <div class="timeline-flow">
@@ -104,16 +108,18 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
       <header class="section-head">
         <div>
           <span>SYNC DESTINATIONS</span>
-          <h2>Four destinations. Four explicit contracts.</h2>
+          <h2>Retries stay safe, even after a crash.</h2>
         </div>
         <p>
-          Sync does not pretend different systems provide identical atomicity or replay behavior.
+          BlueTusk never saves progress before the destination is durable. If the final transaction
+          is sent again during recovery, each connector has a tested way to prevent stale or unsafe
+          work.
         </p>
       </header>
       <div class="destination-matrix">
         <div class="matrix-head">
-          <span>Destination</span><span>Write model</span><span>Recovery</span
-          ><span>Current boundary</span>
+          <span>Destination</span><span>How it writes</span><span>How it recovers</span
+          ><span>Proven guarantee</span>
         </div>
         @for (destination of destinations; track destination.name) {
           <div>
@@ -127,30 +133,31 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
         }
       </div>
       <aside class="truth-note">
-        <mat-icon>info</mat-icon>
+        <mat-icon>verified_user</mat-icon>
         <p>
-          <strong>No exactly-once marketing claim.</strong> BlueTusk documents acknowledgement,
-          idempotency, fencing, and destination behavior independently.
+          <strong>Progress never moves past unsafe work.</strong> Recovery may resend the final
+          unconfirmed transaction. PostgreSQL and Redis make that retry atomic, OpenSearch protects
+          it with versions, and NATS gives it one stable identity for deduplication.
         </p>
-        <a routerLink="/documentation/real-time/sync">Read Sync contract</a>
+        <a routerLink="/documentation/real-time/sync">See the complete delivery contract</a>
       </aside>
     </section>
 
     <section class="page-section live-grid">
       <div>
         <span class="section-kicker">LIVE DELIVERY</span>
-        <h2>Authorized state, then updates.</h2>
+        <h2>Send the right data to the right users.</h2>
         <p>
-          Initial delivery, replay, shared subscriptions, backpressure, and ASP.NET transports
-          retain an authoritative re-query security boundary.
+          Live sends an initial result and then only the changes. It checks permissions when needed,
+          recovers missed updates, and slows down safely when clients cannot keep up.
         </p>
         <div class="tag-cloud">
-          <span>SSE</span><span>WebSockets</span><span>Browser client</span><span>Replay</span
-          ><span>Backpressure</span><span>Shared subscriptions</span>
+          <span>SSE</span><span>WebSockets</span><span>Angular</span><span>React</span
+          ><span>Vue</span><span>Svelte</span><span>Replay</span><span>Backpressure</span>
         </div>
       </div>
       <div class="control-panel">
-        <small>CONTROL PLANE VISIBILITY</small>
+        <small>OPERATIONS AT A GLANCE</small>
         @for (item of controls; track item.label) {
           <article>
             <mat-icon>{{ item.icon }}</mat-icon
@@ -174,82 +181,81 @@ export class RealTimePage {
     {
       id: 'streams',
       name: 'Streams',
-      version: 'V1 candidate',
-      role: 'Transactions, snapshots, relay',
+      version: '1.1.0-rc.1 public',
+      role: 'Capture changes and recover safely',
       icon: 'stream',
-      stage: 'pending',
-      gate: '72h evidence pending',
+      stage: 'gate-passed',
+      gate: 'RC verified · 72-hour stable test pending',
     },
     {
       id: 'sync',
       name: 'Sync',
-      version: 'V1 candidate',
-      role: 'Versioned destination writes',
+      version: '1.1.0-rc.1 public',
+      role: 'Keep other systems up to date',
       icon: 'sync_alt',
-      stage: 'pending',
-      gate: '24h evidence pending',
+      stage: 'gate-passed',
+      gate: 'RC verified · 24-hour stable test pending',
     },
     {
       id: 'live',
       name: 'Live',
-      version: 'V1 candidate',
-      role: 'Authorized client delivery',
+      version: '1.1.0-rc.1 public',
+      role: 'Send permitted updates to users',
       icon: 'sensors',
       stage: 'gate-passed',
-      gate: 'Code and package gates complete',
+      gate: 'Package and install checks passed',
     },
     {
       id: 'control',
       name: 'Control Plane',
-      version: 'V1 candidate',
-      role: 'Operations and audit',
+      version: '1.1.0-rc.1 public',
+      role: 'Monitor and manage the system',
       icon: 'monitoring',
-      stage: 'pending',
-      gate: 'Dependency release chain pending',
+      stage: 'gate-passed',
+      gate: 'Package dependencies verified',
     },
   ] as const;
   protected readonly sequence = [
     {
       id: 'commit',
       name: 'Commit',
-      signal: 'PostgreSQL WAL',
+      signal: 'Committed database change',
       icon: 'storage',
       kicker: 'SOURCE OF TRUTH',
       title: 'PostgreSQL commits the transaction',
-      detail:
-        'Logical replication exposes only committed change data with a stable source identity.',
-      rule: 'No destination acknowledgement exists yet.',
+      detail: 'PostgreSQL replication provides changes only after the transaction commits.',
+      rule: 'No progress is marked complete yet.',
     },
     {
       id: 'assemble',
       name: 'Assemble',
-      signal: 'Bounded spool',
+      signal: 'Stored transaction',
       icon: 'inventory_2',
-      kicker: 'TRANSACTION BOUNDARY',
+      kicker: 'ONE COMPLETE CHANGE',
       title: 'Changes become one delivery',
-      detail: 'The stream assembles transaction records under bounded memory and spill behavior.',
-      rule: 'The delivery owns its acknowledgement callback.',
+      detail:
+        'Streams groups the transaction safely and uses disk if it grows beyond the memory limit.',
+      rule: 'The consumer receives one unit of work and a way to confirm it.',
     },
     {
       id: 'apply',
       name: 'Apply',
       signal: 'Destination',
       icon: 'input',
-      kicker: 'APPLICATION WORK',
+      kicker: 'YOUR APPLICATION',
       title: 'The consumer applies the transaction',
-      detail:
-        'Application or connector logic writes its intended result and handles its own failure mode.',
-      rule: 'Failure leaves the source position unacknowledged.',
+      detail: 'Your application or a Sync connector writes the change to its destination.',
+      rule: 'If the write fails, BlueTusk does not save progress.',
     },
     {
       id: 'ack',
       name: 'Acknowledge',
-      signal: 'Checkpoint',
+      signal: 'Saved progress',
       icon: 'done_all',
-      kicker: 'DURABLE PROGRESS',
+      kicker: 'SAFE TO CONTINUE',
       title: 'Progress advances after durable work',
-      detail: 'The acknowledgement updates the checkpoint using ordering and fencing rules.',
-      rule: 'Acknowledgement is not an exactly-once claim.',
+      detail: 'After the destination is safe, BlueTusk records exactly where to resume.',
+      rule: 'Recovery rules still depend on the destination system.',
     },
   ] as const;
   protected readonly activeStep = computed(
@@ -258,59 +264,85 @@ export class RealTimePage {
   protected readonly snapshot = [
     {
       icon: 'lock_clock',
-      title: 'Export snapshot',
-      body: 'Acquire a consistent database view and a matching WAL position.',
+      title: 'Choose a consistent starting point',
+      body: 'Open one consistent view of the data and record where live changes begin.',
     },
     {
       icon: 'download',
-      title: 'Read baseline',
-      body: 'Stream bounded rows from the snapshot into the consumer.',
+      title: 'Load the existing data',
+      body: 'Stream the current rows to the consumer without loading everything into memory.',
     },
     {
       icon: 'flag',
-      title: 'Record fence',
-      body: 'Persist source identity and the exact transition position.',
+      title: 'Save the handover point',
+      body: 'Record the exact position where the initial load hands over to live changes.',
     },
     {
       icon: 'play_arrow',
-      title: 'Consume WAL',
-      body: 'Begin live transactions beyond the fence without a gap.',
+      title: 'Follow new changes',
+      body: 'Continue from the saved position without a gap or an unknown overlap.',
     },
   ] as const;
   protected readonly destinations = [
     {
       name: 'PostgreSQL',
       icon: 'database',
-      write: 'Transactional upsert',
-      recovery: 'Version check + reconciliation',
-      boundary: 'Database transaction semantics',
+      write: 'Write the full change and checkpoint together',
+      recovery: 'A retry finds the saved checkpoint and does no duplicate work',
+      boundary: 'Atomic state + checkpoint',
     },
     {
       name: 'NATS',
       icon: 'swap_horiz',
-      write: 'Published message',
-      recovery: 'Consumer and message identity',
-      boundary: 'Broker acknowledgement contract',
+      write: 'Publish one durable transaction envelope',
+      recovery: 'Deduplicate its stable ID in JetStream and downstream',
+      boundary: 'Durable publish + stable identity',
     },
     {
       name: 'Redis',
       icon: 'memory',
-      write: 'Versioned key update',
-      recovery: 'Compare-and-apply + rebuild',
-      boundary: 'Key-level atomic behavior',
+      write: 'Write the full change and checkpoint in one Lua operation',
+      recovery: 'A retry cannot pass an equal or newer checkpoint',
+      boundary: 'Atomic state + checkpoint',
     },
     {
       name: 'OpenSearch',
       icon: 'search',
-      write: 'Versioned document index',
-      recovery: 'External version + reconcile',
-      boundary: 'Index refresh is independent',
+      write: 'Bulk-write documents with source versions',
+      recovery: 'Replay the bulk; older versions cannot replace newer state',
+      boundary: 'Replay-safe materialisation',
+    },
+    {
+      name: 'Kafka · 1.2',
+      icon: 'hub',
+      write: 'Write the transaction and BlueTusk checkpoint in one broker transaction',
+      recovery: 'Read only committed state and retry an uncertain broker result safely',
+      boundary: 'Transactional events + checkpoint',
+    },
+    {
+      name: 'S3 / Parquet · 1.2',
+      icon: 'cloud_upload',
+      write: 'Write immutable compressed data, then publish its commit manifest',
+      recovery: 'Readers see only complete manifests; unfinished data stays invisible',
+      boundary: 'Immutable data + commit manifest',
+    },
+    {
+      name: 'Signed webhook · 1.2',
+      icon: 'webhook',
+      write: 'Send one bounded request with a stable delivery ID and signature',
+      recovery: 'Retry with the same identity so receivers can deduplicate safely',
+      boundary: 'Authenticated, replay-safe delivery',
     },
   ] as const;
   protected readonly controls = [
-    { icon: 'source', label: 'Sources + slots', detail: 'Identity, WAL position, and lag' },
-    { icon: 'archive', label: 'Relay storage', detail: 'Segments, retention, and backups' },
-    { icon: 'groups', label: 'Consumer groups', detail: 'Membership and checkpoints' },
-    { icon: 'history', label: 'Audit', detail: 'Versioned operational responses' },
+    { icon: 'source', label: 'Data sources', detail: 'Identity, current position, and delay' },
+    { icon: 'archive', label: 'Replay storage', detail: 'Stored changes, retention, and backups' },
+    { icon: 'groups', label: 'Consumers', detail: 'Workers and their saved progress' },
+    { icon: 'history', label: 'Audit history', detail: 'Who changed what and when' },
+    {
+      icon: 'deployed_code',
+      label: 'Kubernetes fleet · 1.2',
+      detail: 'Pause, resume, reconcile, rebuild, and protected deletion',
+    },
   ] as const;
 }

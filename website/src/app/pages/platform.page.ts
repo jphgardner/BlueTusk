@@ -11,29 +11,27 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
   template: `
     <section class="page-hero split-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> PLATFORM TOPOLOGY</span>
-        <h1>One PostgreSQL-native system.<br /><em>Clear boundaries.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> HOW BLUETUSK FITS TOGETHER</span>
+        <h1>Everything your .NET app needs.<br /><em>One PostgreSQL platform.</em></h1>
         <p>
-          The wire protocol, ADO.NET, EF Core, replication, Streams, Sync, Live, extensions, and
-          graph form a deliberately layered platform—not a bundle of wrappers.
+          Start with fast, familiar data access. Add EF Core, change streams, live updates,
+          extensions, or graph features when your application needs them.
         </p>
         <div class="hero-actions">
           <a
             mat-flat-button
             routerLink="/documentation/getting-started/architecture"
             class="primary-action"
-            >Read the architecture</a
-          ><a mat-stroked-button routerLink="/evidence" class="secondary-action"
-            >Inspect evidence</a
-          >
+            >See how it works</a
+          ><a mat-stroked-button routerLink="/evidence" class="secondary-action">View proof</a>
         </div>
       </div>
       <aside class="signal-card">
-        <small>DEPENDENCY RULE</small
-        ><strong>Applications flow down.<br />Evidence flows up.</strong>
+        <small>A SIMPLE DESIGN RULE</small
+        ><strong>Each part does one job.<br />Your app stays in control.</strong>
         <p>
-          Higher layers depend on stable lower-layer contracts. The protocol layer never takes an EF
-          or application dependency.
+          Use only the product areas you need. BlueTusk keeps the lower-level database work separate
+          from your application and business code.
         </p>
         <bt-source-link [href]="source('docs/architecture/overview.md')" />
       </aside>
@@ -42,10 +40,10 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>INTERACTIVE LAYER MAP</span>
-          <h2>Trace responsibility, not marketing.</h2>
+          <span>EXPLORE THE PLATFORM</span>
+          <h2>See what each part does.</h2>
         </div>
-        <p>Select a layer to inspect what it owns and what it is allowed to depend on.</p>
+        <p>Select a part to see what it does and what it connects to.</p>
       </header>
       <div class="layer-explorer">
         <nav aria-label="Architecture layers">
@@ -70,13 +68,13 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
           <p>{{ activeLayer().description }}</p>
           <div class="detail-columns">
             <div>
-              <small>OWNS</small>
+              <small>WHAT IT HANDLES</small>
               @for (item of activeLayer().owns; track item) {
                 <span>{{ item }}</span>
               }
             </div>
             <div>
-              <small>DEPENDS ON</small>
+              <small>WHAT IT USES</small>
               @for (item of activeLayer().depends; track item) {
                 <span>{{ item }}</span>
               }
@@ -89,10 +87,10 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>EXECUTION JOURNEYS</span>
-          <h2>Follow a committed change.</h2>
+          <span>FOLLOW THE DATA</span>
+          <h2>See how work moves through BlueTusk.</h2>
         </div>
-        <p>Three paths share PostgreSQL truth while keeping delivery contracts explicit.</p>
+        <p>Follow a query, a database change, or a live update from start to finish.</p>
       </header>
       <div class="journey-grid">
         @for (journey of journeys; track journey.title) {
@@ -114,12 +112,12 @@ import { SourceLink, StatusPill } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>RELEASE TRAINS</span>
-          <h2>One platform, independently earned confidence.</h2>
+          <span>RELEASE STATUS</span>
+          <h2>Know what is ready today.</h2>
         </div>
         <p>
-          V1 implementation, exact-candidate evidence, and stable publication remain deliberately
-          separate states.
+          We show public availability, completed testing, and remaining stable-release work
+          separately so you can make an informed choice.
         </p>
       </header>
       <div class="status-table">
@@ -161,23 +159,22 @@ export class PlatformPage {
       id: 'applications',
       index: '01',
       name: '.NET applications',
-      role: 'Workloads',
+      role: 'Your code',
       icon: 'developer_mode',
-      description:
-        'Application and service code chooses the data-access or event contract it needs.',
-      owns: ['Domain behavior', 'Authorization context', 'Destination semantics'],
-      depends: ['EF Core', 'ADO.NET', 'Live clients'],
+      description: 'Your application chooses how it reads data, writes data, or receives updates.',
+      owns: ['Business rules', 'User permissions', 'What each update means'],
+      depends: ['EF Core', 'ADO.NET', 'Live updates'],
     },
     {
       id: 'ef',
       index: '02',
       name: 'EF Core + extensions',
-      role: 'Application model',
+      role: 'Data models and LINQ',
       icon: 'data_object',
       description:
-        'Query translation, mappings, migrations, scaffolding, and optional extension packages.',
-      owns: ['LINQ translation', 'Model metadata', 'Design-time tooling'],
-      depends: ['ADO.NET provider', 'Extension abstractions'],
+        'Use DbContext, LINQ, migrations, and database-first tooling with PostgreSQL features.',
+      owns: ['LINQ to SQL', 'Data mappings', 'Migrations and tooling'],
+      depends: ['BlueTusk Provider', 'Optional extensions'],
     },
     {
       id: 'provider',
@@ -186,30 +183,42 @@ export class PlatformPage {
       role: 'Data access',
       icon: 'storage',
       description:
-        'Connections, commands, pooling, type mapping, COPY, notifications, and replication.',
-      owns: ['ADO.NET contracts', 'Pool lifecycle', 'PostgreSQL types'],
-      depends: ['Client protocol', 'Transport'],
+        'Open connections, run commands, reuse connection pools, and work with PostgreSQL types.',
+      owns: ['ADO.NET APIs', 'Connection pools', 'PostgreSQL types'],
+      depends: ['Database communication', 'Network connection'],
     },
     {
       id: 'protocol',
       index: '04',
-      name: 'Protocol + transport',
-      role: 'Wire engine',
+      name: 'Database communication',
+      role: 'Secure network layer',
       icon: 'lan',
-      description: 'Bounded framing, authentication, cancellation, TLS, and pipeline-aware I/O.',
-      owns: ['Frontend/backend frames', 'Buffer ownership', 'Wire cancellation'],
-      depends: ['System.IO.Pipelines', 'Sockets and TLS'],
+      description:
+        'Handles login, TLS, network reads and writes, cancellation, and efficient batching.',
+      owns: ['PostgreSQL messages', 'Memory use', 'Command cancellation'],
+      depends: ['.NET pipelines', 'Sockets and TLS'],
     },
     {
       id: 'realtime',
       index: '05',
-      name: 'Real-time data plane',
-      role: 'Committed changes',
+      name: 'Real-time products',
+      role: 'Changes after commit',
       icon: 'stream',
       description:
-        'Logical replication becomes acknowledged, checkpointed transactions and downstream projections.',
-      owns: ['Source identity', 'Checkpoint fencing', 'Relay retention'],
-      depends: ['Replication', 'PostgreSQL stores'],
+        'Turns committed database changes into recoverable updates for systems, users, and graphs.',
+      owns: ['Where changes came from', 'Safe recovery position', 'Stored replay data'],
+      depends: ['PostgreSQL replication', 'PostgreSQL storage'],
+    },
+    {
+      id: 'operations',
+      index: '06',
+      name: 'Operations + Kubernetes',
+      role: 'Run a fleet safely',
+      icon: 'deployed_code',
+      description:
+        'BlueTusk 1.2 adds a Kubernetes operator and one redacted fleet view for controlled day-two operations.',
+      owns: ['Desired deployment state', 'Reconciliation', 'Audited operator actions'],
+      depends: ['Control Plane', 'Kubernetes custom resources'],
     },
   ] as const;
   protected readonly activeLayer = computed(
@@ -217,45 +226,61 @@ export class PlatformPage {
   );
   protected readonly journeys = [
     {
-      kicker: 'REQUEST / RESPONSE',
-      title: 'Application query',
+      kicker: 'READ OR WRITE DATA',
+      title: 'Run an application query',
       icon: 'sync_alt',
-      steps: ['DbContext', 'Provider', 'Protocol', 'PostgreSQL'],
-      detail: 'Typed values and server capabilities remain visible across every layer.',
+      steps: ['DbContext', 'Provider', 'Network', 'PostgreSQL'],
+      detail: 'Your .NET types and PostgreSQL features remain available from start to finish.',
     },
     {
-      kicker: 'COMMITTED CHANGE',
-      title: 'Snapshot then stream',
+      kicker: 'START REAL-TIME SAFELY',
+      title: 'Load existing data, then follow changes',
       icon: 'timeline',
-      steps: ['Snapshot', 'WAL fence', 'Streams', 'Checkpoint'],
-      detail: 'A recorded fence prevents gaps between the consistent snapshot and live WAL.',
+      steps: ['Existing data', 'Starting position', 'New changes', 'Saved progress'],
+      detail:
+        'BlueTusk records the handover point so no change is missed between the initial load and live updates.',
     },
     {
-      kicker: 'DESTINATION FLOW',
-      title: 'Versioned synchronization',
+      kicker: 'KEEP SYSTEMS UPDATED',
+      title: 'Send each change to its destination',
       icon: 'account_tree',
-      steps: ['Relay', 'Transform', 'Destination', 'Reconcile'],
-      detail: 'PostgreSQL, NATS, Redis, and OpenSearch each keep an explicit delivery contract.',
+      steps: ['Store', 'Transform', 'Write', 'Check'],
+      detail:
+        'Each destination uses its own durable checkpoint and retry rules; 1.2 adds Kafka, S3/Parquet, and signed webhooks.',
+    },
+    {
+      kicker: 'OPERATE A FLEET · 1.2',
+      title: 'Declare, review, and reconcile deployments',
+      icon: 'deployed_code',
+      steps: ['Custom resource', 'Safety checks', 'Fenced reconcile', 'Redacted status'],
+      detail:
+        'The operator adds finalizers before mutation, uses compare-and-swap updates, and never reads Kubernetes Secret values.',
     },
   ] as const;
   protected readonly crosscutting = [
     {
       icon: 'shield',
       kicker: 'SECURITY',
-      title: 'Threat boundaries are documented',
-      body: 'Transport security, credential sources, authorization, and application responsibilities are separated.',
+      title: 'Security responsibilities are clear',
+      body: 'The guides explain how connections, credentials, permissions, and application security fit together.',
     },
     {
       icon: 'monitoring',
       kicker: 'OBSERVABILITY',
-      title: 'Trace the real operations',
-      body: 'Metrics, traces, slow commands, checkpoints, and WAL lag expose the work the system performs.',
+      title: 'See what the system is doing',
+      body: 'Metrics and traces show slow commands, saved progress, replication delay, and operational health.',
     },
     {
       icon: 'verified',
       kicker: 'COMPATIBILITY',
-      title: 'Change is mechanically checked',
-      body: 'Public API freezes, persisted formats, and PostgreSQL matrices turn promises into gates.',
+      title: 'Compatibility is checked automatically',
+      body: 'Automated checks protect public APIs, stored data formats, and supported PostgreSQL versions.',
+    },
+    {
+      icon: 'rocket_launch',
+      kicker: 'STARTER · 1.2',
+      title: 'Begin from a production-shaped application',
+      body: 'The Clean Architecture starter includes API, worker, migrations, tests, telemetry, containers, Helm, SLOs, and runbooks.',
     },
   ] as const;
 }

@@ -36,7 +36,8 @@ internal static class BlueTuskGraphSqlTranslator
 
         var helper = context.GetService<ISqlGenerationHelper>();
         var resolved = pattern.Select(step => ResolveStep(context.Model, graph, step)).ToArray();
-        ValidatePath(resolved);
+        ValidatePath(resolved, projections);
+        var expandedPatterns = ExpandPatterns(resolved);
         var variables = resolved.ToDictionary(step => step.Variable, StringComparer.Ordinal);
         var resultEntityType = context.Model.FindEntityType(resultType);
         ValidateEntityProjection(resultEntityType, projections);
@@ -76,24 +77,43 @@ internal static class BlueTuskGraphSqlTranslator
                 parameters));
         }
 
-        var sql = new StringBuilder("SELECT ");
-        AppendDelimited(
-            sql,
-            columns.Where(column => !column.IsHidden).Select(column => helper.DelimitIdentifier(column.OutputName)));
-        sql.Append(" FROM GRAPH_TABLE (")
-            .Append(helper.DelimitIdentifier(graph.Name, graph.Schema))
-            .Append(" MATCH ");
-        AppendPattern(sql, resolved, helper);
-        sql.Append(" COLUMNS (");
-        AppendDelimited(
-            sql,
-            columns.Select(column =>
-                $"{helper.DelimitIdentifier(column.Variable)}.{helper.DelimitIdentifier(column.Property)} " +
-                $"AS {helper.DelimitIdentifier(column.OutputName)}"));
-        sql.Append("))");
-        if (predicates.Count > 0)
+        var sql = new StringBuilder();
+        if (expandedPatterns.Count == 1)
         {
-            sql.Append(" WHERE ").Append(string.Join(" AND ", predicates));
+            AppendGraphTableQuery(
+                sql,
+                graph,
+                expandedPatterns[0],
+                columns,
+                predicates,
+                helper);
+        }
+        else
+        {
+            sql.Append("SELECT ");
+            AppendDelimited(
+                sql,
+                columns.Where(column => !column.IsHidden)
+                    .Select(column => helper.DelimitIdentifier(column.OutputName)));
+            sql.Append(" FROM (");
+            for (var index = 0; index < expandedPatterns.Count; index++)
+            {
+                if (index > 0)
+                {
+                    sql.Append(" UNION ALL ");
+                }
+
+                AppendGraphTableQuery(
+                    sql,
+                    graph,
+                    expandedPatterns[index],
+                    columns,
+                    predicates,
+                    helper);
+            }
+
+            sql.Append(") AS ")
+                .Append(helper.DelimitIdentifier("__bluetusk_bounded_paths"));
         }
 
         var impactPlan = new BlueTuskGraphQueryImpactPlan(
@@ -107,12 +127,18 @@ internal static class BlueTuskGraphSqlTranslator
                 {
                     var left = resolved[index - 1].Variable;
                     var right = resolved[index + 1].Variable;
-                    sourceVariable = edge.Direction is BlueTuskGraphEdgeDirection.Outgoing
-                        ? left
-                        : right;
-                    destinationVariable = edge.Direction is BlueTuskGraphEdgeDirection.Outgoing
-                        ? right
-                        : left;
+                    sourceVariable = edge.Direction switch
+                    {
+                        BlueTuskGraphEdgeDirection.Outgoing => left,
+                        BlueTuskGraphEdgeDirection.Incoming => right,
+                        _ => null,
+                    };
+                    destinationVariable = edge.Direction switch
+                    {
+                        BlueTuskGraphEdgeDirection.Outgoing => right,
+                        BlueTuskGraphEdgeDirection.Incoming => left,
+                        _ => null,
+                    };
                 }
 
                 return new BlueTuskGraphQueryImpactElement(
@@ -125,18 +151,19 @@ internal static class BlueTuskGraphSqlTranslator
                     step.Element.Source,
                     step.Element.Destination,
                     sourceVariable,
-                    destinationVariable);
+                    destinationVariable,
+                    step.Labels,
+                    step is ResolvedEdge resolvedEdge
+                        ? resolvedEdge.Direction
+                        : null,
+                    step is ResolvedEdge pathEdge ? pathEdge.MinimumHops : 1,
+                    step is ResolvedEdge pathEdgeMaximum ? pathEdgeMaximum.MaximumHops : 1);
             }).ToArray()),
             Array.AsReadOnly(projections.Select(projection =>
             {
                 var variable = variables[projection.Variable];
                 var propertyName = ResolveGraphProperty(variable, projection.GraphProperty);
-                var property = variable.Element.Labels
-                    .SelectMany(static label => label.Properties)
-                    .Single(candidate => string.Equals(
-                        candidate.Name,
-                        propertyName,
-                        StringComparison.Ordinal));
+                var property = ResolveGraphPropertyDefinition(variable, projection.GraphProperty);
                 return new BlueTuskGraphQueryImpactProjection(
                     projection.Variable,
                     variable.Element.Alias,
@@ -152,12 +179,12 @@ internal static class BlueTuskGraphSqlTranslator
         BlueTuskPropertyGraphDefinition graph,
         object step)
     {
-        var (entityClrType, variable, alias, kind) = step switch
+        var (entityClrType, variable, alias, kind, labelExpression) = step switch
         {
             BlueTuskGraphVertexPattern vertex =>
-                (vertex.EntityType, vertex.Variable, vertex.ElementTableAlias, BlueTuskGraphElementKind.Vertex),
+                (vertex.EntityType, vertex.Variable, vertex.ElementTableAlias, BlueTuskGraphElementKind.Vertex, vertex.LabelExpression),
             BlueTuskGraphEdgePattern edge =>
-                (edge.EntityType, edge.Variable, edge.ElementTableAlias, BlueTuskGraphElementKind.Edge),
+                (edge.EntityType, edge.Variable, edge.ElementTableAlias, BlueTuskGraphElementKind.Edge, edge.LabelExpression),
             _ => throw new BlueTuskGraphTranslationException(
                 $"Unsupported graph pattern node '{step.GetType().Name}'."),
         };
@@ -181,23 +208,53 @@ internal static class BlueTuskGraphSqlTranslator
         }
 
         var element = candidates[0];
-        if (element.Labels.Count != 1)
+        IReadOnlyList<string> labels;
+        if (labelExpression is null)
         {
-            throw new BlueTuskGraphTranslationException(
-                $"Element table '{element.Alias}' must have exactly one label for typed pattern translation.");
+            if (element.Labels.Count != 1)
+            {
+                throw new BlueTuskGraphTranslationException(
+                    $"Element table '{element.Alias}' has multiple labels; select the intended OR expression with LabelsAnyOf.");
+            }
+
+            labels = [element.Labels[0].Name];
+        }
+        else
+        {
+            var configuredLabels = element.Labels
+                .Select(static label => label.Name)
+                .ToHashSet(StringComparer.Ordinal);
+            var missingLabels = labelExpression.Labels
+                .Where(label => !configuredLabels.Contains(label))
+                .ToArray();
+            if (missingLabels.Length > 0)
+            {
+                throw new BlueTuskGraphTranslationException(
+                    $"Element table '{element.Alias}' does not expose label(s): {string.Join(", ", missingLabels)}.");
+            }
+
+            labels = labelExpression.Labels;
         }
 
         return step switch
         {
             BlueTuskGraphVertexPattern vertex => new ResolvedVertex(
-                variable, entityType, element, element.Labels[0].Name, vertex.Predicate),
+                variable, entityType, element, labels, vertex.Predicate),
             BlueTuskGraphEdgePattern edge => new ResolvedEdge(
-                variable, entityType, element, element.Labels[0].Name, edge.Direction),
+                variable,
+                entityType,
+                element,
+                labels,
+                edge.Direction,
+                edge.MinimumHops,
+                edge.MaximumHops),
             _ => throw new UnreachableException(),
         };
     }
 
-    private static void ValidatePath(IReadOnlyList<ResolvedStep> steps)
+    private static void ValidatePath(
+        IReadOnlyList<ResolvedStep> steps,
+        IReadOnlyList<BlueTuskGraphProjection> projections)
     {
         for (var index = 1; index < steps.Count; index += 2)
         {
@@ -210,38 +267,94 @@ internal static class BlueTuskGraphSqlTranslator
             var destination = edge.Element.Destination
                 ?? throw new BlueTuskGraphTranslationException(
                     $"Edge element table '{edge.Element.Alias}' has no destination endpoint metadata.");
-            var expectedSource = edge.Direction == BlueTuskGraphEdgeDirection.Outgoing ? left : right;
-            var expectedDestination = edge.Direction == BlueTuskGraphEdgeDirection.Outgoing ? right : left;
-            if (!string.Equals(source.VertexTableAlias, expectedSource.Element.Alias, StringComparison.Ordinal) ||
-                !string.Equals(destination.VertexTableAlias, expectedDestination.Element.Alias, StringComparison.Ordinal))
+            var forward =
+                string.Equals(source.VertexTableAlias, left.Element.Alias, StringComparison.Ordinal) &&
+                string.Equals(destination.VertexTableAlias, right.Element.Alias, StringComparison.Ordinal);
+            var reverse =
+                string.Equals(source.VertexTableAlias, right.Element.Alias, StringComparison.Ordinal) &&
+                string.Equals(destination.VertexTableAlias, left.Element.Alias, StringComparison.Ordinal);
+            var matches = edge.Direction switch
+            {
+                BlueTuskGraphEdgeDirection.Outgoing => forward,
+                BlueTuskGraphEdgeDirection.Incoming => reverse,
+                BlueTuskGraphEdgeDirection.Undirected => forward || reverse,
+                _ => false,
+            };
+            if (!matches)
             {
                 throw new BlueTuskGraphTranslationException(
                     $"Edge '{edge.Variable}' endpoint metadata does not match its {edge.Direction.ToString().ToLowerInvariant()} traversal.");
+            }
+
+            if (edge.MaximumHops > 1)
+            {
+                if (!string.Equals(source.VertexTableAlias, destination.VertexTableAlias, StringComparison.Ordinal) ||
+                    !string.Equals(source.VertexTableAlias, left.Element.Alias, StringComparison.Ordinal) ||
+                    !string.Equals(source.VertexTableAlias, right.Element.Alias, StringComparison.Ordinal))
+                {
+                    throw new BlueTuskGraphTranslationException(
+                        $"Bounded path edge '{edge.Variable}' must connect one vertex element table to itself.");
+                }
+
+                if (projections.Any(projection => string.Equals(
+                        projection.Variable,
+                        edge.Variable,
+                        StringComparison.Ordinal)))
+                {
+                    throw new BlueTuskGraphTranslationException(
+                        $"Bounded path edge '{edge.Variable}' cannot be projected because a multi-hop match can contain more than one edge.");
+                }
             }
         }
     }
 
     private static string ResolveGraphProperty(ResolvedStep variable, string efPropertyName)
+        => ResolveGraphPropertyDefinition(variable, efPropertyName).Name;
+
+    private static BlueTuskGraphPropertyDefinition ResolveGraphPropertyDefinition(
+        ResolvedStep variable,
+        string efPropertyName)
     {
         var property = variable.EntityType.FindProperty(efPropertyName)
             ?? throw new BlueTuskGraphTranslationException(
                 $"Entity type '{variable.EntityType.DisplayName()}' has no property '{efPropertyName}'.");
-        var graphProperties = variable.Element.Labels.SelectMany(label => label.Properties).ToArray();
-        var byName = graphProperties.Where(candidate =>
-            string.Equals(candidate.Name, property.Name, StringComparison.Ordinal)).ToArray();
-        if (byName.Length == 1)
-        {
-            return byName[0].Name;
-        }
-
         var storeObject = StoreObjectIdentifier.Create(variable.EntityType, StoreObjectType.Table);
         var columnName = storeObject is null ? null : property.GetColumnName(storeObject.Value);
-        var byColumn = graphProperties.Where(candidate =>
-            candidate.IsColumn && string.Equals(candidate.Expression, columnName, StringComparison.Ordinal)).ToArray();
-        return byColumn.Length == 1
-            ? byColumn[0].Name
-            : throw new BlueTuskGraphTranslationException(
-                $"EF property '{property.Name}' is not exposed by label '{variable.Label}'.");
+        BlueTuskGraphPropertyDefinition? resolved = null;
+        foreach (var labelName in variable.Labels)
+        {
+            var label = variable.Element.Labels.Single(candidate => string.Equals(
+                candidate.Name,
+                labelName,
+                StringComparison.Ordinal));
+            var candidates = label.Properties.Where(candidate =>
+                    string.Equals(candidate.Name, property.Name, StringComparison.Ordinal) ||
+                    (candidate.IsColumn && string.Equals(
+                        candidate.Expression,
+                        columnName,
+                        StringComparison.Ordinal)))
+                .Distinct()
+                .ToArray();
+            if (candidates.Length != 1)
+            {
+                throw new BlueTuskGraphTranslationException(
+                    $"EF property '{property.Name}' is not exposed unambiguously by label '{labelName}'.");
+            }
+
+            if (resolved is not null &&
+                (!string.Equals(resolved.Name, candidates[0].Name, StringComparison.Ordinal) ||
+                 !string.Equals(resolved.Expression, candidates[0].Expression, StringComparison.Ordinal) ||
+                 resolved.IsColumn != candidates[0].IsColumn))
+            {
+                throw new BlueTuskGraphTranslationException(
+                    $"EF property '{property.Name}' must have one consistent graph property across every selected label.");
+            }
+
+            resolved = candidates[0];
+        }
+
+        return resolved ?? throw new BlueTuskGraphTranslationException(
+            $"EF property '{property.Name}' is not exposed by the selected graph labels.");
     }
 
     private static void ValidateEntityProjection(
@@ -405,6 +518,84 @@ internal static class BlueTuskGraphSqlTranslator
             _ => throw new UnreachableException(),
         };
 
+    private static List<List<ResolvedStep>> ExpandPatterns(
+        IReadOnlyList<ResolvedStep> steps)
+    {
+        var variantCount = steps.OfType<ResolvedEdge>()
+            .Aggregate(
+                1,
+                (count, edge) => checked(count * (edge.MaximumHops - edge.MinimumHops + 1)));
+        if (variantCount > 64)
+        {
+            throw new BlueTuskGraphTranslationException(
+                "Bounded path expansion would generate more than 64 GRAPH_TABLE branches.");
+        }
+
+        List<List<ResolvedStep>> variants = [[steps[0]]];
+        for (var index = 1; index < steps.Count; index += 2)
+        {
+            var edge = (ResolvedEdge)steps[index];
+            var destination = (ResolvedVertex)steps[index + 1];
+            var next = new List<List<ResolvedStep>>();
+            foreach (var variant in variants)
+            {
+                for (var hops = edge.MinimumHops; hops <= edge.MaximumHops; hops++)
+                {
+                    var expanded = new List<ResolvedStep>(variant);
+                    for (var hop = 1; hop <= hops; hop++)
+                    {
+                        expanded.Add(hops == 1
+                            ? edge
+                            : edge with { Variable = $"__bluetusk_{edge.Variable}_edge_{hop}" });
+                        expanded.Add(hop == hops
+                            ? destination
+                            : destination with
+                            {
+                                Variable = $"__bluetusk_{edge.Variable}_vertex_{hop}",
+                                Predicate = null,
+                            });
+                    }
+
+                    next.Add(expanded);
+                }
+            }
+
+            variants = next;
+        }
+
+        return variants;
+    }
+
+    private static void AppendGraphTableQuery(
+        StringBuilder sql,
+        BlueTuskPropertyGraphDefinition graph,
+        List<ResolvedStep> pattern,
+        IReadOnlyList<GraphColumn> columns,
+        List<string> predicates,
+        ISqlGenerationHelper helper)
+    {
+        sql.Append("SELECT ");
+        AppendDelimited(
+            sql,
+            columns.Where(column => !column.IsHidden)
+                .Select(column => helper.DelimitIdentifier(column.OutputName)));
+        sql.Append(" FROM GRAPH_TABLE (")
+            .Append(helper.DelimitIdentifier(graph.Name, graph.Schema))
+            .Append(" MATCH ");
+        AppendPattern(sql, pattern, helper);
+        sql.Append(" COLUMNS (");
+        AppendDelimited(
+            sql,
+            columns.Select(column =>
+                $"{helper.DelimitIdentifier(column.Variable)}.{helper.DelimitIdentifier(column.Property)} " +
+                $"AS {helper.DelimitIdentifier(column.OutputName)}"));
+        sql.Append("))");
+        if (predicates.Count > 0)
+        {
+            sql.Append(" WHERE ").Append(string.Join(" AND ", predicates));
+        }
+    }
+
     private static void AppendPattern(
         StringBuilder sql,
         IReadOnlyList<ResolvedStep> steps,
@@ -417,25 +608,48 @@ internal static class BlueTuskGraphSqlTranslator
                 case ResolvedVertex vertex:
                     sql.Append('(')
                         .Append(helper.DelimitIdentifier(vertex.Variable))
-                        .Append(" IS ")
-                        .Append(helper.DelimitIdentifier(vertex.Label))
-                        .Append(')');
+                        .Append(" IS ");
+                    AppendLabelExpression(sql, vertex.Labels, helper);
+                    sql.Append(')');
                     break;
                 case ResolvedEdge { Direction: BlueTuskGraphEdgeDirection.Outgoing } edge:
                     sql.Append("-[")
                         .Append(helper.DelimitIdentifier(edge.Variable))
-                        .Append(" IS ")
-                        .Append(helper.DelimitIdentifier(edge.Label))
-                        .Append("]->");
+                        .Append(" IS ");
+                    AppendLabelExpression(sql, edge.Labels, helper);
+                    sql.Append("]->");
                     break;
-                case ResolvedEdge edge:
+                case ResolvedEdge { Direction: BlueTuskGraphEdgeDirection.Incoming } edge:
                     sql.Append("<-[")
                         .Append(helper.DelimitIdentifier(edge.Variable))
-                        .Append(" IS ")
-                        .Append(helper.DelimitIdentifier(edge.Label))
-                        .Append("]-");
+                        .Append(" IS ");
+                    AppendLabelExpression(sql, edge.Labels, helper);
+                    sql.Append("]-");
+                    break;
+                case ResolvedEdge edge:
+                    sql.Append("-[")
+                        .Append(helper.DelimitIdentifier(edge.Variable))
+                        .Append(" IS ");
+                    AppendLabelExpression(sql, edge.Labels, helper);
+                    sql.Append("]-");
                     break;
             }
+        }
+    }
+
+    private static void AppendLabelExpression(
+        StringBuilder sql,
+        IReadOnlyList<string> labels,
+        ISqlGenerationHelper helper)
+    {
+        for (var index = 0; index < labels.Count; index++)
+        {
+            if (index > 0)
+            {
+                sql.Append('|');
+            }
+
+            sql.Append(helper.DelimitIdentifier(labels[index]));
         }
     }
 
@@ -463,23 +677,25 @@ internal static class BlueTuskGraphSqlTranslator
         string Variable,
         IEntityType EntityType,
         BlueTuskGraphElementTableDefinition Element,
-        string Label);
+        IReadOnlyList<string> Labels);
 
     private sealed record ResolvedVertex(
         string Variable,
         IEntityType EntityType,
         BlueTuskGraphElementTableDefinition Element,
-        string Label,
+        IReadOnlyList<string> Labels,
         LambdaExpression? Predicate)
-        : ResolvedStep(Variable, EntityType, Element, Label);
+        : ResolvedStep(Variable, EntityType, Element, Labels);
 
     private sealed record ResolvedEdge(
         string Variable,
         IEntityType EntityType,
         BlueTuskGraphElementTableDefinition Element,
-        string Label,
-        BlueTuskGraphEdgeDirection Direction)
-        : ResolvedStep(Variable, EntityType, Element, Label);
+        IReadOnlyList<string> Labels,
+        BlueTuskGraphEdgeDirection Direction,
+        int MinimumHops,
+        int MaximumHops)
+        : ResolvedStep(Variable, EntityType, Element, Labels);
 
     private sealed record GraphColumn(
         string Variable,
@@ -504,7 +720,11 @@ internal sealed record BlueTuskGraphQueryImpactElement(
     BlueTuskGraphEndpointDefinition? Source,
     BlueTuskGraphEndpointDefinition? Destination,
     string? SourceVariable,
-    string? DestinationVariable);
+    string? DestinationVariable,
+    IReadOnlyList<string> Labels,
+    BlueTuskGraphEdgeDirection? Direction,
+    int MinimumHops,
+    int MaximumHops);
 
 internal sealed record BlueTuskGraphQueryImpactProjection(
     string Variable,

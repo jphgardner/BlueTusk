@@ -66,8 +66,13 @@ Streams delivers a transaction with an acknowledgement operation. The consumer
 must apply its side effect before acknowledging. A durable checkpoint records
 progress only after the relevant delivery contract permits it.
 
-BlueTusk does not label this arrangement “exactly once.” End-to-end effects
-depend on the destination’s idempotency, atomicity and reconciliation behavior.
+An acknowledged transaction is never skipped. A crash can cause the last
+unconfirmed transaction to be delivered again with the same identity. Official
+Sync connectors then turn that retry into a proven durable outcome: PostgreSQL
+and Redis commit destination state and checkpoint atomically, OpenSearch uses
+external versions for replay-safe materialisation, and NATS publishes a durable
+stable transaction identity with a configured broker-deduplication window.
+See the [Sync delivery guarantee](../sync/README.md#the-delivery-guarantee).
 
 ## Source identity and schema identity
 
@@ -123,6 +128,12 @@ The V1 implementation was published as `1.0.0` under a documented owner
 exception before the third category was complete. See the
 [publication record](../releases/1.0.0-publication-record.md). Later releases
 remain subject to the normal fail-closed authorization policy.
+
+The public `1.1.0-rc.1` train has implementation evidence, protected package
+publication, registry availability, and clean consumer smoke. It is still a
+prerelease: stable authorization remains open until the exact stable candidate
+passes PostgreSQL 19 GA, endurance, performance, security, and accountable
+acceptance gates. See the [RC release record](../releases/1.1.0-rc.1.md).
 
 ## Where to continue
 

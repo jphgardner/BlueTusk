@@ -1,32 +1,35 @@
 # Sync release endurance
 
-Sync 1.0 requires a completed 24-hour run of the same real-destination recovery
+Sync stable release requires a completed 24-hour run of the same real-destination recovery
 tests used by normal CI. The executable runner is
 `eng/run-sync-endurance.ps1`; the confirmed self-hosted workflow is
 `.github/workflows/sync-release-endurance.yml`.
 
 Each cycle runs the core pipeline, in-process hosting, shared conformance kit,
-and real PostgreSQL, NATS JetStream, Redis, and OpenSearch suites. Those suites
+and PostgreSQL, NATS JetStream, Redis, OpenSearch, Kafka, S3/Parquet, and signed-webhook
+suites. The Kafka suite runs against a real broker; webhook protocol/failure
+boundaries use a deterministic receiver. Those suites
 exercise snapshot restart, transaction redelivery, destination-instance
 restart, transform drift, durable quarantine, PostgreSQL rollback,
 JetStream deduplication, Redis preflight failure, OpenSearch partial-bulk
 recovery, reconciliation/repair, and zero-downtime alias cutover. Any project
 failure stops the run and writes a failed evidence report.
 
-The runner refuses to start unless all four service endpoints are explicit and
+The runner refuses to start unless all six service endpoints and the S3 test
+credentials are explicit and
 the launch repository has no tracked changes. It creates a detached Git
-worktree at the recorded source commit, restores and builds all six test
+worktree at the recorded source commit, restores and builds all nine test
 projects there, and runs every cycle only from that isolated workspace. Other
 repository builds and commits therefore cannot replace the binaries under
 test.
 
-The format-3 JSON report records requested and actual test duration, completed
+The format-4 JSON report records requested and actual test duration, completed
 cycles, project runs, the slowest cycle, exact source commit and branch,
 isolated start/end commits and cleanliness, combined SHA-256 start/end hashes
 of every test artifact, artifact count, isolated-worktree cleanup, the launch
 repository state at completion, .NET SDK, host OS/architecture, processor
 count, exact project list, candidate package/provenance hashes, and the
-digest-pinned PostgreSQL, Redis, NATS and OpenSearch images. A report is
+digest-pinned PostgreSQL, Redis, NATS, Kafka, MinIO and OpenSearch images. A report is
 successful only when `completed` is true, the requested duration and minimum
 cycle count pass, the detached source is unchanged, every test artifact and
 candidate-package hash is unchanged, all service images are pinned, and the
@@ -49,12 +52,16 @@ content-addressed and verified with the Streams records by the
 
 ## Local smoke
 
-Start PostgreSQL 19, Redis 8, NATS JetStream, and OpenSearch 3.7 using the same
+Start PostgreSQL 19, Redis 8, NATS JetStream, Kafka 4.1, MinIO, and OpenSearch 3.7 using the same
 ports as normal CI, then run:
 
 ```powershell
 $env:BLUETUSK_TEST_CONNECTION_STRING = 'Host=localhost;Port=5419;Username=postgres;Password=postgres;Database=bluetusk_tests;SSL Mode=Disable;Channel Binding=Disable'
 $env:BLUETUSK_NATS_URL = 'nats://localhost:4222'
+$env:BLUETUSK_KAFKA_BOOTSTRAP_SERVERS = 'localhost:9092'
+$env:BLUETUSK_S3_ENDPOINT = 'http://127.0.0.1:9000'
+$env:BLUETUSK_S3_ACCESS_KEY = 'bluetusk_endurance'
+$env:BLUETUSK_S3_SECRET_KEY = 'bluetusk_endurance_secret'
 $env:BLUETUSK_TEST_REDIS_CONNECTION_STRING = 'localhost:6379,abortConnect=false'
 $env:BLUETUSK_OPENSEARCH_URL = 'http://127.0.0.1:9200'
 ./eng/run-sync-endurance.ps1 `
@@ -81,11 +88,11 @@ Validate its report with the same reader:
 
 Dispatch **Sync 24-hour release endurance** and enter the exact confirmation
 `RUN-SYNC-24-HOUR-ENDURANCE`. The workflow fixes the duration at 24 hours and
-requires at least 100 complete six-project cycles. It targets a private runner
+requires at least 100 complete nine-project cycles. It targets a private runner
 labelled `self-hosted`, `linux`, `x64`, and `bluetusk-endurance`, retains the
 report for 90 days, and captures all service logs on failure.
 
-Sync stays non-publishable until one successful format-3 report is reviewed and
+Sync stays non-publishable until one successful format-4 report is reviewed and
 archived and all seven Sync disturbance records occur inside its exact
 observation window. A format-2 report from the shared-output runner is
 diagnostic only and cannot satisfy the release gate.

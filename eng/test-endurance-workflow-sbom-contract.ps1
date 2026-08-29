@@ -8,6 +8,7 @@ $repositoryRoot = (Resolve-Path -LiteralPath (Split-Path $PSScriptRoot -Parent))
 $workflowNames = @(
     'streams-release-endurance.yml',
     'sync-release-endurance.yml',
+    'live-control-plane-release-endurance.yml',
     'continuous-graph-release-endurance.yml'
 )
 
@@ -47,5 +48,6 @@ foreach ($workflowName in $workflowNames)
 }
 
 Write-Output (
-    'Endurance workflow SBOM contract passed: Streams, Sync, and ContinuousGraph ' +
-    'restore the complete locked dependency graph before no-restore inventory.')
+    'Endurance workflow SBOM contract passed: Streams, Sync, Live/Control Plane, ' +
+    'and ContinuousGraph restore the complete locked dependency graph before ' +
+    'no-restore inventory.')

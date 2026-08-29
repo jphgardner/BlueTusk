@@ -7,14 +7,16 @@ import { GUIDES } from '../../generated/guides.generated';
 @Component({
   selector: 'bt-docs-hub-page',
   imports: [RouterLink, MatButtonModule, MatIconModule],
+  styleUrl: './docs-hub.page.scss',
   template: `
     <section class="page-hero docs-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> COMPLETE V1 HANDBOOK</span>
-        <h1>Documentation that follows the <em>implementation.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> 1.1.0-RC.1 · SOURCE-SYNCHRONIZED</span>
+        <h1>Production documentation, from <em>first install to incident.</em></h1>
         <p>
-          Every repository guide is transformed at build time, cross-linked, searchable, and checked
-          for drift. Start with a learning path or search the full technical record.
+          Choose an outcome, follow the steps, and keep the operational detail close at hand. Every
+          guide is built from the repository source, searchable, cross-linked, and checked for
+          drift.
         </p>
         <label class="docs-search"
           ><mat-icon>search</mat-icon
@@ -22,7 +24,7 @@ import { GUIDES } from '../../generated/guides.generated';
             autofocus
             [value]="query()"
             (input)="updateQuery($any($event.target).value)"
-            placeholder="Search authentication, COPY, SQL/PGQ, replay…"
+            placeholder="Search guides and topics…"
             aria-label="Search documentation"
           /><kbd>/</kbd></label
         >
@@ -35,6 +37,32 @@ import { GUIDES } from '../../generated/guides.generated';
             ><strong>{{ totalWords().toLocaleString() }}</strong> documented words</span
           >
         </div>
+      </div>
+    </section>
+
+    <section class="docs-onramp" aria-labelledby="docs-onramp-title">
+      <header>
+        <div>
+          <span>START WITH AN OUTCOME</span>
+          <h2 id="docs-onramp-title">From zero to an operable service.</h2>
+        </div>
+        <a routerLink="/documentation/getting-started/release-1-1-rc1">
+          <span><i></i> 1.1.0-rc.1 is public</span>
+          <small>65 packages · clean install checks passed</small>
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </header>
+      <div class="docs-path-grid">
+        @for (path of paths; track path.title; let index = $index) {
+          <a [routerLink]="path.route">
+            <span>0{{ index + 1 }}</span>
+            <mat-icon>{{ path.icon }}</mat-icon>
+            <small>{{ path.kicker }}</small>
+            <h3>{{ path.title }}</h3>
+            <p>{{ path.body }}</p>
+            <strong>{{ path.action }} <mat-icon>arrow_forward</mat-icon></strong>
+          </a>
+        }
       </div>
     </section>
 
@@ -108,6 +136,40 @@ import { GUIDES } from '../../generated/guides.generated';
 })
 export class DocsHubPage {
   protected readonly guides = GUIDES;
+  protected readonly paths = [
+    {
+      kicker: 'EVALUATE',
+      title: 'Install the right packages',
+      body: 'Choose stable or release candidate, install only what you need, and confirm it restores.',
+      action: 'Installation guide',
+      icon: 'download',
+      route: '/documentation/getting-started/install',
+    },
+    {
+      kicker: 'BUILD',
+      title: 'Run the first query',
+      body: 'Start PostgreSQL, create one shared data source, and run a safe parameterized query.',
+      action: 'Developer quickstart',
+      icon: 'terminal',
+      route: '/documentation/getting-started/quickstart',
+    },
+    {
+      kicker: 'SHIP',
+      title: 'Design for production',
+      body: 'Plan security, limits, monitoring, rollout, backups, and recovery before launch.',
+      action: 'Production checklist',
+      icon: 'rocket_launch',
+      route: '/documentation/operations/production-checklist',
+    },
+    {
+      kicker: 'OPERATE',
+      title: 'Diagnose with evidence',
+      body: 'Follow a problem from the first connection through streaming, delivery, and recovery.',
+      action: 'Troubleshooting',
+      icon: 'monitor_heart',
+      route: '/documentation/operations/troubleshooting',
+    },
+  ] as const;
   protected readonly query = signal('');
   protected readonly totalWords = computed(() =>
     this.guides.reduce((total, guide) => total + guide.wordCount, 0),

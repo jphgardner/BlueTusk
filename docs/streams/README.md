@@ -5,9 +5,10 @@ BlueTusk Streams is the transaction-preserving application CDC layer above
 contains the transaction kernel, typed core mappings, no-gap snapshot
 bootstrap, hosted consumers, health/telemetry, snapshot/transaction consumer
 lifecycle, memory/file/PostgreSQL/Redis state stores, direct groups, and
-PostgreSQL durable relay fan-out. Candidate packages can be reproduced, but
-publication is disabled until the immutable Streams V1 candidate completes its
-full manual build and 72-hour endurance evidence.
+PostgreSQL durable relay fan-out. `1.1.0-rc.1` is public and adds the coordinated
+copy/allocation improvements while preserving these contracts. Stable `1.1.0`
+remains disabled until the immutable stable candidate completes its full
+manual build and 72-hour endurance evidence.
 
 ## Implemented kernel
 
@@ -128,6 +129,8 @@ See the [snapshot-then-stream sample](sample.md) for a runnable hosted consumer 
 
 See the [1.0.0 release record](release-notes-1.0.0.md) for the package list,
 guarantees, evidence gate, and support boundary.
+See the coordinated [1.1.0-rc.1 release record](../releases/1.1.0-rc.1.md) for
+the public RC version, exact commit, registry verification, and stable gate.
 
 ## Performance baseline
 

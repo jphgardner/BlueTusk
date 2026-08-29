@@ -12,10 +12,10 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-hero split-hero">
       <div>
         <span class="eyebrow"><i class="live-dot"></i> ENTITY FRAMEWORK CORE</span>
-        <h1>Use a DbContext.<br /><em>Keep PostgreSQL.</em></h1>
+        <h1>Use EF Core.<br /><em>Keep PostgreSQL powerful.</em></h1>
         <p>
-          Translate PostgreSQL-native queries, preserve database objects through migrations, and
-          reverse engineer rich metadata without abandoning familiar EF Core workflows.
+          Keep the DbContext, LINQ, migrations, and tooling you know while using PostgreSQL-specific
+          types and features when they add value.
         </p>
         <div class="hero-actions">
           <a mat-flat-button routerLink="/documentation/ef-core/overview" class="primary-action"
@@ -31,21 +31,21 @@ import { sourceUrl } from '../content/catalog';
         </div>
       </div>
       <aside class="metric-cluster">
-        <bt-status label="V1 code-ready · source preview" stage="gate-passed" />
+        <bt-status label="1.1.0-rc.1 · public" stage="gate-passed" />
         <div><strong>1,987</strong><span>official cases passed</span></div>
         <div><strong>124</strong><span>upstream skips retained</span></div>
         <div><strong>0</strong><span>unexpected failures</span></div>
-        <small>2,111 CASES DISCOVERED · PG 18/19 FULL GATE</small>
+        <small>2,111 TESTS FOUND · FULL POSTGRESQL 18/19 RUN</small>
       </aside>
     </section>
 
     <section class="page-section code-split">
       <div>
-        <span class="section-kicker">DATA-SOURCE FIRST</span>
-        <h2>One pool across ADO.NET and EF.</h2>
+        <span class="section-kicker">ONE SHARED CONNECTION POOL</span>
+        <h2>Configure once. Use it everywhere.</h2>
         <p>
-          Build the provider data source once, then give it to the EF provider. Connection ownership
-          and PostgreSQL type registration remain centralized.
+          Build one data source and share it with EF Core. Connections and PostgreSQL types stay
+          consistent across your application.
         </p>
         <bt-source-link [href]="source('docs/ef-core/README.md')" />
       </div>
@@ -55,10 +55,10 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>POSTGRESQL SURFACE</span>
-          <h2>Explore the model by workload.</h2>
+          <span>WHAT YOU CAN BUILD</span>
+          <h2>Explore EF Core features by task.</h2>
         </div>
-        <p>Each tab represents implemented, repository-documented behavior.</p>
+        <p>Choose a task to see the PostgreSQL features available through EF Core.</p>
       </header>
       <nav class="segmented-tabs" aria-label="EF Core capability area">
         @for (tab of tabs; track tab.id) {
@@ -92,8 +92,8 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>SCHEMA OBJECT MATRIX</span>
-          <h2>Database design remains modelled.</h2>
+          <span>DATABASE DESIGN</span>
+          <h2>Keep PostgreSQL features in your EF model.</h2>
         </div>
         <label class="filter-input"
           ><mat-icon>search</mat-icon
@@ -113,18 +113,18 @@ import { sourceUrl } from '../content/catalog';
             <p>{{ item.detail }}</p>
           </article>
         } @empty {
-          <p class="empty-state">No schema capability matches that filter.</p>
+          <p class="empty-state">No database feature matches that filter.</p>
         }
       </div>
     </section>
 
     <section class="page-section evidence-callout">
       <div>
-        <span class="section-kicker">SPECIFICATION EVIDENCE</span>
-        <h2>Coverage is counted, not implied.</h2>
+        <span class="section-kicker">EF CORE TEST RESULTS</span>
+        <h2>See exactly what was tested.</h2>
         <p>
-          The official relational specification assembly is reported separately from BlueTusk-native
-          live tests. Capability-adjusted cases run across PostgreSQL 15–19.
+          BlueTusk runs the official EF Core relational tests and its own live PostgreSQL tests.
+          Version-specific cases are checked across PostgreSQL 15–19.
         </p>
         <a mat-stroked-button routerLink="/evidence" class="secondary-action"
           >Inspect all evidence</a
@@ -149,20 +149,20 @@ export class EfCorePage {
       label: 'Queries',
       icon: 'query_stats',
       kicker: 'LINQ TRANSLATION',
-      title: 'PostgreSQL operators stay composable',
-      body: 'Translate provider-aware LINQ without hiding the generated SQL boundary.',
+      title: 'Write LINQ that uses PostgreSQL well',
+      body: 'Use PostgreSQL-specific operations in LINQ and inspect the SQL that EF Core generates.',
       items: [
         {
           name: 'Collections',
-          detail: 'Arrays, ranges, multiranges, lateral, and set-returning functions',
+          detail: 'Query arrays, ranges, multiranges, lateral joins, and set-returning functions',
         },
         {
           name: 'Documents',
-          detail: 'JSON/JSONB traversal, containment, and complex-type queries',
+          detail: 'Read and filter JSON/JSONB documents and complex types',
         },
         {
           name: 'Search + network',
-          detail: 'Full text, inet/cidr, and PostgreSQL-specific operators',
+          detail: 'Use full-text search, network types, and PostgreSQL operators',
         },
       ],
     },
@@ -171,8 +171,8 @@ export class EfCorePage {
       label: 'Mappings',
       icon: 'conversion_path',
       kicker: 'TYPE SYSTEM',
-      title: 'Native values across both providers',
-      body: 'The EF layer composes over the provider catalogue rather than inventing a parallel codec system.',
+      title: 'Use the same PostgreSQL types everywhere',
+      body: 'EF Core and ADO.NET share one type system, so values behave consistently across your application.',
       items: [
         { name: 'Built-in', detail: 'Temporal, network, geometric, JSON, arrays, and ranges' },
         { name: 'User-defined', detail: 'Enums, composites, domains, and extension values' },
@@ -187,14 +187,17 @@ export class EfCorePage {
       label: 'Migrations',
       icon: 'schema',
       kicker: 'DATABASE DESIGN',
-      title: 'Model PostgreSQL schema objects',
-      body: 'Generate PostgreSQL-aware operations while retaining escape hatches for guarded features.',
+      title: 'Create PostgreSQL-aware migrations',
+      body: 'Build migrations for PostgreSQL features, with raw SQL available for anything specialised.',
       items: [
         {
           name: 'Tables',
           detail: 'Identity, generated columns, comments, partitions, inheritance, and tablespaces',
         },
-        { name: 'Policy', detail: 'CHECK, RLS, exclusion constraints, triggers, and rules' },
+        {
+          name: 'Rules and security',
+          detail: 'CHECK, row-level security, exclusion constraints, triggers, and rules',
+        },
         { name: 'Data movement', detail: 'Publications, subscriptions, foreign data, and views' },
       ],
     },
@@ -203,14 +206,17 @@ export class EfCorePage {
       label: 'Scaffolding',
       icon: 'account_tree',
       kicker: 'DATABASE FIRST',
-      title: 'Bring server metadata back into code',
-      body: 'Reverse engineer PostgreSQL-specific types and model annotations with schema filtering.',
+      title: 'Generate models from an existing database',
+      body: 'Create EF models from PostgreSQL tables and types, with filters for the schemas you want.',
       items: [
         { name: 'Discovery', detail: 'Schemas, tables, columns, keys, indexes, and custom types' },
-        { name: 'Retention', detail: 'Provider annotations survive code generation' },
+        {
+          name: 'PostgreSQL details',
+          detail: 'Provider-specific settings survive code generation',
+        },
         {
           name: 'Security',
-          detail: 'Design-time connection handling follows documented boundaries',
+          detail: 'Design-time connections follow the documented security rules',
         },
       ],
     },
@@ -219,8 +225,8 @@ export class EfCorePage {
       label: 'SQL/PGQ',
       icon: 'share',
       kicker: 'POSTGRESQL 19',
-      title: 'Graph translation behind a capability guard',
-      body: 'Typed graph constructs only activate when the PostgreSQL 19 SQL/PGQ surface is actually detected.',
+      title: 'Use graph queries when the server supports them',
+      body: 'Typed graph queries turn on only after BlueTusk confirms PostgreSQL 19 SQL/PGQ is available.',
       items: [
         { name: 'Raw SQL', detail: 'Execute SQL/PGQ directly through the provider' },
         { name: 'Migrations', detail: 'Create and reverse engineer property graph metadata' },
@@ -240,49 +246,49 @@ export class EfCorePage {
       icon: 'table_chart',
       name: 'Partitions + inheritance',
       support: 'Migrations + scaffolding',
-      detail: 'PostgreSQL table topology survives the model boundary.',
+      detail: 'Table partitions and inheritance remain visible in the EF model.',
     },
     {
       icon: 'shield',
       name: 'Row-level security',
       support: 'Migrations',
-      detail: 'Policies are modelled as PostgreSQL schema behavior.',
+      detail: 'Create PostgreSQL row-level security policies through migrations.',
     },
     {
       icon: 'rule',
       name: 'CHECK + exclusion',
       support: 'Migrations + discovery',
-      detail: 'Constraint intent remains explicit.',
+      detail: 'Create and discover PostgreSQL CHECK and exclusion constraints.',
     },
     {
       icon: 'publish',
       name: 'Publications + subscriptions',
       support: 'Migrations',
-      detail: 'Logical replication objects are first class.',
+      detail: 'Create logical replication publications and subscriptions in migrations.',
     },
     {
       icon: 'extension',
       name: 'Extensions + custom types',
       support: 'Migrations + mapping',
-      detail: 'Installed capabilities connect to provider type registration.',
+      detail: 'Installed extensions connect to the same types used by the provider.',
     },
     {
       icon: 'view_quilt',
       name: 'Views + foreign data',
       support: 'Migrations + scaffolding',
-      detail: 'Database-owned read models remain discoverable.',
+      detail: 'Discover views and foreign tables when generating a model.',
     },
     {
       icon: 'functions',
       name: 'Routines + operators',
       support: 'Migrations',
-      detail: 'Advanced catalogue objects retain PostgreSQL naming.',
+      detail: 'Create PostgreSQL functions and operators without renaming them.',
     },
     {
       icon: 'share',
       name: 'Property graphs',
       support: 'PG 19 guarded',
-      detail: 'Older servers return capability-safe empty discovery.',
+      detail: 'Graph features stay off on servers that do not support them.',
     },
   ] as const;
   protected readonly filteredSchema = computed(() => {

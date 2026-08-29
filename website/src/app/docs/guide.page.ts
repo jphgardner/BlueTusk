@@ -2,13 +2,17 @@ import {
   AfterViewChecked,
   Component,
   ElementRef,
+  Inject,
+  PLATFORM_ID,
   ViewChild,
   computed,
   signal,
 } from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
 import { ActivatedRoute, RouterLink } from '@angular/router';
 import { MatIconModule } from '@angular/material/icon';
-import { Title } from '@angular/platform-browser';
+import { Meta, Title } from '@angular/platform-browser';
+import { DOCUMENT } from '@angular/common';
 import { GUIDES } from '../../generated/guides.generated';
 
 @Component({
@@ -21,8 +25,8 @@ import { GUIDES } from '../../generated/guides.generated';
           <a routerLink="/documentation" class="back-link"
             ><mat-icon>arrow_back</mat-icon>All documentation</a
           >
-          <small>{{ current.categoryLabel }}</small>
-          <nav [attr.aria-label]="current.categoryLabel + ' guides'">
+          <small class="guide-desktop-index">{{ current.categoryLabel }}</small>
+          <nav class="guide-desktop-index" [attr.aria-label]="current.categoryLabel + ' guides'">
             @for (item of categoryGuides(); track item.slug) {
               <a
                 [routerLink]="['/documentation', item.category, item.slug]"
@@ -31,6 +35,23 @@ import { GUIDES } from '../../generated/guides.generated';
               >
             }
           </nav>
+          <details class="guide-mobile-index">
+            <summary>
+              <span
+                ><small>IN THIS SECTION</small><strong>{{ current.title }}</strong></span
+              >
+              <mat-icon>expand_more</mat-icon>
+            </summary>
+            <nav [attr.aria-label]="current.categoryLabel + ' guides'">
+              @for (item of categoryGuides(); track item.slug) {
+                <a
+                  [routerLink]="['/documentation', item.category, item.slug]"
+                  [class.active]="item.slug === current.slug"
+                  >{{ item.title }}</a
+                >
+              }
+            </nav>
+          </details>
         </aside>
         <main class="guide-main">
           <header>
@@ -46,6 +67,18 @@ import { GUIDES } from '../../generated/guides.generated';
               ><mat-icon>code</mat-icon>View source on GitHub<mat-icon>open_in_new</mat-icon></a
             >
           </header>
+          @if (current.headings.length) {
+            <details class="guide-mobile-toc">
+              <summary><span>ON THIS PAGE</span><mat-icon>expand_more</mat-icon></summary>
+              <nav>
+                @for (heading of current.headings; track heading.id) {
+                  @if (heading.level <= 3 && heading.level > 1) {
+                    <a [routerLink]="[]" [fragment]="heading.id">{{ heading.text }}</a>
+                  }
+                }
+              </nav>
+            </details>
+          }
           <article #guideContent class="guide-content">
             @for (block of current.blocks; track $index) {
               @if (block.kind === 'html') {
@@ -113,6 +146,7 @@ export class GuidePage implements AfterViewChecked {
   private readonly category = signal('');
   private readonly slug = signal('');
   private readonly pendingFragment = signal<string | null>(null);
+  private readonly isBrowser: boolean;
   protected readonly guide = computed(() =>
     GUIDES.find((x) => x.category === this.category() && x.slug === this.slug()),
   );
@@ -127,18 +161,52 @@ export class GuidePage implements AfterViewChecked {
   constructor(
     route: ActivatedRoute,
     private title: Title,
+    private meta: Meta,
+    @Inject(DOCUMENT) private document: Document,
+    @Inject(PLATFORM_ID) platformId: object,
   ) {
+    this.isBrowser = isPlatformBrowser(platformId);
     route.paramMap.subscribe((params) => {
       this.category.set(params.get('category') ?? '');
       this.slug.set(params.get('slug') ?? '');
       const guide = this.guide();
-      if (guide) this.title.setTitle(`${guide.title} — BlueTusk`);
-      if (!route.snapshot.fragment) window.scrollTo({ top: 0, behavior: 'auto' });
+      if (guide) this.updatePageMetadata(guide.title, guide.summary, guide.category, guide.slug);
+      if (this.isBrowser && !route.snapshot.fragment) {
+        window.scrollTo({ top: 0, behavior: 'auto' });
+      }
     });
     route.fragment.subscribe((fragment) => this.pendingFragment.set(fragment));
   }
 
+  private updatePageMetadata(
+    title: string,
+    description: string,
+    category: string,
+    slug: string,
+  ): void {
+    const pageTitle = `${title} — BlueTusk`;
+    const canonicalUrl = `https://bluetusk.io/documentation/${category}/${slug}`;
+    this.title.setTitle(pageTitle);
+    this.meta.updateTag({ name: 'description', content: description });
+    this.meta.updateTag({ name: 'robots', content: 'index, follow, max-snippet:-1' });
+    this.meta.updateTag({ property: 'og:type', content: 'article' });
+    this.meta.updateTag({ property: 'og:title', content: pageTitle });
+    this.meta.updateTag({ property: 'og:description', content: description });
+    this.meta.updateTag({ property: 'og:url', content: canonicalUrl });
+    this.meta.updateTag({ name: 'twitter:title', content: pageTitle });
+    this.meta.updateTag({ name: 'twitter:description', content: description });
+
+    let canonical = this.document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]');
+    if (!canonical) {
+      canonical = this.document.createElement('link');
+      canonical.rel = 'canonical';
+      this.document.head.appendChild(canonical);
+    }
+    canonical.href = canonicalUrl;
+  }
+
   ngAfterViewChecked(): void {
+    if (!this.isBrowser) return;
     const guide = this.guide();
     const container = this.guideContent?.nativeElement;
     if (!guide || !container) return;

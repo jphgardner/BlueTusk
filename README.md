@@ -2,6 +2,8 @@
 
 **PostgreSQL, fully exposed to .NET.**
 
+[Website](https://bluetusk.io/) · [Quickstart](https://bluetusk.io/documentation/getting-started/quickstart) · [Documentation](https://bluetusk.io/documentation) · [Release evidence](https://bluetusk.io/evidence)
+
 BlueTusk is a ground-up PostgreSQL platform for .NET. Its scope includes a
 native wire-protocol engine, ADO.NET, replication, Entity Framework Core,
 extension packages, PostgreSQL SQL/PGQ support, and an independently versioned
@@ -10,14 +12,17 @@ runtime dependency on Npgsql.
 
 > [!IMPORTANT]
 > BlueTusk `1.0.0` was published on 2026-08-23 as six product families: 62
-> NuGet packages and three npm packages. The repository owner authorised an
-> exception for the incomplete independent approval, exact-candidate fuzz,
-> reference-performance, endurance, and PostgreSQL 19 GA evidence; those gates
-> are not represented as passed. The strict release workflow was restored
-> immediately after publication. Start with the
-> [V1 publication record](docs/releases/1.0.0-publication-record.md),
-> [documentation handbook](docs/README.md), [V1 readiness record](docs/v1-release-readiness.md),
-> [roadmap](docs/roadmap.md), and [support matrix](VERSIONING.md).
+> NuGet packages and three npm packages. BlueTusk `1.1.0-rc.1` is also public
+> from exact commit `2e735ed46aec11d5009158a00ca7b862f9ec12af`; all 65 registry
+> artifacts and clean .NET/npm consumer installs were verified. Stable
+> `1.1.0` remains gated on PostgreSQL 19 GA and the exact stable-candidate
+> endurance, performance, security, and external-acceptance record. Start with
+> [installation](docs/getting-started/install.md), the
+> [1.1 RC release record](docs/releases/1.1.0-rc.1.md), the
+> [documentation handbook](docs/README.md), and the
+> [support matrix](VERSIONING.md). The
+> [1.0 publication record](docs/releases/1.0.0-publication-record.md) preserves
+> the explicit owner exceptions used by that historical release.
 
 ## Build
 

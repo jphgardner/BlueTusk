@@ -53,7 +53,6 @@ export const routes: Routes = [
   },
   {
     path: 'documentation/:category/:slug',
-    title: 'Guide — BlueTusk Documentation',
     loadComponent: () => import('./docs/guide.page').then((component) => component.GuidePage),
   },
   {

@@ -1,0 +1,95 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "BlueTusk contributors",
+  "classifications": [
+    "Web",
+    "PostgreSQL",
+    "Clean Architecture",
+    "Kubernetes"
+  ],
+  "identity": "BlueTusk.Production.CSharp",
+  "name": "BlueTusk production application",
+  "shortName": "bluetusk-production",
+  "sourceName": "BlueTusk.OrderOperations",
+  "defaultName": "BlueTusk.ProductionStarter",
+  "preferNameDirectory": true,
+  "sources": [
+    {
+      "exclude": [
+        "clients/**"
+      ]
+    },
+    {
+      "source": "clients/react",
+      "target": "applications/web/order-operations",
+      "condition": "(ClientFramework == \"react\")"
+    },
+    {
+      "source": "clients/angular",
+      "target": "applications/web/order-operations",
+      "condition": "(ClientFramework == \"angular\")"
+    }
+  ],
+  "symbols": {
+    "ClientFramework": {
+      "type": "parameter",
+      "datatype": "choice",
+      "defaultValue": "react",
+      "description": "Browser client generated behind the same-origin BFF.",
+      "choices": [
+        {
+          "choice": "react",
+          "description": "React client using @bluetusk/live-react."
+        },
+        {
+          "choice": "angular",
+          "description": "Angular client using @bluetusk/live-angular."
+        }
+      ]
+    },
+    "BlueTuskVersion": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "1.2.0",
+      "description": "Exact coordinated BlueTusk NuGet and npm version.",
+      "replaces": "1.1.0-rc.1"
+    },
+    "KubernetesPostgreSqlImage": {
+      "type": "parameter",
+      "datatype": "text",
+      "defaultValue": "ghcr.io/cloudnative-pg/postgresql:18-standard-trixie@sha256:e5e820a9083134141caac23cad1d6affd39101a9fefe7bf6cc07738a3fa89452",
+      "description": "Digest-pinned CloudNativePG PostgreSQL image used by the generated Helm values.",
+      "replaces": "ghcr.io/cloudnative-pg/postgresql:19beta3-standard-trixie@sha256:066b9e2245e5c354a57b53d71a4517bfe203aabbe7286778981b98e177ee79c3"
+    },
+    "skipRestore": {
+      "type": "parameter",
+      "datatype": "bool",
+      "defaultValue": "false",
+      "description": "Skip the automatic .NET restore post-action."
+    }
+  },
+  "primaryOutputs": [
+    {
+      "path": "BlueTusk.ProductionStarter.slnx"
+    },
+    {
+      "path": "compose.yaml"
+    },
+    {
+      "path": "applications/deploy/charts/bluetusk-application/Chart.yaml"
+    }
+  ],
+  "postActions": [
+    {
+      "condition": "(!skipRestore)",
+      "description": "Restore the generated .NET solution.",
+      "manualInstructions": [
+        {
+          "text": "Run 'dotnet restore' if automatic restore was skipped."
+        }
+      ],
+      "actionId": "210D431B-A78B-4D2F-B762-4ED3E3EA9025",
+      "continueOnError": true
+    }
+  ]
+}

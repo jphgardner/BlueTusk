@@ -12,10 +12,10 @@ import { SourceLink } from '../shared/technical-ui';
     <section class="page-hero split-hero community-hero">
       <div>
         <span class="eyebrow"><i class="live-dot"></i> BUILD IN THE OPEN</span>
-        <h1>Put BlueTusk under a <em>real workload.</em></h1>
+        <h1>Help shape BlueTusk with <em>real-world use.</em></h1>
         <p>
-          The useful contribution is evidence: a reproducible issue, a missing PostgreSQL behavior,
-          an extension contract, a workload sample, or a gate that makes confidence measurable.
+          Report what you tried, what happened, and what you expected. Issues, samples, missing
+          PostgreSQL behavior, and production feedback all make the platform better.
         </p>
         <div class="hero-actions">
           <a
@@ -48,8 +48,8 @@ import { SourceLink } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>CONTRIBUTION PATH</span>
-          <h2>Move from observation to evidence.</h2>
+          <span>HOW TO CONTRIBUTE</span>
+          <h2>Turn what you found into a useful change.</h2>
         </div>
         <bt-source-link [href]="source('CONTRIBUTING.md')" label="CONTRIBUTING.md" />
       </header>
@@ -69,9 +69,9 @@ import { SourceLink } from '../shared/technical-ui';
       <header class="section-head">
         <div>
           <span>WHERE WORK HELPS</span>
-          <h2>Contribute at a real boundary.</h2>
+          <h2>Choose an area where your experience helps.</h2>
         </div>
-        <p>These areas map to implemented repository surfaces and explicit roadmap work.</p>
+        <p>Each area links to working code, tests, documentation, and planned improvements.</p>
       </header>
       <div>
         @for (area of areas; track area.title) {
@@ -88,11 +88,11 @@ import { SourceLink } from '../shared/technical-ui';
 
     <section class="page-section contributor-contract">
       <div>
-        <span class="section-kicker">ENGINEERING CONTRACT</span>
-        <h2>Changes carry their proof.</h2>
+        <span class="section-kicker">WHAT A GOOD CHANGE INCLUDES</span>
+        <h2>Show that the change works.</h2>
         <p>
-          Dependency direction, API compatibility, native PostgreSQL behavior, and test scope are
-          repository rules—not review-time surprises.
+          Keep the architecture clear, protect existing APIs, follow PostgreSQL behavior, and add
+          tests that match the risk of the change.
         </p>
       </div>
       <div class="contract-list">
@@ -145,18 +145,18 @@ export class CommunityPage {
     },
     {
       icon: 'account_tree',
-      title: 'Respect the layers',
-      body: 'Keep project dependency direction and public API compatibility explicit.',
+      title: 'Keep the architecture clear',
+      body: 'Put code in the right project and avoid breaking existing public APIs.',
     },
     {
       icon: 'science',
-      title: 'Add focused evidence',
-      body: 'Pair the change with fast tests and live PostgreSQL coverage where behavior requires it.',
+      title: 'Add the right tests',
+      body: 'Add fast tests and, when needed, prove the behavior against a real PostgreSQL server.',
     },
     {
       icon: 'description',
-      title: 'Update the contract',
-      body: 'Keep samples, documentation, freezes, and compatibility records synchronized.',
+      title: 'Update the supporting material',
+      body: 'Keep examples, documentation, API records, and compatibility notes up to date.',
     },
   ] as const;
   protected readonly areas = [
@@ -164,7 +164,7 @@ export class CommunityPage {
       icon: 'storage',
       kicker: 'PROVIDER',
       title: 'PostgreSQL behavior',
-      body: 'Reproduce a protocol, type, pooling, auth, or data-path gap.',
+      body: 'Reproduce a connection, type, pooling, login, or data-handling problem.',
       route: '/provider',
       action: 'Explore provider',
     },
@@ -172,7 +172,7 @@ export class CommunityPage {
       icon: 'extension',
       kicker: 'EXTENSIONS',
       title: 'Specialized packages',
-      body: 'Add a codec, descriptor, translation, and live gate through the extension SDK.',
+      body: 'Add support for a PostgreSQL extension in ADO.NET, EF Core, and live tests.',
       route: '/extensions',
       action: 'Explore extensions',
     },
@@ -180,7 +180,7 @@ export class CommunityPage {
       icon: 'stream',
       kicker: 'REAL TIME',
       title: 'Operational workloads',
-      body: 'Exercise snapshots, replay, destination recovery, or endurance harnesses.',
+      body: 'Test initial loads, replay, destination recovery, or long-running workloads.',
       route: '/real-time',
       action: 'Explore real time',
     },
@@ -188,7 +188,7 @@ export class CommunityPage {
       icon: 'code',
       kicker: 'SAMPLES',
       title: 'Executable scenarios',
-      body: 'Turn a real application shape into a minimal, maintainable repository sample.',
+      body: 'Turn a real application pattern into a clear, maintainable example project.',
       route: '/documentation',
       action: 'Read guides',
     },
@@ -196,15 +196,15 @@ export class CommunityPage {
   protected readonly rules = [
     {
       title: 'PostgreSQL is the specification',
-      body: 'Server behavior and documented wire semantics decide correctness.',
+      body: 'PostgreSQL behavior and its official documentation decide what is correct.',
     },
     {
       title: 'Public API changes are deliberate',
-      body: 'Freeze files and compatibility guidance move with intentional surface changes.',
+      body: 'API records and compatibility guidance must be updated with intentional public changes.',
     },
     {
       title: 'Tests match the risk',
-      body: 'Unit, live, topology, security, stress, or endurance coverage is selected by behavior.',
+      body: 'Choose unit, live, security, load, or long-running tests based on what could go wrong.',
     },
     {
       title: 'Secrets never enter the repository',

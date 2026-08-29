@@ -28,4 +28,22 @@
              Link="Template\%(Filename)%(Extension)" />
   </ItemGroup>
 
+  <ItemGroup>
+    <None Include="..\..\templates\BlueTusk.Production\content\.template.config\template.json"
+          Link="ProductionTemplate\template.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\templates\BlueTusk.Production\content\compose.yaml"
+          Link="ProductionTemplate\compose.yaml"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\templates\BlueTusk.Production\content\BlueTusk.ProductionStarter.slnx"
+          Link="ProductionTemplate\BlueTusk.ProductionStarter.slnx"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\applications\web\order-operations\package.json"
+          Link="ProductionTemplate\react-package.json"
+          CopyToOutputDirectory="PreserveNewest" />
+    <None Include="..\..\applications\web\order-operations-angular\package.json"
+          Link="ProductionTemplate\angular-package.json"
+          CopyToOutputDirectory="PreserveNewest" />
+  </ItemGroup>
+
 </Project>

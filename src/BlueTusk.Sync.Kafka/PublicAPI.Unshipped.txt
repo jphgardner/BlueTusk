@@ -1,0 +1,59 @@
+#nullable enable
+BlueTusk.Sync.Kafka.KafkaSyncConfigurationException
+BlueTusk.Sync.Kafka.KafkaSyncConfigurationException.KafkaSyncConfigurationException(string! message) -> void
+BlueTusk.Sync.Kafka.KafkaSyncDeliveryException
+BlueTusk.Sync.Kafka.KafkaSyncDeliveryException.KafkaSyncDeliveryException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Kafka.KafkaSyncDestination
+BlueTusk.Sync.Kafka.KafkaSyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Kafka.KafkaSyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
+BlueTusk.Sync.Kafka.KafkaSyncDestination.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.Kafka.KafkaSyncDestination.CompleteSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotComplete! complete, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Kafka.KafkaSyncDestination.DisposeAsync() -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Kafka.KafkaSyncDestination.KafkaSyncDestination(BlueTusk.Sync.Kafka.KafkaSyncOptions! options) -> void
+BlueTusk.Sync.Kafka.KafkaSyncDestination.Name.get -> string!
+BlueTusk.Sync.Kafka.KafkaSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.Kafka.KafkaSyncDestination.ReplayTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, string! operationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayApplyResult!>
+BlueTusk.Sync.Kafka.KafkaSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Kafka.KafkaSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Kafka.KafkaSyncEnvelopeException
+BlueTusk.Sync.Kafka.KafkaSyncEnvelopeException.KafkaSyncEnvelopeException(string! message) -> void
+BlueTusk.Sync.Kafka.KafkaSyncException
+BlueTusk.Sync.Kafka.KafkaSyncException.KafkaSyncException(string! message) -> void
+BlueTusk.Sync.Kafka.KafkaSyncException.KafkaSyncException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions
+BlueTusk.Sync.Kafka.KafkaSyncOptions.<Clone>$() -> BlueTusk.Sync.Kafka.KafkaSyncOptions!
+BlueTusk.Sync.Kafka.KafkaSyncOptions.BootstrapServers.get -> string!
+BlueTusk.Sync.Kafka.KafkaSyncOptions.BootstrapServers.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.ClientConfiguration.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+BlueTusk.Sync.Kafka.KafkaSyncOptions.ClientConfiguration.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.ClientId.get -> string!
+BlueTusk.Sync.Kafka.KafkaSyncOptions.ClientId.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.CreateTopics.get -> bool
+BlueTusk.Sync.Kafka.KafkaSyncOptions.CreateTopics.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.Equals(BlueTusk.Sync.Kafka.KafkaSyncOptions? other) -> bool
+BlueTusk.Sync.Kafka.KafkaSyncOptions.InitializationTimeout.get -> System.TimeSpan
+BlueTusk.Sync.Kafka.KafkaSyncOptions.InitializationTimeout.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.KafkaSyncOptions() -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.MaxEnvelopeBytes.get -> int
+BlueTusk.Sync.Kafka.KafkaSyncOptions.MaxEnvelopeBytes.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.PartitionCount.get -> int
+BlueTusk.Sync.Kafka.KafkaSyncOptions.PartitionCount.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.ReplicationFactor.get -> short
+BlueTusk.Sync.Kafka.KafkaSyncOptions.ReplicationFactor.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.TopicPrefix.get -> string!
+BlueTusk.Sync.Kafka.KafkaSyncOptions.TopicPrefix.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.TransactionalId.get -> string!
+BlueTusk.Sync.Kafka.KafkaSyncOptions.TransactionalId.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncOptions.TransactionTimeout.get -> System.TimeSpan
+BlueTusk.Sync.Kafka.KafkaSyncOptions.TransactionTimeout.init -> void
+BlueTusk.Sync.Kafka.KafkaSyncProtocol
+const BlueTusk.Sync.Kafka.KafkaSyncProtocol.CurrentFormatVersion = 1 -> int
+const BlueTusk.Sync.Kafka.KafkaSyncProtocol.DeliveryIdHeader = "bluetusk.delivery-id" -> string!
+const BlueTusk.Sync.Kafka.KafkaSyncProtocol.EventHeader = "bluetusk.event" -> string!
+const BlueTusk.Sync.Kafka.KafkaSyncProtocol.FormatVersionHeader = "bluetusk.format-version" -> string!
+const BlueTusk.Sync.Kafka.KafkaSyncProtocol.TransformFingerprintHeader = "bluetusk.transform-fingerprint" -> string!
+override BlueTusk.Sync.Kafka.KafkaSyncOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.Kafka.KafkaSyncOptions.GetHashCode() -> int
+override BlueTusk.Sync.Kafka.KafkaSyncOptions.ToString() -> string!
+static BlueTusk.Sync.Kafka.KafkaSyncOptions.operator !=(BlueTusk.Sync.Kafka.KafkaSyncOptions? left, BlueTusk.Sync.Kafka.KafkaSyncOptions? right) -> bool
+static BlueTusk.Sync.Kafka.KafkaSyncOptions.operator ==(BlueTusk.Sync.Kafka.KafkaSyncOptions? left, BlueTusk.Sync.Kafka.KafkaSyncOptions? right) -> bool

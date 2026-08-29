@@ -128,7 +128,20 @@ streaming client for the versioned contract.
 
 `@bluetusk/live` is the framework-neutral fetch-streaming client. It parses chunked UTF-8 SSE frames, applies every keyed Live event to a local result, rejects invalid sequence/key transitions, persists signed resume tokens through an application callback, and reconnects with bounded jittered backoff. A `409` only discards a resume token when one was actually supplied; tokenless conflicts and malformed payloads fail closed.
 
-`@bluetusk/live-angular` exposes the same query state through Angular read-only signals. `@bluetusk/live-react` uses `useSyncExternalStore`, preserving React concurrent-render consistency. Both adapters own only lifecycle integration; protocol, recovery, and result semantics remain in `@bluetusk/live`.
+`@bluetusk/live-angular` exposes the same query state through Angular read-only
+signals. `@bluetusk/live-react` uses `useSyncExternalStore`, preserving React
+concurrent-render consistency. BlueTusk 1.2 adds `@bluetusk/live-vue` with
+read-only refs and setup-scope disposal, plus `@bluetusk/live-svelte` with
+standard read-only stores and component destruction cleanup. Every adapter
+batches rapid server notifications into one microtask. They own only framework
+lifecycle integration; protocol validation, recovery, resume tokens, and keyed
+result semantics remain in `@bluetusk/live`.
+
+Vue and Svelte both provide two entry points. `useBlueTuskLiveQuery` starts the
+stream and binds its cleanup to the current component. The explicit
+`createBlueTuskLiveQuery` form is safe for services and tests when the caller
+owns `destroy()`. This keeps hidden global connections out of server rendering
+and makes teardown testable.
 
 ## Hosting and testing
 
@@ -155,14 +168,15 @@ B. Machine-checked budgets cap those paths at 235,000 B, 900 B, and 185,000 B
 respectively. These are local regression baselines, not network latency or
 universal throughput claims.
 
-The published stable `1.0.0` family has passed its implementation audit. The
+The published stable `1.0.0` family has passed its implementation audit, and
+the coordinated `1.1.0-rc.1` NuGet/npm packages are public. The
 PostgreSQL 15–19 matrix persists initial and update replay in the production
 store and drives signed disconnect/resume delivery through real SSE,
-SignalR/WebSockets, and HTTP/2 gRPC endpoints. Live candidate packages are
-reproducible, but publication is disabled until its V1 dependencies and
-exact-commit release gates pass. See the
+SignalR/WebSockets, and HTTP/2 gRPC endpoints. Stable `1.1.0` publication stays
+disabled until its dependencies and exact stable-candidate gates pass. See the
 [1.0.0 release record](release-notes-1.0.0.md) for exact scope and
-boundaries.
+boundaries and the [1.1.0-rc.1 record](../releases/1.1.0-rc.1.md) for current
+package availability.
 
 The [public API candidate freeze](api-compatibility.md) and
 [durable format registry](format-compatibility.md) prepare the Live 1.0 surface

@@ -15,11 +15,53 @@ public sealed class BlueTuskCliTests
 
         Assert.Equal(0, BlueTuskCli.Run(["--help"], output, error));
         Assert.Contains("bluetusk scaffold", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("bluetusk doctor", output.ToString(), StringComparison.Ordinal);
         Assert.Equal(string.Empty, error.ToString());
+
+        output.GetStringBuilder().Clear();
+        Assert.Equal(0, BlueTuskCli.Run(["doctor", "--help"], output, error));
+        Assert.Contains("--require-streams", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("read-only", output.ToString(), StringComparison.Ordinal);
 
         output.GetStringBuilder().Clear();
         Assert.Equal(2, BlueTuskCli.Run(["scaffold", "--unknown"], output, error));
         Assert.Contains("Unknown scaffold option", error.ToString(), StringComparison.Ordinal);
+
+        error.GetStringBuilder().Clear();
+        Assert.Equal(2, BlueTuskCli.Run(["doctor", "--unknown"], output, error));
+        Assert.Contains("Unknown doctor option", error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Doctor_requires_a_bounded_timeout()
+    {
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        Assert.Equal(2, BlueTuskCli.Run(
+            ["doctor", "--connection", "Host=localhost", "--timeout", "0"],
+            output,
+            error));
+        Assert.Contains("1 to 120", error.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Doctor_reports_machine_readable_production_state()
+    {
+        var connectionString = ConnectionString();
+        using var output = new StringWriter();
+        using var error = new StringWriter();
+
+        var result = BlueTuskCli.Run(
+            ["doctor", "--connection", connectionString, "--json", "--extension", "plpgsql"],
+            output,
+            error);
+
+        Assert.Equal(0, result);
+        Assert.Equal(string.Empty, error.ToString());
+        Assert.Contains("\"schemaVersion\": 1", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("\"status\": \"ready\"", output.ToString(), StringComparison.Ordinal);
+        Assert.DoesNotContain(connectionString, output.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]

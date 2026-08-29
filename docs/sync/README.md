@@ -17,6 +17,35 @@ The Streams delivery is acknowledged only after the destination returns the
 exact commit-end position as durably handled. Duplicate delivery is safe when a
 destination reports the same position as already applied.
 
+## The delivery guarantee
+
+BlueTusk guarantees that an acknowledged source transaction is never skipped.
+If a worker stops after writing a destination but before saving source progress,
+the last unconfirmed transaction is delivered again with the same source,
+transaction, commit-position, and change identities. Every official Sync
+connector provides a tested replay-safety mechanism, but the durable boundary
+depends on the destination. For NATS, the downstream consumer must retain the
+stable identity beyond JetStream's configured deduplication window:
+
+| Destination | Guarantee | What happens during recovery |
+| --- | --- | --- |
+| PostgreSQL | Atomic state and checkpoint | The complete mutation and checkpoint commit in one PostgreSQL transaction. Recovery sees both or neither. |
+| Redis | Atomic state and checkpoint | One same-slot Lua operation validates and writes the complete mutation plus checkpoint. Recovery sees both or neither. |
+| OpenSearch | Replay-safe materialisation | A failed or ambiguous bulk is replayed with the same external versions. Older source versions cannot replace newer materialized state, and the checkpoint advances only after every item succeeds. |
+| NATS JetStream | Durable publication with stable identity | JetStream acknowledges durable storage and deduplicates the deterministic message ID inside its configured window. The same ID remains in the envelope so consumers can enforce a longer boundary. |
+
+In practical terms, PostgreSQL and Redis provide one atomic destination effect;
+OpenSearch converges to one version-protected materialized state after replay;
+and NATS provides one durable transaction identity with a clearly bounded
+broker-deduplication window. Third-party connectors remain conservatively
+at-least-once unless their own destination contract proves a stronger outcome.
+
+`SyncDestinationConformanceSuite` verifies changed-payload redelivery both in
+the same process and after a new connector instance starts. The official
+connector tests then verify destination-specific atomicity, partial-write,
+deduplication-window, versioning, and checkpoint failure boundaries. The public
+`SyncDestinationCapabilities` flags expose which mechanics a connector supports.
+
 Transform definitions carry a canonical SHA-256 fingerprint. A mismatch moves
 the pipeline to `Rebuilding` and requires an explicit rebuild or migration;
 BlueTusk does not silently reinterpret existing destination data.
@@ -133,9 +162,10 @@ request operation ID into the replay coordinator, preserving idempotency across
 HTTP retries. Resume the worker only after replay reports `Completed` or
 `AlreadyCompleted`.
 
-PostgreSQL, NATS JetStream, Redis, and OpenSearch connector slices are
-implemented and pass the same executable snapshot-plus-stream recovery
-contract. The shared count, key-set, and partitioned content-hash engine plus
+PostgreSQL, NATS JetStream, Redis, OpenSearch, signed webhook, and Kafka
+connector slices are implemented and pass the same executable
+snapshot-plus-stream recovery contract. The shared count, key-set, and
+partitioned content-hash engine plus
 PostgreSQL, Redis, and OpenSearch repair paths are implemented and live-tested.
 The destination-neutral rebuild coordinator is implemented with an explicit
 cutover barrier, and the in-process hosting package provides named workers,
@@ -148,11 +178,12 @@ read models now expose pipeline state, sampled throughput, checkpoint lag,
 failures, quarantine, retries, and rebuild/reconciliation state without leaking
 worker exception messages. Separately authorized retry, reconcile, and rebuild
 controls now pass exact confirmations through the audit-before-mutation control
-plane executor. Endurance and final release gates remain. The Sync release train
-remains non-publishable until those remaining Phase 5 gates pass.
+plane executor. The coordinated `1.1.0-rc.1` package train is public. Stable
+`1.1.0` remains non-publishable until the exact 24-hour endurance and final
+stable-release gates pass.
 
 The executable [Sync release endurance](release-endurance.md) gate repeatedly
-runs the core/hosting contracts and all four live connector suites for 24 hours,
+runs the core/hosting contracts and all seven destination suites for 24 hours,
 then emits a versioned evidence report. A local one-cycle smoke proves the
 orchestration only; it does not satisfy the release gate.
 
@@ -189,8 +220,10 @@ to retry.
 ## Shared destination conformance
 
 `BlueTusk.Sync.Testing` contains `SyncDestinationConformanceSuite`, the single
-connector acceptance scenario used by the PostgreSQL, NATS JetStream, Redis,
-and OpenSearch live test projects. It verifies:
+connector acceptance scenario used by PostgreSQL, NATS JetStream, Redis,
+OpenSearch, Kafka, and signed webhook destinations. Service-backed suites run
+against their real connector; deterministic transports cover protocol and
+failure boundaries that would otherwise be timing-dependent. It verifies:
 
 - provisioning and transform-fingerprint ownership;
 - idempotent snapshot batches and completed snapshot state after a new
@@ -389,6 +422,156 @@ dotnet test tests/BlueTusk.Sync.Nats.Tests/BlueTusk.Sync.Nats.Tests.csproj
 The live suite proves whole-transaction persistence, duplicate recovery after a
 destination restart, snapshot lifecycle deduplication, transform-generation
 rejection, and stable stream message counts.
+
+## Apache Kafka destination
+
+`BlueTusk.Sync.Kafka` publishes one versioned JSON envelope for each complete
+PostgreSQL source transaction. The event record and the destination checkpoint
+are committed together with a Confluent Kafka transactional producer. The
+checkpoint lives in a separate compacted state topic and is loaded with
+`isolation.level=read_committed` on every provision or restart. BlueTusk does
+not acknowledge Streams until Kafka confirms that atomic broker transaction.
+
+This is an explicit end-to-end at-least-once contract. Kafka's producer
+transaction prevents a visible event without its BlueTusk checkpoint, while
+stable delivery and mutation IDs let consumers make their own business effect
+idempotent. It does not claim that an arbitrary downstream consumer's database
+write is magically part of the Kafka transaction. If the broker outcome is
+ambiguous, the destination is invalidated and the checkpoint is not advanced;
+re-provisioning reloads the authoritative compacted state before retrying.
+
+Each pipeline owns exactly two topics:
+
+- `<prefix>.events`, containing ordered transaction and snapshot envelopes;
+- `<prefix>.state`, with `cleanup.policy=compact`, containing configuration,
+  the highest committed PostgreSQL position, and bounded current-snapshot
+  progress.
+
+Both topics require exactly one partition per pipeline. This is deliberate:
+transaction order is a correctness boundary, not a throughput hint. Scale by
+using independent pipeline/topic prefixes. A production cluster should use a
+replication factor of three, `acks=all`, idempotence, TLS/SASL credentials from
+secret-backed Confluent configuration, and a unique transactional ID for each
+active pipeline writer.
+
+```csharp
+var destination = new KafkaSyncDestination(new KafkaSyncOptions
+{
+    BootstrapServers = configuration["Kafka:BootstrapServers"]!,
+    TopicPrefix = "bluetusk.orders",
+    TransactionalId = "orders-sync-primary",
+    ClientId = "orders-sync",
+    ReplicationFactor = 3,
+    ClientConfiguration = new Dictionary<string, string>
+    {
+        ["security.protocol"] = "SaslSsl",
+        ["sasl.mechanism"] = "SCRAM-SHA-512",
+        ["sasl.username"] = configuration["Kafka:Username"]!,
+        ["sasl.password"] = configuration["Kafka:Password"]!,
+    },
+});
+```
+
+Provisioning validates topic existence, partition count, and compaction on the
+state topic. The state record owns the pipeline, PostgreSQL source fingerprint,
+and transform fingerprint. Reusing a topic prefix for another pipeline/source
+fails closed; a transform change returns `RebuildRequired`. Snapshot batch
+progress is monotonic per table, old epoch keys are tombstoned on reset, and
+the ordinary CDC checkpoint never moves during snapshot delivery.
+
+## S3 and Parquet lake destination
+
+`BlueTusk.Sync.S3` stores each transaction or snapshot batch as one immutable,
+Zstandard-compressed Parquet object. Every row retains the stable source ID,
+mutation order, operation, collection/key routing, content type, partition key,
+and opaque content bytes. File metadata records the format, delivery, event,
+pipeline, and transform identities. Mutation count and final compressed byte
+size are bounded before any checkpoint can advance.
+
+S3 has no multi-object transaction, so BlueTusk uses an explicit data-lake
+commit protocol:
+
+1. write the deterministic Parquet data key with `If-None-Match: *`;
+2. verify an existing object has the same SHA-256 if a retry races it;
+3. write an immutable JSON manifest with `If-None-Match: *` last; and
+4. acknowledge the exact PostgreSQL position only after the manifest succeeds.
+
+Lake readers enumerate `commits/`, never `data/`. A crash between steps 1 and 3
+can leave an orphaned data object, but it cannot create a visible commit or
+advance Streams. Retrying uses the same object keys and hashes. A conflicting
+object fails closed. Transaction manifest names begin with the fixed-width
+commit-end LSN so a reader can retain authoritative PostgreSQL order.
+
+This is at-least-once delivery with immutable commit markers, not a claim that
+S3 provides cross-object transactions. The marker is the durable duplicate
+receipt. Re-delivery after restart returns `AlreadyApplied` when that marker is
+present, even if the caller presents changed content for the same source
+identity.
+
+```csharp
+var destination = new S3SyncDestination(new S3SyncOptions
+{
+    Client = amazonS3,
+    BucketName = "company-data-lake",
+    Prefix = "bluetusk/orders/v1",
+    ServerSideEncryption = ServerSideEncryptionMethod.AWSKMS,
+    KmsKeyId = configuration["DataLakeKmsKeyId"],
+    MaxMutationCount = 100_000,
+    MaxParquetBytes = 64 * 1024 * 1024,
+});
+```
+
+The prefix owns one immutable configuration object containing the pipeline,
+PostgreSQL source, and transform fingerprints. Reusing it for another source
+fails; transform drift returns `RebuildRequired`. Use a new generation prefix
+for rebuilds. Production defaults request S3-managed encryption, while KMS can
+be enforced explicitly. Bucket policy should limit the writer to its prefix,
+deny unencrypted transport, retain commit manifests, and apply lifecycle rules
+to known orphan/data retention separately from committed evidence.
+
+## Signed webhook destination
+
+`BlueTusk.Sync.Webhooks` delivers one bounded JSON envelope for an entire source
+transaction. It also emits explicit snapshot reset, start, batch, and completion
+events. Each request has a deterministic delivery ID and an HMAC-SHA256
+signature over the timestamp and exact request body. HTTPS is mandatory unless
+insecure HTTP is explicitly enabled for a local test.
+
+The receiver—not an in-process cache—owns durable duplicate detection. It must
+persist the delivery ID with the application result before replying with
+`BlueTusk-Delivery-Status: applied`. A redelivery replies with `duplicate`.
+BlueTusk treats a successful HTTP response without either acknowledgement as
+ambiguous and does not advance the Streams checkpoint. HTTP 408, 425, 429, and
+5xx responses receive bounded retries with the same delivery ID, body,
+timestamp, and signature.
+
+This is a concrete at-least-once contract: a crash can cause the same request to
+arrive again, but the receiver has a stable ID with which to suppress repeated
+work. It is not described as “exactly once.” Transaction envelopes are ordered
+per destination instance and contain stable mutation IDs, collection/key
+routing, content types, partition keys, and base64-encoded opaque content.
+
+Provisioning is also signed. The receiver returns its durable transform
+fingerprint in `BlueTusk-Transform-Fingerprint`; a different fingerprint causes
+`RebuildRequired` before data delivery begins. Configure the destination with a
+dedicated `HttpClient`, an HTTPS endpoint, a non-secret key identifier, and at
+least 32 random signing-key bytes:
+
+```csharp
+var destination = new WebhookSyncDestination(new WebhookSyncOptions
+{
+    Client = httpClient,
+    Endpoint = new Uri("https://receiver.example.com/bluetusk/sync"),
+    KeyId = "orders-2026-09",
+    SigningKey = Convert.FromBase64String(configuration["WebhookSigningKey"]!),
+});
+```
+
+The receiver must reject stale timestamps according to its clock-skew policy,
+look up the key by `BlueTusk-Key-Id`, compare signatures in constant time,
+validate `formatVersion`, and persist the delivery ID in the same durability
+boundary as the business effect. Rotate keys by accepting both identifiers for
+the maximum retry interval before removing the old key.
 
 ## Redis destination
 

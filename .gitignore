@@ -3,6 +3,7 @@
 .vs/
 .vscode/
 .idea/
+.angular/
 TestResults/
 artifacts/
 benchmarks/baselines/**/*.log

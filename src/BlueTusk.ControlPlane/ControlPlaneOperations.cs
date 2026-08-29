@@ -20,6 +20,11 @@ public enum ControlPlaneOperationKind
     RewindCheckpoint,
     DeleteSlot,
     ReplayQuarantine,
+    PauseDeployment,
+    ResumeDeployment,
+    ReconcileDeployment,
+    RebuildDeployment,
+    DeleteDeployment,
 }
 
 public enum ControlPlaneAuditStatus
@@ -72,7 +77,8 @@ public static class ControlPlaneOperationPolicies
         var destructive = kind is
             ControlPlaneOperationKind.RemoveConsumerGroup or
             ControlPlaneOperationKind.RewindCheckpoint or
-            ControlPlaneOperationKind.DeleteSlot;
+            ControlPlaneOperationKind.DeleteSlot or
+            ControlPlaneOperationKind.DeleteDeployment;
         return new ControlPlaneOperationPolicy(
             destructive ? ControlPlaneRole.Administrator : ControlPlaneRole.Operator,
             kind + ":" + target,
