@@ -21,6 +21,11 @@ spec:
       restartPolicy: Never
       terminationGracePeriodSeconds: 120
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -40,6 +45,11 @@ spec:
           envFrom:
             - configMapRef:
                 name: endurance-candidate
+          env:
+            - name: DOTNET_CLI_HOME
+              value: /workspace/.dotnet
+            - name: NUGET_PACKAGES
+              value: /workspace/.nuget/packages
           resources:
             requests: {cpu: "1", memory: 768Mi}
             limits: {cpu: "2", memory: 1536Mi}
@@ -48,8 +58,11 @@ spec:
             capabilities:
               drop: [ALL]
           volumeMounts:
+            - {name: workspace, mountPath: /workspace}
             - {name: evidence, mountPath: /workspace/artifacts}
       volumes:
+        - name: workspace
+          emptyDir: {}
         - name: evidence
           persistentVolumeClaim:
             claimName: endurance-evidence

@@ -27,6 +27,11 @@ spec:
       restartPolicy: Never
       terminationGracePeriodSeconds: 120
       securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
         seccompProfile:
           type: RuntimeDefault
       containers:
@@ -47,6 +52,10 @@ spec:
             - configMapRef:
                 name: endurance-candidate
           env:
+            - name: DOTNET_CLI_HOME
+              value: /workspace/.dotnet
+            - name: NUGET_PACKAGES
+              value: /workspace/.nuget/packages
             - name: NON_GATING_PREVIEW
               value: "true"
             - name: POSTGRES_PASSWORD
@@ -62,8 +71,11 @@ spec:
             capabilities:
               drop: [ALL]
           volumeMounts:
+            - {name: workspace, mountPath: /workspace}
             - {name: evidence, mountPath: /workspace/artifacts}
       volumes:
+        - name: workspace
+          emptyDir: {}
         - name: evidence
           persistentVolumeClaim:
             claimName: endurance-evidence

@@ -3,8 +3,9 @@
 This lane runs the exact BlueTusk 1.2 release candidate in the isolated
 `bluetusk-endurance` namespace. It distributes destination services across the
 cluster instead of nesting them inside one Docker-in-Docker runner. All images
-are digest pinned, service-account tokens are disabled, traffic is isolated by
-default, and reports are written continuously to a retained block volume.
+are digest pinned, runners use a fixed non-root identity, service-account tokens
+are disabled, traffic is isolated by default, and reports are written
+continuously to a retained block volume.
 
 The launcher refuses to start a gate unless the exact candidate commit is an
 ancestor of `origin/main`. Streams must complete and verify before Sync can
