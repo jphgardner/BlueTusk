@@ -1,0 +1,212 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bluetusk-dashboard-preview
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+    app.kubernetes.io/part-of: bluetusk
+automountServiceAccountToken: false
+imagePullSecrets:
+  - name: bluetusk
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bluetusk-dashboard-preview
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+    app.kubernetes.io/part-of: bluetusk
+    app.kubernetes.io/component: dashboard
+    app.kubernetes.io/version: 1.2.0-rc.1
+spec:
+  replicas: 2
+  minReadySeconds: 5
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-dashboard-preview
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bluetusk-dashboard-preview
+        app.kubernetes.io/part-of: bluetusk
+        app.kubernetes.io/component: dashboard
+        app.kubernetes.io/version: 1.2.0-rc.1
+    spec:
+      serviceAccountName: bluetusk-dashboard-preview
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: bluetusk-dashboard-preview
+      containers:
+        - name: dashboard
+          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:d5838112c6d56380492a4edc15eceaea8f07b884f4fc7a4f66bc3ae9a4d67f8c
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+              ephemeral-storage: 32Mi
+            limits:
+              cpu: 300m
+              memory: 192Mi
+              ephemeral-storage: 256Mi
+          startupProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            failureThreshold: 30
+            periodSeconds: 2
+            timeoutSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            failureThreshold: 3
+            periodSeconds: 15
+            timeoutSeconds: 2
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluetusk-dashboard-preview
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: bluetusk-dashboard-preview
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-dashboard-preview
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bluetusk-dashboard-preview
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-dashboard-preview
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: traefik
+      ports:
+        - protocol: TCP
+          port: 8080
+  egress: []
+---
+apiVersion: cert-manager.io/v1
+kind: Certificate
+metadata:
+  name: dashboard-bluetusk-io
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  secretName: dashboard-bluetusk-io-tls
+  dnsNames:
+    - dashboard.bluetusk.io
+  issuerRef:
+    kind: ClusterIssuer
+    name: letsencrypt-production
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: bluetusk-dashboard-preview
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-preview
+    app.kubernetes.io/part-of: bluetusk
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: web,websecure
+    traefik.ingress.kubernetes.io/router.middlewares: bluetusk-web-bluetusk-https-redirect@kubernetescrd
+spec:
+  ingressClassName: traefik
+  rules:
+    - host: dashboard.bluetusk.io
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: bluetusk-dashboard-preview
+                port:
+                  name: http
+  tls:
+    - hosts:
+        - dashboard.bluetusk.io
+      secretName: dashboard-bluetusk-io-tls
