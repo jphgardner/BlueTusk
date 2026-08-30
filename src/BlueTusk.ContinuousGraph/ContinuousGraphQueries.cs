@@ -1,7 +1,9 @@
+using System.Buffers;
 using System.Collections.ObjectModel;
 using System.Data;
 using System.Globalization;
 using System.Linq.Expressions;
+using System.Security.Cryptography;
 using System.Text;
 using BlueTusk.Data;
 using BlueTusk.EntityFrameworkCore.Graphs;
@@ -42,8 +44,10 @@ public sealed class ContinuousGraphImpactPlan
         ResultKeyProperty = resultKeyProperty;
         ResultKeyElementAlias = resultKeyElementAlias;
         ResultKeyColumn = resultKeyColumn;
-        _patternElements = Array.AsReadOnly(patternElements.ToArray());
-        _projections = Array.AsReadOnly(projections.ToArray());
+        _patternElements = Array.AsReadOnly(
+            patternElements as string[] ?? patternElements.ToArray());
+        _projections = Array.AsReadOnly(
+            projections as string[] ?? projections.ToArray());
         CanonicalQuery = canonicalQuery;
     }
 
@@ -413,17 +417,15 @@ public static class ContinuousGraphQueryCompiler
                 $"Continuous graph query '{definition.Name}' must translate through GRAPH_TABLE.");
         }
 
+        var defaultSchema = graph.Schema ?? context.Model.GetDefaultSchema() ?? "public";
+        var impactPatternElements = BuildImpactPatternElements(
+            capturedImpact,
+            definition.ElementTableAliases,
+            defaultSchema);
+        var impactProjections = BuildImpactProjections(capturedImpact);
         var canonicalImpact = capturedImpact is null
             ? "<uncaptured>"
-            : string.Join(';', capturedImpact.Elements.Select(element => string.Join(
-                ':',
-                element.Variable,
-                element.Alias,
-                element.Kind,
-                string.Join('|', element.Labels),
-                element.Direction?.ToString() ?? "vertex",
-                element.MinimumHops,
-                element.MaximumHops)));
+            : CreateImpactFingerprint(impactPatternElements);
 
         var canonicalPlan = string.Join(
             '\n',
@@ -439,10 +441,10 @@ public static class ContinuousGraphQueryCompiler
             canonicalImpact,
             shape.CanonicalExpression,
             definition.RowComparer.GetType().AssemblyQualifiedName);
-        var fingerprint = LiveQueryFingerprint.Create(
+        var fingerprint = CreateFingerprint(
             definition.Name,
             definition.Version,
-            Encoding.UTF8.GetBytes(canonicalPlan));
+            canonicalPlan);
         var capabilities =
             LiveQueryCapabilities.TenantFilter |
             LiveQueryCapabilities.DeterministicOrdering |
@@ -481,7 +483,7 @@ public static class ContinuousGraphQueryCompiler
         var automaticImpacts = TryBuildAutomaticImpacts(
             capturedImpact,
             keyProperty,
-            graph.Schema ?? context.Model.GetDefaultSchema() ?? "public",
+            defaultSchema,
             out var keyProjection);
         var impactPlan = new ContinuousGraphImpactPlan(
             graph.Name,
@@ -490,23 +492,8 @@ public static class ContinuousGraphQueryCompiler
             keyProperty,
             keyProjection?.ElementAlias,
             keyProjection?.ColumnName,
-            capturedImpact?.Elements.Select(element => string.Join(
-                ':',
-                element.Variable,
-                element.Alias,
-                element.Kind,
-                string.Join('|', element.Labels),
-                element.Direction?.ToString() ?? "vertex",
-                $"{element.MinimumHops}..{element.MaximumHops}",
-                element.Schema ?? graph.Schema ?? context.Model.GetDefaultSchema() ?? "public",
-                element.Table,
-                string.Join(',', element.KeyColumns))) ?? definition.ElementTableAliases,
-            capturedImpact?.Projections.Select(projection => string.Join(
-                ':',
-                projection.ResultProperty,
-                projection.Variable,
-                projection.GraphProperty,
-                projection.ColumnName ?? "<expression>")) ?? [],
+            impactPatternElements,
+            impactProjections,
             shape.CanonicalExpression);
         Func<
             IContinuousGraphCdcProjector<TResult, TKey>?,
@@ -555,6 +542,108 @@ public static class ContinuousGraphQueryCompiler
             maintenanceCapabilities,
             impactPlan,
             automaticEvaluatorFactory);
+    }
+
+    private static string[] BuildImpactPatternElements(
+        BlueTuskGraphQueryImpactPlan? capturedImpact,
+        IEnumerable<string> fallbackAliases,
+        string defaultSchema)
+    {
+        if (capturedImpact is null)
+        {
+            return fallbackAliases.ToArray();
+        }
+
+        var elements = new string[capturedImpact.Elements.Count];
+        for (var index = 0; index < elements.Length; index++)
+        {
+            var element = capturedImpact.Elements[index];
+            elements[index] =
+                $"{element.Variable}:{element.Alias}:{element.Kind}:" +
+                $"{string.Join('|', element.Labels)}:" +
+                $"{element.Direction?.ToString() ?? "vertex"}:" +
+                $"{element.MinimumHops}..{element.MaximumHops}:" +
+                $"{element.Schema ?? capturedImpact.GraphSchema ?? defaultSchema}:" +
+                $"{element.Table}:{string.Join(',', element.KeyColumns)}";
+        }
+
+        return elements;
+    }
+
+    private static string CreateFingerprint(
+        string name,
+        string version,
+        string canonicalPlan)
+    {
+        var byteCount = Encoding.UTF8.GetByteCount(canonicalPlan);
+        var bytes = ArrayPool<byte>.Shared.Rent(byteCount);
+        try
+        {
+            var written = Encoding.UTF8.GetBytes(canonicalPlan, bytes);
+            return LiveQueryFingerprint.Create(
+                name,
+                version,
+                bytes.AsSpan(0, written));
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes, clearArray: true);
+        }
+    }
+
+    private static string CreateImpactFingerprint(string[] elements)
+    {
+        var byteCount = checked(elements.Length * sizeof(int));
+        for (var index = 0; index < elements.Length; index++)
+        {
+            byteCount = checked(byteCount + Encoding.UTF8.GetByteCount(elements[index]));
+        }
+
+        var bytes = ArrayPool<byte>.Shared.Rent(byteCount);
+        try
+        {
+            var written = 0;
+            for (var index = 0; index < elements.Length; index++)
+            {
+                var lengthOffset = written;
+                written += sizeof(int);
+                var elementBytes = Encoding.UTF8.GetBytes(
+                    elements[index],
+                    bytes.AsSpan(written));
+                System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(
+                    bytes.AsSpan(lengthOffset, sizeof(int)),
+                    elementBytes);
+                written += elementBytes;
+            }
+
+            Span<byte> hash = stackalloc byte[SHA256.HashSizeInBytes];
+            SHA256.HashData(bytes.AsSpan(0, written), hash);
+            return Convert.ToHexStringLower(hash);
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes, clearArray: true);
+        }
+    }
+
+    private static string[] BuildImpactProjections(
+        BlueTuskGraphQueryImpactPlan? capturedImpact)
+    {
+        if (capturedImpact is null)
+        {
+            return [];
+        }
+
+        var projections = new string[capturedImpact.Projections.Count];
+        for (var index = 0; index < projections.Length; index++)
+        {
+            var projection = capturedImpact.Projections[index];
+            projections[index] =
+                $"{projection.ResultProperty}:{projection.Variable}:" +
+                $"{projection.GraphProperty}:{projection.ColumnName ?? "<expression>"}";
+        }
+
+        return projections;
     }
 
     private static ReadOnlyCollection<ContinuousGraphAutomaticTableImpact>?

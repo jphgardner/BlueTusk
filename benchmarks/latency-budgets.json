@@ -74,36 +74,42 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.DiffOneUpdatedRowInOneThousand",
+      "parameters": "ResultCount=1000&SubscriberCount=64",
       "maximumMeanNanoseconds": 96000,
       "maximumP95Nanoseconds": 107000,
       "reason": "Keyed Live diff of a 1,000-row result with one update."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.SerializeOneUpdatedRow",
+      "parameters": "ResultCount=1000&SubscriberCount=64",
       "maximumMeanNanoseconds": 1110,
       "maximumP95Nanoseconds": 1160,
       "reason": "Versioned and integrity-protected replay event serialization."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.LiveQueryBenchmarks.CoalesceOneHundredInvalidationsAndFanOut64SubscribersAsync",
+      "parameters": "ResultCount=1000&SubscriberCount=64",
       "maximumMeanNanoseconds": 116000,
       "maximumP95Nanoseconds": 119000,
       "reason": "Shared-subscription coalescing, authoritative refresh, replay persistence, and fan-out."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.CompileGraphRegistrationAsync",
+      "parameters": "EdgeCount=1000&TopN=1000",
       "maximumMeanNanoseconds": 1240000,
       "maximumP95Nanoseconds": 1350000,
       "reason": "PostgreSQL-backed graph registration, validation, translation, and fingerprinting."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AuthoritativeGraphRequeryAsync",
+      "parameters": "EdgeCount=1000&TopN=1000",
       "maximumMeanNanoseconds": 3540000,
       "maximumP95Nanoseconds": 3610000,
       "reason": "Authoritative PostgreSQL GRAPH_TABLE query and materialisation of 999 results."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.ContinuousGraphBenchmarks.AffectedGraphRefreshAndDiffAsync",
+      "parameters": "EdgeCount=1000&TopN=1000",
       "maximumMeanNanoseconds": 5290000,
       "maximumP95Nanoseconds": 5470000,
       "reason": "Affected invalidation, authoritative graph requery, and keyed Live diff."
@@ -134,12 +140,15 @@
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.AssembleAndMaterializeOneThousandInserts",
+      "parameters": "TransactionChangeCount=1000",
+      "normalizationDivisorParameter": "TransactionChangeCount",
       "maximumMeanNanoseconds": 880,
       "maximumP95Nanoseconds": 900,
       "reason": "CDC transaction assembly and materialisation normalized per change."
     },
     {
       "benchmark": "BlueTusk.Benchmarks.StreamsTransactionBenchmarks.SpillAndStreamFourMiBTransaction",
+      "parameters": "TransactionChangeCount=1",
       "maximumMeanNanoseconds": 58500000,
       "maximumP95Nanoseconds": 59600000,
       "reason": "Durable 4 MiB transaction spill, integrity-checked stream, and cleanup."

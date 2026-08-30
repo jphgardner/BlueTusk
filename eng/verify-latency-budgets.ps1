@@ -29,7 +29,7 @@ if (-not [double]::IsFinite($maximumMeanRegressionPercent) -or
     throw 'Latency budget policy contains invalid limits.'
 }
 
-$actual = @{}
+$actual = [System.Collections.Generic.List[object]]::new()
 $reports = @(
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-brief.json"
     Get-ChildItem -LiteralPath $BaselinePath -Filter "*-report-full.json"
@@ -44,7 +44,20 @@ $reports | ForEach-Object {
             continue
         }
 
-        $actual[[string]$benchmark.FullName] = $benchmark
+        $benchmarkName = if (
+            -not [string]::IsNullOrWhiteSpace([string]$benchmark.Namespace) -and
+            -not [string]::IsNullOrWhiteSpace([string]$benchmark.Type) -and
+            -not [string]::IsNullOrWhiteSpace([string]$benchmark.Method)) {
+            "$($benchmark.Namespace).$($benchmark.Type).$($benchmark.Method)"
+        }
+        else {
+            [regex]::Replace([string]$benchmark.FullName, '\(.*\)$', '')
+        }
+        $actual.Add([pscustomobject]@{
+            Benchmark = $benchmarkName
+            Parameters = [string]$benchmark.Parameters
+            Result = $benchmark
+        })
     }
 }
 
@@ -52,13 +65,26 @@ $failures = [System.Collections.Generic.List[string]]::new()
 $seen = [System.Collections.Generic.HashSet[string]]::new([StringComparer]::Ordinal)
 foreach ($budget in @($configuration.budgets)) {
     $benchmarkName = [string]$budget.benchmark
-    if (-not $seen.Add($benchmarkName)) {
-        $failures.Add("Duplicate latency budget for $benchmarkName.")
+    $parameters = if ($null -ne $budget.PSObject.Properties['parameters']) {
+        [string]$budget.parameters
+    }
+    else {
+        ''
+    }
+    $budgetKey = "$benchmarkName|$parameters"
+    $displayName = if ([string]::IsNullOrWhiteSpace($parameters)) {
+        $benchmarkName
+    }
+    else {
+        "$benchmarkName [$parameters]"
+    }
+    if (-not $seen.Add($budgetKey)) {
+        $failures.Add("Duplicate latency budget for $displayName.")
         continue
     }
 
     if ([string]::IsNullOrWhiteSpace([string]$budget.reason)) {
-        $failures.Add("Latency budget for $benchmarkName has no reason.")
+        $failures.Add("Latency budget for $displayName has no reason.")
     }
 
     $maximumMean = [double]$budget.maximumMeanNanoseconds
@@ -66,7 +92,7 @@ foreach ($budget in @($configuration.budgets)) {
     if (-not [double]::IsFinite($maximumMean) -or $maximumMean -le 0 -or
         -not [double]::IsFinite($maximumP95) -or $maximumP95 -le 0 -or
         $maximumP95 -lt $maximumMean) {
-        $failures.Add("Latency budget for $benchmarkName has invalid mean/P95 ceilings.")
+        $failures.Add("Latency budget for $displayName has invalid mean/P95 ceilings.")
     }
 
     if ($null -ne $budget.PSObject.Properties['calibration']) {
@@ -138,12 +164,27 @@ foreach ($budget in @($configuration.budgets)) {
         }
     }
 
-    if (-not $actual.ContainsKey($benchmarkName)) {
-        $failures.Add("Missing latency result for $benchmarkName.")
+    $matches = @($actual | Where-Object {
+        $_.Benchmark -eq $benchmarkName -and $_.Parameters -eq $parameters
+    })
+    $usedLegacyFallback = $false
+    if ($matches.Count -eq 0 -and -not [string]::IsNullOrWhiteSpace($parameters)) {
+        $matches = @($actual | Where-Object {
+            $_.Benchmark -eq $benchmarkName -and
+            [string]::IsNullOrWhiteSpace($_.Parameters)
+        })
+        $usedLegacyFallback = $matches.Count -eq 1
+    }
+    if ($matches.Count -eq 0) {
+        $failures.Add("Missing latency result for $displayName.")
+        continue
+    }
+    if ($matches.Count -ne 1) {
+        $failures.Add("Latency result for $displayName is ambiguous; found $($matches.Count) measurements.")
         continue
     }
 
-    $benchmark = $actual[$benchmarkName]
+    $benchmark = $matches[0].Result
     $samples = if ($null -ne $benchmark.Statistics.PSObject.Properties['N']) {
         [int]$benchmark.Statistics.N
     }
@@ -154,29 +195,52 @@ foreach ($budget in @($configuration.budgets)) {
         0
     }
     if ($samples -lt $minimumSamples) {
-        $failures.Add("$benchmarkName has $samples samples; at least $minimumSamples are required.")
+        $failures.Add("$displayName has $samples samples; at least $minimumSamples are required.")
     }
 
     $mean = [double]$benchmark.Statistics.Mean
     $p95 = [double]$benchmark.Statistics.Percentiles.P95
+    if (-not $usedLegacyFallback -and
+        $null -ne $budget.PSObject.Properties['normalizationDivisorParameter']) {
+        $divisorName = [string]$budget.normalizationDivisorParameter
+        $parameterValues = @{}
+        foreach ($part in @($parameters -split '&')) {
+            $pair = @($part -split '=', 2)
+            if ($pair.Count -eq 2) {
+                $parameterValues[$pair[0]] = $pair[1]
+            }
+        }
+        $divisor = 0L
+        if (-not $parameterValues.ContainsKey($divisorName) -or
+            -not [long]::TryParse(
+                [string]$parameterValues[$divisorName],
+                [ref]$divisor) -or
+            $divisor -le 0) {
+            $failures.Add(
+                "Latency budget for $displayName has invalid normalization parameter '$divisorName'.")
+            continue
+        }
+        $mean /= $divisor
+        $p95 /= $divisor
+    }
     if (-not [double]::IsFinite($mean) -or $mean -le 0) {
-        $failures.Add("$benchmarkName has an invalid mean '$mean'.")
+        $failures.Add("$displayName has an invalid mean '$mean'.")
     }
     elseif ($mean -gt $maximumMean) {
-        $failures.Add("$benchmarkName mean is $([math]::Round($mean, 3)) ns; budget is $maximumMean ns.")
+        $failures.Add("$displayName mean is $([math]::Round($mean, 3)) ns; budget is $maximumMean ns.")
     }
 
     if (-not [double]::IsFinite($p95) -or $p95 -le 0) {
-        $failures.Add("$benchmarkName has an invalid P95 '$p95'.")
+        $failures.Add("$displayName has an invalid P95 '$p95'.")
     }
     elseif ($p95 -gt $maximumP95) {
-        $failures.Add("$benchmarkName P95 is $([math]::Round($p95, 3)) ns; budget is $maximumP95 ns.")
+        $failures.Add("$displayName P95 is $([math]::Round($p95, 3)) ns; budget is $maximumP95 ns.")
     }
 
     if ($mean -le $maximumMean -and $p95 -le $maximumP95) {
         Write-Host (
             "{0}: mean {1:N3}/{2:N3} ns; P95 {3:N3}/{4:N3} ns" -f
-            $benchmarkName,
+            $displayName,
             $mean,
             $maximumMean,
             $p95,
