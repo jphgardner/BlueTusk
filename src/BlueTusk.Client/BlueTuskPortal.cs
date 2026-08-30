@@ -280,6 +280,8 @@ public sealed class BlueTuskPortalRow
     private int _payloadLength;
     private bool _payloadBuffered;
     private ReadOnlyMemory<byte> _bufferedPayload;
+    private int _bufferedNextField;
+    private int _bufferedValueOffset = sizeof(short);
     private int _payloadConsumed;
     private int _activeOrdinal = -1;
     private int _activeLength = -2;
@@ -359,13 +361,21 @@ public sealed class BlueTuskPortalRow
         _payloadConsumed = sizeof(short);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     internal ReadOnlyMemory<byte>? ReadBufferedField(int ordinal)
     {
         ValidateOrdinal(ordinal);
         EnsureBuffered();
-        var offset = sizeof(short);
-        for (var index = 0; index < FieldCount; index++)
+        if (ordinal < _bufferedNextField || _bufferedNextField > FieldCount)
         {
+            _bufferedNextField = 0;
+            _bufferedValueOffset = sizeof(short);
+        }
+
+        while (_bufferedNextField <= ordinal)
+        {
+            var index = _bufferedNextField++;
+            var offset = _bufferedValueOffset;
             if (offset > _bufferedPayload.Length - sizeof(int))
             {
                 throw new BlueTuskProtocolException(
@@ -381,6 +391,13 @@ public sealed class BlueTuskPortalRow
                     "DataRow field length exceeds the buffered message payload.");
             }
 
+            var valueOffset = offset;
+            if (length >= 0)
+            {
+                offset += length;
+            }
+
+            _bufferedValueOffset = offset;
             if (index == ordinal)
             {
                 if (length == -1)
@@ -388,12 +405,7 @@ public sealed class BlueTuskPortalRow
                     return null;
                 }
 
-                return _bufferedPayload.Slice(offset, length);
-            }
-
-            if (length != -1)
-            {
-                offset += length;
+                return _bufferedPayload.Slice(valueOffset, length);
             }
         }
 
@@ -1026,6 +1038,8 @@ public sealed class BlueTuskPortalRow
         _payloadConsumed = 0;
         _payloadBuffered = payloadBuffered;
         _bufferedPayload = default;
+        _bufferedNextField = 0;
+        _bufferedValueOffset = sizeof(short);
         _activeOrdinal = -1;
         _activeLength = -2;
         _activePosition = 0;

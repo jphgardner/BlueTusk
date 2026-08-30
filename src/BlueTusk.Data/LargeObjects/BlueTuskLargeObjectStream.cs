@@ -1,3 +1,6 @@
+using System.Buffers;
+using System.Runtime.CompilerServices;
+
 namespace BlueTusk.Data.LargeObjects;
 
 /// <summary>Provides synchronous and asynchronous transactional access to a PostgreSQL large object.</summary>
@@ -8,6 +11,9 @@ public sealed class BlueTuskLargeObjectStream : Stream
     private readonly FileAccess _access;
     private long _length;
     private long _position;
+    private byte[]? _readAheadBuffer;
+    private int _readAheadOffset;
+    private int _readAheadCount;
     private int _faulted;
     private int _disposed;
 
@@ -61,6 +67,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
                 _position = restored;
                 _length = length;
+                InvalidateReadAhead();
                 return length;
             }
             catch
@@ -112,14 +119,21 @@ public sealed class BlueTuskLargeObjectStream : Stream
         try
         {
             var requested = Math.Min(count, MaximumTransferSize);
-            var read = _operations.Read(buffer.AsSpan(offset, requested));
-            _position = checked(_position + read);
-            if (read < requested)
+            if (_readAheadCount != 0)
             {
-                _length = _position;
+                return CopyReadAhead(buffer.AsSpan(offset, requested));
             }
 
-            return read;
+            if (requested == MaximumTransferSize)
+            {
+                var read = _operations.Read(buffer.AsSpan(offset, requested));
+                AdvanceDirectRead(read, requested);
+                return read;
+            }
+
+            var readAhead = EnsureReadAheadBuffer();
+            var fetched = _operations.Read(readAhead.AsSpan(0, MaximumTransferSize));
+            return BufferAndCopyReadAhead(fetched, buffer.AsSpan(offset, requested));
         }
         catch
         {
@@ -143,19 +157,29 @@ public sealed class BlueTuskLargeObjectStream : Stream
             return 0;
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         try
         {
             var requested = Math.Min(buffer.Length, MaximumTransferSize);
-            var read = await _operations.ReadAsync(
-                buffer[..requested],
-                cancellationToken).ConfigureAwait(false);
-            _position = checked(_position + read);
-            if (read < requested)
+            if (_readAheadCount != 0)
             {
-                _length = _position;
+                return CopyReadAhead(buffer.Span[..requested]);
             }
 
-            return read;
+            if (requested == MaximumTransferSize)
+            {
+                var read = await _operations.ReadAsync(
+                    buffer[..requested],
+                    cancellationToken).ConfigureAwait(false);
+                AdvanceDirectRead(read, requested);
+                return read;
+            }
+
+            var readAhead = EnsureReadAheadBuffer();
+            var fetched = await _operations.ReadAsync(
+                readAhead.AsMemory(0, MaximumTransferSize),
+                cancellationToken).ConfigureAwait(false);
+            return BufferAndCopyReadAhead(fetched, buffer.Span[..requested]);
         }
         catch
         {
@@ -175,6 +199,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
         try
         {
+            SynchronizeReadAhead();
             var remaining = buffer.AsSpan(offset, count);
             while (!remaining.IsEmpty)
             {
@@ -214,6 +239,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
         try
         {
+            await SynchronizeReadAheadAsync(cancellationToken).ConfigureAwait(false);
             while (!buffer.IsEmpty)
             {
                 var count = Math.Min(buffer.Length, MaximumTransferSize);
@@ -252,13 +278,16 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
         try
         {
-            var position = _operations.Seek(offset, origin);
+            var position = _readAheadCount != 0 && origin == SeekOrigin.Current
+                ? _operations.Seek(checked(_position + offset), SeekOrigin.Begin)
+                : _operations.Seek(offset, origin);
             if (position < 0)
             {
                 throw new IOException("PostgreSQL returned a negative large-object position.");
             }
 
             _position = position;
+            InvalidateReadAhead();
             if (origin == SeekOrigin.End)
             {
                 _length = checked(position - offset);
@@ -287,9 +316,15 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
         try
         {
+            var seekOffset = _readAheadCount != 0 && origin == SeekOrigin.Current
+                ? checked(_position + offset)
+                : offset;
+            var seekOrigin = _readAheadCount != 0 && origin == SeekOrigin.Current
+                ? SeekOrigin.Begin
+                : origin;
             var position = await _operations.SeekAsync(
-                offset,
-                origin,
+                seekOffset,
+                seekOrigin,
                 cancellationToken).ConfigureAwait(false);
             if (position < 0)
             {
@@ -297,6 +332,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
             }
 
             _position = position;
+            InvalidateReadAhead();
             if (origin == SeekOrigin.End)
             {
                 _length = checked(position - offset);
@@ -322,6 +358,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
         ArgumentOutOfRangeException.ThrowIfNegative(value);
         try
         {
+            SynchronizeReadAhead();
             _operations.SetLength(value);
             _length = value;
         }
@@ -346,6 +383,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
         ArgumentOutOfRangeException.ThrowIfNegative(value);
         try
         {
+            await SynchronizeReadAheadAsync(cancellationToken).ConfigureAwait(false);
             await _operations.SetLengthAsync(value, cancellationToken).ConfigureAwait(false);
             _length = value;
         }
@@ -366,6 +404,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
             }
             finally
             {
+                ReturnReadAheadBuffer();
                 base.Dispose(disposing);
             }
 
@@ -387,6 +426,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
             }
             finally
             {
+                ReturnReadAheadBuffer();
                 await base.DisposeAsync().ConfigureAwait(false);
                 GC.SuppressFinalize(this);
             }
@@ -395,6 +435,113 @@ public sealed class BlueTuskLargeObjectStream : Stream
         {
             await base.DisposeAsync().ConfigureAwait(false);
         }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    private int CopyReadAhead(Span<byte> destination)
+    {
+        var count = Math.Min(destination.Length, _readAheadCount);
+        _readAheadBuffer!.AsSpan(_readAheadOffset, count).CopyTo(destination);
+        _readAheadOffset += count;
+        _readAheadCount -= count;
+        _position = checked(_position + count);
+        if (_readAheadCount == 0)
+        {
+            _readAheadOffset = 0;
+        }
+
+        return count;
+    }
+
+    private int BufferAndCopyReadAhead(int fetched, Span<byte> destination)
+    {
+        if ((uint)fetched > MaximumTransferSize)
+        {
+            throw new IOException(
+                $"PostgreSQL returned {fetched} large-object bytes when {MaximumTransferSize} were requested.");
+        }
+
+        _readAheadOffset = 0;
+        _readAheadCount = fetched;
+        var read = CopyReadAhead(destination);
+        if (fetched < MaximumTransferSize)
+        {
+            _length = checked(_position + _readAheadCount);
+        }
+
+        return read;
+    }
+
+    private void AdvanceDirectRead(int read, int requested)
+    {
+        if ((uint)read > (uint)requested)
+        {
+            throw new IOException(
+                $"PostgreSQL returned {read} large-object bytes when {requested} were requested.");
+        }
+
+        _position = checked(_position + read);
+        if (read < requested)
+        {
+            _length = _position;
+        }
+    }
+
+    private byte[] EnsureReadAheadBuffer() =>
+        _readAheadBuffer ??= ArrayPool<byte>.Shared.Rent(MaximumTransferSize);
+
+    private void SynchronizeReadAhead()
+    {
+        if (_readAheadCount == 0)
+        {
+            return;
+        }
+
+        var restored = _operations.Seek(_position, SeekOrigin.Begin);
+        if (restored != _position)
+        {
+            throw new IOException(
+                $"PostgreSQL restored large-object position {restored} instead of {_position}.");
+        }
+
+        InvalidateReadAhead();
+    }
+
+    private async ValueTask SynchronizeReadAheadAsync(CancellationToken cancellationToken)
+    {
+        if (_readAheadCount == 0)
+        {
+            return;
+        }
+
+        var restored = await _operations.SeekAsync(
+            _position,
+            SeekOrigin.Begin,
+            cancellationToken).ConfigureAwait(false);
+        if (restored != _position)
+        {
+            throw new IOException(
+                $"PostgreSQL restored large-object position {restored} instead of {_position}.");
+        }
+
+        InvalidateReadAhead();
+    }
+
+    private void InvalidateReadAhead()
+    {
+        _readAheadOffset = 0;
+        _readAheadCount = 0;
+    }
+
+    private void ReturnReadAheadBuffer()
+    {
+        var buffer = Interlocked.Exchange(ref _readAheadBuffer, null);
+        if (buffer is not null)
+        {
+            ArrayPool<byte>.Shared.Return(buffer);
+        }
+
+        InvalidateReadAhead();
     }
 
     private void ThrowIfDisposed() => ObjectDisposedException.ThrowIf(IsDisposed, this);

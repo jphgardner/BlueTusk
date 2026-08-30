@@ -115,12 +115,35 @@ public partial class ProviderComparisonBenchmarks : IAsyncDisposable
             _ = await dropPayload.ExecuteNonQueryAsync();
         }
 
-        await _blueTuskPreparedCommand.DisposeAsync();
-        await _npgsqlPreparedCommand.DisposeAsync();
-        await _blueTuskConnection!.DisposeAsync();
-        await _npgsqlConnection.DisposeAsync();
-        await _blueTuskDataSource.DisposeAsync();
-        await _npgsqlDataSource.DisposeAsync();
+        if (_blueTuskPreparedCommand is not null)
+        {
+            await _blueTuskPreparedCommand.DisposeAsync();
+        }
+
+        if (_npgsqlPreparedCommand is not null)
+        {
+            await _npgsqlPreparedCommand.DisposeAsync();
+        }
+
+        if (_blueTuskConnection is not null)
+        {
+            await _blueTuskConnection.DisposeAsync();
+        }
+
+        if (_npgsqlConnection is not null)
+        {
+            await _npgsqlConnection.DisposeAsync();
+        }
+
+        if (_blueTuskDataSource is not null)
+        {
+            await _blueTuskDataSource.DisposeAsync();
+        }
+
+        if (_npgsqlDataSource is not null)
+        {
+            await _npgsqlDataSource.DisposeAsync();
+        }
         GC.SuppressFinalize(this);
     }
 
