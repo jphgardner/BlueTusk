@@ -248,7 +248,8 @@ internal sealed class KubernetesApiTopologySource
     internal static KubernetesApiTopologySource Create(KubernetesTopologyCollectorOptions options)
     {
         ArgumentNullException.ThrowIfNull(options);
-        var rootCertificate = X509Certificate2.CreateFromPemFile(options.CertificateAuthorityPath);
+        var rootCertificate = X509Certificate2.CreateFromPem(
+            File.ReadAllText(options.CertificateAuthorityPath));
         var handler = new SocketsHttpHandler
         {
             AutomaticDecompression = System.Net.DecompressionMethods.All,
