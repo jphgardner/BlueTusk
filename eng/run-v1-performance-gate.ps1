@@ -109,7 +109,7 @@ try
     }
     $providerPairedArguments += @(
         '--',
-        '--provider-paired-evidence',
+        '--provider-extended-paired-evidence',
         $providerPairedReport
     )
 

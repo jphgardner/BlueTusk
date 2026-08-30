@@ -17,6 +17,17 @@ if ($parseErrors.Count -ne 0)
     throw "V1 performance gate has PowerShell parse errors: $($parseErrors -join '; ')"
 }
 
+$gateText = Get-Content -LiteralPath $gatePath -Raw
+if ($gateText -notmatch [regex]::Escape("'--provider-extended-paired-evidence'"))
+{
+    throw 'V1 performance gate must capture all 16 paired provider workloads.'
+}
+
+if ($gateText -match [regex]::Escape("'--provider-paired-evidence'"))
+{
+    throw 'V1 performance gate must not use the five-workload provider evidence mode.'
+}
+
 $teeCommands = @($ast.FindAll({
     param($node)
     $node -is [Management.Automation.Language.CommandAst] -and
@@ -78,5 +89,5 @@ finally
 }
 
 Write-Output (
-    'V1 performance gate contract self-test passed: both paired phases and the benchmark phase ' +
-    'use valid, append-safe PowerShell parameter sets.')
+    'V1 performance gate contract self-test passed: the full 16-workload provider phase, ' +
+    'multiplexing phase, and benchmark phase use valid, append-safe PowerShell parameter sets.')
