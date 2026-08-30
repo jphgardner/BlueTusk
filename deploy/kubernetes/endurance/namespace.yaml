@@ -95,6 +95,16 @@ spec:
       ports:
         - protocol: TCP
           port: 5432
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bluetusk-web
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+      ports:
+        - protocol: TCP
+          port: 5432
   egress:
     - to:
         - podSelector: {}

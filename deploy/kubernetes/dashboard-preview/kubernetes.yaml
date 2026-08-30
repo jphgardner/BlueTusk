@@ -10,6 +10,96 @@ automountServiceAccountToken: false
 imagePullSecrets:
   - name: bluetusk
 ---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bluetusk-dashboard-topology-collector
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+    app.kubernetes.io/part-of: bluetusk
+automountServiceAccountToken: true
+imagePullSecrets:
+  - name: bluetusk
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: bluetusk-dashboard-topology-reader
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+    app.kubernetes.io/part-of: bluetusk
+rules:
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["deployments", "replicasets", "statefulsets"]
+    verbs: ["get", "list"]
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["get", "list"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["ingresses"]
+    verbs: ["get", "list"]
+  - apiGroups: ["discovery.k8s.io"]
+    resources: ["endpointslices"]
+    verbs: ["get", "list"]
+  - apiGroups: ["cert-manager.io"]
+    resources: ["certificates"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bluetusk-dashboard-topology-reader
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+    app.kubernetes.io/part-of: bluetusk
+subjects:
+  - kind: ServiceAccount
+    name: bluetusk-dashboard-topology-collector
+    namespace: bluetusk-web
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: bluetusk-dashboard-topology-reader
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bluetusk-dashboard-topology-reader
+  namespace: bluetusk-endurance
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+    app.kubernetes.io/part-of: bluetusk
+subjects:
+  - kind: ServiceAccount
+    name: bluetusk-dashboard-topology-collector
+    namespace: bluetusk-web
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: bluetusk-dashboard-topology-reader
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: bluetusk-dashboard-topology-reader
+  namespace: cert-manager
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+    app.kubernetes.io/part-of: bluetusk
+subjects:
+  - kind: ServiceAccount
+    name: bluetusk-dashboard-topology-collector
+    namespace: bluetusk-web
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: bluetusk-dashboard-topology-reader
+---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -116,6 +206,127 @@ spec:
         - name: tmp
           emptyDir:
             sizeLimit: 64Mi
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bluetusk-dashboard-topology-collector
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+    app.kubernetes.io/part-of: bluetusk
+    app.kubernetes.io/component: topology-collector
+    app.kubernetes.io/version: 1.2.0-rc.1
+spec:
+  replicas: 1
+  revisionHistoryLimit: 3
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+        app.kubernetes.io/part-of: bluetusk
+        app.kubernetes.io/component: topology-collector
+        app.kubernetes.io/version: 1.2.0-rc.1
+    spec:
+      serviceAccountName: bluetusk-dashboard-topology-collector
+      automountServiceAccountToken: true
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: topology-collector
+          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:660dbee83840211e083ab8861cdcdbf04358a1afee8752a454dc70064f220193
+          imagePullPolicy: IfNotPresent
+          args: ["--collect-topology"]
+          env:
+            - name: BLUETUSK_GRAPH_WRITER_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: bluetusk-dashboard-topology-writer
+                  key: connection-string
+            - name: BLUETUSK_KUBERNETES_CLUSTER_ID
+              value: digitalocean/lon1/bluetusk
+            - name: BLUETUSK_TOPOLOGY_NAMESPACES
+              value: bluetusk-web,bluetusk-endurance,cert-manager
+            - name: BLUETUSK_TOPOLOGY_REFRESH_SECONDS
+              value: "30"
+            - name: BLUETUSK_TOPOLOGY_RETRY_SECONDS
+              value: "10"
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+              ephemeral-storage: 32Mi
+            limits:
+              cpu: 300m
+              memory: 192Mi
+              ephemeral-storage: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bluetusk-dashboard-topology-collector
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-dashboard-topology-collector
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress: []
+  egress:
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    - to:
+        - ipBlock:
+            cidr: 10.109.0.1/32
+      ports:
+        - protocol: TCP
+          port: 443
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: bluetusk-endurance
+          podSelector:
+            matchLabels:
+              app.kubernetes.io/name: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
 ---
 apiVersion: v1
 kind: Service

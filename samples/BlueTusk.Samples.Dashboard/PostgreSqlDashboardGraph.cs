@@ -6,10 +6,10 @@ using Microsoft.EntityFrameworkCore;
 
 internal sealed class PostgreSqlDashboardGraphRuntime
 {
-    private const string GraphName = "release_topology";
+    private const string GraphName = "cluster_topology";
     private const string GraphSchema = "bluetusk_dashboard";
     private const string DatabaseIdentityValue =
-        "PostgreSQL 19 Beta 3 / bluetusk_dashboard / release_topology";
+        "PostgreSQL 19 Beta 3 / bluetusk_dashboard / cluster_topology";
 
     private PostgreSqlDashboardGraphRuntime(
         ContinuousGraphQueryRegistry queryRegistry,
@@ -95,7 +95,7 @@ internal sealed class PostgreSqlDashboardGraphRuntime
             "postgresql-graph-table-live-query",
             plan.Fingerprint,
             DatabaseIdentityValue,
-            "PostgreSQL-backed deployment topology captured from the active BlueTusk Kubernetes release");
+            "Live Kubernetes API inventory synchronized into PostgreSQL with object UID, resource version, provenance, and observation time");
     }
 
     private static ContinuousGraphQueryDefinition<
@@ -103,7 +103,7 @@ internal sealed class PostgreSqlDashboardGraphRuntime
         DashboardGraphPath,
         string> CreateDefinition() =>
         new(
-            "live-bluetusk-release-topology",
+            "live-kubernetes-topology",
             DatabaseIdentityValue,
             "1",
             GraphName,
@@ -166,6 +166,26 @@ internal sealed class PostgreSqlDashboardGraphRuntime
                             entity => entity.Provenance,
                             result => result.SourceProvenance)
                         .Property<DashboardGraphEntity, string>(
+                            "source",
+                            entity => entity.ResourceNamespace,
+                            result => result.SourceNamespace)
+                        .Property<DashboardGraphEntity, string>(
+                            "source",
+                            entity => entity.ApiVersion,
+                            result => result.SourceApiVersion)
+                        .Property<DashboardGraphEntity, string>(
+                            "source",
+                            entity => entity.ResourceUid,
+                            result => result.SourceResourceUid)
+                        .Property<DashboardGraphEntity, string>(
+                            "source",
+                            entity => entity.ResourceVersion,
+                            result => result.SourceResourceVersion)
+                        .Property<DashboardGraphEntity, DateTimeOffset>(
+                            "source",
+                            entity => entity.ObservedAt,
+                            result => result.SourceObservedAt)
+                        .Property<DashboardGraphEntity, string>(
                             "target",
                             entity => entity.Id,
                             result => result.TargetId)
@@ -188,7 +208,27 @@ internal sealed class PostgreSqlDashboardGraphRuntime
                         .Property<DashboardGraphEntity, string>(
                             "target",
                             entity => entity.Provenance,
-                            result => result.TargetProvenance))
+                            result => result.TargetProvenance)
+                        .Property<DashboardGraphEntity, string>(
+                            "target",
+                            entity => entity.ResourceNamespace,
+                            result => result.TargetNamespace)
+                        .Property<DashboardGraphEntity, string>(
+                            "target",
+                            entity => entity.ApiVersion,
+                            result => result.TargetApiVersion)
+                        .Property<DashboardGraphEntity, string>(
+                            "target",
+                            entity => entity.ResourceUid,
+                            result => result.TargetResourceUid)
+                        .Property<DashboardGraphEntity, string>(
+                            "target",
+                            entity => entity.ResourceVersion,
+                            result => result.TargetResourceVersion)
+                        .Property<DashboardGraphEntity, DateTimeOffset>(
+                            "target",
+                            entity => entity.ObservedAt,
+                            result => result.TargetObservedAt))
                     .Where(result => result.Weight >= minimumWeight)
                     .OrderBy(result => result.RelationshipKind)
                     .ThenBy(result => result.RelationshipId)
@@ -203,16 +243,26 @@ internal sealed class PostgreSqlDashboardGraphRuntime
                  path.SourceId,
                  path.SourceName,
                  path.SourceKind,
-                 path.SourceStatus,
-                 path.SourceDetail,
-                 path.SourceProvenance),
+                  path.SourceStatus,
+                  path.SourceDetail,
+                  path.SourceProvenance,
+                  path.SourceNamespace,
+                  path.SourceApiVersion,
+                  path.SourceResourceUid,
+                  path.SourceResourceVersion,
+                  path.SourceObservedAt),
              Node(
                  path.TargetId,
                  path.TargetName,
                  path.TargetKind,
-                 path.TargetStatus,
-                 path.TargetDetail,
-                 path.TargetProvenance)],
+                  path.TargetStatus,
+                  path.TargetDetail,
+                  path.TargetProvenance,
+                  path.TargetNamespace,
+                  path.TargetApiVersion,
+                  path.TargetResourceUid,
+                  path.TargetResourceVersion,
+                  path.TargetObservedAt)],
             [new ControlPlaneContinuousGraphEdge(
                 path.RelationshipId,
                 path.SourceId,
@@ -239,7 +289,12 @@ internal sealed class PostgreSqlDashboardGraphRuntime
         string category,
         string status,
         string detail,
-        string provenance) =>
+        string provenance,
+        string resourceNamespace,
+        string apiVersion,
+        string resourceUid,
+        string resourceVersion,
+        DateTimeOffset observedAt) =>
         new(
             id,
             label,
@@ -247,6 +302,18 @@ internal sealed class PostgreSqlDashboardGraphRuntime
             [new ControlPlaneContinuousGraphProperty("status", status),
              new ControlPlaneContinuousGraphProperty("detail", detail),
              new ControlPlaneContinuousGraphProperty("provenance", provenance),
+             new ControlPlaneContinuousGraphProperty("namespace", resourceNamespace),
+             new ControlPlaneContinuousGraphProperty("apiVersion", apiVersion),
+             new ControlPlaneContinuousGraphProperty("resourceUid", resourceUid),
+             new ControlPlaneContinuousGraphProperty("resourceVersion", resourceVersion),
+             new ControlPlaneContinuousGraphProperty(
+                 "observedAt",
+                 observedAt.ToString("O", CultureInfo.InvariantCulture)),
+             new ControlPlaneContinuousGraphProperty(
+                 "freshness",
+                 DateTimeOffset.UtcNow - observedAt <= TimeSpan.FromMinutes(2)
+                     ? "fresh"
+                     : "stale"),
              new ControlPlaneContinuousGraphProperty(
                  "storage",
                  "PostgreSQL 19 Beta 3 / bluetusk_dashboard")]);
@@ -279,6 +346,11 @@ internal sealed class DashboardGraphContext(DbContextOptions<DashboardGraphConte
             entity.Property(value => value.Status).HasColumnName("status");
             entity.Property(value => value.Detail).HasColumnName("detail");
             entity.Property(value => value.Provenance).HasColumnName("provenance");
+            entity.Property(value => value.ResourceNamespace).HasColumnName("resource_namespace");
+            entity.Property(value => value.ApiVersion).HasColumnName("api_version");
+            entity.Property(value => value.ResourceUid).HasColumnName("resource_uid");
+            entity.Property(value => value.ResourceVersion).HasColumnName("resource_version");
+            entity.Property(value => value.ObservedAt).HasColumnName("observed_at");
         });
         modelBuilder.Entity<DashboardGraphRelationship>(entity =>
         {
@@ -293,7 +365,7 @@ internal sealed class DashboardGraphContext(DbContextOptions<DashboardGraphConte
             entity.Property(value => value.Detail).HasColumnName("detail");
         });
         modelBuilder.HasPropertyGraph(
-            "release_topology",
+            "cluster_topology",
             graph =>
             {
                 graph.Vertex<DashboardGraphEntity>("entities", vertex => vertex
@@ -307,6 +379,11 @@ internal sealed class DashboardGraphContext(DbContextOptions<DashboardGraphConte
                         entity.Status,
                         entity.Detail,
                         entity.Provenance,
+                        entity.ResourceNamespace,
+                        entity.ApiVersion,
+                        entity.ResourceUid,
+                        entity.ResourceVersion,
+                        entity.ObservedAt,
                     }));
                 graph.Edge<DashboardGraphRelationship>("relationships", edge => edge
                     .HasLabel("dependency")
@@ -345,6 +422,16 @@ internal sealed class DashboardGraphEntity
     public string Detail { get; set; } = string.Empty;
 
     public string Provenance { get; set; } = string.Empty;
+
+    public string ResourceNamespace { get; set; } = string.Empty;
+
+    public string ApiVersion { get; set; } = string.Empty;
+
+    public string ResourceUid { get; set; } = string.Empty;
+
+    public string ResourceVersion { get; set; } = string.Empty;
+
+    public DateTimeOffset ObservedAt { get; set; }
 }
 
 internal sealed class DashboardGraphRelationship
@@ -388,6 +475,16 @@ internal sealed class DashboardGraphPath
 
     public string SourceProvenance { get; set; } = string.Empty;
 
+    public string SourceNamespace { get; set; } = string.Empty;
+
+    public string SourceApiVersion { get; set; } = string.Empty;
+
+    public string SourceResourceUid { get; set; } = string.Empty;
+
+    public string SourceResourceVersion { get; set; } = string.Empty;
+
+    public DateTimeOffset SourceObservedAt { get; set; }
+
     public string TargetId { get; set; } = string.Empty;
 
     public string TargetName { get; set; } = string.Empty;
@@ -399,6 +496,16 @@ internal sealed class DashboardGraphPath
     public string TargetDetail { get; set; } = string.Empty;
 
     public string TargetProvenance { get; set; } = string.Empty;
+
+    public string TargetNamespace { get; set; } = string.Empty;
+
+    public string TargetApiVersion { get; set; } = string.Empty;
+
+    public string TargetResourceUid { get; set; } = string.Empty;
+
+    public string TargetResourceVersion { get; set; } = string.Empty;
+
+    public DateTimeOffset TargetObservedAt { get; set; }
 }
 
 internal sealed class DashboardGraphPathComparer : IEqualityComparer<DashboardGraphPath>
@@ -419,12 +526,22 @@ internal sealed class DashboardGraphPathComparer : IEqualityComparer<DashboardGr
          string.Equals(x.SourceStatus, y.SourceStatus, StringComparison.Ordinal) &&
          string.Equals(x.SourceDetail, y.SourceDetail, StringComparison.Ordinal) &&
          string.Equals(x.SourceProvenance, y.SourceProvenance, StringComparison.Ordinal) &&
+         string.Equals(x.SourceNamespace, y.SourceNamespace, StringComparison.Ordinal) &&
+         string.Equals(x.SourceApiVersion, y.SourceApiVersion, StringComparison.Ordinal) &&
+         string.Equals(x.SourceResourceUid, y.SourceResourceUid, StringComparison.Ordinal) &&
+         string.Equals(x.SourceResourceVersion, y.SourceResourceVersion, StringComparison.Ordinal) &&
+         x.SourceObservedAt == y.SourceObservedAt &&
          string.Equals(x.TargetId, y.TargetId, StringComparison.Ordinal) &&
          string.Equals(x.TargetName, y.TargetName, StringComparison.Ordinal) &&
          string.Equals(x.TargetKind, y.TargetKind, StringComparison.Ordinal) &&
          string.Equals(x.TargetStatus, y.TargetStatus, StringComparison.Ordinal) &&
          string.Equals(x.TargetDetail, y.TargetDetail, StringComparison.Ordinal) &&
-         string.Equals(x.TargetProvenance, y.TargetProvenance, StringComparison.Ordinal));
+         string.Equals(x.TargetProvenance, y.TargetProvenance, StringComparison.Ordinal) &&
+         string.Equals(x.TargetNamespace, y.TargetNamespace, StringComparison.Ordinal) &&
+         string.Equals(x.TargetApiVersion, y.TargetApiVersion, StringComparison.Ordinal) &&
+         string.Equals(x.TargetResourceUid, y.TargetResourceUid, StringComparison.Ordinal) &&
+         string.Equals(x.TargetResourceVersion, y.TargetResourceVersion, StringComparison.Ordinal) &&
+         x.TargetObservedAt == y.TargetObservedAt);
 
     public int GetHashCode(DashboardGraphPath value) =>
         HashCode.Combine(

@@ -6,6 +6,12 @@ using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.Extensions.Options;
 
+if (args.Contains("--collect-topology", StringComparer.Ordinal))
+{
+    await KubernetesTopologyCollectorHost.RunAsync(args);
+    return;
+}
+
 const string readPolicy = "DashboardPreview.Read";
 const string mutationPolicy = "DashboardPreview.Mutate";
 const string graphExecutionPolicy = "DashboardPreview.GraphExecute";

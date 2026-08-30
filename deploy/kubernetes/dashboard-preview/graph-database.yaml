@@ -21,6 +21,14 @@ data:
       'ALTER ROLE bluetusk_dashboard_reader PASSWORD %L',
       :'dashboard_password')
     \gexec
+    SELECT 'CREATE ROLE bluetusk_dashboard_writer LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'bluetusk_dashboard_writer')
+    \gexec
+    SELECT format(
+      'ALTER ROLE bluetusk_dashboard_writer PASSWORD %L',
+      :'writer_password')
+    \gexec
 
     CREATE SCHEMA IF NOT EXISTS bluetusk_dashboard;
     CREATE TABLE IF NOT EXISTS bluetusk_dashboard.graph_entities (
@@ -29,7 +37,24 @@ data:
       kind text NOT NULL,
       status text NOT NULL,
       detail text NOT NULL,
-      provenance text NOT NULL);
+      provenance text NOT NULL,
+      resource_namespace text NOT NULL,
+      api_version text NOT NULL,
+      resource_uid text NOT NULL,
+      resource_version text NOT NULL,
+      observed_at timestamptz NOT NULL);
+    ALTER TABLE bluetusk_dashboard.graph_entities
+      ADD COLUMN IF NOT EXISTS resource_namespace text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS api_version text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS resource_uid text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS resource_version text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS observed_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ALTER TABLE bluetusk_dashboard.graph_entities
+      ALTER COLUMN resource_namespace DROP DEFAULT,
+      ALTER COLUMN api_version DROP DEFAULT,
+      ALTER COLUMN resource_uid DROP DEFAULT,
+      ALTER COLUMN resource_version DROP DEFAULT,
+      ALTER COLUMN observed_at DROP DEFAULT;
     CREATE TABLE IF NOT EXISTS bluetusk_dashboard.graph_relationships (
       id text PRIMARY KEY,
       source_id text NOT NULL REFERENCES bluetusk_dashboard.graph_entities (id),
@@ -39,101 +64,8 @@ data:
       observed_at timestamptz NOT NULL,
       detail text NOT NULL);
 
-    TRUNCATE TABLE
-      bluetusk_dashboard.graph_relationships,
-      bluetusk_dashboard.graph_entities;
-
-    INSERT INTO bluetusk_dashboard.graph_entities
-      (id, display_name, kind, status, detail, provenance)
-    VALUES
-      ('client:browser', 'Public browser', 'Client', 'external',
-       'HTTPS reader of bluetusk.io and dashboard.bluetusk.io',
-       'Public DNS and ingress contract'),
-      ('dns:bluetusk.io', 'DigitalOcean DNS', 'DNS', 'active',
-       'bluetusk.io, www.bluetusk.io, and dashboard.bluetusk.io',
-       'Authoritative DigitalOcean DNS zone'),
-      ('load-balancer:159.89.248.5', 'DigitalOcean load balancer', 'Load balancer', 'active',
-       'One public IPv4 entry point at 159.89.248.5',
-       'Kubernetes Service status'),
-      ('ingress:traefik', 'Traefik ingress', 'Ingress', 'running',
-       '3 replicas; one shared load balancer; HTTP to HTTPS redirect',
-       'bluetusk-web Kubernetes deployment'),
-      ('app:website', 'BlueTusk website', 'Application', 'running',
-       '3 replicas; Angular prerender; bluetusk.io and www.bluetusk.io',
-       'bluetusk-web Kubernetes deployment'),
-      ('app:dashboard', 'BlueTusk dashboard', 'Application', 'running',
-       '2 replicas; read-only public operations explorer',
-       'bluetusk-web Kubernetes deployment'),
-      ('controller:cert-manager', 'cert-manager', 'Controller', 'running',
-       '2 replicas per controller; ACME certificate reconciliation',
-       'cert-manager Kubernetes namespace'),
-      ('certificate:bluetusk.io', 'bluetusk.io TLS certificate', 'Certificate', 'ready',
-       'Let''s Encrypt production certificate for bluetusk.io and www.bluetusk.io',
-       'cert-manager Certificate status'),
-      ('certificate:dashboard.bluetusk.io', 'dashboard.bluetusk.io TLS certificate', 'Certificate', 'ready',
-       'Let''s Encrypt production certificate for dashboard.bluetusk.io',
-       'cert-manager Certificate status'),
-      ('database:postgresql-19beta3', 'PostgreSQL 19 Beta 3', 'Database', 'running',
-       'Digest-pinned SQL/PGQ preview with durable block storage',
-       'bluetusk-endurance StatefulSet'),
-      ('registry:docr', 'DigitalOcean Container Registry', 'Registry', 'active',
-       'Digest-addressed website and dashboard images',
-       'DigitalOcean Container Registry'),
-      ('source:github', 'BlueTusk GitHub repository', 'Source', 'active',
-       'Single 1.2 release candidate branch and PR #41',
-       'github.com/jphgardner/BlueTusk'),
-      ('release:1.2.0-rc.1', 'BlueTusk 1.2.0 RC1', 'Release', 'candidate',
-       'Provider, Streams, Sync, Live, Control Plane, and Continuous Graph',
-       'Exact-SHA release train'),
-      ('registry:nuget', 'NuGet Gallery', 'Package registry', 'configured',
-       'Trusted Publishing for BlueTusk.* packages',
-       'NuGet trusted-publisher policy'),
-      ('registry:npm', 'npm registry', 'Package registry', 'configured',
-       'Granular-token publication for BlueTusk browser clients',
-       'npm package publication policy');
-
-    INSERT INTO bluetusk_dashboard.graph_relationships
-      (id, source_id, target_id, kind, weight, observed_at, detail)
-    VALUES
-      ('edge:01', 'client:browser', 'dns:bluetusk.io', 'RESOLVES_WITH', 3, CURRENT_TIMESTAMP,
-       'The public client resolves the BlueTusk hostnames.'),
-      ('edge:02', 'dns:bluetusk.io', 'load-balancer:159.89.248.5', 'POINTS_TO', 3, CURRENT_TIMESTAMP,
-       'The authoritative zone points public traffic to 159.89.248.5.'),
-      ('edge:03', 'load-balancer:159.89.248.5', 'ingress:traefik', 'FORWARDS_TO', 3, CURRENT_TIMESTAMP,
-       'One cloud load balancer forwards HTTP and HTTPS to Traefik.'),
-      ('edge:04', 'ingress:traefik', 'app:website', 'ROUTES_TO', 3, CURRENT_TIMESTAMP,
-       'Traefik routes bluetusk.io and www.bluetusk.io.'),
-      ('edge:05', 'ingress:traefik', 'app:dashboard', 'ROUTES_TO', 3, CURRENT_TIMESTAMP,
-       'Traefik routes dashboard.bluetusk.io.'),
-      ('edge:06', 'controller:cert-manager', 'certificate:bluetusk.io', 'RECONCILES', 2, CURRENT_TIMESTAMP,
-       'cert-manager renews and stores the website certificate.'),
-      ('edge:07', 'controller:cert-manager', 'certificate:dashboard.bluetusk.io', 'RECONCILES', 2, CURRENT_TIMESTAMP,
-       'cert-manager renews and stores the dashboard certificate.'),
-      ('edge:08', 'certificate:bluetusk.io', 'app:website', 'SECURES', 3, CURRENT_TIMESTAMP,
-       'The certificate terminates TLS for the website route.'),
-      ('edge:09', 'certificate:dashboard.bluetusk.io', 'app:dashboard', 'SECURES', 3, CURRENT_TIMESTAMP,
-       'The certificate terminates TLS for the dashboard route.'),
-      ('edge:10', 'app:dashboard', 'database:postgresql-19beta3', 'EXECUTES_GRAPH_TABLE_ON', 3, CURRENT_TIMESTAMP,
-       'The explorer executes the compiled release_topology GRAPH_TABLE query.'),
-      ('edge:11', 'app:website', 'registry:docr', 'PULLS_IMAGE_FROM', 2, CURRENT_TIMESTAMP,
-       'The website deployment uses an immutable container digest.'),
-      ('edge:12', 'app:dashboard', 'registry:docr', 'PULLS_IMAGE_FROM', 2, CURRENT_TIMESTAMP,
-       'The dashboard deployment uses an immutable container digest.'),
-      ('edge:13', 'source:github', 'registry:docr', 'BUILDS_IMAGES_INTO', 1, CURRENT_TIMESTAMP,
-       'Release automation builds and pushes immutable images.'),
-      ('edge:14', 'source:github', 'release:1.2.0-rc.1', 'DEFINES', 1, CURRENT_TIMESTAMP,
-       'The exact candidate commit defines the coordinated release.'),
-      ('edge:15', 'release:1.2.0-rc.1', 'app:website', 'DEPLOYS', 2, CURRENT_TIMESTAMP,
-       'The current candidate supplies the live website.'),
-      ('edge:16', 'release:1.2.0-rc.1', 'app:dashboard', 'DEPLOYS', 2, CURRENT_TIMESTAMP,
-       'The current candidate supplies the live dashboard.'),
-      ('edge:17', 'release:1.2.0-rc.1', 'registry:nuget', 'PUBLISHES_TO', 1, CURRENT_TIMESTAMP,
-       'NuGet packages publish only after exact release gates pass.'),
-      ('edge:18', 'release:1.2.0-rc.1', 'registry:npm', 'PUBLISHES_TO', 1, CURRENT_TIMESTAMP,
-       'Browser client packages publish only after exact release gates pass.');
-
-    DROP PROPERTY GRAPH IF EXISTS bluetusk_dashboard.release_topology;
-    CREATE PROPERTY GRAPH bluetusk_dashboard.release_topology
+    DROP PROPERTY GRAPH IF EXISTS bluetusk_dashboard.cluster_topology;
+    CREATE PROPERTY GRAPH bluetusk_dashboard.cluster_topology
       VERTEX TABLES (
         bluetusk_dashboard.graph_entities AS entities
         KEY (id)
@@ -143,7 +75,12 @@ data:
           kind AS "Kind",
           status AS "Status",
           detail AS "Detail",
-          provenance AS "Provenance"))
+          provenance AS "Provenance",
+          resource_namespace AS "ResourceNamespace",
+          api_version AS "ApiVersion",
+          resource_uid AS "ResourceUid",
+          resource_version AS "ResourceVersion",
+          observed_at AS "ObservedAt"))
       EDGE TABLES (
         bluetusk_dashboard.graph_relationships AS relationships
         KEY (id)
@@ -162,13 +99,19 @@ data:
     REVOKE ALL ON ALL TABLES IN SCHEMA bluetusk_dashboard FROM PUBLIC;
     GRANT USAGE ON SCHEMA bluetusk_dashboard TO bluetusk_dashboard_reader;
     GRANT SELECT ON ALL TABLES IN SCHEMA bluetusk_dashboard TO bluetusk_dashboard_reader;
-    GRANT SELECT ON PROPERTY GRAPH bluetusk_dashboard.release_topology
+    GRANT SELECT ON PROPERTY GRAPH bluetusk_dashboard.cluster_topology
       TO bluetusk_dashboard_reader;
+    REVOKE ALL ON SCHEMA bluetusk_dashboard FROM bluetusk_dashboard_writer;
+    GRANT USAGE ON SCHEMA bluetusk_dashboard TO bluetusk_dashboard_writer;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON
+      bluetusk_dashboard.graph_entities,
+      bluetusk_dashboard.graph_relationships
+      TO bluetusk_dashboard_writer;
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: bluetusk-dashboard-graph-init-v1
+  name: bluetusk-dashboard-graph-init-v2
   namespace: bluetusk-endurance
   labels:
     app.kubernetes.io/name: bluetusk-dashboard-graph
@@ -208,6 +151,7 @@ spec:
                 --username=postgres \
                 --dbname=bluetusk_tests \
                 --set=dashboard_password="$DASHBOARD_READER_PASSWORD" \
+                --set=writer_password="$DASHBOARD_WRITER_PASSWORD" \
                 --file=/config/init.sql
           env:
             - name: POSTGRES_ADMIN_PASSWORD
@@ -219,6 +163,11 @@ spec:
               valueFrom:
                 secretKeyRef:
                   name: dashboard-graph-reader
+                  key: password
+            - name: DASHBOARD_WRITER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dashboard-graph-writer
                   key: password
           resources:
             requests:
