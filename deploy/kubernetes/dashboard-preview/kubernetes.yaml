@@ -150,7 +150,7 @@ spec:
               app.kubernetes.io/name: bluetusk-dashboard-preview
       containers:
         - name: dashboard
-          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:71171b33182a50f50fe81c77e00deaf730becef0858260fddec92e76f926eb74
+          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:05c7727cd1386c421cb18907bde46bdf00c6ececd878d9756c6a7d9aa3bc4edc
           imagePullPolicy: IfNotPresent
           env:
             - name: BLUETUSK_GRAPH_REQUIRED
@@ -246,7 +246,7 @@ spec:
           type: RuntimeDefault
       containers:
         - name: topology-collector
-          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:71171b33182a50f50fe81c77e00deaf730becef0858260fddec92e76f926eb74
+          image: registry.digitalocean.com/bluetusk/dashboard-preview@sha256:05c7727cd1386c421cb18907bde46bdf00c6ececd878d9756c6a7d9aa3bc4edc
           imagePullPolicy: IfNotPresent
           args: ["--collect-topology"]
           env:
