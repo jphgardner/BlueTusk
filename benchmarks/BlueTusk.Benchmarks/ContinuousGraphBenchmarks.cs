@@ -209,6 +209,10 @@ public class ContinuousGraphBenchmarks : IAsyncDisposable
     {
         await using var command = _administration.CreateCommand();
         command.CommandText = sql;
+        // GlobalSetup deliberately creates the largest graph outside the measured
+        // operation. It can exceed the provider's production-safe command timeout
+        // on slower runners without saying anything about benchmark performance.
+        command.CommandTimeout = 0;
         _ = await command.ExecuteNonQueryAsync();
     }
 

@@ -558,13 +558,14 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
     {
         ArgumentNullException.ThrowIfNull(session);
         Interlocked.Decrement(ref _busy);
+        var now = _timeProvider.GetUtcNow();
         var discard = Volatile.Read(ref _disposed) != 0 ||
             session.Generation != Volatile.Read(ref _generation) ||
             !session.Session.IsOpen ||
-            IsExpired(session, includeIdleLifetime: false);
+            IsExpired(session, includeIdleLifetime: false, now);
         if (!discard)
         {
-            session.LastReturned = _timeProvider.GetUtcNow();
+            session.LastReturned = now;
             Interlocked.Increment(ref _idle);
             if (Volatile.Read(ref _waiting) > 0)
             {
@@ -1089,7 +1090,14 @@ internal sealed class BlueTuskConnectionPool : BlueTuskConnectionPoolBase
 
     private bool IsExpired(BlueTuskPooledSession session, bool includeIdleLifetime)
     {
-        var now = _timeProvider.GetUtcNow();
+        return IsExpired(session, includeIdleLifetime, _timeProvider.GetUtcNow());
+    }
+
+    private bool IsExpired(
+        BlueTuskPooledSession session,
+        bool includeIdleLifetime,
+        DateTimeOffset now)
+    {
         return (_connectionLifetime > TimeSpan.Zero && now - session.CreatedAt >= _connectionLifetime) ||
             (includeIdleLifetime &&
              _idleLifetime > TimeSpan.Zero &&
