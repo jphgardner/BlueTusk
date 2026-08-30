@@ -279,6 +279,31 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 point.y - (start.y + offset * dy));
             };
 
+            const bezierPoint = (geometry, progress) => {
+              const remainder = 1 - progress;
+              return {
+                x: remainder * remainder * remainder * geometry.start.x +
+                  3 * remainder * remainder * progress * geometry.controlOne.x +
+                  3 * remainder * progress * progress * geometry.controlTwo.x +
+                  progress * progress * progress * geometry.end.x,
+                y: remainder * remainder * remainder * geometry.start.y +
+                  3 * remainder * remainder * progress * geometry.controlOne.y +
+                  3 * remainder * progress * progress * geometry.controlTwo.y +
+                  progress * progress * progress * geometry.end.y
+              };
+            };
+
+            const pointToBezierDistance = (point, geometry) => {
+              let previous = geometry.start;
+              let distance = Number.POSITIVE_INFINITY;
+              for (let index = 1; index <= 24; index++) {
+                const current = bezierPoint(geometry, index / 24);
+                distance = Math.min(distance, pointToSegmentDistance(point, previous, current));
+                previous = current;
+              }
+              return distance;
+            };
+
             const clipToNode = (from, toward, width, height) => {
               const dx = toward.x - from.x;
               const dy = toward.y - from.y;
@@ -298,7 +323,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
               return `${text}…`;
             };
 
-            const drawArrow = (context, source, target, color, strong, directed, label) => {
+            const edgeGeometry = (source, target) => {
               const nodeWidth = graphNodeWidth * state.camera.scale;
               const nodeHeight = graphNodeHeight * state.camera.scale;
               const start = clipToNode(source, target, nodeWidth, nodeHeight);
@@ -313,6 +338,12 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
               const controlTwo = Math.abs(dx) < nodeWidth
                 ? { x: end.x + nodeWidth * .68, y: end.y - dy * .18 }
                 : { x: end.x - direction * curve, y: end.y };
+              return { start, controlOne, controlTwo, end };
+            };
+
+            const drawArrow = (context, source, target, color, strong, directed, label) => {
+              const geometry = edgeGeometry(source, target);
+              const { start, controlOne, controlTwo, end } = geometry;
               context.strokeStyle = color;
               context.globalAlpha = strong ? .96 : .5;
               context.lineWidth = strong ? 2.6 : 1.35;
@@ -341,10 +372,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 context.fill();
               }
               if (strong && label) {
-                const middle = {
-                  x: (start.x + 3 * controlOne.x + 3 * controlTwo.x + end.x) / 8,
-                  y: (start.y + 3 * controlOne.y + 3 * controlTwo.y + end.y) / 8
-                };
+                const middle = bezierPoint(geometry, .5);
                 context.globalAlpha = 1;
                 context.font = '700 10px system-ui, sans-serif';
                 const labelWidth = context.measureText(label).width + 12;
@@ -693,10 +721,9 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                   .filter(item => item.source && item.target)
                   .map(item => ({
                     edge: item.edge,
-                    distance: pointToSegmentDistance(
-                      pointer,
+                    distance: pointToBezierDistance(pointer, edgeGeometry(
                       worldToScreen(item.source),
-                      worldToScreen(item.target))
+                      worldToScreen(item.target)))
                   }))
                   .sort((left, right) => left.distance - right.distance)[0];
                 if (closestEdge?.distance <= 10) select('edge', closestEdge.edge);

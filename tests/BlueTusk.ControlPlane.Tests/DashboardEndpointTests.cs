@@ -229,6 +229,16 @@ public sealed class DashboardEndpointTests
         Assert.Contains("All nodes", graphDetailHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("tenant-value", graphDetailHtml, StringComparison.Ordinal);
 
+        var dashboardScript = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/assets/dashboard.js");
+        var dashboardScriptText = await InvokeHtmlAsync(
+            dashboardScript,
+            application.Services,
+            context.User);
+        Assert.Contains("pointToBezierDistance", dashboardScriptText, StringComparison.Ordinal);
+        Assert.Contains("edgeGeometry", dashboardScriptText, StringComparison.Ordinal);
+
         var graphExecution = Assert.Single(
             endpoints,
             endpoint => endpoint.RoutePattern.RawText ==
