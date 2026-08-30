@@ -610,14 +610,14 @@ internal static class KubernetesTopologyGraphBuilder
 
     private static (string Status, string Detail) DescribeEndpointSlice(KubernetesResourceDocument resource)
     {
-        var endpoints = GetArray(resource.Spec, "endpoints").ToArray();
+        var endpoints = AsArray(resource.Endpoints).ToArray();
         var ready = endpoints.Count(static value =>
             GetBoolean(GetObject(value, "conditions"), "ready", defaultValue: true));
         return (
             ready == endpoints.Length ? "Ready" : "Degraded",
             $"endpoints={endpoints.Length.ToString(CultureInfo.InvariantCulture)}; " +
             $"ready={ready.ToString(CultureInfo.InvariantCulture)}; " +
-            $"addressType={GetString(resource.Spec, "addressType") ?? "unknown"}");
+            $"addressType={resource.AddressType}");
     }
 
     private static void AddOwnershipEdges(
@@ -695,13 +695,9 @@ internal static class KubernetesTopologyGraphBuilder
 
             foreach (var candidate in resources.Where(value =>
                          value.Metadata.Namespace == service.Metadata.Namespace &&
-                         value.Kind is "Deployment" or "ReplicaSet" or "StatefulSet" or "Pod"))
+                         value.Kind == "Pod"))
             {
-                var labels = candidate.Kind == "Pod"
-                    ? candidate.Metadata.Labels
-                    : GetStringObject(GetObject(
-                        GetObject(GetObject(candidate.Spec, "template"), "metadata"),
-                        "labels"));
+                var labels = candidate.Metadata.Labels;
                 if (!selector.All(pair => labels.TryGetValue(pair.Key, out var value) && value == pair.Value))
                 {
                     continue;
@@ -816,7 +812,7 @@ internal static class KubernetesTopologyGraphBuilder
                 }
             }
 
-            foreach (var endpoint in GetArray(slice.Spec, "endpoints"))
+            foreach (var endpoint in AsArray(slice.Endpoints))
             {
                 var target = GetObject(endpoint, "targetRef");
                 var kind = GetString(target, "kind");
@@ -960,8 +956,11 @@ internal static class KubernetesTopologyGraphBuilder
     private static JsonElement.ArrayEnumerator GetArray(JsonElement value, string property)
     {
         var result = GetObject(value, property);
-        return result.ValueKind == JsonValueKind.Array ? result.EnumerateArray() : default;
+        return AsArray(result);
     }
+
+    private static JsonElement.ArrayEnumerator AsArray(JsonElement value) =>
+        value.ValueKind == JsonValueKind.Array ? value.EnumerateArray() : default;
 
     private static string? GetString(JsonElement value, string property)
     {
@@ -1239,6 +1238,10 @@ internal sealed class KubernetesResourceDocument
     public JsonElement Spec { get; set; }
 
     public JsonElement Status { get; set; }
+
+    public string AddressType { get; set; } = string.Empty;
+
+    public JsonElement Endpoints { get; set; }
 }
 
 internal sealed class KubernetesResourceMetadata

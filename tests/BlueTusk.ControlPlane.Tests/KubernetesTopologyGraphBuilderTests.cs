@@ -159,15 +159,13 @@ public sealed class KubernetesTopologyGraphBuilderTests
                     "resourceVersion": "107",
                     "labels": { "kubernetes.io/service-name": "dashboard" }
                   },
-                  "spec": {
-                    "addressType": "IPv4",
-                    "endpoints": [
-                      {
-                        "conditions": { "ready": true },
-                        "targetRef": { "kind": "Pod", "namespace": "bluetusk-web", "name": "dashboard-abc-123" }
-                      }
-                    ]
-                  },
+                  "addressType": "IPv4",
+                  "endpoints": [
+                    {
+                      "conditions": { "ready": true },
+                      "targetRef": { "kind": "Pod", "namespace": "bluetusk-web", "name": "dashboard-abc-123" }
+                    }
+                  ],
                   "status": {}
                 }
               ]
