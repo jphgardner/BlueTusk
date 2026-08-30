@@ -1,8 +1,9 @@
 # BlueTusk Dashboard preview host
 
-This sample hosts the real `BlueTusk.Dashboard` endpoint renderer. Most
-control-plane inventories remain representative and redacted so the public UI
-does not expose a production database. Continuous Graph is different: when
+This sample hosts the real `BlueTusk.Dashboard` endpoint renderer. The public
+environment does not invent product telemetry: Streams, Sync, Live, and managed
+deployment inventories remain empty until a real control-plane source is
+connected. Continuous Graph is live: when
 `BLUETUSK_GRAPH_CONNECTION_STRING` is configured, the host compiles and
 executes a registered, read-only PostgreSQL 19 `GRAPH_TABLE` query and renders
 its complete bounded result over a continuously discovered Kubernetes
@@ -21,12 +22,11 @@ dotnet run --project samples/BlueTusk.Samples.Dashboard `
   --urls http://127.0.0.1:5217
 ```
 
-Open `http://127.0.0.1:5217/bluetusk/overview`. The preview contains several
-representative sources, pipelines, Live subscriptions, and deployments in
-healthy, catching-up, and degraded states. Every inventory
-row is linked to its complete redacted detail view, including nested consumer
-groups, snapshots, and checkpoints. Search and health filters make the larger
-inventories easy to inspect, and the layout adapts down to phone widths.
+Open `http://127.0.0.1:5217/bluetusk/overview`. A provenance banner states the
+public preview's exact live-data boundary. Empty product sections are reported
+as not connected rather than healthy, while the graph page exposes live
+Kubernetes provenance, observation times, UIDs, resource versions, and its
+PostgreSQL query engine. The layout adapts down to phone widths.
 
 The public Kubernetes deployment requires `BLUETUSK_GRAPH_CONNECTION_STRING`
 and fails startup when the PostgreSQL registration cannot be compiled. A

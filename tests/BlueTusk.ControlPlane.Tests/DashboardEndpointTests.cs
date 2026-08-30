@@ -43,6 +43,8 @@ public sealed class DashboardEndpointTests
             options.ReadAuthorizationPolicy = "ops-read";
             options.MutationAuthorizationPolicy = "ops-mutate";
             options.GraphExecutionAuthorizationPolicy = "ops-graph-execute";
+            options.BrandLabel = "Production <west>";
+            options.DataProvenanceNotice = "Live source <script>alert('no')</script>";
         });
 
         var endpoints = ((IEndpointRouteBuilder)application).DataSources
@@ -86,6 +88,9 @@ public sealed class DashboardEndpointTests
             context.User);
         Assert.Contains("Operational overview", overviewHtml, StringComparison.Ordinal);
         Assert.Contains("Needs attention", overviewHtml, StringComparison.Ordinal);
+        Assert.Contains("Production &lt;west&gt;", overviewHtml, StringComparison.Ordinal);
+        Assert.Contains("Live source &lt;script&gt;alert(&#x27;no&#x27;)&lt;/script&gt;", overviewHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<script>alert('no')</script>", overviewHtml, StringComparison.Ordinal);
 
         var sourceDetail = Assert.Single(
             endpoints,

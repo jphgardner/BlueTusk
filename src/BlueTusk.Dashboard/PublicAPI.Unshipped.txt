@@ -1,4 +1,8 @@
 #nullable enable
+BlueTusk.Dashboard.BlueTuskDashboardOptions.BrandLabel.get -> string!
+BlueTusk.Dashboard.BlueTuskDashboardOptions.BrandLabel.set -> void
+BlueTusk.Dashboard.BlueTuskDashboardOptions.DataProvenanceNotice.get -> string?
+BlueTusk.Dashboard.BlueTuskDashboardOptions.DataProvenanceNotice.set -> void
 BlueTusk.Dashboard.BlueTuskDashboardOptions.GraphExecutionAuthorizationPolicy.get -> string!
 BlueTusk.Dashboard.BlueTuskDashboardOptions.GraphExecutionAuthorizationPolicy.set -> void
 BlueTusk.Dashboard.BlueTuskDashboardOptions.GraphExecutorRole.get -> string!

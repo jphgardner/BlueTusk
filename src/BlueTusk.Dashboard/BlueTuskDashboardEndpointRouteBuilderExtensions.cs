@@ -1350,14 +1350,27 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 "Sources & Streams",
                 "PostgreSQL capture, relay durability and consumer progress.",
                 StatusBadge(
-                    healthy == overview.Sources.Count ? "All sources healthy" : $"{overview.Sources.Count - healthy} need attention",
-                    healthy == overview.Sources.Count ? "ok" : "warn")))
+                    overview.Sources.Count == 0
+                        ? "Not connected"
+                        : healthy == overview.Sources.Count
+                            ? "All sources healthy"
+                            : $"{overview.Sources.Count - healthy} need attention",
+                    overview.Sources.Count > 0 && healthy == overview.Sources.Count ? "ok" : "warn")))
             .Append("<div class=\"cards\">")
             .Append(MetricCard("Sources", overview.Sources.Count.ToString(CultureInfo.InvariantCulture), "Configured capture sources"))
             .Append(MetricCard("Active slots", overview.Sources.Count(source => source.Slot.Active).ToString(CultureInfo.InvariantCulture), "Currently streaming"))
             .Append(MetricCard("WAL lag", Bytes(overview.Sources.Sum(source => source.Slot.WalLagBytes)), "Total retained WAL"))
             .Append(MetricCard("Relay storage", Bytes(overview.Sources.Sum(source => source.Relay.StorageBytes)), "Durable transaction history"))
-            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Inventory</p><h2>Capture sources</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("</div>");
+        if (overview.Sources.Count == 0)
+        {
+            body.Append(EmptyInventory(
+                "No Streams sources are connected",
+                "Register a live control-plane source to report capture, relay, consumer, snapshot, and checkpoint state."));
+            return Layout("Sources", overview.ObservedAt, body.ToString(), options);
+        }
+
+        body.Append("<section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Inventory</p><h2>Capture sources</h2></div><span class=\"muted\" data-filter-count></span></div>")
             .Append("<div class=\"table-tools\"><label><span>Search sources</span><input type=\"search\" placeholder=\"Instance, database or slot\" data-table-filter></label>")
             .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
             .Append("<div class=\"table-wrap\"><table><thead><tr><th>Instance</th><th>Database</th><th>Slot</th>")
@@ -1469,6 +1482,13 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             body.Append(RenderSnapshotTable(source, options));
         }
 
+        if (overview.Sources.Count == 0)
+        {
+            body.Append(EmptyInventory(
+                "No snapshot telemetry is connected",
+                "Snapshot runs appear here after a live Streams source is registered."));
+        }
+
         return Layout("Snapshots", overview.ObservedAt, body.ToString(), options);
     }
 
@@ -1486,6 +1506,13 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         foreach (var source in overview.Sources)
         {
             body.Append(RenderGroupTable(source, options));
+        }
+
+        if (overview.Sources.Count == 0)
+        {
+            body.Append(EmptyInventory(
+                "No consumer-group telemetry is connected",
+                "Consumer ownership, leases, and lag appear here after a live Streams source is registered."));
         }
 
         return Layout("Consumer groups", overview.ObservedAt, body.ToString(), options);
@@ -1507,6 +1534,13 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             body.Append(RenderCheckpointTable(source, options));
         }
 
+        if (overview.Sources.Count == 0)
+        {
+            body.Append(EmptyInventory(
+                "No checkpoint telemetry is connected",
+                "Durable resume positions appear here after a live Streams source is registered."));
+        }
+
         return Layout("Checkpoints", overview.ObservedAt, body.ToString(), options);
     }
 
@@ -1525,15 +1559,28 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 "Sync pipelines",
                 "Destination delivery, throughput, lag and recovery state.",
                 StatusBadge(
-                    healthy == overview.Pipelines.Count ? "All pipelines healthy" : $"{overview.Pipelines.Count - healthy} need attention",
-                    healthy == overview.Pipelines.Count ? "ok" : "warn")))
+                    overview.Pipelines.Count == 0
+                        ? "Not connected"
+                        : healthy == overview.Pipelines.Count
+                            ? "All pipelines healthy"
+                            : $"{overview.Pipelines.Count - healthy} need attention",
+                    overview.Pipelines.Count > 0 && healthy == overview.Pipelines.Count ? "ok" : "warn")))
             .Append("<div class=\"cards\">")
             .Append(MetricCard("Pipelines", overview.Pipelines.Count.ToString(CultureInfo.InvariantCulture), "Configured destinations"))
             .Append(MetricCard("Running", overview.Pipelines.Count(static pipeline => pipeline.State == "Running").ToString(CultureInfo.InvariantCulture), "Workers currently active"))
             .Append(MetricCard("Throughput", totalRate.ToString("N1", CultureInfo.InvariantCulture) + " tx/s", "Combined recent rate"))
             .Append(MetricCard("Quarantined", overview.Pipelines.Sum(static pipeline => pipeline.QuarantinedTransactions).ToString("N0", CultureInfo.InvariantCulture), "Awaiting review"))
             .Append(MetricCard("Failures", overview.Pipelines.Sum(static pipeline => pipeline.FailureCount).ToString("N0", CultureInfo.InvariantCulture), "Recorded failures"))
-            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Delivery inventory</p><h2>All pipelines</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("</div>");
+        if (overview.Pipelines.Count == 0)
+        {
+            body.Append(EmptyInventory(
+                "No Sync pipelines are connected",
+                "Register a hosted pipeline status source to report destination delivery, lag, retry, and quarantine state."));
+            return Layout("Sync pipelines", overview.ObservedAt, body.ToString(), options);
+        }
+
+        body.Append("<section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Delivery inventory</p><h2>All pipelines</h2></div><span class=\"muted\" data-filter-count></span></div>")
             .Append("<div class=\"table-tools\"><label><span>Search pipelines</span><input type=\"search\" placeholder=\"Pipeline, state or diagnostic\" data-table-filter></label>")
             .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
             .Append("<div class=\"table-wrap\"><table><thead><tr><th>Pipeline</th><th>State</th><th>Throughput</th>")
@@ -1585,15 +1632,28 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 "Live subscriptions",
                 "Shared queries, connected clients, fan-out, replay and backpressure.",
                 StatusBadge(
-                    healthy == overview.Subscriptions.Count ? "All subscriptions current" : $"{overview.Subscriptions.Count - healthy} need attention",
-                    healthy == overview.Subscriptions.Count ? "ok" : "warn")))
+                    overview.Subscriptions.Count == 0
+                        ? "Not connected"
+                        : healthy == overview.Subscriptions.Count
+                            ? "All subscriptions current"
+                            : $"{overview.Subscriptions.Count - healthy} need attention",
+                    overview.Subscriptions.Count > 0 && healthy == overview.Subscriptions.Count ? "ok" : "warn")))
             .Append("<div class=\"cards\">")
             .Append(MetricCard("Shared queries", overview.Registry.SharedSubscriptions.ToString(CultureInfo.InvariantCulture), $"Limit {overview.Registry.MaximumSharedSubscriptions:N0}"))
             .Append(MetricCard("Subscribers", overview.Subscriptions.Sum(static item => item.SubscriberCount).ToString("N0", CultureInfo.InvariantCulture), "Across every query"))
             .Append(MetricCard("Connected clients", overview.Subscriptions.Sum(static item => item.ConnectedClients).ToString("N0", CultureInfo.InvariantCulture), "Current transport connections"))
             .Append(MetricCard("Fan-out deliveries", overview.Subscriptions.Sum(static item => item.FanOutDeliveries).ToString("N0", CultureInfo.InvariantCulture), "Shared result deliveries"))
             .Append(MetricCard("Quota rejections", (overview.Registry.QuotaRejections + overview.Subscriptions.Sum(static item => item.QuotaRejections)).ToString("N0", CultureInfo.InvariantCulture), "Capacity protection"))
-            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Query inventory</p><h2>Shared subscriptions</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("</div>");
+        if (overview.Subscriptions.Count == 0)
+        {
+            body.Append(EmptyInventory(
+                "No Live subscriptions are connected",
+                "Register a Live control-plane status source to report clients, fan-out, replay, and backpressure."));
+            return Layout("Live subscriptions", overview.ObservedAt, body.ToString(), options);
+        }
+
+        body.Append("<section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Query inventory</p><h2>Shared subscriptions</h2></div><span class=\"muted\" data-filter-count></span></div>")
             .Append("<div class=\"table-tools\"><label><span>Search subscriptions</span><input type=\"search\" placeholder=\"Query, scope or disconnect code\" data-table-filter></label>")
             .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
             .Append("<div class=\"table-wrap\"><table><thead><tr><th>Query</th><th>Scope</th><th>Clients</th>")
@@ -1701,15 +1761,28 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 "Managed deployments",
                 "Fleet state, generation convergence, placement and requested capacity.",
                 StatusBadge(
-                    healthy == overview.Deployments.Count ? "Fleet ready" : $"{overview.Deployments.Count - healthy} need attention",
-                    healthy == overview.Deployments.Count ? "ok" : "warn")))
+                    overview.Deployments.Count == 0
+                        ? "Not connected"
+                        : healthy == overview.Deployments.Count
+                            ? "Fleet ready"
+                            : $"{overview.Deployments.Count - healthy} need attention",
+                    overview.Deployments.Count > 0 && healthy == overview.Deployments.Count ? "ok" : "warn")))
             .Append("<div class=\"cards\">")
             .Append(MetricCard("Deployments", overview.Deployments.Count.ToString(CultureInfo.InvariantCulture), "Managed environments"))
             .Append(MetricCard("Ready", healthy.ToString(CultureInfo.InvariantCulture), "Converged generations"))
             .Append(MetricCard("Replicas", overview.Deployments.Sum(static deployment => deployment.Replicas).ToString("N0", CultureInfo.InvariantCulture), "Requested workload replicas"))
             .Append(MetricCard("Requested CPU", overview.Deployments.Sum(static deployment => deployment.CpuMillicores).ToString("N0", CultureInfo.InvariantCulture) + "m", "Across the fleet"))
             .Append(MetricCard("Requested memory", Bytes(overview.Deployments.Sum(static deployment => deployment.MemoryBytes)), "Across the fleet"))
-            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Fleet inventory</p><h2>All deployments</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("</div>");
+        if (overview.Deployments.Count == 0)
+        {
+            body.Append(EmptyInventory(
+                "No managed deployments are connected",
+                "Register a durable managed-deployment store to report convergence, capacity, placement, and protection state."));
+            return Layout("Managed deployments", overview.ObservedAt, body.ToString(), options);
+        }
+
+        body.Append("<section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Fleet inventory</p><h2>All deployments</h2></div><span class=\"muted\" data-filter-count></span></div>")
             .Append("<div class=\"table-tools\"><label><span>Search deployments</span><input type=\"search\" placeholder=\"Deployment, tenant, region or workload\" data-table-filter></label>")
             .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
             .Append("<div class=\"table-wrap\"><table><thead><tr><th>Deployment</th><th>Tenant</th><th>Placement</th>")
@@ -1843,7 +1916,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         <style>
         :root{color-scheme:dark;font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#07101d;--surface:#0c1828;--surface-2:#101f32;--surface-3:#142840;--border:#233a53;--border-soft:#192d43;--text:#f1f7fb;--muted:#90a7bb;--blue:#48b9ff;--blue-strong:#169eea;--cyan:#5ce1d1;--ok:#4ade9a;--warn:#f6c85f;--critical:#ff6f7d;--shadow:0 18px 48px rgba(0,0,0,.24)}
         *{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 82% -10%,rgba(32,151,220,.15),transparent 28rem),var(--bg);color:var(--text);min-height:100vh}button,input,select{font:inherit}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}code{font:500 .86em ui-monospace,SFMono-Regular,Consolas,monospace;color:#bfe8ff;overflow-wrap:anywhere}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2rem,4vw,3rem);line-height:1.08;letter-spacing:-.04em;margin-bottom:.75rem}h2{font-size:1.28rem;letter-spacing:-.02em;margin-bottom:.35rem}small{display:block;color:var(--muted)}
-        .skip-link{position:fixed;left:1rem;top:-5rem;z-index:100;padding:.65rem 1rem;background:var(--blue);color:#00111d;border-radius:.5rem}.skip-link:focus{top:1rem}.app-shell{min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;border-bottom:1px solid var(--border-soft);background:rgba(7,16,29,.88);backdrop-filter:blur(18px);position:sticky;top:0;z-index:30}.brand{display:inline-flex;align-items:center;gap:.72rem;color:var(--text);font-weight:750;font-size:1.12rem;letter-spacing:-.02em}.brand:hover{text-decoration:none}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,var(--blue),var(--cyan));color:#05121d;box-shadow:0 8px 25px rgba(45,183,244,.28);font-weight:900}.brand small{display:inline;color:var(--muted);font-weight:500;margin-left:.22rem}.nav-toggle{display:none}.app-body{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100vh - 72px)}.sidebar{border-right:1px solid var(--border-soft);background:rgba(9,20,34,.76);padding:1.35rem 1rem;position:sticky;top:72px;height:calc(100vh - 72px);overflow:auto}.nav-section{margin-bottom:1.3rem}.nav-label{display:block;padding:0 .7rem .45rem;color:#647f97;text-transform:uppercase;letter-spacing:.12em;font-size:.68rem;font-weight:750}.side-nav{display:grid;gap:.18rem}.side-nav a{display:flex;align-items:center;gap:.62rem;color:#a9bed0;padding:.58rem .7rem;border-radius:.55rem;font-weight:550}.side-nav a::before{content:"";width:7px;height:7px;border:1px solid #59748b;border-radius:50%}.side-nav a:hover{background:var(--surface-2);color:var(--text);text-decoration:none}.side-nav a[aria-current=page]{background:linear-gradient(90deg,rgba(41,169,237,.18),rgba(41,169,237,.06));color:#eaf8ff}.side-nav a[aria-current=page]::before{border-color:var(--blue);background:var(--blue);box-shadow:0 0 0 4px rgba(72,185,255,.1)}.security-note{margin-top:2rem;padding:.8rem;border:1px solid var(--border);border-radius:.7rem;background:rgba(15,31,50,.7);color:var(--muted);font-size:.78rem}.security-note strong{display:block;color:var(--text);margin-bottom:.2rem}
+        .skip-link{position:fixed;left:1rem;top:-5rem;z-index:100;padding:.65rem 1rem;background:var(--blue);color:#00111d;border-radius:.5rem}.skip-link:focus{top:1rem}.app-shell{min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;border-bottom:1px solid var(--border-soft);background:rgba(7,16,29,.88);backdrop-filter:blur(18px);position:sticky;top:0;z-index:30}.brand{display:inline-flex;align-items:center;gap:.72rem;color:var(--text);font-weight:750;font-size:1.12rem;letter-spacing:-.02em}.brand:hover{text-decoration:none}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,var(--blue),var(--cyan));color:#05121d;box-shadow:0 8px 25px rgba(45,183,244,.28);font-weight:900}.brand small{display:inline;color:var(--muted);font-weight:500;margin-left:.22rem}.nav-toggle{display:none}.app-body{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100vh - 72px)}.sidebar{border-right:1px solid var(--border-soft);background:rgba(9,20,34,.76);padding:1.35rem 1rem;position:sticky;top:72px;height:calc(100vh - 72px);overflow:auto}.nav-section{margin-bottom:1.3rem}.nav-label{display:block;padding:0 .7rem .45rem;color:#647f97;text-transform:uppercase;letter-spacing:.12em;font-size:.68rem;font-weight:750}.side-nav{display:grid;gap:.18rem}.side-nav a{display:flex;align-items:center;gap:.62rem;color:#a9bed0;padding:.58rem .7rem;border-radius:.55rem;font-weight:550}.side-nav a::before{content:"";width:7px;height:7px;border:1px solid #59748b;border-radius:50%}.side-nav a:hover{background:var(--surface-2);color:var(--text);text-decoration:none}.side-nav a[aria-current=page]{background:linear-gradient(90deg,rgba(41,169,237,.18),rgba(41,169,237,.06));color:#eaf8ff}.side-nav a[aria-current=page]::before{border-color:var(--blue);background:var(--blue);box-shadow:0 0 0 4px rgba(72,185,255,.1)}.security-note{margin-top:2rem;padding:.8rem;border:1px solid var(--border);border-radius:.7rem;background:rgba(15,31,50,.7);color:var(--muted);font-size:.78rem}.security-note strong{display:block;color:var(--text);margin-bottom:.2rem}.provenance-notice{display:grid;grid-template-columns:auto 1fr;gap:.75rem;align-items:start;margin:0 0 1.35rem;padding:.85rem 1rem;border:1px solid rgba(72,185,255,.28);border-radius:.7rem;background:rgba(27,105,151,.12);color:#b9d6e8}.provenance-notice::before{content:"LIVE";padding:.16rem .38rem;border-radius:.32rem;background:rgba(72,185,255,.18);color:#82d0ff;font-size:.62rem;font-weight:850;letter-spacing:.08em}.provenance-notice strong{display:block;color:var(--text);margin-bottom:.15rem}.provenance-notice span{display:block;font-size:.8rem}
         main{width:100%;max-width:1500px;margin:0 auto;padding:2rem clamp(1.1rem,3vw,3.2rem) 3rem;min-width:0}.breadcrumbs{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.82rem;margin-bottom:1.55rem;overflow:auto;white-space:nowrap}.breadcrumbs a{color:var(--muted)}.page-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;margin-bottom:1.8rem}.page-heading>div:first-child{max-width:760px}.page-heading p:not(.eyebrow){color:var(--muted);font-size:1.02rem;margin-bottom:0}.page-actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;justify-content:flex-end}.eyebrow{color:var(--cyan);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;font-weight:800;margin-bottom:.45rem}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.8rem;margin-bottom:1.4rem}.cards--wide{grid-template-columns:repeat(auto-fit,minmax(195px,1fr))}.card{min-height:124px;background:linear-gradient(145deg,rgba(16,34,55,.96),rgba(11,25,42,.96));border:1px solid var(--border);border-radius:.8rem;padding:1rem;box-shadow:0 10px 28px rgba(0,0,0,.12)}.card>span{display:block;color:var(--muted);font-size:.78rem;font-weight:650}.card strong{display:block;font-size:1.62rem;letter-spacing:-.04em;margin:.32rem 0 .15rem;overflow-wrap:anywhere}.card small{font-size:.75rem}.panel{background:linear-gradient(155deg,rgba(13,29,47,.98),rgba(9,22,38,.98));border:1px solid var(--border);border-radius:.85rem;padding:1.15rem;margin:0 0 1.2rem;box-shadow:var(--shadow)}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.9rem}.section-heading h2{margin:0}.muted{color:var(--muted)}.status-badge{display:inline-flex;align-items:center;gap:.42rem;width:max-content;max-width:100%;padding:.28rem .58rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:#c5d5e2;font-size:.75rem;font-weight:700;white-space:nowrap}.status-dot,.product-icon{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px rgba(144,167,187,.1)}[data-tone=ok]{--tone:var(--ok)}[data-tone=warn]{--tone:var(--warn)}[data-tone=critical]{--tone:var(--critical)}.status-dot[data-tone],.product-icon[data-tone]{background:var(--tone);box-shadow:0 0 0 3px color-mix(in srgb,var(--tone) 16%,transparent)}.status-badge[data-tone=ok]{border-color:rgba(74,222,154,.25);color:#9af1c6;background:rgba(74,222,154,.08)}.status-badge[data-tone=warn]{border-color:rgba(246,200,95,.26);color:#ffe09a;background:rgba(246,200,95,.08)}.status-badge[data-tone=critical]{border-color:rgba(255,111,125,.3);color:#ffabb3;background:rgba(255,111,125,.08)}
         .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.8rem}.product-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.85rem;padding:1rem;border:1px solid var(--border);border-radius:.8rem;background:var(--surface);color:var(--text)}.product-card:hover{border-color:#366c91;background:var(--surface-2);text-decoration:none}.product-card .product-icon{width:10px;height:10px}.product-card strong,.related-link strong{display:block;margin-bottom:.2rem}.product-card small,.related-link small{font-size:.78rem}.product-count{color:var(--blue);font-size:.8rem;white-space:nowrap}.attention-list{display:grid;gap:.45rem}.attention-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.8rem;padding:.72rem;border-radius:.6rem;color:var(--text);background:rgba(14,32,52,.7)}.attention-item:hover{background:var(--surface-3);text-decoration:none}.attention-item small{font-size:.78rem}.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.6rem;color:var(--muted)}.empty-state strong{color:var(--text);margin-bottom:.3rem}.table-panel{padding-bottom:.35rem}.table-tools{display:flex;align-items:end;gap:.8rem;flex-wrap:wrap;margin-bottom:.85rem}.table-tools label{display:grid;gap:.3rem;color:var(--muted);font-size:.72rem;font-weight:650}.table-tools label:first-child{flex:1 1 280px}.table-tools input,.table-tools select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:.52rem;background:#081624;color:var(--text);padding:.48rem .65rem;outline:none}.table-tools input:focus,.table-tools select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.table-wrap{overflow:auto;margin:0 -1.15rem}.table-wrap table{min-width:760px}table{width:100%;border-collapse:collapse}th,td{padding:.75rem .82rem;text-align:left;border-bottom:1px solid var(--border-soft);vertical-align:middle}th{color:#7892a8;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800;background:rgba(8,20,34,.7);white-space:nowrap}td{font-size:.84rem;color:#c7d6e3}tbody tr:hover{background:rgba(31,73,102,.12)}tbody tr:last-child td{border-bottom:0}td small{margin-top:.18rem;font-size:.7rem}.primary-link{color:#e7f7ff;font-weight:720}.row-action{white-space:nowrap;font-size:.78rem;font-weight:700}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:0}.detail-grid>div{padding:.75rem;border-bottom:1px solid var(--border-soft);min-width:0}.detail-grid>div:nth-last-child(-n+2){border-bottom:0}.detail-grid dt{color:var(--muted);font-size:.72rem;margin-bottom:.18rem}.detail-grid dd{margin:0;color:#dce8f1;overflow-wrap:anywhere}.tag-list{display:flex;flex-wrap:wrap;gap:.5rem}.tag-list code{padding:.35rem .55rem;border:1px solid var(--border);border-radius:.45rem;background:#081624}.copy-value{display:inline-flex;align-items:center;gap:.45rem;max-width:100%}.copy-button{padding:.18rem .42rem;font-size:.67rem}.related-link{display:flex;align-items:center;justify-content:space-between;color:var(--text)}.related-link:hover{text-decoration:none;border-color:#366c91}.steps{display:grid;gap:.7rem;margin:1rem 0 0;padding:0;list-style:none;counter-reset:steps}.steps li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;color:var(--muted);counter-increment:steps}.steps li::before{content:counter(steps);display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:rgba(72,185,255,.12);color:var(--blue);font-weight:800}.steps strong,.steps span{display:block}.steps strong{color:var(--text)}.button-row{display:flex;flex-wrap:wrap;gap:.45rem}.read-only{border-color:rgba(72,185,255,.22)}.danger-zone{border-color:rgba(246,200,95,.25)}
         button{appearance:none;border:1px solid #365773;border-radius:.5rem;background:var(--surface-3);color:var(--text);padding:.45rem .7rem;cursor:pointer;font-weight:650}button:hover{border-color:var(--blue);background:#193853}button.secondary{background:transparent}button:disabled{cursor:wait;opacity:.6}.graph-query-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.8rem;margin-top:1rem;padding:1rem;border:1px solid var(--border-soft);border-radius:.7rem;background:rgba(7,20,33,.65)}.graph-query-form label,.graph-toolbar label{display:grid;gap:.35rem;color:var(--muted);font-size:.75rem;font-weight:700}.graph-query-form input,.graph-toolbar input{min-height:42px;border:1px solid var(--border);border-radius:.52rem;background:#06131f;color:var(--text);padding:.5rem .65rem;outline:none}.graph-query-form input:focus,.graph-toolbar input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.graph-query-form>.button-row{grid-column:1/-1;align-items:center}.server-bound{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;color:var(--muted);font-size:.78rem}.server-bound strong{color:var(--text)}.graph-result{margin-top:1.2rem}.graph-snapshot{display:flex;align-items:center;gap:.45rem;margin-bottom:.8rem;padding:.6rem .75rem;border:1px solid var(--border);border-radius:.6rem;background:rgba(8,22,36,.72);color:#a9bed0;font-size:.76rem;font-weight:650}.graph-snapshot::before{content:"";width:9px;height:9px;border-radius:50%;background:#7f9bb1;box-shadow:0 0 0 4px rgba(127,155,177,.1)}.graph-snapshot[data-tone=fresh]::before{background:#4ade9a;box-shadow:0 0 0 4px rgba(74,222,154,.11)}.graph-snapshot[data-tone=stale]{border-color:rgba(246,200,95,.32);color:#f6d98b}.graph-snapshot[data-tone=stale]::before{background:#f6c85f;box-shadow:0 0 0 4px rgba(246,200,95,.12)}.graph-summary{margin-bottom:.8rem}.graph-summary .card{min-height:92px}.graph-summary .card strong{font-size:1.3rem}.graph-composition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin:.8rem 0}.graph-composition section{padding:.85rem;border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.68)}.graph-composition h3{font-size:.85rem;margin-bottom:.6rem}.graph-composition .tag-list span{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .55rem;border:1px solid var(--border);border-radius:999px;color:#d9e7f0;font-size:.76rem}.graph-composition .tag-list span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--category-color)}.graph-toolbar{display:flex;align-items:end;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin:1rem 0 .65rem}.graph-toolbar label{flex:1 1 300px}.graph-workspace{display:grid;grid-template-columns:minmax(0,3fr) minmax(245px,1fr);gap:.8rem;min-height:580px}.graph-canvas-shell{position:relative;min-width:0;border:1px solid var(--border);border-radius:.75rem;overflow:hidden;background:#07131f}.graph-canvas-shell canvas{display:block;width:100%;height:580px;touch-action:none;cursor:grab}.graph-canvas-shell canvas:active{cursor:grabbing}.graph-canvas-help{position:absolute;left:.7rem;bottom:.7rem;padding:.35rem .5rem;border-radius:.4rem;background:rgba(3,12,20,.82);color:#88a1b5;font-size:.69rem;pointer-events:none}.graph-inspector{padding:1rem;border:1px solid var(--border);border-radius:.75rem;background:rgba(8,22,36,.8);overflow:auto}.graph-inspector h3{overflow-wrap:anywhere}.graph-property-list{display:grid;grid-template-columns:minmax(80px,.7fr) minmax(0,1.3fr);margin-top:1rem}.graph-property-list dt,.graph-property-list dd{padding:.48rem;border-bottom:1px solid var(--border-soft);overflow-wrap:anywhere}.graph-property-list dt{color:var(--muted);font-size:.72rem}.graph-property-list dd{margin:0;color:var(--text);font-size:.78rem}.graph-element-lists{display:grid;gap:.7rem;margin-top:.8rem}.graph-element-lists details{border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.55);overflow:hidden}.graph-element-lists summary{padding:.8rem 1rem;cursor:pointer}.graph-element-lists .table-wrap{margin:0}.graph-element-lists table{min-width:720px}.graph-element-button{border:0;background:transparent;padding:0;color:#e7f7ff;text-align:left}.graph-element-button:hover{border:0;background:transparent;color:var(--blue);text-decoration:underline}.footer{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:#637e94;font-size:.75rem;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border-soft)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
@@ -1857,7 +1930,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         <a class="skip-link" href="#main-content">Skip to dashboard content</a>
         <div class="app-shell">
           <header class="topbar">
-            <a class="brand" href="{{{E(DashboardPath(options, "overview"))}}}"><span class="brand-mark" aria-hidden="true">B</span><span>BlueTusk <small>Control plane</small></span></a>
+            <a class="brand" href="{{{E(DashboardPath(options, "overview"))}}}"><span class="brand-mark" aria-hidden="true">B</span><span>BlueTusk <small>{{{E(options.BrandLabel)}}}</small></span></a>
             <button class="nav-toggle secondary" type="button" data-nav-toggle aria-expanded="false" aria-controls="dashboard-navigation">Menu</button>
           </header>
           <div class="app-body">
@@ -1868,6 +1941,7 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
               <div class="security-note"><strong>Role-secured view</strong>Inventory is redacted by the control plane. Operations are shown only to authorised roles.</div>
             </aside>
             <main id="main-content">
+              {{{DataProvenanceNotice(options)}}}
               {{{body}}}
               <footer class="footer"><span>Observed <time datetime="{{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}">{{{E(observedAt.ToString("dd MMM yyyy, HH:mm:ss 'UTC'", CultureInfo.InvariantCulture))}}}</time></span><span>BlueTusk 1.2 control plane</span></footer>
             </main>
@@ -1877,6 +1951,14 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         </body>
         </html>
         """;
+
+    private static string DataProvenanceNotice(BlueTuskDashboardOptions options) =>
+        string.IsNullOrWhiteSpace(options.DataProvenanceNotice)
+            ? string.Empty
+            : $"<aside class=\"provenance-notice\"><div><strong>Data provenance</strong><span>{E(options.DataProvenanceNotice)}</span></div></aside>";
+
+    private static string EmptyInventory(string title, string description) =>
+        $"<section class=\"panel empty-state\"><strong>{E(title)}</strong><span>{E(description)}</span></section>";
 
     private static string PipelineControls(string pipelineId, long quarantinedTransactions)
     {

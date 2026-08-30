@@ -32,9 +32,15 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
         var healthySubscriptions = live.Subscriptions.Count(IsLiveHealthy);
         var healthyDeployments = fleet.Deployments.Count(IsDeploymentHealthy);
         var attention = BuildAttentionItems(sources, sync, live, fleet, options);
+        var reportingProducts =
+            (sources.Sources.Count > 0 ? 1 : 0) +
+            (sync.Pipelines.Count > 0 ? 1 : 0) +
+            (live.Subscriptions.Count > 0 ? 1 : 0) +
+            (graphs.Queries.Count > 0 ? 1 : 0) +
+            (fleet.Deployments.Count > 0 ? 1 : 0);
         var overallTone = attention.Any(static item => item.Tone == "critical")
             ? "critical"
-            : attention.Count > 0 ? "warn" : "ok";
+            : attention.Count > 0 || reportingProducts < 5 ? "warn" : "ok";
         var observedAt = new[]
         {
             sources.ObservedAt,
@@ -50,7 +56,11 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
                 "Operational overview",
                 "Everything BlueTusk is running, in one place.",
                 StatusBadge(
-                    overallTone == "ok" ? "All systems healthy" : $"{attention.Count} need attention",
+                    attention.Count > 0
+                        ? $"{attention.Count} need attention"
+                        : reportingProducts == 5
+                            ? "All systems healthy"
+                            : $"{reportingProducts}/5 product families reporting",
                     overallTone)))
             .Append("<div class=\"cards cards--wide\">")
             .Append(MetricCard("Sources healthy", $"{healthySources}/{sources.Sources.Count}", "PostgreSQL capture"))
@@ -68,7 +78,9 @@ public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
             .Append("</div>");
         if (attention.Count == 0)
         {
-            body.Append("<div class=\"empty-state\"><strong>Everything is within its expected operating state.</strong><span>No current diagnostics, stopped workloads, or lag warnings were reported.</span></div>");
+            body.Append(reportingProducts == 5
+                ? "<div class=\"empty-state\"><strong>Everything is within its expected operating state.</strong><span>No current diagnostics, stopped workloads, or lag warnings were reported.</span></div>"
+                : $"<div class=\"empty-state\"><strong>Partial telemetry: {reportingProducts}/5 product families are reporting.</strong><span>Unconnected products are shown as empty, never inferred to be healthy.</span></div>");
         }
         else
         {
