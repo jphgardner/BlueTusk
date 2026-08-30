@@ -1,19 +1,21 @@
 # BlueTusk 1.1 performance leadership report
 
-**Candidate basis:** `ac702d7` plus the coordinated 1.1 implementation
+**Public RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af`
 
 **Release:** 1.1.0 across Provider, Streams, Sync, Live, Control Plane, and
 Continuous Graph
 
-**Publication state:** disabled until every exact-candidate gate passes,
-including digest-pinned PostgreSQL 19 GA
+**Publication state:** `1.1.0-rc.1` is public; stable `1.1.0` remains disabled
+until every exact-stable-candidate gate passes, including digest-pinned
+PostgreSQL 19 GA
 
 ## Current verdict
 
 Provider's retained Npgsql 10.0.3 evidence passes all 16 latency/allocation
-pairs and four saturated-pool shapes. The complete 1.1 leadership claim is
-**not yet earned**: final-SHA Windows/Linux comparisons, confidence intervals,
-and endurance evidence remain mandatory. Missing evidence and ties fail.
+pairs and four saturated-pool shapes. The public RC exposes those improvements
+for independent evaluation. The complete 1.1 leadership claim is **not yet
+earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and
+endurance evidence remain mandatory. Missing evidence and ties fail.
 
 ## Implemented hot paths
 

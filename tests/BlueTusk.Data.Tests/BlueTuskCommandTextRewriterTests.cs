@@ -28,6 +28,27 @@ public sealed class BlueTuskCommandTextRewriterTests
     }
 
     [Fact]
+    public void Publishes_parameterless_plans_safely_to_concurrent_commands()
+    {
+        var sql = $"SELECT 42 /* {Guid.NewGuid():N} */";
+
+        Parallel.For(
+            0,
+            Environment.ProcessorCount * 4_096,
+            _ =>
+            {
+                var plan = BlueTuskCommandTextRewriter.Rewrite(
+                    sql,
+                    new BlueTuskParameterCollection());
+
+                Assert.Equal(sql, plan.Sql);
+                Assert.NotNull(plan.Parameters);
+                Assert.Empty(plan.Parameters);
+                Assert.False(plan.UsesNamedParameters);
+            });
+    }
+
+    [Fact]
     public void Rewrites_named_parameters_in_first_use_order_and_reuses_ordinals()
     {
         var parameters = new BlueTuskParameterCollection();

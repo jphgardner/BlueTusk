@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/Shared/">
+    <Project Path="applications/src/Shared/BlueTusk.Applications.Hosting/BlueTusk.Applications.Hosting.csproj" />
+  </Folder>
+  <Folder Name="/OrderOperations/">
+    <Project Path="applications/src/OrderOperations/BlueTusk.OrderOperations.Domain/BlueTusk.OrderOperations.Domain.csproj" />
+    <Project Path="applications/src/OrderOperations/BlueTusk.OrderOperations.Application/BlueTusk.OrderOperations.Application.csproj" />
+    <Project Path="applications/src/OrderOperations/BlueTusk.OrderOperations.Infrastructure/BlueTusk.OrderOperations.Infrastructure.csproj" />
+    <Project Path="applications/src/OrderOperations/BlueTusk.OrderOperations.Api/BlueTusk.OrderOperations.Api.csproj" />
+    <Project Path="applications/src/OrderOperations/BlueTusk.OrderOperations.Worker/BlueTusk.OrderOperations.Worker.csproj" />
+    <Project Path="applications/tests/BlueTusk.OrderOperations.Tests/BlueTusk.OrderOperations.Tests.csproj" />
+  </Folder>
+</Solution>

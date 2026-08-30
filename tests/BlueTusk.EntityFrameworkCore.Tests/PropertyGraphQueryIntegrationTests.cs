@@ -36,18 +36,23 @@ public sealed class PropertyGraphQueryIntegrationTests
             INSERT INTO bluetusk_ef_graph_people VALUES
                 (1, 'Ada'), (2, 'Grace'), (3, 'Linus');
             INSERT INTO bluetusk_ef_graph_friendships VALUES
-                (10, 1, 2), (11, 1, 3);
+                (10, 1, 2), (11, 1, 3), (12, 2, 3);
             CREATE TEMP PROPERTY GRAPH bluetusk_ef_graph
                 VERTEX TABLES (
                     bluetusk_ef_graph_people AS people
                     KEY (id)
-                    LABEL person PROPERTIES (id AS "Id", name AS "Name"))
+                    LABEL person PROPERTIES (id AS "Id", name AS "Name")
+                    LABEL contact PROPERTIES (id AS "Id", name AS "Name"))
                 EDGE TABLES (
                     bluetusk_ef_graph_friendships AS friendships
                     KEY (id)
                     SOURCE KEY (from_id) REFERENCES people (id)
                     DESTINATION KEY (to_id) REFERENCES people (id)
                     LABEL knows PROPERTIES (
+                        id AS "Id",
+                        from_id AS "FromPersonId",
+                        to_id AS "ToPersonId")
+                    LABEL connected PROPERTIES (
                         id AS "Id",
                         from_id AS "FromPersonId",
                         to_id AS "ToPersonId"));
@@ -81,7 +86,9 @@ public sealed class PropertyGraphQueryIntegrationTests
 
             var trackedPerson = Assert.Single(
                 await context.PropertyGraph("bluetusk_ef_graph")
-                    .Match(pattern => pattern.Vertex<Person>("person"))
+                    .Match(pattern => pattern
+                        .Vertex<Person>("person")
+                        .LabelsAnyOf("person"))
                     .Select<Person>(projection => projection
                         .Property<Person, int>("person", person => person.Id, result => result.Id)
                         .Property<Person, string>("person", person => person.Name, result => result.Name))
@@ -91,6 +98,38 @@ public sealed class PropertyGraphQueryIntegrationTests
             Assert.Contains(
                 context.ChangeTracker.Entries<Person>(),
                 entry => entry.Entity == trackedPerson && entry.State == EntityState.Unchanged);
+
+            var undirected = await context.PropertyGraph("bluetusk_ef_graph")
+                .Match(pattern => pattern
+                    .Vertex<Person>("left", person => person.Id == 2)
+                    .LabelsAnyOf("person", "contact")
+                    .Undirected<Friendship>("relationship")
+                    .LabelsAnyOf("knows", "connected")
+                    .Vertex<Person>("right")
+                    .LabelsAnyOf("person", "contact"))
+                .Select<PathEndpointResult>(projection => projection
+                    .Property<Person, int>("left", person => person.Id, result => result.SourceId)
+                    .Property<Person, int>("right", person => person.Id, result => result.TargetId)
+                    .Property<Person, string>("right", person => person.Name, result => result.TargetName))
+                .OrderBy(result => result.TargetId)
+                .ToListAsync();
+            Assert.Equal([1, 3], undirected.Select(static result => result.TargetId));
+
+            var bounded = await context.PropertyGraph("bluetusk_ef_graph")
+                .Match(pattern => pattern
+                    .Vertex<Person>("source", person => person.Id == 1)
+                    .LabelsAnyOf("person")
+                    .OutgoingPath<Friendship>("path", 1, 2)
+                    .LabelsAnyOf("knows")
+                    .Vertex<Person>("target")
+                    .LabelsAnyOf("person"))
+                .Select<PathEndpointResult>(projection => projection
+                    .Property<Person, int>("source", person => person.Id, result => result.SourceId)
+                    .Property<Person, int>("target", person => person.Id, result => result.TargetId)
+                    .Property<Person, string>("target", person => person.Name, result => result.TargetName))
+                .OrderBy(result => result.TargetId)
+                .ToListAsync();
+            Assert.Equal([2, 3, 3], bounded.Select(static result => result.TargetId));
         }
         finally
         {
@@ -102,8 +141,11 @@ public sealed class PropertyGraphQueryIntegrationTests
         context.PropertyGraph("bluetusk_ef_graph")
             .Match(pattern => pattern
                 .Vertex<Person>("source", person => person.Id == sourceId)
+                .LabelsAnyOf("person")
                 .Outgoing<Friendship>("relationship")
-                .Vertex<Person>("target"))
+                .LabelsAnyOf("knows")
+                .Vertex<Person>("target")
+                .LabelsAnyOf("person"))
             .Select<FriendResult>(projection => projection
                 .Property<Person, int>("source", person => person.Id, result => result.SourceId)
                 .Property<Person, string>("source", person => person.Name, result => result.SourceName)
@@ -169,10 +211,12 @@ public sealed class PropertyGraphQueryIntegrationTests
                 {
                     graph.Vertex<Person>("people", vertex => vertex
                         .HasLabel("person")
+                        .HasLabel("contact")
                         .HasKey(person => person.Id)
                         .Properties(person => new { person.Id, person.Name }));
                     graph.Edge<Friendship>("friendships", edge => edge
                         .HasLabel("knows")
+                        .HasLabel("connected")
                         .HasKey(friendship => friendship.Id)
                         .Properties(friendship => new
                         {
@@ -209,6 +253,15 @@ public sealed class PropertyGraphQueryIntegrationTests
         public string SourceName { get; set; } = string.Empty;
 
         public int RelationshipId { get; set; }
+
+        public int TargetId { get; set; }
+
+        public string TargetName { get; set; } = string.Empty;
+    }
+
+    private sealed class PathEndpointResult
+    {
+        public int SourceId { get; set; }
 
         public int TargetId { get; set; }
 

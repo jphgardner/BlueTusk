@@ -1,0 +1,60 @@
+#nullable enable
+BlueTusk.Sync.Webhooks.WebhookSyncDeliveryException
+BlueTusk.Sync.Webhooks.WebhookSyncDeliveryException.WebhookSyncDeliveryException(string! message) -> void
+BlueTusk.Sync.Webhooks.WebhookSyncDeliveryException.WebhookSyncDeliveryException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Webhooks.WebhookSyncDestination
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.ApplySnapshotBatchAsync(BlueTusk.Sync.SyncSnapshotBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.ApplyTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncApplyResult!>
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.Capabilities.get -> BlueTusk.Sync.SyncDestinationCapabilities
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.CompleteSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotComplete! complete, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.Name.get -> string!
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.ProvisionAsync(BlueTusk.Sync.SyncProvisionRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncProvisionResult!>
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.ReplayTransactionAsync(BlueTusk.Sync.SyncTransactionBatch! batch, string! operationId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.Sync.SyncQuarantineReplayApplyResult!>
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.ResetSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotReset! reset, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.StartSnapshotAsync(string! pipelineId, BlueTusk.Streams.SnapshotStart! start, BlueTusk.Sync.SyncTransformVersion! transform, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask
+BlueTusk.Sync.Webhooks.WebhookSyncDestination.WebhookSyncDestination(BlueTusk.Sync.Webhooks.WebhookSyncOptions! options) -> void
+BlueTusk.Sync.Webhooks.WebhookSyncException
+BlueTusk.Sync.Webhooks.WebhookSyncException.WebhookSyncException(string! message) -> void
+BlueTusk.Sync.Webhooks.WebhookSyncException.WebhookSyncException(string! message, System.Exception! innerException) -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.<Clone>$() -> BlueTusk.Sync.Webhooks.WebhookSyncOptions!
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.AllowInsecureHttp.get -> bool
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.AllowInsecureHttp.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.Client.get -> System.Net.Http.HttpClient!
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.Client.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.Endpoint.get -> System.Uri!
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.Endpoint.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.Equals(BlueTusk.Sync.Webhooks.WebhookSyncOptions? other) -> bool
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.InitialRetryDelay.get -> System.TimeSpan
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.InitialRetryDelay.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.KeyId.get -> string!
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.KeyId.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.MaxEnvelopeBytes.get -> int
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.MaxEnvelopeBytes.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.MaximumAttempts.get -> int
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.MaximumAttempts.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.MaximumRetryDelay.get -> System.TimeSpan
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.MaximumRetryDelay.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.SigningKey.get -> System.ReadOnlyMemory<byte>
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.SigningKey.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.TimeProvider.get -> System.TimeProvider!
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.TimeProvider.init -> void
+BlueTusk.Sync.Webhooks.WebhookSyncOptions.WebhookSyncOptions() -> void
+BlueTusk.Sync.Webhooks.WebhookSyncProtocol
+BlueTusk.Sync.Webhooks.WebhookSyncProtocolException
+BlueTusk.Sync.Webhooks.WebhookSyncProtocolException.WebhookSyncProtocolException(string! message) -> void
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.AppliedStatus = "applied" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.CurrentFormatVersion = 1 -> int
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.DeliveryIdHeader = "BlueTusk-Delivery-Id" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.DeliveryStatusHeader = "BlueTusk-Delivery-Status" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.DuplicateStatus = "duplicate" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.EventHeader = "BlueTusk-Event" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.KeyIdHeader = "BlueTusk-Key-Id" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.SignatureHeader = "BlueTusk-Signature" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.TimestampHeader = "BlueTusk-Timestamp" -> string!
+const BlueTusk.Sync.Webhooks.WebhookSyncProtocol.TransformFingerprintHeader = "BlueTusk-Transform-Fingerprint" -> string!
+override BlueTusk.Sync.Webhooks.WebhookSyncOptions.Equals(object? obj) -> bool
+override BlueTusk.Sync.Webhooks.WebhookSyncOptions.GetHashCode() -> int
+override BlueTusk.Sync.Webhooks.WebhookSyncOptions.ToString() -> string!
+static BlueTusk.Sync.Webhooks.WebhookSyncOptions.operator !=(BlueTusk.Sync.Webhooks.WebhookSyncOptions? left, BlueTusk.Sync.Webhooks.WebhookSyncOptions? right) -> bool
+static BlueTusk.Sync.Webhooks.WebhookSyncOptions.operator ==(BlueTusk.Sync.Webhooks.WebhookSyncOptions? left, BlueTusk.Sync.Webhooks.WebhookSyncOptions? right) -> bool

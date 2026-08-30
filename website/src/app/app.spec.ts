@@ -22,6 +22,9 @@ describe('App', () => {
     await fixture.whenStable();
     const compiled = fixture.nativeElement as HTMLElement;
     expect(compiled.querySelector('.brand')?.textContent).toContain('BlueTusk');
+    expect(compiled.querySelector<HTMLImageElement>('.brand img')?.src).toContain(
+      'bluetusk-mark.png',
+    );
     expect(compiled.querySelector('.desktop-nav')?.textContent).toContain('Provider');
   });
 
@@ -35,5 +38,20 @@ describe('App', () => {
     expect(fixture.nativeElement.querySelector('.search-results')?.textContent).toContain(
       'Platform',
     );
+  });
+
+  it('opens a descriptive mobile navigation', async () => {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    compiled.querySelector<HTMLButtonElement>('.mobile-menu-trigger')?.click();
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const dialog = compiled.querySelector<HTMLElement>('#mobile-navigation');
+    expect(dialog?.getAttribute('aria-modal')).toBe('true');
+    expect(dialog?.textContent).toContain('Choose what you want to build.');
+    expect(dialog?.textContent).toContain('Connect .NET applications directly to PostgreSQL.');
   });
 });

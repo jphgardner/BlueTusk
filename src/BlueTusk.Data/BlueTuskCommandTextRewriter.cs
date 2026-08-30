@@ -411,14 +411,19 @@ internal static class BlueTuskCommandTextRewriter
 
     private sealed class NoNamedRewriteTemplate(string sql)
     {
-        private BlueTuskCommandPlan? _parameterlessPlan;
+        // This template is shared by every command that uses the same SQL text.
+        // A lazily assigned Nullable<BlueTuskCommandPlan> can tear while its
+        // multi-field struct value is published by concurrent first callers,
+        // exposing a plan whose Parameters member is null. Construct the
+        // immutable parameterless plan with the template and never mutate it.
+        private readonly BlueTuskCommandPlan _parameterlessPlan = new(
+            sql,
+            Array.Empty<BlueTuskParameter>(),
+            UsesNamedParameters: false);
 
         public BlueTuskCommandPlan Bind(BlueTuskParameterCollection parameters) =>
             parameters.Count == 0
-                ? _parameterlessPlan ??= new BlueTuskCommandPlan(
-                    sql,
-                    Array.Empty<BlueTuskParameter>(),
-                    UsesNamedParameters: false)
+                ? _parameterlessPlan
                 : new BlueTuskCommandPlan(
                     sql,
                     parameters.Items,

@@ -25,16 +25,16 @@ jobs:
         with:
           node-version: 24
 
+      - name: Build exact local RC feed
+        shell: pwsh
+        run: ./eng/build-prerelease-packages.ps1
+
       - name: Verify application and deployment contracts
         shell: pwsh
         run: |
           ./eng/verify-applications.ps1
           ./eng/test-application-image-evidence-verifier.ps1
           ./eng/test-prerelease-release-verifier.ps1
-
-      - name: Build exact local RC feed
-        shell: pwsh
-        run: ./eng/build-prerelease-packages.ps1
 
       - name: Restore, format, build, and test applications
         shell: pwsh
@@ -144,6 +144,7 @@ jobs:
           ./eng/test-prerelease-release-verifier.ps1 `
             -PrereleaseTrainPath ./eng/package-prerelease-train.json
           ./eng/test-v1-approval-evidence-verifier.ps1
+          ./eng/test-allocation-budget-verifier.ps1
           ./eng/test-latency-budget-verifier.ps1
           ./eng/test-multiplexing-performance-verifier.ps1
           ./eng/test-provider-performance-verifier.ps1
@@ -151,6 +152,8 @@ jobs:
           ./eng/verify-performance-leadership-contract.ps1
           ./eng/test-performance-leadership-evidence-verifier.ps1
           ./eng/test-endurance-workflow-sbom-contract.ps1
+          ./eng/test-live-control-plane-endurance-verifier.ps1
+          ./eng/verify-v1.2-release-contract.ps1
 
       - name: Build
         run: dotnet build BlueTusk.slnx --configuration Release --no-restore

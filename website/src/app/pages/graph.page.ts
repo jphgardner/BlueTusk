@@ -11,36 +11,37 @@ import { sourceUrl } from '../content/catalog';
   template: `
     <section class="page-hero graph-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> CONNECTED DATA</span>
-        <h1>Graph in PostgreSQL.<br /><em>Two different jobs.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> POSTGRESQL 19 SQL/PGQ</span>
+        <h1>Query relationships <em>inside PostgreSQL.</em></h1>
         <p>
-          Use PostgreSQL 19 SQL/PGQ for server-side property graph queries. Use Continuous Graph for
-          checkpointed projections that react to committed changes.
+          Define property graphs over relational tables, query them with SQL/PGQ, or maintain an
+          authorized result as committed data changes. Every graph surface is capability guarded
+          because PostgreSQL 19 is still a prerelease dependency.
         </p>
         <div class="hero-actions">
           <a mat-flat-button routerLink="/documentation/graph/sql-pgq" class="primary-action"
-            >SQL/PGQ guide</a
+            >Read the SQL/PGQ guide</a
           ><a
             mat-stroked-button
             routerLink="/documentation/real-time/continuous-graph"
             class="secondary-action"
-            >Continuous Graph guide</a
+            >Read Continuous Graph</a
           >
         </div>
       </div>
       <div class="node-field" aria-hidden="true">
         <i></i><i></i><i></i><i></i><i></i><span>SQL/PGQ</span><span>WAL</span
-        ><span>Projection</span>
+        ><span>Authorized results</span>
       </div>
     </section>
 
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>CHOOSE THE MODEL</span>
-          <h2>Query graph state or maintain it continuously.</h2>
+          <span>TWO DIFFERENT JOBS</span>
+          <h2>Query now or maintain a result.</h2>
         </div>
-        <p>The two surfaces have separate runtime requirements, evidence and release boundaries.</p>
+        <p>Choose based on when the answer is needed and who owns delivery.</p>
       </header>
       <div class="comparison-grid">
         @for (model of models; track model.id) {
@@ -62,9 +63,7 @@ import { sourceUrl } from '../content/catalog';
                 </div>
               }
             </dl>
-            <a [routerLink]="model.route"
-              >Read the implementation guide <mat-icon>arrow_forward</mat-icon></a
-            >
+            <a [routerLink]="model.route">Read the guide <mat-icon>arrow_forward</mat-icon></a>
           </article>
         }
       </div>
@@ -72,13 +71,13 @@ import { sourceUrl } from '../content/catalog';
 
     <section class="page-section capability-guard">
       <div>
-        <span class="section-kicker">SERVER CAPABILITY GUARD</span>
-        <h2>PostgreSQL 19 is detected, not assumed.</h2>
+        <span class="section-kicker">FAIL-CLOSED CAPABILITY CHECK</span>
+        <h2>Graph APIs stay off until the server proves support.</h2>
         <p>
-          The authenticated connection probes the documented information schema before enabling
-          SQL/PGQ. A version string alone is not treated as product support.
+          BlueTusk checks the authenticated server’s catalogue and SQL/PGQ capability. A major
+          version number alone is not treated as proof.
         </p>
-        <bt-source-link [href]="source('docs/graph/README.md')" />
+        <bt-source-link [href]="source('docs/graph/README.md')" label="Capability contract" />
       </div>
       <div class="version-rail">
         @for (version of versions; track version.number) {
@@ -94,10 +93,10 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>QUERY SURFACE</span>
-          <h2>Start raw. Move to typed where supported.</h2>
+          <span>QUERY SURFACES</span>
+          <h2>Use SQL directly or a bounded typed query.</h2>
         </div>
-        <nav class="segmented-tabs">
+        <nav class="segmented-tabs" aria-label="Graph query example">
           @for (sample of samples; track sample.id) {
             <button
               type="button"
@@ -115,7 +114,7 @@ import { sourceUrl } from '../content/catalog';
           <h3>{{ selectedSample().title }}</h3>
           <p>{{ selectedSample().detail }}</p>
           <div class="tag-cloud">
-            @for (tag of selectedSample().tags; track tag) {
+            @for (tag of selectedSample().tags; track $index) {
               <span>{{ tag }}</span>
             }
           </div>
@@ -127,10 +126,10 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section sample-workloads">
       <header class="section-head">
         <div>
-          <span>CONTINUOUS WORKLOADS</span>
-          <h2>Run the projections that define the boundary.</h2>
+          <span>RUNNABLE EXAMPLES</span>
+          <h2>See the recovery model in application code.</h2>
         </div>
-        <p>Both samples are executable projects in the repository, not conceptual mockups.</p>
+        <p>These samples require a PostgreSQL 19 server with the negotiated SQL/PGQ capability.</p>
       </header>
       <div>
         @for (sample of workloads; track sample.title) {
@@ -157,55 +156,66 @@ export class GraphPage {
       icon: 'account_tree',
       kicker: 'DATABASE QUERY',
       title: 'PostgreSQL SQL/PGQ',
-      status: 'PG 19 GA pending',
+      status: 'PostgreSQL 19 prerelease',
       stage: 'preview',
-      body: 'Create, discover, migrate, scaffold, and query property graphs through a capability-guarded PostgreSQL 19 surface.',
+      body: 'Create property-graph metadata over relational tables and query it when the application needs an answer.',
       route: '/documentation/graph/sql-pgq',
       rows: [
-        { label: 'Source', value: 'PostgreSQL property graphs' },
-        { label: 'Execution', value: 'On-demand SQL query' },
-        { label: 'Availability', value: 'Beta 3 tested; GA gated' },
+        { label: 'Execution', value: 'One PostgreSQL query' },
+        { label: 'Result owner', value: 'The calling application' },
+        {
+          label: 'Availability',
+          value: 'Prerelease evaluation; stable waits for PostgreSQL 19 GA',
+        },
       ],
     },
     {
       id: 'continuous',
       icon: 'hub',
-      kicker: 'REACTIVE PROJECTION',
+      kicker: 'MAINTAINED RESULT',
       title: 'Continuous Graph',
-      status: '1.1 candidate',
-      stage: 'gate-passed',
-      body: 'Maintain authorised graph results through trusted CDC deltas, compiler-scoped GRAPH_TABLE deltas, and fail-closed full repair.',
+      status: '1.1 RC · PG19 gated',
+      stage: 'preview',
+      body: 'Use Streams and Live to refresh a registered graph query after relevant committed changes while preserving authorization.',
       route: '/documentation/real-time/continuous-graph',
       rows: [
-        { label: 'Source', value: 'Streams transactions' },
-        { label: 'Execution', value: 'Three-tier incremental maintenance' },
-        { label: 'Security', value: 'Original RLS and Live scope retained' },
-        { label: 'Availability', value: 'PostgreSQL 19 GA + evidence gated' },
+        { label: 'Execution', value: 'Scoped update or authoritative repair' },
+        { label: 'Result owner', value: 'A registered Live query and security scope' },
+        { label: 'Recovery', value: 'Checkpointed source delivery and replay' },
+        {
+          label: 'Availability',
+          value: 'Public RC; stable waits for PostgreSQL 19 GA and endurance',
+        },
       ],
     },
   ] as const;
   protected readonly versions = [
-    { number: '15', state: 'Guarded', detail: 'Empty safe discovery', enabled: false },
-    { number: '16', state: 'Guarded', detail: 'Empty safe discovery', enabled: false },
-    { number: '17', state: 'Guarded', detail: 'Empty safe discovery', enabled: false },
-    { number: '18', state: 'Guarded', detail: 'Empty safe discovery', enabled: false },
-    { number: '19', state: 'Enabled', detail: 'SQL/PGQ probe + tests', enabled: true },
+    { number: '15', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
+    { number: '16', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
+    { number: '17', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
+    { number: '18', state: 'Unavailable', detail: 'No SQL/PGQ capability', enabled: false },
+    {
+      number: '19',
+      state: 'Guarded',
+      detail: 'Enable only after capability negotiation',
+      enabled: true,
+    },
   ] as const;
   protected readonly samples = [
     {
       id: 'raw',
       label: 'Raw SQL',
       icon: 'terminal',
-      title: 'Execute SQL/PGQ directly',
+      title: 'Run SQL/PGQ directly',
       detail:
-        'The provider can execute graph DDL and MATCH queries like any capability-guarded PostgreSQL statement.',
-      tags: ['MATCH', 'GRAPH_TABLE', 'COLUMNS'],
+        'Use the Provider when the query is naturally expressed as SQL or falls outside the typed EF subset.',
+      tags: ['MATCH', 'GRAPH_TABLE', 'Parameterized values'],
       file: 'GraphQuery.cs',
       code: `await using var command = dataSource.CreateCommand("""
     SELECT *
     FROM GRAPH_TABLE (
       social_graph
-      MATCH (person:Person)-[knows:KNOWS]->(friend:Person)
+      MATCH (person IS Person)-[knows IS KNOWS]->(friend IS Person)
       COLUMNS (person.name AS person, friend.name AS friend)
     )
     """);
@@ -216,34 +226,40 @@ await using var reader = await command.ExecuteReaderAsync();`,
       id: 'ef',
       label: 'EF Core',
       icon: 'data_object',
-      title: 'Translate supported typed constructs',
+      title: 'Build a typed linear path',
       detail:
-        'Typed EF constructs produce SQL/PGQ while unsupported shapes fail explicitly instead of falling back silently.',
-      tags: ['Migrations', 'Scaffolding', 'Typed translation'],
+        'Use model metadata for supported bounded shapes. BlueTusk quotes identifiers, binds captured values, and rejects unsupported patterns.',
+      tags: ['Model metadata', 'Typed projection', 'Composable IQueryable'],
       file: 'GraphContext.cs',
-      code: `var paths = await context.PropertyGraph("social_graph")
-    .Match<Person, Knows, Person>()
-    .Where(path => path.Edge.Since >= 2024)
-    .Select(path => new { path.Source.Name, Friend = path.Target.Name })
+      code: `var friends = await context.PropertyGraph("social", "application")
+    .Match(pattern => pattern
+        .Vertex<Person>("source", person => person.Id == personId)
+        .Outgoing<Friendship>("edge")
+        .Vertex<Person>("target"))
+    .Select<FriendResult>(projection => projection
+        .Property<Person, long>(
+            "target", person => person.Id, result => result.PersonId)
+        .Property<Person, string>(
+            "target", person => person.Name, result => result.Name))
     .ToListAsync();`,
     },
   ] as const;
   protected readonly selectedSample = computed(
-    () => this.samples.find((x) => x.id === this.activeSample()) ?? this.samples[0],
+    () => this.samples.find((sample) => sample.id === this.activeSample()) ?? this.samples[0],
   );
   protected readonly workloads = [
     {
       icon: 'security',
       kicker: 'FRAUD',
-      title: 'Connected-risk projection',
-      body: 'Apply account and transfer changes into a graph used to surface suspicious paths.',
+      title: 'Connected financial risk',
+      body: 'Register a bounded transfer path and observe an authorized result change after a relevant commit.',
       href: 'https://github.com/jphgardner/BlueTusk/tree/main/samples/BlueTusk.Samples.ContinuousGraph.Fraud',
     },
     {
       icon: 'router',
       kicker: 'NETWORK',
-      title: 'Topology projection',
-      body: 'Maintain network nodes and links from acknowledged committed changes.',
+      title: 'Changing network topology',
+      body: 'Maintain gateway relationships and expose updates through the same checkpoint and replay model.',
       href: 'https://github.com/jphgardner/BlueTusk/tree/main/samples/BlueTusk.Samples.ContinuousGraph.Network',
     },
   ] as const;

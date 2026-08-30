@@ -68,6 +68,50 @@ safe graph-pattern and projection translation, and EF must produce
 failures, unbounded results, and unstable ordering fail before clients can
 subscribe.
 
+### Expanded graph patterns in 1.2
+
+The typed builder supports the PostgreSQL 19 SQL/PGQ shapes needed by larger
+relationship models:
+
+```csharp
+var related = context.PropertyGraph("payments", "risk")
+    .Match(pattern => pattern
+        .Vertex<Account>("source", account => account.Id == accountId)
+        .LabelsAnyOf("account", "customer")
+        .UndirectedPath<Transfer>("path", minimumHops: 1, maximumHops: 4)
+        .LabelsAnyOf("sent", "received")
+        .Vertex<Account>("target")
+        .LabelsAnyOf("account", "customer"))
+    .Select<RelatedAccount>(projection => projection
+        .Property<Account, long>(
+            "source", account => account.Id, result => result.SourceId)
+        .Property<Account, long>(
+            "target", account => account.Id, result => result.TargetId));
+```
+
+- `Undirected` matches either edge direction using PostgreSQL's native
+  `-[...]-` syntax. `Outgoing` and `Incoming` remain directional.
+- `LabelsAnyOf` emits the SQL/PGQ `label-a|label-b` OR expression. Every selected
+  label must exist on the resolved element table, and projected properties must
+  be identical across those labels.
+- `OutgoingPath`, `IncomingPath`, and `UndirectedPath` accept a bounded range of
+  one to eight hops. PostgreSQL 19 does not provide native variable-length path
+  syntax, so BlueTusk compiles the range into fixed-hop `GRAPH_TABLE` branches
+  joined with `UNION ALL`. At most 64 branches are allowed.
+
+A multi-hop edge variable cannot be projected because one match can contain
+several edges. Project the start and end vertices instead. Repeating a path is
+allowed only when the edge connects the same vertex element table to itself.
+These rules are checked during translation. The generated SQL has also been
+materialised against the digest-pinned PostgreSQL 19 Beta 3 development image;
+PostgreSQL 19 GA and its exact digest remain mandatory for stable publication.
+
+Continuous Graph treats variable-length and undirected patterns as broad-impact
+queries. They receive authoritative full repair rather than affected-key delta
+maintenance because a changed edge can alter reachability for keys that are not
+present in the changed row. Multi-label expressions retain scoped delta support
+when the ordinary endpoint proof remains complete.
+
 ## Capability and correctness
 
 The production capability probe opens the factory context and requires
@@ -103,8 +147,9 @@ source of client-visible data. The context factory and registered query remain
 responsible for applying RLS, tenant settings, and application authorisation.
 Security scopes participate in Live subscription identity and are never shared.
 
-Cancellation flows through context creation and EF execution. Unbounded paths
-and dependency inference from caller-authored raw SQL remain unsupported.
+Cancellation flows through context creation and EF execution. Unbounded paths,
+more than eight hops, more than 64 compiled branches, and dependency inference
+from caller-authored raw SQL remain unsupported.
 
 ## Three-tier incremental maintenance in 1.1
 
@@ -220,13 +265,44 @@ dotnet run --project samples/BlueTusk.Samples.ContinuousGraph.Network
 `ContinuousGraphQueryRegistry` stores non-generic registration descriptors
 without retaining bound parameter values or result rows. Register each compiled
 plan with the application registry. Install the optional
-`BlueTusk.ContinuousGraph.ControlPlane` package to add
-`HostedContinuousGraphControlPlaneQueryService`. It projects query
-fingerprints, graph names, databases, element aliases, exact table
-dependencies, result limits, and capabilities. The authorised dashboard
-exposes the same inventory at `/graphs` and `/api/graphs`; every application
-value is HTML encoded. The optional adapter owns the graph dependency; the
-Control Plane core does not reference ContinuousGraph.
+`BlueTusk.ContinuousGraph.ControlPlane` package to add the metadata-only
+`HostedContinuousGraphControlPlaneQueryService` or the executable explorer.
+
+The explorer uses a separate `ContinuousGraphControlPlaneExecutionRegistry`.
+Registration is deliberately explicit: provide the compiled plan, all bound
+arguments, the small allowlist of parameters an operator may edit, a server-side
+security-scope resolver, and a result projector. Never mark a tenant, role,
+permission, or RLS binding editable.
+
+```csharp
+var executions = new ContinuousGraphControlPlaneExecutionRegistry();
+executions.Register(
+    compiledPlan,
+    new Dictionary<string, object?>
+    {
+        ["minimumRisk"] = 0.75m,
+        ["tenantId"] = tenantId,
+    },
+    editableParameters: ["minimumRisk"],
+    securityScopeFactory: actor => scopes.Resolve(actor.ActorId),
+    projector: row => new ControlPlaneContinuousGraphFragment(
+        Nodes: ProjectNodes(row),
+        Edges: ProjectEdges(row)));
+
+builder.Services.AddSingleton(executions);
+builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
+    new ExecutableContinuousGraphControlPlaneQueryService(metadata, executions));
+builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
+    new HostedContinuousGraphControlPlaneExecutionService(executions));
+```
+
+The authorised detail page can then execute only the registered fingerprint and
+show every projected node, edge, category, label, endpoint, and property in the
+bounded result. The canvas provides pan, zoom, search, fit, and selection while
+the node and edge tables preserve a complete accessible representation. Limits,
+timeouts, conflicting element IDs, and dangling endpoints fail visibly; BlueTusk
+does not return a partial graph and call it complete. The optional adapter owns
+the graph dependency; the Control Plane core does not reference ContinuousGraph.
 
 `ContinuousGraphIncrementalSession.Status` exposes counts for trusted CDC,
 authoritative delta, and authoritative repair evaluations, plus affected-key
@@ -240,10 +316,11 @@ rather than attempting to suppress repair.
 
 The two 1.0.0 packages remain immutable. `BlueTusk.ContinuousGraph` contains
 the runtime; `BlueTusk.ContinuousGraph.ControlPlane` contains the optional
-operations adapter. The coordinated 1.1.0 candidate remains non-publishable
-until PostgreSQL 19 GA is digest-pinned, every lower product family has passed
-its exact-candidate gates, the 24-hour Continuous Graph endurance run is
-archived, and the performance-leadership evidence passes. The release script
+operations adapter. The coordinated `1.1.0-rc.1` packages are public for
+production-like evaluation. Stable `1.1.0` remains blocked until PostgreSQL 19
+GA is digest-pinned, every lower product family has passed its exact stable-
+candidate gates, the 24-hour Continuous Graph endurance run is archived, and
+the performance-leadership evidence passes. The release script
 machine-enforces dependency readiness and protected tag ordering. The 1.0
 public surface remains a compatible subset of the hash-locked 1.1 candidate
 surface; see the

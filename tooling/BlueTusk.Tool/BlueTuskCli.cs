@@ -36,6 +36,31 @@ public static class BlueTuskCli
             return 0;
         }
 
+        if (string.Equals(arguments[0], "doctor", StringComparison.Ordinal))
+        {
+            DoctorOptions doctorOptions;
+            try
+            {
+                doctorOptions = ParseDoctorOptions(arguments.Skip(1).ToArray());
+            }
+            catch (ArgumentException exception)
+            {
+                error.WriteLine(exception.Message);
+                error.WriteLine("Run 'bluetusk doctor --help' for usage.");
+                return 2;
+            }
+
+            if (doctorOptions.Help)
+            {
+                WriteDoctorHelp(output);
+                return 0;
+            }
+
+            return BlueTuskDoctor.RunAsync(doctorOptions, output, error)
+                .GetAwaiter()
+                .GetResult();
+        }
+
         if (!string.Equals(arguments[0], "scaffold", StringComparison.Ordinal))
         {
             error.WriteLine($"Unknown BlueTusk command '{arguments[0]}'.");
@@ -201,6 +226,74 @@ public static class BlueTuskCli
             Help: false);
     }
 
+    private static DoctorOptions ParseDoctorOptions(string[] arguments)
+    {
+        string? connectionString = null;
+        var extensions = new List<string>();
+        var requireStreams = false;
+        var requireTls = false;
+        var json = false;
+        var help = false;
+        var timeoutSeconds = 10;
+
+        for (var index = 0; index < arguments.Length; index++)
+        {
+            var argument = arguments[index];
+            switch (argument)
+            {
+                case "--help" or "-h":
+                    help = true;
+                    break;
+                case "--require-streams":
+                    requireStreams = true;
+                    break;
+                case "--require-tls":
+                    requireTls = true;
+                    break;
+                case "--json":
+                    json = true;
+                    break;
+                case "--connection":
+                    connectionString = ReadValue(arguments, ref index, argument);
+                    break;
+                case "--extension":
+                    extensions.Add(ReadValue(arguments, ref index, argument));
+                    break;
+                case "--timeout":
+                    var value = ReadValue(arguments, ref index, argument);
+                    if (!int.TryParse(value, out timeoutSeconds) || timeoutSeconds is < 1 or > 120)
+                    {
+                        throw new ArgumentException("Option '--timeout' must be an integer from 1 to 120 seconds.");
+                    }
+
+                    break;
+                default:
+                    throw new ArgumentException($"Unknown doctor option '{argument}'.");
+            }
+        }
+
+        if (help)
+        {
+            return DoctorOptions.HelpOnly;
+        }
+
+        connectionString ??= Environment.GetEnvironmentVariable(ConnectionEnvironmentVariable);
+        if (string.IsNullOrWhiteSpace(connectionString))
+        {
+            throw new ArgumentException(
+                $"A connection string is required through --connection or {ConnectionEnvironmentVariable}.");
+        }
+
+        return new DoctorOptions(
+            connectionString,
+            timeoutSeconds,
+            requireStreams,
+            requireTls,
+            json,
+            extensions.Distinct(StringComparer.Ordinal).ToArray(),
+            Help: false);
+    }
+
     private static string ReadValue(
         string[] arguments,
         ref int index,
@@ -224,10 +317,29 @@ public static class BlueTuskCli
         output.WriteLine("BlueTusk PostgreSQL tooling");
         output.WriteLine();
         output.WriteLine("Usage:");
+        output.WriteLine("  bluetusk doctor [options]");
         output.WriteLine("  bluetusk scaffold [options]");
         output.WriteLine("  bluetusk --version");
         output.WriteLine();
-        output.WriteLine("Run 'bluetusk scaffold --help' for scaffold options.");
+        output.WriteLine("Run 'bluetusk doctor --help' or 'bluetusk scaffold --help' for command options.");
+    }
+
+    private static void WriteDoctorHelp(TextWriter output)
+    {
+        output.WriteLine("Usage: bluetusk doctor [options]");
+        output.WriteLine();
+        output.WriteLine("Connection:");
+        output.WriteLine("  --connection <value>          PostgreSQL connection string; alternatively set");
+        output.WriteLine($"                                {ConnectionEnvironmentVariable}.");
+        output.WriteLine("  --timeout <seconds>           Overall diagnostic timeout, 1-120 (default: 10).");
+        output.WriteLine();
+        output.WriteLine("Production requirements:");
+        output.WriteLine("  --require-tls                 Fail when the current PostgreSQL session is not encrypted.");
+        output.WriteLine("  --require-streams             Require logical WAL and available replication settings.");
+        output.WriteLine("  --extension <name>            Require an installed extension; repeatable.");
+        output.WriteLine("  --json                        Write a versioned machine-readable report.");
+        output.WriteLine();
+        output.WriteLine("The command is read-only and never prints the supplied connection string.");
     }
 
     private static void WriteScaffoldHelp(TextWriter output)
@@ -293,6 +405,25 @@ public static class BlueTuskCli
             NoPluralize: false,
             Help: true);
     }
+}
+
+internal sealed record DoctorOptions(
+    string ConnectionString,
+    int TimeoutSeconds,
+    bool RequireStreams,
+    bool RequireTls,
+    bool Json,
+    IReadOnlyList<string> RequiredExtensions,
+    bool Help)
+{
+    public static DoctorOptions HelpOnly { get; } = new(
+        "",
+        10,
+        RequireStreams: false,
+        RequireTls: false,
+        Json: false,
+        RequiredExtensions: [],
+        Help: true);
 }
 
 #pragma warning restore EF1001

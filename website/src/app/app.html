@@ -2,7 +2,7 @@
   <header class="topbar">
     <div class="topbar-inner">
       <a routerLink="/" class="brand" aria-label="BlueTusk home">
-        <img src="/favicon.ico" width="32" height="32" alt="" />
+        <img src="/bluetusk-mark.png" width="36" height="36" alt="" />
         <span>BlueTusk</span>
       </a>
 
@@ -32,11 +32,17 @@
           <mat-icon>terminal</mat-icon>
           <span>GitHub</span>
         </a>
-        <a mat-flat-button routerLink="/documentation" class="topbar-cta">Get Started</a>
+        <a mat-flat-button routerLink="/documentation/getting-started/quickstart" class="topbar-cta"
+          >Quickstart</a
+        >
         <button
+          #mobileNavTrigger
           mat-icon-button
-          [matMenuTriggerFor]="mobileMenu"
+          type="button"
+          (click)="openMobileNav()"
           aria-label="Open navigation"
+          aria-controls="mobile-navigation"
+          [attr.aria-expanded]="mobileNavOpen()"
           class="mobile-menu-trigger"
         >
           <mat-icon>menu</mat-icon>
@@ -45,14 +51,61 @@
     </div>
   </header>
 
-  <mat-menu #mobileMenu="matMenu" class="mobile-menu">
-    @for (item of navItems; track item.href) {
-      <a mat-menu-item [routerLink]="item.href">
-        <mat-icon>{{ item.icon }}</mat-icon>
-        <span>{{ item.label }}</span>
-      </a>
-    }
-  </mat-menu>
+  @if (mobileNavOpen()) {
+    <div class="mobile-nav-backdrop" role="presentation" (click)="closeMobileNav()">
+      <aside
+        id="mobile-navigation"
+        class="mobile-nav-sheet"
+        role="dialog"
+        aria-modal="true"
+        aria-label="BlueTusk navigation"
+        (click)="$event.stopPropagation()"
+      >
+        <header>
+          <div>
+            <span>EXPLORE BLUETUSK</span>
+            <strong>Choose what you want to build.</strong>
+          </div>
+          <button
+            mat-icon-button
+            type="button"
+            (click)="closeMobileNav()"
+            aria-label="Close navigation"
+          >
+            <mat-icon>close</mat-icon>
+          </button>
+        </header>
+        <nav aria-label="Mobile navigation">
+          @for (item of navItems; track item.href) {
+            <a
+              #mobileNavFirst
+              [routerLink]="item.href"
+              routerLinkActive="active"
+              (click)="closeMobileNav(false)"
+            >
+              <mat-icon>{{ item.icon }}</mat-icon>
+              <span
+                ><strong>{{ item.label }}</strong
+                ><small>{{ item.description }}</small></span
+              >
+              <mat-icon>arrow_forward</mat-icon>
+            </a>
+          }
+        </nav>
+        <footer>
+          <a
+            mat-flat-button
+            routerLink="/documentation/getting-started/quickstart"
+            (click)="closeMobileNav(false)"
+            >Start the quickstart</a
+          >
+          <a href="https://github.com/jphgardner/BlueTusk" target="_blank" rel="noreferrer"
+            >View GitHub <mat-icon>open_in_new</mat-icon></a
+          >
+        </footer>
+      </aside>
+    </div>
+  }
 
   <main>
     <router-outlet />
@@ -61,10 +114,15 @@
   <footer class="site-footer">
     <div class="footer-inner">
       <div>
-        <a routerLink="/" class="footer-brand">BlueTusk</a>
-        <p>© 2026 BlueTusk Infrastructure. Built for .NET &amp; PostgreSQL.</p>
+        <a routerLink="/" class="footer-brand">
+          <img src="/bluetusk-mark.png" width="26" height="26" alt="" />
+          <span>BlueTusk</span>
+        </a>
+        <p>© 2026 BlueTusk. Stable 1.0 · 1.1 release candidate available.</p>
       </div>
       <div class="footer-links">
+        <a routerLink="/documentation/getting-started/install">Install</a>
+        <a routerLink="/documentation/getting-started/release-1-1-rc1">Current release</a>
         <a routerLink="/documentation">Documentation</a>
         <a
           href="https://github.com/jphgardner/BlueTusk/blob/main/docs/roadmap.md"
@@ -103,7 +161,7 @@
               autofocus
               [value]="searchQuery()"
               (input)="updateSearch($event)"
-              placeholder="Provider, COPY, checkpoints, SQL/PGQ…"
+              placeholder="Connections, EF Core, live updates, graph…"
             />
           </mat-form-field>
           <button mat-icon-button type="button" (click)="closeSearch()" aria-label="Close search">

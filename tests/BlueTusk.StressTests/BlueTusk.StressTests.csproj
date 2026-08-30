@@ -19,6 +19,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\BlueTusk.ContinuousGraph\BlueTusk.ContinuousGraph.csproj" />
+    <ProjectReference Include="..\..\src\BlueTusk.ControlPlane\BlueTusk.ControlPlane.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Data\BlueTusk.Data.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.EntityFrameworkCore\BlueTusk.EntityFrameworkCore.csproj" />
     <ProjectReference Include="..\..\src\BlueTusk.Live\BlueTusk.Live.csproj" />

@@ -34,6 +34,7 @@ export interface GuideHeading {
 export interface GuideManifestEntry {
   category: string;
   categoryLabel: string;
+  listed: boolean;
   slug: string;
   title: string;
   summary: string;

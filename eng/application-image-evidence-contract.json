@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "rcVersion": "1.0.0-rc.1",
+  "rcVersion": "1.2.0-rc.1",
   "workflow": "applications-images.yml",
   "requiredApplications": [
     "order-operations",

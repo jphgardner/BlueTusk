@@ -12,6 +12,10 @@
       "sha256": "74f77c960f99819e25ed2e87cfef2efecebd887b5277b7512a543a1932b44720"
     },
     {
+      "path": "src/BlueTusk.Sync.Kafka/PublicAPI.Unshipped.txt",
+      "sha256": "bdaec0b6eaf9896423a58389f758fc4b179d241ed0675d9cade9282284dd6473"
+    },
+    {
       "path": "src/BlueTusk.Sync.Nats/PublicAPI.Unshipped.txt",
       "sha256": "6e06d329f8675bc33cdf5784c8d000ce405448a35311841814d6ddb19b681953"
     },
@@ -28,8 +32,16 @@
       "sha256": "2add681afbf13dbd64240cda1e17dafc6f08b8efbe1b0f5b7de73c34c21cf8cb"
     },
     {
+      "path": "src/BlueTusk.Sync.S3/PublicAPI.Unshipped.txt",
+      "sha256": "b3e3c54cd237afcc0cdee9f43cb8ff3749cf0f216f81bda4e52f525d2500003a"
+    },
+    {
       "path": "src/BlueTusk.Sync.Testing/PublicAPI.Unshipped.txt",
       "sha256": "193e3c137d0a122025165183a8e7c282c347a4c9fda79bacb78b4244dfd5b21e"
+    },
+    {
+      "path": "src/BlueTusk.Sync.Webhooks/PublicAPI.Unshipped.txt",
+      "sha256": "421f47f36f0b86d9a0d21058deacf78b8413d67fc228369e27c6f3bbf2542245"
     },
     {
       "path": "src/BlueTusk.Sync/PublicAPI.Unshipped.txt",

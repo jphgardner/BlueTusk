@@ -11,7 +11,7 @@ using Microsoft.Extensions.Logging;
 
 namespace BlueTusk.Dashboard;
 
-public static class BlueTuskDashboardEndpointRouteBuilderExtensions
+public static partial class BlueTuskDashboardEndpointRouteBuilderExtensions
 {
     private const string OperationIdHeader = "X-BlueTusk-Operation-Id";
     private const long MaximumOperationRequestBytes = 16 * 1024;
@@ -20,9 +20,419 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             LogLevel.Error,
             new EventId(1, "ControlPlaneOperationFailed"),
             "BlueTusk control-plane operation {OperationId} failed.");
+    private static readonly Action<ILogger, Guid, string, Exception?> GraphExecutionFailed =
+        LoggerMessage.Define<Guid, string>(
+            LogLevel.Error,
+            new EventId(2, "ContinuousGraphExecutionFailed"),
+            "BlueTusk Continuous Graph execution {ExecutionId} for {QueryFingerprint} failed.");
     private const string DashboardScript = """
         (() => {
           const operationUrl = new URL('../api/v1/operations', document.currentScript.src);
+          const navToggle = document.querySelector('[data-nav-toggle]');
+          const navigation = document.querySelector('[data-navigation]');
+          navToggle?.addEventListener('click', () => {
+            const expanded = navToggle.getAttribute('aria-expanded') === 'true';
+            navToggle.setAttribute('aria-expanded', String(!expanded));
+            navigation?.toggleAttribute('data-open', !expanded);
+          });
+
+          const currentPath = window.location.pathname.replace(/\/$/, '');
+          document.querySelectorAll('[data-navigation] a').forEach(link => {
+            const linkPath = new URL(link.href).pathname.replace(/\/$/, '');
+            if (currentPath === linkPath || currentPath.startsWith(linkPath + '/')) {
+              link.setAttribute('aria-current', 'page');
+            }
+          });
+
+          document.querySelectorAll('[data-table-filter]').forEach(input => {
+            const panel = input.closest('[data-filter-panel]');
+            const rows = panel?.querySelectorAll('tbody tr') ?? [];
+            const state = panel?.querySelector('[data-state-filter]');
+            const count = panel?.querySelector('[data-filter-count]');
+            const apply = () => {
+              const query = input.value.trim().toLocaleLowerCase();
+              const selectedState = state?.value ?? '';
+              let visible = 0;
+              rows.forEach(row => {
+                const matchesQuery = !query || row.textContent.toLocaleLowerCase().includes(query);
+                const matchesState = !selectedState || row.dataset.state === selectedState;
+                const show = matchesQuery && matchesState;
+                row.hidden = !show;
+                if (show) visible++;
+              });
+              if (count) count.textContent = `${visible} of ${rows.length}`;
+            };
+            input.addEventListener('input', apply);
+            state?.addEventListener('change', apply);
+            apply();
+          });
+
+          document.querySelectorAll('[data-copy]').forEach(button =>
+            button.addEventListener('click', async () => {
+              const value = button.dataset.copy;
+              if (!value) return;
+              try {
+                await navigator.clipboard.writeText(value);
+                const original = button.textContent;
+                button.textContent = 'Copied';
+                window.setTimeout(() => { button.textContent = original; }, 1200);
+              } catch {
+                window.prompt('Copy this value:', value);
+              }
+            }));
+
+          document.querySelectorAll('[data-refresh]').forEach(button =>
+            button.addEventListener('click', () => window.location.reload()));
+
+          const graphPalette = [
+            '#48b9ff', '#4ade9a', '#f6c85f', '#b79cff', '#ff7f91',
+            '#4fe0d4', '#ffad66', '#8fc7ff', '#c6e56f', '#f49ddd'
+          ];
+          const appendText = (parent, tag, text, className) => {
+            const element = document.createElement(tag);
+            if (className) element.className = className;
+            element.textContent = text;
+            parent.append(element);
+            return element;
+          };
+          const propertyText = properties =>
+            (properties ?? []).map(property =>
+              `${property.name}=${property.value ?? 'null'}`).join(' · ') || 'No properties';
+
+          document.querySelectorAll('[data-graph-runner]').forEach(runner => {
+            const form = runner.querySelector('[data-graph-form]');
+            const resultPanel = runner.querySelector('[data-graph-result]');
+            const status = runner.querySelector('[data-graph-status]');
+            const message = runner.querySelector('[data-graph-message]');
+            const canvas = runner.querySelector('[data-graph-canvas]');
+            const inspector = runner.querySelector('[data-graph-inspector]');
+            const search = runner.querySelector('[data-graph-search]');
+            const state = {
+              result: null,
+              nodes: [],
+              edges: [],
+              positions: new Map(),
+              colors: new Map(),
+              selected: null,
+              query: '',
+              camera: { x: 0, y: 0, scale: 1 },
+              drag: null
+            };
+
+            const resizeCanvas = () => {
+              const rect = canvas.getBoundingClientRect();
+              const ratio = Math.min(window.devicePixelRatio || 1, 2);
+              const width = Math.max(320, Math.round(rect.width * ratio));
+              const height = Math.max(360, Math.round(rect.height * ratio));
+              if (canvas.width !== width || canvas.height !== height) {
+                canvas.width = width;
+                canvas.height = height;
+              }
+              draw();
+            };
+
+            const layout = () => {
+              state.positions.clear();
+              const groups = new Map();
+              state.nodes.forEach(node => {
+                if (!groups.has(node.category)) groups.set(node.category, []);
+                groups.get(node.category).push(node);
+              });
+              const categories = [...groups.keys()].sort();
+              categories.forEach((category, groupIndex) => {
+                const nodes = groups.get(category);
+                const groupAngle = (Math.PI * 2 * groupIndex) / Math.max(1, categories.length) - Math.PI / 2;
+                const centreRadius = categories.length === 1 ? 0 : 300;
+                const centreX = Math.cos(groupAngle) * centreRadius;
+                const centreY = Math.sin(groupAngle) * centreRadius;
+                nodes.forEach((node, index) => {
+                  const ring = Math.floor(Math.sqrt(index));
+                  const radius = ring === 0 ? 0 : 55 + ring * 34;
+                  const angle = index * 2.399963229728653 + groupAngle;
+                  state.positions.set(node.id, {
+                    x: centreX + Math.cos(angle) * radius,
+                    y: centreY + Math.sin(angle) * radius
+                  });
+                });
+              });
+            };
+
+            const fit = () => {
+              if (!state.positions.size) return;
+              const points = [...state.positions.values()];
+              const minX = Math.min(...points.map(point => point.x));
+              const maxX = Math.max(...points.map(point => point.x));
+              const minY = Math.min(...points.map(point => point.y));
+              const maxY = Math.max(...points.map(point => point.y));
+              const padding = 90;
+              const width = Math.max(180, maxX - minX + padding * 2);
+              const height = Math.max(180, maxY - minY + padding * 2);
+              state.camera.scale = Math.min(canvas.width / width, canvas.height / height);
+              state.camera.x = canvas.width / 2 - ((minX + maxX) / 2) * state.camera.scale;
+              state.camera.y = canvas.height / 2 - ((minY + maxY) / 2) * state.camera.scale;
+              draw();
+            };
+
+            const matches = element => {
+              if (!state.query) return true;
+              return `${element.id} ${element.label} ${element.category} ${propertyText(element.properties)}`
+                .toLocaleLowerCase().includes(state.query);
+            };
+
+            const worldToScreen = point => ({
+              x: point.x * state.camera.scale + state.camera.x,
+              y: point.y * state.camera.scale + state.camera.y
+            });
+
+            const drawArrow = (context, source, target, color, strong, directed) => {
+              const dx = target.x - source.x;
+              const dy = target.y - source.y;
+              const distance = Math.hypot(dx, dy) || 1;
+              const ux = dx / distance;
+              const uy = dy / distance;
+              const start = { x: source.x + ux * 13, y: source.y + uy * 13 };
+              const end = { x: target.x - ux * 15, y: target.y - uy * 15 };
+              context.strokeStyle = color;
+              context.globalAlpha = strong ? .92 : .22;
+              context.lineWidth = strong ? 2.2 : 1;
+              context.beginPath();
+              context.moveTo(start.x, start.y);
+              context.lineTo(end.x, end.y);
+              context.stroke();
+              if (directed) {
+                context.fillStyle = color;
+                context.beginPath();
+                context.moveTo(end.x, end.y);
+                context.lineTo(end.x - ux * 10 - uy * 5, end.y - uy * 10 + ux * 5);
+                context.lineTo(end.x - ux * 10 + uy * 5, end.y - uy * 10 - ux * 5);
+                context.closePath();
+                context.fill();
+              }
+            };
+
+            const draw = () => {
+              const context = canvas.getContext('2d');
+              if (!context) return;
+              context.clearRect(0, 0, canvas.width, canvas.height);
+              context.fillStyle = '#07131f';
+              context.fillRect(0, 0, canvas.width, canvas.height);
+              state.edges.forEach(edge => {
+                const sourcePosition = state.positions.get(edge.sourceNodeId);
+                const targetPosition = state.positions.get(edge.targetNodeId);
+                if (!sourcePosition || !targetPosition) return;
+                const source = worldToScreen(sourcePosition);
+                const target = worldToScreen(targetPosition);
+                const selected = state.selected?.kind === 'edge' && state.selected.value.id === edge.id;
+                const highlighted = matches(edge);
+                drawArrow(context, source, target, selected ? '#ffffff' : '#52718a', selected || highlighted && !!state.query, edge.directed);
+              });
+              state.nodes.forEach(node => {
+                const position = state.positions.get(node.id);
+                if (!position) return;
+                const point = worldToScreen(position);
+                const selected = state.selected?.kind === 'node' && state.selected.value.id === node.id;
+                const highlighted = matches(node);
+                const radius = selected ? 16 : highlighted || !state.query ? 11 : 6;
+                context.globalAlpha = highlighted || !state.query ? 1 : .18;
+                context.fillStyle = state.colors.get(node.category) ?? graphPalette[0];
+                context.beginPath();
+                context.arc(point.x, point.y, radius, 0, Math.PI * 2);
+                context.fill();
+                context.strokeStyle = selected ? '#ffffff' : '#09223a';
+                context.lineWidth = selected ? 3 : 2;
+                context.stroke();
+                if (selected || highlighted && (state.query || state.nodes.length <= 60)) {
+                  context.globalAlpha = 1;
+                  context.fillStyle = '#eaf7ff';
+                  context.font = '600 12px system-ui, sans-serif';
+                  context.fillText(node.label, point.x + radius + 5, point.y + 4);
+                }
+              });
+              context.globalAlpha = 1;
+            };
+
+            const select = (kind, value) => {
+              state.selected = { kind, value };
+              inspector.replaceChildren();
+              appendText(inspector, 'p', kind === 'node' ? 'Node' : 'Edge', 'eyebrow');
+              appendText(inspector, 'h3', value.label);
+              appendText(inspector, 'p', `${value.category} · ${value.id}`, 'muted');
+              if (kind === 'edge') {
+                appendText(inspector, 'p', `${value.sourceNodeId} ${value.directed ? '→' : '—'} ${value.targetNodeId}`);
+              }
+              const list = document.createElement('dl');
+              list.className = 'graph-property-list';
+              (value.properties ?? []).forEach(property => {
+                appendText(list, 'dt', property.name);
+                appendText(list, 'dd', property.value ?? 'null');
+              });
+              if (!value.properties?.length) appendText(inspector, 'p', 'No properties', 'muted');
+              else inspector.append(list);
+              draw();
+            };
+
+            const createComposition = (target, composition) => {
+              target.replaceChildren();
+              composition.forEach((item, index) => {
+                const tag = appendText(target, 'span', `${item.category} · ${item.count}`);
+                tag.style.setProperty('--category-color', graphPalette[index % graphPalette.length]);
+              });
+            };
+
+            const createRows = (target, values, kind) => {
+              target.replaceChildren();
+              const fragment = document.createDocumentFragment();
+              values.forEach(value => {
+                const row = document.createElement('tr');
+                row.dataset.graphText = `${value.id} ${value.label} ${value.category} ${propertyText(value.properties)}`.toLocaleLowerCase();
+                const identity = document.createElement('td');
+                const button = appendText(identity, 'button', value.label, 'graph-element-button');
+                button.type = 'button';
+                button.addEventListener('click', () => select(kind, value));
+                appendText(identity, 'small', value.id);
+                row.append(identity);
+                if (kind === 'node') {
+                  appendText(row, 'td', value.category);
+                } else {
+                  appendText(row, 'td', `${value.sourceNodeId} ${value.directed ? '→' : '—'} ${value.targetNodeId}`);
+                }
+                appendText(row, 'td', propertyText(value.properties));
+                fragment.append(row);
+              });
+              target.append(fragment);
+            };
+
+            const applySearch = () => {
+              state.query = search.value.trim().toLocaleLowerCase();
+              runner.querySelectorAll('[data-graph-text]').forEach(row => {
+                row.hidden = !!state.query && !row.dataset.graphText.includes(state.query);
+              });
+              draw();
+            };
+
+            const render = result => {
+              state.result = result;
+              state.nodes = result.nodes ?? [];
+              state.edges = result.edges ?? [];
+              state.colors.clear();
+              (result.nodeComposition ?? []).forEach((item, index) =>
+                state.colors.set(item.category, graphPalette[index % graphPalette.length]));
+              layout();
+              const durationParts = String(result.duration).split(':');
+              const durationMilliseconds = durationParts.length === 3
+                ? (Number(durationParts[0]) * 3600 + Number(durationParts[1]) * 60 + Number(durationParts[2])) * 1000
+                : Number(result.duration) / 10000;
+              const summary = runner.querySelector('[data-graph-summary]');
+              summary.replaceChildren();
+              [
+                ['Result rows', String(result.resultRowCount)],
+                ['Nodes', String(state.nodes.length)],
+                ['Edges', String(state.edges.length)],
+                ['Execution', `${durationMilliseconds.toFixed(2)} ms`]
+              ].forEach(([label, value]) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                appendText(card, 'span', label);
+                appendText(card, 'strong', value);
+                summary.append(card);
+              });
+              createComposition(runner.querySelector('[data-node-composition]'), result.nodeComposition ?? []);
+              createComposition(runner.querySelector('[data-edge-composition]'), result.edgeComposition ?? []);
+              createRows(runner.querySelector('[data-node-list]'), state.nodes, 'node');
+              createRows(runner.querySelector('[data-edge-list]'), state.edges, 'edge');
+              runner.querySelector('[data-node-count]').textContent = `(${state.nodes.length})`;
+              runner.querySelector('[data-edge-count]').textContent = `(${state.edges.length})`;
+              resultPanel.hidden = false;
+              requestAnimationFrame(() => { resizeCanvas(); fit(); });
+            };
+
+            form.addEventListener('submit', async event => {
+              event.preventDefault();
+              const runButton = runner.querySelector('[data-graph-run]');
+              const parameters = {};
+              runner.querySelectorAll('[data-graph-parameter]').forEach(input => {
+                parameters[input.name] = input.value;
+              });
+              runButton.disabled = true;
+              status.textContent = 'Running';
+              message.textContent = 'Executing the registered authoritative query…';
+              try {
+                const response = await fetch(runner.dataset.runUrl, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ parameters })
+                });
+                const payload = await response.json();
+                if (!response.ok) throw new Error(payload.title || 'Graph execution was rejected.');
+                render(payload.data);
+                status.textContent = 'Complete';
+                message.textContent = `Complete result loaded: ${payload.data.nodes.length} nodes and ${payload.data.edges.length} edges.`;
+              } catch (error) {
+                status.textContent = 'Failed';
+                message.textContent = error instanceof Error ? error.message : 'Graph execution failed.';
+              } finally {
+                runButton.disabled = false;
+              }
+            });
+
+            search?.addEventListener('input', applySearch);
+            runner.querySelector('[data-graph-fit]')?.addEventListener('click', fit);
+            runner.querySelector('[data-graph-reset]')?.addEventListener('click', () => {
+              state.query = '';
+              search.value = '';
+              state.selected = null;
+              applySearch();
+              fit();
+            });
+            canvas.addEventListener('wheel', event => {
+              event.preventDefault();
+              const rect = canvas.getBoundingClientRect();
+              const ratioX = canvas.width / rect.width;
+              const ratioY = canvas.height / rect.height;
+              const pointer = { x: (event.clientX - rect.left) * ratioX, y: (event.clientY - rect.top) * ratioY };
+              const world = {
+                x: (pointer.x - state.camera.x) / state.camera.scale,
+                y: (pointer.y - state.camera.y) / state.camera.scale
+              };
+              const factor = Math.exp(-event.deltaY * .001);
+              state.camera.scale = Math.min(4, Math.max(.08, state.camera.scale * factor));
+              state.camera.x = pointer.x - world.x * state.camera.scale;
+              state.camera.y = pointer.y - world.y * state.camera.scale;
+              draw();
+            }, { passive: false });
+            canvas.addEventListener('pointerdown', event => {
+              canvas.setPointerCapture(event.pointerId);
+              state.drag = { x: event.clientX, y: event.clientY, moved: false };
+            });
+            canvas.addEventListener('pointermove', event => {
+              if (!state.drag) return;
+              const dx = event.clientX - state.drag.x;
+              const dy = event.clientY - state.drag.y;
+              if (Math.abs(dx) + Math.abs(dy) > 2) state.drag.moved = true;
+              const rect = canvas.getBoundingClientRect();
+              state.camera.x += dx * canvas.width / rect.width;
+              state.camera.y += dy * canvas.height / rect.height;
+              state.drag.x = event.clientX;
+              state.drag.y = event.clientY;
+              draw();
+            });
+            canvas.addEventListener('pointerup', event => {
+              const drag = state.drag;
+              state.drag = null;
+              if (!drag?.moved) {
+                const rect = canvas.getBoundingClientRect();
+                const x = (event.clientX - rect.left) * canvas.width / rect.width;
+                const y = (event.clientY - rect.top) * canvas.height / rect.height;
+                const closest = state.nodes
+                  .map(node => ({ node, point: worldToScreen(state.positions.get(node.id)) }))
+                  .map(item => ({ ...item, distance: Math.hypot(item.point.x - x, item.point.y - y) }))
+                  .sort((left, right) => left.distance - right.distance)[0];
+                if (closest?.distance <= 24) select('node', closest.node);
+              }
+            });
+            new ResizeObserver(resizeCanvas).observe(canvas);
+          });
+
           document.querySelectorAll('button[data-operation-kind]').forEach(button =>
             button.addEventListener('click', async () => {
               const expected = button.dataset.operationName + ':' + button.dataset.operationTarget;
@@ -62,7 +472,7 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
 
         var group = endpoints.MapGroup(options.RoutePrefix)
             .RequireAuthorization(options.ReadAuthorizationPolicy);
-        group.MapGet("/", () => Results.Redirect(options.RoutePrefix + "/sources"));
+        group.MapGet("/", () => Results.Redirect(options.RoutePrefix + "/overview"));
         group.MapGet(
             "/api/overview",
             async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
@@ -79,6 +489,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             "/api/graphs",
             async (IControlPlaneContinuousGraphQueryService queries, CancellationToken cancellationToken) =>
                 Json(await queries.GetContinuousGraphOverviewAsync(cancellationToken).ConfigureAwait(false)));
+        group.MapGet(
+            "/api/fleet",
+            async (IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
+                Json(await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false)));
         group.MapGet(
             "/api/capabilities",
             () => Json(ControlPlaneApiContract.Capabilities));
@@ -101,6 +515,44 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 Json(Versioned(
                     await queries.GetContinuousGraphOverviewAsync(cancellationToken)
                         .ConfigureAwait(false))));
+        group.MapGet(
+            ControlPlaneApiContract.VersionedRoutePrefix + "/fleet",
+            async (IControlPlaneFleetQueryService queries, CancellationToken cancellationToken) =>
+                Json(Versioned(
+                    await queries.GetFleetOverviewAsync(cancellationToken)
+                        .ConfigureAwait(false))));
+        group.MapPost(
+                "/api/graphs/{queryFingerprint}/run",
+                (string queryFingerprint,
+                        HttpContext context,
+                        IControlPlaneContinuousGraphExecutionService executions,
+                        ILoggerFactory loggerFactory,
+                        CancellationToken cancellationToken) =>
+                    ExecuteGraphAsync(
+                        queryFingerprint,
+                        context,
+                        executions,
+                        loggerFactory.CreateLogger("BlueTusk.Dashboard.ContinuousGraph"),
+                        options,
+                        versionedResponse: false,
+                        cancellationToken))
+            .RequireAuthorization(options.GraphExecutionAuthorizationPolicy);
+        group.MapPost(
+                ControlPlaneApiContract.VersionedRoutePrefix + "/graphs/{queryFingerprint}/run",
+                (string queryFingerprint,
+                        HttpContext context,
+                        IControlPlaneContinuousGraphExecutionService executions,
+                        ILoggerFactory loggerFactory,
+                        CancellationToken cancellationToken) =>
+                    ExecuteGraphAsync(
+                        queryFingerprint,
+                        context,
+                        executions,
+                        loggerFactory.CreateLogger("BlueTusk.Dashboard.ContinuousGraph"),
+                        options,
+                        versionedResponse: true,
+                        cancellationToken))
+            .RequireAuthorization(options.GraphExecutionAuthorizationPolicy);
         group.MapGet(
             "/assets/dashboard.js",
             () => Results.Text(DashboardScript, "application/javascript; charset=utf-8"));
@@ -133,6 +585,22 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                         cancellationToken))
             .RequireAuthorization(options.MutationAuthorizationPolicy);
         group.MapGet(
+            "/overview",
+            async (IControlPlaneQueryService sources,
+                    IControlPlaneSyncQueryService sync,
+                    IControlPlaneLiveQueryService live,
+                    IControlPlaneContinuousGraphQueryService graphs,
+                    IControlPlaneFleetQueryService fleet,
+                    CancellationToken cancellationToken) =>
+                Html(RenderOverview(
+                    await sources.GetOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    await sync.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    await live.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    await graphs.GetContinuousGraphOverviewAsync(cancellationToken)
+                        .ConfigureAwait(false),
+                    await fleet.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    options)));
+        group.MapGet(
             "/sources",
             async (IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
                 Html(RenderSources(await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false), options)));
@@ -141,11 +609,61 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             async (string sourceKey, IControlPlaneQueryService queries, CancellationToken cancellationToken) =>
             {
                 var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
-                var source = overview.Sources.FirstOrDefault(
-                    candidate => string.Equals(candidate.SourceKey, sourceKey, StringComparison.Ordinal));
+                var source = FindSource(overview, sourceKey);
                 return source is null
+                     ? Results.NotFound()
+                     : Html(RenderSource(overview.ObservedAt, source, options));
+            });
+        group.MapGet(
+            "/sources/{sourceKey}/consumer-groups/{groupName}",
+            async (string sourceKey,
+                    string groupName,
+                    IControlPlaneQueryService queries,
+                    CancellationToken cancellationToken) =>
+            {
+                var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var source = FindSource(overview, sourceKey);
+                var consumerGroup = source?.ConsumerGroups.FirstOrDefault(
+                    candidate => string.Equals(candidate.Name, groupName, StringComparison.Ordinal));
+                return source is null || consumerGroup is null
                     ? Results.NotFound()
-                    : Html(RenderSource(overview.ObservedAt, source, options));
+                    : Html(RenderConsumerGroup(overview.ObservedAt, source, consumerGroup, options));
+            });
+        group.MapGet(
+            "/sources/{sourceKey}/snapshots/{snapshotEpoch}",
+            async (string sourceKey,
+                    string snapshotEpoch,
+                    IControlPlaneQueryService queries,
+                    CancellationToken cancellationToken) =>
+            {
+                var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var source = FindSource(overview, sourceKey);
+                var snapshot = source?.SnapshotRuns.FirstOrDefault(
+                    candidate => string.Equals(
+                        candidate.SnapshotEpoch,
+                        snapshotEpoch,
+                        StringComparison.Ordinal));
+                return source is null || snapshot is null
+                    ? Results.NotFound()
+                    : Html(RenderSnapshot(overview.ObservedAt, source, snapshot, options));
+            });
+        group.MapGet(
+            "/sources/{sourceKey}/checkpoints/{consumerGroup}",
+            async (string sourceKey,
+                    string consumerGroup,
+                    IControlPlaneQueryService queries,
+                    CancellationToken cancellationToken) =>
+            {
+                var overview = await queries.GetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var source = FindSource(overview, sourceKey);
+                var checkpoint = source?.Checkpoints.FirstOrDefault(
+                    candidate => string.Equals(
+                        candidate.ConsumerGroup,
+                        consumerGroup,
+                        StringComparison.Ordinal));
+                return source is null || checkpoint is null
+                    ? Results.NotFound()
+                    : Html(RenderCheckpoint(overview.ObservedAt, source, checkpoint, options));
             });
         group.MapGet(
             "/snapshots",
@@ -169,11 +687,45 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                     options,
                     CanMutate(context.User, options))));
         group.MapGet(
+            "/pipelines/{pipelineId}",
+            async (string pipelineId,
+                    HttpContext context,
+                    IControlPlaneSyncQueryService queries,
+                    CancellationToken cancellationToken) =>
+            {
+                var overview = await queries.GetSyncOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var pipeline = overview.Pipelines.FirstOrDefault(
+                    candidate => string.Equals(candidate.PipelineId, pipelineId, StringComparison.Ordinal));
+                return pipeline is null
+                    ? Results.NotFound()
+                    : Html(RenderPipeline(
+                        overview.ObservedAt,
+                        pipeline,
+                        options,
+                        CanMutate(context.User, options)));
+            });
+        group.MapGet(
             "/live",
             async (IControlPlaneLiveQueryService queries, CancellationToken cancellationToken) =>
                 Html(RenderLive(
                     await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false),
                     options)));
+        group.MapGet(
+            "/live/{subscriptionFingerprint}",
+            async (string subscriptionFingerprint,
+                    IControlPlaneLiveQueryService queries,
+                    CancellationToken cancellationToken) =>
+            {
+                var overview = await queries.GetLiveOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var subscription = overview.Subscriptions.FirstOrDefault(
+                    candidate => string.Equals(
+                        candidate.SubscriptionFingerprint,
+                        subscriptionFingerprint,
+                        StringComparison.Ordinal));
+                return subscription is null
+                    ? Results.NotFound()
+                    : Html(RenderLiveSubscription(overview.ObservedAt, subscription, options));
+            });
         group.MapGet(
             "/graphs",
             async (IControlPlaneContinuousGraphQueryService queries,
@@ -182,6 +734,60 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                     await queries.GetContinuousGraphOverviewAsync(cancellationToken)
                         .ConfigureAwait(false),
                     options)));
+        group.MapGet(
+            "/graphs/{queryFingerprint}",
+            async (string queryFingerprint,
+                    HttpContext context,
+                    IControlPlaneContinuousGraphQueryService queries,
+                    CancellationToken cancellationToken) =>
+            {
+                var overview = await queries.GetContinuousGraphOverviewAsync(cancellationToken)
+                    .ConfigureAwait(false);
+                var query = overview.Queries.FirstOrDefault(
+                    candidate => string.Equals(
+                        candidate.QueryFingerprint,
+                        queryFingerprint,
+                        StringComparison.Ordinal));
+                return query is null
+                    ? Results.NotFound()
+                    : Html(RenderContinuousGraphQuery(
+                        overview.ObservedAt,
+                        query,
+                        options,
+                        CanExecuteGraph(context.User, options)));
+            });
+        group.MapGet(
+            "/deployments",
+            async (HttpContext context,
+                    IControlPlaneFleetQueryService queries,
+                    CancellationToken cancellationToken) =>
+                Html(RenderFleet(
+                    await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false),
+                    options,
+                    CanMutate(context.User, options),
+                    context.User.IsInRole(options.AdministratorRole))));
+        group.MapGet(
+            "/deployments/{deploymentId}",
+            async (string deploymentId,
+                    HttpContext context,
+                    IControlPlaneFleetQueryService queries,
+                    CancellationToken cancellationToken) =>
+            {
+                var overview = await queries.GetFleetOverviewAsync(cancellationToken).ConfigureAwait(false);
+                var deployment = overview.Deployments.FirstOrDefault(
+                    candidate => string.Equals(
+                        candidate.DeploymentId,
+                        deploymentId,
+                        StringComparison.Ordinal));
+                return deployment is null
+                    ? Results.NotFound()
+                    : Html(RenderDeployment(
+                        overview.ObservedAt,
+                        deployment,
+                        options,
+                        CanMutate(context.User, options),
+                        context.User.IsInRole(options.AdministratorRole)));
+            });
         return endpoints;
     }
 
@@ -300,6 +906,121 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         }
     }
 
+    private static async Task<IResult> ExecuteGraphAsync(
+        string queryFingerprint,
+        HttpContext context,
+        IControlPlaneContinuousGraphExecutionService executions,
+        ILogger logger,
+        BlueTuskDashboardOptions options,
+        bool versionedResponse,
+        CancellationToken cancellationToken)
+    {
+        if (context.User.Identity?.IsAuthenticated is not true)
+        {
+            return Results.Unauthorized();
+        }
+
+        if (string.IsNullOrWhiteSpace(queryFingerprint) ||
+            !context.Request.HasJsonContentType() ||
+            context.Request.ContentLength is not (> 0 and <= MaximumOperationRequestBytes))
+        {
+            return GraphProblem(
+                "invalid-graph-execution-request",
+                "The graph execution request is invalid.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        ControlPlaneContinuousGraphRunRequest? request;
+        try
+        {
+            request = await context.Request
+                .ReadFromJsonAsync<ControlPlaneContinuousGraphRunRequest>(
+                    BlueTuskDashboardJsonContext.Default.ControlPlaneContinuousGraphRunRequest,
+                    cancellationToken)
+                .ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is System.Text.Json.JsonException or
+                                          NotSupportedException or
+                                          BadHttpRequestException)
+        {
+            return GraphProblem(
+                "invalid-graph-execution-request",
+                "The graph execution request is invalid.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        if (request?.Parameters is null || request.Parameters.Count > 64)
+        {
+            return GraphProblem(
+                "invalid-graph-execution-request",
+                "The graph execution request is invalid.",
+                StatusCodes.Status400BadRequest);
+        }
+
+        var actor = CreateActor(context.User, options);
+        if (actor is null)
+        {
+            return Results.Forbid();
+        }
+
+        var executionId = Guid.NewGuid();
+        try
+        {
+            var result = await executions.ExecuteAsync(
+                    queryFingerprint,
+                    actor,
+                    request,
+                    cancellationToken)
+                .ConfigureAwait(false);
+            return versionedResponse ? Json(Versioned(result)) : Json(result);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (ControlPlaneContinuousGraphExecutionException exception)
+        {
+            var statusCode = exception.Code switch
+            {
+                "graph-query-not-executable" => StatusCodes.Status404NotFound,
+                "graph-parameter-not-editable" or
+                "graph-parameter-invalid" => StatusCodes.Status400BadRequest,
+                "graph-execution-timeout" => StatusCodes.Status504GatewayTimeout,
+                "graph-visualization-limit-exceeded" or
+                "graph-result-row-limit-exceeded" => StatusCodes.Status422UnprocessableEntity,
+                _ => StatusCodes.Status500InternalServerError,
+            };
+            if (statusCode >= StatusCodes.Status500InternalServerError)
+            {
+                GraphExecutionFailed(logger, executionId, queryFingerprint, exception);
+            }
+
+            return GraphProblem(exception.Code, exception.Message, statusCode, executionId);
+        }
+        catch (Exception exception)
+        {
+            GraphExecutionFailed(logger, executionId, queryFingerprint, exception);
+            return GraphProblem(
+                "graph-execution-failed",
+                "The graph query could not be executed. Use the execution ID to inspect server logs.",
+                StatusCodes.Status500InternalServerError,
+                executionId);
+        }
+    }
+
+    private static IResult GraphProblem(
+        string code,
+        string title,
+        int statusCode,
+        Guid? executionId = null) => Results.Problem(
+        title: title,
+        statusCode: statusCode,
+        extensions: new Dictionary<string, object?>
+        {
+            ["code"] = code,
+            ["executionId"] = executionId,
+        });
+
     private static IResult Html(string content) => Results.Content(
         content,
         "text/html; charset=utf-8",
@@ -323,35 +1044,47 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneOverview overview,
         BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder();
-        body.Append("<h1>Sources</h1><div class=\"cards\">")
-            .Append(Card("Sources", overview.Sources.Count.ToString(CultureInfo.InvariantCulture)))
-            .Append(Card(
-                "Active slots",
-                overview.Sources.Count(source => source.Slot.Active).ToString(CultureInfo.InvariantCulture)))
-            .Append(Card(
-                "Relay bytes",
-                overview.Sources.Sum(source => source.Relay.StorageBytes).ToString("N0", CultureInfo.InvariantCulture)))
-            .Append("</div><table><thead><tr><th>Instance</th><th>Database</th><th>Slot</th>")
-            .Append("<th>Slot state</th><th>WAL lag</th><th>Relay</th><th>Groups</th></tr></thead><tbody>");
+        var healthy = overview.Sources.Count(IsSourceHealthy);
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Sources", null)))
+            .Append(PageHeading(
+                "Sources & Streams",
+                "PostgreSQL capture, relay durability and consumer progress.",
+                StatusBadge(
+                    healthy == overview.Sources.Count ? "All sources healthy" : $"{overview.Sources.Count - healthy} need attention",
+                    healthy == overview.Sources.Count ? "ok" : "warn")))
+            .Append("<div class=\"cards\">")
+            .Append(MetricCard("Sources", overview.Sources.Count.ToString(CultureInfo.InvariantCulture), "Configured capture sources"))
+            .Append(MetricCard("Active slots", overview.Sources.Count(source => source.Slot.Active).ToString(CultureInfo.InvariantCulture), "Currently streaming"))
+            .Append(MetricCard("WAL lag", Bytes(overview.Sources.Sum(source => source.Slot.WalLagBytes)), "Total retained WAL"))
+            .Append(MetricCard("Relay storage", Bytes(overview.Sources.Sum(source => source.Relay.StorageBytes)), "Durable transaction history"))
+            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Inventory</p><h2>Capture sources</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("<div class=\"table-tools\"><label><span>Search sources</span><input type=\"search\" placeholder=\"Instance, database or slot\" data-table-filter></label>")
+            .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
+            .Append("<div class=\"table-wrap\"><table><thead><tr><th>Instance</th><th>Database</th><th>Slot</th>")
+            .Append("<th>Health</th><th>WAL lag</th><th>Relay</th><th>Groups</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
         foreach (var source in overview.Sources)
         {
-            body.Append("<tr><td>").Append(E(source.InstanceName)).Append("</td><td>")
-                .Append(E(source.DatabaseName)).Append("</td><td><a href=\"")
-                .Append(E(options.RoutePrefix)).Append("/sources/")
-                .Append(Uri.EscapeDataString(source.SourceKey)).Append("\">")
-                .Append(E(source.SlotName)).Append("</a></td><td>")
-                .Append(source.Slot.SourceReachable
-                    ? source.Slot.Exists ? source.Slot.Active ? "active" : "inactive" : "missing"
-                    : "unreachable")
+            var isHealthy = IsSourceHealthy(source);
+            var status = source.Slot.SourceReachable
+                ? source.Slot.Exists ? source.Slot.Active ? "Active" : "Inactive" : "Missing"
+                : "Unreachable";
+            var href = DashboardPath(options, "sources", source.SourceKey);
+            body.Append("<tr data-state=\"").Append(isHealthy ? "healthy" : "attention")
+                .Append("\"><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\">")
+                .Append(E(source.InstanceName)).Append("</a><small>").Append(E(source.SourceKey))
+                .Append("</small></td><td>").Append(E(source.DatabaseName)).Append("</td><td><code>")
+                .Append(E(source.SlotName)).Append("</code></td><td>")
+                .Append(StatusBadge(status, isHealthy ? "ok" : source.Slot.SourceReachable ? "warn" : "critical"))
                 .Append("</td><td>").Append(Bytes(source.Slot.WalLagBytes)).Append("</td><td>")
                 .Append(source.Relay.TransactionCount.ToString("N0", CultureInfo.InvariantCulture))
                 .Append(" tx / ").Append(Bytes(source.Relay.StorageBytes)).Append("</td><td>")
                 .Append(source.ConsumerGroups.Count.ToString(CultureInfo.InvariantCulture))
-                .Append("</td></tr>");
+                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href))
+                .Append("\" aria-label=\"Open ").Append(E(source.InstanceName)).Append("\">View →</a></td></tr>");
         }
 
-        body.Append("</tbody></table>");
+        body.Append("</tbody></table></div></section>");
         return Layout("Sources", overview.ObservedAt, body.ToString(), options);
     }
 
@@ -360,22 +1093,59 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneSourceSnapshot source,
         BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder();
-        body.Append("<h1>").Append(E(source.DatabaseName)).Append(" / ")
-            .Append(E(source.SlotName)).Append("</h1><div class=\"cards\">")
-            .Append(Card("WAL lag", Bytes(source.Slot.WalLagBytes)))
-            .Append(Card("Relay storage", Bytes(source.Relay.StorageBytes)))
-            .Append(Card("Last sequence", source.LastSequence.ToString("N0", CultureInfo.InvariantCulture)))
-            .Append(Card("Last commit", E(source.LastCommitPosition))).Append("</div>")
-            .Append("<h2>Slot</h2><dl><dt>Reachable</dt><dd>")
-            .Append(source.Slot.SourceReachable).Append("</dd><dt>Exists</dt><dd>")
-            .Append(source.Slot.Exists).Append("</dd><dt>Active</dt><dd>")
-            .Append(source.Slot.Active).Append("</dd><dt>Plugin</dt><dd>")
-            .Append(E(source.Slot.OutputPlugin ?? "—")).Append("</dd><dt>WAL status</dt><dd>")
-            .Append(E(source.Slot.WalStatus ?? source.Slot.DiagnosticCode ?? "—")).Append("</dd></dl>")
-            .Append(RenderGroupTable(source))
-            .Append(RenderSnapshotTable(source))
-            .Append(RenderCheckpointTable(source));
+        var healthy = IsSourceHealthy(source);
+        var status = !source.Slot.SourceReachable
+            ? "Unreachable"
+            : !source.Slot.Exists ? "Slot missing" : !source.Slot.Active ? "Slot inactive" : "Streaming";
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(
+                options,
+                ("Sources", DashboardPath(options, "sources")),
+                (source.InstanceName, null)))
+            .Append(PageHeading(
+                source.InstanceName,
+                $"{source.DatabaseName} through {source.SlotName}",
+                StatusBadge(status, healthy ? "ok" : source.Slot.SourceReachable ? "warn" : "critical")))
+            .Append("<div class=\"cards\">")
+            .Append(MetricCard("WAL lag", Bytes(source.Slot.WalLagBytes), "Retained by PostgreSQL"))
+            .Append(MetricCard("Relay storage", Bytes(source.Relay.StorageBytes), $"{source.Relay.TransactionCount:N0} transactions"))
+            .Append(MetricCard("Last sequence", source.LastSequence.ToString("N0", CultureInfo.InvariantCulture), "Relay head"))
+            .Append(MetricCard("Unacknowledged age", Duration(source.Relay.OldestUnacknowledgedAge), "Oldest retained work"))
+            .Append("</div>")
+            .Append(DetailsPanel(
+                "Source identity",
+                ("Source key", Copyable(source.SourceKey)),
+                ("Instance", E(source.InstanceName)),
+                ("Database", E(source.DatabaseName)),
+                ("System identifier", Copyable(source.SystemIdentifier)),
+                ("Source fingerprint", Copyable(source.SourceFingerprint)),
+                ("Publication fingerprint", Copyable(source.PublicationFingerprint)),
+                ("Source epoch", Number(source.SourceEpoch)),
+                ("Last sequence", Number(source.LastSequence)),
+                ("Last commit position", Copyable(source.LastCommitPosition))))
+            .Append(DetailsPanel(
+                "Replication slot",
+                ("Slot", E(source.SlotName)),
+                ("Reachable", YesNo(source.Slot.SourceReachable)),
+                ("Exists", YesNo(source.Slot.Exists)),
+                ("Active", YesNo(source.Slot.Active)),
+                ("Output plugin", E(source.Slot.OutputPlugin ?? "—")),
+                ("WAL status", E(source.Slot.WalStatus ?? "—")),
+                ("Restart position", source.Slot.RestartPosition is null ? "—" : Copyable(source.Slot.RestartPosition)),
+                ("Confirmed flush", source.Slot.ConfirmedFlushPosition is null ? "—" : Copyable(source.Slot.ConfirmedFlushPosition)),
+                ("WAL lag", Bytes(source.Slot.WalLagBytes)),
+                ("Diagnostic", E(source.Slot.DiagnosticCode ?? "None"))))
+            .Append(DetailsPanel(
+                "Durable relay",
+                ("Transactions", Number(source.Relay.TransactionCount)),
+                ("Storage", Bytes(source.Relay.StorageBytes)),
+                ("First sequence", Number(source.Relay.FirstSequence)),
+                ("Last sequence", Number(source.Relay.LastSequence)),
+                ("Minimum checkpoint", Number(source.Relay.MinimumCheckpointSequence)),
+                ("Oldest unacknowledged", Duration(source.Relay.OldestUnacknowledgedAge))))
+            .Append(RenderGroupTable(source, options))
+            .Append(RenderSnapshotTable(source, options))
+            .Append(RenderCheckpointTable(source, options));
         return Layout(source.SlotName, observedAt, body.ToString(), options);
     }
 
@@ -383,10 +1153,21 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneOverview overview,
         BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder("<h1>Snapshots</h1>");
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Snapshots", null)))
+            .Append(PageHeading(
+                "Snapshots",
+                "Initial-copy runs across every configured source.",
+                StatusBadge(
+                    overview.Sources.SelectMany(static source => source.SnapshotRuns)
+                        .All(static snapshot => string.Equals(snapshot.State, "Complete", StringComparison.OrdinalIgnoreCase))
+                        ? "All complete" : "Runs in progress",
+                    overview.Sources.SelectMany(static source => source.SnapshotRuns)
+                        .All(static snapshot => string.Equals(snapshot.State, "Complete", StringComparison.OrdinalIgnoreCase))
+                        ? "ok" : "warn")));
         foreach (var source in overview.Sources)
         {
-            body.Append(RenderSnapshotTable(source));
+            body.Append(RenderSnapshotTable(source, options));
         }
 
         return Layout("Snapshots", overview.ObservedAt, body.ToString(), options);
@@ -396,10 +1177,16 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneOverview overview,
         BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder("<h1>Consumer groups</h1>");
+        var groups = overview.Sources.SelectMany(static source => source.ConsumerGroups).ToArray();
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Consumer groups", null)))
+            .Append(PageHeading(
+                "Consumer groups",
+                "Durable consumers, leases, checkpoints and ownership fences.",
+                StatusBadge($"{groups.Count(static group => group.IsActive)} active", "ok")));
         foreach (var source in overview.Sources)
         {
-            body.Append(RenderGroupTable(source));
+            body.Append(RenderGroupTable(source, options));
         }
 
         return Layout("Consumer groups", overview.ObservedAt, body.ToString(), options);
@@ -409,10 +1196,16 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneOverview overview,
         BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder("<h1>Direct checkpoints</h1>");
+        var checkpoints = overview.Sources.Sum(static source => source.Checkpoints.Count);
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Checkpoints", null)))
+            .Append(PageHeading(
+                "Direct checkpoints",
+                "Exact durable PostgreSQL resume positions for every consumer.",
+                StatusBadge($"{checkpoints} checkpoints", "ok")));
         foreach (var source in overview.Sources)
         {
-            body.Append(RenderCheckpointTable(source));
+            body.Append(RenderCheckpointTable(source, options));
         }
 
         return Layout("Checkpoints", overview.ObservedAt, body.ToString(), options);
@@ -426,29 +1219,39 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         var totalRate = overview.Pipelines
             .Where(static pipeline => pipeline.TransactionsPerSecond.HasValue)
             .Sum(static pipeline => pipeline.TransactionsPerSecond!.Value);
-        var body = new StringBuilder("<h1>Sync pipelines</h1><div class=\"cards\">")
-            .Append(Card("Pipelines", overview.Pipelines.Count.ToString(CultureInfo.InvariantCulture)))
-            .Append(Card(
-                "Running",
-                overview.Pipelines.Count(static pipeline => pipeline.State == "Running")
-                    .ToString(CultureInfo.InvariantCulture)))
-            .Append(Card("Throughput", totalRate.ToString("N1", CultureInfo.InvariantCulture) + " tx/s"))
-            .Append(Card(
-                "Quarantined",
-                overview.Pipelines.Sum(static pipeline => pipeline.QuarantinedTransactions)
-                    .ToString("N0", CultureInfo.InvariantCulture)))
-            .Append(Card(
-                "Failures",
-                overview.Pipelines.Sum(static pipeline => pipeline.FailureCount)
-                    .ToString("N0", CultureInfo.InvariantCulture)))
-            .Append("</div><table><thead><tr><th>Pipeline</th><th>State</th><th>Throughput</th>")
+        var healthy = overview.Pipelines.Count(IsPipelineHealthy);
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Sync pipelines", null)))
+            .Append(PageHeading(
+                "Sync pipelines",
+                "Destination delivery, throughput, lag and recovery state.",
+                StatusBadge(
+                    healthy == overview.Pipelines.Count ? "All pipelines healthy" : $"{overview.Pipelines.Count - healthy} need attention",
+                    healthy == overview.Pipelines.Count ? "ok" : "warn")))
+            .Append("<div class=\"cards\">")
+            .Append(MetricCard("Pipelines", overview.Pipelines.Count.ToString(CultureInfo.InvariantCulture), "Configured destinations"))
+            .Append(MetricCard("Running", overview.Pipelines.Count(static pipeline => pipeline.State == "Running").ToString(CultureInfo.InvariantCulture), "Workers currently active"))
+            .Append(MetricCard("Throughput", totalRate.ToString("N1", CultureInfo.InvariantCulture) + " tx/s", "Combined recent rate"))
+            .Append(MetricCard("Quarantined", overview.Pipelines.Sum(static pipeline => pipeline.QuarantinedTransactions).ToString("N0", CultureInfo.InvariantCulture), "Awaiting review"))
+            .Append(MetricCard("Failures", overview.Pipelines.Sum(static pipeline => pipeline.FailureCount).ToString("N0", CultureInfo.InvariantCulture), "Recorded failures"))
+            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Delivery inventory</p><h2>All pipelines</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("<div class=\"table-tools\"><label><span>Search pipelines</span><input type=\"search\" placeholder=\"Pipeline, state or diagnostic\" data-table-filter></label>")
+            .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
+            .Append("<div class=\"table-wrap\"><table><thead><tr><th>Pipeline</th><th>State</th><th>Throughput</th>")
             .Append("<th>Checkpoint lag</th><th>Applied</th><th>Snapshot rows</th>")
-            .Append("<th>Retries</th><th>Quarantine</th><th>Diagnostic</th><th>Controls</th></tr></thead><tbody>");
+            .Append("<th>Retries</th><th>Quarantine</th><th>Diagnostic</th><th>Controls</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
         foreach (var pipeline in overview.Pipelines)
         {
-            body.Append("<tr><td>").Append(E(pipeline.PipelineId)).Append("</td><td>")
-                .Append(E(pipeline.State)).Append("</td><td>")
+            var isHealthy = IsPipelineHealthy(pipeline);
+            var (status, tone) = PipelineStatus(pipeline);
+            var href = DashboardPath(options, "pipelines", pipeline.PipelineId);
+            body.Append("<tr data-state=\"").Append(isHealthy ? "healthy" : "attention")
+                .Append("\"><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\">")
+                .Append(E(pipeline.PipelineId)).Append("</a><small>")
+                .Append(E(ShortFingerprint(pipeline.SourceFingerprint))).Append("</small></td><td>")
+                .Append(StatusBadge(status, tone)).Append("</td><td>")
                 .Append(pipeline.TransactionsPerSecond?.ToString("N1", CultureInfo.InvariantCulture) ?? "—")
+                .Append(" tx/s")
                 .Append("</td><td>")
                 .Append(pipeline.CheckpointLagBytes is { } lag ? Bytes(lag) : "—")
                 .Append("</td><td>")
@@ -465,10 +1268,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 .Append(canMutate
                     ? PipelineControls(pipeline.PipelineId, pipeline.QuarantinedTransactions)
                     : "—")
-                .Append("</td></tr>");
+                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href)).Append("\">View →</a></td></tr>");
         }
 
-        body.Append("</tbody></table>");
+        body.Append("</tbody></table></div></section>");
         return Layout("Sync pipelines", overview.ObservedAt, body.ToString(), options);
     }
 
@@ -476,31 +1279,36 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         ControlPlaneLiveOverview overview,
         BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder("<h1>Live subscriptions</h1><div class=\"cards\">")
-            .Append(Card(
-                "Shared queries",
-                overview.Registry.SharedSubscriptions.ToString(CultureInfo.InvariantCulture)))
-            .Append(Card(
-                "Active clients",
-                overview.Subscriptions.Sum(static item => item.SubscriberCount)
-                    .ToString("N0", CultureInfo.InvariantCulture)))
-            .Append(Card(
-                "Fan-out deliveries",
-                overview.Subscriptions.Sum(static item => item.FanOutDeliveries)
-                    .ToString("N0", CultureInfo.InvariantCulture)))
-            .Append(Card(
-                "Quota rejections",
-                (overview.Registry.QuotaRejections +
-                 overview.Subscriptions.Sum(static item => item.QuotaRejections))
-                    .ToString("N0", CultureInfo.InvariantCulture)))
-            .Append("</div><table><thead><tr><th>Query</th><th>Scope</th><th>Clients</th>")
+        var healthy = overview.Subscriptions.Count(IsLiveHealthy);
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Live subscriptions", null)))
+            .Append(PageHeading(
+                "Live subscriptions",
+                "Shared queries, connected clients, fan-out, replay and backpressure.",
+                StatusBadge(
+                    healthy == overview.Subscriptions.Count ? "All subscriptions current" : $"{overview.Subscriptions.Count - healthy} need attention",
+                    healthy == overview.Subscriptions.Count ? "ok" : "warn")))
+            .Append("<div class=\"cards\">")
+            .Append(MetricCard("Shared queries", overview.Registry.SharedSubscriptions.ToString(CultureInfo.InvariantCulture), $"Limit {overview.Registry.MaximumSharedSubscriptions:N0}"))
+            .Append(MetricCard("Subscribers", overview.Subscriptions.Sum(static item => item.SubscriberCount).ToString("N0", CultureInfo.InvariantCulture), "Across every query"))
+            .Append(MetricCard("Connected clients", overview.Subscriptions.Sum(static item => item.ConnectedClients).ToString("N0", CultureInfo.InvariantCulture), "Current transport connections"))
+            .Append(MetricCard("Fan-out deliveries", overview.Subscriptions.Sum(static item => item.FanOutDeliveries).ToString("N0", CultureInfo.InvariantCulture), "Shared result deliveries"))
+            .Append(MetricCard("Quota rejections", (overview.Registry.QuotaRejections + overview.Subscriptions.Sum(static item => item.QuotaRejections)).ToString("N0", CultureInfo.InvariantCulture), "Capacity protection"))
+            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Query inventory</p><h2>Shared subscriptions</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("<div class=\"table-tools\"><label><span>Search subscriptions</span><input type=\"search\" placeholder=\"Query, scope or disconnect code\" data-table-filter></label>")
+            .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
+            .Append("<div class=\"table-wrap\"><table><thead><tr><th>Query</th><th>Scope</th><th>Clients</th>")
             .Append("<th>Fan-out</th><th>Invalidation lag</th><th>Replay</th>")
-            .Append("<th>Resume rejected</th><th>Disconnect</th></tr></thead><tbody>");
+            .Append("<th>Resume rejected</th><th>Disconnect</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
         foreach (var subscription in overview.Subscriptions)
         {
-            body.Append("<tr><td><code>")
+            var isHealthy = IsLiveHealthy(subscription);
+            var (status, tone) = LiveStatus(subscription);
+            var href = DashboardPath(options, "live", subscription.SubscriptionFingerprint);
+            body.Append("<tr data-state=\"").Append(isHealthy ? "healthy" : "attention")
+                .Append("\"><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\"><code>")
                 .Append(E(ShortFingerprint(subscription.QueryPlanFingerprint)))
-                .Append("</code></td><td>")
+                .Append("</code></a><small>").Append(StatusBadge(status, tone)).Append("</small></td><td>")
                 .Append(E(subscription.SecurityScopeLabel))
                 .Append("</td><td>")
                 .Append(subscription.SubscriberCount.ToString("N0", CultureInfo.InvariantCulture))
@@ -518,10 +1326,10 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 .Append(subscription.ResumeRejections.ToString("N0", CultureInfo.InvariantCulture))
                 .Append("</td><td>")
                 .Append(E(subscription.LastDisconnectCode ?? "—"))
-                .Append("</td></tr>");
+                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href)).Append("\">View →</a></td></tr>");
         }
 
-        body.Append("</tbody></table>");
+        body.Append("</tbody></table></div></section>");
         return Layout("Live subscriptions", overview.ObservedAt, body.ToString(), options);
     }
 
@@ -537,20 +1345,29 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
             .SelectMany(static query => query.TableDependencies)
             .Distinct(StringComparer.Ordinal)
             .Count();
-        var body = new StringBuilder("<h1>Continuous Graph queries</h1><div class=\"cards\">")
-            .Append(Card("Registered queries", overview.Queries.Count.ToString(CultureInfo.InvariantCulture)))
-            .Append(Card("Databases", databaseCount.ToString(CultureInfo.InvariantCulture)))
-            .Append(Card("Affected tables", dependencyCount.ToString(CultureInfo.InvariantCulture)))
-            .Append("</div><table><thead><tr><th>Query</th><th>Graph</th><th>Database</th>")
-            .Append("<th>Elements</th><th>Dependencies</th><th>Limit</th><th>Capabilities</th>")
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Continuous Graph", null)))
+            .Append(PageHeading(
+                "Continuous Graph",
+                "Registered graph queries and the plans that keep their results current.",
+                StatusBadge($"{overview.Queries.Count} queries registered", "ok")))
+            .Append("<div class=\"cards\">")
+            .Append(MetricCard("Registered queries", overview.Queries.Count.ToString(CultureInfo.InvariantCulture), "Continuously maintained"))
+            .Append(MetricCard("Databases", databaseCount.ToString(CultureInfo.InvariantCulture), "Distinct database identities"))
+            .Append(MetricCard("Affected tables", dependencyCount.ToString(CultureInfo.InvariantCulture), "Tracked dependencies"))
+            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Impact plans</p><h2>Registered queries</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("<div class=\"table-tools\"><label><span>Search graph queries</span><input type=\"search\" placeholder=\"Name, graph, database or table\" data-table-filter></label></div>")
+            .Append("<div class=\"table-wrap\"><table><thead><tr><th>Query</th><th>Graph</th><th>Database</th>")
+            .Append("<th>Elements</th><th>Dependencies</th><th>Limit</th><th>Capabilities</th><th><span class=\"sr-only\">Open</span></th>")
             .Append("</tr></thead><tbody>");
         foreach (var query in overview.Queries)
         {
             var qualifiedGraph = string.IsNullOrWhiteSpace(query.GraphSchema)
                 ? query.GraphName
                 : query.GraphSchema + "." + query.GraphName;
-            body.Append("<tr><td>")
-                .Append(E(query.Name))
+            var href = DashboardPath(options, "graphs", query.QueryFingerprint);
+            body.Append("<tr><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\">")
+                .Append(E(query.Name)).Append("</a>")
                 .Append("<br><code>")
                 .Append(E(ShortFingerprint(query.QueryFingerprint)))
                 .Append("</code></td><td>")
@@ -565,68 +1382,150 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                 .Append(query.MaximumResultCount.ToString("N0", CultureInfo.InvariantCulture))
                 .Append("</td><td>")
                 .Append(E(query.Capabilities))
-                .Append("</td></tr>");
+                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href)).Append("\">View →</a></td></tr>");
         }
 
-        body.Append("</tbody></table>");
+        body.Append("</tbody></table></div></section>");
         return Layout("Continuous Graph queries", overview.ObservedAt, body.ToString(), options);
     }
 
-    private static string RenderGroupTable(ControlPlaneSourceSnapshot source)
+    private static string RenderFleet(
+        ControlPlaneFleetOverview overview,
+        BlueTuskDashboardOptions options,
+        bool canMutate,
+        bool canAdminister)
     {
-        var body = new StringBuilder("<h2>Relay groups — ")
+        var healthy = overview.Deployments.Count(IsDeploymentHealthy);
+        var body = new StringBuilder()
+            .Append(Breadcrumbs(options, ("Managed deployments", null)))
+            .Append(PageHeading(
+                "Managed deployments",
+                "Fleet state, generation convergence, placement and requested capacity.",
+                StatusBadge(
+                    healthy == overview.Deployments.Count ? "Fleet ready" : $"{overview.Deployments.Count - healthy} need attention",
+                    healthy == overview.Deployments.Count ? "ok" : "warn")))
+            .Append("<div class=\"cards\">")
+            .Append(MetricCard("Deployments", overview.Deployments.Count.ToString(CultureInfo.InvariantCulture), "Managed environments"))
+            .Append(MetricCard("Ready", healthy.ToString(CultureInfo.InvariantCulture), "Converged generations"))
+            .Append(MetricCard("Replicas", overview.Deployments.Sum(static deployment => deployment.Replicas).ToString("N0", CultureInfo.InvariantCulture), "Requested workload replicas"))
+            .Append(MetricCard("Requested CPU", overview.Deployments.Sum(static deployment => deployment.CpuMillicores).ToString("N0", CultureInfo.InvariantCulture) + "m", "Across the fleet"))
+            .Append(MetricCard("Requested memory", Bytes(overview.Deployments.Sum(static deployment => deployment.MemoryBytes)), "Across the fleet"))
+            .Append("</div><section class=\"panel table-panel\" data-filter-panel><div class=\"section-heading\"><div><p class=\"eyebrow\">Fleet inventory</p><h2>All deployments</h2></div><span class=\"muted\" data-filter-count></span></div>")
+            .Append("<div class=\"table-tools\"><label><span>Search deployments</span><input type=\"search\" placeholder=\"Deployment, tenant, region or workload\" data-table-filter></label>")
+            .Append("<label><span>Health</span><select data-state-filter><option value=\"\">All states</option><option value=\"healthy\">Healthy</option><option value=\"attention\">Needs attention</option></select></label></div>")
+            .Append("<div class=\"table-wrap\"><table><thead><tr><th>Deployment</th><th>Tenant</th><th>Placement</th>")
+            .Append("<th>State</th><th>Generation</th><th>Workloads</th><th>Replicas</th>")
+            .Append("<th>Storage</th><th>Protection</th><th>Diagnostic</th><th>Controls</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
+        foreach (var deployment in overview.Deployments)
+        {
+            var isHealthy = IsDeploymentHealthy(deployment);
+            var (status, tone) = DeploymentStatus(deployment);
+            var href = DashboardPath(options, "deployments", deployment.DeploymentId);
+            body.Append("<tr data-state=\"").Append(isHealthy ? "healthy" : "attention")
+                .Append("\"><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\">")
+                .Append(E(deployment.DeploymentId)).Append("</a></td><td>")
+                .Append(E(deployment.TenantId)).Append("</td><td>")
+                .Append(E(deployment.Provider)).Append(" / ").Append(E(deployment.Region))
+                .Append("</td><td>").Append(StatusBadge(status, tone)).Append("</td><td>")
+                .Append(deployment.ObservedGeneration.ToString(CultureInfo.InvariantCulture))
+                .Append(" / ")
+                .Append(deployment.DesiredGeneration.ToString(CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(E(string.Join(", ", deployment.WorkloadKinds)))
+                .Append("</td><td>")
+                .Append(deployment.Replicas.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>").Append(Bytes(deployment.StorageBytes)).Append("</td><td>")
+                .Append(deployment.DeleteProtection ? "delete protected" : "unprotected")
+                .Append(deployment.Paused ? " / paused" : string.Empty)
+                .Append("</td><td>").Append(E(deployment.DiagnosticCode ?? "—")).Append("</td><td>")
+                .Append(canMutate
+                    ? DeploymentControls(deployment, canAdminister)
+                    : "—")
+                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href)).Append("\">View →</a></td></tr>");
+        }
+
+        body.Append("</tbody></table></div></section>");
+        return Layout("Managed deployments", overview.ObservedAt, body.ToString(), options);
+    }
+
+    private static string RenderGroupTable(
+        ControlPlaneSourceSnapshot source,
+        BlueTuskDashboardOptions options)
+    {
+        var body = new StringBuilder("<section class=\"panel table-panel\"><div class=\"section-heading\"><div><p class=\"eyebrow\">Streams</p><h2>Consumer groups — ")
             .Append(E(source.InstanceName)).Append(" / ").Append(E(source.SlotName))
-            .Append("</h2><table><thead><tr><th>Group</th><th>State</th><th>Checkpoint</th>")
-            .Append("<th>Generation</th><th>Lease</th><th>Fence</th></tr></thead><tbody>");
+            .Append("</h2></div><span class=\"muted\">")
+            .Append(source.ConsumerGroups.Count.ToString(CultureInfo.InvariantCulture))
+            .Append(" groups</span></div><div class=\"table-wrap\"><table><thead><tr><th>Group</th><th>State</th><th>Checkpoint</th>")
+            .Append("<th>Behind relay</th><th>Generation</th><th>Lease</th><th>Fence</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
         foreach (var group in source.ConsumerGroups)
         {
-            body.Append("<tr><td>").Append(E(group.Name)).Append("</td><td>")
-                .Append(group.IsActive ? "active" : "removed").Append("</td><td>")
+            var href = DashboardPath(options, "sources", source.SourceKey, "consumer-groups", group.Name);
+            body.Append("<tr><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\">")
+                .Append(E(group.Name)).Append("</a></td><td>")
+                .Append(StatusBadge(group.IsActive ? "Active" : "Removed", group.IsActive ? "ok" : "critical"))
+                .Append("</td><td>")
                 .Append(group.CheckpointSequence.ToString("N0", CultureInfo.InvariantCulture))
+                .Append("</td><td>")
+                .Append(Math.Max(0, source.Relay.LastSequence - group.CheckpointSequence)
+                    .ToString("N0", CultureInfo.InvariantCulture))
                 .Append("</td><td>").Append(group.StoreGeneration.ToString(CultureInfo.InvariantCulture))
                 .Append("</td><td>").Append(group.IsLeased ? "leased" : "free")
                 .Append("</td><td>").Append(group.LastFencingToken.ToString(CultureInfo.InvariantCulture))
-                .Append("</td></tr>");
+                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href)).Append("\">View →</a></td></tr>");
         }
 
-        return body.Append("</tbody></table>").ToString();
+        return body.Append("</tbody></table></div></section>").ToString();
     }
 
-    private static string RenderSnapshotTable(ControlPlaneSourceSnapshot source)
+    private static string RenderSnapshotTable(
+        ControlPlaneSourceSnapshot source,
+        BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder("<h2>Snapshots — ")
+        var body = new StringBuilder("<section class=\"panel table-panel\"><div class=\"section-heading\"><div><p class=\"eyebrow\">Initial copy</p><h2>Snapshots — ")
             .Append(E(source.InstanceName)).Append(" / ").Append(E(source.SlotName))
-            .Append("</h2><table><thead><tr><th>Epoch</th><th>State</th><th>Progress bytes</th>")
-            .Append("<th>Updated</th></tr></thead><tbody>");
+            .Append("</h2></div><span class=\"muted\">")
+            .Append(source.SnapshotRuns.Count.ToString(CultureInfo.InvariantCulture))
+            .Append(" runs</span></div><div class=\"table-wrap\"><table><thead><tr><th>Epoch</th><th>State</th><th>Progress</th>")
+            .Append("<th>Updated</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
         foreach (var snapshot in source.SnapshotRuns)
         {
-            body.Append("<tr><td>").Append(E(snapshot.SnapshotEpoch)).Append("</td><td>")
-                .Append(E(snapshot.State)).Append("</td><td>")
-                .Append(snapshot.ProgressBytes.ToString("N0", CultureInfo.InvariantCulture))
-                .Append("</td><td>").Append(E(snapshot.UpdatedAt.ToString("O", CultureInfo.InvariantCulture)))
-                .Append("</td></tr>");
+            var href = DashboardPath(options, "sources", source.SourceKey, "snapshots", snapshot.SnapshotEpoch);
+            var complete = string.Equals(snapshot.State, "Complete", StringComparison.OrdinalIgnoreCase);
+            body.Append("<tr><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\"><code>")
+                .Append(E(snapshot.SnapshotEpoch)).Append("</code></a></td><td>")
+                .Append(StatusBadge(snapshot.State, complete ? "ok" : "warn")).Append("</td><td>")
+                .Append(Bytes(snapshot.ProgressBytes)).Append("</td><td>")
+                .Append(Date(snapshot.UpdatedAt)).Append("</td><td><a class=\"row-action\" href=\"")
+                .Append(E(href)).Append("\">View →</a></td></tr>");
         }
 
-        return body.Append("</tbody></table>").ToString();
+        return body.Append("</tbody></table></div></section>").ToString();
     }
 
-    private static string RenderCheckpointTable(ControlPlaneSourceSnapshot source)
+    private static string RenderCheckpointTable(
+        ControlPlaneSourceSnapshot source,
+        BlueTuskDashboardOptions options)
     {
-        var body = new StringBuilder("<h2>Direct checkpoints — ")
+        var body = new StringBuilder("<section class=\"panel table-panel\"><div class=\"section-heading\"><div><p class=\"eyebrow\">Durable progress</p><h2>Direct checkpoints — ")
             .Append(E(source.InstanceName)).Append(" / ").Append(E(source.SlotName))
-            .Append("</h2><table><thead><tr><th>Group</th><th>Position</th><th>Generation</th>")
-            .Append("<th>Mapping</th><th>Lease</th></tr></thead><tbody>");
+            .Append("</h2></div><span class=\"muted\">")
+            .Append(source.Checkpoints.Count.ToString(CultureInfo.InvariantCulture))
+            .Append(" checkpoints</span></div><div class=\"table-wrap\"><table><thead><tr><th>Group</th><th>Position</th><th>Generation</th>")
+            .Append("<th>Mapping</th><th>Lease</th><th><span class=\"sr-only\">Open</span></th></tr></thead><tbody>");
         foreach (var checkpoint in source.Checkpoints)
         {
-            body.Append("<tr><td>").Append(E(checkpoint.ConsumerGroup)).Append("</td><td>")
+            var href = DashboardPath(options, "sources", source.SourceKey, "checkpoints", checkpoint.ConsumerGroup);
+            body.Append("<tr><td><a class=\"primary-link\" href=\"").Append(E(href)).Append("\">")
+                .Append(E(checkpoint.ConsumerGroup)).Append("</a></td><td>")
                 .Append(E(checkpoint.AcknowledgedPosition)).Append("</td><td>")
                 .Append(checkpoint.StoreGeneration.ToString(CultureInfo.InvariantCulture))
                 .Append("</td><td><code>").Append(E(ShortFingerprint(checkpoint.MappingFingerprint)))
                 .Append("</code></td><td>").Append(checkpoint.IsLeased ? "leased" : "free")
-                .Append("</td></tr>");
+                .Append("</td><td><a class=\"row-action\" href=\"").Append(E(href)).Append("\">View →</a></td></tr>");
         }
 
-        return body.Append("</tbody></table>").ToString();
+        return body.Append("</tbody></table></div></section>").ToString();
     }
 
     private static string Layout(
@@ -635,28 +1534,49 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
         string body,
         BlueTuskDashboardOptions options) =>
         $$$"""
-        <!doctype html><html lang="en"><head><meta charset="utf-8">
+        <!doctype html>
+        <html lang="en">
+        <head>
+        <meta charset="utf-8">
         <meta name="viewport" content="width=device-width,initial-scale=1">
-        <title>{{{E(title)}}} · BlueTusk</title><style>
-        :root{color-scheme:light dark;font:15px system-ui,sans-serif}body{margin:0;background:#10151b;color:#e9f1f7}
-        nav{padding:1rem 2rem;background:#17212b;display:flex;gap:1rem}nav a{color:#8dd8ff;text-decoration:none}
-        main{max-width:1200px;margin:auto;padding:2rem}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:1rem}
-        .card{background:#17212b;border:1px solid #2b3c4b;border-radius:8px;padding:1rem}.card strong{display:block;font-size:1.5rem}
-        table{width:100%;border-collapse:collapse;margin:1rem 0 2rem}th,td{padding:.65rem;text-align:left;border-bottom:1px solid #2b3c4b}
-        th,dt{color:#9fb2c2}a{color:#8dd8ff}dl{display:grid;grid-template-columns:max-content 1fr;gap:.5rem 1rem}
-        footer{color:#9fb2c2;margin-top:2rem}code{font-size:.85em}
-        button{margin:.15rem;padding:.35rem .55rem;border:1px solid #4b687d;border-radius:5px;background:#21313e;color:#e9f1f7;cursor:pointer}
-        </style></head><body><nav><strong>BlueTusk</strong>
-        <a href="{{{E(options.RoutePrefix)}}}/sources">Sources</a>
-        <a href="{{{E(options.RoutePrefix)}}}/snapshots">Snapshots</a>
-        <a href="{{{E(options.RoutePrefix)}}}/consumer-groups">Consumer groups</a>
-        <a href="{{{E(options.RoutePrefix)}}}/checkpoints">Checkpoints</a>
-        <a href="{{{E(options.RoutePrefix)}}}/pipelines">Sync pipelines</a>
-        <a href="{{{E(options.RoutePrefix)}}}/live">Live subscriptions</a>
-        <a href="{{{E(options.RoutePrefix)}}}/graphs">Continuous Graph</a></nav>
-        <main>{{{body}}}<footer>Observed {{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}</footer></main>
-        <script src="{{{E(options.RoutePrefix)}}}/assets/dashboard.js" defer></script>
-        </body></html>
+        <meta name="color-scheme" content="dark">
+        <title>{{{E(title)}}} · BlueTusk</title>
+        <style>
+        :root{color-scheme:dark;font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--bg:#07101d;--surface:#0c1828;--surface-2:#101f32;--surface-3:#142840;--border:#233a53;--border-soft:#192d43;--text:#f1f7fb;--muted:#90a7bb;--blue:#48b9ff;--blue-strong:#169eea;--cyan:#5ce1d1;--ok:#4ade9a;--warn:#f6c85f;--critical:#ff6f7d;--shadow:0 18px 48px rgba(0,0,0,.24)}
+        *{box-sizing:border-box}html{background:var(--bg);scroll-behavior:smooth}body{margin:0;background:radial-gradient(circle at 82% -10%,rgba(32,151,220,.15),transparent 28rem),var(--bg);color:var(--text);min-height:100vh}button,input,select{font:inherit}a{color:var(--blue);text-decoration:none}a:hover{text-decoration:underline}code{font:500 .86em ui-monospace,SFMono-Regular,Consolas,monospace;color:#bfe8ff;overflow-wrap:anywhere}h1,h2,h3,p{margin-top:0}h1{font-size:clamp(2rem,4vw,3rem);line-height:1.08;letter-spacing:-.04em;margin-bottom:.75rem}h2{font-size:1.28rem;letter-spacing:-.02em;margin-bottom:.35rem}small{display:block;color:var(--muted)}
+        .skip-link{position:fixed;left:1rem;top:-5rem;z-index:100;padding:.65rem 1rem;background:var(--blue);color:#00111d;border-radius:.5rem}.skip-link:focus{top:1rem}.app-shell{min-height:100vh}.topbar{height:72px;display:flex;align-items:center;justify-content:space-between;padding:0 1.5rem;border-bottom:1px solid var(--border-soft);background:rgba(7,16,29,.88);backdrop-filter:blur(18px);position:sticky;top:0;z-index:30}.brand{display:inline-flex;align-items:center;gap:.72rem;color:var(--text);font-weight:750;font-size:1.12rem;letter-spacing:-.02em}.brand:hover{text-decoration:none}.brand-mark{display:grid;place-items:center;width:36px;height:36px;border-radius:11px;background:linear-gradient(145deg,var(--blue),var(--cyan));color:#05121d;box-shadow:0 8px 25px rgba(45,183,244,.28);font-weight:900}.brand small{display:inline;color:var(--muted);font-weight:500;margin-left:.22rem}.nav-toggle{display:none}.app-body{display:grid;grid-template-columns:250px minmax(0,1fr);min-height:calc(100vh - 72px)}.sidebar{border-right:1px solid var(--border-soft);background:rgba(9,20,34,.76);padding:1.35rem 1rem;position:sticky;top:72px;height:calc(100vh - 72px);overflow:auto}.nav-section{margin-bottom:1.3rem}.nav-label{display:block;padding:0 .7rem .45rem;color:#647f97;text-transform:uppercase;letter-spacing:.12em;font-size:.68rem;font-weight:750}.side-nav{display:grid;gap:.18rem}.side-nav a{display:flex;align-items:center;gap:.62rem;color:#a9bed0;padding:.58rem .7rem;border-radius:.55rem;font-weight:550}.side-nav a::before{content:"";width:7px;height:7px;border:1px solid #59748b;border-radius:50%}.side-nav a:hover{background:var(--surface-2);color:var(--text);text-decoration:none}.side-nav a[aria-current=page]{background:linear-gradient(90deg,rgba(41,169,237,.18),rgba(41,169,237,.06));color:#eaf8ff}.side-nav a[aria-current=page]::before{border-color:var(--blue);background:var(--blue);box-shadow:0 0 0 4px rgba(72,185,255,.1)}.security-note{margin-top:2rem;padding:.8rem;border:1px solid var(--border);border-radius:.7rem;background:rgba(15,31,50,.7);color:var(--muted);font-size:.78rem}.security-note strong{display:block;color:var(--text);margin-bottom:.2rem}
+        main{width:100%;max-width:1500px;margin:0 auto;padding:2rem clamp(1.1rem,3vw,3.2rem) 3rem;min-width:0}.breadcrumbs{display:flex;align-items:center;gap:.5rem;color:var(--muted);font-size:.82rem;margin-bottom:1.55rem;overflow:auto;white-space:nowrap}.breadcrumbs a{color:var(--muted)}.page-heading{display:flex;align-items:flex-start;justify-content:space-between;gap:2rem;margin-bottom:1.8rem}.page-heading>div:first-child{max-width:760px}.page-heading p:not(.eyebrow){color:var(--muted);font-size:1.02rem;margin-bottom:0}.page-actions{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;justify-content:flex-end}.eyebrow{color:var(--cyan);font-size:.72rem;text-transform:uppercase;letter-spacing:.12em;font-weight:800;margin-bottom:.45rem}.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(175px,1fr));gap:.8rem;margin-bottom:1.4rem}.cards--wide{grid-template-columns:repeat(auto-fit,minmax(195px,1fr))}.card{min-height:124px;background:linear-gradient(145deg,rgba(16,34,55,.96),rgba(11,25,42,.96));border:1px solid var(--border);border-radius:.8rem;padding:1rem;box-shadow:0 10px 28px rgba(0,0,0,.12)}.card>span{display:block;color:var(--muted);font-size:.78rem;font-weight:650}.card strong{display:block;font-size:1.62rem;letter-spacing:-.04em;margin:.32rem 0 .15rem;overflow-wrap:anywhere}.card small{font-size:.75rem}.panel{background:linear-gradient(155deg,rgba(13,29,47,.98),rgba(9,22,38,.98));border:1px solid var(--border);border-radius:.85rem;padding:1.15rem;margin:0 0 1.2rem;box-shadow:var(--shadow)}.section-heading{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:.9rem}.section-heading h2{margin:0}.muted{color:var(--muted)}.status-badge{display:inline-flex;align-items:center;gap:.42rem;width:max-content;max-width:100%;padding:.28rem .58rem;border-radius:999px;border:1px solid var(--border);background:var(--surface-2);color:#c5d5e2;font-size:.75rem;font-weight:700;white-space:nowrap}.status-dot,.product-icon{display:inline-block;width:8px;height:8px;border-radius:50%;background:var(--muted);box-shadow:0 0 0 3px rgba(144,167,187,.1)}[data-tone=ok]{--tone:var(--ok)}[data-tone=warn]{--tone:var(--warn)}[data-tone=critical]{--tone:var(--critical)}.status-dot[data-tone],.product-icon[data-tone]{background:var(--tone);box-shadow:0 0 0 3px color-mix(in srgb,var(--tone) 16%,transparent)}.status-badge[data-tone=ok]{border-color:rgba(74,222,154,.25);color:#9af1c6;background:rgba(74,222,154,.08)}.status-badge[data-tone=warn]{border-color:rgba(246,200,95,.26);color:#ffe09a;background:rgba(246,200,95,.08)}.status-badge[data-tone=critical]{border-color:rgba(255,111,125,.3);color:#ffabb3;background:rgba(255,111,125,.08)}
+        .product-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:.8rem}.product-card{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.85rem;padding:1rem;border:1px solid var(--border);border-radius:.8rem;background:var(--surface);color:var(--text)}.product-card:hover{border-color:#366c91;background:var(--surface-2);text-decoration:none}.product-card .product-icon{width:10px;height:10px}.product-card strong,.related-link strong{display:block;margin-bottom:.2rem}.product-card small,.related-link small{font-size:.78rem}.product-count{color:var(--blue);font-size:.8rem;white-space:nowrap}.attention-list{display:grid;gap:.45rem}.attention-item{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:.8rem;padding:.72rem;border-radius:.6rem;color:var(--text);background:rgba(14,32,52,.7)}.attention-item:hover{background:var(--surface-3);text-decoration:none}.attention-item small{font-size:.78rem}.empty-state{display:flex;flex-direction:column;align-items:center;text-align:center;padding:1.6rem;color:var(--muted)}.empty-state strong{color:var(--text);margin-bottom:.3rem}.table-panel{padding-bottom:.35rem}.table-tools{display:flex;align-items:end;gap:.8rem;flex-wrap:wrap;margin-bottom:.85rem}.table-tools label{display:grid;gap:.3rem;color:var(--muted);font-size:.72rem;font-weight:650}.table-tools label:first-child{flex:1 1 280px}.table-tools input,.table-tools select{width:100%;min-height:40px;border:1px solid var(--border);border-radius:.52rem;background:#081624;color:var(--text);padding:.48rem .65rem;outline:none}.table-tools input:focus,.table-tools select:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.table-wrap{overflow:auto;margin:0 -1.15rem}.table-wrap table{min-width:760px}table{width:100%;border-collapse:collapse}th,td{padding:.75rem .82rem;text-align:left;border-bottom:1px solid var(--border-soft);vertical-align:middle}th{color:#7892a8;font-size:.68rem;text-transform:uppercase;letter-spacing:.08em;font-weight:800;background:rgba(8,20,34,.7);white-space:nowrap}td{font-size:.84rem;color:#c7d6e3}tbody tr:hover{background:rgba(31,73,102,.12)}tbody tr:last-child td{border-bottom:0}td small{margin-top:.18rem;font-size:.7rem}.primary-link{color:#e7f7ff;font-weight:720}.row-action{white-space:nowrap;font-size:.78rem;font-weight:700}.detail-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0;margin:0}.detail-grid>div{padding:.75rem;border-bottom:1px solid var(--border-soft);min-width:0}.detail-grid>div:nth-last-child(-n+2){border-bottom:0}.detail-grid dt{color:var(--muted);font-size:.72rem;margin-bottom:.18rem}.detail-grid dd{margin:0;color:#dce8f1;overflow-wrap:anywhere}.tag-list{display:flex;flex-wrap:wrap;gap:.5rem}.tag-list code{padding:.35rem .55rem;border:1px solid var(--border);border-radius:.45rem;background:#081624}.copy-value{display:inline-flex;align-items:center;gap:.45rem;max-width:100%}.copy-button{padding:.18rem .42rem;font-size:.67rem}.related-link{display:flex;align-items:center;justify-content:space-between;color:var(--text)}.related-link:hover{text-decoration:none;border-color:#366c91}.steps{display:grid;gap:.7rem;margin:1rem 0 0;padding:0;list-style:none;counter-reset:steps}.steps li{display:grid;grid-template-columns:auto 1fr;gap:.7rem;align-items:start;color:var(--muted);counter-increment:steps}.steps li::before{content:counter(steps);display:grid;place-items:center;width:27px;height:27px;border-radius:50%;background:rgba(72,185,255,.12);color:var(--blue);font-weight:800}.steps strong,.steps span{display:block}.steps strong{color:var(--text)}.button-row{display:flex;flex-wrap:wrap;gap:.45rem}.read-only{border-color:rgba(72,185,255,.22)}.danger-zone{border-color:rgba(246,200,95,.25)}
+        button{appearance:none;border:1px solid #365773;border-radius:.5rem;background:var(--surface-3);color:var(--text);padding:.45rem .7rem;cursor:pointer;font-weight:650}button:hover{border-color:var(--blue);background:#193853}button.secondary{background:transparent}button:disabled{cursor:wait;opacity:.6}.graph-query-form{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:.8rem;margin-top:1rem;padding:1rem;border:1px solid var(--border-soft);border-radius:.7rem;background:rgba(7,20,33,.65)}.graph-query-form label,.graph-toolbar label{display:grid;gap:.35rem;color:var(--muted);font-size:.75rem;font-weight:700}.graph-query-form input,.graph-toolbar input{min-height:42px;border:1px solid var(--border);border-radius:.52rem;background:#06131f;color:var(--text);padding:.5rem .65rem;outline:none}.graph-query-form input:focus,.graph-toolbar input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(72,185,255,.12)}.graph-query-form>.button-row{grid-column:1/-1;align-items:center}.server-bound{display:flex;align-items:center;gap:.55rem;flex-wrap:wrap;color:var(--muted);font-size:.78rem}.server-bound strong{color:var(--text)}.graph-result{margin-top:1.2rem}.graph-summary{margin-bottom:.8rem}.graph-summary .card{min-height:92px}.graph-summary .card strong{font-size:1.3rem}.graph-composition{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.8rem;margin:.8rem 0}.graph-composition section{padding:.85rem;border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.68)}.graph-composition h3{font-size:.85rem;margin-bottom:.6rem}.graph-composition .tag-list span{display:inline-flex;align-items:center;gap:.4rem;padding:.35rem .55rem;border:1px solid var(--border);border-radius:999px;color:#d9e7f0;font-size:.76rem}.graph-composition .tag-list span::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--category-color)}.graph-toolbar{display:flex;align-items:end;justify-content:space-between;gap:.8rem;flex-wrap:wrap;margin:1rem 0 .65rem}.graph-toolbar label{flex:1 1 300px}.graph-workspace{display:grid;grid-template-columns:minmax(0,3fr) minmax(245px,1fr);gap:.8rem;min-height:580px}.graph-canvas-shell{position:relative;min-width:0;border:1px solid var(--border);border-radius:.75rem;overflow:hidden;background:#07131f}.graph-canvas-shell canvas{display:block;width:100%;height:580px;touch-action:none;cursor:grab}.graph-canvas-shell canvas:active{cursor:grabbing}.graph-canvas-help{position:absolute;left:.7rem;bottom:.7rem;padding:.35rem .5rem;border-radius:.4rem;background:rgba(3,12,20,.82);color:#88a1b5;font-size:.69rem;pointer-events:none}.graph-inspector{padding:1rem;border:1px solid var(--border);border-radius:.75rem;background:rgba(8,22,36,.8);overflow:auto}.graph-inspector h3{overflow-wrap:anywhere}.graph-property-list{display:grid;grid-template-columns:minmax(80px,.7fr) minmax(0,1.3fr);margin-top:1rem}.graph-property-list dt,.graph-property-list dd{padding:.48rem;border-bottom:1px solid var(--border-soft);overflow-wrap:anywhere}.graph-property-list dt{color:var(--muted);font-size:.72rem}.graph-property-list dd{margin:0;color:var(--text);font-size:.78rem}.graph-element-lists{display:grid;gap:.7rem;margin-top:.8rem}.graph-element-lists details{border:1px solid var(--border-soft);border-radius:.65rem;background:rgba(8,22,36,.55);overflow:hidden}.graph-element-lists summary{padding:.8rem 1rem;cursor:pointer}.graph-element-lists .table-wrap{margin:0}.graph-element-lists table{min-width:720px}.graph-element-button{border:0;background:transparent;padding:0;color:#e7f7ff;text-align:left}.graph-element-button:hover{border:0;background:transparent;color:var(--blue);text-decoration:underline}.footer{display:flex;justify-content:space-between;gap:1rem;flex-wrap:wrap;color:#637e94;font-size:.75rem;margin-top:2rem;padding-top:1rem;border-top:1px solid var(--border-soft)}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}[hidden]{display:none!important}
+        @media(max-width:980px){.topbar{height:64px;padding:0 1rem}.brand small{display:none}.nav-toggle{display:inline-flex}.app-body{display:block;min-height:calc(100vh - 64px)}.sidebar{display:none;position:sticky;top:64px;width:100%;height:auto;max-height:calc(100vh - 64px);z-index:25;border-right:0;border-bottom:1px solid var(--border);padding:.8rem 1rem;background:#081421}.sidebar[data-open]{display:block}.side-nav{grid-template-columns:repeat(2,minmax(0,1fr))}.security-note{display:none}main{padding-top:1.35rem}}
+        @media(max-width:850px){.graph-workspace{grid-template-columns:1fr;min-height:0}.graph-canvas-shell canvas{height:460px}.graph-inspector{max-height:340px}.graph-composition{grid-template-columns:1fr}}
+        @media(max-width:680px){h1{font-size:2rem}.page-heading{display:block}.page-actions{justify-content:flex-start;margin-top:1rem}.cards,.cards--wide,.product-grid{grid-template-columns:1fr}.card{min-height:0}.product-card{grid-template-columns:auto 1fr}.product-count{grid-column:2}.section-heading{align-items:flex-start}.table-tools{display:grid}.detail-grid{grid-template-columns:1fr}.detail-grid>div:nth-last-child(2){border-bottom:1px solid var(--border-soft)}.side-nav{grid-template-columns:1fr}.topbar{position:sticky}.panel{padding:1rem}.table-wrap{margin:0 -1rem}.graph-query-form{grid-template-columns:1fr;padding:.8rem}.graph-canvas-shell canvas{height:390px}.graph-canvas-help{display:none}.footer{display:block}.footer span{display:block;margin-bottom:.25rem}}
+        @media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}*{transition:none!important}}
+        </style>
+        </head>
+        <body>
+        <a class="skip-link" href="#main-content">Skip to dashboard content</a>
+        <div class="app-shell">
+          <header class="topbar">
+            <a class="brand" href="{{{E(DashboardPath(options, "overview"))}}}"><span class="brand-mark" aria-hidden="true">B</span><span>BlueTusk <small>Control plane</small></span></a>
+            <button class="nav-toggle secondary" type="button" data-nav-toggle aria-expanded="false" aria-controls="dashboard-navigation">Menu</button>
+          </header>
+          <div class="app-body">
+            <aside class="sidebar" id="dashboard-navigation" data-navigation>
+              <div class="nav-section"><span class="nav-label">Workspace</span><nav class="side-nav" aria-label="Dashboard"><a href="{{{E(DashboardPath(options, "overview"))}}}">Overview</a></nav></div>
+              <div class="nav-section"><span class="nav-label">Data flow</span><nav class="side-nav" aria-label="Data flow"><a href="{{{E(DashboardPath(options, "sources"))}}}">Sources & Streams</a><a href="{{{E(DashboardPath(options, "pipelines"))}}}">Sync pipelines</a><a href="{{{E(DashboardPath(options, "live"))}}}">Live subscriptions</a><a href="{{{E(DashboardPath(options, "graphs"))}}}">Continuous Graph</a></nav></div>
+              <div class="nav-section"><span class="nav-label">Operations</span><nav class="side-nav" aria-label="Operations"><a href="{{{E(DashboardPath(options, "snapshots"))}}}">Snapshots</a><a href="{{{E(DashboardPath(options, "consumer-groups"))}}}">Consumer groups</a><a href="{{{E(DashboardPath(options, "checkpoints"))}}}">Checkpoints</a><a href="{{{E(DashboardPath(options, "deployments"))}}}">Deployments</a></nav></div>
+              <div class="security-note"><strong>Role-secured view</strong>Inventory is redacted by the control plane. Operations are shown only to authorised roles.</div>
+            </aside>
+            <main id="main-content">
+              {{{body}}}
+              <footer class="footer"><span>Observed <time datetime="{{{E(observedAt.ToString("O", CultureInfo.InvariantCulture))}}}">{{{E(observedAt.ToString("dd MMM yyyy, HH:mm:ss 'UTC'", CultureInfo.InvariantCulture))}}}</time></span><span>BlueTusk 1.2 control plane</span></footer>
+            </main>
+          </div>
+        </div>
+        <script src="{{{E(DashboardPath(options, "assets", "dashboard.js"))}}}" defer></script>
+        </body>
+        </html>
         """;
 
     private static string PipelineControls(string pipelineId, long quarantinedTransactions)
@@ -669,6 +1589,23 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
                OperationButton(ControlPlaneOperationKind.ReconcilePipeline, target, "Reconcile") +
                OperationButton(ControlPlaneOperationKind.RebuildPipeline, target, "Rebuild") +
                replay;
+    }
+
+    private static string DeploymentControls(
+        ControlPlaneManagedDeploymentSnapshot deployment,
+        bool canAdminister)
+    {
+        var target = E("deployment:" + deployment.DeploymentId);
+        var pause = deployment.Paused
+            ? OperationButton(ControlPlaneOperationKind.ResumeDeployment, target, "Resume")
+            : OperationButton(ControlPlaneOperationKind.PauseDeployment, target, "Pause");
+        var delete = canAdminister
+            ? OperationButton(ControlPlaneOperationKind.DeleteDeployment, target, "Delete")
+            : string.Empty;
+        return pause +
+               OperationButton(ControlPlaneOperationKind.ReconcileDeployment, target, "Reconcile") +
+               OperationButton(ControlPlaneOperationKind.RebuildDeployment, target, "Rebuild") +
+               delete;
     }
 
     private static string OperationButton(
@@ -700,4 +1637,26 @@ public static class BlueTuskDashboardEndpointRouteBuilderExtensions
 
     private static bool CanMutate(ClaimsPrincipal user, BlueTuskDashboardOptions options) =>
         user.IsInRole(options.OperatorRole) || user.IsInRole(options.AdministratorRole);
+
+    private static bool CanExecuteGraph(
+        ClaimsPrincipal user,
+        BlueTuskDashboardOptions options) =>
+        user.IsInRole(options.GraphExecutorRole) || user.IsInRole(options.AdministratorRole);
+
+    private static ControlPlaneActor? CreateActor(
+        ClaimsPrincipal user,
+        BlueTuskDashboardOptions options)
+    {
+        var actorId = user.FindFirst(ClaimTypes.NameIdentifier)?.Value ?? user.Identity?.Name;
+        if (string.IsNullOrWhiteSpace(actorId))
+        {
+            return null;
+        }
+
+        var roles = new HashSet<ControlPlaneRole>();
+        if (user.IsInRole(options.ViewerRole)) roles.Add(ControlPlaneRole.Viewer);
+        if (user.IsInRole(options.OperatorRole)) roles.Add(ControlPlaneRole.Operator);
+        if (user.IsInRole(options.AdministratorRole)) roles.Add(ControlPlaneRole.Administrator);
+        return new ControlPlaneActor(actorId, roles);
+    }
 }

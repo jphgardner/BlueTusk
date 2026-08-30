@@ -1,0 +1,76 @@
+# BlueTusk
+
+> BlueTusk is a PostgreSQL-native platform for .NET covering ADO.NET, EF Core, replication, real-time delivery, extensions, and graph workloads.
+
+Use this index to find the canonical HTML documentation. The complete curated guide set is available at [llms-full.txt](https://bluetusk.io/llms-full.txt).
+
+## Start here
+
+- [BlueTusk overview](https://bluetusk.io/)
+- [Quickstart](https://bluetusk.io/documentation/getting-started/quickstart)
+- [Installation](https://bluetusk.io/documentation/getting-started/install)
+- [Documentation hub](https://bluetusk.io/documentation)
+- [Release evidence](https://bluetusk.io/evidence)
+
+## Getting started
+
+- [Install BlueTusk](https://bluetusk.io/documentation/getting-started/install): Choose the stable or RC channel, install the smallest NuGet/npm package set, pin exact versions, and verify the resolved dependency graph.
+- [Quickstart: run the first query](https://bluetusk.io/documentation/getting-started/quickstart): Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.
+- [Core concepts](https://bluetusk.io/documentation/getting-started/concepts): Learn data-source ownership, sessions, capabilities, type identity, checkpoints, source identity, and release-state vocabulary.
+- [Architecture](https://bluetusk.io/documentation/getting-started/architecture): Understand the layers, dependency direction, ownership, and async boundaries.
+- [ADO.NET](https://bluetusk.io/documentation/getting-started/provider-overview): Build and run the native ADO.NET provider.
+
+## Provider
+
+- [Authentication](https://bluetusk.io/documentation/provider/authentication): Credentials, password files, TLS certificates, GSSAPI, Kerberos, and SSPI.
+- [Cloud identity](https://bluetusk.io/documentation/provider/cloud-identity): AWS, Azure, and Google Cloud identity integration and live-test boundaries.
+- [Dependency injection and health checks](https://bluetusk.io/documentation/provider/dependency-injection): Register one long-lived provider data source, consume DbDataSource, and design readiness checks without harming liveness.
+- [Connection pooling](https://bluetusk.io/documentation/provider/pooling): Pool sizing, reset behavior, operational signals, and PgBouncer modes.
+- [Multi-host connections](https://bluetusk.io/documentation/provider/multi-host): Multi-host routing, failover, target session attributes, and recovery.
+- [Batches](https://bluetusk.io/documentation/provider/batches): Execute ordered command batches with PostgreSQL-aware error behavior.
+- [COPY](https://bluetusk.io/documentation/provider/copy): Text and binary COPY APIs, typed values, cancellation, and completion.
+- [Large objects](https://bluetusk.io/documentation/provider/large-objects): Large-object ownership and streaming behavior.
+- [Asynchronous notifications](https://bluetusk.io/documentation/provider/notifications): LISTEN and NOTIFY lifecycle, dispatch, and connection behavior.
+- [Sequential readers](https://bluetusk.io/documentation/provider/sequential-readers): Bounded sequential reads for large PostgreSQL values.
+- [Schema discovery](https://bluetusk.io/documentation/provider/schema-discovery): Use GetSchema, GetColumnSchema, GetSchemaTable, restrictions, and provider-neutral catalogue metadata.
+- [Core type mappings](https://bluetusk.io/documentation/provider/types): Catalogue-driven PostgreSQL type mappings and extension points.
+- [PostgreSQL pipeline mode](https://bluetusk.io/documentation/provider/pipeline-mode): Pipeline groups, protocol Sync boundaries, and ordered failures.
+- [Replication](https://bluetusk.io/documentation/provider/replication): Physical and logical replication, pgoutput, and WAL feedback.
+
+## EF Core
+
+- [Entity Framework Core](https://bluetusk.io/documentation/ef-core/overview): Queries, mappings, migrations, scaffolding, and PostgreSQL 19 graph.
+- [EF Core relational specification tests](https://bluetusk.io/documentation/ef-core/specification-tests): Official relational specification coverage and native PostgreSQL gates.
+
+## Real time
+
+- [BlueTusk real-time platform](https://bluetusk.io/documentation/real-time/platform): Correctness contract and independent release trains.
+- [Real-time platform contracts](https://bluetusk.io/documentation/real-time/contracts): Shared delivery, checkpoint, and source identity contracts.
+- [BlueTusk Streams](https://bluetusk.io/documentation/real-time/streams): The implemented Streams kernel, transactions, failures, and performance.
+- [Consistent snapshot bootstrap](https://bluetusk.io/documentation/real-time/snapshot-bootstrap): A fenced snapshot-then-stream protocol.
+- [PostgreSQL durable relay](https://bluetusk.io/documentation/real-time/durable-relay): Storage, backup, groups, retention, and relay fan-out.
+- [Streams checkpoint and lease stores](https://bluetusk.io/documentation/real-time/state-stores): State-store contracts and supported persistence behavior.
+- [Hosting and observability](https://bluetusk.io/documentation/real-time/streams-hosting): Hosted services, health checks, metrics, and operational behavior.
+- [BlueTusk Sync](https://bluetusk.io/documentation/real-time/sync): Versioned destination synchronization, quarantine, reconciliation, and rebuilds.
+- [BlueTusk Live](https://bluetusk.io/documentation/real-time/live): Authorized live delivery, replay, subscriptions, transports, and browser clients.
+- [BlueTusk Control Plane and Dashboard](https://bluetusk.io/documentation/real-time/control-plane): Operational queries, dashboard boundaries, authorization, and audit.
+- [Real-time operations](https://bluetusk.io/documentation/real-time/operations): Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.
+- [BlueTusk Continuous Graph](https://bluetusk.io/documentation/real-time/continuous-graph): Checkpointed graph projections for fraud and network workloads.
+
+## Extensions
+
+- [Extension SDK](https://bluetusk.io/documentation/extensions/catalog): Extension SDK, seven V1 extension families, and one upstream-preview adapter.
+
+## Graph
+
+- [PostgreSQL 19 SQL/PGQ V1 candidate](https://bluetusk.io/documentation/graph/sql-pgq): PostgreSQL 19 SQL/PGQ, discovery, migrations, and typed EF queries.
+
+## Operations
+
+- [Production checklist](https://bluetusk.io/documentation/operations/production-checklist): Take a BlueTusk application from package selection to a secure, bounded, observable, recoverable, and operator-owned production deployment.
+- [Deployment and configuration](https://bluetusk.io/documentation/operations/deployment): Design production topology, security roles, pool capacity, migrations, rolling deployment, and real-time persistence.
+- [Diagnostics and observability](https://bluetusk.io/documentation/operations/observability): Metrics, traces, and slow-command events.
+- [Troubleshooting](https://bluetusk.io/documentation/operations/troubleshooting): Diagnose connection, TLS, authentication, pool, command, type, EF, replication, and destination failures from the lowest boundary upward.
+- [Security review](https://bluetusk.io/documentation/operations/security): Threat model, closed findings, application boundaries, and checks.
+- [Performance engineering](https://bluetusk.io/documentation/operations/performance): Measure pool pressure, command paths, multiplexing, allocation, readers, COPY, and real-time throughput with reproducible evidence.
+- [Upgrade guide](https://bluetusk.io/documentation/operations/upgrade-guide): Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.

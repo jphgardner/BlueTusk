@@ -41,4 +41,32 @@ describe('GuidePage', () => {
 
     expect(TestBed.inject(Router).url).toBe('/documentation/ef-core/overview#configure-a-context');
   });
+
+  it('renders collapsible section and page indexes for small screens', async () => {
+    const harness = await RouterTestingHarness.create('/documentation/ef-core/overview');
+    harness.fixture.detectChanges();
+    await harness.fixture.whenStable();
+
+    const sectionIndex = harness.routeNativeElement?.querySelector('.guide-mobile-index');
+    const pageIndex = harness.routeNativeElement?.querySelector('.guide-mobile-toc');
+
+    expect(sectionIndex?.textContent).toContain('IN THIS SECTION');
+    expect(sectionIndex?.textContent).toContain('Entity Framework Core');
+    expect(pageIndex?.textContent).toContain('ON THIS PAGE');
+    expect(pageIndex?.textContent).toContain('Configure a context');
+  });
+
+  it('publishes guide-specific crawler metadata', async () => {
+    const harness = await RouterTestingHarness.create('/documentation/getting-started/quickstart');
+    harness.fixture.detectChanges();
+    await harness.fixture.whenStable();
+
+    expect(document.title).toBe('Quickstart: run the first query — BlueTusk');
+    expect(document.head.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href).toBe(
+      'https://bluetusk.io/documentation/getting-started/quickstart',
+    );
+    expect(document.head.querySelector<HTMLMetaElement>('meta[property="og:url"]')?.content).toBe(
+      'https://bluetusk.io/documentation/getting-started/quickstart',
+    );
+  });
 });

@@ -12,42 +12,43 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-hero split-hero">
       <div>
         <span class="eyebrow"><i class="live-dot"></i> ENTITY FRAMEWORK CORE</span>
-        <h1>Use a DbContext.<br /><em>Keep PostgreSQL.</em></h1>
+        <h1>Use EF Core.<br /><em>Keep PostgreSQL visible.</em></h1>
         <p>
-          Translate PostgreSQL-native queries, preserve database objects through migrations, and
-          reverse engineer rich metadata without abandoning familiar EF Core workflows.
+          Use DbContext, LINQ, migrations, and database-first tooling without reducing PostgreSQL to
+          a lowest-common-denominator database. Provider-specific behavior remains explicit and
+          capability guarded.
         </p>
         <div class="hero-actions">
           <a mat-flat-button routerLink="/documentation/ef-core/overview" class="primary-action"
-            >Open EF guide</a
+            >Read the EF Core guide</a
           ><a
             mat-stroked-button
             href="https://github.com/jphgardner/BlueTusk/tree/main/samples/BlueTusk.Samples.EntityFrameworkCore"
             target="_blank"
             rel="noreferrer"
             class="secondary-action"
-            >Run sample</a
+            >Open the sample</a
           >
         </div>
       </div>
       <aside class="metric-cluster">
-        <bt-status label="V1 code-ready · source preview" stage="gate-passed" />
-        <div><strong>1,987</strong><span>official cases passed</span></div>
-        <div><strong>124</strong><span>upstream skips retained</span></div>
-        <div><strong>0</strong><span>unexpected failures</span></div>
-        <small>2,111 CASES DISCOVERED · PG 18/19 FULL GATE</small>
+        <bt-status label="1.1.0-rc.1 · public" stage="gate-passed" />
+        <div><strong>LINQ</strong><span>translated to PostgreSQL SQL</span></div>
+        <div><strong>15–19</strong><span>live server matrix</span></div>
+        <div><strong>0</strong><span>unexpected official-suite failures</span></div>
+        <small>ADO.NET AND EF SHARE ONE DATA SOURCE</small>
       </aside>
     </section>
 
     <section class="page-section code-split">
       <div>
-        <span class="section-kicker">DATA-SOURCE FIRST</span>
-        <h2>One pool across ADO.NET and EF.</h2>
+        <span class="section-kicker">ONE PROVIDER CONFIGURATION</span>
+        <h2>Share the data source with DbContext.</h2>
         <p>
-          Build the provider data source once, then give it to the EF provider. Connection ownership
-          and PostgreSQL type registration remain centralized.
+          EF-created logical connections reuse the same physical pool, runtime codecs, type
+          catalogue, authentication, and diagnostics as direct ADO.NET work.
         </p>
-        <bt-source-link [href]="source('docs/ef-core/README.md')" />
+        <bt-source-link [href]="source('docs/ef-core/README.md')" label="Complete EF reference" />
       </div>
       <bt-code-panel file="AppDbContext.cs" [code]="setupCode" />
     </section>
@@ -55,10 +56,10 @@ import { sourceUrl } from '../content/catalog';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>POSTGRESQL SURFACE</span>
-          <h2>Explore the model by workload.</h2>
+          <span>CHOOSE A TASK</span>
+          <h2>Use the PostgreSQL feature through the right EF workflow.</h2>
         </div>
-        <p>Each tab represents implemented, repository-documented behavior.</p>
+        <p>Choose a task to see the supported surface and its boundary.</p>
       </header>
       <nav class="segmented-tabs" aria-label="EF Core capability area">
         @for (tab of tabs; track tab.id) {
@@ -89,80 +90,53 @@ import { sourceUrl } from '../content/catalog';
       </div>
     </section>
 
-    <section class="page-section">
-      <header class="section-head">
-        <div>
-          <span>SCHEMA OBJECT MATRIX</span>
-          <h2>Database design remains modelled.</h2>
-        </div>
-        <label class="filter-input"
-          ><mat-icon>search</mat-icon
-          ><input
-            [value]="schemaQuery()"
-            (input)="schemaQuery.set($any($event.target).value)"
-            placeholder="Filter partitions, RLS, indexes…"
-            aria-label="Filter schema capabilities"
-        /></label>
-      </header>
-      <div class="schema-grid">
-        @for (item of filteredSchema(); track item.name) {
-          <article>
-            <mat-icon>{{ item.icon }}</mat-icon
-            ><strong>{{ item.name }}</strong
-            ><span>{{ item.support }}</span>
-            <p>{{ item.detail }}</p>
-          </article>
-        } @empty {
-          <p class="empty-state">No schema capability matches that filter.</p>
-        }
-      </div>
+    <section class="crosscut-band">
+      @for (rule of rules; track rule.title) {
+        <article>
+          <mat-icon>{{ rule.icon }}</mat-icon>
+          <div>
+            <small>{{ rule.kicker }}</small>
+            <h3>{{ rule.title }}</h3>
+            <p>{{ rule.body }}</p>
+          </div>
+        </article>
+      }
     </section>
 
-    <section class="page-section evidence-callout">
-      <div>
-        <span class="section-kicker">SPECIFICATION EVIDENCE</span>
-        <h2>Coverage is counted, not implied.</h2>
-        <p>
-          The official relational specification assembly is reported separately from BlueTusk-native
-          live tests. Capability-adjusted cases run across PostgreSQL 15–19.
-        </p>
-        <a mat-stroked-button routerLink="/evidence" class="secondary-action"
-          >Inspect all evidence</a
-        >
-      </div>
-      <div class="test-bars">
-        <article><span>PASS</span><strong>1,987</strong><i style="--bar:94.1%"></i></article>
-        <article><span>UPSTREAM SKIP</span><strong>124</strong><i style="--bar:5.9%"></i></article>
-        <article><span>UNEXPECTED FAIL</span><strong>0</strong><i style="--bar:0%"></i></article>
-        <small>Source: docs/ef-core/specification-tests.md</small>
-      </div>
-    </section>
+    <aside class="truth-note">
+      <mat-icon>fact_check</mat-icon>
+      <p>
+        <strong>Compatibility is measured, not implied.</strong> BlueTusk runs Microsoft’s
+        provider-facing relational suite and separate live PostgreSQL tests. PostgreSQL-specific
+        features are supported only where the provider documents and tests them.
+      </p>
+      <a routerLink="/evidence">Inspect the evidence</a>
+    </aside>
   `,
 })
 export class EfCorePage {
   protected readonly source = sourceUrl;
   protected readonly activeTab = signal('queries');
-  protected readonly schemaQuery = signal('');
   protected readonly tabs = [
     {
       id: 'queries',
-      label: 'Queries',
+      label: 'Querying',
       icon: 'query_stats',
       kicker: 'LINQ TRANSLATION',
-      title: 'PostgreSQL operators stay composable',
-      body: 'Translate provider-aware LINQ without hiding the generated SQL boundary.',
+      title: 'Write LINQ that produces PostgreSQL SQL',
+      body: 'Use standard relational LINQ and focused PostgreSQL extensions. Unsupported shapes fail during translation instead of silently moving work to the client.',
       items: [
         {
-          name: 'Collections',
-          detail: 'Arrays, ranges, multiranges, lateral, and set-returning functions',
+          name: 'Collections and documents',
+          detail: 'Arrays, ranges, multiranges, JSON, lateral expansion, and set-returning roots',
         },
         {
-          name: 'Documents',
-          detail: 'JSON/JSONB traversal, containment, and complex-type queries',
+          name: 'PostgreSQL operators',
+          detail: 'Full-text, network, regex, row-value, geometric, and typed scalar functions',
         },
         {
-          name: 'Search + network',
-          detail: 'Full text, inet/cidr, and PostgreSQL-specific operators',
+          name: 'Advanced relational SQL',
+          detail: 'CTEs, row locking, window functions, RETURNING, ON CONFLICT, and MERGE',
         },
       ],
     },
@@ -170,135 +144,93 @@ export class EfCorePage {
       id: 'mappings',
       label: 'Mappings',
       icon: 'conversion_path',
-      kicker: 'TYPE SYSTEM',
-      title: 'Native values across both providers',
-      body: 'The EF layer composes over the provider catalogue rather than inventing a parallel codec system.',
+      kicker: 'ONE TYPE SYSTEM',
+      title: 'Use the same PostgreSQL values in EF and ADO.NET',
+      body: 'The data source owns the type catalogue and extension codecs; EF adds relational mapping and query translation on top.',
       items: [
         { name: 'Built-in', detail: 'Temporal, network, geometric, JSON, arrays, and ranges' },
-        { name: 'User-defined', detail: 'Enums, composites, domains, and extension values' },
+        { name: 'User-defined', detail: 'Enums, domains, composites, records, and custom ranges' },
         {
           name: 'Extensions',
-          detail: 'pgvector, PostGIS, TimescaleDB, hstore, ltree, citext, and pg_trgm',
+          detail: 'PostGIS, pgvector, TimescaleDB, citext, hstore, ltree, and pg_trgm',
         },
       ],
     },
     {
-      id: 'migrations',
-      label: 'Migrations',
+      id: 'schema',
+      label: 'Schema',
       icon: 'schema',
-      kicker: 'DATABASE DESIGN',
-      title: 'Model PostgreSQL schema objects',
-      body: 'Generate PostgreSQL-aware operations while retaining escape hatches for guarded features.',
+      kicker: 'MIGRATIONS',
+      title: 'Represent PostgreSQL schema deliberately',
+      body: 'Use provider APIs for supported PostgreSQL objects and explicit migration SQL when an application needs a specialized operation outside that surface.',
       items: [
         {
-          name: 'Tables',
-          detail: 'Identity, generated columns, comments, partitions, inheritance, and tablespaces',
+          name: 'Tables and constraints',
+          detail:
+            'Identity, generated columns, indexes, partitions, inheritance, CHECK, and exclusion',
         },
-        { name: 'Policy', detail: 'CHECK, RLS, exclusion constraints, triggers, and rules' },
-        { name: 'Data movement', detail: 'Publications, subscriptions, foreign data, and views' },
+        {
+          name: 'Security and behavior',
+          detail: 'Row-level security, triggers, rules, collations, and tablespaces',
+        },
+        {
+          name: 'Database programs',
+          detail: 'Views, routines, operators, publications, subscriptions, and foreign data',
+        },
       ],
     },
     {
       id: 'scaffolding',
-      label: 'Scaffolding',
+      label: 'Database first',
       icon: 'account_tree',
-      kicker: 'DATABASE FIRST',
-      title: 'Bring server metadata back into code',
-      body: 'Reverse engineer PostgreSQL-specific types and model annotations with schema filtering.',
+      kicker: 'REVERSE ENGINEERING',
+      title: 'Generate a model without discarding PostgreSQL metadata',
+      body: 'Discover selected schemas and tables, retain provider-owned metadata, and keep credentials out of generated code by default.',
       items: [
-        { name: 'Discovery', detail: 'Schemas, tables, columns, keys, indexes, and custom types' },
-        { name: 'Retention', detail: 'Provider annotations survive code generation' },
+        { name: 'Selection', detail: 'Repeatable schema and table filters' },
         {
-          name: 'Security',
-          detail: 'Design-time connection handling follows documented boundaries',
+          name: 'PostgreSQL metadata',
+          detail: 'Types, indexes, constraints, views, and schema objects',
         },
-      ],
-    },
-    {
-      id: 'graph',
-      label: 'SQL/PGQ',
-      icon: 'share',
-      kicker: 'POSTGRESQL 19',
-      title: 'Graph translation behind a capability guard',
-      body: 'Typed graph constructs only activate when the PostgreSQL 19 SQL/PGQ surface is actually detected.',
-      items: [
-        { name: 'Raw SQL', detail: 'Execute SQL/PGQ directly through the provider' },
-        { name: 'Migrations', detail: 'Create and reverse engineer property graph metadata' },
         {
-          name: 'Typed queries',
-          detail:
-            'Translate supported EF graph constructs with explicit failure for unsupported shapes',
+          name: 'Tooling',
+          detail: 'Standard dotnet ef integration and the bluetusk scaffold tool',
         },
       ],
     },
   ] as const;
   protected readonly selectedTab = computed(
-    () => this.tabs.find((x) => x.id === this.activeTab()) ?? this.tabs[0],
+    () => this.tabs.find((tab) => tab.id === this.activeTab()) ?? this.tabs[0],
   );
-  protected readonly schema = [
+  protected readonly rules = [
     {
-      icon: 'table_chart',
-      name: 'Partitions + inheritance',
-      support: 'Migrations + scaffolding',
-      detail: 'PostgreSQL table topology survives the model boundary.',
+      icon: 'dns',
+      kicker: 'SERVER EXECUTION',
+      title: 'Queries stay on PostgreSQL',
+      body: 'Provider extensions translate to SQL or fail clearly; they do not hide accidental client evaluation.',
     },
     {
       icon: 'shield',
-      name: 'Row-level security',
-      support: 'Migrations',
-      detail: 'Policies are modelled as PostgreSQL schema behavior.',
+      kicker: 'CAPABILITIES',
+      title: 'Optional features are checked',
+      body: 'Extensions and PostgreSQL 19 SQL/PGQ activate only when the connected server exposes the required capability.',
     },
     {
-      icon: 'rule',
-      name: 'CHECK + exclusion',
-      support: 'Migrations + discovery',
-      detail: 'Constraint intent remains explicit.',
-    },
-    {
-      icon: 'publish',
-      name: 'Publications + subscriptions',
-      support: 'Migrations',
-      detail: 'Logical replication objects are first class.',
-    },
-    {
-      icon: 'extension',
-      name: 'Extensions + custom types',
-      support: 'Migrations + mapping',
-      detail: 'Installed capabilities connect to provider type registration.',
-    },
-    {
-      icon: 'view_quilt',
-      name: 'Views + foreign data',
-      support: 'Migrations + scaffolding',
-      detail: 'Database-owned read models remain discoverable.',
-    },
-    {
-      icon: 'functions',
-      name: 'Routines + operators',
-      support: 'Migrations',
-      detail: 'Advanced catalogue objects retain PostgreSQL naming.',
-    },
-    {
-      icon: 'share',
-      name: 'Property graphs',
-      support: 'PG 19 guarded',
-      detail: 'Older servers return capability-safe empty discovery.',
+      icon: 'history',
+      kicker: 'SCHEMA OWNERSHIP',
+      title: 'Migrations remain reviewable',
+      body: 'Generated operations preserve PostgreSQL intent while ownership and application-specific grants stay explicit.',
     },
   ] as const;
-  protected readonly filteredSchema = computed(() => {
-    const q = this.schemaQuery().trim().toLowerCase();
-    return q
-      ? this.schema.filter((x) => `${x.name} ${x.support} ${x.detail}`.toLowerCase().includes(q))
-      : this.schema;
-  });
   protected readonly setupCode = `await using var dataSource =
     new BlueTuskDataSourceBuilder(connectionString).Build();
 
-var options = new DbContextOptionsBuilder<AppDbContext>()
-    .UseBlueTusk(dataSource)
-    .Options;
+services.AddDbContext<AppDbContext>(options =>
+    options.UseBlueTusk(dataSource));
 
-await using var context = new AppDbContext(options);
+await using var context = serviceProvider
+    .GetRequiredService<AppDbContext>();
+
 var active = await context.Customers
     .Where(customer => customer.Tags.Contains("active"))
     .ToListAsync();`;

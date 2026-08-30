@@ -1,0 +1,85 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: continuous-graph-preview-1h
+  namespace: bluetusk-endurance
+  labels:
+    app.kubernetes.io/name: continuous-graph-preview-1h
+    app.kubernetes.io/part-of: bluetusk-endurance
+    bluetusk.io/release-gate: "false"
+  annotations:
+    bluetusk.io/evidence-classification: non-gating-postgresql-19-beta3-preview
+spec:
+  backoffLimit: 0
+  # Includes a cold source checkout, package/SBOM build, and the exact one-hour
+  # measured preview. The workload duration remains fixed in the runner script.
+  activeDeadlineSeconds: 14400
+  ttlSecondsAfterFinished: 604800
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: continuous-graph-preview-1h
+        app.kubernetes.io/part-of: bluetusk-endurance
+        bluetusk.io/release-gate: "false"
+    spec:
+      serviceAccountName: endurance-runner
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      terminationGracePeriodSeconds: 120
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1654
+        runAsGroup: 1654
+        fsGroup: 1654
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: runner
+          image: mcr.microsoft.com/dotnet/sdk:10.0.400-noble@sha256:0e53453ccfc8ff2d51319fe80c678971c6d0f8008dff3565fa88e15840b69854
+          imagePullPolicy: IfNotPresent
+          command: [pwsh, -NoLogo, -NoProfile, -Command]
+          args:
+            - |
+              Set-Location /workspace
+              New-Item -Path $env:HOME -ItemType Directory -Force | Out-Null
+              git config --global --add safe.directory /workspace
+              git init --quiet
+              git remote add origin https://github.com/jphgardner/BlueTusk.git
+              git fetch --quiet --depth 1 origin $env:CANDIDATE_SHA
+              git checkout --quiet --detach $env:CANDIDATE_SHA
+              if ($LASTEXITCODE -ne 0) { throw 'Preview checkout failed.' }
+              & ./deploy/kubernetes/endurance/run-continuous-graph-preview.ps1
+          envFrom:
+            - configMapRef:
+                name: endurance-candidate
+          env:
+            - name: HOME
+              value: /workspace/.home
+            - name: DOTNET_CLI_HOME
+              value: /workspace/.dotnet
+            - name: NUGET_PACKAGES
+              value: /workspace/.nuget/packages
+            - name: NON_GATING_PREVIEW
+              value: "true"
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: endurance-runtime
+                  key: postgres-password
+          resources:
+            requests: {cpu: "1", memory: 1024Mi}
+            limits: {cpu: "2", memory: 2048Mi}
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - {name: workspace, mountPath: /workspace}
+            - {name: evidence, mountPath: /workspace/artifacts}
+      volumes:
+        - name: workspace
+          emptyDir: {}
+        - name: evidence
+          persistentVolumeClaim:
+            claimName: endurance-evidence

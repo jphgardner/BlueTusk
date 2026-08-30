@@ -1,3 +1,4 @@
+using System.Buffers;
 using System.Collections.Concurrent;
 using System.Collections.ObjectModel;
 using System.Globalization;
@@ -363,7 +364,29 @@ public static class LiveQueryFingerprint
 
     private static void Append(IncrementalHash hash, string value)
     {
-        var bytes = Encoding.UTF8.GetBytes(value);
+        var byteCount = Encoding.UTF8.GetByteCount(value);
+        if (byteCount <= 256)
+        {
+            Span<byte> stackBytes = stackalloc byte[byteCount];
+            var written = Encoding.UTF8.GetBytes(value, stackBytes);
+            Append(hash, stackBytes[..written]);
+            return;
+        }
+
+        var bytes = ArrayPool<byte>.Shared.Rent(byteCount);
+        try
+        {
+            var written = Encoding.UTF8.GetBytes(value, bytes);
+            Append(hash, bytes.AsSpan(0, written));
+        }
+        finally
+        {
+            ArrayPool<byte>.Shared.Return(bytes, clearArray: true);
+        }
+    }
+
+    private static void Append(IncrementalHash hash, ReadOnlySpan<byte> bytes)
+    {
         Span<byte> length = stackalloc byte[sizeof(int)];
         System.Buffers.Binary.BinaryPrimitives.WriteInt32LittleEndian(length, bytes.Length);
         hash.AppendData(length);

@@ -60,11 +60,16 @@ ancestor-commit evidence does not pass.
       evidence passed.
 - [ ] Streams has an exact 72-hour report when it is in the dependency chain.
 - [ ] Sync has an exact 24-hour report when it is in the dependency chain.
-- [ ] Both exact endurance windows contain process death, network interruption,
+- [ ] Live and Control Plane have the shared exact 24-hour report when either is
+      in the dependency chain.
+- [ ] Continuous Graph has its exact 24-hour PostgreSQL 19 GA report when it is
+      in the dependency chain.
+- [ ] The exact Streams, Sync, Live/Control Plane, and Continuous Graph
+      endurance windows contain process death, network interruption,
       controlled storage exhaustion, credential rotation, primary failover,
       backward/forward clock movement and a same-major PostgreSQL minor
-      upgrade: 14 passed scenarios, 28 matching observation hashes, no blocker
-      and no observed data loss.
+      upgrade, with the required matching observation hashes, no blocker and no
+      observed data loss.
 - [ ] Known limitations, migrations, operational rollback and security
       assumptions are documented.
 

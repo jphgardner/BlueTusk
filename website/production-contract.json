@@ -2,15 +2,26 @@
   "schemaVersion": 1,
   "distributionRoot": "dist/website/browser",
   "limits": {
-    "initialRawBytes": 650000,
-    "initialBrotliBytes": 143360,
-    "largestLazyBrotliBytes": 282624,
-    "totalDistributionBytes": 8388608
+    "initialRawBytes": 950000,
+    "initialBrotliBytes": 225280,
+    "largestLazyBrotliBytes": 286720,
+    "totalDistributionBytes": 20971520
   },
+  "minimumPrerenderedRoutes": 135,
   "requiredAssets": [
     "favicon.ico",
     "robots.txt",
+    "sitemap.xml",
+    "llms.txt",
+    "llms-full.txt",
     ".well-known/security.txt"
+  ],
+  "requiredPrerenderedRoutes": [
+    "/",
+    "/platform",
+    "/provider",
+    "/documentation",
+    "/documentation/real-time/continuous-graph"
   ],
   "requiredMetadata": [
     "<html lang=\"en\"",
@@ -20,6 +31,8 @@
     "<meta property=\"og:title\"",
     "property=\"og:description\"",
     "property=\"og:image\"",
-    "<meta name=\"twitter:card\""
+    "<meta name=\"twitter:card\"",
+    "name=\"robots\"",
+    "href=\"/llms.txt\""
   ]
 }

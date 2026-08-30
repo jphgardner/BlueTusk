@@ -1,0 +1,214 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: bluetusk-web
+  labels:
+    app.kubernetes.io/part-of: bluetusk
+    pod-security.kubernetes.io/audit: restricted
+    pod-security.kubernetes.io/enforce: restricted
+    pod-security.kubernetes.io/warn: restricted
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: bluetusk-website
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-website
+    app.kubernetes.io/part-of: bluetusk
+automountServiceAccountToken: false
+imagePullSecrets:
+  - name: bluetusk
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bluetusk-website
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-website
+    app.kubernetes.io/part-of: bluetusk
+    app.kubernetes.io/version: 1.1.0-rc.1
+spec:
+  replicas: 3
+  minReadySeconds: 5
+  revisionHistoryLimit: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-website
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bluetusk-website
+        app.kubernetes.io/part-of: bluetusk
+        app.kubernetes.io/version: 1.1.0-rc.1
+    spec:
+      serviceAccountName: bluetusk-website
+      automountServiceAccountToken: false
+      terminationGracePeriodSeconds: 30
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 101
+        runAsGroup: 101
+        fsGroup: 101
+        fsGroupChangePolicy: OnRootMismatch
+        seccompProfile:
+          type: RuntimeDefault
+      topologySpreadConstraints:
+        - maxSkew: 1
+          topologyKey: kubernetes.io/hostname
+          whenUnsatisfiable: ScheduleAnyway
+          labelSelector:
+            matchLabels:
+              app.kubernetes.io/name: bluetusk-website
+      affinity:
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            - topologyKey: kubernetes.io/hostname
+              labelSelector:
+                matchLabels:
+                  app.kubernetes.io/name: bluetusk-website
+      containers:
+        - name: website
+          image: registry.digitalocean.com/bluetusk/website@sha256:72d18ab4d9099c9fc4a5215065ea41b21a346f26b498edb64d5a0a5fbca8f095
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 8080
+              protocol: TCP
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 250m
+              memory: 128Mi
+          startupProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            failureThreshold: 30
+            periodSeconds: 2
+          readinessProbe:
+            httpGet:
+              path: /health/ready
+              port: http
+            failureThreshold: 3
+            periodSeconds: 5
+            timeoutSeconds: 2
+          livenessProbe:
+            httpGet:
+              path: /health/live
+              port: http
+            failureThreshold: 3
+            periodSeconds: 15
+            timeoutSeconds: 2
+          lifecycle:
+            preStop:
+              exec:
+                command: ["/bin/sh", "-c", "sleep 5"]
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+            readOnlyRootFilesystem: true
+          volumeMounts:
+            - name: nginx-cache
+              mountPath: /var/cache/nginx
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: nginx-cache
+          emptyDir:
+            sizeLimit: 32Mi
+        - name: tmp
+          emptyDir:
+            sizeLimit: 32Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluetusk-website-backend
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-website
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  type: ClusterIP
+  selector:
+    app.kubernetes.io/name: bluetusk-website
+  ports:
+    - name: http
+      port: 80
+      targetPort: http
+      protocol: TCP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: bluetusk-website
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-edge
+    app.kubernetes.io/part-of: bluetusk
+    app.kubernetes.io/component: edge
+  annotations:
+    service.beta.kubernetes.io/do-loadbalancer-name: bluetusk-website
+    service.beta.kubernetes.io/do-loadbalancer-type: REGIONAL
+    service.beta.kubernetes.io/do-loadbalancer-protocol: tcp
+    service.beta.kubernetes.io/do-loadbalancer-override-health-check: "true"
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-protocol: tcp
+    service.beta.kubernetes.io/do-loadbalancer-healthcheck-port: "80"
+spec:
+  type: LoadBalancer
+  selector:
+    app.kubernetes.io/name: traefik
+  ports:
+    - name: http
+      port: 80
+      targetPort: web
+      protocol: TCP
+    - name: https
+      port: 443
+      targetPort: websecure
+      protocol: TCP
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: bluetusk-website
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-website
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-website
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: bluetusk-website
+  namespace: bluetusk-web
+  labels:
+    app.kubernetes.io/name: bluetusk-website
+    app.kubernetes.io/part-of: bluetusk
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: bluetusk-website
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    - ports:
+        - protocol: TCP
+          port: 8080
+  egress: []

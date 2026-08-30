@@ -66,6 +66,73 @@ public sealed class PropertyGraphQueryTests
     }
 
     [Fact]
+    public void Undirected_and_multi_label_match_emits_native_sql_pgq_syntax()
+    {
+        using var context = CreateMultiLabelContext();
+
+        var sql = context.PropertyGraph("social", "graphs")
+            .Match(pattern => pattern
+                .Vertex<Person>("left")
+                .LabelsAnyOf("person", "contact")
+                .Undirected<Friendship>("relationship")
+                .LabelsAnyOf("knows", "connected")
+                .Vertex<Person>("right")
+                .LabelsAnyOf("person", "contact"))
+            .Select<FriendResult>(projection => projection
+                .Property<Person, int>("left", person => person.Id, result => result.SourceId)
+                .Property<Person, int>("right", person => person.Id, result => result.TargetId))
+            .ToQueryString();
+
+        Assert.Contains(
+            "(\"left\" IS \"person\"|\"contact\")-[\"relationship\" IS \"knows\"|\"connected\"]-(\"right\" IS \"person\"|\"contact\")",
+            sql,
+            StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Bounded_path_expands_to_fixed_graph_table_branches()
+    {
+        using var context = CreateContext();
+
+        var sql = context.PropertyGraph("social", "graphs")
+            .Match(pattern => pattern
+                .Vertex<Person>("source")
+                .OutgoingPath<Friendship>("path", 1, 3)
+                .Vertex<Person>("target"))
+            .Select<FriendResult>(projection => projection
+                .Property<Person, int>("source", person => person.Id, result => result.SourceId)
+                .Property<Person, int>("target", person => person.Id, result => result.TargetId))
+            .ToQueryString();
+
+        Assert.Equal(3, CountOccurrences(sql, "GRAPH_TABLE"));
+        Assert.Equal(2, CountOccurrences(sql, "UNION ALL"));
+        Assert.Contains("__bluetusk_path_edge_3", sql, StringComparison.Ordinal);
+        Assert.Contains("__bluetusk_path_vertex_2", sql, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Bounded_path_rejects_ambiguous_edge_projection_and_unsafe_bounds()
+    {
+        using var context = CreateContext();
+        var root = context.PropertyGraph("social", "graphs");
+
+        Assert.Throws<ArgumentOutOfRangeException>(() => root.Match(pattern => pattern
+            .Vertex<Person>("source")
+            .OutgoingPath<Friendship>("path", 1, 9)
+            .Vertex<Person>("target")));
+
+        var match = root.Match(pattern => pattern
+            .Vertex<Person>("source")
+            .OutgoingPath<Friendship>("path", 1, 2)
+            .Vertex<Person>("target"));
+        var exception = Assert.Throws<BlueTuskGraphTranslationException>(() =>
+            match.Select<FriendResult>(projection => projection
+                .Property<Friendship, int>("path", edge => edge.Id, result => result.RelationshipId)));
+
+        Assert.Contains("cannot be projected", exception.Message, StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Graph_results_support_grouping_and_mapped_entity_materialization_SQL()
     {
         using var context = CreateContext();
@@ -151,6 +218,27 @@ public sealed class PropertyGraphQueryTests
         return new GraphContext(options);
     }
 
+    private static MultiLabelGraphContext CreateMultiLabelContext()
+    {
+        var options = new DbContextOptionsBuilder<MultiLabelGraphContext>()
+            .UseBlueTusk(ConnectionString)
+            .Options;
+        return new MultiLabelGraphContext(options);
+    }
+
+    private static int CountOccurrences(string value, string search)
+    {
+        var count = 0;
+        var offset = 0;
+        while ((offset = value.IndexOf(search, offset, StringComparison.Ordinal)) >= 0)
+        {
+            count++;
+            offset += search.Length;
+        }
+
+        return count;
+    }
+
     private sealed class GraphContext(DbContextOptions<GraphContext> options) : DbContext(options)
     {
         protected override void OnModelCreating(ModelBuilder modelBuilder)
@@ -180,6 +268,52 @@ public sealed class PropertyGraphQueryTests
                         .Properties(person => new { person.Id, person.Name }));
                     graph.Edge<Friendship>("friendships", edge => edge
                         .HasLabel("knows")
+                        .HasKey(friendship => friendship.Id)
+                        .Properties(friendship => new
+                        {
+                            friendship.Id,
+                            friendship.FromPersonId,
+                            friendship.ToPersonId,
+                        })
+                        .HasSource<Person>(friendship => friendship.FromPersonId, person => person.Id)
+                        .HasDestination<Person>(friendship => friendship.ToPersonId, person => person.Id));
+                },
+                schema: "graphs");
+        }
+    }
+
+    private sealed class MultiLabelGraphContext(DbContextOptions<MultiLabelGraphContext> options)
+        : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        {
+            modelBuilder.Entity<Person>(entity =>
+            {
+                entity.ToTable("people", "graphs");
+                entity.HasKey(person => person.Id);
+                entity.Property(person => person.Id).HasColumnName("id");
+                entity.Property(person => person.Name).HasColumnName("name");
+            });
+            modelBuilder.Entity<Friendship>(entity =>
+            {
+                entity.ToTable("friendships", "graphs");
+                entity.HasKey(friendship => friendship.Id);
+                entity.Property(friendship => friendship.Id).HasColumnName("id");
+                entity.Property(friendship => friendship.FromPersonId).HasColumnName("from_id");
+                entity.Property(friendship => friendship.ToPersonId).HasColumnName("to_id");
+            });
+            modelBuilder.HasPropertyGraph(
+                "social",
+                graph =>
+                {
+                    graph.Vertex<Person>("people", vertex => vertex
+                        .HasLabel("person")
+                        .HasLabel("contact")
+                        .HasKey(person => person.Id)
+                        .Properties(person => new { person.Id, person.Name }));
+                    graph.Edge<Friendship>("friendships", edge => edge
+                        .HasLabel("knows")
+                        .HasLabel("connected")
                         .HasKey(friendship => friendship.Id)
                         .Properties(friendship => new
                         {

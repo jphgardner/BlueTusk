@@ -1,0 +1,10 @@
+**/bin/
+**/obj/
+**/node_modules/
+**/dist/
+**/playwright-report/
+**/test-results/
+.env
+.idea/
+.vs/
+.vscode/

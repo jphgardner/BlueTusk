@@ -7,14 +7,15 @@ import { GUIDES } from '../../generated/guides.generated';
 @Component({
   selector: 'bt-docs-hub-page',
   imports: [RouterLink, MatButtonModule, MatIconModule],
+  styleUrl: './docs-hub.page.scss',
   template: `
     <section class="page-hero docs-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> COMPLETE V1 HANDBOOK</span>
-        <h1>Documentation that follows the <em>implementation.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> TASK-ORIENTED · SOURCE-SYNCHRONIZED</span>
+        <h1>Find the guide for <em>the job in front of you.</em></h1>
         <p>
-          Every repository guide is transformed at build time, cross-linked, searchable, and checked
-          for drift. Start with a learning path or search the full technical record.
+          Start with installation, a product, or an operational task. Project records and release
+          evidence remain available without crowding the main guide index.
         </p>
         <label class="docs-search"
           ><mat-icon>search</mat-icon
@@ -22,7 +23,7 @@ import { GUIDES } from '../../generated/guides.generated';
             autofocus
             [value]="query()"
             (input)="updateQuery($any($event.target).value)"
-            placeholder="Search authentication, COPY, SQL/PGQ, replay…"
+            placeholder="Search guides and topics…"
             aria-label="Search documentation"
           /><kbd>/</kbd></label
         >
@@ -31,10 +32,34 @@ import { GUIDES } from '../../generated/guides.generated';
             ><strong>{{ guides.length }}</strong> guides</span
           ><span
             ><strong>{{ categories().length }}</strong> categories</span
-          ><span
-            ><strong>{{ totalWords().toLocaleString() }}</strong> documented words</span
-          >
+          ><span><strong>Git</strong> source of truth</span>
         </div>
+      </div>
+    </section>
+
+    <section class="docs-onramp" aria-labelledby="docs-onramp-title">
+      <header>
+        <div>
+          <span>START WITH AN OUTCOME</span>
+          <h2 id="docs-onramp-title">From zero to an operable service.</h2>
+        </div>
+        <a routerLink="/documentation/getting-started/release-1-1-rc1">
+          <span><i></i> 1.1.0-rc.1 is public</span>
+          <small>65 packages · clean install checks passed</small>
+          <mat-icon>arrow_forward</mat-icon>
+        </a>
+      </header>
+      <div class="docs-path-grid">
+        @for (path of paths; track path.title; let index = $index) {
+          <a [routerLink]="path.route">
+            <span>0{{ index + 1 }}</span>
+            <mat-icon>{{ path.icon }}</mat-icon>
+            <small>{{ path.kicker }}</small>
+            <h3>{{ path.title }}</h3>
+            <p>{{ path.body }}</p>
+            <strong>{{ path.action }} <mat-icon>arrow_forward</mat-icon></strong>
+          </a>
+        }
       </div>
     </section>
 
@@ -91,7 +116,7 @@ import { GUIDES } from '../../generated/guides.generated';
                 @for (guide of category.guides; track guide.sourcePath) {
                   <a [routerLink]="['/documentation', guide.category, guide.slug]"
                     ><div>
-                      <small>{{ guide.readMinutes }} min · {{ guide.sourcePath }}</small>
+                      <small>{{ guide.readMinutes }} min</small>
                       <h3>{{ guide.title }}</h3>
                       <p>{{ guide.summary }}</p>
                     </div>
@@ -107,11 +132,42 @@ import { GUIDES } from '../../generated/guides.generated';
   `,
 })
 export class DocsHubPage {
-  protected readonly guides = GUIDES;
+  protected readonly guides = GUIDES.filter((guide) => guide.listed);
+  protected readonly paths = [
+    {
+      kicker: 'EVALUATE',
+      title: 'Install the right packages',
+      body: 'Choose stable or release candidate, install only what you need, and confirm it restores.',
+      action: 'Installation guide',
+      icon: 'download',
+      route: '/documentation/getting-started/install',
+    },
+    {
+      kicker: 'BUILD',
+      title: 'Run the first query',
+      body: 'Start PostgreSQL, create one shared data source, and run a safe parameterized query.',
+      action: 'Developer quickstart',
+      icon: 'terminal',
+      route: '/documentation/getting-started/quickstart',
+    },
+    {
+      kicker: 'SHIP',
+      title: 'Design for production',
+      body: 'Plan security, limits, monitoring, rollout, backups, and recovery before launch.',
+      action: 'Production checklist',
+      icon: 'rocket_launch',
+      route: '/documentation/operations/production-checklist',
+    },
+    {
+      kicker: 'OPERATE',
+      title: 'Diagnose with evidence',
+      body: 'Follow a problem from the first connection through streaming, delivery, and recovery.',
+      action: 'Troubleshooting',
+      icon: 'monitor_heart',
+      route: '/documentation/operations/troubleshooting',
+    },
+  ] as const;
   protected readonly query = signal('');
-  protected readonly totalWords = computed(() =>
-    this.guides.reduce((total, guide) => total + guide.wordCount, 0),
-  );
   protected readonly categories = computed(() => {
     const titles: Record<string, string> = {
       'getting-started': 'Orient yourself and run the first provider sample.',
@@ -122,7 +178,7 @@ export class DocsHubPage {
       graph: 'Query and project connected data.',
       architecture:
         'Understand ownership, dependency rules, decisions, and performance constraints.',
-      operations: 'Build, test, secure, and evolve the repository.',
+      operations: 'Deploy, observe, troubleshoot, secure, and upgrade BlueTusk.',
     };
     const ids = [...new Set(this.guides.map((x) => x.category))];
     return ids.map((id) => {

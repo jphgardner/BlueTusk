@@ -59,7 +59,8 @@ function Get-ExpectedArea
     }
 
     if ($ProjectPath -match '^src/BlueTusk\.(ControlPlane|Dashboard)' -or
-        $ProjectPath -match '^tests/BlueTusk\.ControlPlane')
+        $ProjectPath -match '^tests/BlueTusk\.ControlPlane' -or
+        $ProjectPath -match '^samples/BlueTusk\.Samples\.Dashboard')
     {
         return 'Operations'
     }

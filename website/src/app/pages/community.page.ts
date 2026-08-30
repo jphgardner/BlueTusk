@@ -11,11 +11,12 @@ import { SourceLink } from '../shared/technical-ui';
   template: `
     <section class="page-hero split-hero community-hero">
       <div>
-        <span class="eyebrow"><i class="live-dot"></i> BUILD IN THE OPEN</span>
-        <h1>Put BlueTusk under a <em>real workload.</em></h1>
+        <span class="eyebrow"><i class="live-dot"></i> CONTRIBUTE</span>
+        <h1>Bring a reproducer.<br /><em>Leave the project clearer.</em></h1>
         <p>
-          The useful contribution is evidence: a reproducible issue, a missing PostgreSQL behavior,
-          an extension contract, a workload sample, or a gate that makes confidence measurable.
+          Start with observable PostgreSQL behavior: what you ran, what happened, what you expected,
+          and the smallest case that shows the difference. Discuss substantial changes before
+          implementation.
         </p>
         <div class="hero-actions">
           <a
@@ -27,9 +28,11 @@ import { SourceLink } from '../shared/technical-ui';
             >Open GitHub Issues</a
           ><a
             mat-stroked-button
-            routerLink="/documentation/operations/contributing"
+            href="https://github.com/jphgardner/BlueTusk/blob/main/CONTRIBUTING.md"
+            target="_blank"
+            rel="noreferrer"
             class="secondary-action"
-            >Contribution guide</a
+            >Read CONTRIBUTING.md</a
           >
         </div>
       </div>
@@ -48,8 +51,8 @@ import { SourceLink } from '../shared/technical-ui';
     <section class="page-section">
       <header class="section-head">
         <div>
-          <span>CONTRIBUTION PATH</span>
-          <h2>Move from observation to evidence.</h2>
+          <span>CONTRIBUTOR LOOP</span>
+          <h2>Make the change easy to review.</h2>
         </div>
         <bt-source-link [href]="source('CONTRIBUTING.md')" label="CONTRIBUTING.md" />
       </header>
@@ -68,10 +71,10 @@ import { SourceLink } from '../shared/technical-ui';
     <section class="page-section contribution-areas">
       <header class="section-head">
         <div>
-          <span>WHERE WORK HELPS</span>
-          <h2>Contribute at a real boundary.</h2>
+          <span>START FROM EXPERIENCE</span>
+          <h2>Work where you can prove behavior.</h2>
         </div>
-        <p>These areas map to implemented repository surfaces and explicit roadmap work.</p>
+        <p>Each area leads to its current product boundary and technical documentation.</p>
       </header>
       <div>
         @for (area of areas; track area.title) {
@@ -88,11 +91,11 @@ import { SourceLink } from '../shared/technical-ui';
 
     <section class="page-section contributor-contract">
       <div>
-        <span class="section-kicker">ENGINEERING CONTRACT</span>
-        <h2>Changes carry their proof.</h2>
+        <span class="section-kicker">REVIEW CONTRACT</span>
+        <h2>Evidence travels with the change.</h2>
         <p>
-          Dependency direction, API compatibility, native PostgreSQL behavior, and test scope are
-          repository rules—not review-time surprises.
+          Keep the architecture clear, protect existing APIs, follow PostgreSQL behavior, and add
+          tests that match the risk of the change.
         </p>
       </div>
       <div class="contract-list">
@@ -145,18 +148,18 @@ export class CommunityPage {
     },
     {
       icon: 'account_tree',
-      title: 'Respect the layers',
-      body: 'Keep project dependency direction and public API compatibility explicit.',
+      title: 'Keep the architecture clear',
+      body: 'Put code in the right project and avoid breaking existing public APIs.',
     },
     {
       icon: 'science',
-      title: 'Add focused evidence',
-      body: 'Pair the change with fast tests and live PostgreSQL coverage where behavior requires it.',
+      title: 'Add the right tests',
+      body: 'Add fast tests and, when needed, prove the behavior against a real PostgreSQL server.',
     },
     {
       icon: 'description',
-      title: 'Update the contract',
-      body: 'Keep samples, documentation, freezes, and compatibility records synchronized.',
+      title: 'Update the supporting material',
+      body: 'Keep examples, documentation, API records, and compatibility notes up to date.',
     },
   ] as const;
   protected readonly areas = [
@@ -164,7 +167,7 @@ export class CommunityPage {
       icon: 'storage',
       kicker: 'PROVIDER',
       title: 'PostgreSQL behavior',
-      body: 'Reproduce a protocol, type, pooling, auth, or data-path gap.',
+      body: 'Reproduce a connection, type, pooling, login, or data-handling problem.',
       route: '/provider',
       action: 'Explore provider',
     },
@@ -172,7 +175,7 @@ export class CommunityPage {
       icon: 'extension',
       kicker: 'EXTENSIONS',
       title: 'Specialized packages',
-      body: 'Add a codec, descriptor, translation, and live gate through the extension SDK.',
+      body: 'Add support for a PostgreSQL extension in ADO.NET, EF Core, and live tests.',
       route: '/extensions',
       action: 'Explore extensions',
     },
@@ -180,7 +183,7 @@ export class CommunityPage {
       icon: 'stream',
       kicker: 'REAL TIME',
       title: 'Operational workloads',
-      body: 'Exercise snapshots, replay, destination recovery, or endurance harnesses.',
+      body: 'Test initial loads, replay, destination recovery, or long-running workloads.',
       route: '/real-time',
       action: 'Explore real time',
     },
@@ -188,7 +191,7 @@ export class CommunityPage {
       icon: 'code',
       kicker: 'SAMPLES',
       title: 'Executable scenarios',
-      body: 'Turn a real application shape into a minimal, maintainable repository sample.',
+      body: 'Turn a real application pattern into a clear, maintainable example project.',
       route: '/documentation',
       action: 'Read guides',
     },
@@ -196,15 +199,15 @@ export class CommunityPage {
   protected readonly rules = [
     {
       title: 'PostgreSQL is the specification',
-      body: 'Server behavior and documented wire semantics decide correctness.',
+      body: 'PostgreSQL behavior and its official documentation decide what is correct.',
     },
     {
       title: 'Public API changes are deliberate',
-      body: 'Freeze files and compatibility guidance move with intentional surface changes.',
+      body: 'API records and compatibility guidance must be updated with intentional public changes.',
     },
     {
       title: 'Tests match the risk',
-      body: 'Unit, live, topology, security, stress, or endurance coverage is selected by behavior.',
+      body: 'Choose unit, live, security, load, or long-running tests based on what could go wrong.',
     },
     {
       title: 'Secrets never enter the repository',

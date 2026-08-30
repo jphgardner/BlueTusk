@@ -22,18 +22,28 @@ approval remain the publication boundary.
 
 ## Current package RC train
 
-`eng/package-prerelease-train.json` defines the immutable `1.1.0-rc.1` package train
-for all six families in stable dependency order. RC packing uses version
+`eng/package-prerelease-train.json` defines the prepared immutable
+`1.2.0-rc.1` package train for all six families in stable dependency order.
+This train is not public until the reviewed commit reaches `main` and the six
+exact RC tags publish successfully. RC packing uses version
 overrides and temporary npm artifact copies; it does not rewrite the stable
 family manifests. Every internal NuGet/npm dependency must resolve to the same
-exact RC version. Exact `*-v1.1.0-rc.1` tags publish through the protected
+exact RC version. Exact `*-v1.2.0-rc.1` tags publish through the protected
 `package-prerelease` environment, and npm packages use the `rc` dist-tag,
 never `latest`. A correction is `rc.2`; an RC is never overwritten.
 
-The separate `eng/prerelease-train.json` manifest keeps the three V1
-package-consumer applications on their immutable historical `1.0.0-rc.1`
-validation train. Their recorded package locks, image evidence, and staging
-observations are not rewritten by the 1.1 package RC.
+The complete `1.1.0-rc.1` train was published on 2026-08-29 from commit
+`2e735ed46aec11d5009158a00ca7b862f9ec12af`. All 62 NuGet and three npm
+packages passed public-availability and clean-consumer verification. The
+[release record](releases/1.1.0-rc.1.md) is the human-readable authority. This
+does not arm or authorize stable `1.1.0`.
+
+The separate `eng/prerelease-train.json` manifest places the production
+application source and image workflow on the prepared exact `1.2.0-rc.1`
+train. New image evidence must be generated after that train is public and from
+the reviewed commit; it cannot reuse the historical 1.0 or 1.1 image manifest.
+Earlier application observations remain historical evidence and are not
+rewritten.
 
 Before registry publication, the package-consumer solution restores through
 `eng/nuget/applications-candidate.config` into an isolated cache. Its source
@@ -54,9 +64,11 @@ staging/production boundary are documented in the
 1. Finish code, documentation, API/format freezes, upgrades, package inspection,
    security audit, live matrices, and performance gates.
 2. After PostgreSQL 19 GA, merge a reviewed final arming PR to `main`. Its
-   resulting SHA must contain exactly six stable `1.0.0` families, all armed
-   in dependency order, with no V1 release tags and no candidate packages
-   published. That reviewed `main` SHA is the immutable candidate.
+   resulting SHA must contain exactly six stable `1.2.0` families, all armed
+   in dependency order, with no stable 1.2 release tags or stable 1.2 packages
+   published. The manifest-bound public RC remains separate evidence and
+   cannot satisfy the stable gate. That reviewed `main` SHA is the immutable
+   candidate.
 3. Dispatch `build.yml` explicitly at that exact commit. A normal pull-request
    or branch-push run is not release evidence because the manual run includes
    the elevated PostgreSQL, connector, authentication, stress, and endurance
@@ -68,9 +80,10 @@ staging/production boundary are documented in the
 5. Dispatch `performance.yml` at that exact commit on the labelled reference
    runner and retain its integrity-bound complete benchmark evidence.
 6. Complete `streams-release-endurance.yml`,
-   `sync-release-endurance.yml`, and
-   `continuous-graph-release-endurance.yml` at that commit. The three windows
-   are 72, 24, and 24 hours respectively. ContinuousGraph additionally requires
+   `sync-release-endurance.yml`,
+   `live-control-plane-release-endurance.yml`, and
+   `continuous-graph-release-endurance.yml` at that commit. The four windows
+   are 72, 24, 24, and 24 hours respectively. ContinuousGraph additionally requires
    at least 100,000 evaluations, 99.9% committed outcomes, P95 lifecycle at or
    below one second, repair/restart/cancellation/disconnect evidence, and no
    ordering or reconciliation errors.
@@ -82,9 +95,9 @@ staging/production boundary are documented in the
    project, dependency, version, workflow, or release-policy change creates a
    new commit and invalidates the evidence.
 9. Create the exact tags sequentially on the verified commit:
-   `provider-v1.0.0`, `streams-v1.0.0`, `sync-v1.0.0`,
-   `live-v1.0.0`, `control-plane-v1.0.0`, then
-   `continuous-graph-v1.0.0`. After every tag, verify registry availability,
+   `provider-v1.2.0`, `streams-v1.2.0`, `sync-v1.2.0`,
+   `live-v1.2.0`, `control-plane-v1.2.0`, then
+   `continuous-graph-v1.2.0`. After every tag, verify registry availability,
    hashes, provenance, installation, and dependency resolution before creating
    the next tag.
 

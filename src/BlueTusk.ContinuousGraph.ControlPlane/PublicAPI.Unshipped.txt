@@ -1,4 +1,35 @@
 #nullable enable
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.<Clone>$() -> BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions!
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.ContinuousGraphControlPlaneExecutionOptions() -> void
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.Equals(BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions? other) -> bool
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.ExecutionTimeout.get -> System.TimeSpan
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.ExecutionTimeout.init -> void
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.MaximumConcurrentExecutions.get -> int
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.MaximumConcurrentExecutions.init -> void
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.MaximumEdges.get -> int
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.MaximumEdges.init -> void
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.MaximumNodes.get -> int
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.MaximumNodes.init -> void
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry.CanExecute(string! queryFingerprint) -> bool
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry.ContinuousGraphControlPlaneExecutionRegistry() -> void
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry.Count.get -> int
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry.GetParameters(string! queryFingerprint) -> System.Collections.Generic.IReadOnlyList<BlueTusk.ControlPlane.ControlPlaneContinuousGraphParameterSnapshot!>!
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry.Register<TResult, TKey>(BlueTusk.ContinuousGraph.ContinuousGraphQueryPlan<TResult!, TKey>! plan, System.Collections.Generic.IReadOnlyDictionary<string!, object?>! boundArguments, System.Collections.Generic.IEnumerable<string!>! editableParameters, System.Func<BlueTusk.ControlPlane.ControlPlaneActor!, BlueTusk.Live.LiveSecurityScope!>! securityScopeFactory, System.Func<TResult!, BlueTusk.ControlPlane.ControlPlaneContinuousGraphFragment!>! projector) -> bool
+BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry.Unregister(string! queryFingerprint) -> bool
+BlueTusk.ControlPlane.ExecutableContinuousGraphControlPlaneQueryService
+BlueTusk.ControlPlane.ExecutableContinuousGraphControlPlaneQueryService.ExecutableContinuousGraphControlPlaneQueryService(BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry! registry, BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry! executionRegistry, System.TimeProvider? timeProvider = null) -> void
+BlueTusk.ControlPlane.ExecutableContinuousGraphControlPlaneQueryService.GetContinuousGraphOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview!>
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneExecutionService
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneExecutionService.Dispose() -> void
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneExecutionService.ExecuteAsync(string! queryFingerprint, BlueTusk.ControlPlane.ControlPlaneActor! actor, BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneContinuousGraphRunResult!>
+BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneExecutionService.HostedContinuousGraphControlPlaneExecutionService(BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionRegistry! registry, BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions? options = null, System.TimeProvider? timeProvider = null) -> void
 BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService
 BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService.GetContinuousGraphOverviewAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.ValueTask<BlueTusk.ControlPlane.ControlPlaneContinuousGraphOverview!>
 BlueTusk.ControlPlane.HostedContinuousGraphControlPlaneQueryService.HostedContinuousGraphControlPlaneQueryService(BlueTusk.ContinuousGraph.ContinuousGraphQueryRegistry! registry, System.TimeProvider? timeProvider = null) -> void
+override BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.Equals(object? obj) -> bool
+override BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.GetHashCode() -> int
+override BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.ToString() -> string!
+static BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.operator !=(BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions? left, BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions? right) -> bool
+static BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions.operator ==(BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions? left, BlueTusk.ControlPlane.ContinuousGraphControlPlaneExecutionOptions? right) -> bool

@@ -212,7 +212,7 @@ requires:
 - confirmation that zero stable release tags exist and zero exact stable
   candidate packages have been published;
 - the immutable commit, six tags, exact version and six-family inventory for
-  the already-published `1.0.0-rc.1` validation train;
+  the already-published `1.2.0-rc.1` validation train;
 - confirmation that protected production approval is still pending;
 - accepted stop conditions;
 - a named rollback authority; and

@@ -7,6 +7,13 @@ not complete the external exact-candidate evidence below: independent approval,
 fuzz, reference performance, endurance, and PostgreSQL 19 GA remain open. The
 standard release process remains fail closed for later versions.
 
+On 2026-08-29, the coordinated `1.1.0-rc.1` train was published from commit
+`2e735ed46aec11d5009158a00ca7b862f9ec12af`. Its 62 NuGet and three npm
+packages passed public availability and clean consumer verification. That
+updates package availability only; it does not close the stable endurance,
+PostgreSQL 19 GA, performance, security, or external-acceptance gates below.
+See the [1.1 RC release record](releases/1.1.0-rc.1.md).
+
 ## Implemented V1 hardening
 
 - Nine bounded parser fuzzing targets, replayable corpus tests, CI/scheduled

@@ -12,6 +12,9 @@ if (Test-Path -LiteralPath $testRoot)
 }
 $null = New-Item -ItemType Directory -Path $testRoot
 $commit = '1234567890abcdef1234567890abcdef12345678'
+$contract = Get-Content -LiteralPath (
+    Join-Path $PSScriptRoot 'application-image-evidence-contract.json') -Raw |
+    ConvertFrom-Json
 $index = 0
 $images = [ordered]@{}
 foreach ($application in @('order-operations', 'service-topology', 'fraud-investigation'))
@@ -28,8 +31,8 @@ foreach ($application in @('order-operations', 'service-topology', 'fraud-invest
 }
 $valid = [ordered]@{
     schemaVersion = 1
-    rcVersion = '1.0.0-rc.1'
-    workflow = 'applications-images.yml'
+    rcVersion = [string]$contract.rcVersion
+    workflow = [string]$contract.workflow
     commit = $commit
     images = $images
 }

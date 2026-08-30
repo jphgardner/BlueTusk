@@ -9,6 +9,31 @@ $applicationsRoot = Join-Path $repositoryRoot 'applications'
 $expectedVersion = [string](
     Get-Content -LiteralPath (Join-Path $PSScriptRoot 'prerelease-train.json') -Raw |
         ConvertFrom-Json).version
+$localNpmPackageRoot = Join-Path $repositoryRoot 'artifacts/prerelease/live'
+$hasLocalNpmCandidate = Test-Path -LiteralPath $localNpmPackageRoot -PathType Container
+$canVerifyLocalNpmIntegrity =
+    $hasLocalNpmCandidate -and
+    [Runtime.InteropServices.RuntimeInformation]::IsOSPlatform(
+        [Runtime.InteropServices.OSPlatform]::Linux)
+$verifiedLocalNpmPackages = [Collections.Generic.HashSet[string]]::new(
+    [StringComparer]::Ordinal)
+
+function Get-NpmIntegrity
+{
+    param(
+        [Parameter(Mandatory)]
+        [string] $Path
+    )
+
+    $hex = (Get-FileHash -LiteralPath $Path -Algorithm SHA512).Hash
+    $bytes = [byte[]]::new($hex.Length / 2)
+    for ($index = 0; $index -lt $bytes.Length; $index++)
+    {
+        $bytes[$index] = [Convert]::ToByte($hex.Substring($index * 2, 2), 16)
+    }
+
+    return 'sha512-' + [Convert]::ToBase64String($bytes)
+}
 [xml]$central = Get-Content -LiteralPath (
     Join-Path $applicationsRoot 'Directory.Packages.props') -Raw
 $centralVersions = @{}
@@ -80,9 +105,9 @@ $webManifests = @(Get-ChildItem -LiteralPath $webRoot -Directory | ForEach-Objec
             Get-Item -LiteralPath $manifest
         }
     })
-if ($webManifests.Count -ne 3)
+if ($webManifests.Count -ne 4)
 {
-    throw "Expected three browser-client manifests; found $($webManifests.Count)."
+    throw "Expected four browser-client manifests; found $($webManifests.Count)."
 }
 
 foreach ($webManifest in $webManifests)
@@ -120,6 +145,28 @@ foreach ($webManifest in $webManifests)
             [string]$lockEntry.integrity -notmatch '^sha512-[A-Za-z0-9+/]+={0,2}$')
         {
             throw "Web app '$($package.name)' lock entry for '$($dependency.Name)' is not the exact public RC artifact."
+        }
+
+        # npm's tar archive bytes include platform-specific metadata. The Linux
+        # package lane is authoritative because it is also the publishing lane.
+        if ($canVerifyLocalNpmIntegrity)
+        {
+            $candidatePath = Join-Path $localNpmPackageRoot (
+                "bluetusk-$leaf-$expectedVersion.tgz")
+            if (-not (Test-Path -LiteralPath $candidatePath -PathType Leaf))
+            {
+                throw "The local npm candidate for '$($dependency.Name)' is missing: '$candidatePath'."
+            }
+
+            $candidateIntegrity = Get-NpmIntegrity -Path $candidatePath
+            if (-not [string]::Equals(
+                    [string]$lockEntry.integrity,
+                    $candidateIntegrity,
+                    [StringComparison]::Ordinal))
+            {
+                throw "Web app '$($package.name)' lock integrity for '$($dependency.Name)' does not match the locally verified RC tarball."
+            }
+            $null = $verifiedLocalNpmPackages.Add($dependency.Name)
         }
     }
 }
@@ -170,6 +217,22 @@ foreach ($containerDefinition in $expectedContainerBases.GetEnumerator())
 
 $imageWorkflowPath = Join-Path $repositoryRoot '.github/workflows/applications-images.yml'
 $imageWorkflow = Get-Content -LiteralPath $imageWorkflowPath -Raw
+$imageContract = Get-Content -LiteralPath (
+    Join-Path $PSScriptRoot 'application-image-evidence-contract.json') -Raw |
+    ConvertFrom-Json
+if (-not [string]::Equals(
+        [string]$imageContract.rcVersion,
+        $expectedVersion,
+        [StringComparison]::Ordinal) -or
+    -not $imageWorkflow.Contains(
+        "-Version $expectedVersion",
+        [StringComparison]::Ordinal) -or
+    -not $imageWorkflow.Contains(
+        "rcVersion = '$expectedVersion'",
+        [StringComparison]::Ordinal))
+{
+    throw 'Application source, image workflow, and evidence contract must use the same exact RC version.'
+}
 foreach ($snippet in @(
         'name: Verify runtime framework closure',
         "if: matrix.component != 'ui'",
@@ -263,5 +326,6 @@ if ($blueTuskReferences -lt 20)
 
 Write-Output (
     "Verified 20 application projects, $blueTuskReferences BlueTusk package references, " +
-    "three browser clients, three hardened digest-pinned container definitions, " +
-    "and the package-only $expectedVersion boundary.")
+    "four browser clients, three hardened digest-pinned container definitions, " +
+    "the package-only $expectedVersion boundary, and " +
+    "$($verifiedLocalNpmPackages.Count) locally integrity-bound npm candidate(s).")

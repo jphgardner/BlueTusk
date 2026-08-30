@@ -1,0 +1,76 @@
+{
+  "schemaVersion": 1,
+  "releaseVersion": "1.2.0",
+  "baselineCommit": "2e735ed46aec11d5009158a00ca7b862f9ec12af",
+  "coordinatedFamilies": [
+    "Provider",
+    "Streams",
+    "Sync",
+    "Live",
+    "ControlPlane",
+    "ContinuousGraph"
+  ],
+  "compatibility": {
+    "sourceCompatibleWith": "1.0.0",
+    "binaryCompatibleWith": "1.0.0",
+    "mixedBlueTuskVersionsSupported": false,
+    "minimumDotNet": "10.0",
+    "generalPostgreSqlMajors": [15, 16, 17, 18, 19],
+    "continuousGraphRequiresPostgreSql19Ga": true
+  },
+  "newNuGetPackages": [
+    "BlueTusk.Production.Templates",
+    "BlueTusk.ControlPlane.Kubernetes",
+    "BlueTusk.Sync.Kafka",
+    "BlueTusk.Sync.S3",
+    "BlueTusk.Sync.Webhooks"
+  ],
+  "newNpmPackages": [
+    "@bluetusk/live-vue",
+    "@bluetusk/live-svelte"
+  ],
+  "requiredProductWork": {
+    "productionStarter": true,
+    "readOnlyDoctor": true,
+    "kubernetesOperator": true,
+    "controlPlaneFleetOperations": true,
+    "graphVariableLengthPaths": true,
+    "graphUndirectedPatterns": true,
+    "graphMultiLabelExpressions": true
+  },
+  "releaseGates": {
+    "build": true,
+    "security": true,
+    "performance": true,
+    "publicApiCompatibility": true,
+    "packageConsumerSmoke": true,
+    "nativeAotAndTrimming": true,
+    "windowsX64": true,
+    "linuxX64": true,
+    "streamsEnduranceHours": 72,
+    "syncEnduranceHours": 24,
+    "liveAndControlPlaneEnduranceHours": 24,
+    "continuousGraphEnduranceHours": 24,
+    "backupRestoreRehearsal": true,
+    "rollbackRehearsal": true,
+    "independentPilots": 2,
+    "postgresql19GaDigestRequired": true
+  },
+  "enduranceExecution": {
+    "namespace": "bluetusk-endurance",
+    "launcher": "eng/deploy-kubernetes-endurance.ps1",
+    "evidenceStorageClass": "do-block-storage-retain",
+    "streamsBeforeSync": true,
+    "liveAndControlPlaneAfterSync": true,
+    "exactMainCommitRequired": true,
+    "continuousGraphPreviewEnabled": true,
+    "continuousGraphJobEnabledBeforePostgreSql19Ga": false
+  },
+  "publication": {
+    "stableEnabledBeforeAllGatesPass": false,
+    "nugetTrustedPublishingRequired": true,
+    "npmProvenanceRequired": true,
+    "sbomRequired": true,
+    "dependencyOrderRequired": true
+  }
+}

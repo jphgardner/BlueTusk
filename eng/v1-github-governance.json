@@ -99,7 +99,13 @@
           "sync-v1.1.0-rc.*",
           "live-v1.1.0-rc.*",
           "control-plane-v1.1.0-rc.*",
-          "continuous-graph-v1.1.0-rc.*"
+          "continuous-graph-v1.1.0-rc.*",
+          "provider-v1.2.0-rc.*",
+          "streams-v1.2.0-rc.*",
+          "sync-v1.2.0-rc.*",
+          "live-v1.2.0-rc.*",
+          "control-plane-v1.2.0-rc.*",
+          "continuous-graph-v1.2.0-rc.*"
         ]
       }
     },
@@ -122,7 +128,13 @@
           "sync-v1.1.0",
           "live-v1.1.0",
           "control-plane-v1.1.0",
-          "continuous-graph-v1.1.0"
+          "continuous-graph-v1.1.0",
+          "provider-v1.2.0",
+          "streams-v1.2.0",
+          "sync-v1.2.0",
+          "live-v1.2.0",
+          "control-plane-v1.2.0",
+          "continuous-graph-v1.2.0"
         ]
       }
     }

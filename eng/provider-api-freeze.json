@@ -2,6 +2,13 @@
   "schemaVersion": 1,
   "baseline": "1.0.0-candidate",
   "normalization": "utf8-lf",
+  "reviewedAdditions": [
+    {
+      "release": "1.2.0",
+      "path": "src/BlueTusk.EntityFrameworkCore/PublicAPI.Unshipped.txt",
+      "sha256": "41bb0c248adad1226fa11623432c941cfc3b34b097469791e3bba35f6ef32a4d"
+    }
+  ],
   "files": [
     {
       "path": "extensions/BlueTusk.Extensions.Citext.EntityFrameworkCore/PublicAPI.Shipped.txt",

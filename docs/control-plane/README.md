@@ -1,6 +1,11 @@
 # BlueTusk Control Plane and Dashboard
 
-`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph projections. They are independently versioned under the Control Plane release train. The Control Plane implementation and upgrade gates are complete, but the release manifest remains non-publishable until the Sync release dependency has archived its required 24-hour endurance evidence.
+`BlueTusk.ControlPlane` and `BlueTusk.Dashboard` provide the Phase 4 operational
+foundation plus the Phase 5 Sync, Phase 6 Live, and Phase 7 Continuous Graph
+projections. They are independently versioned under the Control Plane release
+train. The coordinated `1.1.0-rc.1` packages are public. Stable `1.1.0` remains
+blocked until the Sync dependency has archived its required 24-hour endurance
+evidence and the exact stable-candidate release chain passes.
 
 ## Read-only inventory
 
@@ -45,7 +50,35 @@ var queries = new PostgreSqlControlPlaneQueryService(
 
 ## Dashboard
 
-`MapBlueTuskDashboard` adds an HTML dashboard and a JSON overview API. The initial pages cover sources, slots and WAL lag, relay storage, snapshots, consumer groups, and direct checkpoints. All values rendered into HTML are encoded.
+`MapBlueTuskDashboard` adds a complete, server-rendered operational dashboard and
+versioned JSON APIs. Its `/overview` page assesses the whole BlueTusk estate and
+links directly to anything that needs attention. Inventory pages cover sources,
+slots and WAL lag, relay storage, snapshots, consumer groups, direct checkpoints,
+Sync pipelines, Live subscriptions, Continuous Graph queries, and managed
+deployments. Every inventory row opens a detail page containing the complete
+redacted control-plane projection for that resource.
+
+The dashboard remains useful without JavaScript. Its same-origin script adds
+mobile navigation, inventory search and health filtering, copy helpers, refresh,
+and authorised operation confirmations. Tables scroll safely on narrow screens,
+detail grids collapse to one column, and navigation becomes an explicit mobile
+menu. All application-provided values, URLs, and attribute values are HTML
+encoded; route keys containing reserved characters are encoded and decoded as
+single opaque identifiers.
+
+The HTML routes below are available under the configured `RoutePrefix` (which is
+`/bluetusk` by default):
+
+- `/overview`
+- `/sources` and `/sources/{sourceKey}`
+- `/sources/{sourceKey}/consumer-groups/{groupName}`
+- `/sources/{sourceKey}/snapshots/{snapshotEpoch}`
+- `/sources/{sourceKey}/checkpoints/{consumerGroup}`
+- `/pipelines` and `/pipelines/{pipelineId}`
+- `/live` and `/live/{subscriptionFingerprint}`
+- `/graphs` and `/graphs/{queryFingerprint}`
+- `/deployments` and `/deployments/{deploymentId}`
+- `/snapshots`, `/consumer-groups`, and `/checkpoints` for fleet-wide views
 
 ```csharp
 builder.Services.AddSingleton<IControlPlaneQueryService>(queries);
@@ -58,6 +91,8 @@ builder.Services.AddAuthorization(options =>
     options.AddPolicy("BlueTusk.ControlPlane.Read", policy =>
         policy.RequireRole("BlueTuskViewer", "BlueTuskOperator", "BlueTuskAdministrator"));
     options.AddPolicy("BlueTusk.ControlPlane.Mutate", policy =>
+        policy.RequireRole("BlueTuskOperator", "BlueTuskAdministrator"));
+    options.AddPolicy("BlueTusk.ControlPlane.GraphExecute", policy =>
         policy.RequireRole("BlueTuskOperator", "BlueTuskAdministrator"));
 });
 
@@ -77,13 +112,50 @@ clients, fan-out ratio, redacted scopes, invalidation lag, replay usage, resume
 rejections, quotas, and slow-client disconnect causes. Both routes use the same
 mandatory read policy as the rest of the dashboard.
 
-The optional `BlueTusk.ContinuousGraph.ControlPlane` adapter supplies
-`HostedContinuousGraphControlPlaneQueryService`, which projects registered graph query
-fingerprints, graph/database identities, explicit element aliases, exact
-relational dependencies, result bounds, and capabilities. It does not expose
-bound parameters or graph result rows. The authorised `/graphs` and
-`/api/graphs` endpoints HTML-encode every application-provided value.
-The Control Plane core does not reference the optional ContinuousGraph adapter.
+The optional `BlueTusk.ContinuousGraph.ControlPlane` adapter supplies two modes.
+`HostedContinuousGraphControlPlaneQueryService` remains metadata-only.
+`ExecutableContinuousGraphControlPlaneQueryService` adds explicitly registered,
+bounded execution metadata and `HostedContinuousGraphControlPlaneExecutionService`
+executes those exact fingerprints. The browser cannot submit SQL, choose a graph,
+or supply a security scope. A registration binds server-owned values and the
+original `LiveSecurityScope`; only parameters on its editable allowlist can be
+changed by an authorised operator.
+
+The graph detail page renders the complete bounded projection as an interactive
+directed graph with pan, zoom, fit, search, composition counts, selection details,
+and complete accessible node and edge tables. The projector must return stable
+element IDs, labels, categories, properties, and endpoints. Conflicting duplicate
+IDs, dangling endpoints, query-row overflow, node/edge overflow, timeout, or an
+incomplete projection fail closed. Result data is never silently truncated.
+
+`POST /api/v1/graphs/{queryFingerprint}/run` has a separate graph-execution
+authorization policy and a 16 KiB request limit. The legacy unversioned route is
+available for the stable 1.x compatibility line. The authorised `/graphs` and
+`/api/graphs` endpoints HTML-encode every application-provided value. The Control
+Plane core contains only the execution contracts and does not reference the
+optional ContinuousGraph adapter.
+
+## Managed deployment fleet
+
+`ManagedDeploymentFleetQueryService` exposes the durable managed-hosting store
+as a redacted fleet inventory. The `/deployments`, `/api/fleet`, and
+`/api/v1/fleet` routes show placement, desired and observed generations,
+workload families, aggregate resource requests, protection state, and stable
+diagnostic codes. Workload settings, secret-reference names, provider plans,
+credentials, and provider exception text are not part of this projection.
+
+Fleet controls reuse the same separate mutation policy, exact typed
+confirmation, audit-before-mutation sequence, and immutable audit store as the
+existing pipeline controls. Operators can pause, resume, reconcile, or rebuild
+a deployment. Deletion is an Administrator operation and still cannot bypass a
+deployment's delete-protection check.
+
+`ManagedDeploymentControlPlaneOperationHandler` supplies the concrete fleet
+command path. Pause and resume are desired-state compare-and-swap updates;
+reconcile and delete use the fenced controller; rebuild first invokes the
+host's `IManagedDeploymentRebuildHandler` and then performs a normal
+reconciliation. A fallback handler can continue to own non-fleet commands, so
+hosts keep one audited `IControlPlaneOperationHandler` boundary.
 
 ## Versioned agent API
 
@@ -94,6 +166,8 @@ Automation and operational agents should use the explicitly versioned routes:
 - `GET /api/v1/sync`
 - `GET /api/v1/live`
 - `GET /api/v1/graphs`
+- `POST /api/v1/graphs/{queryFingerprint}/run`
+- `GET /api/v1/fleet`
 - `POST /api/v1/operations`
 
 The capability response declares the current, minimum, and complete supported
@@ -205,6 +279,29 @@ late. Delete protection additionally requires the exact expected desired
 generation and an explicit override. See
 [ADR 0014](../architecture/decisions/0014-managed-hosting-reconciliation.md)
 for the complete failure and security contract.
+
+### Kubernetes custom resources
+
+`BlueTusk.ControlPlane.Kubernetes` supplies the namespaced
+`controlplane.bluetusk.io/v1alpha1` `BlueTuskDeployment` CRD, minimum RBAC, a
+source-generated Kubernetes REST client, and a bounded-concurrency reconciler.
+The installable manifests live under [`deploy/kubernetes/operator`](../../deploy/kubernetes/operator/)
+and are also carried in the NuGet package's `contentFiles` directory.
+
+The reconciler persists its finalizer before provider mutation. Kubernetes
+resource generations are observations, not durable Control Plane generations:
+if several Kubernetes updates are coalesced, one changed desired fingerprint
+advances the managed generation by exactly one. An unchanged fingerprint is
+idempotent. Each provider apply still runs under the PostgreSQL-backed lease and
+monotonic fencing token, and status updates use a JSON Patch resource-version
+test so a stale operator cannot overwrite newer status.
+
+Deletion retains the finalizer until the fenced provider deletion is complete.
+Delete protection produces the stable `delete-protection-enabled` status and
+leaves the finalizer in place. The shipped ClusterRole can list, watch, and
+patch only `BlueTuskDeployment` resources and their status; it has no Secret
+read permission. The provider adapter resolves secret references under a
+separate identity if its workload needs them.
 
 ## Verification status
 

@@ -1,0 +1,190 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: bluetusk-dashboard-graph-schema
+  namespace: bluetusk-endurance
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-graph
+    app.kubernetes.io/part-of: bluetusk
+    bluetusk.io/release-gate: "false"
+  annotations:
+    bluetusk.io/evidence-classification: non-gating-postgresql-19-beta3-public-preview
+data:
+  init.sql: |
+    \set ON_ERROR_STOP on
+
+    SELECT 'CREATE ROLE bluetusk_dashboard_reader LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'bluetusk_dashboard_reader')
+    \gexec
+    SELECT format(
+      'ALTER ROLE bluetusk_dashboard_reader PASSWORD %L',
+      :'dashboard_password')
+    \gexec
+    SELECT 'CREATE ROLE bluetusk_dashboard_writer LOGIN NOSUPERUSER NOCREATEDB NOCREATEROLE NOREPLICATION'
+    WHERE NOT EXISTS (
+      SELECT 1 FROM pg_catalog.pg_roles WHERE rolname = 'bluetusk_dashboard_writer')
+    \gexec
+    SELECT format(
+      'ALTER ROLE bluetusk_dashboard_writer PASSWORD %L',
+      :'writer_password')
+    \gexec
+
+    CREATE SCHEMA IF NOT EXISTS bluetusk_dashboard;
+    CREATE TABLE IF NOT EXISTS bluetusk_dashboard.graph_entities (
+      id text PRIMARY KEY,
+      display_name text NOT NULL,
+      kind text NOT NULL,
+      status text NOT NULL,
+      detail text NOT NULL,
+      provenance text NOT NULL,
+      resource_namespace text NOT NULL,
+      api_version text NOT NULL,
+      resource_uid text NOT NULL,
+      resource_version text NOT NULL,
+      observed_at timestamptz NOT NULL);
+    ALTER TABLE bluetusk_dashboard.graph_entities
+      ADD COLUMN IF NOT EXISTS resource_namespace text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS api_version text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS resource_uid text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS resource_version text NOT NULL DEFAULT '',
+      ADD COLUMN IF NOT EXISTS observed_at timestamptz NOT NULL DEFAULT CURRENT_TIMESTAMP;
+    ALTER TABLE bluetusk_dashboard.graph_entities
+      ALTER COLUMN resource_namespace DROP DEFAULT,
+      ALTER COLUMN api_version DROP DEFAULT,
+      ALTER COLUMN resource_uid DROP DEFAULT,
+      ALTER COLUMN resource_version DROP DEFAULT,
+      ALTER COLUMN observed_at DROP DEFAULT;
+    CREATE TABLE IF NOT EXISTS bluetusk_dashboard.graph_relationships (
+      id text PRIMARY KEY,
+      source_id text NOT NULL REFERENCES bluetusk_dashboard.graph_entities (id),
+      target_id text NOT NULL REFERENCES bluetusk_dashboard.graph_entities (id),
+      kind text NOT NULL,
+      weight numeric NOT NULL CHECK (weight >= 0),
+      observed_at timestamptz NOT NULL,
+      detail text NOT NULL);
+
+    DROP PROPERTY GRAPH IF EXISTS bluetusk_dashboard.cluster_topology;
+    CREATE PROPERTY GRAPH bluetusk_dashboard.cluster_topology
+      VERTEX TABLES (
+        bluetusk_dashboard.graph_entities AS entities
+        KEY (id)
+        LABEL component PROPERTIES (
+          id AS "Id",
+          display_name AS "DisplayName",
+          kind AS "Kind",
+          status AS "Status",
+          detail AS "Detail",
+          provenance AS "Provenance",
+          resource_namespace AS "ResourceNamespace",
+          api_version AS "ApiVersion",
+          resource_uid AS "ResourceUid",
+          resource_version AS "ResourceVersion",
+          observed_at AS "ObservedAt"))
+      EDGE TABLES (
+        bluetusk_dashboard.graph_relationships AS relationships
+        KEY (id)
+        SOURCE KEY (source_id) REFERENCES entities (id)
+        DESTINATION KEY (target_id) REFERENCES entities (id)
+        LABEL dependency PROPERTIES (
+          id AS "Id",
+          source_id AS "SourceId",
+          target_id AS "TargetId",
+          kind AS "Kind",
+          weight AS "Weight",
+          observed_at AS "ObservedAt",
+          detail AS "Detail"));
+
+    REVOKE ALL ON SCHEMA bluetusk_dashboard FROM PUBLIC;
+    REVOKE ALL ON ALL TABLES IN SCHEMA bluetusk_dashboard FROM PUBLIC;
+    GRANT USAGE ON SCHEMA bluetusk_dashboard TO bluetusk_dashboard_reader;
+    GRANT SELECT ON ALL TABLES IN SCHEMA bluetusk_dashboard TO bluetusk_dashboard_reader;
+    GRANT SELECT ON PROPERTY GRAPH bluetusk_dashboard.cluster_topology
+      TO bluetusk_dashboard_reader;
+    REVOKE ALL ON SCHEMA bluetusk_dashboard FROM bluetusk_dashboard_writer;
+    GRANT USAGE ON SCHEMA bluetusk_dashboard TO bluetusk_dashboard_writer;
+    GRANT SELECT, INSERT, UPDATE, DELETE ON
+      bluetusk_dashboard.graph_entities,
+      bluetusk_dashboard.graph_relationships
+      TO bluetusk_dashboard_writer;
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: bluetusk-dashboard-graph-init-v2
+  namespace: bluetusk-endurance
+  labels:
+    app.kubernetes.io/name: bluetusk-dashboard-graph
+    app.kubernetes.io/part-of: bluetusk
+    bluetusk.io/release-gate: "false"
+  annotations:
+    bluetusk.io/evidence-classification: non-gating-postgresql-19-beta3-public-preview
+spec:
+  backoffLimit: 2
+  activeDeadlineSeconds: 600
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: bluetusk-dashboard-graph-init
+        app.kubernetes.io/part-of: bluetusk
+    spec:
+      automountServiceAccountToken: false
+      restartPolicy: Never
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 70
+        runAsGroup: 70
+        fsGroup: 70
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: initializer
+          image: postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc
+          imagePullPolicy: IfNotPresent
+          command: [sh, -ec]
+          args:
+            - |
+              export PGPASSWORD="$POSTGRES_ADMIN_PASSWORD"
+              psql \
+                --host=postgresql \
+                --username=postgres \
+                --dbname=bluetusk_tests \
+                --set=dashboard_password="$DASHBOARD_READER_PASSWORD" \
+                --set=writer_password="$DASHBOARD_WRITER_PASSWORD" \
+                --file=/config/init.sql
+          env:
+            - name: POSTGRES_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: endurance-runtime
+                  key: postgres-password
+            - name: DASHBOARD_READER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dashboard-graph-reader
+                  key: password
+            - name: DASHBOARD_WRITER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: dashboard-graph-writer
+                  key: password
+          resources:
+            requests:
+              cpu: 25m
+              memory: 32Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: [ALL]
+          volumeMounts:
+            - name: schema
+              mountPath: /config
+              readOnly: true
+      volumes:
+        - name: schema
+          configMap:
+            name: bluetusk-dashboard-graph-schema

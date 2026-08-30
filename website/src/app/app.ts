@@ -4,7 +4,6 @@ import { MatButtonModule } from '@angular/material/button';
 import { MatFormFieldModule } from '@angular/material/form-field';
 import { MatIconModule } from '@angular/material/icon';
 import { MatInputModule } from '@angular/material/input';
-import { MatMenuModule } from '@angular/material/menu';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { GUIDE_SEARCH } from '../generated/guide-search.generated';
 import { SITE_SEARCH } from './content/catalog';
@@ -26,7 +25,6 @@ interface NavigationItem {
     MatFormFieldModule,
     MatIconModule,
     MatInputModule,
-    MatMenuModule,
     MatTooltipModule,
   ],
   templateUrl: './app.html',
@@ -35,32 +33,35 @@ interface NavigationItem {
 export class App {
   @ViewChild('searchTrigger') private searchTrigger?: ElementRef<HTMLButtonElement>;
   @ViewChild('searchField') private searchField?: ElementRef<HTMLInputElement>;
+  @ViewChild('mobileNavTrigger') private mobileNavTrigger?: ElementRef<HTMLButtonElement>;
+  @ViewChild('mobileNavFirst') private mobileNavFirst?: ElementRef<HTMLAnchorElement>;
   protected readonly searchOpen = signal(false);
   protected readonly searchQuery = signal('');
+  protected readonly mobileNavOpen = signal(false);
 
   protected readonly navItems: readonly NavigationItem[] = [
     {
       label: 'Platform',
       href: '/platform',
-      description: 'The complete BlueTusk ecosystem and architecture.',
+      description: 'See how the BlueTusk products work together.',
       icon: 'hub',
     },
     {
       label: 'Provider',
       href: '/provider',
-      description: 'ADO.NET, pooling, COPY, notifications, and replication.',
+      description: 'Connect .NET applications directly to PostgreSQL.',
       icon: 'storage',
     },
     {
       label: 'EF Core',
       href: '/ef-core',
-      description: 'PostgreSQL-native queries, mappings, and migrations.',
+      description: 'Use PostgreSQL through familiar EF Core workflows.',
       icon: 'data_object',
     },
     {
       label: 'Real Time',
       href: '/real-time',
-      description: 'Streams, Sync, Live, relay, and control plane.',
+      description: 'Move changes, sync data, and update users live.',
       icon: 'stream',
     },
     {
@@ -72,26 +73,14 @@ export class App {
     {
       label: 'Graph',
       href: '/graph',
-      description: 'PostgreSQL 19 SQL/PGQ and Continuous Graph.',
+      description: 'Query relationships and keep results up to date.',
       icon: 'share',
-    },
-    {
-      label: 'Evidence',
-      href: '/evidence',
-      description: 'V1 compatibility, security, provenance, performance, and open gates.',
-      icon: 'verified_user',
     },
     {
       label: 'Documentation',
       href: '/documentation',
-      description: 'The complete source-synchronized V1 engineering handbook.',
+      description: 'Find tutorials, guides, and production help.',
       icon: 'menu_book',
-    },
-    {
-      label: 'Community',
-      href: '/community',
-      description: 'Contribute, report issues, and become a design partner.',
-      icon: 'groups',
     },
   ];
 
@@ -117,9 +106,10 @@ export class App {
   });
 
   protected openSearch(): void {
+    this.mobileNavOpen.set(false);
     this.searchQuery.set('');
     this.searchOpen.set(true);
-    window.setTimeout(() => this.searchField?.nativeElement.focus());
+    window.setTimeout(() => this.searchField?.nativeElement?.focus());
   }
 
   protected closeSearch(): void {
@@ -134,9 +124,25 @@ export class App {
     this.searchQuery.set((event.target as HTMLInputElement).value);
   }
 
+  protected openMobileNav(): void {
+    this.mobileNavOpen.set(true);
+    window.setTimeout(() => this.mobileNavFirst?.nativeElement?.focus());
+  }
+
+  protected closeMobileNav(restoreFocus = true): void {
+    this.mobileNavOpen.set(false);
+    if (restoreFocus) {
+      window.requestAnimationFrame(() => this.mobileNavTrigger?.nativeElement?.focus());
+    }
+  }
+
   @HostListener('document:keydown.escape')
   protected onEscape(): void {
-    this.closeSearch();
+    if (this.searchOpen()) {
+      this.closeSearch();
+    } else if (this.mobileNavOpen()) {
+      this.closeMobileNav();
+    }
   }
 
   @HostListener('document:keydown', ['$event'])

@@ -60,6 +60,7 @@
         "src/BlueTusk.Transport/BlueTusk.Transport.csproj",
         "src/BlueTusk.TypeSystem/BlueTusk.TypeSystem.csproj",
         "templates/BlueTusk.Extension/BlueTusk.Templates.csproj",
+        "templates/BlueTusk.Production/BlueTusk.Production.Templates.csproj",
         "tooling/BlueTusk.Tool/BlueTusk.Tool.csproj"
       ]
     },
@@ -153,11 +154,14 @@
         "src/BlueTusk.Sync/BlueTusk.Sync.csproj",
         "src/BlueTusk.Sync.Aspire/BlueTusk.Sync.Aspire.csproj",
         "src/BlueTusk.Sync.DependencyInjection/BlueTusk.Sync.DependencyInjection.csproj",
+        "src/BlueTusk.Sync.Kafka/BlueTusk.Sync.Kafka.csproj",
         "src/BlueTusk.Sync.Nats/BlueTusk.Sync.Nats.csproj",
         "src/BlueTusk.Sync.OpenSearch/BlueTusk.Sync.OpenSearch.csproj",
         "src/BlueTusk.Sync.PostgreSql/BlueTusk.Sync.PostgreSql.csproj",
         "src/BlueTusk.Sync.Redis/BlueTusk.Sync.Redis.csproj",
-        "src/BlueTusk.Sync.Testing/BlueTusk.Sync.Testing.csproj"
+        "src/BlueTusk.Sync.S3/BlueTusk.Sync.S3.csproj",
+        "src/BlueTusk.Sync.Testing/BlueTusk.Sync.Testing.csproj",
+        "src/BlueTusk.Sync.Webhooks/BlueTusk.Sync.Webhooks.csproj"
       ]
     },
     "Live": {
@@ -180,6 +184,12 @@
             ]
           },
           {
+            "workflowFile": "live-control-plane-release-endurance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
             "workflowFile": "v1-candidate-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
@@ -194,7 +204,9 @@
       "npmPackages": [
         "clients/live",
         "clients/live-angular",
-        "clients/live-react"
+        "clients/live-react",
+        "clients/live-svelte",
+        "clients/live-vue"
       ],
       "packages": [
         "src/BlueTusk.Live/BlueTusk.Live.csproj",
@@ -228,6 +240,12 @@
             ]
           },
           {
+            "workflowFile": "live-control-plane-release-endurance.yml",
+            "allowedEvents": [
+              "workflow_dispatch"
+            ]
+          },
+          {
             "workflowFile": "v1-candidate-readiness.yml",
             "allowedEvents": [
               "workflow_dispatch"
@@ -243,6 +261,7 @@
       ],
       "packages": [
         "src/BlueTusk.ControlPlane/BlueTusk.ControlPlane.csproj",
+        "src/BlueTusk.ControlPlane.Kubernetes/BlueTusk.ControlPlane.Kubernetes.csproj",
         "src/BlueTusk.Dashboard/BlueTusk.Dashboard.csproj"
       ]
     },

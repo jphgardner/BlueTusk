@@ -1,6 +1,11 @@
 [CmdletBinding()]
 param(
-    [ValidateSet('All', 'OrderOperations', 'ServiceTopology', 'FraudInvestigation')]
+    [ValidateSet(
+        'All',
+        'OrderOperations',
+        'OrderOperationsAngular',
+        'ServiceTopology',
+        'FraudInvestigation')]
     [string] $Application = 'All',
     [string] $PackageDirectory = 'artifacts/prerelease/live',
     [string] $Output = 'artifacts/application-web'
@@ -38,6 +43,7 @@ foreach ($packageFile in $packageFiles.Values)
 
 $applications = [ordered]@{
     OrderOperations = 'order-operations'
+    OrderOperationsAngular = 'order-operations-angular'
     ServiceTopology = 'service-topology'
     FraudInvestigation = 'fraud-investigation'
 }

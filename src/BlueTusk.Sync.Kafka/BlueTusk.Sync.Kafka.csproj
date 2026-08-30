@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <BlueTuskProductFamily>Sync</BlueTuskProductFamily>
+    <Description>Transactional, restart-safe Apache Kafka destination for BlueTusk Sync.</Description>
+    <PackageTags>postgresql;cdc;sync;kafka;transactions;idempotency</PackageTags>
+  </PropertyGroup>
+
+  <Import Project="..\..\eng\versions\Sync.props" />
+
+  <ItemGroup>
+    <PackageReference Include="Confluent.Kafka" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BlueTusk.Sync\BlueTusk.Sync.csproj" />
+  </ItemGroup>
+</Project>

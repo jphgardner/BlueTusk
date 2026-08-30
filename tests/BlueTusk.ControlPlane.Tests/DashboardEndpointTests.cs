@@ -27,6 +27,10 @@ public sealed class DashboardEndpointTests
         builder.Services.AddSingleton<IControlPlaneLiveQueryService>(new FakeLiveQueryService());
         builder.Services.AddSingleton<IControlPlaneContinuousGraphQueryService>(
             new FakeContinuousGraphQueryService());
+        builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
+            new FakeContinuousGraphExecutionService());
+        builder.Services.AddSingleton<IControlPlaneFleetQueryService>(
+            new FakeFleetQueryService());
         builder.Services.AddSingleton(
             new ControlPlaneOperationExecutor(
                 new RoleControlPlaneAuthorizer(),
@@ -38,13 +42,14 @@ public sealed class DashboardEndpointTests
             options.RoutePrefix = "/operations";
             options.ReadAuthorizationPolicy = "ops-read";
             options.MutationAuthorizationPolicy = "ops-mutate";
+            options.GraphExecutionAuthorizationPolicy = "ops-graph-execute";
         });
 
         var endpoints = ((IEndpointRouteBuilder)application).DataSources
             .SelectMany(source => source.Endpoints)
             .OfType<RouteEndpoint>()
             .ToArray();
-        Assert.Equal(21, endpoints.Length);
+        Assert.Equal(34, endpoints.Length);
         Assert.All(
             endpoints,
             endpoint => Assert.Contains(
@@ -70,7 +75,77 @@ public sealed class DashboardEndpointTests
         Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
         Assert.Contains("&lt;script&gt;", html, StringComparison.Ordinal);
         Assert.DoesNotContain("<td><script>", html, StringComparison.Ordinal);
-        Assert.Contains(">missing<", html, StringComparison.Ordinal);
+        Assert.Contains(">Missing<", html, StringComparison.Ordinal);
+
+        var overview = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/overview");
+        var overviewHtml = await InvokeHtmlAsync(
+            overview,
+            application.Services,
+            context.User);
+        Assert.Contains("Operational overview", overviewHtml, StringComparison.Ordinal);
+        Assert.Contains("Needs attention", overviewHtml, StringComparison.Ordinal);
+
+        var sourceDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/sources/{sourceKey}");
+        var sourceHtml = await InvokeHtmlAsync(
+            sourceDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary { ["sourceKey"] = "primary%2Ffingerprint" });
+        Assert.Contains("Source identity", sourceHtml, StringComparison.Ordinal);
+        Assert.Contains("Replication slot", sourceHtml, StringComparison.Ordinal);
+        Assert.Contains("&lt;script&gt;", sourceHtml, StringComparison.Ordinal);
+
+        var groupDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText ==
+                "/operations/sources/{sourceKey}/consumer-groups/{groupName}");
+        var groupHtml = await InvokeHtmlAsync(
+            groupDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary
+            {
+                ["sourceKey"] = "primary%2Ffingerprint",
+                ["groupName"] = "group<script>",
+            });
+        Assert.Contains("group&lt;script&gt;", groupHtml, StringComparison.Ordinal);
+        Assert.Contains("Consumer group state", groupHtml, StringComparison.Ordinal);
+
+        var snapshotDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText ==
+                "/operations/sources/{sourceKey}/snapshots/{snapshotEpoch}");
+        var snapshotHtml = await InvokeHtmlAsync(
+            snapshotDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary
+            {
+                ["sourceKey"] = "primary%2Ffingerprint",
+                ["snapshotEpoch"] = "snapshot<img>",
+            });
+        Assert.Contains("snapshot&lt;img&gt;", snapshotHtml, StringComparison.Ordinal);
+        Assert.Contains("Snapshot identity", snapshotHtml, StringComparison.Ordinal);
+
+        var checkpointDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText ==
+                "/operations/sources/{sourceKey}/checkpoints/{consumerGroup}");
+        var checkpointHtml = await InvokeHtmlAsync(
+            checkpointDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary
+            {
+                ["sourceKey"] = "primary%2Ffingerprint",
+                ["consumerGroup"] = "group<script>",
+            });
+        Assert.Contains("Checkpoint contract", checkpointHtml, StringComparison.Ordinal);
+        Assert.Contains("group&lt;script&gt; checkpoint", checkpointHtml, StringComparison.Ordinal);
 
         var pipelines = Assert.Single(
             endpoints,
@@ -86,6 +161,18 @@ public sealed class DashboardEndpointTests
         Assert.Contains("data-operation-name=\"RebuildPipeline\"", pipelineHtml, StringComparison.Ordinal);
         Assert.Contains("data-operation-name=\"ReplayQuarantine\"", pipelineHtml, StringComparison.Ordinal);
 
+        var pipelineDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/pipelines/{pipelineId}");
+        var pipelineDetailHtml = await InvokeHtmlAsync(
+            pipelineDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary { ["pipelineId"] = "<img src=x>" });
+        Assert.Contains("Pipeline state", pipelineDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("&lt;img src=x&gt;", pipelineDetailHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("sensitive", pipelineDetailHtml, StringComparison.OrdinalIgnoreCase);
+
         var live = Assert.Single(
             endpoints,
             endpoint => endpoint.RoutePattern.RawText == "/operations/live");
@@ -98,6 +185,19 @@ public sealed class DashboardEndpointTests
         Assert.DoesNotContain("<tenant>", liveHtml, StringComparison.Ordinal);
         Assert.Contains("slow-client-reset", liveHtml, StringComparison.Ordinal);
 
+        var liveDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText ==
+                "/operations/live/{subscriptionFingerprint}");
+        var liveDetailHtml = await InvokeHtmlAsync(
+            liveDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary { ["subscriptionFingerprint"] = new string('c', 64) });
+        Assert.Contains("Delivery and clients", liveDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("Replay and invalidation", liveDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("&lt;tenant&gt;", liveDetailHtml, StringComparison.Ordinal);
+
         var graphs = Assert.Single(
             endpoints,
             endpoint => endpoint.RoutePattern.RawText == "/operations/graphs");
@@ -109,6 +209,83 @@ public sealed class DashboardEndpointTests
         Assert.Contains("&lt;graph&gt;", graphHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("<graph>", graphHtml, StringComparison.Ordinal);
         Assert.Contains("risk.&lt;transfers&gt;", graphHtml, StringComparison.Ordinal);
+
+        var graphDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/graphs/{queryFingerprint}");
+        var graphDetailHtml = await InvokeHtmlAsync(
+            graphDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary { ["queryFingerprint"] = new string('d', 64) });
+        Assert.Contains("How this query stays current", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("Authoritative scoped delta", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("risk.&lt;transfers&gt;", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("Run and inspect the complete result", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("data-graph-canvas", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("All nodes", graphDetailHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("tenant-value", graphDetailHtml, StringComparison.Ordinal);
+
+        var graphExecution = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText ==
+                "/operations/api/v1/graphs/{queryFingerprint}/run");
+        Assert.Contains(
+            graphExecution.Metadata.GetOrderedMetadata<IAuthorizeData>(),
+            metadata => metadata.Policy == "ops-graph-execute");
+        var graphRequest = new ControlPlaneContinuousGraphRunRequest(
+            new Dictionary<string, string?>(StringComparer.Ordinal)
+            {
+                ["minimumRisk"] = "0.80",
+            });
+        var graphRequestBody = JsonSerializer.SerializeToUtf8Bytes(graphRequest, WebJson);
+        context.Request.Method = HttpMethods.Post;
+        context.Request.ContentType = "application/json";
+        context.Request.ContentLength = graphRequestBody.Length;
+        context.Request.Body = new MemoryStream(graphRequestBody);
+        context.Request.RouteValues = new RouteValueDictionary
+        {
+            ["queryFingerprint"] = new string('d', 64),
+        };
+        context.Response.Body = new MemoryStream();
+        await graphExecution.RequestDelegate!(context);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        context.Response.Body.Position = 0;
+        var graphResponse = await JsonSerializer.DeserializeAsync<
+            ControlPlaneApiResponse<ControlPlaneContinuousGraphRunResult>>(
+                context.Response.Body,
+                WebJson);
+        Assert.NotNull(graphResponse);
+        Assert.Equal(ControlPlaneApiContract.CurrentVersion, graphResponse.ContractVersion);
+        Assert.Equal("account:1", Assert.Single(graphResponse.Data.Nodes).Id);
+        Assert.Equal("transfer:1", Assert.Single(graphResponse.Data.Edges).Id);
+
+        var deployments = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText == "/operations/deployments");
+        context.Response.Body = new MemoryStream();
+        await deployments.RequestDelegate!(context);
+        context.Response.Body.Position = 0;
+        using var fleetReader = new StreamReader(context.Response.Body, Encoding.UTF8);
+        var fleetHtml = await fleetReader.ReadToEndAsync();
+        Assert.Contains("&lt;deployment&gt;", fleetHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("<deployment>", fleetHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("secret-name", fleetHtml, StringComparison.Ordinal);
+        Assert.Contains("data-operation-name=\"ReconcileDeployment\"", fleetHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("data-operation-name=\"DeleteDeployment\"", fleetHtml, StringComparison.Ordinal);
+
+        var deploymentDetail = Assert.Single(
+            endpoints,
+            endpoint => endpoint.RoutePattern.RawText ==
+                "/operations/deployments/{deploymentId}");
+        var deploymentDetailHtml = await InvokeHtmlAsync(
+            deploymentDetail,
+            application.Services,
+            context.User,
+            new RouteValueDictionary { ["deploymentId"] = "<deployment>" });
+        Assert.Contains("Deployment state", deploymentDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("&lt;deployment&gt;", deploymentDetailHtml, StringComparison.Ordinal);
+        Assert.DoesNotContain("secret-name", deploymentDetailHtml, StringComparison.Ordinal);
 
         var legacyOperations = Assert.Single(
             endpoints,
@@ -233,7 +410,7 @@ public sealed class DashboardEndpointTests
                 new ControlPlaneOverview(
                     new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
                     [new ControlPlaneSourceSnapshot(
-                        "primary:fingerprint",
+                        "primary/fingerprint",
                         "<script>",
                         "fingerprint",
                         "system",
@@ -254,10 +431,54 @@ public sealed class DashboardEndpointTests
                             WalLagBytes: 0,
                             DiagnosticCode: "slot-missing"),
                         new ControlPlaneRelaySnapshot(0, 0, 0, 0, 0, TimeSpan.Zero),
-                        [],
-                        [],
-                        [])]));
+                        [new ControlPlaneConsumerGroupSnapshot(
+                            "group<script>",
+                            0,
+                            0,
+                            1,
+                            true,
+                            true,
+                            new DateTimeOffset(2026, 8, 3, 16, 1, 0, TimeSpan.Zero),
+                            2,
+                            null,
+                            null)],
+                        [new ControlPlaneSnapshotRunSnapshot(
+                            "snapshot<img>",
+                            "Complete",
+                            128,
+                            new DateTimeOffset(2026, 8, 3, 15, 59, 0, TimeSpan.Zero))],
+                        [new ControlPlaneCheckpointSnapshot(
+                            "group<script>",
+                            2,
+                            "orders_slot",
+                            "pgoutput",
+                            "mapping<script>",
+                            "0/0",
+                            1,
+                            true,
+                            new DateTimeOffset(2026, 8, 3, 16, 1, 0, TimeSpan.Zero),
+                            2)])]));
         }
+    }
+
+    private static async Task<string> InvokeHtmlAsync(
+        RouteEndpoint endpoint,
+        IServiceProvider services,
+        ClaimsPrincipal user,
+        RouteValueDictionary? routeValues = null)
+    {
+        var context = new DefaultHttpContext
+        {
+            RequestServices = services,
+            Response = { Body = new MemoryStream() },
+            User = user,
+        };
+        context.Request.RouteValues = routeValues ?? new RouteValueDictionary();
+        await endpoint.RequestDelegate!(context);
+        Assert.Equal(StatusCodes.Status200OK, context.Response.StatusCode);
+        context.Response.Body.Position = 0;
+        using var reader = new StreamReader(context.Response.Body, Encoding.UTF8);
+        return await reader.ReadToEndAsync();
     }
 
     private sealed class FakeSyncQueryService : IControlPlaneSyncQueryService
@@ -353,7 +574,84 @@ public sealed class DashboardEndpointTests
                         ["accounts", "<edges>"],
                         ["risk.accounts", "risk.<transfers>"],
                         100,
-                        "TenantFilter, DeterministicOrdering, BoundedTake")]));
+                        "TenantFilter, DeterministicOrdering, BoundedTake",
+                        [new ControlPlaneContinuousGraphParameterSnapshot(
+                            "minimumRisk", "Decimal", false, true, "0.72"),
+                         new ControlPlaneContinuousGraphParameterSnapshot(
+                             "tenantId", "String", false, false, null)],
+                        true)]));
+        }
+    }
+
+    private sealed class FakeContinuousGraphExecutionService :
+        IControlPlaneContinuousGraphExecutionService
+    {
+        public ValueTask<ControlPlaneContinuousGraphRunResult> ExecuteAsync(
+            string queryFingerprint,
+            ControlPlaneActor actor,
+            ControlPlaneContinuousGraphRunRequest request,
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            Assert.Equal(new string('d', 64), queryFingerprint);
+            Assert.Equal("operator@example.invalid", actor.ActorId);
+            Assert.Equal("0.80", request.Parameters["minimumRisk"]);
+            return ValueTask.FromResult(new ControlPlaneContinuousGraphRunResult(
+                Guid.Parse("5fa80f3e-b759-4c89-bc70-77c70812ff68"),
+                new DateTimeOffset(2026, 8, 29, 10, 0, 0, TimeSpan.Zero),
+                TimeSpan.FromMilliseconds(12.4),
+                queryFingerprint,
+                "risk-query",
+                "risk-primary",
+                "transfers",
+                "risk",
+                1,
+                [new ControlPlaneContinuousGraphNode(
+                    "account:1",
+                    "Account <script>",
+                    "Account",
+                    [new ControlPlaneContinuousGraphProperty("risk", "0.91")])],
+                [new ControlPlaneContinuousGraphEdge(
+                    "transfer:1",
+                    "account:1",
+                    "account:1",
+                    "TRANSFERRED_TO",
+                    "Transfer",
+                    true,
+                    [new ControlPlaneContinuousGraphProperty("amount", "100")])],
+                [new ControlPlaneContinuousGraphComposition("Account", 1)],
+                [new ControlPlaneContinuousGraphComposition("Transfer", 1)]));
+        }
+    }
+
+    private sealed class FakeFleetQueryService : IControlPlaneFleetQueryService
+    {
+        public ValueTask<ControlPlaneFleetOverview> GetFleetOverviewAsync(
+            CancellationToken cancellationToken = default)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+            return ValueTask.FromResult(
+                new ControlPlaneFleetOverview(
+                    new DateTimeOffset(2026, 8, 3, 16, 0, 0, TimeSpan.Zero),
+                    [new ControlPlaneManagedDeploymentSnapshot(
+                        "<deployment>",
+                        "tenant-a",
+                        "kubernetes",
+                        "uk-south",
+                        2,
+                        2,
+                        4,
+                        ManagedDeploymentState.Ready,
+                        false,
+                        true,
+                        2,
+                        [ManagedWorkloadKind.Streams, ManagedWorkloadKind.Sync],
+                        4,
+                        2000,
+                        4L * 1024 * 1024 * 1024,
+                        20L * 1024 * 1024 * 1024,
+                        null,
+                        new DateTimeOffset(2026, 8, 3, 15, 59, 0, TimeSpan.Zero))]));
         }
     }
 

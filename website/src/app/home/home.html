@@ -1,12 +1,12 @@
 <section class="hero">
   <div class="hero-glow" aria-hidden="true"></div>
   <div class="hero-inner">
-    <div class="release-label"><span></span> BLUETUSK 0.3.0-PREVIEW.1</div>
+    <div class="release-label"><span></span> BLUETUSK 1.1.0-RC.1 · PUBLIC</div>
     <h1>The PostgreSQL platform for <em>.NET</em></h1>
     <p>
-      Build PostgreSQL-native .NET applications with a V1 candidate-ready provider, EF Core
-      integration, replication, real-time data pipelines, extensions, and graph capabilities—backed
-      by executable evidence.
+      Use one PostgreSQL-native stack for ADO.NET, EF Core, replication, real-time delivery,
+      extensions, and graph. Start small, add only what you need, and verify every release through
+      published evidence.
     </p>
     <div class="hero-actions">
       <a
@@ -15,7 +15,12 @@
         class="primary-action"
         >Get Started</a
       >
-      <a mat-stroked-button href="#ecosystem" class="secondary-action">Explore BlueTusk</a>
+      <a
+        mat-stroked-button
+        routerLink="/documentation/getting-started/release-1-1-rc1"
+        class="secondary-action"
+        >Release Notes</a
+      >
       <a
         mat-stroked-button
         href="https://github.com/jphgardner/BlueTusk"
@@ -31,23 +36,41 @@
 
 <section class="architecture-wrap" aria-labelledby="architecture-title">
   <div class="section-label-row">
-    <span id="architecture-title">PLATFORM TOPOLOGY</span>
-    <span>POSTGRESQL-NATIVE DATA PLANE</span>
+    <span id="architecture-title">HOW BLUETUSK WORKS</span>
+    <span>ONE CONNECTED POSTGRESQL STACK</span>
   </div>
   <figure class="architecture-frame">
     <img
-      src="/bluetusk-architecture.png"
+      src="/bluetusk-architecture.png?v=3"
       width="1376"
       height="768"
-      loading="lazy"
+      loading="eager"
+      fetchpriority="high"
       decoding="async"
-      alt="BlueTusk architecture: .NET applications connect through the BlueTusk Provider and EF Core to PostgreSQL, then replication and Streams feed Relay and Sync destinations including Redis, NATS, OpenSearch, and applications."
+      alt="BlueTusk architecture: .NET applications connect through Provider and EF Core to PostgreSQL. Streams then powers Sync, Live, and Continuous Graph while Control Plane observes the runtime. Sync delivers to Redis, NATS, and OpenSearch; Live delivers to applications."
     />
     <figcaption>
-      <span><i></i> Architecture overview</span>
-      <span>Provider → PostgreSQL → Streams → Sync</span>
+      <span><i></i> How the products connect</span>
+      <span>Provider → PostgreSQL → Streams → Sync · Live · Graph</span>
     </figcaption>
   </figure>
+  <ol class="architecture-mobile-flow" aria-label="How data moves through BlueTusk">
+    <li>
+      <span>01 · BUILD</span><strong>.NET applications</strong><small>ADO.NET · EF Core</small>
+    </li>
+    <li>
+      <span>02 · CONNECT</span><strong>BlueTusk Provider</strong
+      ><small>Pooling · types · COPY</small>
+    </li>
+    <li><span>03 · STORE</span><strong>PostgreSQL</strong><small>SQL · WAL · extensions</small></li>
+    <li>
+      <span>04 · REACT</span><strong>Streams</strong><small>Database changes · safe recovery</small>
+    </li>
+    <li>
+      <span>05 · DELIVER</span><strong>Sync · Live · Graph</strong
+      ><small>Other systems · users · connected data</small>
+    </li>
+  </ol>
 </section>
 
 <section class="content-section path-selector">
@@ -57,8 +80,8 @@
       <h2>Start from the job in front of you.</h2>
     </div>
     <p>
-      Each path leads to a working repository surface, its current evidence, and the exact boundary
-      between code readiness and release authorization.
+      Pick the outcome you need. We’ll take you to the right product, a working example, and the
+      evidence behind it.
     </p>
   </div>
   <div class="path-layout">
@@ -92,8 +115,8 @@
 <section id="ecosystem" class="content-section">
   <div class="section-heading-center">
     <span>THE ECOSYSTEM</span>
-    <h2>Engineered for the modern PostgreSQL stack</h2>
-    <p>Six product surfaces. One protocol-aware platform.</p>
+    <h2>Choose the part your workload needs</h2>
+    <p>Six focused product areas, designed to compose without hiding PostgreSQL.</p>
   </div>
 
   <div class="ecosystem-grid">
@@ -116,17 +139,17 @@
 
 <section class="content-section code-section">
   <div class="code-copy">
-    <span class="section-kicker">FAMILIAR .NET. NATIVE POSTGRESQL.</span>
-    <h2>Start with a connection.<br />Keep every capability.</h2>
+    <span class="section-kicker">FAMILIAR .NET. FULL POSTGRESQL.</span>
+    <h2>Start with a connection.<br />Keep PostgreSQL’s strengths.</h2>
     <p>
       BlueTusk follows standard ADO.NET and EF Core patterns while exposing PostgreSQL features
       directly when your application needs them.
     </p>
     <ul>
       <li><mat-icon>check</mat-icon> Typed parameters, never SQL interpolation</li>
-      <li><mat-icon>check</mat-icon> Async data paths and bounded resource use</li>
+      <li><mat-icon>check</mat-icon> Async operations with predictable resource use</li>
       <li><mat-icon>check</mat-icon> Native COPY, replication, and type support</li>
-      <li><mat-icon>check</mat-icon> First-class diagnostics and release evidence</li>
+      <li><mat-icon>check</mat-icon> Built-in diagnostics and published test results</li>
     </ul>
   </div>
 
@@ -155,44 +178,15 @@
   </div>
 </section>
 
-<section class="content-section capability-section">
-  <div class="section-heading-split">
-    <div>
-      <span>POSTGRESQL, FULLY EXPOSED</span>
-      <h2>The database stays powerful.</h2>
-    </div>
-    <p>
-      Types, schema objects, extensions, and SQL features stay first class across the provider and
-      EF Core.
-    </p>
-  </div>
-
-  <div class="capability-grid">
-    @for (group of capabilityGroups; track group.title; let index = $index) {
-      <article>
-        <span class="capability-index">0{{ index + 1 }}</span>
-        <small>{{ group.eyebrow }}</small>
-        <h3>{{ group.title }}</h3>
-        <div>
-          @for (item of group.items; track item) {
-            <span>{{ item }}</span>
-          }
-        </div>
-      </article>
-    }
-  </div>
-</section>
-
 <section class="content-section evidence-section">
   <div class="evidence-header">
     <div>
-      <span>V1 HARDENING EVIDENCE · 04 AUG 2026</span>
-      <h2>Candidate-ready, with receipts.</h2>
+      <span>1.1 RC TEST RESULTS · 29 AUG 2026</span>
+      <h2>See what passed and what still needs work.</h2>
     </div>
     <p>
-      Feature development and hardening implementation are complete. Stable publication remains
-      deliberately blocked on exact endurance, PostgreSQL 19 GA, independent review, and operational
-      rehearsal.
+      All 65 release-candidate packages are public and install correctly in clean test applications.
+      Stable 1.1 will wait for the remaining long-running tests and PostgreSQL 19 GA.
     </p>
   </div>
 
@@ -210,37 +204,18 @@
   </div>
 
   <div class="evidence-footer">
-    <span><i></i> All product-spec engineering gates executable</span>
+    <span><i></i> 1.1.0-rc.1 available from NuGet and npm</span>
     <a routerLink="/evidence">Inspect the evidence <mat-icon>arrow_forward</mat-icon></a>
-  </div>
-</section>
-
-<section class="content-section roadmap-section">
-  <div class="section-heading-center">
-    <span>RELEASE TRAINS</span>
-    <h2>A roadmap that separates code from confidence</h2>
-    <p>Each stage advances through explicit engineering and endurance gates.</p>
-  </div>
-
-  <div class="roadmap">
-    @for (stage of roadmap; track stage.name; let index = $index) {
-      <article [attr.data-kind]="stage.kind">
-        <div class="roadmap-line"><i></i></div>
-        <small>0{{ index + 1 }}</small>
-        <h3>{{ stage.name }}</h3>
-        <p>{{ stage.status }}</p>
-      </article>
-    }
   </div>
 </section>
 
 <section class="community-section">
   <div>
     <span>BUILD WITH BLUETUSK</span>
-    <h2>Put the V1 candidate under a real workload.</h2>
+    <h2>Try the release candidate with a real workload.</h2>
     <p>
-      Try it, report issues, contribute an extension, or become a design partner for the path to a
-      production-ready 1.0.
+      Install the public packages, try them with a real workload, report anything you can reproduce,
+      and help make the stable 1.1 release stronger.
     </p>
   </div>
   <div>
