@@ -159,6 +159,80 @@ public sealed class LiveLoadGateTests
         Assert.Equal(0, shared.Status.SubscriberCount);
     }
 
+    [Fact]
+    public async Task Concurrent_disconnect_and_publish_keep_subscriber_state_consistent()
+    {
+        const int subscriberCount = 64;
+        var dependency = new LiveTableDependency("sales", "orders");
+        var invalidations = new InMemoryLiveInvalidationLog();
+        var version = 0;
+        var plan = new LiveQueryPlan<Row, int>(
+            "disconnect-publish-race",
+            "database",
+            new string('a', 64),
+            LiveQueryCapabilities.SingleTable |
+                LiveQueryCapabilities.TenantFilter |
+                LiveQueryCapabilities.DeterministicOrdering |
+                LiveQueryCapabilities.BoundedTake,
+            [dependency],
+            [],
+            1,
+            (_, _) => ValueTask.FromResult<IReadOnlyList<Row>>([new Row(1, $"v{version}")]),
+            static row => row.Id);
+        await using var session = new LiveQuerySession<Row, int>(
+            plan,
+            LiveQueryArguments.Create([], new Dictionary<string, object?>()),
+            new LiveSecurityScope("tenant:disconnect-race", "policy:v1"),
+            invalidations);
+        await using var shared = new LiveSharedSubscription<Row, int>(
+            session,
+            new InMemoryLiveReplayStore(),
+            new LiveSharedSubscriptionOptions
+            {
+                MaximumSubscribers = subscriberCount,
+                SubscriberBufferCapacity = 1,
+            });
+        await shared.StartAsync(TestContext.Current.CancellationToken);
+        var connections = new LiveSubscriptionConnection[subscriberCount];
+        for (var index = 0; index < connections.Length; index++)
+        {
+            var connected = await shared.ConnectAsync(
+                0,
+                TestContext.Current.CancellationToken);
+            connections[index] = Assert.IsType<LiveSubscriptionConnection>(connected.Connection);
+        }
+
+        version = 1;
+        _ = invalidations.Append("database", [dependency]);
+        var start = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var publish = Task.Run(
+            async () =>
+            {
+                await start.Task;
+                return await shared.RefreshAsync(TestContext.Current.CancellationToken);
+            },
+            TestContext.Current.CancellationToken);
+        var disconnect = Task.Run(
+            async () =>
+            {
+                await start.Task;
+                foreach (var connection in connections)
+                {
+                    await connection.DisposeAsync();
+                }
+            },
+            TestContext.Current.CancellationToken);
+
+        start.SetResult();
+        Assert.Equal(1, await publish);
+        await disconnect;
+
+        var status = shared.Status;
+        Assert.Equal(0, status.SubscriberCount);
+        Assert.Equal(0, status.ConnectedClients);
+        Assert.InRange(status.FanOutDeliveries, 0, subscriberCount);
+    }
+
     private static async ValueTask<LiveSubscriberMessage> ReadOneAsync(
         LiveSubscriptionConnection connection,
         CancellationToken cancellationToken)

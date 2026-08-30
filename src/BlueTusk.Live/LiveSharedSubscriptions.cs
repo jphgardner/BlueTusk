@@ -178,8 +178,10 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     private readonly LiveQuerySession<T, TKey> _session;
     private readonly ILiveReplayStore _replayStore;
     private readonly LiveSharedSubscriptionOptions _options;
-    private readonly ConcurrentDictionary<Guid, Subscriber> _subscribers = new();
+    private readonly Dictionary<Guid, Subscriber> _subscribers = [];
+    private readonly object _subscribersGate = new();
     private readonly SemaphoreSlim _gate = new(1, 1);
+    private readonly BoundedChannelOptions _subscriberChannelOptions;
     private long _persistedSequence;
     private long _publishedEvents;
     private long _fanOutDeliveries;
@@ -208,6 +210,13 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         _session = session;
         _replayStore = replayStore;
         _options = options;
+        _subscriberChannelOptions = new BoundedChannelOptions(options.SubscriberBufferCapacity)
+        {
+            FullMode = BoundedChannelFullMode.Wait,
+            SingleReader = true,
+            SingleWriter = true,
+            AllowSynchronousContinuations = false,
+        };
     }
 
     public LiveSubscriptionIdentity Identity => _session.Identity;
@@ -215,7 +224,7 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
     public LiveSharedSubscriptionStatus Status => new(
         Identity,
         Volatile.Read(ref _started) != 0,
-        _subscribers.Count,
+        SubscriberCount,
         Interlocked.Read(ref _persistedSequence),
         Interlocked.Read(ref _publishedEvents),
         Interlocked.Read(ref _fanOutDeliveries),
@@ -293,11 +302,14 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
                 return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.NotStarted, null);
             }
 
-            if (_subscribers.Count >= _options.MaximumSubscribers)
+            lock (_subscribersGate)
             {
-                Interlocked.Increment(ref _quotaRejections);
-                LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.QuotaExceeded);
-                return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.QuotaExceeded, null);
+                if (_subscribers.Count >= _options.MaximumSubscribers)
+                {
+                    Interlocked.Increment(ref _quotaRejections);
+                    LiveDiagnostics.RecordConnection(LiveSubscriptionConnectStatus.QuotaExceeded);
+                    return new LiveSubscriptionConnectResult(LiveSubscriptionConnectStatus.QuotaExceeded, null);
+                }
             }
 
             var replay = await _replayStore.ReadAsync(
@@ -337,18 +349,14 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
             }
 
             var id = Guid.NewGuid();
-            var channel = Channel.CreateBounded<LiveSubscriberMessage>(new BoundedChannelOptions(
-                _options.SubscriberBufferCapacity)
-            {
-                FullMode = BoundedChannelFullMode.Wait,
-                SingleReader = true,
-                SingleWriter = true,
-                AllowSynchronousContinuations = false,
-            });
+            var channel = Channel.CreateBounded<LiveSubscriberMessage>(_subscriberChannelOptions);
             var subscriber = new Subscriber(channel);
-            if (!_subscribers.TryAdd(id, subscriber))
+            lock (_subscribersGate)
             {
-                throw new InvalidOperationException("A generated Live subscriber ID collided unexpectedly.");
+                if (!_subscribers.TryAdd(id, subscriber))
+                {
+                    throw new InvalidOperationException("A generated Live subscriber ID collided unexpectedly.");
+                }
             }
 
             var connection = new LiveSubscriptionConnection(
@@ -413,13 +421,18 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         await _gate.WaitAsync().ConfigureAwait(false);
         try
         {
-            var connected = _subscribers.Count;
-            foreach (var subscriber in _subscribers.Values)
+            int connected;
+            lock (_subscribersGate)
             {
-                subscriber.Channel.Writer.TryComplete();
+                connected = _subscribers.Count;
+                foreach (var subscriber in _subscribers.Values)
+                {
+                    subscriber.Channel.Writer.TryComplete();
+                }
+
+                _subscribers.Clear();
             }
 
-            _subscribers.Clear();
             if (connected != 0)
             {
                 Interlocked.Add(ref _connectedClients, -connected);
@@ -481,52 +494,65 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
         }
 
         long deliveries = 0;
-        foreach (var (id, subscriber) in _subscribers)
+        List<Guid>? disconnected = null;
+        lock (_subscribersGate)
         {
-            var active = true;
-            foreach (var message in messages)
+            foreach (var (id, subscriber) in _subscribers)
             {
-                if (subscriber.Channel.Writer.TryWrite(message))
+                var active = true;
+                foreach (var message in messages)
                 {
-                    Interlocked.Increment(ref _fanOutDeliveries);
-                    deliveries++;
-                    continue;
-                }
-
-                active = false;
-                Interlocked.Increment(ref _slowClientDisconnects);
-                LiveDiagnostics.RecordSlowClientDisconnect(_options.SlowClientPolicy);
-                if (_options.SlowClientPolicy is LiveSlowClientPolicy.RequireReset)
-                {
-                    Volatile.Write(ref _lastDisconnectCode, "slow-client-reset");
-                    while (subscriber.Channel.Reader.TryRead(out _))
+                    if (subscriber.Channel.Writer.TryWrite(message))
                     {
+                        deliveries++;
+                        continue;
                     }
 
-                    _ = subscriber.Channel.Writer.TryWrite(ResetRequiredMessage);
-                    subscriber.Channel.Writer.TryComplete();
-                }
-                else
-                {
-                    Volatile.Write(ref _lastDisconnectCode, "slow-client-disconnect");
-                    subscriber.Channel.Writer.TryComplete(
-                        new LiveSlowClientException(
-                            $"Live subscriber '{id}' exceeded its bounded delivery buffer."));
+                    active = false;
+                    Interlocked.Increment(ref _slowClientDisconnects);
+                    LiveDiagnostics.RecordSlowClientDisconnect(_options.SlowClientPolicy);
+                    if (_options.SlowClientPolicy is LiveSlowClientPolicy.RequireReset)
+                    {
+                        Volatile.Write(ref _lastDisconnectCode, "slow-client-reset");
+                        while (subscriber.Channel.Reader.TryRead(out _))
+                        {
+                        }
+
+                        _ = subscriber.Channel.Writer.TryWrite(ResetRequiredMessage);
+                        subscriber.Channel.Writer.TryComplete();
+                    }
+                    else
+                    {
+                        Volatile.Write(ref _lastDisconnectCode, "slow-client-disconnect");
+                        subscriber.Channel.Writer.TryComplete(
+                            new LiveSlowClientException(
+                                $"Live subscriber '{id}' exceeded its bounded delivery buffer."));
+                    }
+
+                    (disconnected ??= []).Add(id);
+                    break;
                 }
 
-                if (_subscribers.TryRemove(id, out _))
+                if (!active)
                 {
-                    Interlocked.Decrement(ref _connectedClients);
-                    LiveDiagnostics.RecordActiveClientDelta(-1);
+                    continue;
                 }
-
-                break;
             }
 
-            if (!active)
+            if (disconnected is not null)
             {
-                continue;
+                foreach (var id in disconnected)
+                {
+                    _subscribers.Remove(id);
+                }
             }
+        }
+
+        Interlocked.Add(ref _fanOutDeliveries, deliveries);
+        if (disconnected is not null)
+        {
+            Interlocked.Add(ref _connectedClients, -disconnected.Count);
+            LiveDiagnostics.RecordActiveClientDelta(-disconnected.Count);
         }
 
         LiveDiagnostics.RecordFanOut(deliveries);
@@ -534,11 +560,28 @@ public sealed class LiveSharedSubscription<T, TKey> : ILiveSharedSubscription
 
     private void RemoveSubscriber(Guid id)
     {
-        if (_subscribers.TryRemove(id, out var subscriber))
+        Subscriber? subscriber;
+        lock (_subscribersGate)
+        {
+            _subscribers.Remove(id, out subscriber);
+        }
+
+        if (subscriber is not null)
         {
             Interlocked.Decrement(ref _connectedClients);
             LiveDiagnostics.RecordActiveClientDelta(-1);
             subscriber.Channel.Writer.TryComplete();
+        }
+    }
+
+    private int SubscriberCount
+    {
+        get
+        {
+            lock (_subscribersGate)
+            {
+                return _subscribers.Count;
+            }
         }
     }
 
