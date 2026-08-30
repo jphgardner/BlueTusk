@@ -174,7 +174,7 @@
         { "name": "publicationPoliciesArmed", "type": "boolean", "equals": true },
         { "name": "stableReleaseTagsCreated", "type": "integer", "equals": 0 },
         { "name": "stableCandidatePackagesPublished", "type": "integer", "equals": 0 },
-        { "name": "publishedPrereleaseVersion", "type": "string", "allowedValues": [ "1.0.0-rc.1" ] },
+        { "name": "publishedPrereleaseVersion", "type": "string", "allowedValues": [ "1.2.0-rc.1" ] },
         { "name": "publishedPrereleaseCommit", "type": "gitSha" },
         { "name": "publishedPrereleaseTags", "type": "integer", "equals": 6 },
         { "name": "publishedPrereleaseFamilies", "type": "stringArray", "minimumItems": 6 },

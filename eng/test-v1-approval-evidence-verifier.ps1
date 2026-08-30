@@ -218,6 +218,17 @@ try
         'maintainer-signoff' `
         'wrong-prerelease-commit'
 
+    $wrongPrereleaseVersion = (
+        @($examples.examples | Where-Object {
+            [string]$_.gateId -eq 'maintainer-signoff'
+        })[0] | ConvertTo-Json -Depth 20 | ConvertFrom-Json
+    )
+    $wrongPrereleaseVersion.details.publishedPrereleaseVersion = '1.1.0-rc.1'
+    Assert-Rejected `
+        $wrongPrereleaseVersion `
+        'maintainer-signoff' `
+        'wrong-prerelease-version'
+
     $unarmedPolicies = (
         @($examples.examples | Where-Object {
             [string]$_.gateId -eq 'maintainer-signoff'
@@ -307,5 +318,5 @@ finally
 
 Write-Output (
     'V1 approval-evidence verifier self-test passed: ten positive schemas, one ' +
-    'complete set, nine record mutations, six cross-record mutations and one ' +
+    'complete set, ten record mutations, six cross-record mutations and one ' +
     'stale-set mutation.')
