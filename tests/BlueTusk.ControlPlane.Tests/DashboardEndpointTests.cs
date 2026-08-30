@@ -223,6 +223,9 @@ public sealed class DashboardEndpointTests
         Assert.Contains("risk.&lt;transfers&gt;", graphDetailHtml, StringComparison.Ordinal);
         Assert.Contains("Run and inspect the complete result", graphDetailHtml, StringComparison.Ordinal);
         Assert.Contains("data-graph-canvas", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("relationship-aware directed graph", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("data-graph-snapshot", graphDetailHtml, StringComparison.Ordinal);
+        Assert.Contains("Topology flows left to right", graphDetailHtml, StringComparison.Ordinal);
         Assert.Contains("All nodes", graphDetailHtml, StringComparison.Ordinal);
         Assert.DoesNotContain("tenant-value", graphDetailHtml, StringComparison.Ordinal);
 

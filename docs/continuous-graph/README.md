@@ -298,11 +298,29 @@ builder.Services.AddSingleton<IControlPlaneContinuousGraphExecutionService>(
 
 The authorised detail page can then execute only the registered fingerprint and
 show every projected node, edge, category, label, endpoint, and property in the
-bounded result. The canvas provides pan, zoom, search, fit, and selection while
-the node and edge tables preserve a complete accessible representation. Limits,
-timeouts, conflicting element IDs, and dangling endpoints fail visibly; BlueTusk
-does not return a partial graph and call it complete. The optional adapter owns
-the graph dependency; the Control Plane core does not reference ContinuousGraph.
+bounded result. The canvas uses the graph's directed relationships to produce a
+deterministic left-to-right topology rather than arranging decorative category
+bubbles. Known Kubernetes elements use Cluster, Namespace, Workload, Controller,
+Runtime, Networking, Exposure, and Image stages. Other graph shapes derive
+bounded stages from their directed edges, including a deterministic cycle
+fallback. Category-coloured arrows remain visible in the complete fit view;
+selecting a node highlights its immediate neighbours and relationships, while
+selecting an edge exposes its endpoints, direction, type, and projected
+properties.
+
+Pan, zoom, search, fit, node selection, and edge selection are additive to the
+complete node and edge tables, which remain the accessible representation and
+do not depend on canvas hit testing. When projected rows contain `observedAt`,
+`provenance`, and `storage` properties, the explorer displays the source,
+snapshot age, local time-zone-qualified observation time, and authoritative
+store above the result. A snapshot older than two minutes is visibly marked
+stale. This is presentation metadata only: it does not weaken the registered
+query's security scope or turn browser input into SQL.
+
+Limits, timeouts, conflicting element IDs, and dangling endpoints fail visibly;
+BlueTusk does not return a partial graph and call it complete. The optional
+adapter owns the graph dependency; the Control Plane core does not reference
+ContinuousGraph.
 
 `ContinuousGraphIncrementalSession.Status` exposes counts for trusted CDC,
 authoritative delta, and authoritative repair evaluations, plus affected-key

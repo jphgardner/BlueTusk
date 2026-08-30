@@ -66,6 +66,16 @@ menu. All application-provided values, URLs, and attribute values are HTML
 encoded; route keys containing reserved characters are encoded and decoded as
 single opaque identifiers.
 
+Executable Continuous Graph detail pages add a relationship-aware canvas without
+making the canvas the source of truth. Directed edges determine bounded topology
+stages, known Kubernetes resources use an operational left-to-right hierarchy,
+and generic graph categories use a deterministic edge-derived fallback. Nodes
+and edges can both be selected and inspected; search dims unrelated elements;
+the full accessible tables continue to expose every bounded result element.
+Projected `observedAt`, `provenance`, and `storage` values become a visible
+freshness banner so operators can distinguish a current live snapshot from a
+stale or merely authoritative result.
+
 The HTML routes below are available under the configured `RoutePrefix` (which is
 `/bluetusk` by default):
 
