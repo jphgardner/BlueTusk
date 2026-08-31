@@ -39,44 +39,48 @@ public sealed class BlueTuskMultiplexingIntegrationTests
     [Fact]
     public async Task Exhausted_pool_preserves_bounded_admission_and_cancellation()
     {
-        var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
+        const int iterations = 8;
+        for (var iteration = 0; iteration < iterations; iteration++)
         {
-            MaximumPoolSize = 1,
-        };
-        await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionString)
-            .EnableMultiplexing(options =>
+            var settings = new BlueTuskConnectionStringBuilder(GetConnectionString())
             {
-                options.WorkerCount = 1;
-                options.QueueCapacity = 1;
-                options.MaxCommandsPerLease = 1;
-                options.MaxPipelineCommands = 1;
-            })
-            .Build();
-        await using var held = await dataSource.OpenConnectionAsync();
-        await using var first = dataSource.CreateCommand("SELECT 40::int4");
-        await using var second = dataSource.CreateCommand("SELECT 41::int4");
-        await using var canceled = dataSource.CreateCommand("SELECT 99::int4");
+                MaximumPoolSize = 1,
+            };
+            await using var dataSource = new BlueTuskDataSourceBuilder(settings.ConnectionString)
+                .EnableMultiplexing(options =>
+                {
+                    options.WorkerCount = 1;
+                    options.QueueCapacity = 1;
+                    options.MaxCommandsPerLease = 1;
+                    options.MaxPipelineCommands = 1;
+                })
+                .Build();
+            await using var held = await dataSource.OpenConnectionAsync();
+            await using var first = dataSource.CreateCommand("SELECT 40::int4");
+            await using var second = dataSource.CreateCommand("SELECT 41::int4");
+            await using var canceled = dataSource.CreateCommand("SELECT 99::int4");
 
-        var firstTask = first.ExecuteScalarAsync<int>();
-        await WaitUntilAsync(() => dataSource.GetPoolStatistics().Waiting == 1);
-        var secondTask = second.ExecuteScalarAsync<int>();
-        await WaitUntilAsync(() => dataSource.GetMultiplexingStatistics().Queued >= 1);
-        using var admissionCancellation = new CancellationTokenSource(
-            TimeSpan.FromMilliseconds(150));
+            var firstTask = first.ExecuteScalarAsync<int>();
+            await WaitUntilAsync(() => dataSource.GetPoolStatistics().Waiting == 1);
+            var secondTask = second.ExecuteScalarAsync<int>();
+            await WaitUntilAsync(() => dataSource.GetMultiplexingStatistics().Queued >= 1);
+            using var admissionCancellation = new CancellationTokenSource(
+                TimeSpan.FromMilliseconds(150));
 
-        await Assert.ThrowsAnyAsync<OperationCanceledException>(
-            () => canceled.ExecuteScalarAsync<int>(admissionCancellation.Token));
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(
+                () => canceled.ExecuteScalarAsync<int>(admissionCancellation.Token));
 
-        await held.DisposeAsync();
-        Assert.Equal(40, await firstTask);
-        Assert.Equal(41, await secondTask);
-        await WaitUntilAsync(
-            () => dataSource.GetMultiplexingStatistics() is { Queued: 0, Executing: 0 });
-        var statistics = dataSource.GetMultiplexingStatistics();
-        Assert.Equal(2, statistics.Accepted);
-        Assert.Equal(2, statistics.Completed);
-        Assert.Equal(0, statistics.Queued);
-        Assert.Equal(0, statistics.Executing);
+            await held.DisposeAsync();
+            Assert.Equal(40, await firstTask);
+            Assert.Equal(41, await secondTask);
+            await WaitUntilAsync(
+                () => dataSource.GetMultiplexingStatistics() is { Queued: 0, Executing: 0 });
+            var statistics = dataSource.GetMultiplexingStatistics();
+            Assert.Equal(2, statistics.Accepted);
+            Assert.Equal(2, statistics.Completed);
+            Assert.Equal(0, statistics.Queued);
+            Assert.Equal(0, statistics.Executing);
+        }
     }
 
     [Fact]

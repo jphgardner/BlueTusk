@@ -222,7 +222,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
                 FileAccess.Write,
                 FileShare.None,
                 64 * 1024,
-                FileOptions.Asynchronous | FileOptions.WriteThrough);
+                FileOptions.Asynchronous | FileOptions.SequentialScan);
 
             var source = Encoding.UTF8.GetBytes(key.SourceFingerprint);
             var protectorId = Encoding.UTF8.GetBytes(protector.Id);
@@ -333,7 +333,7 @@ public sealed class FileTransactionSpool : ITransactionSpool
             try
             {
                 await stream.WriteAsync(_recordHeader, cancellationToken).ConfigureAwait(false);
-                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+                cancellationToken.ThrowIfCancellationRequested();
                 stream.Flush(flushToDisk: true);
                 await stream.DisposeAsync().ConfigureAwait(false);
                 _stream = null;

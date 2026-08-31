@@ -1,4 +1,5 @@
 using System.Buffers.Binary;
+using System.Runtime.CompilerServices;
 
 namespace BlueTusk.Replication;
 
@@ -11,6 +12,7 @@ internal static class BlueTuskReplicationWireProtocol
     private static readonly DateTimeOffset PostgreSqlEpoch =
         new(2000, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static BlueTuskReplicationMessage Decode(ReadOnlyMemory<byte> payload)
     {
         if (payload.IsEmpty)
@@ -19,13 +21,19 @@ internal static class BlueTuskReplicationWireProtocol
                 "A replication CopyData payload cannot be empty.");
         }
 
-        return payload.Span[0] switch
+        var code = payload.Span[0];
+        if (code == (byte)'w')
         {
-            (byte)'w' => DecodeXLogData(payload),
-            (byte)'k' => DecodeKeepalive(payload.Span),
-            var code => throw new BlueTuskReplicationProtocolException(
-                $"Unknown replication message code 0x{code:X2}."),
-        };
+            return DecodeXLogData(payload);
+        }
+
+        if (code == (byte)'k')
+        {
+            return DecodeKeepalive(payload.Span);
+        }
+
+        throw new BlueTuskReplicationProtocolException(
+            $"Unknown replication message code 0x{code:X2}.");
     }
 
     public static byte[] EncodeStandbyStatus(
@@ -56,6 +64,7 @@ internal static class BlueTuskReplicationWireProtocol
         return payload;
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static BlueTuskXLogData DecodeXLogData(ReadOnlyMemory<byte> payload)
     {
         if (payload.Length < XLogDataHeaderLength)
@@ -94,11 +103,20 @@ internal static class BlueTuskReplicationWireProtocol
             reply);
     }
 
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     private static DateTimeOffset FromPostgreSqlMicroseconds(long microseconds)
     {
+        if (microseconds == 0)
+        {
+            return PostgreSqlEpoch;
+        }
+
         try
         {
-            return PostgreSqlEpoch.AddTicks(checked(microseconds * TimeSpan.TicksPerMicrosecond));
+            var ticks = checked(
+                PostgreSqlEpoch.UtcTicks +
+                checked(microseconds * TimeSpan.TicksPerMicrosecond));
+            return new DateTimeOffset(ticks, TimeSpan.Zero);
         }
         catch (ArgumentOutOfRangeException exception)
         {

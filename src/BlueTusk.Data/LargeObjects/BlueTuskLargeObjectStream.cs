@@ -12,6 +12,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
     private long _length;
     private long _position;
     private byte[]? _readAheadBuffer;
+    private bool _readAheadBufferPooled;
     private int _readAheadOffset;
     private int _readAheadCount;
     private int _faulted;
@@ -124,6 +125,12 @@ public sealed class BlueTuskLargeObjectStream : Stream
                 return CopyReadAhead(buffer.AsSpan(offset, requested));
             }
 
+            if (!_operations.SupportsDirectBufferReads)
+            {
+                var data = _operations.Read(MaximumTransferSize);
+                return BufferAndCopyLegacyRead(data, buffer.AsSpan(offset, requested));
+            }
+
             if (requested == MaximumTransferSize)
             {
                 var read = _operations.Read(buffer.AsSpan(offset, requested));
@@ -142,7 +149,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
         }
     }
 
-    public override async ValueTask<int> ReadAsync(
+    public override ValueTask<int> ReadAsync(
         Memory<byte> buffer,
         CancellationToken cancellationToken = default)
     {
@@ -154,7 +161,7 @@ public sealed class BlueTuskLargeObjectStream : Stream
 
         if (buffer.IsEmpty)
         {
-            return 0;
+            return ValueTask.FromResult(0);
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -163,23 +170,106 @@ public sealed class BlueTuskLargeObjectStream : Stream
             var requested = Math.Min(buffer.Length, MaximumTransferSize);
             if (_readAheadCount != 0)
             {
-                return CopyReadAhead(buffer.Span[..requested]);
+                return ValueTask.FromResult(CopyReadAhead(buffer.Span[..requested]));
+            }
+
+            if (!_operations.SupportsDirectBufferReads)
+            {
+                var pendingLegacyRead = _operations.ReadAsync(
+                    MaximumTransferSize,
+                    cancellationToken);
+                if (pendingLegacyRead.IsCompletedSuccessfully)
+                {
+                    return ValueTask.FromResult(
+                        BufferAndCopyLegacyRead(
+                            pendingLegacyRead.Result,
+                            buffer.Span[..requested]));
+                }
+
+                return AwaitLegacyReadAsync(
+                    pendingLegacyRead,
+                    buffer,
+                    requested);
             }
 
             if (requested == MaximumTransferSize)
             {
-                var read = await _operations.ReadAsync(
+                var pendingRead = _operations.ReadAsync(
                     buffer[..requested],
-                    cancellationToken).ConfigureAwait(false);
-                AdvanceDirectRead(read, requested);
-                return read;
+                    cancellationToken);
+                if (pendingRead.IsCompletedSuccessfully)
+                {
+                    var read = pendingRead.Result;
+                    AdvanceDirectRead(read, requested);
+                    return ValueTask.FromResult(read);
+                }
+
+                return AwaitDirectReadAsync(pendingRead, requested);
             }
 
             var readAhead = EnsureReadAheadBuffer();
-            var fetched = await _operations.ReadAsync(
+            var pendingReadAhead = _operations.ReadAsync(
                 readAhead.AsMemory(0, MaximumTransferSize),
-                cancellationToken).ConfigureAwait(false);
-            return BufferAndCopyReadAhead(fetched, buffer.Span[..requested]);
+                cancellationToken);
+            if (pendingReadAhead.IsCompletedSuccessfully)
+            {
+                return ValueTask.FromResult(
+                    BufferAndCopyReadAhead(pendingReadAhead.Result, buffer.Span[..requested]));
+            }
+
+            return AwaitReadAheadAsync(pendingReadAhead, buffer, requested);
+        }
+        catch
+        {
+            Interlocked.Exchange(ref _faulted, 1);
+            throw;
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> AwaitLegacyReadAsync(
+        ValueTask<byte[]> pendingRead,
+        Memory<byte> destination,
+        int requested)
+    {
+        try
+        {
+            var data = await pendingRead.ConfigureAwait(false);
+            return BufferAndCopyLegacyRead(data, destination.Span[..requested]);
+        }
+        catch
+        {
+            Interlocked.Exchange(ref _faulted, 1);
+            throw;
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> AwaitDirectReadAsync(ValueTask<int> pendingRead, int requested)
+    {
+        try
+        {
+            var read = await pendingRead.ConfigureAwait(false);
+            AdvanceDirectRead(read, requested);
+            return read;
+        }
+        catch
+        {
+            Interlocked.Exchange(ref _faulted, 1);
+            throw;
+        }
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<int> AwaitReadAheadAsync(
+        ValueTask<int> pendingRead,
+        Memory<byte> destination,
+        int requested)
+    {
+        try
+        {
+            var fetched = await pendingRead.ConfigureAwait(false);
+            return BufferAndCopyReadAhead(fetched, destination.Span[..requested]);
         }
         catch
         {
@@ -472,6 +562,26 @@ public sealed class BlueTuskLargeObjectStream : Stream
         return read;
     }
 
+    private int BufferAndCopyLegacyRead(byte[] data, Span<byte> destination)
+    {
+        if (data.Length > MaximumTransferSize)
+        {
+            throw new IOException(
+                $"PostgreSQL returned {data.Length} large-object bytes when {MaximumTransferSize} were requested.");
+        }
+
+        ReplaceReadAheadBuffer(data, pooled: false);
+        _readAheadOffset = 0;
+        _readAheadCount = data.Length;
+        var read = CopyReadAhead(destination);
+        if (data.Length < MaximumTransferSize)
+        {
+            _length = checked(_position + _readAheadCount);
+        }
+
+        return read;
+    }
+
     private void AdvanceDirectRead(int read, int requested)
     {
         if ((uint)read > (uint)requested)
@@ -487,8 +597,28 @@ public sealed class BlueTuskLargeObjectStream : Stream
         }
     }
 
-    private byte[] EnsureReadAheadBuffer() =>
-        _readAheadBuffer ??= ArrayPool<byte>.Shared.Rent(MaximumTransferSize);
+    private byte[] EnsureReadAheadBuffer()
+    {
+        if (_readAheadBuffer is not null && _readAheadBufferPooled)
+        {
+            return _readAheadBuffer;
+        }
+
+        var buffer = ArrayPool<byte>.Shared.Rent(MaximumTransferSize);
+        ReplaceReadAheadBuffer(buffer, pooled: true);
+        return buffer;
+    }
+
+    private void ReplaceReadAheadBuffer(byte[] buffer, bool pooled)
+    {
+        if (_readAheadBufferPooled && _readAheadBuffer is not null)
+        {
+            ArrayPool<byte>.Shared.Return(_readAheadBuffer);
+        }
+
+        _readAheadBuffer = buffer;
+        _readAheadBufferPooled = pooled;
+    }
 
     private void SynchronizeReadAhead()
     {
@@ -536,11 +666,12 @@ public sealed class BlueTuskLargeObjectStream : Stream
     private void ReturnReadAheadBuffer()
     {
         var buffer = Interlocked.Exchange(ref _readAheadBuffer, null);
-        if (buffer is not null)
+        if (_readAheadBufferPooled && buffer is not null)
         {
             ArrayPool<byte>.Shared.Return(buffer);
         }
 
+        _readAheadBufferPooled = false;
         InvalidateReadAhead();
     }
 

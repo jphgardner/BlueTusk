@@ -30,7 +30,7 @@
       "apiExemptProjects": []
     },
     "ControlPlane": {
-      "maximumSignatures": 1095,
+      "maximumSignatures": 1099,
       "baselineProjects": 3,
       "apiExemptProjects": []
     },

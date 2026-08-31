@@ -1462,6 +1462,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     internal async ValueTask ExecuteMultiplexedPipelineAsync(
             IReadOnlyList<BlueTuskMultiplexedPipelineCommand> commands,
             IReadOnlyList<CancellationToken>? groupCancellationTokens,
@@ -1492,8 +1493,10 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 dispatchCancellationToken).ConfigureAwait(false);
             messagesWritten = true;
 
+            var retainExecutingStateBetweenGroups = groupCancellationTokens is null;
             for (var index = 0; index < commands.Count; index++)
             {
+                var finalGroup = index + 1 == commands.Count;
                 var groupCancellationToken =
                     groupCancellationTokens?[index] ?? CancellationToken.None;
                 groupStarting?.Invoke(index);
@@ -1506,9 +1509,14 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         {
                             outcome = new BlueTuskMultiplexedPipelineOutcome(
                                 Result: null,
-                                await ReadScalarResponseWithCancellationAsync(
-                                        preparedDescription: null,
-                                        groupCancellationToken)
+                                retainExecutingStateBetweenGroups
+                                    ? await ReadScalarResponseAsync(
+                                            preparedDescription: null,
+                                            completeReadyForQuery: finalGroup)
+                                        .ConfigureAwait(false)
+                                    : await ReadScalarResponseWithCancellationAsync(
+                                            preparedDescription: null,
+                                            groupCancellationToken)
                                     .ConfigureAwait(false),
                                 Error: null,
                                 Cancellation: null);
@@ -1524,9 +1532,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     }
                     else
                     {
-                        var result = await ReadPipelineGroupResponseWithCancellationAsync(
-                                groupCancellationToken)
-                            .ConfigureAwait(false);
+                        var result = retainExecutingStateBetweenGroups
+                            ? await ReadPipelineGroupResponseAsync(
+                                    completeReadyForQuery: finalGroup)
+                                .ConfigureAwait(false)
+                            : await ReadPipelineGroupResponseWithCancellationAsync(
+                                    groupCancellationToken)
+                                .ConfigureAwait(false);
                         outcome = new BlueTuskMultiplexedPipelineOutcome(
                             result.Result,
                             ScalarResult: default,
@@ -1549,7 +1561,7 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 }
                 outcomeCompleted(index, outcome);
 
-                if (index + 1 < commands.Count)
+                if (!retainExecutingStateBetweenGroups && !finalGroup)
                 {
                     BeginNextPipelineGroup();
                 }
@@ -5606,11 +5618,13 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskScalarQueryResult> ReadScalarResponseAsync(
         PreparedStatementDescription? preparedDescription,
         int prependedResultSetCount = 0,
         int prependedReadyForQueryCount = 0,
-        Action? prependedCompleted = null)
+        Action? prependedCompleted = null,
+        bool completeReadyForQuery = true)
     {
         IReadOnlyList<BlueTuskFieldDescription> fields = [];
         BlueTuskFieldDescription? firstField = preparedDescription?.FirstField;
@@ -5684,9 +5698,16 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                         break;
                     }
 
-                    var cancellationCompletion = CompleteReadyForQuery(
-                        transactionStatus);
-                    await cancellationCompletion.ConfigureAwait(false);
+                    if (completeReadyForQuery)
+                    {
+                        var cancellationCompletion = CompleteReadyForQuery(
+                            transactionStatus);
+                        await cancellationCompletion.ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        TransactionStatus = transactionStatus;
+                    }
                     if (prependedError is not null)
                     {
                         throw prependedError;
@@ -5707,7 +5728,8 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
     [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskPipelineGroupResult> ReadPipelineGroupResponseAsync(
         int expectedResultSetCount = 0,
-        bool poolBufferedRows = false)
+        bool poolBufferedRows = false,
+        bool completeReadyForQuery = true)
     {
         var resultSets = expectedResultSetCount == 0
             ? new List<BlueTuskResultSet>()
@@ -5756,9 +5778,18 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                     StoreParameter(BlueTuskBackendMessageDecoder.DecodeParameterStatus(message));
                     break;
                 case 'Z':
-                    var cancellationCompletion = CompleteReadyForQuery(
-                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message));
-                    await cancellationCompletion.ConfigureAwait(false);
+                    var transactionStatus =
+                        BlueTuskBackendMessageDecoder.DecodeReadyForQuery(message);
+                    if (completeReadyForQuery)
+                    {
+                        var cancellationCompletion = CompleteReadyForQuery(
+                            transactionStatus);
+                        await cancellationCompletion.ConfigureAwait(false);
+                    }
+                    else
+                    {
+                        TransactionStatus = transactionStatus;
+                    }
                     if (fields.Count != 0)
                     {
                         resultSets.Add(new BlueTuskResultSet(
