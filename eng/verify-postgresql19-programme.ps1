@@ -42,6 +42,16 @@ foreach ($path in @($current[0].evidence, $manifest.typedSubsetRecord))
     }
 }
 
+foreach ($evidence in $manifest.requiredFeatureEvidence.PSObject.Properties)
+{
+    if ([string]::IsNullOrWhiteSpace([string]$evidence.Value) -or
+        -not (Test-Path -LiteralPath (
+            Join-Path $RepositoryRoot ([string]$evidence.Value)) -PathType Leaf))
+    {
+        throw "PostgreSQL 19 feature evidence '$($evidence.Name)' is missing."
+    }
+}
+
 $compose = Get-Content -LiteralPath (
     Join-Path $RepositoryRoot 'eng/compose/postgres.yml') -Raw
 if (-not $compose.Contains([string]$current[0].image, [StringComparison]::Ordinal))

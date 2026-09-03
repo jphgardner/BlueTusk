@@ -34,6 +34,7 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 - [Sequential readers](https://bluetusk.io/documentation/provider/sequential-readers): Bounded sequential reads for large PostgreSQL values.
 - [Schema discovery](https://bluetusk.io/documentation/provider/schema-discovery): Use GetSchema, GetColumnSchema, GetSchemaTable, restrictions, and provider-neutral catalogue metadata.
 - [Use PostgreSQL types](https://bluetusk.io/documentation/provider/types): Read and write common, custom, array, JSON, temporal, and extension-defined PostgreSQL values from .NET.
+- [PostgreSQL 19 native REPACK](https://bluetusk.io/documentation/provider/repack): Run and monitor PostgreSQL 19 native REPACK safely from .NET.
 - [PostgreSQL pipeline mode](https://bluetusk.io/documentation/provider/pipeline-mode): Pipeline groups, protocol Sync boundaries, and ordered failures.
 - [Start PostgreSQL replication](https://bluetusk.io/documentation/provider/replication): Open a dedicated replication session, decode pgoutput, and acknowledge only durable transaction progress.
 

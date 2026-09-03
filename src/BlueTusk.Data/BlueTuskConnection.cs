@@ -126,6 +126,12 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
     /// </summary>
     public bool? SupportsSqlPgq => PhysicalSession?.Capabilities.SupportsSqlPgq;
 
+    /// <summary>
+    /// Gets whether the current physical session supports PostgreSQL's native <c>REPACK</c>
+    /// command, or <see langword="null"/> while no physical session is open.
+    /// </summary>
+    public bool? SupportsRepack => PhysicalSession?.Capabilities.SupportsRepack;
+
     public override ConnectionState State => _state;
 
     public override int ConnectionTimeout => checked((int)_settings.Timeout.TotalSeconds);

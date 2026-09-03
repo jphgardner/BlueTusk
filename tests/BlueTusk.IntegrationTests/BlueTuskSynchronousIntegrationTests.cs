@@ -25,6 +25,7 @@ public sealed class BlueTuskSynchronousIntegrationTests
             Assert.Equal(capabilities.ServerVersion.Major >= 14, capabilities.SupportsMultiranges);
             Assert.Equal(capabilities.ServerVersion.Major >= 18, capabilities.SupportsVirtualGeneratedColumns);
             Assert.Equal(capabilities.ServerVersion.Major >= 19, capabilities.SupportsSqlPgq);
+            Assert.Equal(capabilities.ServerVersion.Major >= 19, capabilities.SupportsRepack);
             Assert.False(capabilities.SupportsOAuthBearer);
 
             using var prepared = new BlueTuskCommand(

@@ -899,6 +899,79 @@ export const GUIDES: readonly GuideManifestEntry[] = [
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "slug": "repack",
+    "summary": "Run and monitor PostgreSQL 19 native REPACK safely from .NET.",
+    "keywords": [
+      "repack",
+      "maintenance",
+      "postgresql 19",
+      "bloat"
+    ],
+    "order": 105,
+    "listed": true,
+    "title": "PostgreSQL 19 native REPACK",
+    "sourcePath": "docs/ado-net/repack.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/repack.md",
+    "headings": [
+      {
+        "id": "postgresql-19-native-repack",
+        "text": "PostgreSQL 19 native REPACK",
+        "level": 1
+      },
+      {
+        "id": "repack-one-table",
+        "text": "Repack one table",
+        "level": 2
+      },
+      {
+        "id": "choose-the-operation",
+        "text": "Choose the operation",
+        "level": 2
+      },
+      {
+        "id": "monitor-progress",
+        "text": "Monitor progress",
+        "level": 2
+      },
+      {
+        "id": "production-checks",
+        "text": "Production checks",
+        "level": 2
+      }
+    ],
+    "wordCount": 686,
+    "readMinutes": 4,
+    "searchText": "PostgreSQL 19 native REPACK PostgreSQL 19 adds the native `REPACK` statement for rewriting a table and returning space occupied by dead rows to the operating system. This is the PostgreSQL command, not the separate `pg_repack` extension. BlueTusk 1.2 supports every documented PostgreSQL 19 form through `BlueTuskRepackRequest`, prevents unsupported combinations before sending SQL, and exposes live server progress from `pg_stat_progress_repack`. PostgreSQL 19 is currently Beta 3. Use this API for development and release qualification now, but wait for the digest-pinned PostgreSQL 19 GA gate before describing the combination as production-certified. Repack one table Open a dedicated connection. A repack owns that physical session until the server completes or the operation is cancelled. `CommandTimeoutSeconds = 0` disables the client timeout, which is usually the right choice for scheduled maintenance. Cancellation still sends PostgreSQL's normal cancellation request and restores the connection to a usable protocol state. Choose the operation Goal Request Rewrite one table `ForTable(\"events\", \"app\")` Keep a supported table available Set `Concurrently = true` Refresh all table statistics Set `Analyze = true` Refresh selected column statistics Set `Analyze = true` and `AnalyzeColumns = [\"tenant_id\"]` Physically order by the configured clustering index Set `UseIndex = true` Choose and remember a clustering index Set `IndexName = \"events_created_at_idx\"` Emit PostgreSQL information messages Set `Verbose = true` Process all eligible relations in the database `ForDatabase()` Process all relations with a configured clustering index `ForDatabase() with { UseIndex = true }` Table, schema, index, and column names are quoted as PostgreSQL identifiers; they are never concatenated as untrusted SQL fragments. BlueTusk sends `REPACK` over the simple protocol on a non-multiplexed connection because it is connection-affine maintenance work. For a newly introduced PostgreSQL feature wit",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>PostgreSQL 19 native REPACK</h1>\n<p>PostgreSQL 19 adds the native <code>REPACK</code> statement for rewriting a table and\nreturning space occupied by dead rows to the operating system. This is the\nPostgreSQL command, not the separate <code>pg_repack</code> extension.</p>\n<p>BlueTusk 1.2 supports every documented PostgreSQL 19 form through\n<code>BlueTuskRepackRequest</code>, prevents unsupported combinations before sending SQL,\nand exposes live server progress from <code>pg_stat_progress_repack</code>.</p>\n<blockquote>\n<p>PostgreSQL 19 is currently Beta 3. Use this API for development and release\nqualification now, but wait for the digest-pinned PostgreSQL 19 GA gate\nbefore describing the combination as production-certified.</p>\n</blockquote>\n<h2>Repack one table</h2>\n<p>Open a dedicated connection. A repack owns that physical session until the\nserver completes or the operation is cancelled.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "using BlueTusk.Data;\nusing BlueTusk.Data.Maintenance;\n\nawait using var dataSource = new BlueTuskDataSourceBuilder(connectionString).Build();\nawait using var connection = await dataSource.OpenConnectionAsync();\n\nif (connection.SupportsRepack is not true)\n{\n    throw new InvalidOperationException(\"PostgreSQL 19 or later is required.\");\n}\n\nawait connection.RepackAsync(\n    BlueTuskRepackRequest.ForTable(\"events\", \"app\") with\n    {\n        Concurrently = true,\n        Analyze = true,\n        CommandTimeoutSeconds = 0,\n    },\n    stoppingToken);\n",
+        "highlighted": "<span class=\"hljs-keyword\">using</span> BlueTusk.Data;\n<span class=\"hljs-keyword\">using</span> BlueTusk.Data.Maintenance;\n\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> dataSource = <span class=\"hljs-keyword\">new</span> BlueTuskDataSourceBuilder(connectionString).Build();\n<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> connection = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n\n<span class=\"hljs-keyword\">if</span> (connection.SupportsRepack <span class=\"hljs-keyword\">is</span> <span class=\"hljs-keyword\">not</span> <span class=\"hljs-literal\">true</span>)\n{\n    <span class=\"hljs-keyword\">throw</span> <span class=\"hljs-keyword\">new</span> InvalidOperationException(<span class=\"hljs-string\">&quot;PostgreSQL 19 or later is required.&quot;</span>);\n}\n\n<span class=\"hljs-keyword\">await</span> connection.RepackAsync(\n    BlueTuskRepackRequest.ForTable(<span class=\"hljs-string\">&quot;events&quot;</span>, <span class=\"hljs-string\">&quot;app&quot;</span>) <span class=\"hljs-keyword\">with</span>\n    {\n        Concurrently = <span class=\"hljs-literal\">true</span>,\n        Analyze = <span class=\"hljs-literal\">true</span>,\n        CommandTimeoutSeconds = <span class=\"hljs-number\">0</span>,\n    },\n    stoppingToken);\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p><code>CommandTimeoutSeconds = 0</code> disables the client timeout, which is usually the\nright choice for scheduled maintenance. Cancellation still sends PostgreSQL’s\nnormal cancellation request and restores the connection to a usable protocol\nstate.</p>\n<h2>Choose the operation</h2>\n<table>\n<thead>\n<tr>\n<th>Goal</th>\n<th>Request</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Rewrite one table</td>\n<td><code>ForTable(&quot;events&quot;, &quot;app&quot;)</code></td>\n</tr>\n<tr>\n<td>Keep a supported table available</td>\n<td>Set <code>Concurrently = true</code></td>\n</tr>\n<tr>\n<td>Refresh all table statistics</td>\n<td>Set <code>Analyze = true</code></td>\n</tr>\n<tr>\n<td>Refresh selected column statistics</td>\n<td>Set <code>Analyze = true</code> and <code>AnalyzeColumns = [&quot;tenant_id&quot;]</code></td>\n</tr>\n<tr>\n<td>Physically order by the configured clustering index</td>\n<td>Set <code>UseIndex = true</code></td>\n</tr>\n<tr>\n<td>Choose and remember a clustering index</td>\n<td>Set <code>IndexName = &quot;events_created_at_idx&quot;</code></td>\n</tr>\n<tr>\n<td>Emit PostgreSQL information messages</td>\n<td>Set <code>Verbose = true</code></td>\n</tr>\n<tr>\n<td>Process all eligible relations in the database</td>\n<td><code>ForDatabase()</code></td>\n</tr>\n<tr>\n<td>Process all relations with a configured clustering index</td>\n<td><code>ForDatabase() with { UseIndex = true }</code></td>\n</tr>\n</tbody>\n</table>\n<p>Table, schema, index, and column names are quoted as PostgreSQL identifiers;\nthey are never concatenated as untrusted SQL fragments. BlueTusk sends\n<code>REPACK</code> over the simple protocol on a non-multiplexed connection because it is\nconnection-affine maintenance work.</p>\n<p>For a newly introduced PostgreSQL feature without a BlueTusk convenience API,\nuse a parameterized <code>BlueTuskCommand</code>. BlueTusk does not maintain an allow-list\nof SQL statements, so native PostgreSQL grammar remains available immediately.</p>\n<h2>Monitor progress</h2>\n<p>Poll from a second connection while the maintenance connection is busy:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "await using var observer = await dataSource.OpenConnectionAsync();\n\nforeach (var operation in await observer.GetRepackProgressAsync(stoppingToken))\n{\n    logger.LogInformation(\n        \"REPACK pid {Pid}: {Phase}, heap scan {Percent:P0}, {Indexes} indexes rebuilt\",\n        operation.ProcessId,\n        operation.Phase,\n        operation.HeapScanPercent is { } percent ? percent / 100 : null,\n        operation.IndexRebuildCount);\n}\n",
+        "highlighted": "<span class=\"hljs-keyword\">await</span> <span class=\"hljs-keyword\">using</span> <span class=\"hljs-keyword\">var</span> observer = <span class=\"hljs-keyword\">await</span> dataSource.OpenConnectionAsync();\n\n<span class=\"hljs-keyword\">foreach</span> (<span class=\"hljs-keyword\">var</span> operation <span class=\"hljs-keyword\">in</span> <span class=\"hljs-keyword\">await</span> observer.GetRepackProgressAsync(stoppingToken))\n{\n    logger.LogInformation(\n        <span class=\"hljs-string\">&quot;REPACK pid {Pid}: {Phase}, heap scan {Percent:P0}, {Indexes} indexes rebuilt&quot;</span>,\n        operation.ProcessId,\n        operation.Phase,\n        operation.HeapScanPercent <span class=\"hljs-keyword\">is</span> { } percent ? percent / <span class=\"hljs-number\">100</span> : <span class=\"hljs-literal\">null</span>,\n        operation.IndexRebuildCount);\n}\n",
+        "language": "csharp"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The returned model includes the database and relation OIDs, command, phase,\nindex OID, tuple counters, heap-block counters, index rebuild count, and a\nbounded <code>HeapScanPercent</code> when PostgreSQL reports a block total. A completed\noperation disappears from the view, so store any history your operations team\nneeds outside PostgreSQL.</p>\n<h2>Production checks</h2>\n<p>Before scheduling <code>REPACK</code>:</p>\n<ol>\n<li>Grant the execution role <code>MAINTAIN</code> on each target table.</li>\n<li>Budget free disk for a complete table and index copy. A sort can require up\nto roughly twice the table size plus its indexes.</li>\n<li>Use <code>CONCURRENTLY</code> only for a logged, non-partitioned user table with a\nprimary key or index-based replica identity.</li>\n<li>Reserve a <code>max_repack_replication_slots</code> slot and enough WAL capacity for a\nconcurrent run.</li>\n<li>Choose a quiet period. Concurrent mode shortens the final exclusive lock,\nbut it still needs one to swap relation files and catch-up work can extend it.</li>\n<li>Alert on a stalled phase, rapidly growing WAL or temporary storage, lock\nwaits, cancellation, and server errors.</li>\n<li>Verify table row counts and application health after completion.</li>\n</ol>\n<p>Database-wide and concurrent operations cannot run inside a transaction.\nPostgreSQL also rejects a partitioned-table repack inside a transaction. The\nBlueTusk request validator rejects transaction and option combinations it can\nprove invalid; relation-specific eligibility remains authoritative on the\nserver.</p>\n<p>The command’s full behavior and restrictions are defined by the PostgreSQL 19\n<a href=\"https://www.postgresql.org/docs/19/sql-repack.html\" target=\"_blank\" rel=\"noreferrer\"><code>REPACK</code> documentation</a>,\nand the progress columns and phases are defined by\n<a href=\"https://www.postgresql.org/docs/19/progress-reporting.html#REPACK-PROGRESS-REPORTING\" target=\"_blank\" rel=\"noreferrer\"><code>pg_stat_progress_repack</code></a>.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
     "slug": "pipeline-mode",
     "summary": "Pipeline groups, protocol Sync boundaries, and ordered failures.",
     "keywords": [
@@ -1073,13 +1146,13 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 502,
+    "wordCount": 543,
     "readMinutes": 3,
     "searchText": "ADO.NET V1 compatibility This matrix is the V1 contract for provider-neutral ADO.NET consumers. A capability marked excluded fails explicitly; it is not silently approximated. The live acceptance suite is `tests/BlueTusk.CompatibilityTests/AdoNetV1CompatibilityTests.cs`. Surface V1 status Contract Text commands Supported `CommandType.Text`, named or positional parameters, sync/async execution and local transactions. Stored procedures and functions Supported through SQL text Use `CALL ...` for procedures and `SELECT ...` for functions. PostgreSQL `OUT` and `INOUT` values are read from returned result rows. `CommandType.StoredProcedure` Excluded Setting it throws `NotSupportedException`; BlueTusk does not invent a provider-specific routine-name convention. Parameter directions `Input` supported `Output`, `InputOutput` and `ReturnValue` throw `NotSupportedException`. Use PostgreSQL result rows for output values. Local transactions Supported `BeginTransaction`, command enlistment, commit, rollback, savepoints and async equivalents. `System.Transactions` ambient/distributed enlistment Excluded V1 does not promise promotable, distributed or ambient enlistment. Keep work inside an explicit `DbTransaction`. `CommandBehavior.Default` Supported All rows and result sets are buffered unless sequential access is selected. `SingleRow` Supported At most the first row is exposed. `SingleResult` Supported `NextResult` returns false after the first result set. `SequentialAccess` Supported Uses the incremental portal reader; combine with `SingleRow`, `SingleResult` or `CloseConnection` as needed. `CloseConnection` Supported Closing or disposing the reader closes its logical connection. `SchemaOnly` and `KeyInfo` Excluded Both throw `NotSupportedException`; they are never silently ignored. Reader schema Supported `GetColumnSchema`, `GetSchemaTable` and async equivalents expose names, ordinals, CLR/provider types and available origin metadata. Connection schema Supported `MetaDataCollec",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>ADO.NET V1 compatibility</h1>\n<p>This matrix is the V1 contract for provider-neutral ADO.NET consumers. A\ncapability marked excluded fails explicitly; it is not silently approximated.\nThe live acceptance suite is\n<code>tests/BlueTusk.CompatibilityTests/AdoNetV1CompatibilityTests.cs</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Surface</th>\n<th>V1 status</th>\n<th>Contract</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Text commands</td>\n<td>Supported</td>\n<td><code>CommandType.Text</code>, named or positional parameters, sync/async execution and local transactions.</td>\n</tr>\n<tr>\n<td>Stored procedures and functions</td>\n<td>Supported through SQL text</td>\n<td>Use <code>CALL ...</code> for procedures and <code>SELECT ...</code> for functions. PostgreSQL <code>OUT</code> and <code>INOUT</code> values are read from returned result rows.</td>\n</tr>\n<tr>\n<td><code>CommandType.StoredProcedure</code></td>\n<td>Excluded</td>\n<td>Setting it throws <code>NotSupportedException</code>; BlueTusk does not invent a provider-specific routine-name convention.</td>\n</tr>\n<tr>\n<td>Parameter directions</td>\n<td><code>Input</code> supported</td>\n<td><code>Output</code>, <code>InputOutput</code> and <code>ReturnValue</code> throw <code>NotSupportedException</code>. Use PostgreSQL result rows for output values.</td>\n</tr>\n<tr>\n<td>Local transactions</td>\n<td>Supported</td>\n<td><code>BeginTransaction</code>, command enlistment, commit, rollback, savepoints and async equivalents.</td>\n</tr>\n<tr>\n<td><code>System.Transactions</code> ambient/distributed enlistment</td>\n<td>Excluded</td>\n<td>V1 does not promise promotable, distributed or ambient enlistment. Keep work inside an explicit <code>DbTransaction</code>.</td>\n</tr>\n<tr>\n<td><code>CommandBehavior.Default</code></td>\n<td>Supported</td>\n<td>All rows and result sets are buffered unless sequential access is selected.</td>\n</tr>\n<tr>\n<td><code>SingleRow</code></td>\n<td>Supported</td>\n<td>At most the first row is exposed.</td>\n</tr>\n<tr>\n<td><code>SingleResult</code></td>\n<td>Supported</td>\n<td><code>NextResult</code> returns false after the first result set.</td>\n</tr>\n<tr>\n<td><code>SequentialAccess</code></td>\n<td>Supported</td>\n<td>Uses the incremental portal reader; combine with <code>SingleRow</code>, <code>SingleResult</code> or <code>CloseConnection</code> as needed.</td>\n</tr>\n<tr>\n<td><code>CloseConnection</code></td>\n<td>Supported</td>\n<td>Closing or disposing the reader closes its logical connection.</td>\n</tr>\n<tr>\n<td><code>SchemaOnly</code> and <code>KeyInfo</code></td>\n<td>Excluded</td>\n<td>Both throw <code>NotSupportedException</code>; they are never silently ignored.</td>\n</tr>\n<tr>\n<td>Reader schema</td>\n<td>Supported</td>\n<td><code>GetColumnSchema</code>, <code>GetSchemaTable</code> and async equivalents expose names, ordinals, CLR/provider types and available origin metadata.</td>\n</tr>\n<tr>\n<td>Connection schema</td>\n<td>Supported</td>\n<td><code>MetaDataCollections</code>, <code>DataSourceInformation</code>, <code>DataTypes</code>, <code>Restrictions</code>, <code>ReservedWords</code>, <code>Databases</code>, <code>Schemas</code>, <code>Tables</code> and <code>Columns</code>. Live catalogue collections require an open connection.</td>\n</tr>\n<tr>\n<td>Dapper</td>\n<td>Supported</td>\n<td>Parameter binding, command execution and POCO materialisation are covered by live acceptance tests.</td>\n</tr>\n<tr>\n<td>Dependency injection</td>\n<td>Supported</td>\n<td><code>BlueTusk.Data.DependencyInjection</code> registers one shared <code>BlueTuskDataSource</code> as both its concrete type and <code>DbDataSource</code>.</td>\n</tr>\n<tr>\n<td>Readiness health check</td>\n<td>Supported</td>\n<td>The DI integration registers a <code>bluetusk</code> check tagged <code>bluetusk</code> and <code>ready</code>; it opens a connection and executes <code>SELECT 1</code>.</td>\n</tr>\n</tbody>\n</table>\n<h2>Host registration</h2>\n"
+        "html": "<h1>ADO.NET V1 compatibility</h1>\n<p>This matrix is the V1 contract for provider-neutral ADO.NET consumers. A\ncapability marked excluded fails explicitly; it is not silently approximated.\nThe live acceptance suite is\n<code>tests/BlueTusk.CompatibilityTests/AdoNetV1CompatibilityTests.cs</code>.</p>\n<table>\n<thead>\n<tr>\n<th>Surface</th>\n<th>V1 status</th>\n<th>Contract</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Text commands</td>\n<td>Supported</td>\n<td><code>CommandType.Text</code>, named or positional parameters, sync/async execution and local transactions.</td>\n</tr>\n<tr>\n<td>Stored procedures and functions</td>\n<td>Supported through SQL text</td>\n<td>Use <code>CALL ...</code> for procedures and <code>SELECT ...</code> for functions. PostgreSQL <code>OUT</code> and <code>INOUT</code> values are read from returned result rows.</td>\n</tr>\n<tr>\n<td><code>CommandType.StoredProcedure</code></td>\n<td>Excluded</td>\n<td>Setting it throws <code>NotSupportedException</code>; BlueTusk does not invent a provider-specific routine-name convention.</td>\n</tr>\n<tr>\n<td>Parameter directions</td>\n<td><code>Input</code> supported</td>\n<td><code>Output</code>, <code>InputOutput</code> and <code>ReturnValue</code> throw <code>NotSupportedException</code>. Use PostgreSQL result rows for output values.</td>\n</tr>\n<tr>\n<td>Local transactions</td>\n<td>Supported</td>\n<td><code>BeginTransaction</code>, command enlistment, commit, rollback, savepoints and async equivalents.</td>\n</tr>\n<tr>\n<td><code>System.Transactions</code> ambient/distributed enlistment</td>\n<td>Excluded</td>\n<td>V1 does not promise promotable, distributed or ambient enlistment. Keep work inside an explicit <code>DbTransaction</code>.</td>\n</tr>\n<tr>\n<td><code>CommandBehavior.Default</code></td>\n<td>Supported</td>\n<td>All rows and result sets are buffered unless sequential access is selected.</td>\n</tr>\n<tr>\n<td><code>SingleRow</code></td>\n<td>Supported</td>\n<td>At most the first row is exposed.</td>\n</tr>\n<tr>\n<td><code>SingleResult</code></td>\n<td>Supported</td>\n<td><code>NextResult</code> returns false after the first result set.</td>\n</tr>\n<tr>\n<td><code>SequentialAccess</code></td>\n<td>Supported</td>\n<td>Uses the incremental portal reader; combine with <code>SingleRow</code>, <code>SingleResult</code> or <code>CloseConnection</code> as needed.</td>\n</tr>\n<tr>\n<td><code>CloseConnection</code></td>\n<td>Supported</td>\n<td>Closing or disposing the reader closes its logical connection.</td>\n</tr>\n<tr>\n<td><code>SchemaOnly</code> and <code>KeyInfo</code></td>\n<td>Excluded</td>\n<td>Both throw <code>NotSupportedException</code>; they are never silently ignored.</td>\n</tr>\n<tr>\n<td>Reader schema</td>\n<td>Supported</td>\n<td><code>GetColumnSchema</code>, <code>GetSchemaTable</code> and async equivalents expose names, ordinals, CLR/provider types and available origin metadata.</td>\n</tr>\n<tr>\n<td>Connection schema</td>\n<td>Supported</td>\n<td><code>MetaDataCollections</code>, <code>DataSourceInformation</code>, <code>DataTypes</code>, <code>Restrictions</code>, <code>ReservedWords</code>, <code>Databases</code>, <code>Schemas</code>, <code>Tables</code> and <code>Columns</code>. Live catalogue collections require an open connection.</td>\n</tr>\n<tr>\n<td>Dapper</td>\n<td>Supported</td>\n<td>Parameter binding, command execution and POCO materialisation are covered by live acceptance tests.</td>\n</tr>\n<tr>\n<td>Dependency injection</td>\n<td>Supported</td>\n<td><code>BlueTusk.Data.DependencyInjection</code> registers one shared <code>BlueTuskDataSource</code> as both its concrete type and <code>DbDataSource</code>.</td>\n</tr>\n<tr>\n<td>Readiness health check</td>\n<td>Supported</td>\n<td>The DI integration registers a <code>bluetusk</code> check tagged <code>bluetusk</code> and <code>ready</code>; it opens a connection and executes <code>SELECT 1</code>.</td>\n</tr>\n<tr>\n<td>PostgreSQL 19 native <code>REPACK</code></td>\n<td>Supported on PostgreSQL 19+</td>\n<td>Typed sync/async execution, every documented command shape, safe identifier quoting, non-multiplexed routing, cancellation, and <code>pg_stat_progress_repack</code> monitoring. PostgreSQL 19 GA certification remains a release gate while 19 is in beta.</td>\n</tr>\n</tbody>\n</table>\n<h2>Host registration</h2>\n"
       },
       {
         "kind": "code",
@@ -1271,7 +1344,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1091,
+    "order": 1092,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1309,7 +1382,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1092,
+    "order": 1093,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1357,7 +1430,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1106,
+    "order": 1107,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1534,7 +1607,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1132,
+    "order": 1133,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",

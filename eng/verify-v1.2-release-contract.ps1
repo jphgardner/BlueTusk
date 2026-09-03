@@ -136,6 +136,7 @@ foreach ($flag in @(
         'readOnlyDoctor',
         'kubernetesOperator',
         'controlPlaneFleetOperations',
+        'postgresql19NativeRepack',
         'graphVariableLengthPaths',
         'graphUndirectedPatterns',
         'graphMultiLabelExpressions'))
@@ -143,6 +144,18 @@ foreach ($flag in @(
     if ($contract.requiredProductWork.PSObject.Properties[$flag].Value -ne $true)
     {
         throw "Required 1.2 product-work flag '$flag' is not complete."
+    }
+}
+
+foreach ($path in @(
+        'src/BlueTusk.Data/Maintenance/BlueTuskRepack.cs',
+        'tests/BlueTusk.Data.Tests/BlueTuskRepackTests.cs',
+        'tests/BlueTusk.IntegrationTests/BlueTuskRepackIntegrationTests.cs',
+        'docs/ado-net/repack.md'))
+{
+    if (-not (Test-Path -LiteralPath (Join-Path $repositoryRoot $path) -PathType Leaf))
+    {
+        throw "Required PostgreSQL 19 native REPACK asset '$path' is missing."
     }
 }
 

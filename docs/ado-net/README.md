@@ -33,6 +33,7 @@ lifetime so commands and logical connections share its bounded physical pool.
 | Large field without buffering the complete row   | [Sequential readers](sequential-readers.md)  |
 | Primary/standby routing                          | [Multi-host](multi-host.md)                  |
 | High-concurrency session-neutral commands        | [Pooling and multiplexing](pooling.md)       |
+| Reclaim table space with PostgreSQL 19            | [Native REPACK](repack.md)                   |
 
 The [compatibility matrix](compatibility.md) records supported and explicitly
 excluded ADO.NET, Dapper, dependency-injection, schema, and routine surfaces.

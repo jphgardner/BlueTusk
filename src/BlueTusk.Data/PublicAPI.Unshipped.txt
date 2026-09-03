@@ -1,1 +1,75 @@
 #nullable enable
+BlueTusk.Data.BlueTuskConnection.SupportsRepack.get -> bool?
+BlueTusk.Data.Maintenance.BlueTuskRepackExtensions
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.<Clone>$() -> BlueTusk.Data.Maintenance.BlueTuskRepackProgress!
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.BlueTuskRepackProgress(int ProcessId, long DatabaseOid, string? DatabaseName, long RelationOid, string! Command, string! Phase, long RepackIndexRelationOid, long HeapTuplesScanned, long HeapTuplesInserted, long HeapTuplesUpdated, long HeapTuplesDeleted, long HeapBlocksTotal, long HeapBlocksScanned, long IndexRebuildCount) -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.Command.get -> string!
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.Command.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.DatabaseName.get -> string?
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.DatabaseName.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.DatabaseOid.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.DatabaseOid.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.Deconstruct(out int ProcessId, out long DatabaseOid, out string? DatabaseName, out long RelationOid, out string! Command, out string! Phase, out long RepackIndexRelationOid, out long HeapTuplesScanned, out long HeapTuplesInserted, out long HeapTuplesUpdated, out long HeapTuplesDeleted, out long HeapBlocksTotal, out long HeapBlocksScanned, out long IndexRebuildCount) -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.Equals(BlueTusk.Data.Maintenance.BlueTuskRepackProgress? other) -> bool
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapBlocksScanned.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapBlocksScanned.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapBlocksTotal.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapBlocksTotal.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapScanPercent.get -> double?
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesDeleted.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesDeleted.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesInserted.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesInserted.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesScanned.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesScanned.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesUpdated.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.HeapTuplesUpdated.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.IndexRebuildCount.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.IndexRebuildCount.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.Phase.get -> string!
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.Phase.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.ProcessId.get -> int
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.ProcessId.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.RelationOid.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.RelationOid.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.RepackIndexRelationOid.get -> long
+BlueTusk.Data.Maintenance.BlueTuskRepackProgress.RepackIndexRelationOid.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.<Clone>$() -> BlueTusk.Data.Maintenance.BlueTuskRepackRequest!
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Analyze.get -> bool
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Analyze.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.AnalyzeColumns.get -> System.Collections.Generic.IReadOnlyList<string!>!
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.AnalyzeColumns.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.BlueTuskRepackRequest() -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.CommandTimeoutSeconds.get -> int
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.CommandTimeoutSeconds.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Concurrently.get -> bool
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Concurrently.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Equals(BlueTusk.Data.Maintenance.BlueTuskRepackRequest? other) -> bool
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.IndexName.get -> string?
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.IndexName.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.SchemaName.get -> string?
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.SchemaName.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.TableName.get -> string?
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.TableName.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.UseIndex.get -> bool
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.UseIndex.init -> void
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Verbose.get -> bool
+BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Verbose.init -> void
+override BlueTusk.Data.Maintenance.BlueTuskRepackProgress.Equals(object? obj) -> bool
+override BlueTusk.Data.Maintenance.BlueTuskRepackProgress.GetHashCode() -> int
+override BlueTusk.Data.Maintenance.BlueTuskRepackProgress.ToString() -> string!
+override BlueTusk.Data.Maintenance.BlueTuskRepackRequest.Equals(object? obj) -> bool
+override BlueTusk.Data.Maintenance.BlueTuskRepackRequest.GetHashCode() -> int
+override BlueTusk.Data.Maintenance.BlueTuskRepackRequest.ToString() -> string!
+static BlueTusk.Data.Maintenance.BlueTuskRepackExtensions.GetRepackProgress(this BlueTusk.Data.BlueTuskConnection! connection) -> System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Maintenance.BlueTuskRepackProgress!>!
+static BlueTusk.Data.Maintenance.BlueTuskRepackExtensions.GetRepackProgressAsync(this BlueTusk.Data.BlueTuskConnection! connection, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<BlueTusk.Data.Maintenance.BlueTuskRepackProgress!>!>!
+static BlueTusk.Data.Maintenance.BlueTuskRepackExtensions.Repack(this BlueTusk.Data.BlueTuskConnection! connection, BlueTusk.Data.Maintenance.BlueTuskRepackRequest! request) -> void
+static BlueTusk.Data.Maintenance.BlueTuskRepackExtensions.RepackAsync(this BlueTusk.Data.BlueTuskConnection! connection, BlueTusk.Data.Maintenance.BlueTuskRepackRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+static BlueTusk.Data.Maintenance.BlueTuskRepackProgress.operator !=(BlueTusk.Data.Maintenance.BlueTuskRepackProgress? left, BlueTusk.Data.Maintenance.BlueTuskRepackProgress? right) -> bool
+static BlueTusk.Data.Maintenance.BlueTuskRepackProgress.operator ==(BlueTusk.Data.Maintenance.BlueTuskRepackProgress? left, BlueTusk.Data.Maintenance.BlueTuskRepackProgress? right) -> bool
+static BlueTusk.Data.Maintenance.BlueTuskRepackRequest.ForDatabase() -> BlueTusk.Data.Maintenance.BlueTuskRepackRequest!
+static BlueTusk.Data.Maintenance.BlueTuskRepackRequest.ForTable(string! tableName, string? schemaName = null) -> BlueTusk.Data.Maintenance.BlueTuskRepackRequest!
+static BlueTusk.Data.Maintenance.BlueTuskRepackRequest.operator !=(BlueTusk.Data.Maintenance.BlueTuskRepackRequest? left, BlueTusk.Data.Maintenance.BlueTuskRepackRequest? right) -> bool
+static BlueTusk.Data.Maintenance.BlueTuskRepackRequest.operator ==(BlueTusk.Data.Maintenance.BlueTuskRepackRequest? left, BlueTusk.Data.Maintenance.BlueTuskRepackRequest? right) -> bool

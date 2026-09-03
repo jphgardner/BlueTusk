@@ -204,7 +204,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "core",
       "reference"
     ],
-    "order": 1056,
+    "order": 1057,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",

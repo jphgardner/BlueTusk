@@ -28,6 +28,12 @@
     "every release candidate",
     "19.0 general availability"
   ],
+  "requiredFeatureEvidence": {
+    "nativeRepackApi": "src/BlueTusk.Data/Maintenance/BlueTuskRepack.cs",
+    "nativeRepackUnitTests": "tests/BlueTusk.Data.Tests/BlueTuskRepackTests.cs",
+    "nativeRepackIntegrationTests": "tests/BlueTusk.IntegrationTests/BlueTuskRepackIntegrationTests.cs",
+    "nativeRepackGuide": "docs/ado-net/repack.md"
+  },
   "generalAvailability": {
     "status": "pending",
     "version": null,

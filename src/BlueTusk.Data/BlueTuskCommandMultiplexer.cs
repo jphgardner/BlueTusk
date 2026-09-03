@@ -1015,6 +1015,7 @@ internal static class BlueTuskMultiplexingClassifier
         "PREPARE",
         "RELEASE",
         "RESET",
+        "REPACK",
         "ROLLBACK",
         "SAVEPOINT",
         "SET",

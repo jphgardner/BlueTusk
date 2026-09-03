@@ -22,8 +22,9 @@ For every later beta and every release candidate:
 
 1. Pin the official image by digest and record its release date.
 2. Run the full PostgreSQL 15–19 solution matrix at the exact BlueTusk commit.
-3. Run the SQL/PGQ migration, discovery, typed-query, raw-SQL, reverse
-   engineering, performance, replication and stress subsets.
+3. Run the SQL/PGQ migration, discovery, typed-query, raw-SQL, native `REPACK`
+   execution/progress, reverse-engineering, performance, replication and
+   stress subsets.
 4. Review the PostgreSQL release notes for protocol, catalogue, type, grammar
    and migration changes.
 5. Archive test results, server version, image digest, source commit and
@@ -33,6 +34,14 @@ The [typed SQL/PGQ boundary](graph/README.md#exact-v1-typed-subset-boundary) rem
 fixed: linear typed paths and direct scalar predicates are supported; the rest
 stays available through parameterised raw SQL. Unsupported typed forms fail
 without a string-concatenation fallback.
+
+BlueTusk 1.2 also has a first-class API for PostgreSQL 19's native `REPACK`
+statement, including synchronous and asynchronous execution, every documented
+table/database, `USING INDEX`, `ANALYZE`, `VERBOSE`, and `CONCURRENTLY` shape,
+and `pg_stat_progress_repack` monitoring. The Beta 3 integration test reclaims
+a table, refreshes selected statistics, executes the concurrent path, and
+verifies data preservation. This is pre-GA compatibility evidence and must be
+repeated against every later milestone and the final digest-pinned GA image.
 
 Stable publication invokes
 `verify-postgresql19-programme.ps1 -RequireGeneralAvailability`. That gate

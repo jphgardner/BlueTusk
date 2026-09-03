@@ -110,6 +110,15 @@
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "slug": "repack",
+    "source": "docs/ado-net/repack.md",
+    "summary": "Run and monitor PostgreSQL 19 native REPACK safely from .NET.",
+    "keywords": ["repack", "maintenance", "postgresql 19", "bloat"],
+    "order": 105
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
     "slug": "pipeline-mode",
     "source": "docs/pipeline-mode.md",
     "summary": "Pipeline groups, protocol Sync boundaries, and ordered failures.",

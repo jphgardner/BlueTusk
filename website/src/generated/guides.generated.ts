@@ -456,9 +456,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 1378,
+    "wordCount": 1389,
     "readMinutes": 7,
-    "searchText": "ADO.NET Use `BlueTusk.Data` when you want direct PostgreSQL commands, transactions, batches, COPY, notifications, or replication from .NET. If your application is primarily LINQ and change tracking, start with the [EF Core guide](../ef-core/README.md). Run one query Create one long-lived data source and short-lived commands: Values are bound separately from SQL. Keep the data source for the application lifetime so commands and logical connections share its bounded physical pool. Choose the API by task Task API or guide One command without connection-affine state `dataSource.CreateCommand(...)` Several commands in one transaction Open a connection, then begin a transaction. Several independent statements in one round trip [Batches](batches.md) Bulk import or export [COPY](copy.md) Large field without buffering the complete row [Sequential readers](sequential-readers.md) Primary/standby routing [Multi-host](multi-host.md) High-concurrency session-neutral commands [Pooling and multiplexing](pooling.md) The [compatibility matrix](compatibility.md) records supported and explicitly excluded ADO.NET, Dapper, dependency-injection, schema, and routine surfaces. How the provider works Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths. Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers SCRAM channel binding when PostgreSQL offers it. PostgreSQL GSSAPI/Kerberos and SSPI requests use the operating system security context with mutual authentication. Legacy PostgreSQL MD5 challenges are supported for compatibility, but MD5 is deprecated by PostgreSQL and should not be selected for new deployments. A server request for cleartext password authentication is accepted over an established TLS connection. It is rejected"
+    "searchText": "ADO.NET Use `BlueTusk.Data` when you want direct PostgreSQL commands, transactions, batches, COPY, notifications, or replication from .NET. If your application is primarily LINQ and change tracking, start with the [EF Core guide](../ef-core/README.md). Run one query Create one long-lived data source and short-lived commands: Values are bound separately from SQL. Keep the data source for the application lifetime so commands and logical connections share its bounded physical pool. Choose the API by task Task API or guide One command without connection-affine state `dataSource.CreateCommand(...)` Several commands in one transaction Open a connection, then begin a transaction. Several independent statements in one round trip [Batches](batches.md) Bulk import or export [COPY](copy.md) Large field without buffering the complete row [Sequential readers](sequential-readers.md) Primary/standby routing [Multi-host](multi-host.md) High-concurrency session-neutral commands [Pooling and multiplexing](pooling.md) Reclaim table space with PostgreSQL 19 [Native REPACK](repack.md) The [compatibility matrix](compatibility.md) records supported and explicitly excluded ADO.NET, Dapper, dependency-injection, schema, and routine surfaces. How the provider works Build one long-lived `BlueTuskDataSource` per distinct application configuration. The data source owns physical pooling, registered codecs, and its runtime PostgreSQL catalogue. Connections created directly with `new BlueTuskConnection(...)` are unpooled convenience/compatibility paths. Authentication defaults to TLS certificate verification with SCRAM-SHA-256 and prefers SCRAM channel binding when PostgreSQL offers it. PostgreSQL GSSAPI/Kerberos and SSPI requests use the operating system security context with mutual authentication. Legacy PostgreSQL MD5 challenges are supported for compatibility, but MD5 is deprecated by PostgreSQL and should not be selected for new deployments. A server request for cleartext password authenticat"
   },
   {
     "category": "getting-started",
@@ -1003,6 +1003,53 @@ export const GUIDES: readonly GuideIndexEntry[] = [
   {
     "category": "provider",
     "categoryLabel": "Provider",
+    "slug": "repack",
+    "summary": "Run and monitor PostgreSQL 19 native REPACK safely from .NET.",
+    "keywords": [
+      "repack",
+      "maintenance",
+      "postgresql 19",
+      "bloat"
+    ],
+    "order": 105,
+    "listed": true,
+    "title": "PostgreSQL 19 native REPACK",
+    "sourcePath": "docs/ado-net/repack.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ado-net/repack.md",
+    "headings": [
+      {
+        "id": "postgresql-19-native-repack",
+        "text": "PostgreSQL 19 native REPACK",
+        "level": 1
+      },
+      {
+        "id": "repack-one-table",
+        "text": "Repack one table",
+        "level": 2
+      },
+      {
+        "id": "choose-the-operation",
+        "text": "Choose the operation",
+        "level": 2
+      },
+      {
+        "id": "monitor-progress",
+        "text": "Monitor progress",
+        "level": 2
+      },
+      {
+        "id": "production-checks",
+        "text": "Production checks",
+        "level": 2
+      }
+    ],
+    "wordCount": 686,
+    "readMinutes": 4,
+    "searchText": "PostgreSQL 19 native REPACK PostgreSQL 19 adds the native `REPACK` statement for rewriting a table and returning space occupied by dead rows to the operating system. This is the PostgreSQL command, not the separate `pg_repack` extension. BlueTusk 1.2 supports every documented PostgreSQL 19 form through `BlueTuskRepackRequest`, prevents unsupported combinations before sending SQL, and exposes live server progress from `pg_stat_progress_repack`. PostgreSQL 19 is currently Beta 3. Use this API for development and release qualification now, but wait for the digest-pinned PostgreSQL 19 GA gate before describing the combination as production-certified. Repack one table Open a dedicated connection. A repack owns that physical session until the server completes or the operation is cancelled. `CommandTimeoutSeconds = 0` disables the client timeout, which is usually the right choice for scheduled maintenance. Cancellation still sends PostgreSQL's normal cancellation request and restores the connection to a usable protocol state. Choose the operation Goal Request Rewrite one table `ForTable(\"events\", \"app\")` Keep a supported table available Set `Concurrently = true` Refresh all table statistics Set `Analyze = true` Refresh selected column statistics Set `Analyze = true` and `AnalyzeColumns = [\"tenant_id\"]` Physically order by the configured clustering index Set `UseIndex = true` Choose and remember a clustering index Set `IndexName = \"events_created_at_idx\"` Emit PostgreSQL information messages Set `Verbose = true` Process all eligible relations in the database `ForDatabase()` Process all relations with a configured clustering index `ForDatabase() with { UseIndex = true }` Table, schema, index, and column names are quoted as PostgreSQL identifiers; they are never concatenated as untrusted SQL fragments. BlueTusk sends `REPACK` over the simple protocol on a non-multiplexed connection because it is connection-affine maintenance work. For a newly introduced PostgreSQL feature wit"
+  },
+  {
+    "category": "provider",
+    "categoryLabel": "Provider",
     "slug": "pipeline-mode",
     "summary": "Pipeline groups, protocol Sync boundaries, and ordered failures.",
     "keywords": [
@@ -1115,7 +1162,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 502,
+    "wordCount": 543,
     "readMinutes": 3,
     "searchText": "ADO.NET V1 compatibility This matrix is the V1 contract for provider-neutral ADO.NET consumers. A capability marked excluded fails explicitly; it is not silently approximated. The live acceptance suite is `tests/BlueTusk.CompatibilityTests/AdoNetV1CompatibilityTests.cs`. Surface V1 status Contract Text commands Supported `CommandType.Text`, named or positional parameters, sync/async execution and local transactions. Stored procedures and functions Supported through SQL text Use `CALL ...` for procedures and `SELECT ...` for functions. PostgreSQL `OUT` and `INOUT` values are read from returned result rows. `CommandType.StoredProcedure` Excluded Setting it throws `NotSupportedException`; BlueTusk does not invent a provider-specific routine-name convention. Parameter directions `Input` supported `Output`, `InputOutput` and `ReturnValue` throw `NotSupportedException`. Use PostgreSQL result rows for output values. Local transactions Supported `BeginTransaction`, command enlistment, commit, rollback, savepoints and async equivalents. `System.Transactions` ambient/distributed enlistment Excluded V1 does not promise promotable, distributed or ambient enlistment. Keep work inside an explicit `DbTransaction`. `CommandBehavior.Default` Supported All rows and result sets are buffered unless sequential access is selected. `SingleRow` Supported At most the first row is exposed. `SingleResult` Supported `NextResult` returns false after the first result set. `SequentialAccess` Supported Uses the incremental portal reader; combine with `SingleRow`, `SingleResult` or `CloseConnection` as needed. `CloseConnection` Supported Closing or disposing the reader closes its logical connection. `SchemaOnly` and `KeyInfo` Excluded Both throw `NotSupportedException`; they are never silently ignored. Reader schema Supported `GetColumnSchema`, `GetSchemaTable` and async equivalents expose names, ordinals, CLR/provider types and available origin metadata. Connection schema Supported `MetaDataCollec"
   },
@@ -1225,7 +1272,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1091,
+    "order": 1092,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1257,7 +1304,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1092,
+    "order": 1093,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1293,7 +1340,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1106,
+    "order": 1107,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1354,7 +1401,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1132,
+    "order": 1133,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
@@ -1519,7 +1566,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "core",
       "reference"
     ],
-    "order": 1056,
+    "order": 1057,
     "title": "Entity Framework Core",
     "sourcePath": "docs/ef-core/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/ef-core/reference.md",
@@ -2425,7 +2472,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1051,
+    "order": 1052,
     "title": "Control Plane API and format compatibility",
     "sourcePath": "docs/control-plane/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/api-compatibility.md",
@@ -2452,7 +2499,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "plane",
       "reference"
     ],
-    "order": 1052,
+    "order": 1053,
     "title": "BlueTusk Control Plane and Dashboard",
     "sourcePath": "docs/control-plane/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/reference.md",
@@ -2525,7 +2572,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1053,
+    "order": 1054,
     "title": "BlueTusk Control Plane 0.1.0-preview.1 release notes",
     "sourcePath": "docs/control-plane/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/release-notes-0.1.0-preview.1.md",
@@ -2571,7 +2618,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1054,
+    "order": 1055,
     "title": "BlueTusk Control Plane 1.0.0 release record",
     "sourcePath": "docs/control-plane/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/control-plane/release-notes-1.0.0.md",
@@ -2598,7 +2645,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1068,
+    "order": 1069,
     "title": "Live public API compatibility",
     "sourcePath": "docs/live/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/api-compatibility.md",
@@ -2625,7 +2672,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1069,
+    "order": 1070,
     "title": "Live format compatibility",
     "sourcePath": "docs/live/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/format-compatibility.md",
@@ -2651,7 +2698,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "live",
       "reference"
     ],
-    "order": 1070,
+    "order": 1071,
     "title": "BlueTusk Live",
     "sourcePath": "docs/live/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/reference.md",
@@ -2743,7 +2790,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1071,
+    "order": 1072,
     "title": "BlueTusk Live 0.1.0-preview.1",
     "sourcePath": "docs/live/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-0.1.0-preview.1.md",
@@ -2793,7 +2840,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1072,
+    "order": 1073,
     "title": "BlueTusk Live 1.0.0 release record",
     "sourcePath": "docs/live/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/live/release-notes-1.0.0.md",
@@ -2821,7 +2868,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1096,
+    "order": 1097,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -2853,7 +2900,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1110,
+    "order": 1111,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -2879,7 +2926,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1111,
+    "order": 1112,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -2905,7 +2952,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1112,
+    "order": 1113,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -2931,7 +2978,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1113,
+    "order": 1114,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -2958,7 +3005,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1115,
+    "order": 1116,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -2985,7 +3032,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1117,
+    "order": 1118,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -3027,7 +3074,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1119,
+    "order": 1120,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -3072,7 +3119,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1120,
+    "order": 1121,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -3098,7 +3145,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1121,
+    "order": 1122,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -3125,7 +3172,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1124,
+    "order": 1125,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -3172,7 +3219,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1126,
+    "order": 1127,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -3199,7 +3246,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1127,
+    "order": 1128,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -3225,7 +3272,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1128,
+    "order": 1129,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -3330,7 +3377,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1130,
+    "order": 1131,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
@@ -3408,7 +3455,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "extensions",
       "reference"
     ],
-    "order": 1059,
+    "order": 1060,
     "title": "Extension SDK",
     "sourcePath": "docs/extensions/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/extensions/reference.md",
@@ -3542,7 +3589,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1044,
+    "order": 1045,
     "title": "ContinuousGraph public API compatibility",
     "sourcePath": "docs/continuous-graph/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/api-compatibility.md",
@@ -3569,7 +3616,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1045,
+    "order": 1046,
     "title": "BlueTusk Continuous Graph",
     "sourcePath": "docs/continuous-graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/reference.md",
@@ -3647,7 +3694,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1046,
+    "order": 1047,
     "title": "BlueTusk Continuous Graph 0.1.0-preview.1",
     "sourcePath": "docs/continuous-graph/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-0.1.0-preview.1.md",
@@ -3693,7 +3740,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1047,
+    "order": 1048,
     "title": "BlueTusk ContinuousGraph 1.0.0 release record",
     "sourcePath": "docs/continuous-graph/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-1.0.0.md",
@@ -3719,7 +3766,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1065,
+    "order": 1066,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",
@@ -3771,7 +3818,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "allocation",
       "discipline"
     ],
-    "order": 1022,
+    "order": 1023,
     "title": "Allocation discipline",
     "sourcePath": "docs/architecture/allocation-discipline.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/allocation-discipline.md",
@@ -3801,7 +3848,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "dependency",
       "direction"
     ],
-    "order": 1023,
+    "order": 1024,
     "title": "ADR 0001: Enforce layered dependency direction",
     "sourcePath": "docs/architecture/decisions/0001-layered-dependency-direction.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0001-layered-dependency-direction.md",
@@ -3847,7 +3894,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "the",
       "specification"
     ],
-    "order": 1024,
+    "order": 1025,
     "title": "ADR 0002: Treat PostgreSQL as the specification",
     "sourcePath": "docs/architecture/decisions/0002-postgresql-is-the-specification.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0002-postgresql-is-the-specification.md",
@@ -3882,7 +3929,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "driven",
       "types"
     ],
-    "order": 1025,
+    "order": 1026,
     "title": "ADR 0003: Discover types from catalogues",
     "sourcePath": "docs/architecture/decisions/0003-catalogue-driven-types.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0003-catalogue-driven-types.md",
@@ -3927,7 +3974,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "conformance",
       "testing"
     ],
-    "order": 1026,
+    "order": 1027,
     "title": "ADR 0004: Test protocol framing independently",
     "sourcePath": "docs/architecture/decisions/0004-protocol-conformance-testing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0004-protocol-conformance-testing.md",
@@ -3965,7 +4012,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "transport",
       "pipelines"
     ],
-    "order": 1027,
+    "order": 1028,
     "title": "ADR 0005: Separate PostgreSQL pipeline mode from transport pipelines",
     "sourcePath": "docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md",
@@ -4020,7 +4067,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "semantics"
     ],
-    "order": 1028,
+    "order": 1029,
     "title": "ADR 0006: Make Streams the application CDC boundary",
     "sourcePath": "docs/architecture/decisions/0006-streams-delivery-semantics.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0006-streams-delivery-semantics.md",
@@ -4066,7 +4113,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "and",
       "fencing"
     ],
-    "order": 1029,
+    "order": 1030,
     "title": "ADR 0007: Persist checkpoints before replication feedback",
     "sourcePath": "docs/architecture/decisions/0007-checkpoint-ordering-and-fencing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0007-checkpoint-ordering-and-fencing.md",
@@ -4112,7 +4159,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "stream",
       "protocol"
     ],
-    "order": 1030,
+    "order": 1031,
     "title": "ADR 0008: Bootstrap with an exported consistent snapshot",
     "sourcePath": "docs/architecture/decisions/0008-snapshot-then-stream-protocol.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0008-snapshot-then-stream-protocol.md",
@@ -4157,7 +4204,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "transaction",
       "spooling"
     ],
-    "order": 1031,
+    "order": 1032,
     "title": "ADR 0009: Bound transaction memory and spill to a versioned spool",
     "sourcePath": "docs/architecture/decisions/0009-bounded-transaction-spooling.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0009-bounded-transaction-spooling.md",
@@ -4202,7 +4249,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "durable",
       "relay"
     ],
-    "order": 1032,
+    "order": 1033,
     "title": "ADR 0010: Use PostgreSQL for the first durable relay",
     "sourcePath": "docs/architecture/decisions/0010-postgresql-durable-relay.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0010-postgresql-durable-relay.md",
@@ -4248,7 +4295,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "requery",
       "security"
     ],
-    "order": 1033,
+    "order": 1034,
     "title": "ADR 0011: Treat CDC as Live invalidation, not client-visible truth",
     "sourcePath": "docs/architecture/decisions/0011-live-authoritative-requery-security.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0011-live-authoritative-requery-security.md",
@@ -4294,7 +4341,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "contract"
     ],
-    "order": 1034,
+    "order": 1035,
     "title": "ADR 0012: Keep source transactions as the Sync delivery unit",
     "sourcePath": "docs/architecture/decisions/0012-sync-connector-delivery-contract.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0012-sync-connector-delivery-contract.md",
@@ -4339,7 +4386,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "statement",
       "multiplexing"
     ],
-    "order": 1035,
+    "order": 1036,
     "title": "ADR 0013: Use bounded, session-neutral statement multiplexing",
     "sourcePath": "docs/architecture/decisions/0013-bounded-statement-multiplexing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0013-bounded-statement-multiplexing.md",
@@ -4384,7 +4431,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "hosting",
       "reconciliation"
     ],
-    "order": 1036,
+    "order": 1037,
     "title": "ADR 0014: managed hosting uses fenced desired-state reconciliation",
     "sourcePath": "docs/architecture/decisions/0014-managed-hosting-reconciliation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0014-managed-hosting-reconciliation.md",
@@ -4430,7 +4477,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "client",
       "queries"
     ],
-    "order": 1037,
+    "order": 1038,
     "title": "ADR 0015: Gate client-authored queries with database capabilities",
     "sourcePath": "docs/architecture/decisions/0015-capability-secured-client-queries.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0015-capability-secured-client-queries.md",
@@ -4476,7 +4523,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "graph",
       "maintenance"
     ],
-    "order": 1038,
+    "order": 1039,
     "title": "ADR 0016: Use bounded incremental graph maintenance with authoritative repair",
     "sourcePath": "docs/architecture/decisions/0016-authoritative-incremental-graph-maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0016-authoritative-incremental-graph-maintenance.md",
@@ -4523,7 +4570,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "provider",
       "spi"
     ],
-    "order": 1039,
+    "order": 1040,
     "title": "ADR 0017: Keep the EF-to-Data provider SPI internal and minimal",
     "sourcePath": "docs/architecture/decisions/0017-internal-ef-data-provider-spi.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0017-internal-ef-data-provider-spi.md",
@@ -4564,7 +4611,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "architecture",
       "transport"
     ],
-    "order": 1041,
+    "order": 1042,
     "title": "Transport contract",
     "sourcePath": "docs/architecture/transport.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/transport.md",
@@ -5686,7 +5733,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "naming"
     ],
-    "order": 1021,
+    "order": 1022,
     "title": "Public API naming",
     "sourcePath": "docs/api-naming.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/api-naming.md",
@@ -5717,7 +5764,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "completion",
       "audit"
     ],
-    "order": 1042,
+    "order": 1043,
     "title": "Specification completion audit",
     "sourcePath": "docs/completion-audit.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/completion-audit.md",
@@ -5753,8 +5800,8 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 2187,
-    "readMinutes": 10,
+    "wordCount": 2215,
+    "readMinutes": 11,
     "searchText": "Specification completion audit This record maps the original BlueTusk product specification and the subsequent architecture-gap review to concrete repository evidence. “Complete” here means the engineering surface is implemented, documented, and covered by an executable gate. All six families were published at `1.0.0` under the [documented owner exception](releases/1.0.0-publication-record.md), but this record does not replace external production experience or declare every PostgreSQL deployment suitable without application-specific validation. Those release boundaries remain in [Runtime release readiness](release-readiness.md). Original product specification Specification area Engineering state Primary evidence 1–5. Vision, layers, repository, package family, and branding Implemented and published as six layered stable 1.0.0 product families; later publication remains gated. [Architecture overview](architecture/overview.md), [layering ADR](architecture/decisions/0001-layered-dependency-direction.md), [roadmap](roadmap.md), and the Release packaging gate in [CI](../.github/workflows/build.yml). 6. Transport Implemented with genuine sync/async socket and TLS paths, cancellation-safe lifetimes, bounded buffers, and multi-host endpoints. [Transport architecture](architecture/transport.md), [transport tests](../tests/BlueTusk.Transport.Tests/BlueTuskSocketTransportTests.cs), and [TLS tests](../tests/BlueTusk.Transport.Tests/BlueTuskTlsTransportTests.cs). 7. PostgreSQL protocol engine Implemented independently of ADO.NET and EF, including framing, state transitions, extended query, streaming payloads, cancellation, and capture tooling. [Protocol guide](protocol/README.md), [state-machine tests](../tests/BlueTusk.Protocol.Tests/BlueTuskProtocolStateMachineTests.cs), [streaming tests](../tests/BlueTusk.Protocol.Tests/BlueTuskProtocolConnectionStreamingTests.cs), and [fake-server conformance](../tests/BlueTusk.ConformanceTests/FakePostgreSqlServerTests.cs). 8. Authenticatio"
   },
   {
@@ -5767,7 +5814,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "docs",
       "fuzzing"
     ],
-    "order": 1060,
+    "order": 1061,
     "title": "Parser reliability and coverage-guided fuzzing",
     "sourcePath": "docs/fuzzing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/fuzzing.md",
@@ -5803,7 +5850,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "hardening",
       "programme"
     ],
-    "order": 1066,
+    "order": 1067,
     "title": "V1 hardening programme",
     "sourcePath": "docs/hardening-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/hardening-programme.md",
@@ -5846,7 +5893,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "platform",
       "health"
     ],
-    "order": 1074,
+    "order": 1075,
     "title": "Application platform health and rollout acceptance",
     "sourcePath": "docs/operations/application-platform-health.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/application-platform-health.md",
@@ -5918,7 +5965,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "approval",
       "evidence"
     ],
-    "order": 1075,
+    "order": 1076,
     "title": "V1 operational approval evidence",
     "sourcePath": "docs/operations/approval-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/approval-evidence.md",
@@ -6001,7 +6048,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "disturbance",
       "evidence"
     ],
-    "order": 1077,
+    "order": 1078,
     "title": "Endurance disturbance evidence",
     "sourcePath": "docs/operations/endurance-disturbance-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/endurance-disturbance-evidence.md",
@@ -6049,7 +6096,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "finding",
       "handoff"
     ],
-    "order": 1078,
+    "order": 1079,
     "title": "V1 fuzz-finding review handoff",
     "sourcePath": "docs/operations/fuzz-finding-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/fuzz-finding-handoff.md",
@@ -6100,7 +6147,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "operations",
       "observability"
     ],
-    "order": 1080,
+    "order": 1081,
     "title": "Production observability and SLOs",
     "sourcePath": "docs/operations/observability.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/observability.md",
@@ -6212,7 +6259,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "package",
       "evidence"
     ],
-    "order": 1081,
+    "order": 1082,
     "title": "Canonical V1 package evidence",
     "sourcePath": "docs/operations/package-evidence.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/package-evidence.md",
@@ -6261,7 +6308,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "1",
       "1"
     ],
-    "order": 1082,
+    "order": 1083,
     "title": "BlueTusk 1.1 performance leadership report",
     "sourcePath": "docs/operations/performance-leadership-1.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/performance-leadership-1.1.md",
@@ -6313,7 +6360,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "production",
       "readiness"
     ],
-    "order": 1085,
+    "order": 1086,
     "title": "V1 production readiness",
     "sourcePath": "docs/operations/production-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/production-readiness.md",
@@ -6415,7 +6462,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "website",
       "production"
     ],
-    "order": 1088,
+    "order": 1089,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -6456,7 +6503,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1090,
+    "order": 1091,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -6467,9 +6514,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 1
       }
     ],
-    "wordCount": 300,
+    "wordCount": 371,
     "readMinutes": 2,
-    "searchText": "PostgreSQL 19 compatibility programme PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence, not a production dependency. The official project warns that beta features and behaviour may still change and does not recommend beta releases for production. General availability is currently planned for September 2026. `eng/postgresql19-programme.json` is the machine-readable cadence. The checked Beta 3 container is pinned by OCI digest, the scheduled official-branch snapshot detects catalogue and grammar drift, and `verify-postgresql19-programme.ps1 -VerifyOfficialCurrent` fails when the official documentation advances beyond the recorded milestone. BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official documentation moved on 2026-08-13. The full serial solution suite and the application migration/integration suite passed against `postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc` with zero failures. This is milestone-drift evidence only; it is neither the immutable GA matrix nor production approval. For every later beta and every release candidate: Pin the official image by digest and record its release date. Run the full PostgreSQL 15–19 solution matrix at the exact BlueTusk commit. Run the SQL/PGQ migration, discovery, typed-query, raw-SQL, reverse engineering, performance, replication and stress subsets. Review the PostgreSQL release notes for protocol, catalogue, type, grammar and migration changes. Archive test results, server version, image digest, source commit and package hashes; then update the programme record. The [typed SQL/PGQ boundary](graph/README.md#exact-v1-typed-subset-boundary) remains fixed: linear typed paths and direct scalar predicates are supported; the rest stays available through parameterised raw SQL. Unsupported typed forms fail without a string-concatenation fallback. Stable publication invokes `verify-postgresql19-programme.ps1 -RequireGeneralAvailability`."
+    "searchText": "PostgreSQL 19 compatibility programme PostgreSQL 19 is currently at Beta 3. BlueTusk treats it as pre-GA evidence, not a production dependency. The official project warns that beta features and behaviour may still change and does not recommend beta releases for production. General availability is currently planned for September 2026. `eng/postgresql19-programme.json` is the machine-readable cadence. The checked Beta 3 container is pinned by OCI digest, the scheduled official-branch snapshot detects catalogue and grammar drift, and `verify-postgresql19-programme.ps1 -VerifyOfficialCurrent` fails when the official documentation advances beyond the recorded milestone. BlueTusk advanced from Beta 2 to Beta 3 on 2026-08-17 after the official documentation moved on 2026-08-13. The full serial solution suite and the application migration/integration suite passed against `postgres:19beta3-alpine@sha256:b1692e50613a21e61c424859f943b9e193ae73e5a8c68abd5382dfb235bf15fc` with zero failures. This is milestone-drift evidence only; it is neither the immutable GA matrix nor production approval. For every later beta and every release candidate: Pin the official image by digest and record its release date. Run the full PostgreSQL 15–19 solution matrix at the exact BlueTusk commit. Run the SQL/PGQ migration, discovery, typed-query, raw-SQL, native `REPACK` execution/progress, reverse-engineering, performance, replication and stress subsets. Review the PostgreSQL release notes for protocol, catalogue, type, grammar and migration changes. Archive test results, server version, image digest, source commit and package hashes; then update the programme record. The [typed SQL/PGQ boundary](graph/README.md#exact-v1-typed-subset-boundary) remains fixed: linear typed paths and direct scalar predicates are supported; the rest stays available through parameterised raw SQL. Unsupported typed forms fail without a string-concatenation fallback. BlueTusk 1.2 also has a first-class API for PostgreSQL "
   },
   {
     "category": "operations",
@@ -6486,7 +6533,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1093,
+    "order": 1094,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -6512,7 +6559,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "process"
     ],
-    "order": 1098,
+    "order": 1099,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -6554,7 +6601,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1100,
+    "order": 1101,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -6599,7 +6646,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -6678,7 +6725,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -6717,7 +6764,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1104,
+    "order": 1105,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -6743,9 +6790,9 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "level": 2
       }
     ],
-    "wordCount": 827,
-    "readMinutes": 4,
-    "searchText": "BlueTusk 1.2 release contract BlueTusk 1.2 is a coordinated expansion release, not six unrelated package updates. Every BlueTusk dependency in one application remains on the same exact version. The machine-readable authority is [`eng/v1.2-release-contract.json`](../../eng/v1.2-release-contract.json). What 1.2 adds a complete `dotnet new bluetusk-production` Clean Architecture starter and read-only `bluetusk doctor` preflight; Kafka, S3/Parquet, and signed webhook Sync destinations; Kubernetes custom resources and reconciliation; fleet inventory, RBAC, approval, audit, replay, reconciliation, and rebuild operations in Control Plane; variable-length, undirected, and multi-label graph patterns; and Vue and Svelte Live clients alongside Angular, React, and the framework-free client. The starter, doctor, signed webhook, transactional Kafka destination, and immutable S3/Parquet lake destination are completed implementation slices. The template is built from the real Order Operations package-consumer application, including API, worker, migrations, tests, same-origin BFF security, telemetry, containers, Helm, SLOs, and runbooks. It supports React and Angular clients and starts local PostgreSQL 18, Redis, NATS JetStream, and OpenSearch with one Compose command. The Kafka connector writes each whole source transaction and its compacted BlueTusk checkpoint in one broker transaction. Restart deduplication is driven by `read_committed` state, transform drift requires an explicit rebuild, and an ambiguous broker outcome cannot advance the Streams acknowledgement. Its live adapter has passed restart-deduplication and atomic event/checkpoint recovery against the digest-pinned Apache Kafka 4.1.1 image, including a broker with topic auto-creation enabled. The exact 24-hour endurance evidence remains a release gate rather than being inferred from a smoke test. The S3 connector writes immutable Zstandard-compressed Parquet data before an immutable JSON commit manifest. Readers consume "
+    "wordCount": 953,
+    "readMinutes": 5,
+    "searchText": "BlueTusk 1.2 release contract BlueTusk 1.2 is a coordinated expansion release, not six unrelated package updates. Every BlueTusk dependency in one application remains on the same exact version. The machine-readable authority is [`eng/v1.2-release-contract.json`](../../eng/v1.2-release-contract.json). What 1.2 adds a complete `dotnet new bluetusk-production` Clean Architecture starter and read-only `bluetusk doctor` preflight; Kafka, S3/Parquet, and signed webhook Sync destinations; Kubernetes custom resources and reconciliation; fleet inventory, RBAC, approval, audit, replay, reconciliation, and rebuild operations in Control Plane; first-class execution and monitoring for PostgreSQL 19's native `REPACK` statement; variable-length, undirected, and multi-label graph patterns; and Vue and Svelte Live clients alongside Angular, React, and the framework-free client. The starter, doctor, signed webhook, transactional Kafka destination, and immutable S3/Parquet lake destination are completed implementation slices. The template is built from the real Order Operations package-consumer application, including API, worker, migrations, tests, same-origin BFF security, telemetry, containers, Helm, SLOs, and runbooks. It supports React and Angular clients and starts local PostgreSQL 18, Redis, NATS JetStream, and OpenSearch with one Compose command. The Kafka connector writes each whole source transaction and its compacted BlueTusk checkpoint in one broker transaction. Restart deduplication is driven by `read_committed` state, transform drift requires an explicit rebuild, and an ambiguous broker outcome cannot advance the Streams acknowledgement. Its live adapter has passed restart-deduplication and atomic event/checkpoint recovery against the digest-pinned Apache Kafka 4.1.1 image, including a broker with topic auto-creation enabled. The exact 24-hour endurance evidence remains a release gate rather than being inferred from a smoke test. The S3 connector writes immutable Zstandar"
   },
   {
     "category": "operations",
@@ -6758,7 +6805,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1133,
+    "order": 1134,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -6800,7 +6847,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",

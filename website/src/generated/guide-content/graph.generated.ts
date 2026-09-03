@@ -127,7 +127,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1044,
+    "order": 1045,
     "title": "ContinuousGraph public API compatibility",
     "sourcePath": "docs/continuous-graph/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/api-compatibility.md",
@@ -160,7 +160,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1045,
+    "order": 1046,
     "title": "BlueTusk Continuous Graph",
     "sourcePath": "docs/continuous-graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/reference.md",
@@ -340,7 +340,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1046,
+    "order": 1047,
     "title": "BlueTusk Continuous Graph 0.1.0-preview.1",
     "sourcePath": "docs/continuous-graph/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-0.1.0-preview.1.md",
@@ -392,7 +392,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1047,
+    "order": 1048,
     "title": "BlueTusk ContinuousGraph 1.0.0 release record",
     "sourcePath": "docs/continuous-graph/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/continuous-graph/release-notes-1.0.0.md",
@@ -424,7 +424,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "graph",
       "reference"
     ],
-    "order": 1065,
+    "order": 1066,
     "title": "PostgreSQL 19 SQL/PGQ V1 candidate",
     "sourcePath": "docs/graph/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/graph/reference.md",

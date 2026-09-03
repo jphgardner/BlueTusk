@@ -28,6 +28,7 @@
 /documentation/provider/sequential-readers
 /documentation/provider/schema-discovery
 /documentation/provider/types
+/documentation/provider/repack
 /documentation/provider/pipeline-mode
 /documentation/provider/replication
 /documentation/provider/ado-net-compatibility

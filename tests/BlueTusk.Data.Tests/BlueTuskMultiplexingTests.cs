@@ -93,6 +93,7 @@ public sealed class BlueTuskMultiplexingTests
     [InlineData("COPY app.items TO STDOUT", false)]
     [InlineData("CALL app.update_session()", false)]
     [InlineData("DO $$ BEGIN PERFORM set_config('application_name', 'x', false); END $$", false)]
+    [InlineData("REPACK (CONCURRENTLY) app.events", false)]
     public void Classifier_conservatively_routes_session_state(
         string sql,
         bool expectedSessionNeutral)

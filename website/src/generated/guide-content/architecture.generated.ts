@@ -14,7 +14,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "allocation",
       "discipline"
     ],
-    "order": 1022,
+    "order": 1023,
     "title": "Allocation discipline",
     "sourcePath": "docs/architecture/allocation-discipline.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/allocation-discipline.md",
@@ -60,7 +60,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "dependency",
       "direction"
     ],
-    "order": 1023,
+    "order": 1024,
     "title": "ADR 0001: Enforce layered dependency direction",
     "sourcePath": "docs/architecture/decisions/0001-layered-dependency-direction.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0001-layered-dependency-direction.md",
@@ -112,7 +112,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "the",
       "specification"
     ],
-    "order": 1024,
+    "order": 1025,
     "title": "ADR 0002: Treat PostgreSQL as the specification",
     "sourcePath": "docs/architecture/decisions/0002-postgresql-is-the-specification.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0002-postgresql-is-the-specification.md",
@@ -153,7 +153,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "driven",
       "types"
     ],
-    "order": 1025,
+    "order": 1026,
     "title": "ADR 0003: Discover types from catalogues",
     "sourcePath": "docs/architecture/decisions/0003-catalogue-driven-types.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0003-catalogue-driven-types.md",
@@ -204,7 +204,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "conformance",
       "testing"
     ],
-    "order": 1026,
+    "order": 1027,
     "title": "ADR 0004: Test protocol framing independently",
     "sourcePath": "docs/architecture/decisions/0004-protocol-conformance-testing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0004-protocol-conformance-testing.md",
@@ -248,7 +248,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "transport",
       "pipelines"
     ],
-    "order": 1027,
+    "order": 1028,
     "title": "ADR 0005: Separate PostgreSQL pipeline mode from transport pipelines",
     "sourcePath": "docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0005-postgresql-pipeline-mode-and-transport-pipelines.md",
@@ -319,7 +319,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "delivery",
       "semantics"
     ],
-    "order": 1028,
+    "order": 1029,
     "title": "ADR 0006: Make Streams the application CDC boundary",
     "sourcePath": "docs/architecture/decisions/0006-streams-delivery-semantics.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0006-streams-delivery-semantics.md",
@@ -371,7 +371,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "and",
       "fencing"
     ],
-    "order": 1029,
+    "order": 1030,
     "title": "ADR 0007: Persist checkpoints before replication feedback",
     "sourcePath": "docs/architecture/decisions/0007-checkpoint-ordering-and-fencing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0007-checkpoint-ordering-and-fencing.md",
@@ -423,7 +423,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "stream",
       "protocol"
     ],
-    "order": 1030,
+    "order": 1031,
     "title": "ADR 0008: Bootstrap with an exported consistent snapshot",
     "sourcePath": "docs/architecture/decisions/0008-snapshot-then-stream-protocol.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0008-snapshot-then-stream-protocol.md",
@@ -474,7 +474,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "transaction",
       "spooling"
     ],
-    "order": 1031,
+    "order": 1032,
     "title": "ADR 0009: Bound transaction memory and spill to a versioned spool",
     "sourcePath": "docs/architecture/decisions/0009-bounded-transaction-spooling.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0009-bounded-transaction-spooling.md",
@@ -525,7 +525,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "durable",
       "relay"
     ],
-    "order": 1032,
+    "order": 1033,
     "title": "ADR 0010: Use PostgreSQL for the first durable relay",
     "sourcePath": "docs/architecture/decisions/0010-postgresql-durable-relay.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0010-postgresql-durable-relay.md",
@@ -577,7 +577,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "requery",
       "security"
     ],
-    "order": 1033,
+    "order": 1034,
     "title": "ADR 0011: Treat CDC as Live invalidation, not client-visible truth",
     "sourcePath": "docs/architecture/decisions/0011-live-authoritative-requery-security.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0011-live-authoritative-requery-security.md",
@@ -629,7 +629,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "delivery",
       "contract"
     ],
-    "order": 1034,
+    "order": 1035,
     "title": "ADR 0012: Keep source transactions as the Sync delivery unit",
     "sourcePath": "docs/architecture/decisions/0012-sync-connector-delivery-contract.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0012-sync-connector-delivery-contract.md",
@@ -680,7 +680,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "statement",
       "multiplexing"
     ],
-    "order": 1035,
+    "order": 1036,
     "title": "ADR 0013: Use bounded, session-neutral statement multiplexing",
     "sourcePath": "docs/architecture/decisions/0013-bounded-statement-multiplexing.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0013-bounded-statement-multiplexing.md",
@@ -731,7 +731,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "hosting",
       "reconciliation"
     ],
-    "order": 1036,
+    "order": 1037,
     "title": "ADR 0014: managed hosting uses fenced desired-state reconciliation",
     "sourcePath": "docs/architecture/decisions/0014-managed-hosting-reconciliation.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0014-managed-hosting-reconciliation.md",
@@ -783,7 +783,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "client",
       "queries"
     ],
-    "order": 1037,
+    "order": 1038,
     "title": "ADR 0015: Gate client-authored queries with database capabilities",
     "sourcePath": "docs/architecture/decisions/0015-capability-secured-client-queries.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0015-capability-secured-client-queries.md",
@@ -835,7 +835,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "graph",
       "maintenance"
     ],
-    "order": 1038,
+    "order": 1039,
     "title": "ADR 0016: Use bounded incremental graph maintenance with authoritative repair",
     "sourcePath": "docs/architecture/decisions/0016-authoritative-incremental-graph-maintenance.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0016-authoritative-incremental-graph-maintenance.md",
@@ -898,7 +898,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "provider",
       "spi"
     ],
-    "order": 1039,
+    "order": 1040,
     "title": "ADR 0017: Keep the EF-to-Data provider SPI internal and minimal",
     "sourcePath": "docs/architecture/decisions/0017-internal-ef-data-provider-spi.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/decisions/0017-internal-ef-data-provider-spi.md",
@@ -945,7 +945,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "architecture",
       "transport"
     ],
-    "order": 1041,
+    "order": 1042,
     "title": "Transport contract",
     "sourcePath": "docs/architecture/transport.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/architecture/transport.md",

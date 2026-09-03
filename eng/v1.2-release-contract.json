@@ -34,6 +34,7 @@
     "readOnlyDoctor": true,
     "kubernetesOperator": true,
     "controlPlaneFleetOperations": true,
+    "postgresql19NativeRepack": true,
     "graphVariableLengthPaths": true,
     "graphUndirectedPatterns": true,
     "graphMultiLabelExpressions": true
