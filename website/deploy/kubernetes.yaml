@@ -28,7 +28,7 @@ metadata:
   labels:
     app.kubernetes.io/name: bluetusk-website
     app.kubernetes.io/part-of: bluetusk
-    app.kubernetes.io/version: 1.1.0-rc.1
+    app.kubernetes.io/version: 1.2.0
 spec:
   replicas: 3
   minReadySeconds: 5
@@ -46,7 +46,7 @@ spec:
       labels:
         app.kubernetes.io/name: bluetusk-website
         app.kubernetes.io/part-of: bluetusk
-        app.kubernetes.io/version: 1.1.0-rc.1
+        app.kubernetes.io/version: 1.2.0
     spec:
       serviceAccountName: bluetusk-website
       automountServiceAccountToken: false
@@ -75,7 +75,7 @@ spec:
                   app.kubernetes.io/name: bluetusk-website
       containers:
         - name: website
-          image: registry.digitalocean.com/bluetusk/website@sha256:72d18ab4d9099c9fc4a5215065ea41b21a346f26b498edb64d5a0a5fbca8f095
+          image: registry.digitalocean.com/bluetusk/website@sha256:a9c358bf71a6377cbb5d3eae0a860f57df6c8f2b1b8c21887b5554c887fe1023
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
