@@ -5,6 +5,16 @@
   "reviewedAdditions": [
     {
       "release": "1.2.0",
+      "path": "src/BlueTusk.Client/PublicAPI.Unshipped.txt",
+      "sha256": "7b7eff1e4403db8797a75e47fdb3a168999f33fcad47d903b8009bf14bde08d2"
+    },
+    {
+      "release": "1.2.0",
+      "path": "src/BlueTusk.Data/PublicAPI.Unshipped.txt",
+      "sha256": "0030618ee47dcb7ed36d83742e7b3a04010c91876efe8a9edba3738ef9c04025"
+    },
+    {
+      "release": "1.2.0",
       "path": "src/BlueTusk.EntityFrameworkCore/PublicAPI.Unshipped.txt",
       "sha256": "41bb0c248adad1226fa11623432c941cfc3b34b097469791e3bba35f6ef32a4d"
     }
