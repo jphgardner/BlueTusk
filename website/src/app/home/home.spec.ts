@@ -32,9 +32,9 @@ describe('Home', () => {
     expect(image?.getAttribute('loading')).toBe('eager');
     expect(image?.getAttribute('fetchpriority')).toBe('high');
     expect(image?.getAttribute('decoding')).toBe('async');
-    expect(image?.getAttribute('width')).toBe('1376');
-    expect(image?.getAttribute('height')).toBe('768');
-    expect(image?.getAttribute('src')).toBe('/bluetusk-architecture.svg?v=4');
+    expect(image?.getAttribute('width')).toBe('1672');
+    expect(image?.getAttribute('height')).toBe('941');
+    expect(image?.getAttribute('src')).toBe('/bluetusk-architecture.png?v=5');
     expect(image?.getAttribute('alt')).toContain('The BlueTusk Platform');
   });
 
