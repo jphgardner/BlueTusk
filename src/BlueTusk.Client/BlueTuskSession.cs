@@ -2452,6 +2452,32 @@ public sealed class BlueTuskSession : IAsyncDisposable, IDisposable
                 syncSent: fetchSize == 0,
                 started);
         }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            if (requestWritten)
+            {
+                try
+                {
+                    await CancelAsync(CancellationToken.None).ConfigureAwait(false);
+                    await RecoverAbandonedPortalAsync(
+                        portalName,
+                        syncSent: fetchSize == 0).ConfigureAwait(false);
+                }
+                catch
+                {
+                    _open = false;
+                }
+            }
+            else
+            {
+                _open = false;
+            }
+
+            ReleasePortalOperation(started);
+            throw new OperationCanceledException(
+                "The PostgreSQL portal operation was cancelled.",
+                cancellationToken);
+        }
         catch
         {
             if (requestWritten)
