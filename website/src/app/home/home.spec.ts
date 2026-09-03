@@ -34,7 +34,7 @@ describe('Home', () => {
     expect(image?.getAttribute('decoding')).toBe('async');
     expect(image?.getAttribute('width')).toBe('1672');
     expect(image?.getAttribute('height')).toBe('941');
-    expect(image?.getAttribute('src')).toBe('/bluetusk-architecture.png?v=5');
+    expect(image?.getAttribute('src')).toBe('/bluetusk-architecture.png?v=6');
     expect(image?.getAttribute('alt')).toContain('The BlueTusk Platform');
   });
 
