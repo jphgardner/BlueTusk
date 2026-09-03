@@ -1,0 +1,186 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1376" height="768" viewBox="0 0 1376 768" role="img" aria-labelledby="title description">
+  <title id="title">How the BlueTusk Platform works</title>
+  <desc id="description">.NET applications enter the BlueTusk Platform through Provider, EF Core, and Extensions. Provider connects to PostgreSQL. PostgreSQL change data enters Streams, which powers Sync, Live, and Continuous Graph. Control Plane observes those runtime products.</desc>
+  <defs>
+    <linearGradient id="background" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#030b1d"/>
+      <stop offset="0.55" stop-color="#07142b"/>
+      <stop offset="1" stop-color="#020817"/>
+    </linearGradient>
+    <linearGradient id="platform" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0a1e3f" stop-opacity="0.96"/>
+      <stop offset="0.58" stop-color="#07152e" stop-opacity="0.98"/>
+      <stop offset="1" stop-color="#041025" stop-opacity="0.98"/>
+    </linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#102954"/>
+      <stop offset="1" stop-color="#07162f"/>
+    </linearGradient>
+    <linearGradient id="provider" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#0d3971"/>
+      <stop offset="0.5" stop-color="#104c90"/>
+      <stop offset="1" stop-color="#0b2b59"/>
+    </linearGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M 32 0 L 0 0 0 32" fill="none" stroke="#2a6ea6" stroke-opacity="0.14" stroke-width="1"/>
+    </pattern>
+    <filter id="cyanGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="5" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <filter id="blueGlow" x="-30%" y="-30%" width="160%" height="160%">
+      <feGaussianBlur stdDeviation="4" result="blur"/>
+      <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+    </filter>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8.5" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#4cd7f6"/>
+    </marker>
+    <style>
+      .sans { font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; }
+      .mono { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
+      .label { fill: #f6f9ff; font-size: 22px; font-weight: 700; }
+      .small { fill: #91a5c1; font-size: 13px; letter-spacing: 1.5px; }
+      .flow { fill: none; stroke: #4cd7f6; stroke-width: 2.5; marker-end: url(#arrow); }
+      .observe { fill: none; stroke: #4cd7f6; stroke-width: 1.8; stroke-dasharray: 7 7; opacity: 0.72; }
+      .card { fill: url(#card); stroke: #277ed0; stroke-width: 1.5; }
+      .icon { fill: none; stroke: #4cd7f6; stroke-width: 2.4; stroke-linecap: round; stroke-linejoin: round; }
+    </style>
+  </defs>
+
+  <rect width="1376" height="768" fill="url(#background)"/>
+  <rect width="1376" height="768" fill="url(#grid)"/>
+  <circle cx="134" cy="132" r="240" fill="#1263ad" opacity="0.08"/>
+  <circle cx="1220" cy="616" r="260" fill="#00d9ff" opacity="0.045"/>
+
+  <!-- Application outside the platform -->
+  <g filter="url(#blueGlow)">
+    <rect x="492" y="22" width="392" height="82" rx="13" fill="#081630" stroke="#2388ea" stroke-width="2"/>
+    <rect x="499" y="29" width="378" height="68" rx="9" fill="none" stroke="#4cd7f6" stroke-opacity="0.28"/>
+  </g>
+  <g transform="translate(536 44)" class="icon">
+    <path d="M0 10h27M0 20h18M0 30h27"/>
+    <path d="M35 5c17 0 28 9 28 23 0 12-7 20-18 20-8 0-13-5-13-11 0-6 5-10 11-10h7"/>
+    <path d="M58 17c9 2 15 8 18 17-7 1-13-1-18-5"/>
+  </g>
+  <text x="620" y="72" class="sans" fill="#f8fbff" font-size="29" font-weight="750">.NET Applications</text>
+  <path d="M688 104V132" class="flow"/>
+
+  <!-- The platform is the dominant visual and contains every BlueTusk product -->
+  <g filter="url(#cyanGlow)">
+    <rect x="56" y="136" width="1264" height="498" rx="30" fill="url(#platform)" stroke="#22d3ee" stroke-width="2.5"/>
+  </g>
+  <rect x="68" y="148" width="1240" height="474" rx="23" fill="none" stroke="#268bd6" stroke-opacity="0.28"/>
+  <path d="M57 234H1319" stroke="#2b83c7" stroke-opacity="0.45"/>
+
+  <g transform="translate(112 169)" class="icon" filter="url(#cyanGlow)">
+    <path d="M0 9h31M0 20h22M0 31h31"/>
+    <path d="M41 1c19 0 31 10 31 26 0 13-8 23-20 23-9 0-15-5-15-12 0-7 5-11 12-11h8"/>
+    <path d="M66 15c10 2 17 9 20 19-8 1-15-1-21-6"/>
+  </g>
+  <text x="214" y="205" class="sans" fill="#ffffff" font-size="47" font-weight="800" letter-spacing="-1">BlueTusk</text>
+  <g transform="translate(435 168)">
+    <rect width="166" height="44" rx="22" fill="#092a52" stroke="#4cd7f6" stroke-opacity="0.7"/>
+    <text x="83" y="28" text-anchor="middle" class="mono" fill="#72e7ff" font-size="15" font-weight="700" letter-spacing="2.2">PLATFORM</text>
+  </g>
+  <text x="1246" y="189" text-anchor="end" class="mono small">EVERY PRODUCT · ONE PLATFORM</text>
+  <text x="1246" y="208" text-anchor="end" class="mono" fill="#5f7899" font-size="11" letter-spacing="1">POSTGRESQL-NATIVE · BUILT FOR .NET</text>
+  <path d="M688 136V248H330V274" class="flow"/>
+
+  <!-- Provider foundation -->
+  <g filter="url(#blueGlow)">
+    <rect x="120" y="274" width="420" height="100" rx="13" fill="url(#provider)" stroke="#4cd7f6" stroke-width="2"/>
+  </g>
+  <g transform="translate(151 299)" class="icon">
+    <path d="M22 0 42 8v17c0 15-9 25-20 31C11 50 2 40 2 25V8Z"/>
+    <path d="m13 27 7 7 13-15"/>
+  </g>
+  <text x="226" y="316" class="mono" fill="#79e8ff" font-size="12" font-weight="700" letter-spacing="2">DATA-ACCESS FOUNDATION</text>
+  <text x="226" y="349" class="sans" fill="#ffffff" font-size="31" font-weight="800">Provider</text>
+
+  <!-- Provider integrations -->
+  <g>
+    <rect x="120" y="410" width="190" height="76" rx="11" class="card"/>
+    <g transform="translate(145 430)" class="icon">
+      <ellipse cx="18" cy="6" rx="17" ry="6"/>
+      <path d="M1 6v26c0 4 8 7 17 7s17-3 17-7V6M1 19c0 4 8 7 17 7s17-3 17-7"/>
+    </g>
+    <text x="200" y="455" class="sans label">EF Core</text>
+    <path d="M215 410V390H250V374" class="flow"/>
+  </g>
+  <g>
+    <rect x="350" y="410" width="190" height="76" rx="11" class="card"/>
+    <g transform="translate(374 430)" class="icon">
+      <path d="M9 0h13v10c3-3 9-2 9 4s-6 7-9 4v13H10c3 3 2 9-4 9s-7-6-4-9V18h10c-3-3-2-9 4-9s7 6 4 9"/>
+    </g>
+    <text x="425" y="455" class="sans" fill="#f6f9ff" font-size="20" font-weight="700">Extensions</text>
+    <path d="M445 410V390H410V374" class="flow"/>
+  </g>
+
+  <!-- Provider stores data in PostgreSQL outside the platform -->
+  <path d="M330 374V659" class="flow"/>
+  <text x="347" y="548" class="mono" fill="#88a2c2" font-size="12" letter-spacing="1">READ · WRITE</text>
+
+  <!-- PostgreSQL change data enters Streams -->
+  <path d="M540 710H610V345H650" class="flow"/>
+  <text x="627" y="607" class="mono" fill="#72e7ff" font-size="12" font-weight="700" letter-spacing="1.4" transform="rotate(-90 627 607)">CHANGE DATA</text>
+
+  <!-- Streams and delivery products -->
+  <g filter="url(#blueGlow)">
+    <rect x="650" y="300" width="300" height="90" rx="13" fill="url(#card)" stroke="#4cd7f6" stroke-width="2"/>
+  </g>
+  <g transform="translate(683 327)" class="icon">
+    <path d="M0 9c8-9 17-9 25 0s17 9 25 0M0 22c8-9 17-9 25 0s17 9 25 0M0 35c8-9 17-9 25 0s17 9 25 0"/>
+  </g>
+  <text x="758" y="354" class="sans" fill="#ffffff" font-size="29" font-weight="800">Streams</text>
+  <text x="800" y="413" text-anchor="middle" class="mono" fill="#72e7ff" font-size="11" font-weight="700" letter-spacing="1.4">POWERS</text>
+  <path d="M800 390V450H705V498M800 450H905V498M800 450H1110V498" fill="none" stroke="#4cd7f6" stroke-width="2.5"/>
+  <path d="M705 474V498M905 474V498M1110 474V498" class="flow"/>
+
+  <g>
+    <rect x="620" y="498" width="170" height="82" rx="11" class="card"/>
+    <g transform="translate(645 522)" class="icon">
+      <path d="M8 7a18 18 0 0 1 29 8M37 7v8h-8M37 31a18 18 0 0 1-29-8M8 31v-8h8"/>
+    </g>
+    <text x="702" y="548" class="sans label">Sync</text>
+  </g>
+  <g>
+    <rect x="820" y="498" width="170" height="82" rx="11" class="card"/>
+    <g transform="translate(844 522)" class="icon">
+      <circle cx="21" cy="17" r="4" fill="#4cd7f6" stroke="none"/>
+      <path d="M12 8a13 13 0 0 0 0 18M30 8a13 13 0 0 1 0 18M6 2a21 21 0 0 0 0 30M36 2a21 21 0 0 1 0 30"/>
+    </g>
+    <text x="900" y="548" class="sans label">Live</text>
+  </g>
+  <g>
+    <rect x="1020" y="498" width="215" height="82" rx="11" class="card"/>
+    <g transform="translate(1044 522)" class="icon">
+      <circle cx="6" cy="18" r="5"/><circle cx="34" cy="4" r="5"/><circle cx="34" cy="33" r="5"/>
+      <path d="m11 16 18-9M11 21l18 9"/>
+    </g>
+    <text x="1092" y="543" class="sans" fill="#f6f9ff" font-size="18" font-weight="700">Continuous</text>
+    <text x="1092" y="564" class="sans" fill="#f6f9ff" font-size="18" font-weight="700">Graph</text>
+  </g>
+
+  <!-- Control Plane observes the runtime without sitting in the data path -->
+  <g>
+    <rect x="1050" y="276" width="185" height="126" rx="12" class="card"/>
+    <g transform="translate(1128 292) scale(.72)" class="icon">
+      <circle cx="20" cy="20" r="11"/>
+      <path d="M20 0v7M20 33v7M0 20h7M33 20h7M6 6l5 5M29 29l5 5M34 6l-5 5M11 29l-5 5"/>
+    </g>
+    <text x="1142" y="355" text-anchor="middle" class="sans" fill="#f6f9ff" font-size="18" font-weight="700">Control Plane</text>
+    <text x="1142" y="378" text-anchor="middle" class="mono" fill="#72e7ff" font-size="9" font-weight="700" letter-spacing="1.1">OBSERVES RUNTIME</text>
+    <path d="M1050 345H950" class="observe"/>
+    <path d="M1136 402V466H705M1136 466H905M1136 466H1110" class="observe"/>
+  </g>
+
+  <!-- PostgreSQL remains outside BlueTusk -->
+  <g filter="url(#blueGlow)">
+    <rect x="105" y="674" width="435" height="74" rx="13" fill="#081630" stroke="#2388ea" stroke-width="2"/>
+  </g>
+  <g transform="translate(143 690)" class="icon">
+    <ellipse cx="20" cy="8" rx="18" ry="7"/>
+    <path d="M2 8v27c0 5 8 8 18 8s18-3 18-8V8M2 21c0 5 8 8 18 8s18-3 18-8"/>
+  </g>
+  <text x="216" y="720" class="sans" fill="#ffffff" font-size="29" font-weight="800">PostgreSQL</text>
+</svg>

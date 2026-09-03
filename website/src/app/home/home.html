@@ -37,21 +37,21 @@
 <section class="architecture-wrap" aria-labelledby="architecture-title">
   <div class="section-label-row">
     <span id="architecture-title">HOW BLUETUSK WORKS</span>
-    <span>ONE CONNECTED POSTGRESQL STACK</span>
+    <span>EVERY PRODUCT · ONE BLUETUSK PLATFORM</span>
   </div>
   <figure class="architecture-frame">
     <img
-      src="/bluetusk-architecture.png?v=3"
+      src="/bluetusk-architecture.svg?v=4"
       width="1376"
       height="768"
       loading="eager"
       fetchpriority="high"
       decoding="async"
-      alt="BlueTusk architecture: .NET applications connect through Provider and EF Core to PostgreSQL. Streams then powers Sync, Live, and Continuous Graph while Control Plane observes the runtime. Sync delivers to Redis, NATS, and OpenSearch; Live delivers to applications."
+      alt="The BlueTusk Platform connects .NET applications to PostgreSQL. Provider is the data-access foundation; EF Core and Extensions build on it, while PostgreSQL change data enters Streams to power Sync, Live, and Continuous Graph under Control Plane observation."
     />
     <figcaption>
-      <span><i></i> How the products connect</span>
-      <span>Provider → PostgreSQL → Streams → Sync · Live · Graph</span>
+      <span><i></i> The BlueTusk Platform</span>
+      <span>Provider → PostgreSQL → Streams → Sync · Live · Continuous Graph</span>
     </figcaption>
   </figure>
   <ol class="architecture-mobile-flow" aria-label="How data moves through BlueTusk">

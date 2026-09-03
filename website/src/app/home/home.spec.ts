@@ -34,6 +34,8 @@ describe('Home', () => {
     expect(image?.getAttribute('decoding')).toBe('async');
     expect(image?.getAttribute('width')).toBe('1376');
     expect(image?.getAttribute('height')).toBe('768');
+    expect(image?.getAttribute('src')).toBe('/bluetusk-architecture.svg?v=4');
+    expect(image?.getAttribute('alt')).toContain('The BlueTusk Platform');
   });
 
   it('provides a readable architecture flow for small screens', () => {

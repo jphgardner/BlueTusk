@@ -75,7 +75,7 @@ spec:
                   app.kubernetes.io/name: bluetusk-website
       containers:
         - name: website
-          image: registry.digitalocean.com/bluetusk/website@sha256:a9c358bf71a6377cbb5d3eae0a860f57df6c8f2b1b8c21887b5554c887fe1023
+          image: registry.digitalocean.com/bluetusk/website@sha256:3e8966e2560d6591353c79d2e0ceacdbb234e143c77189ff30a3d82af41bd7c5
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
