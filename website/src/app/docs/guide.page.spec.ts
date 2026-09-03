@@ -56,6 +56,20 @@ describe('GuidePage', () => {
     expect(pageIndex?.textContent).toContain('Configure a context');
   });
 
+  it('keeps readers oriented within the library and a guided path', async () => {
+    const harness = await RouterTestingHarness.create('/documentation/getting-started/quickstart');
+    harness.fixture.detectChanges();
+    await harness.fixture.whenStable();
+
+    const page = harness.routeNativeElement;
+    expect(page?.querySelector('.guide-breadcrumb')?.textContent).toContain('Documentation');
+    expect(page?.querySelector('.guide-breadcrumb')?.textContent).toContain('Start here');
+    expect(page?.querySelector('.guide-journey')?.textContent).toContain(
+      'Connect a .NET application',
+    );
+    expect(page?.querySelector('.guide-journey .current')?.textContent).toContain('YOU ARE HERE');
+  });
+
   it('publishes guide-specific crawler metadata', async () => {
     const harness = await RouterTestingHarness.create('/documentation/getting-started/quickstart');
     harness.fixture.detectChanges();

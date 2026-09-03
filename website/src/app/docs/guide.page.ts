@@ -14,6 +14,12 @@ import { MatIconModule } from '@angular/material/icon';
 import { Meta, Title } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
 import { GUIDES } from '../../generated/guides.generated';
+import {
+  DOCUMENTATION_JOURNEYS,
+  DOCUMENTATION_SECTIONS,
+  documentationSectionFor,
+  guideRoute,
+} from '../content/documentation-navigation';
 
 @Component({
   selector: 'bt-guide-page',
@@ -23,9 +29,22 @@ import { GUIDES } from '../../generated/guides.generated';
       <div class="guide-shell">
         <aside class="guide-sidebar">
           <a routerLink="/documentation" class="back-link"
-            ><mat-icon>arrow_back</mat-icon>All documentation</a
+            ><mat-icon>arrow_back</mat-icon>Documentation home</a
           >
-          <small class="guide-desktop-index">{{ current.categoryLabel }}</small>
+          <small class="guide-desktop-index">BROWSE DOCUMENTATION</small>
+          <nav class="guide-desktop-index guide-section-index" aria-label="Documentation sections">
+            @for (section of sections; track section.id) {
+              <a
+                routerLink="/documentation"
+                [fragment]="section.id"
+                [class.active]="section.id === currentSection().id"
+              >
+                <mat-icon>{{ section.icon }}</mat-icon>
+                <span>{{ section.label }}</span>
+              </a>
+            }
+          </nav>
+          <small class="guide-desktop-index guide-topic-label">THIS TOPIC</small>
           <nav class="guide-desktop-index" [attr.aria-label]="current.categoryLabel + ' guides'">
             @for (item of categoryGuides(); track item.slug) {
               <a
@@ -55,12 +74,20 @@ import { GUIDES } from '../../generated/guides.generated';
         </aside>
         <main class="guide-main">
           <header>
-            <span>{{ current.categoryLabel }}</span>
+            <nav class="guide-breadcrumb" aria-label="Breadcrumb">
+              <a routerLink="/documentation">Documentation</a>
+              <mat-icon>chevron_right</mat-icon>
+              <a routerLink="/documentation" [fragment]="currentSection().id">{{
+                currentSection().label
+              }}</a>
+              <mat-icon>chevron_right</mat-icon>
+              <span>{{ current.categoryLabel }}</span>
+            </nav>
             <h1>{{ current.title }}</h1>
             <p>{{ current.summary }}</p>
             <div class="guide-meta">
               <span>{{ current.readMinutes }} min read</span
-              ><span>Maintained in the repository</span>
+              ><span>{{ currentSection().label }}</span>
             </div>
             <a [href]="current.sourceUrl" target="_blank" rel="noreferrer"
               ><mat-icon>code</mat-icon>View source on GitHub<mat-icon>open_in_new</mat-icon></a
@@ -97,6 +124,36 @@ import { GUIDES } from '../../generated/guides.generated';
               }
             }
           </article>
+          @if (journey(); as path) {
+            <aside class="guide-journey" aria-labelledby="guide-journey-title">
+              <header>
+                <div>
+                  <small>GUIDED PATH</small>
+                  <h2 id="guide-journey-title">{{ path.title }}</h2>
+                </div>
+                <mat-icon>{{ path.icon }}</mat-icon>
+              </header>
+              <p>{{ path.description }}</p>
+              <ol>
+                @for (step of path.steps; track step.route; let stepIndex = $index) {
+                  <li [class.current]="step.route === currentRoute()">
+                    @if (step.route === currentRoute()) {
+                      <span>
+                        <small>{{ stepIndex + 1 }} · YOU ARE HERE</small>
+                        <strong>{{ step.title }}</strong>
+                      </span>
+                    } @else {
+                      <a [routerLink]="step.route">
+                        <small>{{ stepIndex + 1 }} · {{ step.label }}</small>
+                        <strong>{{ step.title }}</strong>
+                        <mat-icon>arrow_forward</mat-icon>
+                      </a>
+                    }
+                  </li>
+                }
+              </ol>
+            </aside>
+          }
           <nav class="guide-pagination" aria-label="Guide pagination">
             @if (previous(); as item) {
               <a [routerLink]="['/documentation', item.category, item.slug]"
@@ -148,6 +205,20 @@ export class GuidePage implements AfterViewChecked {
   private readonly isBrowser: boolean;
   protected readonly guide = computed(() =>
     GUIDES.find((x) => x.category === this.category() && x.slug === this.slug()),
+  );
+  protected readonly sections = DOCUMENTATION_SECTIONS;
+  protected readonly currentSection = computed(() => {
+    const current = this.guide();
+    return current ? documentationSectionFor(current) : DOCUMENTATION_SECTIONS[0];
+  });
+  protected readonly currentRoute = computed(() => {
+    const current = this.guide();
+    return current ? guideRoute(current) : '';
+  });
+  protected readonly journey = computed(() =>
+    DOCUMENTATION_JOURNEYS.find((path) =>
+      path.steps.some((step) => step.route === this.currentRoute()),
+    ),
   );
   protected readonly categoryGuides = computed(() =>
     GUIDES.filter(

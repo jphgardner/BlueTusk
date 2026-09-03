@@ -1,6 +1,11 @@
 import { EVIDENCE, EXTENSION_CAPABILITIES, PRODUCT_STATUSES, SITE_SEARCH } from './catalog';
 import { GUIDES } from '../../generated/guides.generated';
 import { GUIDE_SEARCH } from '../../generated/guide-search.generated';
+import {
+  DOCUMENTATION_JOURNEYS,
+  DOCUMENTATION_SECTIONS,
+  documentationSectionFor,
+} from './documentation-navigation';
 
 describe('website content integrity', () => {
   it('keeps product maturity and pending gates explicit', () => {
@@ -99,5 +104,28 @@ describe('website content integrity', () => {
         '/community',
       ]),
     );
+  });
+
+  it('keeps every guide in one clear documentation section', () => {
+    const sectionIds = DOCUMENTATION_SECTIONS.map((section) => section.id);
+    expect(new Set(sectionIds).size).toBe(sectionIds.length);
+
+    for (const guide of GUIDES) {
+      const section = documentationSectionFor(guide);
+      expect(sectionIds).toContain(section.id);
+      expect(section.id === 'reference').toBe(!guide.listed);
+    }
+  });
+
+  it('keeps every guided journey short and linked to a generated guide', () => {
+    const generatedRoutes = new Set(
+      GUIDES.map((guide) => `/documentation/${guide.category}/${guide.slug}`),
+    );
+
+    expect(DOCUMENTATION_JOURNEYS.length).toBeGreaterThanOrEqual(6);
+    for (const journey of DOCUMENTATION_JOURNEYS) {
+      expect(journey.steps).toHaveLength(3);
+      for (const step of journey.steps) expect(generatedRoutes.has(step.route)).toBe(true);
+    }
   });
 });

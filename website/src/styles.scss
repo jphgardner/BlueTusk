@@ -1,4 +1,5 @@
 @use '@angular/material' as mat;
+@use './app/docs/docs-hub.page';
 
 :root {
   --bg: #0c1324;
@@ -3657,7 +3658,8 @@ a {
 }
 
 .guide-list h2,
-.guide-list h3 {
+.guide-list h3,
+.guide-list h4 {
   margin: 8px 0 0;
   font-size: 16px;
 }
@@ -3733,6 +3735,35 @@ a {
   line-height: 1.4;
 }
 
+.guide-sidebar .guide-section-index {
+  gap: 4px;
+  margin-bottom: 28px;
+}
+
+.guide-sidebar .guide-section-index a {
+  display: grid;
+  grid-template-columns: 18px 1fr;
+  align-items: center;
+  gap: 8px;
+  min-height: 36px;
+  border: 1px solid transparent;
+  border-radius: 4px;
+}
+
+.guide-sidebar .guide-section-index a.active {
+  border-color: rgba(76, 215, 246, 0.16);
+}
+
+.guide-sidebar .guide-section-index mat-icon {
+  width: 16px;
+  height: 16px;
+  font-size: 16px;
+}
+
+.guide-sidebar .guide-topic-label {
+  display: block;
+}
+
 .guide-sidebar nav a.active,
 .guide-sidebar nav a:hover,
 .guide-toc nav a:hover {
@@ -3770,10 +3801,36 @@ a {
   border-bottom: 1px solid var(--line-soft);
 }
 
-.guide-main > header > span {
+.guide-breadcrumb {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
   color: var(--cyan);
   font-family: var(--font-mono);
   font-size: 9px;
+}
+
+.guide-breadcrumb a,
+.guide-breadcrumb span {
+  min-width: 0;
+  overflow: hidden;
+  color: inherit;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.guide-breadcrumb a:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.guide-breadcrumb mat-icon {
+  flex: 0 0 auto;
+  width: 14px;
+  height: 14px;
+  color: var(--dim);
+  font-size: 14px;
 }
 
 .guide-main > header h1 {
@@ -3964,6 +4021,106 @@ a {
 .guide-content td {
   min-width: 120px;
   font-size: 12px;
+}
+
+.guide-journey {
+  margin: 0 0 48px;
+  padding: 24px;
+  border: 1px solid rgba(76, 215, 246, 0.2);
+  border-radius: 7px;
+  background:
+    linear-gradient(135deg, rgba(76, 215, 246, 0.07), transparent 45%), var(--surface-low);
+}
+
+.guide-journey > header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.guide-journey > header small,
+.guide-journey li small {
+  color: var(--cyan);
+  font-family: var(--font-mono);
+  font-size: 8px;
+  letter-spacing: 0.08em;
+}
+
+.guide-journey > header h2 {
+  margin: 6px 0 0;
+  font-size: 22px;
+}
+
+.guide-journey > header > mat-icon {
+  color: var(--cyan);
+}
+
+.guide-journey > p {
+  max-width: 620px;
+  margin: 10px 0 20px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.65;
+}
+
+.guide-journey ol {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.guide-journey li,
+.guide-journey li > a,
+.guide-journey li > span {
+  min-width: 0;
+  min-height: 72px;
+}
+
+.guide-journey li > a,
+.guide-journey li > span {
+  display: grid;
+  grid-template-columns: 1fr auto;
+  align-content: center;
+  gap: 5px 10px;
+  padding: 12px;
+  border: 1px solid var(--line-soft);
+  border-radius: 4px;
+  background: var(--bg-deep);
+}
+
+.guide-journey li.current > span {
+  border-color: var(--cyan);
+  background: rgba(76, 215, 246, 0.08);
+}
+
+.guide-journey li small,
+.guide-journey li strong {
+  grid-column: 1;
+}
+
+.guide-journey li strong {
+  overflow: hidden;
+  color: var(--text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+}
+
+.guide-journey li mat-icon {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
+  width: 16px;
+  height: 16px;
+  color: var(--cyan);
+  font-size: 16px;
+}
+
+.guide-journey li > a:hover {
+  border-color: rgba(76, 215, 246, 0.35);
 }
 
 .guide-mobile-index,
@@ -4797,12 +4954,17 @@ a {
     font-size: clamp(32px, 9vw, 36px);
   }
 
-  .guide-main > header > span {
+  .guide-breadcrumb {
     display: block;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
+  }
+
+  .guide-breadcrumb mat-icon {
+    display: inline-block;
+    vertical-align: middle;
   }
 
   .guide-main > header p {
@@ -4827,6 +4989,14 @@ a {
   .guide-content h2 {
     margin-top: 42px;
     font-size: 25px;
+  }
+
+  .guide-journey {
+    padding: 18px;
+  }
+
+  .guide-journey ol {
+    grid-template-columns: 1fr;
   }
 
   .guide-content h3 {
