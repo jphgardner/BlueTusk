@@ -116,7 +116,10 @@ import { CodePanel, SourceLink, StatusPill } from '../shared/technical-ui';
           The resulting configuration is immutable. Pools, commands, and EF contexts then share the
           same catalogue and exact PostgreSQL type identities.
         </p>
-        <bt-source-link [href]="source('docs/extensions/README.md')" label="Extension reference" />
+        <bt-source-link
+          [href]="source('docs/extensions/reference.md')"
+          label="Extension reference"
+        />
       </div>
       <bt-code-panel file="Extensions.cs" [code]="code" />
     </section>

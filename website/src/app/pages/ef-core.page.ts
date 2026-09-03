@@ -48,7 +48,10 @@ import { sourceUrl } from '../content/catalog';
           EF-created logical connections reuse the same physical pool, runtime codecs, type
           catalogue, authentication, and diagnostics as direct ADO.NET work.
         </p>
-        <bt-source-link [href]="source('docs/ef-core/README.md')" label="Complete EF reference" />
+        <bt-source-link
+          [href]="source('docs/ef-core/reference.md')"
+          label="Complete EF reference"
+        />
       </div>
       <bt-code-panel file="AppDbContext.cs" [code]="setupCode" />
     </section>

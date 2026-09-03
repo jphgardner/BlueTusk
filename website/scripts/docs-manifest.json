@@ -13,7 +13,7 @@
     "categoryLabel": "Getting started",
     "slug": "provider-overview",
     "source": "docs/ado-net/README.md",
-    "summary": "Build and run the native ADO.NET provider.",
+    "summary": "Connect a .NET application, run safe SQL, and choose the right command, transaction, batch, or bulk API.",
     "keywords": ["ado.net", "quickstart", "connection"],
     "order": 20
   },
@@ -103,7 +103,7 @@
     "categoryLabel": "Provider",
     "slug": "types",
     "source": "docs/types/README.md",
-    "summary": "Catalogue-driven PostgreSQL type mappings and extension points.",
+    "summary": "Read and write common, custom, array, JSON, temporal, and extension-defined PostgreSQL values from .NET.",
     "keywords": ["types", "arrays", "ranges", "json"],
     "order": 100
   },
@@ -121,7 +121,7 @@
     "categoryLabel": "Provider",
     "slug": "replication",
     "source": "docs/replication/README.md",
-    "summary": "Physical and logical replication, pgoutput, and WAL feedback.",
+    "summary": "Open a dedicated replication session, decode pgoutput, and acknowledge only durable transaction progress.",
     "keywords": ["logical", "physical", "wal", "pgoutput"],
     "order": 120
   },
@@ -130,7 +130,7 @@
     "categoryLabel": "EF Core",
     "slug": "overview",
     "source": "docs/ef-core/README.md",
-    "summary": "Queries, mappings, migrations, scaffolding, and PostgreSQL 19 graph.",
+    "summary": "Set up an EF Core context, query and save data, create migrations, and prepare the provider for production.",
     "keywords": ["linq", "migrations", "scaffolding", "mapping"],
     "order": 10
   },
@@ -141,14 +141,15 @@
     "source": "docs/ef-core/specification-tests.md",
     "summary": "Official relational specification coverage and native PostgreSQL gates.",
     "keywords": ["tests", "1987", "2111"],
-    "order": 20
+    "order": 20,
+    "listed": false
   },
   {
     "category": "real-time",
     "categoryLabel": "Real time",
     "slug": "platform",
     "source": "docs/realtime-platform/README.md",
-    "summary": "Correctness contract and independent release trains.",
+    "summary": "Choose Streams, Sync, Live, Continuous Graph, or Control Plane from the outcome your application needs.",
     "keywords": ["streams", "sync", "live", "contracts"],
     "order": 10
   },
@@ -157,7 +158,7 @@
     "categoryLabel": "Real time",
     "slug": "contracts",
     "source": "docs/realtime-platform/contracts.md",
-    "summary": "Shared delivery, checkpoint, and source identity contracts.",
+    "summary": "Understand when work is durable, when it may be replayed, and what each real-time product guarantees.",
     "keywords": ["contract", "delivery", "checkpoint"],
     "order": 20
   },
@@ -166,7 +167,7 @@
     "categoryLabel": "Real time",
     "slug": "streams",
     "source": "docs/streams/README.md",
-    "summary": "The implemented Streams kernel, transactions, failures, and performance.",
+    "summary": "Turn PostgreSQL changes into complete transactions with bounded storage, durable progress, and safe recovery.",
     "keywords": ["cdc", "stream", "transaction"],
     "order": 30
   },
@@ -221,7 +222,7 @@
     "categoryLabel": "Real time",
     "slug": "sync",
     "source": "docs/sync/README.md",
-    "summary": "Versioned destination synchronization, quarantine, reconciliation, and rebuilds.",
+    "summary": "Keep PostgreSQL, Redis, OpenSearch, NATS, Kafka, S3, or a webhook current from committed changes.",
     "keywords": ["redis", "nats", "opensearch", "destination"],
     "order": 90
   },
@@ -240,7 +241,7 @@
     "categoryLabel": "Real time",
     "slug": "live",
     "source": "docs/live/README.md",
-    "summary": "Authorized live delivery, replay, subscriptions, transports, and browser clients.",
+    "summary": "Register one authorized query and keep browser or .NET clients updated with bounded, resumable changes.",
     "keywords": ["websocket", "sse", "replay", "security"],
     "order": 110
   },
@@ -249,7 +250,7 @@
     "categoryLabel": "Real time",
     "slug": "control-plane",
     "source": "docs/control-plane/README.md",
-    "summary": "Operational queries, dashboard boundaries, authorization, and audit.",
+    "summary": "Run the dashboard, inspect every product, drill into unhealthy resources, and authorize audited operations.",
     "keywords": ["dashboard", "operations", "audit"],
     "order": 120
   },
@@ -258,7 +259,7 @@
     "categoryLabel": "Real time",
     "slug": "continuous-graph",
     "source": "docs/continuous-graph/README.md",
-    "summary": "Checkpointed graph projections for fraud and network workloads.",
+    "summary": "Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.",
     "keywords": ["graph", "projection", "checkpoint"],
     "order": 130
   },
@@ -267,7 +268,7 @@
     "categoryLabel": "Extensions",
     "slug": "catalog",
     "source": "docs/extensions/README.md",
-    "summary": "Extension SDK, seven V1 extension families, and one upstream-preview adapter.",
+    "summary": "Choose and configure typed support for PostGIS, pgvector, TimescaleDB, citext, and other extensions.",
     "keywords": ["postgis", "pgvector", "timescaledb", "citext"],
     "order": 10
   },
@@ -276,7 +277,7 @@
     "categoryLabel": "Graph",
     "slug": "sql-pgq",
     "source": "docs/graph/README.md",
-    "summary": "PostgreSQL 19 SQL/PGQ, discovery, migrations, and typed EF queries.",
+    "summary": "Define a PostgreSQL property graph, run a safe GRAPH_TABLE query, and inspect or map it from .NET.",
     "keywords": ["sql/pgq", "property graph", "postgresql 19"],
     "order": 10
   },
@@ -294,7 +295,7 @@
     "categoryLabel": "Operations",
     "slug": "security",
     "source": "docs/security.md",
-    "summary": "Threat model, closed findings, application boundaries, and checks.",
+    "summary": "Apply secure connection, identity, secret-handling, and diagnostics defaults before production.",
     "keywords": ["security", "threat", "secrets"],
     "order": 20
   },

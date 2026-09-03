@@ -77,7 +77,7 @@ import { sourceUrl } from '../content/catalog';
           BlueTusk checks the authenticated server’s catalogue and SQL/PGQ capability. A major
           version number alone is not treated as proof.
         </p>
-        <bt-source-link [href]="source('docs/graph/README.md')" label="Capability contract" />
+        <bt-source-link [href]="source('docs/graph/reference.md')" label="Capability contract" />
       </div>
       <div class="version-rail">
         @for (version of versions; track version.number) {

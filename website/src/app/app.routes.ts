@@ -1,4 +1,5 @@
-import { Routes } from '@angular/router';
+import { ActivatedRouteSnapshot, Routes } from '@angular/router';
+import { loadGuide } from '../generated/guide-loader.generated';
 
 export const routes: Routes = [
   {
@@ -53,6 +54,10 @@ export const routes: Routes = [
   },
   {
     path: 'documentation/:category/:slug',
+    resolve: {
+      guide: (route: ActivatedRouteSnapshot) =>
+        loadGuide(route.paramMap.get('category') ?? '', route.paramMap.get('slug') ?? ''),
+    },
     loadComponent: () => import('./docs/guide.page').then((component) => component.GuidePage),
   },
   {

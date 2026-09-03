@@ -14,9 +14,11 @@ import { MatIconModule } from '@angular/material/icon';
 import { Meta, Title } from '@angular/platform-browser';
 import { DOCUMENT } from '@angular/common';
 import { GUIDES } from '../../generated/guides.generated';
+import type { GuideManifestEntry } from '../content/models';
 import {
   DOCUMENTATION_JOURNEYS,
   DOCUMENTATION_SECTIONS,
+  documentationPrimerFor,
   documentationSectionFor,
   guideRoute,
 } from '../content/documentation-navigation';
@@ -93,6 +95,26 @@ import {
               ><mat-icon>code</mat-icon>View source on GitHub<mat-icon>open_in_new</mat-icon></a
             >
           </header>
+          <section class="guide-orientation" aria-label="How to use this guide">
+            <div>
+              <small>USE THIS GUIDE WHEN</small>
+              <p>{{ primer().useWhen }}</p>
+            </div>
+            <div>
+              <small>BEFORE YOU START</small>
+              <p>{{ primer().beforeYouStart }}</p>
+            </div>
+            @if (quickHeadings().length) {
+              <nav aria-label="Fast path through this guide">
+                <small>FAST PATH</small>
+                @for (heading of quickHeadings(); track heading.id) {
+                  <a [routerLink]="[]" [fragment]="heading.id"
+                    >{{ heading.text }}<mat-icon>arrow_downward</mat-icon></a
+                  >
+                }
+              </nav>
+            }
+          </section>
           @if (current.headings.length) {
             <details class="guide-mobile-toc">
               <summary><span>ON THIS PAGE</span><mat-icon>expand_more</mat-icon></summary>
@@ -203,9 +225,7 @@ export class GuidePage implements AfterViewChecked {
   private readonly slug = signal('');
   private readonly pendingFragment = signal<string | null>(null);
   private readonly isBrowser: boolean;
-  protected readonly guide = computed(() =>
-    GUIDES.find((x) => x.category === this.category() && x.slug === this.slug()),
-  );
+  protected readonly guide = signal<GuideManifestEntry | undefined>(undefined);
   protected readonly sections = DOCUMENTATION_SECTIONS;
   protected readonly currentSection = computed(() => {
     const current = this.guide();
@@ -215,6 +235,13 @@ export class GuidePage implements AfterViewChecked {
     const current = this.guide();
     return current ? guideRoute(current) : '';
   });
+  protected readonly primer = computed(() => {
+    const current = this.guide();
+    return documentationPrimerFor(current ?? { category: 'getting-started', listed: true });
+  });
+  protected readonly quickHeadings = computed(() =>
+    (this.guide()?.headings ?? []).filter((heading) => heading.level === 2).slice(0, 3),
+  );
   protected readonly journey = computed(() =>
     DOCUMENTATION_JOURNEYS.find((path) =>
       path.steps.some((step) => step.route === this.currentRoute()),
@@ -241,11 +268,14 @@ export class GuidePage implements AfterViewChecked {
     route.paramMap.subscribe((params) => {
       this.category.set(params.get('category') ?? '');
       this.slug.set(params.get('slug') ?? '');
-      const guide = this.guide();
-      if (guide) this.updatePageMetadata(guide.title, guide.summary, guide.category, guide.slug);
       if (this.isBrowser && !route.snapshot.fragment) {
         window.scrollTo({ top: 0, behavior: 'auto' });
       }
+    });
+    route.data.subscribe((data) => {
+      const guide = data['guide'] as GuideManifestEntry | undefined;
+      this.guide.set(guide);
+      if (guide) this.updatePageMetadata(guide.title, guide.summary, guide.category, guide.slug);
     });
     route.fragment.subscribe((fragment) => this.pendingFragment.set(fragment));
   }

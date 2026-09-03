@@ -1,7 +1,8 @@
 import { TestBed } from '@angular/core/testing';
-import { provideRouter, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, provideRouter, Router } from '@angular/router';
 import { RouterTestingHarness } from '@angular/router/testing';
 import { vi } from 'vitest';
+import { loadGuide } from '../../generated/guide-loader.generated';
 import { GuidePage } from './guide.page';
 
 describe('GuidePage', () => {
@@ -17,6 +18,10 @@ describe('GuidePage', () => {
           {
             path: 'documentation/:category/:slug',
             component: GuidePage,
+            resolve: {
+              guide: (route: ActivatedRouteSnapshot) =>
+                loadGuide(route.paramMap.get('category') ?? '', route.paramMap.get('slug') ?? ''),
+            },
           },
         ]),
       ],
@@ -31,15 +36,21 @@ describe('GuidePage', () => {
     const links = Array.from(
       harness.routeNativeElement?.querySelectorAll<HTMLAnchorElement>('.guide-toc nav a') ?? [],
     );
-    const link = links.find((candidate) => candidate.textContent?.trim() === 'Configure a context');
+    const link = links.find(
+      (candidate) => candidate.textContent?.trim() === '2. Create the model and context',
+    );
 
     expect(link).toBeTruthy();
-    expect(link?.getAttribute('href')).toBe('/documentation/ef-core/overview#configure-a-context');
+    expect(link?.getAttribute('href')).toBe(
+      '/documentation/ef-core/overview#2-create-the-model-and-context',
+    );
 
     link?.click();
     await harness.fixture.whenStable();
 
-    expect(TestBed.inject(Router).url).toBe('/documentation/ef-core/overview#configure-a-context');
+    expect(TestBed.inject(Router).url).toBe(
+      '/documentation/ef-core/overview#2-create-the-model-and-context',
+    );
   });
 
   it('renders collapsible section and page indexes for small screens', async () => {
@@ -53,7 +64,7 @@ describe('GuidePage', () => {
     expect(sectionIndex?.textContent).toContain('IN THIS SECTION');
     expect(sectionIndex?.textContent).toContain('Entity Framework Core');
     expect(pageIndex?.textContent).toContain('ON THIS PAGE');
-    expect(pageIndex?.textContent).toContain('Configure a context');
+    expect(pageIndex?.textContent).toContain('2. Create the model and context');
   });
 
   it('keeps readers oriented within the library and a guided path', async () => {
@@ -64,6 +75,9 @@ describe('GuidePage', () => {
     const page = harness.routeNativeElement;
     expect(page?.querySelector('.guide-breadcrumb')?.textContent).toContain('Documentation');
     expect(page?.querySelector('.guide-breadcrumb')?.textContent).toContain('Start here');
+    expect(page?.querySelector('.guide-orientation')?.textContent).toContain('USE THIS GUIDE WHEN');
+    expect(page?.querySelector('.guide-orientation')?.textContent).toContain('BEFORE YOU START');
+    expect(page?.querySelector('.guide-orientation')?.textContent).toContain('FAST PATH');
     expect(page?.querySelector('.guide-journey')?.textContent).toContain(
       'Connect a .NET application',
     );

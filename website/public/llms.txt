@@ -18,7 +18,7 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 - [Quickstart: run the first query](https://bluetusk.io/documentation/getting-started/quickstart): Create a .NET console app, install BlueTusk, run a parameterized PostgreSQL query, and understand data-source ownership.
 - [Core concepts](https://bluetusk.io/documentation/getting-started/concepts): Learn data-source ownership, sessions, capabilities, type identity, checkpoints, source identity, and release-state vocabulary.
 - [Architecture](https://bluetusk.io/documentation/getting-started/architecture): Understand the layers, dependency direction, ownership, and async boundaries.
-- [ADO.NET](https://bluetusk.io/documentation/getting-started/provider-overview): Build and run the native ADO.NET provider.
+- [ADO.NET](https://bluetusk.io/documentation/getting-started/provider-overview): Connect a .NET application, run safe SQL, and choose the right command, transaction, batch, or bulk API.
 
 ## Provider
 
@@ -33,37 +33,36 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 - [Asynchronous notifications](https://bluetusk.io/documentation/provider/notifications): LISTEN and NOTIFY lifecycle, dispatch, and connection behavior.
 - [Sequential readers](https://bluetusk.io/documentation/provider/sequential-readers): Bounded sequential reads for large PostgreSQL values.
 - [Schema discovery](https://bluetusk.io/documentation/provider/schema-discovery): Use GetSchema, GetColumnSchema, GetSchemaTable, restrictions, and provider-neutral catalogue metadata.
-- [Core type mappings](https://bluetusk.io/documentation/provider/types): Catalogue-driven PostgreSQL type mappings and extension points.
+- [Use PostgreSQL types](https://bluetusk.io/documentation/provider/types): Read and write common, custom, array, JSON, temporal, and extension-defined PostgreSQL values from .NET.
 - [PostgreSQL pipeline mode](https://bluetusk.io/documentation/provider/pipeline-mode): Pipeline groups, protocol Sync boundaries, and ordered failures.
-- [Replication](https://bluetusk.io/documentation/provider/replication): Physical and logical replication, pgoutput, and WAL feedback.
+- [Start PostgreSQL replication](https://bluetusk.io/documentation/provider/replication): Open a dedicated replication session, decode pgoutput, and acknowledge only durable transaction progress.
 
 ## EF Core
 
-- [Entity Framework Core](https://bluetusk.io/documentation/ef-core/overview): Queries, mappings, migrations, scaffolding, and PostgreSQL 19 graph.
-- [EF Core relational specification tests](https://bluetusk.io/documentation/ef-core/specification-tests): Official relational specification coverage and native PostgreSQL gates.
+- [Use BlueTusk with Entity Framework Core](https://bluetusk.io/documentation/ef-core/overview): Set up an EF Core context, query and save data, create migrations, and prepare the provider for production.
 
 ## Real time
 
-- [BlueTusk real-time platform](https://bluetusk.io/documentation/real-time/platform): Correctness contract and independent release trains.
-- [Real-time platform contracts](https://bluetusk.io/documentation/real-time/contracts): Shared delivery, checkpoint, and source identity contracts.
-- [BlueTusk Streams](https://bluetusk.io/documentation/real-time/streams): The implemented Streams kernel, transactions, failures, and performance.
+- [BlueTusk real-time platform](https://bluetusk.io/documentation/real-time/platform): Choose Streams, Sync, Live, Continuous Graph, or Control Plane from the outcome your application needs.
+- [Delivery guarantees in plain language](https://bluetusk.io/documentation/real-time/contracts): Understand when work is durable, when it may be replayed, and what each real-time product guarantees.
+- [BlueTusk Streams](https://bluetusk.io/documentation/real-time/streams): Turn PostgreSQL changes into complete transactions with bounded storage, durable progress, and safe recovery.
 - [Consistent snapshot bootstrap](https://bluetusk.io/documentation/real-time/snapshot-bootstrap): A fenced snapshot-then-stream protocol.
 - [PostgreSQL durable relay](https://bluetusk.io/documentation/real-time/durable-relay): Storage, backup, groups, retention, and relay fan-out.
 - [Streams checkpoint and lease stores](https://bluetusk.io/documentation/real-time/state-stores): State-store contracts and supported persistence behavior.
 - [Hosting and observability](https://bluetusk.io/documentation/real-time/streams-hosting): Hosted services, health checks, metrics, and operational behavior.
-- [BlueTusk Sync](https://bluetusk.io/documentation/real-time/sync): Versioned destination synchronization, quarantine, reconciliation, and rebuilds.
-- [BlueTusk Live](https://bluetusk.io/documentation/real-time/live): Authorized live delivery, replay, subscriptions, transports, and browser clients.
-- [BlueTusk Control Plane and Dashboard](https://bluetusk.io/documentation/real-time/control-plane): Operational queries, dashboard boundaries, authorization, and audit.
+- [Keep another system in sync](https://bluetusk.io/documentation/real-time/sync): Keep PostgreSQL, Redis, OpenSearch, NATS, Kafka, S3, or a webhook current from committed changes.
+- [Push live updates to applications](https://bluetusk.io/documentation/real-time/live): Register one authorized query and keep browser or .NET clients updated with bounded, resumable changes.
+- [Operate BlueTusk from the dashboard](https://bluetusk.io/documentation/real-time/control-plane): Run the dashboard, inspect every product, drill into unhealthy resources, and authorize audited operations.
 - [Real-time operations](https://bluetusk.io/documentation/real-time/operations): Operate source identity, checkpoints, relay storage, destinations, failover, reconciliation, rebuilds, and endurance evidence.
-- [BlueTusk Continuous Graph](https://bluetusk.io/documentation/real-time/continuous-graph): Checkpointed graph projections for fraud and network workloads.
+- [Keep graph query results current](https://bluetusk.io/documentation/real-time/continuous-graph): Keep a bounded SQL/PGQ result current with incremental updates and authoritative repair.
 
 ## Extensions
 
-- [Extension SDK](https://bluetusk.io/documentation/extensions/catalog): Extension SDK, seven V1 extension families, and one upstream-preview adapter.
+- [Use PostgreSQL extensions](https://bluetusk.io/documentation/extensions/catalog): Choose and configure typed support for PostGIS, pgvector, TimescaleDB, citext, and other extensions.
 
 ## Graph
 
-- [PostgreSQL 19 SQL/PGQ V1 candidate](https://bluetusk.io/documentation/graph/sql-pgq): PostgreSQL 19 SQL/PGQ, discovery, migrations, and typed EF queries.
+- [Query a PostgreSQL property graph](https://bluetusk.io/documentation/graph/sql-pgq): Define a PostgreSQL property graph, run a safe GRAPH_TABLE query, and inspect or map it from .NET.
 
 ## Operations
 
@@ -71,6 +70,6 @@ Use this index to find the canonical HTML documentation. The complete curated gu
 - [Deployment and configuration](https://bluetusk.io/documentation/operations/deployment): Design production topology, security roles, pool capacity, migrations, rolling deployment, and real-time persistence.
 - [Diagnostics and observability](https://bluetusk.io/documentation/operations/observability): Metrics, traces, and slow-command events.
 - [Troubleshooting](https://bluetusk.io/documentation/operations/troubleshooting): Diagnose connection, TLS, authentication, pool, command, type, EF, replication, and destination failures from the lowest boundary upward.
-- [Security review](https://bluetusk.io/documentation/operations/security): Threat model, closed findings, application boundaries, and checks.
+- [Security review](https://bluetusk.io/documentation/operations/security): Apply secure connection, identity, secret-handling, and diagnostics defaults before production.
 - [Performance engineering](https://bluetusk.io/documentation/operations/performance): Measure pool pressure, command paths, multiplexing, allocation, readers, COPY, and real-time throughput with reproducible evidence.
 - [Upgrade guide](https://bluetusk.io/documentation/operations/upgrade-guide): Upgrade product families, EF Core, extensions, PostgreSQL, formats, mappings, and rolling deployments with a recoverable plan.

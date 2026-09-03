@@ -23,6 +23,11 @@ export interface DocumentationJourney {
   readonly steps: readonly DocumentationJourneyStep[];
 }
 
+export interface DocumentationGuidePrimer {
+  readonly useWhen: string;
+  readonly beforeYouStart: string;
+}
+
 export const DOCUMENTATION_SECTIONS: readonly DocumentationSection[] = [
   {
     id: 'start',
@@ -220,4 +225,51 @@ export function compareDocumentationGuides(
     left.order - right.order ||
     left.title.localeCompare(right.title)
   );
+}
+
+const GUIDE_PRIMERS: Readonly<Record<string, DocumentationGuidePrimer>> = {
+  'getting-started': {
+    useWhen: 'You are new to BlueTusk or need to choose the correct starting point.',
+    beforeYouStart: 'Have the .NET SDK and access to a disposable PostgreSQL database.',
+  },
+  provider: {
+    useWhen: 'You are building or tuning the direct database boundary of a .NET application.',
+    beforeYouStart: 'Complete the first-query quickstart and keep one long-lived data source.',
+  },
+  'ef-core': {
+    useWhen: 'Your application uses EF Core for queries, changes, migrations, or scaffolding.',
+    beforeYouStart: 'Complete the EF Core setup and confirm the matching package versions.',
+  },
+  'real-time': {
+    useWhen: 'Your application must react safely after PostgreSQL commits a change.',
+    beforeYouStart: 'Understand Streams delivery and decide where durable progress will live.',
+  },
+  extensions: {
+    useWhen:
+      'A PostgreSQL extension adds types or behavior your application needs to use directly.',
+    beforeYouStart:
+      'Install the server extension first and choose only the required client package.',
+  },
+  graph: {
+    useWhen: 'You need to model, query, or maintain connected data with PostgreSQL SQL/PGQ.',
+    beforeYouStart: 'Use a server that reports SQL/PGQ capability and begin with a bounded query.',
+  },
+  operations: {
+    useWhen: 'You are preparing, deploying, observing, upgrading, or repairing a BlueTusk service.',
+    beforeYouStart:
+      'Record the exact package, runtime, PostgreSQL, configuration, and deployment versions.',
+  },
+};
+
+export function documentationPrimerFor(
+  guide: Pick<GuideManifestEntry, 'category' | 'listed'>,
+): DocumentationGuidePrimer {
+  if (!guide.listed) {
+    return {
+      useWhen: 'You need implementation detail, compatibility evidence, or an incident reference.',
+      beforeYouStart:
+        'Use the practical guide first unless you are reviewing or debugging internals.',
+    };
+  }
+  return GUIDE_PRIMERS[guide.category] ?? GUIDE_PRIMERS['operations'];
 }

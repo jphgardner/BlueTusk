@@ -31,7 +31,7 @@ export interface GuideHeading {
   level: number;
 }
 
-export interface GuideManifestEntry {
+export interface GuideIndexEntry {
   category: string;
   categoryLabel: string;
   listed: boolean;
@@ -46,6 +46,9 @@ export interface GuideManifestEntry {
   wordCount: number;
   readMinutes: number;
   searchText: string;
+}
+
+export interface GuideManifestEntry extends GuideIndexEntry {
   blocks: readonly GuideContentBlock[];
 }
 

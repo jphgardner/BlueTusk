@@ -1,11 +1,30 @@
 import { EVIDENCE, EXTENSION_CAPABILITIES, PRODUCT_STATUSES, SITE_SEARCH } from './catalog';
 import { GUIDES } from '../../generated/guides.generated';
 import { GUIDE_SEARCH } from '../../generated/guide-search.generated';
+import { GUIDES as ARCHITECTURE_GUIDES } from '../../generated/guide-content/architecture.generated';
+import { GUIDES as EF_CORE_GUIDES } from '../../generated/guide-content/ef-core.generated';
+import { GUIDES as EXTENSION_GUIDES } from '../../generated/guide-content/extensions.generated';
+import { GUIDES as GETTING_STARTED_GUIDES } from '../../generated/guide-content/getting-started.generated';
+import { GUIDES as GRAPH_GUIDES } from '../../generated/guide-content/graph.generated';
+import { GUIDES as OPERATIONS_GUIDES } from '../../generated/guide-content/operations.generated';
+import { GUIDES as PROVIDER_GUIDES } from '../../generated/guide-content/provider.generated';
+import { GUIDES as REAL_TIME_GUIDES } from '../../generated/guide-content/real-time.generated';
 import {
   DOCUMENTATION_JOURNEYS,
   DOCUMENTATION_SECTIONS,
   documentationSectionFor,
 } from './documentation-navigation';
+
+const CONTENT_GUIDES = [
+  ...GETTING_STARTED_GUIDES,
+  ...PROVIDER_GUIDES,
+  ...EF_CORE_GUIDES,
+  ...REAL_TIME_GUIDES,
+  ...EXTENSION_GUIDES,
+  ...GRAPH_GUIDES,
+  ...ARCHITECTURE_GUIDES,
+  ...OPERATIONS_GUIDES,
+];
 
 describe('website content integrity', () => {
   it('keeps product maturity and pending gates explicit', () => {
@@ -65,6 +84,9 @@ describe('website content integrity', () => {
       expect(guide.readMinutes).toBeGreaterThan(0);
       expect(guide.searchText.length).toBeGreaterThan(0);
       expect(new Set(guide.headings.map((heading) => heading.id)).size).toBe(guide.headings.length);
+    }
+    expect(CONTENT_GUIDES).toHaveLength(GUIDES.length);
+    for (const guide of CONTENT_GUIDES) {
       expect(
         guide.blocks
           .filter((block) => block.kind === 'html')
@@ -88,6 +110,23 @@ describe('website content integrity', () => {
     expect(GUIDE_SEARCH.map((guide) => guide.route).sort()).toEqual(
       listed.map((guide) => `/documentation/${guide.category}/${guide.slug}`).sort(),
     );
+  });
+
+  it('keeps practical product entry points concise and deep manuals in reference', () => {
+    const practical = GUIDES.filter((guide) => guide.listed);
+    expect(Math.max(...practical.map((guide) => guide.readMinutes))).toBeLessThanOrEqual(12);
+
+    for (const sourcePath of [
+      'docs/ef-core/reference.md',
+      'docs/sync/reference.md',
+      'docs/live/reference.md',
+      'docs/control-plane/reference.md',
+      'docs/continuous-graph/reference.md',
+      'docs/extensions/reference.md',
+      'docs/graph/reference.md',
+    ]) {
+      expect(GUIDES.find((guide) => guide.sourcePath === sourcePath)?.listed).toBe(false);
+    }
   });
 
   it('keeps every flagship page in global search', () => {

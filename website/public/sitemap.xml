@@ -37,8 +37,11 @@
   <url><loc>https://bluetusk.io/documentation/provider/ado-net-nativeaot</loc></url>
   <url><loc>https://bluetusk.io/documentation/provider/protocol</loc></url>
   <url><loc>https://bluetusk.io/documentation/provider/protocol-capture-format</loc></url>
+  <url><loc>https://bluetusk.io/documentation/provider/replication-reference</loc></url>
+  <url><loc>https://bluetusk.io/documentation/provider/types-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/ef-core/overview</loc></url>
   <url><loc>https://bluetusk.io/documentation/ef-core/specification-tests</loc></url>
+  <url><loc>https://bluetusk.io/documentation/ef-core/ef-core-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/platform</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/contracts</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/streams</loc></url>
@@ -54,10 +57,12 @@
   <url><loc>https://bluetusk.io/documentation/real-time/operations</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/continuous-graph</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/control-plane-api-compatibility</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/control-plane-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/control-plane-release-notes-0-1-0-preview-1</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/control-plane-release-notes-1-0-0</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/live-api-compatibility</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/live-format-compatibility</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/live-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/live-release-notes-0-1-0-preview-1</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/live-release-notes-1-0-0</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/realtime-platform-delivery-plan</loc></url>
@@ -73,12 +78,16 @@
   <url><loc>https://bluetusk.io/documentation/real-time/streams-typed-mappings</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/sync-api-compatibility</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/sync-format-compatibility</loc></url>
+  <url><loc>https://bluetusk.io/documentation/real-time/sync-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/real-time/sync-release-notes-1-0-0</loc></url>
   <url><loc>https://bluetusk.io/documentation/extensions/catalog</loc></url>
+  <url><loc>https://bluetusk.io/documentation/extensions/extensions-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/graph/sql-pgq</loc></url>
   <url><loc>https://bluetusk.io/documentation/graph/continuous-graph-api-compatibility</loc></url>
+  <url><loc>https://bluetusk.io/documentation/graph/continuous-graph-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/graph/continuous-graph-release-notes-0-1-0-preview-1</loc></url>
   <url><loc>https://bluetusk.io/documentation/graph/continuous-graph-release-notes-1-0-0</loc></url>
+  <url><loc>https://bluetusk.io/documentation/graph/graph-reference</loc></url>
   <url><loc>https://bluetusk.io/documentation/architecture/architecture-allocation-discipline</loc></url>
   <url><loc>https://bluetusk.io/documentation/architecture/architecture-decisions-0001-layered-dependency-direction</loc></url>
   <url><loc>https://bluetusk.io/documentation/architecture/architecture-decisions-0002-postgresql-is-the-specification</loc></url>

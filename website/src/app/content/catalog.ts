@@ -325,7 +325,7 @@ export const EVIDENCE: readonly EvidenceRecord[] = [
     detail:
       'Replay, permissions, transports, clients, security, load, stored formats, and package tests are implemented.',
     asOf: '2026-08-04',
-    sourcePath: 'docs/live/README.md',
+    sourcePath: 'docs/live/reference.md',
   },
   {
     id: 'graph-pg19',
@@ -373,7 +373,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '15–19',
     state: 'supported',
     notes: 'Scalar and array mappings with EF translation.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
   {
     surface: 'ADO.NET + EF',
@@ -382,7 +382,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '15–19',
     state: 'supported',
     notes: 'Vector, half-vector, sparse-vector, and distance operators.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
   {
     surface: 'ADO.NET + EF',
@@ -391,7 +391,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '15–19',
     state: 'supported',
     notes: 'Key/value mapping works in ADO.NET and EF Core, including arrays.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
   {
     surface: 'ADO.NET + EF',
@@ -400,7 +400,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '15–19',
     state: 'supported',
     notes: 'Typed .NET values for paths and PostgreSQL hierarchy queries.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
   {
     surface: 'ADO.NET + EF',
@@ -409,7 +409,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '15–19',
     state: 'supported',
     notes: 'Fuzzy text matching and similarity queries in EF Core.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
   {
     surface: 'ADO.NET',
@@ -418,7 +418,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '17 / 0.2.5 gate',
     state: 'preview',
     notes: 'Evaluation only. The upstream preview is not approved for production use.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
   {
     surface: 'ADO.NET + EF',
@@ -427,7 +427,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '18 gate',
     state: 'supported',
     notes: 'PostGIS 3.6 spatial values and queries tested end to end.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
   {
     surface: 'ADO.NET + EF',
@@ -436,7 +436,7 @@ export const EXTENSION_CAPABILITIES: readonly CapabilityRecord[] = [
     postgres: '17 gate',
     state: 'supported',
     notes: 'TimescaleDB 2.29 queries, including compiled EF Core queries.',
-    sourcePath: 'docs/extensions/README.md',
+    sourcePath: 'docs/extensions/reference.md',
   },
 ] as const;
 
