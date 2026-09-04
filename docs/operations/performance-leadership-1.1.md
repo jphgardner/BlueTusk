@@ -59,6 +59,13 @@ before treating this as an end-to-end leadership gate. The existing provider
 budget gate permits ratios up to 1.00 or 1.05 depending on the workload; passing
 it does not establish this programme's stricter 0.98 leadership threshold.
 
+The [Provider request-level capture adapter](provider-request-capture.md) now
+provides all 16 feature adapters with a shared pool, independent workers,
+individual-request samples, process counters, and observed TLS state. It is a
+separate capture path; the full leadership workflow has not yet been switched
+to an end-to-end raw-to-verdict pipeline. Diagnostic adapter tests do not fill
+the missing dedicated-runner or cross-product evidence requirements.
+
 - Provider: 16 features at concurrency 1, 64, and 256, including TLS and
   constrained-network variants, against Npgsql 10.0.3.
 - Streams: 1/1,000-change transactions, 4 MiB spill, snapshot/catch-up, and

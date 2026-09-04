@@ -161,6 +161,9 @@ jobs:
       - name: Test
         run: dotnet test BlueTusk.slnx --configuration Release --no-build --logger trx --results-directory artifacts/test-results
 
+      - name: Test individual-request performance capture machinery
+        run: dotnet run --project benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj --configuration Release --no-build -- --provider-request-self-test
+
       - name: Verify V1 engineering production readiness
         shell: pwsh
         run: ./eng/verify-v1-production-readiness.ps1

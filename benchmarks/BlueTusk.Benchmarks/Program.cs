@@ -4,6 +4,18 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using BlueTusk.Benchmarks;
 
+if (args is ["--provider-request-self-test"])
+{
+    await ProviderRequestCaptureSelfTests.RunAsync();
+    return;
+}
+
+if (args is ["--provider-request-capture", var requestOptionsPath])
+{
+    await ProviderRequestCapture.RunAsync(requestOptionsPath);
+    return;
+}
+
 if (args is ["--transport-tls-smoke"])
 {
     using var benchmark = new TransportPipelineSocketBenchmarks
