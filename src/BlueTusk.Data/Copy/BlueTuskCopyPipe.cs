@@ -1,4 +1,5 @@
 using System.Buffers;
+using System.Runtime.CompilerServices;
 using System.Threading.Channels;
 
 namespace BlueTusk.Data.Copy;
@@ -67,6 +68,7 @@ internal sealed class BlueTuskCopyPipe : Stream
         return EnqueueWriteAsync(chunk, cancellationToken);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask WriteCoalescedAsync(
         ReadOnlyMemory<byte> buffer,
         CancellationToken cancellationToken)
@@ -109,6 +111,7 @@ internal sealed class BlueTuskCopyPipe : Stream
         _channel.Writer.TryComplete(exception);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask CompleteWritingAsync(CancellationToken cancellationToken = default)
     {
         if (_pendingWriteCount != 0)
@@ -119,6 +122,7 @@ internal sealed class BlueTuskCopyPipe : Stream
         _channel.Writer.TryComplete();
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     public override async ValueTask<int> ReadAsync(
         Memory<byte> buffer,
         CancellationToken cancellationToken = default)
@@ -199,6 +203,7 @@ internal sealed class BlueTuskCopyPipe : Stream
         _hasCurrent = false;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask EnqueuePendingWriteAsync(CancellationToken cancellationToken)
     {
         var bytes = _pendingWriteBuffer!;
@@ -218,6 +223,7 @@ internal sealed class BlueTuskCopyPipe : Stream
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask EnqueueWriteAsync(
         PooledChunk chunk,
         CancellationToken cancellationToken)

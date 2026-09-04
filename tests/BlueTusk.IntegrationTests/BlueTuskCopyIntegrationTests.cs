@@ -325,6 +325,51 @@ public sealed class BlueTuskCopyIntegrationTests
         await ExecuteAsync(connection, $"DROP TABLE {tableName}");
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Cancellable_binary_import_preserves_codecs_and_recovers_after_abort(bool cancelCompletion)
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        await ExecuteAsync(connection,
+            "CREATE TEMP TABLE bluetusk_cancelable_import_reuse (id int4, amount numeric, note text)");
+        const string sql = "COPY bluetusk_cancelable_import_reuse FROM STDIN WITH (FORMAT BINARY)";
+        using (var tokenSource = new CancellationTokenSource())
+        {
+            await using var importer = await connection.BeginBinaryImportAsync(sql, tokenSource.Token);
+            for (var index = 0; index < 64; index++)
+            {
+                await importer.StartRowAsync(tokenSource.Token);
+                await importer.WriteAsync(index, tokenSource.Token);
+                await importer.WriteAsync(123.45m + index, 1700, tokenSource.Token);
+                await importer.WriteAsync("checked", tokenSource.Token);
+            }
+            Assert.Equal(64, await importer.CompleteAsync(tokenSource.Token));
+        }
+        using (var tokenSource = new CancellationTokenSource())
+        {
+            await using var importer = await connection.BeginBinaryImportAsync(sql, tokenSource.Token);
+            await importer.StartRowAsync(tokenSource.Token);
+            if (cancelCompletion)
+            {
+                await importer.WriteAsync(99, tokenSource.Token);
+                await importer.WriteAsync(1m, 1700, tokenSource.Token);
+                await importer.WriteAsync("must roll back", tokenSource.Token);
+            }
+            await tokenSource.CancelAsync();
+            await Assert.ThrowsAnyAsync<OperationCanceledException>(() => cancelCompletion
+                ? importer.CompleteAsync(tokenSource.Token).AsTask()
+                : importer.WriteAsync(99, tokenSource.Token).AsTask());
+        }
+        await using var verify = new BlueTuskCommand(
+            "SELECT count(*)::int8 FROM bluetusk_cancelable_import_reuse WHERE amount = 123.45 + id AND note = 'checked'",
+            connection);
+        Assert.Equal(64, await verify.ExecuteScalarAsync<long>(CancellationToken.None));
+        await using var total = new BlueTuskCommand("SELECT count(*)::int8 FROM bluetusk_cancelable_import_reuse", connection);
+        Assert.Equal(64, await total.ExecuteScalarAsync<long>(CancellationToken.None));
+    }
+
     [Fact]
     public async Task Cancelled_copy_from_aborts_and_leaves_the_connection_reusable()
     {

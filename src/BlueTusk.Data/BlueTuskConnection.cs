@@ -1651,6 +1651,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
         }
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskRawCopyResult> CopyFromCoreAsync(
         string copyCommand,
         Stream source,
@@ -2431,6 +2432,7 @@ public sealed class BlueTuskConnection : DbConnection, IProviderConnection
             result.BytesTransferred);
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
     private async ValueTask<BlueTuskCopyResponse> AwaitCopyStartAsync(
         Task<BlueTuskCopyResponse> started,
         Task<BlueTuskRawCopyResult> copyTask,

@@ -25,9 +25,9 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
     private readonly BlueTuskCopyInOperation? _synchronousOperation;
     private readonly BlueTuskCopyInOperation? _asynchronousOperation;
     private readonly BlueTuskTypeRegistry _registry;
-    private readonly BlueTuskParameter _reusableParameter = new();
+    private BlueTuskParameter? _reusableParameter;
     private readonly short _columnCount;
-    private readonly byte[]?[] _fieldBuffers;
+    private byte[]?[]? _fieldBuffers;
     private byte[]? _writeBuffer;
     private int _writeBufferCount;
     private int _fieldIndex;
@@ -42,12 +42,12 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         BlueTuskTypeRegistry registry,
         int columnCount)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(columnCount);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
         _pipe = pipe;
         _copyTask = copyTask;
         _registry = registry;
         _columnCount = checked((short)columnCount);
-        _fieldBuffers = new byte[]?[columnCount];
     }
 
     internal BlueTuskBinaryImporter(
@@ -56,6 +56,7 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         int columnCount,
         bool asynchronous = false)
     {
+        ArgumentOutOfRangeException.ThrowIfNegative(columnCount);
         ArgumentOutOfRangeException.ThrowIfGreaterThan(columnCount, short.MaxValue);
         _pipe = null!;
         _copyTask = null!;
@@ -69,7 +70,6 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         }
         _registry = registry;
         _columnCount = checked((short)columnCount);
-        _fieldBuffers = new byte[]?[columnCount];
     }
 
     internal void Initialize() => _synchronousOperation!.Write(Header);
@@ -82,10 +82,12 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
             return AwaitInitializeAsync(capacity);
         }
 
+        capacity.GetAwaiter().GetResult();
         BufferHeader();
         return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitInitializeAsync(ValueTask capacity)
     {
         await capacity.ConfigureAwait(false);
@@ -125,10 +127,12 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
             return AwaitStartRowAsync(capacity);
         }
 
+        capacity.GetAwaiter().GetResult();
         StartRowBuffered();
         return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitStartRowAsync(ValueTask capacity)
     {
         await capacity.ConfigureAwait(false);
@@ -184,10 +188,12 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
             return AwaitWriteInt32Async(capacity, value);
         }
 
+        capacity.GetAwaiter().GetResult();
         WriteInt32Buffered(value);
         return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitWriteInt32Async(ValueTask capacity, int value)
     {
         await capacity.ConfigureAwait(false);
@@ -214,10 +220,12 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
             return AwaitWriteBooleanAsync(capacity, value);
         }
 
+        capacity.GetAwaiter().GetResult();
         WriteBooleanBuffered(value);
         return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitWriteBooleanAsync(ValueTask capacity, bool value)
     {
         await capacity.ConfigureAwait(false);
@@ -245,10 +253,12 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
             return AwaitWriteGuidAsync(capacity, value);
         }
 
+        capacity.GetAwaiter().GetResult();
         WriteGuidBuffered(value);
         return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitWriteGuidAsync(ValueTask capacity, Guid value)
     {
         await capacity.ConfigureAwait(false);
@@ -288,10 +298,12 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
             return AwaitWriteStringAsync(capacity, value, payloadLength);
         }
 
+        capacity.GetAwaiter().GetResult();
         WriteStringBuffered(value, payloadLength);
         return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitWriteStringAsync(
         ValueTask capacity,
         string value,
@@ -335,6 +347,7 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         _fieldIndex++;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     public async ValueTask WriteAsync<T>(
         T? value,
         uint? postgreSqlTypeOid,
@@ -351,11 +364,14 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         }
         else
         {
+            // Built-in fast paths write directly into the shared output buffer. Only
+            // general codecs need parameter metadata and reusable per-column storage.
+            _fieldBuffers ??= new byte[]?[_columnCount];
             var payload = BlueTuskBinaryCopyCodec.Encode(
                 value,
                 postgreSqlTypeOid,
                 _registry,
-                _reusableParameter,
+                _reusableParameter ??= new BlueTuskParameter(),
                 ref _fieldBuffers[_fieldIndex]);
             var fieldLength = checked(sizeof(int) + payload.Length);
             await EnsureWriteCapacityAsync(fieldLength, cancellationToken).ConfigureAwait(false);
@@ -592,11 +608,17 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         }
 
         var write = _pipe.WriteChunkAsync(data, cancellationToken);
-        return write.IsCompletedSuccessfully
-            ? ValueTask.CompletedTask
-            : AwaitWriteChunkAsync(write, cancellationToken);
+        if (!write.IsCompletedSuccessfully)
+        {
+            return AwaitWriteChunkAsync(write, cancellationToken);
+        }
+
+        // Consume completed pooled operations too, so their state can be reused.
+        write.GetAwaiter().GetResult();
+        return ValueTask.CompletedTask;
     }
 
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder))]
     private async ValueTask AwaitWriteChunkAsync(
         ValueTask write,
         CancellationToken cancellationToken)

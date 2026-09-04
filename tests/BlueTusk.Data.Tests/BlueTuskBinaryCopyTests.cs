@@ -41,6 +41,36 @@ public sealed class BlueTuskBinaryCopyTests
     }
 
     [Fact]
+    public async Task Importer_general_codecs_reuse_column_storage_across_rows()
+    {
+        await using var pipe = new BlueTuskCopyPipe();
+        var completion = new TaskCompletionSource<BlueTuskRawCopyResult>(TaskCreationOptions.RunContinuationsAsynchronously);
+        var registry = BlueTuskBuiltInTypes.CreateRegistry();
+        await using var importer = new BlueTuskBinaryImporter(pipe, completion.Task, registry, columnCount: 2);
+        await importer.InitializeAsync(CancellationToken.None);
+        for (var index = 0; index < 32; index++)
+        {
+            await importer.StartRowAsync();
+            await importer.WriteAsync(123.45m + index, BlueTuskBuiltInTypes.Numeric.Id.Oid);
+            await importer.WriteAsync((long)index, BlueTuskBuiltInTypes.Int8.Id.Oid);
+        }
+        var complete = importer.CompleteAsync().AsTask();
+        completion.SetResult(BinaryResult(32, 0));
+        Assert.Equal(32, await complete);
+
+        await using var exporter = new BlueTuskBinaryExporter(pipe, completion.Task, registry, columnCount: 2);
+        await exporter.InitializeAsync(CancellationToken.None);
+        for (var index = 0; index < 32; index++)
+        {
+            Assert.Equal(2, await exporter.StartRowAsync());
+            var amount = await exporter.ReadAsync<BlueTuskNumeric>(BlueTuskBuiltInTypes.Numeric.Id.Oid);
+            Assert.Equal(123.45m + index, amount.ToDecimal());
+            Assert.Equal((long)index, await exporter.ReadAsync<long>());
+        }
+        Assert.Equal(-1, await exporter.StartRowAsync());
+    }
+
+    [Fact]
     public async Task Exporter_reads_fragmented_postgresql_binary_rows()
     {
         var pipe = new BlueTuskCopyPipe();
