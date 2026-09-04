@@ -7,7 +7,7 @@ individual operation, rather than percentiles of averaged operation blocks.
 
 **Status:** implemented capture adapter, not a completed leadership gate. Short
 local smoke runs validate its operation but must not be presented as performance
-wins. Dedicated-runner captures, confidence intervals and the remaining
+wins. Dedicated-runner captures, validated statistical assumptions and the remaining
 cross-product adapters are still required by the
 [performance programme](performance-leadership-1.1.md).
 
@@ -123,15 +123,67 @@ measured harness hash. Failed runs retain their partial files but have no
 completed index. Output directories are never overwritten.
 
 The index deliberately sets `leadershipGatePassed` to `false`. It is not the
-schema-2 consolidated leadership evidence document. The next processing stage
-must independently derive mean/P95/P99, throughput, allocation and CPU/event
-from raw counters and samples, compute paired confidence intervals, verify
-runner and image provenance, and combine the rest of the required product
-matrix. An image digest supplied to this wrapper is a declared identity; retain
-the actual container/runtime inspection that binds it to the measured server.
+schema-2 consolidated leadership evidence document. An image digest supplied
+to this wrapper is a declared identity; retain the actual container/runtime
+inspection that binds it to the measured server.
+
+## Derive a readable comparison
+
+After capture, run the analyzer against its complete index and exact source SHA:
+
+```powershell
+dotnet benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll `
+    --provider-request-analyze `
+    artifacts/provider-request-windows/capture-index.json `
+    $candidateSha `
+    artifacts/provider-request-windows-analysis
+```
+
+The output directory must be new. `provider-report.md` contains latency,
+allocation, throughput, CPU and peak-RSS comparisons; `provider-analysis.json`
+retains the per-trial absolute values, GC counts, source hashes, ratios and
+confidence intervals. The analyzer records its own assembly version separately
+from the measured candidate, so it can analyze a retained older capture without
+pretending to have measured a newer binary.
+
+The analyzer checks every raw file hash before parsing it. It rejects missing
+trial pairs, duplicate records, mismatched source/runtime/transport/method
+metadata, changed observation windows, inconsistent sample counts and invalid
+counters. It recomputes mean and nearest-rank P95/P99 from individual request
+ticks, allocation and CPU per completed operation, and throughput from the
+actual elapsed measurement window. It does not accept precomputed summary
+statistics as a substitute for those inputs.
+
+Each independently restarted process is one trial. For each metric, the reported
+ratio is the geometric mean of matched BlueTusk/Npgsql trial ratios; trials have
+equal weight. At least five pairs are required for the approximate, two-sided
+95% Student-t interval on trial log-ratios. The calculation applies the
+[NIST mean confidence-interval formula](https://www.itl.nist.gov/div898/handbook/eda/section3/eda352.htm)
+to those log-ratios and exponentiates its bounds. It uses the
+[NIST critical values](https://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm)
+with a small conservative allowance for published rounding.
+
+This assumes independent trials and approximately normal trial log-ratios;
+the analyzer does not establish those assumptions. Requests within one process
+are not treated as independent trials. These are individual metric intervals,
+not a simultaneous confidence guarantee across the full matrix. Zero-valued
+counters remain visible but receive no log-ratio inference. Too few trials or
+an interval crossing the target cannot produce a numerical-target pass.
+
+Even when a workload meets the numerical 0.98 point/upper-confidence target for
+all four latency/allocation measures, **the analyzer does not certify a release
+gate**. Diagnostic runs remain diagnostic. Isolated-runner and image provenance,
+statistical validation, final-SHA evidence and all remaining product/OS/network
+workloads are still required. This output does not feed the schema-2 consolidated
+verifier yet: that verifier's separate candidate/reference bounds are not the
+same quantity as this analyzer's paired-ratio interval. Integration must preserve
+that distinction, not relabel one type of interval as the other.
 
 The no-database self-test runs with `--provider-request-self-test` and is included
 in the build workflow. It covers real worker concurrency, synchronous-operation
 fairness, complete samples, counters, warmup exclusion, sample overflow,
-cancellation, worker failure and invalid resource bounds. It is machinery
-validation, not measured BlueTusk/Npgsql performance evidence.
+cancellation, worker failure, invalid resource bounds and private-CA validation.
+It also tests raw statistic derivation, known confidence limits, ties, zero
+counters, insufficient trials, hash mismatches, source identity, incomplete
+pairs, path containment and mismatched capture methodology. Its synthetic
+fixtures test machinery, not measured BlueTusk/Npgsql performance.

@@ -4,6 +4,12 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using BlueTusk.Benchmarks;
 
+if (args is ["--provider-request-analyze", var captureIndexPath, var captureCommit, var analysisDirectory])
+{
+    await ProviderRequestAnalysis.RunAsync(captureIndexPath, captureCommit, analysisDirectory);
+    return;
+}
+
 if (args is ["--provider-request-self-test"])
 {
     await ProviderRequestCaptureSelfTests.RunAsync();

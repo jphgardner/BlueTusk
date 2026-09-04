@@ -73,6 +73,7 @@ internal static class ProviderRequestCaptureSelfTests
         Assert(ProviderRequestFixture.Features.Length == 16 &&
             ProviderRequestFixture.Features.Distinct(StringComparer.Ordinal).Count() == 16, "All 16 feature adapters must be named uniquely.");
         TestPrivateCertificateValidation();
+        await ProviderRequestAnalysisSelfTests.RunAsync();
         Console.WriteLine("Provider request-capture self-tests passed: concurrency, raw samples, counters, warmup exclusion, bounded capacity, cancellation, worker failure, option bounds, and private-CA validation.");
     }
 

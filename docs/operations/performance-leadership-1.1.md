@@ -65,6 +65,10 @@ individual-request samples, process counters, and observed TLS state. It is a
 separate capture path; the full leadership workflow has not yet been switched
 to an end-to-end raw-to-verdict pipeline. Diagnostic adapter tests do not fill
 the missing dedicated-runner or cross-product evidence requirements.
+Its raw-data analyzer now recomputes Provider metrics and approximate paired
+trial confidence intervals, retaining hashes and a readable report. This is
+not yet integrated with the consolidated verifier's separate-bound schema;
+neither diagnostic captures nor standalone numerical passes certify release.
 
 - Provider: 16 features at concurrency 1, 64, and 256, including TLS and
   constrained-network variants, against Npgsql 10.0.3.
