@@ -565,6 +565,46 @@ public sealed class BlueTuskSessionIntegrationTests
         Assert.Equal(42, await valid.ExecuteScalarAsync<int>(CancellationToken.None));
     }
 
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task Cancellable_scalars_reuse_state_after_success_failure_and_cancellation(bool prepared)
+    {
+        await using var connection = new BlueTuskConnection(GetConnectionString());
+        await connection.OpenAsync(CancellationToken.None);
+        using var lifetime = new CancellationTokenSource();
+        await using var command = new BlueTuskCommand("SELECT $1::int4", connection);
+        var parameter = new BlueTuskParameter<int>(0);
+        command.Parameters.Add(parameter);
+        if (prepared) await command.PrepareAsync(lifetime.Token);
+
+        for (var cycle = 0; cycle < 4; cycle++)
+        {
+            for (var value = 0; value < 16; value++)
+            {
+                parameter.Value = cycle * 16 + value;
+                Assert.Equal(cycle * 16 + value, await command.ExecuteScalarAsync<int>(lifetime.Token));
+            }
+
+            await using (var invalid = new BlueTuskCommand("SELECT 1 / 0", connection))
+            {
+                var error = await Assert.ThrowsAsync<BlueTuskException>(() => invalid.ExecuteScalarAsync<int>(lifetime.Token));
+                Assert.Equal("22012", error.SqlState);
+            }
+
+            await using (var sleeping = new BlueTuskCommand("SELECT $1::int4 FROM pg_sleep(5)", connection))
+            {
+                sleeping.Parameters.Add(new BlueTuskParameter<int>(42));
+                if (prepared) await sleeping.PrepareAsync(lifetime.Token);
+                using var cancellation = new CancellationTokenSource(TimeSpan.FromMilliseconds(100));
+                await Assert.ThrowsAnyAsync<OperationCanceledException>(() => sleeping.ExecuteScalarAsync<int>(cancellation.Token));
+            }
+            Assert.Equal(ConnectionState.Open, connection.State);
+            parameter.Value = 42;
+            Assert.Equal(42, await command.ExecuteScalarAsync<int>(lifetime.Token));
+        }
+    }
+
     [Fact]
     public async Task Command_timeouts_cancel_on_the_server_and_preserve_the_connection()
     {
