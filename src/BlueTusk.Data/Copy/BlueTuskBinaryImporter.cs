@@ -435,8 +435,16 @@ public sealed class BlueTuskBinaryImporter : IDisposable, IAsyncDisposable
         _completed = true;
         if (_asynchronousOperation is not null)
         {
-            var operationResult = await _asynchronousOperation.CompleteAsync(cancellationToken)
-                .ConfigureAwait(false);
+            BlueTuskCopyResult operationResult;
+            try
+            {
+                operationResult = await _asynchronousOperation.CompleteAsync(cancellationToken)
+                    .ConfigureAwait(false);
+            }
+            catch (BlueTuskServerException exception)
+            {
+                throw new BlueTuskException(exception);
+            }
             if (operationResult.Response.Format != BlueTuskCopyFormat.Binary)
             {
                 throw new InvalidOperationException("PostgreSQL did not execute binary COPY.");
