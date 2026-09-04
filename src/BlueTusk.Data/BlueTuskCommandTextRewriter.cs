@@ -539,7 +539,6 @@ internal static class BlueTuskCommandTextRewriter
                 }
                 return new BlueTuskCommandPlan(Sql, batchParameters, true, _hasMultipleStatements);
             }
-            ValidateUniqueNames(parameters.Items);
             if (parameters.Count == OrderedNames.Length)
             {
                 var alreadyOrdered = true;
@@ -556,6 +555,8 @@ internal static class BlueTuskCommandTextRewriter
 
                 if (alreadyOrdered)
                 {
+                    // Template names are unique by construction. An exact
+                    // ordered match also proves collection uniqueness in O(n).
                     return new BlueTuskCommandPlan(
                         Sql,
                         parameters.Items,
@@ -564,6 +565,7 @@ internal static class BlueTuskCommandTextRewriter
                 }
             }
 
+            ValidateUniqueNames(parameters.Items);
             var ordered = new BlueTuskParameter[OrderedNames.Length];
             for (var nameIndex = 0; nameIndex < OrderedNames.Length; nameIndex++)
             {
