@@ -134,6 +134,7 @@
 /documentation/operations/operations-package-evidence
 /documentation/operations/operations-performance-leadership-1-1
 /documentation/operations/operations-production-readiness
+/documentation/operations/operations-provider-request-capture
 /documentation/operations/operations-website-production
 /documentation/operations/postgresql19-programme
 /documentation/operations/provider-release-notes-1-0-0

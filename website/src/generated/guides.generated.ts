@@ -803,10 +803,15 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "id": "typed-binary-copy",
         "text": "Typed binary COPY",
         "level": 2
+      },
+      {
+        "id": "cancellation-errors-and-transactions",
+        "text": "Cancellation, errors, and transactions",
+        "level": 3
       }
     ],
-    "wordCount": 611,
-    "readMinutes": 3,
+    "wordCount": 919,
+    "readMinutes": 5,
     "searchText": "COPY `BlueTuskConnection.CopyFrom`/`CopyTo` and `CopyFromAsync`/`CopyToAsync` stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation. The result reports PostgreSQL's overall and per-column COPY formats, rows affected, and payload bytes transferred. BlueTusk does not dispose the caller-owned stream. For text and CSV data, the synchronous `CopyTextFrom`/`CopyTextTo` and asynchronous `CopyTextFromAsync`/`CopyTextToAsync` APIs accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks: Only the supplied SQL determines COPY options such as delimiter, quote, escape, null representation, encoding, and header handling. Values are not interpolated by these raw APIs; construct commands from trusted SQL and use PostgreSQL identifier quoting for dynamic object names. The physical session remains exclusively leased for the full transfer. If the source, destination, or cancellation token fails, BlueTusk sends `CopyFail` or a cancellation request as appropriate and drains through `ReadyForQuery` before allowing the connection to be reused. COPY OUT cleanup also synchronizes once after cancellation so a late PostgreSQL cancel signal cannot affect the caller's next command. Typed binary COPY `BeginBinaryImportAsync` writes PostgreSQL's binary COPY header, rows, field lengths, null markers, and trailer while using the data source's catalogue-loaded binary codecs: `StartRowAsync` uses the server-reported column count and requires every field to be written before another row or completion. `WriteAsync<T>` infers the PostgreSQL type from the same registry used for parameters; an overload accepts an explicit PostgreSQL type OID when a CLR type is ambiguous. Null fields are written with PostgreSQL's `-1` length marker. Binary export validates the s"
   },
   {
@@ -1272,7 +1277,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1092,
+    "order": 1093,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1304,7 +1309,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1093,
+    "order": 1094,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1340,7 +1345,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1107,
+    "order": 1108,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1401,7 +1406,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1133,
+    "order": 1134,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
@@ -2868,7 +2873,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "delivery",
       "plan"
     ],
-    "order": 1097,
+    "order": 1098,
     "title": "Real-time platform delivery plan",
     "sourcePath": "docs/realtime-platform/delivery-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/realtime-platform/delivery-plan.md",
@@ -2900,7 +2905,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1111,
+    "order": 1112,
     "title": "Streams public API compatibility",
     "sourcePath": "docs/streams/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/api-compatibility.md",
@@ -2926,7 +2931,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "aspire"
     ],
-    "order": 1112,
+    "order": 1113,
     "title": "Aspire integration",
     "sourcePath": "docs/streams/aspire.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/aspire.md",
@@ -2952,7 +2957,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cli"
     ],
-    "order": 1113,
+    "order": 1114,
     "title": "Streams validation and provisioning CLI",
     "sourcePath": "docs/streams/cli.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cli.md",
@@ -2978,7 +2983,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "cloudevents"
     ],
-    "order": 1114,
+    "order": 1115,
     "title": "CloudEvents",
     "sourcePath": "docs/streams/cloudevents.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/cloudevents.md",
@@ -3005,7 +3010,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1116,
+    "order": 1117,
     "title": "Streams format compatibility",
     "sourcePath": "docs/streams/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/format-compatibility.md",
@@ -3032,7 +3037,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "prepared",
       "transactions"
     ],
-    "order": 1118,
+    "order": 1119,
     "title": "Prepared and two-phase transactions",
     "sourcePath": "docs/streams/prepared-transactions.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/prepared-transactions.md",
@@ -3074,7 +3079,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "preview",
       "1"
     ],
-    "order": 1120,
+    "order": 1121,
     "title": "BlueTusk Streams 0.1.0-preview.1",
     "sourcePath": "docs/streams/release-notes-0.1.0-preview.1.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-0.1.0-preview.1.md",
@@ -3119,7 +3124,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1121,
+    "order": 1122,
     "title": "BlueTusk Streams 1.0.0 release record",
     "sourcePath": "docs/streams/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/release-notes-1.0.0.md",
@@ -3145,7 +3150,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "streams",
       "sample"
     ],
-    "order": 1122,
+    "order": 1123,
     "title": "Snapshot-then-stream sample",
     "sourcePath": "docs/streams/sample.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/sample.md",
@@ -3172,7 +3177,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "typed",
       "mappings"
     ],
-    "order": 1125,
+    "order": 1126,
     "title": "Typed change mappings",
     "sourcePath": "docs/streams/typed-mappings.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/streams/typed-mappings.md",
@@ -3219,7 +3224,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "api",
       "compatibility"
     ],
-    "order": 1127,
+    "order": 1128,
     "title": "Sync public API compatibility",
     "sourcePath": "docs/sync/api-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/api-compatibility.md",
@@ -3246,7 +3251,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "format",
       "compatibility"
     ],
-    "order": 1128,
+    "order": 1129,
     "title": "Sync format compatibility",
     "sourcePath": "docs/sync/format-compatibility.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/format-compatibility.md",
@@ -3272,7 +3277,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "sync",
       "reference"
     ],
-    "order": 1129,
+    "order": 1130,
     "title": "BlueTusk Sync",
     "sourcePath": "docs/sync/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/reference.md",
@@ -3377,7 +3382,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1131,
+    "order": 1132,
     "title": "BlueTusk Sync 1.0.0 release record",
     "sourcePath": "docs/sync/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/sync/release-notes-1.0.0.md",
@@ -6342,10 +6347,15 @@ export const GUIDES: readonly GuideIndexEntry[] = [
         "id": "remaining-evidence-before-release",
         "text": "Remaining evidence before release",
         "level": 2
+      },
+      {
+        "id": "evidence-artifact-validation",
+        "text": "Evidence artifact validation",
+        "level": 2
       }
     ],
-    "wordCount": 691,
-    "readMinutes": 4,
+    "wordCount": 1062,
+    "readMinutes": 5,
     "searchText": "BlueTusk 1.1 performance leadership report **Public RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Release:** 1.1.0 across Provider, Streams, Sync, Live, Control Plane, and Continuous Graph **Publication state:** `1.1.0-rc.1` is public; stable `1.1.0` remains disabled until every exact-stable-candidate gate passes, including digest-pinned PostgreSQL 19 GA Current verdict Provider's retained Npgsql 10.0.3 evidence passes all 16 latency/allocation pairs and four saturated-pool shapes. The public RC exposes those improvements for independent evaluation. The complete 1.1 leadership claim is **not yet earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance evidence remain mandatory. Missing evidence and ties fail. Implemented hot paths Family 1.1 implementation Provider Integrates the `ac702d7` command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix. Streams Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay. Sync Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering. Live Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications. Control Plane Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache, and source-generated API JSON metadata. Continuous Graph Uses immutable compiler impact plans, trusted CDC projection only behind a complete explicit trust contract, automatic key-scoped authoritative queries, ordered affected-candidate merges, and fail-closed full repair. Required measurement matrix The m"
   },
   {
@@ -6454,6 +6464,59 @@ export const GUIDES: readonly GuideIndexEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "operations-provider-request-capture",
+    "summary": "This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connection…",
+    "keywords": [
+      "docs",
+      "operations",
+      "provider",
+      "request",
+      "capture"
+    ],
+    "order": 1087,
+    "title": "Provider request-level performance capture",
+    "sourcePath": "docs/operations/provider-request-capture.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
+    "headings": [
+      {
+        "id": "provider-request-level-performance-capture",
+        "text": "Provider request-level performance capture",
+        "level": 1
+      },
+      {
+        "id": "run-a-matrix",
+        "text": "Run a matrix",
+        "level": 2
+      },
+      {
+        "id": "counters-and-measurement-boundaries",
+        "text": "Counters and measurement boundaries",
+        "level": 2
+      },
+      {
+        "id": "tls",
+        "text": "TLS",
+        "level": 2
+      },
+      {
+        "id": "artifacts-and-remaining-verification",
+        "text": "Artifacts and remaining verification",
+        "level": 2
+      },
+      {
+        "id": "derive-a-readable-comparison",
+        "text": "Derive a readable comparison",
+        "level": 2
+      }
+    ],
+    "wordCount": 1404,
+    "readMinutes": 7,
+    "searchText": "Provider request-level performance capture This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connections. It records every individual operation, rather than percentiles of averaged operation blocks. **Status:** implemented capture adapter, not a completed leadership gate. Short local smoke runs validate its operation but must not be presented as performance wins. Dedicated-runner captures, validated statistical assumptions and the remaining cross-product adapters are still required by the [performance programme](performance-leadership-1.1.md). Run a matrix Build the benchmark application from a clean, committed candidate. Point `BLUETUSK_BENCHMARK_CONNECTION_STRING` at a **dedicated benchmark database**. Do not point this harness at a production database: it creates temporary test schemas, writes data, creates large objects and opens many connections. The connection string is inherited by child processes, not placed in evidence files or command-line arguments. The default feature set is the full 16-feature list from [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json). For focused diagnosis, pass `-Features prepared-scalar,ef-update`. A subset does not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees or shorter smoke-test windows; those captures are explicitly labelled diagnostic. The wrapper rejects mismatched candidate SHAs, existing output directories, duplicate cases, wrong reference versions, incomplete raw samples and failed child processes. Non-diagnostic captures also check assembly commit metadata. Each feature/concurrency/trial runs each provider in a **separate process**. Provider order alternates between trials. The wrapper does not overlap provider runs. Workers share one provider data source and pool, use independent active connections wher"
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-website-production",
     "summary": "The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes a curated source-synchronized guide set, and keeps benchmark, compatibility, and operational records available at…",
     "keywords": [
@@ -6462,7 +6525,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "website",
       "production"
     ],
-    "order": 1089,
+    "order": 1090,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -6503,7 +6566,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1091,
+    "order": 1092,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -6533,7 +6596,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "0"
     ],
-    "order": 1094,
+    "order": 1095,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -6559,7 +6622,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "process"
     ],
-    "order": 1099,
+    "order": 1100,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -6601,7 +6664,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -6646,7 +6709,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -6725,7 +6788,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1103,
+    "order": 1104,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -6764,7 +6827,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -6805,7 +6868,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -6847,7 +6910,7 @@ export const GUIDES: readonly GuideIndexEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1135,
+    "order": 1136,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",

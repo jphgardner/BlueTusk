@@ -2340,15 +2340,30 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "id": "remaining-evidence-before-release",
         "text": "Remaining evidence before release",
         "level": 2
+      },
+      {
+        "id": "evidence-artifact-validation",
+        "text": "Evidence artifact validation",
+        "level": 2
       }
     ],
-    "wordCount": 691,
-    "readMinutes": 4,
+    "wordCount": 1062,
+    "readMinutes": 5,
     "searchText": "BlueTusk 1.1 performance leadership report **Public RC basis:** `2e735ed46aec11d5009158a00ca7b862f9ec12af` **Release:** 1.1.0 across Provider, Streams, Sync, Live, Control Plane, and Continuous Graph **Publication state:** `1.1.0-rc.1` is public; stable `1.1.0` remains disabled until every exact-stable-candidate gate passes, including digest-pinned PostgreSQL 19 GA Current verdict Provider's retained Npgsql 10.0.3 evidence passes all 16 latency/allocation pairs and four saturated-pool shapes. The public RC exposes those improvements for independent evaluation. The complete 1.1 leadership claim is **not yet earned**: final-stable-SHA Windows/Linux comparisons, confidence intervals, and endurance evidence remain mandatory. Missing evidence and ties fail. Implemented hot paths Family 1.1 implementation Provider Integrates the `ac702d7` command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix. Streams Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay. Sync Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering. Live Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications. Control Plane Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache, and source-generated API JSON metadata. Continuous Graph Uses immutable compiler impact plans, trusted CDC projection only behind a complete explicit trust contract, automatic key-scoped authoritative queries, ordered affected-candidate merges, and fail-closed full repair. Required measurement matrix The m",
     "blocks": [
       {
         "kind": "html",
-        "html": "<h1>BlueTusk 1.1 performance leadership report</h1>\n<p><strong>Public RC basis:</strong> <code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code></p>\n<p><strong>Release:</strong> 1.1.0 across Provider, Streams, Sync, Live, Control Plane, and\nContinuous Graph</p>\n<p><strong>Publication state:</strong> <code>1.1.0-rc.1</code> is public; stable <code>1.1.0</code> remains disabled\nuntil every exact-stable-candidate gate passes, including digest-pinned\nPostgreSQL 19 GA</p>\n<h2>Current verdict</h2>\n<p>Provider’s retained Npgsql 10.0.3 evidence passes all 16 latency/allocation\npairs and four saturated-pool shapes. The public RC exposes those improvements\nfor independent evaluation. The complete 1.1 leadership claim is <strong>not yet\nearned</strong>: final-stable-SHA Windows/Linux comparisons, confidence intervals, and\nendurance evidence remain mandatory. Missing evidence and ties fail.</p>\n<h2>Implemented hot paths</h2>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>1.1 implementation</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Provider</td>\n<td>Integrates the <code>ac702d7</code> command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix.</td>\n</tr>\n<tr>\n<td>Streams</td>\n<td>Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay.</td>\n</tr>\n<tr>\n<td>Sync</td>\n<td>Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering.</td>\n</tr>\n<tr>\n<td>Live</td>\n<td>Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications.</td>\n</tr>\n<tr>\n<td>Control Plane</td>\n<td>Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache, and source-generated API JSON metadata.</td>\n</tr>\n<tr>\n<td>Continuous Graph</td>\n<td>Uses immutable compiler impact plans, trusted CDC projection only behind a complete explicit trust contract, automatic key-scoped authoritative queries, ordered affected-candidate merges, and fail-closed full repair.</td>\n</tr>\n</tbody>\n</table>\n<h2>Required measurement matrix</h2>\n<p>The machine-readable authority is\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/performance-leadership-contract.json</code></a>.\nIt requires identical datasets, payloads, durability boundaries, warm-up, and\nobservation windows on dedicated Windows x64 and Linux x64 runners.\nThe manual-only\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/performance-leadership.yml\" target=\"_blank\" rel=\"noreferrer\"><code>performance-leadership.yml</code></a>\nchecks out one full SHA on both runner classes, starts the digest-pinned current\nPostgreSQL 19 development milestone, executes the complete raw capture, and\narchives each environment independently. The same-SHA ratio/confidence and\nexternal-reference gates remain mandatory.\n<code>verify-performance-leadership-evidence.ps1</code> expands this contract into 886\nexact environment/workload comparisons, rejects missing or duplicate cases,\nand evaluates both the observed ratio and the conservative 95% confidence\nbound. Its mutation self-test proves that a weak ratio and an incomplete matrix\nboth fail closed.</p>\n<ul>\n<li>Provider: 16 features at concurrency 1, 64, and 256, including TLS and\nconstrained-network variants, against Npgsql 10.0.3.</li>\n<li>Streams: 1/1,000-change transactions, 4 MiB spill, snapshot/catch-up, and\ncommit-to-delivery against digest-pinned Debezium Server 3.6.1.Final.</li>\n<li>Sync: 1/100/1,000 mutations to NATS, Redis, OpenSearch, and PostgreSQL against\nDebezium plus each native destination client.</li>\n<li>Live: 10/1,000/100,000 rows and 1/64/1,000/10,000 subscribers, with churn and\nslow clients, against ASP.NET Core SignalR 10.</li>\n<li>Control Plane: 1/100/1,000 sources with 32/256 clients, compared with 1.0 and\nabsolute scale budgets.</li>\n<li>Continuous Graph: 1K/100K/1M edges, top-N 10/100/1,000, all three tiers, and\ninsert/update/delete/rank/truncate/two-phase/schema-drift scenarios, against\nprepared raw <code>GRAPH_TABLE</code> and 1.0 full requery.</li>\n</ul>\n<h2>Non-negotiable gates</h2>\n<p>Same-runtime mean, P95, P99, and allocation ratios must each be at most 0.98.\nCross-runtime throughput must be at least 1.05x and P95, P99, CPU/event, and\npeak RSS ratios at most 0.95. The 95% confidence interval must establish the\nwin. Unique workloads may regress no more than 2% from 1.0 and each family’s\nprimary hot path must improve P95 and allocation by at least 20%.</p>\n<p>Trusted CDC graph deltas must use at most 10% of full-requery P95 and allocation;\nauthoritative scoped deltas at most 35%. Every result set must retain raw\nsamples, commit SHA, environment and image manifests, allocation/CPU/RSS/GC\ncounters, verifier self-tests, and this readable consolidation.</p>\n<h2>Remaining evidence before release</h2>\n<ol>\n<li>Capture exact-final-SHA Windows and Linux benchmark evidence and run the\nratio/confidence verifier.</li>\n<li>Archive Streams 72-hour, then Sync 24-hour, Live/Control Plane 24-hour, and,\nafter PostgreSQL 19 GA, Continuous Graph 24-hour endurance evidence.</li>\n<li>Run PostgreSQL 15–19, TLS, trimming, NativeAOT, package-consumer, Angular,\nsupply-chain, provenance, SBOM, install, and smoke gates.</li>\n<li>Obtain the independent coverage-guided CI handoff after the final branch\nupdate. This implementation does not trigger or iterate that workflow.</li>\n<li>Enable publication only after all evidence resolves to the same immutable\ncommit and PostgreSQL 19 GA image digest.</li>\n</ol>\n<p>Until those items pass, 1.1 is a performance-engineered candidate—not a blanket\n“faster everywhere” release claim.</p>\n"
+        "html": "<h1>BlueTusk 1.1 performance leadership report</h1>\n<p><strong>Public RC basis:</strong> <code>2e735ed46aec11d5009158a00ca7b862f9ec12af</code></p>\n<p><strong>Release:</strong> 1.1.0 across Provider, Streams, Sync, Live, Control Plane, and\nContinuous Graph</p>\n<p><strong>Publication state:</strong> <code>1.1.0-rc.1</code> is public; stable <code>1.1.0</code> remains disabled\nuntil every exact-stable-candidate gate passes, including digest-pinned\nPostgreSQL 19 GA</p>\n<h2>Current verdict</h2>\n<p>Provider’s retained Npgsql 10.0.3 evidence passes all 16 latency/allocation\npairs and four saturated-pool shapes. The public RC exposes those improvements\nfor independent evaluation. The complete 1.1 leadership claim is <strong>not yet\nearned</strong>: final-stable-SHA Windows/Linux comparisons, confidence intervals, and\nendurance evidence remain mandatory. Missing evidence and ties fail.</p>\n<h2>Implemented hot paths</h2>\n<table>\n<thead>\n<tr>\n<th>Family</th>\n<th>1.1 implementation</th>\n</tr>\n</thead>\n<tbody>\n<tr>\n<td>Provider</td>\n<td>Integrates the <code>ac702d7</code> command, pooling, COPY, EF, protocol, and allocation work while retaining the 16-feature Npgsql 10.0.3 matrix.</td>\n</tr>\n<tr>\n<td>Streams</td>\n<td>Reuses bounded transaction-assembly collections, preserves owned tuple memory, avoids the envelope decode copy, and retains segmented pooled spool writes and zero-copy memory-mapped replay.</td>\n</tr>\n<tr>\n<td>Sync</td>\n<td>Builds NATS envelopes directly into one exact-sized integrity-protected buffer, streams OpenSearch NDJSON to HTTP without a monolithic bulk array, reuses PostgreSQL binary payload memory, and retains Redis atomic batch ordering.</td>\n</tr>\n<tr>\n<td>Live</td>\n<td>Mutates explicitly affected rows while sharing the immutable key index, reuses one serialized replay payload for fan-out, and coalesces Angular/React reducer notifications.</td>\n</tr>\n<tr>\n<td>Control Plane</td>\n<td>Uses set-based inventory reads, bounded cross-instance concurrency, a short-lived single-flight immutable cache, and source-generated API JSON metadata.</td>\n</tr>\n<tr>\n<td>Continuous Graph</td>\n<td>Uses immutable compiler impact plans, trusted CDC projection only behind a complete explicit trust contract, automatic key-scoped authoritative queries, ordered affected-candidate merges, and fail-closed full repair.</td>\n</tr>\n</tbody>\n</table>\n<h2>Required measurement matrix</h2>\n<p>The machine-readable authority is\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>eng/performance-leadership-contract.json</code></a>.\nIt requires identical datasets, payloads, durability boundaries, warm-up, and\nobservation windows on dedicated Windows x64 and Linux x64 runners.\nThe manual-only\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/.github/workflows/performance-leadership.yml\" target=\"_blank\" rel=\"noreferrer\"><code>performance-leadership.yml</code></a>\nchecks out one full SHA on both runner classes, starts the digest-pinned current\nPostgreSQL 19 development milestone, executes the existing provider and\nmicrobenchmark capture, and archives each environment independently. It does\n<strong>not</strong> currently capture all 886 leadership comparisons or run the complete\nleadership evidence verifier. Debezium, native destination, SignalR, network,\nand full scaling comparisons still need capture adapters. A successful run of\nthat workflow is therefore supporting evidence, not a leadership-gate pass.\nThe same-SHA ratio/confidence and external-reference gates remain mandatory.\n<code>verify-performance-leadership-evidence.ps1</code> expands this contract into 886\nexact environment/workload comparisons, rejects missing or duplicate cases,\nand evaluates both the observed ratio and the conservative 95% confidence\nbound. Schema 2 also requires retained, nonempty artifacts, verifies their\nSHA-256 hashes, checks the environment manifests against an explicitly supplied\ncandidate SHA, and rejects non-finite metrics. Its self-test uses synthetic\nfixtures to test rejection paths; those fixtures are not performance evidence.</p>\n<p>The verifier currently evaluates <strong>declared</strong> summary statistics and confidence\nbounds. It does not recompute them from raw samples. A reproducible statistics\ngenerator and an independent raw-to-summary consistency check remain required\nbefore treating this as an end-to-end leadership gate. The existing provider\nbudget gate permits ratios up to 1.00 or 1.05 depending on the workload; passing\nit does not establish this programme’s stricter 0.98 leadership threshold.</p>\n<p>The <a href=\"/documentation/operations/operations-provider-request-capture\">Provider request-level capture adapter</a> now\nprovides all 16 feature adapters with a shared pool, independent workers,\nindividual-request samples, process counters, and observed TLS state. It is a\nseparate capture path; the full leadership workflow has not yet been switched\nto an end-to-end raw-to-verdict pipeline. Diagnostic adapter tests do not fill\nthe missing dedicated-runner or cross-product evidence requirements.\nIts raw-data analyzer now recomputes Provider metrics and approximate paired\ntrial confidence intervals, retaining hashes and a readable report. This is\nnot yet integrated with the consolidated verifier’s separate-bound schema;\nneither diagnostic captures nor standalone numerical passes certify release.</p>\n<ul>\n<li>Provider: 16 features at concurrency 1, 64, and 256, including TLS and\nconstrained-network variants, against Npgsql 10.0.3.</li>\n<li>Streams: 1/1,000-change transactions, 4 MiB spill, snapshot/catch-up, and\ncommit-to-delivery against digest-pinned Debezium Server 3.6.1.Final.</li>\n<li>Sync: 1/100/1,000 mutations to NATS, Redis, OpenSearch, and PostgreSQL against\nDebezium plus each native destination client.</li>\n<li>Live: 10/1,000/100,000 rows and 1/64/1,000/10,000 subscribers, with churn and\nslow clients, against ASP.NET Core SignalR 10.</li>\n<li>Control Plane: 1/100/1,000 sources with 32/256 clients, compared with 1.0 and\nabsolute scale budgets.</li>\n<li>Continuous Graph: 1K/100K/1M edges, top-N 10/100/1,000, all three tiers, and\ninsert/update/delete/rank/truncate/two-phase/schema-drift scenarios, against\nprepared raw <code>GRAPH_TABLE</code> and 1.0 full requery.</li>\n</ul>\n<h2>Non-negotiable gates</h2>\n<p>Same-runtime mean, P95, P99, and allocation ratios must each be at most 0.98.\nCross-runtime throughput must be at least 1.05x and P95, P99, CPU/event, and\npeak RSS ratios at most 0.95. The 95% confidence interval must establish the\nwin. Unique workloads may regress no more than 2% from 1.0 and each family’s\nprimary hot path must improve P95 and allocation by at least 20%.</p>\n<p>Trusted CDC graph deltas must use at most 10% of full-requery P95 and allocation;\nauthoritative scoped deltas at most 35%. Every result set must retain raw\nsamples, commit SHA, environment and image manifests, allocation/CPU/RSS/GC\ncounters, verifier self-tests, and this readable consolidation.</p>\n<h2>Remaining evidence before release</h2>\n<ol>\n<li>Complete the external-reference and full-matrix capture adapters, derive\nstatistics reproducibly from retained samples, and independently verify\nraw-to-summary consistency. Capture exact-final-SHA Windows and Linux\nevidence and run the ratio/confidence verifier.</li>\n<li>Archive Streams 72-hour, then Sync 24-hour, Live/Control Plane 24-hour, and,\nafter PostgreSQL 19 GA, Continuous Graph 24-hour endurance evidence.</li>\n<li>Run PostgreSQL 15–19, TLS, trimming, NativeAOT, package-consumer, Angular,\nsupply-chain, provenance, SBOM, install, and smoke gates.</li>\n<li>Obtain the independent coverage-guided CI handoff after the final branch\nupdate. This implementation does not trigger or iterate that workflow.</li>\n<li>Enable publication only after all evidence resolves to the same immutable\ncommit and PostgreSQL 19 GA image digest.</li>\n</ol>\n<p>Until those items pass, 1.1 is a performance-engineered candidate—not a blanket\n“faster everywhere” release claim.</p>\n<h2>Evidence artifact validation</h2>\n<p>Run the schema-2 verifier with the full SHA of the candidate being assessed:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "./eng/verify-performance-leadership-evidence.ps1 `\n    -EvidencePath artifacts/performance-leadership/evidence.json `\n    -ExpectedCommit $candidateSha\n",
+        "highlighted": "./eng/verify<span class=\"hljs-literal\">-performance-leadership-evidence</span>.ps1 `\n    <span class=\"hljs-literal\">-EvidencePath</span> artifacts/performance<span class=\"hljs-literal\">-leadership</span>/evidence.json `\n    <span class=\"hljs-literal\">-ExpectedCommit</span> <span class=\"hljs-variable\">$candidateSha</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The evidence document retains the comparison and digest fields and supplies\n<code>consolidatedReportPath</code> and <code>verifierSelfTestsPath</code>. Each environment supplies\n<code>environmentManifestPath</code> and <code>rawSamplesPath</code>. Paths are relative to the\nevidence document, use <code>/</code> separators, and may not leave that directory or\ntraverse symbolic links/junctions. Every referenced file must exist, contain\ndata, and match its corresponding SHA-256 field. Environment JSON must include\nmatching <code>sourceCommit</code>, <code>os</code>, <code>architecture</code>, and <code>containerImageDigests</code>.</p>\n<p>Old schema-1 documents containing only hash-shaped strings are not accepted.\nRetaining a file and matching its hash proves artifact integrity, not the\ncorrectness of its contents or the completeness of the measurement method.</p>\n"
       }
     ]
   },
@@ -2514,6 +2529,85 @@ export const GUIDES: readonly GuideManifestEntry[] = [
     "category": "operations",
     "categoryLabel": "Operations",
     "listed": false,
+    "slug": "operations-provider-request-capture",
+    "summary": "This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connection…",
+    "keywords": [
+      "docs",
+      "operations",
+      "provider",
+      "request",
+      "capture"
+    ],
+    "order": 1087,
+    "title": "Provider request-level performance capture",
+    "sourcePath": "docs/operations/provider-request-capture.md",
+    "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/provider-request-capture.md",
+    "headings": [
+      {
+        "id": "provider-request-level-performance-capture",
+        "text": "Provider request-level performance capture",
+        "level": 1
+      },
+      {
+        "id": "run-a-matrix",
+        "text": "Run a matrix",
+        "level": 2
+      },
+      {
+        "id": "counters-and-measurement-boundaries",
+        "text": "Counters and measurement boundaries",
+        "level": 2
+      },
+      {
+        "id": "tls",
+        "text": "TLS",
+        "level": 2
+      },
+      {
+        "id": "artifacts-and-remaining-verification",
+        "text": "Artifacts and remaining verification",
+        "level": 2
+      },
+      {
+        "id": "derive-a-readable-comparison",
+        "text": "Derive a readable comparison",
+        "level": 2
+      }
+    ],
+    "wordCount": 1404,
+    "readMinutes": 7,
+    "searchText": "Provider request-level performance capture This adapter measures all 16 Provider comparison features through BlueTusk and Npgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency up to 256, and both plaintext and TLS PostgreSQL connections. It records every individual operation, rather than percentiles of averaged operation blocks. **Status:** implemented capture adapter, not a completed leadership gate. Short local smoke runs validate its operation but must not be presented as performance wins. Dedicated-runner captures, validated statistical assumptions and the remaining cross-product adapters are still required by the [performance programme](performance-leadership-1.1.md). Run a matrix Build the benchmark application from a clean, committed candidate. Point `BLUETUSK_BENCHMARK_CONNECTION_STRING` at a **dedicated benchmark database**. Do not point this harness at a production database: it creates temporary test schemas, writes data, creates large objects and opens many connections. The connection string is inherited by child processes, not placed in evidence files or command-line arguments. The default feature set is the full 16-feature list from [`performance-leadership-contract.json`](../../eng/performance-leadership-contract.json). For focused diagnosis, pass `-Features prepared-scalar,ef-update`. A subset does not satisfy full-matrix coverage. Use `-Diagnostic` for dirty working trees or shorter smoke-test windows; those captures are explicitly labelled diagnostic. The wrapper rejects mismatched candidate SHAs, existing output directories, duplicate cases, wrong reference versions, incomplete raw samples and failed child processes. Non-diagnostic captures also check assembly commit metadata. Each feature/concurrency/trial runs each provider in a **separate process**. Provider order alternates between trials. The wrapper does not overlap provider runs. Workers share one provider data source and pool, use independent active connections wher",
+    "blocks": [
+      {
+        "kind": "html",
+        "html": "<h1>Provider request-level performance capture</h1>\n<p>This adapter measures all 16 Provider comparison features through BlueTusk and\nNpgsql 10.0.3. It supports Windows x64 and Linux x64, configurable concurrency\nup to 256, and both plaintext and TLS PostgreSQL connections. It records every\nindividual operation, rather than percentiles of averaged operation blocks.</p>\n<p><strong>Status:</strong> implemented capture adapter, not a completed leadership gate. Short\nlocal smoke runs validate its operation but must not be presented as performance\nwins. Dedicated-runner captures, validated statistical assumptions and the remaining\ncross-product adapters are still required by the\n<a href=\"/documentation/operations/operations-performance-leadership-1-1\">performance programme</a>.</p>\n<h2>Run a matrix</h2>\n<p>Build the benchmark application from a clean, committed candidate. Point\n<code>BLUETUSK_BENCHMARK_CONNECTION_STRING</code> at a <strong>dedicated benchmark database</strong>.\nDo not point this harness at a production database: it creates temporary test\nschemas, writes data, creates large objects and opens many connections.\nThe connection string is inherited by child processes, not placed in evidence\nfiles or command-line arguments.</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj -c Release\n\n./eng/capture-provider-request-matrix.ps1 `\n    -ExpectedCommit $candidateSha `\n    -PostgreSqlImage $observedImageWithDigest `\n    -OutputPath artifacts/provider-request-windows `\n    -Concurrency 1,64,256 `\n    -Trials 5 `\n    -WarmupSeconds 5 `\n    -MeasurementSeconds 10 `\n    -MaximumTotalSamples 16000000\n",
+        "highlighted": "dotnet build benchmarks/BlueTusk.Benchmarks/BlueTusk.Benchmarks.csproj <span class=\"hljs-literal\">-c</span> Release\n\n./eng/capture<span class=\"hljs-literal\">-provider-request-matrix</span>.ps1 `\n    <span class=\"hljs-literal\">-ExpectedCommit</span> <span class=\"hljs-variable\">$candidateSha</span> `\n    <span class=\"hljs-literal\">-PostgreSqlImage</span> <span class=\"hljs-variable\">$observedImageWithDigest</span> `\n    <span class=\"hljs-literal\">-OutputPath</span> artifacts/provider<span class=\"hljs-literal\">-request-windows</span> `\n    <span class=\"hljs-literal\">-Concurrency</span> <span class=\"hljs-number\">1</span>,<span class=\"hljs-number\">64</span>,<span class=\"hljs-number\">256</span> `\n    <span class=\"hljs-literal\">-Trials</span> <span class=\"hljs-number\">5</span> `\n    <span class=\"hljs-literal\">-WarmupSeconds</span> <span class=\"hljs-number\">5</span> `\n    <span class=\"hljs-literal\">-MeasurementSeconds</span> <span class=\"hljs-number\">10</span> `\n    <span class=\"hljs-literal\">-MaximumTotalSamples</span> <span class=\"hljs-number\">16000000</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The default feature set is the full 16-feature list from\n<a href=\"https://github.com/jphgardner/BlueTusk/blob/main/eng/performance-leadership-contract.json\" target=\"_blank\" rel=\"noreferrer\"><code>performance-leadership-contract.json</code></a>.\nFor focused diagnosis, pass <code>-Features prepared-scalar,ef-update</code>. A subset does\nnot satisfy full-matrix coverage. Use <code>-Diagnostic</code> for dirty working trees or\nshorter smoke-test windows; those captures are explicitly labelled diagnostic.\nThe wrapper rejects mismatched candidate SHAs, existing output directories,\nduplicate cases, wrong reference versions, incomplete raw samples and failed\nchild processes. Non-diagnostic captures also check assembly commit metadata.</p>\n<p>Each feature/concurrency/trial runs each provider in a <strong>separate process</strong>.\nProvider order alternates between trials. The wrapper does not overlap provider\nruns. Workers share one provider data source and pool, use independent active\nconnections where required, and never share a command or DbContext. Test schema\nnames are unique to each process. EF update workers use disjoint row keys; a\nhot-row contention test is a separate workload, not implied by this adapter.</p>\n<h2>Counters and measurement boundaries</h2>\n<ul>\n<li>Load is closed-loop: each worker issues its next operation after the previous\none completes. This is not an open-loop arrival-rate or queueing-latency test.</li>\n<li>Raw timings use monotonic Stopwatch ticks around complete, checked operations,\nincluding reader/stream consumption and disposal. The clock frequency is\nretained. No request samples are silently dropped or replaced by averages.</li>\n<li>Warmup and measurement use equal configured windows for each provider.\nIn-flight requests finish before counters are read; actual elapsed ticks are\nretained for throughput calculations.</li>\n<li>Allocation, CPU time and GC counts cover the client process during measurement,\nincluding harness overhead. Sample arrays are preallocated before counters\nstart. No estimated overhead is subtracted to manufacture a win.</li>\n<li>Peak RSS is the client process high-water mark, including setup and sample\nbuffers; PostgreSQL is excluded. It is not a database-plus-client memory total.</li>\n<li>Every 64 requests a worker yields to the scheduler, outside individual latency\ntiming. Throughput and process counters include that overhead. This prevents\nsynchronously completing operations from starving later workers.</li>\n<li>COPY import, EF insert and EF update roll back their transactions, matching the\nexisting Provider feature matrix. They do not measure durable commit latency.\nEmpty begin/rollback performs no application data work.</li>\n</ul>\n<p><code>MaximumTotalSamples</code> is a <strong>total budget divided across all workers</strong>, not a\nper-worker allocation. Sixteen million 64-bit samples reserve about 122 MiB\nin total at concurrency 1, 64 or 256. Per-worker read buffers additionally use\n128 KiB each. The engine rejects sample arrays totalling more than 32 million\nentries (about 244 MiB), and fails if a worker fills its assigned sample buffer.\nRaise the explicit bound or choose an equal shorter diagnostic window; never\ndiscard overflow and treat the remaining samples as a complete run.</p>\n<p>Provide enough database capacity. Notification tests need two connections per\nworker; most other cases need one. Preflight requires <code>max_connections</code> of at\nleast <code>2 * concurrency + 10</code> for notification delivery and <code>concurrency + 10</code>\notherwise. This is not a guarantee of sufficient RAM, CPU or free connection\nslots: provision and attest the dedicated runner/database before a full run.</p>\n<h2>TLS</h2>\n<p>Configure certificate validation in the connection string and pass <code>-Tls</code>.\nThe adapter queries <code>pg_stat_ssl</code> and fails if the observed connection is not\nencrypted. For production-like verification use <code>SSL Mode=VerifyFull</code> and an\nexplicit trusted root certificate; enabling <code>-Tls</code> does not itself select or\nweaken certificate validation.</p>\n<p>For the shared fixture’s <code>Root Certificate</code> setting, the adapter explicitly\nconfigures BlueTusk’s documented <code>UseRemoteCertificateValidationCallback</code> API\nwith a custom-root chain, server-authentication purpose, expiry and hostname\nchecks. Npgsql uses its native root-certificate setting. Both use the requested\nrevocation-check setting. The disposable CA has no revocation service, so its\nsmoke-test configuration leaves revocation checking off; this is recorded in\nthe artifact and is not evidence of production revocation handling. This\ntranslation belongs to the benchmark adapter, not to BlueTusk’s general\nconnection-string parser.</p>\n<p><code>eng/new-benchmark-tls-fixture.ps1 -OutputPath artifacts/benchmark-tls</code> creates\na two-day disposable CA and localhost server certificate/key for isolated smoke\ntests. It does not change the system trust store or configure a server. Keep the\nprivate server key confined to that disposable test environment.</p>\n<p>Constrained-network capture is <strong>not implemented by this adapter</strong>. A TLS run\nis not evidence of controlled latency, bandwidth, jitter or packet loss. A\nseparate digest-pinned network-shaping fixture and retained configuration are\nrequired before claiming that variant.</p>\n<h2>Artifacts and remaining verification</h2>\n<p>Each child writes a raw JSON report and the wrapper retains its input options.\n<code>capture-index.json</code> is written only after every requested case passes capture\nvalidation. It records workload keys, trial/provider order, file hashes and the\nmeasured harness hash. Failed runs retain their partial files but have no\ncompleted index. Output directories are never overwritten.</p>\n<p>The index deliberately sets <code>leadershipGatePassed</code> to <code>false</code>. It is not the\nschema-2 consolidated leadership evidence document. An image digest supplied\nto this wrapper is a declared identity; retain the actual container/runtime\ninspection that binds it to the measured server.</p>\n<h2>Derive a readable comparison</h2>\n<p>After capture, run the analyzer against its complete index and exact source SHA:</p>\n"
+      },
+      {
+        "kind": "code",
+        "code": "dotnet benchmarks/BlueTusk.Benchmarks/bin/Release/net10.0/BlueTusk.Benchmarks.dll `\n    --provider-request-analyze `\n    artifacts/provider-request-windows/capture-index.json `\n    $candidateSha `\n    artifacts/provider-request-windows-analysis\n",
+        "highlighted": "dotnet benchmarks/BlueTusk.Benchmarks/bin/Release/net10.<span class=\"hljs-number\">0</span>/BlueTusk.Benchmarks.dll `\n    <span class=\"hljs-literal\">--provider-request-analyze</span> `\n    artifacts/provider<span class=\"hljs-literal\">-request-windows</span>/capture<span class=\"hljs-literal\">-index</span>.json `\n    <span class=\"hljs-variable\">$candidateSha</span> `\n    artifacts/provider<span class=\"hljs-literal\">-request-windows-analysis</span>\n",
+        "language": "powershell"
+      },
+      {
+        "kind": "html",
+        "html": "<p>The output directory must be new. <code>provider-report.md</code> contains latency,\nallocation, throughput, CPU and peak-RSS comparisons; <code>provider-analysis.json</code>\nretains the per-trial absolute values, GC counts, source hashes, ratios and\nconfidence intervals. The analyzer records its own assembly version separately\nfrom the measured candidate, so it can analyze a retained older capture without\npretending to have measured a newer binary.</p>\n<p>The analyzer checks every raw file hash before parsing it. It rejects missing\ntrial pairs, duplicate records, mismatched source/runtime/transport/method\nmetadata, changed observation windows, inconsistent sample counts and invalid\ncounters. It recomputes mean and nearest-rank P95/P99 from individual request\nticks, allocation and CPU per completed operation, and throughput from the\nactual elapsed measurement window. It does not accept precomputed summary\nstatistics as a substitute for those inputs.</p>\n<p>Each independently restarted process is one trial. For each metric, the reported\nratio is the geometric mean of matched BlueTusk/Npgsql trial ratios; trials have\nequal weight. At least five pairs are required for the approximate, two-sided\n95% Student-t interval on trial log-ratios. The calculation applies the\n<a href=\"https://www.itl.nist.gov/div898/handbook/eda/section3/eda352.htm\" target=\"_blank\" rel=\"noreferrer\">NIST mean confidence-interval formula</a>\nto those log-ratios and exponentiates its bounds. It uses the\n<a href=\"https://www.itl.nist.gov/div898/handbook/eda/section3/eda3672.htm\" target=\"_blank\" rel=\"noreferrer\">NIST critical values</a>\nwith a small conservative allowance for published rounding.</p>\n<p>This assumes independent trials and approximately normal trial log-ratios;\nthe analyzer does not establish those assumptions. Requests within one process\nare not treated as independent trials. These are individual metric intervals,\nnot a simultaneous confidence guarantee across the full matrix. Zero-valued\ncounters remain visible but receive no log-ratio inference. Too few trials or\nan interval crossing the target cannot produce a numerical-target pass.</p>\n<p>Even when a workload meets the numerical 0.98 point/upper-confidence target for\nall four latency/allocation measures, <strong>the analyzer does not certify a release\ngate</strong>. Diagnostic runs remain diagnostic. Isolated-runner and image provenance,\nstatistical validation, final-SHA evidence and all remaining product/OS/network\nworkloads are still required. This output does not feed the schema-2 consolidated\nverifier yet: that verifier’s separate candidate/reference bounds are not the\nsame quantity as this analyzer’s paired-ratio interval. Integration must preserve\nthat distinction, not relabel one type of interval as the other.</p>\n<p>The no-database self-test runs with <code>--provider-request-self-test</code> and is included\nin the build workflow. It covers real worker concurrency, synchronous-operation\nfairness, complete samples, counters, warmup exclusion, sample overflow,\ncancellation, worker failure, invalid resource bounds and private-CA validation.\nIt also tests raw statistic derivation, known confidence limits, ties, zero\ncounters, insufficient trials, hash mismatches, source identity, incomplete\npairs, path containment and mismatched capture methodology. Its synthetic\nfixtures test machinery, not measured BlueTusk/Npgsql performance.</p>\n"
+      }
+    ]
+  },
+  {
+    "category": "operations",
+    "categoryLabel": "Operations",
+    "listed": false,
     "slug": "operations-website-production",
     "summary": "The Angular website is part of the V1 release evidence surface. It explains product maturity, publishes a curated source-synchronized guide set, and keeps benchmark, compatibility, and operational records available at…",
     "keywords": [
@@ -2522,7 +2616,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "website",
       "production"
     ],
-    "order": 1089,
+    "order": 1090,
     "title": "Website production contract",
     "sourcePath": "docs/operations/website-production.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/operations/website-production.md",
@@ -2589,7 +2683,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "postgresql19",
       "programme"
     ],
-    "order": 1091,
+    "order": 1092,
     "title": "PostgreSQL 19 compatibility programme",
     "sourcePath": "docs/postgresql19-programme.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/postgresql19-programme.md",
@@ -2625,7 +2719,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "0"
     ],
-    "order": 1094,
+    "order": 1095,
     "title": "BlueTusk Provider 1.0.0 release record",
     "sourcePath": "docs/provider/release-notes-1.0.0.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/provider/release-notes-1.0.0.md",
@@ -2657,7 +2751,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "process"
     ],
-    "order": 1099,
+    "order": 1100,
     "title": "Release process",
     "sourcePath": "docs/release-process.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-process.md",
@@ -2705,7 +2799,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "review",
       "handoff"
     ],
-    "order": 1101,
+    "order": 1102,
     "title": "Independent V1 release review handoff",
     "sourcePath": "docs/release-review-handoff.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/release-review-handoff.md",
@@ -2756,7 +2850,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "publication",
       "record"
     ],
-    "order": 1102,
+    "order": 1103,
     "title": "BlueTusk 1.0.0 publication record",
     "sourcePath": "docs/releases/1.0.0-publication-record.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.0.0-publication-record.md",
@@ -2841,7 +2935,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "candidate"
     ],
-    "order": 1103,
+    "order": 1104,
     "title": "BlueTusk 1.1.0 coordinated release line",
     "sourcePath": "docs/releases/1.1.0-candidate.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.1.0-candidate.md",
@@ -2886,7 +2980,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "0",
       "plan"
     ],
-    "order": 1105,
+    "order": 1106,
     "title": "BlueTusk 1.2 release contract",
     "sourcePath": "docs/releases/1.2.0-plan.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/releases/1.2.0-plan.md",
@@ -2933,7 +3027,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "v1",
       "applications"
     ],
-    "order": 1134,
+    "order": 1135,
     "title": "V1 application suite and RC deployment",
     "sourcePath": "docs/v1-applications.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-applications.md",
@@ -2991,7 +3085,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "release",
       "readiness"
     ],
-    "order": 1135,
+    "order": 1136,
     "title": "V1 release readiness",
     "sourcePath": "docs/v1-release-readiness.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/v1-release-readiness.md",

@@ -487,10 +487,15 @@ export const GUIDES: readonly GuideManifestEntry[] = [
         "id": "typed-binary-copy",
         "text": "Typed binary COPY",
         "level": 2
+      },
+      {
+        "id": "cancellation-errors-and-transactions",
+        "text": "Cancellation, errors, and transactions",
+        "level": 3
       }
     ],
-    "wordCount": 611,
-    "readMinutes": 3,
+    "wordCount": 919,
+    "readMinutes": 5,
     "searchText": "COPY `BlueTuskConnection.CopyFrom`/`CopyTo` and `CopyFromAsync`/`CopyToAsync` stream raw PostgreSQL COPY payloads without buffering the complete transfer. The SQL command selects text, CSV, or binary format, so the same APIs can preserve any PostgreSQL-supported COPY representation. The result reports PostgreSQL's overall and per-column COPY formats, rows affected, and payload bytes transferred. BlueTusk does not dispose the caller-owned stream. For text and CSV data, the synchronous `CopyTextFrom`/`CopyTextTo` and asynchronous `CopyTextFromAsync`/`CopyTextToAsync` APIs accept caller-owned `TextReader` and `TextWriter` instances. They transcode strict UTF-8 incrementally, including Unicode values split across COPY chunks: Only the supplied SQL determines COPY options such as delimiter, quote, escape, null representation, encoding, and header handling. Values are not interpolated by these raw APIs; construct commands from trusted SQL and use PostgreSQL identifier quoting for dynamic object names. The physical session remains exclusively leased for the full transfer. If the source, destination, or cancellation token fails, BlueTusk sends `CopyFail` or a cancellation request as appropriate and drains through `ReadyForQuery` before allowing the connection to be reused. COPY OUT cleanup also synchronizes once after cancellation so a late PostgreSQL cancel signal cannot affect the caller's next command. Typed binary COPY `BeginBinaryImportAsync` writes PostgreSQL's binary COPY header, rows, field lengths, null markers, and trailer while using the data source's catalogue-loaded binary codecs: `StartRowAsync` uses the server-reported column count and requires every field to be written before another row or completion. `WriteAsync<T>` infers the PostgreSQL type from the same registry used for parameters; an overload accepts an explicit PostgreSQL type OID when a CLR type is ambiguous. Null fields are written with PostgreSQL's `-1` length marker. Binary export validates the s",
     "blocks": [
       {
@@ -541,7 +546,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       },
       {
         "kind": "html",
-        "html": "<p>Arrays and other catalogue-composed values use their existing binary codecs. <code>ReadAsync&lt;T&gt;</code> also has an explicit-OID overload. Reading a PostgreSQL null into a non-nullable value type fails instead of silently substituting its CLR default.</p>\n<p>Both typed operations use a bounded producer/consumer pipe, so application code and the network apply backpressure to one another. COPY-mode initialization is ordered independently from transfer completion, including immediate empty exports under concurrent load. Disposing before the trailer aborts and drains COPY, leaving the connection reusable.</p>\n<p>Synchronous typed binary COPY is also incremental and uses a stateful protocol operation rather than buffering the transfer:</p>\n"
+        "html": "<p>Arrays and other catalogue-composed values use their existing binary codecs. <code>ReadAsync&lt;T&gt;</code> also has an explicit-OID overload. Reading a PostgreSQL null into a non-nullable value type fails instead of silently substituting its CLR default.</p>\n<p>Typed imports and exports stream through a stateful protocol operation; neither buffers the complete transfer. The asynchronous importer uses a pooled 64 KiB write buffer, flushing it before accepting more data when it fills. Large fields and general-purpose codecs can require additional field-sized storage: 64 KiB is not a maximum field size or a total-memory guarantee. Supplying a cancellation token uses the same direct import path, without an extra producer/consumer pipe or background transfer task.</p>\n<p>COPY-mode initialization is ordered independently from transfer completion, including immediate empty exports under concurrent load. Always use <code>await using</code> with an asynchronous importer or exporter. Disposing an unfinished operation aborts and drains COPY before releasing its connection.</p>\n<h3>Cancellation, errors, and transactions</h3>\n<p>Pass the token to startup, row writes, and completion. Cancellation is cooperative: BlueTusk finishes an in-progress protocol write or drains the server response rather than leaving a partial message for the next command. A token is not a guarantee of an immediate return, and cancellation after completion has begun does not guarantee that PostgreSQL rolled the operation back.</p>\n<p>If cancellation wins while an import is waiting to start, BlueTusk sends a PostgreSQL cancellation request, drains the response, and synchronizes before reusing the connection. If cleanup cannot establish a safe state, the physical connection is discarded. If the import was inside an explicit transaction, roll that transaction back before issuing more commands; cancellation or a constraint error can leave it aborted.</p>\n<p>Startup and completion errors reported by PostgreSQL are exposed as <code>BlueTuskException</code>, including their <code>SqlState</code>. A fully drained server error does not by itself make the physical connection unusable. For example, a failed check constraint reports <code>23514</code>; the transaction may still need a rollback.</p>\n<p><code>CompleteAsync</code> finishes COPY and checks PostgreSQL’s row count. It does not commit an enclosing transaction: call that transaction’s <code>CommitAsync</code> separately. Do not assume a successful return from a rollback-based benchmark measures durable commit performance. For request-level timing and allocation measurement, see the <a href=\"/documentation/operations/operations-provider-request-capture\">Provider capture guide</a>.</p>\n<p>The asynchronous import path retains the <code>bluetusk.copy.bytes</code> counter and records <code>bluetusk.commands.duration</code> from startup through completion or cleanup. Buffered bytes that were never sent are not counted as transferred bytes.</p>\n<p>Synchronous typed binary COPY is also incremental and uses a stateful protocol operation rather than buffering the transfer:</p>\n"
       },
       {
         "kind": "code",
@@ -1344,7 +1349,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "protocol",
       "README"
     ],
-    "order": 1092,
+    "order": 1093,
     "title": "Protocol notes",
     "sourcePath": "docs/protocol/README.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/README.md",
@@ -1382,7 +1387,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "capture",
       "format"
     ],
-    "order": 1093,
+    "order": 1094,
     "title": "Protocol capture format",
     "sourcePath": "docs/protocol/capture-format.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/protocol/capture-format.md",
@@ -1430,7 +1435,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "replication",
       "reference"
     ],
-    "order": 1107,
+    "order": 1108,
     "title": "Replication",
     "sourcePath": "docs/replication/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/replication/reference.md",
@@ -1607,7 +1612,7 @@ export const GUIDES: readonly GuideManifestEntry[] = [
       "types",
       "reference"
     ],
-    "order": 1133,
+    "order": 1134,
     "title": "Core type mappings",
     "sourcePath": "docs/types/reference.md",
     "sourceUrl": "https://github.com/jphgardner/BlueTusk/blob/main/docs/types/reference.md",
