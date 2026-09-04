@@ -3,6 +3,20 @@ namespace BlueTusk.Data.Tests;
 public sealed class BlueTuskCommandTextRewriterTests
 {
     [Theory]
+    [InlineData("SELECT @a; SELECT @b;", 2)]
+    [InlineData("SELECT ';' AS \"a;b\"; -- trailing ;\n", 1)]
+    [InlineData("; /* outer ; /* nested ; */ done */ SELECT 1;; SELECT 2; /* tail ; */", 2)]
+    [InlineData("SELECT $body$one;two$body$; SELECT $$three;four$$", 2)]
+    [InlineData("SELECT E'escaped\\\';semicolon'; SELECT 2", 2)]
+    [InlineData("-- only a comment ;\n/* another ; */;", 0)]
+    public void Statement_splitting_preserves_quoted_and_commented_semicolons(string sql, int count)
+    {
+        var statements = BlueTuskCommandTextRewriter.SplitStatements(sql);
+        Assert.Equal(count, statements.Count);
+        Assert.All(statements, statement => Assert.True(BlueTuskCommandTextRewriter.CanUseExtendedProtocol(statement)));
+    }
+
+    [Theory]
     [InlineData("SELECT $1::int4", false)]
     [InlineData("SELECT value::text", false)]
     [InlineData("SELECT @value", true)]

@@ -8,6 +8,29 @@ internal static class ProviderRequestCaptureSelfTests
 {
     public static async Task RunAsync()
     {
+        var efProbe = new ProviderRequestCapture.Options
+        {
+            Provider = "bluetusk", Feature = "ef-update", Concurrency = 1,
+            WarmupSeconds = 1, MeasurementSeconds = 2, MaximumSamplesPerWorker = 1000,
+            RequireTls = false, SourceCommit = new string('a', 40),
+            PostgreSqlImage = "postgres:19beta3-alpine@sha256:" + new string('b', 64),
+            OutputPath = "not-written.json", Diagnostic = true,
+        };
+        EfBatchCapture.Validate(efProbe, 100, null);
+        EfBatchCapture.Validate(efProbe, 1000, 1000);
+        Action[] invalidProbes =
+        [
+            () => EfBatchCapture.Validate(efProbe with { Diagnostic = false }, 100, 42),
+            () => EfBatchCapture.Validate(efProbe with { Concurrency = 2 }, 100, 42),
+            () => EfBatchCapture.Validate(efProbe with { Feature = "copy-import-1000" }, 100, 42),
+            () => EfBatchCapture.Validate(efProbe, 2, 42),
+            () => EfBatchCapture.Validate(efProbe, 100, 0),
+            () => EfBatchCapture.Validate(efProbe, 100, 1001),
+        ];
+        foreach (var invalidProbe in invalidProbes)
+        {
+            await RejectAsync(() => { invalidProbe(); return Task.CompletedTask; }, typeof(ArgumentException), null);
+        }
         var concurrent = 0;
         var peakConcurrent = 0;
         async Task CheckedOperation(CancellationToken token)

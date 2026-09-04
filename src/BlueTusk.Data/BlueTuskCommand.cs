@@ -1014,6 +1014,11 @@ public sealed class BlueTuskCommand : DbCommand
                         : connection.Session.ExecuteSimpleQuery(plan.Sql);
             }
 
+            if (plan.HasMultipleStatements)
+            {
+                return ExecuteStatementBatch(connection, beginStatement);
+            }
+
             var parameters = EncodeParameters(plan, connection.TypeRegistry);
             var useBinaryResults = beginStatement is null &&
                 connection.Session.TransactionStatus == BlueTuskTransactionStatus.Idle;
@@ -1194,6 +1199,12 @@ public sealed class BlueTuskCommand : DbCommand
                         effectiveToken).ConfigureAwait(false)
                     : await connection.Session.ExecuteSimpleQueryAsync(plan.Sql, effectiveToken)
                         .ConfigureAwait(false);
+            }
+
+            if (plan.HasMultipleStatements)
+            {
+                return await ExecuteStatementBatchAsync(connection, beginStatement, effectiveToken)
+                    .ConfigureAwait(false);
             }
 
             var parameters = EncodeParameters(plan, connection.TypeRegistry);
@@ -1568,6 +1579,13 @@ public sealed class BlueTuskCommand : DbCommand
                                 : await connection.Session.ExecuteSimpleQueryAsync(
                                     plan.Sql,
                                     cancellationToken).ConfigureAwait(false)));
+                }
+
+                if (plan.HasMultipleStatements)
+                {
+                    return DecodeScalar<T>(connection, BlueTuskScalarQueryResult.FromQueryResult(
+                        await ExecuteStatementBatchAsync(connection, beginStatement, cancellationToken)
+                            .ConfigureAwait(false)));
                 }
 
                 var parameters = EncodeParameters(plan, connection.TypeRegistry);
@@ -2032,6 +2050,51 @@ public sealed class BlueTuskCommand : DbCommand
     {
         Interlocked.Exchange(ref _timeoutRequested, 1);
         Cancel();
+    }
+
+    private BlueTuskBatchQuery[] BuildStatementBatch(BlueTuskConnection connection)
+    {
+        if (_prepareRequested)
+        {
+            throw new NotSupportedException("Use BlueTuskBatch to explicitly prepare multiple statements.");
+        }
+
+        var statements = BlueTuskCommandTextRewriter.RewriteStatements(CommandText, Parameters,
+            GetCommandPlan().UsesNamedParameters);
+        var queries = new BlueTuskBatchQuery[statements.Length];
+        for (var index = 0; index < statements.Length; index++)
+        {
+            // Rebind each original statement separately so named parameters are
+            // local to its Parse/Bind pair, including repeated or unused names.
+            var plan = statements[index];
+            queries[index] = new BlueTuskBatchQuery(plan.Sql,
+                BlueTuskParameterEncoder.Encode(plan.Parameters, connection.TypeRegistry),
+                UseBinaryResults: false);
+        }
+        return queries;
+    }
+
+    private BlueTuskQueryResult ExecuteStatementBatch(BlueTuskConnection connection, string? beginStatement)
+    {
+        var queries = BuildStatementBatch(connection);
+        connection.CompletePendingPoolReset();
+        if (beginStatement is not null) { _ = connection.Session.ExecuteSimpleQuery(beginStatement); }
+        // Text results avoid retrying an entire batch after an unsupported binary
+        // output type. Retrying a multi-statement write could repeat side effects.
+        return connection.Session.ExecuteBatch(queries);
+    }
+
+    [AsyncMethodBuilder(typeof(PoolingAsyncValueTaskMethodBuilder<>))]
+    private async ValueTask<BlueTuskQueryResult> ExecuteStatementBatchAsync(
+        BlueTuskConnection connection, string? beginStatement, CancellationToken cancellationToken)
+    {
+        var queries = BuildStatementBatch(connection);
+        await connection.CompletePendingPoolResetAsync(cancellationToken).ConfigureAwait(false);
+        if (beginStatement is not null)
+        {
+            _ = await connection.Session.ExecuteSimpleQueryAsync(beginStatement, cancellationToken).ConfigureAwait(false);
+        }
+        return await connection.Session.ExecuteBatchAsync(queries, cancellationToken).ConfigureAwait(false);
     }
 
     private BlueTuskCommandPlan GetCommandPlan()

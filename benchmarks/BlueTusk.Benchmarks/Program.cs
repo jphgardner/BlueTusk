@@ -4,6 +4,13 @@ using BenchmarkDotNet.Configs;
 using BenchmarkDotNet.Running;
 using BlueTusk.Benchmarks;
 
+if (args is ["--ef-batch-capture", var efOptionsPath, var efRowCount, var efBatchSize])
+{
+    await EfBatchCapture.RunAsync(efOptionsPath, int.Parse(efRowCount, System.Globalization.CultureInfo.InvariantCulture),
+        efBatchSize == "default" ? null : int.Parse(efBatchSize, System.Globalization.CultureInfo.InvariantCulture));
+    return;
+}
+
 if (args is ["--provider-request-analyze", var captureIndexPath, var captureCommit, var analysisDirectory])
 {
     await ProviderRequestAnalysis.RunAsync(captureIndexPath, captureCommit, analysisDirectory);
