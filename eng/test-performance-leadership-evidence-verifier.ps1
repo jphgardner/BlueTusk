@@ -73,6 +73,34 @@ function Add-Comparison
     })
 }
 
+function Test-RejectedEvidence
+{
+    param(
+        [Parameter(Mandatory)][string] $Name,
+        [Parameter(Mandatory)][scriptblock] $Mutate,
+        [Parameter(Mandatory)][string] $ExpectedMessage
+    )
+
+    $changed = $validJson | ConvertFrom-Json -AsHashtable
+    & $Mutate $changed
+    $path = Join-Path $temporaryRoot "$Name.json"
+    $changed | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $path -Encoding utf8
+    $failure = $null
+    try
+    {
+        & $verifierPath -EvidencePath $path -ContractPath $contractPath -ExpectedCommit $commit | Out-Null
+    }
+    catch
+    {
+        $failure = $_.Exception.Message
+    }
+    if ($null -eq $failure -or -not $failure.Contains($ExpectedMessage))
+    {
+        throw "Case '$Name' expected '$ExpectedMessage'; received '$failure'."
+    }
+    $script:rejectionCount++
+}
+
 try
 {
     $comparisons = [Collections.Generic.List[object]]::new()
@@ -149,47 +177,119 @@ try
     }
 
     $commit = '1234567890abcdef1234567890abcdef12345678'
+    # These are synthetic verifier fixtures, never captured benchmark evidence.
+    'Synthetic consolidated report fixture.' |
+        Set-Content -LiteralPath (Join-Path $temporaryRoot 'report.md') -Encoding utf8
+    'Synthetic verifier self-test log fixture.' |
+        Set-Content -LiteralPath (Join-Path $temporaryRoot 'self-tests.log') -Encoding utf8
+    $environments = @($contract.environments.os | Sort-Object | ForEach-Object {
+        $os = $_
+        $manifestPath = Join-Path $temporaryRoot "$os-environment.json"
+        $samplesPath = Join-Path $temporaryRoot "$os-samples.json"
+        $images = @('postgres@sha256:' + ('e' * 64))
+        [ordered]@{
+            sourceCommit = $commit
+            os = $os
+            architecture = 'x64'
+            containerImageDigests = $images
+        } | ConvertTo-Json | Set-Content -LiteralPath $manifestPath -Encoding utf8
+        '{"fixture":"synthetic verifier test, not benchmark measurements"}' |
+            Set-Content -LiteralPath $samplesPath -Encoding utf8
+        [ordered]@{
+            os = $os
+            architecture = 'x64'
+            sourceCommit = $commit
+            environmentManifestPath = "$os-environment.json"
+            environmentManifestSha256 = (Get-FileHash $manifestPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            rawSamplesPath = "$os-samples.json"
+            rawSamplesSha256 = (Get-FileHash $samplesPath -Algorithm SHA256).Hash.ToLowerInvariant()
+            containerImageDigests = $images
+        }
+    })
     $evidence = [ordered]@{
-        schemaVersion = 1
-        release = '1.1.0'
+        schemaVersion = 2
+        release = $contract.release
         sourceCommit = $commit
         confidenceLevel = 0.95
-        consolidatedReportSha256 = ('a' * 64)
-        verifierSelfTestsSha256 = ('b' * 64)
-        environments = @($contract.environments.os | Sort-Object | ForEach-Object {
-            [ordered]@{
-                os = $_
-                architecture = 'x64'
-                sourceCommit = $commit
-                environmentManifestSha256 = ('c' * 64)
-                rawSamplesSha256 = ('d' * 64)
-                containerImageDigests = @('postgres@sha256:' + ('e' * 64))
-            }
-        })
+        consolidatedReportPath = 'report.md'
+        consolidatedReportSha256 = (Get-FileHash (Join-Path $temporaryRoot 'report.md') -Algorithm SHA256).Hash.ToLowerInvariant()
+        verifierSelfTestsPath = 'self-tests.log'
+        verifierSelfTestsSha256 = (Get-FileHash (Join-Path $temporaryRoot 'self-tests.log') -Algorithm SHA256).Hash.ToLowerInvariant()
+        environments = $environments
         comparisons = $comparisons
     }
     $validPath = Join-Path $temporaryRoot 'valid.json'
-    $evidence | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $validPath -Encoding utf8
-    & $verifierPath -EvidencePath $validPath -ContractPath $contractPath | Out-Null
+    $validJson = $evidence | ConvertTo-Json -Depth 12
+    $validJson | Set-Content -LiteralPath $validPath -Encoding utf8
+    & $verifierPath -EvidencePath $validPath -ContractPath $contractPath -ExpectedCommit $commit | Out-Null
 
-    $evidence.comparisons[0].metrics.mean.candidate = 100.0
-    $ratioPath = Join-Path $temporaryRoot 'bad-ratio.json'
-    $evidence | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $ratioPath -Encoding utf8
-    $failed = $false
-    try { & $verifierPath -EvidencePath $ratioPath -ContractPath $contractPath | Out-Null }
-    catch { $failed = $true }
-    if (-not $failed) { throw 'The evidence verifier accepted a failed comparison ratio.' }
+    $script:rejectionCount = 0
+    Test-RejectedEvidence 'bad-ratio' {
+        param($changed)
+        $changed.comparisons[0].metrics.mean.candidate = 100.0
+        $changed.comparisons[0].metrics.mean.candidateCiUpper = 101.0
+    } "failed 'mean'"
+    Test-RejectedEvidence 'missing-workload' {
+        param($changed)
+        $changed.comparisons = @($changed.comparisons | Select-Object -Skip 1)
+    } 'Expected exactly'
+    Test-RejectedEvidence 'duplicate-workload' {
+        param($changed)
+        $changed.comparisons[1] = $changed.comparisons[0]
+    } 'duplicate or outside'
+    Test-RejectedEvidence 'old-schema' {
+        param($changed)
+        $changed.schemaVersion = 1
+    } 'identity, release, commit'
+    Test-RejectedEvidence 'wrong-commit' {
+        param($changed)
+        $changed.sourceCommit = ('f' * 40)
+    } 'identity, release, commit'
+    Test-RejectedEvidence 'missing-artifact' {
+        param($changed)
+        $changed.environments[0].rawSamplesPath = 'absent.json'
+    } 'is missing'
+    Test-RejectedEvidence 'incorrect-digest' {
+        param($changed)
+        $changed.environments[0].rawSamplesSha256 = ('a' * 64)
+    } 'does not match its SHA-256'
+    Test-RejectedEvidence 'relative-traversal' {
+        param($changed)
+        $changed.consolidatedReportPath = '../report.md'
+    } 'normalized relative path'
+    Test-RejectedEvidence 'absolute-path' {
+        param($changed)
+        $changed.consolidatedReportPath = $validPath
+    } 'normalized relative path'
+    Test-RejectedEvidence 'alternate-path-separator' {
+        param($changed)
+        $changed.consolidatedReportPath = 'nested\report.md'
+    } 'normalized relative path'
+    Test-RejectedEvidence 'environment-images-mismatch' {
+        param($changed)
+        $changed.environments[0].containerImageDigests = @('postgres@sha256:' + ('f' * 64))
+    } 'does not match the candidate, platform, or images'
+    foreach ($invalid in @('NaN', 'Infinity', '-Infinity', '90', $null, $true))
+    {
+        Test-RejectedEvidence "invalid-number-$script:rejectionCount" {
+            param($changed)
+            $changed.comparisons[0].metrics.mean.candidate = $invalid
+        } 'finite JSON number'
+    }
+    Test-RejectedEvidence 'negative-ungated-counter' {
+        param($changed)
+        $changed.comparisons[0].metrics.gcCounters.candidate = -1
+    } "negative 'gcCounters'"
+    Test-RejectedEvidence 'invalid-confidence-bound' {
+        param($changed)
+        $changed.comparisons[0].metrics.mean.candidateCiUpper = 'NaN'
+    } 'finite JSON number'
+    Test-RejectedEvidence 'confidence-tie' {
+        param($changed)
+        $changed.comparisons[0].metrics.mean.candidateCiUpper = 99.0
+    } "failed 'mean'"
 
-    $evidence.comparisons[0].metrics.mean.candidate = 90.0
-    $evidence.comparisons = @($evidence.comparisons | Select-Object -Skip 1)
-    $coveragePath = Join-Path $temporaryRoot 'missing-workload.json'
-    $evidence | ConvertTo-Json -Depth 12 | Set-Content -LiteralPath $coveragePath -Encoding utf8
-    $failed = $false
-    try { & $verifierPath -EvidencePath $coveragePath -ContractPath $contractPath | Out-Null }
-    catch { $failed = $true }
-    if (-not $failed) { throw 'The evidence verifier accepted an incomplete workload matrix.' }
-
-    Write-Output 'Performance leadership evidence verifier self-test passed.'
+    Write-Output "Performance leadership evidence verifier self-test passed: valid synthetic fixture and $script:rejectionCount rejected fixtures."
 }
 finally
 {

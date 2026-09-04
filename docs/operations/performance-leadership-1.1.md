@@ -37,14 +37,27 @@ observation windows on dedicated Windows x64 and Linux x64 runners.
 The manual-only
 [`performance-leadership.yml`](../../.github/workflows/performance-leadership.yml)
 checks out one full SHA on both runner classes, starts the digest-pinned current
-PostgreSQL 19 development milestone, executes the complete raw capture, and
-archives each environment independently. The same-SHA ratio/confidence and
-external-reference gates remain mandatory.
+PostgreSQL 19 development milestone, executes the existing provider and
+microbenchmark capture, and archives each environment independently. It does
+**not** currently capture all 886 leadership comparisons or run the complete
+leadership evidence verifier. Debezium, native destination, SignalR, network,
+and full scaling comparisons still need capture adapters. A successful run of
+that workflow is therefore supporting evidence, not a leadership-gate pass.
+The same-SHA ratio/confidence and external-reference gates remain mandatory.
 `verify-performance-leadership-evidence.ps1` expands this contract into 886
 exact environment/workload comparisons, rejects missing or duplicate cases,
 and evaluates both the observed ratio and the conservative 95% confidence
-bound. Its mutation self-test proves that a weak ratio and an incomplete matrix
-both fail closed.
+bound. Schema 2 also requires retained, nonempty artifacts, verifies their
+SHA-256 hashes, checks the environment manifests against an explicitly supplied
+candidate SHA, and rejects non-finite metrics. Its self-test uses synthetic
+fixtures to test rejection paths; those fixtures are not performance evidence.
+
+The verifier currently evaluates **declared** summary statistics and confidence
+bounds. It does not recompute them from raw samples. A reproducible statistics
+generator and an independent raw-to-summary consistency check remain required
+before treating this as an end-to-end leadership gate. The existing provider
+budget gate permits ratios up to 1.00 or 1.05 depending on the workload; passing
+it does not establish this programme's stricter 0.98 leadership threshold.
 
 - Provider: 16 features at concurrency 1, 64, and 256, including TLS and
   constrained-network variants, against Npgsql 10.0.3.
@@ -75,8 +88,10 @@ counters, verifier self-tests, and this readable consolidation.
 
 ## Remaining evidence before release
 
-1. Capture exact-final-SHA Windows and Linux benchmark evidence and run the
-   ratio/confidence verifier.
+1. Complete the external-reference and full-matrix capture adapters, derive
+   statistics reproducibly from retained samples, and independently verify
+   raw-to-summary consistency. Capture exact-final-SHA Windows and Linux
+   evidence and run the ratio/confidence verifier.
 2. Archive Streams 72-hour, then Sync 24-hour, Live/Control Plane 24-hour, and,
    after PostgreSQL 19 GA, Continuous Graph 24-hour endurance evidence.
 3. Run PostgreSQL 15–19, TLS, trimming, NativeAOT, package-consumer, Angular,
@@ -88,3 +103,25 @@ counters, verifier self-tests, and this readable consolidation.
 
 Until those items pass, 1.1 is a performance-engineered candidate—not a blanket
 “faster everywhere” release claim.
+
+## Evidence artifact validation
+
+Run the schema-2 verifier with the full SHA of the candidate being assessed:
+
+```powershell
+./eng/verify-performance-leadership-evidence.ps1 `
+    -EvidencePath artifacts/performance-leadership/evidence.json `
+    -ExpectedCommit $candidateSha
+```
+
+The evidence document retains the comparison and digest fields and supplies
+`consolidatedReportPath` and `verifierSelfTestsPath`. Each environment supplies
+`environmentManifestPath` and `rawSamplesPath`. Paths are relative to the
+evidence document, use `/` separators, and may not leave that directory or
+traverse symbolic links/junctions. Every referenced file must exist, contain
+data, and match its corresponding SHA-256 field. Environment JSON must include
+matching `sourceCommit`, `os`, `architecture`, and `containerImageDigests`.
+
+Old schema-1 documents containing only hash-shaped strings are not accepted.
+Retaining a file and matching its hash proves artifact integrity, not the
+correctness of its contents or the completeness of the measurement method.
