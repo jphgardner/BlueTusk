@@ -18,6 +18,11 @@ internal static class BlueTuskCommandTextRewriter
     private static readonly ConditionalWeakTable<string, NoNamedRewriteTemplate> NoNamedTemplates = new();
     private static readonly ConcurrentDictionary<string, NamedRewriteTemplate> NamedTemplatesByValue =
         new(StringComparer.Ordinal);
+    private const int MaximumBatchCachedSqlLength = 64 * 1024;
+    private const int MaximumBatchCachedTemplateCount = 128;
+    private static readonly ConcurrentDictionary<string, BatchSqlTemplate> BatchTemplatesByValue = new(StringComparer.Ordinal);
+    private static readonly ConditionalWeakTable<string, BatchSqlTemplate> BatchTemplates = new();
+    private static readonly object BatchTemplateLock = new();
 
     public static BlueTuskCommandPlan Rewrite(
         string sql,
@@ -26,6 +31,12 @@ internal static class BlueTuskCommandTextRewriter
     {
         ArgumentNullException.ThrowIfNull(sql);
         ArgumentNullException.ThrowIfNull(parameters);
+        // Keep the immutable SQL key alive with its bounded batch template. Large
+        // EF command strings are recreated per SaveChanges, not interned by EF.
+        if (sql.Length > MaximumValueCachedSqlLength && BatchTemplatesByValue.TryGetValue(sql, out var batchTemplate))
+        {
+            sql = batchTemplate.Sql;
+        }
         if (NamedTemplates.TryGetValue(sql, out var cachedTemplate))
         {
             return cachedTemplate.Bind(parameters, namedParameterMap);
@@ -258,7 +269,7 @@ internal static class BlueTuskCommandTextRewriter
     internal static BlueTuskCommandPlan[] RewriteStatements(string sql, BlueTuskParameterCollection parameters,
         bool usesNamedParameters)
     {
-        var statements = SplitStatements(sql);
+        var statements = GetBatchTemplate(sql).Statements;
         // Validate/index the parent collection once, not once per statement.
         var names = usesNamedParameters ? BuildNamedParameterMap(parameters) : null;
         var plans = new BlueTuskCommandPlan[statements.Count];
@@ -268,6 +279,24 @@ internal static class BlueTuskCommandTextRewriter
         }
         return plans;
     }
+
+    private static BatchSqlTemplate GetBatchTemplate(string sql)
+    {
+        if (BatchTemplatesByValue.TryGetValue(sql, out var cached)) { return cached; }
+        var template = BatchTemplates.GetValue(sql, static text => new BatchSqlTemplate(text, SplitStatements(text)));
+        if (sql.Length <= MaximumBatchCachedSqlLength)
+        {
+            lock (BatchTemplateLock)
+            {
+                if (BatchTemplatesByValue.TryGetValue(sql, out cached)) { return cached; }
+                if (BatchTemplatesByValue.Count < MaximumBatchCachedTemplateCount) { BatchTemplatesByValue.TryAdd(sql, template); }
+            }
+        }
+        return template;
+    }
+
+    // No parameter values, connections, or mutable command state are cached.
+    private sealed record BatchSqlTemplate(string Sql, IReadOnlyList<string> Statements);
 
     internal static IReadOnlyList<string> SplitStatements(string sql)
     {

@@ -5,6 +5,37 @@ namespace BlueTusk.IntegrationTests;
 
 public sealed class BlueTuskStatementBatchIntegrationTests
 {
+    [Fact]
+    public async Task Multiplexed_statement_batches_use_the_buffered_dispatch_path()
+    {
+        var value = Environment.GetEnvironmentVariable("BLUETUSK_TEST_CONNECTION_STRING");
+        if (string.IsNullOrWhiteSpace(value)) { throw SkipException.ForSkip("BLUETUSK_TEST_CONNECTION_STRING is not configured."); }
+        await using var source = new BlueTuskDataSourceBuilder(value)
+            .EnableMultiplexing(options => { options.WorkerCount = 1; options.MaxPipelineCommands = 8; })
+            .Build();
+        var results = await Task.WhenAll(Enumerable.Range(0, 16).Select(async number =>
+        {
+            await using var command = source.CreateCommand("SELECT @value::int4; SELECT @value::int4 + 1;");
+            command.Parameters.Add(new BlueTuskParameter<int>(number) { ParameterName = "value" });
+            return await command.ExecuteScalarAsync<int>();
+        }));
+        Assert.Equal(Enumerable.Range(0, 16), results);
+        Assert.Equal(0, source.GetMultiplexingStatistics().Faulted);
+    }
+
+    [Fact]
+    public async Task Scalar_values_outlive_released_batch_row_buffers()
+    {
+        await using var connection = await OpenAsync();
+        byte[] expected = [1, 2, 3, 4];
+        await using var command = new BlueTuskCommand("SELECT @bytes::bytea; SELECT @bytes::bytea;", connection);
+        command.Parameters.Add(new BlueTuskParameter<byte[]>(expected) { ParameterName = "bytes" });
+        var actual = Assert.IsType<byte[]>(await command.ExecuteScalarAsync());
+        command.Parameters["bytes"].Value = new byte[] { 5, 6, 7, 8 };
+        for (var index = 0; index < 16; index++) { _ = await command.ExecuteNonQueryAsync(); }
+        Assert.Equal(expected, actual);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]

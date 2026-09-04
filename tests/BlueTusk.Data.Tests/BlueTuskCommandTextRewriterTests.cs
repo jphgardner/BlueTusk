@@ -3,6 +3,28 @@ namespace BlueTusk.Data.Tests;
 public sealed class BlueTuskCommandTextRewriterTests
 {
     [Theory]
+    [InlineData(0)]
+    [InlineData(18000)]
+    public void Cached_statement_templates_never_share_parameter_values(int padding)
+    {
+        var sql = "SELECT @right::int4; /*" + new string(' ', padding) + "*/ SELECT @left::int4 + @right::int4;";
+        Parallel.For(0, 64, value =>
+        {
+            var recreatedSql = new string(sql.ToCharArray());
+            var parameters = new BlueTuskParameterCollection();
+            var left = parameters.Add(new BlueTuskParameter<int>(value) { ParameterName = "left" });
+            var right = parameters.Add(new BlueTuskParameter<int>(value + 1) { ParameterName = "right" });
+            var parent = BlueTuskCommandTextRewriter.Rewrite(recreatedSql, parameters);
+            var plans = BlueTuskCommandTextRewriter.RewriteStatements(recreatedSql, parameters, parent.UsesNamedParameters);
+            Assert.True(parent.HasMultipleStatements);
+            Assert.Equal(2, plans.Length);
+            Assert.Same(right, Assert.Single(plans[0].Parameters));
+            Assert.Same(left, plans[1].Parameters[0]);
+            Assert.Same(right, plans[1].Parameters[1]);
+        });
+    }
+
+    [Theory]
     [InlineData("SELECT @a; SELECT @b;", 2)]
     [InlineData("SELECT ';' AS \"a;b\"; -- trailing ;\n", 1)]
     [InlineData("; /* outer ; /* nested ; */ done */ SELECT 1;; SELECT 2; /* tail ; */", 2)]
