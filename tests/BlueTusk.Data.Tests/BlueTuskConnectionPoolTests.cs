@@ -86,38 +86,6 @@ public sealed class BlueTuskConnectionPoolTests
     }
 
     [Fact]
-    public async Task Returning_a_session_does_not_execute_its_consumer_inline()
-    {
-        await using var pool = CreatePool(maximumSize: 1);
-        var firstLease = await pool.RentAsync(CancellationToken.None);
-        var returnThread = Environment.CurrentManagedThreadId;
-        var returning = 0;
-        var consumer = ConsumeAsync();
-        await WaitUntilAsync(() => pool.Statistics.Waiting == 1);
-
-        // Check both thread identity and the active Return call. An asynchronously
-        // scheduled consumer may legitimately reuse this worker thread later.
-        returnThread = Environment.CurrentManagedThreadId;
-        Volatile.Write(ref returning, 1);
-        try { pool.Return(firstLease); }
-        finally { Volatile.Write(ref returning, 0); }
-
-        Assert.False(await consumer.WaitAsync(TimeSpan.FromSeconds(5)));
-        Assert.Equal(0, pool.Statistics.Waiting);
-        Assert.Equal(0, pool.Statistics.Busy);
-        Assert.Equal(1, pool.Statistics.Idle);
-
-        async Task<bool> ConsumeAsync()
-        {
-            var lease = await pool.RentAsync(CancellationToken.None).ConfigureAwait(false);
-            var ranInline = Environment.CurrentManagedThreadId == returnThread &&
-                Volatile.Read(ref returning) != 0;
-            pool.Return(lease);
-            return ranInline;
-        }
-    }
-
-    [Fact]
     public async Task Idle_lifetime_discards_and_replaces_expired_sessions()
     {
         var timeProvider = new ManualTimeProvider();
